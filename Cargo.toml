@@ -1,1 +1,6 @@
-workspace = []
+[workspace]
+
+members = [
+    "contracts/cosmwasm-vm/cw-icon-light-client",
+    "contracts/cosmwasm-vm/cw-xcall",
+]
