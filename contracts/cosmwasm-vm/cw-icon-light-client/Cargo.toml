@@ -1,8 +1,8 @@
 [package]
 name = "cw-icon-light-client"
 version = "0.1.0"
-authors = ["Icon Foundation<foo@icon.foundation>"]
 edition = "2021"
+authors = {workspace = true}
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
