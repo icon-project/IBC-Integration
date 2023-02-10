@@ -32,8 +32,8 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn add_txn_info(mut self, txn_info: TransactionInfo) -> MockEnvBuilder {
-        self.env.transaction = Some(txn_info);
+    pub fn add_txn_info(mut self, txn_info: Option<TransactionInfo>) -> MockEnvBuilder {
+        self.env.transaction = txn_info;
         self
     }
 
@@ -77,7 +77,7 @@ fn test() {
 
     let mock_env: Env = MockEnvBuilder::new()
         .add_block(block_info)
-        .add_txn_info(transaction.unwrap())
+        .add_txn_info(transaction)
         .add_contract_info(contract)
         .build();
 

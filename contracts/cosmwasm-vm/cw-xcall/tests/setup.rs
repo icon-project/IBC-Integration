@@ -77,7 +77,7 @@ fn test() {
 
     let mock_env_builder: Env = MockEnvBuilder::new()
         .add_block(block_info)
-        .add_txn_info(transaction.unwrap())
+        .add_txn_info(transaction)
         .add_contract_info(contract)
         .build();
 
