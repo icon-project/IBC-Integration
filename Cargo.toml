@@ -1,1 +1,9 @@
-workspace = []
+[workspace]
+members = [
+    "contracts/cosmwasm-vm/cw-icon-light-client",
+    "contracts/cosmwasm-vm/cw-xcall",
+]
+
+[workspace.package]
+authors = ["Icon Foundation<foo@icon.foundation>"]
+repository = "https://github.com/icon-project/ibc-integration.git"
