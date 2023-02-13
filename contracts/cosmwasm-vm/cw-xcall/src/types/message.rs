@@ -34,3 +34,11 @@ pub struct CallServiceMessageReponse {
     response_code: CallServiceResponseType,
     message: Vec<u8>,
 }
+
+#[cw_serde]
+pub struct CallRequest {
+    from: Address,
+    to: Address,
+    rollback: Vec<u8>,
+    enabled: bool,
+}
