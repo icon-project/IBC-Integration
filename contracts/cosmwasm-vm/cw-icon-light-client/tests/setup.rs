@@ -75,11 +75,11 @@ fn test() {
         address: Addr::unchecked(MOCK_CONTRACT_ADDR),
     };
 
-    let mock_env_builder: Env = MockEnvBuilder::new()
+    let mock_env: Env = MockEnvBuilder::new()
         .add_block(block_info)
         .add_txn_info(transaction)
         .add_contract_info(contract)
         .build();
 
-    assert_eq!(mock, mock_env_builder)
+    assert_eq!(mock, mock_env)
 }
