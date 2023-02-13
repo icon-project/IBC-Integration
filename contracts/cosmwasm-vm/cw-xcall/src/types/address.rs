@@ -1,8 +1,6 @@
-use std::error::Error;
+use super::*;
 
-use cosmwasm_std::StdError;
-use cw_storage_plus::KeyDeserialize;
-
+#[cw_serde]
 pub struct Address(String);
 
 impl Address {
