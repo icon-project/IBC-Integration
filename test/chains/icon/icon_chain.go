@@ -161,7 +161,7 @@ func (c *IconChain) Start(testName string, ctx context.Context, additionalGenesi
 //
 // "env" are environment variables in the format "MY_ENV_VAR=value"
 func (c *IconChain) Exec(ctx context.Context, cmd []string, env []string) (stdout []byte, stderr []byte, err error) {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().Exec(ctx, cmd, env)
 }
 
 // ExportState exports the chain state at specific height.
@@ -270,4 +270,14 @@ func (c *IconChain) Acknowledgements(ctx context.Context, height uint64) ([]ibc.
 // Timeouts returns all timeouts in a block at height.
 func (c *IconChain) Timeouts(ctx context.Context, height uint64) ([]ibc.PacketTimeout, error) {
 	panic("not implemented") // TODO: Implement
+}
+
+func (c *IconChain) getFullNode() *IconNode {
+	c.findTxMu.Lock()
+	defer c.findTxMu.Unlock()
+	if len(c.FullNodes) > 0 {
+		// use first full node
+		return c.FullNodes[0]
+	}
+	return c.FullNodes[0]
 }
