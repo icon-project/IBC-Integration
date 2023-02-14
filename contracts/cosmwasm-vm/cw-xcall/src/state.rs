@@ -52,7 +52,3 @@ impl CallService<'_> {
 }
 
 pub const CALLSERVICE: Item<CallService> = Item::new("call-service");
-
-// pub const CALLSERVICE: Item<CallService> = Item::new("call-service");
-// pub const CALLREQUEST: Map<'static, u128, CallRequest> = Map::new("callrequest");
-//pub const CALLMESSAGE: Map<'static, u128, CallServiceMessageRequest> = Map::new("callmessage");

@@ -39,9 +39,6 @@ pub fn execute(
     _info: MessageInfo,
     _msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let r = CALLSERVICE.load(deps.storage)?;
-
-    r.last_request_id();
     unimplemented!()
 }
 
