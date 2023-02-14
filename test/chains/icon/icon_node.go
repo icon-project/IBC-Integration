@@ -75,7 +75,7 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 			PortBindings: nat.PortMap{
 				"9080/tcp": {
 					nat.PortBinding{
-						HostIP:   "127.0.0.1",
+						HostIP:   "172.17.0.1",
 						HostPort: "9080",
 					},
 				},
@@ -134,4 +134,23 @@ func (in *IconNode) logger() *zap.Logger {
 		zap.String("chain_id", in.Chain.Config().ChainID),
 		zap.String("test", in.TestName),
 	)
+}
+
+func (in *IconNode) Exec(ctx context.Context, cmd []string, env []string) ([]byte, []byte, error) {
+	job := dockerutil.NewImage(in.logger(), in.DockerClient, in.NetworkID, in.TestName, in.Image.Repository, in.Image.Version)
+	opts := dockerutil.ContainerOptions{
+		Env:   env,
+		Binds: in.Bind(),
+	}
+	res := job.Run(ctx, cmd, opts)
+	return res.Stdout, res.Stderr, res.Err
+}
+
+func (in *IconNode) BinCommand(command ...string) []string {
+	command = append([]string{in.Chain.Config().Bin}, command...)
+	return command
+}
+
+func (in *IconNode) ExecBin(ctx context.Context, command ...string) ([]byte, []byte, error) {
+	return in.Exec(ctx, in.BinCommand(command...), nil)
 }
