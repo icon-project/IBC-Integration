@@ -75,7 +75,7 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 			PortBindings: nat.PortMap{
 				"9080/tcp": {
 					nat.PortBinding{
-						HostIP:   "127.0.0.1",
+						HostIP:   "172.17.0.1",
 						HostPort: "9080",
 					},
 				},
