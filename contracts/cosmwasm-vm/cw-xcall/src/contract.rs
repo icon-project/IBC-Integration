@@ -39,7 +39,7 @@ pub fn execute(
     _info: MessageInfo,
     _msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    unimplemented!()
+    unimplemented!();
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
