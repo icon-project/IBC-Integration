@@ -171,10 +171,11 @@ func (c *IconChain) ExportState(ctx context.Context, height int64) (string, erro
 
 // GetRPCAddress retrieves the rpc address that can be reached by other containers in the docker network.
 func (c *IconChain) GetRPCAddress() string {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().HostRPCPort
 }
 
 // GetGRPCAddress retrieves the grpc address that can be reached by other containers in the docker network.
+// Not Applicable for Icon
 func (c *IconChain) GetGRPCAddress() string {
 	panic("not implemented") // TODO: Implement
 }
@@ -182,11 +183,12 @@ func (c *IconChain) GetGRPCAddress() string {
 // GetHostRPCAddress returns the rpc address that can be reached by processes on the host machine.
 // Note that this will not return a valid value until after Start returns.
 func (c *IconChain) GetHostRPCAddress() string {
-	panic("not implemented") // TODO: Implement
+	return "http://" + c.getFullNode().HostRPCPort
 }
 
 // GetHostGRPCAddress returns the grpc address that can be reached by processes on the host machine.
 // Note that this will not return a valid value until after Start returns.
+// Not applicable for Icon
 func (c *IconChain) GetHostGRPCAddress() string {
 	panic("not implemented") // TODO: Implement
 }
@@ -194,7 +196,7 @@ func (c *IconChain) GetHostGRPCAddress() string {
 // HomeDir is the home directory of a node running in a docker container. Therefore, this maps to
 // the container's filesystem (not the host).
 func (c *IconChain) HomeDir() string {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().HomeDir()
 }
 
 // CreateKey creates a test key in the "user" node (either the first fullnode or the first validator if no fullnodes).
