@@ -7,3 +7,14 @@ members = [
 [workspace.package]
 authors = ["Icon Foundation<foo@icon.foundation>"]
 repository = "https://github.com/icon-project/ibc-integration.git"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
