@@ -188,5 +188,11 @@ func (in *IconNode) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, e
 	}
 
 	// ToDo Add events from block if any to newTx.Events.
+	// Event is an alternative representation of tendermint/abci/types.Event
 	return txs, nil
+}
+
+func (in *IconNode) Height(ctx context.Context) (uint64, error) {
+	res, err := in.Client.GetLastBlock()
+	return uint64(res.Height), err
 }

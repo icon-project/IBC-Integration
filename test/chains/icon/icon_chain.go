@@ -253,7 +253,7 @@ func (c *IconChain) CreatePool(ctx context.Context, keyName string, contractAddr
 
 // Height returns the current block height or an error if unable to get current height.
 func (c *IconChain) Height(ctx context.Context) (uint64, error) {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().Height(ctx)
 }
 
 // GetBalance fetches the current balance for a specific account address and denom.
