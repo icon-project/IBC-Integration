@@ -258,7 +258,7 @@ func (c *IconChain) Height(ctx context.Context) (uint64, error) {
 
 // GetBalance fetches the current balance for a specific account address and denom.
 func (c *IconChain) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().GetBalance(ctx, address)
 }
 
 // GetGasFeesInNativeDenom gets the fees in native denom for an amount of spent gas.

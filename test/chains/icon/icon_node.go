@@ -196,3 +196,9 @@ func (in *IconNode) Height(ctx context.Context) (uint64, error) {
 	res, err := in.Client.GetLastBlock()
 	return uint64(res.Height), err
 }
+
+func (in *IconNode) GetBalance(ctx context.Context, address string) (int64, error) {
+	addr := icontypes.AddressParam{Address: icontypes.Address(address)}
+	bal, _ := in.Client.GetBalance(&addr)
+	return bal.Int64(), nil
+}
