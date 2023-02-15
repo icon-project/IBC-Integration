@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 	"sync"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -263,7 +265,9 @@ func (c *IconChain) GetBalance(ctx context.Context, address string, denom string
 
 // GetGasFeesInNativeDenom gets the fees in native denom for an amount of spent gas.
 func (c *IconChain) GetGasFeesInNativeDenom(gasPaid int64) int64 {
-	panic("not implemented") // TODO: Implement
+	gasPrice, _ := strconv.ParseFloat(strings.Replace(c.cfg.GasPrices, c.cfg.Denom, "", 1), 64)
+	fees := float64(gasPaid) * gasPrice
+	return int64(fees)
 }
 
 // Acknowledgements returns all acknowledgements in a block at height.
