@@ -1,5 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
+use crate::types::request::CallServiceMessageRequest;
+
 #[cw_serde]
 pub struct InstantiateMsg {
     
@@ -13,4 +15,6 @@ pub enum ExecuteMsg {}
 pub enum QueryMsg {}
 
 #[cw_serde]
-pub enum IbcExecuteMsg {}
+pub enum IbcExecuteMsg {
+    Event {sn : i128,rollback:Vec<u8>,message:CallServiceMessageRequest}
+}
