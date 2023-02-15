@@ -41,3 +41,4 @@ thiserror = { version = "1.0.31" }
 [dev-dependencies]
 cosmwasm = "0.7.2"
 cw-multi-test = "0.16.2"
+common = { path="../../../libraries/rust/common" }
