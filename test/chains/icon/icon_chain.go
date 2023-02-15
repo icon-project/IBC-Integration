@@ -166,7 +166,8 @@ func (c *IconChain) Exec(ctx context.Context, cmd []string, env []string) (stdou
 
 // ExportState exports the chain state at specific height.
 func (c *IconChain) ExportState(ctx context.Context, height int64) (string, error) {
-	panic("not implemented") // TODO: Implement
+	block, err := c.getFullNode().GetBlockByHeight(ctx, height)
+	return block, err
 }
 
 // GetRPCAddress retrieves the rpc address that can be reached by other containers in the docker network.

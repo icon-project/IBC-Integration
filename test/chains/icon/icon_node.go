@@ -154,3 +154,15 @@ func (in *IconNode) BinCommand(command ...string) []string {
 func (in *IconNode) ExecBin(ctx context.Context, command ...string) ([]byte, []byte, error) {
 	return in.Exec(ctx, in.BinCommand(command...), nil)
 }
+
+func (in *IconNode) GetBlockByHeight(ctx context.Context, height int64) (string, error) {
+	in.lock.Lock()
+	defer in.lock.Unlock()
+	uri := "http://" + in.HostRPCPort + "/api/v3"
+	block, _, err := in.ExecBin(ctx,
+		"rpc", "blockbyheight", fmt.Sprint(height),
+		"--uri", uri,
+	)
+	fmt.Println(string(block))
+	return string(block), err
+}
