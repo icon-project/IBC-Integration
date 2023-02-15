@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::*;
 
 #[cw_serde]
@@ -42,30 +40,7 @@ impl CallServiceMessageReponse {
     }
 }
 
-pub struct CSMessageResponse(HashMap<u128, CallServiceMessageReponse>);
-
-impl Default for CSMessageResponse {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CSMessageResponse {
-    pub fn new() -> Self {
-        Self(HashMap::new())
-    }
-
-    pub fn add(&mut self, sequence_no: u128, response: CallServiceMessageReponse) {
-        self.0.insert(sequence_no, response);
-    }
-
-    pub fn remove(&mut self, sequence_no: u128) {
-        self.0.remove(&sequence_no);
-    }
-    pub fn contains(&self, sequence_no: u128) -> bool {
-        self.0.contains_key(&sequence_no)
-    }
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
+mod test {
+    #[test]
+    fn test_add() {}
 }
