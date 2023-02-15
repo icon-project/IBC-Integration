@@ -20,9 +20,9 @@ impl<'a> CwCallservice<'a> {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        self.owner()
-            .save(deps.storage, &Address::from_string(info.sender.to_string()))?;
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+        self.add_owner(deps, Address::from_string(info.sender.to_string()))?;
 
         Ok(Response::new().add_attribute("method", "instantiate"))
     }

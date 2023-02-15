@@ -9,8 +9,25 @@ impl<'a> CwCallservice<'a> {
         Ok(admin)
     }
 
-    pub fn set_admin(
-        &mut self,
+    pub fn add_admin(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        admin: Address,
+    ) -> Result<Response, ContractError> {
+        let owner = self.owner().load(deps.storage)?;
+        if info.sender.to_string() == owner.to_string() {
+            self.admin().save(deps.storage, &admin)?;
+            Ok(Response::new()
+                .add_attribute("method", "add_admin")
+                .add_attribute("admin", admin.to_string()))
+        } else {
+            Err(ContractError::Unauthorized {})
+        }
+    }
+
+    pub fn update_admin(
+        &self,
         deps: DepsMut,
         info: MessageInfo,
         new_admin: Address,
@@ -34,5 +51,20 @@ impl<'a> CwCallservice<'a> {
         Ok(Response::new()
             .add_attribute("action", "update admin")
             .add_attribute("admin", new_admin.to_string()))
+    }
+
+    pub fn remove_admin(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+    ) -> Result<Response, ContractError> {
+        let owner = self.owner().load(deps.storage)?;
+
+        if info.sender.to_string() == owner.to_string() {
+            self.admin().remove(deps.storage);
+            Ok(Response::new().add_attribute("method", "remove_admin"))
+        } else {
+            Err(ContractError::Unauthorized {})
+        }
     }
 }

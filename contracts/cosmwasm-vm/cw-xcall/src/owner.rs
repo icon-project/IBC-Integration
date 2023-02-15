@@ -9,8 +9,16 @@ impl<'a> CwCallservice<'a> {
         Ok(owner)
     }
 
-    pub fn set_owner(
-        &mut self,
+    pub fn add_owner(&self, deps: DepsMut, owner: Address) -> Result<Response, ContractError> {
+        self.owner().save(deps.storage, &owner)?;
+
+        Ok(Response::new()
+            .add_attribute("method", "add_owner")
+            .add_attribute("owner", owner.to_string()))
+    }
+
+    pub fn update_owner(
+        &self,
         deps: DepsMut,
         info: MessageInfo,
         new_owner: Address,
