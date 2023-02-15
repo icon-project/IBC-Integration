@@ -166,7 +166,6 @@ func (in *IconNode) GetBlockByHeight(ctx context.Context, height int64) (string,
 		"rpc", "blockbyheight", fmt.Sprint(height),
 		"--uri", uri,
 	)
-	fmt.Println(string(block))
 	return string(block), err
 }
 
