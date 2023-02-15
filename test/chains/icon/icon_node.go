@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"path"
 	"sync"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
 	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
 	iconclient "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon"
+	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	iconlog "github.com/icon-project/icon-bridge/common/log"
 	"github.com/strangelove-ventures/ibctest/ibc"
 	"go.uber.org/zap"
@@ -165,4 +168,25 @@ func (in *IconNode) GetBlockByHeight(ctx context.Context, height int64) (string,
 	)
 	fmt.Println(string(block))
 	return string(block), err
+}
+
+func (in *IconNode) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
+	var flag = true
+	if flag {
+		time.Sleep(3 * time.Second)
+		flag = false
+	}
+
+	time.Sleep(2 * time.Second)
+	blockHeight := icontypes.BlockHeightParam{Height: icontypes.NewHexInt(int64(height))}
+	res, _ := in.Client.GetBlockByHeight(&blockHeight)
+
+	txs := make([]blockdb.Tx, 0, len(res.NormalTransactions)+2)
+	var newTx blockdb.Tx
+	for _, tx := range res.NormalTransactions {
+		newTx.Data = []byte(fmt.Sprintf(`{"data":"%s"}`, tx.Data))
+	}
+
+	// ToDo Add events from block if any to newTx.Events.
+	return txs, nil
 }

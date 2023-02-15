@@ -9,6 +9,7 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
 	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
 	"github.com/strangelove-ventures/ibctest/ibc"
 	"go.uber.org/zap"
@@ -283,4 +284,9 @@ func (c *IconChain) getFullNode() *IconNode {
 		return c.FullNodes[0]
 	}
 	return c.FullNodes[0]
+}
+
+func (c *IconChain) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
+	fn := c.getFullNode()
+	return fn.FindTxs(ctx, height)
 }
