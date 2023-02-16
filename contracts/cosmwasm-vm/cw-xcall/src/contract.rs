@@ -1,11 +1,10 @@
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
 
 use crate::{
     error::ContractError,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     state::CwCallservice,
-    types::address::Address,
 };
 
 // version info for migration info
@@ -20,11 +19,7 @@ impl<'a> CwCallservice<'a> {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-        self.add_owner(deps, Address::from_string(info.sender.to_string()))?;
-
-        Ok(Response::new().add_attribute("method", "instantiate"))
+        unimplemented!()
     }
 
     pub fn execute(
