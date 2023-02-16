@@ -280,3 +280,8 @@ func (c *IconChain) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, e
 	fn := c.getFullNode()
 	return fn.FindTxs(ctx, height)
 }
+
+// DeployContract takes a file path to smart contract and initialization message and returns the instantiated contract/SCORE address.
+func (c *IconChain) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
+	return c.getFullNode().DeployContract(ctx, scorePath, keystorePath, initMessage)
+}

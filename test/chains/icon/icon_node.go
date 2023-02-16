@@ -2,8 +2,11 @@ package icon
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -200,4 +203,98 @@ func (in *IconNode) GetBalance(ctx context.Context, address string) (int64, erro
 	addr := icontypes.AddressParam{Address: icontypes.Address(address)}
 	bal, _ := in.Client.GetBalance(&addr)
 	return bal.Int64(), nil
+}
+
+func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
+	var result icontypes.TransactionResult
+
+	// Write Contract file to Docker volume
+	_, score := filepath.Split(scorePath)
+	err := in.CopyFile(ctx, scorePath, score)
+	if err != nil {
+		return "", fmt.Errorf("error copying keystore to Docker volume: %w", err)
+	}
+
+	// Deploy the contract
+	hash, err := in.ExecTx(ctx, initMessage, path.Join(in.HomeDir(), score), keystorePath)
+	if err != nil {
+		return "", err
+	}
+	uri := "http://" + in.HostRPCPort + "/api/v3"
+
+	//wait for few blocks
+	time.Sleep(3 * time.Second)
+
+	// Get Score Address
+	out, _, err := in.ExecBin(ctx, "rpc", "txresult", hash, "--uri", uri)
+	json.Unmarshal(out, &result)
+	scoreAddress := result.SCOREAddress
+	return string(scoreAddress), err
+
+}
+
+// ExecTx executes a transaction, waits for 2 blocks if successful, then returns the tx hash.
+func (in *IconNode) ExecTx(ctx context.Context, initMessage string, filePath string, keystorePath string, command ...string) (string, error) {
+	var output string
+	in.lock.Lock()
+	defer in.lock.Unlock()
+	stdout, _, err := in.Exec(ctx, in.TxCommand(ctx, initMessage, filePath, keystorePath, command...), nil)
+	if err != nil {
+		return "", err
+	}
+	json.Unmarshal(stdout, &output)
+	return output, nil
+}
+
+// TxCommand is a helper to retrieve a full command for broadcasting a tx
+// with the chain node binary.
+func (in *IconNode) TxCommand(ctx context.Context, initMessage, filePath, keystorePath string, command ...string) []string {
+	// Write keystore file to Docker volume
+	_, key := filepath.Split(keystorePath)
+	err := in.CopyFile(ctx, keystorePath, key)
+	if err != nil {
+		return []string{"error copying keystore to Docker volume"}
+	}
+	keystore := path.Join(in.HomeDir(), key)
+
+	command = append([]string{"rpc", "sendtx", "deploy", filePath}, command...)
+	return in.NodeCommand(append(command,
+		"--key_store", keystore,
+		"--key_password", "gochain",
+		"--step_limit", "5000000000",
+		"--content_type", "application/java",
+		"--param", initMessage,
+	)...)
+}
+
+// NodeCommand is a helper to retrieve a full command for a chain node binary.
+// when interactions with the RPC endpoint are necessary.
+// For example, if chain node binary is `gaiad`, and desired command is `gaiad keys show key1`,
+// pass ("keys", "show", "key1") for command to return the full command.
+// Will include additional flags for node URL, home directory, and chain ID.
+func (in *IconNode) NodeCommand(command ...string) []string {
+	command = in.BinCommand(command...)
+	return append(command,
+		"--uri", fmt.Sprintf("http://%s/api/v3", in.HostRPCPort),
+		"--nid", "0xc5addf",
+	)
+}
+
+// CopyFile adds a file from the host filesystem to the docker filesystem
+// relPath describes the location of the file in the docker volume relative to
+// the home directory
+func (tn *IconNode) CopyFile(ctx context.Context, srcPath, dstPath string) error {
+	content, err := os.ReadFile(srcPath)
+	if err != nil {
+		return err
+	}
+	return tn.WriteFile(ctx, content, dstPath)
+}
+
+// WriteFile accepts file contents in a byte slice and writes the contents to
+// the docker filesystem. relPath describes the location of the file in the
+// docker volume relative to the home directory
+func (tn *IconNode) WriteFile(ctx context.Context, content []byte, relPath string) error {
+	fw := dockerutil.NewFileWriter(tn.logger(), tn.DockerClient, tn.TestName)
+	return fw.WriteFile(ctx, tn.VolumeName, relPath, content)
 }
