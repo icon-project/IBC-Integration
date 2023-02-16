@@ -6,6 +6,7 @@ pub mod helpers;
 pub mod ibc;
 pub mod msg;
 pub mod owner;
+pub mod requests;
 pub mod state;
 pub mod types;
 
