@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 	"sync"
 
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
 	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
 	"github.com/strangelove-ventures/ibctest/ibc"
 	"go.uber.org/zap"
@@ -166,15 +169,17 @@ func (c *IconChain) Exec(ctx context.Context, cmd []string, env []string) (stdou
 
 // ExportState exports the chain state at specific height.
 func (c *IconChain) ExportState(ctx context.Context, height int64) (string, error) {
-	panic("not implemented") // TODO: Implement
+	block, err := c.getFullNode().GetBlockByHeight(ctx, height)
+	return block, err
 }
 
 // GetRPCAddress retrieves the rpc address that can be reached by other containers in the docker network.
 func (c *IconChain) GetRPCAddress() string {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().HostRPCPort
 }
 
 // GetGRPCAddress retrieves the grpc address that can be reached by other containers in the docker network.
+// Not Applicable for Icon
 func (c *IconChain) GetGRPCAddress() string {
 	panic("not implemented") // TODO: Implement
 }
@@ -182,11 +187,12 @@ func (c *IconChain) GetGRPCAddress() string {
 // GetHostRPCAddress returns the rpc address that can be reached by processes on the host machine.
 // Note that this will not return a valid value until after Start returns.
 func (c *IconChain) GetHostRPCAddress() string {
-	panic("not implemented") // TODO: Implement
+	return "http://" + c.getFullNode().HostRPCPort
 }
 
 // GetHostGRPCAddress returns the grpc address that can be reached by processes on the host machine.
 // Note that this will not return a valid value until after Start returns.
+// Not applicable for Icon
 func (c *IconChain) GetHostGRPCAddress() string {
 	panic("not implemented") // TODO: Implement
 }
@@ -194,7 +200,7 @@ func (c *IconChain) GetHostGRPCAddress() string {
 // HomeDir is the home directory of a node running in a docker container. Therefore, this maps to
 // the container's filesystem (not the host).
 func (c *IconChain) HomeDir() string {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().HomeDir()
 }
 
 // CreateKey creates a test key in the "user" node (either the first fullnode or the first validator if no fullnodes).
@@ -249,17 +255,19 @@ func (c *IconChain) CreatePool(ctx context.Context, keyName string, contractAddr
 
 // Height returns the current block height or an error if unable to get current height.
 func (c *IconChain) Height(ctx context.Context) (uint64, error) {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().Height(ctx)
 }
 
 // GetBalance fetches the current balance for a specific account address and denom.
 func (c *IconChain) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
-	panic("not implemented") // TODO: Implement
+	return c.getFullNode().GetBalance(ctx, address)
 }
 
 // GetGasFeesInNativeDenom gets the fees in native denom for an amount of spent gas.
 func (c *IconChain) GetGasFeesInNativeDenom(gasPaid int64) int64 {
-	panic("not implemented") // TODO: Implement
+	gasPrice, _ := strconv.ParseFloat(strings.Replace(c.cfg.GasPrices, c.cfg.Denom, "", 1), 64)
+	fees := float64(gasPaid) * gasPrice
+	return int64(fees)
 }
 
 // Acknowledgements returns all acknowledgements in a block at height.
@@ -280,4 +288,9 @@ func (c *IconChain) getFullNode() *IconNode {
 		return c.FullNodes[0]
 	}
 	return c.FullNodes[0]
+}
+
+func (c *IconChain) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
+	fn := c.getFullNode()
+	return fn.FindTxs(ctx, height)
 }
