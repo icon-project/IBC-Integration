@@ -13,7 +13,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
 	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
-	"github.com/strangelove-ventures/ibctest/ibc"
+	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -224,32 +224,7 @@ func (c *IconChain) SendFunds(ctx context.Context, keyName string, amount ibc.Wa
 }
 
 // SendIBCTransfer sends an IBC transfer returning a transaction or an error if the transfer failed.
-func (c *IconChain) SendIBCTransfer(ctx context.Context, channelID string, keyName string, amount ibc.WalletAmount, timeout *ibc.IBCTimeout) (ibc.Tx, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// UpgradeProposal submits a software-upgrade proposal to the chain.
-func (c *IconChain) UpgradeProposal(ctx context.Context, keyName string, prop ibc.SoftwareUpgradeProposal) (ibc.SoftwareUpgradeTx, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// InstantiateContract takes a file path to smart contract and initialization message and returns the instantiated contract address.
-func (c *IconChain) InstantiateContract(ctx context.Context, keyName string, amount ibc.WalletAmount, fileName string, initMessage string, needsNoAdminFlag bool) (string, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// ExecuteContract executes a contract transaction with a message using it's address.
-func (c *IconChain) ExecuteContract(ctx context.Context, keyName string, contractAddress string, message string) error {
-	panic("not implemented") // TODO: Implement
-}
-
-// DumpContractState dumps the state of a contract at a block height.
-func (c *IconChain) DumpContractState(ctx context.Context, contractAddress string, height int64) (*ibc.DumpContractStateResponse, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// CreatePool creates a balancer pool.
-func (c *IconChain) CreatePool(ctx context.Context, keyName string, contractAddress string, swapFee float64, exitFee float64, assets []ibc.WalletAmount) error {
+func (c *IconChain) SendIBCTransfer(ctx context.Context, channelID string, keyName string, amount ibc.WalletAmount, options ibc.TransferOptions) (ibc.Tx, error) {
 	panic("not implemented") // TODO: Implement
 }
 
@@ -277,6 +252,17 @@ func (c *IconChain) Acknowledgements(ctx context.Context, height uint64) ([]ibc.
 
 // Timeouts returns all timeouts in a block at height.
 func (c *IconChain) Timeouts(ctx context.Context, height uint64) ([]ibc.PacketTimeout, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+// BuildRelayerWallet will return a chain-specific wallet populated with the mnemonic so that the wallet can
+// be restored in the relayer node using the mnemonic. After it is built, that address is included in
+// genesis with some funds.
+func (c *IconChain) BuildRelayerWallet(ctx context.Context, keyName string) (ibc.Wallet, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+func (c *IconChain) BuildWallet(ctx context.Context, keyName string, mnemonic string) (ibc.Wallet, error) {
 	panic("not implemented") // TODO: Implement
 }
 
