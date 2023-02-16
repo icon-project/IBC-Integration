@@ -11,3 +11,9 @@ pub struct CallServiceMessage {
     message_type: CallServiceMessageType,
     payload: Vec<u8>,
 }
+
+impl Decodable for CallServiceMessage {
+    fn decode(rlp: &common::rlp::Rlp) -> Result<Self, common::rlp::DecoderError> {
+        todo!()
+    }
+}
