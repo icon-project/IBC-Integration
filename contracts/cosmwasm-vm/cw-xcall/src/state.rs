@@ -1,8 +1,7 @@
-use cw_storage_plus::{Item, Map};
-
 use crate::types::{
     address::Address, request::CallServiceMessageRequest, stroage_keys::StorageKey,
 };
+use cw_storage_plus::{Item, Map};
 
 pub struct CwCallservice<'a> {
     last_sequence_no: Item<'a, u128>,
