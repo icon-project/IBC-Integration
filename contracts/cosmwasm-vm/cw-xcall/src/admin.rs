@@ -16,7 +16,7 @@ impl<'a> CwCallservice<'a> {
         admin: Address,
     ) -> Result<Response, ContractError> {
         let owner = self.owner().load(deps.storage)?;
-        if info.sender.to_string() == owner.to_string() {
+        if info.sender == owner.to_string() {
             self.admin().save(deps.storage, &admin)?;
             Ok(Response::new()
                 .add_attribute("method", "add_admin")
@@ -36,7 +36,7 @@ impl<'a> CwCallservice<'a> {
         self.admin().update(
             deps.storage,
             |mut current_admin| -> Result<_, ContractError> {
-                if info.sender.to_string() == owner.to_string() {
+                if info.sender == owner.to_string() {
                     if current_admin == new_admin {
                         Err(ContractError::OwnerAlreadyExist)
                     } else {
@@ -60,7 +60,7 @@ impl<'a> CwCallservice<'a> {
     ) -> Result<Response, ContractError> {
         let owner = self.owner().load(deps.storage)?;
 
-        if info.sender.to_string() == owner.to_string() {
+        if info.sender == owner.to_string() {
             self.admin().remove(deps.storage);
             Ok(Response::new().add_attribute("method", "remove_admin"))
         } else {

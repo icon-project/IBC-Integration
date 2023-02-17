@@ -26,15 +26,15 @@ impl<'a> CwCallservice<'a> {
         self.owner().update(
             deps.storage,
             |mut current_owner| -> Result<_, ContractError> {
-                if info.sender.to_string() == current_owner.to_string() {
+                if info.sender == current_owner.to_string() {
                     if current_owner == new_owner {
-                        return Err(ContractError::OwnerAlreadyExist);
+                        Err(ContractError::OwnerAlreadyExist)
                     } else {
                         current_owner = new_owner.clone();
-                        return Ok(current_owner);
+                        Ok(current_owner)
                     }
                 } else {
-                    return Err(ContractError::Unauthorized {});
+                    Err(ContractError::Unauthorized {})
                 }
             },
         )?;

@@ -12,7 +12,7 @@ impl<'a> CwCallservice<'a> {
     pub fn increment_last_sequence_no(&self, deps: DepsMut) -> Result<(), ContractError> {
         self.last_sequence_no()
             .update(deps.storage, |mut seq| -> Result<_, ContractError> {
-                seq = seq + 1;
+                seq += 1;
 
                 Ok(seq)
             })?;
@@ -36,7 +36,7 @@ impl<'a> CwCallservice<'a> {
     pub fn increment_last_request_id(&self, deps: DepsMut) -> Result<(), ContractError> {
         self.last_request_id()
             .update(deps.storage, |mut req_id| -> Result<_, ContractError> {
-                req_id = req_id + 1;
+                req_id += 1;
 
                 Ok(req_id)
             })?;
