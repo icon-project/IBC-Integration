@@ -43,7 +43,7 @@ impl<'a> CwCallservice<'a> {
             |mut current_admin| -> Result<_, ContractError> {
                 if info.sender == owner.to_string() {
                     if current_admin == new_admin {
-                        Err(ContractError::OwnerAlreadyExist)
+                        Err(ContractError::AdminAlreadyExist)
                     } else {
                         current_admin = new_admin.clone();
                         Ok(current_admin)
