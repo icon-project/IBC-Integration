@@ -1,7 +1,8 @@
 package ibc.icon.structs;
 
-// ClientState as defined by Tendermint Specifications
+import ibc.icon.structs.proto.core.client.Height;
 
+// ClientState as defined by Tendermint Specifications
 
 public class ClientState {
     public String chainId;
@@ -15,4 +16,3 @@ public class ClientState {
     public boolean allowUpdateAfterExpiry;
     public boolean allowUpdateAfterMisbehaviour;
 }
-

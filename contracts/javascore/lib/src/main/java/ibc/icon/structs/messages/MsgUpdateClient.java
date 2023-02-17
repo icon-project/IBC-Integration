@@ -1,4 +1,4 @@
-package ibc.icon.structs;
+package ibc.icon.structs.messages;
 
 public class MsgUpdateClient {
     public String clientId;

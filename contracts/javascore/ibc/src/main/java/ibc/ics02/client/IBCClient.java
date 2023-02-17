@@ -2,8 +2,8 @@ package ibc.ics02.client;
 
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.MsgCreateClient;
-import ibc.icon.structs.MsgUpdateClient;
+import ibc.icon.structs.messages.MsgCreateClient;
+import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.ics24.host.IBCStore;
 import java.math.BigInteger;
 import score.Address;
@@ -17,7 +17,8 @@ public class IBCClient {
 
     /**
      * Registers a client to registry
-     * @param clientType Type of client
+     *
+     * @param clientType  Type of client
      * @param lightClient Light client contract address
      */
     @External
@@ -59,6 +60,5 @@ public class IBCClient {
         store.nextClientSequence.set(currClientSequence.add(BigInteger.ONE));
         return identifier;
     }
-
 
 }
