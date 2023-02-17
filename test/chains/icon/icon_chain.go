@@ -285,3 +285,7 @@ func (c *IconChain) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, e
 func (c *IconChain) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
 	return c.getFullNode().DeployContract(ctx, scorePath, keystorePath, initMessage)
 }
+
+func (c *IconChain) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
+	return c.getFullNode().QueryContract(ctx, scoreAddress, methodName, params)
+}
