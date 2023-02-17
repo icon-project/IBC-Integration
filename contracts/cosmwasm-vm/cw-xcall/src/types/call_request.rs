@@ -1,6 +1,4 @@
 
-use common::rlp::{Encodable, self, RlpStream, Rlp, Decodable};
-use cosmwasm_schema::cw_serde;
 use serde::{Serialize, Deserialize};
 
 use super::address::{Address, self};
@@ -46,28 +44,5 @@ impl CallRequest{
     }
 
 
-}
-
-impl Encodable for CallRequest{
-    fn rlp_append(&self, s: &mut RlpStream) {
-        s.begin_list(4)
-        .append(&self.from)
-        .append(&self.to)
-        .append(&self.rollback)
-        .append(&self.enabled);
-
-    }
-}
-
-impl Decodable for CallRequest{
-
-fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError>{
-Ok(Self {
-    from: rlp.val_at::<Address>(0)?,
-    to: rlp.val_at::<String>(1)?,
-    rollback: rlp.val_at::<Vec<u8>>(2)?,
-    enabled: rlp.val_at::<bool>(3)?,
-})
-}
 }
 
