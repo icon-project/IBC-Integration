@@ -1,5 +1,4 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-
 use crate::types::request::CallServiceMessageRequest;
 
 #[cw_serde]
