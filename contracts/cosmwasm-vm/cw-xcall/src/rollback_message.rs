@@ -1,5 +1,3 @@
-use std::vec;
-
 use crate::msg::IbcExecuteMsg;
 use crate::types::request::CallServiceMessageRequest;
 use crate::ContractError;
@@ -38,12 +36,6 @@ impl RollbackMessage {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    ExecuteRollBack { sequence_no: i128 },
-}
-
 fn do_ibc_packet_receive(
     deps: DepsMut,
     _env: Env,
@@ -56,17 +48,14 @@ fn do_ibc_packet_receive(
             sequence_no,
             rollback,
             message,
-        } => rollbackexecuted(deps, sequence_no, rollback, message),
+        } => rollbackexecuted(message),
     }
 }
 
 fn rollbackexecuted(
-    deps: DepsMut,
-    sn: i128,
-    rollback: Vec<u8>,
     message: CallServiceMessageRequest,
 ) -> Result<IbcReceiveResponse, ContractError> {
-    let r = try_rollbackexecuted(message);
+    try_rollbackexecuted(message)?;
     Ok(IbcReceiveResponse::new().add_attribute("method", "execute_rollbackexecuted"))
 }
 

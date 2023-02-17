@@ -1,22 +1,16 @@
 use cw_xcall::{
-    msg,
     rollback_message::{try_rollbackexecuted, RollbackMessage},
     types::address::Address,
     types::request::CallServiceMessageRequest,
 };
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_rollbackmessage() {
-        let msg = RollbackMessage::new(123, vec![1, 2, 3], "message".to_owned());
-        let event = msg.rollbackmessage();
-        assert_eq!(event.ty, "rollbackmessage");
-        assert_eq!(event.attributes[0].key, "sn");
-        assert_eq!(event.attributes[0].value, "123");
-    }
+#[test]
+fn test_rollbackmessage() {
+    let msg = RollbackMessage::new(123, vec![1, 2, 3], "message".to_owned());
+    let event = msg.rollbackmessage();
+    assert_eq!(event.ty, "rollbackmessage");
+    assert_eq!(event.attributes[0].key, "sn");
+    assert_eq!(event.attributes[0].value, "123");
 }
 
 #[test]
