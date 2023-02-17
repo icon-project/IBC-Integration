@@ -10,7 +10,18 @@ impl<'a> CwCallservice<'a> {
     }
 
     pub fn add_owner(&self, deps: DepsMut, owner: Address) -> Result<Response, ContractError> {
-        self.owner().save(deps.storage, &owner)?;
+        match self.owner().may_load(deps.storage)? {
+            Some(address) => {
+                if address != owner {
+                    self.owner().save(deps.storage, &owner)?;
+                } else {
+                    return Err(ContractError::OwnerAlreadyExist);
+                }
+            }
+            None => {
+                self.owner().save(deps.storage, &owner)?;
+            }
+        };
 
         Ok(Response::new()
             .add_attribute("method", "add_owner")
