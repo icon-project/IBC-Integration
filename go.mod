@@ -11,7 +11,6 @@ require (
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/icon-project/icon-bridge v0.0.11
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
-	github.com/strangelove-ventures/ibctest v0.0.0-20220912210217-eb7f6a3b4e6a
 	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230208222759-0b3a8a07775d
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.23.0
@@ -55,7 +54,6 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.19.4 // indirect
-	github.com/cosmos/ibc-go/v5 v5.0.0-beta1 // indirect
 	github.com/cosmos/ibc-go/v6 v6.1.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
