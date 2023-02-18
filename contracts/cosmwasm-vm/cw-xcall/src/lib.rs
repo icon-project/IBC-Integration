@@ -9,13 +9,11 @@ pub mod owner;
 pub mod requests;
 pub mod state;
 pub mod types;
-
+use crate::error::ContractError;
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use state::CwCallservice;
-
-use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
