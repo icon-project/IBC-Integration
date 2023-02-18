@@ -1,7 +1,6 @@
 use super::*;
 
 #[cw_serde]
-#[derive(Hash, Eq)]
 pub struct Address(String);
 
 impl Address {
@@ -14,5 +13,9 @@ impl Address {
     }
     pub fn new(adr: String) -> Self {
         Address(adr)
+    }
+
+    pub fn to_string(&self) -> String {
+        self.0.clone()
     }
 }
