@@ -6,22 +6,22 @@ use cw_xcall::{
 };
 
 #[test]
-fn test_rollbackmessage() {
+fn test_rollback_message() {
     let msg = RollbackMessage::new(123, vec![1, 2, 3], "message".to_owned());
-    let event = msg.rollbackmessage();
-    let actual = Event::new("rollbackmessage").add_attribute("sequence_no", "123");
-    assert_eq!(event, actual)
+    let actual_event = msg.rollback_message();
+    let expected_event = Event::new("rollbackmessage").add_attribute("sequence_no", "123");
+    assert_eq!(actual_event, expected_event)
 }
 
 #[test]
-fn test_rollbackexecuted() {
+fn test_rollback_executed() {
     let msg = RollbackMessage::new(123, vec![1, 2, 3], "message".to_owned());
-    let event = msg.rollbackexecuted();
-    let actual = Event::new("rollbackexecuted")
+    let actual_event = msg.rollback_executed();
+    let expected_event = Event::new("rollbackexecuted")
         .add_attribute("sequence_no", "123")
         .add_attribute("rollback", String::from_utf8(vec![1, 2, 3]).unwrap())
         .add_attribute("message", "message");
-    assert_eq!(event, actual);
+    assert_eq!(actual_event, expected_event);
 }
 
 #[test]

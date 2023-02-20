@@ -1,5 +1,5 @@
-use cosmwasm_schema::{cw_serde, QueryResponses};
 use crate::types::request::CallServiceMessageRequest;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]
 pub struct InstantiateMsg {}

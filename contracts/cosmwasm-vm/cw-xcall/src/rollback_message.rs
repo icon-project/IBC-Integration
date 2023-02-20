@@ -21,7 +21,7 @@ impl RollbackMessage {
             message,
         }
     }
-    pub fn rollbackexecuted(&self) -> Event {
+    pub fn rollback_executed(&self) -> Event {
         Event::new("rollbackexecuted")
             .add_attribute("sequence_no", self.sequence_no.to_string())
             .add_attribute(
@@ -31,7 +31,7 @@ impl RollbackMessage {
             .add_attribute("message", self.message.clone())
     }
 
-    pub fn rollbackmessage(&self) -> Event {
+    pub fn rollback_message(&self) -> Event {
         Event::new("rollbackmessage").add_attribute("sequence_no", self.sequence_no.to_string())
     }
 }
@@ -48,11 +48,11 @@ fn do_ibc_packet_receive(
             sequence_no,
             rollback,
             message,
-        } => rollbackexecuted(message),
+        } => rollback_executed(message),
     }
 }
 
-fn rollbackexecuted(
+fn rollback_executed(
     message: CallServiceMessageRequest,
 ) -> Result<IbcReceiveResponse, ContractError> {
     try_rollbackexecuted(message)?;
