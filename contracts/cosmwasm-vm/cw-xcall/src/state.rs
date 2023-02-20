@@ -1,7 +1,8 @@
 use cw_storage_plus::{Item, Map};
 
 use crate::types::{
-    address::Address, request::CallServiceMessageRequest, stroage_keys::StorageKey,
+    address::Address, call_request::CallRequest, request::CallServiceMessageRequest,
+    stroage_keys::StorageKey,
 };
 
 pub struct CwCallservice<'a> {
@@ -10,6 +11,7 @@ pub struct CwCallservice<'a> {
     owner: Item<'a, Address>,
     admin: Item<'a, Address>,
     message_request: Map<'a, u128, CallServiceMessageRequest>,
+    requests: Map<'a, u128, CallRequest>,
 }
 
 impl<'a> Default for CwCallservice<'a> {
@@ -26,6 +28,7 @@ impl<'a> CwCallservice<'a> {
             owner: Item::new(StorageKey::Owner.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
             message_request: Map::new(StorageKey::MessageRequest.as_str()),
+            requests: Map::new(StorageKey::Requests.as_str()),
         }
     }
 
@@ -47,5 +50,9 @@ impl<'a> CwCallservice<'a> {
 
     pub fn message_request(&self) -> &Map<'a, u128, CallServiceMessageRequest> {
         &self.message_request
+    }
+
+    pub fn requests(&self) -> &Map<'a, u128, CallRequest> {
+        &self.requests
     }
 }
