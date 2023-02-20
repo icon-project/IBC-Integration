@@ -1,10 +1,28 @@
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::IbcEndpoint;
 use cw_storage_plus::{Item, Map};
 
 use crate::types::{
     address::Address, call_request::CallRequest, request::CallServiceMessageRequest,
     stroage_keys::StorageKey,
 };
+#[cw_serde]
+pub struct IbcConfig {
+    src: IbcEndpoint,
+    dst: IbcEndpoint,
+}
 
+impl IbcConfig {
+    pub fn new(src: IbcEndpoint, dst: IbcEndpoint) -> Self {
+        Self { src, dst }
+    }
+    pub fn src_endpoint(&self) -> &IbcEndpoint {
+        &self.src
+    }
+    pub fn dsr_endpoint(&self) -> &IbcEndpoint {
+        &self.dst
+    }
+}
 pub struct CwCallservice<'a> {
     last_sequence_no: Item<'a, u128>,
     last_request_id: Item<'a, u128>,
@@ -12,6 +30,7 @@ pub struct CwCallservice<'a> {
     admin: Item<'a, Address>,
     message_request: Map<'a, u128, CallServiceMessageRequest>,
     requests: Map<'a, u128, CallRequest>,
+    ibc_config: Item<'a, IbcConfig>,
 }
 
 impl<'a> Default for CwCallservice<'a> {
@@ -29,6 +48,7 @@ impl<'a> CwCallservice<'a> {
             admin: Item::new(StorageKey::Admin.as_str()),
             message_request: Map::new(StorageKey::MessageRequest.as_str()),
             requests: Map::new(StorageKey::Requests.as_str()),
+            ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
         }
     }
 
@@ -54,5 +74,9 @@ impl<'a> CwCallservice<'a> {
 
     pub fn requests(&self) -> &Map<'a, u128, CallRequest> {
         &self.requests
+    }
+
+    pub fn ibc_config(&self) -> &Item<'a, IbcConfig> {
+        &self.ibc_config
     }
 }
