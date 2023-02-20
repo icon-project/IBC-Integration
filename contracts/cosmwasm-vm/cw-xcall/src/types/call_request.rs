@@ -1,4 +1,4 @@
-use super::address::{self, Address};
+use super::address::Address;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -20,18 +20,18 @@ impl CallRequest {
     }
 
     pub fn from(&self) -> &Address {
-        &self.from()
+        &self.from
     }
 
     pub fn to(&self) -> &String {
-        &self.to()
+        &self.to
     }
 
     pub fn rollback(&self) -> &Vec<u8> {
-        &self.rollback()
+        &self.rollback
     }
 
     pub fn enabled(&self) -> &bool {
-        &self.enabled()
+        &self.enabled
     }
 }
