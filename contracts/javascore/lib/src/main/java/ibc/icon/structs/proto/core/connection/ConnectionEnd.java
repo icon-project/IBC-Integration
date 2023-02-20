@@ -1,6 +1,13 @@
 package ibc.icon.structs.proto.core.connection;
 
 import java.math.BigInteger;
+import java.util.List;
+
+import score.ByteArrayObjectWriter;
+import score.Context;
+import score.ObjectReader;
+import score.ObjectWriter;
+import scorex.util.ArrayList;
 
 // ConnectionEnd defines a stateful object on a chain connected to another
 // separate one.
@@ -9,7 +16,7 @@ import java.math.BigInteger;
 public class ConnectionEnd {
     // State defines if a connection is in one of the following states:
     // INIT, TRYOPEN, OPEN or UNINITIALIZED.
-    enum State {
+    public enum State {
         STATE_UNINITIALIZED_UNSPECIFIED,
         // A connection end has just started the opening handshake.
         STATE_INIT,
@@ -37,6 +44,64 @@ public class ConnectionEnd {
     // packet-verification NOTE: delay period logic is only implemented by some
     // clients.
     public BigInteger delayPeriod;
+
+    public static void writeObject(ObjectWriter writer, ConnectionEnd obj) {
+        obj.writeObject(writer);
+    }
+
+    public static ConnectionEnd readObject(ObjectReader reader) {
+        ConnectionEnd obj = new ConnectionEnd();
+        reader.beginList();
+        obj.clientId = reader.readString();
+
+        reader.beginList();
+        Version[] versions = null;
+        List<Version> versionsList = new ArrayList<>();
+        while (reader.hasNext()) {
+            byte[] versionElementBytes = reader.readNullable(byte[].class);
+            if (versionElementBytes != null) {
+                ObjectReader versionElementReader = Context.newByteArrayObjectReader("RLPn", versionElementBytes);
+                versionsList.add(versionElementReader.read(Version.class));
+            }
+        }
+
+        versions = new Version[versionsList.size()];
+        for (int i = 0; i < versionsList.size(); i++) {
+            versions[i] = (Version) versionsList.get(i);
+        }
+        obj.versions = versions;
+        reader.end();
+
+        obj.state = reader.readString();
+        obj.counterparty = reader.read(Counterparty.class);
+        obj.delayPeriod = reader.readBigInteger();
+        reader.end();
+        return obj;
+    }
+
+    public void writeObject(ObjectWriter writer) {
+        writer.beginList(5);
+        writer.write(this.clientId);
+
+        Version[] versions = this.getVersions();
+        if (versions != null) {
+            writer.beginNullableList(versions.length);
+            for (Version v : versions) {
+                ByteArrayObjectWriter vWriter = Context.newByteArrayObjectWriter("RLPn");
+                vWriter.write(v);
+                writer.write(vWriter.toByteArray());
+            }
+            writer.end();
+        } else {
+            writer.writeNull();
+        }
+
+        writer.write(this.state);
+        writer.write(this.counterparty);
+        writer.write(this.delayPeriod);
+
+        writer.end();
+    }
 
     public String getClientId() {
         return clientId;

@@ -1,10 +1,18 @@
 package ibc.icon.structs.proto.core.channel;
 
+import java.util.List;
+
+import score.ByteArrayObjectWriter;
+import score.Context;
+import score.ObjectReader;
+import score.ObjectWriter;
+import scorex.util.ArrayList;
+
 public class Channel {
 
     // State defines if a channel is in one of the following states:
     // CLOSED, INIT, TRYOPEN, OPEN or UNINITIALIZED.
-    enum State {
+    public enum State {
         // Default State
         STATE_UNINITIALIZED_UNSPECIFIED,
         // A channel has just started the opening handshake.
@@ -20,7 +28,7 @@ public class Channel {
     }
 
     // Order defines if a channel is ORDERED or UNORDERED
-    enum Order {
+    public enum Order {
         // zero-value for channel ordering
         ORDER_NONE_UNSPECIFIED,
         // packets can be delivered in any order, which may differ from the order in
@@ -28,50 +36,6 @@ public class Channel {
         ORDER_UNORDERED,
         // packets are delivered exactly in the order which they were sent
         ORDER_ORDERED,
-    }
-
-    // Counterparty defines a channel end counterparty
-    class Counterparty {
-        // port on the counterparty chain which owns the other end of the channel.
-        public String portId;
-        // channel end on the counterparty chain
-        public String channelId;
-
-        public String getPortId() {
-            return portId;
-        }
-
-        public void setPortId(String portId) {
-            this.portId = portId;
-        }
-
-        public String getChannelId() {
-            return channelId;
-        }
-
-        public void setChannelId(String channelId) {
-            this.channelId = channelId;
-        }
-    }
-
-    // IdentifiedChannel defines a channel with additional port and channel
-    // identifier fields.
-    class IdentifiedChannel {
-        // current state of the channel end
-        public State state;
-        // whether the channel is ordered or unordered
-        public Order ordering;
-        // counterparty channel end
-        public Counterparty counterparty;
-        // list of connection identifiers, in order, along which packets sent on
-        // this channel will travel
-        public String[] connectionHops;
-        // opaque channel version, which is agreed upon during the handshake
-        public String version;
-        // port identifier
-        public String portId;
-        // channel identifier
-        public String channelId;
     }
 
     // current state of the channel end
@@ -85,6 +49,71 @@ public class Channel {
     public String[] connectionHops;
     // opaque channel version, which is agreed upon during the handshake
     public String version;
+
+    public static void writeObject(ObjectWriter writer, Channel obj) {
+        obj.writeObject(writer);
+    }
+
+    public static Channel readObject(ObjectReader reader) {
+
+        Channel obj = new Channel();
+        reader.beginList();
+        obj.state = reader.readString();
+        obj.ordering = reader.readString();
+        Counterparty counterparty = new Counterparty();
+        counterparty.portId = reader.readString();
+        counterparty.channelId = reader.readString();
+        obj.counterparty = counterparty;
+
+        reader.beginList();
+        String[] connectionHops = null;
+        List<String> connectionHopsList = new ArrayList<>();
+        while (reader.hasNext()) {
+            byte[] connectionHopElementBytes = reader.readNullable(byte[].class);
+            if (connectionHopElementBytes != null) {
+                ObjectReader connectionHopElementReader = Context.newByteArrayObjectReader("RLPn",
+                        connectionHopElementBytes);
+                connectionHopsList.add(connectionHopElementReader.read(String.class));
+            }
+        }
+
+        connectionHops = new String[connectionHopsList.size()];
+        for (int i = 0; i < connectionHopsList.size(); i++) {
+            connectionHops[i] = (String) connectionHopsList.get(i);
+        }
+        obj.connectionHops = connectionHops;
+        reader.end();
+
+        obj.version = reader.readString();
+        reader.end();
+
+        return obj;
+    }
+
+    public void writeObject(ObjectWriter writer) {
+        writer.beginList(6);
+        writer.write(this.state);
+        writer.write(this.ordering);
+        writer.write(this.counterparty.portId);
+        writer.write(this.counterparty.channelId);
+
+        String[] connectionHops = this.connectionHops;
+        if (connectionHops != null) {
+            writer.beginNullableList(connectionHops.length);
+            for (String v : connectionHops) {
+                ByteArrayObjectWriter vWriter = Context.newByteArrayObjectWriter("RLPn");
+                vWriter.write(v);
+                writer.write(vWriter.toByteArray());
+            }
+            writer.end();
+        } else {
+            writer.writeNull();
+        }
+
+        writer.write(this.version);
+
+        writer.end();
+    }
 
     public State getState() {
         return State.valueOf(state);
