@@ -103,6 +103,17 @@ public class ConnectionEnd {
         writer.end();
     }
 
+    public static ConnectionEnd fromBytes(byte[] bytes) {
+        ObjectReader reader = Context.newByteArrayObjectReader("RLPn", bytes);
+        return ConnectionEnd.readObject(reader);
+    }
+
+    public byte[] toBytes() {
+        ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
+        ConnectionEnd.writeObject(writer, this);
+        return writer.toByteArray();
+    }
+
     public String getClientId() {
         return clientId;
     }

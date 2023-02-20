@@ -115,6 +115,17 @@ public class Channel {
         writer.end();
     }
 
+    public static Channel fromBytes(byte[] bytes) {
+        ObjectReader reader = Context.newByteArrayObjectReader("RLPn", bytes);
+        return Channel.readObject(reader);
+    }
+
+    public byte[] toBytes() {
+        ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
+        Channel.writeObject(writer, this);
+        return writer.toByteArray();
+    }
+
     public State getState() {
         return State.valueOf(state);
     }
