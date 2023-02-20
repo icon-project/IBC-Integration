@@ -3,6 +3,6 @@ include (
         'score-util',
         'lib',
         'ibc',
-        'xcall',
-        'lightclients:archway',
+        // 'xcall',
+        // 'lightclients:archway',
 )
