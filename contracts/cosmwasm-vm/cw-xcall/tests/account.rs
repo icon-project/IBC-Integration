@@ -1,17 +1,17 @@
 use cw_xcall::types::address::Address;
 
 pub fn alice() -> Address {
-    Address::from_str("alice")
+    Address::from("alice")
 }
 
 pub fn bob() -> Address {
-    Address::from_str("bob")
+    Address::from("bob")
 }
 
 pub fn admin_one() -> Address {
-    Address::from_str("adminone")
+    Address::from("adminone")
 }
 
 pub fn admin_two() -> Address {
-    Address::from_str("admintwo")
+    Address::from("admintwo")
 }

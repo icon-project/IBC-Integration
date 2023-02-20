@@ -29,7 +29,7 @@ fn add_admin() {
     contract
         .add_owner(
             mock_deps.as_mut(),
-            Address::from_str(&mock_info.sender.to_string()),
+            Address::from(&mock_info.sender.to_string()),
         )
         .unwrap();
 
@@ -54,7 +54,7 @@ fn update_admin_unauthorzied() {
     contract
         .add_owner(
             mock_deps.as_mut(),
-            Address::from_str(&mock_info.sender.to_string()),
+            Address::from(&mock_info.sender.to_string()),
         )
         .unwrap();
 
@@ -84,7 +84,7 @@ fn update_admin() {
     contract
         .add_owner(
             mock_deps.as_mut(),
-            Address::from_str(&mock_info.sender.to_string()),
+            Address::from(&mock_info.sender.to_string()),
         )
         .unwrap();
 
@@ -117,7 +117,7 @@ fn update_existing_admin() {
     contract
         .add_owner(
             mock_deps.as_mut(),
-            Address::from_str(&mock_info.sender.to_string()),
+            Address::from(&mock_info.sender.to_string()),
         )
         .unwrap();
 

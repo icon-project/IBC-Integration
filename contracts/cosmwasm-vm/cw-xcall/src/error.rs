@@ -1,5 +1,3 @@
-use std::fmt;
-
 use cosmwasm_std::StdError;
 use thiserror::Error;
 
@@ -18,16 +16,6 @@ pub enum ContractError {
     #[error("invalid IBC channel version. Got ({actual}), expected ({expected})")]
     InvalidVersion { actual: String, expected: String },
 
-    #[error("Admin Already Exist")]
-    AdminAlreadyExist,
-    #[error("Owner Already Exist")]
-    OwnerAlreadyExist,
-    #[error("Admin Not Exist")]
-    AdminNotExist,
-}
-
-#[derive(Error, Debug)]
-pub enum CallServiceError {
     #[error("Admin Already Exist")]
     AdminAlreadyExist,
     #[error("Owner Already Exist")]
