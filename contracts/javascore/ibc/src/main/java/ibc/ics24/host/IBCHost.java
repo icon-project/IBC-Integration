@@ -1,5 +1,5 @@
 package ibc.ics24.host;
 
-public class IBCHost {
+public class IBCHost extends IBCStore {
 
 }
