@@ -37,8 +37,8 @@ cw2 = "1.0.1"
 schemars = "0.8.10"
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
+common = { path="../../../libraries/rust/common" }
 
 [dev-dependencies]
 cosmwasm = "0.7.2"
 cw-multi-test = "0.16.2"
-common = { path="../../../libraries/rust/common" }

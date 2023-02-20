@@ -39,8 +39,3 @@ impl CallServiceMessageReponse {
         &self.message
     }
 }
-
-mod test {
-    #[test]
-    fn test_add() {}
-}
