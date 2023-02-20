@@ -55,11 +55,11 @@ fn do_ibc_packet_receive(
 fn rollback_executed(
     message: CallServiceMessageRequest,
 ) -> Result<IbcReceiveResponse, ContractError> {
-    try_rollbackexecuted(message)?;
+    try_rollback_executed(message)?;
     Ok(IbcReceiveResponse::new().add_attribute("method", "execute_rollbackexecuted"))
 }
 
-pub fn try_rollbackexecuted(message: CallServiceMessageRequest) -> Result<Vec<u8>, ContractError> {
+pub fn try_rollback_executed(message: CallServiceMessageRequest) -> Result<Vec<u8>, ContractError> {
     match message.rollback().is_empty() {
         true => Err(ContractError::Unauthorized {}),
         false => return Ok(message.rollback().to_vec()),

@@ -1,6 +1,6 @@
 use cosmwasm_std::Event;
 use cw_xcall::{
-    rollback_message::{try_rollbackexecuted, RollbackMessage},
+    rollback_message::{try_rollback_executed, RollbackMessage},
     types::address::Address,
     types::request::CallServiceMessageRequest,
 };
@@ -33,7 +33,7 @@ fn test_contains_rollback() {
         vec![1, 2, 3],
         vec![4, 5, 6],
     );
-    let m = try_rollbackexecuted(msg);
+    let m = try_rollback_executed(msg);
     assert_eq!(m.unwrap(), vec![1, 2, 3]);
 }
 
@@ -46,6 +46,6 @@ fn test_not_contains_rollback() {
         vec![],
         vec![1, 2, 3],
     );
-    let n = try_rollbackexecuted(msg);
+    let n = try_rollback_executed(msg);
     assert!(n.is_err());
 }
