@@ -2,10 +2,9 @@ package ibc.icon.structs.messages;
 
 import java.math.BigInteger;
 
-import com.fasterxml.jackson.core.Version;
-
 import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.connection.Counterparty;
+import ibc.icon.structs.proto.core.connection.Version;
 
 public class MsgConnectionOpenTry {
     public String previousConnectionId;

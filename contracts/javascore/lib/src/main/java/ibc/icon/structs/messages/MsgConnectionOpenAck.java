@@ -1,8 +1,8 @@
 package ibc.icon.structs.messages;
 
-import com.fasterxml.jackson.core.Version;
 
 import ibc.icon.structs.proto.core.client.Height;
+import ibc.icon.structs.proto.core.connection.Version;
 
 public class MsgConnectionOpenAck {
     public String connectionId;
