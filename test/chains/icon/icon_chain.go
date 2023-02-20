@@ -204,8 +204,8 @@ func (c *IconChain) HomeDir() string {
 }
 
 // CreateKey creates a test key in the "user" node (either the first fullnode or the first validator if no fullnodes).
-func (c *IconChain) CreateKey(ctx context.Context, keyName string) error {
-	panic("not implemented") // TODO: Implement
+func (c *IconChain) CreateKey(ctx context.Context, password string) error {
+	return c.getFullNode().CreateKey(ctx, password)
 }
 
 // RecoverKey recovers an existing user from a given mnemonic.

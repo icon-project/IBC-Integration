@@ -1,34 +1,51 @@
-use cosmwasm_schema::cw_serde;
+use cw_storage_plus::{Item, Map};
 
-use cw_storage_plus::Item;
+use crate::types::{
+    address::Address, request::CallServiceMessageRequest, stroage_keys::StorageKey,
+};
 
-use crate::types::{address::Address, admins::Admins, owners::Owners, request::CSMessageRequests};
-#[cw_serde]
-pub struct CallService {
-    pub last_sequence_no: u128,
-    pub last_request_id: u128,
-    pub owners: Owners,
-    pub admins: Admins,
-    pub message_request: CSMessageRequests,
+pub struct CwCallservice<'a> {
+    last_sequence_no: Item<'a, u128>,
+    last_request_id: Item<'a, u128>,
+    owner: Item<'a, Address>,
+    admin: Item<'a, Address>,
+    message_request: Map<'a, u128, CallServiceMessageRequest>,
 }
 
-impl CallService {
-    pub fn new(sq_no: u128, req_id: u128, owner: Address, admin: Address) -> CallService {
-        let mut owners = Owners::default();
-        owners.add(owner);
-
-        let mut admins = Admins::default();
-        admins.add(admin);
-
-        CallService {
-            last_sequence_no: sq_no,
-            last_request_id: req_id,
-            owners,
-            admins,
-            message_request: CSMessageRequests::default(),
-            // message_request: HashMap::new(),
-        }
+impl<'a> Default for CwCallservice<'a> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-pub const CALLSERVICE: Item<CallService> = Item::new("call-service");
+impl<'a> CwCallservice<'a> {
+    pub fn new() -> Self {
+        Self {
+            last_sequence_no: Item::new(StorageKey::SequenceNo.as_str()),
+            last_request_id: Item::new(StorageKey::RequestNo.as_str()),
+            owner: Item::new(StorageKey::Owner.as_str()),
+            admin: Item::new(StorageKey::Admin.as_str()),
+            message_request: Map::new(StorageKey::MessageRequest.as_str()),
+        }
+    }
+
+    pub fn last_sequence_no(&self) -> &Item<'a, u128> {
+        &self.last_sequence_no
+    }
+
+    pub fn last_request_id(&self) -> &Item<'a, u128> {
+        &self.last_request_id
+    }
+
+    pub fn owner(&self) -> &Item<'a, Address> {
+        &self.owner
+    }
+
+    pub fn admin(&self) -> &Item<'a, Address> {
+        &self.admin
+    }
+
+    pub fn message_request(&self) -> &Map<'a, u128, CallServiceMessageRequest> {
+        &self.message_request
+    }
+}

@@ -2,6 +2,7 @@
 members = [
     "contracts/cosmwasm-vm/cw-icon-light-client",
     "contracts/cosmwasm-vm/cw-xcall",
+    "libraries/rust/common"
 ]
 
 [workspace.package]
