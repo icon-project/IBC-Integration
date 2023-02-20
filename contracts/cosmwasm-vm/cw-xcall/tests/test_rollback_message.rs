@@ -9,9 +9,7 @@ use cw_xcall::{
 fn test_rollbackmessage() {
     let msg = RollbackMessage::new(123, vec![1, 2, 3], "message".to_owned());
     let event = msg.rollbackmessage();
-    let actual = Event::new("rollbackmessage")
-        .add_attribute("sequence_no", "123")
-        .add_attribute("rollback", String::from_utf8(vec![1, 2, 3]).unwrap());
+    let actual = Event::new("rollbackmessage").add_attribute("sequence_no", "123");
     assert_eq!(event, actual)
 }
 
@@ -29,9 +27,7 @@ fn test_rollbackexecuted() {
 #[test]
 fn test_contains_rollback() {
     let msg = CallServiceMessageRequest::new(
-        Address::from_string(
-            "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        ),
+        Address::from_str("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
         vec![1, 2, 3],
@@ -44,9 +40,7 @@ fn test_contains_rollback() {
 #[test]
 fn test_not_contains_rollback() {
     let msg = CallServiceMessageRequest::new(
-        Address::from_string(
-            "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        ),
+        Address::from_str("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
         vec![],
