@@ -1,0 +1,272 @@
+package ibc.ics04.channel;
+
+import java.math.BigInteger;
+
+import ibc.icon.interfaces.IIBCChannelHandshake;
+import ibc.icon.interfaces.ILightClient;
+import ibc.icon.interfaces.ILightClientScoreInterface;
+import ibc.icon.structs.messages.MsgChannelCloseConfirm;
+import ibc.icon.structs.messages.MsgChannelCloseInit;
+import ibc.icon.structs.messages.MsgChannelOpenAck;
+import ibc.icon.structs.messages.MsgChannelOpenConfirm;
+import ibc.icon.structs.messages.MsgChannelOpenInit;
+import ibc.icon.structs.messages.MsgChannelOpenTry;
+import ibc.icon.structs.proto.core.channel.Channel;
+import ibc.icon.structs.proto.core.channel.Counterparty;
+import ibc.icon.structs.proto.core.client.Height;
+import ibc.icon.structs.proto.core.connection.ConnectionEnd;
+import ibc.ics24.host.IBCStore;
+import score.Context;
+
+public class IBCChannelHandshake implements IIBCChannelHandshake {
+
+    public String channelOpenInit(MsgChannelOpenInit msg) {
+        Context.require(msg.channel.connectionHops.length == 1, "connection_hops length must be 1");
+
+        ConnectionEnd connection = IBCStore.connections.get(msg.channel.connectionHops[0]);
+        Context.require(connection != null, "connection does not exist");
+        Context.require(
+                connection.versions.length == 1,
+                "single version must be negotiated on connection before opening channel");
+
+        Context.require(msg.channel.getState().equals(Channel.State.STATE_INIT), "channel state must STATE_INIT");
+
+        // TODO: verifySupportedFeature
+        // TODO: authenticates a port binding
+
+        String channelId = generateChannelIdentifier();
+        IBCStore.channels.at(msg.portId).set(channelId, msg.channel);
+        IBCStore.nextSequenceSends.at(msg.portId).set(channelId, BigInteger.ONE);
+        IBCStore.nextSequenceRecvs.at(msg.portId).set(channelId, BigInteger.ONE);
+        IBCStore.nextSequenceAcks.at(msg.portId).set(channelId, BigInteger.ONE);
+
+        updateChannelCommitment(msg.portId, channelId);
+
+        return channelId;
+    }
+
+    public String channelOpenTry(MsgChannelOpenTry msg) {
+        Context.require(msg.channel.getConnectionHops().length == 1, "connection_hops length must be 1");
+        ConnectionEnd connection = IBCStore.connections.get(msg.channel.getConnectionHops()[0]);
+        Context.require(connection != null, "connection does not exist");
+        Context.require(
+                connection.versions.length == 1,
+                "single version must be negotiated on connection before opening channel");
+        Context.require(msg.channel.getState().equals(Channel.State.STATE_TRYOPEN),
+                "channel state must be STATE_TRYOPEN");
+        Context.require(msg.channel.getConnectionHops().length == 1);
+
+        // TODO verifySupportedFeature
+
+        // TODO authenticates a port binding
+
+        Counterparty expectedCounterparty = new Counterparty();
+        expectedCounterparty.setPortId(msg.portId);
+        expectedCounterparty.setChannelId("");
+
+        Channel expectedChannel = new Channel();
+        expectedChannel.setState(Channel.State.STATE_INIT);
+        expectedChannel.setOrdering(msg.channel.getOrdering());
+        expectedChannel.setCounterparty(expectedCounterparty);
+        expectedChannel.setConnectionHops(getCounterpartyHops(msg.channel.getConnectionHops()[0]));
+        expectedChannel.setVersion(msg.counterpartyVersion);
+        boolean channelStateVerification = verifyChannelState(
+                connection,
+                msg.proofHeight,
+                msg.proofInit,
+                msg.channel.getCounterparty().getPortId(),
+                msg.channel.getCounterparty().getChannelId(),
+                expectedChannel);
+        Context.require(channelStateVerification, "failed to verify channel state");
+
+        String channelId = generateChannelIdentifier();
+        IBCStore.channels.at(msg.portId).set(channelId, msg.channel);
+        IBCStore.nextSequenceSends.at(msg.portId).set(channelId, BigInteger.ONE);
+        IBCStore.nextSequenceRecvs.at(msg.portId).set(channelId, BigInteger.ONE);
+        IBCStore.nextSequenceAcks.at(msg.portId).set(channelId, BigInteger.ONE);
+
+        updateChannelCommitment(msg.portId, channelId);
+
+        return channelId;
+    }
+
+    public void channelOpenAck(MsgChannelOpenAck msg) {
+        Channel channel = IBCStore.channels.at(msg.portId).get(msg.channelId);
+        Context.require(channel != null, "channel does not exist");
+        Context.require(channel.getConnectionHops().length == 1);
+        Context.require(
+                channel.getState().equals(Channel.State.STATE_INIT)
+                        || channel.getState().equals(Channel.State.STATE_TRYOPEN),
+                "invalid channel state");
+
+        // TODO authenticates a port binding
+
+        ConnectionEnd connection = IBCStore.connections.get(channel.getConnectionHops()[0]);
+        Context.require(connection != null, "connection does not exist");
+        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+
+        Counterparty expectedCounterparty = new Counterparty();
+        expectedCounterparty.setPortId(msg.portId);
+        expectedCounterparty.setChannelId(msg.channelId);
+
+        Channel expectedChannel = new Channel();
+        expectedChannel.setState(Channel.State.STATE_TRYOPEN);
+        expectedChannel.setOrdering(channel.getOrdering());
+        expectedChannel.setCounterparty(expectedCounterparty);
+        expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
+        expectedChannel.setVersion(msg.counterpartyVersion);
+
+        boolean channelStateVerification = verifyChannelState(
+                connection,
+                msg.proofHeight,
+                msg.proofTry,
+                channel.getCounterparty().getPortId(),
+                msg.counterpartyChannelId,
+                expectedChannel);
+        Context.require(channelStateVerification, "failed to verify channel state");
+
+        channel.setState(Channel.State.STATE_OPEN);
+        channel.setVersion(msg.counterpartyVersion);
+        channel.getCounterparty().setChannelId(msg.counterpartyChannelId);
+        updateChannelCommitment(msg.portId, msg.channelId);
+
+        IBCStore.channels.at(msg.portId).set(msg.channelId, channel);
+    }
+
+    public void channelOpenConfirm(MsgChannelOpenConfirm msg) {
+        Channel channel = IBCStore.channels.at(msg.portId).get(msg.channelId);
+        Context.require(channel != null, "channel does not exist");
+        Context.require(channel.getConnectionHops().length == 1);
+        Context.require(channel.getState().equals(Channel.State.STATE_TRYOPEN), "channel state is not TRYOPEN");
+
+        // TODO authenticates a port binding
+
+        ConnectionEnd connection = IBCStore.connections.get(channel.getConnectionHops()[0]);
+        Context.require(connection != null, "connection does not exist");
+        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+
+        Counterparty expectedCounterparty = new Counterparty();
+        expectedCounterparty.setPortId(msg.portId);
+        expectedCounterparty.setChannelId(msg.channelId);
+
+        Channel expectedChannel = new Channel();
+        expectedChannel.setState(Channel.State.STATE_OPEN);
+        expectedChannel.setOrdering(channel.getOrdering());
+        expectedChannel.setCounterparty(expectedCounterparty);
+        expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
+        expectedChannel.setVersion(channel.getVersion());
+
+        boolean channelStateVerification = verifyChannelState(
+                connection,
+                msg.proofHeight,
+                msg.proofAck,
+                channel.getCounterparty().getPortId(),
+                channel.getCounterparty().getChannelId(),
+                expectedChannel);
+        Context.require(channelStateVerification, "failed to verify channel state");
+
+        channel.setState(Channel.State.STATE_OPEN);
+        updateChannelCommitment(msg.portId, msg.channelId);
+
+        IBCStore.channels.at(msg.portId).set(msg.channelId, channel);
+    }
+
+    public void channelCloseInit(MsgChannelCloseInit msg) {
+        Channel channel = IBCStore.channels.at(msg.portId).get(msg.channelId);
+        Context.require(channel != null, "channel does not exist");
+        Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
+
+        // TODO authenticates a port binding
+
+        ConnectionEnd connection = IBCStore.connections.get(channel.getConnectionHops()[0]);
+        Context.require(connection != null, "connection does not exist");
+        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+
+        channel.setState(Channel.State.STATE_CLOSED);
+        updateChannelCommitment(msg.portId, msg.channelId);
+
+        IBCStore.channels.at(msg.portId).set(msg.channelId, channel);
+    }
+
+    public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
+        Channel channel = IBCStore.channels.at(msg.portId).get(msg.channelId);
+        Context.require(channel != null, "channel does not exist");
+        Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
+        Context.require(channel.getConnectionHops().length == 1);
+
+        // TODO authenticates a port binding
+
+        ConnectionEnd connection = IBCStore.connections.get(channel.getConnectionHops()[0]);
+        Context.require(connection != null, "connection does not exist");
+        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+
+        Counterparty expectedCounterparty = new Counterparty();
+        expectedCounterparty.setPortId(msg.portId);
+        expectedCounterparty.setChannelId(msg.channelId);
+
+        Channel expectedChannel = new Channel();
+        expectedChannel.setState(Channel.State.STATE_CLOSED);
+        expectedChannel.setOrdering(channel.getOrdering());
+        expectedChannel.setCounterparty(expectedCounterparty);
+        expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
+        expectedChannel.setVersion(channel.getVersion());
+
+        boolean channelStateVerification = verifyChannelState(
+                connection,
+                msg.proofHeight,
+                msg.proofInit,
+                channel.getCounterparty().getPortId(),
+                channel.getCounterparty().getChannelId(),
+                expectedChannel);
+        Context.require(channelStateVerification, "failed to verify channel state");
+
+        channel.setState(Channel.State.STATE_CLOSED);
+        updateChannelCommitment(msg.portId, msg.channelId);
+
+        IBCStore.channels.at(msg.portId).set(msg.channelId, channel);
+    }
+
+    private void updateChannelCommitment(String portId, String channelId) {
+        // TODO IBC-HOST: wait for implementation
+        // commitments[IBCCommitment.channelCommitmentKey(portId, channelId)] =
+        // keccak256(Channel.encode(channels[portId][channelId]));
+    }
+
+    /* Verification functions */
+
+    private boolean verifyChannelState(
+            ConnectionEnd connection,
+            Height height,
+            byte[] proof,
+            String portId,
+            String channelId,
+            Channel channel) {
+        ILightClient client = new ILightClientScoreInterface(IBCStore.clientImpls.get(connection.getClientId()));
+        return client.verifyMembership(
+                connection.getClientId(),
+                height,
+                BigInteger.ZERO,
+                BigInteger.ZERO,
+                proof,
+                connection.getCounterparty().getPrefix().getKeyPrefix(),
+                new byte[0], // TODO:IBCCommitment.channelPath(portId, channelId),
+                channel.toBytes());
+
+    }
+
+    /* Internal functions */
+
+    private String[] getCounterpartyHops(String connectionId) {
+        String hop = IBCStore.connections.get(connectionId).getCounterparty().getConnectionId();
+        String[] hops = new String[] { hop };
+        return hops;
+    }
+
+    private String generateChannelIdentifier() {
+        BigInteger currChannelSequence = IBCStore.nextChannelSequence.getOrDefault(BigInteger.ZERO);
+        String identifier = "channel-" + currChannelSequence.toString();
+        IBCStore.nextChannelSequence.set(currChannelSequence.add(BigInteger.ONE));
+
+        return identifier;
+    }
+}
