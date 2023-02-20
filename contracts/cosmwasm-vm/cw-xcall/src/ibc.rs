@@ -7,6 +7,7 @@ use cosmwasm_std::{
 
 use crate::ack::make_ack_fail;
 use crate::msg::IbcExecuteMsg;
+use crate::state::{CwCallservice, IbcConfig};
 use crate::ContractError;
 
 pub const IBC_VERSION: &str = "xcall-1";
@@ -23,18 +24,22 @@ pub fn ibc_channel_open(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_channel_connect(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     msg: IbcChannelConnectMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
     validate_order_and_version(msg.channel(), msg.counterparty_version())?;
 
-    // Initialize the count for this channel to zero.
-    let channel = msg.channel().endpoint.channel_id.clone();
+    let soruce = msg.channel().endpoint.clone();
+    let destination = msg.channel().counterparty_endpoint.clone();
 
-    Ok(IbcBasicResponse::new()
-        .add_attribute("method", "ibc_channel_connect")
-        .add_attribute("channel_id", channel))
+    let ibc_config = IbcConfig::new(soruce, destination);
+
+    let mut call_service = CwCallservice::default();
+
+    call_service.save_config(deps, &ibc_config)?;
+
+    Ok(IbcBasicResponse::new().add_attribute("method", "ibc_channel_connect"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -142,4 +147,13 @@ pub fn ibc_packet_timeout(
     // respond to this likely as it means that the packet in question
     // isn't going anywhere.
     Ok(IbcBasicResponse::new().add_attribute("method", "ibc_packet_timeout"))
+}
+
+impl<'a> CwCallservice<'a> {
+    fn save_config(&mut self, deps: DepsMut, config: &IbcConfig) -> Result<(), ContractError> {
+        match self.ibc_config().save(deps.storage, config) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(ContractError::Std(err)),
+        }
+    }
 }
