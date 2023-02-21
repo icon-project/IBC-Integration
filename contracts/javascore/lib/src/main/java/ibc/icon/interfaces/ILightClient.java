@@ -2,8 +2,6 @@ package ibc.icon.interfaces;
 
 import java.math.BigInteger;
 
-import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.StringKeySerializer;
-
 import foundation.icon.score.client.ScoreInterface;
 import ibc.icon.structs.messages.UpdateClientResponse;
 import ibc.icon.structs.proto.core.client.Height;
@@ -56,7 +54,7 @@ public interface ILightClient {
      *      The caller is expected to construct the full CommitmentPath from a
      *      CommitmentPrefix and a standardized path (as defined in ICS 24).
      */
-    public boolean verifyMembership(
+    public Boolean verifyMembership(
             String clientId,
             Height height,
             BigInteger delayTimePeriod,
@@ -72,7 +70,7 @@ public interface ILightClient {
      *      The caller is expected to construct the full CommitmentPath from a
      *      CommitmentPrefix and a standardized path (as defined in ICS 24).
      */
-    public boolean verifyNonMembership(
+    public Boolean verifyNonMembership(
             String clientId,
             Height height,
             BigInteger delayTimePeriod,
