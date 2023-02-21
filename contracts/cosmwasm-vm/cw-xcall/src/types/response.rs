@@ -38,4 +38,11 @@ impl CallServiceMessageReponse {
     pub fn message(&self) -> &[u8] {
         &self.message
     }
+
+}
+
+impl Default for CallServiceMessageReponse{
+    fn default() -> Self {
+      Self :: new(123, CallServiceResponseType::CallServiceResponseSucess,vec[1])
+}
 }
