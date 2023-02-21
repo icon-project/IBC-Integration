@@ -2,6 +2,7 @@ package icon
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -215,7 +216,11 @@ func (c *IconChain) RecoverKey(ctx context.Context, name string, mnemonic string
 
 // GetAddress fetches the bech32 address for a test key on the "user" node (either the first fullnode or the first validator if no fullnodes).
 func (c *IconChain) GetAddress(ctx context.Context, keyName string) ([]byte, error) {
-	panic("not implemented") // TODO: Implement
+	addrInByte, err := json.Marshal(keyName)
+	if err != nil {
+		return nil, err
+	}
+	return addrInByte, nil
 }
 
 // SendFunds sends funds to a wallet from a user account.
@@ -259,11 +264,20 @@ func (c *IconChain) Timeouts(ctx context.Context, height uint64) ([]ibc.PacketTi
 // be restored in the relayer node using the mnemonic. After it is built, that address is included in
 // genesis with some funds.
 func (c *IconChain) BuildRelayerWallet(ctx context.Context, keyName string) (ibc.Wallet, error) {
-	panic("not implemented") // TODO: Implement
+	return c.BuildWallet(ctx, keyName, "")
 }
 
 func (c *IconChain) BuildWallet(ctx context.Context, keyName string, mnemonic string) (ibc.Wallet, error) {
-	panic("not implemented") // TODO: Implement
+	if err := c.CreateKey(ctx, keyName); err != nil {
+		return nil, fmt.Errorf("failed to create key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
+	}
+	addr := c.getFullNode().Address
+	addrBytes, err := c.GetAddress(ctx, addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account address for key %q on chain %s: %w", keyName, c.cfg.Name, err)
+	}
+
+	return NewWallet(keyName, addrBytes, mnemonic, c.cfg), nil
 }
 
 func (c *IconChain) getFullNode() *IconNode {
