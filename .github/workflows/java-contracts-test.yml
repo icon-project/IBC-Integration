@@ -22,4 +22,4 @@ jobs:
           submodules: true
 
       - name: Run unit tests
-        run: cd contracts/javascore && ./gradlew clean build optimizedJar
+        run: cd contracts/javascore && ./gradlew clean build  && ./gradlew optimizedJar
