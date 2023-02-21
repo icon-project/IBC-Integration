@@ -23,7 +23,7 @@ public abstract class IBCStore {
 
     // DB Variables
     // Commitments
-    public final DictDB<Byte[], Byte[]> commitments = Context.newDictDB(COMMITMENTS, Byte[].class);
+    public final DictDB<byte[], byte[]> commitments = Context.newDictDB(COMMITMENTS, byte[].class);
 
     // Store
     // clientType => clientImpl
@@ -42,7 +42,7 @@ public abstract class IBCStore {
             Context.newBranchDB(NEXT_SEQUENCE_ACKNOWLEDGEMENTS, BigInteger.class);
     public final BranchDB<String, BranchDB<String, DictDB<BigInteger, BigInteger>>> packetReceipts =
             Context.newBranchDB(PACKET_RECEIPTS, BigInteger.class);
-    public final BranchDB<Byte[], ArrayDB<Address>> capabilities = Context.newBranchDB(CAPABILITIES, Address.class);
+    public final BranchDB<byte[], ArrayDB<Address>> capabilities = Context.newBranchDB(CAPABILITIES, Address.class);
 
     // Host Parameters
     public final VarDB<BigInteger> expectedTimePerBlock = Context.newVarDB(EXPECTED_TIME_PER_BLOCK, BigInteger.class);
