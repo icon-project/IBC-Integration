@@ -8,19 +8,30 @@ use crate::types::{
 };
 #[cw_serde]
 pub struct IbcConfig {
+    sequence: u128,
     src: IbcEndpoint,
     dst: IbcEndpoint,
 }
 
 impl IbcConfig {
     pub fn new(src: IbcEndpoint, dst: IbcEndpoint) -> Self {
-        Self { src, dst }
+        Self {
+            src,
+            dst,
+            sequence: 0,
+        }
     }
     pub fn src_endpoint(&self) -> &IbcEndpoint {
         &self.src
     }
-    pub fn dsr_endpoint(&self) -> &IbcEndpoint {
+    pub fn dst_endpoint(&self) -> &IbcEndpoint {
         &self.dst
+    }
+    pub fn sequence(&self) -> u128 {
+        self.sequence
+    }
+    pub fn next_sequence(&self) -> Option<u128> {
+        self.sequence.checked_add(1)
     }
 }
 pub struct CwCallservice<'a> {

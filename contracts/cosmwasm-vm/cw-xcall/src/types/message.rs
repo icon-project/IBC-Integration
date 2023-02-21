@@ -11,3 +11,12 @@ pub struct CallServiceMessage {
     message_type: CallServiceMessageType,
     payload: Vec<u8>,
 }
+
+impl CallServiceMessage {
+    pub fn new(message_type: CallServiceMessageType, payload: Vec<u8>) -> Self {
+        Self {
+            message_type,
+            payload,
+        }
+    }
+}
