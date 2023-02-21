@@ -80,19 +80,19 @@ public class StringUtil {
         if (hexString.length() % 2 > 0) {
             throw new IllegalArgumentException("hex cannot has odd length");
         }
-        int l = hexString.length()/2;
+        int l = hexString.length() / 2;
         int j = 0;
         byte[] bytes = new byte[l];
         for (int i = 0; i < l; i++) {
-            bytes[i] = (byte)((Character.digit(hexString.charAt(j++), 16) << 4) |
+            bytes[i] = (byte) ((Character.digit(hexString.charAt(j++), 16) << 4) |
                     Character.digit(hexString.charAt(j++), 16) & 0xFF);
         }
         return bytes;
     }
 
     public static boolean isAlphaNumeric(String str) {
-        for(char c : str.toCharArray()) {
-            if(!Character.isLetterOrDigit(c)) {
+        for (char c : str.toCharArray()) {
+            if (!Character.isLetterOrDigit(c)) {
                 return false;
             }
         }
@@ -123,7 +123,7 @@ public class StringUtil {
             if (arr.length > 0) {
                 sb.append(toString(arr[0]));
             }
-            for(int i=1;i < arr.length;i++) {
+            for (int i = 1; i < arr.length; i++) {
                 sb.append(",").append(toString(arr[i]));
             }
             return sb.append("]").toString();
@@ -138,7 +138,7 @@ public class StringUtil {
             if (arr.length > 0) {
                 sb.append(toString(arr[0]));
             }
-            for(int i=1;i < arr.length;i++) {
+            for (int i = 1; i < arr.length; i++) {
                 sb.append(",").append(toString(arr[i]));
             }
             return sb.append("]").toString();
