@@ -8,6 +8,7 @@ pub mod msg;
 pub mod owner;
 pub mod requests;
 pub mod rollback_message;
+pub mod handle_callmessage;
 pub mod state;
 pub mod types;
 use crate::error::ContractError;
