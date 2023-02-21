@@ -2,8 +2,6 @@ package ibc.icon.interfaces;
 
 import java.math.BigInteger;
 
-import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.StringKeySerializer;
-
 import foundation.icon.score.client.ScoreInterface;
 import ibc.icon.structs.messages.UpdateClientResponse;
 import ibc.icon.structs.proto.core.client.Height;
