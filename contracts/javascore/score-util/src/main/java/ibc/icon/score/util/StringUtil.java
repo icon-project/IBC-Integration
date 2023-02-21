@@ -144,4 +144,12 @@ public class StringUtil {
             return sb.append("]").toString();
         }
     }
+
+    public static byte[] encodePacked(Object... params) {
+        StringBuilder result = new StringBuilder();
+        for (Object param : params) {
+            result.append(param.toString());
+        }
+        return result.toString().getBytes();
+    }
 }
