@@ -1,13 +1,16 @@
 use super::*;
 
 #[cw_serde]
+#[derive(Default)]
 pub enum CallServiceResponseType {
     CallServiceIbcError = -2,
     CallServiceResponseFailure,
+    #[default]
     CallServiceResponseSucess,
 }
 
 #[cw_serde]
+#[derive(Default)]
 pub struct CallServiceMessageReponse {
     sequence_no: u128,
     response_code: CallServiceResponseType,
@@ -39,10 +42,15 @@ impl CallServiceMessageReponse {
         &self.message
     }
 
+    pub fn set_fields(&mut self, sequence_no: u128,response_code: CallServiceResponseType,message: Vec<u8>){
+
+        self.sequence_no.clone_from(&sequence_no);
+        self.response_code = response_code;
+        self.message = message
+    }
+
+
+
 }
 
-impl Default for CallServiceMessageReponse{
-    fn default() -> Self {
-      Self :: new(123, CallServiceResponseType::CallServiceResponseSucess,vec[1])
-}
-}
+
