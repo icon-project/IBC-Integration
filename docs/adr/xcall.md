@@ -70,7 +70,8 @@ type PacketData struct {
 ```
 
 ### Flow Diagram
-![ICON xCall Design (1).png](..%2F..%2F..%2F..%2F..%2FDownloads%2FICON%20xCall%20Design%20%281%29.png)
+![ICON xCall Design (1)](https://user-images.githubusercontent.com/25897013/220556832-4fe50011-a80f-417a-ad3e-bc4ada234413.png)
+
 
 
 ### Events
