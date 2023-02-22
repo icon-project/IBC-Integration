@@ -16,7 +16,6 @@ import ibc.icon.structs.proto.core.commitment.MerklePrefix;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.icon.structs.proto.core.connection.Counterparty;
 import ibc.icon.structs.proto.core.connection.Version;
-import ibc.ics24.host.IBCStore;
 import ibc.ics02.client.IBCClient;
 import score.Address;
 import score.Context;
