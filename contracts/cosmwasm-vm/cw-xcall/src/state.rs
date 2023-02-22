@@ -6,6 +6,10 @@ use crate::types::{
     address::Address, call_request::CallRequest, request::CallServiceMessageRequest,
     stroage_keys::StorageKey,
 };
+
+pub const MAX_DATA_SIZE: u64 = 2048;
+pub const MAX_ROLLBACK_SIZE: u64 = 1024;
+
 #[cw_serde]
 pub struct IbcConfig {
     sequence: u128,

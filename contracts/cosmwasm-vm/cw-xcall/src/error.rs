@@ -22,4 +22,10 @@ pub enum ContractError {
     OwnerAlreadyExist,
     #[error("Admin Not Exist")]
     AdminNotExist,
+    #[error("RollbackNotPossible")]
+    RollbackNotPossible,
+    #[error("MaxDataSizeExceeded")]
+    MaxDataSizeExceeded,
+    #[error("MaxRollbackSizeExceeded")]
+    MaxRollbackSizeExceeded,
 }

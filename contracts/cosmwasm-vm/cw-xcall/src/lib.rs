@@ -1,5 +1,6 @@
 pub mod ack;
 pub mod admin;
+pub mod assertion;
 pub mod call_message;
 pub mod contract;
 mod error;
