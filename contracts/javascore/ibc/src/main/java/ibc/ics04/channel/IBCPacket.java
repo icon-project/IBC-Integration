@@ -11,13 +11,12 @@ import ibc.icon.structs.proto.core.channel.Channel;
 import ibc.icon.structs.proto.core.channel.Packet;
 import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
-import ibc.ics24.host.IBCStore;
 import score.Context;
 import score.DictDB;
 
-public class IBCPacket implements IIBCPacket {
+public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
     public void sendPacket(Packet packet) {
-        Channel channel = IBCStore.channels.at(packet.getSourcePort()).get(packet.getSourceChannel());
+        Channel channel = store.channels.at(packet.getSourcePort()).get(packet.getSourceChannel());
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
         Context.require(
                 packet.getDestinationPort().equals(channel.getCounterparty().getPortId()),
@@ -26,9 +25,9 @@ public class IBCPacket implements IIBCPacket {
                 packet.getDestinationChannel().equals(channel.getCounterparty().getChannelId()),
                 "packet destination channel doesn't match the counterparty's channel");
 
-        ConnectionEnd connection = IBCStore.connections.get(channel.getConnectionHops()[0]);
+        ConnectionEnd connection = store.connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
-        ILightClient client = new ILightClientScoreInterface(IBCStore.clientImpls.get(connection.getClientId()));
+        ILightClient client = new ILightClientScoreInterface(store.clientImpls.get(connection.getClientId()));
         Height latestHeight = client.getLatestHeight(connection.getClientId());
 
         Context.require(
@@ -41,13 +40,13 @@ public class IBCPacket implements IIBCPacket {
                         || latestTimestamp.compareTo(packet.getTimeoutTimestamp()) < 0,
                 "receiving chain block timestamp >= packet timeout timestamp");
 
-        BigInteger nextSequenceSend = IBCStore.nextSequenceSends.at(packet.getSourcePort())
+        BigInteger nextSequenceSend = store.nextSequenceSends.at(packet.getSourcePort())
                 .getOrDefault(packet.getSourceChannel(), BigInteger.ZERO);
         Context.require(
                 packet.getSequence().equals(nextSequenceSend),
                 "packet sequence != next send sequence");
 
-        IBCStore.nextSequenceSends.at(packet.getSourcePort())
+        store.nextSequenceSends.at(packet.getSourcePort())
                 .set(packet.getSourceChannel(), nextSequenceSend.add(BigInteger.ONE));
 
         // TODO: IBC-Store
@@ -64,7 +63,7 @@ public class IBCPacket implements IIBCPacket {
     }
 
     public void recvPacket(MsgPacketRecv msg) {
-        Channel channel = IBCStore.channels.at(msg.packet.getSourcePort()).get(msg.packet.getSourceChannel());
+        Channel channel = store.channels.at(msg.packet.getSourcePort()).get(msg.packet.getSourceChannel());
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
 
         // TODO
@@ -78,7 +77,7 @@ public class IBCPacket implements IIBCPacket {
                 msg.packet.getDestinationChannel().equals(channel.getCounterparty().getChannelId()),
                 "packet destination channel doesn't match the counterparty's channel");
 
-        ConnectionEnd connection = IBCStore.connections.get(channel.getConnectionHops()[0]);
+        ConnectionEnd connection = store.connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
 
@@ -101,29 +100,27 @@ public class IBCPacket implements IIBCPacket {
         // msg.packet.timeout_height.revision_number,
         // msg.packet.timeout_height.revision_height,
         // sha256(msg.packet.data)))),
-        Context.require(
-                verifyPacketCommitment(
-                        connection,
-                        msg.proofHeight,
-                        msg.proof,
-                        commitmentPath,
-                        commitmentBytes),
-                "failed to verify packet commitment");
+        verifyPacketCommitment(
+                connection,
+                msg.proofHeight,
+                msg.proof,
+                commitmentPath,
+                commitmentBytes);
 
         if (channel.getOrdering().equals(Channel.Order.ORDER_UNORDERED)) {
-            DictDB<BigInteger, BigInteger> packetReceipt = IBCStore.packetReceipts.at(msg.packet.getDestinationPort())
+            DictDB<BigInteger, BigInteger> packetReceipt = store.packetReceipts.at(msg.packet.getDestinationPort())
                     .at(msg.packet.getDestinationChannel());
             Context.require(
                     packetReceipt.get(msg.packet.getSequence()) == null,
                     "packet sequence already has been received");
             packetReceipt.set(msg.packet.getSequence(), BigInteger.ONE);
         } else if (channel.getOrdering().equals(Channel.Order.ORDER_ORDERED)) {
-            BigInteger nextSequenceRecv = IBCStore.nextSequenceRecvs.at(msg.packet.getDestinationPort())
+            BigInteger nextSequenceRecv = store.nextSequenceRecvs.at(msg.packet.getDestinationPort())
                     .getOrDefault(msg.packet.getDestinationChannel(), BigInteger.ZERO);
             Context.require(
                     nextSequenceRecv.equals(msg.packet.sequence),
                     "packet sequence != next receive sequence");
-            IBCStore.nextSequenceRecvs.at(msg.packet.getDestinationPort()).set(msg.packet.getDestinationChannel(),
+            store.nextSequenceRecvs.at(msg.packet.getDestinationPort()).set(msg.packet.getDestinationChannel(),
                     nextSequenceRecv.add(BigInteger.ONE));
         } else {
             Context.revert("unknown ordering type");
@@ -134,7 +131,7 @@ public class IBCPacket implements IIBCPacket {
             byte[] acknowledgement) {
         Context.require(acknowledgement.length > 0, "acknowledgement cannot be empty");
 
-        Channel channel = IBCStore.channels.at(destinationPortId).get(destinationChannel);
+        Channel channel = store.channels.at(destinationPortId).get(destinationChannel);
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
 
         // bytes32 ackCommitmentKey =
@@ -149,7 +146,7 @@ public class IBCPacket implements IIBCPacket {
     }
 
     public void acknowledgePacket(MsgPacketAcknowledgement msg) {
-        Channel channel = IBCStore.channels.at(msg.packet.getSourcePort()).get(msg.packet.getSourceChannel());
+        Channel channel = store.channels.at(msg.packet.getSourcePort()).get(msg.packet.getSourceChannel());
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
 
         Context.require(
@@ -159,7 +156,7 @@ public class IBCPacket implements IIBCPacket {
                 msg.packet.getDestinationChannel().equals(channel.getCounterparty().getChannelId()),
                 "packet destination channel doesn't match the counterparty's channel");
 
-        ConnectionEnd connection = IBCStore.connections.get(channel.getConnectionHops()[0]);
+        ConnectionEnd connection = store.connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
 
@@ -186,27 +183,22 @@ public class IBCPacket implements IIBCPacket {
         // "commitment byte[] are not equal"
         // );
 
-        // Context.require(
         // verifyPacketAcknowledgement(
         // connection,
         // msg.proofHeight,
         // msg.proof,
         // IBCCommitment.packetAcknowledgementCommitmentPath(
         // msg.packet.destination_port, msg.packet.destination_channel,
-        // msg.packet.sequence
-        // ),
-        // sha256(msg.acknowledgement)
-        // ),
-        // "failed to verify packet acknowledgement commitment"
-        // );
+        // msg.packet.sequence),
+        // sha256(msg.acknowledgement))
 
         if (channel.getOrdering().equals(Channel.Order.ORDER_ORDERED)) {
-            BigInteger nextSequenceAck = IBCStore.nextSequenceAcks.at(msg.packet.getSourcePort())
+            BigInteger nextSequenceAck = store.nextSequenceAcks.at(msg.packet.getSourcePort())
                     .getOrDefault(msg.packet.getSourceChannel(), BigInteger.ZERO);
             Context.require(
                     nextSequenceAck.equals(msg.packet.sequence),
                     "packet sequence != next ack sequence");
-            IBCStore.nextSequenceAcks.at(msg.packet.getSourcePort()).set(msg.packet.getSourceChannel(),
+            store.nextSequenceAcks.at(msg.packet.getSourcePort()).set(msg.packet.getSourceChannel(),
                     nextSequenceAck.add(BigInteger.ONE));
         }
 
@@ -215,14 +207,14 @@ public class IBCPacket implements IIBCPacket {
 
     /* Verification functions */
 
-    private boolean verifyPacketCommitment(
+    private void verifyPacketCommitment(
             ConnectionEnd connection,
             Height height,
             byte[] proof,
             byte[] path,
             byte[] commitmentBytes) {
-        ILightClient client = new ILightClientScoreInterface(IBCStore.clientImpls.get(connection.getClientId()));
-        return client.verifyMembership(
+        ILightClient client = new ILightClientScoreInterface(store.clientImpls.get(connection.getClientId()));
+        boolean ok = client.verifyMembership(
                 connection.getClientId(),
                 height,
                 connection.getDelayPeriod(),
@@ -231,16 +223,17 @@ public class IBCPacket implements IIBCPacket {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path,
                 commitmentBytes);
+        Context.require(ok, "failed to verify packet commitment");
     }
 
-    private boolean verifyPacketAcknowledgement(
+    private void verifyPacketAcknowledgement(
             ConnectionEnd connection,
             Height height,
             byte[] proof,
             byte[] path,
             byte[] acknowledgementCommitmentBytes) {
-        ILightClient client = new ILightClientScoreInterface(IBCStore.clientImpls.get(connection.getClientId()));
-        return client.verifyMembership(
+        ILightClient client = new ILightClientScoreInterface(store.clientImpls.get(connection.getClientId()));
+        boolean ok = client.verifyMembership(
                 connection.getClientId(),
                 height,
                 connection.getDelayPeriod(),
@@ -249,6 +242,7 @@ public class IBCPacket implements IIBCPacket {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path,
                 acknowledgementCommitmentBytes);
+        Context.require(ok, "failed to verify packet acknowledgement commitment");
     }
 
     /* Internal functions */
