@@ -2,13 +2,13 @@ package ibc.icon.structs.messages;
 
 public class UpdateClientResponse {
     public UpdateClientResponse(byte[] clientStateCommitment,
-            ConsensusStateUpdate update, boolean ok) {
+            ConsensusStateUpdate[] updates, boolean ok) {
         this.clientStateCommitment = clientStateCommitment;
-        this.update = update;
+        this.updates = updates;
         this.ok = ok;
     }
 
     public byte[] clientStateCommitment;
-    public ConsensusStateUpdate update;
+    public ConsensusStateUpdate[] updates;
     public boolean ok;
 }

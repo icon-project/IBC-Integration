@@ -6,6 +6,8 @@ import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
 import ibc.icon.structs.proto.core.channel.Channel;
+import ibc.icon.structs.proto.core.channel.Packet;
+import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.commitment.MerklePrefix;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.icon.structs.proto.core.connection.Counterparty;
@@ -30,6 +32,7 @@ public class ProtoStorageTest extends TestBase {
 
         VarDB<ConnectionEnd> connectionEndDB = newVarDB("connectionEndDB", ConnectionEnd.class);
         VarDB<Channel> channelDB = newVarDB("channelDB", Channel.class);
+        VarDB<Packet> packetDB = newVarDB("packetDB", Packet.class);
 
         public DummyScore() {
         }
@@ -48,6 +51,14 @@ public class ProtoStorageTest extends TestBase {
 
         public Channel getChannel() {
             return channelDB.get();
+        }
+
+        public void setPacket(Packet packet) {
+            packetDB.set(packet);
+        }
+
+        public Packet getPacketChannel() {
+            return packetDB.get();
         }
     }
 
@@ -132,5 +143,41 @@ public class ProtoStorageTest extends TestBase {
         assertEquals(channel.getCounterparty().getPortId(), storedChannel.getCounterparty().getPortId());
         assertArrayEquals(channel.getConnectionHops(), storedChannel.getConnectionHops());
         assertEquals(channel.getVersion(), storedChannel.getVersion());
+    }
+
+    @Test
+    public void storePacket() {
+        // Arrange
+        Packet packet = new Packet();
+        packet.setSequence(BigInteger.ONE);
+        packet.setSourcePort("sourcePort");
+        packet.setSourceChannel("sourceChannel");
+        packet.setDestinationPort("destinationPort");
+        packet.setDestinationChannel("destinationChannel");
+        packet.setData("data");
+
+        Height timeoutHeight = new Height();
+        timeoutHeight.setRevisionNumber(BigInteger.valueOf(2));
+        timeoutHeight.setRevisionHeight(BigInteger.valueOf(3));
+
+        packet.setTimeoutHeight(timeoutHeight);
+        packet.setTimeoutTimestamp(BigInteger.valueOf(3));
+        // Act
+        dummyScore.invoke(owner, "setPacket", packet);
+
+        // Assert
+        Packet storedPacket = (Packet) dummyScore.call("getPacket");
+
+        assertEquals(packet.getSequence(), storedPacket.getSequence());
+        assertEquals(packet.getSourcePort(), storedPacket.getSourcePort());
+        assertEquals(packet.getSourceChannel(), storedPacket.getSourceChannel());
+        assertEquals(packet.getDestinationPort(), storedPacket.getDestinationPort());
+        assertEquals(packet.getDestinationChannel(), storedPacket.getDestinationChannel());
+        assertEquals(packet.getData(), storedPacket.getData());
+        assertEquals(packet.getTimeoutHeight().getRevisionNumber(),
+                storedPacket.getTimeoutHeight().getRevisionNumber());
+        assertEquals(packet.getTimeoutHeight().getRevisionHeight(),
+                storedPacket.getTimeoutHeight().getRevisionHeight());
+        assertEquals(packet.getTimeoutTimestamp(), storedPacket.getTimeoutTimestamp());
     }
 }

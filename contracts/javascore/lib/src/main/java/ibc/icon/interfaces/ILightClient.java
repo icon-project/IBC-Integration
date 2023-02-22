@@ -3,6 +3,7 @@ package ibc.icon.interfaces;
 import java.math.BigInteger;
 
 import foundation.icon.score.client.ScoreInterface;
+import ibc.icon.structs.messages.CreateClientResponse;
 import ibc.icon.structs.messages.UpdateClientResponse;
 import ibc.icon.structs.proto.core.client.Height;
 
@@ -18,7 +19,7 @@ public interface ILightClient {
      * @dev createClient creates a new client with the given state.
      *      If succeeded, it returns a commitment for the initial state.
      */
-    public UpdateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes);
+    public CreateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes);
 
     /**
      * @dev getTimestampAtHeight returns the timestamp of the consensus state at the

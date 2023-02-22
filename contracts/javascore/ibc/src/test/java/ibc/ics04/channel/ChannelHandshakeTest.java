@@ -1,5 +1,7 @@
 package ibc.ics04.channel;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -9,8 +11,6 @@ import java.math.BigInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
-import org.mockito.stubbing.OngoingStubbing;
-import org.w3c.dom.css.Counter;
 
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
@@ -25,11 +25,6 @@ import ibc.icon.structs.messages.MsgChannelOpenAck;
 import ibc.icon.structs.messages.MsgChannelOpenConfirm;
 import ibc.icon.structs.messages.MsgChannelOpenInit;
 import ibc.icon.structs.messages.MsgChannelOpenTry;
-import ibc.icon.structs.messages.MsgConnectionOpenAck;
-import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
-import ibc.icon.structs.messages.MsgConnectionOpenInit;
-import ibc.icon.structs.messages.MsgConnectionOpenTry;
-import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.proto.core.channel.Channel;
 import ibc.icon.structs.proto.core.channel.Counterparty;
 import ibc.icon.structs.proto.core.client.Height;
@@ -38,6 +33,7 @@ import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.icon.structs.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
+import ibc.ics24.host.IBCCommitment;
 import score.Address;
 
 public class ChannelHandshakeTest extends TestBase {
@@ -65,11 +61,11 @@ public class ChannelHandshakeTest extends TestBase {
         }
 
         public void setConnectionEnd(String connectionId, ConnectionEnd connectionEnd) {
-            store.connections.set(connectionId, connectionEnd);
+            connections.set(connectionId, connectionEnd);
         }
 
         public void setClient(String clientId, Address client) {
-            store.clientImpls.set(clientId, client);
+            clientImplementations.set(clientId, client);
         }
     }
 
@@ -190,8 +186,14 @@ public class ChannelHandshakeTest extends TestBase {
         channel.invoke(owner, "channelOpenInit", msg);
 
         // Assert
-        // TODO: assert storage
-        // TODO: assert updated commitment
+        byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
+        byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
+
+        assertArrayEquals(IBCCommitment.keccak256(msg.channel.toBytes()), storedCommitment);
+        assertEquals(BigInteger.ONE, channel.call("getNextChannelSequence"));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceSend", portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceAcknowledgement", portId, channelId));
     }
 
     @Test
@@ -283,7 +285,8 @@ public class ChannelHandshakeTest extends TestBase {
         expectedChannel.setVersion(msg.counterpartyVersion);
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
-                msg.proofInit, prefix.getKeyPrefix(), new byte[0], expectedChannel.toBytes())).thenReturn(false);
+                msg.proofInit, prefix.getKeyPrefix(), IBCCommitment.channelPath(portId, channelId),
+                expectedChannel.toBytes())).thenReturn(false);
 
         // Act & Assert
         String expectedErrorMessage = "failed to verify channel state";
@@ -318,13 +321,20 @@ public class ChannelHandshakeTest extends TestBase {
         expectedChannel.setVersion(msg.counterpartyVersion);
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
-                msg.proofInit, prefix.getKeyPrefix(), new byte[0], expectedChannel.toBytes())).thenReturn(true);
+                msg.proofInit, prefix.getKeyPrefix(), IBCCommitment.channelPath(portId, channelId),
+                expectedChannel.toBytes())).thenReturn(true);
         // Act
         channel.invoke(owner, "channelOpenTry", msg);
 
         // Assert
-        // TODO: assert storage
-        // TODO: assert updated commitment
+        byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
+        byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
+
+        assertArrayEquals(IBCCommitment.keccak256(msg.channel.toBytes()), storedCommitment);
+        assertEquals(BigInteger.ONE, channel.call("getNextChannelSequence"));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceSend", portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceAcknowledgement", portId, channelId));
     }
 
     @Test
@@ -342,21 +352,28 @@ public class ChannelHandshakeTest extends TestBase {
         expectedCounterparty.setPortId(msg.portId);
         expectedCounterparty.setChannelId(msg.channelId);
 
-        Channel expectedChannel = new Channel();
-        expectedChannel.setState(Channel.State.STATE_TRYOPEN);
-        expectedChannel.setOrdering(baseChannel.getOrdering());
-        expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
-        expectedChannel.setVersion(msg.counterpartyVersion);
+        Channel counterpartyChannel = new Channel();
+        counterpartyChannel.setState(Channel.State.STATE_TRYOPEN);
+        counterpartyChannel.setOrdering(baseChannel.getOrdering());
+        counterpartyChannel.setCounterparty(expectedCounterparty);
+        counterpartyChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
+        counterpartyChannel.setVersion(msg.counterpartyVersion);
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
-                msg.proofTry, prefix.getKeyPrefix(), new byte[0], expectedChannel.toBytes())).thenReturn(true);
+                msg.proofTry, prefix.getKeyPrefix(), IBCCommitment.channelPath(portId, channelId),
+                counterpartyChannel.toBytes())).thenReturn(true);
 
         channel.invoke(owner, "channelOpenAck", msg);
 
         // Assert
-        // TODO: assert storage
-        // TODO: assert updated commitment
+        byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
+        byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
+
+        Channel expectedChannel = baseChannel;
+        expectedChannel.setState(Channel.State.STATE_OPEN);
+        expectedChannel.setVersion(msg.counterpartyVersion);
+        expectedChannel.getCounterparty().setChannelId(msg.counterpartyChannelId);
+        assertArrayEquals(IBCCommitment.keccak256(expectedChannel.toBytes()), storedCommitment);
     }
 
     @Test
@@ -374,22 +391,27 @@ public class ChannelHandshakeTest extends TestBase {
         expectedCounterparty.setPortId(msg.portId);
         expectedCounterparty.setChannelId(msg.channelId);
 
-        Channel expectedChannel = new Channel();
-        expectedChannel.setState(Channel.State.STATE_OPEN);
-        expectedChannel.setOrdering(baseChannel.getOrdering());
-        expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
-        expectedChannel.setVersion(baseChannel.getVersion());
+        Channel counterpartyChannel = new Channel();
+        counterpartyChannel.setState(Channel.State.STATE_OPEN);
+        counterpartyChannel.setOrdering(baseChannel.getOrdering());
+        counterpartyChannel.setCounterparty(expectedCounterparty);
+        counterpartyChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
+        counterpartyChannel.setVersion(baseChannel.getVersion());
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
-                msg.proofAck, prefix.getKeyPrefix(), new byte[0], expectedChannel.toBytes())).thenReturn(true);
+                msg.proofAck, prefix.getKeyPrefix(), IBCCommitment.channelPath(portId, channelId),
+                counterpartyChannel.toBytes())).thenReturn(true);
 
         // Act
         channel.invoke(owner, "channelOpenConfirm", msg);
 
         // Assert
-        // TODO: assert storage
-        // TODO: assert updated commitment
+        byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
+        byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
+
+        Channel expectedChannel = baseChannel;
+        expectedChannel.setState(Channel.State.STATE_OPEN);
+        assertArrayEquals(IBCCommitment.keccak256(expectedChannel.toBytes()), storedCommitment);
     }
 
     @Test
@@ -405,8 +427,12 @@ public class ChannelHandshakeTest extends TestBase {
         channel.invoke(owner, "channelCloseInit", msg);
 
         // Assert
-        // TODO: assert storage
-        // TODO: assert updated commitment
+        byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
+        byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
+
+        Channel expectedChannel = baseChannel;
+        expectedChannel.setState(Channel.State.STATE_CLOSED);
+        assertArrayEquals(IBCCommitment.keccak256(expectedChannel.toBytes()), storedCommitment);
     }
 
     @Test
@@ -424,22 +450,27 @@ public class ChannelHandshakeTest extends TestBase {
         expectedCounterparty.setPortId(msg.portId);
         expectedCounterparty.setChannelId(msg.channelId);
 
-        Channel expectedChannel = new Channel();
-        expectedChannel.setState(Channel.State.STATE_CLOSED);
-        expectedChannel.setOrdering(baseChannel.getOrdering());
-        expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
-        expectedChannel.setVersion(baseChannel.getVersion());
+        Channel counterpartyChannel = new Channel();
+        counterpartyChannel.setState(Channel.State.STATE_CLOSED);
+        counterpartyChannel.setOrdering(baseChannel.getOrdering());
+        counterpartyChannel.setCounterparty(expectedCounterparty);
+        counterpartyChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
+        counterpartyChannel.setVersion(baseChannel.getVersion());
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
-                msg.proofInit, prefix.getKeyPrefix(), new byte[0], expectedChannel.toBytes())).thenReturn(true);
+                msg.proofInit, prefix.getKeyPrefix(), IBCCommitment.channelPath(portId, channelId),
+                counterpartyChannel.toBytes())).thenReturn(true);
 
         // Act
         channel.invoke(owner, "channelCloseConfirm", msg);
 
         // Assert
-        // TODO: assert storage
-        // TODO: assert updated commitment
+        byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
+        byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
+
+        Channel expectedChannel = baseChannel;
+        expectedChannel.setState(Channel.State.STATE_CLOSED);
+        assertArrayEquals(IBCCommitment.keccak256(expectedChannel.toBytes()), storedCommitment);
     }
 
     private void addConnection(String connectionId, ConnectionEnd connectionEnd) {

@@ -7,14 +7,14 @@ import com.iconloop.score.test.TestBase;
 
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.interfaces.ILightClient;
+import ibc.icon.structs.messages.ConsensusStateUpdate;
+import ibc.icon.structs.messages.CreateClientResponse;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.commitment.MerklePrefix;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
-import ibc.icon.structs.proto.core.connection.Counterparty;
-import ibc.icon.structs.proto.core.connection.Version;
+import ibc.icon.structs.messages.UpdateClientResponse;
+import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.test.MockContract;
+import ibc.ics24.host.IBCCommitment;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 public class ClientTest extends TestBase {
 
@@ -79,19 +79,34 @@ public class ClientTest extends TestBase {
         msg.clientType = "type";
         msg.consensusState = new byte[2];
         msg.clientState = new byte[3];
-        // TODO mock lightclient update response
+        String expectedClientId = msg.clientType + "-0";
+
+        byte[] clientStateCommitment = new byte[4];
+        byte[] consensusStateCommitment = new byte[5];
+        Height consensusHeight = new Height();
+        consensusHeight.setRevisionHeight(BigInteger.ONE);
+        consensusHeight.setRevisionNumber(BigInteger.TWO);
+        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight);
+        CreateClientResponse response = new CreateClientResponse(clientStateCommitment, update, true);
+        when(lightClient.mock.createClient(msg.clientType + "-" + BigInteger.ZERO, msg.clientState,
+                msg.consensusState)).thenReturn(response);
 
         // Act
         client.invoke(owner, "registerClient", msg.clientType, lightClient.getAddress());
         client.invoke(owner, "createClient", msg);
-        client.invoke(owner, "createClient", msg);
 
         // Assert
-        verify(lightClient.mock).createClient(msg.clientType + "-" + BigInteger.ZERO, msg.clientState,
-                msg.consensusState);
-        verify(lightClient.mock).createClient(msg.clientType + "-" + BigInteger.ONE, msg.clientState,
-                msg.consensusState);
-        // TODO verify commitements
+        byte[] storedClientStateCommitment = (byte[]) client.call("getCommitment",
+                IBCCommitment.clientStateCommitmentKey(expectedClientId));
+        assertEquals(clientStateCommitment, storedClientStateCommitment);
+
+        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(expectedClientId,
+                consensusHeight.getRevisionNumber(),
+                consensusHeight.getRevisionHeight());
+        byte[] storedConsensusStateCommitment = (byte[]) client.call("getCommitment", consensusKey);
+        assertArrayEquals(consensusStateCommitment, storedConsensusStateCommitment);
+
+        assertEquals(BigInteger.ONE, client.call("getNextClientSequence"));
     }
 
     @Test
@@ -110,33 +125,51 @@ public class ClientTest extends TestBase {
     }
 
     @Test
-    public void updateClient_NonExistingCommitment() {
-        // TODO
-    }
-
-    @Test
     public void updateClient() {
         // Arrange
-        MsgCreateClient msg = new MsgCreateClient();
-        msg.clientType = "type";
-        msg.consensusState = new byte[2];
-        msg.clientState = new byte[3];
+        createClient();
+        MsgUpdateClient msg = new MsgUpdateClient();
+        msg.clientId = "type-0";
+        msg.clientMessage = new byte[4];
 
-        MsgUpdateClient updateMsg = new MsgUpdateClient();
-        updateMsg.clientId = msg.clientType + "-0";
-        updateMsg.clientMessage = new byte[4];
+        byte[] clientStateCommitment = new byte[4];
+        byte[] consensusStateCommitment1 = new byte[5];
+        byte[] consensusStateCommitment2 = new byte[6];
 
-        // TODO mock lightclient update responses
+        Height consensusHeight1 = new Height();
+        consensusHeight1.setRevisionHeight(BigInteger.ONE);
+        consensusHeight1.setRevisionNumber(BigInteger.TWO);
+        Height consensusHeight2 = new Height();
+        consensusHeight2.setRevisionHeight(BigInteger.valueOf(3));
+        consensusHeight2.setRevisionNumber(BigInteger.valueOf(4));
+
+        ConsensusStateUpdate update1 = new ConsensusStateUpdate(consensusStateCommitment1, consensusHeight1);
+        ConsensusStateUpdate update2 = new ConsensusStateUpdate(consensusStateCommitment2, consensusHeight2);
+        ConsensusStateUpdate[] updates = new ConsensusStateUpdate[] { update1, update2 };
+        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, updates, true);
+
+        when(lightClient.mock.updateClient(msg.clientId, msg.clientMessage)).thenReturn(response);
 
         // Act
-        client.invoke(owner, "registerClient", msg.clientType, lightClient.getAddress());
-        client.invoke(owner, "createClient", msg);
-        client.invoke(owner, "updateClient", updateMsg);
+        client.invoke(owner, "updateClient", msg);
 
         // Assert
-        verify(lightClient.mock).createClient(msg.clientType + "-" + BigInteger.ZERO, msg.clientState,
-                msg.consensusState);
-        verify(lightClient.mock).updateClient(updateMsg.clientId, updateMsg.clientMessage);
-        // TODO verify commitements
+        verify(lightClient.mock).updateClient(msg.clientId, msg.clientMessage);
+
+        byte[] storedClientStateCommitment = (byte[]) client.call("getCommitment",
+                IBCCommitment.clientStateCommitmentKey(msg.clientId));
+        assertArrayEquals(clientStateCommitment, storedClientStateCommitment);
+
+        byte[] consensusKey1 = IBCCommitment.consensusStateCommitmentKey(msg.clientId,
+                consensusHeight1.getRevisionNumber(),
+                consensusHeight1.getRevisionHeight());
+        byte[] storedConsensusStateCommitment1 = (byte[]) client.call("getCommitment", consensusKey1);
+        assertArrayEquals(consensusStateCommitment1, storedConsensusStateCommitment1);
+
+        byte[] consensusKey2 = IBCCommitment.consensusStateCommitmentKey(msg.clientId,
+                consensusHeight2.getRevisionNumber(),
+                consensusHeight2.getRevisionHeight());
+        byte[] storedConsensusStateCommitment2 = (byte[]) client.call("getCommitment", consensusKey2);
+        assertArrayEquals(consensusStateCommitment2, storedConsensusStateCommitment2);
     }
 }
