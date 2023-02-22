@@ -57,6 +57,12 @@ type CSMessage struct {
     payload []byte
 }
 
+type CSMessageResponse struct {
+	sn uint;
+	code int;
+	msg string;
+}
+
 type PacketData struct {
     sequence uint
     source_port string
