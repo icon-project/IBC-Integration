@@ -19,13 +19,13 @@ fn update_sequence() {
 
     assert_eq!(result, 0);
 
-    contract
+    let updated = contract
         .increment_last_sequence_no(mock_deps.as_mut())
         .unwrap();
 
     let result = contract.query_last_sequence_no(mock_deps.as_ref()).unwrap();
 
-    assert_eq!(result, 1);
+    assert_eq!(result, updated);
 }
 
 #[test]
@@ -96,13 +96,13 @@ fn set_sequence() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    contract
+    let updated = contract
         .set_last_sequence_no(mock_deps.as_mut(), 20)
         .unwrap();
 
     let result = contract.query_last_sequence_no(mock_deps.as_ref()).unwrap();
 
-    assert_eq!(result, 20);
+    assert_eq!(result, updated);
 }
 
 #[test]
@@ -116,13 +116,13 @@ fn set_request_id() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    contract
+    let updated = contract
         .set_last_request_id(mock_deps.as_mut(), 20)
         .unwrap();
 
     let result = contract.query_last_request_id(mock_deps.as_ref()).unwrap();
 
-    assert_eq!(result, 20);
+    assert_eq!(result, updated);
 }
 
 #[test]

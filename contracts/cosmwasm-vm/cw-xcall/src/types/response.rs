@@ -1,3 +1,5 @@
+use cosmwasm_std::Binary;
+
 use super::*;
 
 #[cw_serde]
@@ -11,15 +13,11 @@ pub enum CallServiceResponseType {
 pub struct CallServiceMessageReponse {
     sequence_no: u128,
     response_code: CallServiceResponseType,
-    message: Vec<u8>,
+    message: Binary,
 }
 
 impl CallServiceMessageReponse {
-    pub fn new(
-        sequence_no: u128,
-        response_code: CallServiceResponseType,
-        message: Vec<u8>,
-    ) -> Self {
+    pub fn new(sequence_no: u128, response_code: CallServiceResponseType, message: Binary) -> Self {
         Self {
             sequence_no,
             response_code,

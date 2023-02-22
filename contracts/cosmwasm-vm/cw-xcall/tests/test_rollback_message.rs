@@ -30,8 +30,8 @@ fn test_contains_rollback() {
         Address::from("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        vec![1, 2, 3],
-        vec![4, 5, 6],
+        vec![1, 2, 3].try_into().unwrap(),
+        vec![4, 5, 6].try_into().unwrap(),
     );
     let m = try_rollback_executed(msg);
     assert_eq!(m.unwrap(), vec![1, 2, 3]);
@@ -43,8 +43,8 @@ fn test_not_contains_rollback() {
         Address::from("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        vec![],
-        vec![1, 2, 3],
+        vec![].try_into().unwrap(),
+        vec![1, 2, 3].try_into().unwrap(),
     );
     let n = try_rollback_executed(msg);
     assert!(n.is_err());

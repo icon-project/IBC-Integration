@@ -1,3 +1,5 @@
+use cosmwasm_std::Binary;
+
 use super::*;
 
 #[cw_serde]
@@ -5,8 +7,8 @@ pub struct CallServiceMessageRequest {
     from: Address,
     to: String,
     sequence_no: u128,
-    rollback: Vec<u8>,
-    data: Vec<u8>,
+    rollback: Binary,
+    data: Binary,
 }
 
 impl CallServiceMessageRequest {
@@ -14,8 +16,8 @@ impl CallServiceMessageRequest {
         from: Address,
         to: String,
         sequence_no: u128,
-        rollback: Vec<u8>,
-        data: Vec<u8>,
+        rollback: Binary,
+        data: Binary,
     ) -> Self {
         Self {
             from,
@@ -45,9 +47,4 @@ impl CallServiceMessageRequest {
     pub fn data(&self) -> &[u8] {
         &self.data
     }
-}
-
-mod test {
-    #[test]
-    fn test_add() {}
 }
