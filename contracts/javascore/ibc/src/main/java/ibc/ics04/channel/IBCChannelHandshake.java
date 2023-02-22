@@ -4,7 +4,6 @@ import java.math.BigInteger;
 
 import ibc.icon.interfaces.IIBCChannelHandshake;
 import ibc.icon.interfaces.ILightClient;
-import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.structs.messages.MsgChannelCloseConfirm;
 import ibc.icon.structs.messages.MsgChannelCloseInit;
 import ibc.icon.structs.messages.MsgChannelOpenAck;
@@ -16,6 +15,7 @@ import ibc.icon.structs.proto.core.channel.Counterparty;
 import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.ics03.connection.IBCConnection;
+import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
 public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHandshake {
@@ -23,7 +23,7 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
     public String channelOpenInit(MsgChannelOpenInit msg) {
         Context.require(msg.channel.connectionHops.length == 1, "connection_hops length must be 1");
 
-        ConnectionEnd connection = store.connections.get(msg.channel.connectionHops[0]);
+        ConnectionEnd connection = connections.get(msg.channel.connectionHops[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(
                 connection.versions.length == 1,
@@ -35,19 +35,19 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
         // TODO: authenticates a port binding
 
         String channelId = generateChannelIdentifier();
-        store.channels.at(msg.portId).set(channelId, msg.channel);
-        store.nextSequenceSends.at(msg.portId).set(channelId, BigInteger.ONE);
-        store.nextSequenceRecvs.at(msg.portId).set(channelId, BigInteger.ONE);
-        store.nextSequenceAcks.at(msg.portId).set(channelId, BigInteger.ONE);
+        channels.at(msg.portId).set(channelId, msg.channel);
+        nextSequenceSends.at(msg.portId).set(channelId, BigInteger.ONE);
+        nextSequenceReceives.at(msg.portId).set(channelId, BigInteger.ONE);
+        nextSequenceAcknowledgements.at(msg.portId).set(channelId, BigInteger.ONE);
 
-        updateChannelCommitment(msg.portId, channelId);
+        updateChannelCommitment(msg.portId, channelId, msg.channel);
 
         return channelId;
     }
 
     public String channelOpenTry(MsgChannelOpenTry msg) {
         Context.require(msg.channel.getConnectionHops().length == 1, "connection_hops length must be 1");
-        ConnectionEnd connection = store.connections.get(msg.channel.getConnectionHops()[0]);
+        ConnectionEnd connection = connections.get(msg.channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(
                 connection.versions.length == 1,
@@ -79,18 +79,18 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
                 expectedChannel);
 
         String channelId = generateChannelIdentifier();
-        store.channels.at(msg.portId).set(channelId, msg.channel);
-        store.nextSequenceSends.at(msg.portId).set(channelId, BigInteger.ONE);
-        store.nextSequenceRecvs.at(msg.portId).set(channelId, BigInteger.ONE);
-        store.nextSequenceAcks.at(msg.portId).set(channelId, BigInteger.ONE);
+        channels.at(msg.portId).set(channelId, msg.channel);
+        nextSequenceSends.at(msg.portId).set(channelId, BigInteger.ONE);
+        nextSequenceReceives.at(msg.portId).set(channelId, BigInteger.ONE);
+        nextSequenceAcknowledgements.at(msg.portId).set(channelId, BigInteger.ONE);
 
-        updateChannelCommitment(msg.portId, channelId);
+        updateChannelCommitment(msg.portId, channelId, msg.channel);
 
         return channelId;
     }
 
     public void channelOpenAck(MsgChannelOpenAck msg) {
-        Channel channel = store.channels.at(msg.portId).get(msg.channelId);
+        Channel channel = channels.at(msg.portId).get(msg.channelId);
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getConnectionHops().length == 1);
 
@@ -101,7 +101,7 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
 
         // TODO authenticates a port binding
 
-        ConnectionEnd connection = store.connections.get(channel.getConnectionHops()[0]);
+        ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
 
@@ -127,20 +127,20 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
         channel.setState(Channel.State.STATE_OPEN);
         channel.setVersion(msg.counterpartyVersion);
         channel.getCounterparty().setChannelId(msg.counterpartyChannelId);
-        updateChannelCommitment(msg.portId, msg.channelId);
 
-        store.channels.at(msg.portId).set(msg.channelId, channel);
+        updateChannelCommitment(msg.portId, msg.channelId, channel);
+        channels.at(msg.portId).set(msg.channelId, channel);
     }
 
     public void channelOpenConfirm(MsgChannelOpenConfirm msg) {
-        Channel channel = store.channels.at(msg.portId).get(msg.channelId);
+        Channel channel = channels.at(msg.portId).get(msg.channelId);
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getConnectionHops().length == 1);
         Context.require(channel.getState().equals(Channel.State.STATE_TRYOPEN), "channel state is not TRYOPEN");
 
         // TODO authenticates a port binding
 
-        ConnectionEnd connection = store.connections.get(channel.getConnectionHops()[0]);
+        ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
 
@@ -164,37 +164,37 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
                 expectedChannel);
 
         channel.setState(Channel.State.STATE_OPEN);
-        updateChannelCommitment(msg.portId, msg.channelId);
 
-        store.channels.at(msg.portId).set(msg.channelId, channel);
+        updateChannelCommitment(msg.portId, msg.channelId, channel);
+        channels.at(msg.portId).set(msg.channelId, channel);
     }
 
     public void channelCloseInit(MsgChannelCloseInit msg) {
-        Channel channel = store.channels.at(msg.portId).get(msg.channelId);
+        Channel channel = channels.at(msg.portId).get(msg.channelId);
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
 
         // TODO authenticates a port binding
 
-        ConnectionEnd connection = store.connections.get(channel.getConnectionHops()[0]);
+        ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
 
         channel.setState(Channel.State.STATE_CLOSED);
-        updateChannelCommitment(msg.portId, msg.channelId);
 
-        store.channels.at(msg.portId).set(msg.channelId, channel);
+        updateChannelCommitment(msg.portId, msg.channelId, channel);
+        channels.at(msg.portId).set(msg.channelId, channel);
     }
 
     public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
-        Channel channel = store.channels.at(msg.portId).get(msg.channelId);
+        Channel channel = channels.at(msg.portId).get(msg.channelId);
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
         Context.require(channel.getConnectionHops().length == 1);
 
         // TODO authenticates a port binding
 
-        ConnectionEnd connection = store.connections.get(channel.getConnectionHops()[0]);
+        ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
 
@@ -218,15 +218,14 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
                 expectedChannel);
 
         channel.setState(Channel.State.STATE_CLOSED);
-        updateChannelCommitment(msg.portId, msg.channelId);
 
-        store.channels.at(msg.portId).set(msg.channelId, channel);
+        updateChannelCommitment(msg.portId, msg.channelId, channel);
+        channels.at(msg.portId).set(msg.channelId, channel);
     }
 
-    private void updateChannelCommitment(String portId, String channelId) {
-        // TODO IBC-HOST: wait for implementation
-        // commitments[IBCCommitment.channelCommitmentKey(portId, channelId)] =
-        // keccak256(Channel.encode(channels[portId][channelId]));
+    private void updateChannelCommitment(String portId, String channelId, Channel channel) {
+        commitments.set(IBCCommitment.channelCommitmentKey(portId, channelId),
+                IBCCommitment.keccak256(channel.toBytes()));
     }
 
     /* Verification functions */
@@ -238,7 +237,7 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
             String portId,
             String channelId,
             Channel channel) {
-        ILightClient client = new ILightClientScoreInterface(store.clientImpls.get(connection.getClientId()));
+        ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),
                 height,
@@ -246,7 +245,7 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
                 BigInteger.ZERO,
                 proof,
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
-                new byte[0], // TODO:IBCCommitment.channelPath(portId, channelId),
+                IBCCommitment.channelPath(portId, channelId),
                 channel.toBytes());
         Context.require(ok, "failed to verify channel state");
 
@@ -255,15 +254,15 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
     /* Internal functions */
 
     private String[] getCounterpartyHops(String connectionId) {
-        String hop = store.connections.get(connectionId).getCounterparty().getConnectionId();
+        String hop = connections.get(connectionId).getCounterparty().getConnectionId();
         String[] hops = new String[] { hop };
         return hops;
     }
 
     private String generateChannelIdentifier() {
-        BigInteger currChannelSequence = store.nextChannelSequence.getOrDefault(BigInteger.ZERO);
+        BigInteger currChannelSequence = nextChannelSequence.getOrDefault(BigInteger.ZERO);
         String identifier = "channel-" + currChannelSequence.toString();
-        store.nextChannelSequence.set(currChannelSequence.add(BigInteger.ONE));
+        nextChannelSequence.set(currChannelSequence.add(BigInteger.ONE));
 
         return identifier;
     }

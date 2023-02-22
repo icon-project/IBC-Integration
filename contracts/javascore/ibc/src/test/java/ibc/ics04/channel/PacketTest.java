@@ -1,5 +1,8 @@
 package ibc.ics04.channel;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -9,7 +12,6 @@ import java.math.BigInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
-import org.mockito.stubbing.OngoingStubbing;
 
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
@@ -18,11 +20,8 @@ import com.iconloop.score.test.TestBase;
 
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
-import ibc.icon.structs.messages.MsgConnectionOpenAck;
-import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
-import ibc.icon.structs.messages.MsgConnectionOpenInit;
-import ibc.icon.structs.messages.MsgConnectionOpenTry;
-import ibc.icon.structs.messages.MsgCreateClient;
+import ibc.icon.score.util.StringUtil;
+import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
 import ibc.icon.structs.proto.core.channel.Channel;
 import ibc.icon.structs.proto.core.channel.Counterparty;
@@ -33,6 +32,7 @@ import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.icon.structs.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
+import ibc.ics24.host.IBCCommitment;
 import score.Address;
 
 public class PacketTest extends TestBase {
@@ -63,18 +63,18 @@ public class PacketTest extends TestBase {
         }
 
         public void setConnection(String connectionId, ConnectionEnd connectionEnd) {
-            store.connections.set(connectionId, connectionEnd);
+            connections.set(connectionId, connectionEnd);
         }
 
         public void setClient(String clientId, Address client) {
-            store.clientImpls.set(clientId, client);
+            clientImplementations.set(clientId, client);
         }
 
         public void setChannel(String portId, String channelId, Channel channel) {
-            store.channels.at(portId).set(channelId, channel);
-            store.nextSequenceSends.at(portId).set(channelId, BigInteger.ONE);
-            store.nextSequenceRecvs.at(portId).set(channelId, BigInteger.ONE);
-            store.nextSequenceAcks.at(portId).set(channelId, BigInteger.ONE);
+            channels.at(portId).set(channelId, channel);
+            nextSequenceSends.at(portId).set(channelId, BigInteger.ONE);
+            nextSequenceReceives.at(portId).set(channelId, BigInteger.ONE);
+            nextSequenceAcknowledgements.at(portId).set(channelId, BigInteger.ONE);
 
         }
     }
@@ -114,7 +114,7 @@ public class PacketTest extends TestBase {
         packet.invoke(owner, "setConnection", connectionId, baseConnection);
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
 
-        basePacket.setData("data");
+        basePacket.setData("ZGF0YQ==");
         basePacket.setSourcePort(portId);
         basePacket.setSourceChannel(channelId);
         basePacket.setDestinationPort(baseChannel.getCounterparty().getPortId());
@@ -250,11 +250,32 @@ public class PacketTest extends TestBase {
 
         // Act
         packet.invoke(owner, "sendPacket", basePacket);
-        basePacket.setSequence(basePacket.getSequence().add(BigInteger.ONE));
+        basePacket.setSequence(BigInteger.TWO);
         packet.invoke(owner, "sendPacket", basePacket);
 
         // Assert
-        // TODO assert commitments
+        byte[] key1 = IBCCommitment.packetCommitmentKey(basePacket.getSourcePort(),
+                basePacket.getSourceChannel(),
+                BigInteger.ONE);
+        byte[] key2 = IBCCommitment.packetCommitmentKey(basePacket.getSourcePort(),
+                basePacket.getSourceChannel(),
+                basePacket.getSequence());
+
+        byte[] storedCommitment1 = (byte[]) packet.call("getCommitment", key1);
+        byte[] storedCommitment2 = (byte[]) packet.call("getCommitment", key2);
+
+        byte[] expectedCommitment = IBCCommitment.keccak256(
+                IBCCommitment.sha256(
+                        StringUtil.encodePacked(
+                                basePacket.getTimeoutTimestamp(),
+                                basePacket.getTimeoutHeight().getRevisionNumber(),
+                                basePacket.getTimeoutHeight().getRevisionHeight(),
+                                basePacket.getData())));
+
+        assertArrayEquals(expectedCommitment, storedCommitment1);
+        assertArrayEquals(expectedCommitment, storedCommitment2);
+        assertEquals(BigInteger.valueOf(3),
+                packet.call("getNextSequenceSend", basePacket.getSourcePort(), basePacket.getSourceChannel()));
     }
 
     @Test
@@ -362,8 +383,18 @@ public class PacketTest extends TestBase {
         msg.proof = new byte[1];
         msg.proofHeight = proofHeight;
 
+        byte[] commitmentPath = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
+                msg.packet.getSourceChannel(), msg.packet.getSequence());
+        byte[] commitmentBytes = IBCCommitment.keccak256(
+                IBCCommitment.sha256(
+                        StringUtil.encodePacked(
+                                basePacket.getTimeoutTimestamp(),
+                                basePacket.getTimeoutHeight().getRevisionNumber(),
+                                basePacket.getTimeoutHeight().getRevisionHeight(),
+                                basePacket.getData())));
+
         when(lightClient.mock.verifyMembership(clientId, proofHeight, baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                msg.proof, prefix.getKeyPrefix(), new byte[0], new byte[0])).thenReturn(true);
+                msg.proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes)).thenReturn(true);
 
         packet.invoke(owner, "recvPacket", msg);
 
@@ -385,9 +416,22 @@ public class PacketTest extends TestBase {
         msg.proof = new byte[1];
         msg.proofHeight = proofHeight;
 
-        when(lightClient.mock.verifyMembership(clientId, proofHeight, baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                msg.proof, prefix.getKeyPrefix(), new byte[0], new byte[0])).thenReturn(true);
+        byte[] commitmentPath1 = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
+                msg.packet.getSourceChannel(), msg.packet.getSequence());
+        byte[] commitmentPath2 = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
+                msg.packet.getSourceChannel(), msg.packet.getSequence().add(BigInteger.ONE));
+        byte[] commitmentBytes = IBCCommitment.keccak256(
+                IBCCommitment.sha256(
+                        StringUtil.encodePacked(
+                                basePacket.getTimeoutTimestamp(),
+                                basePacket.getTimeoutHeight().getRevisionNumber(),
+                                basePacket.getTimeoutHeight().getRevisionHeight(),
+                                basePacket.getData())));
 
+        when(lightClient.mock.verifyMembership(clientId, proofHeight, baseConnection.getDelayPeriod(), BigInteger.ZERO,
+                msg.proof, prefix.getKeyPrefix(), commitmentPath1, commitmentBytes)).thenReturn(true);
+        when(lightClient.mock.verifyMembership(clientId, proofHeight, baseConnection.getDelayPeriod(), BigInteger.ZERO,
+                msg.proof, prefix.getKeyPrefix(), commitmentPath2, commitmentBytes)).thenReturn(true);
         // Act
         msg.packet.setSequence(BigInteger.TWO);
         packet.invoke(owner, "recvPacket", msg);
@@ -407,8 +451,18 @@ public class PacketTest extends TestBase {
         msg.proof = new byte[1];
         msg.proofHeight = proofHeight;
 
+        byte[] commitmentPath = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
+                msg.packet.getSourceChannel(), msg.packet.getSequence());
+        byte[] commitmentBytes = IBCCommitment.keccak256(
+                IBCCommitment.sha256(
+                        StringUtil.encodePacked(
+                                basePacket.getTimeoutTimestamp(),
+                                basePacket.getTimeoutHeight().getRevisionNumber(),
+                                basePacket.getTimeoutHeight().getRevisionHeight(),
+                                basePacket.getData())));
+
         when(lightClient.mock.verifyMembership(clientId, proofHeight, baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                msg.proof, prefix.getKeyPrefix(), new byte[0], new byte[0])).thenReturn(true);
+                msg.proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes)).thenReturn(true);
 
         // Act & Assert
         String expectedErrorMessage = "packet sequence != next receive sequence";
@@ -419,29 +473,116 @@ public class PacketTest extends TestBase {
     }
 
     @Test
-    void recvPacket() {
+    void recvPacket_UnOrdered() {
         // Arrange
+        baseChannel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         MsgPacketRecv msg = new MsgPacketRecv();
         msg.packet = basePacket;
         msg.proof = new byte[1];
         msg.proofHeight = proofHeight;
 
+        byte[] commitmentPath = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
+                msg.packet.getSourceChannel(), msg.packet.getSequence());
+        byte[] commitmentBytes = IBCCommitment.keccak256(
+                IBCCommitment.sha256(
+                        StringUtil.encodePacked(
+                                basePacket.getTimeoutTimestamp(),
+                                basePacket.getTimeoutHeight().getRevisionNumber(),
+                                basePacket.getTimeoutHeight().getRevisionHeight(),
+                                basePacket.getData())));
+
         when(lightClient.mock.verifyMembership(clientId, proofHeight, baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                msg.proof, prefix.getKeyPrefix(), new byte[0], new byte[0])).thenReturn(true);
+                msg.proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes)).thenReturn(true);
         // Act
         packet.invoke(owner, "recvPacket", msg);
 
         // Assert
-        // TODO assert storage
+        assertEquals(BigInteger.ONE, packet.call("getPacketReceipt", portId, channelId, basePacket.getSequence()));
+    }
+
+    @Test
+    void recvPacket_Ordered() {
+        // Arrange
+        baseChannel.setOrdering(Channel.Order.ORDER_ORDERED);
+        packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
+        MsgPacketRecv msg = new MsgPacketRecv();
+        msg.packet = basePacket;
+        msg.proof = new byte[1];
+        msg.proofHeight = proofHeight;
+
+        byte[] commitmentPath = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
+                msg.packet.getSourceChannel(), msg.packet.getSequence());
+        byte[] commitmentBytes = IBCCommitment.keccak256(
+                IBCCommitment.sha256(
+                        StringUtil.encodePacked(
+                                basePacket.getTimeoutTimestamp(),
+                                basePacket.getTimeoutHeight().getRevisionNumber(),
+                                basePacket.getTimeoutHeight().getRevisionHeight(),
+                                basePacket.getData())));
+
+        when(lightClient.mock.verifyMembership(clientId, proofHeight, baseConnection.getDelayPeriod(), BigInteger.ZERO,
+                msg.proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes)).thenReturn(true);
+        // Act
+        packet.invoke(owner, "recvPacket", msg);
+
+        // Assert
+        assertEquals(basePacket.getSequence().add(BigInteger.ONE),
+                packet.call("getNextSequenceReceive", portId, channelId));
     }
 
     @Test
     void writeAcknowledgement() {
-        // TODO: Wait for commitment work
+        // Arrange
+        byte[] acknowledgement = new byte[5];
+        BigInteger sequence = BigInteger.ONE;
+
+        // Act
+        packet.invoke(owner, "writeAcknowledgement", baseCounterparty.getPortId(), baseCounterparty.getChannelId(),
+                sequence, acknowledgement);
+
+        // Assert
+        byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(baseCounterparty.getPortId(),
+                baseCounterparty.getChannelId(), sequence);
+        byte[] storedCommitment = (byte[]) packet.call("getCommitment", ackCommitmentKey);
+
+        byte[] expectedCommitment = IBCCommitment.keccak256(IBCCommitment.sha256(acknowledgement));
+        assertArrayEquals(expectedCommitment, storedCommitment);
     }
 
     @Test
     void acknowledgePacket() {
-        // TODO: Wait for commitment work
+        // Arrange
+        Height latestHeight = new Height();
+        latestHeight.setRevisionHeight(BigInteger.ZERO);
+        latestHeight.setRevisionNumber(BigInteger.ZERO);
+        when(lightClient.mock.getLatestHeight(clientId)).thenReturn(latestHeight);
+        when(lightClient.mock.getTimestampAtHeight(clientId, latestHeight)).thenReturn(BigInteger.ZERO);
+
+        packet.invoke(owner, "sendPacket", basePacket);
+
+        MsgPacketAcknowledgement msg = new MsgPacketAcknowledgement();
+        msg.packet = basePacket;
+        msg.acknowledgement = new byte[4];
+        msg.proof = new byte[5];
+        msg.proofHeight = proofHeight;
+
+        byte[] commitmentPath = IBCCommitment.packetAcknowledgementCommitmentPath(msg.packet.destinationPort,
+                msg.packet.destinationChannel, msg.packet.sequence);
+        when(lightClient.mock.verifyMembership(clientId, proofHeight,
+                baseConnection.getDelayPeriod(), BigInteger.ZERO,
+                msg.proof, prefix.getKeyPrefix(), commitmentPath,
+                IBCCommitment.sha256(msg.acknowledgement))).thenReturn(true);
+
+        // Act
+        packet.invoke(owner, "acknowledgePacket", msg);
+
+        // Assert
+        byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(msg.packet.getSourcePort(),
+                msg.packet.getSourceChannel(), msg.packet.getSequence());
+        Object storedCommitment = packet.call("getCommitment", packetCommitmentKey);
+        assertNull(storedCommitment);
+        assertEquals(BigInteger.TWO, packet.call("getNextSequenceAcknowledgement", basePacket.getSourcePort(),
+                basePacket.getSourceChannel()));
     }
 }
