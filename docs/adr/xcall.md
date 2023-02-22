@@ -69,6 +69,10 @@ type PacketData struct {
   }
 ```
 
+### Flow Diagram
+![ICON xCall Design (1).png](..%2F..%2F..%2F..%2F..%2FDownloads%2FICON%20xCall%20Design%20%281%29.png)
+
+
 ### Events
 These events are to be used as per the specifications as defined in IIP 52.
 
