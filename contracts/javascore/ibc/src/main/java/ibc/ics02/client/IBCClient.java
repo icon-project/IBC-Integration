@@ -16,7 +16,7 @@ import score.Context;
 public class IBCClient implements IIBCClient {
 
     Logger logger = new Logger("ibc-core");
-    IBCStore store = new IBCStore();
+    protected IBCStore store = new IBCStore();
 
     public void registerClient(String clientType, Address lightClient) {
         Context.require(store.clientRegistry.get(clientType) == null, "Already registered.");
