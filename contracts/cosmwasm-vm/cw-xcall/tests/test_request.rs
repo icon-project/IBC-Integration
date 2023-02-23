@@ -15,15 +15,19 @@ fn update_sequence() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let result = contract.query_last_sequence_no(mock_deps.as_ref()).unwrap();
+    let result = contract
+        .query_last_sequence_no(mock_deps.as_ref().storage)
+        .unwrap();
 
     assert_eq!(result, 0);
 
     let updated = contract
-        .increment_last_sequence_no(mock_deps.as_mut())
+        .increment_last_sequence_no(mock_deps.as_mut().storage)
         .unwrap();
 
-    let result = contract.query_last_sequence_no(mock_deps.as_ref()).unwrap();
+    let result = contract
+        .query_last_sequence_no(mock_deps.as_ref().storage)
+        .unwrap();
 
     assert_eq!(result, updated);
 }
@@ -37,10 +41,12 @@ fn update_sequence_without_proper_initialisation() {
     let contract = CwCallservice::default();
 
     contract
-        .increment_last_sequence_no(mock_deps.as_mut())
+        .increment_last_sequence_no(mock_deps.as_mut().storage)
         .unwrap();
 
-    let result = contract.query_last_sequence_no(mock_deps.as_ref()).unwrap();
+    let result = contract
+        .query_last_sequence_no(mock_deps.as_ref().storage)
+        .unwrap();
 
     assert_eq!(result, 1);
 }
@@ -56,15 +62,19 @@ fn update_request_id() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let result = contract.query_last_request_id(mock_deps.as_ref()).unwrap();
+    let result = contract
+        .query_last_request_id(mock_deps.as_ref().storage)
+        .unwrap();
 
     assert_eq!(result, 0);
 
     contract
-        .increment_last_request_id(mock_deps.as_mut())
+        .increment_last_request_id(mock_deps.as_mut().storage)
         .unwrap();
 
-    let result = contract.query_last_request_id(mock_deps.as_ref()).unwrap();
+    let result = contract
+        .query_last_request_id(mock_deps.as_ref().storage)
+        .unwrap();
 
     assert_eq!(result, 1);
 }
@@ -77,10 +87,12 @@ fn update_request_id_without_proper_initialisation() {
     let contract = CwCallservice::default();
 
     contract
-        .increment_last_request_id(mock_deps.as_mut())
+        .increment_last_request_id(mock_deps.as_mut().storage)
         .unwrap();
 
-    let result = contract.query_last_request_id(mock_deps.as_ref()).unwrap();
+    let result = contract
+        .query_last_request_id(mock_deps.as_ref().storage)
+        .unwrap();
 
     assert_eq!(result, 1);
 }
@@ -97,10 +109,12 @@ fn set_sequence() {
         .unwrap();
 
     let updated = contract
-        .set_last_sequence_no(mock_deps.as_mut(), 20)
+        .set_last_sequence_no(mock_deps.as_mut().storage, 20)
         .unwrap();
 
-    let result = contract.query_last_sequence_no(mock_deps.as_ref()).unwrap();
+    let result = contract
+        .query_last_sequence_no(mock_deps.as_ref().storage)
+        .unwrap();
 
     assert_eq!(result, updated);
 }
@@ -117,10 +131,12 @@ fn set_request_id() {
         .unwrap();
 
     let updated = contract
-        .set_last_request_id(mock_deps.as_mut(), 20)
+        .set_last_request_id(mock_deps.as_mut().storage, 20)
         .unwrap();
 
-    let result = contract.query_last_request_id(mock_deps.as_ref()).unwrap();
+    let result = contract
+        .query_last_request_id(mock_deps.as_ref().storage)
+        .unwrap();
 
     assert_eq!(result, updated);
 }
@@ -133,7 +149,7 @@ fn set_sequence_without_proper_initialisation() {
     let contract = CwCallservice::default();
 
     contract
-        .set_last_sequence_no(mock_deps.as_mut(), 20)
+        .set_last_sequence_no(mock_deps.as_mut().storage, 20)
         .unwrap();
 }
 
@@ -145,6 +161,6 @@ fn set_request_id_without_proper_initialisation() {
     let contract = CwCallservice::default();
 
     contract
-        .set_last_request_id(mock_deps.as_mut(), 20)
+        .set_last_request_id(mock_deps.as_mut().storage, 20)
         .unwrap();
 }

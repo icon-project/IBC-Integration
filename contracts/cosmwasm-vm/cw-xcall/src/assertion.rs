@@ -1,4 +1,4 @@
-use cosmwasm_std::{ensure, Addr, Deps};
+use cosmwasm_std::{ensure, Addr, Deps, QuerierWrapper};
 
 use crate::{
     error::ContractError,
@@ -12,7 +12,7 @@ impl<'a> CwCallservice<'a> {
         address: Addr,
         rollback: &[u8],
     ) -> Result<(), ContractError> {
-        let is_contract = is_contract(deps, address);
+        let is_contract = is_contract(deps.querier, address);
 
         ensure!(
             is_contract || rollback.is_empty(),
@@ -41,8 +41,8 @@ impl<'a> CwCallservice<'a> {
     }
 }
 
-fn is_contract(deps: Deps, address: Addr) -> bool {
-    match deps.querier.query_wasm_contract_info(address) {
+fn is_contract(querier: QuerierWrapper, address: Addr) -> bool {
+    match querier.query_wasm_contract_info(address) {
         Ok(_) => true,
         Err(_) => false,
     }
