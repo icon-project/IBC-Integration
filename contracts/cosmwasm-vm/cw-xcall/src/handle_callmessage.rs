@@ -9,7 +9,6 @@ use cosmwasm_std::{
 };
 
 const EXECUTE_CALL: u64 = 0;
-const 
 
 impl<'a> CwCallservice<'a> {
     pub fn execute_call(
@@ -20,26 +19,25 @@ impl<'a> CwCallservice<'a> {
         request_id: u128,
     ) -> Result<Response, ContractError> {
         let proxy_reqs = self
-            .message_request()
-            .may_load(deps.storage, request_id)
+            .query_message_request(deps.storage, request_id)
             .unwrap();
 
-        assert!(proxy_reqs.is_none(), "InvalidRequestId");
-         self.message_request()
-            .remove(deps.storage, request_id);
+        self.contains_request(deps.storage, request_id);
 
-        let network_address = proxy_reqs.clone().unwrap().from().to_string();
+        self.remove_request(deps.storage, request_id);
+
+        let network_address = proxy_reqs.clone().from().to_string();
 
         let mut msgRes = CallServiceMessageReponse::default();
 
         msgRes.set_fields(
-            proxy_reqs.clone().unwrap().sequence_no(),
+            proxy_reqs.clone().sequence_no(),
             CallServiceResponseType::CallServiceResponseSucess,
             " ".into(),
         );
 
-        if !proxy_reqs.clone().unwrap().rollback().is_empty() {
-            let sequence_no: u128 = proxy_reqs.clone().unwrap().sequence_no();
+        if !proxy_reqs.clone().rollback().is_empty() {
+            let sequence_no: u128 = proxy_reqs.clone().sequence_no();
             self.create_packet_response(
                 deps.as_ref(),
                 env,
@@ -49,8 +47,8 @@ impl<'a> CwCallservice<'a> {
         }
 
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: proxy_reqs.clone().unwrap().to().to_string(),
-            msg: cosmwasm_std::Binary(proxy_reqs.unwrap().data().to_owned()),
+            contract_addr: proxy_reqs.clone().to().to_string(),
+            msg: cosmwasm_std::Binary(proxy_reqs.data().to_owned()),
             funds: info.funds,
         });
 

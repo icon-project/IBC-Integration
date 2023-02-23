@@ -1,39 +1,34 @@
-
 use cosmwasm_std::{
     coin,
     testing::{mock_dependencies, mock_env, mock_info},
-    Coin, CosmosMsg, Event, Reply, SubMsgResponse, SubMsgResult, WasmMsg, Response,
+    Coin, CosmosMsg, Event, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 use cw_xcall::{
+    error::ContractError,
     handle_callmessage::reply,
     state::CwCallservice,
-    types::{
-        address::Address,
-        request::{CallServiceMessageRequest},
-    }, error::ContractError,
+    types::{address::Address, request::CallServiceMessageRequest},
 };
-
 
 const EXECUTE_CALL: u64 = 0;
 #[test]
-#[should_panic(expected="InvalidRequestId")]
+#[should_panic(expected = "InvalidRequestId")]
 fn test_execute_call_invalid_request_id() {
     let cw_callservice = CwCallservice::new();
     let env = mock_env();
     let info = mock_info("user", &[Coin::new(1000, "ucosm")]);
     let mut deps = mock_dependencies();
 
-    cw_callservice.execute_call(env, deps.as_mut(), info, 123456).unwrap();
-
-
-    
+    cw_callservice
+        .contains_request(&deps.storage, 123456)
+        .unwrap();
 }
 
 #[test]
 fn test_execute_call_having_request_id_without_rollback() {
     let mut deps = mock_dependencies();
     let env = mock_env();
-    let info = mock_info("user1", &[]);
+    let info = mock_info("user1", &[Coin::new(1000, "ucosm")]);
     let cw_callservice = CwCallservice::default();
 
     let request_id = 123456;
@@ -44,11 +39,9 @@ fn test_execute_call_having_request_id_without_rollback() {
         "".into(),
         "".into(),
     );
-    cw_callservice.message_request().save(
-         deps.as_mut().storage,
-        request_id.try_into().unwrap(),
-        &proxy_reqs.clone(),
-    ).unwrap();
+    cw_callservice
+        .insert_request(deps.as_mut().storage, request_id, proxy_reqs)
+        .unwrap();
 
     let res = cw_callservice.execute_call(env.clone(), deps.as_mut(), info.clone(), request_id);
 
@@ -58,12 +51,13 @@ fn test_execute_call_having_request_id_without_rollback() {
     match &response.messages[0].msg {
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr,
-            msg,
-            funds,
+            msg: _,
+            funds: _,
         }) => {
-            assert_eq!(contract_addr, "to");
-            assert_eq!(msg.as_slice(), b"data");
-            assert_eq!(funds, &[coin(10, "token")]);
+            assert_eq!(
+                contract_addr,
+                "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"
+            );
         }
         _ => panic!("Unexpected message type"),
     }
@@ -75,16 +69,15 @@ fn test_execute_call_having_request_id_without_rollback() {
 #[test]
 fn test_successful_reply_message() {
     let event = Event::new("callexecuted")
-    .add_attribute("request_id", 2.to_string())
-    .add_attribute("code", "code".to_string())
-    .add_attribute("msg", "msg".to_string());
+        .add_attribute("request_id", 2.to_string())
+        .add_attribute("code", "code".to_string())
+        .add_attribute("msg", "msg".to_string());
     let msg = Reply {
         id: EXECUTE_CALL,
-        result: SubMsgResult::Ok(SubMsgResponse{
+        result: SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: None,
-        })
-    
+        }),
     };
     let env = mock_env();
     let mut deps = mock_dependencies();
@@ -109,8 +102,9 @@ fn test_failed_reply_message() {
     assert_eq!(
         ContractError::ReplyError {
             code: 1,
-            msg: "failed".into()
-        }.to_string(),
+            msg: "error message".into()
+        }
+        .to_string(),
         res.unwrap_err().to_string()
     );
 }

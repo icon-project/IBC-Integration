@@ -27,6 +27,8 @@ pub enum ContractError {
     OwnerAlreadyExist,
     #[error("Admin Not Exist")]
     AdminNotExist,
+    #[error("InvalidRequestId {id}")]
+    InvalidRequestId { id: u128 },
 }
 
 #[derive(Error, Debug)]

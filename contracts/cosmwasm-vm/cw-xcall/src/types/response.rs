@@ -42,15 +42,14 @@ impl CallServiceMessageReponse {
         &self.message
     }
 
-    pub fn set_fields(&mut self, sequence_no: u128,response_code: CallServiceResponseType,message: Vec<u8>){
-
+    pub fn set_fields(
+        &mut self,
+        sequence_no: u128,
+        response_code: CallServiceResponseType,
+        message: Vec<u8>,
+    ) {
         self.sequence_no.clone_from(&sequence_no);
         self.response_code = response_code;
         self.message = message
     }
-
-
-
 }
-
-
