@@ -1,15 +1,51 @@
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::IbcEndpoint;
 use cw_storage_plus::{Item, Map};
 
 use crate::types::{
-    address::Address, request::CallServiceMessageRequest, stroage_keys::StorageKey,
+    address::Address, call_request::CallRequest, request::CallServiceMessageRequest,
+    stroage_keys::StorageKey,
 };
 
+pub const MAX_DATA_SIZE: u64 = 2048;
+pub const MAX_ROLLBACK_SIZE: u64 = 1024;
+
+#[cw_serde]
+pub struct IbcConfig {
+    sequence: u128,
+    src: IbcEndpoint,
+    dst: IbcEndpoint,
+}
+
+impl IbcConfig {
+    pub fn new(src: IbcEndpoint, dst: IbcEndpoint) -> Self {
+        Self {
+            src,
+            dst,
+            sequence: 0,
+        }
+    }
+    pub fn src_endpoint(&self) -> &IbcEndpoint {
+        &self.src
+    }
+    pub fn dst_endpoint(&self) -> &IbcEndpoint {
+        &self.dst
+    }
+    pub fn sequence(&self) -> u128 {
+        self.sequence
+    }
+    pub fn next_sequence(&self) -> Option<u128> {
+        self.sequence.checked_add(1)
+    }
+}
 pub struct CwCallservice<'a> {
     last_sequence_no: Item<'a, u128>,
     last_request_id: Item<'a, u128>,
     owner: Item<'a, Address>,
     admin: Item<'a, Address>,
     message_request: Map<'a, u128, CallServiceMessageRequest>,
+    requests: Map<'a, u128, CallRequest>,
+    ibc_config: Item<'a, IbcConfig>,
 }
 
 impl<'a> Default for CwCallservice<'a> {
@@ -26,6 +62,8 @@ impl<'a> CwCallservice<'a> {
             owner: Item::new(StorageKey::Owner.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
             message_request: Map::new(StorageKey::MessageRequest.as_str()),
+            requests: Map::new(StorageKey::Requests.as_str()),
+            ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
         }
     }
 
@@ -47,5 +85,13 @@ impl<'a> CwCallservice<'a> {
 
     pub fn message_request(&self) -> &Map<'a, u128, CallServiceMessageRequest> {
         &self.message_request
+    }
+
+    pub fn requests(&self) -> &Map<'a, u128, CallRequest> {
+        &self.requests
+    }
+
+    pub fn ibc_config(&self) -> &Item<'a, IbcConfig> {
+        &self.ibc_config
     }
 }

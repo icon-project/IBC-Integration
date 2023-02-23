@@ -11,15 +11,21 @@ impl Display for Address {
     }
 }
 
-impl Address {
-    pub fn from_str(str: &str) -> Address {
-        Address(str.to_string())
+impl From<&str> for Address {
+    fn from(value: &str) -> Self {
+        Address(value.to_string())
     }
-    pub fn from_bytes(address: &[u8]) -> Result<Address, StdError> {
-        let address = String::from_vec(address.to_vec())?;
-        Ok(Address(address))
+}
+
+impl From<&String> for Address {
+    fn from(value: &String) -> Self {
+        Address(value.to_string())
     }
-    pub fn new(adr: String) -> Self {
-        Address(adr)
+}
+
+impl From<&[u8]> for Address {
+    fn from(value: &[u8]) -> Self {
+        let address = String::from_vec(value.to_vec()).unwrap();
+        Address(address)
     }
 }
