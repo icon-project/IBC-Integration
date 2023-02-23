@@ -3,7 +3,7 @@ use cosmwasm_std::IbcEndpoint;
 use cw_storage_plus::{Item, Map};
 
 use crate::types::{
-    address::Address, request::CallServiceMessageRequest, stroage_keys::StorageKey,
+    address::Address, request::CallServiceMessageRequest, stroage_keys::StorageKey, call_request::CallRequest,
 };
 #[cw_serde]
 pub struct IbcConfig {

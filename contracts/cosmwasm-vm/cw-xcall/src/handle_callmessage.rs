@@ -9,6 +9,7 @@ use cosmwasm_std::{
 };
 
 const EXECUTE_CALL: u64 = 0;
+const 
 
 impl<'a> CwCallservice<'a> {
     pub fn execute_call(
@@ -24,8 +25,8 @@ impl<'a> CwCallservice<'a> {
             .unwrap();
 
         assert!(proxy_reqs.is_none(), "InvalidRequestId");
-        self.message_request()
-            .remove(deps.storage, request_id.try_into().unwrap());
+         self.message_request()
+            .remove(deps.storage, request_id);
 
         let network_address = proxy_reqs.clone().unwrap().from().to_string();
 
