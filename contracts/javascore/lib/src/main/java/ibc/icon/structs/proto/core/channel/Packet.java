@@ -3,6 +3,10 @@ package ibc.icon.structs.proto.core.channel;
 import java.math.BigInteger;
 
 import ibc.icon.structs.proto.core.client.Height;
+import score.ByteArrayObjectWriter;
+import score.Context;
+import score.ObjectReader;
+import score.ObjectWriter;
 
 // Packet defines a type that carries data across different chains through IBC
 public class Packet {
@@ -24,6 +28,57 @@ public class Packet {
     public Height timeoutHeight;
     // block timestamp (in nanoseconds) after which the packet times out
     public BigInteger timeoutTimestamp;
+
+    public static void writeObject(ObjectWriter writer, Packet obj) {
+        obj.writeObject(writer);
+    }
+
+    public static Packet readObject(ObjectReader reader) {
+        Packet obj = new Packet();
+        reader.beginList();
+        obj.sequence = reader.readBigInteger();
+        obj.sourcePort = reader.readString();
+        obj.sourceChannel = reader.readString();
+        obj.destinationPort = reader.readString();
+        obj.destinationChannel = reader.readString();
+        obj.data = reader.readString();
+
+        Height timeoutHeight = new Height();
+        timeoutHeight.setRevisionNumber(reader.readBigInteger());
+        timeoutHeight.setRevisionHeight(reader.readBigInteger());
+
+        obj.timeoutHeight = timeoutHeight;
+        obj.timeoutTimestamp = reader.readBigInteger();
+        reader.end();
+
+        return obj;
+    }
+
+    public void writeObject(ObjectWriter writer) {
+        writer.beginList(9);
+        writer.write(this.sequence);
+        writer.write(this.sourcePort);
+        writer.write(this.sourceChannel);
+        writer.write(this.destinationPort);
+        writer.write(this.destinationChannel);
+        writer.write(this.data);
+        writer.write(this.timeoutHeight.getRevisionNumber());
+        writer.write(this.timeoutHeight.getRevisionHeight());
+        writer.write(this.timeoutTimestamp);
+
+        writer.end();
+    }
+
+    public static Packet fromBytes(byte[] bytes) {
+        ObjectReader reader = Context.newByteArrayObjectReader("RLPn", bytes);
+        return Packet.readObject(reader);
+    }
+
+    public byte[] toBytes() {
+        ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
+        Packet.writeObject(writer, this);
+        return writer.toByteArray();
+    }
 
     public BigInteger getSequence() {
         return sequence;

@@ -57,7 +57,7 @@ public class ProtoStorageTest extends TestBase {
             packetDB.set(packet);
         }
 
-        public Packet getPacketChannel() {
+        public Packet getPacket() {
             return packetDB.get();
         }
     }
