@@ -1,4 +1,4 @@
-use cosmwasm_std::{ensure, Addr, Deps, QuerierWrapper};
+use cosmwasm_std::{ensure, Addr, Deps, Querier, QuerierWrapper};
 
 use crate::{
     error::ContractError,
@@ -12,10 +12,8 @@ impl<'a> CwCallservice<'a> {
         address: Addr,
         rollback: &[u8],
     ) -> Result<(), ContractError> {
-        let is_contract = is_contract(deps.querier, address);
-
         ensure!(
-            is_contract || rollback.is_empty(),
+            (is_contract(deps.querier, address) || rollback.is_empty()),
             ContractError::RollbackNotPossible
         );
 
@@ -34,7 +32,7 @@ impl<'a> CwCallservice<'a> {
     pub fn ensure_rollback_length(&self, rollback: &[u8]) -> Result<(), ContractError> {
         ensure!(
             rollback.is_empty() || rollback.len() <= MAX_ROLLBACK_SIZE as usize,
-            ContractError::MaxDataSizeExceeded
+            ContractError::MaxRollbackSizeExceeded
         );
 
         Ok(())
