@@ -4,7 +4,7 @@ use cosmwasm_std::{
     Binary, Coin, CosmosMsg, IbcEndpoint, IbcMsg, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 use cw_xcall::{
-    state::{CwCallservice, IbcConfig, EXECUTE_CALL},
+    state::{CwCallservice, IbcConfig, EXECUTE_CALL, EXECUTE_ROLLBACK},
     types::{
         address::Address,
         message::{CallServiceMessage, CallServiceMessageType},
@@ -68,7 +68,7 @@ fn test_execute_call_having_request_id_without_rollback() {
         .unwrap();
 
     let res = cw_callservice
-        .execute_call(env.clone(), deps.as_mut(), info.clone(), request_id)
+        .execute_call( deps.as_mut(), info.clone(), request_id)
         .unwrap();
 
     match &res.messages[0].msg {

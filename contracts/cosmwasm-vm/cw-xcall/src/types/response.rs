@@ -3,12 +3,16 @@ use cosmwasm_std::Binary;
 use super::*;
 
 #[cw_serde]
-#[derive(Default)]
+#[derive(Default,Copy)]
 pub enum CallServiceResponseType {
     CallServiceIbcError = -2,
     CallServiceResponseFailure,
     #[default]
     CallServiceResponseSucess,
+}
+
+pub fn to_int(response_type: &CallServiceResponseType) -> i8{
+    *response_type as i8
 }
 
 #[cw_serde]

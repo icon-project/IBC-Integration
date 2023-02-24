@@ -22,3 +22,10 @@ pub fn event_xcall_message_sent(
         .add_attribute("req_id", req_id.to_string())
         .add_attribute("data", to_binary(data).unwrap().to_string())
 }
+
+pub fn event_rollback_executed(sequence_no: u128, code: i8, msg: &str) -> Event {
+    Event::new("callexecuted")
+        .add_attribute("request_id", sequence_no.to_string())
+        .add_attribute("code", code.to_string())
+        .add_attribute("msg", msg.to_string())
+}

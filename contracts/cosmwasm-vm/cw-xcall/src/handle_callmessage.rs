@@ -1,21 +1,21 @@
 use crate::{
     error::ContractError,
-    events::event_call_executed,
-    state::{CwCallservice, EXECUTE_CALL},
+    events::{event_call_executed, event_rollback_executed},
+    state::{CwCallservice, EXECUTE_CALL, EXECUTE_ROLLBACK},
     types::{
         message::{CallServiceMessage, CallServiceMessageType},
-        response::{CallServiceMessageReponse, CallServiceResponseType},
+        response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
     },
 };
 use cosmwasm_std::{
     to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout, MessageInfo,
     Reply, Response, SubMsg, WasmMsg,
 };
+use schemars::_serde_json::to_string;
 
 impl<'a> CwCallservice<'a> {
     pub fn execute_call(
         &self,
-        env: Env,
         deps: DepsMut,
         info: MessageInfo,
         request_id: u128,
@@ -26,17 +26,6 @@ impl<'a> CwCallservice<'a> {
 
         self.ensure_request_not_null(request_id, &proxy_reqs)
             .unwrap();
-
-        let sequence_no = proxy_reqs.sequence_no();
-
-        let msg_res = CallServiceMessageReponse::new(
-            sequence_no,
-            CallServiceResponseType::CallServiceResponseSucess,
-            Binary::from_base64("").unwrap(),
-        );
-
-        let data = to_binary(&msg_res).unwrap();
-        self.create_packet_response(deps.as_ref(), env, data);
 
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: proxy_reqs.to().to_string(),
@@ -115,5 +104,65 @@ impl<'a> CwCallservice<'a> {
             .add_attribute("action", "call_message")
             .add_attribute("method", "execute_callback")
             .add_event(responses.1))
+    }
+
+    pub fn execute_rollback(
+        &self,
+        deps: DepsMut,
+        sequence_no: u128,
+        info: MessageInfo,
+    ) -> Result<Response, ContractError> {
+        let call_request = self.query_request(deps.storage, sequence_no)?;
+        self.enusre_call_request_not_null(sequence_no, &call_request)
+            .unwrap();
+        self.ensure_rollback_enabled(call_request.enabled())
+            .unwrap();
+        let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: call_request.to().to_string(),
+            msg: call_request.rollback().into(), //TODO : Need to update
+            funds: info.funds,
+        });
+
+        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_ROLLBACK);
+
+        Ok(Response::new()
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "execute_call")
+            .add_submessage(sub_msg))
+    }
+
+    pub fn reply_rollback(&self, deps: Deps, msg: Reply) -> Result<Response, ContractError> {
+        let sequence_no = self.last_sequence_no().load(deps.storage)?;
+
+        let response = match msg.result {
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let message_response = CallServiceMessageReponse::new(
+                    sequence_no,
+                    CallServiceResponseType::CallServiceResponseSucess,
+                    "".as_bytes().into(),
+                );
+                message_response
+            }
+            cosmwasm_std::SubMsgResult::Err(err) => {
+                let error_message = format!("CallService Reverted : {err}");
+                let message_response = CallServiceMessageReponse::new(
+                    sequence_no,
+                    CallServiceResponseType::CallServiceResponseFailure,
+                    error_message.as_bytes().into(),
+                );
+                message_response
+            }
+        };
+
+        let event = event_rollback_executed(
+            sequence_no,
+            to_int(&response.response_code()),
+            &to_string(response.message()).unwrap(),
+        );
+
+        Ok(Response::new()
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "execute_rollback")
+            .add_event(event))
     }
 }
