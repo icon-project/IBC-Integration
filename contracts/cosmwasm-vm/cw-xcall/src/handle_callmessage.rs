@@ -119,7 +119,7 @@ impl<'a> CwCallservice<'a> {
             .unwrap();
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: call_request.to().to_string(),
-            msg: call_request.rollback().into(), //TODO : Need to update
+            msg: to_binary(call_request.rollback()).unwrap(), //TODO : Need to update
             funds: info.funds,
         });
 
@@ -156,7 +156,7 @@ impl<'a> CwCallservice<'a> {
 
         let event = event_rollback_executed(
             sequence_no,
-            to_int(&response.response_code()),
+            to_int(response.response_code()),
             &to_string(response.message()).unwrap(),
         );
 
