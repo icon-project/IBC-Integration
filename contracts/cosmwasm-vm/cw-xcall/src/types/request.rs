@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use cosmwasm_std::Binary;
 
 use super::*;
 
@@ -7,8 +7,8 @@ pub struct CallServiceMessageRequest {
     from: Address,
     to: String,
     sequence_no: u128,
-    rollback: Vec<u8>,
-    data: Vec<u8>,
+    rollback: Binary,
+    data: Binary,
 }
 
 impl CallServiceMessageRequest {
@@ -16,8 +16,8 @@ impl CallServiceMessageRequest {
         from: Address,
         to: String,
         sequence_no: u128,
-        rollback: Vec<u8>,
-        data: Vec<u8>,
+        rollback: Binary,
+        data: Binary,
     ) -> Self {
         Self {
             from,
@@ -46,36 +46,5 @@ impl CallServiceMessageRequest {
 
     pub fn data(&self) -> &[u8] {
         &self.data
-    }
-}
-
-#[cw_serde]
-pub struct CSMessageRequests(HashMap<u128, CallServiceMessageRequest>);
-
-impl Default for CSMessageRequests {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CSMessageRequests {
-    pub fn new() -> Self {
-        Self(HashMap::new())
-    }
-
-    pub fn add(&mut self, sequence_no: u128, cs_message_request: CallServiceMessageRequest) {
-        self.0.insert(sequence_no, cs_message_request);
-    }
-
-    pub fn remove(&mut self, sequence_no: u128) {
-        self.0.remove(&sequence_no);
-    }
-
-    pub fn contains(&self, sequence_no: u128) -> bool {
-        self.0.contains_key(&sequence_no)
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
     }
 }

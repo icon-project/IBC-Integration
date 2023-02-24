@@ -1,18 +1,31 @@
+use std::fmt::Display;
+
 use super::*;
 
 #[cw_serde]
-#[derive(Hash, Eq)]
 pub struct Address(String);
 
-impl Address {
-    pub fn from_string(str: String) -> Address {
-        Address(str)
+impl Display for Address {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
-    pub fn from_bytes(address: &[u8]) -> Result<Address, StdError> {
-        let address = String::from_vec(address.to_vec())?;
-        Ok(Address(address))
+}
+
+impl From<&str> for Address {
+    fn from(value: &str) -> Self {
+        Address(value.to_string())
     }
-    pub fn new(adr: String) -> Self {
-        Address(adr)
+}
+
+impl From<&String> for Address {
+    fn from(value: &String) -> Self {
+        Address(value.to_string())
+    }
+}
+
+impl From<&[u8]> for Address {
+    fn from(value: &[u8]) -> Self {
+        let address = String::from_vec(value.to_vec()).unwrap();
+        Address(address)
     }
 }

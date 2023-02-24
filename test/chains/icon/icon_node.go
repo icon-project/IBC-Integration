@@ -298,3 +298,26 @@ func (tn *IconNode) WriteFile(ctx context.Context, content []byte, relPath strin
 	fw := dockerutil.NewFileWriter(tn.logger(), tn.DockerClient, tn.TestName)
 	return fw.WriteFile(ctx, tn.VolumeName, relPath, content)
 }
+
+func (in *IconNode) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
+	uri := "http://" + in.HostRPCPort + "/api/v3"
+	if params != "" {
+		out, _, _ := in.ExecBin(ctx, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--param", params, "--uri", uri)
+		return string(out), nil
+	} else {
+		out, _, _ := in.ExecBin(ctx, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", uri)
+		return string(out), nil
+	}
+
+}
+
+func (in *IconNode) CreateKey(ctx context.Context, password string) error {
+	in.lock.Lock()
+	defer in.lock.Unlock()
+
+	_, _, err := in.ExecBin(ctx,
+		"ks", "gen",
+		"--password", password,
+	)
+	return err
+}

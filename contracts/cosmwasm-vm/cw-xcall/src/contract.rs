@@ -1,51 +1,49 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult,
+};
 use cw2::set_contract_version;
 
-use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{CallService, CALLSERVICE};
-use crate::types::address::Address;
+use crate::{
+    error::ContractError,
+    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    state::{CwCallservice, EXECUTE_ROLLBACK, EXECUTE_CALL},
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-xcall";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
-    deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+impl<'a> CwCallservice<'a> {
+    pub fn instantiate(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        msg: InstantiateMsg,
+    ) -> Result<Response, ContractError> {
+        unimplemented!()
+    }
 
-    let state = CallService::new(
-        0,
-        0,
-        Address::from_string("owner".to_string()),
-        Address::from_string("admin".to_string()),
-    );
+    pub fn execute(
+        &mut self,
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        msg: ExecuteMsg,
+    ) -> Result<Response, ContractError> {
+        unimplemented!()
+    }
 
-    CALLSERVICE.save(deps.storage, &state)?;
-    Ok(Response::new().add_attribute("method", "instantiate"))
+    pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+        unimplemented!()
+    }
+
+    pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
+        match msg.id {
+            EXECUTE_CALL => self.reply_message_sent(deps.as_ref(), env, msg),
+            EXECUTE_ROLLBACK => self.reply_rollback(deps.as_ref(),msg),
+            _ => Err(ContractError::Unauthorized {}),
+        }
+    }
+
 }
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
-    unimplemented!();
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-    unimplemented!()
-}
-
-#[cfg(test)]
-mod tests {}
