@@ -1,3 +1,4 @@
+use cosmwasm::errors::Base64Err;
 use cosmwasm_std::{
     from_binary,
     testing::{mock_dependencies, mock_env, mock_info},
@@ -15,6 +16,7 @@ use cw_xcall::{
 mod account;
 mod setup;
 
+use schemars::_serde_json::to_string;
 use setup::*;
 
 #[test]
@@ -43,33 +45,48 @@ fn test_execute_call_having_request_id_without_rollback() {
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
         Binary::from(vec![]),
-        Binary::from(vec![]),
+        Binary::from(vec![104, 101, 108, 108, 111]),
     );
     cw_callservice
         .insert_request(deps.as_mut().storage, request_id, proxy_reqs)
         .unwrap();
 
-    let res = cw_callservice.execute_call(env.clone(), deps.as_mut(), info.clone(), request_id);
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
 
-    assert!(res.is_ok());
-    let response = res.unwrap();
-    assert_eq!(response.messages.len(), 1);
-    match &response.messages[0].msg {
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    let ibc_config = IbcConfig::new(src, dst);
+
+    cw_callservice
+        .ibc_config()
+        .save(deps.as_mut().storage, &ibc_config)
+        .unwrap();
+
+    let res = cw_callservice
+        .execute_call(env.clone(), deps.as_mut(), info.clone(), request_id)
+        .unwrap();
+
+    match &res.messages[0].msg {
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr,
-            msg: _,
+            msg,
             funds: _,
         }) => {
             assert_eq!(
                 contract_addr,
                 "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"
             );
+
+            assert_eq!("\"aGVsbG8=\"", to_string(msg).unwrap())
         }
-        _ => panic!("Unexpected message type"),
+        _ => {}
     }
-    assert_eq!(response.attributes.len(), 1);
-    assert_eq!(response.attributes[0].key, "call_message");
-    assert_eq!(response.attributes[0].value, "execute_call");
 }
 
 #[test]

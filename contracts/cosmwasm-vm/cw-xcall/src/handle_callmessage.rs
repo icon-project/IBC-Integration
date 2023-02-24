@@ -40,7 +40,7 @@ impl<'a> CwCallservice<'a> {
 
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: proxy_reqs.to().to_string(),
-            msg: to_binary(proxy_reqs.data()).unwrap(), //TODO : Need to update
+            msg: proxy_reqs.data().into(), //TODO : Need to update
             funds: info.funds,
         });
 
