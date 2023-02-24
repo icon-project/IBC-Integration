@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Binary, DepsMut, Env, Event, IbcMsg, MessageInfo, Response};
+use cosmwasm_std::{to_binary, Binary, DepsMut, Env, IbcMsg, MessageInfo, Response};
 use cosmwasm_std::{IbcTimeout, IbcTimeoutBlock};
 
 use crate::error::ContractError;

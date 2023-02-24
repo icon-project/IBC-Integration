@@ -3,7 +3,7 @@ use cosmwasm_std::{ensure, to_binary, Addr, Deps, QuerierWrapper};
 use crate::{
     error::ContractError,
     state::{CwCallservice, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
-    types::{message, request::CallServiceMessageRequest},
+    types::request::CallServiceMessageRequest,
 };
 
 impl<'a> CwCallservice<'a> {
