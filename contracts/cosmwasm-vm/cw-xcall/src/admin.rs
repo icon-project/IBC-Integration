@@ -1,4 +1,4 @@
-use cosmwasm_std::{Deps, DepsMut, MessageInfo, Response, StdError, Storage};
+use cosmwasm_std::{MessageInfo, Response, StdError, Storage};
 
 use crate::{error::ContractError, state::CwCallservice, types::address::Address};
 

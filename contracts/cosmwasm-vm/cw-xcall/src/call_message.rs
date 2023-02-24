@@ -1,7 +1,8 @@
-use cosmwasm_std::{to_binary, Binary, DepsMut, Env, Event, IbcMsg, MessageInfo, Response};
+use cosmwasm_std::{to_binary, Binary, DepsMut, Env, IbcMsg, MessageInfo, Response};
 use cosmwasm_std::{IbcTimeout, IbcTimeoutBlock};
 
 use crate::error::ContractError;
+use crate::events::event_xcall_message_sent;
 use crate::state::CwCallservice;
 use crate::types::{
     address::Address,
@@ -34,7 +35,7 @@ impl<'a> CwCallservice<'a> {
 
         // TODO : ADD fee logic
 
-        let need_response = rollback.is_empty();
+        let need_response = !rollback.is_empty();
 
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
 
@@ -99,19 +100,4 @@ impl<'a> CwCallservice<'a> {
             timeout,
         })
     }
-}
-
-fn event_xcall_message_sent(
-    sequence_no: u128,
-    from: String,
-    req_id: u128,
-    data: &CallServiceMessage,
-) -> Event {
-    let event = Event::new("xcall_message_sent");
-
-    event
-        .add_attribute("from", from)
-        .add_attribute("sequence_no", sequence_no.to_string())
-        .add_attribute("req_id", req_id.to_string())
-        .add_attribute("data", to_binary(data).unwrap().to_string())
 }

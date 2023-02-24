@@ -21,4 +21,11 @@ impl CallServiceMessage {
             payload,
         }
     }
+
+    pub fn message_type(&self) -> &CallServiceMessageType {
+        &self.message_type
+    }
+    pub fn payload(&self) -> &[u8] {
+        &self.payload
+    }
 }

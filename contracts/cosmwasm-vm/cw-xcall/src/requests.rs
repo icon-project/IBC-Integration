@@ -1,6 +1,10 @@
 use cosmwasm_std::Storage;
 
-use crate::{error::ContractError, state::CwCallservice, types::call_request::CallRequest};
+use crate::{
+    error::ContractError,
+    state::CwCallservice,
+    types::{call_request::CallRequest, request::CallServiceMessageRequest},
+};
 
 impl<'a> CwCallservice<'a> {
     pub fn query_last_sequence_no(&self, store: &dyn Storage) -> Result<u128, ContractError> {
@@ -79,5 +83,43 @@ impl<'a> CwCallservice<'a> {
             Ok(_) => Ok(()),
             Err(err) => Err(ContractError::Std(err)),
         }
+    }
+
+    pub fn contains_request(
+        &self,
+        store: &dyn Storage,
+        request_id: u128,
+    ) -> Result<(), ContractError> {
+        match self.message_request().has(store, request_id) {
+            true => Ok(()),
+            false => Err(ContractError::InvalidRequestId { id: request_id }),
+        }
+    }
+
+    pub fn query_message_request(
+        &self,
+        store: &dyn Storage,
+        request_id: u128,
+    ) -> Result<CallServiceMessageRequest, ContractError> {
+        match self.message_request().load(store, request_id) {
+            Ok(result) => Ok(result),
+            Err(err) => Err(ContractError::Std(err)),
+        }
+    }
+
+    pub fn insert_request(
+        &self,
+        store: &mut dyn Storage,
+        request_id: u128,
+        value: CallServiceMessageRequest,
+    ) -> Result<(), ContractError> {
+        match self.message_request().save(store, request_id, &value) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(ContractError::Std(err)),
+        }
+    }
+
+    pub fn remove_request(&self, store: &mut dyn Storage, request_id: u128) {
+        self.message_request().remove(store, request_id);
     }
 }

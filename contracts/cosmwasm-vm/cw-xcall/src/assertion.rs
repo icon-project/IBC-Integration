@@ -1,8 +1,9 @@
-use cosmwasm_std::{ensure, Addr, Deps, Querier, QuerierWrapper};
+use cosmwasm_std::{ensure, to_binary, Addr, Deps, QuerierWrapper};
 
 use crate::{
     error::ContractError,
     state::{CwCallservice, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
+    types::request::CallServiceMessageRequest,
 };
 
 impl<'a> CwCallservice<'a> {
@@ -37,11 +38,22 @@ impl<'a> CwCallservice<'a> {
 
         Ok(())
     }
+
+    pub fn ensure_request_not_null(
+        &self,
+        req_id: u128,
+        message: &CallServiceMessageRequest,
+    ) -> Result<(), ContractError> {
+        let data = to_binary(message).unwrap();
+        ensure!(
+            !(data.is_empty()),
+            ContractError::InvalidRequestId { id: req_id }
+        );
+
+        Ok(())
+    }
 }
 
 fn is_contract(querier: QuerierWrapper, address: Addr) -> bool {
-    match querier.query_wasm_contract_info(address) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+    querier.query_wasm_contract_info(address).is_ok()
 }

@@ -9,6 +9,7 @@ use crate::types::{
 
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
+pub const EXECUTE_CALL: u64 = 0;
 
 #[cw_serde]
 pub struct IbcConfig {

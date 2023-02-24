@@ -1,4 +1,6 @@
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult,
+};
 use cw2::set_contract_version;
 
 use crate::{
@@ -34,5 +36,12 @@ impl<'a> CwCallservice<'a> {
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         unimplemented!()
+    }
+
+    pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
+        match msg.id {
+            EXECUTE_CALL => self.reply_message_sent(deps.as_ref(), env, msg),
+            _ => Err(ContractError::Unauthorized {}),
+        }
     }
 }
