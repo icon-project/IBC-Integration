@@ -1,12 +1,11 @@
 use cosmwasm_std::{entry_point, Never};
 use cosmwasm_std::{
-    from_binary, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse,
+    DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse,
 };
 
 use crate::ack::make_ack_fail;
-use crate::msg::IbcExecuteMsg;
 use crate::state::{CwCallservice, IbcConfig};
 use crate::ContractError;
 
@@ -30,10 +29,10 @@ pub fn ibc_channel_connect(
 ) -> Result<IbcBasicResponse, ContractError> {
     validate_order_and_version(msg.channel(), msg.counterparty_version())?;
 
-    let soruce = msg.channel().endpoint.clone();
+    let source = msg.channel().endpoint.clone();
     let destination = msg.channel().counterparty_endpoint.clone();
 
-    let ibc_config = IbcConfig::new(soruce, destination);
+    let ibc_config = IbcConfig::new(source, destination);
 
     let mut call_service = CwCallservice::default();
 
@@ -117,8 +116,8 @@ fn do_ibc_packet_receive(
     _env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, ContractError> {
-    let _channel = msg.packet.dest.channel_id;
-    let _msg: IbcExecuteMsg = from_binary(&msg.packet.data)?;
+    let _channel = msg.packet.dest.channel_id.clone();
+
     Ok(IbcReceiveResponse::new())
 }
 #[cfg_attr(not(feature = "library"), entry_point)]

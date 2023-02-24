@@ -1,16 +1,17 @@
-use super::address::{self, Address};
+use super::address::Address;
+use cosmwasm_std::Binary;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct CallRequest {
     from: Address,
     to: String,
-    rollback: Vec<u8>,
+    rollback: Binary,
     enabled: bool,
 }
 
 impl CallRequest {
-    pub fn new(from: Address, to: String, rollback: Vec<u8>, enabled: bool) -> Self {
+    pub fn new(from: Address, to: String, rollback: Binary, enabled: bool) -> Self {
         Self {
             from,
             to,
@@ -20,18 +21,18 @@ impl CallRequest {
     }
 
     pub fn from(&self) -> &Address {
-        &self.from()
+        &self.from
     }
 
     pub fn to(&self) -> &String {
-        &self.to()
+        &self.to
     }
 
-    pub fn rollback(&self) -> &Vec<u8> {
-        &self.rollback()
+    pub fn rollback(&self) -> &[u8] {
+        &self.rollback
     }
 
     pub fn enabled(&self) -> &bool {
-        &self.enabled()
+        &self.enabled
     }
 }

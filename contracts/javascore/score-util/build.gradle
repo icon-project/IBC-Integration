@@ -1,5 +1,7 @@
 apply plugin: 'java-library'
 
+optimizedJar.enabled = false
+
 dependencies {
     compileOnly("foundation.icon:javaee-api:$javaeeVersion")
     implementation("foundation.icon:javaee-scorex:$scorexVersion")
