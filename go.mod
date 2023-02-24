@@ -5,13 +5,12 @@ go 1.19
 require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/avast/retry-go/v4 v4.0.4
-	github.com/cosmos/cosmos-sdk v0.46.7
+	github.com/cosmos/cosmos-sdk v0.42.11
 	github.com/docker/docker v20.10.19+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/icon-project/icon-bridge v0.0.11
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
-	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230208222759-0b3a8a07775d
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.1.0
@@ -35,7 +34,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/StirlingMarketingGroup/go-namecase v1.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
-	github.com/aws/aws-sdk-go v1.44.76 // indirect
+	github.com/aws/aws-sdk-go v1.44.122 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
@@ -53,8 +52,7 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
-	github.com/cosmos/iavl v0.19.4 // indirect
-	github.com/cosmos/ibc-go/v6 v6.1.0 // indirect
+	github.com/cosmos/iavl v0.17.3 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -104,7 +102,7 @@ require (
 	github.com/gtank/ristretto255 v0.1.2 // indirect
 	github.com/haltingstate/secp256k1-go v0.0.0-20151224084235-572209b26df6 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-getter v1.6.1 // indirect
+	github.com/hashicorp/go-getter v1.7.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
@@ -138,7 +136,7 @@ require (
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
+	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
@@ -187,7 +185,7 @@ require (
 	github.com/tendermint/tendermint v0.34.24 // indirect
 	github.com/tendermint/tm-db v0.6.7 // indirect
 	github.com/tinylib/msgp v1.1.2 // indirect
-	github.com/ulikunitz/xz v0.5.8 // indirect
+	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/vedhavyas/go-subkey v1.0.3 // indirect
