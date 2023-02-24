@@ -78,7 +78,7 @@ impl<'a> CwCallservice<'a> {
         );
 
         IbcMsg::SendPacket {
-            channel_id: ibc_config.dsr_endpoint().channel_id.clone(),
+            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
             data: to_binary(&data).unwrap(),
             timeout,
         }

@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     coin,
     testing::{mock_dependencies, mock_env, mock_info},
-    Coin, CosmosMsg, Event, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
+    to_binary, Binary, Coin, CosmosMsg, Event, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 use cw_xcall::{
     error::ContractError,
@@ -33,11 +33,11 @@ fn test_execute_call_having_request_id_without_rollback() {
 
     let request_id = 123456;
     let proxy_reqs = CallServiceMessageRequest::new(
-        Address::from_str(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
+        Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        "".into(),
-        "".into(),
+        Binary::from(vec![]),
+        Binary::from(vec![]),
     );
     cw_callservice
         .insert_request(deps.as_mut().storage, request_id, proxy_reqs)

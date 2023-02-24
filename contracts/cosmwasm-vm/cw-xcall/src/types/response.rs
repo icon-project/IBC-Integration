@@ -48,6 +48,6 @@ impl CallServiceMessageReponse {
     ) {
         self.sequence_no.clone_from(&sequence_no);
         self.response_code = response_code;
-        self.message = message
+        self.message = message.into()
     }
 }
