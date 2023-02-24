@@ -1,4 +1,3 @@
-use cosmwasm::errors::Base64Err;
 use cosmwasm_std::{
     from_binary,
     testing::{mock_dependencies, mock_env, mock_info},
@@ -213,8 +212,6 @@ fn check_for_rollback_in_response() {
         .unwrap();
 
     let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
-
-    // let result = CosmosMsg::Ibc(cosmwasm_std::IbcMsg::SendPacket { channel_id: (), data: (), timeout: () });
 
     match response.messages[0].msg.clone() {
         CosmosMsg::Ibc(IbcMsg::SendPacket {
