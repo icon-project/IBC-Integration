@@ -31,6 +31,8 @@ pub enum ContractError {
     MaxDataSizeExceeded,
     #[error("MaxRollbackSizeExceeded")]
     MaxRollbackSizeExceeded,
+    #[error("NotExistRequestId {id}")]
+    NotExistRequestId { id: u128 },
     #[error("InvalidRequestId {id}")]
     InvalidRequestId { id: u128 },
 }

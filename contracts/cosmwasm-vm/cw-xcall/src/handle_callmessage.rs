@@ -1,14 +1,16 @@
 use crate::{
     error::ContractError,
-    state::CwCallservice,
-    types::response::{CallServiceMessageReponse, CallServiceResponseType},
+    events::event_call_executed,
+    state::{CwCallservice, EXECUTE_CALL},
+    types::{
+        message::{CallServiceMessage, CallServiceMessageType},
+        response::{CallServiceMessageReponse, CallServiceResponseType},
+    },
 };
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcMsg,
-    IbcTimeout, MessageInfo, Reply, Response, SubMsg, WasmMsg,
+    to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout, MessageInfo,
+    Reply, Response, SubMsg, WasmMsg,
 };
-
-const EXECUTE_CALL: u64 = 0;
 
 impl<'a> CwCallservice<'a> {
     pub fn execute_call(
@@ -22,90 +24,96 @@ impl<'a> CwCallservice<'a> {
             .query_message_request(deps.storage, request_id)
             .unwrap();
 
-        self.contains_request(deps.storage, request_id);
+        self.ensure_request_not_null(request_id, &proxy_reqs)
+            .unwrap();
 
-        self.remove_request(deps.storage, request_id);
+        let sequence_no = proxy_reqs.sequence_no();
 
-        let network_address = proxy_reqs.clone().from().to_string();
-
-        let mut msgRes = CallServiceMessageReponse::default();
-
-        msgRes.set_fields(
-            proxy_reqs.clone().sequence_no(),
+        let msg_res = CallServiceMessageReponse::new(
+            sequence_no,
             CallServiceResponseType::CallServiceResponseSucess,
-            " ".into(),
+            Binary::from_base64("").unwrap(),
         );
 
-        if !proxy_reqs.clone().rollback().is_empty() {
-            let sequence_no: u128 = proxy_reqs.clone().sequence_no();
-            self.create_packet_response(
-                deps.as_ref(),
-                env,
-                sequence_no,
-                to_binary(&msgRes).unwrap(),
-            );
-        }
+        let data = to_binary(&msg_res).unwrap();
+        self.create_packet_response(deps.as_ref(), env, data);
 
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: proxy_reqs.clone().to().to_string(),
-            msg: cosmwasm_std::Binary(proxy_reqs.data().to_owned()),
+            contract_addr: proxy_reqs.to().to_string(),
+            msg: to_binary(proxy_reqs.data()).unwrap(), //TODO : Need to update
             funds: info.funds,
         });
 
         let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_CALL);
 
         Ok(Response::new()
-            .add_attribute("call_message", "execute_call")
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "execute_call")
             .add_submessage(sub_msg))
     }
 
-    pub fn create_packet_response(
-        &self,
-        deps: Deps,
-        env: Env,
-        sequence_no: u128,
-        data: Binary,
-    ) -> IbcMsg {
+    pub fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
         let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
 
         let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
 
-        let mut msgRes = CallServiceMessageReponse::default();
-        msgRes.set_fields(
-            sequence_no,
-            CallServiceResponseType::CallServiceResponseSucess,
-            "msgRes".into(),
-        );
-
         IbcMsg::SendPacket {
             channel_id: ibc_config.dst_endpoint().channel_id.clone(),
-            data: to_binary(&data).unwrap(),
+            data,
             timeout,
         }
     }
-}
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
-    match msg.id {
-        EXECUTE_CALL => reply_message_sent(msg),
-        id => Err(ContractError::Unauthorized {}),
-    }
-}
+    pub fn reply_message_sent(
+        &self,
+        deps: Deps,
+        env: Env,
+        msg: Reply,
+    ) -> Result<Response, ContractError> {
+        let req_id = self.last_request_id().load(deps.storage)?;
+        let request = self.message_request().load(deps.storage, req_id)?;
 
-pub fn reply_message_sent(msg: Reply) -> Result<Response, ContractError> {
-    match msg.result {
-        cosmwasm_std::SubMsgResult::Ok(res) => Ok(Response::new()
-            .add_attribute("call_message", "reply_message_sent")
-            .add_events(res.events)),
-        cosmwasm_std::SubMsgResult::Err(err) => {
-            Err(ContractError::ReplyError { code: 1, msg: err })
+        let responses = match msg.result {
+            cosmwasm_std::SubMsgResult::Ok(res) => {
+                let code = 0;
+
+                let message_response = CallServiceMessageReponse::new(
+                    request.sequence_no(),
+                    CallServiceResponseType::CallServiceResponseSucess,
+                    "".as_bytes().into(),
+                );
+                let event = event_call_executed(req_id, code, "");
+                (message_response, event)
+            }
+            cosmwasm_std::SubMsgResult::Err(err) => {
+                let code = -1;
+                let error_message = format!("CallService Reverted : {err}");
+                let message_response = CallServiceMessageReponse::new(
+                    request.sequence_no(),
+                    CallServiceResponseType::CallServiceResponseFailure,
+                    error_message.as_bytes().into(),
+                );
+                let event = event_call_executed(req_id, code, &error_message);
+                (message_response, event)
+            }
+        };
+
+        if !request.rollback().is_empty() {
+            let message = CallServiceMessage::new(
+                CallServiceMessageType::CallServiceResponse,
+                to_binary(&responses.0).unwrap(),
+            );
+
+            let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
+
+            return Ok(Response::new()
+                .add_attribute("action", "call_message")
+                .add_attribute("method", "execute_callback")
+                .add_message(packet));
         }
+        Ok(Response::new()
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "execute_callback")
+            .add_event(responses.1))
     }
-}
-pub fn call_executed(request_id: u128, code: u8, msg: String) -> Event {
-    Event::new("callexecuted")
-        .add_attribute("request_id", request_id.to_string())
-        .add_attribute("code", code.to_string())
-        .add_attribute("msg", msg.to_string())
 }
