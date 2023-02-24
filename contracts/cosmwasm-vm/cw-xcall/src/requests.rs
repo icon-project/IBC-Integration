@@ -122,4 +122,21 @@ impl<'a> CwCallservice<'a> {
     pub fn remove_request(&self, store: &mut dyn Storage, request_id: u128) {
         self.message_request().remove(store, request_id);
     }
+
+    pub fn query_request(
+        &self,
+        store: &dyn Storage,
+        sequence: u128,
+    ) -> Result<CallRequest, ContractError> {
+        match self.requests().may_load(store, sequence)? {
+            Some(request) => Ok(request),
+            None => Err(ContractError::InvalidSequenceId { id: sequence }),
+        }
+    }
+
+    pub fn containes_request(&self,store: &dyn Storage,sequence: u128) ->bool{
+        self.requests().load(store,sequence).is_ok()
+    }
+
+
 }

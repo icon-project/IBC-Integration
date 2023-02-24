@@ -3,7 +3,7 @@ use cosmwasm_std::{ensure, to_binary, Addr, Deps, QuerierWrapper};
 use crate::{
     error::ContractError,
     state::{CwCallservice, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
-    types::request::CallServiceMessageRequest,
+    types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
 
 impl<'a> CwCallservice<'a> {
@@ -49,6 +49,26 @@ impl<'a> CwCallservice<'a> {
             !(data.is_empty()),
             ContractError::InvalidRequestId { id: req_id }
         );
+
+        Ok(())
+    }
+
+    pub fn enusre_call_request_not_null(
+        &self,
+        sequence_no: u128,
+        message: &CallRequest,
+    ) -> Result<(), ContractError> {
+        let data = to_binary(message).unwrap();
+        ensure!(
+            !(data.is_empty()),
+            ContractError::InvalidSequenceId { id: sequence_no }
+        );
+
+        Ok(())
+    }
+
+    pub fn ensure_rollback_enabled(&self, enabled: bool) -> Result<(), ContractError> {
+        ensure!(enabled, ContractError::RollbackNotEnabled);
 
         Ok(())
     }

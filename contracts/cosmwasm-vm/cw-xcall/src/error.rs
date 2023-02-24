@@ -35,4 +35,8 @@ pub enum ContractError {
     NotExistRequestId { id: u128 },
     #[error("InvalidRequestId {id}")]
     InvalidRequestId { id: u128 },
+    #[error("RollbackNotEnabled")]
+    RollbackNotEnabled,
+    #[error("InvalidSequenceId {id}")]
+    InvalidSequenceId { id: u128 },
 }

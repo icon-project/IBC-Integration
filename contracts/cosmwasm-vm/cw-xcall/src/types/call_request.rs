@@ -32,7 +32,7 @@ impl CallRequest {
         &self.rollback
     }
 
-    pub fn enabled(&self) -> &bool {
-        &self.enabled
+    pub fn enabled(&self) -> bool {
+        self.enabled
     }
 }
