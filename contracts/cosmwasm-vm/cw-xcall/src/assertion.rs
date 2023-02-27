@@ -1,11 +1,11 @@
 use std::ops::Add;
 
-use cosmwasm_std::{ensure, to_binary, Addr, Deps, QuerierWrapper, DepsMut, Storage};
+use cosmwasm_std::{ensure, ensure_eq, to_binary, Addr, Deps, DepsMut, QuerierWrapper, Storage};
 
 use crate::{
     error::ContractError,
     state::{CwCallservice, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
-    types::{call_request::CallRequest, request::CallServiceMessageRequest, address::Address},
+    types::{address::Address, call_request::CallRequest, request::CallServiceMessageRequest},
 };
 
 impl<'a> CwCallservice<'a> {
@@ -75,8 +75,17 @@ impl<'a> CwCallservice<'a> {
         Ok(())
     }
 
-    pub fn ensure_admin_call_or_not(&self,store: &dyn Storage ) ->Result<(),ContractError> {
-    ensure!(self.query_admin(store),ContractError::OnlyAdmin);
+    pub fn ensure_admin_call_or_not(
+        &self,
+        store: &dyn Storage,
+        address: Addr,
+    ) -> Result<(), ContractError> {
+        let admin = self.query_admin(store)?;
+        ensure_eq!(
+            admin.to_string(),
+            address.to_string(),
+            ContractError::OnlyAdmin
+        );
 
         Ok(())
     }
@@ -85,4 +94,3 @@ impl<'a> CwCallservice<'a> {
 fn is_contract(querier: QuerierWrapper, address: Addr) -> bool {
     querier.query_wasm_contract_info(address).is_ok()
 }
-

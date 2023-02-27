@@ -5,7 +5,7 @@ use cw_storage_plus::{Item, Map};
 
 use crate::types::{
     address::Address, call_request::CallRequest, request::CallServiceMessageRequest,
-    stroage_keys::StorageKey, feehandler::FeeHandler,
+    stroage_keys::StorageKey, 
 };
 
 pub const MAX_DATA_SIZE: u64 = 2048;
@@ -48,7 +48,7 @@ pub struct CwCallservice<'a> {
     message_request: Map<'a, u128, CallServiceMessageRequest>,
     requests: Map<'a, u128, CallRequest>,
     ibc_config: Item<'a, IbcConfig>,
-    fee_handler: Item<'a , FeeHandler >,
+    fee_handler: Item<'a , Address >,
 }
 
 impl<'a> Default for CwCallservice<'a> {
@@ -99,7 +99,7 @@ impl<'a> CwCallservice<'a> {
         &self.ibc_config
     }
 
-    pub fn fee_handler(&self) -> &Item<'a, FeeHandler>{
+    pub fn fee_handler(&self) -> &Item<'a, Address>{
         &self.fee_handler
     }
 }
