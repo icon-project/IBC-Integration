@@ -206,8 +206,6 @@ func (in *IconNode) GetBalance(ctx context.Context, address string) (int64, erro
 }
 
 func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
-	var result icontypes.TransactionResult
-
 	// Write Contract file to Docker volume
 	_, score := filepath.Split(scorePath)
 	err := in.CopyFile(ctx, scorePath, score)
@@ -220,17 +218,26 @@ func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath,
 	if err != nil {
 		return "", err
 	}
-	uri := "http://" + in.HostRPCPort + "/api/v3"
 
 	//wait for few blocks
 	time.Sleep(3 * time.Second)
 
 	// Get Score Address
-	out, _, err := in.ExecBin(ctx, "rpc", "txresult", hash, "--uri", uri)
-	json.Unmarshal(out, &result)
-	scoreAddress := result.SCOREAddress
-	return string(scoreAddress), err
+	trResult, err := in.TransactionResult(ctx, hash)
+	if err != nil {
+		return "", err
+	}
+	return string(trResult.SCOREAddress), nil
 
+}
+
+// Get Transaction result when hash is provided after executing a transaction
+func (in *IconNode) TransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
+	var result icontypes.TransactionResult
+	uri := "http://" + in.HostRPCPort + "/api/v3"
+	out, _, _ := in.ExecBin(ctx, "rpc", "txresult", hash, "--uri", uri)
+	json.Unmarshal(out, &result)
+	return result, nil
 }
 
 // ExecTx executes a transaction, waits for 2 blocks if successful, then returns the tx hash.
