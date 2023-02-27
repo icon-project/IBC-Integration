@@ -16,6 +16,7 @@ import (
 	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
+	"github.com/strangelove-ventures/interchaintest/v6/testutil"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -307,4 +308,8 @@ func (c *IconChain) QueryContract(ctx context.Context, scoreAddress, methodName,
 
 func (c *IconChain) GetTransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
 	return c.getFullNode().TransactionResult(ctx, hash)
+}
+
+func (c *IconChain) WaitForBlocks(ctx context.Context, numBlocks int) {
+	testutil.WaitForBlocks(ctx, numBlocks, c.getFullNode())
 }
