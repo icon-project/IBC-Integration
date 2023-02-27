@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
 	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
+	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -302,4 +303,8 @@ func (c *IconChain) DeployContract(ctx context.Context, scorePath, keystorePath,
 
 func (c *IconChain) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
 	return c.getFullNode().QueryContract(ctx, scoreAddress, methodName, params)
+}
+
+func (c *IconChain) GetTransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
+	return c.getFullNode().TransactionResult(ctx, hash)
 }
