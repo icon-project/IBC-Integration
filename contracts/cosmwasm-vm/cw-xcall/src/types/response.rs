@@ -3,7 +3,7 @@ use cosmwasm_std::Binary;
 use super::*;
 
 #[cw_serde]
-#[derive(Default,Copy)]
+#[derive(Default, Copy)]
 pub enum CallServiceResponseType {
     CallServiceIbcError = -2,
     CallServiceResponseFailure,
@@ -11,7 +11,7 @@ pub enum CallServiceResponseType {
     CallServiceResponseSucess,
 }
 
-pub fn to_int(response_type: &CallServiceResponseType) -> i8{
+pub fn to_int(response_type: &CallServiceResponseType) -> i8 {
     *response_type as i8
 }
 
@@ -20,15 +20,15 @@ pub fn to_int(response_type: &CallServiceResponseType) -> i8{
 pub struct CallServiceMessageReponse {
     sequence_no: u128,
     response_code: CallServiceResponseType,
-    message: Binary,
+    message: String,
 }
 
 impl CallServiceMessageReponse {
-    pub fn new(sequence_no: u128, response_code: CallServiceResponseType, message: Binary) -> Self {
+    pub fn new(sequence_no: u128, response_code: CallServiceResponseType, message: &str) -> Self {
         Self {
             sequence_no,
             response_code,
-            message,
+            message: message.to_string(),
         }
     }
 
@@ -40,7 +40,7 @@ impl CallServiceMessageReponse {
         &self.response_code
     }
 
-    pub fn message(&self) -> &[u8] {
+    pub fn message(&self) -> &str {
         &self.message
     }
 
@@ -48,10 +48,10 @@ impl CallServiceMessageReponse {
         &mut self,
         sequence_no: u128,
         response_code: CallServiceResponseType,
-        message: Vec<u8>,
+        message: &str,
     ) {
         self.sequence_no.clone_from(&sequence_no);
         self.response_code = response_code;
-        self.message = message.into()
+        self.message = message.to_string()
     }
 }
