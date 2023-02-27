@@ -1,4 +1,6 @@
-use cosmwasm_std::{ensure, to_binary, Addr, Deps, QuerierWrapper};
+use cosmwasm_std::{
+    ensure, ensure_eq, to_binary, Addr, Deps, MessageInfo, QuerierWrapper, Storage,
+};
 
 use crate::{
     error::ContractError,
@@ -69,6 +71,22 @@ impl<'a> CwCallservice<'a> {
 
     pub fn ensure_rollback_enabled(&self, enabled: bool) -> Result<(), ContractError> {
         ensure!(enabled, ContractError::RollbackNotEnabled);
+
+        Ok(())
+    }
+
+    pub fn assert_owner(
+        &self,
+        store: &dyn Storage,
+        info: &MessageInfo,
+    ) -> Result<(), ContractError> {
+        let owner = self.owner().load(store)?;
+
+        ensure_eq!(
+            info.sender.to_string(),
+            owner.to_string(),
+            ContractError::Unauthorized {}
+        );
 
         Ok(())
     }

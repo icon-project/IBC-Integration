@@ -134,9 +134,11 @@ impl<'a> CwCallservice<'a> {
         }
     }
 
-    pub fn containes_request(&self,store: &dyn Storage,sequence: u128) ->bool{
-        self.requests().load(store,sequence).is_ok()
+    pub fn containes_request(&self, store: &dyn Storage, sequence: u128) -> bool {
+        self.requests().load(store, sequence).is_ok()
     }
 
-
+    pub fn remove_call_request(&self, store: &mut dyn Storage, sequence_no: u128) {
+        self.requests().remove(store, sequence_no);
+    }
 }

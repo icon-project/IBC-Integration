@@ -3,20 +3,18 @@ use cosmwasm_std::Binary;
 use super::*;
 
 #[cw_serde]
-#[derive(Default, Copy)]
+
 pub enum CallServiceResponseType {
     CallServiceIbcError = -2,
     CallServiceResponseFailure,
-    #[default]
     CallServiceResponseSucess,
 }
 
 pub fn to_int(response_type: &CallServiceResponseType) -> i8 {
-    *response_type as i8
+    response_type.clone() as i8
 }
 
 #[cw_serde]
-#[derive(Default)]
 pub struct CallServiceMessageReponse {
     sequence_no: u128,
     response_code: CallServiceResponseType,

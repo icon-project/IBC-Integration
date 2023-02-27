@@ -1,5 +1,5 @@
 use super::address::Address;
-use cosmwasm_std::Binary;
+use cosmwasm_std::{to_binary, Binary};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -34,5 +34,13 @@ impl CallRequest {
 
     pub fn enabled(&self) -> bool {
         self.enabled
+    }
+
+    pub fn is_null(&self) -> bool {
+        let r = to_binary(self).unwrap();
+        r.is_empty()
+    }
+    pub fn set_enabled(&mut self) {
+        self.enabled = true;
     }
 }

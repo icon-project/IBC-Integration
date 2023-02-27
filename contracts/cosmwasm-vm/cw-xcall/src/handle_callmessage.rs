@@ -69,7 +69,7 @@ impl<'a> CwCallservice<'a> {
                 let message_response = CallServiceMessageReponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseSucess,
-                    "".as_bytes().into(),
+                    "",
                 );
                 let event = event_call_executed(req_id, code, "");
                 (message_response, event)
@@ -80,7 +80,7 @@ impl<'a> CwCallservice<'a> {
                 let message_response = CallServiceMessageReponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseFailure,
-                    error_message.as_bytes().into(),
+                    &error_message,
                 );
                 let event = event_call_executed(req_id, code, &error_message);
                 (message_response, event)
@@ -139,7 +139,7 @@ impl<'a> CwCallservice<'a> {
                 let message_response = CallServiceMessageReponse::new(
                     sequence_no,
                     CallServiceResponseType::CallServiceResponseSucess,
-                    "".as_bytes().into(),
+                    "",
                 );
                 message_response
             }
@@ -148,7 +148,7 @@ impl<'a> CwCallservice<'a> {
                 let message_response = CallServiceMessageReponse::new(
                     sequence_no,
                     CallServiceResponseType::CallServiceResponseFailure,
-                    error_message.as_bytes().into(),
+                    &error_message,
                 );
                 message_response
             }
