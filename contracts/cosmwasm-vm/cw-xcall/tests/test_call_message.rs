@@ -106,15 +106,6 @@ fn send_packet_success() {
     assert_eq!(result.messages[0].msg, CosmosMsg::Ibc(expected_packet))
 }
 
-pub fn handle_query(_: &cosmwasm_std::Empty) {
-    let r = SystemResult::Ok(cosmwasm_std::ContractResult::Ok(
-        to_binary(&WasmQuery::ContractInfo {
-            contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-        })
-        .unwrap(),
-    ));
-}
-
 #[test]
 #[should_panic(expected = "RollbackNotPossible")]
 fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
