@@ -328,3 +328,42 @@ func (in *IconNode) CreateKey(ctx context.Context, password string) error {
 	)
 	return err
 }
+
+func (in *IconNode) ExecuteContract(ctx context.Context, scoreAddress, methodName, keyStorePath, params string) (string, error) {
+	hash, err := in.ExecCallTx(ctx, scoreAddress, methodName, keyStorePath, params)
+	if err != nil {
+		return "", err
+	}
+	return hash, nil
+}
+
+func (in *IconNode) ExecCallTx(ctx context.Context, scoreAddress, methodName, keystorePath, params string) (string, error) {
+	var output string
+	in.lock.Lock()
+	defer in.lock.Unlock()
+	stdout, _, err := in.Exec(ctx, in.ExecCallTxCommand(ctx, scoreAddress, methodName, keystorePath, params), nil)
+	if err != nil {
+		return "", err
+	}
+	json.Unmarshal(stdout, &output)
+	return output, nil
+}
+
+func (in *IconNode) ExecCallTxCommand(ctx context.Context, scoreAddress, methodName, keystorePath, params string) []string {
+	// Write keystore file to Docker volume
+	_, key := filepath.Split(keystorePath)
+	err := in.CopyFile(ctx, keystorePath, key)
+	if err != nil {
+		return []string{"error copying keystore to Docker volume"}
+	}
+	keystore := path.Join(in.HomeDir(), key)
+	command := []string{"rpc", "sendtx", "call"}
+	return in.NodeCommand(append(command,
+		"--to", scoreAddress,
+		"--method", methodName,
+		"--key_store", keystore,
+		"--key_password", "gochain",
+		"--step_limit", "5000000000",
+		"--param", params,
+	)...)
+}

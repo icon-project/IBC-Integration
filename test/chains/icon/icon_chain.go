@@ -313,3 +313,7 @@ func (c *IconChain) GetTransactionResult(ctx context.Context, hash string) (icon
 func (c *IconChain) WaitForBlocks(ctx context.Context, numBlocks int) {
 	testutil.WaitForBlocks(ctx, numBlocks, c.getFullNode())
 }
+
+func (c *IconChain) ExecuteContract(ctx context.Context, scoreAddress, keystorePath, methodName, params string) (string, error) {
+	return c.getFullNode().ExecuteContract(ctx, scoreAddress, methodName, keystorePath, params)
+}
