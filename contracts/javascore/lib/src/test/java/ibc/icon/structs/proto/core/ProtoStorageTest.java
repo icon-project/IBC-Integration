@@ -30,7 +30,8 @@ public class ProtoStorageTest extends TestBase {
 
     public static class DummyScore {
 
-        VarDB<ConnectionEnd> connectionEndDB = newVarDB("connectionEndDB", ConnectionEnd.class);
+        VarDB<ConnectionEnd> connectionEndDB = newVarDB("connectionEndDB",
+                ConnectionEnd.class);
         VarDB<Channel> channelDB = newVarDB("channelDB", Channel.class);
         VarDB<Packet> packetDB = newVarDB("packetDB", Packet.class);
 
@@ -98,10 +99,12 @@ public class ProtoStorageTest extends TestBase {
         // Assert
         ConnectionEnd storedConnectionEnd = (ConnectionEnd) dummyScore.call("getConnectionEnd");
 
-        assertEquals(connectionEnd.counterparty.getClientId(), storedConnectionEnd.counterparty.getClientId());
-        assertEquals(connectionEnd.counterparty.getConnectionId(), storedConnectionEnd.counterparty.getConnectionId());
-        assertEquals(connectionEnd.counterparty.getPrefix().getKeyPrefix(),
-                storedConnectionEnd.counterparty.getPrefix().getKeyPrefix());
+        assertEquals(connectionEnd.getCounterparty().getClientId(),
+                storedConnectionEnd.getCounterparty().getClientId());
+        assertEquals(connectionEnd.getCounterparty().getConnectionId(),
+                storedConnectionEnd.getCounterparty().getConnectionId());
+        assertEquals(connectionEnd.getCounterparty().getPrefix().getKeyPrefix(),
+                storedConnectionEnd.getCounterparty().getPrefix().getKeyPrefix());
 
         assertEquals(connectionEnd.getVersions()[0].getIdentifier(),
                 storedConnectionEnd.getVersions()[0].getIdentifier());
@@ -113,8 +116,10 @@ public class ProtoStorageTest extends TestBase {
                 storedConnectionEnd.getVersions()[1].getFeatures());
 
         assertEquals(connectionEnd.getClientId(), storedConnectionEnd.getClientId());
-        assertEquals(connectionEnd.getState(), storedConnectionEnd.getState());
-        assertEquals(connectionEnd.getDelayPeriod(), storedConnectionEnd.getDelayPeriod());
+        assertEquals(connectionEnd.connectionState(),
+                storedConnectionEnd.connectionState());
+        assertEquals(connectionEnd.getDelayPeriod(),
+                storedConnectionEnd.getDelayPeriod());
     }
 
     @Test
@@ -125,8 +130,8 @@ public class ProtoStorageTest extends TestBase {
         counterparty.setChannelId("channelId");
 
         Channel channel = new Channel();
-        channel.setState(Channel.State.STATE_TRYOPEN);
-        channel.setOrdering(Channel.Order.ORDER_ORDERED);
+        channel.updateState(Channel.State.STATE_TRYOPEN);
+        channel.updateOrder(Channel.Order.ORDER_ORDERED);
         channel.setCounterparty(counterparty);
         channel.setConnectionHops(new String[] { "Aerw", "were" });
         channel.setVersion("version");
@@ -137,11 +142,14 @@ public class ProtoStorageTest extends TestBase {
         // Assert
         Channel storedChannel = (Channel) dummyScore.call("getChannel");
 
-        assertEquals(channel.getState(), storedChannel.getState());
-        assertEquals(channel.getOrdering(), storedChannel.getOrdering());
-        assertEquals(channel.getCounterparty().getChannelId(), storedChannel.getCounterparty().getChannelId());
-        assertEquals(channel.getCounterparty().getPortId(), storedChannel.getCounterparty().getPortId());
-        assertArrayEquals(channel.getConnectionHops(), storedChannel.getConnectionHops());
+        assertEquals(channel.channelState(), storedChannel.channelState());
+        assertEquals(channel.channelOrdering(), storedChannel.channelOrdering());
+        assertEquals(channel.getCounterparty().getChannelId(),
+                storedChannel.getCounterparty().getChannelId());
+        assertEquals(channel.getCounterparty().getPortId(),
+                storedChannel.getCounterparty().getPortId());
+        assertArrayEquals(channel.getConnectionHops(),
+                storedChannel.getConnectionHops());
         assertEquals(channel.getVersion(), storedChannel.getVersion());
     }
 
@@ -172,12 +180,14 @@ public class ProtoStorageTest extends TestBase {
         assertEquals(packet.getSourcePort(), storedPacket.getSourcePort());
         assertEquals(packet.getSourceChannel(), storedPacket.getSourceChannel());
         assertEquals(packet.getDestinationPort(), storedPacket.getDestinationPort());
-        assertEquals(packet.getDestinationChannel(), storedPacket.getDestinationChannel());
+        assertEquals(packet.getDestinationChannel(),
+                storedPacket.getDestinationChannel());
         assertEquals(packet.getData(), storedPacket.getData());
         assertEquals(packet.getTimeoutHeight().getRevisionNumber(),
                 storedPacket.getTimeoutHeight().getRevisionNumber());
         assertEquals(packet.getTimeoutHeight().getRevisionHeight(),
                 storedPacket.getTimeoutHeight().getRevisionHeight());
-        assertEquals(packet.getTimeoutTimestamp(), storedPacket.getTimeoutTimestamp());
+        assertEquals(packet.getTimeoutTimestamp(),
+                storedPacket.getTimeoutTimestamp());
     }
 }

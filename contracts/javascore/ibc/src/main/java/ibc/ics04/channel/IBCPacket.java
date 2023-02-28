@@ -1,7 +1,6 @@
 package ibc.ics04.channel;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.interfaces.ILightClient;
@@ -21,7 +20,7 @@ import score.DictDB;
 public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
     public void sendPacket(Packet packet) {
         Channel channel = channels.at(packet.getSourcePort()).get(packet.getSourceChannel());
-        Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
+        Context.require(channel.channelState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
         Context.require(
                 packet.getDestinationPort().equals(channel.getCounterparty().getPortId()),
                 "packet destination port doesn't match the counterparty's port");
@@ -57,28 +56,29 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
                 packet.getSourceChannel(),
                 packet.getSequence());
 
-        byte[] packetCommitment = IBCCommitment.keccak256(getPacketCommitment(packet));
+        byte[] packetCommitment = IBCCommitment.keccak256(createPacketCommitment(packet));
         commitments.set(packetCommitmentKey, packetCommitment);
     }
 
     public void recvPacket(MsgPacketRecv msg) {
-        Channel channel = channels.at(msg.packet.getSourcePort()).get(msg.packet.getSourceChannel());
-        Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
+        Channel channel = channels.at(msg.packet.getDestinationPort()).get(msg.packet.getDestinationChannel());
+        Context.require(channel.channelState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
 
         // TODO
         // Authenticate capability to ensure caller has authority to receive packet on
         // this channel
 
         Context.require(
-                msg.packet.getDestinationPort().equals(channel.getCounterparty().getPortId()),
+                msg.packet.getSourcePort().equals(channel.getCounterparty().getPortId()),
                 "packet destination port doesn't match the counterparty's port");
         Context.require(
-                msg.packet.getDestinationChannel().equals(channel.getCounterparty().getChannelId()),
+                msg.packet.getSourceChannel().equals(channel.getCounterparty().getChannelId()),
                 "packet destination channel doesn't match the counterparty's channel");
 
         ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
-        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+                "connection state is not OPEN");
 
         Context.require(
                 msg.packet.getTimeoutHeight().getRevisionHeight().equals(BigInteger.ZERO)
@@ -93,7 +93,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
                 msg.packet.getSourceChannel(), msg.packet.getSequence());
-        byte[] commitmentBytes = IBCCommitment.keccak256(getPacketCommitment(msg.packet));
+        byte[] commitmentBytes = IBCCommitment.keccak256(createPacketCommitment(msg.packet));
 
         verifyPacketCommitment(
                 connection,
@@ -102,14 +102,14 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
                 commitmentPath,
                 commitmentBytes);
 
-        if (channel.getOrdering().equals(Channel.Order.ORDER_UNORDERED)) {
+        if (channel.channelOrdering().equals(Channel.Order.ORDER_UNORDERED)) {
             DictDB<BigInteger, BigInteger> packetReceipt = packetReceipts.at(msg.packet.getDestinationPort())
                     .at(msg.packet.getDestinationChannel());
             Context.require(
                     packetReceipt.get(msg.packet.getSequence()) == null,
                     "packet sequence already has been received");
             packetReceipt.set(msg.packet.getSequence(), BigInteger.ONE);
-        } else if (channel.getOrdering().equals(Channel.Order.ORDER_ORDERED)) {
+        } else if (channel.channelOrdering().equals(Channel.Order.ORDER_ORDERED)) {
             BigInteger nextSequenceRecv = nextSequenceReceives.at(msg.packet.getDestinationPort())
                     .getOrDefault(msg.packet.getDestinationChannel(), BigInteger.ZERO);
             Context.require(
@@ -127,7 +127,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
         Context.require(acknowledgement.length > 0, "acknowledgement cannot be empty");
 
         Channel channel = channels.at(destinationPortId).get(destinationChannel);
-        Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
+        Context.require(channel.channelState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
 
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(destinationPortId,
                 destinationChannel, sequence);
@@ -138,7 +138,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
 
     public void acknowledgePacket(MsgPacketAcknowledgement msg) {
         Channel channel = channels.at(msg.packet.getSourcePort()).get(msg.packet.getSourceChannel());
-        Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
+        Context.require(channel.channelState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
 
         Context.require(
                 msg.packet.getDestinationPort().equals(channel.getCounterparty().getPortId()),
@@ -149,15 +149,16 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
 
         ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
-        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+                "connection state is not OPEN");
 
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(msg.packet.getSourcePort(),
                 msg.packet.getSourceChannel(), msg.packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = IBCCommitment.keccak256(getPacketCommitment(msg.packet));
+        byte[] commitment = IBCCommitment.keccak256(createPacketCommitment(msg.packet));
 
-        Context.require(Arrays.equals(packetCommitment, commitment), "commitment byte[] are not equal");
+        Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
         byte[] packetAckPath = IBCCommitment.packetAcknowledgementCommitmentPath(msg.packet.destinationPort,
                 msg.packet.destinationChannel, msg.packet.sequence);
@@ -168,7 +169,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
                 packetAckPath,
                 IBCCommitment.sha256(msg.acknowledgement));
 
-        if (channel.getOrdering().equals(Channel.Order.ORDER_ORDERED)) {
+        if (channel.channelOrdering().equals(Channel.Order.ORDER_ORDERED)) {
             BigInteger nextSequenceAck = nextSequenceAcknowledgements.at(msg.packet.getSourcePort())
                     .get(msg.packet.getSourceChannel());
             Context.require(
@@ -232,7 +233,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
         return blockDelay;
     }
 
-    private byte[] getPacketCommitment(Packet packet) {
+    private byte[] createPacketCommitment(Packet packet) {
         return IBCCommitment.sha256(
                 StringUtil.encodePacked(
                         packet.getTimeoutTimestamp(),

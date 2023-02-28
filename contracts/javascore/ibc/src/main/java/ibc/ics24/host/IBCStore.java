@@ -9,9 +9,11 @@ import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.NullChecker;
 import ibc.icon.structs.proto.core.channel.Channel;
+import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
+import ibc.ics05.port.ModuleManager;
 
-public abstract class IBCStore {
+public abstract class IBCStore extends ModuleManager {
     private final String COMMITMENTS = "commitments";
     private final String CLIENT_REGISTRY = "clientRegistry";
     private final String CLIENT_TYPES = "clientTypes";
@@ -143,6 +145,34 @@ public abstract class IBCStore {
     @External(readonly = true)
     public BigInteger getNextChannelSequence() {
         return nextChannelSequence.get();
+    }
+
+    @External(readonly = true)
+    public byte[] getClientState(String clientId) {
+        return getClient(clientId).getClientState(clientId);
+    }
+
+    @External(readonly = true)
+    public byte[] getConsensusState(String clientId, Height height) {
+        return getClient(clientId).getConsensusState(clientId, height);
+    }
+
+    @External(readonly = true)
+    public byte[] getPacketCommitment(String portId, String channelId, BigInteger sequence) {
+        byte[] key = IBCCommitment.keccak256(IBCCommitment.packetCommitmentPath(portId, channelId, sequence));
+        return commitments.get(key);
+    }
+
+    @External(readonly = true)
+    public byte[] getPacketAcknowledgementCommitment(String portId, String channelId, BigInteger sequence) {
+        byte[] key = IBCCommitment
+                .keccak256(IBCCommitment.packetAcknowledgementCommitmentPath(portId, channelId, sequence));
+        return commitments.get(key);
+    }
+
+    @External(readonly = true)
+    public boolean hasPacketReceipt(String portId, String channelId, BigInteger sequence) {
+        return packetReceipts.at(portId).at(channelId).getOrDefault(sequence, BigInteger.ZERO).equals(BigInteger.ONE);
     }
 
     public ILightClient getClient(String clientId) {

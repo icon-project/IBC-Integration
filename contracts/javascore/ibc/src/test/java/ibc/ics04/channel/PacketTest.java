@@ -104,8 +104,8 @@ public class PacketTest extends TestBase {
         baseCounterparty.setPortId(portId);
         baseCounterparty.setChannelId(channelId);
 
-        baseChannel.setState(Channel.State.STATE_OPEN);
-        baseChannel.setOrdering(Channel.Order.ORDER_ORDERED);
+        baseChannel.updateState(Channel.State.STATE_OPEN);
+        baseChannel.updateOrder(Channel.Order.ORDER_ORDERED);
         baseChannel.setCounterparty(baseCounterparty);
         baseChannel.setConnectionHops(new String[] { connectionId });
         baseChannel.setVersion("v1");
@@ -129,7 +129,7 @@ public class PacketTest extends TestBase {
     @Test
     void sendPacket_nonOpenChannel() {
         // Arrange
-        baseChannel.setState(Channel.State.STATE_CLOSED);
+        baseChannel.updateState(Channel.State.STATE_CLOSED);
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
 
         // Act & Assert
@@ -281,7 +281,7 @@ public class PacketTest extends TestBase {
     @Test
     void recvPacket_nonOpenChannel() {
         // Arrange
-        baseChannel.setState(Channel.State.STATE_CLOSED);
+        baseChannel.updateState(Channel.State.STATE_CLOSED);
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
 
         MsgPacketRecv msg = new MsgPacketRecv();
@@ -298,7 +298,7 @@ public class PacketTest extends TestBase {
     @Test
     void recvPacket_wrongPort() {
         // Arrange
-        basePacket.setDestinationPort("other port");
+        basePacket.setSourcePort("other port");
         MsgPacketRecv msg = new MsgPacketRecv();
         msg.packet = basePacket;
 
@@ -313,7 +313,7 @@ public class PacketTest extends TestBase {
     @Test
     void recvPacket_wrongChannelId() {
         // Arrange
-        basePacket.setDestinationChannel("other channel id");
+        basePacket.setSourceChannel("other channel id");
         MsgPacketRecv msg = new MsgPacketRecv();
         msg.packet = basePacket;
 
@@ -376,7 +376,7 @@ public class PacketTest extends TestBase {
     @Test
     void recvPacket_doubleReceive_UnOrdered() {
         // Arrange
-        baseChannel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        baseChannel.updateOrder(Channel.Order.ORDER_UNORDERED);
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         MsgPacketRecv msg = new MsgPacketRecv();
         msg.packet = basePacket;
@@ -409,7 +409,7 @@ public class PacketTest extends TestBase {
     @Test
     void recvPacket_outOfOrder_UnOrdered() {
         // Arrange
-        baseChannel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        baseChannel.updateOrder(Channel.Order.ORDER_UNORDERED);
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         MsgPacketRecv msg = new MsgPacketRecv();
         msg.packet = basePacket;
@@ -443,7 +443,7 @@ public class PacketTest extends TestBase {
     @Test
     void recvPacket_futureReceive_Ordered() {
         // Arrange
-        baseChannel.setOrdering(Channel.Order.ORDER_ORDERED);
+        baseChannel.updateOrder(Channel.Order.ORDER_ORDERED);
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         MsgPacketRecv msg = new MsgPacketRecv();
         msg.packet = basePacket;
@@ -475,7 +475,7 @@ public class PacketTest extends TestBase {
     @Test
     void recvPacket_UnOrdered() {
         // Arrange
-        baseChannel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        baseChannel.updateOrder(Channel.Order.ORDER_UNORDERED);
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         MsgPacketRecv msg = new MsgPacketRecv();
         msg.packet = basePacket;
@@ -504,7 +504,7 @@ public class PacketTest extends TestBase {
     @Test
     void recvPacket_Ordered() {
         // Arrange
-        baseChannel.setOrdering(Channel.Order.ORDER_ORDERED);
+        baseChannel.updateOrder(Channel.Order.ORDER_ORDERED);
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         MsgPacketRecv msg = new MsgPacketRecv();
         msg.packet = basePacket;

@@ -126,20 +126,36 @@ public class Channel {
         return writer.toByteArray();
     }
 
-    public State getState() {
+    public State channelState() {
         return State.valueOf(state);
     }
 
-    public void setState(State state) {
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public void updateState(State state) {
         this.state = state.toString();
     }
 
-    public Order getOrdering() {
+    public String getState() {
+        return state;
+    }
+
+    public Order channelOrdering() {
         return Order.valueOf(ordering);
     }
 
-    public void setOrdering(Order ordering) {
+    public void updateOrder(Order ordering) {
         this.ordering = ordering.toString();
+    }
+
+    public void setOrdering(String ordering) {
+        this.ordering = ordering;
+    }
+
+    public String getOrdering() {
+        return ordering;
     }
 
     public Counterparty getCounterparty() {

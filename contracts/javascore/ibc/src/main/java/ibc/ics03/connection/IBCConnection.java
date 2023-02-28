@@ -80,7 +80,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
         verifyClientState(
                 connection,
                 msg.proofHeight,
-                IBCCommitment.clientStatePath(connection.counterparty.getClientId()),
+                IBCCommitment.clientStatePath(connection.getCounterparty().getClientId()),
                 msg.proofClient,
                 msg.clientStateBytes);
         // TODO we should also verify a consensus state
@@ -94,7 +94,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     public void connectionOpenAck(MsgConnectionOpenAck msg) {
         ConnectionEnd connection = connections.get(msg.connectionId);
         Context.require(connection != null, "connection does not exist");
-        ConnectionEnd.State state = connection.getState();
+        ConnectionEnd.State state = connection.connectionState();
         // TODO should we allow the state to be TRY_OPEN?
         Context.require(state.equals(ConnectionEnd.State.STATE_INIT) || state.equals(ConnectionEnd.State.STATE_TRYOPEN),
                 "connection state is not INIT or TRYOPEN");
@@ -102,7 +102,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
             Context.require(isSupportedVersion(msg.version),
                     "connection state is in INIT but the provided version is not supported");
         } else {
-            Context.require(connection.versions.length == 1 && connection.versions[0].equals(msg.version),
+            Context.require(connection.getVersions().length == 1 && connection.getVersions()[0].equals(msg.version),
                     "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
         }
 
@@ -122,7 +122,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
         expectedConnection.setClientId(connection.getClientId());
         expectedConnection.setVersions(new Version[] { msg.version });
         expectedConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
-        expectedConnection.setDelayPeriod(connection.delayPeriod);
+        expectedConnection.setDelayPeriod(connection.getDelayPeriod());
         expectedConnection.setCounterparty(expectedCounterparty);
 
         verifyConnectionState(connection, msg.proofHeight, msg.proofTry, msg.counterpartyConnectionID,
@@ -131,15 +131,15 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
         verifyClientState(
                 connection,
                 msg.proofHeight,
-                IBCCommitment.clientStatePath(connection.counterparty.getClientId()),
+                IBCCommitment.clientStatePath(connection.getCounterparty().getClientId()),
                 msg.proofClient,
                 msg.clientStateBytes);
 
         // TODO we should also verify a consensus state
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
-        connection.setVersions(expectedConnection.versions);
-        connection.counterparty.setConnectionId(msg.counterpartyConnectionID);
+        connection.setVersions(expectedConnection.getVersions());
+        connection.getCounterparty().setConnectionId(msg.counterpartyConnectionID);
 
         updateConnectionCommitment(msg.connectionId, connection);
         connections.set(msg.connectionId, connection);
@@ -149,7 +149,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     public void connectionOpenConfirm(MsgConnectionOpenConfirm msg) {
         ConnectionEnd connection = connections.get(msg.connectionId);
         Context.require(connection != null, "connection does not exist");
-        ConnectionEnd.State state = connection.getState();
+        ConnectionEnd.State state = connection.connectionState();
         Context.require(state.equals(ConnectionEnd.State.STATE_TRYOPEN), "connection state is not TRYOPEN");
 
         MerklePrefix prefix = new MerklePrefix();
@@ -164,7 +164,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
         expectedConnection.setClientId(connection.getCounterparty().getClientId());
         expectedConnection.setVersions(connection.getVersions());
         expectedConnection.setState(ConnectionEnd.State.STATE_OPEN);
-        expectedConnection.setDelayPeriod(connection.delayPeriod);
+        expectedConnection.setDelayPeriod(connection.getDelayPeriod());
         expectedConnection.setCounterparty(expectedCounterparty);
 
         verifyConnectionState(connection, msg.proofHeight, msg.proofAck, connection.getCounterparty().getConnectionId(),

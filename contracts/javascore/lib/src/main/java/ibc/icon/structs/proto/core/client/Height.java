@@ -6,6 +6,15 @@ public class Height {
     public BigInteger revisionNumber;
     public BigInteger revisionHeight;
 
+    public Height() {
+
+    }
+
+    public Height(BigInteger revisionNumber, BigInteger revisionHeight) {
+        this.revisionNumber = revisionNumber;
+        this.revisionHeight = revisionHeight;
+    }
+
     public BigInteger getRevisionNumber() {
         return revisionNumber;
     }
