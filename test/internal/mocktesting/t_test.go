@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/icon-project/IBC-Integration/test/internal/mocktesting"
+	"github.com/icon-project/ibc-integration/test/internal/mocktesting"
 
 	"github.com/stretchr/testify/require"
 )

@@ -1,4 +1,4 @@
-module github.com/icon-project/IBC-Integration
+module github.com/icon-project/ibc-integration
 
 go 1.19
 
@@ -11,6 +11,8 @@ require (
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/icon-project/icon-bridge v0.0.11
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
+	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230222020454-110aa579a5a8
+	github.com/spf13/viper v1.14.0
 	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230222020454-110aa579a5a8
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.23.0
@@ -115,7 +117,7 @@ require (
 	github.com/hugobyte/keygen v0.1.0 // indirect
 	github.com/icon-project/goloop v1.2.11 // indirect
 	github.com/icza/dyno v0.0.0-20220812133438-f0b6f8a18845 // indirect
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
@@ -178,7 +180,6 @@ require (
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.14.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220614013038-64ee5596c38a // indirect
 	github.com/tendermint/btcd v0.1.1 // indirect

@@ -5,14 +5,13 @@ import ibc.icon.score.util.NullChecker;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.ics24.host.IBCStore;
-import java.math.BigInteger;
 import score.Address;
-import score.Context;
 import score.annotation.External;
 
-public class IBCClient {
+import java.math.BigInteger;
 
-    IBCStore store = new IBCStore();
+public class IBCClient extends IBCStore {
+
     Logger logger = new Logger("ibc-core");
 
     /**
@@ -23,8 +22,8 @@ public class IBCClient {
      */
     @External
     public void registerClient(String clientType, Address lightClient) {
-        NullChecker.requireNotNull(store.clientRegistry.get(clientType), "Already registered");
-        store.clientRegistry.set(clientType, lightClient);
+        NullChecker.requireNotNull(clientRegistry.get(clientType), "Already registered");
+        clientRegistry.set(clientType, lightClient);
     }
 
     @External
@@ -32,13 +31,13 @@ public class IBCClient {
         String clientType = msg.clientType;
         NullChecker.requireNotNull(clientType, "Client Type cannot be null");
 
-        Address lightClientAddr = store.clientRegistry.get(clientType);
+        Address lightClientAddr = clientRegistry.get(clientType);
         NullChecker.requireNotNull(clientType, "Register client before creation.");
 
         String clientId = generateClientIdentifier(clientType);
         logger.println("Create Client: ", " clientId: ", clientId);
 
-        store.clientImpls.set(clientId, lightClientAddr);
+        clientImplementations.set(clientId, lightClientAddr);
 
         //
     }
@@ -48,16 +47,16 @@ public class IBCClient {
         String clientId = msg.clientId;
         NullChecker.requireNotNull(clientId, "ClientId cannot be null");
 
-        Address lightClientAddr = store.clientImpls.get(clientId);
+        Address lightClientAddr = clientImplementations.get(clientId);
         NullChecker.requireNotNull(lightClientAddr, "Invalid client id");
 
         //
     }
 
     private String generateClientIdentifier(String clientType) {
-        BigInteger currClientSequence = store.nextClientSequence.getOrDefault(BigInteger.ZERO);
+        BigInteger currClientSequence = nextClientSequence.getOrDefault(BigInteger.ZERO);
         String identifier = clientType + "-" + currClientSequence.toString();
-        store.nextClientSequence.set(currClientSequence.add(BigInteger.ONE));
+        nextClientSequence.set(currClientSequence.add(BigInteger.ONE));
         return identifier;
     }
 
