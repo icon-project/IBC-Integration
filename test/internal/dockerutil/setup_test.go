@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
-	"github.com/icon-project/IBC-Integration/test/internal/mocktesting"
+	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
+	"github.com/icon-project/ibc-integration/test/internal/mocktesting"
 
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/errdefs"

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 )
 
 var bufPool = sync.Pool{New: func() any { return new(bytes.Buffer) }}
