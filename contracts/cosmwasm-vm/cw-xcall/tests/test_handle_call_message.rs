@@ -5,11 +5,7 @@ use cosmwasm_std::{
 };
 use cw_xcall::{
     state::{CwCallservice, IbcConfig, EXECUTE_CALL, EXECUTE_ROLLBACK},
-    types::{
-        address::Address,
-        call_request::CallRequest,
-        request::CallServiceMessageRequest,
-    },
+    types::{address::Address, call_request::CallRequest, request::CallServiceMessageRequest},
 };
 mod account;
 mod setup;
@@ -292,9 +288,8 @@ fn execute_rollback_success() {
     }
 }
 
-
 #[test]
-#[should_panic(expected="RollbackNotEnabled")]
+#[should_panic(expected = "RollbackNotEnabled")]
 fn execute_rollback_failure() {
     let mut mock_deps = deps();
 

@@ -10,7 +10,8 @@ pub enum StorageKey {
     MessageRequest,
     Requests,
     IbcConfig,
-    FeeHandler
+    FeeHandler,
+    Balance,
 }
 
 impl StorageKey {
@@ -24,6 +25,7 @@ impl StorageKey {
             StorageKey::Requests => "requests",
             StorageKey::IbcConfig => "ibcconfig",
             StorageKey::FeeHandler => "feehandler",
+            StorageKey::Balance => "balance",
         }
     }
 }

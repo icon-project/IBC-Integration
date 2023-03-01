@@ -1,17 +1,16 @@
-
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::IbcEndpoint;
 use cw_storage_plus::{Item, Map};
 
 use crate::types::{
     address::Address, call_request::CallRequest, request::CallServiceMessageRequest,
-    stroage_keys::StorageKey, 
+    stroage_keys::StorageKey,
 };
 
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
 pub const EXECUTE_CALL: u64 = 0;
-pub const EXECUTE_ROLLBACK : u64 = 1;
+pub const EXECUTE_ROLLBACK: u64 = 1;
 #[cw_serde]
 pub struct IbcConfig {
     sequence: u128,
@@ -48,7 +47,7 @@ pub struct CwCallservice<'a> {
     message_request: Map<'a, u128, CallServiceMessageRequest>,
     requests: Map<'a, u128, CallRequest>,
     ibc_config: Item<'a, IbcConfig>,
-    fee_handler: Item<'a , Address >,
+    fee_handler: Item<'a, Address>,
 }
 
 impl<'a> Default for CwCallservice<'a> {
@@ -67,7 +66,8 @@ impl<'a> CwCallservice<'a> {
             message_request: Map::new(StorageKey::MessageRequest.as_str()),
             requests: Map::new(StorageKey::Requests.as_str()),
             ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
-           fee_handler:Item::new(StorageKey::FeeHandler.as_str()),
+            fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
+            //    balance : Item::new(StorageKey::Balance.as_str()),
         }
     }
 
@@ -99,8 +99,11 @@ impl<'a> CwCallservice<'a> {
         &self.ibc_config
     }
 
-    pub fn fee_handler(&self) -> &Item<'a, Address>{
+    pub fn fee_handler(&self) -> &Item<'a, Address> {
         &self.fee_handler
     }
+
+    // pub fn balance(&self) -> &Item<'a, Balance>{
+    //     &self.balance
+    // }
 }
- 
