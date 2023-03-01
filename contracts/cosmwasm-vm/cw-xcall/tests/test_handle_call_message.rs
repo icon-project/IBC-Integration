@@ -5,11 +5,7 @@ use cosmwasm_std::{
 };
 use cw_xcall::{
     state::{CwCallservice, IbcConfig, EXECUTE_CALL, EXECUTE_ROLLBACK},
-    types::{
-        address::Address,
-        call_request::CallRequest,
-        request::CallServiceMessageRequest,
-    },
+    types::{address::Address, call_request::CallRequest, request::CallServiceMessageRequest},
 };
 mod account;
 mod setup;
@@ -43,8 +39,8 @@ fn test_execute_call_having_request_id_without_rollback() {
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        Binary::from(vec![]),
-        Binary::from(vec![104, 101, 108, 108, 111]),
+        vec![],
+        vec![104, 101, 108, 108, 111],
     );
     cw_callservice
         .insert_request(deps.as_mut().storage, request_id, proxy_reqs)
@@ -109,8 +105,8 @@ fn test_successful_reply_message() {
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        Binary::from(vec![]),
-        Binary::from(vec![]),
+        vec![],
+        vec![],
     );
     contract
         .insert_request(mock_deps.as_mut().storage, request_id, proxy_reqs)
@@ -144,8 +140,8 @@ fn test_failed_reply_message() {
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        Binary::from(vec![]),
-        Binary::from(vec![]),
+        vec![],
+        vec![],
     );
     contract
         .insert_request(mock_deps.as_mut().storage, request_id, proxy_reqs)
@@ -292,9 +288,8 @@ fn execute_rollback_success() {
     }
 }
 
-
 #[test]
-#[should_panic(expected="RollbackNotEnabled")]
+#[should_panic(expected = "RollbackNotEnabled")]
 fn execute_rollback_failure() {
     let mut mock_deps = deps();
 
