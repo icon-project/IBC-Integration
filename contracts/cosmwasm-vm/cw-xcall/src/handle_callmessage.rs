@@ -88,10 +88,7 @@ impl<'a> CwCallservice<'a> {
         };
 
         if !request.rollback().is_empty() {
-            let message = CallServiceMessage::new(
-                CallServiceMessageType::CallServiceResponse,
-                to_binary(&responses.0).unwrap(),
-            );
+            let message: CallServiceMessage = responses.0.into();
 
             let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
 

@@ -5,5 +5,6 @@ pub mod request;
 pub mod response;
 pub mod stroage_keys;
 use address::Address;
+pub use common::rlp;
 use cosmwasm_schema::cw_serde;
 use cw_storage_plus::KeyDeserialize;

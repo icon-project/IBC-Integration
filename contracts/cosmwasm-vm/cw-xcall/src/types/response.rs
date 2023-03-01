@@ -1,4 +1,4 @@
-use cosmwasm_std::Binary;
+use common::rlp::Encodable;
 
 use super::*;
 
@@ -51,5 +51,26 @@ impl CallServiceMessageReponse {
         self.sequence_no.clone_from(&sequence_no);
         self.response_code = response_code;
         self.message = message.to_string()
+    }
+}
+
+impl Encodable for CallServiceResponseType {
+    fn rlp_append(&self, stream: &mut rlp::RlpStream) {
+        stream.begin_list(1);
+        match self {
+            CallServiceResponseType::CallServiceIbcError => stream.append::<u128>(&2),
+            CallServiceResponseType::CallServiceResponseFailure => stream.append::<u128>(&1),
+            CallServiceResponseType::CallServiceResponseSucess => stream.append::<u128>(&0),
+        };
+    }
+}
+
+impl Encodable for CallServiceMessageReponse {
+    fn rlp_append(&self, stream: &mut rlp::RlpStream) {
+        stream
+            .begin_list(3)
+            .append(&self.sequence_no())
+            .append(self.response_code())
+            .append(&self.message());
     }
 }

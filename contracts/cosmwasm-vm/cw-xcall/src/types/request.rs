@@ -1,3 +1,4 @@
+use common::rlp::Encodable;
 use cosmwasm_std::Binary;
 
 use super::*;
@@ -7,8 +8,8 @@ pub struct CallServiceMessageRequest {
     from: Address,
     to: String,
     sequence_no: u128,
-    rollback: Binary,
-    data: Binary,
+    rollback: Vec<u8>,
+    data: Vec<u8>,
 }
 
 impl CallServiceMessageRequest {
@@ -16,8 +17,8 @@ impl CallServiceMessageRequest {
         from: Address,
         to: String,
         sequence_no: u128,
-        rollback: Binary,
-        data: Binary,
+        rollback: Vec<u8>,
+        data: Vec<u8>,
     ) -> Self {
         Self {
             from,
@@ -46,5 +47,17 @@ impl CallServiceMessageRequest {
 
     pub fn data(&self) -> &[u8] {
         &self.data
+    }
+}
+
+impl Encodable for CallServiceMessageRequest {
+    fn rlp_append(&self, stream: &mut rlp::RlpStream) {
+        stream
+            .begin_list(5)
+            .append(&self.from)
+            .append(&self.to)
+            .append(&self.sequence_no)
+            .append(&self.rollback)
+            .append(&self.data);
     }
 }

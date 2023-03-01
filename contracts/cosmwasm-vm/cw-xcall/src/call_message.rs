@@ -54,14 +54,11 @@ impl<'a> CwCallservice<'a> {
             Address::from(info.sender.as_str()),
             to,
             sequence_no,
-            rollback,
-            data,
+            rollback.to_vec(),
+            data.to_vec(),
         );
 
-        let message = CallServiceMessage::new(
-            CallServiceMessageType::CallServiceRequest,
-            to_binary(&call_request).unwrap(),
-        );
+        let message: CallServiceMessage = call_request.into();
 
         let packet =
             self.create_packet_and_event_for_request(deps, env, time_out_height, message.clone())?;

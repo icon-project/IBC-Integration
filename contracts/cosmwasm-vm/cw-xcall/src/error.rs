@@ -39,4 +39,6 @@ pub enum ContractError {
     RollbackNotEnabled,
     #[error("InvalidSequenceId {id}")]
     InvalidSequenceId { id: u128 },
+    #[error("DecodeFaild {error}")]
+    DecodeFailed { error: String },
 }

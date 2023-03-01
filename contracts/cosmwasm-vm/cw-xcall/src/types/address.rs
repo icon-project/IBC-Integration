@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use common::rlp::Encodable;
+
 use super::*;
 
 #[cw_serde]
@@ -27,5 +29,11 @@ impl From<&[u8]> for Address {
     fn from(value: &[u8]) -> Self {
         let address = String::from_vec(value.to_vec()).unwrap();
         Address(address)
+    }
+}
+
+impl Encodable for Address {
+    fn rlp_append(&self, stream: &mut rlp::RlpStream) {
+        stream.begin_list(1).append(&self.0);
     }
 }
