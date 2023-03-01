@@ -68,13 +68,17 @@ impl<'a> CwCallservice<'a> {
     ) -> Result<Response, ContractError> {
         self.assert_owner(deps.storage, &info).unwrap();
 
-        let call_service_message: CallServiceMessage = from_binary(&message.data)?;
+        let call_service_message: CallServiceMessage = message.data.try_into()?;
 
         match call_service_message.message_type() {
-            CallServiceMessageType::CallServiceRequest => {
-                self.hanadle_request(deps, info.sender.to_string(), message.data)
+            CallServiceMessageType::CallServiceRequest => self.hanadle_request(
+                deps,
+                info.sender.to_string(),
+                call_service_message.payload(),
+            ),
+            CallServiceMessageType::CallServiceResponse => {
+                self.handle_response(deps, &call_service_message.payload())
             }
-            CallServiceMessageType::CallServiceResponse => self.handle_response(deps, message.data),
         }
     }
 
@@ -82,9 +86,9 @@ impl<'a> CwCallservice<'a> {
         &self,
         deps: DepsMut,
         from: String,
-        data: Binary,
+        data: &[u8],
     ) -> Result<Response, ContractError> {
-        let message_request: CallServiceMessageRequest = from_binary(&data)?;
+        let message_request: CallServiceMessageRequest = data.try_into()?;
         let from = Address::from(&from);
         let to = message_request.to();
         let request_id = self.increment_last_request_id(deps.storage)?;
@@ -112,8 +116,8 @@ impl<'a> CwCallservice<'a> {
             .add_event(event))
     }
 
-    fn handle_response(&self, deps: DepsMut, data: Binary) -> Result<Response, ContractError> {
-        let message: CallServiceMessageReponse = from_binary(&data)?;
+    fn handle_response(&self, deps: DepsMut, data: &[u8]) -> Result<Response, ContractError> {
+        let message: CallServiceMessageReponse = data.try_into()?;
         let response_sequence_no = message.sequence_no();
 
         let mut call_request = self.query_request(deps.storage, response_sequence_no)?;

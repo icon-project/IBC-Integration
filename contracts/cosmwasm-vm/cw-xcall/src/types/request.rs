@@ -1,5 +1,9 @@
-use common::rlp::Encodable;
+use std::vec;
+
+use common::rlp::{Decodable, Encodable};
 use cosmwasm_std::Binary;
+
+use crate::error::ContractError;
 
 use super::*;
 
@@ -59,5 +63,37 @@ impl Encodable for CallServiceMessageRequest {
             .append(&self.sequence_no)
             .append(&self.rollback)
             .append(&self.data);
+    }
+}
+
+impl Decodable for CallServiceMessageRequest {
+    fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+        Ok(Self {
+            from: rlp.val_at(0)?,
+            to: rlp.val_at(1)?,
+            sequence_no: rlp.val_at(2)?,
+            rollback: rlp.val_at(3)?,
+            data: rlp.val_at(4)?,
+        })
+    }
+}
+
+impl TryFrom<&Vec<u8>> for CallServiceMessageRequest {
+    type Error = ContractError;
+    fn try_from(value: &Vec<u8>) -> Result<Self, Self::Error> {
+        let rlp = rlp::Rlp::new(value as &[u8]);
+        Self::decode(&rlp).map_err(|error| ContractError::DecodeFailed {
+            error: error.to_string(),
+        })
+    }
+}
+
+impl TryFrom<&[u8]> for CallServiceMessageRequest {
+    type Error = ContractError;
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        let rlp = rlp::Rlp::new(value);
+        Self::decode(&rlp).map_err(|error| ContractError::DecodeFailed {
+            error: error.to_string(),
+        })
     }
 }

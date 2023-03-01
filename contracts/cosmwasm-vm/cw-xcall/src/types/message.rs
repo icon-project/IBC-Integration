@@ -54,7 +54,7 @@ impl Encodable for CallServiceMessage {
 
 impl Decodable for CallServiceMessageType {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
-        match rlp.as_val::<u128>()? {
+        match rlp.as_val::<u8>()? {
             0 => Ok(Self::CallServiceRequest),
             1 => Ok(Self::CallServiceResponse),
             _ => Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
@@ -65,8 +65,8 @@ impl Decodable for CallServiceMessageType {
 impl Decodable for CallServiceMessage {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
         Ok(Self {
-            message_type: rlp.val_at(0)?,
             payload: rlp.val_at(1)?,
+            message_type: rlp.val_at(0)?,
         })
     }
 }
@@ -93,7 +93,7 @@ impl TryFrom<Binary> for CallServiceMessage {
     type Error = ContractError;
 
     fn try_from(value: Binary) -> Result<Self, Self::Error> {
-        let rlp = rlp::Rlp::new(&value);
+        let rlp = rlp::Rlp::new(&value.0);
         Self::decode(&rlp).map_err(|error| ContractError::DecodeFailed {
             error: error.to_string(),
         })
@@ -108,5 +108,11 @@ impl TryFrom<Vec<u8>> for CallServiceMessage {
         Self::decode(&rlp).map_err(|error| ContractError::DecodeFailed {
             error: error.to_string(),
         })
+    }
+}
+
+impl From<CallServiceMessage> for Binary {
+    fn from(value: CallServiceMessage) -> Self {
+        Binary(rlp::encode(&value).to_vec())
     }
 }

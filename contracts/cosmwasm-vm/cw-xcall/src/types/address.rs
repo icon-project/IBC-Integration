@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use common::rlp::Encodable;
+use common::rlp::{Decodable, Encodable};
 
 use super::*;
 
@@ -35,5 +35,11 @@ impl From<&[u8]> for Address {
 impl Encodable for Address {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
         stream.begin_list(1).append(&self.0);
+    }
+}
+
+impl Decodable for Address {
+    fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+        Ok(Self(rlp.val_at(0)?))
     }
 }
