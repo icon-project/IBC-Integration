@@ -23,7 +23,7 @@ impl IbcConfig {
         Self {
             src,
             dst,
-            sequence: 0,
+            sequence: u128::default(),
         }
     }
     pub fn src_endpoint(&self) -> &IbcEndpoint {
@@ -88,7 +88,7 @@ impl<'a> CwCallservice<'a> {
         &self.message_request
     }
 
-    pub fn requests(&self) -> &Map<'a, u128, CallRequest> {
+    pub fn call_requests(&self) -> &Map<'a, u128, CallRequest> {
         &self.requests
     }
 

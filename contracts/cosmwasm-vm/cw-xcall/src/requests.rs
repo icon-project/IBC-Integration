@@ -79,7 +79,7 @@ impl<'a> CwCallservice<'a> {
         sequence: u128,
         call_request: CallRequest,
     ) -> Result<(), ContractError> {
-        match self.requests().save(store, sequence, &call_request) {
+        match self.call_requests().save(store, sequence, &call_request) {
             Ok(_) => Ok(()),
             Err(err) => Err(ContractError::Std(err)),
         }
@@ -128,17 +128,17 @@ impl<'a> CwCallservice<'a> {
         store: &dyn Storage,
         sequence: u128,
     ) -> Result<CallRequest, ContractError> {
-        match self.requests().may_load(store, sequence)? {
+        match self.call_requests().may_load(store, sequence)? {
             Some(request) => Ok(request),
             None => Err(ContractError::InvalidSequenceId { id: sequence }),
         }
     }
 
     pub fn containes_request(&self, store: &dyn Storage, sequence: u128) -> bool {
-        self.requests().load(store, sequence).is_ok()
+        self.call_requests().load(store, sequence).is_ok()
     }
 
     pub fn remove_call_request(&self, store: &mut dyn Storage, sequence_no: u128) {
-        self.requests().remove(store, sequence_no);
+        self.call_requests().remove(store, sequence_no);
     }
 }

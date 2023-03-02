@@ -3,7 +3,7 @@ use crate::{
     events::{event_call_executed, event_rollback_executed},
     state::{CwCallservice, EXECUTE_CALL, EXECUTE_ROLLBACK},
     types::{
-        message::{CallServiceMessage, CallServiceMessageType},
+        message::CallServiceMessage,
         response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
     },
 };
@@ -106,8 +106,8 @@ impl<'a> CwCallservice<'a> {
     pub fn execute_rollback(
         &self,
         deps: DepsMut,
-        sequence_no: u128,
         info: MessageInfo,
+        sequence_no: u128,
     ) -> Result<Response, ContractError> {
         let call_request = self.query_request(deps.storage, sequence_no)?;
         self.enusre_call_request_not_null(sequence_no, &call_request)

@@ -6,12 +6,12 @@ use cosmwasm_std::{to_binary, Binary};
 pub struct CallRequest {
     from: Address,
     to: String,
-    rollback: Binary,
+    rollback: Vec<u8>,
     enabled: bool,
 }
 
 impl CallRequest {
-    pub fn new(from: Address, to: String, rollback: Binary, enabled: bool) -> Self {
+    pub fn new(from: Address, to: String, rollback: Vec<u8>, enabled: bool) -> Self {
         Self {
             from,
             to,

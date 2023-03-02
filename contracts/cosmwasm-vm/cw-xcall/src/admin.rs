@@ -19,16 +19,15 @@ impl<'a> CwCallservice<'a> {
             Some(owner) => {
                 if info.sender == owner.to_string() {
                     self.admin().save(store, &admin)?;
+                    Ok(Response::new()
+                        .add_attribute("method", "add_admin")
+                        .add_attribute("admin", admin.to_string()))
                 } else {
                     return Err(ContractError::Unauthorized {});
                 }
             }
             None => return Err(ContractError::Unauthorized {}),
-        };
-
-        Ok(Response::new()
-            .add_attribute("method", "add_admin")
-            .add_attribute("admin", admin.to_string()))
+        }
     }
 
     pub fn update_admin(

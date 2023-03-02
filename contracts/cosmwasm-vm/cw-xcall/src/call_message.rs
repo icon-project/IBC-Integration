@@ -5,9 +5,7 @@ use crate::error::ContractError;
 use crate::events::event_xcall_message_sent;
 use crate::state::CwCallservice;
 use crate::types::{
-    address::Address,
-    call_request::CallRequest,
-    message::{CallServiceMessage, CallServiceMessageType},
+    address::Address, call_request::CallRequest, message::CallServiceMessage,
     request::CallServiceMessageRequest,
 };
 
@@ -18,20 +16,20 @@ impl<'a> CwCallservice<'a> {
         deps: DepsMut,
         info: MessageInfo,
         to: String,
-        data: Binary,
-        rollback: Binary,
+        data: Vec<u8>,
+        rollback: Vec<u8>,
         time_out_height: u64,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),
-            &rollback.0,
+            &rollback,
         )?;
 
         self.ensure_data_length(data.len())?;
 
-        self.ensure_rollback_length(&rollback.0)?;
+        self.ensure_rollback_length(&rollback)?;
 
         // TODO : ADD fee logic
 
