@@ -29,3 +29,9 @@ impl From<&[u8]> for Address {
         Address(address)
     }
 }
+
+impl Address {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}

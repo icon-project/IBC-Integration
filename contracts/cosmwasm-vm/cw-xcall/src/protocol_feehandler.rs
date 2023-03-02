@@ -1,60 +1,64 @@
-use cosmwasm_std::Coin;
+use cosmwasm_std::{Coin, QuerierWrapper};
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Response, StdResult,
+    CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult, Storage,
 };
 
 use crate::{error::ContractError, state::CwCallservice, types::address::Address};
 
 impl<'a> CwCallservice<'a> {
-    pub fn setprotocol_feehandler(
+    pub fn set_protocol_feehandler(
         &self,
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
         address: Address,
     ) -> Result<Response, ContractError> {
-        self.ensure_admin_call_or_not(deps.storage, info.sender)?;
-        self.fee_handler().save(deps.storage, &address)?;
+        self.ensure_admin(deps.storage, info.sender)?;
+        self.add_feehandler(deps.storage, &address)?;
 
-        if address.to_string().len().ne(&0) {
-            let accured_fees = self.get_balance(deps.as_ref(), &address)?;
+        if address.len().ne(&0) {
+            let accured_fees = self.get_balance(deps.querier, env.contract.address.to_string())?;
 
-            if !accured_fees.is_empty() {
-                self.create_packet(
-                    deps.as_ref(),
-                    env,
-                    to_binary(&address).unwrap(),
-                    accured_fees[0].clone(),
-                );
+            if accured_fees.amount.u128() > 0 {
+                let message: CosmosMsg<Empty> = CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
+                    to_address: address.to_string(),
+                    amount: vec![accured_fees],
+                });
+
+                return Ok(Response::new()
+                    .add_message(message)
+                    .add_attribute("action", "accured_fees")
+                    .add_attribute("method", "setprotocol_feehandler"));
             }
-        }
-
+        };
         Ok(Response::new()
             .add_attribute("action", "accured_fees")
             .add_attribute("method", "setprotocol_feehandler"))
     }
 
-    pub fn create_packet(&self, deps: Deps, env: Env, data: Binary, accured_fees: Coin) -> IbcMsg {
-        let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
+    pub fn get_protocol_feehandler(&self, deps: Deps) -> Address {
+        self.query_feehandler(deps.storage).unwrap()
+    }
 
-        let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
-        let to_address = " ";
-        let amount = accured_fees;
-
-        IbcMsg::Transfer {
-            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
-            to_address: " ".to_owned(),
-            amount,
-            timeout,
+    pub fn add_feehandler(
+        &self,
+        store: &mut dyn Storage,
+        address: &Address,
+    ) -> Result<(), ContractError> {
+        match self.fee_handler().save(store, address) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
         }
     }
 
-    pub fn get_balance(&self, deps: Deps, address: &Address) -> StdResult<Vec<Coin>> {
-        let _ = &CwCallservice::new().fee_handler().load(deps.storage)?;
-        deps.querier.query_all_balances(address.to_string())
+    pub fn query_feehandler(&self, store: &dyn Storage) -> Result<Address, ContractError> {
+        match self.fee_handler().load(store) {
+            Ok(address) => Ok(address),
+            Err(error) => Err(ContractError::Std(error)),
+        }
     }
 
-    pub fn get_protocolfeehandler(&self, deps: Deps) -> StdResult<Address> {
-        return self.fee_handler().load(deps.storage);
+    fn get_balance(&self, querier: QuerierWrapper, address: String) -> StdResult<Coin> {
+        querier.query_balance(address, "uconst")
     }
 }

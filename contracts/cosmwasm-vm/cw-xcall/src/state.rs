@@ -102,8 +102,4 @@ impl<'a> CwCallservice<'a> {
     pub fn fee_handler(&self) -> &Item<'a, Address> {
         &self.fee_handler
     }
-
-    // pub fn balance(&self) -> &Item<'a, Balance>{
-    //     &self.balance
-    // }
 }

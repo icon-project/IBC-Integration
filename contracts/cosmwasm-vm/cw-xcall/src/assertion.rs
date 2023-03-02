@@ -75,11 +75,7 @@ impl<'a> CwCallservice<'a> {
         Ok(())
     }
 
-    pub fn ensure_admin_call_or_not(
-        &self,
-        store: &dyn Storage,
-        address: Addr,
-    ) -> Result<(), ContractError> {
+    pub fn ensure_admin(&self, store: &dyn Storage, address: Addr) -> Result<(), ContractError> {
         let admin = self.query_admin(store)?;
         ensure_eq!(
             admin.to_string(),
