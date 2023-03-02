@@ -5,7 +5,6 @@ use crate::error::ContractError;
 use super::*;
 
 #[cw_serde]
-
 pub enum CallServiceResponseType {
     CallServiceIbcError = -2,
     CallServiceResponseFailure,

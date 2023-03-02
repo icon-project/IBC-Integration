@@ -1,6 +1,4 @@
-use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Addr, Deps, MessageInfo, QuerierWrapper, Storage,
-};
+use cosmwasm_std::{ensure, ensure_eq, to_binary, Addr, Deps, QuerierWrapper, Storage};
 
 use crate::{
     error::ContractError,
@@ -86,6 +84,15 @@ impl<'a> CwCallservice<'a> {
             info.sender.to_string(),
             owner.to_string(),
             ContractError::Unauthorized {}
+        );
+        Ok(())
+    }
+    pub fn ensure_admin(&self, store: &dyn Storage, address: Addr) -> Result<(), ContractError> {
+        let admin = self.query_admin(store)?;
+        ensure_eq!(
+            admin.to_string(),
+            address.to_string(),
+            ContractError::OnlyAdmin
         );
 
         Ok(())

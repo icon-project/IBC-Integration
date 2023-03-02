@@ -41,4 +41,6 @@ pub enum ContractError {
     InvalidSequenceId { id: u128 },
     #[error("DecodeFaild {error}")]
     DecodeFailed { error: String },
+    #[error("OnlyAdmin")]
+    OnlyAdmin,
 }

@@ -63,7 +63,7 @@ impl<'a> CwCallservice<'a> {
         let request = self.message_request().load(deps.storage, req_id)?;
 
         let responses = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => {
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let code = 0;
 
                 let message_response = CallServiceMessageReponse::new(

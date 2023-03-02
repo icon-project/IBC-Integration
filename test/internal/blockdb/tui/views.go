@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
-	"github.com/icon-project/IBC-Integration/test/internal/blockdb/tui/presenter"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb/tui/presenter"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
