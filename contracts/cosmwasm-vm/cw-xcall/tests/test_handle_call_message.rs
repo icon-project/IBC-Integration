@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     from_binary,
     testing::{mock_dependencies, mock_env, mock_info},
-    Binary, Coin, CosmosMsg, IbcEndpoint, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
+    Coin, CosmosMsg, IbcEndpoint, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 use cw_xcall::{
     state::{CwCallservice, IbcConfig, EXECUTE_CALL, EXECUTE_ROLLBACK},
@@ -18,9 +18,8 @@ use setup::*;
 #[should_panic(expected = "InvalidRequestId")]
 fn test_execute_call_invalid_request_id() {
     let cw_callservice = CwCallservice::new();
-    let env = mock_env();
-    let info = mock_info("user", &[Coin::new(1000, "ucosm")]);
-    let mut deps = mock_dependencies();
+
+    let deps = mock_dependencies();
 
     cw_callservice
         .contains_request(&deps.storage, 123456)
@@ -30,7 +29,7 @@ fn test_execute_call_invalid_request_id() {
 #[test]
 fn test_execute_call_having_request_id_without_rollback() {
     let mut deps = mock_dependencies();
-    let env = mock_env();
+
     let info = mock_info("user1", &[Coin::new(1000, "ucosm")]);
     let cw_callservice = CwCallservice::default();
 
@@ -178,7 +177,7 @@ fn check_for_rollback_in_response() {
     let request = CallRequest::new(
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
-        Binary::from(vec![1, 2, 3]),
+        vec![1, 2, 3],
         true,
     );
 
@@ -224,7 +223,7 @@ fn check_for_rollback_response_failure() {
     let request = CallRequest::new(
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
-        Binary::from(vec![]),
+        vec![],
         false,
     );
 
@@ -248,8 +247,6 @@ fn execute_rollback_success() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let env = mock_env();
-
     let contract = CwCallservice::default();
 
     let seq_id = 123456;
@@ -257,7 +254,7 @@ fn execute_rollback_success() {
     let request = CallRequest::new(
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
-        Binary::from(vec![1, 2, 3]),
+        vec![1, 2, 3],
         true,
     );
 
@@ -271,7 +268,7 @@ fn execute_rollback_success() {
         .unwrap();
 
     let response = contract
-        .execute_rollback(mock_deps.as_mut(), seq_id, mock_info)
+        .execute_rollback(mock_deps.as_mut(), mock_info, seq_id)
         .unwrap();
 
     match response.messages[0].msg.clone() {
@@ -295,8 +292,6 @@ fn execute_rollback_failure() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let env = mock_env();
-
     let contract = CwCallservice::default();
 
     let seq_id = 123456;
@@ -304,7 +299,7 @@ fn execute_rollback_failure() {
     let request = CallRequest::new(
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
-        Binary::from(vec![]),
+        vec![],
         false,
     );
 
@@ -318,7 +313,7 @@ fn execute_rollback_failure() {
         .unwrap();
 
     let response = contract
-        .execute_rollback(mock_deps.as_mut(), seq_id, mock_info)
+        .execute_rollback(mock_deps.as_mut(), mock_info, seq_id)
         .unwrap();
 
     match response.messages[0].msg.clone() {

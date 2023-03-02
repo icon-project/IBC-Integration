@@ -33,9 +33,13 @@ fn add_admin() {
         )
         .unwrap();
 
-    contract
+    let response = contract
         .add_admin(mock_deps.as_mut().storage, mock_info.clone(), admin_one())
         .unwrap();
+
+    assert_eq!(response.attributes[0].value, "add_admin");
+
+    assert_eq!(response.attributes[1].value, admin_one().to_string());
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
