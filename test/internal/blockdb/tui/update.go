@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/icon-project/IBC-Integration/test/internal/blockdb/tui/presenter"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb/tui/presenter"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
