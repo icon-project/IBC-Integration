@@ -54,6 +54,8 @@ impl Encodable for CallServiceMessage {
 
 impl Decodable for CallServiceMessageType {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+        let data = rlp.data()?;
+        let rlp = rlp::Rlp::new(&data);
         match rlp.as_val::<u8>()? {
             0 => Ok(Self::CallServiceRequest),
             1 => Ok(Self::CallServiceResponse),
@@ -93,7 +95,7 @@ impl TryFrom<Binary> for CallServiceMessage {
     type Error = ContractError;
 
     fn try_from(value: Binary) -> Result<Self, Self::Error> {
-        let rlp = rlp::Rlp::new(&value.0);
+        let rlp = rlp::Rlp::new(&value);
         Self::decode(&rlp).map_err(|error| ContractError::DecodeFailed {
             error: error.to_string(),
         })
