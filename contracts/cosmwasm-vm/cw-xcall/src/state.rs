@@ -67,7 +67,6 @@ impl<'a> CwCallservice<'a> {
             requests: Map::new(StorageKey::Requests.as_str()),
             ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
-            //    balance : Item::new(StorageKey::Balance.as_str()),
         }
     }
 
