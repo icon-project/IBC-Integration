@@ -1,11 +1,9 @@
-use std::ops::Add;
-
-use cosmwasm_std::{ensure, ensure_eq, to_binary, Addr, Deps, DepsMut, QuerierWrapper, Storage};
+use cosmwasm_std::{ensure, ensure_eq, to_binary, Addr, Deps, QuerierWrapper, Storage};
 
 use crate::{
     error::ContractError,
     state::{CwCallservice, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
-    types::{address::Address, call_request::CallRequest, request::CallServiceMessageRequest},
+    types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
 
 impl<'a> CwCallservice<'a> {
