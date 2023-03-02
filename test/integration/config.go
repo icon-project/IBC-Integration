@@ -1,4 +1,4 @@
-package integration_test
+package integration
 
 type Config struct {
 	Environment      string `mapstructure:"environment"`
@@ -11,4 +11,5 @@ type Config struct {
 	GasPrice         string `mapstructure:"gas_price"`
 	Bin              string `mapstructure:"bin"`
 	TrustingPeriod   string `mapstructure:"trusting_period"`
+	NID              string `mapstructure:"nid"`
 }
