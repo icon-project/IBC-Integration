@@ -1,8 +1,8 @@
 use super::address::Address;
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Binary};
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[cw_serde]
 pub struct CallRequest {
     from: Address,
     to: String,
