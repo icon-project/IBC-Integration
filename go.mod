@@ -11,6 +11,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/icon-project/icon-bridge v0.0.11
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
+	github.com/rs/zerolog v1.27.0
 	github.com/spf13/viper v1.14.0
 	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230222020454-110aa579a5a8
 	github.com/stretchr/testify v1.8.1
