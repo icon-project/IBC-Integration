@@ -6,7 +6,7 @@ use cw2::set_contract_version;
 use crate::{
     error::ContractError,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    state::{CwCallservice, EXECUTE_ROLLBACK, EXECUTE_CALL},
+    state::{CwCallservice, EXECUTE_CALL, EXECUTE_ROLLBACK},
 };
 
 // version info for migration info
@@ -41,9 +41,8 @@ impl<'a> CwCallservice<'a> {
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             EXECUTE_CALL => self.reply_message_sent(deps.as_ref(), env, msg),
-            EXECUTE_ROLLBACK => self.reply_rollback(deps.as_ref(),msg),
+            EXECUTE_ROLLBACK => self.reply_rollback(deps.as_ref(), msg),
             _ => Err(ContractError::Unauthorized {}),
         }
     }
-
 }

@@ -1,4 +1,4 @@
-use cosmwasm_std::{ensure, to_binary, Addr, Deps, QuerierWrapper};
+use cosmwasm_std::{ensure, ensure_eq, to_binary, Addr, Deps, QuerierWrapper, Storage};
 
 use crate::{
     error::ContractError,
@@ -69,6 +69,17 @@ impl<'a> CwCallservice<'a> {
 
     pub fn ensure_rollback_enabled(&self, enabled: bool) -> Result<(), ContractError> {
         ensure!(enabled, ContractError::RollbackNotEnabled);
+
+        Ok(())
+    }
+
+    pub fn ensure_admin(&self, store: &dyn Storage, address: Addr) -> Result<(), ContractError> {
+        let admin = self.query_admin(store)?;
+        ensure_eq!(
+            admin.to_string(),
+            address.to_string(),
+            ContractError::OnlyAdmin
+        );
 
         Ok(())
     }

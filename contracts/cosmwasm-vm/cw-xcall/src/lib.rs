@@ -10,6 +10,7 @@ pub mod helpers;
 pub mod ibc;
 pub mod msg;
 pub mod owner;
+pub mod protocol_feehandler;
 pub mod requests;
 pub mod rollback_message;
 pub mod state;
