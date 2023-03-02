@@ -13,6 +13,7 @@ pub mod owner;
 pub mod protocol_feehandler;
 pub mod requests;
 pub mod rollback_message;
+pub mod protocol_fee;
 pub mod state;
 pub mod types;
 use crate::error::ContractError;

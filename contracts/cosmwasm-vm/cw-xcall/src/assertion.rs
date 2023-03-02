@@ -73,7 +73,11 @@ impl<'a> CwCallservice<'a> {
         Ok(())
     }
 
-    pub fn ensure_admin(&self, store: &dyn Storage, address: Addr) -> Result<(), ContractError> {
+    pub fn ensure_admin(
+        &self,
+        store: &dyn Storage,
+        address: Addr,
+    ) -> Result<(), ContractError> {
         let admin = self.query_admin(store)?;
         ensure_eq!(
             admin.to_string(),
@@ -81,6 +85,11 @@ impl<'a> CwCallservice<'a> {
             ContractError::OnlyAdmin
         );
 
+        Ok(())
+    }
+
+    pub fn ensure_positive_value(&self, value: u128) -> Result<(), ContractError> {
+        ensure!(value >= 0 as u128, ContractError::ValueShouldBePositive);
         Ok(())
     }
 }

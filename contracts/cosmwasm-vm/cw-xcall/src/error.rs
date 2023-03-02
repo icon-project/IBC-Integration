@@ -41,4 +41,6 @@ pub enum ContractError {
     InvalidSequenceId { id: u128 },
     #[error("OnlyAdmin")]
     OnlyAdmin,
+    #[error("ValueShouldBePositive")]
+    ValueShouldBePositive,
 }
