@@ -3,7 +3,7 @@ use cosmwasm_std::{MessageInfo, Response, StdError, Storage};
 use crate::{error::ContractError, state::CwCallservice, types::address::Address};
 
 impl<'a> CwCallservice<'a> {
-    pub fn query_admin(&self, store: &dyn Storage) -> Result<Address, StdError> {
+    pub fn query_admin(&self, store: &dyn Storage) -> Result<Address, ContractError> {
         let admin = self.admin().load(store)?;
 
         Ok(admin)
@@ -23,10 +23,10 @@ impl<'a> CwCallservice<'a> {
                         .add_attribute("method", "add_admin")
                         .add_attribute("admin", admin.to_string()))
                 } else {
-                    return Err(ContractError::Unauthorized {});
+                    Err(ContractError::Unauthorized {})
                 }
             }
-            None => return Err(ContractError::Unauthorized {}),
+            None => Err(ContractError::Unauthorized {}),
         }
     }
 

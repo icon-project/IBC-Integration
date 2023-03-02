@@ -31,9 +31,11 @@ impl<'a> CwCallservice<'a> {
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        msg: InstantiateMsg,
+        _msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        unimplemented!()
+        set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+        self.init(deps, info)
     }
 
     pub fn execute(
@@ -43,11 +45,32 @@ impl<'a> CwCallservice<'a> {
         info: MessageInfo,
         msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
-        unimplemented!()
+        match msg {
+            ExecuteMsg::SetAdmin { address } => self.add_admin(deps.storage, info, address),
+            ExecuteMsg::SetProtocol { value } => {
+                todo!()
+            }
+            ExecuteMsg::SetProtocolFeeHandler { address } => {
+                self.set_protocol_feehandler(deps, env, info, address)
+            }
+            ExecuteMsg::SendCallMessage { to, data, rollback } => {
+                self.send_packet(env, deps, info, to, data, rollback, 0)
+            }
+            ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
+            ExecuteMsg::ExecuteRollback { sequence_no } => {
+                self.execute_rollback(deps, info, sequence_no)
+            }
+        }
     }
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-        unimplemented!()
+        match msg {
+            QueryMsg::GetAdmin {} => to_binary(&self.query_admin(deps.storage).unwrap()),
+            QueryMsg::GetProtocolFee {} => todo!(),
+            QueryMsg::GetProtocolFeeHandler {} => {
+                to_binary(&self.query_feehandler(deps.storage).unwrap())
+            }
+        }
     }
 
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
@@ -77,7 +100,7 @@ impl<'a> CwCallservice<'a> {
                 call_service_message.payload(),
             ),
             CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, &call_service_message.payload())
+                self.handle_response(deps, call_service_message.payload())
             }
         }
     }
@@ -128,7 +151,7 @@ impl<'a> CwCallservice<'a> {
                 .add_attribute("method", "handle_response")
                 .add_attribute(
                     "message",
-                    &format!("handle_resposne: no request for {}", response_sequence_no),
+                    format!("handle_resposne: no request for {}", response_sequence_no),
                 ));
         }
 
@@ -137,12 +160,12 @@ impl<'a> CwCallservice<'a> {
                 let event = match message.message().is_empty() {
                     true => event_response_message(
                         response_sequence_no,
-                        to_int(&message.response_code()),
+                        to_int(message.response_code()),
                         "",
                     ),
                     false => event_response_message(
                         response_sequence_no,
-                        to_int(&message.response_code()),
+                        to_int(message.response_code()),
                         message.message(),
                     ),
                 };
@@ -170,5 +193,17 @@ impl<'a> CwCallservice<'a> {
 
     fn cleanup_request(&self, deps: DepsMut, sequence_no: u128) {
         self.remove_call_request(deps.storage, sequence_no);
+    }
+
+    fn init(&self, deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
+        let last_sequence_no = u128::default();
+        let last_request_id = u128::default();
+        let owner = Address::from(info.sender.as_str());
+
+        self.add_owner(deps.storage, owner)?;
+        self.init_last_sequnce_no(deps.storage, last_sequence_no)?;
+        self.init_last_request_id(deps.storage, last_request_id)?;
+
+        Ok(Response::new())
     }
 }

@@ -132,22 +132,18 @@ impl<'a> CwCallservice<'a> {
         let sequence_no = self.last_sequence_no().load(deps.storage)?;
 
         let response = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let message_response = CallServiceMessageReponse::new(
-                    sequence_no,
-                    CallServiceResponseType::CallServiceResponseSucess,
-                    "",
-                );
-                message_response
-            }
+            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageReponse::new(
+                sequence_no,
+                CallServiceResponseType::CallServiceResponseSucess,
+                "",
+            ),
             cosmwasm_std::SubMsgResult::Err(err) => {
                 let error_message = format!("CallService Reverted : {err}");
-                let message_response = CallServiceMessageReponse::new(
+                CallServiceMessageReponse::new(
                     sequence_no,
                     CallServiceResponseType::CallServiceResponseFailure,
                     &error_message,
-                );
-                message_response
+                )
             }
         };
 

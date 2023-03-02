@@ -141,4 +141,25 @@ impl<'a> CwCallservice<'a> {
     pub fn remove_call_request(&self, store: &mut dyn Storage, sequence_no: u128) {
         self.call_requests().remove(store, sequence_no);
     }
+    pub fn init_last_sequnce_no(
+        &self,
+        store: &mut dyn Storage,
+        sequence_no: u128,
+    ) -> Result<(), ContractError> {
+        match self.last_sequence_no().save(store, &sequence_no) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    pub fn init_last_request_id(
+        &self,
+        store: &mut dyn Storage,
+        request_id: u128,
+    ) -> Result<(), ContractError> {
+        match self.last_request_id().save(store, &request_id) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
 }
