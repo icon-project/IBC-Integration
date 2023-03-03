@@ -1,5 +1,10 @@
 package integration
 
+import (
+	"fmt"
+	"github.com/spf13/viper"
+)
+
 type Config struct {
 	Environment      string `mapstructure:"environment"`
 	URL              string `mapstructure:"url"`
@@ -12,4 +17,13 @@ type Config struct {
 	Bin              string `mapstructure:"bin"`
 	TrustingPeriod   string `mapstructure:"trusting_period"`
 	NID              string `mapstructure:"nid"`
+}
+
+func GetConfig() *Config {
+	var config Config
+	if err := viper.Unmarshal(&config); err != nil {
+		fmt.Println(err)
+	}
+
+	return &config
 }
