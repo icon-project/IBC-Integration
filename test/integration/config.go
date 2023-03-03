@@ -22,25 +22,30 @@ type Config struct {
 }
 
 type Chain struct {
-	Name        string      `mapstructure:"environment"`
+	Name        string      `mapstructure:"name"`
 	ChainConfig ChainConfig `mapstructure:"chain_config"`
 }
 
 type ChainConfig struct {
-	Type           string            `mapstructure:"type"`
-	Name           string            `mapstructure:"name"`
-	ChainID        string            `mapstructure:"chain_id"`
-	Images         []ibc.DockerImage `mapstructure:"images"`
-	Bin            string            `mapstructure:"bin"`
-	Bech32Prefix   string            `mapstructure:"bech32_prefix"`
-	Denom          string            `mapstructure:"denom"`
-	CoinType       string            `default:"118" mapstructure:"coin_type"`
-	GasPrices      string            `mapstructure:"gas_prices"`
-	GasAdjustment  float64           `mapstructure:"gas_adjustment"`
-	TrustingPeriod string            `mapstructure:"trusting_period"`
-	NoHostMount    bool              `mapstructure:"no_host_mount"`
+	Type           string      `mapstructure:"type"`
+	Name           string      `mapstructure:"name"`
+	ChainID        string      `mapstructure:"chain_id"`
+	Images         DockerImage `mapstructure:"image"`
+	Bin            string      `mapstructure:"bin"`
+	Bech32Prefix   string      `mapstructure:"bech32_prefix"`
+	Denom          string      `mapstructure:"denom"`
+	CoinType       string      `mapstructure:"coin_type"`
+	GasPrices      string      `mapstructure:"gas_prices"`
+	GasAdjustment  float64     `mapstructure:"gas_adjustment"`
+	TrustingPeriod string      `mapstructure:"trusting_period"`
+	NoHostMount    bool        `mapstructure:"no_host_mount"`
 }
 
+type DockerImage struct {
+	Repository string `mapstructure:"repository"`
+	Version    string `mapstructure:"version"`
+	UidGid     string `mapstructure:"uid_gid"`
+}
 
 func GetConfig() *Config {
 	var config Config
