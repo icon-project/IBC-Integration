@@ -12,7 +12,7 @@ pub enum StorageKey {
     IbcConfig,
     FeeHandler,
     Balance,
-    Fee
+    Fee,
 }
 
 impl StorageKey {

@@ -108,9 +108,8 @@ fn test_for_get_protocol_fee_handler() {
 }
 
 #[test]
-fn test_for_set_protocolfee() {
+fn set_protocolfee() {
     let mut deps = mock_dependencies();
-    let env = mock_env();
     let value = 123;
     let info = mock_info("user", &[Coin::new(1000, "uconst")]);
     let contract = CwCallservice::new();
@@ -126,16 +125,18 @@ fn test_for_set_protocolfee() {
         .add_admin(deps.as_mut().storage, info.clone(), admin_one())
         .unwrap();
 
-    contract.fee().save(&mut deps.storage, &value).unwrap();
     let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "uconst")]);
     let result = contract.set_protocolfee(deps.as_mut(), info, value);
-    assert_eq!(result.unwrap().attributes.len(), 1)
+    assert_eq!(result.unwrap().attributes.len(), 1);
+
+    let fee = contract.get_protocolfee(deps.as_ref());
+
+    assert_eq!(value, fee)
 }
 
 #[test]
-fn test_for_get_protocolfee() {
+fn get_protocolfee() {
     let mut deps = mock_dependencies();
-    let env = mock_env();
     let info = mock_info("user", &[Coin::new(1000, "ucosm")]);
     let value = 123;
 
@@ -150,11 +151,32 @@ fn test_for_get_protocolfee() {
     contract
         .add_admin(deps.as_mut().storage, info.clone(), admin_one())
         .unwrap();
-    contract.fee().save(&mut deps.storage, &value).unwrap();
     let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "ucosm")]);
     contract
         .set_protocolfee(deps.as_mut(), info, value)
         .unwrap();
-    let result = contract.get_protocolfee(deps.as_mut());
-    assert_eq!("123", result.to_string());
+    let result = contract.get_protocolfee(deps.as_ref());
+    assert_eq!(123, result);
+}
+
+#[test]
+fn get_protocolfee_zero() {
+    let mut deps = mock_dependencies();
+
+    let info = mock_info("user", &[Coin::new(1000, "ucosm")]);
+
+    let contract = CwCallservice::new();
+    contract
+        .add_owner(
+            deps.as_mut().storage,
+            Address::from(&info.sender.to_string()),
+        )
+        .unwrap();
+
+    contract
+        .add_admin(deps.as_mut().storage, info.clone(), admin_one())
+        .unwrap();
+
+    let result = contract.get_protocolfee(deps.as_ref());
+    assert_eq!(0, result);
 }

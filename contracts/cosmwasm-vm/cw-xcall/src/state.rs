@@ -48,7 +48,7 @@ pub struct CwCallservice<'a> {
     requests: Map<'a, u128, CallRequest>,
     ibc_config: Item<'a, IbcConfig>,
     fee_handler: Item<'a, Address>,
-    fee: Item<'a, u128 >,
+    fee: Item<'a, u128>,
 }
 
 impl<'a> Default for CwCallservice<'a> {
@@ -103,7 +103,7 @@ impl<'a> CwCallservice<'a> {
     pub fn fee_handler(&self) -> &Item<'a, Address> {
         &self.fee_handler
     }
-    pub fn fee(&self) -> &Item<'a, u128>{
+    pub fn fee(&self) -> &Item<'a, u128> {
         &self.fee
     }
 }
