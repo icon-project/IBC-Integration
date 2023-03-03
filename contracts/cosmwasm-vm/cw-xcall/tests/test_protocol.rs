@@ -3,14 +3,12 @@ use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR},
     Coin,
 };
-use cw_xcall::{
-    state::CwCallservice,
-    types::address::{self, Address},
-};
+use cw_xcall::{state::CwCallservice, types::address::Address};
 pub mod account;
 use account::*;
+
 #[test]
-fn test_valid_input() {
+fn test_for_set_protocol_feehandler() {
     let mut deps = mock_dependencies();
     let env = mock_env();
 
@@ -80,7 +78,7 @@ fn test_invalid_input() {
 }
 
 #[test]
-fn test_get_protocol_fee_handler() {
+fn test_for_get_protocol_fee_handler() {
     let mut deps = mock_dependencies();
     let env = mock_env();
     let info = mock_info("user", &[Coin::new(1000, "ucosm")]);
@@ -110,7 +108,7 @@ fn test_get_protocol_fee_handler() {
 }
 
 #[test]
-fn test_valid_input_for_set_protocolfee() {
+fn test_for_set_protocolfee() {
     let mut deps = mock_dependencies();
     let env = mock_env();
     let value = 123;
@@ -135,7 +133,7 @@ fn test_valid_input_for_set_protocolfee() {
 }
 
 #[test]
-fn test_get_protocolfee() {
+fn test_for_get_protocolfee() {
     let mut deps = mock_dependencies();
     let env = mock_env();
     let info = mock_info("user", &[Coin::new(1000, "ucosm")]);

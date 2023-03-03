@@ -16,8 +16,8 @@ impl<'a> CwCallservice<'a> {
         Ok(Response::new().add_attribute("method", "set_protocolfee"))
     }
 
-    pub fn get_protocolfee(&self, deps:DepsMut)-> u128{
-self.query_fee( deps.storage).unwrap()
+    pub fn get_protocolfee(&self, deps: DepsMut) -> u128 {
+        self.query_fee(deps.storage).unwrap()
     }
 
     fn add_fee(&self, store: &mut dyn Storage, value: u128) -> Result<(), ContractError> {
@@ -27,8 +27,8 @@ self.query_fee( deps.storage).unwrap()
         }
     }
 
-    fn query_fee(&self, store: &mut dyn Storage) -> Result<u128, ContractError>{
-        match self.fee().load(store){
+    fn query_fee(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+        match self.fee().load(store) {
             Ok(value) => Ok(value),
             Err(error) => Err(ContractError::Std(error)),
         }
