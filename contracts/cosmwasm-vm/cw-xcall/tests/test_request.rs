@@ -1,14 +1,14 @@
 mod account;
 mod setup;
 
-use cw_xcall::state::CwCallservice;
+use cw_xcall::state::CwCallService;
 use setup::*;
 
 #[test]
 fn update_sequence() {
     let mut mock_deps = deps();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .last_sequence_no()
@@ -38,7 +38,7 @@ fn update_sequence() {
 fn update_sequence_without_proper_initialisation() {
     let mut mock_deps = deps();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .increment_last_sequence_no(mock_deps.as_mut().storage)
@@ -55,7 +55,7 @@ fn update_sequence_without_proper_initialisation() {
 fn update_request_id() {
     let mut mock_deps = deps();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .last_request_id()
@@ -84,7 +84,7 @@ fn update_request_id() {
 fn update_request_id_without_proper_initialisation() {
     let mut mock_deps = deps();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .increment_last_request_id(mock_deps.as_mut().storage)
@@ -101,7 +101,7 @@ fn update_request_id_without_proper_initialisation() {
 fn set_sequence() {
     let mut mock_deps = deps();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .last_sequence_no()
@@ -123,7 +123,7 @@ fn set_sequence() {
 fn set_request_id() {
     let mut mock_deps = deps();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .last_request_id()
@@ -146,7 +146,7 @@ fn set_request_id() {
 fn set_sequence_without_proper_initialisation() {
     let mut mock_deps = deps();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .set_last_sequence_no(mock_deps.as_mut().storage, 20)
@@ -158,7 +158,7 @@ fn set_sequence_without_proper_initialisation() {
 fn set_request_id_without_proper_initialisation() {
     let mut mock_deps = deps();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .set_last_request_id(mock_deps.as_mut().storage, 20)

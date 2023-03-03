@@ -1,13 +1,13 @@
-use cosmwasm_std::{entry_point, Never};
-use cosmwasm_std::{
-    DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse,
+use crate::{
+    ack::make_ack_fail,
+    state::{CwCallService, IbcConfig},
+    ContractError,
 };
-
-use crate::ack::make_ack_fail;
-use crate::state::{CwCallservice, IbcConfig};
-use crate::ContractError;
+use cosmwasm_std::{
+    entry_point, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, Never,
+};
 
 pub const IBC_VERSION: &str = "xcall-1";
 
@@ -33,9 +33,7 @@ pub fn ibc_channel_connect(
     let destination = msg.channel().counterparty_endpoint.clone();
 
     let ibc_config = IbcConfig::new(source, destination);
-
-    let mut call_service = CwCallservice::default();
-
+    let mut call_service = CwCallService::default();
     call_service.save_config(deps, &ibc_config)?;
 
     Ok(IbcBasicResponse::new().add_attribute("method", "ibc_channel_connect"))
@@ -116,10 +114,11 @@ fn do_ibc_packet_receive(
     _env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, ContractError> {
-    let _channel = msg.packet.dest.channel_id.clone();
+    let _channel = msg.packet.dest.channel_id;
 
     Ok(IbcReceiveResponse::new())
 }
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_packet_ack(
     _deps: DepsMut,
@@ -148,7 +147,7 @@ pub fn ibc_packet_timeout(
     Ok(IbcBasicResponse::new().add_attribute("method", "ibc_packet_timeout"))
 }
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     fn save_config(&mut self, deps: DepsMut, config: &IbcConfig) -> Result<(), ContractError> {
         match self.ibc_config().save(deps.storage, config) {
             Ok(_) => Ok(()),

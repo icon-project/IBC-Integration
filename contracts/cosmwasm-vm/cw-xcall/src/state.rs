@@ -4,13 +4,14 @@ use cw_storage_plus::{Item, Map};
 
 use crate::types::{
     address::Address, call_request::CallRequest, request::CallServiceMessageRequest,
-    stroage_keys::StorageKey,
+    storage_keys::StorageKey,
 };
 
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
 pub const EXECUTE_CALL: u64 = 0;
 pub const EXECUTE_ROLLBACK: u64 = 1;
+
 #[cw_serde]
 pub struct IbcConfig {
     sequence: u128,
@@ -23,23 +24,28 @@ impl IbcConfig {
         Self {
             src,
             dst,
-            sequence: 0,
+            sequence: u128::default(),
         }
     }
+
     pub fn src_endpoint(&self) -> &IbcEndpoint {
         &self.src
     }
+
     pub fn dst_endpoint(&self) -> &IbcEndpoint {
         &self.dst
     }
+
     pub fn sequence(&self) -> u128 {
         self.sequence
     }
+
     pub fn next_sequence(&self) -> Option<u128> {
         self.sequence.checked_add(1)
     }
 }
-pub struct CwCallservice<'a> {
+
+pub struct CwCallService<'a> {
     last_sequence_no: Item<'a, u128>,
     last_request_id: Item<'a, u128>,
     owner: Item<'a, Address>,
@@ -50,13 +56,13 @@ pub struct CwCallservice<'a> {
     fee_handler: Item<'a, Address>,
 }
 
-impl<'a> Default for CwCallservice<'a> {
+impl<'a> Default for CwCallService<'a> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn new() -> Self {
         Self {
             last_sequence_no: Item::new(StorageKey::SequenceNo.as_str()),
@@ -90,7 +96,7 @@ impl<'a> CwCallservice<'a> {
         &self.message_request
     }
 
-    pub fn requests(&self) -> &Map<'a, u128, CallRequest> {
+    pub fn call_requests(&self) -> &Map<'a, u128, CallRequest> {
         &self.requests
     }
 

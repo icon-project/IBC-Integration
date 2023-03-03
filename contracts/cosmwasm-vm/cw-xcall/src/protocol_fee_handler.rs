@@ -3,9 +3,9 @@ use cosmwasm_std::{
     CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult, Storage,
 };
 
-use crate::{error::ContractError, state::CwCallservice, types::address::Address};
+use crate::{error::ContractError, state::CwCallService, types::address::Address};
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn set_protocol_feehandler(
         &self,
         deps: DepsMut,
@@ -31,6 +31,7 @@ impl<'a> CwCallservice<'a> {
                     .add_attribute("method", "setprotocol_feehandler"));
             }
         };
+        
         Ok(Response::new()
             .add_attribute("action", "accured_fees")
             .add_attribute("method", "setprotocol_feehandler"))

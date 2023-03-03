@@ -1,42 +1,41 @@
-use cosmwasm_std::{to_binary, Binary, DepsMut, Env, IbcMsg, MessageInfo, Response};
-use cosmwasm_std::{IbcTimeout, IbcTimeoutBlock};
-
-use crate::error::ContractError;
-use crate::events::event_xcall_message_sent;
-use crate::state::CwCallservice;
-use crate::types::{
-    address::Address,
-    call_request::CallRequest,
-    message::{CallServiceMessage, CallServiceMessageType},
-    request::CallServiceMessageRequest,
+use cosmwasm_std::{
+    to_binary, DepsMut, Env, IbcMsg, IbcTimeout, IbcTimeoutBlock, MessageInfo, Response,
 };
 
-impl<'a> CwCallservice<'a> {
+use crate::{
+    error::ContractError,
+    events::event_xcall_message_sent,
+    state::CwCallService,
+    types::{
+        address::Address, call_request::CallRequest, message::CallServiceMessage,
+        request::CallServiceMessageRequest,
+    },
+};
+
+impl<'a> CwCallService<'a> {
     pub fn send_packet(
         &self,
         env: Env,
         deps: DepsMut,
         info: MessageInfo,
         to: String,
-        data: Binary,
-        rollback: Binary,
+        data: Vec<u8>,
+        rollback: Vec<u8>,
         time_out_height: u64,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),
-            &rollback.0,
+            &rollback,
         )?;
 
         self.ensure_data_length(data.len())?;
-
-        self.ensure_rollback_length(&rollback.0)?;
+        self.ensure_rollback_length(&rollback)?;
 
         // TODO : ADD fee logic
 
         let need_response = !rollback.is_empty();
-
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
 
         if need_response {
@@ -54,15 +53,11 @@ impl<'a> CwCallservice<'a> {
             Address::from(info.sender.as_str()),
             to,
             sequence_no,
-            rollback,
-            data,
+            rollback.to_vec(),
+            data.to_vec(),
         );
 
-        let message = CallServiceMessage::new(
-            CallServiceMessageType::CallServiceRequest,
-            to_binary(&call_request).unwrap(),
-        );
-
+        let message: CallServiceMessage = call_request.into();
         let packet =
             self.create_packet_and_event_for_request(deps, env, time_out_height, message.clone())?;
 
