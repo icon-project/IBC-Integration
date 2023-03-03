@@ -16,7 +16,7 @@ type IconTestnet struct {
 }
 
 // This function takes initMessage, scorePath and keytorePath, Deploys contract to testnet and returns score address
-func (it IconTestnet) DeployContract(scorePath, keystorePath, initMessage string) (string, error) {
+func (it *IconTestnet) DeployContract(scorePath, keystorePath, initMessage string) (string, error) {
 	var result *icontypes.TransactionResult
 	var output string
 	hash, _ := exec.Command(it.Config.Bin, "rpc", "sendtx", "deploy", scorePath,
@@ -31,4 +31,15 @@ func (it IconTestnet) DeployContract(scorePath, keystorePath, initMessage string
 	out, err := exec.Command(it.Config.Bin, "rpc", "txresult", output, "--uri", it.Config.URL).Output()
 	json.Unmarshal(out, &result)
 	return string(result.SCOREAddress), err
+}
+
+// This function queries any method in deployed smartcontract given score address, method name along with params if any, to return the result
+func (it *IconTestnet) QueryContract(scoreAddress, methodName, params string) (string, error) {
+	if params != "" {
+		output, _ := exec.Command(it.Config.Bin, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--param", params, "--uri", it.Config.URL).Output()
+		return string(output), nil
+	} else {
+		output, _ := exec.Command(it.Config.Bin, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", it.Config.URL).Output()
+		return string(output), nil
+	}
 }
