@@ -3,7 +3,7 @@ use cosmwasm_std::{Deps, DepsMut, MessageInfo, Response, Storage};
 use crate::{error::ContractError, state::CwCallservice};
 
 impl<'a> CwCallservice<'a> {
-    pub fn set_protocolfee(
+    pub fn set_protocol_fee(
         &self,
         deps: DepsMut,
         info: MessageInfo,
@@ -15,8 +15,8 @@ impl<'a> CwCallservice<'a> {
         Ok(Response::new().add_attribute("method", "set_protocolfee"))
     }
 
-    pub fn get_protocolfee(&self, deps: Deps) -> u128 {
-        self.query_fee(deps.storage).unwrap_or_default()
+    pub fn get_protocol_fee(&self, deps: DepsMut) -> u128 {
+        self.query_fee(deps.storage).unwrap()
     }
 
     fn add_fee(&self, store: &mut dyn Storage, value: u128) -> Result<(), ContractError> {
