@@ -26,3 +26,8 @@ func NewExecutor(t *testing.T) *Executor {
 		Config: GetConfig(),
 	}
 }
+
+
+func (e *Executor) ChainRunning(){
+	e.
+}

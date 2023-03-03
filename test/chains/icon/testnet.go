@@ -5,13 +5,13 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/icon-project/ibc-integration/test/integration"
+	integration_test "github.com/icon-project/ibc-integration/test/integration"
 	iconclient "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 )
 
 type IconTestnet struct {
-	Config integration.Config
+	Config integration_test.Config
 	Client *iconclient.Client
 }
 
