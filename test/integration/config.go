@@ -2,11 +2,12 @@ package integration_test
 
 import (
 	"fmt"
-
 	"github.com/spf13/viper"
+	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 )
 
 type Config struct {
+	Chain            Chain  `mapstructure:"chain"`
 	Environment      string `mapstructure:"environment"`
 	URL              string `mapstructure:"url"`
 	KeystoreFile     string `mapstructure:"keystore_file"`
@@ -19,6 +20,27 @@ type Config struct {
 	TrustingPeriod   string `mapstructure:"trusting_period"`
 	NID              string `mapstructure:"nid"`
 }
+
+type Chain struct {
+	Name        string      `mapstructure:"environment"`
+	ChainConfig ChainConfig `mapstructure:"chain_config"`
+}
+
+type ChainConfig struct {
+	Type           string            `mapstructure:"type"`
+	Name           string            `mapstructure:"name"`
+	ChainID        string            `mapstructure:"chain_id"`
+	Images         []ibc.DockerImage `mapstructure:"images"`
+	Bin            string            `mapstructure:"bin"`
+	Bech32Prefix   string            `mapstructure:"bech32_prefix"`
+	Denom          string            `mapstructure:"denom"`
+	CoinType       string            `default:"118" mapstructure:"coin_type"`
+	GasPrices      string            `mapstructure:"gas_prices"`
+	GasAdjustment  float64           `mapstructure:"gas_adjustment"`
+	TrustingPeriod string            `mapstructure:"trusting_period"`
+	NoHostMount    bool              `mapstructure:"no_host_mount"`
+}
+
 
 func GetConfig() *Config {
 	var config Config
