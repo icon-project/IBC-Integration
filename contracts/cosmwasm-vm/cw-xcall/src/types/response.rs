@@ -69,7 +69,7 @@ impl Encodable for CallServiceResponseType {
 impl Decodable for CallServiceResponseType {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
         let data = rlp.data()?;
-        let rlp = rlp::Rlp::new(&data);
+        let rlp = rlp::Rlp::new(data);
         match rlp.as_val::<u8>()? {
             0 => Ok(Self::CallServiceResponseSucess),
             1 => Ok(Self::CallServiceResponseFailure),

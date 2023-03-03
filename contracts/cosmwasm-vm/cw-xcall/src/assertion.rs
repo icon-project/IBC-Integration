@@ -4,11 +4,11 @@ use cosmwasm_std::{
 
 use crate::{
     error::ContractError,
-    state::{CwCallservice, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
+    state::{CwCallService, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn ensure_caller_is_contract_and_rollback_is_null(
         &self,
         deps: Deps,
@@ -75,7 +75,7 @@ impl<'a> CwCallservice<'a> {
         Ok(())
     }
 
-    pub fn assert_owner(
+    pub fn ensure_owner(
         &self,
         store: &dyn Storage,
         info: &MessageInfo,
@@ -87,6 +87,7 @@ impl<'a> CwCallservice<'a> {
             owner.to_string(),
             ContractError::Unauthorized {}
         );
+
         Ok(())
     }
     pub fn ensure_admin(&self, store: &dyn Storage, address: Addr) -> Result<(), ContractError> {

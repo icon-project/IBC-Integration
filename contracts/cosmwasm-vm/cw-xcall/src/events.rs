@@ -1,5 +1,4 @@
 use cosmwasm_std::{to_binary, Event};
-
 use crate::types::{message::CallServiceMessage, response::CallServiceResponseType};
 
 pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
@@ -8,6 +7,7 @@ pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
         .add_attribute("code", code.to_string())
         .add_attribute("msg", msg.to_string())
 }
+
 pub fn event_xcall_message_sent(
     sequence_no: u128,
     from: String,

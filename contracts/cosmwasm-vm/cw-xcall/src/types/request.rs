@@ -1,8 +1,4 @@
-use std::vec;
-
 use common::rlp::{Decodable, Encodable};
-use cosmwasm_std::Binary;
-
 use crate::error::ContractError;
 
 use super::*;

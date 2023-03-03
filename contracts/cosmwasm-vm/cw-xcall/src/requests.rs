@@ -2,11 +2,11 @@ use cosmwasm_std::Storage;
 
 use crate::{
     error::ContractError,
-    state::CwCallservice,
+    state::CwCallService,
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn query_last_sequence_no(&self, store: &dyn Storage) -> Result<u128, ContractError> {
         let last_sequence = self.last_sequence_no().load(store)?;
 
@@ -24,8 +24,10 @@ impl<'a> CwCallservice<'a> {
 
                     Ok(seq)
                 })?;
+
         Ok(sequence_no)
     }
+
     pub fn set_last_sequence_no(
         &self,
         store: &mut dyn Storage,
@@ -37,6 +39,7 @@ impl<'a> CwCallservice<'a> {
                     seq.clone_from(&sequence);
                     Ok(seq)
                 })?;
+
         Ok(req_id)
     }
 
@@ -57,8 +60,10 @@ impl<'a> CwCallservice<'a> {
 
                     Ok(req_id)
                 })?;
+
         Ok(req_id)
     }
+
     pub fn set_last_request_id(
         &self,
         store: &mut dyn Storage,
@@ -70,6 +75,7 @@ impl<'a> CwCallservice<'a> {
                     req_id.clone_from(&request_id);
                     Ok(req_id)
                 })?;
+
         Ok(req_id)
     }
 
@@ -141,6 +147,7 @@ impl<'a> CwCallservice<'a> {
     pub fn remove_call_request(&self, store: &mut dyn Storage, sequence_no: u128) {
         self.call_requests().remove(store, sequence_no);
     }
+
     pub fn init_last_sequnce_no(
         &self,
         store: &mut dyn Storage,

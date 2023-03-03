@@ -6,7 +6,7 @@ use cosmwasm_std::{
     testing::mock_dependencies, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock,
 };
 use cw_xcall::{
-    state::CwCallservice,
+    state::CwCallService,
     types::{
         address::Address, call_request::CallRequest, message::CallServiceMessage,
         request::CallServiceMessageRequest, response::CallServiceMessageReponse,
@@ -19,7 +19,7 @@ fn test_receive_packet_for_call_message_request() {
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -73,7 +73,7 @@ fn test_receive_packet_for_call_message_response() {
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -137,7 +137,7 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -196,7 +196,7 @@ fn handle_response_emit_rollback_event() {
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(

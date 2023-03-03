@@ -1,7 +1,7 @@
 use crate::{
     error::ContractError,
     events::{event_call_executed, event_rollback_executed},
-    state::{CwCallservice, EXECUTE_CALL, EXECUTE_ROLLBACK},
+    state::{CwCallService, EXECUTE_CALL, EXECUTE_ROLLBACK},
     types::{
         message::CallServiceMessage,
         response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
@@ -13,7 +13,7 @@ use cosmwasm_std::{
 };
 use schemars::_serde_json::to_string;
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn execute_call(
         &self,
         deps: DepsMut,
@@ -97,6 +97,7 @@ impl<'a> CwCallservice<'a> {
                 .add_attribute("method", "execute_callback")
                 .add_message(packet));
         }
+
         Ok(Response::new()
             .add_attribute("action", "call_message")
             .add_attribute("method", "execute_callback")
@@ -110,10 +111,12 @@ impl<'a> CwCallservice<'a> {
         sequence_no: u128,
     ) -> Result<Response, ContractError> {
         let call_request = self.query_request(deps.storage, sequence_no)?;
+
         self.enusre_call_request_not_null(sequence_no, &call_request)
             .unwrap();
         self.ensure_rollback_enabled(call_request.enabled())
             .unwrap();
+
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: call_request.to().to_string(),
             msg: to_binary(call_request.rollback()).unwrap(), //TODO : Need to update

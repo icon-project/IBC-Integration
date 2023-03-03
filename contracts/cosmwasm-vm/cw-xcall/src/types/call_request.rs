@@ -1,6 +1,6 @@
 use super::address::Address;
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, Binary};
+use cosmwasm_std::to_binary;
 
 #[cw_serde]
 pub struct CallRequest {

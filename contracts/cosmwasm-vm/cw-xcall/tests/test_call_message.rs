@@ -10,7 +10,7 @@ use cosmwasm_std::{
 };
 
 use cw_xcall::{
-    state::{CwCallservice, IbcConfig},
+    state::{CwCallService, IbcConfig},
     types::{address::Address, message::CallServiceMessage, request::CallServiceMessageRequest},
 };
 use setup::*;
@@ -25,7 +25,7 @@ fn send_packet_success() {
 
     let env = mock_env();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .last_sequence_no()
@@ -112,7 +112,7 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
 
     let env = mock_env();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .last_sequence_no()
@@ -180,7 +180,7 @@ fn send_packet_failure_due_data_len() {
 
     let env = mock_env();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .last_sequence_no()
@@ -267,7 +267,7 @@ fn send_packet_failure_due_rollback_len() {
 
     let env = mock_env();
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .last_sequence_no()

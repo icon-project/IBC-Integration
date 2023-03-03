@@ -1,5 +1,10 @@
 use crate::{
+    error::ContractError,
     events::{event_call_message, event_response_message, event_rollback_message},
+    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    state::{CwCallService, EXECUTE_CALL, EXECUTE_ROLLBACK},
+    types::message::CallServiceMessage,
+    types::response::CallServiceResponseType,
     types::{
         address::Address,
         message::CallServiceMessageType,
@@ -8,24 +13,15 @@ use crate::{
     },
 };
 use cosmwasm_std::{
-    from_binary, to_binary, Binary, Deps, DepsMut, Env, IbcPacket, MessageInfo, Reply, Response,
-    StdResult,
+    to_binary, Binary, Deps, DepsMut, Env, IbcPacket, MessageInfo, Reply, Response, StdResult,
 };
 use cw2::set_contract_version;
-
-use crate::{
-    error::ContractError,
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    state::{CwCallservice, EXECUTE_CALL, EXECUTE_ROLLBACK},
-    types::message::CallServiceMessage,
-    types::response::CallServiceResponseType,
-};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-xcall";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn instantiate(
         &self,
         deps: DepsMut,
@@ -82,14 +78,14 @@ impl<'a> CwCallservice<'a> {
     }
 }
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn receive_packet_data(
         &self,
         deps: DepsMut,
         info: MessageInfo,
         message: IbcPacket,
     ) -> Result<Response, ContractError> {
-        self.assert_owner(deps.storage, &info).unwrap();
+        self.ensure_owner(deps.storage, &info).unwrap();
 
         let call_service_message: CallServiceMessage = message.data.try_into()?;
 
@@ -111,11 +107,12 @@ impl<'a> CwCallservice<'a> {
         from: String,
         data: &[u8],
     ) -> Result<Response, ContractError> {
+        let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
+
         let from = Address::from(&from);
         let to = message_request.to();
-        let request_id = self.increment_last_request_id(deps.storage)?;
-
+        
         let request = CallServiceMessageRequest::new(
             from.clone(),
             to.to_string(),

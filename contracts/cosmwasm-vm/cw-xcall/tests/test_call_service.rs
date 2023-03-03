@@ -3,7 +3,7 @@ mod setup;
 use account::*;
 use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
 
-use cw_xcall::{instantiate, msg::InstantiateMsg, state::CwCallservice};
+use cw_xcall::{instantiate, msg::InstantiateMsg, state::CwCallService};
 use setup::*;
 
 #[test]
@@ -11,7 +11,7 @@ fn proper_instantiate() {
     let mut mock_deps = deps();
     let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
     let env = mock_env();
-    let store = CwCallservice::default();
+    let store = CwCallService::default();
 
     let res = instantiate(mock_deps.as_mut(), env, mock_info, InstantiateMsg {}).unwrap();
 
@@ -33,7 +33,7 @@ fn proper_instantiate() {
 fn improper_instantiate() {
     let mock_deps = deps();
 
-    let store = CwCallservice::default();
+    let store = CwCallService::default();
 
     let last_request_id = store
         .query_last_request_id(mock_deps.as_ref().storage)
