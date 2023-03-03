@@ -15,10 +15,12 @@ impl<'a> CwCallService<'a> {
         Ok(Response::new().add_attribute("method", "set_protocolfee"))
     }
 
-    pub fn get_protocol_fee(&self, deps: DepsMut) -> u128 {
+    pub fn get_protocol_fee(&self, deps: Deps) -> u128 {
         self.query_fee(deps.storage).unwrap()
     }
+}
 
+impl<'a> CwCallService<'a> {
     fn add_fee(&self, store: &mut dyn Storage, value: u128) -> Result<(), ContractError> {
         match self.fee().save(store, &value) {
             Ok(_) => Ok(()),

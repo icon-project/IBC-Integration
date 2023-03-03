@@ -43,9 +43,7 @@ impl<'a> CwCallService<'a> {
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::SetAdmin { address } => self.add_admin(deps.storage, info, address),
-            ExecuteMsg::SetProtocol { value } => {
-                todo!()
-            }
+            ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
@@ -59,13 +57,11 @@ impl<'a> CwCallService<'a> {
         }
     }
 
-    pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::GetAdmin {} => to_binary(&self.query_admin(deps.storage).unwrap()),
-            QueryMsg::GetProtocolFee {} => todo!(),
-            QueryMsg::GetProtocolFeeHandler {} => {
-                to_binary(&self.query_feehandler(deps.storage).unwrap())
-            }
+            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
+            QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
         }
     }
 
@@ -112,7 +108,7 @@ impl<'a> CwCallService<'a> {
 
         let from = Address::from(&from);
         let to = message_request.to();
-        
+
         let request = CallServiceMessageRequest::new(
             from.clone(),
             to.to_string(),
