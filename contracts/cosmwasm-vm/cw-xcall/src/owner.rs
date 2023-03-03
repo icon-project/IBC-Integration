@@ -1,8 +1,8 @@
 use cosmwasm_std::{MessageInfo, Response, StdError, Storage};
 
-use crate::{error::ContractError, state::CwCallservice, types::address::Address};
+use crate::{error::ContractError, state::CwCallService, types::address::Address};
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn query_owner(&self, store: &dyn Storage) -> Result<Address, StdError> {
         let owner = self.owner().load(store)?;
 
@@ -51,6 +51,7 @@ impl<'a> CwCallservice<'a> {
                     Err(ContractError::Unauthorized {})
                 }
             })?;
+
         Ok(Response::new()
             .add_attribute("action", "update owner")
             .add_attribute("owner", new_owner.to_string()))

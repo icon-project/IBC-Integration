@@ -1,9 +1,9 @@
 use crate::{
     error::ContractError,
     events::{event_call_executed, event_rollback_executed},
-    state::{CwCallservice, EXECUTE_CALL, EXECUTE_ROLLBACK},
+    state::{CwCallService, EXECUTE_CALL, EXECUTE_ROLLBACK},
     types::{
-        message::{CallServiceMessage, CallServiceMessageType},
+        message::CallServiceMessage,
         response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
     },
 };
@@ -13,7 +13,7 @@ use cosmwasm_std::{
 };
 use schemars::_serde_json::to_string;
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn execute_call(
         &self,
         deps: DepsMut,
@@ -63,13 +63,13 @@ impl<'a> CwCallservice<'a> {
         let request = self.message_request().load(deps.storage, req_id)?;
 
         let responses = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => {
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let code = 0;
 
                 let message_response = CallServiceMessageReponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseSucess,
-                    "".as_bytes().into(),
+                    "",
                 );
                 let event = event_call_executed(req_id, code, "");
                 (message_response, event)
@@ -80,7 +80,7 @@ impl<'a> CwCallservice<'a> {
                 let message_response = CallServiceMessageReponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseFailure,
-                    error_message.as_bytes().into(),
+                    &error_message,
                 );
                 let event = event_call_executed(req_id, code, &error_message);
                 (message_response, event)
@@ -88,10 +88,7 @@ impl<'a> CwCallservice<'a> {
         };
 
         if !request.rollback().is_empty() {
-            let message = CallServiceMessage::new(
-                CallServiceMessageType::CallServiceResponse,
-                to_binary(&responses.0).unwrap(),
-            );
+            let message: CallServiceMessage = responses.0.into();
 
             let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
 
@@ -100,6 +97,7 @@ impl<'a> CwCallservice<'a> {
                 .add_attribute("method", "execute_callback")
                 .add_message(packet));
         }
+
         Ok(Response::new()
             .add_attribute("action", "call_message")
             .add_attribute("method", "execute_callback")
@@ -109,14 +107,16 @@ impl<'a> CwCallservice<'a> {
     pub fn execute_rollback(
         &self,
         deps: DepsMut,
-        sequence_no: u128,
         info: MessageInfo,
+        sequence_no: u128,
     ) -> Result<Response, ContractError> {
         let call_request = self.query_request(deps.storage, sequence_no)?;
+
         self.enusre_call_request_not_null(sequence_no, &call_request)
             .unwrap();
         self.ensure_rollback_enabled(call_request.enabled())
             .unwrap();
+
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: call_request.to().to_string(),
             msg: to_binary(call_request.rollback()).unwrap(), //TODO : Need to update
@@ -135,22 +135,18 @@ impl<'a> CwCallservice<'a> {
         let sequence_no = self.last_sequence_no().load(deps.storage)?;
 
         let response = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let message_response = CallServiceMessageReponse::new(
-                    sequence_no,
-                    CallServiceResponseType::CallServiceResponseSucess,
-                    "".as_bytes().into(),
-                );
-                message_response
-            }
+            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageReponse::new(
+                sequence_no,
+                CallServiceResponseType::CallServiceResponseSucess,
+                "",
+            ),
             cosmwasm_std::SubMsgResult::Err(err) => {
                 let error_message = format!("CallService Reverted : {err}");
-                let message_response = CallServiceMessageReponse::new(
+                CallServiceMessageReponse::new(
                     sequence_no,
                     CallServiceResponseType::CallServiceResponseFailure,
-                    error_message.as_bytes().into(),
-                );
-                message_response
+                    &error_message,
+                )
             }
         };
 

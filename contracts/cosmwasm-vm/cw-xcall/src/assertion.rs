@@ -1,12 +1,14 @@
-use cosmwasm_std::{ensure, to_binary, Addr, Deps, QuerierWrapper};
+use cosmwasm_std::{
+    ensure, ensure_eq, to_binary, Addr, Deps, MessageInfo, QuerierWrapper, Storage,
+};
 
 use crate::{
     error::ContractError,
-    state::{CwCallservice, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
+    state::{CwCallService, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn ensure_caller_is_contract_and_rollback_is_null(
         &self,
         deps: Deps,
@@ -69,6 +71,28 @@ impl<'a> CwCallservice<'a> {
 
     pub fn ensure_rollback_enabled(&self, enabled: bool) -> Result<(), ContractError> {
         ensure!(enabled, ContractError::RollbackNotEnabled);
+
+        Ok(())
+    }
+
+    pub fn ensure_owner(
+        &self,
+        store: &dyn Storage,
+        info: &MessageInfo,
+    ) -> Result<(), ContractError> {
+        let owner = self.owner().load(store)?;
+
+        ensure_eq!(
+            info.sender,
+            owner.to_string(),
+            ContractError::Unauthorized {}
+        );
+
+        Ok(())
+    }
+    pub fn ensure_admin(&self, store: &dyn Storage, address: Addr) -> Result<(), ContractError> {
+        let admin = self.query_admin(store)?;
+        ensure_eq!(admin.to_string(), address, ContractError::OnlyAdmin);
 
         Ok(())
     }

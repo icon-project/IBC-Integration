@@ -1,7 +1,7 @@
 mod account;
 mod setup;
 use account::*;
-use cw_xcall::{state::CwCallservice, types::address::Address};
+use cw_xcall::{state::CwCallService, types::address::Address};
 use setup::*;
 
 #[test]
@@ -10,7 +10,7 @@ fn add_owner() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -30,7 +30,7 @@ fn update_owner() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -59,7 +59,7 @@ fn add_existing_owner() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -87,7 +87,7 @@ fn update_owner_unauthorized() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
