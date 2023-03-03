@@ -1,17 +1,17 @@
 use super::address::Address;
-use cosmwasm_std::Binary;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::to_binary;
 
-#[derive(Serialize, Deserialize)]
+#[cw_serde]
 pub struct CallRequest {
     from: Address,
     to: String,
-    rollback: Binary,
+    rollback: Vec<u8>,
     enabled: bool,
 }
 
 impl CallRequest {
-    pub fn new(from: Address, to: String, rollback: Binary, enabled: bool) -> Self {
+    pub fn new(from: Address, to: String, rollback: Vec<u8>, enabled: bool) -> Self {
         Self {
             from,
             to,
@@ -34,5 +34,13 @@ impl CallRequest {
 
     pub fn enabled(&self) -> bool {
         self.enabled
+    }
+
+    pub fn is_null(&self) -> bool {
+        let r = to_binary(self).unwrap();
+        r.is_empty()
+    }
+    pub fn set_enabled(&mut self) {
+        self.enabled = true;
     }
 }

@@ -1,8 +1,8 @@
 use cosmwasm_std::{Deps, DepsMut, MessageInfo, Response, Storage};
 
-use crate::{error::ContractError, state::CwCallservice};
+use crate::{error::ContractError, state::CwCallService};
 
-impl<'a> CwCallservice<'a> {
+impl<'a> CwCallService<'a> {
     pub fn set_protocol_fee(
         &self,
         deps: DepsMut,

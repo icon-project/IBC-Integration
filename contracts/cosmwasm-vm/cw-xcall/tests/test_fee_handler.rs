@@ -3,19 +3,19 @@ use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR},
     Coin,
 };
-use cw_xcall::{state::CwCallservice, types::address::Address};
+use cw_xcall::{state::CwCallService, types::address::Address};
 pub mod account;
 use account::*;
 
 #[test]
-fn set_protocol_feehandler() {
+fn set_protocol_fee_handler() {
     let mut deps = mock_dependencies();
     let env = mock_env();
 
     let info = mock_info("user", &[Coin::new(1000, "uconst")]);
     let address = Address::from("xyz");
 
-    let contract = CwCallservice::new();
+    let contract = CwCallService::new();
     contract
         .add_owner(
             deps.as_mut().storage,
@@ -60,7 +60,7 @@ fn test_invalid_input() {
     let env = mock_env();
     let info = mock_info("user", &[Coin::new(1000, "ucosm")]);
     let address = Address::from("xyz");
-    let cw_callservice = CwCallservice::new();
+    let cw_callservice = CwCallService::new();
     cw_callservice
         .add_owner(
             deps.as_mut().storage,
@@ -84,7 +84,7 @@ fn get_protocol_fee_handler() {
     let info = mock_info("user", &[Coin::new(1000, "ucosm")]);
     let address = Address::from("xyz");
 
-    let contract = CwCallservice::new();
+    let contract = CwCallService::new();
     contract
         .add_owner(
             deps.as_mut().storage,
@@ -108,11 +108,11 @@ fn get_protocol_fee_handler() {
 }
 
 #[test]
-fn set_protocolfee() {
+fn set_protocol_fee() {
     let mut deps = mock_dependencies();
     let value = 123;
     let info = mock_info("user", &[Coin::new(1000, "uconst")]);
-    let contract = CwCallservice::new();
+    let contract = CwCallService::new();
 
     contract
         .add_owner(
@@ -131,12 +131,12 @@ fn set_protocolfee() {
 }
 
 #[test]
-fn get_protocolfee() {
+fn get_protocol_fee() {
     let mut deps = mock_dependencies();
     let info = mock_info("user", &[Coin::new(1000, "ucosm")]);
     let value = 123;
 
-    let contract = CwCallservice::new();
+    let contract = CwCallService::new();
     contract
         .add_owner(
             deps.as_mut().storage,
