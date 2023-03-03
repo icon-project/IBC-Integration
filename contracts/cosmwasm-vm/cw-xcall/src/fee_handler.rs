@@ -31,7 +31,7 @@ impl<'a> CwCallService<'a> {
                     .add_attribute("method", "setprotocol_feehandler"));
             }
         };
-        
+
         Ok(Response::new()
             .add_attribute("action", "accured_fees")
             .add_attribute("method", "setprotocol_feehandler"))
@@ -41,7 +41,7 @@ impl<'a> CwCallService<'a> {
         self.query_feehandler(deps.storage).unwrap()
     }
 
-    pub fn add_feehandler(
+    fn add_feehandler(
         &self,
         store: &mut dyn Storage,
         address: &Address,

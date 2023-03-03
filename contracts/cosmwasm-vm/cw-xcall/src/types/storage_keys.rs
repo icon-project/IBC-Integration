@@ -12,6 +12,7 @@ pub enum StorageKey {
     IbcConfig,
     FeeHandler,
     Balance,
+    Fee,
 }
 
 impl StorageKey {
@@ -26,6 +27,7 @@ impl StorageKey {
             StorageKey::IbcConfig => "ibcconfig",
             StorageKey::FeeHandler => "feehandler",
             StorageKey::Balance => "balance",
+            StorageKey::Fee => "fee",
         }
     }
 }
