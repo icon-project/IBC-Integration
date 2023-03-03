@@ -5,6 +5,7 @@ dependencies {
     implementation("foundation.icon:javaee-scorex:$scorexVersion")
     implementation project(':lib')
     implementation project(':score-util')
+    implementation project(':ibc')
 
     testImplementation 'foundation.icon:javaee-rt:0.9.3'
     testImplementation("org.mockito:mockito-core:$mockitoCoreVersion")
@@ -35,7 +36,7 @@ jacocoTestReport {
 }
 
 optimizedJar {
-    mainClassName = 'ibc.ics25.handler.IBCHandler'
+    mainClassName = 'ibc.tendermint.TendermintLightClient'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }

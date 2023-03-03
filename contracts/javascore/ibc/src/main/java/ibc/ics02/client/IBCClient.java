@@ -5,7 +5,6 @@ import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
 import ibc.icon.structs.messages.ConsensusStateUpdate;
-import ibc.icon.structs.messages.CreateClientResponse;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.icon.structs.messages.UpdateClientResponse;
@@ -36,8 +35,9 @@ public class IBCClient extends IBCHost implements IIBCClient {
         clientTypes.set(clientId, msg.clientType);
         clientImplementations.set(clientId, lightClientAddr);
         ILightClient client = getClient(clientId);
-        CreateClientResponse response = client.createClient(clientId, msg.clientState, msg.consensusState);
+        UpdateClientResponse response = client.createClient(clientId, msg.clientState, msg.consensusState);
         Context.require(response.ok);
+
         commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 response.update.height.getRevisionNumber(),
@@ -56,11 +56,10 @@ public class IBCClient extends IBCHost implements IIBCClient {
         Context.require(response.ok);
 
         commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
-        for (ConsensusStateUpdate update : response.updates) {
-            byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId, update.height.getRevisionNumber(),
-                    update.height.getRevisionHeight());
-            commitments.set(consensusKey, update.consensusStateCommitment);
-        }
+        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
+                response.update.height.getRevisionNumber(),
+                response.update.height.getRevisionHeight());
+        commitments.set(consensusKey, response.update.consensusStateCommitment);
     }
 
     private String generateClientIdentifier(String clientType) {

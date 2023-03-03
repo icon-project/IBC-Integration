@@ -96,7 +96,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         ConsensusStateUpdate update = new ConsensusStateUpdate(new byte[0],
                 new Height(BigInteger.ZERO, BigInteger.ZERO));
-        CreateClientResponse response = new CreateClientResponse(new byte[0], update, true);
+        UpdateClientResponse response = new UpdateClientResponse(new byte[0], update, true);
         when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
                 .thenReturn(response);
 
@@ -115,20 +115,15 @@ public class IBCHandlerTestBase extends TestBase {
         msg.clientMessage = new byte[4];
 
         byte[] clientStateCommitment = new byte[4];
-        byte[] consensusStateCommitment1 = new byte[5];
-        byte[] consensusStateCommitment2 = new byte[6];
+        byte[] consensusStateCommitment = new byte[5];
 
-        Height consensusHeight1 = new Height();
-        consensusHeight1.setRevisionHeight(BigInteger.ONE);
-        consensusHeight1.setRevisionNumber(BigInteger.TWO);
-        Height consensusHeight2 = new Height();
-        consensusHeight2.setRevisionHeight(BigInteger.valueOf(3));
-        consensusHeight2.setRevisionNumber(BigInteger.valueOf(4));
+        Height consensusHeight = new Height();
+        consensusHeight.setRevisionHeight(BigInteger.ONE);
+        consensusHeight.setRevisionNumber(BigInteger.TWO);
 
-        ConsensusStateUpdate update1 = new ConsensusStateUpdate(consensusStateCommitment1, consensusHeight1);
-        ConsensusStateUpdate update2 = new ConsensusStateUpdate(consensusStateCommitment2, consensusHeight2);
-        ConsensusStateUpdate[] updates = new ConsensusStateUpdate[] { update1, update2 };
-        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, updates, true);
+        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight);
+
+        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, update, true);
 
         when(lightClient.mock.updateClient(msg.clientId, msg.clientMessage)).thenReturn(response);
 

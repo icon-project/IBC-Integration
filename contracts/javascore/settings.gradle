@@ -5,5 +5,7 @@ include (
         'test-lib',
         'ibc',
         // 'xcall',
-        // 'lightclients:archway',
 )
+
+include(':tendermint')
+project(':tendermint').projectDir = file("lightclients/tendermint")
