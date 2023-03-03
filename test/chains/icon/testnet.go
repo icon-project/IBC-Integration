@@ -43,3 +43,12 @@ func (it *IconTestnet) QueryContract(scoreAddress, methodName, params string) (s
 		return string(output), nil
 	}
 }
+
+// This function takes method name and params along with score address and keystore path to execute any method in contract that is already deployed
+func (it *IconTestnet) ExecuteContract(scoreAddress, keystorePath, methodName, params string) (string, error) {
+	var hash string
+	output, err := exec.Command(it.Config.Bin, "rpc", "sendtx", "call", "--to", scoreAddress, "--method", methodName, "--key_store", keystorePath,
+		"--key_password", "gochain", "--step_limit", "5000000000", "--param", params).Output()
+	json.Unmarshal(output, &hash)
+	return hash, err
+}
