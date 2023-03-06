@@ -12,9 +12,11 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
-	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
-	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
+	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
+	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
+	"github.com/strangelove-ventures/interchaintest/v6/testutil"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -302,4 +304,16 @@ func (c *IconChain) DeployContract(ctx context.Context, scorePath, keystorePath,
 
 func (c *IconChain) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
 	return c.getFullNode().QueryContract(ctx, scoreAddress, methodName, params)
+}
+
+func (c *IconChain) GetTransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
+	return c.getFullNode().TransactionResult(ctx, hash)
+}
+
+func (c *IconChain) WaitForBlocks(ctx context.Context, numBlocks int) {
+	testutil.WaitForBlocks(ctx, numBlocks, c.getFullNode())
+}
+
+func (c *IconChain) ExecuteContract(ctx context.Context, scoreAddress, keystorePath, methodName, params string) (string, error) {
+	return c.getFullNode().ExecuteContract(ctx, scoreAddress, methodName, keystorePath, params)
 }

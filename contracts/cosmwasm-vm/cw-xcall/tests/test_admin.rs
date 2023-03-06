@@ -1,7 +1,7 @@
 mod account;
 mod setup;
 use account::*;
-use cw_xcall::{state::CwCallservice, types::address::Address};
+use cw_xcall::{state::CwCallService, types::address::Address};
 use setup::*;
 
 #[test]
@@ -11,7 +11,7 @@ fn add_admin_unauthorized() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_admin(mock_deps.as_mut().storage, mock_info.clone(), admin_one())
@@ -24,7 +24,7 @@ fn add_admin() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -33,9 +33,13 @@ fn add_admin() {
         )
         .unwrap();
 
-    contract
+    let response = contract
         .add_admin(mock_deps.as_mut().storage, mock_info.clone(), admin_one())
         .unwrap();
+
+    assert_eq!(response.attributes[0].value, "add_admin");
+
+    assert_eq!(response.attributes[1].value, admin_one().to_string());
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
@@ -49,7 +53,7 @@ fn update_admin_unauthorzied() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -79,7 +83,7 @@ fn update_admin() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -112,7 +116,7 @@ fn update_existing_admin() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let contract = CwCallservice::default();
+    let contract = CwCallService::default();
 
     contract
         .add_owner(
