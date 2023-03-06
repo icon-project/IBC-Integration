@@ -2,8 +2,8 @@ package integration_test
 
 import (
 	"fmt"
+
 	"github.com/spf13/viper"
-	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 )
 
 type Config struct {
