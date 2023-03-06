@@ -75,6 +75,13 @@ func (it *IconTestnet) GetBalance(address string) (string, error) {
 
 	// Concatenating quotient and remainder with decimal point
 	result := fmt.Sprintf("%v.%v", quotient, remainder[:2])
-	fmt.Println(result)
 	return result, nil
+}
+
+// Given a hash this function will return the transaction result
+func (it *IconTestnet) GetTransactionResult(hash string) (*icontypes.TransactionResult, error) {
+	var result *icontypes.TransactionResult
+	out, err := exec.Command(it.Config.Bin, "rpc", "txresult", hash, "--uri", it.Config.URL).Output()
+	json.Unmarshal(out, &result)
+	return result, err
 }
