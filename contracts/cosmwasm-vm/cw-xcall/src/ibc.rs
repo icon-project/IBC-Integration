@@ -162,16 +162,14 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         message: IbcPacket,
     ) -> Result<IbcReceiveResponse, ContractError> {
-        // self.ensure_owner(deps.storage, &info).unwrap();
+        // TODO : ADD check for sender logic
 
         let call_service_message: CallServiceMessage = message.data.try_into()?;
 
         match call_service_message.message_type() {
-            CallServiceMessageType::CallServiceRequest => self.hanadle_request(
-                deps,
-                message.src.channel_id.to_string(),
-                call_service_message.payload(),
-            ),
+            CallServiceMessageType::CallServiceRequest => {
+                self.hanadle_request(deps, call_service_message.payload())
+            }
             CallServiceMessageType::CallServiceResponse => {
                 self.handle_response(deps, call_service_message.payload())
             }
@@ -181,13 +179,12 @@ impl<'a> CwCallService<'a> {
     fn hanadle_request(
         &self,
         deps: DepsMut,
-        from: String,
         data: &[u8],
     ) -> Result<IbcReceiveResponse, ContractError> {
         let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
 
-        let from = Address::from(&from);
+        let from = message_request.from();
         let to = message_request.to();
 
         let request = CallServiceMessageRequest::new(
