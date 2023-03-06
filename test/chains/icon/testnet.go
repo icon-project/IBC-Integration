@@ -52,3 +52,9 @@ func (it *IconTestnet) ExecuteContract(scoreAddress, keystorePath, methodName, p
 	json.Unmarshal(output, &hash)
 	return hash, err
 }
+
+// Returns latest Height
+func (it *IconTestnet) GetLastBlock() (int64, error) {
+	res, err := it.Client.GetLastBlock()
+	return res.Height, err
+}
