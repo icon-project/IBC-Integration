@@ -3,7 +3,6 @@ use crate::{
     events::{event_call_message, event_response_message, event_rollback_message},
     state::{CwCallService, IbcConfig},
     types::{
-        address::Address,
         message::{CallServiceMessage, CallServiceMessageType},
         request::CallServiceMessageRequest,
         response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
