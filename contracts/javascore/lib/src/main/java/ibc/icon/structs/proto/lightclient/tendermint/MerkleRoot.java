@@ -1,5 +1,6 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
+import ibc.icon.score.util.Proto;
 import score.ObjectReader;
 import score.ObjectWriter;
 
@@ -38,6 +39,10 @@ public class MerkleRoot {
 
     public void setHash(byte[] hash) {
         this.hash = hash;
+    }
+
+    public byte[] encode() {
+        return Proto.encode(1, hash);
     }
 
 }

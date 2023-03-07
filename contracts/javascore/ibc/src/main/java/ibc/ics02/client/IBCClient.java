@@ -2,9 +2,9 @@ package ibc.ics02.client;
 
 import ibc.icon.interfaces.IIBCClient;
 import ibc.icon.interfaces.ILightClient;
+import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.icon.structs.messages.UpdateClientResponse;
@@ -38,11 +38,16 @@ public class IBCClient extends IBCHost implements IIBCClient {
         UpdateClientResponse response = client.createClient(clientId, msg.clientState, msg.consensusState);
         Context.require(response.ok);
 
-        commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
+        byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
+        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),
+        // response.clientStateCommitment);
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 response.update.height.getRevisionNumber(),
                 response.update.height.getRevisionHeight());
-        commitments.set(consensusKey, response.update.consensusStateCommitment);
+        // commitments.set(consensusKey, response.update.consensusStateCommitment);
+
+        sendBTPMessage(ByteUtil.join(clientKey, response.clientStateCommitment));
+        sendBTPMessage(ByteUtil.join(consensusKey, response.update.consensusStateCommitment));
 
         return clientId;
     }
@@ -51,15 +56,22 @@ public class IBCClient extends IBCHost implements IIBCClient {
         String clientId = msg.clientId;
         ILightClient client = getClient(clientId);
 
-        Context.require(commitments.get(IBCCommitment.clientStateCommitmentKey(clientId)) != null);
+        // Should be required on client side
+        // Context.require(commitments.get(IBCCommitment.clientStateCommitmentKey(clientId))
+        // != null);
         UpdateClientResponse response = client.updateClient(clientId, msg.clientMessage);
         Context.require(response.ok);
 
-        commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
+        byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
+        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),
+        // response.clientStateCommitment);
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 response.update.height.getRevisionNumber(),
                 response.update.height.getRevisionHeight());
-        commitments.set(consensusKey, response.update.consensusStateCommitment);
+        // commitments.set(consensusKey, response.update.consensusStateCommitment);
+
+        sendBTPMessage(ByteUtil.join(clientKey, response.clientStateCommitment));
+        sendBTPMessage(ByteUtil.join(consensusKey, response.update.consensusStateCommitment));
     }
 
     private String generateClientIdentifier(String clientType) {

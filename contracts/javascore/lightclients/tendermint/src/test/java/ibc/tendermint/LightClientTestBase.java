@@ -24,6 +24,11 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
+import ibc.icon.structs.proto.core.channel.Channel;
+import ibc.icon.structs.proto.core.channel.Counterparty;
+import ibc.icon.structs.proto.core.commitment.MerklePrefix;
+import ibc.icon.structs.proto.core.connection.ConnectionEnd;
+import ibc.icon.structs.proto.core.connection.Version;
 import ibc.icon.structs.proto.lightclient.tendermint.BlockID;
 import ibc.icon.structs.proto.lightclient.tendermint.ClientState;
 import ibc.icon.structs.proto.lightclient.tendermint.Commit;
@@ -95,11 +100,6 @@ public class LightClientTestBase extends TestBase {
     @AfterEach
     protected void teardown() {
         contextMock.close();
-    }
-    @Test
-    void test() throws Exception {
-        SignedHeader  signedHeader = parseSignedHeader(1);
-        printBytes(signedHeader.header.lastBlockId.encode());
     }
 
     @Test

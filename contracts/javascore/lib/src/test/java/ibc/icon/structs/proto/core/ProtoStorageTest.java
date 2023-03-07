@@ -72,7 +72,7 @@ public class ProtoStorageTest extends TestBase {
     public void storeConnectionEnd() {
         // Arrange
         MerklePrefix prefix = new MerklePrefix();
-        prefix.setKeyPrefix("merkle");
+        prefix.setKeyPrefix(new byte[5]);
 
         Counterparty counterparty = new Counterparty();
         counterparty.setClientId("clientId");
@@ -103,7 +103,7 @@ public class ProtoStorageTest extends TestBase {
                 storedConnectionEnd.getCounterparty().getClientId());
         assertEquals(connectionEnd.getCounterparty().getConnectionId(),
                 storedConnectionEnd.getCounterparty().getConnectionId());
-        assertEquals(connectionEnd.getCounterparty().getPrefix().getKeyPrefix(),
+        assertArrayEquals(connectionEnd.getCounterparty().getPrefix().getKeyPrefix(),
                 storedConnectionEnd.getCounterparty().getPrefix().getKeyPrefix());
 
         assertEquals(connectionEnd.getVersions()[0].getIdentifier(),
@@ -116,8 +116,8 @@ public class ProtoStorageTest extends TestBase {
                 storedConnectionEnd.getVersions()[1].getFeatures());
 
         assertEquals(connectionEnd.getClientId(), storedConnectionEnd.getClientId());
-        assertEquals(connectionEnd.connectionState(),
-                storedConnectionEnd.connectionState());
+        assertEquals(connectionEnd.getState(),
+                storedConnectionEnd.getState());
         assertEquals(connectionEnd.getDelayPeriod(),
                 storedConnectionEnd.getDelayPeriod());
     }
@@ -130,8 +130,8 @@ public class ProtoStorageTest extends TestBase {
         counterparty.setChannelId("channelId");
 
         Channel channel = new Channel();
-        channel.updateState(Channel.State.STATE_TRYOPEN);
-        channel.updateOrder(Channel.Order.ORDER_ORDERED);
+        channel.setState(Channel.State.STATE_TRYOPEN);
+        channel.setOrdering(Channel.Order.ORDER_ORDERED);
         channel.setCounterparty(counterparty);
         channel.setConnectionHops(new String[] { "Aerw", "were" });
         channel.setVersion("version");
@@ -142,8 +142,8 @@ public class ProtoStorageTest extends TestBase {
         // Assert
         Channel storedChannel = (Channel) dummyScore.call("getChannel");
 
-        assertEquals(channel.channelState(), storedChannel.channelState());
-        assertEquals(channel.channelOrdering(), storedChannel.channelOrdering());
+        assertEquals(channel.getState(), storedChannel.getState());
+        assertEquals(channel.getOrdering(), storedChannel.getOrdering());
         assertEquals(channel.getCounterparty().getChannelId(),
                 storedChannel.getCounterparty().getChannelId());
         assertEquals(channel.getCounterparty().getPortId(),
@@ -162,7 +162,7 @@ public class ProtoStorageTest extends TestBase {
         packet.setSourceChannel("sourceChannel");
         packet.setDestinationPort("destinationPort");
         packet.setDestinationChannel("destinationChannel");
-        packet.setData("data");
+        packet.setData(new byte[10]);
 
         Height timeoutHeight = new Height();
         timeoutHeight.setRevisionNumber(BigInteger.valueOf(2));
@@ -182,7 +182,7 @@ public class ProtoStorageTest extends TestBase {
         assertEquals(packet.getDestinationPort(), storedPacket.getDestinationPort());
         assertEquals(packet.getDestinationChannel(),
                 storedPacket.getDestinationChannel());
-        assertEquals(packet.getData(), storedPacket.getData());
+        assertArrayEquals(packet.getData(), storedPacket.getData());
         assertEquals(packet.getTimeoutHeight().getRevisionNumber(),
                 storedPacket.getTimeoutHeight().getRevisionNumber());
         assertEquals(packet.getTimeoutHeight().getRevisionHeight(),

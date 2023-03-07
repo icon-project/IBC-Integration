@@ -2,6 +2,7 @@ package ibc.icon.structs.proto.lightclient.tendermint;
 
 import java.math.BigInteger;
 
+import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 
 public class CanonicalVote {
@@ -20,7 +21,7 @@ public class CanonicalVote {
         byte[] timestamp = Proto.encode(5, this.timestamp.encode());
         byte[] chainId = Proto.encode(6, this.chainId);
 
-        return Proto.join(type, height, round, blockId, timestamp, chainId);
+        return ByteUtil.join(type, height, round, blockId, timestamp, chainId);
     }
 
 }

@@ -4,6 +4,7 @@ import java.math.BigInteger;
 
 import ibc.icon.interfaces.IIBCConnection;
 import ibc.icon.interfaces.ILightClient;
+import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Logger;
 import ibc.icon.structs.messages.MsgConnectionOpenAck;
 import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
@@ -16,13 +17,12 @@ import ibc.icon.structs.proto.core.connection.Counterparty;
 import ibc.icon.structs.proto.core.connection.Version;
 import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
-
 import score.Context;
 
 public class IBCConnection extends IBCClient implements IIBCConnection {
     public static final String v1Identifier = "1";
     public static final String[] supportedV1Features = new String[] { "ORDER_ORDERED", "ORDER_UNORDERED" };
-    public static final String commitmentPrefix = "ibc";
+    public static final byte[] commitmentPrefix = "ibc".getBytes();
 
     Logger logger = new Logger("ibc-core");
 
@@ -94,11 +94,11 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     public void connectionOpenAck(MsgConnectionOpenAck msg) {
         ConnectionEnd connection = connections.get(msg.connectionId);
         Context.require(connection != null, "connection does not exist");
-        ConnectionEnd.State state = connection.connectionState();
+        int state = connection.getState();
         // TODO should we allow the state to be TRY_OPEN?
-        Context.require(state.equals(ConnectionEnd.State.STATE_INIT) || state.equals(ConnectionEnd.State.STATE_TRYOPEN),
+        Context.require(state == ConnectionEnd.State.STATE_INIT || state == ConnectionEnd.State.STATE_TRYOPEN,
                 "connection state is not INIT or TRYOPEN");
-        if (state.equals(ConnectionEnd.State.STATE_INIT)) {
+        if (state == ConnectionEnd.State.STATE_INIT) {
             Context.require(isSupportedVersion(msg.version),
                     "connection state is in INIT but the provided version is not supported");
         } else {
@@ -149,8 +149,8 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     public void connectionOpenConfirm(MsgConnectionOpenConfirm msg) {
         ConnectionEnd connection = connections.get(msg.connectionId);
         Context.require(connection != null, "connection does not exist");
-        ConnectionEnd.State state = connection.connectionState();
-        Context.require(state.equals(ConnectionEnd.State.STATE_TRYOPEN), "connection state is not TRYOPEN");
+        int state = connection.getState();
+        Context.require(state == ConnectionEnd.State.STATE_TRYOPEN, "connection state is not TRYOPEN");
 
         MerklePrefix prefix = new MerklePrefix();
         prefix.setKeyPrefix(commitmentPrefix);
@@ -256,8 +256,10 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     }
 
     private void updateConnectionCommitment(String connectionId, ConnectionEnd connection) {
-        commitments.set(IBCCommitment.connectionCommitmentKey(connectionId),
-                IBCCommitment.keccak256(connection.toBytes()));
+        sendBTPMessage(ByteUtil.join(IBCCommitment.connectionCommitmentKey(connectionId),
+                IBCCommitment.keccak256(connection.encode())));
+        // commitments.set(IBCCommitment.connectionCommitmentKey(connectionId),
+        // IBCCommitment.keccak256(connection.toBytes()));>
     }
 
 }

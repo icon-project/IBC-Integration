@@ -29,6 +29,7 @@ public abstract class IBCStore extends ModuleManager {
     private final String NEXT_CLIENT_SEQUENCE = "nextClientSequence";
     private final String NEXT_CONNECTION_SEQUENCE = "nextConnectionSequence";
     private final String NEXT_CHANNEL_SEQUENCE = "nextChannelSequence";
+    private final String BTP_NETWORK_ID = "btpNetworkId";
 
     // DB Variables
     // Commitments
@@ -64,6 +65,8 @@ public abstract class IBCStore extends ModuleManager {
     public final VarDB<BigInteger> nextConnectionSequence = Context.newVarDB(NEXT_CONNECTION_SEQUENCE,
             BigInteger.class);
     public final VarDB<BigInteger> nextChannelSequence = Context.newVarDB(NEXT_CHANNEL_SEQUENCE, BigInteger.class);
+
+    public final VarDB<Integer> btpNetworkId = Context.newVarDB(BTP_NETWORK_ID, Integer.class);
 
     @External(readonly = true)
     public byte[] getCommitment(byte[] key) {
@@ -179,6 +182,10 @@ public abstract class IBCStore extends ModuleManager {
         Address address = clientImplementations.get(clientId);
         NullChecker.requireNotNull(address, "Client does not exist");
         return new ILightClientScoreInterface(address);
+    }
+
+    public void setBTPNetworkId(int btpNetworkId) {
+        this.btpNetworkId.set(btpNetworkId);
     }
 
 }

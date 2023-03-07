@@ -2,8 +2,8 @@ package ibc.icon.structs.proto.lightclient.tendermint;
 
 import java.math.BigInteger;
 
-import score.ByteArrayObjectWriter;
-import score.Context;
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import score.ObjectReader;
 import score.ObjectWriter;
 
@@ -37,5 +37,12 @@ public class Fraction {
         writer.write(numerator);
         writer.write(denominator);
         writer.end();
+    }
+
+    public byte[] encode() {
+        byte[] seconds = Proto.encode(1, this.numerator);
+        byte[] nanos = Proto.encode(2, this.denominator);
+
+        return ByteUtil.join(seconds, nanos);
     }
 }

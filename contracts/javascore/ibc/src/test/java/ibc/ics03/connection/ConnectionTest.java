@@ -4,7 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.math.BigInteger;
 
@@ -19,6 +23,7 @@ import com.iconloop.score.test.TestBase;
 
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
+import ibc.icon.score.util.ByteUtil;
 import ibc.icon.structs.messages.MsgConnectionOpenAck;
 import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
 import ibc.icon.structs.messages.MsgConnectionOpenInit;
@@ -37,6 +42,7 @@ public class ConnectionTest extends TestBase {
     private final Account owner = sm.createAccount();
     private Score connection;
     private MockContract<ILightClient> lightClient;
+    private IBCConnection connectionSpy;
 
     Height proofHeight = new Height();
     Height consensusHeight = new Height();
@@ -62,6 +68,9 @@ public class ConnectionTest extends TestBase {
     @BeforeEach
     public void setup() throws Exception {
         connection = sm.deploy(owner, ConnectionMock.class);
+        connectionSpy = (IBCConnection) spy(connection.getInstance());
+        connection.setInstance(connectionSpy);
+        doNothing().when(connectionSpy).sendBTPMessage(any(byte[].class));
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
 
@@ -134,9 +143,13 @@ public class ConnectionTest extends TestBase {
         ConnectionEnd expectedConnection = baseConnection;
         expectedConnection.setState(ConnectionEnd.State.STATE_INIT);
 
-        byte[] storedCommitment = (byte[]) connection.call("getCommitment",
-                IBCCommitment.connectionCommitmentKey(expectedConnectionId));
-        assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()), storedCommitment);
+        // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
+        // IBCCommitment.connectionCommitmentKey(expectedConnectionId));
+        // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
+        // storedCommitment);
+        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(expectedConnectionId);
+        verify(connectionSpy)
+                .sendBTPMessage(ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.encode())));
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
     }
 
@@ -279,9 +292,14 @@ public class ConnectionTest extends TestBase {
         ConnectionEnd expectedConnection = baseConnection;
         expectedConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
 
-        byte[] storedCommitment = (byte[]) connection.call("getCommitment",
-                IBCCommitment.connectionCommitmentKey(expectedConnectionId));
-        assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()), storedCommitment);
+        // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
+        // IBCCommitment.connectionCommitmentKey(expectedConnectionId));
+        // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
+        // storedCommitment);
+        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(expectedConnectionId);
+        verify(connectionSpy)
+                .sendBTPMessage(ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.encode())));
+
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
     }
 
@@ -367,9 +385,14 @@ public class ConnectionTest extends TestBase {
         expectedConnection.setState(ConnectionEnd.State.STATE_OPEN);
         expectedConnection.setVersions(counterpartyConnection.getVersions());
         expectedConnection.getCounterparty().setConnectionId(msg.counterpartyConnectionID);
-        byte[] storedCommitment = (byte[]) connection.call("getCommitment",
-                IBCCommitment.connectionCommitmentKey(msg.connectionId));
-        assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()), storedCommitment);
+        // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
+        // IBCCommitment.connectionCommitmentKey(msg.connectionId));
+        // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
+        // storedCommitment);
+        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.connectionId);
+        verify(connectionSpy)
+                .sendBTPMessage(ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.encode())));
+
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
     }
 
@@ -424,9 +447,14 @@ public class ConnectionTest extends TestBase {
         // Assert
         ConnectionEnd expectedConnection = baseConnection;
         expectedConnection.setState(ConnectionEnd.State.STATE_OPEN);
-        byte[] storedCommitment = (byte[]) connection.call("getCommitment",
-                IBCCommitment.connectionCommitmentKey(msg.connectionId));
-        assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()), storedCommitment);
+        // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
+        // IBCCommitment.connectionCommitmentKey(msg.connectionId));
+        // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
+        // storedCommitment);
+        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.connectionId);
+        verify(connectionSpy)
+                .sendBTPMessage(ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.encode())));
+
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
 
     }

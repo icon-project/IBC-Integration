@@ -21,7 +21,7 @@ public interface IIBCModule {
     // If there is no default version String for the application,
     // it should return an error if provided version is empty String.
     public void onChanOpenInit(
-            Channel.Order order,
+            int order,
             String[] connectionHops,
             String portId,
             String channelId,
@@ -38,7 +38,7 @@ public interface IIBCModule {
     // must select the final version String and return it to core IBC.
     // OnChanOpenTry may also perform custom initialization logic
     public void onChanOpenTry(
-            Channel.Order order,
+            int order,
             String[] connectionHops,
             String portId,
             String channelId,

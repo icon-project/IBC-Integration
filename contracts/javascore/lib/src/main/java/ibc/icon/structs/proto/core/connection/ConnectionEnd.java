@@ -3,6 +3,8 @@ package ibc.icon.structs.proto.core.connection;
 import java.math.BigInteger;
 import java.util.List;
 
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
@@ -16,15 +18,15 @@ import scorex.util.ArrayList;
 public class ConnectionEnd {
     // State defines if a connection is in one of the following states:
     // INIT, TRYOPEN, OPEN or UNINITIALIZED.
-    public enum State {
-        STATE_UNINITIALIZED_UNSPECIFIED,
+    public static class State {
+        public static int STATE_UNINITIALIZED_UNSPECIFIED = 0;
         // A connection end has just started the opening handshake.
-        STATE_INIT,
+        public static int STATE_INIT = 1;
         // A connection end has acknowledged the handshake step on the counterparty
         // chain.
-        STATE_TRYOPEN,
+        public static int STATE_TRYOPEN = 2;
         // A connection end has completed the handshake.
-        STATE_OPEN
+        public static int STATE_OPEN = 3;
     }
 
     // client associated with this connection.
@@ -35,7 +37,7 @@ public class ConnectionEnd {
     private Version[] versions;
 
     // current state of the connection end.
-    private String state;
+    private int state;
 
     // counterparty chain associated with this connection.
     private Counterparty counterparty;
@@ -72,7 +74,7 @@ public class ConnectionEnd {
         obj.versions = versions;
         reader.end();
 
-        obj.state = reader.readString();
+        obj.state = reader.readInt();
         obj.counterparty = reader.read(Counterparty.class);
         obj.delayPeriod = reader.readBigInteger();
         reader.end();
@@ -114,6 +116,20 @@ public class ConnectionEnd {
         return writer.toByteArray();
     }
 
+    public byte[] encode() {
+        byte[][] encodedVersions = new byte[this.versions.length][];
+        for (int i = 0; i < this.versions.length; i++) {
+            encodedVersions[i] = Proto.encode(2, this.versions[i].encode());
+        }
+
+        return ByteUtil.join(
+                Proto.encode(1, clientId),
+                ByteUtil.join(encodedVersions),
+                Proto.encode(3, BigInteger.valueOf(state)),
+                Proto.encode(4, counterparty.encode()),
+                Proto.encode(5, delayPeriod));
+    }
+
     public String getClientId() {
         return clientId;
     }
@@ -130,19 +146,11 @@ public class ConnectionEnd {
         this.versions = versions;
     }
 
-    public State connectionState() {
-        return State.valueOf(state);
-    }
-
-    public void setState(State state) {
-        this.state = state.toString();
-    }
-
-    public void setState(String state) {
+    public void setState(int state) {
         this.state = state;
     }
 
-    public String getState() {
+    public int getState() {
         return state;
     }
 

@@ -1,7 +1,10 @@
 package ibc.icon.structs.proto.core.channel;
 
+import java.math.BigInteger;
 import java.util.List;
 
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
@@ -12,36 +15,36 @@ public class Channel {
 
     // State defines if a channel is in one of the following states:
     // CLOSED, INIT, TRYOPEN, OPEN or UNINITIALIZED.
-    public enum State {
+    public static class State {
         // Default State
-        STATE_UNINITIALIZED_UNSPECIFIED,
+        public static int STATE_UNINITIALIZED_UNSPECIFIED = 0;
         // A channel has just started the opening handshake.
-        STATE_INIT,
+        public static int STATE_INIT = 1;
         // A channel has acknowledged the handshake step on the counterparty chain.
-        STATE_TRYOPEN,
+        public static int STATE_TRYOPEN = 2;
         // A channel has completed the handshake. Open channels are
         // ready to send and receive packets.
-        STATE_OPEN,
+        public static int STATE_OPEN = 3;
         // A channel has been closed and can no longer be used to send or receive
         // packets.
-        STATE_CLOSED
+        public static int STATE_CLOSED = 4;
     }
 
     // Order defines if a channel is ORDERED or UNORDERED
-    public enum Order {
+    public static class Order {
         // zero-value for channel ordering
-        ORDER_NONE_UNSPECIFIED,
+        public static int ORDER_NONE_UNSPECIFIED = 0;
         // packets can be delivered in any order, which may differ from the order in
         // which they were sent.
-        ORDER_UNORDERED,
+        public static int ORDER_UNORDERED = 1;
         // packets are delivered exactly in the order which they were sent
-        ORDER_ORDERED,
+        public static int ORDER_ORDERED = 2;
     }
 
     // current state of the channel end
-    public String state;
+    public int state;
     // whether the channel is ordered or unordered
-    public String ordering;
+    public int ordering;
     // counterparty channel end
     public Counterparty counterparty;
     // lis t of connection identifiers, in order, along which packets sent on
@@ -58,8 +61,8 @@ public class Channel {
 
         Channel obj = new Channel();
         reader.beginList();
-        obj.state = reader.readString();
-        obj.ordering = reader.readString();
+        obj.state = reader.readInt();
+        obj.ordering = reader.readInt();
         Counterparty counterparty = new Counterparty();
         counterparty.portId = reader.readString();
         counterparty.channelId = reader.readString();
@@ -126,35 +129,33 @@ public class Channel {
         return writer.toByteArray();
     }
 
-    public State channelState() {
-        return State.valueOf(state);
+    public byte[] encode() {
+        byte[][] encodedConnectionHops = new byte[this.connectionHops.length][];
+        for (int i = 0; i < this.connectionHops.length; i++) {
+            encodedConnectionHops[i] = Proto.encode(4, this.connectionHops[i]);
+        }
+
+        return ByteUtil.join(
+                Proto.encode(1, BigInteger.valueOf(state)),
+                Proto.encode(2, BigInteger.valueOf(ordering)),
+                Proto.encode(3, counterparty.encode()),
+                ByteUtil.join(encodedConnectionHops),
+                Proto.encode(5, version));
     }
 
-    public void setState(String state) {
+    public void setState(int state) {
         this.state = state;
     }
 
-    public void updateState(State state) {
-        this.state = state.toString();
-    }
-
-    public String getState() {
+    public int getState() {
         return state;
     }
 
-    public Order channelOrdering() {
-        return Order.valueOf(ordering);
-    }
-
-    public void updateOrder(Order ordering) {
-        this.ordering = ordering.toString();
-    }
-
-    public void setOrdering(String ordering) {
+    public void setOrdering(int ordering) {
         this.ordering = ordering;
     }
 
-    public String getOrdering() {
+    public int getOrdering() {
         return ordering;
     }
 

@@ -4,6 +4,7 @@ import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -70,17 +71,18 @@ public class IBCHandlerTestBase extends TestBase {
 
         handlerSpy = (IBCHandler) spy(handler.getInstance());
         handler.setInstance(handlerSpy);
+        doNothing().when(handlerSpy).sendBTPMessage(any(byte[].class));
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
         module = new MockContract<>(IIBCModuleScoreInterface.class, IIBCModule.class, sm, owner);
 
         when(lightClient.mock.verifyMembership(any(String.class), any(Height.class), any(BigInteger.class),
                 any(BigInteger.class),
-                any(byte[].class), any(String.class), any(byte[].class), any(byte[].class))).thenReturn(true);
+                any(byte[].class), any(byte[].class), any(byte[].class), any(byte[].class))).thenReturn(true);
         when(lightClient.mock.getClientState(any(String.class))).thenReturn(new byte[0]);
 
         prefix = new MerklePrefix();
-        prefix.setKeyPrefix("ibc");
+        prefix.setKeyPrefix("ibc".getBytes());
 
         baseVersion.identifier = IBCConnection.v1Identifier;
         baseVersion.features = IBCConnection.supportedV1Features;
@@ -193,7 +195,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         // Assert
         ConnectionEnd connection = (ConnectionEnd) handler.call("getConnection", connectionId);
-        assertEquals(ConnectionEnd.State.STATE_OPEN, connection.connectionState());
+        assertEquals(ConnectionEnd.State.STATE_OPEN, connection.getState());
 
     }
 
@@ -209,7 +211,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         // Assert
         ConnectionEnd connection = (ConnectionEnd) handler.call("getConnection", connectionId);
-        assertEquals(ConnectionEnd.State.STATE_OPEN, connection.connectionState());
+        assertEquals(ConnectionEnd.State.STATE_OPEN, connection.getState());
     }
 
     void openChannel() {
@@ -217,8 +219,8 @@ public class IBCHandlerTestBase extends TestBase {
         MsgChannelOpenInit msg = new MsgChannelOpenInit();
         msg.portId = portId;
         msg.channel = new Channel();
-        msg.channel.updateOrder(Channel.Order.ORDER_UNORDERED);
-        msg.channel.updateState(Channel.State.STATE_INIT);
+        msg.channel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        msg.channel.setState(Channel.State.STATE_INIT);
         msg.channel.setConnectionHops(new String[] { connectionId });
         msg.channel.setCounterparty(new ibc.icon.structs.proto.core.channel.Counterparty());
         msg.channel.getCounterparty().setPortId(counterPartyPortId);
@@ -234,7 +236,7 @@ public class IBCHandlerTestBase extends TestBase {
         channelId = channelIdCaptor.getValue();
 
         verify(module.mock).onChanOpenInit(
-                msg.channel.channelOrdering(),
+                msg.channel.getOrdering(),
                 msg.channel.getConnectionHops(),
                 msg.portId,
                 channelId,
@@ -247,8 +249,8 @@ public class IBCHandlerTestBase extends TestBase {
         MsgChannelOpenTry msg = new MsgChannelOpenTry();
         msg.portId = portId;
         msg.channel = new Channel();
-        msg.channel.updateOrder(Channel.Order.ORDER_UNORDERED);
-        msg.channel.updateState(Channel.State.STATE_TRYOPEN);
+        msg.channel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        msg.channel.setState(Channel.State.STATE_TRYOPEN);
         msg.channel.setConnectionHops(new String[] { connectionId });
         msg.channel.setCounterparty(new ibc.icon.structs.proto.core.channel.Counterparty());
         msg.channel.getCounterparty().setPortId(counterPartyPortId);
@@ -265,7 +267,7 @@ public class IBCHandlerTestBase extends TestBase {
         verify(handlerSpy).GeneratedChannelIdentifier(channelIdCaptor.capture());
         channelId = channelIdCaptor.getValue();
 
-        verify(module.mock).onChanOpenTry(msg.channel.channelOrdering(), msg.channel.connectionHops, portId, channelId,
+        verify(module.mock).onChanOpenTry(msg.channel.getOrdering(), msg.channel.connectionHops, portId, channelId,
                 msg.channel.counterparty, msg.channel.version, msg.counterpartyVersion);
     }
 
@@ -284,7 +286,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         // Assert
         Channel channel = (Channel) handler.call("getChannel", portId, channelId);
-        assertEquals(Channel.State.STATE_OPEN, channel.channelState());
+        assertEquals(Channel.State.STATE_OPEN, channel.getState());
 
         verify(module.mock).onChanOpenAck(portId, channelId, msg.counterpartyVersion);
     }
@@ -301,7 +303,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         // Assert
         Channel channel = (Channel) handler.call("getChannel", portId, channelId);
-        assertEquals(Channel.State.STATE_OPEN, channel.channelState());
+        assertEquals(Channel.State.STATE_OPEN, channel.getState());
 
         verify(module.mock).onChanOpenConfirm(portId, channelId);
     }
@@ -317,7 +319,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         // Assert
         Channel channel = (Channel) handler.call("getChannel", portId, channelId);
-        assertEquals(Channel.State.STATE_CLOSED, channel.channelState());
+        assertEquals(Channel.State.STATE_CLOSED, channel.getState());
 
         verify(module.mock).onChanCloseInit(portId, channelId);
     }
@@ -335,7 +337,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         // Assert
         Channel channel = (Channel) handler.call("getChannel", portId, channelId);
-        assertEquals(Channel.State.STATE_CLOSED, channel.channelState());
+        assertEquals(Channel.State.STATE_CLOSED, channel.getState());
 
         verify(module.mock).onChanCloseConfirm(portId, channelId);
     }
@@ -433,7 +435,7 @@ public class IBCHandlerTestBase extends TestBase {
         packet.setSourceChannel(channelId);
         packet.setDestinationPort(counterPartyPortId);
         packet.setDestinationChannel(counterPartyChannelId);
-        packet.setData("test");
+        packet.setData(new byte[7]);
         packet.setTimeoutHeight(new Height(BigInteger.ONE, BigInteger.valueOf(sm.getBlock().getHeight() + 100)));
         packet.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp() * 2));
 
@@ -451,7 +453,7 @@ public class IBCHandlerTestBase extends TestBase {
         packet.setDestinationPort(portId);
         packet.setSourceChannel(counterPartyChannelId);
         packet.setSourcePort(counterPartyPortId);
-        packet.setData("test");
+        packet.setData(new byte[7]);
         packet.setTimeoutHeight(new Height(BigInteger.ONE, BigInteger.valueOf(sm.getBlock().getHeight() + 100)));
         packet.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp() * 2));
 

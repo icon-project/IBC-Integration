@@ -23,7 +23,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection {
 
         String id = super.channelOpenInit(msg);
         module.onChanOpenInit(
-                msg.channel.channelOrdering(),
+                msg.channel.getOrdering(),
                 msg.channel.getConnectionHops(),
                 msg.portId,
                 id,
@@ -41,7 +41,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection {
 
         String id = super.channelOpenTry(msg);
         module.onChanOpenTry(
-                msg.channel.channelOrdering(),
+                msg.channel.getOrdering(),
                 msg.channel.getConnectionHops(),
                 msg.portId,
                 id,

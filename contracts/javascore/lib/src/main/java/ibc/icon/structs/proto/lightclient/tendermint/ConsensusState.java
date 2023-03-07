@@ -1,5 +1,7 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
@@ -54,6 +56,13 @@ public class ConsensusState {
         ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
         ConsensusState.writeObject(writer, this);
         return writer.toByteArray();
+    }
+
+    public byte[] encode() {
+        return ByteUtil.join(
+                Proto.encode(1, timestamp.encode()),
+                Proto.encode(2, root.encode()),
+                Proto.encode(3, nextValidatorsHash));
     }
 
     public Timestamp getTimestamp() {

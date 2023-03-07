@@ -60,7 +60,7 @@ public interface ILightClient {
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,
-            String prefix,
+            byte[] prefix,
             byte[] path,
             byte[] value);
 
@@ -76,7 +76,7 @@ public interface ILightClient {
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,
-            String prefix,
+            byte[] prefix,
             byte[] path);
 
     /**

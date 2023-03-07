@@ -2,6 +2,8 @@ package ibc.icon.structs.proto.lightclient.tendermint;
 
 import java.math.BigInteger;
 
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
@@ -72,6 +74,19 @@ public class ClientState {
         ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
         ClientState.writeObject(writer, this);
         return writer.toByteArray();
+    }
+
+    public byte[] encode() {
+        return ByteUtil.join(
+                Proto.encode(1, chainId),
+                Proto.encode(2, trustLevel.encode()),
+                Proto.encode(3, trustingPeriod.encode()),
+                Proto.encode(4, unbondingPeriod.encode()),
+                Proto.encode(5, maxClockDrift.encode()),
+                Proto.encode(6, frozenHeight),
+                Proto.encode(7, latestHeight),
+                Proto.encode(8, allowUpdateAfterExpiry),
+                Proto.encode(9, allowUpdateAfterMisbehaviour));
     }
 
     public String getChainId() {

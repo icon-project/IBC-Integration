@@ -2,6 +2,7 @@ package ibc.icon.structs.proto.lightclient.tendermint;
 
 import java.util.Arrays;
 
+import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 import score.ObjectReader;
 import score.ObjectWriter;
@@ -50,8 +51,8 @@ public class BlockID {
         byte[] blockId2 = Proto.encode(1, this.partSetHeader.total);
         byte[] blockId3 = Proto.encode(2, this.partSetHeader.hash);
 
-        byte[] groupedPartSetHeader = Proto.encode(2, Proto.join(blockId2, blockId3));
+        byte[] groupedPartSetHeader = Proto.encode(2, ByteUtil.join(blockId2, blockId3));
 
-        return Proto.join(blockId1, groupedPartSetHeader);
+        return ByteUtil.join(blockId1, groupedPartSetHeader);
     }
 }

@@ -23,7 +23,7 @@ public class Packet {
     // identifies the channel end on the receiving chain.
     public String destinationChannel;
     // actual opaque bytes transferred directly to the application module
-    public String data;
+    public byte[] data;
     // block height after which the packet times out
     public Height timeoutHeight;
     // block timestamp (in nanoseconds) after which the packet times out
@@ -41,7 +41,7 @@ public class Packet {
         obj.sourceChannel = reader.readString();
         obj.destinationPort = reader.readString();
         obj.destinationChannel = reader.readString();
-        obj.data = reader.readString();
+        obj.data = reader.readByteArray();
 
         Height timeoutHeight = new Height();
         timeoutHeight.setRevisionNumber(reader.readBigInteger());
@@ -120,11 +120,11 @@ public class Packet {
         this.destinationChannel = destinationChannel;
     }
 
-    public String getData() {
+    public byte[] getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(byte[] data) {
         this.data = data;
     }
 

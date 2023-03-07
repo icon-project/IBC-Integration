@@ -2,6 +2,8 @@ package ibc.icon.structs.proto.core.connection;
 
 import java.util.List;
 
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
@@ -68,6 +70,17 @@ public class Version {
         }
 
         return this.identifier == v.identifier;
+    }
+
+    public byte[] encode() {
+        byte[][] encodedFeatures = new byte[this.features.length][];
+        for (int i = 0; i < this.features.length; i++) {
+            encodedFeatures[i] = Proto.encode(2, this.features[i]);
+        }
+
+        return ByteUtil.join(
+                Proto.encode(1, identifier),
+                ByteUtil.join(encodedFeatures));
     }
 
     public String getIdentifier() {

@@ -212,7 +212,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         handler.invoke(relayer, "recvPacket", msg);
 
         verify(lightClient.mock).verifyMembership(any(String.class), any(Height.class), eq(delayPeriod),
-                eq(expectedDelayTime), any(byte[].class), any(String.class), any(byte[].class), any(byte[].class));
+                eq(expectedDelayTime), any(byte[].class), any(byte[].class), any(byte[].class), any(byte[].class));
     }
 
     @Test

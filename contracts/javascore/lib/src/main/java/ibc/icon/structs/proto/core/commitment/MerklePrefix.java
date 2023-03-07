@@ -1,14 +1,20 @@
 package ibc.icon.structs.proto.core.commitment;
 
-public class MerklePrefix {
-    private String keyPrefix;
+import ibc.icon.score.util.Proto;
 
-    public String getKeyPrefix() {
+public class MerklePrefix {
+    private byte[] keyPrefix;
+
+    public byte[] getKeyPrefix() {
         return keyPrefix;
     }
 
-    public void setKeyPrefix(String keyPrefix) {
+    public void setKeyPrefix(byte[] keyPrefix) {
         this.keyPrefix = keyPrefix;
+    }
+
+    public byte[] encode() {
+        return Proto.encode(1, keyPrefix);
     }
 
 }

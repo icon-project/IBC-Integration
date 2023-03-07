@@ -1,5 +1,7 @@
 package ibc.icon.structs.proto.core.connection;
 
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import ibc.icon.structs.proto.core.commitment.MerklePrefix;
 import score.ObjectReader;
 import score.ObjectWriter;
@@ -28,7 +30,7 @@ public class Counterparty {
         obj.clientId = reader.readString();
         obj.connectionId = reader.readString();
         obj.prefix = new MerklePrefix();
-        obj.prefix.setKeyPrefix(reader.readString());
+        obj.prefix.setKeyPrefix(reader.readByteArray());
         reader.end();
 
         return obj;
@@ -40,6 +42,13 @@ public class Counterparty {
         writer.write(this.connectionId);
         writer.write(this.prefix.getKeyPrefix());
         writer.end();
+    }
+
+    public byte[] encode() {
+        return ByteUtil.join(
+                Proto.encode(1, clientId),
+                Proto.encode(2, connectionId),
+                Proto.encode(3, prefix.encode()));
     }
 
     public String getClientId() {

@@ -2,24 +2,7 @@ package ibc.icon.score.util;
 
 import java.math.BigInteger;
 
-
 public class Proto {
-
-    public static byte[] join(byte[]... data) {
-        int length = 0;
-        for (byte[] bs : data) {
-            length += bs.length;
-        }
-
-        byte[] result = new byte[length];
-        int index = 0;
-        for (byte[] bs : data) {
-            System.arraycopy(bs, 0, result, index, bs.length);
-            index += bs.length;
-        }
-
-        return result;
-    }
 
     public static byte[] encode(int order, String item) {
         return encode(order, item.getBytes());
@@ -40,6 +23,17 @@ public class Proto {
         return bs;
     }
 
+    public static byte[] encode(int order, Boolean item) {
+        if (item == null) {
+            return new byte[0];
+        }
+
+        byte[] bs = new byte[2];
+        bs[0] = (byte) (order << 3 | 0);
+        bs[1] = (byte) (item ? 1 : 0);
+
+        return bs;
+    }
 
     public static byte[] encode(int order, BigInteger item) {
         if (item == null) {
@@ -61,8 +55,8 @@ public class Proto {
         }
 
         int itemBytes = item.bitLength();
-        int size =  itemBytes/7;
-        if (itemBytes %7 != 0) {
+        int size = itemBytes / 7;
+        if (itemBytes % 7 != 0) {
             size++;
         }
         byte[] res = new byte[size];
@@ -71,7 +65,7 @@ public class Proto {
 
         while (true) {
             if ((value & ~0x7FL) == 0) {
-                res[index] = (byte)value;
+                res[index] = (byte) value;
                 break;
             } else {
                 res[index] = (byte) (((int) value & 0x7F) | 0x80);
@@ -90,7 +84,7 @@ public class Proto {
         byte[] bs = new byte[9];
         bs[0] = (byte) (order << 3 | 1);
         for (int i = 1; i < 9; i++) {
-            bs[i] = (byte)(l & 0xFF);
+            bs[i] = (byte) (l & 0xFF);
             l >>= 8;
         }
 

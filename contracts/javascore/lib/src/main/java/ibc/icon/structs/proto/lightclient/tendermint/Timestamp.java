@@ -2,6 +2,7 @@ package ibc.icon.structs.proto.lightclient.tendermint;
 
 import java.math.BigInteger;
 
+import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 import score.ObjectReader;
 import score.ObjectWriter;
@@ -61,6 +62,6 @@ public class Timestamp {
         byte[] seconds = Proto.encode(1, this.seconds);
         byte[] nanos = Proto.encode(2, this.nanos);
 
-        return Proto.join(seconds, nanos);
+        return ByteUtil.join(seconds, nanos);
     }
 }
