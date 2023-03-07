@@ -1,5 +1,5 @@
 use crate::{
-    ack::make_ack_fail,
+    ack::{make_ack_fail, Ack},
     events::{event_call_message, event_response_message, event_rollback_message},
     state::{CwCallService, IbcConfig},
     types::{
@@ -11,7 +11,7 @@ use crate::{
 };
 
 use cosmwasm_std::{
-    entry_point, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
+    attr, entry_point, from_binary, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
     IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacket, IbcPacketAckMsg,
     IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, Never,
 };
@@ -131,7 +131,7 @@ fn do_ibc_packet_receive(
 pub fn ibc_packet_ack(
     _deps: DepsMut,
     _env: Env,
-    _ack: IbcPacketAckMsg,
+    ack: IbcPacketAckMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
     // Nothing to do here. We don't keep any state about the other
     // chain, just deliver messages so nothing to update.
@@ -139,7 +139,12 @@ pub fn ibc_packet_ack(
     // If we did care about how the other chain received our message
     // we could deserialize the data field into an `Ack` and inspect
     // it.
-    Ok(IbcBasicResponse::new().add_attribute("method", "ibc_packet_ack"))
+    let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
+
+    match ack_response {
+        Ack::Result(_) => on_ack_sucess(ack.original_packet),
+        Ack::Error(err) => on_ack_failure(ack.original_packet, &err),
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -275,4 +280,35 @@ impl<'a> CwCallService<'a> {
             Err(err) => Err(ContractError::Std(err)),
         }
     }
+}
+
+fn on_ack_sucess(packet: IbcPacket) -> Result<IbcBasicResponse, ContractError> {
+    let message: CallServiceMessage = from_binary(&packet.data)?;
+
+    let message_type = match message.message_type() {
+        CallServiceMessageType::CallServiceRequest => "call_service_request",
+        CallServiceMessageType::CallServiceResponse => "call_service_response",
+    };
+
+    let attributes = vec![
+        attr("action", "acknowledge"),
+        attr("success", "true"),
+        attr("message_type", message_type),
+    ];
+
+    Ok(IbcBasicResponse::new().add_attributes(attributes))
+}
+
+fn on_ack_failure(packet: IbcPacket, error: &str) -> Result<IbcBasicResponse, ContractError> {
+    let message: CallServiceMessage = from_binary(&packet.data)?;
+    let message_type = match message.message_type() {
+        CallServiceMessageType::CallServiceRequest => "call_service_request",
+        CallServiceMessageType::CallServiceResponse => "call_service_response",
+    };
+
+    Ok(IbcBasicResponse::new()
+        .add_attribute("action", "acknowledge")
+        .add_attribute("message_type", message_type)
+        .add_attribute("success", "false")
+        .add_attribute("error", error))
 }

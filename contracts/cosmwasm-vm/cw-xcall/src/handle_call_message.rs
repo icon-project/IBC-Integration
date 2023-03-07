@@ -131,7 +131,11 @@ impl<'a> CwCallService<'a> {
             .add_submessage(sub_msg))
     }
 
-    pub fn reply_execute_rollback(&self, deps: Deps, msg: Reply) -> Result<Response, ContractError> {
+    pub fn reply_execute_rollback(
+        &self,
+        deps: Deps,
+        msg: Reply,
+    ) -> Result<Response, ContractError> {
         let sequence_no = self.last_sequence_no().load(deps.storage)?;
 
         let response = match msg.result {
