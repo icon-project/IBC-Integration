@@ -277,9 +277,7 @@ fn execute_rollback_success() {
             msg,
             funds: _,
         }) => {
-            let r: Vec<u64> = from_binary(&msg).unwrap();
-
-            assert_eq!(vec![1, 2, 3], r)
+            assert_eq!(vec![1, 2, 3], msg.0)
         }
         _ => todo!(),
     }
