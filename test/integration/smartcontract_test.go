@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/cucumber/godog"
@@ -11,8 +12,11 @@ func TestSmartContract(t *testing.T) {
 	suite := godog.TestSuite{
 		Name: "TestSmartContract",
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
+			ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+				return executor.EnsureChainIsRunning(ctx)
+			})
+			
 			ctx.Step(`^Contract should be deployed on chain$`, executor.contractShouldBeDeployedOnChain)
-			ctx.Step(`^Chain running$`, executor.ChainRunning)
 			ctx.Step(`^we Deploy SmartContract on chain$`, executor.weDeploySmartContractOnChain)
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/smartcontract.feature"}, TestingT: t},

@@ -1,54 +1,119 @@
 package icon
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"time"
 
-	integration_test "github.com/icon-project/ibc-integration/test/integration"
-	iconclient "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon"
-	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
+	"github.com/icon-project/ibc-integration/test/chains"
+	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 )
 
 type IconTestnet struct {
-	Config integration_test.Config
-	Client *iconclient.Client
+	bin              string
+	nid              string
+	keystorePath     string
+	keyPassword      string
+	scorePaths       map[string]string
+	defaultStepLimit string
+	url              string
 }
 
-// This function takes initMessage, scorePath and keytorePath, Deploys contract to testnet and returns score address
-func (it *IconTestnet) DeployContract(scorePath, keystorePath, initMessage string) (string, error) {
-	var result *icontypes.TransactionResult
+type ContractInfo struct {
+	name         string
+	scoreAddress string
+	// any neccessary info
+}
+
+// DeployContract implements chains.Chain
+func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, error) {
+	var result *types.TransactionResult
 	var output string
-	hash, _ := exec.Command(it.Config.Bin, "rpc", "sendtx", "deploy", scorePath,
-		"--key_store", keystorePath, "--key_password", "gochain", "--step_limit", "5000000000",
-		"--content_type", "application/java", "--param", initMessage,
-		"--uri", it.Config.URL, "--nid", it.Config.NID).Output()
+
+	// Build Params
+	// "--param", initMessage
+
+	contract := ctx.Value(chains.ContractKey{}).(string)
+	contractPath := it.scorePaths[contract]
+	if contract == "" {
+		return nil, fmt.Errorf("cannot find contract %v in config", contract)
+	}
+
+	hash, _ := exec.Command(it.bin, "rpc", "sendtx", "deploy", contractPath,
+		"--key_store", it.keystorePath, "--key_password", it.keyPassword, "--step_limit", it.defaultStepLimit,
+		"--content_type", "application/java",
+		"--uri", it.url, "--nid", it.nid).Output()
 
 	json.Unmarshal(hash, &output)
 	time.Sleep(3 * time.Second)
 
-	// To get score address
-	out, err := exec.Command(it.Config.Bin, "rpc", "txresult", output, "--uri", it.Config.URL).Output()
+	out, err := exec.Command(it.bin, "rpc", "txresult", output, "--uri", it.url).Output()
+	if err != nil {
+		return nil, err
+	}
+
 	json.Unmarshal(out, &result)
-	return string(result.SCOREAddress), err
+
+	return context.WithValue(ctx, ContractInfo{}, ContractInfo{
+		scoreAddress: string(result.SCOREAddress),
+	}), nil
 }
 
-// This function queries any method in deployed smartcontract given score address, method name along with params if any, to return the result
-func (it *IconTestnet) QueryContract(scoreAddress, methodName, params string) (string, error) {
-	if params != "" {
-		output, _ := exec.Command(it.Config.Bin, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--param", params, "--uri", it.Config.URL).Output()
-		return string(output), nil
-	} else {
-		output, _ := exec.Command(it.Config.Bin, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", it.Config.URL).Output()
-		return string(output), nil
+// ExecuteContract implements chains.Chain
+func (*IconTestnet) ExecuteContract(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
+}
+
+// GetBalance implements chains.Chain
+func (*IconTestnet) GetBalance(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
+}
+
+// GetBlockByHeight implements chains.Chain
+func (*IconTestnet) GetBlockByHeight(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
+}
+
+// GetLastBlock implements chains.Chain
+func (*IconTestnet) GetLastBlock(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
+}
+
+// QueryContract implements chains.Chain
+func (*IconTestnet) QueryContract(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
+}
+
+func NewIconTestnet(bin, nid, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
+	return &IconTestnet{
+		bin,
+		nid,
+		keystorePath,
+		keyPassword,
+		scorePaths,
+		defaultStepLimit,
+		url,
 	}
 }
 
-// This function takes method name and params along with score address and keystore path to execute any method in contract that is already deployed
-func (it *IconTestnet) ExecuteContract(scoreAddress, keystorePath, methodName, params string) (string, error) {
-	var hash string
-	output, err := exec.Command(it.Config.Bin, "rpc", "sendtx", "call", "--to", scoreAddress, "--method", methodName, "--key_store", keystorePath,
-		"--key_password", "gochain", "--step_limit", "5000000000", "--param", params).Output()
-	json.Unmarshal(output, &hash)
-	return hash, err
-}
+// // This function queries any method in deployed smartcontract given score address, method name along with params if any, to return the result
+// func (it *Testnet) QueryContract(scoreAddress, methodName, params string) (string, error) {
+// 	if params != "" {
+// 		output, _ := exec.Command(it.Config.Bin, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--param", params, "--uri", it.Config.URL).Output()
+// 		return string(output), nil
+// 	} else {
+// 		output, _ := exec.Command(it.Config.Bin, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", it.Config.URL).Output()
+// 		return string(output), nil
+// 	}
+// }
+
+// // This function takes method name and params along with score address and keystore path to execute any method in contract that is already deployed
+// func (it *Testnet) ExecuteContract(scoreAddress, keystorePath, methodName, params string) (string, error) {
+// 	var hash string
+// 	output, err := exec.Command(it.Config.Bin, "rpc", "sendtx", "call", "--to", scoreAddress, "--method", methodName, "--key_store", keystorePath,
+// 		"--key_password", "gochain", "--step_limit", "5000000000", "--param", params).Output()
+// 	json.Unmarshal(output, &hash)
+// 	return hash, err
+// }

@@ -12,16 +12,17 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
-	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
+	// icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
-	"github.com/strangelove-ventures/interchaintest/v6/testutil"
+	// "github.com/strangelove-ventures/interchaintest/v6/testutil"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
-type IconChain struct {
+type IconLocalnet struct {
 	log           *zap.Logger
 	testName      string
 	cfg           ibc.ChainConfig
@@ -31,8 +32,8 @@ type IconChain struct {
 	findTxMu      sync.Mutex
 }
 
-func NewIconChain(testName string, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, log *zap.Logger) *IconChain {
-	return &IconChain{
+func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int) chains.Chain {
+	return &IconLocalnet{
 		testName:      testName,
 		cfg:           chainConfig,
 		numValidators: numValidators,
@@ -42,12 +43,12 @@ func NewIconChain(testName string, chainConfig ibc.ChainConfig, numValidators in
 }
 
 // Config fetches the chain configuration.
-func (c *IconChain) Config() ibc.ChainConfig {
+func (c *IconLocalnet) Config() ibc.ChainConfig {
 	return c.cfg
 }
 
 // Initialize initializes node structs so that things like initializing keys can be done before starting the chain
-func (c *IconChain) Initialize(ctx context.Context, testName string, cli *client.Client, networkID string) error {
+func (c *IconLocalnet) Initialize(ctx context.Context, testName string, cli *client.Client, networkID string) error {
 	chainCfg := c.Config()
 	c.pullImages(ctx, cli)
 	image := chainCfg.Images[0]
@@ -77,7 +78,7 @@ func (c *IconChain) Initialize(ctx context.Context, testName string, cli *client
 	return nil
 }
 
-func (c *IconChain) pullImages(ctx context.Context, cli *client.Client) {
+func (c *IconLocalnet) pullImages(ctx context.Context, cli *client.Client) {
 	for _, image := range c.Config().Images {
 		rc, err := cli.ImagePull(
 			ctx,
@@ -97,7 +98,7 @@ func (c *IconChain) pullImages(ctx context.Context, cli *client.Client) {
 	}
 }
 
-func (c *IconChain) NewChainNode(
+func (c *IconLocalnet) NewChainNode(
 	ctx context.Context,
 	testName string,
 	cli *client.Client,
@@ -144,7 +145,7 @@ func (c *IconChain) NewChainNode(
 }
 
 // Start sets up everything needed (validators, gentx, fullnodes, peering, additional accounts) for chain to start from genesis.
-func (c *IconChain) Start(testName string, ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
+func (c *IconLocalnet) Start(testName string, ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
 	c.findTxMu.Lock()
 	defer c.findTxMu.Unlock()
 	eg, egCtx := errgroup.WithContext(ctx)
@@ -166,58 +167,58 @@ func (c *IconChain) Start(testName string, ctx context.Context, additionalGenesi
 // is up to the chain implementation.
 //
 // "env" are environment variables in the format "MY_ENV_VAR=value"
-func (c *IconChain) Exec(ctx context.Context, cmd []string, env []string) (stdout []byte, stderr []byte, err error) {
+func (c *IconLocalnet) Exec(ctx context.Context, cmd []string, env []string) (stdout []byte, stderr []byte, err error) {
 	return c.getFullNode().Exec(ctx, cmd, env)
 }
 
 // ExportState exports the chain state at specific height.
-func (c *IconChain) ExportState(ctx context.Context, height int64) (string, error) {
+func (c *IconLocalnet) ExportState(ctx context.Context, height int64) (string, error) {
 	block, err := c.getFullNode().GetBlockByHeight(ctx, height)
 	return block, err
 }
 
 // GetRPCAddress retrieves the rpc address that can be reached by other containers in the docker network.
-func (c *IconChain) GetRPCAddress() string {
+func (c *IconLocalnet) GetRPCAddress() string {
 	return c.getFullNode().HostRPCPort
 }
 
 // GetGRPCAddress retrieves the grpc address that can be reached by other containers in the docker network.
 // Not Applicable for Icon
-func (c *IconChain) GetGRPCAddress() string {
+func (c *IconLocalnet) GetGRPCAddress() string {
 	panic("not implemented") // TODO: Implement
 }
 
 // GetHostRPCAddress returns the rpc address that can be reached by processes on the host machine.
 // Note that this will not return a valid value until after Start returns.
-func (c *IconChain) GetHostRPCAddress() string {
+func (c *IconLocalnet) GetHostRPCAddress() string {
 	return "http://" + c.getFullNode().HostRPCPort
 }
 
 // GetHostGRPCAddress returns the grpc address that can be reached by processes on the host machine.
 // Note that this will not return a valid value until after Start returns.
 // Not applicable for Icon
-func (c *IconChain) GetHostGRPCAddress() string {
+func (c *IconLocalnet) GetHostGRPCAddress() string {
 	panic("not implemented") // TODO: Implement
 }
 
 // HomeDir is the home directory of a node running in a docker container. Therefore, this maps to
 // the container's filesystem (not the host).
-func (c *IconChain) HomeDir() string {
+func (c *IconLocalnet) HomeDir() string {
 	return c.getFullNode().HomeDir()
 }
 
 // CreateKey creates a test key in the "user" node (either the first fullnode or the first validator if no fullnodes).
-func (c *IconChain) CreateKey(ctx context.Context, password string) error {
+func (c *IconLocalnet) CreateKey(ctx context.Context, password string) error {
 	return c.getFullNode().CreateKey(ctx, password)
 }
 
 // RecoverKey recovers an existing user from a given mnemonic.
-func (c *IconChain) RecoverKey(ctx context.Context, name string, mnemonic string) error {
+func (c *IconLocalnet) RecoverKey(ctx context.Context, name string, mnemonic string) error {
 	panic("not implemented") // TODO: Implement
 }
 
 // GetAddress fetches the bech32 address for a test key on the "user" node (either the first fullnode or the first validator if no fullnodes).
-func (c *IconChain) GetAddress(ctx context.Context, keyName string) ([]byte, error) {
+func (c *IconLocalnet) GetAddress(ctx context.Context, keyName string) ([]byte, error) {
 	addrInByte, err := json.Marshal(keyName)
 	if err != nil {
 		return nil, err
@@ -226,50 +227,45 @@ func (c *IconChain) GetAddress(ctx context.Context, keyName string) ([]byte, err
 }
 
 // SendFunds sends funds to a wallet from a user account.
-func (c *IconChain) SendFunds(ctx context.Context, keyName string, amount ibc.WalletAmount) error {
+func (c *IconLocalnet) SendFunds(ctx context.Context, keyName string, amount ibc.WalletAmount) error {
 	panic("not implemented") // TODO: Implement
 }
 
 // SendIBCTransfer sends an IBC transfer returning a transaction or an error if the transfer failed.
-func (c *IconChain) SendIBCTransfer(ctx context.Context, channelID string, keyName string, amount ibc.WalletAmount, options ibc.TransferOptions) (ibc.Tx, error) {
+func (c *IconLocalnet) SendIBCTransfer(ctx context.Context, channelID string, keyName string, amount ibc.WalletAmount, options ibc.TransferOptions) (ibc.Tx, error) {
 	panic("not implemented") // TODO: Implement
 }
 
 // Height returns the current block height or an error if unable to get current height.
-func (c *IconChain) Height(ctx context.Context) (uint64, error) {
+func (c *IconLocalnet) Height(ctx context.Context) (uint64, error) {
 	return c.getFullNode().Height(ctx)
 }
 
-// GetBalance fetches the current balance for a specific account address and denom.
-func (c *IconChain) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
-	return c.getFullNode().GetBalance(ctx, address)
-}
-
 // GetGasFeesInNativeDenom gets the fees in native denom for an amount of spent gas.
-func (c *IconChain) GetGasFeesInNativeDenom(gasPaid int64) int64 {
+func (c *IconLocalnet) GetGasFeesInNativeDenom(gasPaid int64) int64 {
 	gasPrice, _ := strconv.ParseFloat(strings.Replace(c.cfg.GasPrices, c.cfg.Denom, "", 1), 64)
 	fees := float64(gasPaid) * gasPrice
 	return int64(fees)
 }
 
 // Acknowledgements returns all acknowledgements in a block at height.
-func (c *IconChain) Acknowledgements(ctx context.Context, height uint64) ([]ibc.PacketAcknowledgement, error) {
+func (c *IconLocalnet) Acknowledgements(ctx context.Context, height uint64) ([]ibc.PacketAcknowledgement, error) {
 	panic("not implemented") // TODO: Implement
 }
 
 // Timeouts returns all timeouts in a block at height.
-func (c *IconChain) Timeouts(ctx context.Context, height uint64) ([]ibc.PacketTimeout, error) {
+func (c *IconLocalnet) Timeouts(ctx context.Context, height uint64) ([]ibc.PacketTimeout, error) {
 	panic("not implemented") // TODO: Implement
 }
 
 // BuildRelayerWallet will return a chain-specific wallet populated with the mnemonic so that the wallet can
 // be restored in the relayer node using the mnemonic. After it is built, that address is included in
 // genesis with some funds.
-func (c *IconChain) BuildRelayerWallet(ctx context.Context, keyName string) (ibc.Wallet, error) {
+func (c *IconLocalnet) BuildRelayerWallet(ctx context.Context, keyName string) (ibc.Wallet, error) {
 	return c.BuildWallet(ctx, keyName, "")
 }
 
-func (c *IconChain) BuildWallet(ctx context.Context, keyName string, mnemonic string) (ibc.Wallet, error) {
+func (c *IconLocalnet) BuildWallet(ctx context.Context, keyName string, mnemonic string) (ibc.Wallet, error) {
 	if err := c.CreateKey(ctx, keyName); err != nil {
 		return nil, fmt.Errorf("failed to create key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
 	}
@@ -282,7 +278,7 @@ func (c *IconChain) BuildWallet(ctx context.Context, keyName string, mnemonic st
 	return NewWallet(keyName, addrBytes, mnemonic, c.cfg), nil
 }
 
-func (c *IconChain) getFullNode() *IconNode {
+func (c *IconLocalnet) getFullNode() *IconNode {
 	c.findTxMu.Lock()
 	defer c.findTxMu.Unlock()
 	if len(c.FullNodes) > 0 {
@@ -292,28 +288,58 @@ func (c *IconChain) getFullNode() *IconNode {
 	return c.FullNodes[0]
 }
 
-func (c *IconChain) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
+func (c *IconLocalnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
 	fn := c.getFullNode()
 	return fn.FindTxs(ctx, height)
 }
 
-// DeployContract takes a file path to smart contract and initialization message and returns the instantiated contract/SCORE address.
-func (c *IconChain) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
-	return c.getFullNode().DeployContract(ctx, scorePath, keystorePath, initMessage)
+// GetBalance fetches the current balance for a specific account address and denom.
+func (c *IconLocalnet) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
+	return c.getFullNode().GetBalance(ctx, address)
 }
 
-func (c *IconChain) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
-	return c.getFullNode().QueryContract(ctx, scoreAddress, methodName, params)
+// // DeployContract takes a file path to smart contract and initialization message and returns the instantiated contract/SCORE address.
+// func (c *IconLocalnet) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
+// 	return c.getFullNode().DeployContract(ctx, scorePath, keystorePath, initMessage)
+// }
+
+// func (c *IconLocalnet) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
+// 	return c.getFullNode().QueryContract(ctx, scoreAddress, methodName, params)
+// }
+
+// func (c *IconLocalnet) GetTransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
+// 	return c.getFullNode().TransactionResult(ctx, hash)
+// }
+
+// func (c *IconLocalnet) WaitForBlocks(ctx context.Context, numBlocks int) {
+// 	testutil.WaitForBlocks(ctx, numBlocks, c.getFullNode())
+// }
+
+// func (c *IconLocalnet) ExecuteContract(ctx context.Context, scoreAddress, keystorePath, methodName, params string) (string, error) {
+// 	return c.getFullNode().ExecuteContract(ctx, scoreAddress, methodName, keystorePath, params)
+// }
+
+// DeployContract implements chains.Chain
+func (*IconLocalnet) DeployContract(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
 }
 
-func (c *IconChain) GetTransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
-	return c.getFullNode().TransactionResult(ctx, hash)
+// ExecuteContract implements chains.Chain
+func (*IconLocalnet) ExecuteContract(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
 }
 
-func (c *IconChain) WaitForBlocks(ctx context.Context, numBlocks int) {
-	testutil.WaitForBlocks(ctx, numBlocks, c.getFullNode())
+// GetBlockByHeight implements chains.Chain
+func (*IconLocalnet) GetBlockByHeight(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
 }
 
-func (c *IconChain) ExecuteContract(ctx context.Context, scoreAddress, keystorePath, methodName, params string) (string, error) {
-	return c.getFullNode().ExecuteContract(ctx, scoreAddress, methodName, keystorePath, params)
+// GetLastBlock implements chains.Chain
+func (*IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
+}
+
+// QueryContract implements chains.Chain
+func (*IconLocalnet) QueryContract(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
 }
