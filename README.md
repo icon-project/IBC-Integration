@@ -23,8 +23,8 @@ Additional information on how IBC works can be found [here](https://ibc.cosmos.n
 
 Terminologies used in this project.
   
-- [ibc packet](../docs/terminologies/ibc_terminologies.md)
-- [ibc message](../docs/terminologies/ibc_terminologies.md)
+- [ibc packet](./docs/terminologies/ibc_terminologies.md)
+- [ibc message](./docs/terminologies/ibc_terminologies.md)
 - [openInit](./docs/terminologies/ibc_terminologies.md)
 - [openTry](./docs/terminologies/ibc_terminologies.md)
 - [openAck](./docs/terminologies/ibc_terminologies.md)
@@ -37,7 +37,7 @@ Terminologies used in this project.
 ### Project Structure
 | Directory | Description |
 |:----------|:------------|
-| /contracts/cosmwasm-vm | Includes contrcats for multiple chains |
+| [/contracts/cosmwasm-vm](./contracts/cosmwasm-vm) | Includes contrcats for multiple chains |
 | /contracts/evm | Includes contrcats for multiple chains |
 | /contracts/javascore | Includes contrcats for multiple chains |
 | /docs | Documentation |
