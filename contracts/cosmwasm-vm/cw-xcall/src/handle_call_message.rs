@@ -1,7 +1,7 @@
 use crate::{
     error::ContractError,
     events::{event_call_executed, event_rollback_executed},
-    state::{CwCallService, EXECUTE_CALL, EXECUTE_ROLLBACK},
+    state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{
         message::CallServiceMessage,
         response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
@@ -33,7 +33,7 @@ impl<'a> CwCallService<'a> {
             funds: info.funds,
         });
 
-        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_CALL);
+        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_CALL_ID);
 
         Ok(Response::new()
             .add_attribute("action", "call_message")
@@ -123,7 +123,7 @@ impl<'a> CwCallService<'a> {
             funds: info.funds,
         });
 
-        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_ROLLBACK);
+        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_ROLLBACK_ID);
 
         Ok(Response::new()
             .add_attribute("action", "call_message")

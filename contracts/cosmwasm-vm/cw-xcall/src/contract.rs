@@ -1,7 +1,7 @@
 use crate::{
     error::ContractError,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    state::{CwCallService, EXECUTE_CALL, EXECUTE_ROLLBACK},
+    state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::address::Address,
 };
 use cosmwasm_std::{
@@ -59,8 +59,8 @@ impl<'a> CwCallService<'a> {
 
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
-            EXECUTE_CALL => self.reply_execute_call_message(deps.as_ref(), env, msg),
-            EXECUTE_ROLLBACK => self.reply_execute_rollback(deps.as_ref(), msg),
+            EXECUTE_CALL_ID => self.reply_execute_call_message(deps.as_ref(), env, msg),
+            EXECUTE_ROLLBACK_ID => self.reply_execute_rollback(deps.as_ref(), msg),
             _ => Err(ContractError::Unauthorized {}),
         }
     }
