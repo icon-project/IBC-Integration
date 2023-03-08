@@ -1,11 +1,134 @@
 package ibc.icon.score.util;
 
 import java.math.BigInteger;
+import java.util.List;
 
 public class Proto {
 
+    public static class DecodeResponse<T> {
+        public T res;
+        public int index;
+    }
+
+    public static DecodeResponse<Boolean> decodeBoolean(byte[] data, int index) {
+        DecodeResponse<Boolean> resp = new DecodeResponse<>();
+        resp.index = index + 1;
+        resp.res = data[index] == 1;
+
+        return resp;
+    }
+
+    public static DecodeResponse<String> decodeString(byte[] data, int index) {
+        DecodeResponse<String> resp = new DecodeResponse<>();
+        DecodeResponse<byte[]> bytesResp = decodeBytes(data, index);
+        resp.index = bytesResp.index;
+        resp.res = new String(bytesResp.res);
+
+        return resp;
+
+    }
+
+    public static DecodeResponse<byte[]> decodeBytes(byte[] data, int index) {
+        DecodeResponse<byte[]> resp = new DecodeResponse<>();
+
+        int length = data[index];
+        byte[] res = new byte[length];
+
+        System.arraycopy(data, index + 1, res, 0, length);
+        resp.index = index + length + 1;
+        resp.res = res;
+
+        return resp;
+    }
+
+    public static DecodeResponse<Integer> decodeEnum(byte[] data, int index) {
+        int result = 0;
+        DecodeResponse<Integer> resp = new DecodeResponse<>();
+
+        for (int shift = 0; shift < 64; shift += 7) {
+            final byte b = data[index];
+            index++;
+            result |= (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) {
+                break;
+            }
+        }
+
+        resp.index = index;
+        resp.res = result;
+        return resp;
+    }
+
+    public static DecodeResponse<BigInteger> decodeVarInt(byte[] data, int index) {
+        long result = 0;
+        DecodeResponse<BigInteger> resp = new DecodeResponse<>();
+
+        for (int shift = 0; shift < 64; shift += 7) {
+            final byte b = data[index];
+            index++;
+            result |= (long) (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) {
+                break;
+            }
+        }
+
+        resp.index = index;
+        resp.res = BigInteger.valueOf(result);
+        return resp;
+    }
+
+    public static DecodeResponse<BigInteger> decodeFixed64(byte[] data, int index) {
+        DecodeResponse<BigInteger> resp = new DecodeResponse<>();
+        long res = (((data[index] & 0xffL))
+                | ((data[index + 1] & 0xffL) << 8)
+                | ((data[index + 2] & 0xffL) << 16)
+                | ((data[index + 3] & 0xffL) << 24)
+                | ((data[index + 4] & 0xffL) << 32)
+                | ((data[index + 5] & 0xffL) << 40)
+                | ((data[index + 6] & 0xffL) << 48)
+                | ((data[index + 7] & 0xffL) << 56));
+
+        resp.index = index + 8;
+        resp.res = BigInteger.valueOf(res);
+        return resp;
+    }
+
+    public static byte[] encodeMessageArray(int order, List<? extends ProtoMessage> items) {
+        int length = items.size();
+        byte[][] encodedItems = new byte[length][];
+        for (int i = 0; i < length; i++) {
+            encodedItems[i] = encode(order, items.get(i));
+        }
+
+        return ByteUtil.join(encodedItems);
+    }
+
+    public static byte[] encode(int order, ProtoMessage item) {
+        return encode(order, item.encode());
+    }
+
+    public static byte[] encodeStringArray(int order, List<String> items) {
+        int length = items.size();
+        byte[][] encodedItems = new byte[length][];
+        for (int i = 0; i < length; i++) {
+            encodedItems[i] = encode(order, items.get(i));
+        }
+
+        return ByteUtil.join(encodedItems);
+    }
+
     public static byte[] encode(int order, String item) {
         return encode(order, item.getBytes());
+    }
+
+    public static byte[] encodeBytesArray(int order, List<byte[]> items) {
+        int length = items.size();
+        byte[][] encodedItems = new byte[length][];
+        for (int i = 0; i < length; i++) {
+            encodedItems[i] = encode(order, items.get(i));
+        }
+
+        return ByteUtil.join(encodedItems);
     }
 
     public static byte[] encode(int order, byte[] item) {
@@ -23,6 +146,16 @@ public class Proto {
         return bs;
     }
 
+    public static byte[] encodeBooleanArray(int order, List<Boolean> items) {
+        int length = items.size();
+        byte[][] encodedItems = new byte[length][];
+        for (int i = 0; i < length; i++) {
+            encodedItems[i] = encode(order, items.get(i));
+        }
+
+        return ByteUtil.join(encodedItems);
+    }
+
     public static byte[] encode(int order, Boolean item) {
         if (item == null) {
             return new byte[0];
@@ -33,6 +166,20 @@ public class Proto {
         bs[1] = (byte) (item ? 1 : 0);
 
         return bs;
+    }
+
+    public static byte[] encodeVarIntArray(int order, List<BigInteger> items) {
+        int length = items.size();
+        byte[][] encodedItems = new byte[length][];
+        for (int i = 0; i < length; i++) {
+            encodedItems[i] = encode(order, items.get(i));
+        }
+
+        return ByteUtil.join(encodedItems);
+    }
+
+    public static byte[] encode(int order, int item) {
+        return encode(order, BigInteger.valueOf(item));
     }
 
     public static byte[] encode(int order, BigInteger item) {
@@ -76,6 +223,16 @@ public class Proto {
         return res;
     }
 
+    public static byte[] encodeFixed64Array(int order, List<BigInteger> items) {
+        int length = items.size();
+        byte[][] encodedItems = new byte[length][];
+        for (int i = 0; i < length; i++) {
+            encodedItems[i] = encodeFixed64(order, items.get(i));
+        }
+
+        return ByteUtil.join(encodedItems);
+    }
+
     public static byte[] encodeFixed64(int order, BigInteger item) {
         if (item == null) {
             return new byte[0];
@@ -102,5 +259,4 @@ public class Proto {
 
         return bs;
     }
-
 }
