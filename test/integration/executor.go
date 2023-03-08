@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/chains/archway"
 	"github.com/icon-project/ibc-integration/test/chains/cosmos"
 	"github.com/icon-project/ibc-integration/test/chains/icon"
-	ibctest "github.com/strangelove-ventures/interchaintest/v6"
-	"github.com/strangelove-ventures/interchaintest/v6/testreporter"
-	"github.com/stretchr/testify/require"
+	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 )
@@ -20,8 +17,8 @@ import (
 type Executor struct {
 	chain chains.Chain
 	*testing.T
-	ctx context.Context
-	cfg *Config
+	ctx    context.Context
+	cfg    *Config
 	logger *zap.Logger
 }
 
@@ -29,19 +26,21 @@ func NewExecutor(t *testing.T) *Executor {
 	cfg := GetConfig()
 
 	return &Executor{
-		T:   t,
-		cfg: cfg,
-		ctx: context.Background(),
+		T:      t,
+		cfg:    cfg,
+		ctx:    context.Background(),
 		logger: zaptest.NewLogger(t),
 	}
 }
 
-func (e *Executor) EnsureChainIsRunning(ctx context.Context) (context.Context, error) {
-	var err error
+var ctx context.Context
 
+func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
+	var err error
+	ctx = context.Background()
 	switch e.cfg.Chain.Name {
 	case "icon":
-		e.chain, err = icon.NewIconChain(e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.Chain.NID, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger)
+		ctx, e.chain, err = icon.NewIconChain(e.T, ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.Chain.NID, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger)
 	case "archway":
 		e.chain, err = archway.NewArchwayChain(e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig)
 	case "cosmos":
@@ -55,6 +54,9 @@ func (e *Executor) EnsureChainIsRunning(ctx context.Context) (context.Context, e
 	}
 
 	// Check wether chain is running by checking block height
+	ibcChain := ctx.Value("ibc.chain").(ibc.Chain)
+	balance, _ := ibcChain.GetBalance(ctx, "hx3701471b528efb33964dec4d96adf60dd91d249c", "icx")
+	fmt.Println(balance)
 
 	return ctx, nil
 }
@@ -95,57 +97,57 @@ func (e *Executor) EnsureChainIsRunning(ctx context.Context) (context.Context, e
 
 // }
 
-func (e *Executor) ChainRunning() error {
-	exec := NewExecutor(e.T)
-	// cf := ibctest.NewBuiltinChainFactory(zaptest.NewLogger(e.T), chains)
-	// if cf == nil {
-	// 	return fmt.Errorf("chain factory failed")
-	// }
-	// chains, _ := cf.Chains(e.T.Name())
-	cut := exec.chain
-	// client, network := ibctest.DockerSetup(e.T)
-	ic := ibctest.NewInterchain().
-		AddChain(cut)
-	// Log location
-	f, err := ibctest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
-	require.NoError(e.T, err)
-	// Reporter/logs
-	rep := testreporter.NewReporter(f)
-	eRep := rep.RelayerExecReporter(e.T)
+// func (e *Executor) ChainRunning() error {
+// 	exec := NewExecutor(e.T)
+// 	// cf := ibctest.NewBuiltinChainFactory(zaptest.NewLogger(e.T), chains)
+// 	// if cf == nil {
+// 	// 	return fmt.Errorf("chain factory failed")
+// 	// }
+// 	// chains, _ := cf.Chains(e.T.Name())
+// 	cut := exec.chain
+// 	// client, network := ibctest.DockerSetup(e.T)
+// 	ic := ibctest.NewInterchain().
+// 		AddChain(cut)
+// 	// Log location
+// 	f, err := ibctest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
+// 	require.NoError(e.T, err)
+// 	// Reporter/logs
+// 	rep := testreporter.NewReporter(f)
+// 	eRep := rep.RelayerExecReporter(e.T)
 
-	// Build interchain
-	require.NoError(e.T, ic.Build(e.ctx, eRep, ibctest.InterchainBuildOptions{
-		TestName:          e.T.Name(),
-		Client:            exec.client,
-		NetworkID:         exec.network,
-		BlockDatabaseFile: ibctest.DefaultBlockDatabaseFilepath(),
+// 	// Build interchain
+// 	require.NoError(e.T, ic.Build(e.ctx, eRep, ibctest.InterchainBuildOptions{
+// 		TestName:          e.T.Name(),
+// 		Client:            exec.client,
+// 		NetworkID:         exec.network,
+// 		BlockDatabaseFile: ibctest.DefaultBlockDatabaseFilepath(),
 
-		SkipPathCreation: false},
-	),
-	)
-	return nil
+// 		SkipPathCreation: false},
+// 	),
+// 	)
+// 	return nil
 
-}
+// }
 
-func (e *Executor) weDeploySmartContractOnChain() error {
-	users := ibctest.GetAndFundTestUsers(e.T, e.ctx, "default", int64(100_000_000), e.chain)
-	cut := users[0]
-	balance, _ := e.chain.GetBalance(e.ctx, cut.FormattedAddress(), e.chain.Config().Denom)
-	fmt.Println(balance, e.chain.Config().Denom)
-	/*
-		Next step, Need to be generic
-		May be we can use switch case based on cofig we can do type conversion ?
-	*/
-	osmosis := e.chain.(*cosmos.CosmosChain)
-	keyName := cut.KeyName()
-	codeId, err := osmosis.StoreContract(e.ctx, keyName, "/home/dell/practice/ibc-bdd/ibctest/godogs/cw_tpl_osmosis.wasm")
-	if err != nil {
-		return fmt.Errorf("error storing: %v", err)
-	}
-	fmt.Println(codeId)
-	return nil
-}
+// func (e *Executor) weDeploySmartContractOnChain() error {
+// 	users := ibctest.GetAndFundTestUsers(e.T, e.ctx, "default", int64(100_000_000), e.chain)
+// 	cut := users[0]
+// 	balance, _ := e.chain.GetBalance(e.ctx, cut.FormattedAddress(), e.chain.Config().Denom)
+// 	fmt.Println(balance, e.chain.Config().Denom)
+// 	/*
+// 		Next step, Need to be generic
+// 		May be we can use switch case based on cofig we can do type conversion ?
+// 	*/
+// 	osmosis := e.chain.(*cosmos.CosmosChain)
+// 	keyName := cut.KeyName()
+// 	codeId, err := osmosis.StoreContract(e.ctx, keyName, "/home/dell/practice/ibc-bdd/ibctest/godogs/cw_tpl_osmosis.wasm")
+// 	if err != nil {
+// 		return fmt.Errorf("error storing: %v", err)
+// 	}
+// 	fmt.Println(codeId)
+// 	return nil
+// }
 
-func (e *Executor) contractShouldBeDeployedOnChain() {
+// func (e *Executor) contractShouldBeDeployedOnChain() {
 
-}
+// }

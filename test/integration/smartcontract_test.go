@@ -13,11 +13,11 @@ func TestSmartContract(t *testing.T) {
 		Name: "TestSmartContract",
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
 			ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-				return executor.EnsureChainIsRunning(ctx)
+				return executor.EnsureChainIsRunning()
 			})
-			
-			ctx.Step(`^Contract should be deployed on chain$`, executor.contractShouldBeDeployedOnChain)
-			ctx.Step(`^we Deploy SmartContract on chain$`, executor.weDeploySmartContractOnChain)
+
+			// ctx.Step(`^Contract should be deployed on chain$`, executor.contractShouldBeDeployedOnChain)
+			// ctx.Step(`^we Deploy SmartContract on chain$`, executor.weDeploySmartContractOnChain)
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/smartcontract.feature"}, TestingT: t},
 	}

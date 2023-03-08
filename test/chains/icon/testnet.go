@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 )
 
@@ -86,6 +87,9 @@ func (*IconTestnet) QueryContract(ctx context.Context) (context.Context, error) 
 	panic("unimplemented")
 }
 
+func (*IconTestnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
+	panic("unimplemented")
+}
 func NewIconTestnet(bin, nid, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
 	return &IconTestnet{
 		bin,

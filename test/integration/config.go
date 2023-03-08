@@ -2,6 +2,7 @@ package integration_test
 
 import (
 	"fmt"
+
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/spf13/viper"
 )

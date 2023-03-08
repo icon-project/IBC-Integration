@@ -7,13 +7,14 @@ require (
 	github.com/avast/retry-go/v4 v4.0.4
 	github.com/cosmos/cosmos-sdk v0.46.2
 	github.com/cucumber/godog v0.12.6
+	github.com/danielgtaylor/huma v1.13.0
 	github.com/docker/docker v20.10.19+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/icon-project/icon-bridge v0.0.11
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
 	github.com/spf13/viper v1.14.0
-	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230222020454-110aa579a5a8
+	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230228221006-4e43739472a1
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.1.0
