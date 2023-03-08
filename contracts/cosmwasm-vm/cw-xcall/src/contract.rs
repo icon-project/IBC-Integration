@@ -52,7 +52,10 @@ impl<'a> CwCallService<'a> {
         match msg.id {
             EXECUTE_CALL_ID => self.reply_execute_call_message(deps.as_ref(), env, msg),
             EXECUTE_ROLLBACK_ID => self.reply_execute_rollback(deps.as_ref(), msg),
-            _ => Err(ContractError::Unauthorized {}),
+            _ => Err(ContractError::ReplyError {
+                code: msg.id,
+                msg: "Unkown".to_string(),
+            }),
         }
     }
 }

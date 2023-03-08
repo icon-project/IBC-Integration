@@ -1,6 +1,9 @@
+use crate::ack::make_ack_success;
+
 use super::*;
 
 pub const IBC_VERSION: &str = "xcall-1";
+pub const APP_ORDER: IbcOrder = IbcOrder::Unordered;
 
 /// Handles the `OpenInit` and `OpenTry` parts of the IBC handshake.
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -8,8 +11,18 @@ pub fn ibc_channel_open(
     _deps: DepsMut,
     _env: Env,
     msg: IbcChannelOpenMsg,
-) -> Result<(), ContractError> {
-    validate_order_and_version(msg.channel(), msg.counterparty_version())
+) -> Result<IbcChannelOpenResponse, ContractError> {
+    let channel = msg.channel();
+
+    check_order(&channel.order)?;
+
+    if let Some(counter_version) = msg.counterparty_version() {
+        check_version(counter_version)?;
+    }
+
+    Ok(Some(Ibc3ChannelOpenResponse {
+        version: IBC_VERSION.to_string(),
+    }))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -18,7 +31,13 @@ pub fn ibc_channel_connect(
     _env: Env,
     msg: IbcChannelConnectMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    validate_order_and_version(msg.channel(), msg.counterparty_version())?;
+    let channel = msg.channel();
+
+    check_order(&channel.order)?;
+
+    if let Some(counter_version) = msg.counterparty_version() {
+        check_version(counter_version)?;
+    }
 
     let source = msg.channel().endpoint.clone();
     let destination = msg.channel().counterparty_endpoint.clone();
@@ -44,53 +63,12 @@ pub fn ibc_channel_close(
         .add_attribute("channel", channel))
 }
 
-pub fn validate_order_and_version(
-    channel: &IbcChannel,
-    counterparty_version: Option<&str>,
-) -> Result<(), ContractError> {
-    // We expect an unordered channel here. Ordered channels have the
-    // property that if a message is lost the entire channel will stop
-    // working until you start it again.
-    if channel.order != IbcOrder::Unordered {
-        return Err(ContractError::OrderedChannel {});
-    }
-
-    if channel.version != IBC_VERSION {
-        return Err(ContractError::InvalidVersion {
-            actual: channel.version.to_string(),
-            expected: IBC_VERSION.to_string(),
-        });
-    }
-
-    // Make sure that we're talking with a counterparty who speaks the
-    // same "protocol" as us.
-    //
-    // For a connection between chain A and chain B being established
-    // by chain A, chain B knows counterparty information during
-    // `OpenTry` and chain A knows counterparty information during
-    // `OpenAck`. We verify it when we have it but when we don't it's
-    // alright.
-    if let Some(counterparty_version) = counterparty_version {
-        if counterparty_version != IBC_VERSION {
-            return Err(ContractError::InvalidVersion {
-                actual: counterparty_version.to_string(),
-                expected: IBC_VERSION.to_string(),
-            });
-        }
-    }
-
-    Ok(())
-}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_packet_receive(
     deps: DepsMut,
     env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, Never> {
-    // Regardless of if our processing of this packet works we need to
-    // commit an ACK to the chain. As such, we wrap all handling logic
-    // in a seprate function and on error write out an error ack.
     match do_ibc_packet_receive(deps, env, msg) {
         Ok(response) => Ok(response),
         Err(error) => Ok(IbcReceiveResponse::new()
@@ -117,12 +95,6 @@ pub fn ibc_packet_ack(
     _env: Env,
     ack: IbcPacketAckMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    // Nothing to do here. We don't keep any state about the other
-    // chain, just deliver messages so nothing to update.
-    //
-    // If we did care about how the other chain received our message
-    // we could deserialize the data field into an `Ack` and inspect
-    // it.
     let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
 
     match ack_response {
@@ -137,10 +109,6 @@ pub fn ibc_packet_timeout(
     _env: Env,
     _msg: IbcPacketTimeoutMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    // As with ack above, nothing to do here. If we cared about
-    // keeping track of state between the two chains then we'd want to
-    // respond to this likely as it means that the packet in question
-    // isn't going anywhere.
     Ok(IbcBasicResponse::new().add_attribute("method", "ibc_packet_timeout"))
 }
 
@@ -195,6 +163,7 @@ impl<'a> CwCallService<'a> {
         Ok(IbcReceiveResponse::new()
             .add_attribute("action", "call_service")
             .add_attribute("method", "handle_response")
+            .set_ack(make_ack_success())
             .add_event(event))
     }
 
@@ -212,6 +181,10 @@ impl<'a> CwCallService<'a> {
             return Ok(IbcReceiveResponse::new()
                 .add_attribute("action", "call_service")
                 .add_attribute("method", "handle_response")
+                .set_ack(make_ack_fail(format!(
+                    "handle_resposne: no request for {}",
+                    response_sequence_no
+                )))
                 .add_attribute(
                     "message",
                     format!("handle_resposne: no request for {}", response_sequence_no),
@@ -236,6 +209,7 @@ impl<'a> CwCallService<'a> {
                 Ok(IbcReceiveResponse::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
+                    .set_ack(make_ack_success())
                     .add_event(event))
             }
             _ => {
@@ -249,6 +223,7 @@ impl<'a> CwCallService<'a> {
                 Ok(IbcReceiveResponse::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
+                    .set_ack(make_ack_success())
                     .add_event(event))
             }
         }
