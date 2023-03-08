@@ -154,4 +154,16 @@ impl<'a> CwCallService<'a> {
             .add_attribute("method", "execute_callback")
             .add_event(responses.1))
     }
+
+    fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
+        let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
+
+        let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
+
+        IbcMsg::SendPacket {
+            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
+            data,
+            timeout,
+        }
+    }
 }

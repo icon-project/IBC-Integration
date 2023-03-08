@@ -16,7 +16,7 @@ impl<'a> CwCallService<'a> {
 
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: proxy_reqs.to().to_string(),
-            msg: proxy_reqs.data().into(), //TODO : Need to update
+            msg: proxy_reqs.data().into(),
             funds: info.funds,
         });
 
@@ -43,7 +43,7 @@ impl<'a> CwCallService<'a> {
 
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: call_request.to().to_string(),
-            msg: to_binary(call_request.rollback()).unwrap(), //TODO : Need to update
+            msg: call_request.rollback().into(),
             funds: info.funds,
         });
 
@@ -53,16 +53,5 @@ impl<'a> CwCallService<'a> {
             .add_attribute("action", "call_message")
             .add_attribute("method", "execute_call")
             .add_submessage(sub_msg))
-    }
-    pub fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
-        let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
-
-        let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
-
-        IbcMsg::SendPacket {
-            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
-            data,
-            timeout,
-        }
     }
 }
