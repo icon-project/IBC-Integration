@@ -3,9 +3,11 @@ mod setup;
 
 use account::*;
 use cosmwasm_std::{
-    testing::mock_dependencies, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock,
+    testing::{mock_dependencies, mock_env},
+    IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 use cw_xcall::{
+    ibc::ibc_packet_receive,
     state::CwCallService,
     types::{
         address::Address, call_request::CallRequest, message::CallServiceMessage,
@@ -18,6 +20,7 @@ use setup::*;
 fn test_receive_packet_for_call_message_request() {
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
 
     let contract = CwCallService::default();
 
@@ -58,8 +61,11 @@ fn test_receive_packet_for_call_message_request() {
         channel_id: "channel-3".to_string(),
     };
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
+    let packet_message = IbcPacketReceiveMsg::new(packet);
 
-    let result = contract.receive_packet_data(mock_deps.as_mut(), mock_info, packet);
+    let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
+
+    // let result = contract.receive_packet_data(mock_deps.as_mut(), packet);
 
     assert!(result.is_ok());
 
@@ -72,6 +78,7 @@ fn test_receive_packet_for_call_message_request() {
 fn test_receive_packet_for_call_message_response() {
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
 
     let contract = CwCallService::default();
 
@@ -122,7 +129,9 @@ fn test_receive_packet_for_call_message_response() {
     };
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let result = contract.receive_packet_data(mock_deps.as_mut(), mock_info, packet);
+    let packet_message = IbcPacketReceiveMsg::new(packet);
+
+    let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
 
     assert!(result.is_ok());
 
@@ -132,10 +141,10 @@ fn test_receive_packet_for_call_message_response() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidSequenceId")]
 fn receive_packet_for_call_message_response_invalid_sequence_id() {
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
 
     let contract = CwCallService::default();
 
@@ -186,16 +195,18 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
     };
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    contract
-        .receive_packet_data(mock_deps.as_mut(), mock_info, packet)
-        .unwrap();
+    let packet_message = IbcPacketReceiveMsg::new(packet);
+
+    let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message).unwrap();
+
+    assert_eq!(result.attributes[1].value, "InvalidSequenceId 1")
 }
 
 #[test]
 fn handle_response_emit_rollback_event() {
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-
+    let mock_env = mock_env();
     let contract = CwCallService::default();
 
     contract
@@ -245,7 +256,9 @@ fn handle_response_emit_rollback_event() {
     };
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let result = contract.receive_packet_data(mock_deps.as_mut(), mock_info, packet);
+    let packet_message = IbcPacketReceiveMsg::new(packet);
+
+    let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
 
     assert!(result.is_ok());
 
