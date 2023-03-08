@@ -11,11 +11,6 @@ Additional information on how IBC works can be found [here](https://ibc.cosmos.n
   - [Getting Started  ](#getting-started--)
     - [Prerequiste](#prerequiste)
     - [Running the tests](#testing)
-  <!-- - [Deployment  ](#deployment--)
-  - [Usage  ](#usage--)
-  - [Built Using  ](#built-using--)
-  - [Contributing  ](#contributing--)
-  - [Acknowledgments  ](#acknowledgments--) -->
 
 ## About <a name = "about"> </a>
 
