@@ -1,5 +1,3 @@
-use crate::ack::make_ack_success;
-
 use super::*;
 
 pub const IBC_VERSION: &str = "xcall-1";
@@ -109,7 +107,10 @@ pub fn ibc_packet_timeout(
     _env: Env,
     _msg: IbcPacketTimeoutMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    Ok(IbcBasicResponse::new().add_attribute("method", "ibc_packet_timeout"))
+    let submsg = SubMsg::reply_on_error(CosmosMsg::Custom(Empty {}), ACK_FAILURE_ID);
+    Ok(IbcBasicResponse::new()
+        .add_submessage(submsg)
+        .add_attribute("method", "ibc_packet_timeout"))
 }
 
 impl<'a> CwCallService<'a> {

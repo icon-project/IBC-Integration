@@ -52,6 +52,7 @@ impl<'a> CwCallService<'a> {
         match msg.id {
             EXECUTE_CALL_ID => self.reply_execute_call_message(deps.as_ref(), env, msg),
             EXECUTE_ROLLBACK_ID => self.reply_execute_rollback(deps.as_ref(), msg),
+            ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
                 msg: "Unkown".to_string(),
@@ -164,6 +165,12 @@ impl<'a> CwCallService<'a> {
             channel_id: ibc_config.dst_endpoint().channel_id.clone(),
             data,
             timeout,
+        }
+    }
+    fn reply_ack_on_error(&self, reply: Reply) -> Result<Response, ContractError> {
+        match reply.result {
+            SubMsgResult::Ok(_) => Ok(Response::new()),
+            SubMsgResult::Err(err) => Ok(Response::new().set_data(make_ack_fail(err))),
         }
     }
 }
