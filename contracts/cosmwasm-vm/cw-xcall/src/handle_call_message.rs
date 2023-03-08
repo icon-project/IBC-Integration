@@ -1,17 +1,4 @@
-use crate::{
-    error::ContractError,
-    events::{event_call_executed, event_rollback_executed},
-    state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
-    types::{
-        message::CallServiceMessage,
-        response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
-    },
-};
-use cosmwasm_std::{
-    to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout, MessageInfo,
-    Reply, Response, SubMsg, WasmMsg,
-};
-use schemars::_serde_json::to_string;
+use super::*;
 
 impl<'a> CwCallService<'a> {
     pub fn execute_call(
@@ -41,69 +28,6 @@ impl<'a> CwCallService<'a> {
             .add_submessage(sub_msg))
     }
 
-    pub fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
-        let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
-
-        let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
-
-        IbcMsg::SendPacket {
-            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
-            data,
-            timeout,
-        }
-    }
-
-    pub fn reply_execute_call_message(
-        &self,
-        deps: Deps,
-        env: Env,
-        msg: Reply,
-    ) -> Result<Response, ContractError> {
-        let req_id = self.last_request_id().load(deps.storage)?;
-        let request = self.message_request().load(deps.storage, req_id)?;
-
-        let responses = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let code = 0;
-
-                let message_response = CallServiceMessageReponse::new(
-                    request.sequence_no(),
-                    CallServiceResponseType::CallServiceResponseSucess,
-                    "",
-                );
-                let event = event_call_executed(req_id, code, "");
-                (message_response, event)
-            }
-            cosmwasm_std::SubMsgResult::Err(err) => {
-                let code = -1;
-                let error_message = format!("CallService Reverted : {err}");
-                let message_response = CallServiceMessageReponse::new(
-                    request.sequence_no(),
-                    CallServiceResponseType::CallServiceResponseFailure,
-                    &error_message,
-                );
-                let event = event_call_executed(req_id, code, &error_message);
-                (message_response, event)
-            }
-        };
-
-        if !request.rollback().is_empty() {
-            let message: CallServiceMessage = responses.0.into();
-
-            let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
-
-            return Ok(Response::new()
-                .add_attribute("action", "call_message")
-                .add_attribute("method", "execute_callback")
-                .add_message(packet));
-        }
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_callback")
-            .add_event(responses.1))
-    }
-
     pub fn execute_rollback(
         &self,
         deps: DepsMut,
@@ -130,39 +54,15 @@ impl<'a> CwCallService<'a> {
             .add_attribute("method", "execute_call")
             .add_submessage(sub_msg))
     }
+    pub fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
+        let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
 
-    pub fn reply_execute_rollback(
-        &self,
-        deps: Deps,
-        msg: Reply,
-    ) -> Result<Response, ContractError> {
-        let sequence_no = self.last_sequence_no().load(deps.storage)?;
+        let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
 
-        let response = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageReponse::new(
-                sequence_no,
-                CallServiceResponseType::CallServiceResponseSucess,
-                "",
-            ),
-            cosmwasm_std::SubMsgResult::Err(err) => {
-                let error_message = format!("CallService Reverted : {err}");
-                CallServiceMessageReponse::new(
-                    sequence_no,
-                    CallServiceResponseType::CallServiceResponseFailure,
-                    &error_message,
-                )
-            }
-        };
-
-        let event = event_rollback_executed(
-            sequence_no,
-            to_int(response.response_code()),
-            &to_string(response.message()).unwrap(),
-        );
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_rollback")
-            .add_event(event))
+        IbcMsg::SendPacket {
+            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
+            data,
+            timeout,
+        }
     }
 }

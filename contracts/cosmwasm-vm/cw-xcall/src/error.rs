@@ -1,5 +1,4 @@
-use cosmwasm_std::StdError;
-use thiserror::Error;
+use super::*;
 
 #[derive(Error, Debug)]
 pub enum ContractError {

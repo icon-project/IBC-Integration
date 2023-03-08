@@ -1,13 +1,4 @@
-use crate::{
-    error::ContractError,
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
-    types::address::Address,
-};
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult,
-};
-use cw2::set_contract_version;
+use super::*;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-xcall";
@@ -77,5 +68,87 @@ impl<'a> CwCallService<'a> {
         self.init_last_request_id(deps.storage, last_request_id)?;
 
         Ok(Response::new())
+    }
+
+    fn reply_execute_rollback(&self, deps: Deps, msg: Reply) -> Result<Response, ContractError> {
+        let sequence_no = self.last_sequence_no().load(deps.storage)?;
+
+        let response = match msg.result {
+            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageReponse::new(
+                sequence_no,
+                CallServiceResponseType::CallServiceResponseSucess,
+                "",
+            ),
+            cosmwasm_std::SubMsgResult::Err(err) => {
+                let error_message = format!("CallService Reverted : {err}");
+                CallServiceMessageReponse::new(
+                    sequence_no,
+                    CallServiceResponseType::CallServiceResponseFailure,
+                    &error_message,
+                )
+            }
+        };
+
+        let event = event_rollback_executed(
+            sequence_no,
+            to_int(response.response_code()),
+            &to_string(response.message()).unwrap(),
+        );
+
+        Ok(Response::new()
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "execute_rollback")
+            .add_event(event))
+    }
+
+    fn reply_execute_call_message(
+        &self,
+        deps: Deps,
+        env: Env,
+        msg: Reply,
+    ) -> Result<Response, ContractError> {
+        let req_id = self.last_request_id().load(deps.storage)?;
+        let request = self.message_request().load(deps.storage, req_id)?;
+
+        let responses = match msg.result {
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let code = 0;
+
+                let message_response = CallServiceMessageReponse::new(
+                    request.sequence_no(),
+                    CallServiceResponseType::CallServiceResponseSucess,
+                    "",
+                );
+                let event = event_call_executed(req_id, code, "");
+                (message_response, event)
+            }
+            cosmwasm_std::SubMsgResult::Err(err) => {
+                let code = -1;
+                let error_message = format!("CallService Reverted : {err}");
+                let message_response = CallServiceMessageReponse::new(
+                    request.sequence_no(),
+                    CallServiceResponseType::CallServiceResponseFailure,
+                    &error_message,
+                );
+                let event = event_call_executed(req_id, code, &error_message);
+                (message_response, event)
+            }
+        };
+
+        if !request.rollback().is_empty() {
+            let message: CallServiceMessage = responses.0.into();
+
+            let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
+
+            return Ok(Response::new()
+                .add_attribute("action", "call_message")
+                .add_attribute("method", "execute_callback")
+                .add_message(packet));
+        }
+
+        Ok(Response::new()
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "execute_callback")
+            .add_event(responses.1))
     }
 }
