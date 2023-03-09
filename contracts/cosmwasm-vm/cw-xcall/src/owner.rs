@@ -1,6 +1,4 @@
-use cosmwasm_std::{MessageInfo, Response, StdError, Storage};
-
-use crate::{error::ContractError, state::CwCallService, types::address::Address};
+use super::*;
 
 impl<'a> CwCallService<'a> {
     pub fn query_owner(&self, store: &dyn Storage) -> Result<Address, StdError> {

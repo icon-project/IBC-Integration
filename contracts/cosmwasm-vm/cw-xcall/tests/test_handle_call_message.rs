@@ -4,7 +4,7 @@ use cosmwasm_std::{
     Coin, CosmosMsg, IbcEndpoint, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 use cw_xcall::{
-    state::{CwCallService, IbcConfig, EXECUTE_CALL, EXECUTE_ROLLBACK},
+    state::{CwCallService, IbcConfig, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{address::Address, call_request::CallRequest, request::CallServiceMessageRequest},
 };
 mod account;
@@ -90,7 +90,7 @@ fn test_successful_reply_message() {
     let env = mock_env();
 
     let msg = Reply {
-        id: EXECUTE_CALL,
+        id: EXECUTE_CALL_ID,
         result: SubMsgResult::Ok(SubMsgResponse {
             events: vec![],
             data: None,
@@ -128,7 +128,7 @@ fn test_failed_reply_message() {
     let env = mock_env();
 
     let msg = Reply {
-        id: EXECUTE_CALL,
+        id: EXECUTE_CALL_ID,
         result: SubMsgResult::Err("error message".into()),
     };
 
@@ -163,7 +163,7 @@ fn check_for_rollback_in_response() {
     let env = mock_env();
 
     let msg = Reply {
-        id: EXECUTE_ROLLBACK,
+        id: EXECUTE_ROLLBACK_ID,
         result: SubMsgResult::Ok(SubMsgResponse {
             events: vec![],
             data: None,
@@ -212,7 +212,7 @@ fn check_for_rollback_response_failure() {
     let env = mock_env();
 
     let msg = Reply {
-        id: EXECUTE_ROLLBACK,
+        id: EXECUTE_ROLLBACK_ID,
         result: SubMsgResult::Err("error message".into()),
     };
 
@@ -277,9 +277,7 @@ fn execute_rollback_success() {
             msg,
             funds: _,
         }) => {
-            let r: Vec<u64> = from_binary(&msg).unwrap();
-
-            assert_eq!(vec![1, 2, 3], r)
+            assert_eq!(vec![1, 2, 3], msg.0)
         }
         _ => todo!(),
     }
