@@ -1,13 +1,13 @@
 package ibc.icon.structs.proto.core.connection;
 
-import java.math.BigInteger;
-import java.util.List;
-
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.math.BigInteger;
+import java.util.List;
 
 // ConnectionEnd defines a stateful object on a chain connected to another
 // separate one.
@@ -101,6 +101,17 @@ public class ConnectionEnd {
         writer.write(this.delayPeriod);
 
         writer.end();
+    }
+
+    public static ConnectionEnd fromBytes(byte[] bytes) {
+        ObjectReader reader = Context.newByteArrayObjectReader("RLPn", bytes);
+        return ConnectionEnd.readObject(reader);
+    }
+
+    public byte[] toBytes() {
+        ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
+        ConnectionEnd.writeObject(writer, this);
+        return writer.toByteArray();
     }
 
     public String getClientId() {
