@@ -7,8 +7,11 @@ import ibc.icon.score.util.NullChecker;
 import ibc.icon.structs.messages.*;
 import ibc.ics24.host.IBCCommitment;
 import ibc.ics24.host.IBCHost;
+import ibc.icon.structs.messages.MsgCreateClient;
+import ibc.icon.structs.messages.MsgUpdateClient;
 import score.Address;
 import score.Context;
+import score.annotation.External;
 
 import java.math.BigInteger;
 
@@ -16,6 +19,13 @@ public class IBCClient extends IBCHost implements IIBCClient {
 
     Logger logger = new Logger("ibc-core");
 
+    /**
+     * Registers a client to registry
+     *
+     * @param clientType  Type of client
+     * @param lightClient Light client contract address
+     */
+    @External
     public void registerClient(String clientType, Address lightClient) {
         Context.require(clientRegistry.get(clientType) == null, "Already registered.");
         clientRegistry.set(clientType, lightClient);
