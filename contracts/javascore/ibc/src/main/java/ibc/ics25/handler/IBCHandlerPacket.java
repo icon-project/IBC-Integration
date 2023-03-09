@@ -64,10 +64,9 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
             String destinationChannel,
             BigInteger sequence,
             byte[] acknowledgement) {
-        Context.require(authenticateCapability(channelCapabilityPath(destinationPortId,
-                        destinationChannel)),
-                "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId
-                        + "and channel: " + destinationChannel);
+        Context.require(authenticateCapability(channelCapabilityPath(destinationPortId, destinationChannel)),
+                "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId + "and channel: "
+                        + destinationChannel);
         super.writeAcknowledgement(
                 destinationPortId,
                 destinationChannel,

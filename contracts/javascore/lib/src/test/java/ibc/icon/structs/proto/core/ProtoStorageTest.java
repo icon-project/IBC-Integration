@@ -114,10 +114,8 @@ public class ProtoStorageTest extends TestBase {
                 storedConnectionEnd.getVersions()[1].getFeatures());
 
         assertEquals(connectionEnd.getClientId(), storedConnectionEnd.getClientId());
-        assertEquals(connectionEnd.connectionState(),
-                storedConnectionEnd.connectionState());
-        assertEquals(connectionEnd.getDelayPeriod(),
-                storedConnectionEnd.getDelayPeriod());
+        assertEquals(connectionEnd.connectionState(), storedConnectionEnd.connectionState());
+        assertEquals(connectionEnd.getDelayPeriod(), storedConnectionEnd.getDelayPeriod());
     }
 
     @Test
@@ -143,12 +141,9 @@ public class ProtoStorageTest extends TestBase {
 
         assertEquals(channel.channelState(), storedChannel.channelState());
         assertEquals(channel.channelOrdering(), storedChannel.channelOrdering());
-        assertEquals(channel.getCounterparty().getChannelId(),
-                storedChannel.getCounterparty().getChannelId());
-        assertEquals(channel.getCounterparty().getPortId(),
-                storedChannel.getCounterparty().getPortId());
-        assertArrayEquals(channel.getConnectionHops(),
-                storedChannel.getConnectionHops());
+        assertEquals(channel.getCounterparty().getChannelId(), storedChannel.getCounterparty().getChannelId());
+        assertEquals(channel.getCounterparty().getPortId(), storedChannel.getCounterparty().getPortId());
+        assertArrayEquals(channel.getConnectionHops(), storedChannel.getConnectionHops());
         assertEquals(channel.getVersion(), storedChannel.getVersion());
     }
 

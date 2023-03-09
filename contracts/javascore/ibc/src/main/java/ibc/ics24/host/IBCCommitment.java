@@ -90,7 +90,7 @@ public class IBCCommitment {
     }
 
     public static boolean equals(byte[] a, byte[] b) {
-        boolean isEqual = true;
+        boolean isEqual;
         int length = a.length;
         isEqual = length == b.length;
 
