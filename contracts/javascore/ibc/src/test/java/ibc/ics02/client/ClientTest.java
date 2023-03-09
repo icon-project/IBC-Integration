@@ -4,18 +4,12 @@ import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
-import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.interfaces.ILightClient;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
-import ibc.icon.structs.messages.CreateClientResponse;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
-import ibc.icon.structs.messages.UpdateClientResponse;
+import ibc.icon.interfaces.ILightClientScoreInterface;
+import ibc.icon.structs.messages.*;
 import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.test.MockContract;
 import ibc.ics24.host.IBCCommitment;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -145,7 +139,7 @@ public class ClientTest extends TestBase {
 
         ConsensusStateUpdate update1 = new ConsensusStateUpdate(consensusStateCommitment1, consensusHeight1);
         ConsensusStateUpdate update2 = new ConsensusStateUpdate(consensusStateCommitment2, consensusHeight2);
-        ConsensusStateUpdate[] updates = new ConsensusStateUpdate[] { update1, update2 };
+        ConsensusStateUpdate[] updates = new ConsensusStateUpdate[]{update1, update2};
         UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, updates, true);
 
         when(lightClient.mock.updateClient(msg.clientId, msg.clientMessage)).thenReturn(response);

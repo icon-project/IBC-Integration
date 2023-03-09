@@ -15,8 +15,8 @@ import (
 	"github.com/docker/docker/api/types/network"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
-	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
+	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 	iconclient "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	iconlog "github.com/icon-project/icon-bridge/common/log"
@@ -206,8 +206,6 @@ func (in *IconNode) GetBalance(ctx context.Context, address string) (int64, erro
 }
 
 func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
-	var result icontypes.TransactionResult
-
 	// Write Contract file to Docker volume
 	_, score := filepath.Split(scorePath)
 	err := in.CopyFile(ctx, scorePath, score)
@@ -220,17 +218,26 @@ func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath,
 	if err != nil {
 		return "", err
 	}
-	uri := "http://" + in.HostRPCPort + "/api/v3"
 
 	//wait for few blocks
 	time.Sleep(3 * time.Second)
 
 	// Get Score Address
-	out, _, err := in.ExecBin(ctx, "rpc", "txresult", hash, "--uri", uri)
-	json.Unmarshal(out, &result)
-	scoreAddress := result.SCOREAddress
-	return string(scoreAddress), err
+	trResult, err := in.TransactionResult(ctx, hash)
+	if err != nil {
+		return "", err
+	}
+	return string(trResult.SCOREAddress), nil
 
+}
+
+// Get Transaction result when hash is provided after executing a transaction
+func (in *IconNode) TransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
+	var result icontypes.TransactionResult
+	uri := "http://" + in.HostRPCPort + "/api/v3"
+	out, _, _ := in.ExecBin(ctx, "rpc", "txresult", hash, "--uri", uri)
+	json.Unmarshal(out, &result)
+	return result, nil
 }
 
 // ExecTx executes a transaction, waits for 2 blocks if successful, then returns the tx hash.
@@ -320,4 +327,43 @@ func (in *IconNode) CreateKey(ctx context.Context, password string) error {
 		"--password", password,
 	)
 	return err
+}
+
+func (in *IconNode) ExecuteContract(ctx context.Context, scoreAddress, methodName, keyStorePath, params string) (string, error) {
+	hash, err := in.ExecCallTx(ctx, scoreAddress, methodName, keyStorePath, params)
+	if err != nil {
+		return "", err
+	}
+	return hash, nil
+}
+
+func (in *IconNode) ExecCallTx(ctx context.Context, scoreAddress, methodName, keystorePath, params string) (string, error) {
+	var output string
+	in.lock.Lock()
+	defer in.lock.Unlock()
+	stdout, _, err := in.Exec(ctx, in.ExecCallTxCommand(ctx, scoreAddress, methodName, keystorePath, params), nil)
+	if err != nil {
+		return "", err
+	}
+	json.Unmarshal(stdout, &output)
+	return output, nil
+}
+
+func (in *IconNode) ExecCallTxCommand(ctx context.Context, scoreAddress, methodName, keystorePath, params string) []string {
+	// Write keystore file to Docker volume
+	_, key := filepath.Split(keystorePath)
+	err := in.CopyFile(ctx, keystorePath, key)
+	if err != nil {
+		return []string{"error copying keystore to Docker volume"}
+	}
+	keystore := path.Join(in.HomeDir(), key)
+	command := []string{"rpc", "sendtx", "call"}
+	return in.NodeCommand(append(command,
+		"--to", scoreAddress,
+		"--method", methodName,
+		"--key_store", keystore,
+		"--key_password", "gochain",
+		"--step_limit", "5000000000",
+		"--param", params,
+	)...)
 }

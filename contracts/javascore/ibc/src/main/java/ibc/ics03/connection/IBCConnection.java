@@ -1,7 +1,5 @@
 package ibc.ics03.connection;
 
-import java.math.BigInteger;
-
 import ibc.icon.interfaces.IIBCConnection;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.Logger;
@@ -16,12 +14,13 @@ import ibc.icon.structs.proto.core.connection.Counterparty;
 import ibc.icon.structs.proto.core.connection.Version;
 import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
-
 import score.Context;
+
+import java.math.BigInteger;
 
 public class IBCConnection extends IBCClient implements IIBCConnection {
     public static final String v1Identifier = "1";
-    public static final String[] supportedV1Features = new String[] { "ORDER_ORDERED", "ORDER_UNORDERED" };
+    public static final String[] supportedV1Features = new String[]{"ORDER_ORDERED", "ORDER_UNORDERED"};
     public static final String commitmentPrefix = "ibc";
 
     Logger logger = new Logger("ibc-core");
@@ -80,7 +79,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
         verifyClientState(
                 connection,
                 msg.proofHeight,
-                IBCCommitment.clientStatePath(connection.getCounterparty().getClientId()),
+                IBCCommitment.clientStatePath(connection.counterparty.getClientId()),
                 msg.proofClient,
                 msg.clientStateBytes);
         // TODO we should also verify a consensus state
@@ -94,7 +93,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     public void connectionOpenAck(MsgConnectionOpenAck msg) {
         ConnectionEnd connection = connections.get(msg.connectionId);
         Context.require(connection != null, "connection does not exist");
-        ConnectionEnd.State state = connection.connectionState();
+        ConnectionEnd.State state = connection.getState();
         // TODO should we allow the state to be TRY_OPEN?
         Context.require(state.equals(ConnectionEnd.State.STATE_INIT) || state.equals(ConnectionEnd.State.STATE_TRYOPEN),
                 "connection state is not INIT or TRYOPEN");
@@ -102,8 +101,9 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
             Context.require(isSupportedVersion(msg.version),
                     "connection state is in INIT but the provided version is not supported");
         } else {
-            Context.require(connection.getVersions().length == 1 && connection.getVersions()[0].equals(msg.version),
-                    "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
+            Context.require(connection.versions.length == 1 && connection.versions[0].equals(msg.version),
+                    "connection state is in TRYOPEN but the provided version is not set in the previous connection " +
+                            "versions");
         }
 
         // TODO: investigate need to self client validation
@@ -120,9 +120,9 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getClientId());
-        expectedConnection.setVersions(new Version[] { msg.version });
+        expectedConnection.setVersions(new Version[]{msg.version});
         expectedConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
-        expectedConnection.setDelayPeriod(connection.getDelayPeriod());
+        expectedConnection.setDelayPeriod(connection.delayPeriod);
         expectedConnection.setCounterparty(expectedCounterparty);
 
         verifyConnectionState(connection, msg.proofHeight, msg.proofTry, msg.counterpartyConnectionID,
@@ -131,15 +131,15 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
         verifyClientState(
                 connection,
                 msg.proofHeight,
-                IBCCommitment.clientStatePath(connection.getCounterparty().getClientId()),
+                IBCCommitment.clientStatePath(connection.counterparty.getClientId()),
                 msg.proofClient,
                 msg.clientStateBytes);
 
-        // TODO we should also verify a consensus state
+        // TODO: we should also verify a consensus state
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
-        connection.setVersions(expectedConnection.getVersions());
-        connection.getCounterparty().setConnectionId(msg.counterpartyConnectionID);
+        connection.setVersions(expectedConnection.versions);
+        connection.counterparty.setConnectionId(msg.counterpartyConnectionID);
 
         updateConnectionCommitment(msg.connectionId, connection);
         connections.set(msg.connectionId, connection);
@@ -149,7 +149,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     public void connectionOpenConfirm(MsgConnectionOpenConfirm msg) {
         ConnectionEnd connection = connections.get(msg.connectionId);
         Context.require(connection != null, "connection does not exist");
-        ConnectionEnd.State state = connection.connectionState();
+        ConnectionEnd.State state = connection.getState();
         Context.require(state.equals(ConnectionEnd.State.STATE_TRYOPEN), "connection state is not TRYOPEN");
 
         MerklePrefix prefix = new MerklePrefix();
@@ -164,7 +164,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
         expectedConnection.setClientId(connection.getCounterparty().getClientId());
         expectedConnection.setVersions(connection.getVersions());
         expectedConnection.setState(ConnectionEnd.State.STATE_OPEN);
-        expectedConnection.setDelayPeriod(connection.getDelayPeriod());
+        expectedConnection.setDelayPeriod(connection.delayPeriod);
         expectedConnection.setCounterparty(expectedCounterparty);
 
         verifyConnectionState(connection, msg.proofHeight, msg.proofAck, connection.getCounterparty().getConnectionId(),
@@ -179,7 +179,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     /* Verification functions */
 
     private void verifyClientState(ConnectionEnd connection, Height height, byte[] path, byte[] proof,
-            byte[] clientStatebytes) {
+                                   byte[] clientStatebytes) {
         ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),
@@ -194,7 +194,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     }
 
     private void verifyClientConsensusState(ConnectionEnd connection, Height height, Height consensusHeight,
-            byte[] proof, byte[] consensusStateBytes) {
+                                            byte[] proof, byte[] consensusStateBytes) {
         byte[] consensusPath = IBCCommitment.consensusStatePath(connection.getCounterparty().getClientId(),
                 consensusHeight.getRevisionNumber(),
                 consensusHeight.getRevisionHeight());
@@ -214,7 +214,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     }
 
     private void verifyConnectionState(ConnectionEnd connection, Height height, byte[] proof, String connectionId,
-            ConnectionEnd counterpartyConnection) {
+                                       ConnectionEnd counterpartyConnection) {
         ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),
@@ -239,15 +239,14 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     }
 
     /**
-     * @dev getSupportedVersions return the supported versions.
-     *
+     * {@code @dev} getSupportedVersions return the supported versions.
      */
     private Version[] getSupportedVersions() {
         Version version = new Version();
         version.setFeatures(supportedV1Features);
         version.setIdentifier(v1Identifier);
 
-        return new Version[] { version };
+        return new Version[]{version};
     }
 
     // TODO implement

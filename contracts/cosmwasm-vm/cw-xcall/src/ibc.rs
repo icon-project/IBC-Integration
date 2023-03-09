@@ -1,13 +1,20 @@
-use cosmwasm_std::{entry_point, Never};
-use cosmwasm_std::{
-    from_binary, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse,
+use crate::{
+    ack::{make_ack_fail, Ack},
+    events::{event_call_message, event_response_message, event_rollback_message},
+    state::{CwCallService, IbcConfig},
+    types::{
+        message::{CallServiceMessage, CallServiceMessageType},
+        request::CallServiceMessageRequest,
+        response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
+    },
+    ContractError,
 };
 
-use crate::ack::make_ack_fail;
-use crate::msg::IbcExecuteMsg;
-use crate::ContractError;
+use cosmwasm_std::{
+    attr, entry_point, from_binary, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacket, IbcPacketAckMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, Never,
+};
 
 pub const IBC_VERSION: &str = "xcall-1";
 
@@ -23,18 +30,20 @@ pub fn ibc_channel_open(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_channel_connect(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     msg: IbcChannelConnectMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
     validate_order_and_version(msg.channel(), msg.counterparty_version())?;
 
-    // Initialize the count for this channel to zero.
-    let channel = msg.channel().endpoint.channel_id.clone();
+    let source = msg.channel().endpoint.clone();
+    let destination = msg.channel().counterparty_endpoint.clone();
 
-    Ok(IbcBasicResponse::new()
-        .add_attribute("method", "ibc_channel_connect")
-        .add_attribute("channel_id", channel))
+    let ibc_config = IbcConfig::new(source, destination);
+    let mut call_service = CwCallService::default();
+    call_service.save_config(deps, &ibc_config)?;
+
+    Ok(IbcBasicResponse::new().add_attribute("method", "ibc_channel_connect"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -108,19 +117,21 @@ pub fn ibc_packet_receive(
 }
 
 fn do_ibc_packet_receive(
-    _deps: DepsMut,
-    _env: Env,
+    deps: DepsMut,
+    env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, ContractError> {
-    let _channel = msg.packet.dest.channel_id;
-    let _msg: IbcExecuteMsg = from_binary(&msg.packet.data)?;
-    Ok(IbcReceiveResponse::new())
+    let call_service = CwCallService::default();
+    let _channel = msg.packet.dest.channel_id.clone();
+
+    call_service.receive_packet_data(deps, msg.packet)
 }
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_packet_ack(
     _deps: DepsMut,
     _env: Env,
-    _ack: IbcPacketAckMsg,
+    ack: IbcPacketAckMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
     // Nothing to do here. We don't keep any state about the other
     // chain, just deliver messages so nothing to update.
@@ -128,7 +139,12 @@ pub fn ibc_packet_ack(
     // If we did care about how the other chain received our message
     // we could deserialize the data field into an `Ack` and inspect
     // it.
-    Ok(IbcBasicResponse::new().add_attribute("method", "ibc_packet_ack"))
+    let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
+
+    match ack_response {
+        Ack::Result(_) => on_ack_sucess(ack.original_packet),
+        Ack::Error(err) => on_ack_failure(ack.original_packet, &err),
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -142,4 +158,157 @@ pub fn ibc_packet_timeout(
     // respond to this likely as it means that the packet in question
     // isn't going anywhere.
     Ok(IbcBasicResponse::new().add_attribute("method", "ibc_packet_timeout"))
+}
+
+impl<'a> CwCallService<'a> {
+    fn receive_packet_data(
+        &self,
+        deps: DepsMut,
+        message: IbcPacket,
+    ) -> Result<IbcReceiveResponse, ContractError> {
+        // TODO : ADD check for sender logic
+
+        let call_service_message: CallServiceMessage = message.data.try_into()?;
+
+        match call_service_message.message_type() {
+            CallServiceMessageType::CallServiceRequest => {
+                self.hanadle_request(deps, call_service_message.payload())
+            }
+            CallServiceMessageType::CallServiceResponse => {
+                self.handle_response(deps, call_service_message.payload())
+            }
+        }
+    }
+
+    fn hanadle_request(
+        &self,
+        deps: DepsMut,
+        data: &[u8],
+    ) -> Result<IbcReceiveResponse, ContractError> {
+        let request_id = self.increment_last_request_id(deps.storage)?;
+        let message_request: CallServiceMessageRequest = data.try_into()?;
+
+        let from = message_request.from();
+        let to = message_request.to();
+
+        let request = CallServiceMessageRequest::new(
+            from.clone(),
+            to.to_string(),
+            message_request.sequence_no(),
+            message_request.rollback().into(),
+            message_request.data().into(),
+        );
+
+        self.insert_request(deps.storage, request_id, request)?;
+
+        let event = event_call_message(
+            from.to_string(),
+            to.to_string(),
+            message_request.sequence_no(),
+            request_id,
+        );
+
+        Ok(IbcReceiveResponse::new()
+            .add_attribute("action", "call_service")
+            .add_attribute("method", "handle_response")
+            .add_event(event))
+    }
+
+    fn handle_response(
+        &self,
+        deps: DepsMut,
+        data: &[u8],
+    ) -> Result<IbcReceiveResponse, ContractError> {
+        let message: CallServiceMessageReponse = data.try_into()?;
+        let response_sequence_no = message.sequence_no();
+
+        let mut call_request = self.query_request(deps.storage, response_sequence_no)?;
+
+        if call_request.is_null() {
+            return Ok(IbcReceiveResponse::new()
+                .add_attribute("action", "call_service")
+                .add_attribute("method", "handle_response")
+                .add_attribute(
+                    "message",
+                    format!("handle_resposne: no request for {}", response_sequence_no),
+                ));
+        }
+
+        match message.response_code() {
+            CallServiceResponseType::CallServiceResponseSucess => {
+                let event = match message.message().is_empty() {
+                    true => event_response_message(
+                        response_sequence_no,
+                        to_int(message.response_code()),
+                        "",
+                    ),
+                    false => event_response_message(
+                        response_sequence_no,
+                        to_int(message.response_code()),
+                        message.message(),
+                    ),
+                };
+                self.cleanup_request(deps, response_sequence_no);
+                Ok(IbcReceiveResponse::new()
+                    .add_attribute("action", "call_service")
+                    .add_attribute("method", "handle_response")
+                    .add_event(event))
+            }
+            _ => {
+                self.ensure_rollback_length(call_request.rollback())
+                    .unwrap();
+                call_request.set_enabled();
+                self.set_call_request(deps.storage, response_sequence_no, call_request)?;
+
+                let event = event_rollback_message(response_sequence_no);
+
+                Ok(IbcReceiveResponse::new()
+                    .add_attribute("action", "call_service")
+                    .add_attribute("method", "handle_response")
+                    .add_event(event))
+            }
+        }
+    }
+
+    fn cleanup_request(&self, deps: DepsMut, sequence_no: u128) {
+        self.remove_call_request(deps.storage, sequence_no);
+    }
+
+    fn save_config(&mut self, deps: DepsMut, config: &IbcConfig) -> Result<(), ContractError> {
+        match self.ibc_config().save(deps.storage, config) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(ContractError::Std(err)),
+        }
+    }
+}
+
+fn on_ack_sucess(packet: IbcPacket) -> Result<IbcBasicResponse, ContractError> {
+    let message: CallServiceMessage = from_binary(&packet.data)?;
+
+    let message_type = match message.message_type() {
+        CallServiceMessageType::CallServiceRequest => "call_service_request",
+        CallServiceMessageType::CallServiceResponse => "call_service_response",
+    };
+
+    let attributes = vec![
+        attr("action", "acknowledge"),
+        attr("success", "true"),
+        attr("message_type", message_type),
+    ];
+
+    Ok(IbcBasicResponse::new().add_attributes(attributes))
+}
+
+fn on_ack_failure(packet: IbcPacket, error: &str) -> Result<IbcBasicResponse, ContractError> {
+    let message: CallServiceMessage = from_binary(&packet.data)?;
+    let message_type = match message.message_type() {
+        CallServiceMessageType::CallServiceRequest => "call_service_request",
+        CallServiceMessageType::CallServiceResponse => "call_service_response",
+    };
+
+    Ok(IbcBasicResponse::new()
+        .add_attribute("action", "acknowledge")
+        .add_attribute("message_type", message_type)
+        .add_attribute("success", "false")
+        .add_attribute("error", error))
 }

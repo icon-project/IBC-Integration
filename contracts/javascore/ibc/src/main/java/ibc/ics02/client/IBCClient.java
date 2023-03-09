@@ -4,11 +4,7 @@ import ibc.icon.interfaces.IIBCClient;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
-import ibc.icon.structs.messages.CreateClientResponse;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
-import ibc.icon.structs.messages.UpdateClientResponse;
+import ibc.icon.structs.messages.*;
 import ibc.ics24.host.IBCCommitment;
 import ibc.ics24.host.IBCHost;
 import score.Address;
@@ -20,6 +16,12 @@ public class IBCClient extends IBCHost implements IIBCClient {
 
     Logger logger = new Logger("ibc-core");
 
+    /**
+     * Registers a client to registry
+     *
+     * @param clientType  Type of client
+     * @param lightClient Light client contract address
+     */
     public void registerClient(String clientType, Address lightClient) {
         Context.require(clientRegistry.get(clientType) == null, "Already registered.");
         clientRegistry.set(clientType, lightClient);
@@ -38,10 +40,11 @@ public class IBCClient extends IBCHost implements IIBCClient {
         ILightClient client = getClient(clientId);
         CreateClientResponse response = client.createClient(clientId, msg.clientState, msg.consensusState);
         Context.require(response.ok);
+
+        // update commitments
         commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
-                response.update.height.getRevisionNumber(),
-                response.update.height.getRevisionHeight());
+                response.update.height.getRevisionNumber(), response.update.height.getRevisionHeight());
         commitments.set(consensusKey, response.update.consensusStateCommitment);
 
         return clientId;
@@ -55,6 +58,7 @@ public class IBCClient extends IBCHost implements IIBCClient {
         UpdateClientResponse response = client.updateClient(clientId, msg.clientMessage);
         Context.require(response.ok);
 
+        // update commitments
         commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
         for (ConsensusStateUpdate update : response.updates) {
             byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId, update.height.getRevisionNumber(),

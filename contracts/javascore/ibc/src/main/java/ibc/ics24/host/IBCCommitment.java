@@ -8,7 +8,7 @@ import java.math.BigInteger;
 /**
  * // Commitment path generators that comply with
  * <a href=
- * "https://githu.com/cosmos/ibc/tree/main/spec/core/ics-024-host-requirements#path-space">path-space</a>
+ * "https://github.com/cosmos/ibc/tree/main/spec/core/ics-024-host-requirements#path-space">path-space</a>
  */
 public class IBCCommitment {
     private static final String KECCAK256 = "keccak-256";
@@ -61,7 +61,7 @@ public class IBCCommitment {
     }
 
     public static byte[] consensusStateCommitmentKey(String clientId, BigInteger revisionNumber,
-            BigInteger revisionHeight) {
+                                                     BigInteger revisionHeight) {
         return Context.hash(KECCAK256, consensusStatePath(clientId, revisionNumber, revisionHeight));
     }
 

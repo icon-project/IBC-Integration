@@ -1,7 +1,5 @@
 package ibc.ics04.channel;
 
-import java.math.BigInteger;
-
 import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.StringUtil;
@@ -12,9 +10,11 @@ import ibc.icon.structs.proto.core.channel.Packet;
 import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.ics24.host.IBCCommitment;
-
 import score.Context;
 import score.DictDB;
+
+import java.math.BigInteger;
+import java.util.Arrays;
 
 // TODO verify packet commitments follow a correct format
 public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
@@ -43,14 +43,13 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
                         || latestTimestamp.compareTo(packet.getTimeoutTimestamp()) < 0,
                 "receiving chain block timestamp >= packet timeout timestamp");
 
-        BigInteger nextSequenceSend = nextSequenceSends.at(packet.getSourcePort())
-                .getOrDefault(packet.getSourceChannel(), BigInteger.ZERO);
+        DictDB<String, BigInteger> nextSequenceSourcePort = nextSequenceSends.at(packet.getSourcePort());
+        BigInteger nextSequenceSend = nextSequenceSourcePort.getOrDefault(packet.getSourceChannel(), BigInteger.ZERO);
         Context.require(
                 packet.getSequence().equals(nextSequenceSend),
                 "packet sequence != next send sequence");
 
-        nextSequenceSends.at(packet.getSourcePort())
-                .set(packet.getSourceChannel(), nextSequenceSend.add(BigInteger.ONE));
+        nextSequenceSourcePort.set(packet.getSourceChannel(), nextSequenceSend.add(BigInteger.ONE));
 
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(packet.getSourcePort(),
                 packet.getSourceChannel(),

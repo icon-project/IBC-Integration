@@ -1,30 +1,12 @@
 package ibc.ics04.channel;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.math.BigInteger;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
-import ibc.icon.structs.messages.MsgChannelCloseConfirm;
-import ibc.icon.structs.messages.MsgChannelCloseInit;
-import ibc.icon.structs.messages.MsgChannelOpenAck;
-import ibc.icon.structs.messages.MsgChannelOpenConfirm;
-import ibc.icon.structs.messages.MsgChannelOpenInit;
-import ibc.icon.structs.messages.MsgChannelOpenTry;
+import ibc.icon.structs.messages.*;
 import ibc.icon.structs.proto.core.channel.Channel;
 import ibc.icon.structs.proto.core.channel.Counterparty;
 import ibc.icon.structs.proto.core.client.Height;
@@ -34,7 +16,15 @@ import ibc.icon.structs.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
 import ibc.ics24.host.IBCCommitment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import score.Address;
+
+import java.math.BigInteger;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 public class ChannelHandshakeTest extends TestBase {
 
@@ -50,7 +40,8 @@ public class ChannelHandshakeTest extends TestBase {
     Channel baseChannel = new Channel();
     MerklePrefix prefix = new MerklePrefix();
     Version version = new Version();
-    ibc.icon.structs.proto.core.connection.Counterparty connectionCounterparty = new ibc.icon.structs.proto.core.connection.Counterparty();
+    ibc.icon.structs.proto.core.connection.Counterparty connectionCounterparty =
+            new ibc.icon.structs.proto.core.connection.Counterparty();
     Counterparty baseCounterparty = new Counterparty();
     String portId = "portId";
     String channelId = "channel-0";
@@ -89,7 +80,7 @@ public class ChannelHandshakeTest extends TestBase {
         baseConnection.setState(ConnectionEnd.State.STATE_OPEN);
         baseConnection.setCounterparty(connectionCounterparty);
         baseConnection.setDelayPeriod(BigInteger.ONE);
-        baseConnection.setVersions(new Version[] { version });
+        baseConnection.setVersions(new Version[]{version});
 
         baseCounterparty.setPortId(portId);
         baseCounterparty.setChannelId(channelId);
@@ -97,7 +88,7 @@ public class ChannelHandshakeTest extends TestBase {
         baseChannel.updateState(Channel.State.STATE_INIT);
         baseChannel.updateOrder(Channel.Order.ORDER_ORDERED);
         baseChannel.setCounterparty(baseCounterparty);
-        baseChannel.setConnectionHops(new String[] { connectionId });
+        baseChannel.setConnectionHops(new String[]{connectionId});
         baseChannel.setVersion("v1");
         channel.invoke(owner, "setClient", clientId, lightClient.getAddress());
     }
@@ -106,7 +97,7 @@ public class ChannelHandshakeTest extends TestBase {
     void channelOpenInit_multipleHops() {
         // Arrange
         addConnection(connectionId, baseConnection);
-        baseChannel.setConnectionHops(new String[] { connectionId, "otherId" });
+        baseChannel.setConnectionHops(new String[]{connectionId, "otherId"});
 
         MsgChannelOpenInit msg = new MsgChannelOpenInit();
         msg.portId = portId;
@@ -140,7 +131,7 @@ public class ChannelHandshakeTest extends TestBase {
     @Test
     void channelOpenInit_inconsistentVersion() {
         // Arrange
-        baseConnection.setVersions(new Version[] { version, version });
+        baseConnection.setVersions(new Version[]{version, version});
         addConnection(connectionId, baseConnection);
         MsgChannelOpenInit msg = new MsgChannelOpenInit();
         msg.portId = portId;
@@ -199,7 +190,7 @@ public class ChannelHandshakeTest extends TestBase {
     @Test
     void channelOpenTry_multipleHops() {
         // Arrange
-        baseChannel.setConnectionHops(new String[] { connectionId, "otherId" });
+        baseChannel.setConnectionHops(new String[]{connectionId, "otherId"});
 
         MsgChannelOpenTry msg = new MsgChannelOpenTry();
         msg.channel = baseChannel;
@@ -229,7 +220,7 @@ public class ChannelHandshakeTest extends TestBase {
     @Test
     void channelOpenTry_inconsistentVersion() {
         // Arrange
-        baseConnection.setVersions(new Version[] { version, version });
+        baseConnection.setVersions(new Version[]{version, version});
         addConnection(connectionId, baseConnection);
 
         MsgChannelOpenTry msg = new MsgChannelOpenTry();
@@ -281,7 +272,7 @@ public class ChannelHandshakeTest extends TestBase {
         expectedChannel.updateState(Channel.State.STATE_INIT);
         expectedChannel.updateOrder(msg.channel.channelOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
+        expectedChannel.setConnectionHops(new String[]{baseConnection.getCounterparty().getConnectionId()});
         expectedChannel.setVersion(msg.counterpartyVersion);
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
@@ -317,7 +308,7 @@ public class ChannelHandshakeTest extends TestBase {
         expectedChannel.updateState(Channel.State.STATE_INIT);
         expectedChannel.updateOrder(msg.channel.channelOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
+        expectedChannel.setConnectionHops(new String[]{baseConnection.getCounterparty().getConnectionId()});
         expectedChannel.setVersion(msg.counterpartyVersion);
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
@@ -356,7 +347,7 @@ public class ChannelHandshakeTest extends TestBase {
         counterpartyChannel.updateState(Channel.State.STATE_TRYOPEN);
         counterpartyChannel.updateOrder(baseChannel.channelOrdering());
         counterpartyChannel.setCounterparty(expectedCounterparty);
-        counterpartyChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
+        counterpartyChannel.setConnectionHops(new String[]{baseConnection.getCounterparty().getConnectionId()});
         counterpartyChannel.setVersion(msg.counterpartyVersion);
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
@@ -395,7 +386,7 @@ public class ChannelHandshakeTest extends TestBase {
         counterpartyChannel.updateState(Channel.State.STATE_OPEN);
         counterpartyChannel.updateOrder(baseChannel.channelOrdering());
         counterpartyChannel.setCounterparty(expectedCounterparty);
-        counterpartyChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
+        counterpartyChannel.setConnectionHops(new String[]{baseConnection.getCounterparty().getConnectionId()});
         counterpartyChannel.setVersion(baseChannel.getVersion());
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
@@ -454,7 +445,7 @@ public class ChannelHandshakeTest extends TestBase {
         counterpartyChannel.updateState(Channel.State.STATE_CLOSED);
         counterpartyChannel.updateOrder(baseChannel.channelOrdering());
         counterpartyChannel.setCounterparty(expectedCounterparty);
-        counterpartyChannel.setConnectionHops(new String[] { baseConnection.getCounterparty().getConnectionId() });
+        counterpartyChannel.setConnectionHops(new String[]{baseConnection.getCounterparty().getConnectionId()});
         counterpartyChannel.setVersion(baseChannel.getVersion());
 
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
