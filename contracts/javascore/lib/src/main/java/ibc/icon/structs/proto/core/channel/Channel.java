@@ -1,12 +1,12 @@
 package ibc.icon.structs.proto.core.channel;
 
-import java.util.List;
-
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.util.List;
 
 public class Channel {
 
@@ -113,6 +113,17 @@ public class Channel {
         writer.write(this.version);
 
         writer.end();
+    }
+
+    public static Channel fromBytes(byte[] bytes) {
+        ObjectReader reader = Context.newByteArrayObjectReader("RLPn", bytes);
+        return Channel.readObject(reader);
+    }
+
+    public byte[] toBytes() {
+        ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
+        Channel.writeObject(writer, this);
+        return writer.toByteArray();
     }
 
     public State getState() {

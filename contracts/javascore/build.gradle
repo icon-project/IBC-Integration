@@ -15,6 +15,7 @@ subprojects {
     }
     apply plugin: 'java'
     apply plugin: 'foundation.icon.javaee'
+    apply plugin: 'jacoco'
 
     java {
         sourceCompatibility = JavaVersion.VERSION_11
