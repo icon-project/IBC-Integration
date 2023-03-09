@@ -1,8 +1,5 @@
 package ibc.ics04.channel;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-
 import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.StringUtil;
@@ -13,9 +10,11 @@ import ibc.icon.structs.proto.core.channel.Packet;
 import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.ics24.host.IBCCommitment;
-
 import score.Context;
 import score.DictDB;
+
+import java.math.BigInteger;
+import java.util.Arrays;
 
 // TODO verify packet commitments follow a correct format
 public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
@@ -83,12 +82,12 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
         Context.require(
                 msg.packet.getTimeoutHeight().getRevisionHeight().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockHeight())
-                                .compareTo(msg.packet.getTimeoutHeight().getRevisionHeight()) < 0,
+                        .compareTo(msg.packet.getTimeoutHeight().getRevisionHeight()) < 0,
                 "block height >= packet timeout height");
         Context.require(
                 msg.packet.getTimeoutTimestamp().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockTimestamp())
-                                .compareTo(msg.packet.getTimeoutTimestamp()) < 0,
+                        .compareTo(msg.packet.getTimeoutTimestamp()) < 0,
                 "block timestamp >= packet timeout timestamp");
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
@@ -123,7 +122,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
     }
 
     public void writeAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement) {
+                                     byte[] acknowledgement) {
         Context.require(acknowledgement.length > 0, "acknowledgement cannot be empty");
 
         Channel channel = channels.at(destinationPortId).get(destinationChannel);

@@ -4,7 +4,6 @@ import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
 import ibc.icon.structs.proto.core.channel.Channel;
 import ibc.icon.structs.proto.core.channel.Packet;
 import ibc.icon.structs.proto.core.client.Height;
@@ -12,14 +11,14 @@ import ibc.icon.structs.proto.core.commitment.MerklePrefix;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.icon.structs.proto.core.connection.Counterparty;
 import ibc.icon.structs.proto.core.connection.Version;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import score.VarDB;
 
 import java.math.BigInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static score.Context.newVarDB;
 
 public class ProtoStorageTest extends TestBase {
@@ -82,12 +81,12 @@ public class ProtoStorageTest extends TestBase {
         Version version2 = new Version();
         version1.setIdentifier("version1");
         version2.setIdentifier("version2");
-        version1.setFeatures(new String[] { "v1Feature1", "v1Feature2" });
-        version2.setFeatures(new String[] { "v2Feature1", "v2Feature2", "v2Feature3" });
+        version1.setFeatures(new String[]{"v1Feature1", "v1Feature2"});
+        version2.setFeatures(new String[]{"v2Feature1", "v2Feature2", "v2Feature3"});
 
         ConnectionEnd connectionEnd = new ConnectionEnd();
         connectionEnd.setClientId("clientId");
-        connectionEnd.setVersions(new Version[] { version1, version2 });
+        connectionEnd.setVersions(new Version[]{version1, version2});
         connectionEnd.setState(ConnectionEnd.State.STATE_INIT);
         connectionEnd.setCounterparty(counterparty);
         connectionEnd.setDelayPeriod(BigInteger.ONE);
@@ -120,7 +119,8 @@ public class ProtoStorageTest extends TestBase {
     @Test
     public void storeChannel() {
         // Arrange
-        ibc.icon.structs.proto.core.channel.Counterparty counterparty = new ibc.icon.structs.proto.core.channel.Counterparty();
+        ibc.icon.structs.proto.core.channel.Counterparty counterparty =
+                new ibc.icon.structs.proto.core.channel.Counterparty();
         counterparty.setPortId("portId");
         counterparty.setChannelId("channelId");
 
@@ -128,7 +128,7 @@ public class ProtoStorageTest extends TestBase {
         channel.setState(Channel.State.STATE_TRYOPEN);
         channel.setOrdering(Channel.Order.ORDER_ORDERED);
         channel.setCounterparty(counterparty);
-        channel.setConnectionHops(new String[] { "Aerw", "were" });
+        channel.setConnectionHops(new String[]{"Aerw", "were"});
         channel.setVersion("version");
 
         // Act

@@ -1,12 +1,12 @@
 package ibc.icon.structs.proto.core.channel;
 
-import java.math.BigInteger;
-
 import ibc.icon.structs.proto.core.client.Height;
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
+
+import java.math.BigInteger;
 
 // Packet defines a type that carries data across different chains through IBC
 public class Packet {

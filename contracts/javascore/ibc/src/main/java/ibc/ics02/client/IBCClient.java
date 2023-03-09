@@ -4,11 +4,7 @@ import ibc.icon.interfaces.IIBCClient;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
-import ibc.icon.structs.messages.CreateClientResponse;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
-import ibc.icon.structs.messages.UpdateClientResponse;
+import ibc.icon.structs.messages.*;
 import ibc.ics24.host.IBCCommitment;
 import ibc.ics24.host.IBCHost;
 import score.Address;
@@ -40,8 +36,7 @@ public class IBCClient extends IBCHost implements IIBCClient {
         Context.require(response.ok);
         commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
-                response.update.height.getRevisionNumber(),
-                response.update.height.getRevisionHeight());
+                response.update.height.getRevisionNumber(), response.update.height.getRevisionHeight());
         commitments.set(consensusKey, response.update.consensusStateCommitment);
 
         return clientId;

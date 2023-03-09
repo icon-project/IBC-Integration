@@ -1,7 +1,5 @@
 package ibc.ics03.connection;
 
-import java.math.BigInteger;
-
 import ibc.icon.interfaces.IIBCConnection;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.Logger;
@@ -16,12 +14,13 @@ import ibc.icon.structs.proto.core.connection.Counterparty;
 import ibc.icon.structs.proto.core.connection.Version;
 import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
-
 import score.Context;
+
+import java.math.BigInteger;
 
 public class IBCConnection extends IBCClient implements IIBCConnection {
     public static final String v1Identifier = "1";
-    public static final String[] supportedV1Features = new String[] { "ORDER_ORDERED", "ORDER_UNORDERED" };
+    public static final String[] supportedV1Features = new String[]{"ORDER_ORDERED", "ORDER_UNORDERED"};
     public static final String commitmentPrefix = "ibc";
 
     Logger logger = new Logger("ibc-core");
@@ -103,7 +102,8 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
                     "connection state is in INIT but the provided version is not supported");
         } else {
             Context.require(connection.versions.length == 1 && connection.versions[0].equals(msg.version),
-                    "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
+                    "connection state is in TRYOPEN but the provided version is not set in the previous connection " +
+                            "versions");
         }
 
         // TODO: investigate need to self client validation
@@ -120,7 +120,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getClientId());
-        expectedConnection.setVersions(new Version[] { msg.version });
+        expectedConnection.setVersions(new Version[]{msg.version});
         expectedConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
         expectedConnection.setDelayPeriod(connection.delayPeriod);
         expectedConnection.setCounterparty(expectedCounterparty);
@@ -135,7 +135,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
                 msg.proofClient,
                 msg.clientStateBytes);
 
-        // TODO we should also verify a consensus state
+        // TODO: we should also verify a consensus state
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
         connection.setVersions(expectedConnection.versions);
@@ -179,7 +179,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     /* Verification functions */
 
     private void verifyClientState(ConnectionEnd connection, Height height, byte[] path, byte[] proof,
-            byte[] clientStatebytes) {
+                                   byte[] clientStatebytes) {
         ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),
@@ -194,7 +194,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     }
 
     private void verifyClientConsensusState(ConnectionEnd connection, Height height, Height consensusHeight,
-            byte[] proof, byte[] consensusStateBytes) {
+                                            byte[] proof, byte[] consensusStateBytes) {
         byte[] consensusPath = IBCCommitment.consensusStatePath(connection.getCounterparty().getClientId(),
                 consensusHeight.getRevisionNumber(),
                 consensusHeight.getRevisionHeight());
@@ -214,7 +214,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     }
 
     private void verifyConnectionState(ConnectionEnd connection, Height height, byte[] proof, String connectionId,
-            ConnectionEnd counterpartyConnection) {
+                                       ConnectionEnd counterpartyConnection) {
         ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),
@@ -239,15 +239,14 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
     }
 
     /**
-     * @dev getSupportedVersions return the supported versions.
-     *
+     * {@code @dev} getSupportedVersions return the supported versions.
      */
     private Version[] getSupportedVersions() {
         Version version = new Version();
         version.setFeatures(supportedV1Features);
         version.setIdentifier(v1Identifier);
 
-        return new Version[] { version };
+        return new Version[]{version};
     }
 
     // TODO implement

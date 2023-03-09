@@ -1,23 +1,9 @@
 package ibc.ics04.channel;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.math.BigInteger;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.StringUtil;
@@ -33,7 +19,15 @@ import ibc.icon.structs.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
 import ibc.ics24.host.IBCCommitment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import score.Address;
+
+import java.math.BigInteger;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 public class PacketTest extends TestBase {
 
@@ -49,7 +43,8 @@ public class PacketTest extends TestBase {
     Channel baseChannel = new Channel();
     MerklePrefix prefix = new MerklePrefix();
     Version version = new Version();
-    ibc.icon.structs.proto.core.connection.Counterparty connectionCounterparty = new ibc.icon.structs.proto.core.connection.Counterparty();
+    ibc.icon.structs.proto.core.connection.Counterparty connectionCounterparty =
+            new ibc.icon.structs.proto.core.connection.Counterparty();
     Counterparty baseCounterparty = new Counterparty();
     String portId = "portId";
     String channelId = "channel-0";
@@ -99,7 +94,7 @@ public class PacketTest extends TestBase {
         baseConnection.setState(ConnectionEnd.State.STATE_OPEN);
         baseConnection.setCounterparty(connectionCounterparty);
         baseConnection.setDelayPeriod(BigInteger.ONE);
-        baseConnection.setVersions(new Version[] { version });
+        baseConnection.setVersions(new Version[]{version});
 
         baseCounterparty.setPortId(portId);
         baseCounterparty.setChannelId(channelId);
@@ -107,7 +102,7 @@ public class PacketTest extends TestBase {
         baseChannel.setState(Channel.State.STATE_OPEN);
         baseChannel.setOrdering(Channel.Order.ORDER_ORDERED);
         baseChannel.setCounterparty(baseCounterparty);
-        baseChannel.setConnectionHops(new String[] { connectionId });
+        baseChannel.setConnectionHops(new String[]{connectionId});
         baseChannel.setVersion("v1");
 
         packet.invoke(owner, "setClient", clientId, lightClient.getAddress());
