@@ -21,6 +21,7 @@ public class IBCHandler extends IBCHandlerPacket {
     /**
      * registerClient registers a new client type into the client registry
      */
+    @External
     public void registerClient(String clientType, Address client) {
         onlyOwner();
         super.registerClient(clientType, client);
@@ -30,6 +31,7 @@ public class IBCHandler extends IBCHandlerPacket {
      * bindPort binds to an unallocated port, failing if the port has already
      * been allocated.
      */
+    @External
     public void bindPort(String portId, Address moduleAddress) {
         onlyOwner();
         super.bindPort(portId, moduleAddress);
@@ -38,6 +40,7 @@ public class IBCHandler extends IBCHandlerPacket {
     /**
      * setExpectedTimePerBlock sets expected time per block.
      */
+    @External
     public void setExpectedTimePerBlock(BigInteger expectedTimePerBlock) {
         onlyOwner();
         super.setExpectedTimePerBlock(expectedTimePerBlock);
