@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"

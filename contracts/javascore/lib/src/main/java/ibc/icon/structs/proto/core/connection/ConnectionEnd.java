@@ -1,8 +1,5 @@
 package ibc.icon.structs.proto.core.connection;
 
-import java.math.BigInteger;
-import java.util.List;
-
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 import score.ByteArrayObjectWriter;
@@ -10,6 +7,9 @@ import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.math.BigInteger;
+import java.util.List;
 
 // ConnectionEnd defines a stateful object on a chain connected to another
 // separate one.

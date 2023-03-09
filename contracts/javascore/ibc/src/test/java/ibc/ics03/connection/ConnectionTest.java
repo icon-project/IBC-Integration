@@ -191,7 +191,7 @@ public class ConnectionTest extends TestBase {
         msg.counterparty = counterparty;
         msg.delayPeriod = delayPeriod;
         msg.clientStateBytes = new byte[1];
-        msg.counterpartyVersions = new Version[] { version };
+        msg.counterpartyVersions = new Version[]{version};
         msg.proofInit = new byte[2];
         msg.proofClient = new byte[3];
         msg.proofConsensus = new byte[4];
@@ -205,7 +205,7 @@ public class ConnectionTest extends TestBase {
 
         ConnectionEnd counterpartyConnection = new ConnectionEnd();
         counterpartyConnection.setClientId(counterparty.getClientId());
-        counterpartyConnection.setVersions(new Version[] { version });
+        counterpartyConnection.setVersions(new Version[]{version});
         counterpartyConnection.setState(ConnectionEnd.State.STATE_INIT);
         counterpartyConnection.setDelayPeriod(msg.delayPeriod);
         counterpartyConnection.setCounterparty(expectedCounterparty);
@@ -327,11 +327,12 @@ public class ConnectionTest extends TestBase {
         msg.connectionId = "connection-0";
         Version wrongVersion = new Version();
         wrongVersion.identifier = "OtherVersion";
-        wrongVersion.features = new String[] { "some features" };
+        wrongVersion.features = new String[]{"some features"};
         msg.version = wrongVersion;
 
         // Act & Assert
-        String expectedErrorMessage = "connection state is in TRYOPEN but the provided version is not set in the previous connection versions";
+        String expectedErrorMessage = "connection state is in TRYOPEN but the provided version is not set in the " +
+                "previous connection versions";
         Executable clientVerificationFailed = () -> connection.invoke(owner,
                 "connectionOpenAck", msg);
         AssertionError e = assertThrows(AssertionError.class,
@@ -361,7 +362,7 @@ public class ConnectionTest extends TestBase {
 
         ConnectionEnd counterpartyConnection = new ConnectionEnd();
         counterpartyConnection.setClientId(clientId);
-        counterpartyConnection.setVersions(new Version[] { version });
+        counterpartyConnection.setVersions(new Version[]{version});
         counterpartyConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
         counterpartyConnection.setDelayPeriod(delayPeriod);
         counterpartyConnection.setCounterparty(expectedCounterparty);
@@ -430,7 +431,7 @@ public class ConnectionTest extends TestBase {
 
         ConnectionEnd counterpartyConnection = new ConnectionEnd();
         counterpartyConnection.setClientId(counterparty.getClientId());
-        counterpartyConnection.setVersions(new Version[] { version });
+        counterpartyConnection.setVersions(new Version[]{version});
         counterpartyConnection.setState(ConnectionEnd.State.STATE_OPEN);
         counterpartyConnection.setDelayPeriod(delayPeriod);
         counterpartyConnection.setCounterparty(expectedCounterparty);

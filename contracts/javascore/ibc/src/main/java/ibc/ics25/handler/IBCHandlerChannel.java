@@ -1,12 +1,7 @@
 package ibc.ics25.handler;
 
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
-import ibc.icon.structs.messages.MsgChannelCloseConfirm;
-import ibc.icon.structs.messages.MsgChannelCloseInit;
-import ibc.icon.structs.messages.MsgChannelOpenAck;
-import ibc.icon.structs.messages.MsgChannelOpenConfirm;
-import ibc.icon.structs.messages.MsgChannelOpenInit;
-import ibc.icon.structs.messages.MsgChannelOpenTry;
+import ibc.icon.structs.messages.*;
 import score.annotation.EventLog;
 import score.annotation.External;
 
@@ -56,26 +51,30 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection {
 
     @External
     public void channelOpenAck(MsgChannelOpenAck msg) {
-        lookupModuleByPort(msg.portId).onChanOpenAck(msg.portId, msg.channelId, msg.counterpartyVersion);
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.portId);
         super.channelOpenAck(msg);
+        module.onChanOpenAck(msg.portId, msg.channelId, msg.counterpartyVersion);
     }
 
     @External
     public void channelOpenConfirm(MsgChannelOpenConfirm msg) {
-        lookupModuleByPort(msg.portId).onChanOpenConfirm(msg.portId, msg.channelId);
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.portId);
         super.channelOpenConfirm(msg);
+        module.onChanOpenConfirm(msg.portId, msg.channelId);
     }
 
     @External
     public void channelCloseInit(MsgChannelCloseInit msg) {
-        lookupModuleByPort(msg.portId).onChanCloseInit(msg.portId, msg.channelId);
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.portId);
         super.channelCloseInit(msg);
+        module.onChanCloseInit(msg.portId, msg.channelId);
     }
 
     @External
     public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
-        lookupModuleByPort(msg.portId).onChanCloseConfirm(msg.portId, msg.channelId);
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.portId);
         super.channelCloseConfirm(msg);
+        module.onChanCloseConfirm(msg.portId, msg.channelId);
     }
 
 }

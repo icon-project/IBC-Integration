@@ -1,7 +1,5 @@
 package ibc.ics25.handler;
 
-import java.math.BigInteger;
-
 import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
@@ -9,6 +7,8 @@ import ibc.icon.structs.proto.core.channel.Packet;
 import score.Context;
 import score.annotation.EventLog;
 import score.annotation.External;
+
+import java.math.BigInteger;
 
 public abstract class IBCHandlerPacket extends IBCHandlerChannel {
     @EventLog
@@ -21,7 +21,7 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
 
     @EventLog
     public void WriteAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement) {
+                                     byte[] acknowledgement) {
     }
 
     @EventLog
@@ -40,11 +40,12 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
 
     @External
     public void recvPacket(MsgPacketRecv msg) {
-        super.recvPacket(msg);
-
         IIBCModule module = lookupModuleByChannel(msg.packet.getDestinationPort(),
                 msg.packet.getDestinationChannel());
+
         byte[] acknowledgement = module.onRecvPacket(msg.packet, Context.getCaller());
+        super.recvPacket(msg);
+
         if (acknowledgement.length > 0) {
             super.writeAcknowledgement(
                     msg.packet.getDestinationPort(),
@@ -64,10 +65,9 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
             String destinationChannel,
             BigInteger sequence,
             byte[] acknowledgement) {
-        Context.require(authenticateCapability(channelCapabilityPath(destinationPortId,
-                destinationChannel)),
-                "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId
-                        + "and channel: " + destinationChannel);
+        Context.require(authenticateCapability(channelCapabilityPath(destinationPortId, destinationChannel)),
+                "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId + "and channel: "
+                        + destinationChannel);
         super.writeAcknowledgement(
                 destinationPortId,
                 destinationChannel,
@@ -78,11 +78,12 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
 
     @External
     public void acknowledgePacket(MsgPacketAcknowledgement msg) {
-        super.acknowledgePacket(msg);
         IIBCModule module = lookupModuleByChannel(msg.packet.getSourcePort(),
                 msg.packet.getSourceChannel());
         module.onAcknowledgementPacket(msg.packet, msg.acknowledgement,
                 Context.getCaller());
+        super.acknowledgePacket(msg);
+
         AcknowledgePacket(msg.packet.toBytes(), msg.acknowledgement);
     }
 }

@@ -131,7 +131,6 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
         channel.getCounterparty().setChannelId(msg.counterpartyChannelId);
 
         updateChannelCommitment(msg.portId, msg.channelId, channel);
-
         channels.at(msg.portId).set(msg.channelId, channel);
     }
 
@@ -263,7 +262,7 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
 
     private String[] getCounterpartyHops(String connectionId) {
         String hop = connections.get(connectionId).getCounterparty().getConnectionId();
-        String[] hops = new String[] { hop };
+        String[] hops = new String[]{hop};
         return hops;
     }
 

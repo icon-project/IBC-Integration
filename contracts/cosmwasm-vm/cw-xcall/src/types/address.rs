@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use super::*;
 
 #[cw_serde]
@@ -11,15 +9,41 @@ impl Display for Address {
     }
 }
 
+impl From<&str> for Address {
+    fn from(value: &str) -> Self {
+        Address(value.to_string())
+    }
+}
+
+impl From<&String> for Address {
+    fn from(value: &String) -> Self {
+        Address(value.to_string())
+    }
+}
+
+impl From<&[u8]> for Address {
+    fn from(value: &[u8]) -> Self {
+        let address = String::from_vec(value.to_vec()).unwrap();
+        Address(address)
+    }
+}
+impl Encodable for Address {
+    fn rlp_append(&self, stream: &mut rlp::RlpStream) {
+        stream.begin_list(1).append(&self.0);
+    }
+}
+
+impl Decodable for Address {
+    fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+        Ok(Self(rlp.val_at(0)?))
+    }
+}
+
 impl Address {
-    pub fn from_str(str: &str) -> Address {
-        Address(str.to_string())
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
-    pub fn from_bytes(address: &[u8]) -> Result<Address, StdError> {
-        let address = String::from_vec(address.to_vec())?;
-        Ok(Address(address))
-    }
-    pub fn new(adr: String) -> Self {
-        Address(adr)
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 }
