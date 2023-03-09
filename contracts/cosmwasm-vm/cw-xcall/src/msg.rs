@@ -1,6 +1,4 @@
-use crate::types::{address::Address, request::CallServiceMessageRequest};
-
-use cosmwasm_schema::{cw_serde, QueryResponses};
+use super::*;
 
 #[cw_serde]
 pub struct InstantiateMsg {}

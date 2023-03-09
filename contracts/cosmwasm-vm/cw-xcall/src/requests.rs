@@ -1,10 +1,4 @@
-use cosmwasm_std::Storage;
-
-use crate::{
-    error::ContractError,
-    state::CwCallService,
-    types::{call_request::CallRequest, request::CallServiceMessageRequest},
-};
+use super::*;
 
 impl<'a> CwCallService<'a> {
     pub fn query_last_sequence_no(&self, store: &dyn Storage) -> Result<u128, ContractError> {

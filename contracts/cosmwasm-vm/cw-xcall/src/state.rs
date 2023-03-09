@@ -1,16 +1,9 @@
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::IbcEndpoint;
-use cw_storage_plus::{Item, Map};
-
-use crate::types::{
-    address::Address, call_request::CallRequest, request::CallServiceMessageRequest,
-    storage_keys::StorageKey,
-};
+use super::*;
 
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
-pub const EXECUTE_CALL: u64 = 0;
-pub const EXECUTE_ROLLBACK: u64 = 1;
+pub const EXECUTE_CALL_ID: u64 = 0;
+pub const EXECUTE_ROLLBACK_ID: u64 = 1;
 pub const ACK_FAILURE_ID: u64 = 3;
 
 #[cw_serde]
