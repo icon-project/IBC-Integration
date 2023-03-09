@@ -22,7 +22,7 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBC
 
     @EventLog
     public void WriteAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement) {
+                                     byte[] acknowledgement) {
     }
 
     @EventLog
@@ -43,11 +43,12 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBC
     @External
     public void recvPacket(MsgPacketRecv msg) {
         Packet packet = msg.getPacket();
-        super.recvPacket(packet, msg.getProof(), msg.getProofHeightRaw());
-
         IIBCModule module = lookupModuleByChannel(packet.getDestinationPort(),
                 packet.getDestinationChannel());
+
         byte[] acknowledgement = module.onRecvPacket(msg.getPacketRaw(), Context.getCaller());
+        super.recvPacket(packet, msg.getProof(), msg.getProofHeightRaw());
+
         if (acknowledgement.length > 0) {
             super.writeAcknowledgement(
                     packet.getDestinationPort(),
@@ -67,10 +68,9 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBC
             String destinationChannel,
             BigInteger sequence,
             byte[] acknowledgement) {
-        Context.require(authenticateCapability(channelCapabilityPath(destinationPortId,
-                destinationChannel)),
-                "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId
-                        + "and channel: " + destinationChannel);
+        Context.require(authenticateCapability(channelCapabilityPath(destinationPortId, destinationChannel)),
+                "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId + "and channel: "
+                        + destinationChannel);
         super.writeAcknowledgement(
                 destinationPortId,
                 destinationChannel,
@@ -83,10 +83,11 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBC
     public void acknowledgePacket(MsgPacketAcknowledgement msg) {
         Packet packet = msg.getPacket();
         IIBCModule module = lookupModuleByChannel(packet.getSourcePort(), packet.getSourceChannel());
-        super.acknowledgePacket(packet, msg.getAcknowledgement(), msg.getProof(), msg.getProofHeightRaw());
 
         module.onAcknowledgementPacket(msg.getPacketRaw(), msg.getAcknowledgement(),
                 Context.getCaller());
+        super.acknowledgePacket(packet, msg.getAcknowledgement(), msg.getProof(), msg.getProofHeightRaw());
+
         AcknowledgePacket(msg.getPacketRaw(), msg.getAcknowledgement());
     }
 }

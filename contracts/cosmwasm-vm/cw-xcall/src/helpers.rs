@@ -1,7 +1,4 @@
-use crate::msg::ExecuteMsg;
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use super::*;
 
 /// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
@@ -15,6 +12,7 @@ impl CwTemplateContract {
 
     pub fn call<T: Into<ExecuteMsg>>(&self, msg: T) -> StdResult<CosmosMsg> {
         let msg = to_binary(&msg.into())?;
+
         Ok(WasmMsg::Execute {
             contract_addr: self.addr().into(),
             msg,

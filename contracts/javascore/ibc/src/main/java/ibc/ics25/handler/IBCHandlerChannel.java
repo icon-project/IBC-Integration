@@ -2,12 +2,7 @@ package ibc.ics25.handler;
 
 import ibc.icon.interfaces.IIBCChannelHandshake;
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
-import ibc.icon.structs.messages.MsgChannelCloseConfirm;
-import ibc.icon.structs.messages.MsgChannelCloseInit;
-import ibc.icon.structs.messages.MsgChannelOpenAck;
-import ibc.icon.structs.messages.MsgChannelOpenConfirm;
-import ibc.icon.structs.messages.MsgChannelOpenInit;
-import ibc.icon.structs.messages.MsgChannelOpenTry;
+import ibc.icon.structs.messages.*;
 import icon.proto.core.channel.Channel;
 import score.annotation.EventLog;
 import score.annotation.External;
@@ -60,27 +55,30 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
 
     @External
     public void channelOpenAck(MsgChannelOpenAck msg) {
-        lookupModuleByPort(msg.getPortId()).onChanOpenAck(msg.getPortId(), msg.getChannelId(),
-                msg.getCounterpartyVersion());
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         super.channelOpenAck(msg);
+        module.onChanOpenAck(msg.getPortId(), msg.getChannelId(), msg.getCounterpartyVersion());
     }
 
     @External
     public void channelOpenConfirm(MsgChannelOpenConfirm msg) {
-        lookupModuleByPort(msg.getPortId()).onChanOpenConfirm(msg.getPortId(), msg.getChannelId());
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         super.channelOpenConfirm(msg);
+        module.onChanOpenConfirm(msg.getPortId(), msg.getChannelId());
     }
 
     @External
     public void channelCloseInit(MsgChannelCloseInit msg) {
-        lookupModuleByPort(msg.getPortId()).onChanCloseInit(msg.getPortId(), msg.getChannelId());
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         super.channelCloseInit(msg);
+        module.onChanCloseInit(msg.getPortId(), msg.getChannelId());
     }
 
     @External
     public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
-        lookupModuleByPort(msg.getPortId()).onChanCloseConfirm(msg.getPortId(), msg.getChannelId());
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         super.channelCloseConfirm(msg);
+        module.onChanCloseConfirm(msg.getPortId(), msg.getChannelId());
     }
 
 }

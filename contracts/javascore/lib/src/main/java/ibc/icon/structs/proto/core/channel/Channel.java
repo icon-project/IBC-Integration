@@ -1,7 +1,5 @@
 package ibc.icon.structs.proto.core.channel;
 
-import java.math.BigInteger;
-import java.util.List;
 
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
@@ -10,6 +8,10 @@ import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.math.BigInteger;
+import java.util.List;
+
 
 public class Channel {
 

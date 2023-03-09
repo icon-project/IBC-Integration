@@ -142,7 +142,7 @@ public class IBCConnection extends IBCClient {
                 msg.getProofClient(),
                 msg.getClientStateBytes());
 
-        // TODO we should also verify a consensus state
+        // TODO: we should also verify a consensus state
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
         connection.setVersions(expectedConnection.getVersions());
@@ -247,8 +247,7 @@ public class IBCConnection extends IBCClient {
     }
 
     /**
-     * @dev getSupportedVersions return the supported versions.
-     *
+     * {@code @dev} getSupportedVersions return the supported versions.
      */
     private List<Version> getSupportedVersions() {
         Version version = new Version();

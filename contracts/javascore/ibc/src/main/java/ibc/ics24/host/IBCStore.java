@@ -1,10 +1,5 @@
 package ibc.ics24.host;
 
-import score.*;
-import score.annotation.External;
-
-import java.math.BigInteger;
-
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.NullChecker;
@@ -12,6 +7,10 @@ import icon.proto.core.channel.Channel;
 import icon.proto.core.client.Height;
 import icon.proto.core.connection.ConnectionEnd;
 import ibc.ics05.port.ModuleManager;
+import score.*;
+import score.annotation.External;
+
+import java.math.BigInteger;
 
 public abstract class IBCStore extends ModuleManager {
     private final String COMMITMENTS = "commitments";

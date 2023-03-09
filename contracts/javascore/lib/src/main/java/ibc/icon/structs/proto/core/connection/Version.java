@@ -1,7 +1,5 @@
 package ibc.icon.structs.proto.core.connection;
 
-import java.util.List;
-
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 import score.ByteArrayObjectWriter;
@@ -9,6 +7,8 @@ import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.util.List;
 
 public class Version {
     public String identifier;

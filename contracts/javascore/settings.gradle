@@ -1,5 +1,5 @@
 rootProject.name = 'javascore'
-include (
+include(
         'score-util',
         'proto-util',
         'lib',

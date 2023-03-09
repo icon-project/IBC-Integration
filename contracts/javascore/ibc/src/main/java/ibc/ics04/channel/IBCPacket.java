@@ -42,14 +42,13 @@ public class IBCPacket extends IBCChannelHandshake {
                         || latestTimestamp.compareTo(packet.getTimeoutTimestamp()) < 0,
                 "receiving chain block timestamp >= packet timeout timestamp");
 
-        BigInteger nextSequenceSend = nextSequenceSends.at(packet.getSourcePort())
-                .getOrDefault(packet.getSourceChannel(), BigInteger.ZERO);
+        DictDB<String, BigInteger> nextSequenceSourcePort = nextSequenceSends.at(packet.getSourcePort());
+        BigInteger nextSequenceSend = nextSequenceSourcePort.getOrDefault(packet.getSourceChannel(), BigInteger.ZERO);
         Context.require(
                 packet.getSequence().equals(nextSequenceSend),
                 "packet sequence != next send sequence");
 
-        nextSequenceSends.at(packet.getSourcePort())
-                .set(packet.getSourceChannel(), nextSequenceSend.add(BigInteger.ONE));
+        nextSequenceSourcePort.set(packet.getSourceChannel(), nextSequenceSend.add(BigInteger.ONE));
 
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(packet.getSourcePort(),
                 packet.getSourceChannel(),
@@ -85,12 +84,12 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(
                 packet.getTimeoutHeight().getRevisionHeight().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockHeight())
-                                .compareTo(packet.getTimeoutHeight().getRevisionHeight()) < 0,
+                        .compareTo(packet.getTimeoutHeight().getRevisionHeight()) < 0,
                 "block height >= packet timeout height");
         Context.require(
                 packet.getTimeoutTimestamp().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockTimestamp())
-                                .compareTo(packet.getTimeoutTimestamp()) < 0,
+                        .compareTo(packet.getTimeoutTimestamp()) < 0,
                 "block timestamp >= packet timeout timestamp");
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
@@ -112,20 +111,21 @@ public class IBCPacket extends IBCChannelHandshake {
                     "packet sequence already has been received");
             packetReceipt.set(packet.getSequence(), BigInteger.ONE);
         } else if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
-            BigInteger nextSequenceRecv = nextSequenceReceives.at(packet.getDestinationPort())
-                    .getOrDefault(packet.getDestinationChannel(), BigInteger.ZERO);
+            DictDB<String, BigInteger> nextSequenceDestinationPort =
+                    nextSequenceReceives.at(packet.getDestinationPort());
+            BigInteger nextSequenceRecv = nextSequenceDestinationPort.getOrDefault(packet.getDestinationChannel()
+                    , BigInteger.ZERO);
             Context.require(
                     nextSequenceRecv.equals(packet.getSequence()),
                     "packet sequence != next receive sequence");
-            nextSequenceReceives.at(packet.getDestinationPort()).set(packet.getDestinationChannel(),
-                    nextSequenceRecv.add(BigInteger.ONE));
+            nextSequenceDestinationPort.set(packet.getDestinationChannel(), nextSequenceRecv.add(BigInteger.ONE));
         } else {
             Context.revert("unknown ordering type");
         }
     }
 
     public void writeAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement) {
+                                     byte[] acknowledgement) {
         Context.require(acknowledgement.length > 0, "acknowledgement cannot be empty");
 
         Channel channel = Channel.decode(channels.at(destinationPortId).get(destinationChannel));
@@ -173,14 +173,14 @@ public class IBCPacket extends IBCChannelHandshake {
                 packetAckPath,
                 IBCCommitment.sha256(acknowledgement));
 
-        if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
-            BigInteger nextSequenceAck = nextSequenceAcknowledgements.at(packet.getSourcePort())
-                    .get(packet.getSourceChannel());
+        if (channel.getOrdering() == Channel.Order.ORDER_ORDERED)  {
+            DictDB<String, BigInteger> nextSequenceAckSourcePort =
+                    nextSequenceAcknowledgements.at(packet.getSourcePort());
+            BigInteger nextSequenceAck = nextSequenceAckSourcePort.get(packet.getSourceChannel());
             Context.require(
                     nextSequenceAck.equals(packet.getSequence()),
                     "packet sequence != next ack sequence");
-            nextSequenceAcknowledgements.at(packet.getSourcePort()).set(packet.getSourceChannel(),
-                    nextSequenceAck.add(BigInteger.ONE));
+            nextSequenceAckSourcePort.set(packet.getSourceChannel(), nextSequenceAck.add(BigInteger.ONE));
         }
 
         commitments.set(packetCommitmentKey, null);
