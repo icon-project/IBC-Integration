@@ -9,7 +9,6 @@ import ibc.ics24.host.IBCCommitment;
 import ibc.ics24.host.IBCHost;
 import score.Address;
 import score.Context;
-import score.annotation.External;
 
 import java.math.BigInteger;
 
@@ -23,7 +22,6 @@ public class IBCClient extends IBCHost implements IIBCClient {
      * @param clientType  Type of client
      * @param lightClient Light client contract address
      */
-    @External
     public void registerClient(String clientType, Address lightClient) {
         Context.require(clientRegistry.get(clientType) == null, "Already registered.");
         clientRegistry.set(clientType, lightClient);
