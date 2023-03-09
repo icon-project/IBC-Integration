@@ -9,14 +9,14 @@ public class Counterparty {
 
     // identifies the client on the counterparty chain associated with a given
     // connection.
-    public String clientId;
+    private String clientId;
 
     // identifies the connection end on the counterparty chain associated with a
     // given connection.
-    public String connectionId;
+    private String connectionId;
 
     // commitment merkle prefix of the counterparty chain.
-    public MerklePrefix prefix;
+    private MerklePrefix prefix;
 
     public static void writeObject(ObjectWriter writer, Counterparty obj) {
         obj.writeObject(writer);
@@ -28,7 +28,7 @@ public class Counterparty {
         obj.clientId = reader.readString();
         obj.connectionId = reader.readString();
         obj.prefix = new MerklePrefix();
-        obj.prefix.keyPrefix = reader.readString();
+        obj.prefix.setKeyPrefix(reader.readString());
         reader.end();
 
         return obj;
@@ -38,7 +38,7 @@ public class Counterparty {
         writer.beginList(3);
         writer.write(this.clientId);
         writer.write(this.connectionId);
-        writer.write(this.prefix.keyPrefix);
+        writer.write(this.prefix.getKeyPrefix());
         writer.end();
     }
 

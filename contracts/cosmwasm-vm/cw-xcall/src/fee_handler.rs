@@ -1,9 +1,4 @@
-use cosmwasm_std::{Coin, QuerierWrapper};
-use cosmwasm_std::{
-    CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult, Storage,
-};
-
-use crate::{error::ContractError, state::CwCallService, types::address::Address};
+use super::*;
 
 impl<'a> CwCallService<'a> {
     pub fn set_protocol_feehandler(
@@ -40,7 +35,9 @@ impl<'a> CwCallService<'a> {
     pub fn get_protocol_feehandler(&self, deps: Deps) -> Address {
         self.query_feehandler(deps.storage).unwrap()
     }
+}
 
+impl<'a> CwCallService<'a> {
     fn add_feehandler(
         &self,
         store: &mut dyn Storage,
@@ -52,7 +49,7 @@ impl<'a> CwCallService<'a> {
         }
     }
 
-    pub fn query_feehandler(&self, store: &dyn Storage) -> Result<Address, ContractError> {
+    fn query_feehandler(&self, store: &dyn Storage) -> Result<Address, ContractError> {
         match self.fee_handler().load(store) {
             Ok(address) => Ok(address),
             Err(error) => Err(ContractError::Std(error)),

@@ -1,7 +1,7 @@
 package ibc.icon.structs.proto.core.commitment;
 
 public class MerklePrefix {
-    public String keyPrefix;
+    private String keyPrefix;
 
     public String getKeyPrefix() {
         return keyPrefix;
