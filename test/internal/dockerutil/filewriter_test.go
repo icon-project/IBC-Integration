@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
+	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 
 	volumetypes "github.com/docker/docker/api/types/volume"
 	ibctest "github.com/strangelove-ventures/interchaintest/v6"

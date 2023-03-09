@@ -1,0 +1,9 @@
+rootProject.name = 'javascore'
+include(
+        'score-util',
+        'lib',
+        'test-lib',
+        'ibc',
+        // 'xcall',
+        // 'lightclients:archway',
+)

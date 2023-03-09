@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use common::rlp::{Decodable, Encodable};
+use crate::error::ContractError;
 
 use super::*;
 
@@ -49,33 +50,46 @@ impl CallServiceMessageRequest {
     }
 }
 
-#[cw_serde]
-pub struct CSMessageRequests(HashMap<u128, CallServiceMessageRequest>);
-
-impl Default for CSMessageRequests {
-    fn default() -> Self {
-        Self::new()
+impl Encodable for CallServiceMessageRequest {
+    fn rlp_append(&self, stream: &mut rlp::RlpStream) {
+        stream
+            .begin_list(5)
+            .append(&self.from)
+            .append(&self.to)
+            .append(&self.sequence_no)
+            .append(&self.rollback)
+            .append(&self.data);
     }
 }
 
-impl CSMessageRequests {
-    pub fn new() -> Self {
-        Self(HashMap::new())
+impl Decodable for CallServiceMessageRequest {
+    fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+        Ok(Self {
+            from: rlp.val_at(0)?,
+            to: rlp.val_at(1)?,
+            sequence_no: rlp.val_at(2)?,
+            rollback: rlp.val_at(3)?,
+            data: rlp.val_at(4)?,
+        })
     }
+}
 
-    pub fn add(&mut self, sequence_no: u128, cs_message_request: CallServiceMessageRequest) {
-        self.0.insert(sequence_no, cs_message_request);
+impl TryFrom<&Vec<u8>> for CallServiceMessageRequest {
+    type Error = ContractError;
+    fn try_from(value: &Vec<u8>) -> Result<Self, Self::Error> {
+        let rlp = rlp::Rlp::new(value as &[u8]);
+        Self::decode(&rlp).map_err(|error| ContractError::DecodeFailed {
+            error: error.to_string(),
+        })
     }
+}
 
-    pub fn remove(&mut self, sequence_no: u128) {
-        self.0.remove(&sequence_no);
-    }
-
-    pub fn contains(&self, sequence_no: u128) -> bool {
-        self.0.contains_key(&sequence_no)
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+impl TryFrom<&[u8]> for CallServiceMessageRequest {
+    type Error = ContractError;
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        let rlp = rlp::Rlp::new(value);
+        Self::decode(&rlp).map_err(|error| ContractError::DecodeFailed {
+            error: error.to_string(),
+        })
     }
 }

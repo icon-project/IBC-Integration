@@ -2,6 +2,7 @@ package icon
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -11,9 +12,11 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
-	"github.com/icon-project/IBC-Integration/test/internal/blockdb"
-	"github.com/icon-project/IBC-Integration/test/internal/dockerutil"
-	"github.com/strangelove-ventures/ibctest/ibc"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
+	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
+	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
+	"github.com/strangelove-ventures/interchaintest/v6/ibc"
+	"github.com/strangelove-ventures/interchaintest/v6/testutil"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -204,8 +207,8 @@ func (c *IconChain) HomeDir() string {
 }
 
 // CreateKey creates a test key in the "user" node (either the first fullnode or the first validator if no fullnodes).
-func (c *IconChain) CreateKey(ctx context.Context, keyName string) error {
-	panic("not implemented") // TODO: Implement
+func (c *IconChain) CreateKey(ctx context.Context, password string) error {
+	return c.getFullNode().CreateKey(ctx, password)
 }
 
 // RecoverKey recovers an existing user from a given mnemonic.
@@ -215,7 +218,11 @@ func (c *IconChain) RecoverKey(ctx context.Context, name string, mnemonic string
 
 // GetAddress fetches the bech32 address for a test key on the "user" node (either the first fullnode or the first validator if no fullnodes).
 func (c *IconChain) GetAddress(ctx context.Context, keyName string) ([]byte, error) {
-	panic("not implemented") // TODO: Implement
+	addrInByte, err := json.Marshal(keyName)
+	if err != nil {
+		return nil, err
+	}
+	return addrInByte, nil
 }
 
 // SendFunds sends funds to a wallet from a user account.
@@ -224,32 +231,7 @@ func (c *IconChain) SendFunds(ctx context.Context, keyName string, amount ibc.Wa
 }
 
 // SendIBCTransfer sends an IBC transfer returning a transaction or an error if the transfer failed.
-func (c *IconChain) SendIBCTransfer(ctx context.Context, channelID string, keyName string, amount ibc.WalletAmount, timeout *ibc.IBCTimeout) (ibc.Tx, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// UpgradeProposal submits a software-upgrade proposal to the chain.
-func (c *IconChain) UpgradeProposal(ctx context.Context, keyName string, prop ibc.SoftwareUpgradeProposal) (ibc.SoftwareUpgradeTx, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// InstantiateContract takes a file path to smart contract and initialization message and returns the instantiated contract address.
-func (c *IconChain) InstantiateContract(ctx context.Context, keyName string, amount ibc.WalletAmount, fileName string, initMessage string, needsNoAdminFlag bool) (string, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// ExecuteContract executes a contract transaction with a message using it's address.
-func (c *IconChain) ExecuteContract(ctx context.Context, keyName string, contractAddress string, message string) error {
-	panic("not implemented") // TODO: Implement
-}
-
-// DumpContractState dumps the state of a contract at a block height.
-func (c *IconChain) DumpContractState(ctx context.Context, contractAddress string, height int64) (*ibc.DumpContractStateResponse, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// CreatePool creates a balancer pool.
-func (c *IconChain) CreatePool(ctx context.Context, keyName string, contractAddress string, swapFee float64, exitFee float64, assets []ibc.WalletAmount) error {
+func (c *IconChain) SendIBCTransfer(ctx context.Context, channelID string, keyName string, amount ibc.WalletAmount, options ibc.TransferOptions) (ibc.Tx, error) {
 	panic("not implemented") // TODO: Implement
 }
 
@@ -280,6 +262,26 @@ func (c *IconChain) Timeouts(ctx context.Context, height uint64) ([]ibc.PacketTi
 	panic("not implemented") // TODO: Implement
 }
 
+// BuildRelayerWallet will return a chain-specific wallet populated with the mnemonic so that the wallet can
+// be restored in the relayer node using the mnemonic. After it is built, that address is included in
+// genesis with some funds.
+func (c *IconChain) BuildRelayerWallet(ctx context.Context, keyName string) (ibc.Wallet, error) {
+	return c.BuildWallet(ctx, keyName, "")
+}
+
+func (c *IconChain) BuildWallet(ctx context.Context, keyName string, mnemonic string) (ibc.Wallet, error) {
+	if err := c.CreateKey(ctx, keyName); err != nil {
+		return nil, fmt.Errorf("failed to create key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
+	}
+	addr := c.getFullNode().Address
+	addrBytes, err := c.GetAddress(ctx, addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account address for key %q on chain %s: %w", keyName, c.cfg.Name, err)
+	}
+
+	return NewWallet(keyName, addrBytes, mnemonic, c.cfg), nil
+}
+
 func (c *IconChain) getFullNode() *IconNode {
 	c.findTxMu.Lock()
 	defer c.findTxMu.Unlock()
@@ -293,4 +295,25 @@ func (c *IconChain) getFullNode() *IconNode {
 func (c *IconChain) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
 	fn := c.getFullNode()
 	return fn.FindTxs(ctx, height)
+}
+
+// DeployContract takes a file path to smart contract and initialization message and returns the instantiated contract/SCORE address.
+func (c *IconChain) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
+	return c.getFullNode().DeployContract(ctx, scorePath, keystorePath, initMessage)
+}
+
+func (c *IconChain) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
+	return c.getFullNode().QueryContract(ctx, scoreAddress, methodName, params)
+}
+
+func (c *IconChain) GetTransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
+	return c.getFullNode().TransactionResult(ctx, hash)
+}
+
+func (c *IconChain) WaitForBlocks(ctx context.Context, numBlocks int) {
+	testutil.WaitForBlocks(ctx, numBlocks, c.getFullNode())
+}
+
+func (c *IconChain) ExecuteContract(ctx context.Context, scoreAddress, keystorePath, methodName, params string) (string, error) {
+	return c.getFullNode().ExecuteContract(ctx, scoreAddress, methodName, keystorePath, params)
 }
