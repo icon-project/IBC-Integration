@@ -1,7 +1,5 @@
 package ibc.ics25.handler;
 
-import java.math.BigInteger;
-
 import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
@@ -9,6 +7,8 @@ import ibc.icon.structs.proto.core.channel.Packet;
 import score.Context;
 import score.annotation.EventLog;
 import score.annotation.External;
+
+import java.math.BigInteger;
 
 public abstract class IBCHandlerPacket extends IBCHandlerChannel {
     @EventLog
@@ -21,7 +21,7 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
 
     @EventLog
     public void WriteAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement) {
+                                     byte[] acknowledgement) {
     }
 
     @EventLog
@@ -65,7 +65,7 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
             BigInteger sequence,
             byte[] acknowledgement) {
         Context.require(authenticateCapability(channelCapabilityPath(destinationPortId,
-                destinationChannel)),
+                        destinationChannel)),
                 "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId
                         + "and channel: " + destinationChannel);
         super.writeAcknowledgement(

@@ -102,7 +102,8 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
                     "connection state is in INIT but the provided version is not supported");
         } else {
             Context.require(connection.getVersions().length == 1 && connection.getVersions()[0].equals(msg.version),
-                    "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
+                    "connection state is in TRYOPEN but the provided version is not set in the previous connection " +
+                            "versions");
         }
 
         // TODO: investigate need to self client validation

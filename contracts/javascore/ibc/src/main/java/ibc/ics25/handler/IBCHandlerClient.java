@@ -13,8 +13,8 @@ public abstract class IBCHandlerClient extends IBCPacket {
     }
 
     /**
-     * @dev createClient creates a new client state and populates it with a given
-     *      consensus state
+     * createClient creates a new client state and populates it with a given
+     * consensus state
      */
     @External
     public String createClient(MsgCreateClient msg) {
@@ -25,8 +25,8 @@ public abstract class IBCHandlerClient extends IBCPacket {
     }
 
     /**
-     * @dev updateClient updates the consensus state and the state root from a
-     *      provided header
+     * updateClient updates the consensus state and the state root from a
+     * provided header
      */
     @External
     public void updateClient(MsgUpdateClient msg) {

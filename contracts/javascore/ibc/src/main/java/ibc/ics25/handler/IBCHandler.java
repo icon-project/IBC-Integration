@@ -1,10 +1,10 @@
 package ibc.ics25.handler;
 
-import java.math.BigInteger;
-
 import score.Address;
 import score.Context;
 import score.annotation.External;
+
+import java.math.BigInteger;
 
 public class IBCHandler extends IBCHandlerPacket {
 
@@ -19,7 +19,7 @@ public class IBCHandler extends IBCHandlerPacket {
     }
 
     /**
-     * @dev registerClient registers a new client type into the client registry
+     * registerClient registers a new client type into the client registry
      */
     public void registerClient(String clientType, Address client) {
         onlyOwner();
@@ -27,8 +27,8 @@ public class IBCHandler extends IBCHandlerPacket {
     }
 
     /**
-     * @dev bindPort binds to an unallocated port, failing if the port has already
-     *      been allocated.
+     * bindPort binds to an unallocated port, failing if the port has already
+     * been allocated.
      */
     public void bindPort(String portId, Address moduleAddress) {
         onlyOwner();
@@ -36,7 +36,7 @@ public class IBCHandler extends IBCHandlerPacket {
     }
 
     /**
-     * @dev setExpectedTimePerBlock sets expected time per block.
+     * setExpectedTimePerBlock sets expected time per block.
      */
     public void setExpectedTimePerBlock(BigInteger expectedTimePerBlock) {
         onlyOwner();

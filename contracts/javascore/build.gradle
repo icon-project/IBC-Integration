@@ -17,13 +17,6 @@ subprojects {
     apply plugin: 'foundation.icon.javaee'
     apply plugin: 'jacoco'
 
-    sourceSets {
-         main {
-            java {
-				srcDir 'build/generated/sources/annotationProcessor/java/main'
-			}
-		}
-    }
     java {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

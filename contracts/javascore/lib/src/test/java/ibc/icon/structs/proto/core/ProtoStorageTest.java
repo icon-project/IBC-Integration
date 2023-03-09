@@ -132,7 +132,7 @@ public class ProtoStorageTest extends TestBase {
         channel.updateState(Channel.State.STATE_TRYOPEN);
         channel.updateOrder(Channel.Order.ORDER_ORDERED);
         channel.setCounterparty(counterparty);
-        channel.setConnectionHops(new String[] { "Aerw", "were" });
+        channel.setConnectionHops(new String[]{"Aerw", "were"});
         channel.setVersion("version");
 
         // Act

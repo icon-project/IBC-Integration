@@ -1,24 +1,12 @@
 package ibc.ics25.handler;
 
-import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-
-import java.math.BigInteger;
-
-import org.mockito.ArgumentCaptor;
-
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
+import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.structs.messages.*;
 import ibc.icon.structs.proto.core.channel.Channel;
@@ -30,6 +18,13 @@ import ibc.icon.structs.proto.core.connection.Counterparty;
 import ibc.icon.structs.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
+import org.mockito.ArgumentCaptor;
+
+import java.math.BigInteger;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 public class IBCHandlerTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();
@@ -127,7 +122,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         ConsensusStateUpdate update1 = new ConsensusStateUpdate(consensusStateCommitment1, consensusHeight1);
         ConsensusStateUpdate update2 = new ConsensusStateUpdate(consensusStateCommitment2, consensusHeight2);
-        ConsensusStateUpdate[] updates = new ConsensusStateUpdate[] { update1, update2 };
+        ConsensusStateUpdate[] updates = new ConsensusStateUpdate[]{update1, update2};
         UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, updates, true);
 
         when(lightClient.mock.updateClient(msg.clientId, msg.clientMessage)).thenReturn(response);
@@ -165,7 +160,7 @@ public class IBCHandlerTestBase extends TestBase {
         msg.delayPeriod = delayPeriod;
         msg.clientId = clientId;
         msg.clientStateBytes = new byte[0];
-        msg.counterpartyVersions = new Version[] { baseVersion };
+        msg.counterpartyVersions = new Version[]{baseVersion};
         msg.proofInit = new byte[0];
         msg.proofClient = new byte[0];
         msg.proofConsensus = new byte[0];
@@ -224,7 +219,7 @@ public class IBCHandlerTestBase extends TestBase {
         msg.channel = new Channel();
         msg.channel.updateOrder(Channel.Order.ORDER_UNORDERED);
         msg.channel.updateState(Channel.State.STATE_INIT);
-        msg.channel.setConnectionHops(new String[] { connectionId });
+        msg.channel.setConnectionHops(new String[]{connectionId});
         msg.channel.setCounterparty(new ibc.icon.structs.proto.core.channel.Counterparty());
         msg.channel.getCounterparty().setPortId(counterPartyPortId);
         msg.channel.getCounterparty().setChannelId("");
@@ -254,7 +249,7 @@ public class IBCHandlerTestBase extends TestBase {
         msg.channel = new Channel();
         msg.channel.updateOrder(Channel.Order.ORDER_UNORDERED);
         msg.channel.updateState(Channel.State.STATE_TRYOPEN);
-        msg.channel.setConnectionHops(new String[] { connectionId });
+        msg.channel.setConnectionHops(new String[]{connectionId});
         msg.channel.setCounterparty(new ibc.icon.structs.proto.core.channel.Counterparty());
         msg.channel.getCounterparty().setPortId(counterPartyPortId);
         msg.channel.getCounterparty().setChannelId(counterPartyChannelId);

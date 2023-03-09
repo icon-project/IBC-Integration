@@ -1,12 +1,7 @@
 package ibc.ics25.handler;
 
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
-import ibc.icon.structs.messages.MsgChannelCloseConfirm;
-import ibc.icon.structs.messages.MsgChannelCloseInit;
-import ibc.icon.structs.messages.MsgChannelOpenAck;
-import ibc.icon.structs.messages.MsgChannelOpenConfirm;
-import ibc.icon.structs.messages.MsgChannelOpenInit;
-import ibc.icon.structs.messages.MsgChannelOpenTry;
+import ibc.icon.structs.messages.*;
 import score.annotation.EventLog;
 import score.annotation.External;
 
