@@ -1,15 +1,36 @@
 package ibc.icon.structs.messages;
 
-import ibc.icon.structs.proto.core.client.Height;
+import icon.proto.core.client.Height;
 
 public class ConsensusStateUpdate {
-    public ConsensusStateUpdate(byte[] consensusStateCommitment, Height height) {
+    public ConsensusStateUpdate(byte[] consensusStateCommitment, byte[] height) {
         this.consensusStateCommitment = consensusStateCommitment;
         this.height = height;
     }
 
     // commitment for updated consensusState
-    public byte[] consensusStateCommitment;
+    private byte[] consensusStateCommitment;
     // updated height
-    public Height height;
+    private byte[] height;
+
+    public byte[] getConsensusStateCommitment() {
+        return consensusStateCommitment;
+    }
+
+    public void setConsensusStateCommitment(byte[] consensusStateCommitment) {
+        this.consensusStateCommitment = consensusStateCommitment;
+    }
+
+    public byte[] getHeightRaw() {
+        return height;
+    }
+
+    public Height getHeight() {
+        return Height.decode(height);
+    }
+
+    public void setHeight(byte[] height) {
+        this.height = height;
+    }
+
 }

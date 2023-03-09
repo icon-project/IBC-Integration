@@ -24,29 +24,23 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.commitment.MerklePrefix;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
-import ibc.icon.structs.proto.core.connection.Version;
-import ibc.icon.structs.proto.lightclient.tendermint.BlockID;
-import ibc.icon.structs.proto.lightclient.tendermint.ClientState;
-import ibc.icon.structs.proto.lightclient.tendermint.Commit;
-import ibc.icon.structs.proto.lightclient.tendermint.CommitSig;
-import ibc.icon.structs.proto.lightclient.tendermint.Consensus;
-import ibc.icon.structs.proto.lightclient.tendermint.ConsensusState;
-import ibc.icon.structs.proto.lightclient.tendermint.Duration;
-import ibc.icon.structs.proto.lightclient.tendermint.Fraction;
-import ibc.icon.structs.proto.lightclient.tendermint.LightHeader;
-import ibc.icon.structs.proto.lightclient.tendermint.MerkleRoot;
-import ibc.icon.structs.proto.lightclient.tendermint.PartSetHeader;
-import ibc.icon.structs.proto.lightclient.tendermint.PublicKey;
-import ibc.icon.structs.proto.lightclient.tendermint.SignedHeader;
-import ibc.icon.structs.proto.lightclient.tendermint.SignedMsgType;
-import ibc.icon.structs.proto.lightclient.tendermint.Timestamp;
-import ibc.icon.structs.proto.lightclient.tendermint.TmHeader;
-import ibc.icon.structs.proto.lightclient.tendermint.Validator;
-import ibc.icon.structs.proto.lightclient.tendermint.ValidatorSet;
+import icon.proto.clients.tendermint.BlockID;
+import icon.proto.clients.tendermint.ClientState;
+import icon.proto.clients.tendermint.Commit;
+import icon.proto.clients.tendermint.CommitSig;
+import icon.proto.clients.tendermint.Consensus;
+import icon.proto.clients.tendermint.ConsensusState;
+import icon.proto.clients.tendermint.Duration;
+import icon.proto.clients.tendermint.Fraction;
+import icon.proto.clients.tendermint.LightHeader;
+import icon.proto.clients.tendermint.MerkleRoot;
+import icon.proto.clients.tendermint.PartSetHeader;
+import icon.proto.clients.tendermint.PublicKey;
+import icon.proto.clients.tendermint.SignedHeader;
+import icon.proto.clients.tendermint.Timestamp;
+import icon.proto.clients.tendermint.TmHeader;
+import icon.proto.clients.tendermint.Validator;
+import icon.proto.clients.tendermint.ValidatorSet;
 import score.Context;
 import foundation.icon.ee.util.Crypto;
 
@@ -62,15 +56,28 @@ public class LightClientTestBase extends TestBase {
     private static final DateTimeFormatter INSTANT_FORMAT = DateTimeFormatter.ISO_INSTANT;
     private static final BigInteger day = BigInteger.valueOf(86400);
 
-    public static Fraction trustLevel = new Fraction(BigInteger.TWO, BigInteger.valueOf(3));
-    private static Duration trustingPeriod = new Duration(day.multiply(BigInteger.valueOf(1000)), BigInteger.ZERO);
-    private static Duration unbondingPeriod = null;
-    private static Duration maxClockDrift = new Duration(BigInteger.valueOf(10), BigInteger.ZERO);
-    private static BigInteger frozenHeight = null;
+    public static Fraction trustLevel;
+    private static Duration trustingPeriod;
+    private static Duration maxClockDrift;
     private static boolean allowUpdateAfterExpiry = false;
     private static boolean allowUpdateAfterMisbehaviour = false;
     protected final MockedStatic<Context> contextMock = Mockito.mockStatic(Context.class, Mockito.CALLS_REAL_METHODS);
     protected String blockSetPath = "src/test/java/ibc/tendermint/data/simple/";
+
+    static {
+        trustLevel = new Fraction();
+        trustLevel.setNumerator(BigInteger.TWO);
+        trustLevel.setDenominator(BigInteger.valueOf(3));
+
+        trustingPeriod = new Duration();
+        trustingPeriod.setSeconds(day.multiply(BigInteger.valueOf(10000)));
+        trustingPeriod.setNanos(BigInteger.ZERO);
+
+        maxClockDrift = new Duration();
+        maxClockDrift.setSeconds(BigInteger.TEN);
+        maxClockDrift.setNanos(BigInteger.ZERO);
+
+    }
 
     private String getCommitPath(int order) {
         return blockSetPath + "commit." + order + ".json";
@@ -126,39 +133,41 @@ public class LightClientTestBase extends TestBase {
 
     private void initializeClient(int blockOrder) throws Exception {
         TmHeader tmHeader = new TmHeader();
-        tmHeader.signedHeader = parseSignedHeader(blockOrder);
-        tmHeader.validatorSet = parseValidatorSet(blockOrder);
+        tmHeader.setSignedHeader(parseSignedHeader(blockOrder));
+        tmHeader.setValidatorSet(parseValidatorSet(blockOrder));
 
         ClientState clientState = new ClientState();
-        clientState.chainId = tmHeader.signedHeader.header.chainId;
-        clientState.trustLevel = trustLevel;
-        clientState.trustingPeriod = trustingPeriod;
-        clientState.unbondingPeriod = unbondingPeriod;
-        clientState.maxClockDrift = maxClockDrift;
-        clientState.frozenHeight = frozenHeight;
-        clientState.latestHeight = tmHeader.signedHeader.header.height;
-        clientState.allowUpdateAfterExpiry = allowUpdateAfterExpiry;
-        clientState.allowUpdateAfterMisbehaviour = allowUpdateAfterMisbehaviour;
+        clientState.setChainId(tmHeader.getSignedHeader().getHeader().getChainId());
+        clientState.setTrustLevel(trustLevel);
+        clientState.setTrustingPeriod(trustingPeriod);
+        clientState.setMaxClockDrift(maxClockDrift);
+        clientState.setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight());
+        clientState.setAllowUpdateAfterExpiry(allowUpdateAfterExpiry);
+        clientState.setAllowUpdateAfterMisbehaviour(allowUpdateAfterMisbehaviour);
 
         ConsensusState consensusState = new ConsensusState();
-        consensusState.timestamp = tmHeader.signedHeader.header.time;
-        consensusState.root = new MerkleRoot(tmHeader.signedHeader.header.appHash);
-        consensusState.nextValidatorsHash = tmHeader.signedHeader.header.nextValidatorsHash;
+        consensusState.setTimestamp(tmHeader.getSignedHeader().getHeader().getTime());
+        MerkleRoot root = new MerkleRoot();
+        root.setHash(tmHeader.getSignedHeader().getHeader().getAppHash());
+        consensusState.setRoot(root);
+        consensusState.setNextValidatorsHash(tmHeader.getSignedHeader().getHeader().getNextValidatorsHash());
 
-        client.invoke(owner, "createClient", clientId, clientState.toBytes(), consensusState.toBytes());
+        client.invoke(owner, "createClient", clientId, clientState.encode(), consensusState.encode());
     }
 
     private void updateClient(int blockOrder, int referenceBlock) throws Exception {
         TmHeader tmHeader = createHeader(blockOrder, referenceBlock);
-        client.invoke(owner, "updateClient", clientId, tmHeader.toBytes());
+        printBytes(Crypto.hash("sha-256", tmHeader.encode()));
+        printBytes(Crypto.hash("sha-256", TmHeader.decode(tmHeader.encode()).encode()));
+        client.invoke(owner, "updateClient", clientId, tmHeader.encode());
     }
 
     private TmHeader createHeader(int blockOrder, int referenceBlock) throws Exception {
         TmHeader tmHeader = new TmHeader();
-        tmHeader.signedHeader = parseSignedHeader(blockOrder);
-        tmHeader.validatorSet = parseValidatorSet(blockOrder);
-        tmHeader.trustedHeight = parseSignedHeader(referenceBlock).header.height;
-        tmHeader.trustedValidators = parseValidatorSet(referenceBlock);
+        tmHeader.setSignedHeader(parseSignedHeader(blockOrder));
+        tmHeader.setValidatorSet(parseValidatorSet(blockOrder));
+        tmHeader.setTrustedHeight(parseSignedHeader(referenceBlock).getHeader().getHeight());
+        tmHeader.setTrustedValidators(parseValidatorSet(referenceBlock));
         return tmHeader;
 
     }
@@ -173,38 +182,38 @@ public class LightClientTestBase extends TestBase {
 
         LightHeader lightHeader = new LightHeader();
         JsonNode jsonHeader = json.get("signed_header").get("header");
-        lightHeader.version = new Consensus();
-        lightHeader.version.block = BigInteger.valueOf(jsonHeader.get("version").get("block").asInt());
+        Consensus version = new Consensus();
+        version.setBlock(BigInteger.valueOf(jsonHeader.get("version").get("block").asInt()));
+        lightHeader.setVersion(version);
+        lightHeader.setChainId(jsonHeader.get("chain_id").asText());
 
-        lightHeader.chainId = jsonHeader.get("chain_id").asText();
-
-        lightHeader.height = BigInteger.valueOf(jsonHeader.get("height").asInt());
-        lightHeader.time = jsonToTimestamp(jsonHeader.get("time"));
-        lightHeader.lastBlockId = parseBlockId(jsonHeader.get("last_block_id"));
-        lightHeader.lastCommitHash = jsonToBytes(jsonHeader.get("last_commit_hash"));
-        lightHeader.dataHash = jsonToBytes(jsonHeader.get("data_hash"));
-        lightHeader.validatorsHash = jsonToBytes(jsonHeader.get("validators_hash"));
-        lightHeader.nextValidatorsHash = jsonToBytes(jsonHeader.get("next_validators_hash"));
-        lightHeader.consensusHash = jsonToBytes(jsonHeader.get("consensus_hash"));
-        lightHeader.appHash = jsonToBytes(jsonHeader.get("app_hash"));
-        lightHeader.lastResultsHash = jsonToBytes(jsonHeader.get("last_results_hash"));
-        lightHeader.evidenceHash = jsonToBytes(jsonHeader.get("evidence_hash"));
-        lightHeader.proposerAddress = jsonToBytes(jsonHeader.get("proposer_address"));
+        lightHeader.setHeight(BigInteger.valueOf(jsonHeader.get("height").asInt()));
+        lightHeader.setTime(jsonToTimestamp(jsonHeader.get("time")));
+        lightHeader.setLastBlockId(parseBlockId(jsonHeader.get("last_block_id")));
+        lightHeader.setLastCommitHash(jsonToBytes(jsonHeader.get("last_commit_hash")));
+        lightHeader.setDataHash(jsonToBytes(jsonHeader.get("data_hash")));
+        lightHeader.setValidatorsHash(jsonToBytes(jsonHeader.get("validators_hash")));
+        lightHeader.setNextValidatorsHash(jsonToBytes(jsonHeader.get("next_validators_hash")));
+        lightHeader.setConsensusHash(jsonToBytes(jsonHeader.get("consensus_hash")));
+        lightHeader.setAppHash(jsonToBytes(jsonHeader.get("app_hash")));
+        lightHeader.setLastResultsHash(jsonToBytes(jsonHeader.get("last_results_hash")));
+        lightHeader.setEvidenceHash(jsonToBytes(jsonHeader.get("evidence_hash")));
+        lightHeader.setProposerAddress(jsonToBytes(jsonHeader.get("proposer_address")));
 
         Commit commit = new Commit();
         JsonNode jsonCommit = json.get("signed_header").get("commit");
-        commit.height = BigInteger.valueOf(jsonCommit.get("height").asInt());
+        commit.setHeight(BigInteger.valueOf(jsonCommit.get("height").asInt()));
         BigInteger round = BigInteger.valueOf(jsonCommit.get("round").asInt());
         if (!round.equals(BigInteger.ZERO)) {
-            commit.round = round;
+            commit.setRound(round);
         }
 
-        commit.blockId = parseBlockId(jsonCommit.get("block_id"));
-        commit.signatures = parseCommitSig(jsonCommit.get("signatures"));
+        commit.setBlockId(parseBlockId(jsonCommit.get("block_id")));
+        commit.setSignatures(parseCommitSig(jsonCommit.get("signatures")));
 
         SignedHeader signedHeader = new SignedHeader();
-        signedHeader.header = lightHeader;
-        signedHeader.commit = commit;
+        signedHeader.setHeader(lightHeader);
+        signedHeader.setCommit(commit);
 
         return signedHeader;
     }
@@ -216,51 +225,49 @@ public class LightClientTestBase extends TestBase {
         String content = new String(Files.readAllBytes(Paths.get(file.toURI())));
         JsonNode json = mapper.readTree(content);
         ValidatorSet validatorSet = new ValidatorSet();
-        validatorSet.proposer = null;
-        validatorSet.totalVotingPower = BigInteger.ZERO;
+        validatorSet.setTotalVotingPower(BigInteger.ZERO);
         List<Validator> validators = new ArrayList<>();
         json.get("validators").elements().forEachRemaining((node) -> {
             Validator validator = new Validator();
-            validator.address = hexStringToByteArray(node.get("address").asText());
+            validator.setAddress(hexStringToByteArray(node.get("address").asText()));
             PublicKey publicKey = new PublicKey();
             // TODO: support more key types
-            publicKey.ed25519 = Base64.getDecoder().decode(node.get("pub_key").get("value").asText());
-            validator.pubKey = publicKey;
-            validator.votingPower = BigInteger.valueOf(node.get("voting_power").asLong());
-            validator.proposerPriority = BigInteger.valueOf(node.get("proposer_priority").asLong());
+            publicKey.setEd25519(Base64.getDecoder().decode(node.get("pub_key").get("value").asText()));
+            validator.setPubKey(publicKey);
+            validator.setVotingPower(BigInteger.valueOf(node.get("voting_power").asLong()));
+            validator.setProposerPriority(BigInteger.valueOf(node.get("proposer_priority").asLong()));
 
             validators.add(validator);
         });
 
-        validatorSet.validators = validators.toArray(new Validator[validators.size()]);
-
+        validatorSet.setValidators(validators);
         return validatorSet;
     }
 
     private BlockID parseBlockId(JsonNode json) {
         BlockID blockID = new BlockID();
-        blockID.hash = jsonToBytes(json.get("hash"));
-        blockID.partSetHeader = new PartSetHeader();
-        blockID.partSetHeader.hash = jsonToBytes(json.get("parts").get("hash"));
-        blockID.partSetHeader.total = BigInteger.valueOf(json.get("parts").get("total").asInt());
-
+        blockID.setHash(jsonToBytes(json.get("hash")));
+        PartSetHeader partSetHeader = new PartSetHeader();
+        partSetHeader.setHash(jsonToBytes(json.get("parts").get("hash")));
+        partSetHeader.setTotal(BigInteger.valueOf(json.get("parts").get("total").asInt()));
+        blockID.setPartSetHeader(partSetHeader);
         return blockID;
     }
 
-    private CommitSig[] parseCommitSig(JsonNode json) {
+    private List<CommitSig> parseCommitSig(JsonNode json) {
         List<CommitSig> commitSigs = new ArrayList<CommitSig>();
 
         json.elements().forEachRemaining((node) -> {
             CommitSig commitSig = new CommitSig();
-            commitSig.blockIdFlag = node.get("block_id_flag").asInt();
-            commitSig.validatorAddress = jsonToBytes(node.get("validator_address"));
-            commitSig.timestamp = jsonToTimestamp(node.get("timestamp"));
-            commitSig.signature = Base64.getDecoder().decode(node.get("signature").asText());
+            commitSig.setBlockIdFlag(node.get("block_id_flag").asInt());
+            commitSig.setValidatorAddress(jsonToBytes(node.get("validator_address")));
+            commitSig.setTimestamp(jsonToTimestamp(node.get("timestamp")));
+            commitSig.setSignature(Base64.getDecoder().decode(node.get("signature").asText()));
 
             commitSigs.add(commitSig);
         });
 
-        return commitSigs.toArray(new CommitSig[commitSigs.size()]);
+        return commitSigs;
     }
 
     private byte[] jsonToBytes(JsonNode val) {
@@ -269,8 +276,9 @@ public class LightClientTestBase extends TestBase {
 
     private Timestamp jsonToTimestamp(JsonNode val) {
         Instant time = Instant.from(INSTANT_FORMAT.parse(val.asText()));
-        Timestamp timestamp = new Timestamp(BigInteger.valueOf(time.getEpochSecond()),
-                BigInteger.valueOf(time.getNano()));
+        Timestamp timestamp = new Timestamp();
+        timestamp.setSeconds(BigInteger.valueOf(time.getEpochSecond()));
+        timestamp.setNanos(BigInteger.valueOf(time.getNano()));
 
         return timestamp;
     }
@@ -299,97 +307,3 @@ public class LightClientTestBase extends TestBase {
         System.out.println();
     }
 }
-
-// -91, 16, 62, -51, 28, 102, 85, 57, -117, 99, -56, -36, 5, 23, 29, -126, -127,
-// 116, 87, 46, -35, -14, -77, -57, 62, 91, -44, -59, -44, 122, 49, -2,
-// -105, -17, 48, 86, 122, -96, -6, 98, 84, -86, -100, -90, -127, 114, -34, -87,
-// -4, 104, -90, -45, -38, -127, -43, -86, 71, -46, -2, -103, 12, 33, 71, 46,
-// -37, -28, 2, -83, 122, -107, 48, -43, -117, 48, -28, -93, -108, 113, 63, 119,
-// 86, 122, 92, -18, -112, 35, -2, 24, 25, -4, 62, -7, 2, -65, 88, 124,
-// -29, -80, -60, 66, -104, -4, 28, 20, -102, -5, -12, -56, -103, 111, -71, 36,
-// 39, -82, 65, -28, 100, -101, -109, 76, -92, -107, -103, 27, 120, 82, -72, 85,
-// -23, -58, 86, -124, 17, 25, -45, 48, 86, 5, 109, -2, 111, -52, 31, -125, 59,
-// -43, 90, -14, 49, -62, 115, 38, 67, 37, 121, -23, -81, -82, -99, -88,
-// -23, -58, 86, -124, 17, 25, -45, 48, 86, 5, 109, -2, 111, -52, 31, -125, 59,
-// -43, 90, -14, 49, -62, 115, 38, 67, 37, 121, -23, -81, -82, -99, -88,
-// 58, -76, -80, 100, -114, -60, 100, -105, -2, -127, 0, 9, -74, -85, 41, -91,
-// -31, -119, -125, -80, -90, 21, -66, 23, 67, 5, -7, 73, 104, 72, 102, 2,
-// 39, -70, 60, 6, 120, -65, 127, 92, 21, 103, 64, 94, 69, 17, -2, 68, -76, 19,
-// 20, 104, -1, -7, 126, -25, -60, -8, -107, -85, -44, -18, -73, 109,
-// -29, -80, -60, 66, -104, -4, 28, 20, -102, -5, -12, -56, -103, 111, -71, 36,
-// 39, -82, 65, -28, 100, -101, -109, 76, -92, -107, -103, 27, 120, 82, -72, 85,
-// -29, -80, -60, 66, -104, -4, 28, 20, -102, -5, -12, -56, -103, 111, -71, 36,
-// 39, -82, 65, -28, 100, -101, -109, 76, -92, -107, -103, 27, 120, 82, -72, 85,
-// 34, 121, 80, -63, 55, 51, -126, -73, -79, 43, 42, 26, 18, -1, -39, -4, 44,
-// 74, 96, -3,
-// {
-// "version": {
-// "block":11,
-// "app": 0
-// },
-// "chain_id": "constantine-1",
-// "height": 600000,
-// "time": {
-// "seconds": 1677493076,
-// "nanos": 252368746
-// },
-// "last_block_id": {
-// "hash": [-91, 16, 62, -51, 28, 102, 85, 57, -117, 99, -56, -36, 5, 23, 29,
-// -126, -127, 116, 87, 46, -35, -14, -77, -57, 62, 91, -44, -59, -44, 122, 49,
-// -2],
-// "part_set_header": {
-// "total": 1,
-// "hash": [-105, -17, 48, 86, 122, -96, -6, 98, 84, -86, -100, -90, -127, 114,
-// -34, -87, -4, 104, -90, -45, -38, -127, -43, -86, 71, -46, -2, -103, 12, 33,
-// 71, 46]
-// }
-// },
-// "last_commit_hash": [-37, -28, 2, -83, 122, -107, 48, -43, -117, 48, -28,
-// -93, -108, 113, 63, 119, 86, 122, 92, -18, -112, 35, -2, 24, 25, -4, 62, -7,
-// 2, -65, 88, 124],
-// "data_hash": [-29, -80, -60, 66, -104, -4, 28, 20, -102, -5, -12, -56, -103,
-// 111, -71, 36, 39, -82, 65, -28, 100, -101, -109, 76, -92, -107, -103, 27,
-// 120, 82, -72, 85],
-// "validators_hash": [-23, -58, 86, -124, 17, 25, -45, 48, 86, 5, 109, -2, 111,
-// -52, 31, -125, 59, -43, 90, -14, 49, -62, 115, 38, 67, 37, 121, -23, -81,
-// -82, -99, -88],
-// "next_validators_hash": [-23, -58, 86, -124, 17, 25, -45, 48, 86, 5, 109, -2,
-// 111, -52, 31, -125, 59, -43, 90, -14, 49, -62, 115, 38, 67, 37, 121, -23,
-// -81, -82, -99, -88],
-// "consensus_hash": [58, -76, -80, 100, -114, -60, 100, -105, -2, -127, 0, 9,
-// -74, -85, 41, -91, -31, -119, -125, -80, -90, 21, -66, 23, 67, 5, -7, 73,
-// 104, 72, 102, 2],
-// "app_hash": [39, -70, 60, 6, 120, -65, 127, 92, 21, 103, 64, 94, 69, 17, -2,
-// 68, -76, 19, 20, 104, -1, -7, 126, -25, -60, -8, -107, -85, -44, -18, -73,
-// 109,],
-// "last_results_hash": [-29, -80, -60, 66, -104, -4, 28, 20, -102, -5, -12,
-// -56, -103, 111, -71, 36, 39, -82, 65, -28, 100, -101, -109, 76, -92, -107,
-// -103, 27, 120, 82, -72, 85],
-// "evidence_hash": [-29, -80, -60, 66, -104, -4, 28, 20, -102, -5, -12, -56,
-// -103, 111, -71, 36, 39, -82, 65, -28, 100, -101, -109, 76, -92, -107, -103,
-// 27, 120, 82, -72, 85],
-// "proposer_address": [34, 121, 80, -63, 55, 51, -126, -73, -79, 43, 42, 26,
-// 18, -1, -39, -4, 44, 74, 96, -3]
-// }
-
-// {
-// "type": "SIGNED_MSG_TYPE_PRECOMMIT",
-// "height": 600000,
-// "round": 0,
-// "block_id": {
-// "hash": [-40, 95, -86, -18, 29, -97, -112, 34, 11, 46, -106, -117, 109, -10,
-// -99, -63, 59, 37, -15, -23, -103, 85, 68, 54, -37, 51, -106, -13, -94, 107,
-// -26, 38],
-// "part_set_header": {
-// "total": 1,
-// "hash": [-61, 61, 75, -6, 92, 108, 97, 9, -113, 10, -8, 75, -57, 125, 69,
-// -36, 50, 77, 119, 106, -83, -110, -85, 9, 93, 13, 104, -35, -63, -13, -117,
-// -37]
-// }
-// },
-// "timestamp": {
-// "seconds": 1677493081,
-// "nanos": 280744845
-// },
-// "chain_id": "constantine-1"
-// }

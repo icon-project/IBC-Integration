@@ -4,7 +4,6 @@ import java.math.BigInteger;
 
 import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
-import ibc.icon.structs.proto.core.channel.Packet;
 
 public interface IIBCPacket {
 
@@ -15,7 +14,7 @@ public interface IIBCPacket {
      *      error
      *      is returned if one occurs.
      */
-    public void sendPacket(Packet packet);
+    public void sendPacket(byte[] packetPb);
 
     /**
      * @dev recvPacket is called by a module in order to receive & process an IBC

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.mockito.ArgumentCaptor;
 
@@ -22,13 +23,13 @@ import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.structs.messages.*;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Packet;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.core.commitment.MerklePrefix;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
-import ibc.icon.structs.proto.core.connection.Counterparty;
-import ibc.icon.structs.proto.core.connection.Version;
+import icon.proto.core.channel.Channel;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
+import icon.proto.core.connection.MerklePrefix;
+import icon.proto.core.connection.ConnectionEnd;
+import icon.proto.core.connection.Counterparty;
+import icon.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
 
@@ -65,6 +66,7 @@ public class IBCHandlerTestBase extends TestBase {
     protected String portId = "portId";
 
     protected BigInteger nextRecvId = BigInteger.ONE;
+    protected Height baseHeight = new Height();
 
     protected void setup() throws Exception {
         handler = sm.deploy(owner, IBCHandler.class);
@@ -76,7 +78,7 @@ public class IBCHandlerTestBase extends TestBase {
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
         module = new MockContract<>(IIBCModuleScoreInterface.class, IIBCModule.class, sm, owner);
 
-        when(lightClient.mock.verifyMembership(any(String.class), any(Height.class), any(BigInteger.class),
+        when(lightClient.mock.verifyMembership(any(String.class), any(byte[].class), any(BigInteger.class),
                 any(BigInteger.class),
                 any(byte[].class), any(byte[].class), any(byte[].class), any(byte[].class))).thenReturn(true);
         when(lightClient.mock.getClientState(any(String.class))).thenReturn(new byte[0]);
@@ -84,20 +86,23 @@ public class IBCHandlerTestBase extends TestBase {
         prefix = new MerklePrefix();
         prefix.setKeyPrefix("ibc".getBytes());
 
-        baseVersion.identifier = IBCConnection.v1Identifier;
-        baseVersion.features = IBCConnection.supportedV1Features;
+        baseVersion.setIdentifier(IBCConnection.v1Identifier);
+        baseVersion.setFeatures(IBCConnection.supportedV1Features);
+
+        baseHeight.setRevisionHeight(BigInteger.ONE);
+        baseHeight.setRevisionNumber(BigInteger.ONE);
     }
 
     void createClient() {
         // Arrange
         handler.invoke(owner, "registerClient", clientType, lightClient.getAddress());
         MsgCreateClient msg = new MsgCreateClient();
-        msg.clientState = new byte[0];
-        msg.consensusState = new byte[0];
-        msg.clientType = clientType;
+        msg.setClientState(new byte[0]);
+        msg.setConsensusState(new byte[0]);
+        msg.setClientType(clientType);
 
         ConsensusStateUpdate update = new ConsensusStateUpdate(new byte[0],
-                new Height(BigInteger.ZERO, BigInteger.ZERO));
+                new Height().encode());
         UpdateClientResponse response = new UpdateClientResponse(new byte[0], update, true);
         when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
                 .thenReturn(response);
@@ -113,8 +118,8 @@ public class IBCHandlerTestBase extends TestBase {
     void updateClient() {
         // Arrange
         MsgUpdateClient msg = new MsgUpdateClient();
-        msg.clientId = clientId;
-        msg.clientMessage = new byte[4];
+        msg.setClientId(clientId);
+        msg.setClientMessage(new byte[4]);
 
         byte[] clientStateCommitment = new byte[4];
         byte[] consensusStateCommitment = new byte[5];
@@ -123,11 +128,11 @@ public class IBCHandlerTestBase extends TestBase {
         consensusHeight.setRevisionHeight(BigInteger.ONE);
         consensusHeight.setRevisionNumber(BigInteger.TWO);
 
-        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight);
+        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.encode());
 
         UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, update, true);
 
-        when(lightClient.mock.updateClient(msg.clientId, msg.clientMessage)).thenReturn(response);
+        when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(response);
 
         // Act
         handler.invoke(relayer, "updateClient", msg);
@@ -141,9 +146,9 @@ public class IBCHandlerTestBase extends TestBase {
         counterparty.setPrefix(prefix);
         counterparty.setClientId(counterPartyClientId);
         counterparty.setConnectionId("");
-        msg.clientId = clientId;
-        msg.counterparty = counterparty;
-        msg.delayPeriod = delayPeriod;
+        msg.setClientId(clientId);
+        msg.setCounterparty(counterparty.encode());
+        msg.setDelayPeriod(delayPeriod);
 
         handler.invoke(module.account, "connectionOpenInit", msg);
 
@@ -155,19 +160,20 @@ public class IBCHandlerTestBase extends TestBase {
     void tryOpenConnection() {
         // Arrange
         MsgConnectionOpenTry msg = new MsgConnectionOpenTry();
-        msg.counterparty = new Counterparty();
-        msg.counterparty.setClientId(counterPartyClientId);
-        msg.counterparty.setConnectionId(counterPartyConnectionId);
-        msg.counterparty.setPrefix(prefix);
-        msg.delayPeriod = delayPeriod;
-        msg.clientId = clientId;
-        msg.clientStateBytes = new byte[0];
-        msg.counterpartyVersions = new Version[] { baseVersion };
-        msg.proofInit = new byte[0];
-        msg.proofClient = new byte[0];
-        msg.proofConsensus = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
-        msg.consensusHeight = new Height(BigInteger.ONE, BigInteger.ONE);
+        Counterparty counterparty = new Counterparty();
+        counterparty.setClientId(counterPartyClientId);
+        counterparty.setConnectionId(counterPartyConnectionId);
+        counterparty.setPrefix(prefix);
+        msg.setCounterparty(counterparty.encode());
+        msg.setDelayPeriod(delayPeriod);
+        msg.setClientId(clientId);
+        msg.setClientStateBytes(new byte[0]);
+        msg.setCounterpartyVersions(new byte[][] { baseVersion.encode() });
+        msg.setProofInit(new byte[0]);
+        msg.setProofClient(new byte[0]);
+        msg.setProofConsensus(new byte[0]);
+        msg.setProofHeight(baseHeight.encode());
+        msg.setConsensusHeight(baseHeight.encode());
 
         // Act
         handler.invoke(module.account, "connectionOpenTry", msg);
@@ -180,21 +186,21 @@ public class IBCHandlerTestBase extends TestBase {
     void acknowledgeConnection() {
         // Arrange
         MsgConnectionOpenAck msg = new MsgConnectionOpenAck();
-        msg.connectionId = connectionId;
-        msg.clientStateBytes = new byte[0];
-        msg.version = baseVersion;
-        msg.counterpartyConnectionID = counterPartyConnectionId;
-        msg.proofTry = new byte[0];
-        msg.proofClient = new byte[0];
-        msg.proofConsensus = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
-        msg.consensusHeight = new Height(BigInteger.ONE, BigInteger.ONE);
+        msg.setConnectionId(connectionId);
+        msg.setClientStateBytes(new byte[0]);
+        msg.setVersion(baseVersion.encode());
+        msg.setCounterpartyConnectionID(counterPartyConnectionId);
+        msg.setProofTry(new byte[0]);
+        msg.setProofClient(new byte[0]);
+        msg.setProofConsensus(new byte[0]);
+        msg.setProofHeight(baseHeight.encode());
+        msg.setConsensusHeight(baseHeight.encode());
 
         // Act
         handler.invoke(module.account, "connectionOpenAck", msg);
 
         // Assert
-        ConnectionEnd connection = (ConnectionEnd) handler.call("getConnection", connectionId);
+        ConnectionEnd connection = ConnectionEnd.decode((byte[]) handler.call("getConnection", connectionId));
         assertEquals(ConnectionEnd.State.STATE_OPEN, connection.getState());
 
     }
@@ -202,30 +208,33 @@ public class IBCHandlerTestBase extends TestBase {
     void confirmConnection() {
         // Arrange
         MsgConnectionOpenConfirm msg = new MsgConnectionOpenConfirm();
-        msg.connectionId = connectionId;
-        msg.proofAck = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
+        msg.setConnectionId(connectionId);
+        msg.setProofAck(new byte[0]);
+        msg.setProofHeight(baseHeight.encode());
 
         // Act
         handler.invoke(module.account, "connectionOpenConfirm", msg);
 
         // Assert
-        ConnectionEnd connection = (ConnectionEnd) handler.call("getConnection", connectionId);
+        ConnectionEnd connection = ConnectionEnd.decode((byte[]) handler.call("getConnection", connectionId));
         assertEquals(ConnectionEnd.State.STATE_OPEN, connection.getState());
     }
 
     void openChannel() {
         // Arrange
+        Channel.Counterparty counterparty = new Channel.Counterparty();
+        counterparty.setPortId(counterPartyPortId);
+
+        Channel channel = new Channel();
+        channel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        channel.setState(Channel.State.STATE_INIT);
+        channel.setConnectionHops(List.of(connectionId));
+        channel.setCounterparty(counterparty);
+        channel.setVersion("");
+
         MsgChannelOpenInit msg = new MsgChannelOpenInit();
-        msg.portId = portId;
-        msg.channel = new Channel();
-        msg.channel.setOrdering(Channel.Order.ORDER_UNORDERED);
-        msg.channel.setState(Channel.State.STATE_INIT);
-        msg.channel.setConnectionHops(new String[] { connectionId });
-        msg.channel.setCounterparty(new ibc.icon.structs.proto.core.channel.Counterparty());
-        msg.channel.getCounterparty().setPortId(counterPartyPortId);
-        msg.channel.getCounterparty().setChannelId("");
-        msg.channel.setVersion("");
+        msg.setPortId(portId);
+        msg.setChannel(channel.encode());
 
         // Act
         handler.invoke(owner, "bindPort", portId, module.getAddress());
@@ -236,29 +245,36 @@ public class IBCHandlerTestBase extends TestBase {
         channelId = channelIdCaptor.getValue();
 
         verify(module.mock).onChanOpenInit(
-                msg.channel.getOrdering(),
-                msg.channel.getConnectionHops(),
-                msg.portId,
+                msg.getChannel().getOrdering(),
+                msg.getChannel().getConnectionHops(),
+                msg.getPortId(),
                 channelId,
-                msg.channel.getCounterparty(),
-                msg.channel.getVersion());
+                msg.getChannel().getCounterparty().encode(),
+                msg.getChannel().getVersion());
     }
 
     void tryOpenChannel() {
         // Arrange
+        Channel channel = new Channel();
+
+        Channel.Counterparty counterparty = new Channel.Counterparty();
+        counterparty.setPortId(counterPartyPortId);
+        counterparty.setChannelId(counterPartyChannelId);
+
+        channel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        channel.setState(Channel.State.STATE_TRYOPEN);
+        channel.setConnectionHops(List.of(connectionId));
+        channel.setCounterparty(counterparty);
+        channel.getCounterparty().setPortId(counterPartyPortId);
+        channel.getCounterparty().setChannelId(counterPartyChannelId);
+        channel.setVersion("");
+
         MsgChannelOpenTry msg = new MsgChannelOpenTry();
-        msg.portId = portId;
-        msg.channel = new Channel();
-        msg.channel.setOrdering(Channel.Order.ORDER_UNORDERED);
-        msg.channel.setState(Channel.State.STATE_TRYOPEN);
-        msg.channel.setConnectionHops(new String[] { connectionId });
-        msg.channel.setCounterparty(new ibc.icon.structs.proto.core.channel.Counterparty());
-        msg.channel.getCounterparty().setPortId(counterPartyPortId);
-        msg.channel.getCounterparty().setChannelId(counterPartyChannelId);
-        msg.channel.setVersion("");
-        msg.counterpartyVersion = baseVersion.identifier;
-        msg.proofInit = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
+        msg.setPortId(portId);
+        msg.setCounterpartyVersion(baseVersion.getIdentifier());
+        msg.setChannel(channel.encode());
+        msg.setProofInit(new byte[0]);
+        msg.setProofHeight(baseHeight.encode());
 
         handler.invoke(owner, "bindPort", portId, module.getAddress());
         handler.invoke(module.account, "channelOpenTry", msg);
@@ -267,42 +283,42 @@ public class IBCHandlerTestBase extends TestBase {
         verify(handlerSpy).GeneratedChannelIdentifier(channelIdCaptor.capture());
         channelId = channelIdCaptor.getValue();
 
-        verify(module.mock).onChanOpenTry(msg.channel.getOrdering(), msg.channel.connectionHops, portId, channelId,
-                msg.channel.counterparty, msg.channel.version, msg.counterpartyVersion);
+        verify(module.mock).onChanOpenTry(channel.getOrdering(), channel.getConnectionHops(), portId, channelId,
+                channel.getCounterparty().encode(), channel.getVersion(), msg.getCounterpartyVersion());
     }
 
     void acknowledgeChannel() {
         // Arrange
         MsgChannelOpenAck msg = new MsgChannelOpenAck();
-        msg.portId = portId;
-        msg.channelId = channelId;
-        msg.counterpartyVersion = IBCConnection.v1Identifier;
-        msg.counterpartyChannelId = counterPartyChannelId;
-        msg.proofTry = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ZERO, BigInteger.ZERO);
+        msg.setPortId(portId);
+        msg.setChannelId(channelId);
+        msg.setCounterpartyVersion(IBCConnection.v1Identifier);
+        msg.setCounterpartyChannelId(counterPartyChannelId);
+        msg.setProofTry(new byte[0]);
+        msg.setProofHeight(new Height().encode());
 
         // Act
         handler.invoke(module.account, "channelOpenAck", msg);
 
         // Assert
-        Channel channel = (Channel) handler.call("getChannel", portId, channelId);
+        Channel channel = Channel.decode((byte[]) handler.call("getChannel", portId, channelId));
         assertEquals(Channel.State.STATE_OPEN, channel.getState());
 
-        verify(module.mock).onChanOpenAck(portId, channelId, msg.counterpartyVersion);
+        verify(module.mock).onChanOpenAck(portId, channelId, msg.getCounterpartyVersion());
     }
 
     void confirmChannel() {
         MsgChannelOpenConfirm msg = new MsgChannelOpenConfirm();
-        msg.portId = portId;
-        msg.channelId = channelId;
-        msg.proofAck = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ZERO, BigInteger.ZERO);
+        msg.setPortId(portId);
+        msg.setChannelId(channelId);
+        msg.setProofAck(new byte[0]);
+        msg.setProofHeight(new Height().encode());
 
         // Act
         handler.invoke(module.account, "channelOpenConfirm", msg);
 
         // Assert
-        Channel channel = (Channel) handler.call("getChannel", portId, channelId);
+        Channel channel = Channel.decode((byte[]) handler.call("getChannel", portId, channelId));
         assertEquals(Channel.State.STATE_OPEN, channel.getState());
 
         verify(module.mock).onChanOpenConfirm(portId, channelId);
@@ -311,14 +327,14 @@ public class IBCHandlerTestBase extends TestBase {
     void closeChannel() {
         // Arrange
         MsgChannelCloseInit msg = new MsgChannelCloseInit();
-        msg.channelId = channelId;
-        msg.portId = portId;
+        msg.setChannelId(channelId);
+        msg.setPortId(portId);
 
         // Act
         handler.invoke(module.account, "channelCloseInit", msg);
 
         // Assert
-        Channel channel = (Channel) handler.call("getChannel", portId, channelId);
+        Channel channel = Channel.decode((byte[]) handler.call("getChannel", portId, channelId));
         assertEquals(Channel.State.STATE_CLOSED, channel.getState());
 
         verify(module.mock).onChanCloseInit(portId, channelId);
@@ -327,16 +343,16 @@ public class IBCHandlerTestBase extends TestBase {
     void confirmCloseChannel() {
         // Arrange
         MsgChannelCloseConfirm msg = new MsgChannelCloseConfirm();
-        msg.channelId = channelId;
-        msg.portId = portId;
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
-        msg.proofInit = new byte[1];
+        msg.setChannelId(channelId);
+        msg.setPortId(portId);
+        msg.setProofHeight(baseHeight.encode());
+        msg.setProofInit(new byte[1]);
 
         // Act
         handler.invoke(module.account, "channelCloseConfirm", msg);
 
         // Assert
-        Channel channel = (Channel) handler.call("getChannel", portId, channelId);
+        Channel channel = Channel.decode((byte[]) handler.call("getChannel", portId, channelId));
         assertEquals(Channel.State.STATE_CLOSED, channel.getState());
 
         verify(module.mock).onChanCloseConfirm(portId, channelId);
@@ -347,11 +363,11 @@ public class IBCHandlerTestBase extends TestBase {
         Packet packet = getBasePacket();
 
         // Act
-        handler.invoke(module.account, "sendPacket", packet);
+        handler.invoke(module.account, "sendPacket", packet.encode());
 
         // Assert
         verify(handlerSpy).SendPacket(lastPacketCaptor.capture());
-        assertArrayEquals(packet.toBytes(), lastPacketCaptor.getValue());
+        assertArrayEquals(packet.encode(), lastPacketCaptor.getValue());
     }
 
     void receivePacket() {
@@ -359,20 +375,20 @@ public class IBCHandlerTestBase extends TestBase {
         Packet packet = getBaseCounterPacket();
 
         MsgPacketRecv msg = new MsgPacketRecv();
-        msg.packet = packet;
-        msg.proof = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
+        msg.setPacket(packet.encode());
+        msg.setProof(new byte[0]);
+        msg.setProofHeight(baseHeight.encode());
 
-        when(module.mock.onRecvPacket(msg.packet, relayer.getAddress())).thenReturn(new byte[0]);
+        when(module.mock.onRecvPacket(packet.encode(), relayer.getAddress())).thenReturn(new byte[0]);
 
         // Act
         handler.invoke(relayer, "recvPacket", msg);
 
         // Assert
         verify(handlerSpy).RecvPacket(lastPacketCaptor.capture());
-        assertArrayEquals(packet.toBytes(), lastPacketCaptor.getValue());
+        assertArrayEquals(packet.encode(), lastPacketCaptor.getValue());
 
-        verify(module.mock).onRecvPacket(msg.packet, relayer.getAddress());
+        verify(module.mock).onRecvPacket(packet.encode(), relayer.getAddress());
 
     }
 
@@ -381,18 +397,18 @@ public class IBCHandlerTestBase extends TestBase {
         Packet packet = getBaseCounterPacket();
 
         MsgPacketRecv msg = new MsgPacketRecv();
-        msg.packet = packet;
-        msg.proof = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
+        msg.setPacket(packet.encode());
+        msg.setProof(new byte[0]);
+        msg.setProofHeight(baseHeight.encode());
 
-        when(module.mock.onRecvPacket(msg.packet, relayer.getAddress())).thenReturn(new byte[1]);
+        when(module.mock.onRecvPacket(packet.encode(), relayer.getAddress())).thenReturn(new byte[1]);
 
         // Act
         handler.invoke(relayer, "recvPacket", msg);
 
         // Assert
         verify(handlerSpy).RecvPacket(lastPacketCaptor.capture());
-        assertArrayEquals(packet.toBytes(), lastPacketCaptor.getValue());
+        assertArrayEquals(packet.encode(), lastPacketCaptor.getValue());
 
         verify(handlerSpy).WriteAcknowledgement(packet.getDestinationPort(),
                 packet.getDestinationChannel(), packet.getSequence(), new byte[1]);
@@ -401,7 +417,7 @@ public class IBCHandlerTestBase extends TestBase {
     void writeAcknowledgement() {
         // Arrange
         byte[] acknowledgement = new byte[1];
-        Packet lastPacket = Packet.fromBytes(lastPacketCaptor.getValue());
+        Packet lastPacket = Packet.decode(lastPacketCaptor.getValue());
 
         // Act
         handler.invoke(module.account, "writeAcknowledgement", lastPacket.getDestinationPort(),
@@ -414,20 +430,24 @@ public class IBCHandlerTestBase extends TestBase {
 
     void acknowledgePacket() {
         MsgPacketAcknowledgement msg = new MsgPacketAcknowledgement();
-        msg.acknowledgement = new byte[1];
-        msg.proof = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
-        msg.packet = Packet.fromBytes(lastPacketCaptor.getValue());
+        msg.setAcknowledgement(new byte[1]);
+        msg.setProof(new byte[0]);
+        msg.setProofHeight(baseHeight.encode());
+        msg.setPacket(Packet.decode(lastPacketCaptor.getValue()).encode());
 
         // Act
         handler.invoke(relayer, "acknowledgePacket", msg);
 
         // Assert
-        verify(handlerSpy).AcknowledgePacket(msg.packet.toBytes(), msg.acknowledgement);
-        verify(module.mock).onAcknowledgementPacket(msg.packet, msg.acknowledgement, relayer.getAddress());
+        verify(handlerSpy).AcknowledgePacket(msg.getPacketRaw(), msg.getAcknowledgement());
+        verify(module.mock).onAcknowledgementPacket(msg.getPacketRaw(), msg.getAcknowledgement(), relayer.getAddress());
     }
 
     protected Packet getBasePacket() {
+        Height timeoutHeight = new Height();
+        timeoutHeight.setRevisionNumber(BigInteger.ONE);
+        timeoutHeight.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight() + 100));
+
         Packet packet = new Packet();
         BigInteger nextPacketSeq = (BigInteger) handler.call("getNextSequenceSend", portId, channelId);
         packet.setSequence(nextPacketSeq);
@@ -436,16 +456,20 @@ public class IBCHandlerTestBase extends TestBase {
         packet.setDestinationPort(counterPartyPortId);
         packet.setDestinationChannel(counterPartyChannelId);
         packet.setData(new byte[7]);
-        packet.setTimeoutHeight(new Height(BigInteger.ONE, BigInteger.valueOf(sm.getBlock().getHeight() + 100)));
+        packet.setTimeoutHeight(timeoutHeight);
         packet.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp() * 2));
 
-        when(lightClient.mock.getLatestHeight(clientId)).thenReturn(new Height(BigInteger.ZERO, BigInteger.ZERO));
-        when(lightClient.mock.getTimestampAtHeight(any(String.class), any(Height.class))).thenReturn(BigInteger.ONE);
+        when(lightClient.mock.getLatestHeight(clientId)).thenReturn(new Height().encode());
+        when(lightClient.mock.getTimestampAtHeight(any(String.class), any(byte[].class))).thenReturn(BigInteger.ONE);
 
         return packet;
     }
 
     protected Packet getBaseCounterPacket() {
+        Height timeoutHeight = new Height();
+        timeoutHeight.setRevisionNumber(BigInteger.ONE);
+        timeoutHeight.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight() + 100));
+
         Packet packet = new Packet();
         packet.setSequence(nextRecvId);
         nextRecvId = nextRecvId.add(BigInteger.ONE);
@@ -454,11 +478,11 @@ public class IBCHandlerTestBase extends TestBase {
         packet.setSourceChannel(counterPartyChannelId);
         packet.setSourcePort(counterPartyPortId);
         packet.setData(new byte[7]);
-        packet.setTimeoutHeight(new Height(BigInteger.ONE, BigInteger.valueOf(sm.getBlock().getHeight() + 100)));
+        packet.setTimeoutHeight(timeoutHeight);
         packet.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp() * 2));
 
-        when(lightClient.mock.getLatestHeight(clientId)).thenReturn(new Height(BigInteger.ZERO, BigInteger.ZERO));
-        when(lightClient.mock.getTimestampAtHeight(any(String.class), any(Height.class))).thenReturn(BigInteger.ONE);
+        when(lightClient.mock.getLatestHeight(clientId)).thenReturn(new Height().encode());
+        when(lightClient.mock.getTimestampAtHeight(any(String.class), any(byte[].class))).thenReturn(BigInteger.ONE);
 
         return packet;
     }

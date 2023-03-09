@@ -31,11 +31,20 @@ public class Proto {
     public static DecodeResponse<byte[]> decodeBytes(byte[] data, int index) {
         DecodeResponse<byte[]> resp = new DecodeResponse<>();
 
-        int length = data[index];
+        int length = 0;
+        for (int shift = 0; shift < 64; shift += 7) {
+            final byte b = data[index];
+            index++;
+            length |= (long) (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) {
+                break;
+            }
+        }
+
         byte[] res = new byte[length];
 
-        System.arraycopy(data, index + 1, res, 0, length);
-        resp.index = index + length + 1;
+        System.arraycopy(data, index, res, 0, length);
+        resp.index = index + length;
         resp.res = res;
 
         return resp;
@@ -104,6 +113,9 @@ public class Proto {
     }
 
     public static byte[] encode(int order, ProtoMessage item) {
+        if (item == null) {
+            return new byte[0];
+        }
         return encode(order, item.encode());
     }
 
@@ -132,16 +144,18 @@ public class Proto {
     }
 
     public static byte[] encode(int order, byte[] item) {
-        if (item == null) {
+        if (item.length == 0) {
             return new byte[0];
         }
 
-        byte[] bs = new byte[item.length + 2];
+        byte[] length = encodeVarInt(BigInteger.valueOf(item.length));
+
+        byte[] bs = new byte[item.length + 1 + length.length];
 
         bs[0] = (byte) (order << 3 | 2);
-        bs[1] = (byte) item.length;
 
-        System.arraycopy(item, 0, bs, 2, item.length);
+        System.arraycopy(length, 0, bs, 1, length.length);
+        System.arraycopy(item, 0, bs, 1 + length.length, item.length);
 
         return bs;
     }
@@ -157,7 +171,7 @@ public class Proto {
     }
 
     public static byte[] encode(int order, Boolean item) {
-        if (item == null) {
+        if (!item) {
             return new byte[0];
         }
 
@@ -183,7 +197,7 @@ public class Proto {
     }
 
     public static byte[] encode(int order, BigInteger item) {
-        if (item == null) {
+        if (item.equals(BigInteger.ZERO)) {
             return new byte[0];
         }
 
@@ -197,15 +211,12 @@ public class Proto {
     }
 
     public static byte[] encodeVarInt(BigInteger item) {
-        if (item == null) {
+        if (item.equals(BigInteger.ZERO)) {
             return new byte[0];
         }
 
-        int itemBytes = item.bitLength();
-        int size = itemBytes / 7;
-        if (itemBytes % 7 != 0) {
-            size++;
-        }
+        int size = estimateVarIntSize(item);
+
         byte[] res = new byte[size];
         int index = 0;
         long value = item.longValue();
@@ -223,6 +234,21 @@ public class Proto {
         return res;
     }
 
+    public static int estimateVarIntSize(BigInteger item) {
+        int size = 0;
+        long value = item.longValue();
+
+        while (true) {
+            if ((value & ~0x7FL) == 0) {
+                size++;
+                return size;
+            } else {
+                size++;
+                value >>>= 7;
+            }
+        }
+    }
+
     public static byte[] encodeFixed64Array(int order, List<BigInteger> items) {
         int length = items.size();
         byte[][] encodedItems = new byte[length][];
@@ -234,7 +260,7 @@ public class Proto {
     }
 
     public static byte[] encodeFixed64(int order, BigInteger item) {
-        if (item == null) {
+        if (item.equals(BigInteger.ZERO)) {
             return new byte[0];
         }
         long l = item.longValue();

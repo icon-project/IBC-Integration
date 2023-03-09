@@ -17,8 +17,7 @@ import org.junit.jupiter.api.function.Executable;
 import com.iconloop.score.test.Account;
 
 import ibc.icon.structs.messages.*;
-import ibc.icon.structs.proto.core.channel.Packet;
-import ibc.icon.structs.proto.core.client.Height;
+import icon.proto.core.channel.Packet;
 
 public class IBCHandlerTest extends IBCHandlerTestBase {
     @BeforeEach
@@ -121,12 +120,12 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         MsgChannelCloseInit msgCloseInit = new MsgChannelCloseInit();
         MsgChannelCloseConfirm msgCloseConfirm = new MsgChannelCloseConfirm();
 
-        msgInit.portId = portId;
-        msgTry.portId = portId;
-        msgAck.portId = portId;
-        msgConfirm.portId = portId;
-        msgCloseInit.portId = portId;
-        msgCloseConfirm.portId = portId;
+        msgInit.setPortId(portId);
+        msgTry.setPortId(portId);
+        msgAck.setPortId(portId);
+        msgConfirm.setPortId(portId);
+        msgCloseInit.setPortId(portId);
+        msgCloseConfirm.setPortId(portId);
 
         // Act && Assert
         String expectedErrorMessage = "Module not found";
@@ -161,7 +160,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
 
         // Act && Assert
         String expectedErrorMessage = "failed to authenticate " + nonAuthModule.getAddress();
-        Executable sendNonAuthPacket = () -> handler.invoke(nonAuthModule, "sendPacket", packet);
+        Executable sendNonAuthPacket = () -> handler.invoke(nonAuthModule, "sendPacket", packet.encode());
         AssertionError e = assertThrows(AssertionError.class, sendNonAuthPacket);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
     }
@@ -175,7 +174,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
 
         // Act
         receivePacket();
-        Packet lastPacket = Packet.fromBytes(lastPacketCaptor.getValue());
+        Packet lastPacket = Packet.decode(lastPacketCaptor.getValue());
 
         // Assert
         String expectedErrorMessage = "failed to authenticate " + nonAuthModule.getAddress();
@@ -201,17 +200,17 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         Packet packet = getBaseCounterPacket();
 
         MsgPacketRecv msg = new MsgPacketRecv();
-        msg.packet = packet;
-        msg.proof = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
+        msg.setPacket(packet.encode());
+        msg.setProof(new byte[0]);
+        msg.setProofHeight(baseHeight.encode());
 
-        when(module.mock.onRecvPacket(msg.packet, relayer.getAddress())).thenReturn(new byte[0]);
+        when(module.mock.onRecvPacket(msg.getPacketRaw(), relayer.getAddress())).thenReturn(new byte[0]);
 
         // Act
         handler.invoke(owner, "setExpectedTimePerBlock", expectedTimePerBlock);
         handler.invoke(relayer, "recvPacket", msg);
 
-        verify(lightClient.mock).verifyMembership(any(String.class), any(Height.class), eq(delayPeriod),
+        verify(lightClient.mock).verifyMembership(any(String.class), any(byte[].class), eq(delayPeriod),
                 eq(expectedDelayTime), any(byte[].class), any(byte[].class), any(byte[].class), any(byte[].class));
     }
 

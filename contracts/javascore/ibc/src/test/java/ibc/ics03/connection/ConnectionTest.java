@@ -11,6 +11,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,11 +29,11 @@ import ibc.icon.structs.messages.MsgConnectionOpenAck;
 import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
 import ibc.icon.structs.messages.MsgConnectionOpenInit;
 import ibc.icon.structs.messages.MsgConnectionOpenTry;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.core.commitment.MerklePrefix;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
-import ibc.icon.structs.proto.core.connection.Counterparty;
-import ibc.icon.structs.proto.core.connection.Version;
+import icon.proto.core.client.Height;
+import icon.proto.core.connection.MerklePrefix;
+import icon.proto.core.connection.ConnectionEnd;
+import icon.proto.core.connection.Counterparty;
+import icon.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics24.host.IBCCommitment;
 import score.Address;
@@ -74,10 +75,10 @@ public class ConnectionTest extends TestBase {
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
 
-        proofHeight.revisionHeight = BigInteger.valueOf(5);
-        proofHeight.revisionNumber = BigInteger.valueOf(6);
-        proofHeight.revisionHeight = BigInteger.valueOf(7);
-        proofHeight.revisionNumber = BigInteger.valueOf(8);
+        proofHeight.setRevisionHeight(BigInteger.valueOf(5));
+        proofHeight.setRevisionNumber(BigInteger.valueOf(6));
+        proofHeight.setRevisionHeight(BigInteger.valueOf(7));
+        proofHeight.setRevisionNumber(BigInteger.valueOf(8));
 
         prefix.setKeyPrefix(IBCConnection.commitmentPrefix);
 
@@ -85,11 +86,11 @@ public class ConnectionTest extends TestBase {
         counterparty.setConnectionId("connectionId");
         counterparty.setPrefix(prefix);
 
-        version.identifier = IBCConnection.v1Identifier;
-        version.features = IBCConnection.supportedV1Features;
+        version.setIdentifier(IBCConnection.v1Identifier);
+        version.setFeatures(IBCConnection.supportedV1Features);
 
         baseConnection.setClientId(clientId);
-        baseConnection.setVersions(new Version[] { version });
+        baseConnection.setVersions(List.of(version));
         baseConnection.setDelayPeriod(delayPeriod);
         baseConnection.setCounterparty(counterparty);
 
@@ -100,7 +101,7 @@ public class ConnectionTest extends TestBase {
     void connectionOpenInit_clientNotFound() {
         // Arrange
         MsgConnectionOpenInit msg = new MsgConnectionOpenInit();
-        msg.clientId = "non existent";
+        msg.setClientId("non existent");
 
         // Act & Assert
         String expectedErrorMessage = "Client does not exist";
@@ -115,7 +116,7 @@ public class ConnectionTest extends TestBase {
     void connectionOpenInit_clientStateNotFound() {
         // Arrange
         MsgConnectionOpenInit msg = new MsgConnectionOpenInit();
-        msg.clientId = clientId;
+        msg.setClientId(clientId);
 
         // Act & Assert
         String expectedErrorMessage = "Client state not found";
@@ -130,11 +131,11 @@ public class ConnectionTest extends TestBase {
     void connectionOpenInit() {
         // Arrange
         MsgConnectionOpenInit msg = new MsgConnectionOpenInit();
-        msg.clientId = clientId;
-        msg.counterparty = counterparty;
-        msg.delayPeriod = delayPeriod;
+        msg.setClientId(clientId);
+        msg.setCounterparty(counterparty.encode());
+        msg.setDelayPeriod(delayPeriod);
         String expectedConnectionId = "connection-0";
-        when(lightClient.mock.getClientState(msg.clientId)).thenReturn(new byte[0]);
+        when(lightClient.mock.getClientState(msg.getClientId())).thenReturn(new byte[0]);
 
         // Act
         connection.invoke(owner, "connectionOpenInit", msg);
@@ -157,7 +158,7 @@ public class ConnectionTest extends TestBase {
     void connectionOpenTry_MissingVersion() {
         // Arrange
         MsgConnectionOpenTry msg = new MsgConnectionOpenTry();
-        msg.counterpartyVersions = new Version[] {};
+        msg.setCounterpartyVersions(new byte[0][]);
 
         // Act & Assert
         String expectedErrorMessage = "counterpartyVersions length must be greater than 0";
@@ -172,7 +173,7 @@ public class ConnectionTest extends TestBase {
     void connectionOpenTry_failedConnectionStateVerification() {
         // Arrange
         MsgConnectionOpenTry msg = new MsgConnectionOpenTry();
-        msg.counterpartyVersions = new Version[] {};
+        msg.setCounterpartyVersions(new byte[0][]);
 
         // Act & Assert
         String expectedErrorMessage = "counterpartyVersions length must be greater than 0";
@@ -187,42 +188,42 @@ public class ConnectionTest extends TestBase {
     void connectionOpenTry_invalidStates() {
         // Arrange
         MsgConnectionOpenTry msg = new MsgConnectionOpenTry();
-        msg.clientId = clientId;
-        msg.counterparty = counterparty;
-        msg.delayPeriod = delayPeriod;
-        msg.clientStateBytes = new byte[1];
-        msg.counterpartyVersions = new Version[] { version };
-        msg.proofInit = new byte[2];
-        msg.proofClient = new byte[3];
-        msg.proofConsensus = new byte[4];
-        msg.proofHeight = proofHeight;
-        msg.consensusHeight = consensusHeight;
+        msg.setClientId(clientId);
+        msg.setCounterparty(counterparty.encode());
+        msg.setDelayPeriod(delayPeriod);
+        msg.setClientStateBytes(new byte[1]);
+        msg.setCounterpartyVersions(new byte[][] { version.encode() });
+        msg.setProofInit(new byte[2]);
+        msg.setProofClient(new byte[3]);
+        msg.setProofConsensus(new byte[4]);
+        msg.setProofHeight(proofHeight.encode());
+        msg.setConsensusHeight(consensusHeight.encode());
 
         Counterparty expectedCounterparty = new Counterparty();
-        expectedCounterparty.setClientId(msg.clientId);
+        expectedCounterparty.setClientId(msg.getClientId());
         expectedCounterparty.setConnectionId("");
         expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd counterpartyConnection = new ConnectionEnd();
         counterpartyConnection.setClientId(counterparty.getClientId());
-        counterpartyConnection.setVersions(new Version[] { version });
+        counterpartyConnection.setVersions(List.of(version));
         counterpartyConnection.setState(ConnectionEnd.State.STATE_INIT);
-        counterpartyConnection.setDelayPeriod(msg.delayPeriod);
+        counterpartyConnection.setDelayPeriod(msg.getDelayPeriod());
         counterpartyConnection.setCounterparty(expectedCounterparty);
 
         // verifyConnectionState
-        byte[] connectionPath = IBCCommitment.connectionPath(msg.counterparty.getConnectionId());
-        when(lightClient.mock.verifyMembership(msg.clientId,
-                msg.proofHeight, BigInteger.ZERO,
-                BigInteger.ZERO, msg.proofInit, prefix.getKeyPrefix(), connectionPath,
-                counterpartyConnection.toBytes()))
+        byte[] connectionPath = IBCCommitment.connectionPath(msg.getCounterparty().getConnectionId());
+        when(lightClient.mock.verifyMembership(msg.getClientId(),
+                msg.getProofHeightRaw(), BigInteger.ZERO,
+                BigInteger.ZERO, msg.getProofInit(), prefix.getKeyPrefix(), connectionPath,
+                counterpartyConnection.encode()))
                 .thenReturn(false).thenReturn(true);
 
         // verifyClientState
-        byte[] clientStatePath = IBCCommitment.clientStatePath(msg.counterparty.getClientId());
-        when(lightClient.mock.verifyMembership(msg.clientId, msg.proofHeight, BigInteger.ZERO,
-                BigInteger.ZERO, msg.proofClient, prefix.getKeyPrefix(), clientStatePath,
-                msg.clientStateBytes))
+        byte[] clientStatePath = IBCCommitment.clientStatePath(msg.getCounterparty().getClientId());
+        when(lightClient.mock.verifyMembership(msg.getClientId(), msg.getProofHeightRaw(), BigInteger.ZERO,
+                BigInteger.ZERO, msg.getProofClient(), prefix.getKeyPrefix(), clientStatePath,
+                msg.getClientStateBytes()))
                 .thenReturn(false);
 
         // Act & Assert
@@ -246,43 +247,43 @@ public class ConnectionTest extends TestBase {
     void connectionOpenTry() {
         // Arrange
         MsgConnectionOpenTry msg = new MsgConnectionOpenTry();
-        msg.clientId = clientId;
-        msg.counterparty = counterparty;
-        msg.delayPeriod = delayPeriod;
-        msg.clientStateBytes = new byte[1];
-        msg.counterpartyVersions = new Version[] { version };
-        msg.proofInit = new byte[2];
-        msg.proofClient = new byte[3];
-        msg.proofConsensus = new byte[4];
-        msg.proofHeight = proofHeight;
-        msg.consensusHeight = consensusHeight;
+        msg.setClientId(clientId);
+        msg.setCounterparty(counterparty.encode());
+        msg.setDelayPeriod(delayPeriod);
+        msg.setClientStateBytes(new byte[1]);
+        msg.setCounterpartyVersions(new byte[][] { version.encode() });
+        msg.setProofInit(new byte[2]);
+        msg.setProofClient(new byte[3]);
+        msg.setProofConsensus(new byte[4]);
+        msg.setProofHeight(proofHeight.encode());
+        msg.setConsensusHeight(consensusHeight.encode());
 
         Counterparty expectedCounterparty = new Counterparty();
-        expectedCounterparty.setClientId(msg.clientId);
+        expectedCounterparty.setClientId(msg.getClientId());
         expectedCounterparty.setConnectionId("");
         expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd counterpartyConnection = new ConnectionEnd();
         counterpartyConnection.setClientId(counterparty.getClientId());
-        counterpartyConnection.setVersions(new Version[] { version });
+        counterpartyConnection.setVersions(List.of(version));
         counterpartyConnection.setState(ConnectionEnd.State.STATE_INIT);
-        counterpartyConnection.setDelayPeriod(msg.delayPeriod);
+        counterpartyConnection.setDelayPeriod(msg.getDelayPeriod());
         counterpartyConnection.setCounterparty(expectedCounterparty);
 
         String expectedConnectionId = "connection-0";
 
         // verifyConnectionState
-        byte[] connectionPath = IBCCommitment.connectionPath(msg.counterparty.getConnectionId());
-        when(lightClient.mock.verifyMembership(msg.clientId,
-                msg.proofHeight, BigInteger.ZERO,
-                BigInteger.ZERO, msg.proofInit, prefix.getKeyPrefix(), connectionPath,
-                counterpartyConnection.toBytes())).thenReturn(true);
+        byte[] connectionPath = IBCCommitment.connectionPath(msg.getCounterparty().getConnectionId());
+        when(lightClient.mock.verifyMembership(msg.getClientId(),
+                msg.getProofHeightRaw(), BigInteger.ZERO,
+                BigInteger.ZERO, msg.getProofInit(), prefix.getKeyPrefix(), connectionPath,
+                counterpartyConnection.encode())).thenReturn(true);
 
         // verifyClientState
-        byte[] clientStatePath = IBCCommitment.clientStatePath(msg.counterparty.getClientId());
-        when(lightClient.mock.verifyMembership(msg.clientId, msg.proofHeight, BigInteger.ZERO,
-                BigInteger.ZERO, msg.proofClient, prefix.getKeyPrefix(), clientStatePath,
-                msg.clientStateBytes))
+        byte[] clientStatePath = IBCCommitment.clientStatePath(msg.getCounterparty().getClientId());
+        when(lightClient.mock.verifyMembership(msg.getClientId(), msg.getProofHeightRaw(), BigInteger.ZERO,
+                BigInteger.ZERO, msg.getProofClient(), prefix.getKeyPrefix(), clientStatePath,
+                msg.getClientStateBytes()))
                 .thenReturn(true);
 
         // Act
@@ -308,7 +309,7 @@ public class ConnectionTest extends TestBase {
         // Arrange
         connectionOpenConfirm();
         MsgConnectionOpenAck msg = new MsgConnectionOpenAck();
-        msg.connectionId = "connection-0";
+        msg.setConnectionId("connection-0");
 
         // Act & Assert
         String expectedErrorMessage = "connection state is not INIT or TRYOPEN";
@@ -324,11 +325,11 @@ public class ConnectionTest extends TestBase {
         // Arrange
         connectionOpenTry();
         MsgConnectionOpenAck msg = new MsgConnectionOpenAck();
-        msg.connectionId = "connection-0";
+        msg.setConnectionId("connection-0");
         Version wrongVersion = new Version();
-        wrongVersion.identifier = "OtherVersion";
-        wrongVersion.features = new String[] { "some features" };
-        msg.version = wrongVersion;
+        wrongVersion.setIdentifier("OtherVersion");
+        wrongVersion.setFeatures(List.of("some features"));
+        msg.setVersion(wrongVersion.encode());
 
         // Act & Assert
         String expectedErrorMessage = "connection state is in TRYOPEN but the provided version is not set in the previous connection versions";
@@ -344,38 +345,39 @@ public class ConnectionTest extends TestBase {
         // Arrange
         connectionOpenInit();
         MsgConnectionOpenAck msg = new MsgConnectionOpenAck();
-        msg.connectionId = "connection-0";
-        msg.clientStateBytes = new byte[1];
-        msg.version = version;
-        msg.counterpartyConnectionID = counterparty.getClientId();
-        msg.proofTry = new byte[2];
-        msg.proofClient = new byte[3];
-        msg.proofConsensus = new byte[4];
-        msg.proofHeight = proofHeight;
-        msg.consensusHeight = consensusHeight;
+        msg.setConnectionId("connection-0");
+        msg.setClientStateBytes(new byte[1]);
+        msg.setVersion(version.encode());
+        msg.setCounterpartyConnectionID(counterparty.getClientId());
+        msg.setProofTry(new byte[2]);
+        msg.setProofClient(new byte[3]);
+        msg.setProofConsensus(new byte[4]);
+        msg.setProofHeight(proofHeight.encode());
+        msg.setConsensusHeight(consensusHeight.encode());
 
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(clientId);
-        expectedCounterparty.setConnectionId(msg.connectionId);
+        expectedCounterparty.setConnectionId(msg.getConnectionId());
         expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd counterpartyConnection = new ConnectionEnd();
         counterpartyConnection.setClientId(clientId);
-        counterpartyConnection.setVersions(new Version[] { version });
+        counterpartyConnection.setVersions(List.of(version));
         counterpartyConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
         counterpartyConnection.setDelayPeriod(delayPeriod);
         counterpartyConnection.setCounterparty(expectedCounterparty);
 
         // verifyConnectionState
-        byte[] connectionPath = IBCCommitment.connectionPath(msg.counterpartyConnectionID);
-        when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
-                msg.proofTry, prefix.getKeyPrefix(), connectionPath, counterpartyConnection.toBytes()))
+        byte[] connectionPath = IBCCommitment.connectionPath(msg.getCounterpartyConnectionID());
+        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofTry(), prefix.getKeyPrefix(), connectionPath, counterpartyConnection.encode()))
                 .thenReturn(true);
 
         // verifyClientState
         byte[] clientStatePath = IBCCommitment.clientStatePath(counterparty.getClientId());
-        when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
-                msg.proofClient, prefix.getKeyPrefix(), clientStatePath, msg.clientStateBytes)).thenReturn(true);
+        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofClient(), prefix.getKeyPrefix(), clientStatePath, msg.getClientStateBytes()))
+                .thenReturn(true);
 
         // Act
         connection.invoke(owner, "connectionOpenAck", msg);
@@ -384,12 +386,12 @@ public class ConnectionTest extends TestBase {
         ConnectionEnd expectedConnection = baseConnection;
         expectedConnection.setState(ConnectionEnd.State.STATE_OPEN);
         expectedConnection.setVersions(counterpartyConnection.getVersions());
-        expectedConnection.getCounterparty().setConnectionId(msg.counterpartyConnectionID);
+        expectedConnection.getCounterparty().setConnectionId(msg.getCounterpartyConnectionID());
         // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
         // IBCCommitment.connectionCommitmentKey(msg.connectionId));
         // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
         // storedCommitment);
-        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.connectionId);
+        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.getConnectionId());
         verify(connectionSpy)
                 .sendBTPMessage(ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.encode())));
 
@@ -401,9 +403,9 @@ public class ConnectionTest extends TestBase {
         // Arrange
         connectionOpenInit();
         MsgConnectionOpenConfirm msg = new MsgConnectionOpenConfirm();
-        msg.connectionId = "connection-0";
-        msg.proofAck = new byte[1];
-        msg.proofHeight = proofHeight;
+        msg.setConnectionId("connection-0");
+        msg.setProofAck(new byte[1]);
+        msg.setProofHeight(proofHeight.encode());
 
         // Act & Assert
         String expectedErrorMessage = "connection state is not TRYOPEN";
@@ -419,26 +421,26 @@ public class ConnectionTest extends TestBase {
         // Arrange
         connectionOpenTry();
         MsgConnectionOpenConfirm msg = new MsgConnectionOpenConfirm();
-        msg.connectionId = "connection-0";
-        msg.proofAck = new byte[1];
-        msg.proofHeight = proofHeight;
+        msg.setConnectionId("connection-0");
+        msg.setProofAck(new byte[1]);
+        msg.setProofHeight(proofHeight.encode());
 
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(clientId);
-        expectedCounterparty.setConnectionId(msg.connectionId);
+        expectedCounterparty.setConnectionId(msg.getConnectionId());
         expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd counterpartyConnection = new ConnectionEnd();
         counterpartyConnection.setClientId(counterparty.getClientId());
-        counterpartyConnection.setVersions(new Version[] { version });
+        counterpartyConnection.setVersions(List.of(version));
         counterpartyConnection.setState(ConnectionEnd.State.STATE_OPEN);
         counterpartyConnection.setDelayPeriod(delayPeriod);
         counterpartyConnection.setCounterparty(expectedCounterparty);
 
         // verifyConnectionState
         byte[] connectionPath = IBCCommitment.connectionPath(counterparty.getConnectionId());
-        when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
-                msg.proofAck, prefix.getKeyPrefix(), connectionPath, counterpartyConnection.toBytes()))
+        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofAck(), prefix.getKeyPrefix(), connectionPath, counterpartyConnection.encode()))
                 .thenReturn(true);
 
         // Act
@@ -451,7 +453,7 @@ public class ConnectionTest extends TestBase {
         // IBCCommitment.connectionCommitmentKey(msg.connectionId));
         // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
         // storedCommitment);
-        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.connectionId);
+        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.getConnectionId());
         verify(connectionSpy)
                 .sendBTPMessage(ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.encode())));
 

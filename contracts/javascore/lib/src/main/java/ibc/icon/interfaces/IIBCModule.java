@@ -1,9 +1,8 @@
 package ibc.icon.interfaces;
 
+import java.util.List;
+
 import foundation.icon.score.client.ScoreInterface;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.channel.Packet;
 import score.Address;
 
 // IIBCModule defines an interface that implements all the callbacks
@@ -22,10 +21,10 @@ public interface IIBCModule {
     // it should return an error if provided version is empty String.
     public void onChanOpenInit(
             int order,
-            String[] connectionHops,
+            List<String> connectionHops,
             String portId,
             String channelId,
-            Counterparty counterparty,
+            byte[] counterpartyPb,
             String version);
 
     // OnChanOpenTry will verify the relayer-chosen parameters along with the
@@ -39,10 +38,10 @@ public interface IIBCModule {
     // OnChanOpenTry may also perform custom initialization logic
     public void onChanOpenTry(
             int order,
-            String[] connectionHops,
+            List<String> connectionHops,
             String portId,
             String channelId,
-            Counterparty counterparty,
+            byte[] counterpartyPb,
             String version,
             String counterpartyVersion);
 
@@ -66,7 +65,7 @@ public interface IIBCModule {
     // otherwise the application state changes are discarded. In either case the
     // packet is received
     // and the acknowledgement is written (in synchronous cases).
-    public byte[] onRecvPacket(Packet calldata, Address relayer);
+    public byte[] onRecvPacket(byte[] calldata, Address relayer);
 
-    public void onAcknowledgementPacket(Packet calldata, byte[] acknowledgement, Address relayer);
+    public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer);
 }

@@ -4,7 +4,6 @@ import java.math.BigInteger;
 
 import foundation.icon.score.client.ScoreInterface;
 import ibc.icon.structs.messages.UpdateClientResponse;
-import ibc.icon.structs.proto.core.client.Height;
 
 /**
  * @dev This defines an interface for Light Client contract can be integrated
@@ -24,13 +23,13 @@ public interface ILightClient {
      * @dev getTimestampAtHeight returns the timestamp of the consensus state at the
      *      given height.
      */
-    public BigInteger getTimestampAtHeight(String clientId, Height height);
+    public BigInteger getTimestampAtHeight(String clientId, byte[] height);
 
     /**
      * @dev getLatestHeight returns the latest height of the client state
      *      corresponding to `clientId`.
      */
-    public Height getLatestHeight(String clientId);
+    public byte[] getLatestHeight(String clientId);
 
     /**
      * @dev updateClient updates the client corresponding to `clientId`.
@@ -56,7 +55,7 @@ public interface ILightClient {
      */
     public Boolean verifyMembership(
             String clientId,
-            Height height,
+            byte[] height,
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,
@@ -72,7 +71,7 @@ public interface ILightClient {
      */
     public Boolean verifyNonMembership(
             String clientId,
-            Height height,
+            byte[] height,
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,
@@ -90,5 +89,5 @@ public interface ILightClient {
      *      and `height`.
      *      If it's not found, the public void returns false.
      */
-    public byte[] getConsensusState(String clientId, Height height);
+    public byte[] getConsensusState(String clientId, byte[] height);
 }

@@ -29,12 +29,10 @@ import io.protostuff.compiler.model.Proto;
 import io.protostuff.compiler.parser.FileReader;
 import io.protostuff.compiler.parser.FileReaderFactory;
 import io.protostuff.compiler.parser.Importer;
-import io.protostuff.compiler.parser.LocalFileReader;
 import io.protostuff.compiler.parser.ProtoContext;
 import javax.lang.model.element.*;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
 
 public class ProtoGen {
 
@@ -68,12 +66,20 @@ public class ProtoGen {
 
                 final List<io.protostuff.compiler.model.Enum> enums = proto.getEnums();
                 for (io.protostuff.compiler.model.Enum _enum : enums) {
-                    createEnum(_enum, targetPath, targetPackage);
+                    JavaFile javaFile = JavaFile.builder(targetPackage, createEnum(_enum).build())
+                            .build();
+
+                    javaFile.writeTo(new File(targetPath));
                 }
 
                 final List<Message> messages = proto.getMessages();
                 for (Message message : messages) {
-                    createMessage(message, targetPath, targetPackage);
+
+                    JavaFile javaFile = JavaFile.builder(targetPackage, createMessage(message).build())
+                            .build();
+
+                    javaFile.writeTo(new File(targetPath));
+
                 }
             }
 
@@ -82,28 +88,33 @@ public class ProtoGen {
         }
     }
 
-    private static void createEnum(io.protostuff.compiler.model.Enum protoEnum, String targetPath, String targetPackage)
-            throws Exception {
+    private static TypeSpec.Builder createEnum(io.protostuff.compiler.model.Enum protoEnum) throws Exception {
         TypeSpec.Builder enumSpec = TypeSpec.classBuilder(protoEnum.getName())
                 .addModifiers(Modifier.PUBLIC);
         for (EnumConstant _enum : protoEnum.getConstants()) {
             FieldSpec fieldSpec = FieldSpec.builder(int.class, _enum.getName(),
-                    Modifier.PUBLIC, Modifier.FINAL)
+                    Modifier.PUBLIC, Modifier.FINAL, Modifier.STATIC)
                     .initializer("$L", _enum.getValue()).build();
             enumSpec.addField(fieldSpec);
         }
-
-        JavaFile javaFile = JavaFile.builder(targetPackage, enumSpec.build())
-                .build();
-
-        javaFile.writeTo(new File(targetPath));
+        return enumSpec;
     }
 
-    private static void createMessage(Message protoMessage, String targetPath, String targetPackage)
+    private static TypeSpec.Builder createMessage(Message protoMessage)
             throws Exception {
         TypeSpec.Builder messageSpec = TypeSpec.classBuilder(protoMessage.getName())
                 .addModifiers(Modifier.PUBLIC)
                 .superclass(ProtoMessage.class);
+
+        final List<io.protostuff.compiler.model.Enum> enums = protoMessage.getEnums();
+        for (io.protostuff.compiler.model.Enum _enum : enums) {
+            messageSpec.addType(createEnum(_enum).addModifiers(Modifier.STATIC).build());
+        }
+
+        final List<Message> messages = protoMessage.getMessages();
+        for (Message message : messages) {
+            messageSpec.addType(createMessage(message).addModifiers(Modifier.STATIC).build());
+        }
 
         MethodSpec.Builder encodingSpec = MethodSpec.methodBuilder("encode")
                 .returns(byte[].class)
@@ -157,20 +168,9 @@ public class ProtoGen {
         encodingSpec.addCode("$<);");
         messageSpec.addMethod(encodingSpec.build());
         messageSpec.addMethod(decodingSpec.build());
-        JavaFile javaFile = JavaFile.builder(targetPackage, messageSpec.build())
-                .build();
 
-        javaFile.writeTo(new File(targetPath));
+        return messageSpec;
 
-        final List<io.protostuff.compiler.model.Enum> enums = protoMessage.getEnums();
-        for (io.protostuff.compiler.model.Enum _enum : enums) {
-            createEnum(_enum, targetPath, targetPackage);
-        }
-
-        final List<Message> messages = protoMessage.getMessages();
-        for (Message message : messages) {
-            createMessage(message, targetPath, targetPackage);
-        }
     }
 
     private static MethodSpec getSetter(Field field) {
@@ -234,8 +234,37 @@ public class ProtoGen {
             return FieldSpec.builder(typeName, toCamel(field.getName()), Modifier.PRIVATE)
                     .initializer("new $T<>()", scorex.util.ArrayList.class).build();
         }
+        FieldSpec.Builder fieldSpec = FieldSpec.builder(getTypeName(field), toCamel(field.getName()), Modifier.PRIVATE);
+        if (field.getType().isEnum()) {
+            return fieldSpec.initializer("0").build();
+        }
 
-        return FieldSpec.builder(getTypeName(field), toCamel(field.getName()), Modifier.PRIVATE).build();
+        if (field.getType().isMessage()) {
+            return fieldSpec.build();
+        }
+
+        switch (field.getTypeName()) {
+            case "int32":
+            case "int64":
+            case "uint32":
+            case "uint64":
+            case "sint32":
+            case "sint64":
+            case "fixed32":
+            case "fixed64":
+            case "sfixed32":
+            case "sfixed64":
+                return fieldSpec.initializer("BigInteger.ZERO").build();
+            case "bool":
+                return fieldSpec.initializer("false").build();
+            case "string":
+                return fieldSpec.initializer("\"\"").build();
+            case "bytes":
+                return fieldSpec.initializer("new byte[0]").build();
+            default:
+                throw new IllegalArgumentException("Type currently not supported " + field.getTypeName());
+        }
+
     }
 
     private static String getDecoder(Field field) {
@@ -253,11 +282,11 @@ public class ProtoGen {
             case "uint64":
             case "sint32":
             case "sint64":
-            case "fixed32":
-            case "fixed64":
                 return "decodeVarInt";
+            case "fixed32":
             case "sfixed32":
                 throw new IllegalArgumentException("Type currently not supported " + field.getTypeName());
+            case "fixed64":
             case "sfixed64":
                 return "decodeFixed64";
             case "bool":
@@ -272,10 +301,40 @@ public class ProtoGen {
     }
 
     private static String getEncoder(Field field) {
-        if (!field.isRepeated()) {
+        if (field.isRepeated()) {
+            return getArrayEncoder(field);
+        }
+
+        if (field.getType().isMessage() || field.getType().isEnum()) {
             return "encode";
         }
 
+        switch (field.getTypeName()) {
+            case "int32":
+            case "int64":
+            case "uint32":
+            case "uint64":
+            case "sint32":
+            case "sint64":
+                return "encode";
+            case "fixed32":
+            case "sfixed32":
+                throw new IllegalArgumentException("Type currently not supported " + field.getTypeName());
+            case "fixed64":
+            case "sfixed64":
+                return "encodeFixed64";
+            case "bool":
+                return "encode";
+            case "string":
+                return "encode";
+            case "bytes":
+                return "encode";
+            default:
+                throw new IllegalArgumentException("Type currently not supported " + field.getTypeName());
+        }
+    }
+
+    private static String getArrayEncoder(Field field) {
         if (field.getType().isMessage()) {
             return "encodeMessageArray";
         }
@@ -287,11 +346,11 @@ public class ProtoGen {
             case "uint64":
             case "sint32":
             case "sint64":
-            case "fixed32":
-            case "fixed64":
                 return "encodeVarIntArrayArray";
+            case "fixed32":
             case "sfixed32":
                 throw new IllegalArgumentException("Type currently not supported " + field.getTypeName());
+            case "fixed64":
             case "sfixed64":
                 return "encodeFixed64Array";
             case "bool":

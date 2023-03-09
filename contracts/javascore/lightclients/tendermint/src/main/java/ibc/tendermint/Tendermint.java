@@ -4,8 +4,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import ibc.icon.score.util.Proto;
-import ibc.icon.structs.proto.lightclient.tendermint.*;
+import icon.proto.clients.tendermint.*;
 import score.Context;
+
+import static ibc.tendermint.TendermintHelper.*;
 
 public abstract class Tendermint {
     protected boolean verify(
@@ -17,7 +19,8 @@ public abstract class Tendermint {
             SignedHeader untrustedHeader,
             ValidatorSet untrustedVals,
             Duration currentTime) {
-        if (!untrustedHeader.header.height.equals(trustedHeader.header.height.add(BigInteger.ONE))) {
+        if (!untrustedHeader.getHeader().getHeight()
+                .equals(trustedHeader.getHeader().getHeight().add(BigInteger.ONE))) {
             return verifyNonAdjacent(
                     trustedHeader,
                     trustedVals,
@@ -40,25 +43,28 @@ public abstract class Tendermint {
             Duration trustingPeriod,
             Duration currentTime,
             Duration maxClockDrift) {
-        Context.require(untrustedHeader.header.height.equals(trustedHeader.header.height.add(BigInteger.ONE)),
+        Context.require(
+                untrustedHeader.getHeader().getHeight()
+                        .equals(trustedHeader.getHeader().getHeight().add(BigInteger.ONE)),
                 "headers must be adjacent in height");
 
-        Context.require(!trustedHeader.isExpired(trustingPeriod, currentTime), "header can't be expired");
+        Context.require(!isExpired(trustedHeader, trustingPeriod, currentTime), "header can't be expired");
 
         verifyNewHeaderAndVals(untrustedHeader, untrustedVals, trustedHeader, currentTime, maxClockDrift);
 
         // Check the validator hashes are the same
         Context.require(
-                Arrays.equals(untrustedHeader.header.validatorsHash, trustedHeader.header.nextValidatorsHash),
+                Arrays.equals(untrustedHeader.getHeader().getValidatorsHash(),
+                        trustedHeader.getHeader().getNextValidatorsHash()),
                 "expected old header next validators to match those from new header");
 
         // Ensure that +2/3 of new validators signed correctly.
         return verifyCommitLight(
                 untrustedVals,
-                trustedHeader.header.chainId,
-                untrustedHeader.commit.blockId,
-                untrustedHeader.header.height,
-                untrustedHeader.commit);
+                trustedHeader.getHeader().getChainId(),
+                untrustedHeader.getCommit().getBlockId(),
+                untrustedHeader.getHeader().getHeight(),
+                untrustedHeader.getCommit());
 
     }
 
@@ -72,29 +78,31 @@ public abstract class Tendermint {
             Duration maxClockDrift,
             Fraction trustLevel) {
         Context.require(
-                !untrustedHeader.header.height.equals(trustedHeader.header.height.add(BigInteger.ONE)),
+                !untrustedHeader.getHeader().getHeight()
+                        .equals(trustedHeader.getHeader().getHeight().add(BigInteger.ONE)),
                 "LC: headers must be non adjacent in height");
 
         // assert that trustedVals is NextValidators of last trusted header
         // to do this, we check that trustedVals.Hash() == consState.NextValidatorsHash
-        Context.require(Arrays.equals(trustedVals.hash(), trustedHeader.header.nextValidatorsHash),
+        Context.require(Arrays.equals(hash(trustedVals), trustedHeader.getHeader().getNextValidatorsHash()),
                 "LC: headers trusted validators does not hash to latest trusted validators");
 
-        Context.require(!trustedHeader.isExpired(trustingPeriod, currentTime), "header can't be expired");
+        Context.require(!isExpired(trustedHeader, trustingPeriod, currentTime), "header can't be expired");
 
         verifyNewHeaderAndVals(untrustedHeader, untrustedVals, trustedHeader, currentTime, maxClockDrift);
 
         // Ensure that +`trustLevel` (default 1/3) or more of last trusted validators
         // signed correctly.
-        verifyCommitLightTrusting(trustedVals, trustedHeader.header.chainId, untrustedHeader.commit, trustLevel);
+        verifyCommitLightTrusting(trustedVals, trustedHeader.getHeader().getChainId(), untrustedHeader.getCommit(),
+                trustLevel);
 
         // Ensure that +2/3 of new validators signed correctly.
         return verifyCommitLight(
                 untrustedVals,
-                trustedHeader.header.chainId,
-                untrustedHeader.commit.blockId,
-                untrustedHeader.header.height,
-                untrustedHeader.commit);
+                trustedHeader.getHeader().getChainId(),
+                untrustedHeader.getCommit().getBlockId(),
+                untrustedHeader.getHeader().getHeight(),
+                untrustedHeader.getCommit());
 
     }
 
@@ -105,28 +113,29 @@ public abstract class Tendermint {
             Duration currentTime,
             Duration maxClockDrift) {
         // SignedHeader validate basic
-        Context.require(untrustedHeader.header.chainId.equals(trustedHeader.header.chainId),
+        Context.require(untrustedHeader.getHeader().getChainId().equals(trustedHeader.getHeader().getChainId()),
                 "header belongs to another chain");
-        Context.require(untrustedHeader.commit.height.equals(untrustedHeader.header.height),
+        Context.require(untrustedHeader.getCommit().getHeight().equals(untrustedHeader.getHeader().getHeight()),
                 "header and commit height mismatch");
 
-        byte[] untrustedHeaderBlockHash = untrustedHeader.header.hash();
-        Context.require(Arrays.equals(untrustedHeaderBlockHash, untrustedHeader.commit.blockId.hash),
+        byte[] untrustedHeaderBlockHash = hash(untrustedHeader.getHeader());
+        Context.require(Arrays.equals(untrustedHeaderBlockHash, untrustedHeader.getCommit().getBlockId().getHash()),
                 "commit signs signs block failed");
 
-        Context.require(untrustedHeader.header.height.compareTo(trustedHeader.header.height) > 0,
+        Context.require(untrustedHeader.getHeader().getHeight().compareTo(trustedHeader.getHeader().getHeight()) > 0,
                 "expected new header height to be greater than one of old header");
         Context.require(
-                untrustedHeader.header.time.gt(trustedHeader.header.time),
+                gt(untrustedHeader.getHeader().getTime(), trustedHeader.getHeader().getTime()),
                 "expected new header time to be after old header time");
 
-        Timestamp curentTimestamp = new Timestamp(currentTime.seconds.add(maxClockDrift.seconds),
-                currentTime.nanos.add(maxClockDrift.nanos));
-        Context.require(curentTimestamp.gt(untrustedHeader.header.time),
+        Timestamp curentTimestamp = new Timestamp();
+        curentTimestamp.setSeconds(currentTime.getSeconds().add(maxClockDrift.getSeconds()));
+        curentTimestamp.setNanos(currentTime.getNanos().add(maxClockDrift.getNanos()));
+        Context.require(gt(curentTimestamp, untrustedHeader.getHeader().getTime()),
                 "new header has time from the future");
 
-        byte[] validatorsHash = untrustedVals.hash();
-        Context.require(Arrays.equals(untrustedHeader.header.validatorsHash, validatorsHash),
+        byte[] validatorsHash = hash(untrustedVals);
+        Context.require(Arrays.equals(untrustedHeader.getHeader().getValidatorsHash(), validatorsHash),
                 "expected new header validators to match those that were supplied at height XX");
     }
 
@@ -136,26 +145,28 @@ public abstract class Tendermint {
             Commit commit,
             Fraction trustLevel) {
         // sanity check
-        Context.require(!trustLevel.denominator.equals(BigInteger.ZERO), "trustLevel has zero Denominator");
+        Context.require(!trustLevel.getDenominator().equals(BigInteger.ZERO), "trustLevel has zero Denominator");
 
         BigInteger talliedVotingPower = BigInteger.ZERO;
-        boolean[] seenVals = new boolean[trustedVals.validators.length];
+        boolean[] seenVals = new boolean[trustedVals.getValidators().size()];
 
         CommitSig commitSig;
-        BigInteger totalVotingPowerMulByNumerator = trustedVals.getTotalVotingPower().multiply(trustLevel.numerator);
-        BigInteger votingPowerNeeded = totalVotingPowerMulByNumerator.divide(trustLevel.denominator);
+        BigInteger totalVotingPowerMulByNumerator = trustedVals.getTotalVotingPower()
+                .multiply(trustLevel.getNumerator());
+        BigInteger votingPowerNeeded = totalVotingPowerMulByNumerator.divide(trustLevel.getDenominator());
 
-        for (int idx = 0; idx < commit.signatures.length; idx++) {
-            commitSig = commit.signatures[idx];
+        int signaturesLength = commit.getSignatures().size();
+        for (int idx = 0; idx < signaturesLength; idx++) {
+            commitSig = commit.getSignatures().get(idx);
 
             // no need to verify absent or nil votes.
-            if (commitSig.blockIdFlag != BlockIDFlag.BLOCK_ID_FLAG_COMMIT) {
+            if (commitSig.getBlockIdFlag() != BlockIDFlag.BLOCK_ID_FLAG_COMMIT) {
                 continue;
             }
 
             // We don't know the validators that committed this block, so we have to
             // check for each vote if its validator is already known.
-            int valIdx = trustedVals.getByAddress(commitSig.validatorAddress);
+            int valIdx = getByAddress(trustedVals, commitSig.getValidatorAddress());
             if (valIdx == -1) {
                 continue;
             }
@@ -164,17 +175,17 @@ public abstract class Tendermint {
             Context.require(!seenVals[valIdx], "double vote of validator on the same commit");
             seenVals[valIdx] = true;
 
-            Validator val = trustedVals.validators[valIdx];
+            Validator val = trustedVals.getValidators().get(valIdx);
 
             // validate signature
             byte[] message = voteSignBytesDelim(commit, chainID, idx);
-            byte[] sig = commitSig.signature;
+            byte[] sig = commitSig.getSignature();
 
             if (!verifySig(val, message, sig)) {
                 return false;
             }
 
-            talliedVotingPower = talliedVotingPower.add(val.votingPower);
+            talliedVotingPower = talliedVotingPower.add(val.getVotingPower());
 
             if (talliedVotingPower.compareTo(votingPowerNeeded) > 0) {
                 return true;
@@ -195,11 +206,12 @@ public abstract class Tendermint {
             BlockID blockID,
             BigInteger height,
             Commit commit) {
-        Context.require(validators.validators.length == commit.signatures.length, "invalid commmit signatures");
+        Context.require(validators.getValidators().size() == commit.getSignatures().size(),
+                "invalid commmit signatures");
 
-        Context.require(height.equals(commit.height), "invalid commit height");
+        Context.require(height.equals(commit.getHeight()), "invalid commit height");
 
-        Context.require(commit.blockId.equals(blockID), "invalid commit -- wrong block ID");
+        Context.require(commit.getBlockId().equals(blockID), "invalid commit -- wrong block ID");
         Validator val;
         CommitSig commitSig;
 
@@ -207,24 +219,25 @@ public abstract class Tendermint {
         BigInteger votingPowerNeeded = validators.getTotalVotingPower().multiply(BigInteger.TWO)
                 .divide(BigInteger.valueOf(3));
 
-        for (int i = 0; i < commit.signatures.length; i++) {
-            commitSig = commit.signatures[i];
+        int signaturesLength = commit.getSignatures().size();
+        for (int i = 0; i < signaturesLength; i++) {
+            commitSig = commit.getSignatures().get(i);
 
             // no need to verify absent or nil votes.
-            if (commitSig.blockIdFlag != BlockIDFlag.BLOCK_ID_FLAG_COMMIT) {
+            if (commitSig.getBlockIdFlag() != BlockIDFlag.BLOCK_ID_FLAG_COMMIT) {
                 continue;
             }
 
-            val = validators.validators[i];
+            val = validators.getValidators().get(i);
 
             byte[] message = voteSignBytesDelim(commit, chainID, i);
-            byte[] sig = commitSig.signature;
+            byte[] sig = commitSig.getSignature();
 
             if (!verifySig(val, message, sig)) {
                 return false;
             }
 
-            talliedVotingPower = talliedVotingPower.add(val.votingPower);
+            talliedVotingPower = talliedVotingPower.add(val.getVotingPower());
 
             if (talliedVotingPower.compareTo(votingPowerNeeded) > 0) {
                 return true;
@@ -238,10 +251,10 @@ public abstract class Tendermint {
             Validator val,
             byte[] message,
             byte[] sig) {
-        if (val.pubKey.ed25519 != null) {
-            return verifySig("ed25519", message, sig, val.pubKey.ed25519);
+        if (val.getPubKey().getEd25519() != null) {
+            return verifySig("ed25519", message, sig, val.getPubKey().getEd25519());
         } else {
-            return verifySig("ecdsa-secp256k1", message, sig, val.pubKey.secp256k1);
+            return verifySig("ecdsa-secp256k1", message, sig, val.getPubKey().getSecp256k1());
         }
 
     }
@@ -259,7 +272,7 @@ public abstract class Tendermint {
             String chainID,
             int idx) {
 
-        return commit.toCanonicalVote(idx, chainID).encode();
+        return toCanonicalVote(commit, idx, chainID).encode();
     }
 
     protected byte[] voteSignBytesDelim(

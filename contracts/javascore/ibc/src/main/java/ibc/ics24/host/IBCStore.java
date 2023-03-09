@@ -8,9 +8,9 @@ import java.math.BigInteger;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
+import icon.proto.core.channel.Channel;
+import icon.proto.core.client.Height;
+import icon.proto.core.connection.ConnectionEnd;
 import ibc.ics05.port.ModuleManager;
 
 public abstract class IBCStore extends ModuleManager {
@@ -44,8 +44,8 @@ public abstract class IBCStore extends ModuleManager {
     public final DictDB<String, Address> clientImplementations = Context.newDictDB(CLIENT_IMPLEMENTATIONS,
             Address.class);
 
-    public final DictDB<String, ConnectionEnd> connections = Context.newDictDB(CONNECTIONS, ConnectionEnd.class);
-    public final BranchDB<String, DictDB<String, Channel>> channels = Context.newBranchDB(CHANNELS, Channel.class);
+    public final DictDB<String, byte[]> connections = Context.newDictDB(CONNECTIONS, byte[].class);
+    public final BranchDB<String, DictDB<String, byte[]>> channels = Context.newBranchDB(CHANNELS, byte[].class);
 
     public final BranchDB<String, DictDB<String, BigInteger>> nextSequenceSends = Context
             .newBranchDB(NEXT_SEQUENCE_SENDS, BigInteger.class);
@@ -89,12 +89,12 @@ public abstract class IBCStore extends ModuleManager {
     }
 
     @External(readonly = true)
-    public ConnectionEnd getConnection(String connectionId) {
+    public byte[] getConnection(String connectionId) {
         return connections.get(connectionId);
     }
 
     @External(readonly = true)
-    public Channel getChannel(String portId, String channelId) {
+    public byte[] getChannel(String portId, String channelId) {
         return channels.at(portId).get(channelId);
     }
 
@@ -156,7 +156,7 @@ public abstract class IBCStore extends ModuleManager {
     }
 
     @External(readonly = true)
-    public byte[] getConsensusState(String clientId, Height height) {
+    public byte[] getConsensusState(String clientId, byte[] height) {
         return getClient(clientId).getConsensusState(clientId, height);
     }
 
