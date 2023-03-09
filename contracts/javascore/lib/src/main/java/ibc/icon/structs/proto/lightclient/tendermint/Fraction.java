@@ -1,11 +1,11 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
-import java.math.BigInteger;
-
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 import score.ObjectReader;
 import score.ObjectWriter;
+
+import java.math.BigInteger;
 
 public class Fraction {
     public BigInteger numerator;

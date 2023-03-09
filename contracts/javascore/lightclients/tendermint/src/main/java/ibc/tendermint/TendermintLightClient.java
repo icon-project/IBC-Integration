@@ -1,20 +1,19 @@
 package ibc.tendermint;
 
-import java.math.BigInteger;
-
+import ibc.icon.structs.messages.ConsensusStateUpdate;
+import ibc.icon.structs.messages.UpdateClientResponse;
+import ibc.icon.structs.proto.core.client.Height;
+import ibc.icon.structs.proto.lightclient.tendermint.*;
+import ibc.ics24.host.IBCCommitment;
 import score.Address;
 import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
-import ibc.icon.structs.messages.UpdateClientResponse;
-import ibc.icon.structs.proto.core.client.Height;
+
+import java.math.BigInteger;
 
 import static score.Context.require;
-
-import ibc.icon.structs.proto.lightclient.tendermint.*;
-import ibc.ics24.host.IBCCommitment;
 
 public class TendermintLightClient extends Tendermint {
     public final Address ibcHandler;
@@ -39,7 +38,7 @@ public class TendermintLightClient extends Tendermint {
 
     /**
      * @dev getTimestampAtHeight returns the timestamp of the consensus state at the
-     *      given height.
+     * given height.
      */
     @External(readonly = true)
     public BigInteger getTimestampAtHeight(
@@ -189,7 +188,7 @@ public class TendermintLightClient extends Tendermint {
                 untrustedVals,
                 currentTime);
 
-       require(ok, "LC: failed to verify header");
+        require(ok, "LC: failed to verify header");
     }
 
     public boolean verifyChannelState(
@@ -338,7 +337,7 @@ public class TendermintLightClient extends Tendermint {
     }
 
     public boolean validateDelayPeriod(String clientId, BigInteger height, BigInteger delayPeriodTime,
-            BigInteger delayPeriodBlocks) {
+                                       BigInteger delayPeriodBlocks) {
         BigInteger currentTime = BigInteger.valueOf(Context.getBlockTimestamp() * 1000 * 1000 * 1000);
         BigInteger validTime = mustGetProcessedTime(clientId, height).add(delayPeriodTime);
         if (currentTime.compareTo(validTime) < 0) {

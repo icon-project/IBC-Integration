@@ -1,9 +1,9 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
-import java.math.BigInteger;
-
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
+
+import java.math.BigInteger;
 
 public class CanonicalVote {
     public int type;

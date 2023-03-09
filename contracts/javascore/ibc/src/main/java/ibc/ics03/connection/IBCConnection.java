@@ -1,7 +1,5 @@
 package ibc.ics03.connection;
 
-import java.math.BigInteger;
-
 import ibc.icon.interfaces.IIBCConnection;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
@@ -19,9 +17,11 @@ import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
+import java.math.BigInteger;
+
 public class IBCConnection extends IBCClient implements IIBCConnection {
     public static final String v1Identifier = "1";
-    public static final String[] supportedV1Features = new String[] { "ORDER_ORDERED", "ORDER_UNORDERED" };
+    public static final String[] supportedV1Features = new String[]{"ORDER_ORDERED", "ORDER_UNORDERED"};
     public static final byte[] commitmentPrefix = "ibc".getBytes();
 
     Logger logger = new Logger("ibc-core");
@@ -121,7 +121,7 @@ public class IBCConnection extends IBCClient implements IIBCConnection {
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getClientId());
-        expectedConnection.setVersions(new Version[] { msg.version });
+        expectedConnection.setVersions(new Version[]{msg.version});
         expectedConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
         expectedConnection.setDelayPeriod(connection.getDelayPeriod());
         expectedConnection.setCounterparty(expectedCounterparty);

@@ -1,5 +1,21 @@
 package ibc.tendermint;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iconloop.score.test.Account;
+import com.iconloop.score.test.Score;
+import com.iconloop.score.test.ServiceManager;
+import com.iconloop.score.test.TestBase;
+import foundation.icon.ee.util.Crypto;
+import ibc.icon.structs.proto.lightclient.tendermint.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+import score.Context;
+
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -10,48 +26,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iconloop.score.test.Account;
-import com.iconloop.score.test.Score;
-import com.iconloop.score.test.ServiceManager;
-import com.iconloop.score.test.TestBase;
-
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.commitment.MerklePrefix;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
-import ibc.icon.structs.proto.core.connection.Version;
-import ibc.icon.structs.proto.lightclient.tendermint.BlockID;
-import ibc.icon.structs.proto.lightclient.tendermint.ClientState;
-import ibc.icon.structs.proto.lightclient.tendermint.Commit;
-import ibc.icon.structs.proto.lightclient.tendermint.CommitSig;
-import ibc.icon.structs.proto.lightclient.tendermint.Consensus;
-import ibc.icon.structs.proto.lightclient.tendermint.ConsensusState;
-import ibc.icon.structs.proto.lightclient.tendermint.Duration;
-import ibc.icon.structs.proto.lightclient.tendermint.Fraction;
-import ibc.icon.structs.proto.lightclient.tendermint.LightHeader;
-import ibc.icon.structs.proto.lightclient.tendermint.MerkleRoot;
-import ibc.icon.structs.proto.lightclient.tendermint.PartSetHeader;
-import ibc.icon.structs.proto.lightclient.tendermint.PublicKey;
-import ibc.icon.structs.proto.lightclient.tendermint.SignedHeader;
-import ibc.icon.structs.proto.lightclient.tendermint.SignedMsgType;
-import ibc.icon.structs.proto.lightclient.tendermint.Timestamp;
-import ibc.icon.structs.proto.lightclient.tendermint.TmHeader;
-import ibc.icon.structs.proto.lightclient.tendermint.Validator;
-import ibc.icon.structs.proto.lightclient.tendermint.ValidatorSet;
-import score.Context;
-import foundation.icon.ee.util.Crypto;
-
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.spy;
 
 public class LightClientTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();
@@ -248,7 +224,7 @@ public class LightClientTestBase extends TestBase {
     }
 
     private CommitSig[] parseCommitSig(JsonNode json) {
-        List<CommitSig> commitSigs = new ArrayList<CommitSig>();
+        List<CommitSig> commitSigs = new ArrayList<>();
 
         json.elements().forEachRemaining((node) -> {
             CommitSig commitSig = new CommitSig();

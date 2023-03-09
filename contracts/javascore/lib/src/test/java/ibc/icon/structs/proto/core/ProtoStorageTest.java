@@ -4,7 +4,6 @@ import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
 import ibc.icon.structs.proto.core.channel.Channel;
 import ibc.icon.structs.proto.core.channel.Packet;
 import ibc.icon.structs.proto.core.client.Height;
@@ -12,7 +11,6 @@ import ibc.icon.structs.proto.core.commitment.MerklePrefix;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.icon.structs.proto.core.connection.Counterparty;
 import ibc.icon.structs.proto.core.connection.Version;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import score.VarDB;

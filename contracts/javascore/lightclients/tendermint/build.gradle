@@ -21,7 +21,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterEngineVersion")
 }
 
-test{
+test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
 }

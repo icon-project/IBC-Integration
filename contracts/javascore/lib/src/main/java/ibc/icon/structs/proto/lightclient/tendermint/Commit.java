@@ -1,13 +1,13 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
-import java.math.BigInteger;
-import java.util.List;
-
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.math.BigInteger;
+import java.util.List;
 
 public class Commit {
     public BigInteger height;

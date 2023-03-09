@@ -1,7 +1,6 @@
 package ibc.icon.interfaces;
 
 import foundation.icon.score.client.ScoreInterface;
-import ibc.icon.structs.proto.core.channel.Channel;
 import ibc.icon.structs.proto.core.channel.Counterparty;
 import ibc.icon.structs.proto.core.channel.Packet;
 import score.Address;

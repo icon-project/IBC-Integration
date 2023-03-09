@@ -1,11 +1,11 @@
 package ibc.tendermint;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-
 import ibc.icon.score.util.Proto;
 import ibc.icon.structs.proto.lightclient.tendermint.*;
 import score.Context;
+
+import java.math.BigInteger;
+import java.util.Arrays;
 
 public abstract class Tendermint {
     protected boolean verify(

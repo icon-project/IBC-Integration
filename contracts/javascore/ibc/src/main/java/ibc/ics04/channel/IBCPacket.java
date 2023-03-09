@@ -1,7 +1,5 @@
 package ibc.ics04.channel;
 
-import java.math.BigInteger;
-
 import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
@@ -12,9 +10,10 @@ import ibc.icon.structs.proto.core.channel.Packet;
 import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.connection.ConnectionEnd;
 import ibc.ics24.host.IBCCommitment;
-
 import score.Context;
 import score.DictDB;
+
+import java.math.BigInteger;
 
 // TODO verify packet commitments follow a correct format
 public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
@@ -174,7 +173,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
                 packetAckPath,
                 IBCCommitment.sha256(msg.acknowledgement));
 
-        if (channel.getOrdering() == Channel.Order.ORDER_ORDERED)  {
+        if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             DictDB<String, BigInteger> nextSequenceAckSourcePort =
                     nextSequenceAcknowledgements.at(msg.packet.getSourcePort());
             BigInteger nextSequenceAck = nextSequenceAckSourcePort.get(msg.packet.getSourceChannel());
