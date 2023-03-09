@@ -34,6 +34,8 @@ public class IBCClient extends IBCHost implements IIBCClient {
         ILightClient client = getClient(clientId);
         CreateClientResponse response = client.createClient(clientId, msg.clientState, msg.consensusState);
         Context.require(response.ok);
+
+        // update commitments
         commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 response.update.height.getRevisionNumber(), response.update.height.getRevisionHeight());
@@ -50,6 +52,7 @@ public class IBCClient extends IBCHost implements IIBCClient {
         UpdateClientResponse response = client.updateClient(clientId, msg.clientMessage);
         Context.require(response.ok);
 
+        // update commitments
         commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
         for (ConsensusStateUpdate update : response.updates) {
             byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId, update.height.getRevisionNumber(),
