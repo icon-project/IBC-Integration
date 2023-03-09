@@ -52,8 +52,7 @@ public abstract class ModuleManager {
     }
 
     /**
-     * claimCapability allows the IBC app module to claim a capability that
-     * core IBC passes to it
+     * claimCapability allows the IBC app module to claim a capability that core IBC passes to it
      */
     public abstract void claimCapability(byte[] name, Address addr);
 
