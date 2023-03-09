@@ -14,7 +14,6 @@ import score.Context;
 import score.DictDB;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 // TODO verify packet commitments follow a correct format
 public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
@@ -82,12 +81,12 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
         Context.require(
                 msg.packet.getTimeoutHeight().getRevisionHeight().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockHeight())
-                                .compareTo(msg.packet.getTimeoutHeight().getRevisionHeight()) < 0,
+                        .compareTo(msg.packet.getTimeoutHeight().getRevisionHeight()) < 0,
                 "block height >= packet timeout height");
         Context.require(
                 msg.packet.getTimeoutTimestamp().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockTimestamp())
-                                .compareTo(msg.packet.getTimeoutTimestamp()) < 0,
+                        .compareTo(msg.packet.getTimeoutTimestamp()) < 0,
                 "block timestamp >= packet timeout timestamp");
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(msg.packet.getSourcePort(),
@@ -122,7 +121,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
     }
 
     public void writeAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement) {
+                                     byte[] acknowledgement) {
         Context.require(acknowledgement.length > 0, "acknowledgement cannot be empty");
 
         Channel channel = channels.at(destinationPortId).get(destinationChannel);
