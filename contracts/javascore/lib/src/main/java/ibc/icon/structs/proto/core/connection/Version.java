@@ -1,13 +1,13 @@
 package ibc.icon.structs.proto.core.connection;
 
-import java.util.Arrays;
-import java.util.List;
-
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class Version {
     public String identifier;
@@ -62,7 +62,7 @@ public class Version {
     }
 
     public boolean equals(Version v) {
-        return this.identifier == v.identifier && Arrays.equals(this.features, v.features);
+        return this.identifier.equals(v.identifier) && Arrays.equals(this.features, v.features);
     }
 
     public String getIdentifier() {

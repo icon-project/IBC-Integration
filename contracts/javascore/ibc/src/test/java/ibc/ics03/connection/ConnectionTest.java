@@ -309,7 +309,7 @@ public class ConnectionTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "connection state is in TRYOPEN but the provided version is not set in the " +
-				"previous connection versions";
+                "previous connection versions";
         Executable clientVerificationFailed = () -> connection.invoke(owner,
                 "connectionOpenAck", msg);
         AssertionError e = assertThrows(AssertionError.class,

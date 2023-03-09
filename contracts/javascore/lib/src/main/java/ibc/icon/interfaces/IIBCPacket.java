@@ -27,7 +27,7 @@ public interface IIBCPacket {
      * state,which will be verified by the counterparty chain using AcknowledgePacket.
      */
     void writeAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-                                     byte[] acknowledgement);
+                              byte[] acknowledgement);
 
     /**
      * {@code @dev} AcknowledgePacket is called by a module to process the acknowledgement

@@ -7,8 +7,6 @@ import ibc.icon.score.util.NullChecker;
 import ibc.icon.structs.messages.*;
 import ibc.ics24.host.IBCCommitment;
 import ibc.ics24.host.IBCHost;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
 import score.Address;
 import score.Context;
 import score.annotation.External;

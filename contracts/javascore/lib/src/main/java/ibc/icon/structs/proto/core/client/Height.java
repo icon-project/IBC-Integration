@@ -28,19 +28,19 @@ public class Height {
     // }
 
     public boolean isZero() {
-        return this.getRevisionNumber().equals(0) && this.getRevisionHeight().equals(0);
+        return this.getRevisionNumber().equals(BigInteger.ZERO) && this.getRevisionHeight().equals(BigInteger.ZERO);
     }
 
     public boolean lt(Height other) {
         return this.getRevisionNumber().compareTo(other.getRevisionNumber()) < 0
                 || (this.getRevisionNumber().equals(other.getRevisionNumber())
-                        && this.getRevisionHeight().compareTo(other.getRevisionHeight()) < 0);
+                && this.getRevisionHeight().compareTo(other.getRevisionHeight()) < 0);
     }
 
     public boolean lte(Height other) {
         return this.getRevisionNumber().compareTo(other.getRevisionNumber()) < 0
                 || (this.getRevisionNumber().equals(other.getRevisionNumber())
-                        && this.getRevisionHeight().compareTo(other.getRevisionHeight()) <= 0);
+                && this.getRevisionHeight().compareTo(other.getRevisionHeight()) <= 0);
     }
 
     public boolean eq(Height other) {
@@ -51,12 +51,12 @@ public class Height {
     public boolean gt(Height other) {
         return this.getRevisionNumber().compareTo(other.getRevisionNumber()) > 0
                 || (this.getRevisionNumber().equals(other.getRevisionNumber())
-                        && this.getRevisionHeight().compareTo(other.getRevisionHeight()) > 0);
+                && this.getRevisionHeight().compareTo(other.getRevisionHeight()) > 0);
     }
 
     public boolean gte(Height other) {
         return this.getRevisionNumber().compareTo(other.getRevisionNumber()) > 0
                 || (this.getRevisionNumber().equals(other.getRevisionNumber())
-                        && this.getRevisionHeight().compareTo(other.getRevisionHeight()) >= 0);
+                && this.getRevisionHeight().compareTo(other.getRevisionHeight()) >= 0);
     }
 }

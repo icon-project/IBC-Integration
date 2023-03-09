@@ -1,12 +1,12 @@
 package ibc.icon.structs.proto.core.channel;
 
-import java.util.List;
-
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.util.List;
 
 public class Channel {
 
