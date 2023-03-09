@@ -89,7 +89,7 @@ message CanonicalVote {
   SignedMsgType type = 1;
   sfixed64 height = 2;
   sfixed64 round = 3;
-  CanonicalBlockID block_id = 4;
+  BlockID block_id = 4;
   Timestamp timestamp = 5;
   string chain_id = 6;
 }
