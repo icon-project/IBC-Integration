@@ -40,11 +40,12 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
 
     @External
     public void recvPacket(MsgPacketRecv msg) {
-        super.recvPacket(msg);
-
         IIBCModule module = lookupModuleByChannel(msg.packet.getDestinationPort(),
                 msg.packet.getDestinationChannel());
+
         byte[] acknowledgement = module.onRecvPacket(msg.packet, Context.getCaller());
+        super.recvPacket(msg);
+
         if (acknowledgement.length > 0) {
             super.writeAcknowledgement(
                     msg.packet.getDestinationPort(),
@@ -77,11 +78,12 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
 
     @External
     public void acknowledgePacket(MsgPacketAcknowledgement msg) {
-        super.acknowledgePacket(msg);
         IIBCModule module = lookupModuleByChannel(msg.packet.getSourcePort(),
                 msg.packet.getSourceChannel());
         module.onAcknowledgementPacket(msg.packet, msg.acknowledgement,
                 Context.getCaller());
+        super.acknowledgePacket(msg);
+
         AcknowledgePacket(msg.packet.toBytes(), msg.acknowledgement);
     }
 }
