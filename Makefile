@@ -26,9 +26,14 @@ proto-format:
 proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json
 
-proto-gen:
+proto-gen-go:
 	@echo "Generating Protobuf files"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
-		sh ./scripts/protocgen.sh; fi
+		sh ./scripts/protocgen_go.sh; fi
+
+proto-gen-rust:
+	@echo "Generating Protobuf files"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
+		sh ./scripts/protocgen_rust.sh; fi
 
 .PHONY: proto-all proto-gen proto-gen-any proto-swagger-gen proto-format proto-lint proto-check-breaking proto-update-deps
