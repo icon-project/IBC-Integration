@@ -3,6 +3,7 @@ package chains
 import (
 	"context"
 
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 )
 
@@ -17,6 +18,7 @@ type Chain interface {
 	ExecuteContract(ctx context.Context) (context.Context, error)
 	GetLastBlock(ctx context.Context) (context.Context, error)
 	GetBlockByHeight(ctx context.Context) (context.Context, error)
+	FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error)
 }
 
 type ChainConfig struct {

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
+	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
-	interchaintest "github.com/strangelove-ventures/interchaintest/v6"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 	"github.com/strangelove-ventures/interchaintest/v6/testreporter"
 	"github.com/stretchr/testify/require"
@@ -18,10 +18,34 @@ func NewIconChain(t *testing.T, ctx context.Context, environment string, chainCo
 	switch environment {
 	case "local", "localnet":
 		// Start Docker
+		// cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
+		// 	// Source chain
+		// 	{Name: "icon", ChainConfig: ibc.ChainConfig{
+		// 		Type:    "icon",
+		// 		Name:    "icon",
+		// 		ChainID: "icon-1",
+		// 		Images: []ibc.DockerImage{
+		// 			{
+		// 				Repository: "hemz1012/goloop", // FOR LOCAL IMAGE USE: Docker Image Name
+		// 				Version:    "latest",          // FOR LOCAL IMAGE USE: Docker Image Tag
+		// 			},
+		// 		},
+		// 		Bin:            "goloop",
+		// 		Bech32Prefix:   "icon",
+		// 		Denom:          "icx",
+		// 		GasPrices:      "0.001icx",
+		// 		GasAdjustment:  1.3,
+		// 		TrustingPeriod: "508h",
+		// 		NoHostMount:    false},
+		// 	},
+		// },
+		// )
+		// chains, _ := cf.Chains(t.Name())
+		// dest := chains[0]
 		client, network := interchaintest.DockerSetup(t)
-		chain := NewIconLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes)
+		localchain := NewIconLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes)
 		ic := interchaintest.NewInterchain().
-			AddChain(chain.(ibc.Chain))
+			AddChain(localchain.(ibc.Chain))
 		// Log location
 		f, err := interchaintest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
 		if err != nil {
@@ -42,7 +66,7 @@ func NewIconChain(t *testing.T, ctx context.Context, environment string, chainCo
 		),
 		)
 
-		return context.WithValue(ctx, "ibc.chain", chain.(ibc.Chain)), chain, nil
+		return context.WithValue(ctx, "ibc.chain", localchain.(ibc.Chain)), localchain, nil
 	case "testnet":
 		return ctx, NewIconTestnet(chainConfig.Bin, nid, keystorePath, keyPassword, "5000000000", url, scorePaths), nil
 	default:

@@ -44,7 +44,7 @@ func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
 	case "archway":
 		e.chain, err = archway.NewArchwayChain(e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig)
 	case "cosmos":
-		e.chain, err = cosmos.NewCosmosChain(e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig)
+		ctx, e.chain, err = cosmos.NewCosmosChain(e.T, ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger)
 	default:
 		err = fmt.Errorf("unknown chain: %s", e.cfg.Chain.Name)
 	}

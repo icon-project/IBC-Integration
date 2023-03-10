@@ -16,6 +16,7 @@ type Config struct {
 
 type Chain struct {
 	Name        string             `mapstructure:"name"`
+	version     string             `mapstructure:"version"`
 	Environment string             `mapstructure:"environment"`
 	ChainConfig chains.ChainConfig `mapstructure:"chain_config"`
 	URL         string             `mapstructure:"url"`
