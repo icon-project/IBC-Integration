@@ -6,7 +6,6 @@ import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class Version {
@@ -62,7 +61,13 @@ public class Version {
     }
 
     public boolean equals(Version v) {
-        return this.identifier.equals(v.identifier) && Arrays.equals(this.features, v.features);
+        for (int i = 0; i < features.length; i++) {
+            if (!v.features[i].equals(this.features[i])) {
+                return false;
+            }
+        }
+
+        return this.identifier.equals(v.identifier);
     }
 
     public String getIdentifier() {

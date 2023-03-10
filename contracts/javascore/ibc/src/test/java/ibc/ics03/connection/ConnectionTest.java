@@ -325,7 +325,7 @@ public class ConnectionTest extends TestBase {
         msg.connectionId = "connection-0";
         msg.clientStateBytes = new byte[1];
         msg.version = version;
-        msg.counterpartyConnectionID = counterparty.clientId;
+        msg.counterpartyConnectionID = counterparty.getClientId();
         msg.proofTry = new byte[2];
         msg.proofClient = new byte[3];
         msg.proofConsensus = new byte[4];
@@ -351,7 +351,7 @@ public class ConnectionTest extends TestBase {
                 .thenReturn(true);
 
         // verifyClientState
-        byte[] clientStatePath = IBCCommitment.clientStatePath(counterparty.clientId);
+        byte[] clientStatePath = IBCCommitment.clientStatePath(counterparty.getClientId());
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
                 msg.proofClient, prefix.getKeyPrefix(), clientStatePath, msg.clientStateBytes)).thenReturn(true);
 
@@ -361,8 +361,8 @@ public class ConnectionTest extends TestBase {
         // Assert
         ConnectionEnd expectedConnection = baseConnection;
         expectedConnection.setState(ConnectionEnd.State.STATE_OPEN);
-        expectedConnection.setVersions(counterpartyConnection.versions);
-        expectedConnection.counterparty.setConnectionId(msg.counterpartyConnectionID);
+        expectedConnection.setVersions(counterpartyConnection.getVersions());
+        expectedConnection.getCounterparty().setConnectionId(msg.counterpartyConnectionID);
         byte[] storedCommitment = (byte[]) connection.call("getCommitment",
                 IBCCommitment.connectionCommitmentKey(msg.connectionId));
         assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()), storedCommitment);
@@ -409,7 +409,7 @@ public class ConnectionTest extends TestBase {
         counterpartyConnection.setCounterparty(expectedCounterparty);
 
         // verifyConnectionState
-        byte[] connectionPath = IBCCommitment.connectionPath(counterparty.connectionId);
+        byte[] connectionPath = IBCCommitment.connectionPath(counterparty.getConnectionId());
         when(lightClient.mock.verifyMembership(clientId, msg.proofHeight, BigInteger.ZERO, BigInteger.ZERO,
                 msg.proofAck, prefix.getKeyPrefix(), connectionPath, counterpartyConnection.toBytes()))
                 .thenReturn(true);

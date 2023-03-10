@@ -16,15 +16,16 @@ import java.math.BigInteger;
 public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHandshake {
 
     public String channelOpenInit(MsgChannelOpenInit msg) {
-        Context.require(msg.channel.connectionHops.length == 1, "connection_hops length must be 1");
+        Context.require(msg.channel.getConnectionHops().length == 1, "connection_hops length must be 1");
 
-        ConnectionEnd connection = connections.get(msg.channel.connectionHops[0]);
+        ConnectionEnd connection = connections.get(msg.channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(
-                connection.versions.length == 1,
+                connection.getVersions().length == 1,
                 "single version must be negotiated on connection before opening channel");
 
-        Context.require(msg.channel.getState().equals(Channel.State.STATE_INIT), "channel state must be STATE_INIT");
+        Context.require(msg.channel.channelState().equals(Channel.State.STATE_INIT),
+                "channel state must be STATE_INIT");
 
         // TODO: verifySupportedFeature
         // TODO: authenticates a port binding
@@ -45,9 +46,9 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
         ConnectionEnd connection = connections.get(msg.channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
         Context.require(
-                connection.versions.length == 1,
+                connection.getVersions().length == 1,
                 "single version must be negotiated on connection before opening channel");
-        Context.require(msg.channel.getState().equals(Channel.State.STATE_TRYOPEN),
+        Context.require(msg.channel.channelState().equals(Channel.State.STATE_TRYOPEN),
                 "channel state must be STATE_TRYOPEN");
 
         // TODO verifySupportedFeature
@@ -59,8 +60,8 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
         expectedCounterparty.setChannelId("");
 
         Channel expectedChannel = new Channel();
-        expectedChannel.setState(Channel.State.STATE_INIT);
-        expectedChannel.setOrdering(msg.channel.getOrdering());
+        expectedChannel.updateState(Channel.State.STATE_INIT);
+        expectedChannel.updateOrder(msg.channel.channelOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
         expectedChannel.setConnectionHops(getCounterpartyHops(msg.channel.getConnectionHops()[0]));
         expectedChannel.setVersion(msg.counterpartyVersion);
@@ -90,23 +91,24 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
         Context.require(channel.getConnectionHops().length == 1);
 
         Context.require(
-                channel.getState().equals(Channel.State.STATE_INIT)
-                        || channel.getState().equals(Channel.State.STATE_TRYOPEN),
+                channel.channelState().equals(Channel.State.STATE_INIT)
+                        || channel.channelState().equals(Channel.State.STATE_TRYOPEN),
                 "invalid channel state");
 
         // TODO authenticates a port binding
 
         ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
-        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+                "connection state is not OPEN");
 
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setPortId(msg.portId);
         expectedCounterparty.setChannelId(msg.channelId);
 
         Channel expectedChannel = new Channel();
-        expectedChannel.setState(Channel.State.STATE_TRYOPEN);
-        expectedChannel.setOrdering(channel.getOrdering());
+        expectedChannel.updateState(Channel.State.STATE_TRYOPEN);
+        expectedChannel.updateOrder(channel.channelOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
         expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
         expectedChannel.setVersion(msg.counterpartyVersion);
@@ -118,8 +120,7 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
                 channel.getCounterparty().getPortId(),
                 msg.counterpartyChannelId,
                 expectedChannel);
-
-        channel.setState(Channel.State.STATE_OPEN);
+        channel.updateState(Channel.State.STATE_OPEN);
         channel.setVersion(msg.counterpartyVersion);
         channel.getCounterparty().setChannelId(msg.counterpartyChannelId);
 
@@ -131,21 +132,22 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
         Channel channel = channels.at(msg.portId).get(msg.channelId);
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getConnectionHops().length == 1);
-        Context.require(channel.getState().equals(Channel.State.STATE_TRYOPEN), "channel state is not TRYOPEN");
+        Context.require(channel.channelState().equals(Channel.State.STATE_TRYOPEN), "channel state is not TRYOPEN");
 
         // TODO authenticates a port binding
 
         ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
-        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+                "connection state is not OPEN");
 
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setPortId(msg.portId);
         expectedCounterparty.setChannelId(msg.channelId);
 
         Channel expectedChannel = new Channel();
-        expectedChannel.setState(Channel.State.STATE_OPEN);
-        expectedChannel.setOrdering(channel.getOrdering());
+        expectedChannel.updateState(Channel.State.STATE_OPEN);
+        expectedChannel.updateOrder(channel.channelOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
         expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
         expectedChannel.setVersion(channel.getVersion());
@@ -158,7 +160,7 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
                 channel.getCounterparty().getChannelId(),
                 expectedChannel);
 
-        channel.setState(Channel.State.STATE_OPEN);
+        channel.updateState(Channel.State.STATE_OPEN);
 
         updateChannelCommitment(msg.portId, msg.channelId, channel);
         channels.at(msg.portId).set(msg.channelId, channel);
@@ -167,15 +169,16 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
     public void channelCloseInit(MsgChannelCloseInit msg) {
         Channel channel = channels.at(msg.portId).get(msg.channelId);
         Context.require(channel != null, "channel does not exist");
-        Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
+        Context.require(channel.channelState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
 
         // TODO authenticates a port binding
 
         ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
-        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+                "connection state is not OPEN");
 
-        channel.setState(Channel.State.STATE_CLOSED);
+        channel.updateState(Channel.State.STATE_CLOSED);
 
         updateChannelCommitment(msg.portId, msg.channelId, channel);
         channels.at(msg.portId).set(msg.channelId, channel);
@@ -184,22 +187,23 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
     public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
         Channel channel = channels.at(msg.portId).get(msg.channelId);
         Context.require(channel != null, "channel does not exist");
-        Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
+        Context.require(channel.channelState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
         Context.require(channel.getConnectionHops().length == 1);
 
         // TODO authenticates a port binding
 
         ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
         Context.require(connection != null, "connection does not exist");
-        Context.require(connection.getState().equals(ConnectionEnd.State.STATE_OPEN), "connection state is not OPEN");
+        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+                "connection state is not OPEN");
 
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setPortId(msg.portId);
         expectedCounterparty.setChannelId(msg.channelId);
 
         Channel expectedChannel = new Channel();
-        expectedChannel.setState(Channel.State.STATE_CLOSED);
-        expectedChannel.setOrdering(channel.getOrdering());
+        expectedChannel.updateState(Channel.State.STATE_CLOSED);
+        expectedChannel.updateOrder(channel.channelOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
         expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
         expectedChannel.setVersion(channel.getVersion());
@@ -212,7 +216,7 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
                 channel.getCounterparty().getChannelId(),
                 expectedChannel);
 
-        channel.setState(Channel.State.STATE_CLOSED);
+        channel.updateState(Channel.State.STATE_CLOSED);
 
         updateChannelCommitment(msg.portId, msg.channelId, channel);
         channels.at(msg.portId).set(msg.channelId, channel);

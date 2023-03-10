@@ -1,5 +1,4 @@
-use crate::types::message::CallServiceMessage;
-use cosmwasm_std::{to_binary, Event};
+use super::*;
 
 pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
     Event::new("callexecuted")

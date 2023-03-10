@@ -1,16 +1,4 @@
-use cosmwasm_std::{
-    to_binary, DepsMut, Env, IbcMsg, IbcTimeout, IbcTimeoutBlock, MessageInfo, Response,
-};
-
-use crate::{
-    error::ContractError,
-    events::event_xcall_message_sent,
-    state::CwCallService,
-    types::{
-        address::Address, call_request::CallRequest, message::CallServiceMessage,
-        request::CallServiceMessageRequest,
-    },
-};
+use super::*;
 
 impl<'a> CwCallService<'a> {
     pub fn send_packet(
@@ -58,19 +46,20 @@ impl<'a> CwCallService<'a> {
         );
 
         let message: CallServiceMessage = call_request.into();
-        let packet =
-            self.create_packet_and_event_for_request(deps, env, time_out_height, message.clone())?;
+        let packet = self.create_request_packet(deps, env, time_out_height, message.clone())?;
 
         let event = event_xcall_message_sent(sequence_no, info.sender.to_string(), 0, &message);
 
         Ok(Response::new()
             .add_message(packet)
             .add_attribute("action", "xcall-service")
-            .add_attribute("method", "send_packt")
+            .add_attribute("method", "send_packet")
             .add_event(event))
     }
+}
 
-    pub fn create_packet_and_event_for_request(
+impl<'a> CwCallService<'a> {
+    fn create_request_packet(
         &self,
         deps: DepsMut,
         env: Env,

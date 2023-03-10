@@ -1,6 +1,3 @@
-use common::rlp::{Decodable, Encodable};
-use crate::error::ContractError;
-
 use super::*;
 
 #[cw_serde]

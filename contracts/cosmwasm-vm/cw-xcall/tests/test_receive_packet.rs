@@ -4,7 +4,7 @@ mod setup;
 use account::*;
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env},
-    IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
+    Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 use cw_xcall::{
     ibc::ibc_packet_receive,
@@ -61,7 +61,7 @@ fn test_receive_packet_for_call_message_request() {
         channel_id: "channel-3".to_string(),
     };
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
-    let packet_message = IbcPacketReceiveMsg::new(packet);
+    let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
     let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
 
@@ -129,7 +129,7 @@ fn test_receive_packet_for_call_message_response() {
     };
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let packet_message = IbcPacketReceiveMsg::new(packet);
+    let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
     let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
 
@@ -195,7 +195,7 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
     };
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let packet_message = IbcPacketReceiveMsg::new(packet);
+    let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
     let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message).unwrap();
 
@@ -256,7 +256,7 @@ fn handle_response_emit_rollback_event() {
     };
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let packet_message = IbcPacketReceiveMsg::new(packet);
+    let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
     let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
 

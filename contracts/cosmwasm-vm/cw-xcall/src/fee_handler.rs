@@ -1,9 +1,4 @@
-use cosmwasm_std::{Coin, QuerierWrapper};
-use cosmwasm_std::{
-    CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult, Storage,
-};
-
-use crate::{error::ContractError, state::CwCallService, types::address::Address};
+use super::*;
 
 impl<'a> CwCallService<'a> {
     pub fn set_protocol_feehandler(
