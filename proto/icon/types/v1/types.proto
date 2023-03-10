@@ -5,7 +5,7 @@ package icon.types.v1;
 import "gogoproto/gogo.proto";
 
 // go_package output 
-option go_package = "modules/icon;icon";
+option go_package = "libraries/go/common/icon;icon";
 option (gogoproto.goproto_getters_all)  = false;
 
 
