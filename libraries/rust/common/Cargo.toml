@@ -9,3 +9,10 @@ edition = "2021"
 bytes = "1.4.0"
 rustc-hex = { version = "2.1.0", default-features = false }
 rlp-derive = "0.1.0"
+prost = "0.11.8"
+prost-build = "0.11"
+pbjson-types = "0.5.1"
+serde = "1.0.154"
+pbjson = "0.5.1"
+prost-types = { version = "0.11.8" }
+ibc-proto ="0.27.0"
