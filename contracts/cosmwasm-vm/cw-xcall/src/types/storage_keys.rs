@@ -1,4 +1,4 @@
-use cosmwasm_schema::cw_serde;
+use super::*;
 
 #[cw_serde]
 
@@ -10,6 +10,9 @@ pub enum StorageKey {
     MessageRequest,
     Requests,
     IbcConfig,
+    FeeHandler,
+    Balance,
+    Fee,
 }
 
 impl StorageKey {
@@ -22,6 +25,9 @@ impl StorageKey {
             StorageKey::RequestNo => "requestno",
             StorageKey::Requests => "requests",
             StorageKey::IbcConfig => "ibcconfig",
+            StorageKey::FeeHandler => "feehandler",
+            StorageKey::Balance => "balance",
+            StorageKey::Fee => "fee",
         }
     }
 }
