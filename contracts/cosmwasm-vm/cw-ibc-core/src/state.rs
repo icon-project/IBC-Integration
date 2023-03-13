@@ -1,3 +1,4 @@
+
 use super::*;
 
 pub struct IbcStore<'a> {
@@ -10,7 +11,9 @@ pub struct IbcStore<'a> {
     next_client_sequence: Item<'a, u128>,
     next_connection_sequence: Item<'a, u128>,
     next_channel_sequence: Item<'a, u128>,
+    connections : Map<'a, ConnectionId , ConnectionEnd> ,
 }
+
 
 impl<'a> IbcStore<'a> {
     pub fn client_registry(&self) -> &Map<'a, ClientType, String> {
@@ -41,5 +44,8 @@ impl<'a> IbcStore<'a> {
     }
     pub fn next_channel_sequence(&self) -> &Item<'a, u128> {
         &self.next_channel_sequence
+    }
+    pub fn connections(&self) -> &Map<'a, ConnectionId, ConnectionEnd>{
+        &self.connections
     }
 }
