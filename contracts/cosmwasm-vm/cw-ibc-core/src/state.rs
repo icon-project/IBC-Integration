@@ -10,6 +10,7 @@ pub struct IbcStore<'a> {
     next_client_sequence: Item<'a, u128>,
     next_connection_sequence: Item<'a, u128>,
     next_channel_sequence: Item<'a, u128>,
+    channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
 }
 
 impl<'a> IbcStore<'a> {
@@ -41,5 +42,8 @@ impl<'a> IbcStore<'a> {
     }
     pub fn next_channel_sequence(&self) -> &Item<'a, u128> {
         &self.next_channel_sequence
+    }
+    pub fn channels(&self) -> &Map<'a, (PortId, ChannelId), ChannelEnd>{
+        &self.channels
     }
 }
