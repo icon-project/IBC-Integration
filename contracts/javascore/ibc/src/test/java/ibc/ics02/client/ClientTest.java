@@ -14,7 +14,7 @@ import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.icon.structs.messages.UpdateClientResponse;
 import ibc.icon.test.MockContract;
 import ibc.ics24.host.IBCCommitment;
-import icon.proto.core.client.Height;
+import test.proto.core.client.Client.Height;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,10 +92,10 @@ public class ClientTest extends TestBase {
 
         byte[] clientStateCommitment = new byte[4];
         byte[] consensusStateCommitment = new byte[5];
-        Height consensusHeight = new Height();
-        consensusHeight.setRevisionHeight(BigInteger.ONE);
-        consensusHeight.setRevisionNumber(BigInteger.TWO);
-        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.encode());
+        Height consensusHeight = Height.newBuilder()
+                .setRevisionHeight(1)
+                .setRevisionNumber(2).build();
+        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.toByteArray());
         UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, update, true);
         when(lightClient.mock.createClient(msg.getClientType() + "-" + BigInteger.ZERO, msg.getClientState(),
                 msg.getConsensusState())).thenReturn(response);
@@ -112,8 +112,8 @@ public class ClientTest extends TestBase {
         // assertEquals(clientStateCommitment, storedClientStateCommitment);
 
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(expectedClientId,
-                consensusHeight.getRevisionNumber(),
-                consensusHeight.getRevisionHeight());
+                BigInteger.valueOf(consensusHeight.getRevisionNumber()),
+                BigInteger.valueOf(consensusHeight.getRevisionHeight()));
         // byte[] storedConsensusStateCommitment = (byte[]) client.call("getCommitment",
         // consensusKey);
         // assertArrayEquals(consensusStateCommitment, storedConsensusStateCommitment);
@@ -149,11 +149,11 @@ public class ClientTest extends TestBase {
         byte[] clientStateCommitment = new byte[6];
         byte[] consensusStateCommitment = new byte[7];
 
-        Height consensusHeight = new Height();
-        consensusHeight.setRevisionHeight(BigInteger.ONE);
-        consensusHeight.setRevisionNumber(BigInteger.TWO);
+        Height consensusHeight = Height.newBuilder()
+                .setRevisionHeight(1)
+                .setRevisionNumber(2).build();
 
-        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.encode());
+        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.toByteArray());
 
         UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, update, true);
 
@@ -171,8 +171,8 @@ public class ClientTest extends TestBase {
         // assertArrayEquals(clientStateCommitment, storedClientStateCommitment);
 
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(msg.getClientId(),
-                consensusHeight.getRevisionNumber(),
-                consensusHeight.getRevisionHeight());
+                BigInteger.valueOf(consensusHeight.getRevisionNumber()),
+                BigInteger.valueOf(consensusHeight.getRevisionHeight()));
         // byte[] storedConsensusStateCommitment1 = (byte[])
         // client.call("getCommitment", consensusKey);
         // assertArrayEquals(consensusStateCommitment, storedConsensusStateCommitment1);
