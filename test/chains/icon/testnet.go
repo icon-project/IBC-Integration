@@ -10,6 +10,7 @@ import (
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
+	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 )
 
 type IconTestnet struct {
@@ -20,12 +21,17 @@ type IconTestnet struct {
 	scorePaths       map[string]string
 	defaultStepLimit string
 	url              string
+	initMessage      string
 }
 
 type ContractInfo struct {
 	name         string
-	scoreAddress string
+	ScoreAddress string
 	// any neccessary info
+}
+
+type Block struct {
+	Height int64
 }
 
 // DeployContract implements chains.Chain
@@ -36,17 +42,19 @@ func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, err
 	// Build Params
 	// "--param", initMessage
 
-	contract := ctx.Value(chains.ContractKey{}).(string)
-	contractPath := it.scorePaths[contract]
-	if contract == "" {
-		return nil, fmt.Errorf("cannot find contract %v in config", contract)
-	}
+	// contract := ctx.Value(chains.ContractKey{}).(string)
+	// contractPath := it.scorePaths[contract]
+	// if contract == "" {
+	// 	return nil, fmt.Errorf("cannot find contract %v in config", contract)
+	// }
 
-	hash, _ := exec.Command(it.bin, "rpc", "sendtx", "deploy", contractPath,
+	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths["bmc"], "--param", it.initMessage,
 		"--key_store", it.keystorePath, "--key_password", it.keyPassword, "--step_limit", it.defaultStepLimit,
 		"--content_type", "application/java",
 		"--uri", it.url, "--nid", it.nid).Output()
-
+	if err != nil {
+		fmt.Println(err)
+	}
 	json.Unmarshal(hash, &output)
 	time.Sleep(3 * time.Second)
 
@@ -57,8 +65,8 @@ func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, err
 
 	json.Unmarshal(out, &result)
 
-	return context.WithValue(ctx, ContractInfo{}, ContractInfo{
-		scoreAddress: string(result.SCOREAddress),
+	return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
+		ContractAddress: string(result.SCOREAddress),
 	}), nil
 }
 
@@ -68,7 +76,7 @@ func (*IconTestnet) ExecuteContract(ctx context.Context) (context.Context, error
 }
 
 // GetBalance implements chains.Chain
-func (*IconTestnet) GetBalance(ctx context.Context) (context.Context, error) {
+func (*IconTestnet) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
 	panic("unimplemented")
 }
 
@@ -78,8 +86,11 @@ func (*IconTestnet) GetBlockByHeight(ctx context.Context) (context.Context, erro
 }
 
 // GetLastBlock implements chains.Chain
-func (*IconTestnet) GetLastBlock(ctx context.Context) (context.Context, error) {
-	panic("unimplemented")
+func (it *IconTestnet) GetLastBlock(ctx context.Context) (context.Context, error) {
+	var res icontypes.Block
+	out, err := exec.Command(it.bin, "rpc", "lastblock", "--uri", it.url).Output()
+	json.Unmarshal(out, &res)
+	return context.WithValue(ctx, chains.LastBlock{}, uint64(res.Height)), err
 }
 
 // QueryContract implements chains.Chain
@@ -90,15 +101,17 @@ func (*IconTestnet) QueryContract(ctx context.Context) (context.Context, error) 
 func (*IconTestnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
 	panic("unimplemented")
 }
-func NewIconTestnet(bin, nid, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
+
+func NewIconTestnet(bin, nid, initMessage, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
 	return &IconTestnet{
-		bin,
-		nid,
-		keystorePath,
-		keyPassword,
-		scorePaths,
-		defaultStepLimit,
-		url,
+		bin:              bin,
+		nid:              nid,
+		keystorePath:     keystorePath,
+		keyPassword:      keyPassword,
+		scorePaths:       scorePaths,
+		defaultStepLimit: defaultStepLimit,
+		url:              url,
+		initMessage:      initMessage,
 	}
 }
 
