@@ -1,6 +1,5 @@
 mod account;
 mod setup;
-use account::*;
 use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
 
 use cw_xcall::{instantiate, msg::InstantiateMsg, state::CwCallService};

@@ -1,6 +1,5 @@
 package ibc.icon.structs.messages;
 
-
 import ibc.icon.structs.proto.core.client.Height;
 import ibc.icon.structs.proto.core.connection.Version;
 

@@ -7,10 +7,20 @@ import java.math.BigInteger;
 
 /**
  * // Commitment path generators that comply with
- * <a href="https://githu.com/cosmos/ibc/tree/main/spec/core/ics-024-host-requirements#path-space">path-space</a>
+ * <a href=
+ * "https://github.com/cosmos/ibc/tree/main/spec/core/ics-024-host-requirements#path-space">path-space</a>
  */
 public class IBCCommitment {
     private static final String KECCAK256 = "keccak-256";
+    private static final String SHA256 = "sha-256";
+
+    public static byte[] keccak256(byte[] msg) {
+        return Context.hash(KECCAK256, msg);
+    }
+
+    public static byte[] sha256(byte[] msg) {
+        return Context.hash(SHA256, msg);
+    }
 
     public static byte[] clientStatePath(String clientId) {
         return StringUtil.encodePacked("clients/", clientId, "/clientState");
@@ -78,4 +88,17 @@ public class IBCCommitment {
     public static byte[] nextSequenceRecvCommitmentKey(String portId, String channelId) {
         return Context.hash(KECCAK256, nextSequenceRecvCommitmentPath(portId, channelId));
     }
+
+    public static boolean equals(byte[] a, byte[] b) {
+        boolean isEqual;
+        int length = a.length;
+        isEqual = length == b.length;
+
+        for (int i = 0; isEqual && (i < length); ++i) {
+            isEqual = (a[i] == b[i]);
+        }
+
+        return isEqual;
+    }
+
 }
