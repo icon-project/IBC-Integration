@@ -14,28 +14,15 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewCosmosChain(t *testing.T, ctx context.Context, environment string, chainConfig chains.ChainConfig, keystorePath string, keyPassword string, url string, scorePaths map[string]string, logger *zap.Logger) (context.Context, chains.Chain, error) {
+func NewCosmosChain(t *testing.T, ctx context.Context, environment string, chainConfig chains.ChainConfig, keystorePath string, keyPassword string, url string, contractPaths map[string]string, logger *zap.Logger) (chains.Chain, error) {
 	switch environment {
 	case "local", "localnet":
-		// cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
-		// 	// Source chain
-		// 	{Name: "gaia", Version: "v7.0.0", ChainConfig: ibc.ChainConfig{
-		// 		GasPrices: "0.0uatom",
-		// 	},
-		// 	},
-		// },
-		// )
-		// chains, _ := cf.Chains(t.Name())
-		// dest := chains[0]
 		client, network := interchaintest.DockerSetup(t)
-		chain, _ := NewCosmosLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes)
+		localchain, _ := NewCosmosLocalnet(t, logger, chainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes, keyPassword, contractPaths)
 		ic := interchaintest.NewInterchain().
-			AddChain(chain.(ibc.Chain))
+			AddChain(localchain.(ibc.Chain))
 		// Log location
 		f, _ := interchaintest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
-		// if err != nil {
-		// 	return ctx, chain, nil
-		// }
 		// Reporter/logs
 		rep := testreporter.NewReporter(f)
 		eRep := rep.RelayerExecReporter(t)
@@ -50,13 +37,11 @@ func NewCosmosChain(t *testing.T, ctx context.Context, environment string, chain
 			SkipPathCreation: false},
 		),
 		)
-
-		return context.WithValue(ctx, "ibc.chain", chain.(ibc.Chain)), chain, nil
+		return localchain, nil
 
 	case "testnet":
+		return NewCosmosTestnet(chainConfig.Bin, keystorePath, keyPassword, "5000000000", url, contractPaths), nil
 	default:
-		return nil, nil, fmt.Errorf("unknown environment: %s", environment)
+		return nil, fmt.Errorf("unknown environment: %s", environment)
 	}
-
-	return nil, nil, nil
 }
