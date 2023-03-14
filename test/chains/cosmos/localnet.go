@@ -61,6 +61,5 @@ func (c *CosmosLocalnet) GetBlockByHeight(ctx context.Context) (context.Context,
 }
 
 func (c *CosmosLocalnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
-	fmt.Println("**************************************************************************************************")
 	panic("Unimplemented") // TODO: Implement
 }
