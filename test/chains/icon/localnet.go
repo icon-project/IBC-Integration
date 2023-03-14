@@ -15,6 +15,7 @@ import (
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
+
 	// icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 	// "github.com/strangelove-ventures/interchaintest/v6/testutil"
@@ -23,22 +24,29 @@ import (
 )
 
 type IconLocalnet struct {
-	log           *zap.Logger
-	testName      string
-	cfg           ibc.ChainConfig
-	numValidators int
-	numFullNodes  int
-	FullNodes     IconNodes
-	findTxMu      sync.Mutex
+	log                       *zap.Logger
+	testName                  string
+	cfg                       ibc.ChainConfig
+	numValidators             int
+	numFullNodes              int
+	FullNodes                 IconNodes
+	findTxMu                  sync.Mutex
+	keystorePath, keyPassword string
+	scorePaths                map[string]string
+	initMessage               string
 }
 
-func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int) chains.Chain {
+func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keystorePath string, keyPassword string, scorePaths map[string]string, initMessage string) chains.Chain {
 	return &IconLocalnet{
 		testName:      testName,
 		cfg:           chainConfig,
 		numValidators: numValidators,
 		numFullNodes:  numFullNodes,
 		log:           log,
+		keystorePath:  keystorePath,
+		keyPassword:   keyPassword,
+		scorePaths:    scorePaths,
+		initMessage:   initMessage,
 	}
 }
 
@@ -320,8 +328,11 @@ func (c *IconLocalnet) GetBalance(ctx context.Context, address string, denom str
 // }
 
 // DeployContract implements chains.Chain
-func (*IconLocalnet) DeployContract(ctx context.Context) (context.Context, error) {
-	panic("unimplemented")
+func (c *IconLocalnet) DeployContract(ctx context.Context) (context.Context, error) {
+	scoreAddress, _ := c.getFullNode().DeployContract(ctx, c.scorePaths["bmc"], c.keystorePath, c.initMessage)
+	return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
+		ContractAddress: string(scoreAddress),
+	}), nil
 }
 
 // ExecuteContract implements chains.Chain
@@ -335,8 +346,9 @@ func (*IconLocalnet) GetBlockByHeight(ctx context.Context) (context.Context, err
 }
 
 // GetLastBlock implements chains.Chain
-func (*IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error) {
-	panic("unimplemented")
+func (c *IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error) {
+	h, err := c.getFullNode().Height(ctx)
+	return context.WithValue(ctx, chains.LastBlock{}, h), err
 }
 
 // QueryContract implements chains.Chain
