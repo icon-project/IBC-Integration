@@ -2,7 +2,6 @@ package cosmos
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/icon-project/ibc-integration/test/chains"
