@@ -1,5 +1,6 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
+use super::*;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -8,4 +9,16 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("ChannelNotFound {port_id} {channel_id}")]
+    ChannelNotFound {
+        port_id: PortId,
+        channel_id: ChannelId,
+    },
+
+    #[error("MissingNextRecvSeq {port_id} {channel_id}")]
+    MissingNextRecvSeq{
+        port_id: PortId,
+        channel_id: ChannelId,
+    },
 }
