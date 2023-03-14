@@ -119,6 +119,5 @@ func (c *CosmosTestnet) Height(ctx context.Context) (uint64, error) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(result.SyncInfo.LatestBlockHeight)
 	return uint64(0), err
 }
