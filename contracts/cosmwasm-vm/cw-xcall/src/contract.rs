@@ -1,21 +1,4 @@
-use crate::{
-    error::ContractError,
-    events::{event_call_message, event_response_message, event_rollback_message},
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    state::{CwCallService, EXECUTE_CALL, EXECUTE_ROLLBACK},
-    types::message::CallServiceMessage,
-    types::response::CallServiceResponseType,
-    types::{
-        address::Address,
-        message::CallServiceMessageType,
-        request::CallServiceMessageRequest,
-        response::{to_int, CallServiceMessageReponse},
-    },
-};
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, IbcPacket, MessageInfo, Reply, Response, StdResult,
-};
-use cw2::set_contract_version;
+use super::*;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-xcall";
@@ -43,9 +26,7 @@ impl<'a> CwCallService<'a> {
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::SetAdmin { address } => self.add_admin(deps.storage, info, address),
-            ExecuteMsg::SetProtocol { value } => {
-                todo!()
-            }
+            ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
@@ -59,139 +40,28 @@ impl<'a> CwCallService<'a> {
         }
     }
 
-    pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::GetAdmin {} => to_binary(&self.query_admin(deps.storage).unwrap()),
-            QueryMsg::GetProtocolFee {} => todo!(),
-            QueryMsg::GetProtocolFeeHandler {} => {
-                to_binary(&self.query_feehandler(deps.storage).unwrap())
-            }
+            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
+            QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
         }
     }
 
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
-            EXECUTE_CALL => self.reply_message_sent(deps.as_ref(), env, msg),
-            EXECUTE_ROLLBACK => self.reply_rollback(deps.as_ref(), msg),
-            _ => Err(ContractError::Unauthorized {}),
+            EXECUTE_CALL_ID => self.reply_execute_call_message(deps.as_ref(), env, msg),
+            EXECUTE_ROLLBACK_ID => self.reply_execute_rollback(deps.as_ref(), msg),
+            ACK_FAILURE_ID => self.reply_ack_on_error(msg),
+            _ => Err(ContractError::ReplyError {
+                code: msg.id,
+                msg: "Unkown".to_string(),
+            }),
         }
     }
 }
 
 impl<'a> CwCallService<'a> {
-    pub fn receive_packet_data(
-        &self,
-        deps: DepsMut,
-        info: MessageInfo,
-        message: IbcPacket,
-    ) -> Result<Response, ContractError> {
-        self.ensure_owner(deps.storage, &info).unwrap();
-
-        let call_service_message: CallServiceMessage = message.data.try_into()?;
-
-        match call_service_message.message_type() {
-            CallServiceMessageType::CallServiceRequest => self.hanadle_request(
-                deps,
-                info.sender.to_string(),
-                call_service_message.payload(),
-            ),
-            CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, call_service_message.payload())
-            }
-        }
-    }
-
-    fn hanadle_request(
-        &self,
-        deps: DepsMut,
-        from: String,
-        data: &[u8],
-    ) -> Result<Response, ContractError> {
-        let request_id = self.increment_last_request_id(deps.storage)?;
-        let message_request: CallServiceMessageRequest = data.try_into()?;
-
-        let from = Address::from(&from);
-        let to = message_request.to();
-        
-        let request = CallServiceMessageRequest::new(
-            from.clone(),
-            to.to_string(),
-            message_request.sequence_no(),
-            message_request.rollback().into(),
-            message_request.data().into(),
-        );
-
-        self.insert_request(deps.storage, request_id, request)?;
-
-        let event = event_call_message(
-            from.to_string(),
-            to.to_string(),
-            message_request.sequence_no(),
-            request_id,
-        );
-
-        Ok(Response::new()
-            .add_attribute("action", "call_service")
-            .add_attribute("method", "handle_response")
-            .add_event(event))
-    }
-
-    fn handle_response(&self, deps: DepsMut, data: &[u8]) -> Result<Response, ContractError> {
-        let message: CallServiceMessageReponse = data.try_into()?;
-        let response_sequence_no = message.sequence_no();
-
-        let mut call_request = self.query_request(deps.storage, response_sequence_no)?;
-
-        if call_request.is_null() {
-            return Ok(Response::new()
-                .add_attribute("action", "call_service")
-                .add_attribute("method", "handle_response")
-                .add_attribute(
-                    "message",
-                    format!("handle_resposne: no request for {}", response_sequence_no),
-                ));
-        }
-
-        match message.response_code() {
-            CallServiceResponseType::CallServiceResponseSucess => {
-                let event = match message.message().is_empty() {
-                    true => event_response_message(
-                        response_sequence_no,
-                        to_int(message.response_code()),
-                        "",
-                    ),
-                    false => event_response_message(
-                        response_sequence_no,
-                        to_int(message.response_code()),
-                        message.message(),
-                    ),
-                };
-                self.cleanup_request(deps, response_sequence_no);
-                Ok(Response::new()
-                    .add_attribute("action", "call_service")
-                    .add_attribute("method", "handle_response")
-                    .add_event(event))
-            }
-            _ => {
-                self.ensure_rollback_length(call_request.rollback())
-                    .unwrap();
-                call_request.set_enabled();
-                self.set_call_request(deps.storage, response_sequence_no, call_request)?;
-
-                let event = event_rollback_message(response_sequence_no);
-
-                Ok(Response::new()
-                    .add_attribute("action", "call_service")
-                    .add_attribute("method", "handle_response")
-                    .add_event(event))
-            }
-        }
-    }
-
-    fn cleanup_request(&self, deps: DepsMut, sequence_no: u128) {
-        self.remove_call_request(deps.storage, sequence_no);
-    }
-
     fn init(&self, deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
         let last_sequence_no = u128::default();
         let last_request_id = u128::default();
@@ -202,5 +72,105 @@ impl<'a> CwCallService<'a> {
         self.init_last_request_id(deps.storage, last_request_id)?;
 
         Ok(Response::new())
+    }
+
+    fn reply_execute_rollback(&self, deps: Deps, msg: Reply) -> Result<Response, ContractError> {
+        let sequence_no = self.last_sequence_no().load(deps.storage)?;
+
+        let response = match msg.result {
+            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageReponse::new(
+                sequence_no,
+                CallServiceResponseType::CallServiceResponseSucess,
+                "",
+            ),
+            cosmwasm_std::SubMsgResult::Err(err) => {
+                let error_message = format!("CallService Reverted : {err}");
+                CallServiceMessageReponse::new(
+                    sequence_no,
+                    CallServiceResponseType::CallServiceResponseFailure,
+                    &error_message,
+                )
+            }
+        };
+
+        let event = event_rollback_executed(
+            sequence_no,
+            to_int(response.response_code()),
+            &to_string(response.message()).unwrap(),
+        );
+
+        Ok(Response::new()
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "execute_rollback")
+            .add_event(event))
+    }
+
+    fn reply_execute_call_message(
+        &self,
+        deps: Deps,
+        env: Env,
+        msg: Reply,
+    ) -> Result<Response, ContractError> {
+        let req_id = self.last_request_id().load(deps.storage)?;
+        let request = self.message_request().load(deps.storage, req_id)?;
+
+        let responses = match msg.result {
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let code = 0;
+
+                let message_response = CallServiceMessageReponse::new(
+                    request.sequence_no(),
+                    CallServiceResponseType::CallServiceResponseSucess,
+                    "",
+                );
+                let event = event_call_executed(req_id, code, "");
+                (message_response, event)
+            }
+            cosmwasm_std::SubMsgResult::Err(err) => {
+                let code = -1;
+                let error_message = format!("CallService Reverted : {err}");
+                let message_response = CallServiceMessageReponse::new(
+                    request.sequence_no(),
+                    CallServiceResponseType::CallServiceResponseFailure,
+                    &error_message,
+                );
+                let event = event_call_executed(req_id, code, &error_message);
+                (message_response, event)
+            }
+        };
+
+        if !request.rollback().is_empty() {
+            let message: CallServiceMessage = responses.0.into();
+
+            let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
+
+            return Ok(Response::new()
+                .add_attribute("action", "call_message")
+                .add_attribute("method", "execute_callback")
+                .add_message(packet));
+        }
+
+        Ok(Response::new()
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "execute_callback")
+            .add_event(responses.1))
+    }
+
+    fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
+        let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
+
+        let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
+
+        IbcMsg::SendPacket {
+            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
+            data,
+            timeout,
+        }
+    }
+    fn reply_ack_on_error(&self, reply: Reply) -> Result<Response, ContractError> {
+        match reply.result {
+            SubMsgResult::Ok(_) => Ok(Response::new()),
+            SubMsgResult::Err(err) => Ok(Response::new().set_data(make_ack_fail(err))),
+        }
     }
 }

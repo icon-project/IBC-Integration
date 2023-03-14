@@ -1,4 +1,4 @@
-use cosmwasm_schema::cw_serde;
+use super::*;
 
 #[cw_serde]
 

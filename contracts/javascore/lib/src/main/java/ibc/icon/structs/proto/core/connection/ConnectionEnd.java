@@ -1,13 +1,13 @@
 package ibc.icon.structs.proto.core.connection;
 
-import java.math.BigInteger;
-import java.util.List;
-
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.math.BigInteger;
+import java.util.List;
 
 // ConnectionEnd defines a stateful object on a chain connected to another
 // separate one.
@@ -28,22 +28,22 @@ public class ConnectionEnd {
     }
 
     // client associated with this connection.
-    public String clientId;
+    private String clientId;
 
     // IBC version which can be utilised to determine encodings or protocols for
     // channels or packets utilising this connection.
-    public Version[] versions;
+    private Version[] versions;
 
     // current state of the connection end.
-    public String state;
+    private String state;
 
     // counterparty chain associated with this connection.
-    public Counterparty counterparty;
+    private Counterparty counterparty;
 
     // delay period that must pass before a consensus state can be used for
     // packet-verification NOTE: delay period logic is only implemented by some
     // clients.
-    public BigInteger delayPeriod;
+    private BigInteger delayPeriod;
 
     public static void writeObject(ObjectWriter writer, ConnectionEnd obj) {
         obj.writeObject(writer);
@@ -103,6 +103,17 @@ public class ConnectionEnd {
         writer.end();
     }
 
+    public static ConnectionEnd fromBytes(byte[] bytes) {
+        ObjectReader reader = Context.newByteArrayObjectReader("RLPn", bytes);
+        return ConnectionEnd.readObject(reader);
+    }
+
+    public byte[] toBytes() {
+        ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
+        ConnectionEnd.writeObject(writer, this);
+        return writer.toByteArray();
+    }
+
     public String getClientId() {
         return clientId;
     }
@@ -119,12 +130,20 @@ public class ConnectionEnd {
         this.versions = versions;
     }
 
-    public State getState() {
+    public State connectionState() {
         return State.valueOf(state);
     }
 
     public void setState(State state) {
         this.state = state.toString();
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getState() {
+        return state;
     }
 
     public Counterparty getCounterparty() {

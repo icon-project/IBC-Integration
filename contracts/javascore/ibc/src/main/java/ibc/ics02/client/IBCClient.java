@@ -1,16 +1,18 @@
 package ibc.ics02.client;
 
+import ibc.icon.interfaces.IIBCClient;
+import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
-import ibc.ics24.host.IBCStore;
+import ibc.icon.structs.messages.*;
+import ibc.ics24.host.IBCCommitment;
+import ibc.ics24.host.IBCHost;
 import score.Address;
-import score.annotation.External;
+import score.Context;
 
 import java.math.BigInteger;
 
-public class IBCClient extends IBCStore {
+public class IBCClient extends IBCHost implements IIBCClient {
 
     Logger logger = new Logger("ibc-core");
 
@@ -20,37 +22,49 @@ public class IBCClient extends IBCStore {
      * @param clientType  Type of client
      * @param lightClient Light client contract address
      */
-    @External
     public void registerClient(String clientType, Address lightClient) {
-        NullChecker.requireNotNull(clientRegistry.get(clientType), "Already registered");
+        Context.require(clientRegistry.get(clientType) == null, "Already registered.");
         clientRegistry.set(clientType, lightClient);
     }
 
-    @External
-    public void createClient(MsgCreateClient msg) {
+    public String createClient(MsgCreateClient msg) {
         String clientType = msg.clientType;
-        NullChecker.requireNotNull(clientType, "Client Type cannot be null");
-
         Address lightClientAddr = clientRegistry.get(clientType);
-        NullChecker.requireNotNull(clientType, "Register client before creation.");
+        NullChecker.requireNotNull(lightClientAddr, "Register client before creation.");
 
         String clientId = generateClientIdentifier(clientType);
         logger.println("Create Client: ", " clientId: ", clientId);
 
+        clientTypes.set(clientId, msg.clientType);
         clientImplementations.set(clientId, lightClientAddr);
+        ILightClient client = getClient(clientId);
+        CreateClientResponse response = client.createClient(clientId, msg.clientState, msg.consensusState);
+        Context.require(response.ok);
 
-        //
+        // update commitments
+        commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
+        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
+                response.update.height.getRevisionNumber(), response.update.height.getRevisionHeight());
+        commitments.set(consensusKey, response.update.consensusStateCommitment);
+
+        return clientId;
     }
 
-    @External
     public void updateClient(MsgUpdateClient msg) {
         String clientId = msg.clientId;
-        NullChecker.requireNotNull(clientId, "ClientId cannot be null");
+        ILightClient client = getClient(clientId);
 
-        Address lightClientAddr = clientImplementations.get(clientId);
-        NullChecker.requireNotNull(lightClientAddr, "Invalid client id");
+        Context.require(commitments.get(IBCCommitment.clientStateCommitmentKey(clientId)) != null);
+        UpdateClientResponse response = client.updateClient(clientId, msg.clientMessage);
+        Context.require(response.ok);
 
-        //
+        // update commitments
+        commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
+        for (ConsensusStateUpdate update : response.updates) {
+            byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId, update.height.getRevisionNumber(),
+                    update.height.getRevisionHeight());
+            commitments.set(consensusKey, update.consensusStateCommitment);
+        }
     }
 
     private String generateClientIdentifier(String clientType) {
