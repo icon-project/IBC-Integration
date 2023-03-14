@@ -7,7 +7,6 @@ require (
 	github.com/avast/retry-go/v4 v4.0.4
 	github.com/cosmos/cosmos-sdk v0.46.2
 	github.com/cucumber/godog v0.12.6
-	github.com/danielgtaylor/huma v1.13.0
 	github.com/docker/docker v20.10.19+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
@@ -16,6 +15,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230228221006-4e43739472a1
 	github.com/stretchr/testify v1.8.1
+	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.1.0
 	modernc.org/sqlite v1.17.3
@@ -202,7 +202,6 @@ require (
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.2.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.6.0 // indirect

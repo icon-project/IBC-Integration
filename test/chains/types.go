@@ -1,3 +1,6 @@
 package chains
 
-type ContractKey struct {}
+type ContractKey struct {
+	ContractAddress string
+}
+type LastBlock struct{}
