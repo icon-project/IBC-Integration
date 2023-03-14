@@ -14,42 +14,18 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewIconChain(t *testing.T, ctx context.Context, environment string, chainConfig chains.ChainConfig, nid string, keystorePath string, keyPassword string, url string, scorePaths map[string]string, logger *zap.Logger) (context.Context, chains.Chain, error) {
+func NewIconChain(t *testing.T, ctx context.Context, environment string, chainConfig chains.ChainConfig, nid string, keystorePath string, keyPassword string, url string, scorePaths map[string]string, logger *zap.Logger, initMessage string) (chains.Chain, error) {
 	switch environment {
 	case "local", "localnet":
 		// Start Docker
-		// cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
-		// 	// Source chain
-		// 	{Name: "icon", ChainConfig: ibc.ChainConfig{
-		// 		Type:    "icon",
-		// 		Name:    "icon",
-		// 		ChainID: "icon-1",
-		// 		Images: []ibc.DockerImage{
-		// 			{
-		// 				Repository: "hemz1012/goloop", // FOR LOCAL IMAGE USE: Docker Image Name
-		// 				Version:    "latest",          // FOR LOCAL IMAGE USE: Docker Image Tag
-		// 			},
-		// 		},
-		// 		Bin:            "goloop",
-		// 		Bech32Prefix:   "icon",
-		// 		Denom:          "icx",
-		// 		GasPrices:      "0.001icx",
-		// 		GasAdjustment:  1.3,
-		// 		TrustingPeriod: "508h",
-		// 		NoHostMount:    false},
-		// 	},
-		// },
-		// )
-		// chains, _ := cf.Chains(t.Name())
-		// dest := chains[0]
 		client, network := interchaintest.DockerSetup(t)
-		localchain := NewIconLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes)
+		localchain := NewIconLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes, keystorePath, keyPassword, scorePaths, initMessage)
 		ic := interchaintest.NewInterchain().
 			AddChain(localchain.(ibc.Chain))
 		// Log location
 		f, err := interchaintest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
 		if err != nil {
-			return ctx, nil, err
+			return nil, err
 		}
 		// Reporter/logs
 		rep := testreporter.NewReporter(f)
@@ -66,10 +42,10 @@ func NewIconChain(t *testing.T, ctx context.Context, environment string, chainCo
 		),
 		)
 
-		return context.WithValue(ctx, "ibc.chain", localchain.(ibc.Chain)), localchain, nil
+		return localchain, nil
 	case "testnet":
-		return ctx, NewIconTestnet(chainConfig.Bin, nid, keystorePath, keyPassword, "5000000000", url, scorePaths), nil
+		return NewIconTestnet(chainConfig.Bin, nid, initMessage, keystorePath, keyPassword, "5000000000", url, scorePaths), nil
 	default:
-		return ctx, nil, fmt.Errorf("unknown environment: %s", environment)
+		return nil, fmt.Errorf("unknown environment: %s", environment)
 	}
 }
