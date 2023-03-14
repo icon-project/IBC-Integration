@@ -16,7 +16,8 @@ use cosmwasm_schema::cw_serde;
 use cw_storage_plus::{Item, Map};
 use ibc::core::{
     ics02_client::client_type::ClientType,
-    ics04_channel::packet::Sequence,
-    ics24_host::identifier::{ChannelId, ClientId, PortId},
+    ics03_connection::connection::ConnectionEnd,
     ics04_channel::channel::ChannelEnd,
+    ics04_channel::packet::Sequence,
+    ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 };
