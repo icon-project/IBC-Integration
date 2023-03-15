@@ -29,7 +29,7 @@ public class Proto {
         }
 
         byte[] bs = new byte[2];
-        bs[0] = (byte) (order << 3 | 0);
+        bs[0] = (byte) (order << 3);
         bs[1] = (byte) (item ? 1 : 0);
 
         return bs;
@@ -43,7 +43,7 @@ public class Proto {
         byte[] varInt = encodeVarInt(item);
         byte[] bs = new byte[varInt.length + 1];
 
-        bs[0] = (byte) (order << 3 | 0);
+        bs[0] = (byte) (order << 3);
         System.arraycopy(varInt, 0, bs, 1, varInt.length);
 
         return bs;
