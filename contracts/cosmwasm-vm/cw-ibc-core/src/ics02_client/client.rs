@@ -77,4 +77,51 @@ impl<'a> CwIbcStore<'a> {
             Err(error) => Err(error),
         }
     }
+
+    pub fn init_next_client_sequence(
+        &self,
+        store: &mut dyn Storage,
+        sequence_no: u128,
+    ) -> Result<(), ContractError> {
+        match self.next_client_sequence().save(store, &sequence_no) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    pub fn store_client_type(
+        &self,
+        store: &mut dyn Storage,
+        client_id: ClientId,
+        client_type: ClientType,
+    ) -> Result<(), ContractError> {
+        match self.client_types().save(store, client_id, &client_type) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    pub fn store_client_into_registry(
+        &self,
+        store: &mut dyn Storage,
+        client_type: ClientType,
+        client: String,
+    ) -> Result<(), ContractError> {
+        match self.client_registry().save(store, client_type, &client) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    pub fn store_client_impl(
+        &self,
+        store: &mut dyn Storage,
+        client_id: ClientId,
+        client: String,
+    ) -> Result<(), ContractError> {
+        match self.client_impls().save(store, client_id, &client) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
 }
