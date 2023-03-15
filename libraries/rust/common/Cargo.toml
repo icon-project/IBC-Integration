@@ -10,9 +10,7 @@ bytes = { version = "1.4.0", default-features = false }
 rustc-hex = { version = "2.1.0", default-features = false }
 rlp-derive = { version = "0.1.0", default-features = false }
 prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
-# prost-build = { version = "0.11.8", default-features = false }
 pbjson-types = { version = "0.5.1", default-features = false }
 serde = { version = "1.0.156", default-features = false,features = ["derive"] }
 pbjson = { version = "0.5.1", default-features = false }
-# prost-types = { version = "0.11.8" }
 ibc-proto = { version = "0.28.0", default-features = false }
