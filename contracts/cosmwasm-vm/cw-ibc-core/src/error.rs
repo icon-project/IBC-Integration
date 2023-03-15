@@ -33,4 +33,12 @@ pub enum ContractError {
         port_id: PortId,
         channel_id: ChannelId,
     },
+    #[error("InvalidClientId {client_id}")]
+    InvalidClientId { client_id: String },
+
+    #[error("InvalidClientType {client_type}")]
+    InvalidClientType { client_type: String },
+
+    #[error("InvalidNextClientSequence")]
+    InvalidNextClientSequence {},
 }

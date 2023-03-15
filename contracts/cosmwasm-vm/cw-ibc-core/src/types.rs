@@ -10,6 +10,18 @@ use super::*;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientId(IbcClientId);
 
+impl ClientId {
+    /// Get this identifier as a borrowed `&str`
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    /// Get this identifier as a borrowed byte slice
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
 impl<'a> PrimaryKey<'a> for ClientId {
     type Prefix = ();
 
@@ -38,6 +50,17 @@ impl KeyDeserialize for ClientId {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientType(IbcClientType);
+
+impl ClientType {
+    pub fn client_type(&self) -> IbcClientType {
+        self.0.clone()
+    }
+
+    /// Get this identifier as a borrowed `&str`
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
 
 impl<'a> PrimaryKey<'a> for ClientType {
     type Prefix = ();
@@ -68,18 +91,45 @@ impl KeyDeserialize for ClientType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConnectionId(IbcConnectionId);
 
+impl ConnectionId {
+    pub fn new(identifier: u64) -> Self {
+        Self(IbcConnectionId::new(identifier))
+    }
+
+    /// Returns the static prefix to be used across all connection identifiers.
+    pub fn prefix() -> &'static str {
+        IbcConnectionId::prefix()
+    }
+
+    /// Get this identifier as a borrowed `&str`
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    /// Get this identifier as a borrowed byte slice
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
 impl<'a> PrimaryKey<'a> for ConnectionId {
     type Prefix = ();
 
     type SubPrefix = ();
 
-    type Suffix = Self;
+    type Suffix = ();
 
-    type SuperSuffix = Self;
+    type SuperSuffix = ();
     fn key(&self) -> Vec<Key> {
         vec![Key::Ref(self.0.as_str().as_bytes())]
     }
 }
+impl<'a> Prefixer<'a> for ConnectionId {
+    fn prefix(&self) -> Vec<Key> {
+        vec![Key::Ref(self.0.as_bytes())]
+    }
+}
+
 impl KeyDeserialize for ConnectionId {
     type Output = ConnectionId;
 
