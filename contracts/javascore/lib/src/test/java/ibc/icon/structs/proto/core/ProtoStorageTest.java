@@ -174,8 +174,7 @@ public class ProtoStorageTest extends TestBase {
         assertEquals(packet.getSourcePort(), storedPacket.getSourcePort());
         assertEquals(packet.getSourceChannel(), storedPacket.getSourceChannel());
         assertEquals(packet.getDestinationPort(), storedPacket.getDestinationPort());
-        assertEquals(packet.getDestinationChannel(),
-                storedPacket.getDestinationChannel());
+        assertEquals(packet.getDestinationChannel(), storedPacket.getDestinationChannel());
         assertArrayEquals(packet.getData(), storedPacket.getData());
         assertEquals(packet.getTimeoutHeight().getRevisionNumber(),
                 storedPacket.getTimeoutHeight().getRevisionNumber());

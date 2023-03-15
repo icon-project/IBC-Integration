@@ -19,6 +19,12 @@ public class IBCClient extends IBCHost implements IIBCClient {
 
     Logger logger = new Logger("ibc-core");
 
+    /**
+     * Registers a client to registry
+     *
+     * @param clientType  Type of client
+     * @param lightClient Light client contract address
+     */
     public void registerClient(String clientType, Address lightClient) {
         Context.require(clientRegistry.get(clientType) == null, "Already registered.");
         clientRegistry.set(clientType, lightClient);
@@ -39,8 +45,8 @@ public class IBCClient extends IBCHost implements IIBCClient {
         Context.require(response.ok);
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
-        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),
-        // response.clientStateCommitment);
+        // update commitments
+        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 response.update.height.getRevisionNumber(),
                 response.update.height.getRevisionHeight());
@@ -57,14 +63,13 @@ public class IBCClient extends IBCHost implements IIBCClient {
         ILightClient client = getClient(clientId);
 
         // Should be required on client side
-        // Context.require(commitments.get(IBCCommitment.clientStateCommitmentKey(clientId))
-        // != null);
+        // Context.require(commitments.get(IBCCommitment.clientStateCommitmentKey(clientId)) != null);
         UpdateClientResponse response = client.updateClient(clientId, msg.clientMessage);
         Context.require(response.ok);
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
-        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),
-        // response.clientStateCommitment);
+        // update commitments
+        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),response.clientStateCommitment);
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 response.update.height.getRevisionNumber(),
                 response.update.height.getRevisionHeight());
