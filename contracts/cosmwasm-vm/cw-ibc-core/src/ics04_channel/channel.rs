@@ -38,7 +38,7 @@ impl<'a> CwIbcStore<'a> {
     }
 
     // Get the channel sequence number
-    pub fn query_channel_sequence(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+    pub fn query_channel_sequence(&self, store: &dyn Storage) -> Result<u128, ContractError> {
         match self.next_channel_sequence().load(store) {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
@@ -76,7 +76,7 @@ impl<'a> CwIbcStore<'a> {
     // Query the sequence send number
     pub fn query_next_sequence_send(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
@@ -128,7 +128,7 @@ impl<'a> CwIbcStore<'a> {
     // Query the sequence recieve number
     pub fn query_next_sequence_recv(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
@@ -180,7 +180,7 @@ impl<'a> CwIbcStore<'a> {
     // Query the sequence acknowledgement number
     pub fn query_next_sequence_ack(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
