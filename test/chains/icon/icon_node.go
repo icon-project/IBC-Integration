@@ -201,8 +201,8 @@ func (in *IconNode) Height(ctx context.Context) (uint64, error) {
 
 func (in *IconNode) GetBalance(ctx context.Context, address string) (int64, error) {
 	addr := icontypes.AddressParam{Address: icontypes.Address(address)}
-	bal, _ := in.Client.GetBalance(&addr)
-	return bal.Int64(), nil
+	bal, err := in.Client.GetBalance(&addr)
+	return bal.Int64(), err
 }
 
 func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
