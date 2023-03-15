@@ -7,7 +7,7 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 import foundation.icon.ee.util.Crypto;
-import ibc.icon.structs.proto.lightclient.tendermint.*;
+import icon.proto.clients.tendermint.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

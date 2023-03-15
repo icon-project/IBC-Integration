@@ -24,6 +24,7 @@ import org.junit.jupiter.api.function.Executable;
 import score.Address;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

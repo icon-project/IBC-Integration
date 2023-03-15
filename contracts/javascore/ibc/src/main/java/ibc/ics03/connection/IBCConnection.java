@@ -18,6 +18,8 @@ import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 
 public class IBCConnection extends IBCClient implements IIBCConnection {
     public static final String v1Identifier = "1";

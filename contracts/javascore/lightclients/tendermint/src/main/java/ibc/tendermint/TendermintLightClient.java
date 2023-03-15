@@ -2,25 +2,19 @@ package ibc.tendermint;
 
 import ibc.icon.structs.messages.ConsensusStateUpdate;
 import ibc.icon.structs.messages.UpdateClientResponse;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.lightclient.tendermint.*;
 import ibc.ics24.host.IBCCommitment;
+import icon.proto.clients.tendermint.*;
+import icon.proto.core.client.Height;
 import score.Address;
 import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
-import ibc.icon.structs.messages.UpdateClientResponse;
-import icon.proto.core.client.Height;
 
 import java.math.BigInteger;
 
-import static score.Context.require;
 import static ibc.tendermint.TendermintHelper.*;
-
-import icon.proto.clients.tendermint.*;
-import ibc.ics24.host.IBCCommitment;
+import static score.Context.require;
 
 public class TendermintLightClient extends Tendermint {
     public final Address ibcHandler;

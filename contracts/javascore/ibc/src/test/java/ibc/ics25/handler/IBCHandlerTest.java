@@ -3,8 +3,6 @@ package ibc.ics25.handler;
 import com.iconloop.score.test.Account;
 import ibc.icon.structs.messages.*;
 import icon.proto.core.channel.Packet;
-import ibc.icon.structs.proto.core.channel.Packet;
-import ibc.icon.structs.proto.core.client.Height;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;

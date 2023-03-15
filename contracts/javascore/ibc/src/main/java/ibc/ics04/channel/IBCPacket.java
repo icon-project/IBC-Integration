@@ -3,11 +3,11 @@ package ibc.ics04.channel;
 import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
+import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
 import icon.proto.core.connection.ConnectionEnd;
-import ibc.ics24.host.IBCCommitment;
 import score.Context;
 import score.DictDB;
 
@@ -246,7 +246,7 @@ public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
     }
 
     private boolean isZero(Height height) {
-        return height.getRevisionNumber().equals(0) && height.getRevisionHeight().equals(0);
+        return height.getRevisionNumber().equals(BigInteger.ZERO) && height.getRevisionHeight().equals(BigInteger.ZERO);
     }
 
     private boolean lt(Height h1, Height h2) {

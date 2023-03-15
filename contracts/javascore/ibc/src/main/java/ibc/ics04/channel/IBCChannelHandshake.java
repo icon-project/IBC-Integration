@@ -4,15 +4,14 @@ import ibc.icon.interfaces.IIBCChannelHandshake;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.structs.messages.*;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
+import icon.proto.core.channel.Channel;
+import icon.proto.core.connection.ConnectionEnd;
 import ibc.ics03.connection.IBCConnection;
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
 import java.math.BigInteger;
+import java.util.List;
 
 public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHandshake {
 

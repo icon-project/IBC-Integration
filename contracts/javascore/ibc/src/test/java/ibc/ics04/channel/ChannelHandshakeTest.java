@@ -8,12 +8,12 @@ import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.structs.messages.*;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.core.commitment.MerklePrefix;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
-import ibc.icon.structs.proto.core.connection.Version;
+import icon.proto.core.channel.Channel;
+import icon.proto.core.channel.Channel.Counterparty;
+import icon.proto.core.client.Height;
+import icon.proto.core.connection.MerklePrefix;
+import icon.proto.core.connection.ConnectionEnd;
+import icon.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
 import ibc.ics24.host.IBCCommitment;
@@ -23,6 +23,7 @@ import org.junit.jupiter.api.function.Executable;
 import score.Address;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
