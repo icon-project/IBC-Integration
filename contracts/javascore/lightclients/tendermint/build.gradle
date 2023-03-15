@@ -35,6 +35,12 @@ jacocoTestReport {
     }
 }
 
+tasks.named('compileJava') {
+    dependsOn(':ibc:optimizedJar')
+    dependsOn(':score-util:jar')
+    dependsOn(':lib:jar')
+}
+
 optimizedJar {
     mainClassName = 'ibc.tendermint.TendermintLightClient'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
