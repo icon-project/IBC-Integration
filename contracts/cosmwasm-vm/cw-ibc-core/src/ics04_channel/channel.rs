@@ -103,6 +103,28 @@ impl<'a> CwIbcStore<'a> {
         }
     }
 
+    pub fn increment_next_sequence_send(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+    ) -> Result<Sequence, ContractError> {
+        let sequence = self.next_sequence_send().update(
+            store,
+            (port_id.clone(), channel_id.clone()),
+            |req_id| -> Result<_, ContractError> {
+                match req_id {
+                    Some(seq) => Ok(seq.increment()),
+                    None => Err(ContractError::MissingNextSendSeq {
+                        port_id,
+                        channel_id,
+                    }),
+                }
+            },
+        )?;
+        Ok(sequence)
+    }
+
     // Query the sequence recieve number
     pub fn query_next_sequence_recv(
         &self,
@@ -131,6 +153,28 @@ impl<'a> CwIbcStore<'a> {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
+    }
+
+    pub fn increment_next_sequence_recv(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+    ) -> Result<Sequence, ContractError> {
+        let sequence = self.next_sequence_recv().update(
+            store,
+            (port_id.clone(), channel_id.clone()),
+            |req_id| -> Result<_, ContractError> {
+                match req_id {
+                    Some(seq) => Ok(seq.increment()),
+                    None => Err(ContractError::MissingNextRecvSeq {
+                        port_id,
+                        channel_id,
+                    }),
+                }
+            },
+        )?;
+        Ok(sequence)
     }
 
     // Query the sequence acknowledgement number
@@ -162,6 +206,28 @@ impl<'a> CwIbcStore<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
+
+    pub fn increment_next_sequence_ack(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+    ) -> Result<Sequence, ContractError> {
+        let sequence = self.next_sequence_ack().update(
+            store,
+            (port_id.clone(), channel_id.clone()),
+            |req_id| -> Result<_, ContractError> {
+                match req_id {
+                    Some(seq) => Ok(seq.increment()),
+                    None => Err(ContractError::MissingNextAckSeq {
+                        port_id,
+                        channel_id,
+                    }),
+                }
+            },
+        )?;
+        Ok(sequence)
+    }
 }
 
 #[cfg(test)]
@@ -177,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_add_channel() {
-        let store = CwIbcStore::default();
+        let ctx = CwIbcStore::default();
         let port_id = PortId::dafault();
         let channel_id = ChannelId::default();
         let channel_end = ChannelEnd::new(
@@ -189,14 +255,14 @@ mod tests {
         );
         let mut storage = MockStorage::default();
 
-        let _storing = store.add_channel_end(
+        let _storing = ctx.add_channel_end(
             &mut storage,
             port_id.clone(),
             channel_id.clone(),
             channel_end.clone(),
         );
 
-        let retrived_channel_end = store.get_channel_end(&mut storage, port_id, channel_id);
+        let retrived_channel_end = ctx.get_channel_end(&mut storage, port_id, channel_id);
 
         assert_eq!(channel_end, retrived_channel_end.unwrap())
     }
@@ -241,5 +307,113 @@ mod tests {
         let result = ctx.query_next_sequence_send(&mut store, port_id, channel_id);
 
         assert_eq!(sequene, result.unwrap())
+    }
+
+    #[test]
+    fn test_channel_sequence_send_increment() {
+        let ctx = CwIbcStore::default();
+        let mut store = MockStorage::default();
+        let sequence = Sequence::default();
+        let port_id = PortId::dafault();
+        let channel_id = ChannelId::default();
+        let _store =
+            ctx.store_next_sequence_send(&mut store, port_id.clone(), channel_id.clone(), sequence);
+        let result = ctx.query_next_sequence_send(&mut store, port_id.clone(), channel_id.clone());
+
+        assert_eq!(sequence, result.unwrap());
+
+        let incremented_result =
+            ctx.increment_next_sequence_send(&mut store, port_id.clone(), channel_id.clone());
+        assert_eq!(Sequence::from(1), incremented_result.unwrap());
+    }
+
+    #[test]
+    fn test_channel_sequence_recv_increment() {
+        let ctx = CwIbcStore::default();
+        let mut store = MockStorage::default();
+        let sequence = Sequence::default();
+        let port_id = PortId::dafault();
+        let channel_id = ChannelId::default();
+        let _store =
+            ctx.store_next_sequence_recv(&mut store, port_id.clone(), channel_id.clone(), sequence);
+        let result = ctx.query_next_sequence_recv(&mut store, port_id.clone(), channel_id.clone());
+
+        assert_eq!(sequence, result.unwrap());
+
+        let incremented_result =
+            ctx.increment_next_sequence_recv(&mut store, port_id.clone(), channel_id.clone());
+        assert_eq!(Sequence::from(1), incremented_result.unwrap());
+    }
+
+    #[test]
+    fn test_channel_sequence_ack_increment() {
+        let ctx = CwIbcStore::default();
+        let mut store = MockStorage::default();
+        let sequence = Sequence::default();
+        let port_id = PortId::dafault();
+        let channel_id = ChannelId::default();
+        let _store =
+            ctx.store_next_sequence_ack(&mut store, port_id.clone(), channel_id.clone(), sequence);
+        let result = ctx.query_next_sequence_ack(&mut store, port_id.clone(), channel_id.clone());
+
+        assert_eq!(sequence, result.unwrap());
+
+        let incremented_result =
+            ctx.increment_next_sequence_ack(&mut store, port_id.clone(), channel_id.clone());
+        assert_eq!(Sequence::from(1), incremented_result.unwrap());
+    }
+
+    #[test]
+    fn test_channel_sequence_ack_fail() {
+        let ctx = CwIbcStore::default();
+        let mut store = MockStorage::default();
+        let port_id = PortId::dafault();
+        let channel_id = ChannelId::default();
+        let result =
+            ctx.increment_next_sequence_ack(&mut store, port_id.clone(), channel_id.clone());
+
+        assert_eq!(
+            result,
+            Err(ContractError::MissingNextAckSeq {
+                port_id,
+                channel_id
+            })
+        )
+    }
+
+    #[test]
+    fn test_channel_sequence_send_fail() {
+        let ctx = CwIbcStore::default();
+        let mut store = MockStorage::default();
+        let port_id = PortId::dafault();
+        let channel_id = ChannelId::default();
+        let result =
+            ctx.increment_next_sequence_send(&mut store, port_id.clone(), channel_id.clone());
+
+        assert_eq!(
+            result,
+            Err(ContractError::MissingNextSendSeq {
+                port_id,
+                channel_id
+            })
+        )
+    }
+
+    #[test]
+    fn test_channel_sequence_recv_fail() {
+        let ctx = CwIbcStore::default();
+        let mut store = MockStorage::default();
+        let port_id = PortId::dafault();
+        let channel_id = ChannelId::default();
+        let result =
+            ctx.increment_next_sequence_recv(&mut store, port_id.clone(), channel_id.clone());
+
+        assert_eq!(
+            result,
+            Err(ContractError::MissingNextRecvSeq {
+                port_id,
+                channel_id
+            })
+        )
     }
 }

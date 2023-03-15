@@ -15,4 +15,22 @@ pub enum ContractError {
         port_id: PortId,
         channel_id: ChannelId,
     },
+
+    #[error("MissingNextRecvSeq {port_id} {channel_id}")]
+    MissingNextRecvSeq {
+        port_id: PortId,
+        channel_id: ChannelId,
+    },
+
+    #[error("MissingNextSendSeq {port_id} {channel_id}")]
+    MissingNextSendSeq {
+        port_id: PortId,
+        channel_id: ChannelId,
+    },
+
+    #[error("MissingNextAckSeq {port_id} {channel_id}")]
+    MissingNextAckSeq {
+        port_id: PortId,
+        channel_id: ChannelId,
+    },
 }
