@@ -66,7 +66,7 @@ impl KeyDeserialize for ClientType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChannelId(IbcChannelId);
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ConnectionId(pub IbcConnectionId);
 
 impl<'a> PrimaryKey<'a> for ConnectionId {

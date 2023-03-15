@@ -1,6 +1,6 @@
 use crate::types::ConnectionId;
 use crate::{state::CwIbcStore, ContractError};
-use cosmwasm_std::{DepsMut, Response, Storage, Deps};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Response, Storage};
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 
 impl<'a> CwIbcStore<'a> {
@@ -14,7 +14,7 @@ impl<'a> CwIbcStore<'a> {
         Ok(Response::new().add_attribute("method", "set_connection"))
     }
 
-    pub fn get_connection(&self, deps: Deps, conn_id: ConnectionId) -> ConnectionEnd {
+    pub fn get_connection(&self, deps: Deps, conn_id: ConnectionId) -> Binary {
         self.query_connection(deps.storage, conn_id).unwrap()
     }
 
@@ -32,7 +32,8 @@ impl<'a> CwIbcStore<'a> {
         conn_end: ConnectionEnd,
         conn_id: ConnectionId,
     ) -> Result<(), ContractError> {
-        match self.connections().save(store, conn_id, &conn_end) {
+        let data = to_binary(&conn_end).unwrap();
+        match self.connections().save(store, conn_id, &data) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -42,7 +43,7 @@ impl<'a> CwIbcStore<'a> {
         &self,
         store: &dyn Storage,
         conn_id: ConnectionId,
-    ) -> Result<ConnectionEnd, ContractError> {
+    ) -> Result<Binary, ContractError> {
         match self.connections().load(store, conn_id) {
             Ok(conn_end) => Ok(conn_end),
             Err(error) => Err(ContractError::Std(error)),
@@ -54,13 +55,13 @@ impl<'a> CwIbcStore<'a> {
         store: &mut dyn Storage,
         sequence: u128,
     ) -> Result<(), ContractError> {
-        match self.next_channel_sequence().save(store, &sequence) {
+        match self.next_connection_sequence().save(store, &sequence) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
     }
     pub fn query_next_sequence(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
-        match self.next_channel_sequence().load(store) {
+        match self.next_connection_sequence().load(store) {
             Ok(u128) => Ok(u128),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -86,13 +87,17 @@ impl<'a> CwIbcStore<'a> {
 #[cfg(test)]
 
 mod tests {
+    use std::time::Duration;
+
     use super::*;
     use crate::state::CwIbcStore;
-    use crate::ConnectionEnd;
     use crate::IbcConnectionId;
     use cosmwasm_std::testing::mock_dependencies;
     use cosmwasm_std::testing::MockStorage;
     use cosmwasm_std::Response;
+    use ibc::core::ics03_connection::connection::Counterparty;
+    use ibc::core::ics03_connection::connection::State;
+    use ibc::core::ics03_connection::version::Version;
 
     #[test]
     fn test_set_connection() {
@@ -109,18 +114,27 @@ mod tests {
 
     #[test]
     fn test_get_connection() {
-        let mut deps = mock_dependencies();
-        let conn_end = ConnectionEnd::default();
-        let conn_id = ConnectionId(IbcConnectionId::default());
-        println!("{:?}",conn_id);
-        let contract = CwIbcStore::new();
-        contract
-            .set_connection(deps.as_mut(), conn_end.clone(), conn_id.clone())
-            .unwrap();
-        let response = contract.get_connection(deps.as_ref(), conn_id);
-        assert_eq!(conn_end, response);
+        let mut s = MockStorage::default();
+        let shhs = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".to_string().as_bytes().to_vec(),
+        );
+        let shanii = Counterparty::new(IbcClientId::default(), None, shhs.unwrap());
+        let conn_end = ConnectionEnd::new(
+            State::Open,
+            IbcClientId::default(),
+            shanii,
+            vec![Version::default()],
+            Duration::default(),
+        );
+        let conn_id = ConnectionId(IbcConnectionId::new(5));
+        println!("{:?}", conn_id);
+        let mut contract = CwIbcStore::new();
+        let ss = contract.add_connection(&mut s, conn_end, conn_id.clone());
+        let response = contract.query_connection(&mut s, conn_id);
+        println!("{:?}", response);
     }
 
+    use crate::IbcClientId;
     #[test]
     fn test_connection_sequence() {
         let mut store = MockStorage::default();
@@ -128,7 +142,7 @@ mod tests {
         contract
             .connection_next_sequence_init(&mut store, u128::default())
             .unwrap();
-        let result = contract.get_next_connection_sequence(&mut store, u128::default());
+        let result = contract.get_next_connection_sequence(&mut store, 1);
         assert_eq!(0, result);
         let increment_sequence = contract.increase_connection_sequence(&mut store);
         assert_eq!(1, increment_sequence.unwrap());
