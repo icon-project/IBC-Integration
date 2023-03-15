@@ -1,26 +1,12 @@
 package ibc.ics25.handler;
 
-import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-
-import java.math.BigInteger;
-import java.util.List;
-
-import org.mockito.ArgumentCaptor;
-
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
+import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.structs.messages.*;
 import icon.proto.core.channel.Channel;
@@ -32,6 +18,13 @@ import icon.proto.core.connection.Counterparty;
 import icon.proto.core.connection.Version;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
+import org.mockito.ArgumentCaptor;
+
+import java.math.BigInteger;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 public class IBCHandlerTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();
@@ -168,7 +161,7 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setDelayPeriod(delayPeriod);
         msg.setClientId(clientId);
         msg.setClientStateBytes(new byte[0]);
-        msg.setCounterpartyVersions(new byte[][] { baseVersion.encode() });
+        msg.setCounterpartyVersions(new byte[][]{baseVersion.encode()});
         msg.setProofInit(new byte[0]);
         msg.setProofClient(new byte[0]);
         msg.setProofConsensus(new byte[0]);

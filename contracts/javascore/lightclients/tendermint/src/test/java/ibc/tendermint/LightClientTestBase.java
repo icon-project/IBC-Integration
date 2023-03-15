@@ -1,5 +1,21 @@
 package ibc.tendermint;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iconloop.score.test.Account;
+import com.iconloop.score.test.Score;
+import com.iconloop.score.test.ServiceManager;
+import com.iconloop.score.test.TestBase;
+import foundation.icon.ee.util.Crypto;
+import ibc.icon.structs.proto.lightclient.tendermint.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+import score.Context;
+
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -10,42 +26,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iconloop.score.test.Account;
-import com.iconloop.score.test.Score;
-import com.iconloop.score.test.ServiceManager;
-import com.iconloop.score.test.TestBase;
-
-import icon.proto.clients.tendermint.BlockID;
-import icon.proto.clients.tendermint.ClientState;
-import icon.proto.clients.tendermint.Commit;
-import icon.proto.clients.tendermint.CommitSig;
-import icon.proto.clients.tendermint.Consensus;
-import icon.proto.clients.tendermint.ConsensusState;
-import icon.proto.clients.tendermint.Duration;
-import icon.proto.clients.tendermint.Fraction;
-import icon.proto.clients.tendermint.LightHeader;
-import icon.proto.clients.tendermint.MerkleRoot;
-import icon.proto.clients.tendermint.PartSetHeader;
-import icon.proto.clients.tendermint.PublicKey;
-import icon.proto.clients.tendermint.SignedHeader;
-import icon.proto.clients.tendermint.Timestamp;
-import icon.proto.clients.tendermint.TmHeader;
-import icon.proto.clients.tendermint.Validator;
-import icon.proto.clients.tendermint.ValidatorSet;
-import score.Context;
-import foundation.icon.ee.util.Crypto;
-
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.spy;
 
 public class LightClientTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();

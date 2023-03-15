@@ -4,10 +4,9 @@ import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
+import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.ByteUtil;
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.structs.messages.ConsensusStateUpdate;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
@@ -23,11 +22,8 @@ import org.junit.jupiter.api.function.Executable;
 import java.math.BigInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 public class ClientTest extends TestBase {
 

@@ -23,7 +23,7 @@ public class Version {
         reader.beginList();
         obj.identifier = reader.readString();
         reader.beginList();
-        String[] features = null;
+        String[] features;
         List<String> featuresList = new ArrayList<>();
         while (reader.hasNext()) {
             byte[] featureElementBytes = reader.readNullable(byte[].class);
@@ -69,7 +69,7 @@ public class Version {
             }
         }
 
-        return this.identifier == v.identifier;
+        return this.identifier.equals(v.identifier);
     }
 
     public byte[] encode() {

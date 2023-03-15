@@ -1,11 +1,11 @@
 package ibc.icon.structs.proto.core.client;
 
-import java.math.BigInteger;
-
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
+
+import java.math.BigInteger;
 
 public class Height {
     public BigInteger revisionNumber;
