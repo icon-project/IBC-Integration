@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_std::StdError;
-use cw_storage_plus::{Key, KeyDeserialize, PrimaryKey};
+use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
 
 use super::*;
 
@@ -66,21 +66,48 @@ impl KeyDeserialize for ClientType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChannelId(IbcChannelId);
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct ConnectionId(IbcConnectionId);
+
+impl ConnectionId {
+    pub fn new(identifier: u64) -> Self {
+        Self(IbcConnectionId::new(identifier))
+    }
+
+    /// Returns the static prefix to be used across all connection identifiers.
+    pub fn prefix() -> &'static str {
+        IbcConnectionId::prefix()
+    }
+
+    /// Get this identifier as a borrowed `&str`
+    pub fn as_str(&self) -> &str {
+        &self.0.as_str()
+    }
+
+    /// Get this identifier as a borrowed byte slice
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
 
 impl<'a> PrimaryKey<'a> for ConnectionId {
     type Prefix = ();
 
     type SubPrefix = ();
 
-    type Suffix = Self;
+    type Suffix = ();
 
-    type SuperSuffix = Self;
+    type SuperSuffix = ();
     fn key(&self) -> Vec<Key> {
         vec![Key::Ref(self.0.as_str().as_bytes())]
     }
 }
+impl<'a> Prefixer<'a> for ConnectionId {
+    fn prefix(&self) -> Vec<Key> {
+        vec![Key::Ref(self.0.as_bytes())]
+    }
+}
+
 impl KeyDeserialize for ConnectionId {
     type Output = ConnectionId;
 
