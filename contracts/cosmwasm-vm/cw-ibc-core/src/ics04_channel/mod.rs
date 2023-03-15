@@ -4,7 +4,7 @@ pub use super::*;
 use cosmwasm_std::Storage;
 
 impl<'a> CwIbcStore<'a> {
-    // get the channel from the store
+    // Get the channel from the store
     pub fn get_channel_end(
         &self,
         store: &dyn Storage,
@@ -23,7 +23,7 @@ impl<'a> CwIbcStore<'a> {
         }
     }
 
-    // add new channel to the store
+    // Add new channel to the store
     pub fn add_channel_end(
         &self,
         store: &mut dyn Storage,
@@ -40,6 +40,7 @@ impl<'a> CwIbcStore<'a> {
         }
     }
 
+    // Get the channel sequence number
     pub fn query_channel_sequence(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
         match self.next_channel_sequence().load(store) {
             Ok(sequence) => Ok(sequence),
@@ -47,6 +48,7 @@ impl<'a> CwIbcStore<'a> {
         }
     }
 
+    // Increment the sequence number for channel
     pub fn increment_channel_sequence(
         &self,
         store: &mut dyn Storage,
@@ -62,6 +64,19 @@ impl<'a> CwIbcStore<'a> {
         Ok(sequence)
     }
 
+    // Initialize the next sequence storage
+    pub fn init_next_channel_sequence(
+        &self,
+        store: &mut dyn Storage,
+        sequence_no: u128,
+    ) -> Result<(), ContractError> {
+        match self.next_channel_sequence().save(store, &sequence_no) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    // Query the sequence send number
     pub fn query_next_sequence_send(
         &self,
         store: &mut dyn Storage,
@@ -74,6 +89,7 @@ impl<'a> CwIbcStore<'a> {
         }
     }
 
+    // Storing the send sequene in the storage
     pub fn store_next_sequence_send(
         &self,
         store: &mut dyn Storage,
@@ -89,11 +105,72 @@ impl<'a> CwIbcStore<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
+
+    // Query the sequence recieve number
+    pub fn query_next_sequence_recv(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+    ) -> Result<Sequence, ContractError> {
+        match self.next_sequence_recv().load(store, (port_id, channel_id)) {
+            Ok(sequence) => Ok(sequence),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    // Storing the recieve sequene in the storage
+    pub fn store_next_sequence_recv(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+        sequence: Sequence,
+    ) -> Result<(), ContractError> {
+        match self
+            .next_sequence_recv()
+            .save(store, (port_id, channel_id), &sequence)
+        {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    // Query the sequence acknowledgement number
+    pub fn query_next_sequence_ack(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+    ) -> Result<Sequence, ContractError> {
+        match self.next_sequence_ack().load(store, (port_id, channel_id)) {
+            Ok(sequence) => Ok(sequence),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    // Storing the acknowledgement sequene in the storage
+    pub fn store_next_sequence_ack(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+        sequence: Sequence,
+    ) -> Result<(), ContractError> {
+        match self
+            .next_sequence_ack()
+            .save(store, (port_id, channel_id), &sequence)
+        {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::testing::MockStorage;
+
+    use cosmwasm_std::{testing::MockStorage, StdError};
     use ibc::core::ics04_channel::{
         channel::{Counterparty, Order, State},
         Version,
@@ -125,5 +202,46 @@ mod tests {
         let retrived_channel_end = store.get_channel_end(&mut storage, port_id, channel_id);
 
         assert_eq!(channel_end, retrived_channel_end.unwrap())
+    }
+
+    #[test]
+    fn test_channel_sequence_initialisation() {
+        let ctx = CwIbcStore::default();
+        let mut store = MockStorage::default();
+        let _store = ctx.init_next_channel_sequence(&mut store, u128::default());
+        let result = ctx.query_channel_sequence(&mut store);
+
+        assert_eq!(0, result.unwrap());
+
+        let incremented_result = ctx.increment_channel_sequence(&mut store);
+        assert_eq!(1, incremented_result.unwrap());
+    }
+
+    #[test]
+    fn test_channel_sequence_fail() {
+        let ctx = CwIbcStore::default();
+        let mut store = MockStorage::default();
+        let result = ctx.increment_channel_sequence(&mut store);
+
+        assert_eq!(
+            result,
+            Err(ContractError::from(StdError::NotFound {
+                kind: "u128".to_string()
+            }))
+        )
+    }
+
+    #[test]
+    fn test_channel_sequence_send() {
+        let ctx = CwIbcStore::default();
+        let port_id = PortId::dafault();
+        let channel_id = ChannelId::default();
+        let sequene = Sequence::from(6);
+        let mut store = MockStorage::default();
+        
+        let _store = ctx.store_next_sequence_send(&mut store, port_id.clone(), channel_id.clone(), sequene);
+        let result = ctx.query_next_sequence_send(&mut store, port_id, channel_id);
+
+        assert_eq!(sequene, result.unwrap())
     }
 }

@@ -119,6 +119,11 @@ impl KeyDeserialize for ChannelId {
 }
 
 impl ChannelId {
+    /// function for create new channel id
+    pub fn new(identifier: u64) -> Self {
+        Self(IbcChannelId::new(identifier))
+    }
+
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
         &self.0.as_str()
