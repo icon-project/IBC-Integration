@@ -17,19 +17,19 @@ public interface ILightClient {
      * @dev createClient creates a new client with the given state.
      *      If succeeded, it returns a commitment for the initial state.
      */
-    public UpdateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes);
+    UpdateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes);
 
     /**
      * @dev getTimestampAtHeight returns the timestamp of the consensus state at the
      *      given height.
      */
-    public BigInteger getTimestampAtHeight(String clientId, byte[] height);
+    BigInteger getTimestampAtHeight(String clientId, byte[] height);
 
     /**
      * @dev getLatestHeight returns the latest height of the client state
      *      corresponding to `clientId`.
      */
-    public byte[] getLatestHeight(String clientId);
+    byte[] getLatestHeight(String clientId);
 
     /**
      * @dev updateClient updates the client corresponding to `clientId`.
@@ -44,7 +44,7 @@ public interface ILightClient {
      *      4. update state(s) with the client message
      *      5. persist the state(s) on the host
      */
-    public UpdateClientResponse updateClient(String clientId, byte[] clientMessageBytes);
+    UpdateClientResponse updateClient(String clientId, byte[] clientMessageBytes);
 
     /**
      * @dev verifyMembership is a generic proof verification method which verifies a
@@ -55,7 +55,7 @@ public interface ILightClient {
      */
     public Boolean verifyMembership(
             String clientId,
-            byte[] height,
+            byte[] heightBytes,
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,
@@ -71,7 +71,7 @@ public interface ILightClient {
      */
     public Boolean verifyNonMembership(
             String clientId,
-            byte[] height,
+            byte[] heightBytes,
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,

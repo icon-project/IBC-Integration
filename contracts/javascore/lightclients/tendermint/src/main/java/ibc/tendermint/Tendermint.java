@@ -18,22 +18,26 @@ public abstract class Tendermint {
             ValidatorSet trustedVals,
             SignedHeader untrustedHeader,
             ValidatorSet untrustedVals,
-            Duration currentTime) {
-        if (!untrustedHeader.getHeader().getHeight()
-                .equals(trustedHeader.getHeader().getHeight().add(BigInteger.ONE))) {
-            return verifyNonAdjacent(
-                    trustedHeader,
-                    trustedVals,
-                    untrustedHeader,
-                    untrustedVals,
-                    trustingPeriod,
-                    currentTime,
-                    maxClockDrift,
-                    trustLevel);
+            Timestamp currentTime) {
+        verifyNewHeaderAndVals(untrustedHeader, untrustedVals, trustedHeader, currentTime, maxClockDrift);
+
+        boolean isAdjacent = untrustedHeader.getHeader().getHeight()
+                .equals(trustedHeader.getHeader().getHeight().add(BigInteger.ONE));
+        if (isAdjacent) {
+            return verifyAdjacent(trustedHeader, untrustedHeader, untrustedVals, trustingPeriod, currentTime,
+                    maxClockDrift);
         }
 
-        return verifyAdjacent(trustedHeader, untrustedHeader, untrustedVals, trustingPeriod, currentTime,
-                maxClockDrift);
+        return verifyNonAdjacent(
+                trustedHeader,
+                trustedVals,
+                untrustedHeader,
+                untrustedVals,
+                trustingPeriod,
+                currentTime,
+                maxClockDrift,
+                trustLevel);
+
     }
 
     protected boolean verifyAdjacent(
@@ -41,16 +45,8 @@ public abstract class Tendermint {
             SignedHeader untrustedHeader,
             ValidatorSet untrustedVals,
             Duration trustingPeriod,
-            Duration currentTime,
+            Timestamp currentTime,
             Duration maxClockDrift) {
-        Context.require(
-                untrustedHeader.getHeader().getHeight()
-                        .equals(trustedHeader.getHeader().getHeight().add(BigInteger.ONE)),
-                "headers must be adjacent in height");
-
-        Context.require(!isExpired(trustedHeader, trustingPeriod, currentTime), "header can't be expired");
-
-        verifyNewHeaderAndVals(untrustedHeader, untrustedVals, trustedHeader, currentTime, maxClockDrift);
 
         // Check the validator hashes are the same
         Context.require(
@@ -74,22 +70,14 @@ public abstract class Tendermint {
             SignedHeader untrustedHeader,
             ValidatorSet untrustedVals,
             Duration trustingPeriod,
-            Duration currentTime,
+            Timestamp currentTime,
             Duration maxClockDrift,
             Fraction trustLevel) {
-        Context.require(
-                !untrustedHeader.getHeader().getHeight()
-                        .equals(trustedHeader.getHeader().getHeight().add(BigInteger.ONE)),
-                "LC: headers must be non adjacent in height");
 
         // assert that trustedVals is NextValidators of last trusted header
         // to do this, we check that trustedVals.Hash() == consState.NextValidatorsHash
         Context.require(Arrays.equals(hash(trustedVals), trustedHeader.getHeader().getNextValidatorsHash()),
                 "LC: headers trusted validators does not hash to latest trusted validators");
-
-        Context.require(!isExpired(trustedHeader, trustingPeriod, currentTime), "header can't be expired");
-
-        verifyNewHeaderAndVals(untrustedHeader, untrustedVals, trustedHeader, currentTime, maxClockDrift);
 
         // Ensure that +`trustLevel` (default 1/3) or more of last trusted validators
         // signed correctly.
@@ -110,7 +98,7 @@ public abstract class Tendermint {
             SignedHeader untrustedHeader,
             ValidatorSet untrustedVals,
             SignedHeader trustedHeader,
-            Duration currentTime,
+            Timestamp currentTime,
             Duration maxClockDrift) {
         // SignedHeader validate basic
         Context.require(untrustedHeader.getHeader().getChainId().equals(trustedHeader.getHeader().getChainId()),
@@ -144,14 +132,11 @@ public abstract class Tendermint {
             String chainID,
             Commit commit,
             Fraction trustLevel) {
-        // sanity check
-        Context.require(!trustLevel.getDenominator().equals(BigInteger.ZERO), "trustLevel has zero Denominator");
-
         BigInteger talliedVotingPower = BigInteger.ZERO;
         boolean[] seenVals = new boolean[trustedVals.getValidators().size()];
 
         CommitSig commitSig;
-        BigInteger totalVotingPowerMulByNumerator = trustedVals.getTotalVotingPower()
+        BigInteger totalVotingPowerMulByNumerator = getTotalVotingPower(trustedVals)
                 .multiply(trustLevel.getNumerator());
         BigInteger votingPowerNeeded = totalVotingPowerMulByNumerator.divide(trustLevel.getDenominator());
 
@@ -216,7 +201,7 @@ public abstract class Tendermint {
         CommitSig commitSig;
 
         BigInteger talliedVotingPower = BigInteger.ZERO;
-        BigInteger votingPowerNeeded = validators.getTotalVotingPower().multiply(BigInteger.TWO)
+        BigInteger votingPowerNeeded = getTotalVotingPower(validators).multiply(BigInteger.TWO)
                 .divide(BigInteger.valueOf(3));
 
         int signaturesLength = commit.getSignatures().size();
@@ -256,7 +241,6 @@ public abstract class Tendermint {
         } else {
             return verifySig("ecdsa-secp256k1", message, sig, val.getPubKey().getSecp256k1());
         }
-
     }
 
     public boolean verifySig(

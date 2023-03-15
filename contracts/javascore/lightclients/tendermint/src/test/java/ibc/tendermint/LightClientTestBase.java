@@ -10,9 +10,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -26,30 +24,60 @@ import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
 import ibc.tendermint.light.TendermintLight.*;
+import icon.proto.core.client.Height;
 import score.Context;
 import foundation.icon.ee.util.Crypto;
 
 import static org.mockito.Mockito.spy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
 
 public class LightClientTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();
     protected final Account owner = sm.createAccount();
-    protected final Account relayer = sm.createAccount();
+    protected Account ibcHandler = sm.createAccount();
     protected Score client;
+    protected TendermintLightClient clientSpy;
     protected String clientId = "client-1";
-    private static final DateTimeFormatter INSTANT_FORMAT = DateTimeFormatter.ISO_INSTANT;
-    private static final BigInteger day = BigInteger.valueOf(86400);
+    protected static final DateTimeFormatter INSTANT_FORMAT = DateTimeFormatter.ISO_INSTANT;
+    protected static final BigInteger day = BigInteger.valueOf(86400);
 
-    public static Fraction trustLevel;
-    private static Duration trustingPeriod;
-    private static Duration maxClockDrift;
-    private static boolean allowUpdateAfterExpiry = false;
-    private static boolean allowUpdateAfterMisbehaviour = false;
+    protected static Fraction trustLevel;
+    protected static Duration trustingPeriod;
+    protected static Duration maxClockDrift;
+    protected static boolean allowUpdateAfterExpiry = false;
+    protected static boolean allowUpdateAfterMisbehaviour = false;
     protected final MockedStatic<Context> contextMock = Mockito.mockStatic(Context.class, Mockito.CALLS_REAL_METHODS);
-    protected String blockSetPath = "src/test/java/ibc/tendermint/data/simple/";
+    protected static final String BLOCK_SET_BASE_PATH = "src/test/java/ibc/tendermint/data/";
+    protected static final String BLOCK_SET_SIMPLE = BLOCK_SET_BASE_PATH + "simple/";
+    protected static final String BLOCK_SET_MUTILPLE_VALIDATORS = BLOCK_SET_BASE_PATH + "multi-validator/";
+    protected static final String BLOCK_SET_ADJACENT = BLOCK_SET_BASE_PATH + "adjacent/";
+    protected static final String BLOCK_SET_MALICIOUS = BLOCK_SET_BASE_PATH + "malicious/";
+    protected String blockSetPath = BLOCK_SET_SIMPLE;
 
-    static {
+    private String getCommitPath(int order) {
+        return blockSetPath + "commit." + order + ".json";
+
+    }
+
+    private String getValidatorPath(int order) {
+        return blockSetPath + "validators." + order + ".json";
+    }
+
+    protected void setup() throws Exception {
+        contextMock.when(() -> Context.getBlockTimestamp())
+                .thenReturn(System.currentTimeMillis() * 1000 + (sm.getBlock().getHeight() * 2_000_000));
+
+        client = sm.deploy(owner, TendermintLightClient.class, ibcHandler.getAddress());
+
+        clientSpy = (TendermintLightClient) spy(client.getInstance());
+        client.setInstance(clientSpy);
+
+        Mockito.doAnswer((Answer<Boolean>) invocation -> {
+            final Object[] args = invocation.getArguments();
+            return Crypto.verifySignature((String) args[0], (byte[]) args[1], (byte[]) args[2], (byte[]) args[3]);
+        }).when(clientSpy).verifySig(any(String.class), any(byte[].class), any(byte[].class), any(byte[].class));
+
         trustLevel = Fraction.newBuilder()
                 .setNumerator(BigInteger.TWO.longValue())
                 .setDenominator(BigInteger.valueOf(3).longValue()).build();
@@ -61,32 +89,6 @@ public class LightClientTestBase extends TestBase {
         maxClockDrift = Duration.newBuilder()
                 .setSeconds(10)
                 .setNanos(0).build();
-
-    }
-
-    private String getCommitPath(int order) {
-        return blockSetPath + "commit." + order + ".json";
-
-    }
-
-    private String getValidatorPath(int order) {
-        return blockSetPath + "validators." + order + ".json";
-    }
-
-    @BeforeEach
-    protected void setup() throws Exception {
-        contextMock.when(() -> Context.getBlockTimestamp())
-                .thenReturn(System.currentTimeMillis() * 1000 + (sm.getBlock().getHeight() * 2_000_000));
-
-        client = sm.deploy(owner, TendermintLightClient.class, owner.getAddress());
-
-        TendermintLightClient clientSpy = (TendermintLightClient) spy(client.getInstance());
-        client.setInstance(clientSpy);
-
-        Mockito.doAnswer((Answer<Boolean>) invocation -> {
-            final Object[] args = invocation.getArguments();
-            return Crypto.verifySignature((String) args[0], (byte[]) args[1], (byte[]) args[2], (byte[]) args[3]);
-        }).when(clientSpy).verifySig(any(String.class), any(byte[].class), any(byte[].class), any(byte[].class));
     }
 
     @AfterEach
@@ -94,29 +96,7 @@ public class LightClientTestBase extends TestBase {
         contextMock.close();
     }
 
-    @Test
-    void update_NonAdjacentInOrder() throws Exception {
-        initializeClient(1);
-        updateClient(2, 1);
-        updateClient(3, 2);
-    }
-
-    @Test
-    void update_NonAdjacentOutOfOrder() throws Exception {
-        initializeClient(1);
-        updateClient(3, 1);
-        updateClient(2, 1);
-    }
-
-    @Test
-    void updateMultiValidator() throws Exception {
-        blockSetPath = "src/test/java/ibc/tendermint/data/multi-validator/";
-        initializeClient(1);
-        updateClient(2, 1);
-        updateClient(3, 2);
-    }
-
-    private void initializeClient(int blockOrder) throws Exception {
+    protected void initializeClient(int blockOrder) throws Exception {
         TmHeader tmHeader = TmHeader.newBuilder()
                 .setSignedHeader(parseSignedHeader(blockOrder))
                 .setValidatorSet(parseValidatorSet(blockOrder)).build();
@@ -138,19 +118,33 @@ public class LightClientTestBase extends TestBase {
                 .setRoot(root)
                 .setNextValidatorsHash(tmHeader.getSignedHeader().getHeader().getNextValidatorsHash()).build();
 
-        client.invoke(owner, "createClient", clientId, clientState.toByteArray(),
+        client.invoke(ibcHandler, "createClient", clientId, clientState.toByteArray(),
                 consensusState.toByteArray());
     }
 
-    private void updateClient(int blockOrder, int referenceBlock) throws Exception {
+    protected void updateClient(int blockOrder, int referenceBlock) throws Exception {
         TmHeader tmHeader = createHeader(blockOrder, referenceBlock);
-        printBytes(Crypto.hash("sha-256", tmHeader.toByteArray()));
-        printBytes(Crypto.hash("sha-256",
-                TmHeader.parseFrom(tmHeader.toByteArray()).toByteArray()));
-        client.invoke(owner, "updateClient", clientId, tmHeader.toByteArray());
+        client.invoke(ibcHandler, "updateClient", clientId, tmHeader.toByteArray());
     }
 
-    private TmHeader createHeader(int blockOrder, int referenceBlock) throws Exception {
+    protected ConsensusState getConsensusState(Height height) throws Exception {
+        return ConsensusState.parseFrom((byte[]) client.call("getConsensusState", clientId, height.encode()));
+    }
+
+    protected ClientState getClientState() throws Exception {
+        return ClientState.parseFrom((byte[]) client.call("getClientState", clientId));
+    }
+
+    protected void assertConsensusState(SignedHeader header) throws Exception {
+        Height height = new Height();
+        height.setRevisionHeight(BigInteger.valueOf(header.getHeader().getHeight()));
+        ConsensusState consensusState = getConsensusState(height);
+        assertEquals(header.getHeader().getNextValidatorsHash(), consensusState.getNextValidatorsHash());
+        assertEquals(header.getHeader().getAppHash(), consensusState.getRoot().getHash());
+        assertEquals(header.getHeader().getTime(), consensusState.getTimestamp());
+    }
+
+    protected TmHeader createHeader(int blockOrder, int referenceBlock) throws Exception {
         TmHeader tmHeader = TmHeader.newBuilder()
                 .setSignedHeader(parseSignedHeader(blockOrder))
                 .setValidatorSet(parseValidatorSet(blockOrder))
@@ -159,7 +153,7 @@ public class LightClientTestBase extends TestBase {
         return tmHeader;
     }
 
-    private SignedHeader parseSignedHeader(int blockOrder) throws Exception {
+    protected SignedHeader parseSignedHeader(int blockOrder) throws Exception {
 
         ObjectMapper mapper = new ObjectMapper();
         String loc = getCommitPath(blockOrder);
@@ -202,7 +196,7 @@ public class LightClientTestBase extends TestBase {
         return signedHeader;
     }
 
-    private ValidatorSet parseValidatorSet(int blockOrder) throws Exception {
+    protected ValidatorSet parseValidatorSet(int blockOrder) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         String loc = getValidatorPath(blockOrder);
         File file = new File(loc);
@@ -229,7 +223,7 @@ public class LightClientTestBase extends TestBase {
         return validatorSet.build();
     }
 
-    private BlockID parseBlockId(JsonNode json) {
+    protected BlockID parseBlockId(JsonNode json) {
         PartSetHeader partSetHeader = PartSetHeader.newBuilder()
                 .setHash(jsonToBytes(json.get("parts").get("hash")))
                 .setTotal(json.get("parts").get("total").asInt()).build();
@@ -239,7 +233,7 @@ public class LightClientTestBase extends TestBase {
         return blockID;
     }
 
-    private List<CommitSig> parseCommitSig(JsonNode json) {
+    protected List<CommitSig> parseCommitSig(JsonNode json) {
         List<CommitSig> commitSigs = new ArrayList<CommitSig>();
 
         json.elements().forEachRemaining((node) -> {
@@ -256,7 +250,7 @@ public class LightClientTestBase extends TestBase {
         return commitSigs;
     }
 
-    private ByteString jsonToBytes(JsonNode val) {
+    protected ByteString jsonToBytes(JsonNode val) {
         return ByteString.copyFrom(hexStringToByteArray(val.asText()));
     }
 
