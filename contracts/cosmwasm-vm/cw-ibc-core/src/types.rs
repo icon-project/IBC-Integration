@@ -11,7 +11,7 @@ pub struct ClientId(IbcClientId);
 impl ClientId {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 
     /// Get this identifier as a borrowed byte slice
@@ -56,7 +56,7 @@ impl ClientType {
 
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 }
 
@@ -104,7 +104,7 @@ impl ConnectionId {
 
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 
     /// Get this identifier as a borrowed byte slice

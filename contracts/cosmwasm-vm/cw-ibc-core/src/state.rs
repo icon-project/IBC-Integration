@@ -28,7 +28,7 @@ impl<'a> CwIbcStore<'a> {
         &self.client_types
     }
     pub fn client_impls(&self) -> &Map<'a, ClientId, String> {
-        &&self.client_impls
+        &self.client_impls
     }
     pub fn next_sequence_send(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
         &self.next_sequence_send
