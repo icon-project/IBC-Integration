@@ -102,7 +102,6 @@ impl<'a> PrimaryKey<'a> for ChannelId {
     type SuperSuffix = ();
 
     fn key(&self) -> Vec<Key> {
-        // this is simple, we don't add more prefixes
         vec![Key::Ref(self.0.as_bytes())]
     }
 }
@@ -155,7 +154,6 @@ impl<'a> PrimaryKey<'a> for PortId {
     type SuperSuffix = Self;
 
     fn key(&self) -> Vec<Key> {
-        // this is simple, we don't add more prefixes
         vec![Key::Ref(self.0.as_bytes())]
     }
 }
@@ -193,7 +191,6 @@ impl<'a> Prefixer<'a> for PortId {
     }
 }
 
-// KeyD
 impl KeyDeserialize for PortId {
     type Output = PortId;
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
