@@ -8,4 +8,13 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("InvalidClientId {client_id}")]
+    InvalidClientId { client_id: String },
+
+    #[error("InvalidClientType {client_type}")]
+    InvalidClientType { client_type: String },
+
+    #[error("InvalidNextClientSequence")]
+    InvalidNextClientSequence {},
 }

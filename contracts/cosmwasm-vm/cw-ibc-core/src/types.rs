@@ -8,6 +8,18 @@ use super::*;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientId(IbcClientId);
 
+impl ClientId {
+    /// Get this identifier as a borrowed `&str`
+    pub fn as_str(&self) -> &str {
+        &self.0.as_str()
+    }
+
+    /// Get this identifier as a borrowed byte slice
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
 impl<'a> PrimaryKey<'a> for ClientId {
     type Prefix = ();
 
@@ -36,6 +48,17 @@ impl KeyDeserialize for ClientId {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientType(IbcClientType);
+
+impl ClientType {
+    pub fn client_type(&self) -> IbcClientType {
+        self.0.clone()
+    }
+
+    /// Get this identifier as a borrowed `&str`
+    pub fn as_str(&self) -> &str {
+        &self.0.as_str()
+    }
+}
 
 impl<'a> PrimaryKey<'a> for ClientType {
     type Prefix = ();
