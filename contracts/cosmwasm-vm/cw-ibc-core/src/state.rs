@@ -14,6 +14,12 @@ pub struct CwIbcStore<'a> {
     channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
 }
 
+impl<'a> Default for CwIbcStore<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> CwIbcStore<'a> {
     pub fn client_registry(&self) -> &Map<'a, ClientType, String> {
         &self.client_registry
@@ -22,7 +28,7 @@ impl<'a> CwIbcStore<'a> {
         &self.client_types
     }
     pub fn client_impls(&self) -> &Map<'a, ClientId, String> {
-        &&self.client_impls
+        &self.client_impls
     }
     pub fn next_sequence_send(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
         &self.next_sequence_send
@@ -65,11 +71,5 @@ impl<'a> CwIbcStore<'a> {
             connections: Map::new(StorageKey::Connections.as_str()),
             channels: Map::new(StorageKey::Channels.as_str()),
         }
-    }
-}
-
-impl<'a> Default for CwIbcStore<'a> {
-    fn default() -> Self {
-        Self::new()
     }
 }
