@@ -1,5 +1,22 @@
 package ibc.tendermint;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ByteString;
+import com.iconloop.score.test.Account;
+import com.iconloop.score.test.Score;
+import com.iconloop.score.test.ServiceManager;
+import com.iconloop.score.test.TestBase;
+import foundation.icon.ee.util.Crypto;
+import ibc.tendermint.light.TendermintLight.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+import score.Context;
+
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -10,27 +27,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.ByteString;
-import com.iconloop.score.test.Account;
-import com.iconloop.score.test.Score;
-import com.iconloop.score.test.ServiceManager;
-import com.iconloop.score.test.TestBase;
-
-import ibc.tendermint.light.TendermintLight.*;
-import score.Context;
-import foundation.icon.ee.util.Crypto;
-
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.spy;
 
 public class LightClientTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();

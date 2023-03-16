@@ -1,26 +1,10 @@
 package ibc.ics03.connection;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.math.BigInteger;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
 import com.google.protobuf.ByteString;
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.ByteUtil;
@@ -30,12 +14,21 @@ import ibc.icon.structs.messages.MsgConnectionOpenInit;
 import ibc.icon.structs.messages.MsgConnectionOpenTry;
 import ibc.icon.test.MockContract;
 import ibc.ics24.host.IBCCommitment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import score.Address;
 import test.proto.core.client.Client.Height;
 import test.proto.core.connection.Connection.ConnectionEnd;
 import test.proto.core.connection.Connection.Counterparty;
 import test.proto.core.connection.Connection.MerklePrefix;
 import test.proto.core.connection.Connection.Version;
+
+import java.math.BigInteger;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 public class ConnectionTest extends TestBase {
     private final ServiceManager sm = getServiceManager();
@@ -193,7 +186,7 @@ public class ConnectionTest extends TestBase {
         msg.setCounterparty(counterparty.toByteArray());
         msg.setDelayPeriod(delayPeriod);
         msg.setClientStateBytes(new byte[1]);
-        msg.setCounterpartyVersions(new byte[][] { version.toByteArray() });
+        msg.setCounterpartyVersions(new byte[][]{version.toByteArray()});
         msg.setProofInit(new byte[2]);
         msg.setProofClient(new byte[3]);
         msg.setProofConsensus(new byte[4]);
@@ -252,7 +245,7 @@ public class ConnectionTest extends TestBase {
         msg.setCounterparty(counterparty.toByteArray());
         msg.setDelayPeriod(delayPeriod);
         msg.setClientStateBytes(new byte[1]);
-        msg.setCounterpartyVersions(new byte[][] { version.toByteArray() });
+        msg.setCounterpartyVersions(new byte[][]{version.toByteArray()});
         msg.setProofInit(new byte[2]);
         msg.setProofClient(new byte[3]);
         msg.setProofConsensus(new byte[4]);

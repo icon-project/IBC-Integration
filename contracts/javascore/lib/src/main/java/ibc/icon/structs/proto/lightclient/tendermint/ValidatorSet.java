@@ -1,15 +1,15 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-
 import ibc.icon.score.util.MerkleTree;
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 import scorex.util.ArrayList;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 
 public class ValidatorSet {
     public Validator[] validators;
@@ -76,7 +76,8 @@ public class ValidatorSet {
         for (Validator validator : validators) {
             sum = sum.add(validator.votingPower);
             // TODO do we need this?
-            // Context.require(sum.compareTo(maxTotalVotingPower) <= 0, "total voting power should be guarded to not exceed");
+            // Context.require(sum.compareTo(maxTotalVotingPower) <= 0, "total voting power should be guarded to not
+            // exceed");
         }
 
         totalVotingPower = sum;

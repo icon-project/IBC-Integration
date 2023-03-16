@@ -1,11 +1,11 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
-import java.math.BigInteger;
-
 import ibc.icon.score.util.MerkleTree;
 import ibc.icon.score.util.Proto;
 import score.ObjectReader;
 import score.ObjectWriter;
+
+import java.math.BigInteger;
 
 public class LightHeader {
     public Consensus version;
@@ -72,7 +72,7 @@ public class LightHeader {
         byte[] pbt = this.time.encode();
         byte[] bzbi = this.lastBlockId.encode();
 
-        byte[][] all = new byte[][] {
+        byte[][] all = new byte[][]{
                 hbz,
                 Proto.encode(1, this.chainId),
                 Proto.encode(1, this.height),

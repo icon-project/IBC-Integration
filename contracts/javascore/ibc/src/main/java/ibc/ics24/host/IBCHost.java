@@ -1,12 +1,11 @@
 package ibc.ics24.host;
 
+import ibc.icon.score.util.NullChecker;
 import score.Address;
 import score.ArrayDB;
 import score.Context;
 
 import java.math.BigInteger;
-
-import ibc.icon.score.util.NullChecker;
 
 public class IBCHost extends IBCStore {
     private static final String TAG = "IBCHOST: ";

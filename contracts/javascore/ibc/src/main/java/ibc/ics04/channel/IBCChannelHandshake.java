@@ -1,23 +1,19 @@
 package ibc.ics04.channel;
 
-import java.math.BigInteger;
-import java.util.List;
-
+import ibc.icon.interfaces.IIBCChannelHandshake;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
-import ibc.icon.structs.messages.MsgChannelCloseConfirm;
-import ibc.icon.structs.messages.MsgChannelCloseInit;
-import ibc.icon.structs.messages.MsgChannelOpenAck;
-import ibc.icon.structs.messages.MsgChannelOpenConfirm;
-import ibc.icon.structs.messages.MsgChannelOpenInit;
-import ibc.icon.structs.messages.MsgChannelOpenTry;
+import ibc.icon.structs.messages.*;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.connection.ConnectionEnd;
 import ibc.ics03.connection.IBCConnection;
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
-public class IBCChannelHandshake extends IBCConnection {
+import java.math.BigInteger;
+import java.util.List;
+
+public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHandshake {
 
     public String channelOpenInit(MsgChannelOpenInit msg) {
         Channel channel = msg.getChannel();

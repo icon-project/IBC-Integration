@@ -1,11 +1,11 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
-import java.util.Arrays;
-
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 import score.ObjectReader;
 import score.ObjectWriter;
+
+import java.util.Arrays;
 
 public class BlockID {
     public byte[] hash;

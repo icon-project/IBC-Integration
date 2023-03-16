@@ -1,9 +1,6 @@
 package ibc.ics03.connection;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-
+import ibc.icon.interfaces.IIBCConnection;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Logger;
@@ -20,7 +17,11 @@ import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
-public class IBCConnection extends IBCClient {
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
+
+public class IBCConnection extends IBCClient implements IIBCConnection {
     public static final String v1Identifier = "1";
     public static final List<String> supportedV1Features = List.of("ORDER_ORDERED", "ORDER_UNORDERED");
     public static final byte[] commitmentPrefix = "ibc".getBytes();
@@ -107,10 +108,10 @@ public class IBCConnection extends IBCClient {
             Context.require(isSupportedVersion(msg.getVersion()),
                     "connection state is in INIT but the provided version is not supported");
         } else {
-            Context.require(
-                    connection.getVersions().size() == 1
+            Context.require(connection.getVersions().size() == 1
                             && Arrays.equals(connection.getVersions().get(0).encode(), msg.getVersionRaw()),
-                    "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
+                    "connection state is in TRYOPEN but the provided version is not set in the previous connection " +
+                            "versions");
         }
 
         // TODO: investigate need to self client validation
@@ -187,7 +188,7 @@ public class IBCConnection extends IBCClient {
     /* Verification functions */
 
     private void verifyClientState(ConnectionEnd connection, byte[] height, byte[] path, byte[] proof,
-            byte[] clientStatebytes) {
+                                   byte[] clientStatebytes) {
         ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),
@@ -202,7 +203,7 @@ public class IBCConnection extends IBCClient {
     }
 
     private void verifyClientConsensusState(ConnectionEnd connection, byte[] height, Height consensusHeight,
-            byte[] proof, byte[] consensusStateBytes) {
+                                            byte[] proof, byte[] consensusStateBytes) {
         byte[] consensusPath = IBCCommitment.consensusStatePath(connection.getCounterparty().getClientId(),
                 consensusHeight.getRevisionNumber(),
                 consensusHeight.getRevisionHeight());
@@ -222,7 +223,7 @@ public class IBCConnection extends IBCClient {
     }
 
     private void verifyConnectionState(ConnectionEnd connection, byte[] height, byte[] proof, String connectionId,
-            ConnectionEnd counterpartyConnection) {
+                                       ConnectionEnd counterpartyConnection) {
         ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),
