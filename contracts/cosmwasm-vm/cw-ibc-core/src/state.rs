@@ -12,7 +12,8 @@ pub struct CwIbcStore<'a> {
     next_client_sequence: Item<'a, u128>,
     next_connection_sequence: Item<'a, u128>,
     next_channel_sequence: Item<'a, u128>,
-    connections: Map<'a, ConnectionId, Binary>,
+    client_connections:Map<'a, ClientId, ConnectionId>,
+    connections: Map<'a, ConnectionId, ConnectionEnd>,
     channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
 }
 
@@ -30,7 +31,7 @@ impl<'a> CwIbcStore<'a> {
         &self.client_types
     }
     pub fn client_impls(&self) -> &Map<'a, ClientId, String> {
-        &&self.client_impls
+        &self.client_impls
     }
     pub fn next_sequence_send(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
         &self.next_sequence_send
@@ -52,8 +53,11 @@ impl<'a> CwIbcStore<'a> {
     pub fn next_channel_sequence(&self) -> &Item<'a, u128> {
         &self.next_channel_sequence
     }
-    pub fn connections(&self) -> &Map<'a, ConnectionId, Binary> {
+    pub fn connections(&self) -> &Map<'a, ConnectionId, ConnectionEnd> {
         &self.connections
+    }
+    pub fn client_connections(&self) -> &Map<'a, ClientId, ConnectionId>{
+        &self.client_connections
     }
     pub fn channels(&self) -> &Map<'a, (PortId, ChannelId), ChannelEnd> {
         &self.channels
@@ -71,6 +75,7 @@ impl<'a> CwIbcStore<'a> {
             next_connection_sequence: Item::new(StorageKey::NextConnectionSequence.as_str()),
             next_channel_sequence: Item::new(StorageKey::NextChannelSequence.as_str()),
             connections: Map::new(StorageKey::Connections.as_str()),
+            client_connections: Map::new(StorageKey::ClientConnection.as_str()),
             channels: Map::new(StorageKey::Channels.as_str()),
         }
     }
