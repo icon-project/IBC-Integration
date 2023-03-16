@@ -1,0 +1,40 @@
+name: CosmWasm contracts Codecov
+
+on:
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - 'contracts/cosmwasm-vm/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'contracts/cosmwasm-vm/**'
+
+defaults:
+  run:
+    working-directory: contracts/cosmwasm-vm
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install Rust
+        run: rustup update stable
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
+        run: cargo llvm-cov --workspace --lcov --output-path lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: true
