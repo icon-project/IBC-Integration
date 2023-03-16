@@ -17,7 +17,7 @@ defaults:
     working-directory: contracts/cosmwasm-vm
 
 jobs:
-  unit-test:
+  code-coverage:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_COLOR: always
