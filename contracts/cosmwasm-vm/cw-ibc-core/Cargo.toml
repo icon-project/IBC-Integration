@@ -38,8 +38,8 @@ cw2 = "1.0.1"
 schemars = "0.8.12"
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.39" }
-ibc = { version="0.32.0", default-features = false, features = ["serde","mocks-no-std"]}
-
+ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde", "borsh"]}
+ibc-proto = { version = "0.26.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
 
 [dev-dependencies]
 cw-multi-test = "0.16.2"

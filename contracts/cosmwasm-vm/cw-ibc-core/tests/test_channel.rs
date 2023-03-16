@@ -1,6 +1,6 @@
 use cosmwasm_std::StdError;
 use cw_ibc_core::{
-    state::CwIbcStore,
+    context::CwIbcCoreContext,
     types::{ChannelId, PortId},
     ChannelEnd, ContractError, Sequence,
 };
@@ -14,7 +14,7 @@ use setup::*;
 
 #[test]
 fn test_add_channel() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let port_id = PortId::dafault();
     let channel_id = ChannelId::default();
     let channel_end = ChannelEnd::new(
@@ -40,7 +40,7 @@ fn test_add_channel() {
 
 #[test]
 fn test_channel_sequence_initialisation() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let _store = ctx.init_next_channel_sequence(mock_deps.as_mut().storage, u128::default());
     let result = ctx.query_channel_sequence(mock_deps.as_ref().storage);
@@ -53,7 +53,7 @@ fn test_channel_sequence_initialisation() {
 
 #[test]
 fn test_channel_sequence_fail() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let result = ctx.increment_channel_sequence(mock_deps.as_mut().storage);
 
@@ -67,7 +67,7 @@ fn test_channel_sequence_fail() {
 
 #[test]
 fn test_channel_sequence_send() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let port_id = PortId::dafault();
     let channel_id = ChannelId::default();
     let sequene = Sequence::from(6);
@@ -86,7 +86,7 @@ fn test_channel_sequence_send() {
 
 #[test]
 fn test_channel_sequence_send_increment() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let sequence = Sequence::default();
     let port_id = PortId::dafault();
@@ -115,7 +115,7 @@ fn test_channel_sequence_send_increment() {
 
 #[test]
 fn test_channel_sequence_recv_increment() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let sequence = Sequence::default();
     let port_id = PortId::dafault();
@@ -144,7 +144,7 @@ fn test_channel_sequence_recv_increment() {
 
 #[test]
 fn test_channel_sequence_ack_increment() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let sequence = Sequence::default();
     let port_id = PortId::dafault();
@@ -173,7 +173,7 @@ fn test_channel_sequence_ack_increment() {
 
 #[test]
 fn test_channel_sequence_ack_fail() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let port_id = PortId::dafault();
     let channel_id = ChannelId::default();
@@ -194,7 +194,7 @@ fn test_channel_sequence_ack_fail() {
 
 #[test]
 fn test_channel_sequence_send_fail() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let port_id = PortId::dafault();
     let channel_id = ChannelId::default();
@@ -215,7 +215,7 @@ fn test_channel_sequence_send_fail() {
 
 #[test]
 fn test_channel_sequence_recv_fail() {
-    let ctx = CwIbcStore::default();
+    let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let port_id = PortId::dafault();
     let channel_id = ChannelId::default();

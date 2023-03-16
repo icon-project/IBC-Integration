@@ -1,5 +1,6 @@
 use cosmwasm_std::StdError;
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
+
 use std::{
     fmt::{Display, Error as FmtError, Formatter},
     str::FromStr,
