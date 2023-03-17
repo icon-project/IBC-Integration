@@ -1,6 +1,47 @@
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
+    // write method to increment next client sequence
+    pub fn increase_client_counter(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+        match self.ibc_store().next_client_sequence().update(
+            store,
+            |mut seq| -> Result<_, ContractError> {
+                seq += 1;
+
+                Ok(seq)
+            },
+        ) {
+            Ok(sequence) => Ok(sequence),
+            Err(error) => Err(error),
+        }
+    }
+
+    // query to get next client sequence
+    pub fn client_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        match self.ibc_store().next_client_sequence().may_load(store) {
+            Ok(result) => match result {
+                Some(sequence) => Ok(sequence),
+                None => Err(ContractError::InvalidNextClientSequence {}),
+            },
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    pub fn init_client_counter(
+        &self,
+        store: &mut dyn Storage,
+        sequence_no: u128,
+    ) -> Result<(), ContractError> {
+        match self
+            .ibc_store()
+            .next_client_sequence()
+            .save(store, &sequence_no)
+        {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
     // query to get client type using client id
     pub fn get_client_type(
         &self,
@@ -62,49 +103,6 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
-    // query to get next client sequence
-    pub fn get_next_client_sequence(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        match self.ibc_store().next_client_sequence().may_load(store) {
-            Ok(result) => match result {
-                Some(sequence) => Ok(sequence),
-                None => Err(ContractError::InvalidNextClientSequence {}),
-            },
-            Err(error) => Err(ContractError::Std(error)),
-        }
-    }
-
-    // write method to increment next client sequence
-    pub fn increment_next_client_sequence(
-        &self,
-        store: &mut dyn Storage,
-    ) -> Result<u128, ContractError> {
-        match self.ibc_store().next_client_sequence().update(
-            store,
-            |mut seq| -> Result<_, ContractError> {
-                seq += 1;
-
-                Ok(seq)
-            },
-        ) {
-            Ok(sequence) => Ok(sequence),
-            Err(error) => Err(error),
-        }
-    }
-
-    pub fn init_next_client_sequence(
-        &self,
-        store: &mut dyn Storage,
-        sequence_no: u128,
-    ) -> Result<(), ContractError> {
-        match self
-            .ibc_store()
-            .next_client_sequence()
-            .save(store, &sequence_no)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
-    }
 
     pub fn store_client_type(
         &self,
@@ -155,6 +153,9 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 }
 
+//TODO : Implement Methods
+#[allow(dead_code)]
+#[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
     fn client_state(
         &self,
@@ -222,10 +223,6 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn client_counter(&self) -> Result<u64, ibc::core::ContextError> {
-        todo!()
-    }
-
     fn validate_self_client(
         &self,
         client_state_of_host_on_counterparty: ibc_proto::google::protobuf::Any,
@@ -254,6 +251,9 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 }
 
+//TODO : Implement Methods
+#[allow(dead_code)]
+#[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
     fn store_client_state(
         &mut self,
@@ -268,10 +268,6 @@ impl<'a> CwIbcCoreContext<'a> {
         consensus_state_path: ibc::core::ics24_host::path::ClientConsensusStatePath,
         consensus_state: Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>,
     ) -> Result<(), ibc::core::ContextError> {
-        todo!()
-    }
-
-    fn increase_client_counter(&mut self) {
         todo!()
     }
 
