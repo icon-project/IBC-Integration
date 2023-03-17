@@ -13,6 +13,7 @@ pub enum StorageKey {
     NextConnectionSequence,
     NextChannelSequence,
     Connections,
+    ClientConnection,
     Channels,
 }
 
@@ -29,6 +30,7 @@ impl StorageKey {
             StorageKey::NextConnectionSequence => "next_connection_sequence",
             StorageKey::NextChannelSequence => "next_channel_sequence",
             StorageKey::Connections => "connections",
+            StorageKey::ClientConnection => "client_connections",
             StorageKey::Channels => "channels",
         }
     }
