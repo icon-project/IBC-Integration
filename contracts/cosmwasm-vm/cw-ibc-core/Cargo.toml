@@ -41,6 +41,8 @@ thiserror = { version = "1.0.39" }
 ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde", "borsh"]}
 ibc-proto = { version = "0.26.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
 
+
+
 [dev-dependencies]
 cw-multi-test = "0.16.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}

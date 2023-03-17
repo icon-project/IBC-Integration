@@ -1,8 +1,9 @@
 use super::*;
 use cosmwasm_std::StdError;
+use ibc::core::ContextError;
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
@@ -41,4 +42,10 @@ pub enum ContractError {
 
     #[error("InvalidNextClientSequence")]
     InvalidNextClientSequence {},
+
+    #[error("IbcContextError {error}")]
+    IbcContextError { error: ContextError },
+
+    #[error("IbcDecodeError {error}")]
+    IbcDecodeError { error: String },
 }

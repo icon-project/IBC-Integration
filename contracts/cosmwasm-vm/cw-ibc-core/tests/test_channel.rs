@@ -1,8 +1,7 @@
-use cosmwasm_std::StdError;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     types::{ChannelId, PortId},
-    ChannelEnd, ContractError, Sequence,
+    ChannelEnd, Sequence,
 };
 use ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},
@@ -52,17 +51,12 @@ fn test_channel_sequence_initialisation() {
 }
 
 #[test]
+#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
 fn test_channel_sequence_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
-    let result = ctx.increment_channel_sequence(mock_deps.as_mut().storage);
-
-    assert_eq!(
-        result,
-        Err(ContractError::from(StdError::NotFound {
-            kind: "u128".to_string()
-        }))
-    )
+    ctx.increment_channel_sequence(mock_deps.as_mut().storage)
+        .unwrap();
 }
 
 #[test]
@@ -172,64 +166,46 @@ fn test_channel_sequence_ack_increment() {
 }
 
 #[test]
+#[should_panic(expected = "MissingNextAckSeq")]
 fn test_channel_sequence_ack_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let port_id = PortId::dafault();
     let channel_id = ChannelId::default();
-    let result = ctx.increment_next_sequence_ack(
+    ctx.increment_next_sequence_ack(
         mock_deps.as_mut().storage,
         port_id.clone(),
         channel_id.clone(),
-    );
-
-    assert_eq!(
-        result,
-        Err(ContractError::MissingNextAckSeq {
-            port_id,
-            channel_id
-        })
     )
+    .unwrap();
 }
 
 #[test]
+#[should_panic(expected = "MissingNextSendSeq")]
 fn test_channel_sequence_send_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let port_id = PortId::dafault();
     let channel_id = ChannelId::default();
-    let result = ctx.increment_next_sequence_send(
+    ctx.increment_next_sequence_send(
         mock_deps.as_mut().storage,
         port_id.clone(),
         channel_id.clone(),
-    );
-
-    assert_eq!(
-        result,
-        Err(ContractError::MissingNextSendSeq {
-            port_id,
-            channel_id
-        })
     )
+    .unwrap();
 }
 
 #[test]
+#[should_panic(expected = "MissingNextRecvSeq")]
 fn test_channel_sequence_recv_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let port_id = PortId::dafault();
     let channel_id = ChannelId::default();
-    let result = ctx.increment_next_sequence_recv(
+    ctx.increment_next_sequence_recv(
         mock_deps.as_mut().storage,
         port_id.clone(),
         channel_id.clone(),
-    );
-
-    assert_eq!(
-        result,
-        Err(ContractError::MissingNextRecvSeq {
-            port_id,
-            channel_id
-        })
     )
+    .unwrap();
 }

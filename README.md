@@ -32,16 +32,16 @@ Terminologies used in this project.
 ### Project Structure
 | Directory | Description |
 |:----------|:------------|
-| [/contracts/cosmwasm-vm](./contracts/cosmwasm-vm) | Includes contrcats for multiple chains |
-| /contracts/evm | Includes contrcats for multiple chains |
-| /contracts/javascore | Includes contrcats for multiple chains |
-| /docs | Documentation |
-| /libraries/rust | Common rust libraries used across multiple integrations |
-| /proto | Proto files used for IBC |
-| /resources | Static resources in project . For example images , bin files, etc |
-| /scripts | Scripts to automate task in project , for example build scripts, deploy scripts. |
-| /test | Test Framework and Test Suite including e2e test and functional test |
-| /utils | utilities used for build, setup, CI/CD |
+| [/contracts/cosmwasm-vm](./contracts/cosmwasm-vm) | Includes contracts for cosmwasm based chains |
+| [/contracts/evm](./contracts/evm) | Includes contracts for evm based chains |
+| [/contracts/javascore](./contracts/javascore) | Includes contracts for ICON chain |
+| [/docs](./docs) | Documentation |
+| [/libraries/rust](./libraries/rust) | Common rust libraries used across multiple integrations |
+| [/proto](./proto) | Proto files used for IBC |
+| [/resources](./resources) | Static resources in project. For example images, bin files, etc |
+| [/scripts](./scripts) | Scripts to automate task in project, for example build scripts, deploy scripts. |
+| [/test](./test) | Test Framework and Test Suite including e2e test and functional test |
+| [/utils](./utils) | Utilities used for build, setup, CI/CD |
 
 ## Testing <a name = "testing"> </a>
 

@@ -233,10 +233,6 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn commitment_prefix(&self) -> ibc::core::ics23_commitment::commitment::CommitmentPrefix {
-        todo!()
-    }
-
     fn client_update_time(
         &self,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
