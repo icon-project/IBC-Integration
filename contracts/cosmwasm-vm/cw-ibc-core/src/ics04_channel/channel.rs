@@ -249,7 +249,12 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
         Ok(sequence)
     }
+}
 
+//TODO : Implement Methods
+#[allow(dead_code)]
+#[allow(unused_variables)]
+impl<'a> CwIbcCoreContext<'a> {
     fn get_next_sequence_send(
         &self,
         seq_send_path: &ibc::core::ics24_host::path::SeqSendPath,
