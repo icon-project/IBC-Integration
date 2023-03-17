@@ -1,12 +1,6 @@
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
-    pub fn commitment_prefix(&self) -> CommitmentPrefix {
-        CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default()
-    }
-}
-
-impl<'a> CwIbcCoreContext<'a> {
     pub fn store_connection(
         &self,
         store: &mut dyn Storage,
@@ -36,18 +30,6 @@ impl<'a> CwIbcCoreContext<'a> {
             })?;
 
         Ok(connection_end)
-
-        // match self.ibc_store().connections().load(store, conn_id.clone()) {
-        //     Ok(conn_end) => {
-        //         let data: ConnectionEnd = ConnectionEnd::decode(&*conn_end).unwrap();
-        //         Ok(data)
-        //     }
-        //     Err(_) => Err(ContractError::IbcContextError {
-        //         error: ContextError::ConnectionError(ConnectionError::ConnectionNotFound {
-        //             connection_id: conn_id.connection_id().clone(),
-        //         }),
-        //     }),
-        // }
     }
 
     pub fn store_connection_to_client(
@@ -113,5 +95,9 @@ impl<'a> CwIbcCoreContext<'a> {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
+    }
+
+    pub fn commitment_prefix(&self) -> CommitmentPrefix {
+        CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() // TODO
     }
 }
