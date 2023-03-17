@@ -201,6 +201,16 @@ impl ChannelId {
     pub fn default() -> Self {
         Self(IbcChannelId::default())
     }
+
+    pub fn ibc_channel_id(&self) -> &IbcChannelId {
+        &self.0
+    }
+}
+
+impl From<IbcChannelId> for ChannelId {
+    fn from(channel_id: IbcChannelId) -> Self {
+        Self(channel_id)
+    }
 }
 
 impl Display for ChannelId {
