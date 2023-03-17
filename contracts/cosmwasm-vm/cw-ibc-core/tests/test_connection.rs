@@ -12,6 +12,7 @@ use ibc::core::ics03_connection::connection::Counterparty;
 use ibc::core::ics03_connection::connection::State;
 use ibc::core::ics03_connection::version::Version;
 
+
 #[test]
 fn test_set_connection() {
     let mut deps = mock_dependencies();
@@ -19,7 +20,7 @@ fn test_set_connection() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcStore::new();
     let actual_response = contract
-        .set_connection(deps.as_mut(), conn_end, conn_id)
+        .set_connection(deps.as_mut(), conn_id,  conn_end, )
         .unwrap();
     let expected_response = Response::new().add_attribute("method", "set_connection");
     assert_eq!(actual_response, expected_response);
@@ -42,7 +43,7 @@ fn test_get_connection() {
     let conn_id = ConnectionId::new(5);
     println!("{:?}", conn_id);
     let contract = CwIbcStore::new();
-    let _result = contract.add_connection(&mut s, conn_end, conn_id.clone());
+    let _result = contract.add_connection(&mut s,conn_id.clone(), conn_end, );
     let response = contract.query_connection(&mut s, conn_id);
     println!("{:?}", response);
 }

@@ -3,15 +3,16 @@ use crate::{state::CwIbcStore, ContractError};
 use cosmwasm_std::{Deps, DepsMut, Response, Storage};
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
+use ibc_proto::protobuf::Protobuf;
 
 impl<'a> CwIbcStore<'a> {
     pub fn set_connection(
         &self,
         deps: DepsMut,
-        conn_end: ConnectionEnd,
         conn_id: ConnectionId,
+        conn_end: ConnectionEnd,
     ) -> Result<Response, ContractError> {
-        self.add_connection(deps.storage, conn_end, conn_id)?;
+        self.add_connection(deps.storage, conn_id,conn_end)?;
         Ok(Response::new().add_attribute("method", "set_connection"))
     }
 
@@ -47,10 +48,11 @@ impl<'a> CwIbcStore<'a> {
     pub fn add_connection(
         &self,
         store: &mut dyn Storage,
-        conn_end: ConnectionEnd,
         conn_id: ConnectionId,
+        conn_end: ConnectionEnd,
     ) -> Result<(), ContractError> {
-        match self.connections().save(store, conn_id, &conn_end) {
+        let data = conn_end.encode_vec().unwrap();
+        match self.connections().save(store, conn_id, &data) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -62,7 +64,11 @@ impl<'a> CwIbcStore<'a> {
         conn_id: ConnectionId,
     ) -> Result<ConnectionEnd, ContractError> {
         match self.connections().load(store, conn_id) {
-            Ok(conn_end) => Ok(conn_end),
+            Ok(conn_end) => {
+                let data: &[u8] = &conn_end;
+                let data: ConnectionEnd = ConnectionEnd::decode(data).unwrap();
+                Ok(data)
+            }
             Err(error) => Err(ContractError::Std(error)),
         }
     }
