@@ -1,5 +1,6 @@
 use cosmwasm_std::StdError;
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
+use ibc::core::ics24_host::error::ValidationError;
 use std::{
     fmt::{Display, Error as FmtError, Formatter},
     str::FromStr,
@@ -19,6 +20,16 @@ impl ClientId {
     /// Get this identifier as a borrowed byte slice
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+
+    pub fn new(client_type: ClientType, counter: u64) -> Result<Self, ValidationError> {
+        match IbcClientId::new(client_type.client_type(), counter) {
+            Ok(result) => Ok(Self(result)),
+            Err(error) => Err(error),
+        }
+    }
+    pub fn default() -> Self {
+        Self(IbcClientId::default())
     }
 }
 

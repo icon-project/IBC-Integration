@@ -185,3 +185,6 @@ dist
 
 # Code Coverage
 lcov.info
+
+# vscode files
+.vscode
