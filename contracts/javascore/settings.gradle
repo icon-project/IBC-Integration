@@ -10,3 +10,4 @@ include(
 
 include(':tendermint')
 project(':tendermint').projectDir = file("lightclients/tendermint")
+project(':tendermint').name = "tendermint"
