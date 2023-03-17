@@ -3,14 +3,14 @@ name: CosmWasm contracts Codecov
 on:
   pull_request:
     branches:
-      - '**'
+      - "**"
     paths:
-      - 'contracts/cosmwasm-vm/**'
+      - "contracts/cosmwasm-vm/**"
   push:
     branches:
       - main
     paths:
-      - 'contracts/cosmwasm-vm/**'
+      - "contracts/cosmwasm-vm/**"
 
 defaults:
   run:
@@ -32,9 +32,3 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate code coverage
         run: cargo llvm-cov --lcov --output-path lcov.info --package cw-xcall --package cw-ibc-core --package cw-icon-light-client
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-          fail_ci_if_error: true
