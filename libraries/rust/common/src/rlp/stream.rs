@@ -77,7 +77,7 @@ impl RlpStream {
     /// Apends null to the end of stream, chainable.
     ///
     /// ```
-    /// use libraries::rlp::{RlpStream};
+    /// use common::rlp::{RlpStream};
     /// let mut stream = RlpStream::new_list(2);
     /// stream.append_null().append_null();
     /// let out = stream.out();
@@ -106,7 +106,7 @@ impl RlpStream {
     /// Apends null to the end of stream, chainable.
     ///
     /// ```
-    /// use libraries::rlp::RlpStream;
+    /// use common::rlp::RlpStream;
     /// let mut stream = RlpStream::new_list(2);
     /// stream.append_empty_data().append_empty_data();
     /// let out = stream.out();
@@ -138,7 +138,7 @@ impl RlpStream {
     /// Appends value to the end of stream, chainable.
     ///
     /// ```
-    /// use libraries::rlp::{RlpStream};
+    /// use common::rlp::{RlpStream};
     /// let mut stream = RlpStream::new_list(2);
     /// stream.append(&"cat").append(&"dog");
     /// let out = stream.out();
@@ -159,7 +159,7 @@ impl RlpStream {
     /// Appends iterator to the end of stream, chainable.
     ///
     /// ```
-    /// use libraries::rlp::{RlpStream};
+    /// use common::rlp::{RlpStream};
     /// let mut stream = RlpStream::new_list(2);
     /// stream.append(&"cat").append_iter("dog".as_bytes().iter().cloned());
     /// let out = stream.out();
@@ -203,7 +203,7 @@ impl RlpStream {
     /// Declare appending the list of given size, chainable.
     ///
     /// ```
-    /// use libraries::rlp::{RlpStream};
+    /// use common::rlp::{RlpStream};
     /// let mut stream = RlpStream::new_list(2);
     /// stream.begin_list(2).append(&"cat").append(&"dog");
     /// stream.append(&"");
@@ -282,7 +282,7 @@ impl RlpStream {
     /// Clear the output stream so far.
     ///
     /// ```
-    /// use libraries::rlp::{RlpStream};
+    /// use common::rlp::{RlpStream};
     /// let mut stream = RlpStream::new_list(3);
     /// stream.append(&"cat");
     /// stream.clear();
@@ -301,7 +301,7 @@ impl RlpStream {
     /// Returns true if stream doesnt expect any more items.
     ///
     /// ```
-    /// use libraries::rlp::{RlpStream};
+    /// use common::rlp::{RlpStream};
     /// let mut stream = RlpStream::new_list(2);
     /// stream.append(&"cat");
     /// assert_eq!(stream.is_finished(), false);
