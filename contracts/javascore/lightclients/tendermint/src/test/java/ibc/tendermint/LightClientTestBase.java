@@ -2,12 +2,13 @@ package ibc.tendermint;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ByteString;
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 import foundation.icon.ee.util.Crypto;
-import icon.proto.clients.tendermint.*;
+import ibc.tendermint.light.TendermintLight.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,17 +48,17 @@ public class LightClientTestBase extends TestBase {
     protected String blockSetPath = "src/test/java/ibc/tendermint/data/simple/";
 
     static {
-        trustLevel = new Fraction();
-        trustLevel.setNumerator(BigInteger.TWO);
-        trustLevel.setDenominator(BigInteger.valueOf(3));
+        trustLevel = Fraction.newBuilder()
+                .setNumerator(BigInteger.TWO.longValue())
+                .setDenominator(BigInteger.valueOf(3).longValue()).build();
 
-        trustingPeriod = new Duration();
-        trustingPeriod.setSeconds(day.multiply(BigInteger.valueOf(10000)));
-        trustingPeriod.setNanos(BigInteger.ZERO);
+        trustingPeriod = Duration.newBuilder()
+                .setSeconds(day.multiply(BigInteger.valueOf(10000)).longValue())
+                .setNanos(0).build();
 
-        maxClockDrift = new Duration();
-        maxClockDrift.setSeconds(BigInteger.TEN);
-        maxClockDrift.setNanos(BigInteger.ZERO);
+        maxClockDrift = Duration.newBuilder()
+                .setSeconds(10)
+                .setNanos(0).build();
 
     }
 
@@ -114,44 +115,46 @@ public class LightClientTestBase extends TestBase {
     }
 
     private void initializeClient(int blockOrder) throws Exception {
-        TmHeader tmHeader = new TmHeader();
-        tmHeader.setSignedHeader(parseSignedHeader(blockOrder));
-        tmHeader.setValidatorSet(parseValidatorSet(blockOrder));
+        TmHeader tmHeader = TmHeader.newBuilder()
+                .setSignedHeader(parseSignedHeader(blockOrder))
+                .setValidatorSet(parseValidatorSet(blockOrder)).build();
 
-        ClientState clientState = new ClientState();
-        clientState.setChainId(tmHeader.getSignedHeader().getHeader().getChainId());
-        clientState.setTrustLevel(trustLevel);
-        clientState.setTrustingPeriod(trustingPeriod);
-        clientState.setMaxClockDrift(maxClockDrift);
-        clientState.setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight());
-        clientState.setAllowUpdateAfterExpiry(allowUpdateAfterExpiry);
-        clientState.setAllowUpdateAfterMisbehaviour(allowUpdateAfterMisbehaviour);
+        ClientState clientState = ClientState.newBuilder()
+                .setChainId(tmHeader.getSignedHeader().getHeader().getChainId())
+                .setTrustLevel(trustLevel)
+                .setTrustingPeriod(trustingPeriod)
+                .setMaxClockDrift(maxClockDrift)
+                .setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight())
+                .setAllowUpdateAfterExpiry(allowUpdateAfterExpiry)
+                .setAllowUpdateAfterMisbehaviour(allowUpdateAfterMisbehaviour).build();
 
-        ConsensusState consensusState = new ConsensusState();
-        consensusState.setTimestamp(tmHeader.getSignedHeader().getHeader().getTime());
-        MerkleRoot root = new MerkleRoot();
-        root.setHash(tmHeader.getSignedHeader().getHeader().getAppHash());
-        consensusState.setRoot(root);
-        consensusState.setNextValidatorsHash(tmHeader.getSignedHeader().getHeader().getNextValidatorsHash());
+        MerkleRoot root = MerkleRoot.newBuilder()
+                .setHash(tmHeader.getSignedHeader().getHeader().getAppHash()).build();
 
-        client.invoke(owner, "createClient", clientId, clientState.encode(), consensusState.encode());
+        ConsensusState consensusState = ConsensusState.newBuilder()
+                .setTimestamp(tmHeader.getSignedHeader().getHeader().getTime())
+                .setRoot(root)
+                .setNextValidatorsHash(tmHeader.getSignedHeader().getHeader().getNextValidatorsHash()).build();
+
+        client.invoke(owner, "createClient", clientId, clientState.toByteArray(),
+                consensusState.toByteArray());
     }
 
     private void updateClient(int blockOrder, int referenceBlock) throws Exception {
         TmHeader tmHeader = createHeader(blockOrder, referenceBlock);
-        printBytes(Crypto.hash("sha-256", tmHeader.encode()));
-        printBytes(Crypto.hash("sha-256", TmHeader.decode(tmHeader.encode()).encode()));
-        client.invoke(owner, "updateClient", clientId, tmHeader.encode());
+        printBytes(Crypto.hash("sha-256", tmHeader.toByteArray()));
+        printBytes(Crypto.hash("sha-256",
+                TmHeader.parseFrom(tmHeader.toByteArray()).toByteArray()));
+        client.invoke(owner, "updateClient", clientId, tmHeader.toByteArray());
     }
 
     private TmHeader createHeader(int blockOrder, int referenceBlock) throws Exception {
-        TmHeader tmHeader = new TmHeader();
-        tmHeader.setSignedHeader(parseSignedHeader(blockOrder));
-        tmHeader.setValidatorSet(parseValidatorSet(blockOrder));
-        tmHeader.setTrustedHeight(parseSignedHeader(referenceBlock).getHeader().getHeight());
-        tmHeader.setTrustedValidators(parseValidatorSet(referenceBlock));
+        TmHeader tmHeader = TmHeader.newBuilder()
+                .setSignedHeader(parseSignedHeader(blockOrder))
+                .setValidatorSet(parseValidatorSet(blockOrder))
+                .setTrustedHeight(parseSignedHeader(referenceBlock).getHeader().getHeight())
+                .setTrustedValidators(parseValidatorSet(referenceBlock)).build();
         return tmHeader;
-
     }
 
     private SignedHeader parseSignedHeader(int blockOrder) throws Exception {
@@ -162,40 +165,37 @@ public class LightClientTestBase extends TestBase {
         String content = new String(Files.readAllBytes(Paths.get(file.toURI())));
         JsonNode json = mapper.readTree(content);
 
-        LightHeader lightHeader = new LightHeader();
         JsonNode jsonHeader = json.get("signed_header").get("header");
-        Consensus version = new Consensus();
-        version.setBlock(BigInteger.valueOf(jsonHeader.get("version").get("block").asInt()));
-        lightHeader.setVersion(version);
-        lightHeader.setChainId(jsonHeader.get("chain_id").asText());
+        Consensus version = Consensus.newBuilder()
+                .setBlock(jsonHeader.get("version").get("block").asInt()).build();
 
-        lightHeader.setHeight(BigInteger.valueOf(jsonHeader.get("height").asInt()));
-        lightHeader.setTime(jsonToTimestamp(jsonHeader.get("time")));
-        lightHeader.setLastBlockId(parseBlockId(jsonHeader.get("last_block_id")));
-        lightHeader.setLastCommitHash(jsonToBytes(jsonHeader.get("last_commit_hash")));
-        lightHeader.setDataHash(jsonToBytes(jsonHeader.get("data_hash")));
-        lightHeader.setValidatorsHash(jsonToBytes(jsonHeader.get("validators_hash")));
-        lightHeader.setNextValidatorsHash(jsonToBytes(jsonHeader.get("next_validators_hash")));
-        lightHeader.setConsensusHash(jsonToBytes(jsonHeader.get("consensus_hash")));
-        lightHeader.setAppHash(jsonToBytes(jsonHeader.get("app_hash")));
-        lightHeader.setLastResultsHash(jsonToBytes(jsonHeader.get("last_results_hash")));
-        lightHeader.setEvidenceHash(jsonToBytes(jsonHeader.get("evidence_hash")));
-        lightHeader.setProposerAddress(jsonToBytes(jsonHeader.get("proposer_address")));
+        LightHeader lightHeader = LightHeader.newBuilder()
+                .setVersion(version)
+                .setChainId(jsonHeader.get("chain_id").asText())
+                .setHeight(jsonHeader.get("height").asInt())
+                .setTime(jsonToTimestamp(jsonHeader.get("time")))
+                .setLastBlockId(parseBlockId(jsonHeader.get("last_block_id")))
+                .setLastCommitHash(jsonToBytes(jsonHeader.get("last_commit_hash")))
+                .setDataHash(jsonToBytes(jsonHeader.get("data_hash")))
+                .setValidatorsHash(jsonToBytes(jsonHeader.get("validators_hash")))
+                .setNextValidatorsHash(jsonToBytes(jsonHeader.get("next_validators_hash")))
+                .setConsensusHash(jsonToBytes(jsonHeader.get("consensus_hash")))
+                .setAppHash(jsonToBytes(jsonHeader.get("app_hash")))
+                .setLastResultsHash(jsonToBytes(jsonHeader.get("last_results_hash")))
+                .setEvidenceHash(jsonToBytes(jsonHeader.get("evidence_hash")))
+                .setProposerAddress(jsonToBytes(jsonHeader.get("proposer_address"))).build();
 
-        Commit commit = new Commit();
         JsonNode jsonCommit = json.get("signed_header").get("commit");
-        commit.setHeight(BigInteger.valueOf(jsonCommit.get("height").asInt()));
-        BigInteger round = BigInteger.valueOf(jsonCommit.get("round").asInt());
-        if (!round.equals(BigInteger.ZERO)) {
-            commit.setRound(round);
-        }
 
-        commit.setBlockId(parseBlockId(jsonCommit.get("block_id")));
-        commit.setSignatures(parseCommitSig(jsonCommit.get("signatures")));
+        Commit commit = Commit.newBuilder()
+                .setHeight(jsonCommit.get("height").asInt())
+                .setRound(jsonCommit.get("round").asInt())
+                .setBlockId(parseBlockId(jsonCommit.get("block_id")))
+                .addAllSignatures(parseCommitSig(jsonCommit.get("signatures"))).build();
 
-        SignedHeader signedHeader = new SignedHeader();
-        signedHeader.setHeader(lightHeader);
-        signedHeader.setCommit(commit);
+        SignedHeader signedHeader = SignedHeader.newBuilder()
+                .setHeader(lightHeader)
+                .setCommit(commit).build();
 
         return signedHeader;
     }
@@ -206,33 +206,34 @@ public class LightClientTestBase extends TestBase {
         File file = new File(loc);
         String content = new String(Files.readAllBytes(Paths.get(file.toURI())));
         JsonNode json = mapper.readTree(content);
-        ValidatorSet validatorSet = new ValidatorSet();
-        validatorSet.setTotalVotingPower(BigInteger.ZERO);
+        ValidatorSet.Builder validatorSet = ValidatorSet.newBuilder();
         List<Validator> validators = new ArrayList<>();
         json.get("validators").elements().forEachRemaining((node) -> {
-            Validator validator = new Validator();
-            validator.setAddress(hexStringToByteArray(node.get("address").asText()));
-            PublicKey publicKey = new PublicKey();
-            // TODO: support more key types
-            publicKey.setEd25519(Base64.getDecoder().decode(node.get("pub_key").get("value").asText()));
-            validator.setPubKey(publicKey);
-            validator.setVotingPower(BigInteger.valueOf(node.get("voting_power").asLong()));
-            validator.setProposerPriority(BigInteger.valueOf(node.get("proposer_priority").asLong()));
+            PublicKey publicKey = PublicKey.newBuilder()
+                    .setEd25519(
+                            ByteString.copyFrom(Base64.getDecoder().decode(node.get("pub_key").get("value").asText())))
+                    .build();
+
+            Validator validator = Validator.newBuilder()
+                    .setAddress(jsonToBytes(node.get("address")))
+                    .setPubKey(publicKey)
+                    .setVotingPower(node.get("voting_power").asLong())
+                    .setProposerPriority(node.get("proposer_priority").asLong()).build();
 
             validators.add(validator);
         });
+        validatorSet.addAllValidators(validators);
 
-        validatorSet.setValidators(validators);
-        return validatorSet;
+        return validatorSet.build();
     }
 
     private BlockID parseBlockId(JsonNode json) {
-        BlockID blockID = new BlockID();
-        blockID.setHash(jsonToBytes(json.get("hash")));
-        PartSetHeader partSetHeader = new PartSetHeader();
-        partSetHeader.setHash(jsonToBytes(json.get("parts").get("hash")));
-        partSetHeader.setTotal(BigInteger.valueOf(json.get("parts").get("total").asInt()));
-        blockID.setPartSetHeader(partSetHeader);
+        PartSetHeader partSetHeader = PartSetHeader.newBuilder()
+                .setHash(jsonToBytes(json.get("parts").get("hash")))
+                .setTotal(json.get("parts").get("total").asInt()).build();
+        BlockID blockID = BlockID.newBuilder()
+                .setHash(jsonToBytes(json.get("hash")))
+                .setPartSetHeader(partSetHeader).build();
         return blockID;
     }
 
@@ -240,11 +241,12 @@ public class LightClientTestBase extends TestBase {
         List<CommitSig> commitSigs = new ArrayList<CommitSig>();
 
         json.elements().forEachRemaining((node) -> {
-            CommitSig commitSig = new CommitSig();
-            commitSig.setBlockIdFlag(node.get("block_id_flag").asInt());
-            commitSig.setValidatorAddress(jsonToBytes(node.get("validator_address")));
-            commitSig.setTimestamp(jsonToTimestamp(node.get("timestamp")));
-            commitSig.setSignature(Base64.getDecoder().decode(node.get("signature").asText()));
+            CommitSig commitSig = CommitSig.newBuilder()
+                    .setBlockIdFlagValue(node.get("block_id_flag").asInt())
+                    .setValidatorAddress(jsonToBytes(node.get("validator_address")))
+                    .setTimestamp(jsonToTimestamp(node.get("timestamp")))
+                    .setSignature(ByteString.copyFrom(Base64.getDecoder().decode(node.get("signature").asText())))
+                    .build();
 
             commitSigs.add(commitSig);
         });
@@ -252,15 +254,15 @@ public class LightClientTestBase extends TestBase {
         return commitSigs;
     }
 
-    private byte[] jsonToBytes(JsonNode val) {
-        return hexStringToByteArray(val.asText());
+    private ByteString jsonToBytes(JsonNode val) {
+        return ByteString.copyFrom(hexStringToByteArray(val.asText()));
     }
 
     private Timestamp jsonToTimestamp(JsonNode val) {
         Instant time = Instant.from(INSTANT_FORMAT.parse(val.asText()));
-        Timestamp timestamp = new Timestamp();
-        timestamp.setSeconds(BigInteger.valueOf(time.getEpochSecond()));
-        timestamp.setNanos(BigInteger.valueOf(time.getNano()));
+        Timestamp timestamp = Timestamp.newBuilder()
+                .setSeconds(time.getEpochSecond())
+                .setNanos(time.getNano()).build();
 
         return timestamp;
     }
