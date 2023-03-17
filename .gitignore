@@ -182,4 +182,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Code Coverage
+lcov.info
+
+# vscode files
 .vscode
