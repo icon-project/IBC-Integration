@@ -1,6 +1,6 @@
 pub mod setup;
 
-use cw_ibc_core::state::CwIbcStore;
+use cw_ibc_core::context::CwIbcCoreContext;
 use setup::*;
 
 #[test]
@@ -8,16 +8,13 @@ use setup::*;
 fn get_client_next_sequence() {
     let mut mock = deps();
 
-    let contract = CwIbcStore::default();
+    let contract = CwIbcCoreContext::new();
 
     contract
-        .next_client_sequence()
-        .save(mock.as_mut().storage, &0)
+        .init_client_counter(mock.as_mut().storage, 0)
         .unwrap();
 
-    let result = contract
-        .get_next_client_sequence(mock.as_ref().storage)
-        .unwrap();
+    let result = contract.client_counter(mock.as_ref().storage).unwrap();
 
     assert_eq!(result, 0)
 }
@@ -26,20 +23,17 @@ fn get_client_next_sequence() {
 fn increment_next_client_sequence() {
     let mut mock = deps();
 
-    let contract = CwIbcStore::default();
+    let contract = CwIbcCoreContext::new();
 
     contract
-        .next_client_sequence()
-        .save(mock.as_mut().storage, &0)
+        .init_client_counter(mock.as_mut().storage, 0)
         .unwrap();
 
     let increment = contract
-        .increment_next_client_sequence(mock.as_mut().storage)
+        .increase_client_counter(mock.as_mut().storage)
         .unwrap();
 
-    let result = contract
-        .get_next_client_sequence(mock.as_ref().storage)
-        .unwrap();
+    let result = contract.client_counter(mock.as_ref().storage).unwrap();
 
     assert_eq!(increment, result)
 }

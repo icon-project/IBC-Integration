@@ -1,6 +1,6 @@
 use super::*;
 
-impl<'a> CwIbcStore<'a> {
+impl<'a> CwIbcCoreContext<'a> {
     // Get the channel from the store
     pub fn get_channel_end(
         &self,
@@ -9,6 +9,7 @@ impl<'a> CwIbcStore<'a> {
         channel_id: ChannelId,
     ) -> Result<ChannelEnd, ContractError> {
         match self
+            .ibc_store()
             .channels()
             .may_load(store, (port_id.clone(), channel_id.clone()))?
         {
@@ -29,6 +30,7 @@ impl<'a> CwIbcStore<'a> {
         channel_end: ChannelEnd,
     ) -> Result<(), ContractError> {
         match self
+            .ibc_store()
             .channels()
             .save(store, (port_id, channel_id), &channel_end)
         {
@@ -39,7 +41,7 @@ impl<'a> CwIbcStore<'a> {
 
     // Get the channel sequence number
     pub fn query_channel_sequence(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        match self.next_channel_sequence().load(store) {
+        match self.ibc_store().next_channel_sequence().load(store) {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -50,7 +52,7 @@ impl<'a> CwIbcStore<'a> {
         &self,
         store: &mut dyn Storage,
     ) -> Result<u128, ContractError> {
-        let sequence = self.next_channel_sequence().update(
+        let sequence = self.ibc_store().next_channel_sequence().update(
             store,
             |mut req_id| -> Result<_, ContractError> {
                 req_id += 1;
@@ -67,7 +69,11 @@ impl<'a> CwIbcStore<'a> {
         store: &mut dyn Storage,
         sequence_no: u128,
     ) -> Result<(), ContractError> {
-        match self.next_channel_sequence().save(store, &sequence_no) {
+        match self
+            .ibc_store()
+            .next_channel_sequence()
+            .save(store, &sequence_no)
+        {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -80,7 +86,11 @@ impl<'a> CwIbcStore<'a> {
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
-        match self.next_sequence_send().load(store, (port_id, channel_id)) {
+        match self
+            .ibc_store()
+            .next_sequence_send()
+            .load(store, (port_id, channel_id))
+        {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -95,6 +105,7 @@ impl<'a> CwIbcStore<'a> {
         sequence: Sequence,
     ) -> Result<(), ContractError> {
         match self
+            .ibc_store()
             .next_sequence_send()
             .save(store, (port_id, channel_id), &sequence)
         {
@@ -109,7 +120,7 @@ impl<'a> CwIbcStore<'a> {
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
-        let sequence = self.next_sequence_send().update(
+        let sequence = self.ibc_store().next_sequence_send().update(
             store,
             (port_id.clone(), channel_id.clone()),
             |req_id| -> Result<_, ContractError> {
@@ -132,7 +143,11 @@ impl<'a> CwIbcStore<'a> {
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
-        match self.next_sequence_recv().load(store, (port_id, channel_id)) {
+        match self
+            .ibc_store()
+            .next_sequence_recv()
+            .load(store, (port_id, channel_id))
+        {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -147,6 +162,7 @@ impl<'a> CwIbcStore<'a> {
         sequence: Sequence,
     ) -> Result<(), ContractError> {
         match self
+            .ibc_store()
             .next_sequence_recv()
             .save(store, (port_id, channel_id), &sequence)
         {
@@ -161,7 +177,7 @@ impl<'a> CwIbcStore<'a> {
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
-        let sequence = self.next_sequence_recv().update(
+        let sequence = self.ibc_store().next_sequence_recv().update(
             store,
             (port_id.clone(), channel_id.clone()),
             |req_id| -> Result<_, ContractError> {
@@ -184,7 +200,11 @@ impl<'a> CwIbcStore<'a> {
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
-        match self.next_sequence_ack().load(store, (port_id, channel_id)) {
+        match self
+            .ibc_store()
+            .next_sequence_ack()
+            .load(store, (port_id, channel_id))
+        {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -199,6 +219,7 @@ impl<'a> CwIbcStore<'a> {
         sequence: Sequence,
     ) -> Result<(), ContractError> {
         match self
+            .ibc_store()
             .next_sequence_ack()
             .save(store, (port_id, channel_id), &sequence)
         {
@@ -213,7 +234,7 @@ impl<'a> CwIbcStore<'a> {
         port_id: PortId,
         channel_id: ChannelId,
     ) -> Result<Sequence, ContractError> {
-        let sequence = self.next_sequence_ack().update(
+        let sequence = self.ibc_store().next_sequence_ack().update(
             store,
             (port_id.clone(), channel_id.clone()),
             |req_id| -> Result<_, ContractError> {
@@ -227,5 +248,125 @@ impl<'a> CwIbcStore<'a> {
             },
         )?;
         Ok(sequence)
+    }
+}
+
+//TODO : Implement Methods
+#[allow(dead_code)]
+#[allow(unused_variables)]
+impl<'a> CwIbcCoreContext<'a> {
+    fn get_next_sequence_send(
+        &self,
+        seq_send_path: &ibc::core::ics24_host::path::SeqSendPath,
+    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn get_next_sequence_recv(
+        &self,
+        seq_recv_path: &ibc::core::ics24_host::path::SeqRecvPath,
+    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn get_next_sequence_ack(
+        &self,
+        seq_ack_path: &ibc::core::ics24_host::path::SeqAckPath,
+    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn channel_counter(&self) -> Result<u64, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn store_channel(
+        &mut self,
+        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
+        channel_end: ibc::core::ics04_channel::channel::ChannelEnd,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn increase_channel_counter(&mut self) {
+        todo!()
+    }
+
+    fn emit_ibc_event(&mut self, event: ibc::events::IbcEvent) {
+        todo!()
+    }
+
+    fn log_message(&mut self, message: String) {
+        todo!()
+    }
+
+    fn store_packet_commitment(
+        &mut self,
+        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
+        commitment: ibc::core::ics04_channel::commitment::PacketCommitment,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn delete_packet_commitment(
+        &mut self,
+        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn store_packet_receipt(
+        &mut self,
+        receipt_path: &ibc::core::ics24_host::path::ReceiptPath,
+        receipt: ibc::core::ics04_channel::packet::Receipt,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn store_packet_acknowledgement(
+        &mut self,
+        ack_path: &ibc::core::ics24_host::path::AckPath,
+        ack_commitment: ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn delete_packet_acknowledgement(
+        &mut self,
+        ack_path: &ibc::core::ics24_host::path::AckPath,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn channel_end(
+        &self,
+        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
+    ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn get_packet_commitment(
+        &self,
+        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
+    ) -> Result<ibc::core::ics04_channel::commitment::PacketCommitment, ibc::core::ContextError>
+    {
+        todo!()
+    }
+
+    fn get_packet_receipt(
+        &self,
+        receipt_path: &ibc::core::ics24_host::path::ReceiptPath,
+    ) -> Result<ibc::core::ics04_channel::packet::Receipt, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn get_packet_acknowledgement(
+        &self,
+        ack_path: &ibc::core::ics24_host::path::AckPath,
+    ) -> Result<
+        ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
+        ibc::core::ContextError,
+    > {
+        todo!()
     }
 }

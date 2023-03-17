@@ -7,15 +7,16 @@ pub mod ics03_connection;
 pub mod ics04_channel;
 pub mod ics05_port;
 pub mod ics24_host;
+pub mod ics26_routing;
 pub mod msg;
-pub mod router;
 pub mod state;
 pub mod storage_keys;
 pub mod types;
 
 pub use crate::error::ContractError;
-use crate::{router::CwIbcRouter, state::CwIbcStore};
+use crate::state::CwIbcStore;
 use crate::{
+    ics26_routing::router::CwIbcRouter,
     storage_keys::StorageKey,
     types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
 };

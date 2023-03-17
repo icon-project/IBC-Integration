@@ -4,6 +4,7 @@ pub mod client;
 use cosmwasm_std::Storage;
 
 use crate::{
+    context::CwIbcCoreContext,
     types::{ClientId, ClientType},
-    ContractError, CwIbcStore, IbcClientType,
+    ContractError, IbcClientType,
 };

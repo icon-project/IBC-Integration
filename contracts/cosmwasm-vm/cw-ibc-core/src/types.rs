@@ -1,5 +1,6 @@
 use cosmwasm_std::StdError;
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
+
 use ibc::core::ics24_host::error::ValidationError;
 use std::{
     fmt::{Display, Error as FmtError, Formatter},
@@ -120,6 +121,9 @@ impl ConnectionId {
     /// Get this identifier as a borrowed byte slice
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+    pub fn connection_id(&self) -> &IbcConnectionId {
+        &self.0
     }
 }
 
