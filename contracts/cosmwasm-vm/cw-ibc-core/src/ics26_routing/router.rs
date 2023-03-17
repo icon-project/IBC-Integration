@@ -31,11 +31,4 @@ impl<'a> CwIbcCoreContext<'a> {
     fn has_route(&self, module_id: &ibc::core::ics26_routing::context::ModuleId) -> bool {
         todo!()
     }
-
-    fn lookup_module_by_port(
-        &self,
-        port_id: &ibc::core::ics24_host::identifier::PortId,
-    ) -> Option<ibc::core::ics26_routing::context::ModuleId> {
-        todo!()
-    }
 }

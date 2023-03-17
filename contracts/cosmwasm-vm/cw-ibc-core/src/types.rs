@@ -201,6 +201,10 @@ impl ChannelId {
     pub fn default() -> Self {
         Self(IbcChannelId::default())
     }
+
+    pub fn channel_id(&self) -> &IbcChannelId {
+        &self.0
+    }
 }
 
 impl Display for ChannelId {
@@ -241,6 +245,9 @@ impl PortId {
 
     pub fn dafault() -> Self {
         Self(IbcPortId::default())
+    }
+    pub fn port_id(&self) -> &IbcPortId {
+        &self.0
     }
 }
 
