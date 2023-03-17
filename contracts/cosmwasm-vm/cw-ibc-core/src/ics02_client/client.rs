@@ -154,3 +154,146 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 }
+
+impl<'a> CwIbcCoreContext<'a> {
+    fn client_state(
+        &self,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+    ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ibc::core::ContextError>
+    {
+        todo!()
+    }
+
+    fn decode_client_state(
+        &self,
+        client_state: ibc_proto::google::protobuf::Any,
+    ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ibc::core::ContextError>
+    {
+        todo!()
+    }
+
+    fn consensus_state(
+        &self,
+        client_cons_state_path: &ibc::core::ics24_host::path::ClientConsensusStatePath,
+    ) -> Result<
+        Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>,
+        ibc::core::ContextError,
+    > {
+        todo!()
+    }
+
+    fn next_consensus_state(
+        &self,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
+    ) -> Result<
+        Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
+        ibc::core::ContextError,
+    > {
+        todo!()
+    }
+
+    fn prev_consensus_state(
+        &self,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
+    ) -> Result<
+        Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
+        ibc::core::ContextError,
+    > {
+        todo!()
+    }
+
+    fn host_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn host_timestamp(&self) -> Result<ibc::timestamp::Timestamp, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn host_consensus_state(
+        &self,
+        height: &ibc::Height,
+    ) -> Result<
+        Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>,
+        ibc::core::ContextError,
+    > {
+        todo!()
+    }
+
+    fn client_counter(&self) -> Result<u64, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn validate_self_client(
+        &self,
+        client_state_of_host_on_counterparty: ibc_proto::google::protobuf::Any,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn commitment_prefix(&self) -> ibc::core::ics23_commitment::commitment::CommitmentPrefix {
+        todo!()
+    }
+
+    fn client_update_time(
+        &self,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
+    ) -> Result<ibc::timestamp::Timestamp, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn client_update_height(
+        &self,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
+    ) -> Result<ibc::Height, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn max_expected_time_per_block(&self) -> std::time::Duration {
+        todo!()
+    }
+}
+
+impl<'a> CwIbcCoreContext<'a> {
+    fn store_client_state(
+        &mut self,
+        client_state_path: ibc::core::ics24_host::path::ClientStatePath,
+        client_state: Box<dyn ibc::core::ics02_client::client_state::ClientState>,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn store_consensus_state(
+        &mut self,
+        consensus_state_path: ibc::core::ics24_host::path::ClientConsensusStatePath,
+        consensus_state: Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn increase_client_counter(&mut self) {
+        todo!()
+    }
+
+    fn store_update_time(
+        &mut self,
+        client_id: ibc::core::ics24_host::identifier::ClientId,
+        height: ibc::Height,
+        timestamp: ibc::timestamp::Timestamp,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn store_update_height(
+        &mut self,
+        client_id: ibc::core::ics24_host::identifier::ClientId,
+        height: ibc::Height,
+        host_height: ibc::Height,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+}

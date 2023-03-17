@@ -1,5 +1,3 @@
-use crate::context::CwIbcCoreContext;
-
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -250,5 +248,120 @@ impl<'a> CwIbcCoreContext<'a> {
             },
         )?;
         Ok(sequence)
+    }
+
+    fn get_next_sequence_send(
+        &self,
+        seq_send_path: &ibc::core::ics24_host::path::SeqSendPath,
+    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn get_next_sequence_recv(
+        &self,
+        seq_recv_path: &ibc::core::ics24_host::path::SeqRecvPath,
+    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn get_next_sequence_ack(
+        &self,
+        seq_ack_path: &ibc::core::ics24_host::path::SeqAckPath,
+    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn channel_counter(&self) -> Result<u64, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn store_channel(
+        &mut self,
+        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
+        channel_end: ibc::core::ics04_channel::channel::ChannelEnd,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn increase_channel_counter(&mut self) {
+        todo!()
+    }
+
+    fn emit_ibc_event(&mut self, event: ibc::events::IbcEvent) {
+        todo!()
+    }
+
+    fn log_message(&mut self, message: String) {
+        todo!()
+    }
+
+    fn store_packet_commitment(
+        &mut self,
+        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
+        commitment: ibc::core::ics04_channel::commitment::PacketCommitment,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn delete_packet_commitment(
+        &mut self,
+        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn store_packet_receipt(
+        &mut self,
+        receipt_path: &ibc::core::ics24_host::path::ReceiptPath,
+        receipt: ibc::core::ics04_channel::packet::Receipt,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn store_packet_acknowledgement(
+        &mut self,
+        ack_path: &ibc::core::ics24_host::path::AckPath,
+        ack_commitment: ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn delete_packet_acknowledgement(
+        &mut self,
+        ack_path: &ibc::core::ics24_host::path::AckPath,
+    ) -> Result<(), ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn channel_end(
+        &self,
+        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
+    ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn get_packet_commitment(
+        &self,
+        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
+    ) -> Result<ibc::core::ics04_channel::commitment::PacketCommitment, ibc::core::ContextError>
+    {
+        todo!()
+    }
+
+    fn get_packet_receipt(
+        &self,
+        receipt_path: &ibc::core::ics24_host::path::ReceiptPath,
+    ) -> Result<ibc::core::ics04_channel::packet::Receipt, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn get_packet_acknowledgement(
+        &self,
+        ack_path: &ibc::core::ics24_host::path::AckPath,
+    ) -> Result<
+        ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
+        ibc::core::ContextError,
+    > {
+        todo!()
     }
 }
