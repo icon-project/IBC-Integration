@@ -1,5 +1,6 @@
 use cw_ibc_core::{
     context::CwIbcCoreContext,
+    ics04_channel::MsgChannelOpenInit,
     types::{ChannelId, PortId},
     ChannelEnd, Sequence,
 };
@@ -7,6 +8,7 @@ use ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},
     Version,
 };
+use ibc_proto::ibc::core::channel::v1::MsgChannelOpenInit as RawMsgChannelOpenInit;
 
 pub mod setup;
 use setup::*;
@@ -208,4 +210,14 @@ fn test_channel_sequence_recv_fail() {
         channel_id.clone(),
     )
     .unwrap();
+}
+
+#[test]
+pub fn test_to_and_from_channel_open_init() {
+    let raw = get_dummy_raw_msg_chan_open_init(None);
+    let msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
+    let raw_back = RawMsgChannelOpenInit::from(msg.clone());
+    let msg_back = MsgChannelOpenInit::try_from(raw_back.clone()).unwrap();
+    assert_eq!(raw, raw_back);
+    assert_eq!(msg, msg_back);
 }
