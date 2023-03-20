@@ -193,7 +193,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     }
 
     @External
-    public Boolean verifyMembership(
+    public boolean verifyMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
@@ -217,7 +217,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     }
 
     @External
-    public Boolean verifyNonMembership(
+    public boolean verifyNonMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
