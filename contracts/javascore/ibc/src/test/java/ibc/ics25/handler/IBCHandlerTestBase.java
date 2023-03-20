@@ -12,7 +12,9 @@ import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.structs.messages.*;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
+import test.proto.core.channel.ChannelOuterClass.Channel;
 import test.proto.core.channel.ChannelOuterClass.Packet;
+import test.proto.core.client.Client.Height;
 import test.proto.core.connection.Connection.ConnectionEnd;
 import test.proto.core.connection.Connection.Counterparty;
 import test.proto.core.connection.Connection.MerklePrefix;
@@ -20,6 +22,8 @@ import test.proto.core.connection.Connection.Version;
 
 import java.math.BigInteger;
 import java.util.List;
+
+import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
