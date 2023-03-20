@@ -9,8 +9,6 @@ import java.util.Arrays;
 
 import static ibc.tendermint.TendermintHelper.*;
 
-import static ibc.tendermint.TendermintHelper.*;
-
 public abstract class Tendermint {
     protected boolean verify(
             Duration trustingPeriod,

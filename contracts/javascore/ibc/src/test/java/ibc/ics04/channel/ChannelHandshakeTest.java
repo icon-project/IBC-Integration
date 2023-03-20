@@ -71,8 +71,7 @@ public class ChannelHandshakeTest extends TestBase {
         channel.setInstance(channelSpy);
         doNothing().when(channelSpy).sendBTPMessage(any(byte[].class));
 
-        lightClient = new MockContract<>(ILightClientScoreInterface.class,
-                ILightClient.class, sm, owner);
+        lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
 
         proofHeight = Height.newBuilder()
                 .setRevisionHeight(5)
@@ -205,12 +204,9 @@ public class ChannelHandshakeTest extends TestBase {
 
         verify(channelSpy).sendBTPMessage(ByteUtil.join(key, IBCCommitment.keccak256(msg.getChannelRaw())));
         assertEquals(BigInteger.ONE, channel.call("getNextChannelSequence"));
-        assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId,
-                channelId));
-        assertEquals(BigInteger.ONE, channel.call("getNextSequenceSend", portId,
-                channelId));
-        assertEquals(BigInteger.ONE, channel.call("getNextSequenceAcknowledgement",
-                portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceSend", portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceAcknowledgement", portId, channelId));
     }
 
     @Test
@@ -359,12 +355,9 @@ public class ChannelHandshakeTest extends TestBase {
                 IBCCommitment.keccak256(baseChannel.toByteArray())));
 
         assertEquals(BigInteger.ONE, channel.call("getNextChannelSequence"));
-        assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId,
-                channelId));
-        assertEquals(BigInteger.ONE, channel.call("getNextSequenceSend", portId,
-                channelId));
-        assertEquals(BigInteger.ONE, channel.call("getNextSequenceAcknowledgement",
-                portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceSend", portId, channelId));
+        assertEquals(BigInteger.ONE, channel.call("getNextSequenceAcknowledgement", portId, channelId));
     }
 
     @Test

@@ -8,21 +8,17 @@ import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.NullChecker;
 import ibc.icon.structs.messages.ConsensusStateUpdate;
 import ibc.icon.structs.messages.UpdateClientResponse;
 import icon.proto.core.client.Height;
 
-import java.math.BigInteger;
-
 import static ibc.tendermint.TendermintHelper.*;
 import static score.Context.require;
-import static ibc.tendermint.TendermintHelper.*;
 import icon.proto.clients.tendermint.*;
 import ibc.ics24.host.IBCCommitment;
 
-public class TendermintLightClient extends Tendermint implements ILightClient {
+public class TendermintLightClient extends Tendermint {
     public final Address ibcHandler;
 
     public static final String CLIENT_STATES = "CLIENT_STATES";
@@ -193,7 +189,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     }
 
     @External
-    public Boolean verifyMembership(
+    public boolean verifyMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
@@ -217,7 +213,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     }
 
     @External
-    public Boolean verifyNonMembership(
+    public boolean verifyNonMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,

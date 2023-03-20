@@ -1,9 +1,6 @@
 package ibc.ics03.connection;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-
+import ibc.icon.interfaces.IIBCConnection;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Logger;
@@ -19,6 +16,10 @@ import icon.proto.core.connection.Version;
 import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 
 public class IBCConnection extends IBCClient {
     public static final String v1Identifier = "1";
@@ -107,10 +108,10 @@ public class IBCConnection extends IBCClient {
             Context.require(isSupportedVersion(msg.getVersion()),
                     "connection state is in INIT but the provided version is not supported");
         } else {
-            Context.require(
-                    connection.getVersions().size() == 1
+            Context.require(connection.getVersions().size() == 1
                             && Arrays.equals(connection.getVersions().get(0).encode(), msg.getVersionRaw()),
-                    "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
+                    "connection state is in TRYOPEN but the provided version is not set in the previous connection " +
+                            "versions");
         }
 
         // TODO: investigate need to self client validation
