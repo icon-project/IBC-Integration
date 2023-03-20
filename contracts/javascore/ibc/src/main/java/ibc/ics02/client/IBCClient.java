@@ -19,6 +19,12 @@ public class IBCClient extends IBCHost {
 
     Logger logger = new Logger("ibc-core");
 
+    /**
+     * Registers a client to registry
+     *
+     * @param clientType  Type of client
+     * @param lightClient Light client contract address
+     */
     public void registerClient(String clientType, Address lightClient) {
         Context.require(clientRegistry.get(clientType) == null, "Already registered.");
         clientRegistry.set(clientType, lightClient);
@@ -39,8 +45,8 @@ public class IBCClient extends IBCHost {
         Context.require(response.isOk());
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
-        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),
-        // response.clientStateCommitment);
+        // update commitments
+        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
         Height updateHeight = response.getUpdate().getHeight();
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 updateHeight.getRevisionNumber(),
@@ -64,8 +70,8 @@ public class IBCClient extends IBCHost {
         Context.require(response.isOk());
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
-        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),
-        // response.clientStateCommitment);
+        // update commitments
+        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),response.clientStateCommitment);
         Height updateHeight = response.getUpdate().getHeight();
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 updateHeight.getRevisionNumber(),

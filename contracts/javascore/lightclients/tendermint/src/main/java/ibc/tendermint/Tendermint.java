@@ -1,11 +1,13 @@
 package ibc.tendermint;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-
 import ibc.icon.score.util.Proto;
 import icon.proto.clients.tendermint.*;
 import score.Context;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+
+import static ibc.tendermint.TendermintHelper.*;
 
 import static ibc.tendermint.TendermintHelper.*;
 

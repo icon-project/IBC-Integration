@@ -1,11 +1,11 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
-import java.math.BigInteger;
-
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
+
+import java.math.BigInteger;
 
 public class TmHeader {
     public SignedHeader signedHeader;
@@ -18,7 +18,7 @@ public class TmHeader {
     }
 
     public TmHeader(SignedHeader signedHeader, ValidatorSet validatorSet, BigInteger trustedHeight,
-            ValidatorSet trustedValidators) {
+                    ValidatorSet trustedValidators) {
         this.signedHeader = signedHeader;
         this.validatorSet = validatorSet;
         this.trustedHeight = trustedHeight;

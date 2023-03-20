@@ -1,39 +1,20 @@
 package ibc.ics04.channel;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-
-import java.math.BigInteger;
-import java.util.List;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
 import com.google.protobuf.ByteString;
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.ByteUtil;
-import ibc.icon.structs.messages.MsgChannelCloseConfirm;
-import ibc.icon.structs.messages.MsgChannelCloseInit;
-import ibc.icon.structs.messages.MsgChannelOpenAck;
-import ibc.icon.structs.messages.MsgChannelOpenConfirm;
-import ibc.icon.structs.messages.MsgChannelOpenInit;
-import ibc.icon.structs.messages.MsgChannelOpenTry;
+import ibc.icon.structs.messages.*;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
 import ibc.ics24.host.IBCCommitment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import score.Address;
 import test.proto.core.channel.ChannelOuterClass.Channel;
 import test.proto.core.channel.ChannelOuterClass.Channel.Counterparty;
@@ -42,6 +23,12 @@ import test.proto.core.connection.Connection;
 import test.proto.core.connection.Connection.ConnectionEnd;
 import test.proto.core.connection.Connection.MerklePrefix;
 import test.proto.core.connection.Connection.Version;
+
+import java.math.BigInteger;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class ChannelHandshakeTest extends TestBase {
 
@@ -216,8 +203,7 @@ public class ChannelHandshakeTest extends TestBase {
         // assertArrayEquals(IBCCommitment.keccak256(msg.channel.toBytes()),
         // storedCommitment);
 
-        verify(channelSpy).sendBTPMessage(ByteUtil.join(key,
-                IBCCommitment.keccak256(msg.getChannelRaw())));
+        verify(channelSpy).sendBTPMessage(ByteUtil.join(key, IBCCommitment.keccak256(msg.getChannelRaw())));
         assertEquals(BigInteger.ONE, channel.call("getNextChannelSequence"));
         assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId,
                 channelId));
@@ -320,11 +306,9 @@ public class ChannelHandshakeTest extends TestBase {
                 .addAllConnectionHops(List.of(baseConnection.getCounterparty().getConnectionId()))
                 .setVersion(msg.getCounterpartyVersion()).build();
 
-        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(),
-                BigInteger.ZERO, BigInteger.ZERO,
-                msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId,
-                        channelId),
-                expectedChannel.toByteArray())).thenReturn(false);
+        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId, channelId)
+                , expectedChannel.toByteArray())).thenReturn(false);
 
         // Act & Assert
         String expectedErrorMessage = "failed to verify channel state";
@@ -359,11 +343,9 @@ public class ChannelHandshakeTest extends TestBase {
                 .addAllConnectionHops(List.of(baseConnection.getCounterparty().getConnectionId()))
                 .setVersion(msg.getCounterpartyVersion()).build();
 
-        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(),
-                BigInteger.ZERO, BigInteger.ZERO,
-                msg.getProofInit(), prefix.getKeyPrefix().toByteArray(),
-                IBCCommitment.channelPath(portId, channelId), expectedChannel.toByteArray()))
-                .thenReturn(true);
+        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId, channelId)
+                , expectedChannel.toByteArray())).thenReturn(true);
         // Act
         channel.invoke(owner, "channelOpenTry", msg);
 
@@ -407,10 +389,8 @@ public class ChannelHandshakeTest extends TestBase {
                 .addAllConnectionHops(List.of(baseConnection.getCounterparty().getConnectionId()))
                 .setVersion(msg.getCounterpartyVersion()).build();
 
-        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(),
-                BigInteger.ZERO, BigInteger.ZERO,
-                msg.getProofTry(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId,
-                        channelId),
+        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofTry(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId, channelId),
                 counterpartyChannel.toByteArray())).thenReturn(true);
 
         channel.invoke(owner, "channelOpenAck", msg);
@@ -454,8 +434,7 @@ public class ChannelHandshakeTest extends TestBase {
                 .addAllConnectionHops(List.of(baseConnection.getCounterparty().getConnectionId()))
                 .setVersion(baseChannel.getVersion()).build();
 
-        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(),
-                BigInteger.ZERO, BigInteger.ZERO,
+        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
                 msg.getProofAck(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId, channelId),
                 counterpartyChannel.toByteArray())).thenReturn(true);
 
@@ -520,11 +499,9 @@ public class ChannelHandshakeTest extends TestBase {
                 .addAllConnectionHops(List.of(baseConnection.getCounterparty().getConnectionId()))
                 .setVersion(baseChannel.getVersion()).build();
 
-        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(),
-                BigInteger.ZERO, BigInteger.ZERO,
-                msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId,
-                        channelId),
-                counterpartyChannel.toByteArray())).thenReturn(true);
+        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId, channelId)
+                , counterpartyChannel.toByteArray())).thenReturn(true);
 
         // Act
         channel.invoke(owner, "channelCloseConfirm", msg);

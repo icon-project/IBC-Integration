@@ -35,6 +35,11 @@ jacocoTestReport {
     }
 }
 
+tasks.named('compileJava') {
+    dependsOn(':score-util:jar')
+    dependsOn(':lib:jar')
+}
+
 optimizedJar {
     mainClassName = 'ibc.ics25.handler.IBCHandler'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

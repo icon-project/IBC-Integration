@@ -1,9 +1,9 @@
 package ibc.icon.structs.proto.lightclient.tendermint;
 
-import java.math.BigInteger;
-
 import score.ObjectReader;
 import score.ObjectWriter;
+
+import java.math.BigInteger;
 
 public class PartSetHeader {
     public BigInteger total;

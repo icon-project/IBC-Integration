@@ -187,7 +187,7 @@ public class IBCConnection extends IBCClient {
     /* Verification functions */
 
     private void verifyClientState(ConnectionEnd connection, byte[] height, byte[] path, byte[] proof,
-            byte[] clientStatebytes) {
+                                   byte[] clientStatebytes) {
         ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),
@@ -202,7 +202,7 @@ public class IBCConnection extends IBCClient {
     }
 
     private void verifyClientConsensusState(ConnectionEnd connection, byte[] height, Height consensusHeight,
-            byte[] proof, byte[] consensusStateBytes) {
+                                            byte[] proof, byte[] consensusStateBytes) {
         byte[] consensusPath = IBCCommitment.consensusStatePath(connection.getCounterparty().getClientId(),
                 consensusHeight.getRevisionNumber(),
                 consensusHeight.getRevisionHeight());
@@ -222,7 +222,7 @@ public class IBCConnection extends IBCClient {
     }
 
     private void verifyConnectionState(ConnectionEnd connection, byte[] height, byte[] proof, String connectionId,
-            ConnectionEnd counterpartyConnection) {
+                                       ConnectionEnd counterpartyConnection) {
         ILightClient client = getClient(connection.getClientId());
         boolean ok = client.verifyMembership(
                 connection.getClientId(),

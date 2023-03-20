@@ -5,8 +5,7 @@ public class UpdateClientResponse {
     private ConsensusStateUpdate update;
     private boolean ok;
 
-    public UpdateClientResponse(byte[] clientStateCommitment,
-            ConsensusStateUpdate update, boolean ok) {
+    public UpdateClientResponse(byte[] clientStateCommitment, ConsensusStateUpdate update, boolean ok) {
         this.clientStateCommitment = clientStateCommitment;
         this.update = update;
         this.ok = ok;

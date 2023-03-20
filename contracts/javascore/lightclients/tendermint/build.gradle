@@ -23,7 +23,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterEngineVersion")
 }
 
-test{
+test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
 }
@@ -35,6 +35,12 @@ jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
+}
+
+tasks.named('compileJava') {
+    dependsOn(':ibc:optimizedJar')
+    dependsOn(':score-util:jar')
+    dependsOn(':lib:jar')
 }
 
 optimizedJar {
