@@ -1,12 +1,13 @@
 package ibc.ics25.handler;
 
+import ibc.icon.interfaces.IIBCClient;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.ics04.channel.IBCPacket;
 import score.annotation.EventLog;
 import score.annotation.External;
 
-public abstract class IBCHandlerClient extends IBCPacket {
+public abstract class IBCHandlerClient extends IBCPacket implements IIBCClient {
 
     @EventLog(indexed = 1)
     public void GeneratedClientIdentifier(String identifier) {

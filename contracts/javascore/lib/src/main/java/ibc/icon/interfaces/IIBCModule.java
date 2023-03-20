@@ -1,8 +1,8 @@
 package ibc.icon.interfaces;
 
+import java.util.List;
+
 import foundation.icon.score.client.ScoreInterface;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.channel.Packet;
 import score.Address;
 
 // IIBCModule defines an interface that implements all the callbacks
@@ -19,10 +19,10 @@ public interface IIBCModule {
      */
     void onChanOpenInit(
             int order,
-            String[] connectionHops,
+            List<String> connectionHops,
             String portId,
             String channelId,
-            Counterparty counterparty,
+            byte[] counterpartyPb,
             String version);
 
     /**
@@ -35,10 +35,10 @@ public interface IIBCModule {
      */
     void onChanOpenTry(
             int order,
-            String[] connectionHops,
+            List<String> connectionHops,
             String portId,
             String channelId,
-            Counterparty counterparty,
+            byte[] counterpartyPb,
             String version,
             String counterpartyVersion);
 
@@ -63,7 +63,7 @@ public interface IIBCModule {
      * changes on callback are written, otherwise the application state changes are discarded. In either case the
      * packet is received and the acknowledgement is written (in synchronous cases).
      */
-    byte[] onRecvPacket(Packet calldata, Address relayer);
+    byte[] onRecvPacket(byte[] calldata, Address relayer);
 
-    void onAcknowledgementPacket(Packet calldata, byte[] acknowledgement, Address relayer);
+    void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer);
 }

@@ -1,16 +1,17 @@
 package ibc.ics25.handler;
 
+import java.math.BigInteger;
+
 import ibc.icon.interfaces.IIBCModule;
+import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
-import ibc.icon.structs.proto.core.channel.Packet;
+import icon.proto.core.channel.Packet;
 import score.Context;
 import score.annotation.EventLog;
 import score.annotation.External;
 
-import java.math.BigInteger;
-
-public abstract class IBCHandlerPacket extends IBCHandlerChannel {
+public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
     @EventLog
     public void SendPacket(byte[] packet) {
     }
@@ -29,34 +30,36 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
     }
 
     @External
-    public void sendPacket(Packet packet) {
+    public void sendPacket(byte[] packetPb) {
+        Packet packet = Packet.decode(packetPb);
         Context.require(
                 authenticateCapability(channelCapabilityPath(packet.getSourcePort(), packet.getSourceChannel())),
                 "failed to authenticate " + Context.getCaller() + " for port: " + packet.getSourcePort()
                         + "and channel: " + packet.getSourceChannel());
         super.sendPacket(packet);
-        SendPacket(packet.toBytes());
+        SendPacket(packetPb);
     }
 
     @External
     public void recvPacket(MsgPacketRecv msg) {
-        IIBCModule module = lookupModuleByChannel(msg.packet.getDestinationPort(),
-                msg.packet.getDestinationChannel());
+        Packet packet = msg.getPacket();
+        IIBCModule module = lookupModuleByChannel(packet.getDestinationPort(),
+                packet.getDestinationChannel());
 
-        byte[] acknowledgement = module.onRecvPacket(msg.packet, Context.getCaller());
-        super.recvPacket(msg);
+        byte[] acknowledgement = module.onRecvPacket(msg.getPacketRaw(), Context.getCaller());
+        super.recvPacket(packet, msg.getProof(), msg.getProofHeightRaw());
 
         if (acknowledgement.length > 0) {
             super.writeAcknowledgement(
-                    msg.packet.getDestinationPort(),
-                    msg.packet.getDestinationChannel(),
-                    msg.packet.sequence,
+                    packet.getDestinationPort(),
+                    packet.getDestinationChannel(),
+                    packet.getSequence(),
                     acknowledgement);
-            WriteAcknowledgement(msg.packet.getDestinationPort(),
-                    msg.packet.getDestinationChannel(), msg.packet.sequence, acknowledgement);
+            WriteAcknowledgement(packet.getDestinationPort(),
+                    packet.getDestinationChannel(), packet.getSequence(), acknowledgement);
         }
 
-        RecvPacket(msg.packet.toBytes());
+        RecvPacket(msg.getPacketRaw());
     }
 
     @External
@@ -78,12 +81,13 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel {
 
     @External
     public void acknowledgePacket(MsgPacketAcknowledgement msg) {
-        IIBCModule module = lookupModuleByChannel(msg.packet.getSourcePort(),
-                msg.packet.getSourceChannel());
-        module.onAcknowledgementPacket(msg.packet, msg.acknowledgement,
-                Context.getCaller());
-        super.acknowledgePacket(msg);
+        Packet packet = msg.getPacket();
+        IIBCModule module = lookupModuleByChannel(packet.getSourcePort(), packet.getSourceChannel());
 
-        AcknowledgePacket(msg.packet.toBytes(), msg.acknowledgement);
+        module.onAcknowledgementPacket(msg.getPacketRaw(), msg.getAcknowledgement(),
+                Context.getCaller());
+        super.acknowledgePacket(packet, msg.getAcknowledgement(), msg.getProof(), msg.getProofHeightRaw());
+
+        AcknowledgePacket(msg.getPacketRaw(), msg.getAcknowledgement());
     }
 }

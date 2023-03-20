@@ -2,9 +2,9 @@ package ibc.tendermint;
 
 import ibc.icon.structs.messages.ConsensusStateUpdate;
 import ibc.icon.structs.messages.UpdateClientResponse;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.lightclient.tendermint.*;
 import ibc.ics24.host.IBCCommitment;
+import icon.proto.clients.tendermint.*;
+import icon.proto.core.client.Height;
 import score.Address;
 import score.BranchDB;
 import score.Context;
@@ -13,6 +13,7 @@ import score.annotation.External;
 
 import java.math.BigInteger;
 
+import static ibc.tendermint.TendermintHelper.*;
 import static score.Context.require;
 
 public class TendermintLightClient extends Tendermint {
@@ -45,9 +46,9 @@ public class TendermintLightClient extends Tendermint {
             Address host,
             String clientId,
             Height height) {
-        ConsensusState consensusState = consensusStates.at(clientId).get(height.revisionHeight);
+        ConsensusState consensusState = consensusStates.at(clientId).get(height.getRevisionHeight());
 
-        return consensusState.timestamp.seconds;
+        return consensusState.getTimestamp().getSeconds();
     }
 
     /**
@@ -59,7 +60,8 @@ public class TendermintLightClient extends Tendermint {
         // if (!found) {
         // return (Height(0, 0), false);
         // }
-        return new Height(BigInteger.ZERO, clientState.latestHeight);
+
+        return newHeight(clientState.getLatestHeight());
     }
 
     /**
@@ -67,12 +69,12 @@ public class TendermintLightClient extends Tendermint {
      */
     @External
     public UpdateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
-        ClientState clientState = ClientState.fromBytes(clientStateBytes);
-        ConsensusState consensusState = ConsensusState.fromBytes(consensusStateBytes);
+        ClientState clientState = ClientState.decode(clientStateBytes);
+        ConsensusState consensusState = ConsensusState.decode(consensusStateBytes);
         clientStates.set(clientId, clientState);
-        consensusStates.at(clientId).set(clientState.latestHeight, consensusState);
+        consensusStates.at(clientId).set(clientState.getLatestHeight(), consensusState);
         ConsensusStateUpdate update = new ConsensusStateUpdate(IBCCommitment.keccak256(consensusStateBytes),
-                new Height(BigInteger.ZERO, clientState.latestHeight));
+                newHeight(clientState.getLatestHeight()).encode());
         UpdateClientResponse response = new UpdateClientResponse(IBCCommitment.keccak256(clientStateBytes), update,
                 true);
 
@@ -84,7 +86,7 @@ public class TendermintLightClient extends Tendermint {
      */
     @External(readonly = true)
     public UpdateClientResponse updateClient(String clientId, byte[] clientMessageBytes) {
-        TmHeader tmHeader = TmHeader.fromBytes(clientMessageBytes);
+        TmHeader tmHeader = TmHeader.decode(clientMessageBytes);
         boolean conflictingHeader = false;
 
         // Check if the Client store already has a consensus state for the header's
@@ -92,11 +94,12 @@ public class TendermintLightClient extends Tendermint {
         // If the consensus state exists, and it matches the header then we return early
         // since header has already been submitted in a previous UpdateClient.
         // TODO: revision number?
-        ConsensusState prevConsState = consensusStates.at(clientId).get(tmHeader.signedHeader.header.height);
+        ConsensusState prevConsState = consensusStates.at(clientId)
+                .get(tmHeader.getSignedHeader().getHeader().getHeight());
         if (prevConsState != null) {
             // This header has already been submitted and the necessary state is already
             // stored
-            Context.require(!prevConsState.isEqual(tmHeader.toConsensusState()),
+            Context.require(!isEqual(prevConsState, toConsensusState(tmHeader)),
                     "block already exists in consensus state");
 
             // A consensus state already exists for this height, but it does not match the
@@ -106,30 +109,30 @@ public class TendermintLightClient extends Tendermint {
             conflictingHeader = true;
         }
 
-        ConsensusState trustedConsensusState = consensusStates.at(clientId).get(tmHeader.trustedHeight);
+        ConsensusState trustedConsensusState = consensusStates.at(clientId).get(tmHeader.getTrustedHeight());
         require(trustedConsensusState != null, "LC: consensusState not found at trusted height");
 
         ClientState clientState = clientStates.get(clientId);
         require(clientState != null, "LC: client state is invalid");
-        Duration currentTime = new Duration(
-                BigInteger.valueOf(Context.getBlockTimestamp() / MICRO_SECONDS_IN_A_SECOND.longValue()),
-                BigInteger.ZERO);
+        Duration currentTime = new Duration();
+        currentTime.setSeconds(BigInteger.valueOf(Context.getBlockTimestamp() / MICRO_SECONDS_IN_A_SECOND.longValue()));
+        currentTime.setNanos(BigInteger.ZERO);
         checkValidity(clientState, trustedConsensusState, tmHeader, currentTime);
 
         // Header is different from existing consensus state and also valid, so freeze
         // the client and return
         if (conflictingHeader) {
-            clientState.frozenHeight = tmHeader.signedHeader.header.height;
+            clientState.setFrozenHeight(tmHeader.getSignedHeader().getHeader().getHeight());
             clientStates.set(clientId, clientState);
-            consensusStates.at(clientId).set(clientState.latestHeight, tmHeader.toConsensusState());
-            processedHeights.at(clientId).set(tmHeader.signedHeader.header.height,
+            consensusStates.at(clientId).set(clientState.getLatestHeight(), toConsensusState(tmHeader));
+            processedHeights.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                     BigInteger.valueOf(Context.getBlockHeight()));
-            processedTimes.at(clientId).set(tmHeader.signedHeader.header.height,
+            processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                     BigInteger.valueOf(Context.getBlockTimestamp()));
 
-            ConsensusStateUpdate consensusStateUpdate = new ConsensusStateUpdate(tmHeader.toConsensusState().toBytes(),
-                    new Height(BigInteger.ZERO, tmHeader.signedHeader.header.height));
-            UpdateClientResponse response = new UpdateClientResponse(clientState.toBytes(), consensusStateUpdate, true);
+            ConsensusStateUpdate consensusStateUpdate = new ConsensusStateUpdate(toConsensusState(tmHeader).encode(),
+                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode());
+            UpdateClientResponse response = new UpdateClientResponse(clientState.encode(), consensusStateUpdate, true);
 
             return response;
         }
@@ -137,19 +140,19 @@ public class TendermintLightClient extends Tendermint {
         // TODO: check consensus state monotonicity
 
         // update the consensus state from a new header and set processed time metadata
-        if (tmHeader.signedHeader.header.height.compareTo(clientState.latestHeight) > 0) {
-            clientState.latestHeight = tmHeader.signedHeader.header.height;
+        if (tmHeader.getSignedHeader().getHeader().getHeight().compareTo(clientState.getLatestHeight()) > 0) {
+            clientState.setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight());
         }
 
         clientStates.set(clientId, clientState);
-        consensusStates.at(clientId).set(clientState.latestHeight, tmHeader.toConsensusState());
-        processedHeights.at(clientId).set(tmHeader.signedHeader.header.height,
+        consensusStates.at(clientId).set(clientState.getLatestHeight(), toConsensusState(tmHeader));
+        processedHeights.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                 BigInteger.valueOf(Context.getBlockHeight()));
-        processedTimes.at(clientId).set(tmHeader.signedHeader.header.height,
+        processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                 BigInteger.valueOf(Context.getBlockTimestamp()));
-        ConsensusStateUpdate consensusStateUpdate = new ConsensusStateUpdate(tmHeader.toConsensusState().toBytes(),
-                new Height(BigInteger.ZERO, clientState.latestHeight));
-        UpdateClientResponse response = new UpdateClientResponse(clientState.toBytes(), consensusStateUpdate, true);
+        ConsensusStateUpdate consensusStateUpdate = new ConsensusStateUpdate(toConsensusState(tmHeader).encode(),
+                newHeight(clientState.getLatestHeight()).encode());
+        UpdateClientResponse response = new UpdateClientResponse(clientState.encode(), consensusStateUpdate, true);
 
         return response;
     }
@@ -162,26 +165,26 @@ public class TendermintLightClient extends Tendermint {
             Duration currentTime) {
         // assert header height is newer than consensus state
         require(
-                tmHeader.signedHeader.header.height.compareTo(tmHeader.trustedHeight) > 0,
+                tmHeader.getSignedHeader().getHeader().getHeight().compareTo(tmHeader.getTrustedHeight()) > 0,
                 "LC: header height consensus state height");
 
         LightHeader lc = new LightHeader();
-        lc.chainId = clientState.chainId;
-        lc.height = tmHeader.trustedHeight;
-        lc.time = trustedConsensusState.timestamp;
-        lc.nextValidatorsHash = trustedConsensusState.nextValidatorsHash;
+        lc.setChainId(clientState.getChainId());
+        lc.setHeight(tmHeader.getTrustedHeight());
+        lc.setTime(trustedConsensusState.getTimestamp());
+        lc.setNextValidatorsHash(trustedConsensusState.getNextValidatorsHash());
 
-        ValidatorSet trustedVals = tmHeader.trustedValidators;
+        ValidatorSet trustedVals = tmHeader.getTrustedValidators();
         SignedHeader trustedHeader = new SignedHeader();
-        trustedHeader.header = lc;
+        trustedHeader.setHeader(lc);
 
-        SignedHeader untrustedHeader = tmHeader.signedHeader;
-        ValidatorSet untrustedVals = tmHeader.validatorSet;
+        SignedHeader untrustedHeader = tmHeader.getSignedHeader();
+        ValidatorSet untrustedVals = tmHeader.getValidatorSet();
 
         boolean ok = verify(
-                clientState.trustingPeriod,
-                clientState.maxClockDrift,
-                clientState.trustLevel,
+                clientState.getTrustingPeriod(),
+                clientState.getMaxClockDrift(),
+                clientState.getTrustLevel(),
                 trustedHeader,
                 trustedVals,
                 untrustedHeader,
@@ -191,142 +194,150 @@ public class TendermintLightClient extends Tendermint {
         require(ok, "LC: failed to verify header");
     }
 
-    public boolean verifyChannelState(
-            String clientId,
-            BigInteger height,
-            byte[] prefix,
-            byte[] proof,
-            String portId,
-            String channelId,
-            byte[] channelBytes // serialized with pb
-    ) {
+    // TODO revaulate if we want this logic in Light client or in IBC core
+    // public boolean verifyChannelState(
+    // String clientId,
+    // BigInteger height,
+    // byte[] prefix,
+    // byte[] proof,
+    // String portId,
+    // String channelId,
+    // byte[] channelBytes // serialized with pb
+    // ) {
 
-        ClientState clientState = clientStates.get(clientId);
-        if (clientState == null) {
-            return false;
-        }
-        if (!validateArgs(clientState, height, prefix, proof)) {
-            return false;
-        }
-        ConsensusState consensusState = consensusStates.at(clientId).get(height);
-        if (consensusState == null) {
-            return false;
-        }
-        return verifyMembership(proof, consensusState.root.hash, prefix,
-                IBCCommitment.channelCommitmentKey(portId, channelId),
-                IBCCommitment.keccak256(channelBytes));
-    }
+    // ClientState clientState = clientStates.get(clientId);
+    // if (clientState == null) {
+    // return false;
+    // }
+    // if (!validateArgs(clientState, height, prefix, proof)) {
+    // return false;
+    // }
+    // ConsensusState consensusState = consensusStates.at(clientId).get(height);
+    // if (consensusState == null) {
+    // return false;
+    // }
+    // return verifyMembership(proof, consensusState.root.hash, prefix,
+    // IBCCommitment.channelCommitmentKey(portId, channelId),
+    // IBCCommitment.keccak256(channelBytes));
+    // }
 
-    public boolean verifyPacketCommitment(
-            String clientId,
-            BigInteger height,
-            BigInteger delayPeriodTime,
-            BigInteger delayPeriodBlocks,
-            byte[] prefix,
-            byte[] proof,
-            String portId,
-            String channelId,
-            BigInteger sequence,
-            byte[] commitmentBytes) {
+    // public boolean verifyPacketCommitment(
+    // String clientId,
+    // BigInteger height,
+    // BigInteger delayPeriodTime,
+    // BigInteger delayPeriodBlocks,
+    // byte[] prefix,
+    // byte[] proof,
+    // String portId,
+    // String channelId,
+    // BigInteger sequence,
+    // byte[] commitmentBytes) {
 
-        ClientState clientState = clientStates.get(clientId);
-        if (clientState == null) {
-            return false;
-        }
-        if (!validateArgs(clientState, height, prefix, proof)) {
-            return false;
-        }
-        if (!validateDelayPeriod(clientId, height, delayPeriodTime, delayPeriodBlocks)) {
-            return false;
-        }
-        ConsensusState consensusState = consensusStates.at(clientId).get(height);
-        if (consensusState == null) {
-            return false;
-        }
-        return verifyMembership(proof, consensusState.root.hash, prefix,
-                IBCCommitment.packetCommitmentKey(portId, channelId, sequence), commitmentBytes);
-    }
+    // ClientState clientState = clientStates.get(clientId);
+    // if (clientState == null) {
+    // return false;
+    // }
+    // if (!validateArgs(clientState, height, prefix, proof)) {
+    // return false;
+    // }
+    // if (!validateDelayPeriod(clientId, height, delayPeriodTime,
+    // delayPeriodBlocks)) {
+    // return false;
+    // }
+    // ConsensusState consensusState = consensusStates.at(clientId).get(height);
+    // if (consensusState == null) {
+    // return false;
+    // }
+    // return verifyMembership(proof, consensusState.root.hash, prefix,
+    // IBCCommitment.packetCommitmentKey(portId, channelId, sequence),
+    // commitmentBytes);
+    // }
 
-    public boolean verifyPacketAcknowledgement(
-            String clientId,
-            BigInteger height,
-            BigInteger delayPeriodTime,
-            BigInteger delayPeriodBlocks,
-            byte[] prefix,
-            byte[] proof,
-            String portId,
-            String channelId,
-            BigInteger sequence,
-            byte[] acknowledgement) {
-        ClientState clientState = clientStates.get(clientId);
-        require(clientState != null, "LC: client state not found");
-        if (!validateArgs(clientState, height, prefix, proof)) {
-            return false;
-        }
-        if (!validateDelayPeriod(clientId, height, delayPeriodTime, delayPeriodBlocks)) {
-            return false;
-        }
+    // public boolean verifyPacketAcknowledgement(
+    // String clientId,
+    // BigInteger height,
+    // BigInteger delayPeriodTime,
+    // BigInteger delayPeriodBlocks,
+    // byte[] prefix,
+    // byte[] proof,
+    // String portId,
+    // String channelId,
+    // BigInteger sequence,
+    // byte[] acknowledgement) {
+    // ClientState clientState = clientStates.get(clientId);
+    // require(clientState != null, "LC: client state not found");
+    // if (!validateArgs(clientState, height, prefix, proof)) {
+    // return false;
+    // }
+    // if (!validateDelayPeriod(clientId, height, delayPeriodTime,
+    // delayPeriodBlocks)) {
+    // return false;
+    // }
 
-        byte[] stateRoot = mustGetConsensusState(clientId, height).root.hash;
-        byte[] ackCommitmentSlot = IBCCommitment.packetAcknowledgementCommitmentKey(portId, channelId, sequence);
-        byte[] ackCommitment = IBCCommitment.sha256(acknowledgement);
-        return verifyMembership(proof, stateRoot, prefix, ackCommitmentSlot, ackCommitment);
-    }
+    // byte[] stateRoot = mustGetConsensusState(clientId, height).root.hash;
+    // byte[] ackCommitmentSlot =
+    // IBCCommitment.packetAcknowledgementCommitmentKey(portId, channelId,
+    // sequence);
+    // byte[] ackCommitment = IBCCommitment.sha256(acknowledgement);
+    // return verifyMembership(proof, stateRoot, prefix, ackCommitmentSlot,
+    // ackCommitment);
+    // }
 
-    public boolean verifyClientState(
-            Address host,
-            String clientId,
-            BigInteger height,
-            byte[] prefix,
-            String counterpartyClientIdentifier,
-            byte[] proof,
-            byte[] clientStateBytes) {
+    // public boolean verifyClientState(
+    // Address host,
+    // String clientId,
+    // BigInteger height,
+    // byte[] prefix,
+    // String counterpartyClientIdentifier,
+    // byte[] proof,
+    // byte[] clientStateBytes) {
 
-        ClientState clientState = clientStates.get(clientId);
-        if (clientState == null) {
-            return false;
-        }
-        if (!validateArgs(clientState, height, prefix, proof)) {
-            return false;
-        }
-        ConsensusState consensusState = consensusStates.at(clientId).get(height);
-        if (consensusState == null) {
-            return false;
-        }
-        return verifyMembership(proof, consensusState.root.hash, prefix,
-                IBCCommitment.clientStateCommitmentKey(counterpartyClientIdentifier),
-                IBCCommitment.keccak256(clientStateBytes));
-    }
+    // ClientState clientState = clientStates.get(clientId);
+    // if (clientState == null) {
+    // return false;
+    // }
+    // if (!validateArgs(clientState, height, prefix, proof)) {
+    // return false;
+    // }
+    // ConsensusState consensusState = consensusStates.at(clientId).get(height);
+    // if (consensusState == null) {
+    // return false;
+    // }
+    // return verifyMembership(proof, consensusState.root.hash, prefix,
+    // IBCCommitment.clientStateCommitmentKey(counterpartyClientIdentifier),
+    // IBCCommitment.keccak256(clientStateBytes));
+    // }
 
-    public boolean verifyClientConsensusState(
-            Address host,
-            String clientId,
-            BigInteger height,
-            String counterpartyClientIdentifier,
-            BigInteger consensusHeight,
-            byte[] prefix,
-            byte[] proof,
-            byte[] consensusStateBytes // serialized with pb
-    ) {
-        ClientState clientState = clientStates.get(clientId);
-        if (clientState == null) {
-            return false;
-        }
-        if (!validateArgs(clientState, height, prefix, proof)) {
-            return false;
-        }
-        ConsensusState consensusState = consensusStates.at(clientId).get(height);
-        if (consensusState == null) {
-            return false;
-        }
-        return verifyMembership(proof, consensusState.root.hash, prefix,
-                IBCCommitment.consensusStateCommitmentKey(counterpartyClientIdentifier, BigInteger.ZERO,
-                        consensusHeight),
-                IBCCommitment.keccak256(consensusStateBytes));
-    }
+    // public boolean verifyClientConsensusState(
+    // Address host,
+    // String clientId,
+    // BigInteger height,
+    // String counterpartyClientIdentifier,
+    // BigInteger consensusHeight,
+    // byte[] prefix,
+    // byte[] proof,
+    // byte[] consensusStateBytes // serialized with pb
+    // ) {
+    // ClientState clientState = clientStates.get(clientId);
+    // if (clientState == null) {
+    // return false;
+    // }
+    // if (!validateArgs(clientState, height, prefix, proof)) {
+    // return false;
+    // }
+    // ConsensusState consensusState = consensusStates.at(clientId).get(height);
+    // if (consensusState == null) {
+    // return false;
+    // }
+    // return verifyMembership(proof, consensusState.root.hash, prefix,
+    // IBCCommitment.consensusStateCommitmentKey(counterpartyClientIdentifier,
+    // BigInteger.ZERO,
+    // consensusHeight),
+    // IBCCommitment.keccak256(consensusStateBytes));
+    // }
 
     public boolean validateArgs(ClientState cs, BigInteger height, byte[] prefix, byte[] proof) {
-        if (cs.latestHeight.compareTo(height) < 0) {
+        if (cs.getLatestHeight().compareTo(height) < 0) {
             return false;
         } else if (prefix.length == 0) {
             return false;
