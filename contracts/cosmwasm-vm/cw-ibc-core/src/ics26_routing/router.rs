@@ -1,30 +1,26 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{StdError, Storage};
+use cosmwasm_std::{Addr, StdError, Storage};
 use cw_storage_plus::{Key, KeyDeserialize, PrimaryKey};
 
 use super::*;
-pub struct CwIbcRouter<'a>(Map<'a, ModuleId, Arc<dyn Module>>);
+
+/// Storage for modules based on the module id
+pub struct CwIbcRouter<'a>(Map<'a, ModuleId, Addr>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ModuleId {
-    key: String,
-    value: IbcModuleId,
-}
+pub struct ModuleId(String);
 
 impl ModuleId {
     pub fn new(s: String) -> Self {
         let ibc_module_id = IbcModuleId::from_str(&s).unwrap();
-        Self {
-            key: ibc_module_id.to_string(),
-            value: ibc_module_id,
-        }
+        Self(ibc_module_id.to_string())
     }
     pub fn module_id(&self) -> IbcModuleId {
-        self.value.clone()
+        IbcModuleId::from_str(&self.0).unwrap()
     }
     pub fn as_bytes(&self) -> &[u8] {
-        &self.key.as_bytes()
+        &self.0.as_bytes()
     }
 }
 
@@ -46,10 +42,7 @@ impl KeyDeserialize for ModuleId {
             .map_err(StdError::invalid_utf8)
             .unwrap();
         let module_id = IbcModuleId::from_str(&result).unwrap();
-        Ok(ModuleId {
-            key: module_id.to_string(),
-            value: module_id,
-        })
+        Ok(ModuleId(module_id.to_string()))
     }
 }
 
@@ -63,17 +56,14 @@ impl<'a> CwIbcRouter<'a> {
     pub fn new() -> Self {
         Self(Map::new(StorageKey::Router.as_str()))
     }
-    pub fn router(&self) -> &Map<'a, ModuleId, Arc<dyn Module>> {
+    pub fn router(&self) -> &Map<'a, ModuleId, Addr> {
         &self.0
     }
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-    fn add_route(&self, store: &mut dyn Storage, module_id: ModuleId, module: impl Module) {
-        todo!()
-    }
-    fn get_route(&self, module_id: ModuleId) -> Option<&dyn Module> {
-        // self.ibc_router().router().load();
+    fn add_route(&self, store: &mut dyn Storage, module_id: ModuleId, module: Addr) {}
+    fn get_route(&self, module_id: ModuleId) -> Option<Addr> {
         todo!()
     }
 
