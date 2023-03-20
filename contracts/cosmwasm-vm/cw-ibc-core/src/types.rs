@@ -190,7 +190,7 @@ impl ChannelId {
 
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 
     /// Get this identifier as a borrowed byte slice
@@ -235,7 +235,7 @@ impl PortId {
 
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 
     /// Get this identifier as a borrowed byte slice

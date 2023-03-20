@@ -1,8 +1,3 @@
-use std::str::FromStr;
-
-use cosmwasm_std::{Addr, StdError, Storage};
-use cw_storage_plus::{Key, KeyDeserialize, PrimaryKey};
-
 use super::*;
 
 /// Storage for modules based on the module id
@@ -20,7 +15,7 @@ impl ModuleId {
         IbcModuleId::from_str(&self.0).unwrap()
     }
     pub fn as_bytes(&self) -> &[u8] {
-        &self.0.as_bytes()
+        self.0.as_bytes()
     }
 }
 
@@ -56,22 +51,41 @@ impl<'a> CwIbcRouter<'a> {
     pub fn new() -> Self {
         Self(Map::new(StorageKey::Router.as_str()))
     }
-    pub fn router(&self) -> &Map<'a, ModuleId, Addr> {
-        &self.0
-    }
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-    fn add_route(&self, store: &mut dyn Storage, module_id: ModuleId, module: Addr) {}
-    fn get_route(&self, module_id: ModuleId) -> Option<Addr> {
-        todo!()
+    pub fn add_route(
+        &self,
+        store: &mut dyn Storage,
+        module_id: ModuleId,
+        module: &Addr,
+    ) -> Result<(), ContractError> {
+        match self.ibc_router().0.save(store, module_id, module) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+    pub fn get_route(
+        &self,
+        store: &dyn Storage,
+        module_id: ModuleId,
+    ) -> Result<Addr, ContractError> {
+        match self.ibc_router().0.may_load(store, module_id) {
+            Ok(result) => match result {
+                Some(address) => Ok(address),
+                None => Err(ContractError::IbcDecodeError {
+                    error: "Module Id Not Found".to_string(),
+                }),
+            },
+            Err(error) => Err(ContractError::Std(error)),
+        }
     }
 
-    fn get_route_mut(&mut self, module_id: ModuleId) -> Option<&mut dyn Module> {
-        todo!()
-    }
-
-    fn has_route(&self, module_id: ModuleId) -> bool {
-        todo!()
+    pub fn has_route(&self, store: &dyn Storage, module_id: ModuleId) -> bool {
+        self.ibc_router()
+            .0
+            .may_load(store, module_id)
+            .unwrap()
+            .is_some()
     }
 }
