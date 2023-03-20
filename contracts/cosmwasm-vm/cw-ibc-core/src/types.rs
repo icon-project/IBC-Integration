@@ -125,6 +125,10 @@ impl ConnectionId {
     pub fn connection_id(&self) -> &IbcConnectionId {
         &self.0
     }
+
+    pub fn default() -> Self {
+        Self(IbcConnectionId::default())
+    }
 }
 
 impl<'a> PrimaryKey<'a> for ConnectionId {
@@ -251,6 +255,10 @@ impl PortId {
 
     pub fn dafault() -> Self {
         Self(IbcPortId::default())
+    }
+
+    pub fn ibc_port_id(&self) -> &IbcPortId {
+        &self.0
     }
 }
 

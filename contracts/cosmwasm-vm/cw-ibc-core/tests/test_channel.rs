@@ -1,6 +1,8 @@
 use cw_ibc_core::{
     context::CwIbcCoreContext,
-    ics04_channel::MsgChannelOpenInit,
+    ics04_channel::{
+        MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
+    },
     types::{ChannelId, PortId},
     ChannelEnd, Sequence,
 };
@@ -8,7 +10,10 @@ use ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},
     Version,
 };
-use ibc_proto::ibc::core::channel::v1::MsgChannelOpenInit as RawMsgChannelOpenInit;
+use ibc_proto::ibc::core::channel::v1::{
+    MsgChannelOpenAck as RawMsgChannelOpenAck, MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
+    MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
+};
 
 pub mod setup;
 use setup::*;
@@ -220,4 +225,61 @@ pub fn test_to_and_from_channel_open_init() {
     let msg_back = MsgChannelOpenInit::try_from(raw_back.clone()).unwrap();
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
+}
+
+#[test]
+pub fn test_to_and_from_channel_open_ack() {
+    let raw = get_dummy_raw_msg_chan_open_ack(100);
+    let msg = MsgChannelOpenAck::try_from(raw.clone()).unwrap();
+    let raw_back = RawMsgChannelOpenAck::from(msg.clone());
+    let msg_back = MsgChannelOpenAck::try_from(raw_back.clone()).unwrap();
+    assert_eq!(raw, raw_back);
+    assert_eq!(msg, msg_back);
+}
+#[test]
+pub fn test_to_and_from_channel_open_confirm() {
+    let raw = get_dummy_raw_msg_chan_open_confirm(19);
+    let msg = MsgChannelOpenConfirm::try_from(raw.clone()).unwrap();
+    let raw_back = RawMsgChannelOpenConfirm::from(msg.clone());
+    let msg_back = MsgChannelOpenConfirm::try_from(raw_back.clone()).unwrap();
+    assert_eq!(raw, raw_back);
+    assert_eq!(msg, msg_back);
+}
+#[test]
+pub fn test_to_and_from_channel_open_try() {
+    let raw = get_dummy_raw_msg_chan_open_try(10);
+    let msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let raw_back = RawMsgChannelOpenTry::from(msg.clone());
+    let msg_back = MsgChannelOpenTry::try_from(raw_back.clone()).unwrap();
+    assert_eq!(raw, raw_back);
+    assert_eq!(msg, msg_back);
+}
+
+#[test]
+fn channel_open_init_from_raw_good_parameter() {
+    let default_raw_init_msg = get_dummy_raw_msg_chan_open_init(None);
+    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg.clone());
+    assert_eq!(res_msg.is_ok(), true)
+}
+#[test]
+#[should_panic(expected = "Identifier(ContainSeparator { id: \"p34/\" })")]
+fn channel_open_init_from_raw_incorrect_port_id_parameter() {
+    let default_raw_init_msg = get_dummy_raw_msg_chan_open_init(None);
+    let default_raw_init_msg = RawMsgChannelOpenInit {
+        port_id: "p34/".to_string(),
+        ..default_raw_init_msg.clone()
+    };
+    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg.clone());
+    res_msg.unwrap();
+}
+#[test]
+#[should_panic(expected = "MissingChannel")]
+fn channel_open_init_from_raw_missing_channel_parameter() {
+    let default_raw_init_msg = get_dummy_raw_msg_chan_open_init(None);
+    let default_raw_init_msg = RawMsgChannelOpenInit {
+        channel: None,
+        ..default_raw_init_msg
+    };
+    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg.clone());
+    res_msg.unwrap();
 }
