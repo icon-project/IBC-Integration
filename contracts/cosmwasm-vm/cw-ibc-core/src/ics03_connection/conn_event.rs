@@ -7,4 +7,3 @@ pub fn event_open_init(conn_id: ConnectionId, msg: MsgConnectionOpenInit) -> Ibc
     );
     IbcEvent::OpenInitConnection(open_init)
 }
-
