@@ -6,6 +6,7 @@ use crate::types::{ClientId, ConnectionId};
 use crate::ContractError;
 use cosmwasm_std::Storage;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
+use ibc::core::ics03_connection::{events::OpenTry, msgs::conn_open_try::MsgConnectionOpenTry};
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 use ibc::{
     core::ics03_connection::{events::OpenInit, msgs::conn_open_init::MsgConnectionOpenInit},
