@@ -7,6 +7,7 @@ use crate::ContractError;
 use cosmwasm_std::Event;
 use cosmwasm_std::Storage;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
+use ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 use ibc::{
     core::ics03_connection::events::{
