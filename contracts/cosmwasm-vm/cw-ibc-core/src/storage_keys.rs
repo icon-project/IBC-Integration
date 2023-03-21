@@ -16,6 +16,7 @@ pub enum StorageKey {
     ClientConnection,
     Channels,
     Router,
+    PortToModule,
 }
 
 impl StorageKey {
@@ -34,6 +35,7 @@ impl StorageKey {
             StorageKey::ClientConnection => "client_connections",
             StorageKey::Channels => "channels",
             StorageKey::Router => "router",
+            StorageKey::PortToModule => "port_to_module",
         }
     }
 }
