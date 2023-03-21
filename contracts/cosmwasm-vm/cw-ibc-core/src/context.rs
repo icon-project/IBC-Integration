@@ -1,5 +1,3 @@
-use cosmwasm_std::Storage;
-
 use super::*;
 pub struct CwIbcCoreContext<'a> {
     cw_ibc_store: CwIbcStore<'a>,

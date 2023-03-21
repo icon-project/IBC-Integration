@@ -32,6 +32,9 @@ impl ClientId {
     pub fn default() -> Self {
         Self(IbcClientId::default())
     }
+    pub fn ibc_client_id(&self) -> &IbcClientId {
+        &self.0
+    }
 }
 
 impl<'a> PrimaryKey<'a> for ClientId {
