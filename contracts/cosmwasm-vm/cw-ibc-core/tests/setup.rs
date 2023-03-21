@@ -7,14 +7,28 @@ use cosmwasm_std::{
     Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
 };
 
-use ibc::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
+use cw_ibc_core::types::{ClientId, ClientType};
+use ibc::{
+    core::ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+    mock::{
+        client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
+        misbehaviour::Misbehaviour,
+    },
+    signer::Signer,
+    Height,
+};
 use ibc_proto::ibc::core::channel::v1::Counterparty as RawCounterparty;
 use ibc_proto::ibc::core::channel::v1::{
     MsgChannelOpenAck as RawMsgChannelOpenAck, MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
     MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
 };
-use ibc_proto::ibc::core::{channel::v1::Channel as RawChannel, client::v1::Height};
-
+use ibc_proto::ibc::core::client::v1::{
+    MsgSubmitMisbehaviour as RawMessageMisbehaviour, MsgUpdateClient as RawMessageUpdateCelint,
+    MsgUpgradeClient as RawMessageUpgradeClient,
+};
+use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
+use ibc_proto::ibc::core::{channel::v1::Channel as RawChannel, client::v1::Height as RawHeight};
+use ibc_proto::ics23::CommitmentProof;
 pub struct MockEnvBuilder {
     env: Env,
 }
@@ -128,6 +142,10 @@ pub fn get_dummy_bech32_account() -> String {
     "cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng".to_string()
 }
 
+pub fn get_dummy_account_id() -> Signer {
+    "0CDA3F47EF3C4906693B170EF650EB968C5F4B2C".parse().unwrap()
+}
+
 // Returns a dummy `RawMsgChannelOpenInit`, for testing only!
 pub fn get_dummy_raw_msg_chan_open_ack(proof_height: u64) -> RawMsgChannelOpenAck {
     RawMsgChannelOpenAck {
@@ -136,7 +154,7 @@ pub fn get_dummy_raw_msg_chan_open_ack(proof_height: u64) -> RawMsgChannelOpenAc
         counterparty_channel_id: ChannelId::default().to_string(),
         counterparty_version: "".to_string(),
         proof_try: get_dummy_proof(),
-        proof_height: Some(Height {
+        proof_height: Some(RawHeight {
             revision_number: 0,
             revision_height: proof_height,
         }),
@@ -156,7 +174,7 @@ pub fn get_dummy_raw_msg_chan_open_confirm(proof_height: u64) -> RawMsgChannelOp
         port_id: PortId::default().to_string(),
         channel_id: ChannelId::default().to_string(),
         proof_ack: get_dummy_proof(),
-        proof_height: Some(Height {
+        proof_height: Some(RawHeight {
             revision_number: 0,
             revision_height: proof_height,
         }),
@@ -173,10 +191,58 @@ pub fn get_dummy_raw_msg_chan_open_try(proof_height: u64) -> RawMsgChannelOpenTr
         channel: Some(get_dummy_raw_channel_end(Some(0))),
         counterparty_version: "".to_string(),
         proof_init: get_dummy_proof(),
-        proof_height: Some(Height {
+        proof_height: Some(RawHeight {
             revision_number: 0,
             revision_height: proof_height,
         }),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_update_client_message() -> RawMessageUpdateCelint {
+    let height = Height::new(10, 15).unwrap();
+    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_id = ClientId::new(client_type.clone(), 1).unwrap();
+    RawMessageUpdateCelint {
+        client_id: client_id.ibc_client_id().to_string(),
+        header: Some(MockHeader::new(height).into()),
+        signer: "0CDA3F47EF3C4906693B170EF650EB968C5F4B2C".to_string(),
+    }
+}
+
+pub fn get_dummy_raw_msg_upgrade_client(height: Height) -> RawMessageUpgradeClient {
+    RawMessageUpgradeClient {
+        client_id: "new_client_type".parse().unwrap(),
+        client_state: Some(MockClientState::new(MockHeader::new(height)).into()),
+        consensus_state: Some(MockConsensusState::new(MockHeader::new(height)).into()),
+        proof_upgrade_client: get_dummy_proof(),
+        proof_upgrade_consensus_state: get_dummy_proof(),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+/// Returns a dummy `RawMerkleProof`, for testing only!
+pub fn get_dummy_merkle_proof() -> RawMerkleProof {
+    let parsed = CommitmentProof { proof: None };
+    let mproofs: Vec<CommitmentProof> = vec![parsed];
+    RawMerkleProof { proofs: mproofs }
+}
+
+pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMessageMisbehaviour {
+    let height = Height::new(10, 15).unwrap();
+    let mock_header = MockHeader::new(height);
+
+    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_id = ClientId::new(client_type.clone(), 1).unwrap();
+
+    let mis_b = Misbehaviour {
+        client_id: client_id.ibc_client_id().clone(),
+        header1: mock_header,
+        header2: mock_header,
+    };
+    RawMessageMisbehaviour {
+        client_id: client_id.ibc_client_id().to_string(),
+        misbehaviour: Some(mis_b.into()),
         signer: get_dummy_bech32_account(),
     }
 }

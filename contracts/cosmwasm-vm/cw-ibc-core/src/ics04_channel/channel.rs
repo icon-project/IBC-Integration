@@ -66,7 +66,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Initialize the next sequence storage
-    pub fn init_next_channel_sequence(
+    pub fn init_channel_counter(
         &self,
         store: &mut dyn Storage,
         sequence_no: u128,
