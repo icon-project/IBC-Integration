@@ -14,9 +14,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, (port_id.clone(), channel_id.clone()))?
         {
             Some(request) => Ok(request),
-            None => Err(ContractError::ChannelNotFound {
-                port_id,
-                channel_id,
+            None => Err(ContractError::IbcContextError {
+                error: ContextError::ChannelError(ChannelError::ChannelNotFound {
+                    port_id: port_id.ibc_port_id().clone(),
+                    channel_id: channel_id.ibc_channel_id().clone(),
+                }),
             }),
         }
     }
@@ -126,9 +128,11 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(ContractError::MissingNextSendSeq {
-                        port_id,
-                        channel_id,
+                    None => Err(ContractError::IbcPackketError {
+                        error: PacketError::MissingNextSendSeq {
+                            port_id: port_id.ibc_port_id().clone(),
+                            channel_id: channel_id.ibc_channel_id().clone(),
+                        },
                     }),
                 }
             },
@@ -183,9 +187,11 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(ContractError::MissingNextRecvSeq {
-                        port_id,
-                        channel_id,
+                    None => Err(ContractError::IbcPackketError {
+                        error: PacketError::MissingNextRecvSeq {
+                            port_id: port_id.ibc_port_id().clone(),
+                            channel_id: channel_id.ibc_channel_id().clone(),
+                        },
                     }),
                 }
             },
@@ -240,9 +246,11 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(ContractError::MissingNextAckSeq {
-                        port_id,
-                        channel_id,
+                    None => Err(ContractError::IbcPackketError {
+                        error: PacketError::MissingNextAckSeq {
+                            port_id: port_id.ibc_port_id().clone(),
+                            channel_id: channel_id.ibc_channel_id().clone(),
+                        },
                     }),
                 }
             },

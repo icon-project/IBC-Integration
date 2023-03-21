@@ -15,5 +15,8 @@ pub use ibc::core::ics04_channel::msgs::{
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
     chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry, ChannelMsg,
 };
+use ibc::core::{
+    ics04_channel::error::{ChannelError, PacketError},
+    ContextError,
+};
 use ibc::events::IbcEventType;
-use ibc_proto::protobuf::Protobuf;
