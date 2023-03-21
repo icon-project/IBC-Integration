@@ -10,9 +10,13 @@ use ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},
     Version,
 };
-use ibc_proto::ibc::core::channel::v1::{
-    MsgChannelOpenAck as RawMsgChannelOpenAck, MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
-    MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
+use ibc_proto::ibc::core::{
+    channel::v1::{
+        MsgChannelOpenAck as RawMsgChannelOpenAck,
+        MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
+        MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
+    },
+    client::v1::Height,
 };
 
 pub mod setup;
@@ -281,5 +285,88 @@ fn channel_open_init_from_raw_missing_channel_parameter() {
         ..default_raw_init_msg
     };
     let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg.clone());
+    res_msg.unwrap();
+}
+
+#[test]
+fn channel_open_confirm_from_raw_good_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_msg.clone());
+    assert_eq!(res_msg.is_ok(), true)
+}
+#[test]
+#[should_panic(expected = "Identifier(ContainSeparator { id: \"p34/\" })")]
+fn channel_open_confirm_from_raw_incorrect_port_id_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
+        port_id: "p34/".to_string(),
+        ..default_raw_msg.clone()
+    };
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    res_msg.unwrap();
+}
+#[test]
+#[should_panic(expected = "MissingHeight")]
+fn channel_open_confirm_from_raw_missing_height_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
+        proof_height: None,
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    res_msg.unwrap();
+}
+#[test]
+#[should_panic(expected = "MissingHeight")]
+fn channel_open_confirm_from_raw_missing_proof_height_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
+        proof_height: Some(Height {
+            revision_number: 0,
+            revision_height: 0,
+        }),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    res_msg.unwrap();
+}
+#[test]
+#[should_panic(expected = "InvalidProof")]
+fn channel_open_confirm_from_raw_missing_proof_try_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
+        proof_ack: Vec::new(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    res_msg.unwrap();
+}
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn channel_open_confirm_from_raw_invalid_port_id_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
+        port_id: "abcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfaabcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfa".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    res_msg.unwrap();
+}
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn channel_open_confirm_from_raw_bad_port_id_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
+        port_id: "p".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
     res_msg.unwrap();
 }
