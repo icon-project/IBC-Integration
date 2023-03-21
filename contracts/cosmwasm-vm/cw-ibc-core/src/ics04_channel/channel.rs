@@ -24,7 +24,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Add new channel to the store
-    pub fn add_channel_end(
+    pub fn store_channel_end(
         &self,
         store: &mut dyn Storage,
         port_id: PortId,
@@ -42,7 +42,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Get the channel sequence number
-    pub fn query_channel_sequence(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+    pub fn get_channel_sequence(&self, store: &dyn Storage) -> Result<u128, ContractError> {
         match self.ibc_store().next_channel_sequence().load(store) {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
@@ -50,7 +50,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Increment the sequence number for channel
-    pub fn increment_channel_sequence(
+    pub fn increase_channel_sequence(
         &self,
         store: &mut dyn Storage,
     ) -> Result<u128, ContractError> {
@@ -82,7 +82,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Query the sequence send number
-    pub fn query_next_sequence_send(
+    pub fn get_next_sequence_send(
         &self,
         store: &dyn Storage,
         port_id: PortId,
@@ -116,7 +116,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn increment_next_sequence_send(
+    pub fn increase_next_sequence_send(
         &self,
         store: &mut dyn Storage,
         port_id: PortId,
@@ -141,7 +141,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Query the sequence recieve number
-    pub fn query_next_sequence_recv(
+    pub fn get_next_sequence_recv(
         &self,
         store: &dyn Storage,
         port_id: PortId,
@@ -175,7 +175,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn increment_next_sequence_recv(
+    pub fn increase_next_sequence_recv(
         &self,
         store: &mut dyn Storage,
         port_id: PortId,
@@ -200,7 +200,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Query the sequence acknowledgement number
-    pub fn query_next_sequence_ack(
+    pub fn get_next_sequence_ack(
         &self,
         store: &dyn Storage,
         port_id: PortId,
@@ -234,7 +234,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn increment_next_sequence_ack(
+    pub fn increase_next_sequence_ack(
         &self,
         store: &mut dyn Storage,
         port_id: PortId,
@@ -263,27 +263,6 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    fn get_next_sequence_send(
-        &self,
-        seq_send_path: &ibc::core::ics24_host::path::SeqSendPath,
-    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
-        todo!()
-    }
-
-    fn get_next_sequence_recv(
-        &self,
-        seq_recv_path: &ibc::core::ics24_host::path::SeqRecvPath,
-    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
-        todo!()
-    }
-
-    fn get_next_sequence_ack(
-        &self,
-        seq_ack_path: &ibc::core::ics24_host::path::SeqAckPath,
-    ) -> Result<ibc::core::ics04_channel::packet::Sequence, ibc::core::ContextError> {
-        todo!()
-    }
-
     fn channel_counter(&self) -> Result<u64, ibc::core::ContextError> {
         todo!()
     }
