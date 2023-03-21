@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
@@ -6,9 +8,12 @@ use cw_ibc_core::{
     types::{ChannelId, PortId},
     ChannelEnd, Sequence,
 };
-use ibc::core::ics04_channel::{
-    channel::{Counterparty, Order, State},
-    Version,
+use ibc::{
+    core::ics04_channel::{
+        channel::{Counterparty, Order, State},
+        Version,
+    },
+    signer::Signer,
 };
 use ibc_proto::ibc::core::{
     channel::v1::{
@@ -25,7 +30,7 @@ use setup::*;
 #[test]
 fn test_add_channel() {
     let ctx = CwIbcCoreContext::new();
-    let port_id = PortId::dafault();
+    let port_id = PortId::default();
     let channel_id = ChannelId::default();
     let channel_end = ChannelEnd::new(
         State::Init,
@@ -73,7 +78,7 @@ fn test_channel_sequence_fail() {
 #[test]
 fn test_channel_sequence_send() {
     let ctx = CwIbcCoreContext::new();
-    let port_id = PortId::dafault();
+    let port_id = PortId::default();
     let channel_id = ChannelId::default();
     let sequene = Sequence::from(6);
     let mut mock_deps = deps();
@@ -94,7 +99,7 @@ fn test_channel_sequence_send_increment() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let sequence = Sequence::default();
-    let port_id = PortId::dafault();
+    let port_id = PortId::default();
     let channel_id = ChannelId::default();
     let _store = ctx.store_next_sequence_send(
         mock_deps.as_mut().storage,
@@ -123,7 +128,7 @@ fn test_channel_sequence_recv_increment() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let sequence = Sequence::default();
-    let port_id = PortId::dafault();
+    let port_id = PortId::default();
     let channel_id = ChannelId::default();
     let _store = ctx.store_next_sequence_recv(
         mock_deps.as_mut().storage,
@@ -152,7 +157,7 @@ fn test_channel_sequence_ack_increment() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
     let sequence = Sequence::default();
-    let port_id = PortId::dafault();
+    let port_id = PortId::default();
     let channel_id = ChannelId::default();
     let _store = ctx.store_next_sequence_ack(
         mock_deps.as_mut().storage,
@@ -181,7 +186,7 @@ fn test_channel_sequence_ack_increment() {
 fn test_channel_sequence_ack_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
-    let port_id = PortId::dafault();
+    let port_id = PortId::default();
     let channel_id = ChannelId::default();
     ctx.increment_next_sequence_ack(
         mock_deps.as_mut().storage,
@@ -196,7 +201,7 @@ fn test_channel_sequence_ack_fail() {
 fn test_channel_sequence_send_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
-    let port_id = PortId::dafault();
+    let port_id = PortId::default();
     let channel_id = ChannelId::default();
     ctx.increment_next_sequence_send(
         mock_deps.as_mut().storage,
@@ -211,7 +216,7 @@ fn test_channel_sequence_send_fail() {
 fn test_channel_sequence_recv_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
-    let port_id = PortId::dafault();
+    let port_id = PortId::default();
     let channel_id = ChannelId::default();
     ctx.increment_next_sequence_recv(
         mock_deps.as_mut().storage,
@@ -369,4 +374,28 @@ fn channel_open_confirm_from_raw_bad_port_id_parameter() {
     };
     let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
     res_msg.unwrap();
+}
+
+#[test]
+fn channel_open_confirm_from_raw_valid_channel_id_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
+        channel_id: "channel-34".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+
+    let expected = MsgChannelOpenConfirm {
+        port_id_on_b: PortId::default().ibc_port_id().clone(),
+        chan_id_on_b: ChannelId::new(34).ibc_channel_id().clone(),
+        proof_chan_end_on_a:
+            ibc::core::ics23_commitment::commitment::CommitmentProofBytes::try_from(
+                get_dummy_proof(),
+            )
+            .unwrap(),
+        proof_height_on_a: ibc::core::ics02_client::height::Height::new(0, proof_height).unwrap(),
+        signer: Signer::from_str("cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng").unwrap(),
+    };
+    assert_eq!(res_msg.unwrap(), expected);
 }
