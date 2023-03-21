@@ -75,7 +75,7 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(sequence_no)
     }
 
-    pub fn connection_counter(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+    pub fn connection_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
         match self.ibc_store().next_connection_sequence().load(store) {
             Ok(u128) => Ok(u128),
             Err(error) => Err(ContractError::Std(error)),
@@ -99,5 +99,20 @@ impl<'a> CwIbcCoreContext<'a> {
 
     pub fn commitment_prefix(&self) -> CommitmentPrefix {
         CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() // TODO
+    }
+
+    pub fn init_connection_counter(
+        &self,
+        store: &mut dyn Storage,
+        sequence_no: u128,
+    ) -> Result<(), ContractError> {
+        match self
+            .ibc_store()
+            .next_connection_sequence()
+            .save(store, &sequence_no)
+        {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
     }
 }

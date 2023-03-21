@@ -38,6 +38,7 @@ pub use ibc::core::{
         ChannelId as IbcChannelId, ClientId as IbcClientId, ConnectionId as IbcConnectionId,
         PortId as IbcPortId,
     },
+    ics26_routing::context::ModuleId as IbcModuleId,
     ics26_routing::context::{Module, ModuleId},
 };
 use serde::{Deserialize, Serialize};

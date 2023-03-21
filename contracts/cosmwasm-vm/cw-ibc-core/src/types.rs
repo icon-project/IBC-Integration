@@ -64,6 +64,9 @@ impl KeyDeserialize for ClientId {
 pub struct ClientType(IbcClientType);
 
 impl ClientType {
+    pub fn new(cleint_type: String) -> ClientType {
+        ClientType(IbcClientType::new(cleint_type))
+    }
     pub fn client_type(&self) -> IbcClientType {
         self.0.clone()
     }
@@ -282,5 +285,43 @@ impl KeyDeserialize for PortId {
             .unwrap();
         let port_id = IbcPortId::from_str(&result).unwrap();
         Ok(PortId(port_id))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ModuleId(String);
+
+impl ModuleId {
+    pub fn new(s: String) -> Self {
+        let ibc_module_id = IbcModuleId::from_str(&s).unwrap();
+        Self(ibc_module_id.to_string())
+    }
+    pub fn module_id(&self) -> IbcModuleId {
+        IbcModuleId::from_str(&self.0).unwrap()
+    }
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+impl<'a> PrimaryKey<'a> for ModuleId {
+    type Prefix = ();
+    type SubPrefix = ();
+    type Suffix = ();
+    type SuperSuffix = ();
+
+    fn key(&self) -> Vec<Key> {
+        vec![Key::Ref(self.as_bytes())]
+    }
+}
+
+impl KeyDeserialize for ModuleId {
+    type Output = ModuleId;
+    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
+        let result = String::from_utf8(value)
+            .map_err(StdError::invalid_utf8)
+            .unwrap();
+        let module_id = IbcModuleId::from_str(&result).unwrap();
+        Ok(ModuleId(module_id.to_string()))
     }
 }

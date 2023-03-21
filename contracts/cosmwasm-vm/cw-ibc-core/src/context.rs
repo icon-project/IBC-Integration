@@ -1,7 +1,14 @@
+use cosmwasm_std::Storage;
+
 use super::*;
 pub struct CwIbcCoreContext<'a> {
     cw_ibc_store: CwIbcStore<'a>,
     cw_ibc_router: CwIbcRouter<'a>,
+}
+impl<'a> Default for CwIbcCoreContext<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<'a> CwIbcCoreContext<'a> {
