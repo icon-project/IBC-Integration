@@ -283,3 +283,15 @@ fn channel_open_init_from_raw_missing_channel_parameter() {
     let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg.clone());
     res_msg.unwrap();
 }
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn channel_open_ack_from_raw_bad_channel_id_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
+    let default_raw_ack_msg = RawMsgChannelOpenAck {
+        channel_id: "chshort".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    res_msg.unwrap();
+}
