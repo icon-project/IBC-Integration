@@ -16,8 +16,8 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(request) => Ok(request),
             None => Err(ContractError::IbcContextError {
                 error: ContextError::ChannelError(ChannelError::ChannelNotFound {
-                    port_id: port_id.port_id().clone(),
-                    channel_id: channel_id.channel_id().clone(),
+                    port_id: port_id.ibc_port_id().clone(),
+                    channel_id: channel_id.ibc_channel_id().clone(),
                 }),
             }),
         }
@@ -130,8 +130,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     Some(seq) => Ok(seq.increment()),
                     None => Err(ContractError::IbcPackketError {
                         error: PacketError::MissingNextSendSeq {
-                            port_id: port_id.port_id().clone(),
-                            channel_id: channel_id.channel_id().clone(),
+                            port_id: port_id.ibc_port_id().clone(),
+                            channel_id: channel_id.ibc_channel_id().clone(),
                         },
                     }),
                 }
@@ -189,8 +189,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     Some(seq) => Ok(seq.increment()),
                     None => Err(ContractError::IbcPackketError {
                         error: PacketError::MissingNextRecvSeq {
-                            port_id: port_id.port_id().clone(),
-                            channel_id: channel_id.channel_id().clone(),
+                            port_id: port_id.ibc_port_id().clone(),
+                            channel_id: channel_id.ibc_channel_id().clone(),
                         },
                     }),
                 }
@@ -248,8 +248,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     Some(seq) => Ok(seq.increment()),
                     None => Err(ContractError::IbcPackketError {
                         error: PacketError::MissingNextAckSeq {
-                            port_id: port_id.port_id().clone(),
-                            channel_id: channel_id.channel_id().clone(),
+                            port_id: port_id.ibc_port_id().clone(),
+                            channel_id: channel_id.ibc_channel_id().clone(),
                         },
                     }),
                 }
