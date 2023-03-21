@@ -1,5 +1,45 @@
 use super::*;
-pub struct CwIbcRouter<'a>(Map<'a, ModuleId, Arc<dyn Module>>);
+
+/// Storage for modules based on the module id
+pub struct CwIbcRouter<'a>(Map<'a, ModuleId, Addr>);
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ModuleId(String);
+
+impl ModuleId {
+    pub fn new(s: String) -> Self {
+        let ibc_module_id = IbcModuleId::from_str(&s).unwrap();
+        Self(ibc_module_id.to_string())
+    }
+    pub fn module_id(&self) -> IbcModuleId {
+        IbcModuleId::from_str(&self.0).unwrap()
+    }
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+impl<'a> PrimaryKey<'a> for ModuleId {
+    type Prefix = ();
+    type SubPrefix = ();
+    type Suffix = ();
+    type SuperSuffix = ();
+
+    fn key(&self) -> Vec<Key> {
+        vec![Key::Ref(self.as_bytes())]
+    }
+}
+
+impl KeyDeserialize for ModuleId {
+    type Output = ModuleId;
+    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
+        let result = String::from_utf8(value)
+            .map_err(StdError::invalid_utf8)
+            .unwrap();
+        let module_id = IbcModuleId::from_str(&result).unwrap();
+        Ok(ModuleId(module_id.to_string()))
+    }
+}
 
 impl<'a> Default for CwIbcRouter<'a> {
     fn default() -> Self {
@@ -14,28 +54,38 @@ impl<'a> CwIbcRouter<'a> {
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-    fn get_route(
+    pub fn add_route(
         &self,
-        module_id: &ibc::core::ics26_routing::context::ModuleId,
-    ) -> Option<&dyn ibc::core::ics26_routing::context::Module> {
-        todo!()
+        store: &mut dyn Storage,
+        module_id: ModuleId,
+        module: &Addr,
+    ) -> Result<(), ContractError> {
+        match self.ibc_router().0.save(store, module_id, module) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
     }
-
-    fn get_route_mut(
-        &mut self,
-        module_id: &ibc::core::ics26_routing::context::ModuleId,
-    ) -> Option<&mut dyn ibc::core::ics26_routing::context::Module> {
-        todo!()
-    }
-
-    fn has_route(&self, module_id: &ibc::core::ics26_routing::context::ModuleId) -> bool {
-        todo!()
-    }
-
-    fn lookup_module_by_port(
+    pub fn get_route(
         &self,
-        port_id: &ibc::core::ics24_host::identifier::PortId,
-    ) -> Option<ibc::core::ics26_routing::context::ModuleId> {
-        todo!()
+        store: &dyn Storage,
+        module_id: ModuleId,
+    ) -> Result<Addr, ContractError> {
+        match self.ibc_router().0.may_load(store, module_id) {
+            Ok(result) => match result {
+                Some(address) => Ok(address),
+                None => Err(ContractError::IbcDecodeError {
+                    error: "Module Id Not Found".to_string(),
+                }),
+            },
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    pub fn has_route(&self, store: &dyn Storage, module_id: ModuleId) -> bool {
+        self.ibc_router()
+            .0
+            .may_load(store, module_id)
+            .unwrap()
+            .is_some()
     }
 }
