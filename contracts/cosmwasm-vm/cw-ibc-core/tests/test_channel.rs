@@ -358,3 +358,15 @@ fn channel_open_try_from_raw_invalid_port_id_parameter() {
     let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg.clone());
     res_msg.unwrap();
 }
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn channel_open_try_from_raw_bad_port_id_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_try(proof_height);
+    let default_raw_try_msg = RawMsgChannelOpenTry {
+        port_id: "p".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg.clone());
+    res_msg.unwrap();
+}
