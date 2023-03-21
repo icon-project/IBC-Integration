@@ -12,6 +12,7 @@ pub struct CwIbcStore<'a> {
     client_connections: Map<'a, ClientId, ConnectionId>,
     connections: Map<'a, ConnectionId, Vec<u8>>,
     channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
+    port_to_moudle: Map<'a, PortId, ModuleId>,
 }
 
 impl<'a> Default for CwIbcStore<'a> {
@@ -59,6 +60,9 @@ impl<'a> CwIbcStore<'a> {
     pub fn channels(&self) -> &Map<'a, (PortId, ChannelId), ChannelEnd> {
         &self.channels
     }
+    pub fn port_to_moulde(&self) -> &Map<'a, PortId, ModuleId> {
+        &self.port_to_moudle
+    }
 
     pub fn new() -> Self {
         Self {
@@ -74,6 +78,7 @@ impl<'a> CwIbcStore<'a> {
             connections: Map::new(StorageKey::Connections.as_str()),
             client_connections: Map::new(StorageKey::ClientConnection.as_str()),
             channels: Map::new(StorageKey::Channels.as_str()),
+            port_to_moudle: Map::new(StorageKey::PortToModule.as_str()),
         }
     }
 }
