@@ -1,4 +1,5 @@
 use super::*;
+
 pub fn event_open_init(
     connection_id: ConnectionId,
     client_id: ClientId,
