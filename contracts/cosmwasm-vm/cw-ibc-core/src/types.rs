@@ -190,7 +190,7 @@ impl ChannelId {
 
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 
     /// Get this identifier as a borrowed byte slice
@@ -200,6 +200,10 @@ impl ChannelId {
 
     pub fn default() -> Self {
         Self(IbcChannelId::default())
+    }
+
+    pub fn channel_id(&self) -> &IbcChannelId {
+        &self.0
     }
 }
 
@@ -231,7 +235,7 @@ impl PortId {
 
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 
     /// Get this identifier as a borrowed byte slice
@@ -241,6 +245,9 @@ impl PortId {
 
     pub fn dafault() -> Self {
         Self(IbcPortId::default())
+    }
+    pub fn port_id(&self) -> &IbcPortId {
+        &self.0
     }
 }
 
