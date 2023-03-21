@@ -7,6 +7,16 @@ use cosmwasm_std::{
     Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
 };
 
+use core::prelude::*;
+use ibc::core::ics03_connection::version::Version;
+use ibc::core::ics24_host::identifier::ClientId;
+use ibc::core::ics24_host::identifier::ConnectionId;
+use ibc_proto::ibc::core::commitment::v1::MerklePrefix;
+use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterparty;
+use ibc_proto::ibc::core::connection::v1::{
+    MsgConnectionOpenInit as RawMsgConnectionOpenInit, Version as RawVersion,
+};
+
 pub struct MockEnvBuilder {
     env: Env,
 }
@@ -82,4 +92,32 @@ fn test() {
         .build();
 
     assert_ne!(mock, mock_env_builder)
+}
+
+pub fn get_dummy_raw_msg_conn_open_init() -> RawMsgConnectionOpenInit {
+    RawMsgConnectionOpenInit {
+        client_id: ClientId::default().to_string(),
+        counterparty: Some(get_dummy_raw_counterparty(None)),
+        version: Some(Version::default().into()),
+        delay_period: 0,
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_counterparty(conn_id: Option<u64>) -> RawCounterparty {
+    let connection_id = match conn_id {
+        Some(id) => ConnectionId::new(id).to_string(),
+        None => "".to_string(),
+    };
+    RawCounterparty {
+        client_id: ClientId::default().to_string(),
+        connection_id,
+        prefix: Some(MerklePrefix {
+            key_prefix: b"ibc".to_vec(),
+        }),
+    }
+}
+
+pub fn get_dummy_bech32_account() -> String {
+    "cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng".to_string()
 }
