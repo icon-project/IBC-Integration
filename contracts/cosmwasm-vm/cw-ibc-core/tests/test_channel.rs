@@ -371,7 +371,6 @@ fn channel_open_try_from_raw_bad_port_id_parameter() {
     res_msg.unwrap();
 }
 
-
 #[test]
 fn channel_open_ack_from_raw_good_parameter() {
     let proof_height = 10;
@@ -425,6 +424,30 @@ fn channel_open_ack_from_raw_missing_proof_try_parameter() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
     let default_raw_ack_msg = RawMsgChannelOpenAck {
         proof_try: Vec::new(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    res_msg.unwrap();
+}
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn channel_open_ack_from_raw_invalid_port_id_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
+    let default_raw_ack_msg = RawMsgChannelOpenAck {
+        port_id: "abcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfaabcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfa".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    res_msg.unwrap();
+}
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn channel_open_ack_from_raw_bad_port_id_parameter() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
+    let default_raw_ack_msg = RawMsgChannelOpenAck {
+        port_id: "p".to_string(),
         ..default_raw_msg
     };
     let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
