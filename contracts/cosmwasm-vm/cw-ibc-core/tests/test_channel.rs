@@ -3,7 +3,8 @@ use std::str::FromStr;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
+        MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
+        MsgChannelOpenTry,
     },
     types::{ChannelId, PortId},
     ChannelEnd, Sequence,
@@ -17,7 +18,7 @@ use ibc::{
 };
 use ibc_proto::ibc::core::{
     channel::v1::{
-        MsgChannelOpenAck as RawMsgChannelOpenAck,
+        MsgChannelCloseInit as RawMsgChannelCloseInit, MsgChannelOpenAck as RawMsgChannelOpenAck,
         MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
         MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
     },
@@ -562,5 +563,56 @@ fn channel_open_ack_from_raw_bad_channel_id_parameter() {
         ..default_raw_msg
     };
     let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    res_msg.unwrap();
+}
+
+#[test]
+pub fn test_to_and_from_channel_close_init() {
+    let raw = get_dummy_raw_msg_chan_close_init();
+    let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
+    let raw_back = RawMsgChannelCloseInit::from(msg.clone());
+    let msg_back = MsgChannelCloseInit::try_from(raw_back.clone()).unwrap();
+    assert_eq!(raw, raw_back);
+    assert_eq!(msg, msg_back);
+}
+
+#[test]
+fn channel_close_innit_from_raw_valid_channel_id_parameter() {
+    let default_raw_msg = get_dummy_raw_msg_chan_close_init();
+    let default_raw_confirm_msg = RawMsgChannelCloseInit {
+        channel_id: "channel-34".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelCloseInit::try_from(default_raw_confirm_msg.clone());
+
+    let expected = MsgChannelCloseInit {
+        port_id_on_a: PortId::default().ibc_port_id().clone(),
+        chan_id_on_a: ChannelId::new(34).ibc_channel_id().clone(),
+        signer: Signer::from_str("cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng").unwrap(),
+    };
+    assert_eq!(res_msg.unwrap(), expected);
+}
+
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn channel_close_init_from_raw_bad_channel_id_parameter() {
+    let default_raw_msg = get_dummy_raw_msg_chan_close_init();
+    let default_raw_ack_msg = RawMsgChannelCloseInit {
+        channel_id: "chshort".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelCloseInit::try_from(default_raw_ack_msg.clone());
+    res_msg.unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn channel_close_init_from_raw_bad_port_id_parameter() {
+    let default_raw_msg = get_dummy_raw_msg_chan_close_init();
+    let default_raw_ack_msg = RawMsgChannelCloseInit {
+        port_id: "abcdefsdfasdfasdfasdfasdfasdfadsfasdgafsgadfasdfasdfasdfsdfasdfaghijklmnopqrstuabcdefsdfasdfasdfasdfasdfasdfadsfasdgafsgadfasdfasdfasdfsdfasdfaghijklmnopqrstu".to_string(),
+        ..default_raw_msg
+    };
+    let res_msg = MsgChannelCloseInit::try_from(default_raw_ack_msg.clone());
     res_msg.unwrap();
 }
