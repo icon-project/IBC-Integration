@@ -1,3 +1,5 @@
+use cosmwasm_std::Storage;
+
 use super::*;
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, ClientType, String>,

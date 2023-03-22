@@ -41,14 +41,6 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    // Get the channel sequence number
-    pub fn get_channel_sequence(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        match self.ibc_store().next_channel_sequence().load(store) {
-            Ok(sequence) => Ok(sequence),
-            Err(error) => Err(ContractError::Std(error)),
-        }
-    }
-
     // Increment the sequence number for channel
     pub fn increase_channel_sequence(
         &self,
@@ -66,7 +58,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Initialize the next sequence storage
-    pub fn init_next_channel_sequence(
+    pub fn init_channel_counter(
         &self,
         store: &mut dyn Storage,
         sequence_no: u128,
@@ -257,16 +249,19 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
         Ok(sequence)
     }
+    // Get the channel sequence number
+    pub fn channel_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        match self.ibc_store().next_channel_sequence().load(store) {
+            Ok(sequence) => Ok(sequence),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
 }
 
 //TODO : Implement Methods
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    fn channel_counter(&self) -> Result<u64, ibc::core::ContextError> {
-        todo!()
-    }
-
     fn store_channel(
         &mut self,
         channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,

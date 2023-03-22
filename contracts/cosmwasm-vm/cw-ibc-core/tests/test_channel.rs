@@ -52,8 +52,8 @@ fn test_add_channel() {
 fn test_channel_sequence_initialisation() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
-    let _store = ctx.init_next_channel_sequence(mock_deps.as_mut().storage, u128::default());
-    let result = ctx.get_channel_sequence(mock_deps.as_ref().storage);
+    let _store = ctx.init_channel_counter(mock_deps.as_mut().storage, u128::default());
+    let result = ctx.channel_counter(mock_deps.as_ref().storage);
 
     assert_eq!(0, result.unwrap());
 
