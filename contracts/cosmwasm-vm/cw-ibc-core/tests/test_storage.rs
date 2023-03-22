@@ -23,9 +23,7 @@ fn proper_storage_initialisation() {
 
     assert_eq!(10, connection_counter);
 
-    let channel_counter = contract
-        .query_channel_sequence(deps.as_ref().storage)
-        .unwrap();
+    let channel_counter = contract.channel_counter(deps.as_ref().storage).unwrap();
 
     assert_eq!(10, channel_counter);
 
@@ -63,7 +61,7 @@ fn improper_storage_initialisation() {
 
     assert!(connection_counter.is_err());
 
-    let channel_counter = contract.query_channel_sequence(deps.as_ref().storage);
+    let channel_counter = contract.channel_counter(deps.as_ref().storage);
 
     assert!(channel_counter.is_err());
 
