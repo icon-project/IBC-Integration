@@ -81,3 +81,38 @@ fn improper_router_initalisation() {
         .get_route(deps.as_ref().storage, module_id)
         .unwrap();
 }
+
+#[test]
+fn check_for_route() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let module_id = ModuleId::new("newModule".to_string());
+
+    let module_address = Addr::unchecked("moduleaddress");
+
+    contract
+        .add_route(deps.as_mut().storage, module_id.clone(), &module_address)
+        .unwrap();
+
+    let result = contract.has_route(deps.as_mut().storage, module_id);
+
+    assert!(result)
+}
+
+#[test]
+fn check_for_invalid_route() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let module_id = ModuleId::new("newModule".to_string());
+    let module_id_new = ModuleId::new("newModule1".to_string());
+
+    let module_address = Addr::unchecked("moduleaddress");
+
+    contract
+        .add_route(deps.as_mut().storage, module_id.clone(), &module_address)
+        .unwrap();
+
+    let result = contract.has_route(deps.as_mut().storage, module_id_new);
+
+    assert_eq!(false, result)
+}

@@ -46,6 +46,6 @@ pub fn client_misbehaviour_event(client_id: IbcClientId, client_type: IbcClientT
         .add_attribute(CLIENT_TYPE_ATTRIBUTE_KEY, client_type.as_str())
 }
 
-pub fn event_client_id_generated(client_id: IbcClientId) -> Event {
+pub fn generated_client_id_event(client_id: IbcClientId) -> Event {
     Event::new("client_id_created").add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
 }
