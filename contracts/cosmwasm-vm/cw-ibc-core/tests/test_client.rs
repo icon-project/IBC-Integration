@@ -6,7 +6,7 @@ use cw_ibc_core::{
         client_misbehaviour_event, create_client_event, update_client_event, upgrade_client_event,
     },
     types::{ClientId, ClientType},
-    MsgUpdateClient, MsgUpgradeClient,
+    MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
 };
 use ibc::{
     core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
@@ -245,4 +245,40 @@ fn fail_to_query_client_type() {
     contract
         .get_client_type(deps.as_ref().storage, client_id)
         .unwrap();
+}
+
+#[test]
+fn check_for_raw_message_create_client_deserialize() {
+    let raw_message = get_dummy_raw_msg_create_client();
+    let height = Height::new(10, 15).unwrap();
+    let mock_header = MockHeader::new(height);
+    let mock_client_state = MockClientState::new(mock_header);
+    let mock_consenus_state = MockConsensusState::new(mock_header);
+    let actual_message = MsgCreateClient {
+        client_state: mock_client_state.into(),
+        consensus_state: mock_consenus_state.into(),
+        signer: get_dummy_account_id(),
+    };
+
+    let create_client_message: MsgCreateClient = MsgCreateClient::try_from(raw_message).unwrap();
+
+    assert_eq!(create_client_message, actual_message)
+}
+
+#[test]
+fn check_for_create_client_message_into_raw_message() {
+    let height = Height::new(10, 15).unwrap();
+    let mock_header = MockHeader::new(height);
+    let mock_client_state = MockClientState::new(mock_header);
+    let mock_consenus_state = MockConsensusState::new(mock_header);
+    let actual_message = MsgCreateClient {
+        client_state: mock_client_state.into(),
+        consensus_state: mock_consenus_state.into(),
+        signer: get_dummy_account_id(),
+    };
+
+    let raw_message: ibc_proto::ibc::core::client::v1::MsgCreateClient =
+        ibc_proto::ibc::core::client::v1::MsgCreateClient::try_from(actual_message).unwrap();
+
+    assert_eq!(raw_message, get_dummy_raw_msg_create_client())
 }
