@@ -36,22 +36,21 @@ enum SignedMsgType {
 }
 
 message SignedHeader {
-    BTPHeader       header              =   1;
-    CommitVoteList  commit_vote_list    =   2;
+    BTPHeader       header        =   1;
+    repeated  bytes signatures    =   2;
 }
 
 message BTPHeader{
-
-    int64       main_height     = 1;
-    int32       Round           = 2;
+    uint64      main_height     = 1;
+    uint32      round           = 2;
     bytes       next_proof_context_hash = 3;
     repeated    MerkleNode network_section_to_root  = 4;
-	int64       network_id      = 5;
-	int64       update_number   = 6;
+	uint64      network_id      = 5;
+	uint64      update_number   = 6;
 	bytes       prev_network_section_hash   = 7; 
-    int64       message_count   = 8;
+    uint64      message_count   = 8;
     bytes       message_root    = 9;
-    bytes       next_proof_context  = 10;
+    repeated    bytes nextValidators = 10; 
 }
 
 message  MerkleNode {
@@ -59,36 +58,5 @@ message  MerkleNode {
     bytes value = 2;
 }
 
-message CommitVoteList{
-    int32       round = 1;
-    PartSetID   block_part_set_id = 2;
-    CommitVoteItem items = 3; 
-}
 
-message  CommitVoteItem {
-    int64 timestamp = 1;
-    bytes signature = 2;
-}
 
-message PartSetID{
-    uint32  count = 1;
-    bytes   hash  = 2;
-}
-
-message HR{
-    int64 height = 1;
-    int32 rount  = 2;
-}
-
-message  Vote{
-    int64           height      = 1;
-    int32           round       = 2;
-	SignedMsgType   type        = 3;
-	bytes           block_id    = 4;
-    PartSetID block_part_set_id = 5;
-    int64           timestamp   = 6;
-}
-
-message ValidatorSet{
-    repeated bytes validators = 1;
-}

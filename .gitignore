@@ -188,3 +188,5 @@ lcov.info
 
 # vscode files
 .vscode
+
+**/.DS_Store
