@@ -3,7 +3,8 @@ use std::str::FromStr;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
+        event_channel_id_generated, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
+        MsgChannelOpenTry,
     },
     types::{ChannelId, PortId},
     ChannelEnd, Sequence,
@@ -563,4 +564,14 @@ fn channel_open_ack_from_raw_bad_channel_id_parameter() {
     };
     let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
     res_msg.unwrap();
+}
+
+#[test]
+fn create_channel_id_event_test() {
+    let client_id = ChannelId::new(10);
+    let event = event_channel_id_generated(client_id);
+
+    assert_eq!("channel_id_created", event.ty);
+    assert_eq!("channel-10", event.attributes[0].value);
+    assert_eq!("channel_id", event.attributes[0].key)
 }
