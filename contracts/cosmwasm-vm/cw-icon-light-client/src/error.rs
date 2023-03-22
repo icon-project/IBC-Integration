@@ -14,16 +14,18 @@ pub enum ContractError {
     #[error("{0}")]
     DecodeError(#[from] DecodeError),
     #[error("Timestamp not found for {client_id:?} at height {height:?}")]
-    TimestampNotFound { height: u128, client_id: String },
+    TimestampNotFound { height: u64, client_id: String },
     #[error("Client state not found for client_id:{0}")]
     ClientStateNotFound(String),
     #[error("Height not found in client state for client_id:{0}")]
     HeightNotSaved(String),
     #[error("Consensusstate not found for {client_id:?} at height {height:?}")]
-    ConsensusStateNotFound { height: u128, client_id: String },
+    ConsensusStateNotFound { height: u64, client_id: String },
     #[error("Failed to save client state")]
     FailedToSaveClientState,
 
     #[error("Failed to save consensus state")]
     FailedToSaveConsensusState,
+    #[error("Insufficient validator signatures supplied")]
+    InSuffcientQuorum,
 }

@@ -1,9 +1,9 @@
+use common::icon::icon::types::v1::MerkleNode;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::msg::ExecuteMsg;
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
-use keccak_hash::keccak_256;
 
 /// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
@@ -24,10 +24,4 @@ impl CwTemplateContract {
         }
         .into())
     }
-}
-
-pub fn keccak256(input: &[u8]) -> [u8; 32] {
-    let mut data = [0u8; 32];
-    keccak_256(input, &mut data);
-    data
 }

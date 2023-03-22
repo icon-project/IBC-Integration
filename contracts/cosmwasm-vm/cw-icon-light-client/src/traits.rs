@@ -1,14 +1,15 @@
-use crate::helpers::keccak256;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
+use common::utils::keccak256;
 use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::Height};
 use prost::{DecodeError, Message};
 
+#[derive(Debug, Clone)]
 pub struct ConsensusStateUpdate {
     // commitment for updated consensusState
     pub consensus_state_commitment: [u8; 32],
     // updated height
-    pub height: Height,
+    pub height: u64,
 }
 
 pub trait ILightClient {
@@ -27,13 +28,12 @@ pub trait ILightClient {
     /**
      * @dev getTimestampAtHeight returns the timestamp of the consensus state at the given height.
      */
-    fn get_timestamp_at_height(&self, client_id: &str, height: &Height)
-        -> Result<u64, Self::Error>;
+    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error>;
 
     /**
      * @dev getLatestHeight returns the latest height of the client state corresponding to `clientId`.
      */
-    fn get_latest_height(&self, client_id: &str) -> Result<Height, Self::Error>;
+    fn get_latest_height(&self, client_id: &str) -> Result<u64, Self::Error>;
 
     /**
      * @dev updateClient updates the client corresponding to `clientId`.
@@ -90,8 +90,7 @@ pub trait ILightClient {
      */
     fn get_client_state(&self, client_id: &str) -> Result<Vec<u8>, Self::Error>;
 
-    fn get_consensus_state(&self, client_id: &str, height: &Height)
-        -> Result<Vec<u8>, Self::Error>;
+    fn get_consensus_state(&self, client_id: &str, height: u64) -> Result<Vec<u8>, Self::Error>;
 }
 
 pub trait IContext {
@@ -102,16 +101,18 @@ pub trait IContext {
     fn get_consensus_state(
         &self,
         client_id: &str,
-        height: u128,
+        height: u64,
     ) -> Result<ConsensusState, Self::Error>;
     fn insert_consensus_state(
         &self,
         client_id: &str,
-        height: u128,
+        height: u64,
         state: ConsensusState,
     ) -> Result<(), Self::Error>;
 
-    fn get_timestamp_at_height(&self, client_id: &str, height: u128) -> Result<u64, Self::Error>;
+    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error>;
+
+    fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
 }
 
 pub trait AnyTypes: Message + Default {
@@ -135,44 +136,3 @@ pub trait AnyTypes: Message + Default {
         };
     }
 }
-
-pub trait IHeight {
-    fn to_uint128(height: &Height) -> u128 {
-        (u128::from(height.revision_number) << 64) | u128::from(height.revision_height)
-    }
-
-    fn is_zero(height: &Height) -> bool {
-        height.revision_number == 0 && height.revision_height == 0
-    }
-
-    fn lt(height: &Height, other: &Height) -> bool {
-        height.revision_number < other.revision_number
-            || (height.revision_number == other.revision_number
-                && height.revision_height < other.revision_height)
-    }
-
-    fn lte(height: &Height, other: &Height) -> bool {
-        height.revision_number < other.revision_number
-            || (height.revision_number == other.revision_number
-                && height.revision_height <= other.revision_height)
-    }
-
-    fn eq(height: &Height, other: &Height) -> bool {
-        height.revision_number == other.revision_number
-            && height.revision_height == other.revision_height
-    }
-
-    fn gt(height: &Height, other: &Height) -> bool {
-        height.revision_number > other.revision_number
-            || (height.revision_number == other.revision_number
-                && height.revision_height > other.revision_height)
-    }
-
-    fn gte(height: &Height, other: &Height) -> bool {
-        height.revision_number > other.revision_number
-            || (height.revision_number == other.revision_number
-                && height.revision_height >= other.revision_height)
-    }
-}
-
-impl IHeight for Height {}
