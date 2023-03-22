@@ -209,3 +209,40 @@ fn create_misbehaviour_event_test() {
 
     assert_eq!("client_misbehaviour", event.ty)
 }
+
+#[test]
+fn store_client_type_sucess() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let client_type = ClientType::new("icon_client".to_string());
+
+    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
+
+    contract
+        .store_client_type(
+            deps.as_mut().storage,
+            client_id.clone(),
+            client_type.clone(),
+        )
+        .unwrap();
+    let result = contract
+        .get_client_type(deps.as_ref().storage, client_id)
+        .unwrap();
+
+    assert_eq!(client_type.client_type(), result)
+}
+
+#[test]
+#[should_panic(expected = "InvalidClientId { client_id: \"icon_client-10\" }")]
+fn fail_to_query_client_type() {
+    let deps = deps();
+
+    let contract = CwIbcCoreContext::default();
+    let client_type = ClientType::new("icon_client".to_string());
+
+    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
+
+    contract
+        .get_client_type(deps.as_ref().storage, client_id)
+        .unwrap();
+}
