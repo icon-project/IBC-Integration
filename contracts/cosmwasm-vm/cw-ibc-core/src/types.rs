@@ -259,7 +259,7 @@ impl PortId {
         self.0.as_bytes()
     }
 
-    pub fn dafault() -> Self {
+    pub fn default() -> Self {
         Self(IbcPortId::default())
     }
 
