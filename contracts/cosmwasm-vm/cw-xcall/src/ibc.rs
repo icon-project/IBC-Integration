@@ -78,7 +78,7 @@ pub fn ibc_packet_receive(
 
 fn do_ibc_packet_receive(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, ContractError> {
     let call_service = CwCallService::default();
