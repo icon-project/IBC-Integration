@@ -233,14 +233,14 @@ fn connection_open_try_bad_client_id_name_too_short() {
 }
 
 #[test]
-fn connection_open_ack_from_raw_good_parameter() {
+fn connection_open_ack_from_raw_valid_parameter() {
     let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
     let res_msg = MsgConnectionOpenAck::try_from(default_raw_ack_msg.clone());
     assert_eq!(res_msg.is_ok(), true)
 }
 
 #[test]
-fn conecction_open_ack_bad_connection_id() {
+fn connection_open_ack_invalid_connection_id() {
     let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
     let ack_msg = RawMsgConnectionOpenAck {
         connection_id: "con007".to_string(),
@@ -251,7 +251,7 @@ fn conecction_open_ack_bad_connection_id() {
 }
 
 #[test]
-fn connection_open_ack_bad_version() {
+fn connection_open_ack_invalid_version() {
     let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
     let ack_msg = RawMsgConnectionOpenAck {
         version: None,
@@ -262,7 +262,7 @@ fn connection_open_ack_bad_version() {
 }
 
 #[test]
-fn connection_open_ack_bad_proof_height() {
+fn connection_open_ack_invalid_proof_height() {
     let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
     let ack_msg = RawMsgConnectionOpenAck {
         proof_height: Some(Height {
@@ -276,7 +276,7 @@ fn connection_open_ack_bad_proof_height() {
 }
 
 #[test]
-fn connection_open_ack_bad_consensus_height_and_height_is_0() {
+fn connection_open_ack_invalid_consensus_height_and_height_is_0() {
     let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
     let ack_msg = RawMsgConnectionOpenAck {
         consensus_height: Some(Height {
@@ -290,14 +290,14 @@ fn connection_open_ack_bad_consensus_height_and_height_is_0() {
 }
 
 #[test]
-fn connection_open_confirm_with_goor_parameter() {
+fn connection_open_confirm_with_valid_parameter() {
     let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
     let res_msg = MsgConnectionOpenConfirm::try_from(default_raw_confirm_msg.clone());
     assert_eq!(res_msg.is_ok(), true)
 }
 
 #[test]
-fn connection_open_confirm_bad_connection_id_non_alpha() {
+fn connection_open_confirm_invalid_connection_id_non_alpha() {
     let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
     let confirm_msg = RawMsgConnectionOpenConfirm {
         connection_id: "con007".to_string(),
@@ -308,7 +308,7 @@ fn connection_open_confirm_bad_connection_id_non_alpha() {
 }
 
 #[test]
-fn connection_open_confirm_bad_proof_height() {
+fn connection_open_confirm_invalid_proof_height() {
     let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
     let confirm_msg = RawMsgConnectionOpenConfirm {
         proof_height: Some(Height {
