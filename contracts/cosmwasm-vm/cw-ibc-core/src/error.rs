@@ -1,5 +1,9 @@
 use cosmwasm_std::StdError;
-use ibc::core::{ics04_channel::error::PacketError, ics05_port::error::PortError, ContextError};
+use ibc::core::{
+    ics04_channel::error::{ChannelError, PacketError},
+    ics05_port::error::PortError,
+    ContextError,
+};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -30,4 +34,7 @@ pub enum ContractError {
 
     #[error("IbcPackketError {error}")]
     IbcPackketError { error: PacketError },
+
+    #[error("IbcChannelError {error}")]
+    IbcChannelError { error: ChannelError },
 }

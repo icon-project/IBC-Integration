@@ -3,17 +3,18 @@ use std::str::FromStr;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        make_channel_id_generated_event, make_open_ack_channel_event, make_open_confirm_channel_event,
-        make_open_init_channel_event, make_open_try_channel_event, MsgChannelCloseConfirm,
-        MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
-        MsgChannelOpenTry,
+        make_channel_id_generated_event, make_open_ack_channel_event,
+        make_open_confirm_channel_event, make_open_init_channel_event, make_open_try_channel_event,
+        make_send_packet_event, make_write_ack_event, MsgChannelCloseConfirm, MsgChannelCloseInit,
+        MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
     },
     types::{ChannelId, PortId},
-    ChannelEnd, Sequence,
+    ChannelEnd, IbcConnectionId, Sequence,
 };
 use ibc::{
     core::ics04_channel::{
         channel::{Counterparty, Order, State},
+        packet::Packet,
         Version,
     },
     events::IbcEventType,
@@ -757,4 +758,54 @@ fn create_open_try_channel_event_test() {
     assert_eq!("counterparty_port_id", event.attributes[2].key);
     assert_eq!("channel-11", event.attributes[1].value);
     assert_eq!("defaultPort", event.attributes[0].value);
+}
+
+#[test]
+fn test_make_send_packet_event() {
+    let raw = get_dummy_raw_packet(15, 0);
+    let msg = Packet::try_from(raw.clone()).unwrap();
+    let raw_back = RawPacket::from(msg.clone());
+    let msg_back = Packet::try_from(raw_back.clone()).unwrap();
+    assert_eq!(raw, raw_back);
+    assert_eq!(msg, msg_back);
+    let event = make_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
+    assert_eq!(IbcEventType::SendPacket.as_str(), event.unwrap().ty)
+}
+
+#[test]
+#[should_panic(expected = "NonUtf8PacketData")]
+fn test_make_send_packet_event_fail() {
+    let raw = get_dummy_raw_packet(15, 0);
+
+    let raw = RawPacket {
+        data: vec![u8::MAX],
+        ..raw.clone()
+    };
+    let msg = Packet::try_from(raw.clone()).unwrap();
+    let _event = make_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+}
+
+#[test]
+fn test_make_write_ack_packet_event() {
+    let raw = get_dummy_raw_packet(15, 0);
+    let msg = Packet::try_from(raw.clone()).unwrap();
+    let raw_back = RawPacket::from(msg.clone());
+    let msg_back = Packet::try_from(raw_back.clone()).unwrap();
+    assert_eq!(raw, raw_back);
+    assert_eq!(msg, msg_back);
+    let event = make_write_ack_event(msg_back, vec![0], &IbcConnectionId::default());
+    assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
+}
+
+#[test]
+#[should_panic(expected = "NonUtf8PacketData")]
+fn test_make_write_ack_packet_event_fail() {
+    let raw = get_dummy_raw_packet(15, 0);
+
+    let raw = RawPacket {
+        data: vec![u8::MAX],
+        ..raw.clone()
+    };
+    let msg = Packet::try_from(raw.clone()).unwrap();
+    let _event = make_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
 }
