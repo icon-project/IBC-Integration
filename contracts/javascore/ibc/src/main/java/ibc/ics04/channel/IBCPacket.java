@@ -14,7 +14,8 @@ import score.DictDB;
 import java.math.BigInteger;
 
 // TODO verify packet commitments follow a correct format
-public class IBCPacket extends IBCChannelHandshake implements IIBCPacket {
+public class IBCPacket extends IBCChannelHandshake {
+
     public void sendPacket(Packet packet) {
         Channel channel = Channel.decode(channels.at(packet.getSourcePort()).get(packet.getSourceChannel()));
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");

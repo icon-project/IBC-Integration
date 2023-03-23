@@ -48,7 +48,7 @@ public interface ILightClient {
      */
     Boolean verifyMembership(
             String clientId,
-            byte[] height,
+            byte[] heightBytes,
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,
@@ -63,7 +63,7 @@ public interface ILightClient {
      */
     Boolean verifyNonMembership(
             String clientId,
-            byte[] height,
+            byte[] heightBytes,
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,

@@ -12,7 +12,7 @@ public interface IIBCPacket {
      * The packet sequence generated for the packet to be sent is returned. An
      * error is returned if one occurs.
      */
-    void sendPacket(Packet packetPb);
+    void sendPacket(byte[] packetPb);
 
     /**
      * {@code @dev} recvPacket is called by a module in order to receive & process an IBC

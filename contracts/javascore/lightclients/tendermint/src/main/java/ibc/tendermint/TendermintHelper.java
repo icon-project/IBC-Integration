@@ -20,8 +20,11 @@ import icon.proto.clients.tendermint.TmHeader;
 import icon.proto.clients.tendermint.Validator;
 import icon.proto.clients.tendermint.ValidatorSet;
 import icon.proto.core.client.Height;
+import score.Context;
 
 public class TendermintHelper {
+    public static final BigInteger MICRO_SECONDS_IN_A_SECOND = BigInteger.valueOf(1_000_000);
+
     public static CanonicalVote toCanonicalVote(Commit commit, int valIdx, String chainId) {
         CommitSig commitSig = commit.getSignatures().get(valIdx);
         CanonicalVote vote = new CanonicalVote();
@@ -46,36 +49,10 @@ public class TendermintHelper {
         return state;
     }
 
-    public static boolean isEqual(ConsensusState c1, ConsensusState c2) {
-        if (!Arrays.equals(c1.getNextValidatorsHash(), c2.getNextValidatorsHash())) {
-            return false;
-        }
-
-        if (!Arrays.equals(c1.getRoot().getHash(), c2.getRoot().getHash())) {
-            return false;
-        }
-
-        if (c1.getTimestamp().getSeconds().equals(c2.getTimestamp().getSeconds())) {
-            return false;
-        }
-
-        if (c1.getTimestamp().getNanos().equals(c2.getTimestamp().getNanos())) {
-            return false;
-        }
-        return true;
-    }
-
     public static BigInteger getTotalVotingPower(ValidatorSet validatorSet) {
-        if (!validatorSet.getTotalVotingPower().equals(BigInteger.ZERO)) {
-            return validatorSet.getTotalVotingPower();
-        }
-
         BigInteger sum = BigInteger.ZERO;
         for (Validator validator : validatorSet.getValidators()) {
             sum = sum.add(validator.getVotingPower());
-            // TODO do we need this?
-            // Context.require(sum.compareTo(maxTotalVotingPower) <= 0, "total voting power
-            // should be guarded to not exceed");
         }
 
         validatorSet.setTotalVotingPower(sum);
@@ -121,15 +98,25 @@ public class TendermintHelper {
         return false;
     }
 
-    public static boolean isExpired(SignedHeader header, Duration trustingPeriod, Duration currentTime) {
+    public static boolean isExpired(SignedHeader header, Duration trustingPeriod, Timestamp currentTime) {
         Timestamp expirationTime = new Timestamp();
         expirationTime.setSeconds(header.getHeader().getTime().getSeconds().add(trustingPeriod.getSeconds()));
         expirationTime.setNanos(header.getHeader().getTime().getNanos());
 
-        Timestamp currentTimestamp = new Timestamp();
-        currentTimestamp.setSeconds(currentTime.getSeconds());
-        currentTimestamp.setNanos(BigInteger.ZERO);
-        return gt(currentTimestamp, expirationTime);
+        return gt(currentTime, expirationTime);
+    }
+
+    public static Timestamp getCurrentTime() {
+        BigInteger timeInMicro = BigInteger.valueOf(Context.getBlockTimestamp());
+        BigInteger seconds = timeInMicro.divide(MICRO_SECONDS_IN_A_SECOND);
+        BigInteger microSeconds = timeInMicro.subtract(seconds.multiply(MICRO_SECONDS_IN_A_SECOND));
+        BigInteger nanoSeconds = microSeconds.multiply(BigInteger.valueOf(1000));
+
+        Timestamp currentTime = new Timestamp();
+        currentTime.setSeconds(seconds);
+        currentTime.setNanos(nanoSeconds);
+
+        return currentTime;
     }
 
     public static byte[] hash(ValidatorSet validatorSet) {

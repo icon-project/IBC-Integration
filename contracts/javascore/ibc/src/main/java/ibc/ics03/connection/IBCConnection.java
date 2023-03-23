@@ -21,7 +21,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
-public class IBCConnection extends IBCClient implements IIBCConnection {
+public class IBCConnection extends IBCClient {
     public static final String v1Identifier = "1";
     public static final List<String> supportedV1Features = List.of("ORDER_ORDERED", "ORDER_UNORDERED");
     public static final byte[] commitmentPrefix = "ibc".getBytes();

@@ -13,7 +13,7 @@ import score.Context;
 import java.math.BigInteger;
 import java.util.List;
 
-public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHandshake {
+public class IBCChannelHandshake extends IBCConnection {
 
     public String channelOpenInit(MsgChannelOpenInit msg) {
         Channel channel = msg.getChannel();
