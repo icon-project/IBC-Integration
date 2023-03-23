@@ -37,15 +37,6 @@ pub trait ILightClient {
         consensus_state_bytes: Any,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
 
-    /**
-     * @dev getTimestampAtHeight returns the timestamp of the consensus state at the given height.
-     */
-    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error>;
-
-    /**
-     * @dev getLatestHeight returns the latest height of the client state corresponding to `clientId`.
-     */
-    fn get_latest_height(&self, client_id: &str) -> Result<u64, Self::Error>;
 
     /**
      * @dev updateClient updates the client corresponding to `clientId`.
@@ -76,8 +67,6 @@ pub trait ILightClient {
         delay_time_period: u64,
         delay_block_period: u64,
         proof: &Vec<MerkleNode>,
-        prefix: &[u8],
-        path: &[u8],
         value: &[u8],
     ) -> Result<bool, Self::Error>;
 
@@ -96,15 +85,12 @@ pub trait ILightClient {
         path: &[u8],
     ) -> Result<bool, Self::Error>;
 
-    /**
-     * @dev getClientState returns the clientState corresponding to `clientId`.
-     *      If it's not found, the function returns false.
-     */
-    fn get_client_state(&self, client_id: &str) -> Result<Vec<u8>, Self::Error>;
-
-    fn get_consensus_state(&self, client_id: &str, height: u64) -> Result<Vec<u8>, Self::Error>;
+  
 }
 
+pub trait IStoreReader {
+
+}
 pub trait IContext {
     type Error;
 
@@ -129,6 +115,10 @@ pub trait IContext {
     fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
     fn get_config(&self) -> Result<Config, Self::Error>;
 }
+
+
+
+
 
 pub trait AnyTypes: Message + Default {
     fn get_type_url() -> String;

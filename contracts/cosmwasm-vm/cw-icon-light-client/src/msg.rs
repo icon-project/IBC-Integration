@@ -29,9 +29,23 @@ pub enum ExecuteMsg {
 }
 
 
+
+
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(String)]
-    GetAdmin {},
+   
+    #[returns(u64)]
+    GetLatestHeight{
+        client_id:String
+    },
+    #[returns(Vec<u8>)]
+    GetConsensusState{
+        client_id:String,
+        height:u64,
+    },
+    #[returns(Vec<u8>)]
+    GetClientState{
+        client_id:String
+    }
 }

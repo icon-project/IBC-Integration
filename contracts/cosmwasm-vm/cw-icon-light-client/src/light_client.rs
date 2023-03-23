@@ -105,16 +105,7 @@ impl ILightClient for IconClient<'_> {
         ))
     }
 
-    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error> {
-        let timestamp = self.context.get_timestamp_at_height(client_id, height)?;
-        Ok(timestamp)
-    }
-
-    fn get_latest_height(&self, client_id: &str) -> Result<u64, Self::Error> {
-        let state = self.context.get_client_state(client_id)?;
-
-        Ok(state.latest_height)
-    }
+    
 
     fn update_client(
         &self,
@@ -179,8 +170,7 @@ impl ILightClient for IconClient<'_> {
         delay_time_period: u64,
         delay_block_period: u64,
         proof: &Vec<MerkleNode>,
-        prefix: &[u8],
-        path: &[u8],
+       
         value: &[u8],
     ) -> Result<bool, Self::Error> {
         let leaf = keccak256(value);
@@ -206,15 +196,5 @@ impl ILightClient for IconClient<'_> {
         todo!()
     }
 
-    fn get_client_state(&self, client_id: &str) -> Result<Vec<u8>, Self::Error> {
-        let state = self.context.get_client_state(client_id)?;
-        let any_state = state.to_any();
-        Ok(any_state.encode_to_vec())
-    }
-
-    fn get_consensus_state(&self, client_id: &str, height: u64) -> Result<Vec<u8>, Self::Error> {
-        let state = self.context.get_consensus_state(client_id, height)?;
-        let any_state = state.to_any();
-        Ok(any_state.encode_to_vec())
-    }
+   
 }
