@@ -3,6 +3,7 @@ use std::time::Duration;
 pub mod setup;
 use cosmwasm_std::testing::MockStorage;
 use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
+use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 use setup::*;
 
 use cw_ibc_core::context::CwIbcCoreContext;
@@ -20,10 +21,8 @@ use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnecti
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
-use ibc_proto::ibc::core::connection::v1::{
-    MsgConnectionOpenInit as RawMsgConnectionOpenInit, Version as RawVersion,
-};
 
 #[test]
 fn test_set_connection() {
@@ -111,6 +110,27 @@ fn test_get_connection_fail() {
     contract
         .connection_end(deps.as_ref().storage, conn_id)
         .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
+fn test_set_connection_fail() {
+    let deps = deps();
+    let conn_id = ConnectionId::new(0);
+    let contract = CwIbcCoreContext::new();
+    contract
+        .connection_end(deps.as_ref().storage, conn_id)
+        .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
+fn test_connection_sequence_fail() {
+    let mut store = MockStorage::default();
+    let contract = CwIbcCoreContext::new();
+    contract.connection_counter(&mut store).unwrap();
+
+    contract.increase_connection_counter(&mut store).unwrap();
 }
 
 #[test]
@@ -232,6 +252,13 @@ fn connection_open_try_invalid_client_id_name_too_short() {
     assert_eq!(res_msg.is_ok(), false)
 }
 
+#[test]
+fn test_commitment_prefix() {
+    let contract = CwIbcCoreContext::new();
+    let expected = CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default();
+    let result = contract.commitment_prefix();
+    assert_eq!(result, expected);
+}
 #[test]
 fn connection_open_ack_from_raw_valid_parameter() {
     let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
