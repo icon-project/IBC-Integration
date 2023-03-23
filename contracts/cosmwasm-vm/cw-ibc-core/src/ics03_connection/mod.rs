@@ -1,5 +1,4 @@
 //! ICS 03: Connection implementation for connecting a client
-pub mod conn_event;
 pub mod connection;
 pub mod event;
 use crate::context::CwIbcCoreContext;
