@@ -32,6 +32,8 @@ use ibc_proto::ibc::core::client::v1::{
 };
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterpartyConnection;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
 use ibc_proto::ibc::core::{channel::v1::Channel as RawChannel, client::v1::Height as RawHeight};
@@ -341,6 +343,43 @@ pub fn get_dummy_raw_msg_conn_open_try(
             revision_height: consensus_height,
         }),
         proof_client: get_dummy_proof(),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_conn_open_ack(
+    proof_height: u64,
+    consensus_height: u64,
+) -> RawMsgConnectionOpenAck {
+    let client_state_height = Height::new(0, consensus_height).unwrap();
+    RawMsgConnectionOpenAck {
+        connection_id: ConnectionId::new(0).to_string(),
+        counterparty_connection_id: ConnectionId::new(1).to_string(),
+        proof_try: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: proof_height,
+        }),
+        proof_consensus: get_dummy_proof(),
+        consensus_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: consensus_height,
+        }),
+        client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
+        proof_client: get_dummy_proof(),
+        version: Some(Version::default().into()),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_conn_open_confirm() -> RawMsgConnectionOpenConfirm {
+    RawMsgConnectionOpenConfirm {
+        connection_id: "srcconnection".to_string(),
+        proof_ack: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: 10,
+        }),
         signer: get_dummy_bech32_account(),
     }
 }
