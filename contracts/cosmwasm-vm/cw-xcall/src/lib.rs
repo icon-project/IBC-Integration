@@ -37,6 +37,7 @@ use crate::{
         storage_keys::StorageKey,
     },
 };
+use common::types::message::CrossContractMessage::XCallMessage;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Binary, Coin, CosmosMsg,
@@ -46,6 +47,7 @@ use cosmwasm_std::{
     IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Never,
     QuerierWrapper, Reply, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
 };
+
 use cw2::set_contract_version;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
