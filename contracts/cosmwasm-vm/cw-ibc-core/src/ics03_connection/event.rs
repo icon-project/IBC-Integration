@@ -51,3 +51,22 @@ pub fn event_open_ack(
             counterparty_client_id.as_str(),
         )
 }
+
+pub fn event_open_confirm(
+    connection_id_on_b: ConnectionId,
+    client_id_on_b: ClientId,
+    counterparty_connection_id_on_a: ConnectionId,
+    counterparty_client_id_on_a: ClientId,
+) -> Event {
+    Event::new(IbcEventType::OpenConfirmConnection.as_str())
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_id_on_b.as_str())
+        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id_on_b.as_str())
+        .add_attribute(
+            COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY,
+            counterparty_connection_id_on_a.as_str(),
+        )
+        .add_attribute(
+            COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,
+            counterparty_client_id_on_a.as_str(),
+        )
+}
