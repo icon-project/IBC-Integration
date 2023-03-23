@@ -51,3 +51,4 @@ pub fn event_open_ack(
             counterparty_client_id.as_str(),
         )
 }
+
