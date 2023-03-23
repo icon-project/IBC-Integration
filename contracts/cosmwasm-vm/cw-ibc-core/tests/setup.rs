@@ -21,8 +21,10 @@ use ibc::{
     Height,
 };
 use ibc_proto::ibc::core::channel::v1::{
-    MsgChannelOpenAck as RawMsgChannelOpenAck, MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
-    MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
+    MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
+    MsgChannelCloseInit as RawMsgChannelCloseInit, MsgChannelOpenAck as RawMsgChannelOpenAck,
+    MsgChannelOpenConfirm as RawMsgChannelOpenConfirm, MsgChannelOpenInit as RawMsgChannelOpenInit,
+    MsgChannelOpenTry as RawMsgChannelOpenTry,
 };
 use ibc_proto::ibc::core::client::v1::{
     MsgCreateClient as RawMessageCreateClient, MsgSubmitMisbehaviour as RawMessageMisbehaviour,
@@ -264,6 +266,27 @@ pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMessageMisbehaviour {
     RawMessageMisbehaviour {
         client_id: client_id.ibc_client_id().to_string(),
         misbehaviour: Some(mis_b.into()),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_chan_close_init() -> RawMsgChannelCloseInit {
+    RawMsgChannelCloseInit {
+        port_id: PortId::default().to_string(),
+        channel_id: ChannelId::default().to_string(),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_chan_close_confirm(proof_height: u64) -> RawMsgChannelCloseConfirm {
+    RawMsgChannelCloseConfirm {
+        port_id: PortId::default().to_string(),
+        channel_id: ChannelId::default().to_string(),
+        proof_init: get_dummy_proof(),
+        proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
+            revision_number: 0,
+            revision_height: proof_height,
+        }),
         signer: get_dummy_bech32_account(),
     }
 }
