@@ -3,10 +3,11 @@ use std::str::FromStr;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        make_channel_id_generated_event, make_open_ack_channel_event,
+        make_ack_packet_event, make_channel_id_generated_event, make_open_ack_channel_event,
         make_open_confirm_channel_event, make_open_init_channel_event, make_open_try_channel_event,
-        make_send_packet_event, make_write_ack_event, MsgChannelCloseConfirm, MsgChannelCloseInit,
-        MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
+        make_packet_timeout_event, make_send_packet_event, make_write_ack_event,
+        MsgChannelCloseConfirm, MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm,
+        MsgChannelOpenInit, MsgChannelOpenTry,
     },
     types::{ChannelId, PortId},
     ChannelEnd, IbcConnectionId, Sequence,
@@ -808,4 +809,20 @@ fn test_make_write_ack_packet_event_fail() {
     };
     let msg = Packet::try_from(raw.clone()).unwrap();
     let _event = make_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+}
+
+#[test]
+fn test_make_ack_packet_event() {
+    let raw = get_dummy_raw_packet(15, 0);
+    let packet = Packet::try_from(raw.clone()).unwrap();
+    let event = make_ack_packet_event(packet, &Order::Ordered, &IbcConnectionId::default());
+    assert_eq!("acknowledge_packet", event.ty)
+}
+
+#[test]
+fn test_make_timout_packet_event() {
+    let raw = get_dummy_raw_packet(15, 0);
+    let packet = Packet::try_from(raw.clone()).unwrap();
+    let event = make_packet_timeout_event(packet, &Order::Ordered);
+    assert_eq!("timeout_packet", event.ty)
 }
