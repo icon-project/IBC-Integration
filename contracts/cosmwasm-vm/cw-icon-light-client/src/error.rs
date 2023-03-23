@@ -28,4 +28,19 @@ pub enum ContractError {
     FailedToSaveConsensusState,
     #[error("Insufficient validator signatures supplied")]
     InSuffcientQuorum,
+    #[error("Clientstate already exists for {0}")]
+    ClientStateAlreadyExists(String),
+    #[error("Config not found or initialized")]
+    ConfigNotFound,
+    #[error("Failed to save {update_height:?} client is at {saved_height:?}")]
+    InvalidHeightUpdate {
+        saved_height: u64,
+        update_height: u64,
+    },
+    #[error("Invalid header update {0}")]
+    InvalidHeaderUpdate(String),
+    #[error("Invalid message root {0}")]
+    InvalidMessageRoot(String),
+    #[error("Failed to save processed time")]
+    FailedToSaveProcessedTime,
 }

@@ -1,15 +1,27 @@
+use std::error::Error;
+
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
+use common::icon::icon::types::v1::MerkleNode;
 use common::utils::keccak256;
 use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::Height};
 use prost::{DecodeError, Message};
+use serde::Deserialize;
+use serde::Serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsensusStateUpdate {
     // commitment for updated consensusState
     pub consensus_state_commitment: [u8; 32],
     // updated height
     pub height: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Config {
+    pub src_network_id: String,
+    pub network_id: u64,
+    pub network_type_id: u128,
 }
 
 pub trait ILightClient {
@@ -51,7 +63,7 @@ pub trait ILightClient {
         &self,
         client_id: &str,
         header: Any,
-    ) -> Result<(Vec<u8>, Vec<ConsensusStateUpdate>, bool), Self::Error>;
+    ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
 
     /**
      * @dev verifyMembership is a generic proof verification method which verifies a proof of the existence of a value at a given CommitmentPath at the specified height.
@@ -60,10 +72,10 @@ pub trait ILightClient {
     fn verify_membership(
         &self,
         client_id: &str,
-        height: &Height,
+        height: u64,
         delay_time_period: u64,
         delay_block_period: u64,
-        proof: &[u8],
+        proof: &Vec<MerkleNode>,
         prefix: &[u8],
         path: &[u8],
         value: &[u8],
@@ -95,6 +107,7 @@ pub trait ILightClient {
 
 pub trait IContext {
     type Error;
+
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error>;
     fn insert_client_state(&self, client_id: &str, state: ClientState) -> Result<(), Self::Error>;
 
@@ -111,8 +124,10 @@ pub trait IContext {
     ) -> Result<(), Self::Error>;
 
     fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error>;
+    fn insert_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<(), Self::Error>;
 
     fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
+    fn get_config(&self) -> Result<Config, Self::Error>;
 }
 
 pub trait AnyTypes: Message + Default {

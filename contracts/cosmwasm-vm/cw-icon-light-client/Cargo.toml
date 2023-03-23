@@ -40,6 +40,8 @@ thiserror = { version = "1.0.38" }
 ibc-proto={version="0.28.0", default-features = false}
 prost = { version = "0.11.8", default-features = false, features = ["prost-derive"] }
 prost-types = { version = "0.11.8", default-features = false }
+hex="*"
+bytes="*"
 common={path="../../../libraries/rust/common"}
 
 
