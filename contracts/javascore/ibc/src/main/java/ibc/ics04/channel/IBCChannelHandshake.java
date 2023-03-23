@@ -19,7 +19,7 @@ import score.Context;
 
 public class IBCChannelHandshake extends IBCConnection {
 
-    public String channelOpenInit(MsgChannelOpenInit msg) {
+    public String _channelOpenInit(MsgChannelOpenInit msg) {
         Channel channel = msg.getChannel();
         Context.require(channel.getConnectionHops().size() == 1, "connection_hops length must be 1");
 
@@ -43,12 +43,12 @@ public class IBCChannelHandshake extends IBCConnection {
         nextSequenceReceives.at(msg.getPortId()).set(channelId, BigInteger.ONE);
         nextSequenceAcknowledgements.at(msg.getPortId()).set(channelId, BigInteger.ONE);
 
-        updateChannelCommitment(msg.getPortId(), channelId, msg.getChannelRaw());
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), channelId, msg.getChannelRaw());
 
         return channelId;
     }
 
-    public String channelOpenTry(MsgChannelOpenTry msg) {
+    public String _channelOpenTry(MsgChannelOpenTry msg) {
         Channel channel = msg.getChannel();
         Context.require(channel.getConnectionHops().size() == 1, "connection_hops length must be 1");
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
@@ -90,12 +90,12 @@ public class IBCChannelHandshake extends IBCConnection {
         nextSequenceReceives.at(msg.getPortId()).set(channelId, BigInteger.ONE);
         nextSequenceAcknowledgements.at(msg.getPortId()).set(channelId, BigInteger.ONE);
 
-        updateChannelCommitment(msg.getPortId(), channelId, msg.getChannelRaw());
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), channelId, msg.getChannelRaw());
 
         return channelId;
     }
 
-    public void channelOpenAck(MsgChannelOpenAck msg) {
+    public byte[] _channelOpenAck(MsgChannelOpenAck msg) {
         Channel channel = Channel.decode(channels.at(msg.getPortId()).get(msg.getChannelId()));
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getConnectionHops().size() == 1);
@@ -136,11 +136,13 @@ public class IBCChannelHandshake extends IBCConnection {
         channel.getCounterparty().setChannelId(msg.getCounterpartyChannelId());
 
         byte[] encodedChannel = channel.encode();
-        updateChannelCommitment(msg.getPortId(), msg.getChannelId(), encodedChannel);
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
         channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
+
+        return encodedChannel;
     }
 
-    public void channelOpenConfirm(MsgChannelOpenConfirm msg) {
+    public byte[] _channelOpenConfirm(MsgChannelOpenConfirm msg) {
         Channel channel = Channel.decode(channels.at(msg.getPortId()).get(msg.getChannelId()));
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getConnectionHops().size() == 1);
@@ -175,11 +177,13 @@ public class IBCChannelHandshake extends IBCConnection {
         channel.setState(Channel.State.STATE_OPEN);
 
         byte[] encodedChannel = channel.encode();
-        updateChannelCommitment(msg.getPortId(), msg.getChannelId(), encodedChannel);
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
         channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
+
+        return encodedChannel;
     }
 
-    public void channelCloseInit(MsgChannelCloseInit msg) {
+    public byte[] _channelCloseInit(MsgChannelCloseInit msg) {
         Channel channel = Channel.decode(channels.at(msg.getPortId()).get(msg.getChannelId()));
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
@@ -196,11 +200,13 @@ public class IBCChannelHandshake extends IBCConnection {
         channel.setState(Channel.State.STATE_CLOSED);
 
         byte[] encodedChannel = channel.encode();
-        updateChannelCommitment(msg.getPortId(), msg.getChannelId(), encodedChannel);
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
         channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
+
+        return encodedChannel;
     }
 
-    public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
+    public byte[] _channelCloseConfirm(MsgChannelCloseConfirm msg) {
         Channel channel = Channel.decode(channels.at(msg.getPortId()).get(msg.getChannelId()));
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
@@ -237,15 +243,15 @@ public class IBCChannelHandshake extends IBCConnection {
         channel.setState(Channel.State.STATE_CLOSED);
 
         byte[] encodedChannel = channel.encode();
-        updateChannelCommitment(msg.getPortId(), msg.getChannelId(), encodedChannel);
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
         channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
+
+        return encodedChannel;
     }
 
-    private void updateChannelCommitment(String portId, String channelId, byte[] channel) {
-        sendBTPMessage(ByteUtil.join(IBCCommitment.channelCommitmentKey(portId, channelId),
+    protected void updateChannelCommitment(String clientId, String portId, String channelId, byte[] channel) {
+        sendBTPMessage(clientId, ByteUtil.join(IBCCommitment.channelCommitmentKey(portId, channelId),
                 IBCCommitment.keccak256(channel)));
-        // commitments.set(IBCCommitment.channelCommitmentKey(portId, channelId),
-        // IBCCommitment.keccak256(channel.toBytes()));
     }
 
     /* Verification functions */

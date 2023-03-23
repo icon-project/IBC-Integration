@@ -4,6 +4,7 @@ public class MsgCreateClient {
     private String clientType;
     private byte[] clientState;
     private byte[] consensusState;
+    private int btpNetworkId;
 
     public String getClientType() {
         return clientType;
@@ -27,6 +28,14 @@ public class MsgCreateClient {
 
     public void setConsensusState(byte[] consensusState) {
         this.consensusState = consensusState;
+    }
+
+    public int getBtpNetworkId() {
+        return btpNetworkId;
+    }
+
+    public void setBtpNetworkId(int btpNetworkId) {
+        this.btpNetworkId = btpNetworkId;
     }
 
 }

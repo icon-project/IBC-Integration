@@ -36,4 +36,10 @@ public interface IIBCPacket {
      * NextSequenceAck in case of ORDERED channels.
      */
     void acknowledgePacket(MsgPacketAcknowledgement msg);
+
+    /**
+     * {@code @dev} requestTimeout is called by a module in order to prove the
+     * absence of a packet on a channel.
+     */
+    void requestTimeout(byte[] packetPb);
 }

@@ -106,6 +106,21 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
+    void sendAndTimeoutPacket() throws Exception {
+        establishCommunication();
+
+        sendPacket();
+        timeoutPacket();
+    }
+
+    @Test
+    void requestTimeoutPacket() throws Exception {
+        establishCommunication();
+
+        requestTimeout(getBaseCounterPacket());
+    }
+
+    @Test
     void channel_WithoutPortAllocations() throws Exception {
         // Arrange
         createClient();

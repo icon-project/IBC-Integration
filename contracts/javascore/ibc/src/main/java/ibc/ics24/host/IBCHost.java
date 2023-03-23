@@ -13,7 +13,9 @@ public class IBCHost extends IBCStore {
     private static final Address chainScore = new Address(new byte[Address.LENGTH]);
 
     /***
-     * claimCapability allows the IBC app module to claim a capability that core IBC passes to it
+     * claimCapability allows the IBC app module to claim a capability that core IBC
+     * passes to it
+     *
      * @param name Name of the capability to claim
      * @param addr Address for which the capability is to be claimed
      *
@@ -28,7 +30,8 @@ public class IBCHost extends IBCStore {
     }
 
     /**
-     * authenticateCapability attempts to authenticate a given name from a caller. It allows for a caller to check
+     * authenticateCapability attempts to authenticate a given name from a caller.
+     * It allows for a caller to check
      * that a capability does in fact correspond to a particular name.
      *
      * @param name Name of the capability to authenticate
@@ -67,8 +70,8 @@ public class IBCHost extends IBCStore {
         this.expectedTimePerBlock.set(expectedTimePerBlock);
     }
 
-    public void sendBTPMessage(byte[] message) {
-        int id = btpNetworkId.get();
+    public void sendBTPMessage(String clientId, byte[] message) {
+        int id = btpNetworkId.get(clientId);
         NullChecker.requireNotNull(id, "BTP network not configured");
         Context.call(chainScore, "sendBTPMessage", id, message);
     }

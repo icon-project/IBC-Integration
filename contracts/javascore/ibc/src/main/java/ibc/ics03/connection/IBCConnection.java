@@ -27,7 +27,7 @@ public class IBCConnection extends IBCClient {
 
     Logger logger = new Logger("ibc-core");
 
-    public String connectionOpenInit(MsgConnectionOpenInit msg) {
+    public String _connectionOpenInit(MsgConnectionOpenInit msg) {
         String connectionId = generateConnectionIdentifier();
         Context.require(connections.get(connectionId) == null, "connectionId already exists");
         ILightClient client = getClient(msg.getClientId());
@@ -41,13 +41,13 @@ public class IBCConnection extends IBCClient {
         connection.setCounterparty(msg.getCounterparty());
 
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(connectionId, encodedConnection);
+        updateConnectionCommitment(connection.getClientId(), connectionId, encodedConnection);
         connections.set(connectionId, encodedConnection);
 
         return connectionId;
     }
 
-    public String connectionOpenTry(MsgConnectionOpenTry msg) {
+    public String _connectionOpenTry(MsgConnectionOpenTry msg) {
         List<Version> counterpartyVersions = msg.getCounterpartyVersions();
         // TODO: investigate need to self client validation
         Context.require(counterpartyVersions.size() > 0, "counterpartyVersions length must be greater than 0");
@@ -90,13 +90,13 @@ public class IBCConnection extends IBCClient {
         // TODO we should also verify a consensus state
 
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(connectionId, encodedConnection);
+        updateConnectionCommitment(connection.getClientId(), connectionId, encodedConnection);
         connections.set(connectionId, encodedConnection);
 
         return connectionId;
     }
 
-    public void connectionOpenAck(MsgConnectionOpenAck msg) {
+    public byte[] _connectionOpenAck(MsgConnectionOpenAck msg) {
         ConnectionEnd connection = ConnectionEnd.decode(connections.get(msg.getConnectionId()));
         Context.require(connection != null, "connection does not exist");
         int state = connection.getState();
@@ -149,12 +149,13 @@ public class IBCConnection extends IBCClient {
         connection.getCounterparty().setConnectionId(msg.getCounterpartyConnectionID());
 
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(msg.getConnectionId(), encodedConnection);
+        updateConnectionCommitment(connection.getClientId(), msg.getConnectionId(), encodedConnection);
         connections.set(msg.getConnectionId(), encodedConnection);
 
+        return encodedConnection;
     }
 
-    public void connectionOpenConfirm(MsgConnectionOpenConfirm msg) {
+    public byte[] _connectionOpenConfirm(MsgConnectionOpenConfirm msg) {
         ConnectionEnd connection = ConnectionEnd.decode(connections.get(msg.getConnectionId()));
         Context.require(connection != null, "connection does not exist");
         int state = connection.getState();
@@ -180,8 +181,10 @@ public class IBCConnection extends IBCClient {
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(msg.getConnectionId(), encodedConnection);
+        updateConnectionCommitment(connection.getClientId(), msg.getConnectionId(), encodedConnection);
         connections.set(msg.getConnectionId(), encodedConnection);
+
+        return encodedConnection;
     }
 
     /* Verification functions */
@@ -262,11 +265,9 @@ public class IBCConnection extends IBCClient {
         return true;
     }
 
-    private void updateConnectionCommitment(String connectionId, byte[] connectionBytes) {
-        sendBTPMessage(ByteUtil.join(IBCCommitment.connectionCommitmentKey(connectionId),
+    private void updateConnectionCommitment(String clientId, String connectionId, byte[] connectionBytes) {
+        sendBTPMessage(clientId, ByteUtil.join(IBCCommitment.connectionCommitmentKey(connectionId),
                 IBCCommitment.keccak256(connectionBytes)));
-        // commitments.set(IBCCommitment.connectionCommitmentKey(connectionId),
-        // IBCCommitment.keccak256(connection.toBytes()));>
     }
 
 }

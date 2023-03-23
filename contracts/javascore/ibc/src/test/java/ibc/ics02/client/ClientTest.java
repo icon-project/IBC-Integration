@@ -44,7 +44,7 @@ public class ClientTest extends TestBase {
 
         clientSpy = (IBCClient) spy(client.getInstance());
         client.setInstance(clientSpy);
-        doNothing().when(clientSpy).sendBTPMessage(any(byte[].class));
+        doNothing().when(clientSpy).sendBTPMessage(any(String.class), any(byte[].class));
 
     }
 
@@ -75,7 +75,7 @@ public class ClientTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "Register client before creation.";
         Executable createWithoutRegisterExecutable = () -> client.invoke(owner,
-                "createClient", msg);
+                "_createClient", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 createWithoutRegisterExecutable);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -85,9 +85,11 @@ public class ClientTest extends TestBase {
     void createClient() {
         // Arrange
         MsgCreateClient msg = new MsgCreateClient();
+
         msg.setClientType("type");
         msg.setConsensusState(new byte[2]);
         msg.setClientState(new byte[3]);
+        msg.setBtpNetworkId(4);
         String expectedClientId = msg.getClientType() + "-0";
 
         byte[] clientStateCommitment = new byte[4];
@@ -102,25 +104,18 @@ public class ClientTest extends TestBase {
 
         // Act
         client.invoke(owner, "registerClient", msg.getClientType(), lightClient.getAddress());
-        client.invoke(owner, "createClient", msg);
+        client.invoke(owner, "_createClient", msg);
 
         // Assert
-
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(expectedClientId);
-        // byte[] storedClientStateCommitment = (byte[]) client.call("getCommitment",
-        // IBCCommitment.clientStateCommitmentKey(expectedClientId));
-        // assertEquals(clientStateCommitment, storedClientStateCommitment);
-
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(expectedClientId,
                 BigInteger.valueOf(consensusHeight.getRevisionNumber()),
                 BigInteger.valueOf(consensusHeight.getRevisionHeight()));
-        // byte[] storedConsensusStateCommitment = (byte[]) client.call("getCommitment",
-        // consensusKey);
-        // assertArrayEquals(consensusStateCommitment, storedConsensusStateCommitment);
-        verify(clientSpy).sendBTPMessage(ByteUtil.join(clientKey, clientStateCommitment));
-        verify(clientSpy).sendBTPMessage(ByteUtil.join(consensusKey, consensusStateCommitment));
+        verify(clientSpy).sendBTPMessage(expectedClientId, ByteUtil.join(clientKey, clientStateCommitment));
+        verify(clientSpy).sendBTPMessage(expectedClientId, ByteUtil.join(consensusKey, consensusStateCommitment));
 
         assertEquals(BigInteger.ONE, client.call("getNextClientSequence"));
+        assertEquals(4, client.call("getBTPNetworkId", expectedClientId));
     }
 
     @Test
@@ -132,7 +127,7 @@ public class ClientTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "Client does not exist";
-        Executable updateWithoutCreate = () -> client.invoke(owner, "updateClient", updateMsg);
+        Executable updateWithoutCreate = () -> client.invoke(owner, "_updateClient", updateMsg);
         AssertionError e = assertThrows(AssertionError.class,
                 updateWithoutCreate);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -160,24 +155,16 @@ public class ClientTest extends TestBase {
         when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(response);
 
         // Act
-        client.invoke(owner, "updateClient", msg);
+        client.invoke(owner, "_updateClient", msg);
 
         // Assert
         verify(lightClient.mock).updateClient(msg.getClientId(), msg.getClientMessage());
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(msg.getClientId());
-        // byte[] storedClientStateCommitment = (byte[]) client.call("getCommitment",
-        // IBCCommitment.clientStateCommitmentKey(msg.clientId));
-        // assertArrayEquals(clientStateCommitment, storedClientStateCommitment);
-
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(msg.getClientId(),
                 BigInteger.valueOf(consensusHeight.getRevisionNumber()),
                 BigInteger.valueOf(consensusHeight.getRevisionHeight()));
-        // byte[] storedConsensusStateCommitment1 = (byte[])
-        // client.call("getCommitment", consensusKey);
-        // assertArrayEquals(consensusStateCommitment, storedConsensusStateCommitment1);
-
-        verify(clientSpy).sendBTPMessage(ByteUtil.join(clientKey, clientStateCommitment));
-        verify(clientSpy).sendBTPMessage(ByteUtil.join(consensusKey, consensusStateCommitment));
+        verify(clientSpy).sendBTPMessage(msg.getClientId(), ByteUtil.join(clientKey, clientStateCommitment));
+        verify(clientSpy).sendBTPMessage(msg.getClientId(), ByteUtil.join(consensusKey, consensusStateCommitment));
     }
 }

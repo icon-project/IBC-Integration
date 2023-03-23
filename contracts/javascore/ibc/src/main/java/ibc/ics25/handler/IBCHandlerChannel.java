@@ -9,8 +9,33 @@ import score.annotation.External;
 
 public abstract class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChannelHandshake {
 
-    @EventLog(indexed = 1)
-    public void GeneratedChannelIdentifier(String identifier) {
+    @EventLog(indexed = 2)
+    public void ChannelOpenInit(String portId, String channelId, byte[] channel) {
+
+    }
+
+    @EventLog(indexed = 2)
+    public void ChannelOpenTry(String portId, String channelId, byte[] channel) {
+
+    }
+
+    @EventLog(indexed = 2)
+    public void ChannelOpenAck(String portId, String channelId, byte[] channel) {
+
+    }
+
+    @EventLog(indexed = 2)
+    public void ChannelOpenConfirm(String portId, String channelId, byte[] channel) {
+
+    }
+
+    @EventLog(indexed = 2)
+    public void ChannelCloseInit(String portId, String channelId, byte[] channel) {
+
+    }
+
+    @EventLog(indexed = 2)
+    public void ChannelCloseConfirm(String portId, String channelId, byte[] channel) {
 
     }
 
@@ -19,7 +44,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         // TODO optimize to not do decoding twice
         Channel channel = msg.getChannel();
-        String id = super.channelOpenInit(msg);
+        String id = _channelOpenInit(msg);
         module.onChanOpenInit(
                 channel.getOrdering(),
                 channel.getConnectionHops(),
@@ -29,7 +54,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
                 channel.getVersion());
         claimCapability(channelCapabilityPath(msg.getPortId(), id), module._address());
 
-        GeneratedChannelIdentifier(id);
+        ChannelOpenInit(msg.getPortId(), id, msg.getChannelRaw());
         return id;
     }
 
@@ -38,7 +63,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         // TODO optimize to not do decoding twice
         Channel channel = msg.getChannel();
-        String id = super.channelOpenTry(msg);
+        String id = _channelOpenTry(msg);
         module.onChanOpenTry(
                 channel.getOrdering(),
                 channel.getConnectionHops(),
@@ -49,36 +74,42 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
                 msg.getCounterpartyVersion());
         claimCapability(channelCapabilityPath(msg.getPortId(), id), module._address());
 
-        GeneratedChannelIdentifier(id);
+        ChannelOpenTry(msg.getPortId(), id, msg.getChannelRaw());
+
         return id;
     }
 
     @External
     public void channelOpenAck(MsgChannelOpenAck msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
-        super.channelOpenAck(msg);
+        byte[] channel = _channelOpenAck(msg);
         module.onChanOpenAck(msg.getPortId(), msg.getChannelId(), msg.getCounterpartyVersion());
+        ChannelOpenAck(msg.getPortId(), msg.getChannelId(), channel);
     }
 
     @External
     public void channelOpenConfirm(MsgChannelOpenConfirm msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
-        super.channelOpenConfirm(msg);
+        byte[] channel = _channelOpenConfirm(msg);
         module.onChanOpenConfirm(msg.getPortId(), msg.getChannelId());
+        ChannelOpenConfirm(msg.getPortId(), msg.getChannelId(), channel);
     }
 
     @External
     public void channelCloseInit(MsgChannelCloseInit msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
-        super.channelCloseInit(msg);
+        byte[] channel = _channelCloseInit(msg);
         module.onChanCloseInit(msg.getPortId(), msg.getChannelId());
+        ChannelCloseInit(msg.getPortId(), msg.getChannelId(), channel);
+
     }
 
     @External
     public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
-        super.channelCloseConfirm(msg);
+        byte[] channel = _channelCloseConfirm(msg);
         module.onChanCloseConfirm(msg.getPortId(), msg.getChannelId());
+        ChannelCloseConfirm(msg.getPortId(), msg.getChannelId(), channel);
     }
 
 }

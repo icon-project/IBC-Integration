@@ -69,7 +69,7 @@ public class ConnectionTest extends TestBase {
         connection = sm.deploy(owner, ConnectionMock.class);
         connectionSpy = (IBCConnection) spy(connection.getInstance());
         connection.setInstance(connectionSpy);
-        doNothing().when(connectionSpy).sendBTPMessage(any(byte[].class));
+        doNothing().when(connectionSpy).sendBTPMessage(any(String.class), any(byte[].class));
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
         proofHeight = Height.newBuilder()
@@ -106,7 +106,7 @@ public class ConnectionTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "Client does not exist";
         Executable openConnectionWithoutClient = () -> connection.invoke(owner,
-                "connectionOpenInit", msg);
+                "_connectionOpenInit", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 openConnectionWithoutClient);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -121,7 +121,7 @@ public class ConnectionTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "Client state not found";
         Executable openConnectionWithoutState = () -> connection.invoke(owner,
-                "connectionOpenInit", msg);
+                "_connectionOpenInit", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 openConnectionWithoutState);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -138,19 +138,16 @@ public class ConnectionTest extends TestBase {
         when(lightClient.mock.getClientState(msg.getClientId())).thenReturn(new byte[0]);
 
         // Act
-        connection.invoke(owner, "connectionOpenInit", msg);
+        connection.invoke(owner, "_connectionOpenInit", msg);
 
         // Assert
         ConnectionEnd expectedConnection = ConnectionEnd.newBuilder(baseConnection)
                 .setState(ConnectionEnd.State.STATE_INIT).build();
 
-        // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
-        // IBCCommitment.connectionCommitmentKey(expectedConnectionId));
-        // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
-        // storedCommitment);
         byte[] connectionKey = IBCCommitment.connectionCommitmentKey(expectedConnectionId);
         verify(connectionSpy)
                 .sendBTPMessage(
+                        clientId,
                         ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
     }
@@ -164,7 +161,7 @@ public class ConnectionTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "counterpartyVersions length must be greater than 0";
         Executable openConnectionWithoutVersion = () -> connection.invoke(owner,
-                "connectionOpenTry", msg);
+                "_connectionOpenTry", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 openConnectionWithoutVersion);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -179,7 +176,7 @@ public class ConnectionTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "counterpartyVersions length must be greater than 0";
         Executable openConnectionWithoutVersion = () -> connection.invoke(owner,
-                "connectionOpenTry", msg);
+                "_connectionOpenTry", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 openConnectionWithoutVersion);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -230,14 +227,14 @@ public class ConnectionTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "failed to verify connection state";
         Executable clientVerificationFailed = () -> connection.invoke(owner,
-                "connectionOpenTry", msg);
+                "_connectionOpenTry", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 clientVerificationFailed);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
 
         expectedErrorMessage = "failed to verify clientState";
         Executable stateVerificationFailed = () -> connection.invoke(owner,
-                "connectionOpenTry", msg);
+                "_connectionOpenTry", msg);
         e = assertThrows(AssertionError.class,
                 stateVerificationFailed);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -288,19 +285,17 @@ public class ConnectionTest extends TestBase {
                 .thenReturn(true);
 
         // Act
-        connection.invoke(owner, "connectionOpenTry", msg);
+        connection.invoke(owner, "_connectionOpenTry", msg);
 
         // Assert
         ConnectionEnd expectedConnection = ConnectionEnd.newBuilder(baseConnection)
                 .setState(ConnectionEnd.State.STATE_TRYOPEN).build();
 
-        // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
-        // IBCCommitment.connectionCommitmentKey(expectedConnectionId));
-        // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
-        // storedCommitment);
+
         byte[] connectionKey = IBCCommitment.connectionCommitmentKey(expectedConnectionId);
         verify(connectionSpy)
                 .sendBTPMessage(
+                        clientId,
                         ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
 
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
@@ -316,7 +311,7 @@ public class ConnectionTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "connection state is not INIT or TRYOPEN";
         Executable clientVerificationFailed = () -> connection.invoke(owner,
-                "connectionOpenAck", msg);
+                "_connectionOpenAck", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 clientVerificationFailed);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -337,7 +332,7 @@ public class ConnectionTest extends TestBase {
         String expectedErrorMessage = "connection state is in TRYOPEN but the provided version is not set in the " +
                 "previous connection versions";
         Executable clientVerificationFailed = () -> connection.invoke(owner,
-                "connectionOpenAck", msg);
+                "_connectionOpenAck", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 clientVerificationFailed);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -384,7 +379,7 @@ public class ConnectionTest extends TestBase {
                 .thenReturn(true);
 
         // Act
-        connection.invoke(owner, "connectionOpenAck", msg);
+        connection.invoke(owner, "_connectionOpenAck", msg);
 
         // Assert
         Counterparty counterparty = Counterparty.newBuilder(baseConnection.getCounterparty())
@@ -395,13 +390,10 @@ public class ConnectionTest extends TestBase {
                 .addAllVersions(counterpartyConnection.getVersionsList())
                 .setCounterparty(counterparty).build();
 
-        // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
-        // IBCCommitment.connectionCommitmentKey(msg.connectionId));
-        // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
-        // storedCommitment);
         byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.getConnectionId());
         verify(connectionSpy)
                 .sendBTPMessage(
+                        clientId,
                         ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
 
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
@@ -419,7 +411,7 @@ public class ConnectionTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "connection state is not TRYOPEN";
         Executable clientVerificationFailed = () -> connection.invoke(owner,
-                "connectionOpenConfirm", msg);
+                "_connectionOpenConfirm", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 clientVerificationFailed);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -454,18 +446,16 @@ public class ConnectionTest extends TestBase {
                 .thenReturn(true);
 
         // Act
-        connection.invoke(owner, "connectionOpenConfirm", msg);
+        connection.invoke(owner, "_connectionOpenConfirm", msg);
 
         // Assert
         ConnectionEnd expectedConnection = ConnectionEnd.newBuilder(baseConnection)
                 .setState(ConnectionEnd.State.STATE_OPEN).build();
-        // byte[] storedCommitment = (byte[]) connection.call("getCommitment",
-        // IBCCommitment.connectionCommitmentKey(msg.connectionId));
-        // assertArrayEquals(IBCCommitment.keccak256(expectedConnection.toBytes()),
-        // storedCommitment);
+
         byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.getConnectionId());
         verify(connectionSpy)
                 .sendBTPMessage(
+                        clientId,
                         ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
 
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));

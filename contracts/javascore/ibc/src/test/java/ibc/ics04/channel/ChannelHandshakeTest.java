@@ -82,7 +82,7 @@ public class ChannelHandshakeTest extends TestBase {
         channel = sm.deploy(owner, ChannelHandshakeMock.class);
         channelSpy = (IBCChannelHandshake) spy(channel.getInstance());
         channel.setInstance(channelSpy);
-        doNothing().when(channelSpy).sendBTPMessage(any(byte[].class));
+        doNothing().when(channelSpy).sendBTPMessage(any(String.class), any(byte[].class));
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class,
                 ILightClient.class, sm, owner);
@@ -138,7 +138,7 @@ public class ChannelHandshakeTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "connection_hops length must be 1";
         Executable multiHopChannel = () -> channel.invoke(owner,
-                "channelOpenInit", msg);
+                "_channelOpenInit", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 multiHopChannel);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -154,7 +154,7 @@ public class ChannelHandshakeTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "connection does not exist";
         Executable withoutConnection = () -> channel.invoke(owner,
-                "channelOpenInit", msg);
+                "_channelOpenInit", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 withoutConnection);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -173,7 +173,7 @@ public class ChannelHandshakeTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "single version must be negotiated on connection before opening channel";
-        Executable withoutNegotiatedVersion = () -> channel.invoke(owner, "channelOpenInit", msg);
+        Executable withoutNegotiatedVersion = () -> channel.invoke(owner, "_channelOpenInit", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 withoutNegotiatedVersion);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -192,7 +192,7 @@ public class ChannelHandshakeTest extends TestBase {
         // Act & Assert
         String expectedErrorMessage = "channel state must be STATE_INIT";
         Executable withoutNegotiatedVersion = () -> channel.invoke(owner,
-                "channelOpenInit", msg);
+                "_channelOpenInit", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 withoutNegotiatedVersion);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -208,15 +208,12 @@ public class ChannelHandshakeTest extends TestBase {
         msg.setChannel(baseChannel.toByteArray());
 
         // Act
-        channel.invoke(owner, "channelOpenInit", msg);
+        channel.invoke(owner, "_channelOpenInit", msg);
 
         // Assert
         byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
-        // byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
-        // assertArrayEquals(IBCCommitment.keccak256(msg.channel.toBytes()),
-        // storedCommitment);
 
-        verify(channelSpy).sendBTPMessage(ByteUtil.join(key,
+        verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
                 IBCCommitment.keccak256(msg.getChannelRaw())));
         assertEquals(BigInteger.ONE, channel.call("getNextChannelSequence"));
         assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId,
@@ -239,7 +236,7 @@ public class ChannelHandshakeTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "connection_hops length must be 1";
-        Executable multiHop = () -> channel.invoke(owner, "channelOpenTry", msg);
+        Executable multiHop = () -> channel.invoke(owner, "_channelOpenTry", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 multiHop);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -253,7 +250,7 @@ public class ChannelHandshakeTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "connection does not exist";
-        Executable noConnection = () -> channel.invoke(owner, "channelOpenTry", msg);
+        Executable noConnection = () -> channel.invoke(owner, "_channelOpenTry", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 noConnection);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -272,7 +269,7 @@ public class ChannelHandshakeTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "single version must be negotiated on connection before opening channel";
-        Executable inconsistentVersion = () -> channel.invoke(owner, "channelOpenTry", msg);
+        Executable inconsistentVersion = () -> channel.invoke(owner, "_channelOpenTry", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 inconsistentVersion);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -289,7 +286,7 @@ public class ChannelHandshakeTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "channel state must be STATE_TRYOPEN";
-        Executable wrongState = () -> channel.invoke(owner, "channelOpenTry", msg);
+        Executable wrongState = () -> channel.invoke(owner, "_channelOpenTry", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 wrongState);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -328,7 +325,7 @@ public class ChannelHandshakeTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "failed to verify channel state";
-        Executable wrongState = () -> channel.invoke(owner, "channelOpenTry", msg);
+        Executable wrongState = () -> channel.invoke(owner, "_channelOpenTry", msg);
         AssertionError e = assertThrows(AssertionError.class,
                 wrongState);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -365,15 +362,13 @@ public class ChannelHandshakeTest extends TestBase {
                 IBCCommitment.channelPath(portId, channelId), expectedChannel.toByteArray()))
                 .thenReturn(true);
         // Act
-        channel.invoke(owner, "channelOpenTry", msg);
+        channel.invoke(owner, "_channelOpenTry", msg);
 
         // Assert
         byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
-        // byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
-        // assertArrayEquals(IBCCommitment.keccak256(msg.channel.toBytes()),
-        // storedCommitment);
 
-        verify(channelSpy).sendBTPMessage(ByteUtil.join(key,
+
+        verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
                 IBCCommitment.keccak256(baseChannel.toByteArray())));
 
         assertEquals(BigInteger.ONE, channel.call("getNextChannelSequence"));
@@ -413,7 +408,7 @@ public class ChannelHandshakeTest extends TestBase {
                         channelId),
                 counterpartyChannel.toByteArray())).thenReturn(true);
 
-        channel.invoke(owner, "channelOpenAck", msg);
+        channel.invoke(owner, "_channelOpenAck", msg);
 
         // Assert
         Counterparty counterparty = Counterparty.newBuilder(baseChannel.getCounterparty())
@@ -423,11 +418,8 @@ public class ChannelHandshakeTest extends TestBase {
                 .setVersion(msg.getCounterpartyVersion())
                 .setCounterparty(counterparty).build();
         byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
-        // byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
-        // assertArrayEquals(IBCCommitment.keccak256(expectedChannel.toBytes()),
-        // storedCommitment);
 
-        verify(channelSpy).sendBTPMessage(ByteUtil.join(key,
+        verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
                 IBCCommitment.keccak256(expectedChannel.toByteArray())));
 
     }
@@ -460,17 +452,14 @@ public class ChannelHandshakeTest extends TestBase {
                 counterpartyChannel.toByteArray())).thenReturn(true);
 
         // Act
-        channel.invoke(owner, "channelOpenConfirm", msg);
+        channel.invoke(owner, "_channelOpenConfirm", msg);
 
         // Assert
         Channel expectedChannel = Channel.newBuilder(baseChannel)
                 .setState(Channel.State.STATE_OPEN).build();
 
         byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
-        // byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
-        // assertArrayEquals(IBCCommitment.keccak256(expectedChannel.toBytes()),
-        // storedCommitment);
-        verify(channelSpy).sendBTPMessage(ByteUtil.join(key,
+        verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
                 IBCCommitment.keccak256(expectedChannel.toByteArray())));
     }
 
@@ -484,17 +473,14 @@ public class ChannelHandshakeTest extends TestBase {
         msg.setChannelId(channelId);
 
         // Act
-        channel.invoke(owner, "channelCloseInit", msg);
+        channel.invoke(owner, "_channelCloseInit", msg);
 
         // Assert
         byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
-        // byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
-        // // assertArrayEquals(IBCCommitment.keccak256(expectedChannel.toBytes()),
-        // storedCommitment);
         Channel expectedChannel = Channel.newBuilder(baseChannel)
                 .setState(Channel.State.STATE_CLOSED).build();
 
-        verify(channelSpy).sendBTPMessage(ByteUtil.join(key,
+        verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
                 IBCCommitment.keccak256(expectedChannel.toByteArray())));
     }
 
@@ -527,17 +513,14 @@ public class ChannelHandshakeTest extends TestBase {
                 counterpartyChannel.toByteArray())).thenReturn(true);
 
         // Act
-        channel.invoke(owner, "channelCloseConfirm", msg);
+        channel.invoke(owner, "_channelCloseConfirm", msg);
 
         // Assert
         Channel expectedChannel = Channel.newBuilder(baseChannel)
                 .setState(Channel.State.STATE_CLOSED).build();
 
         byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
-        // byte[] storedCommitment = (byte[]) channel.call("getCommitment", key);
-        // assertArrayEquals(IBCCommitment.keccak256(expectedChannel.toBytes()),
-        // storedCommitment);
-        verify(channelSpy).sendBTPMessage(ByteUtil.join(key,
+        verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
                 IBCCommitment.keccak256(expectedChannel.toByteArray())));
 
     }
