@@ -25,8 +25,8 @@ use ibc_proto::ibc::core::channel::v1::{
     MsgChannelOpenTry as RawMsgChannelOpenTry,
 };
 use ibc_proto::ibc::core::client::v1::{
-    MsgSubmitMisbehaviour as RawMessageMisbehaviour, MsgUpdateClient as RawMessageUpdateCelint,
-    MsgUpgradeClient as RawMessageUpgradeClient,
+    MsgCreateClient as RawMessageCreateClient, MsgSubmitMisbehaviour as RawMessageMisbehaviour,
+    MsgUpdateClient as RawMessageUpdateCelint, MsgUpgradeClient as RawMessageUpgradeClient,
 };
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 use ibc_proto::ibc::core::{channel::v1::Channel as RawChannel, client::v1::Height as RawHeight};
@@ -267,5 +267,17 @@ pub fn get_dummy_raw_msg_chan_close_confirm(proof_height: u64) -> RawMsgChannelC
             revision_height: proof_height,
         }),
         signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_create_client() -> RawMessageCreateClient {
+    let height = Height::new(10, 15).unwrap();
+    let mock_header = MockHeader::new(height);
+    let mock_client_state = MockClientState::new(mock_header);
+    let mock_consenus_state = MockConsensusState::new(mock_header);
+    RawMessageCreateClient {
+        client_state: Some(mock_client_state.into()),
+        consensus_state: Some(mock_consenus_state.into()),
+        signer: get_dummy_account_id().as_ref().to_string(),
     }
 }
