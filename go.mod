@@ -6,8 +6,8 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/avast/retry-go/v4 v4.0.4
 	github.com/cosmos/cosmos-sdk v0.46.2
-	github.com/cucumber/godog v0.12.6
 	github.com/cosmos/ibc-go/v6 v6.0.0-20221104144119-b1f494c64328
+	github.com/cucumber/godog v0.12.6
 	github.com/docker/docker v20.10.19+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
@@ -17,6 +17,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230228221006-4e43739472a1
 	github.com/stretchr/testify v1.8.1
+	github.com/tendermint/tendermint v0.34.24
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.1.0
@@ -189,7 +190,6 @@ require (
 	github.com/tendermint/btcd v0.1.1 // indirect
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/tendermint/tendermint v0.34.24 // indirect
 	github.com/tendermint/tm-db v0.6.7 // indirect
 	github.com/tinylib/msgp v1.1.2 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect

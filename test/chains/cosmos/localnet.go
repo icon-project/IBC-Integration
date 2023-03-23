@@ -2,6 +2,7 @@ package cosmos
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/icon-project/ibc-integration/test/chains"
@@ -11,13 +12,6 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 	"go.uber.org/zap"
 )
-
-type CosmosLocalnet struct {
-	*cosmos.CosmosChain
-	keyName  string
-	filepath map[string]string
-	t        *testing.T
-}
 
 func NewCosmosLocalnet(t *testing.T, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keyPassword string, contracts map[string]string) (chains.Chain, error) {
 	chain := cosmos.NewCosmosChain(t.Name(), chainConfig, numValidators, numFullNodes, log)
@@ -34,20 +28,43 @@ func (c *CosmosLocalnet) DeployContract(ctx context.Context) (context.Context, e
 	destUser := users[0]
 	c.keyName = destUser.KeyName()
 
-	// TODO Init Message
-	codeId, _ := c.CosmosChain.StoreContract(ctx, c.keyName, c.filepath["cosmos_contract"])
-	address, err := c.CosmosChain.InstantiateContract(ctx, c.keyName, codeId, "Init Message", false)
+	// Get Contract Name from context
+	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
+	contractName := ctxValue.ContractName
+	codeId, _ := c.CosmosChain.StoreContract(ctx, c.keyName, c.filepath[contractName])
+
+	// Get Init Message from context
+	ctxVal := ctx.Value(chains.InitMessage{}).(chains.InitMessage)
+	initMessage := ctxVal.InitMsg
+	address, err := c.CosmosChain.InstantiateContract(ctx, c.keyName, codeId, initMessage, true)
 	return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
 		ContractAddress: address,
 	}), err
 }
 
 func (c *CosmosLocalnet) QueryContract(ctx context.Context) (context.Context, error) {
-	panic("not implemented") // TODO: Implement
+	ctxValue := ctx.Value(chains.ContractKey{}).(chains.ContractKey)
+	contractAddress := ctxValue.ContractAddress
+	var response interface{}
+	var r Query
+	ctxVal := ctx.Value(chains.Query{}).(chains.Query)
+	if ctxVal.Query == "get_admin" {
+		r = Query{GetAdmin: &GetAdmin{}}
+	} else if ctxVal.Query == "get_protocol_fee" {
+		r = Query{GetProtocolFee: &GetProtocolFee{}}
+	}
+
+	err := c.CosmosChain.QueryContract(ctx, contractAddress, r, &response)
+	fmt.Printf("Response is : %s", response)
+	return ctx, err
 }
 
 func (c *CosmosLocalnet) ExecuteContract(ctx context.Context) (context.Context, error) {
-	panic("not implemented") // TODO: Implement
+	ctxValue := ctx.Value(chains.ContractKey{}).(chains.ContractKey)
+	contractAddress := ctxValue.ContractAddress
+	paramValue := ctx.Value(chains.Param{}).(chains.Param)
+	err := c.CosmosChain.ExecuteContract(ctx, c.keyName, contractAddress, paramValue.Data)
+	return ctx, err
 }
 
 func (c *CosmosLocalnet) GetLastBlock(ctx context.Context) (context.Context, error) {
