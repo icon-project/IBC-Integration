@@ -32,9 +32,9 @@ pub fn make_open_ack_channel_event(msg: &MsgChannelOpenAck) -> Event {
     Event::new(IbcEventType::OpenAckChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_a.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_a.as_str())
-        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, "")
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, PortId::default().ibc_port_id().as_str())
         .add_attribute(COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_b.as_str())
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, "")
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, ConnectionId::default().connection_id().as_str())
 }
 
 // Makes OpenConfirmChannel IBC Event
@@ -42,9 +42,9 @@ pub fn make_open_confirm_channel_event(msg: &MsgChannelOpenConfirm) -> Event {
     Event::new(IbcEventType::OpenConfirmChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_b.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_b.as_str())
-        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, "")
-        .add_attribute(COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY, "")
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, "")
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, PortId::default().ibc_port_id().as_str())
+        .add_attribute(COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY, ChannelId::default().ibc_channel_id().as_str())
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, ConnectionId::default().connection_id().as_str())
 }
 
 // Event for created channel id
