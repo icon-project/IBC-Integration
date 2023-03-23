@@ -32,6 +32,9 @@ impl ClientId {
     pub fn default() -> Self {
         Self(IbcClientId::default())
     }
+    pub fn ibc_client_id(&self) -> &IbcClientId {
+        &self.0
+    }
 }
 
 impl<'a> PrimaryKey<'a> for ClientId {
@@ -64,6 +67,9 @@ impl KeyDeserialize for ClientId {
 pub struct ClientType(IbcClientType);
 
 impl ClientType {
+    pub fn new(cleint_type: String) -> ClientType {
+        ClientType(IbcClientType::new(cleint_type))
+    }
     pub fn client_type(&self) -> IbcClientType {
         self.0.clone()
     }
@@ -124,6 +130,10 @@ impl ConnectionId {
     }
     pub fn connection_id(&self) -> &IbcConnectionId {
         &self.0
+    }
+
+    pub fn default() -> Self {
+        Self(IbcConnectionId::default())
     }
 }
 
@@ -202,8 +212,14 @@ impl ChannelId {
         Self(IbcChannelId::default())
     }
 
-    pub fn channel_id(&self) -> &IbcChannelId {
+    pub fn ibc_channel_id(&self) -> &IbcChannelId {
         &self.0
+    }
+}
+
+impl From<IbcChannelId> for ChannelId {
+    fn from(channel_id: IbcChannelId) -> Self {
+        Self(channel_id)
     }
 }
 
@@ -243,10 +259,11 @@ impl PortId {
         self.0.as_bytes()
     }
 
-    pub fn dafault() -> Self {
+    pub fn default() -> Self {
         Self(IbcPortId::default())
     }
-    pub fn port_id(&self) -> &IbcPortId {
+
+    pub fn ibc_port_id(&self) -> &IbcPortId {
         &self.0
     }
 }
@@ -271,5 +288,43 @@ impl KeyDeserialize for PortId {
             .unwrap();
         let port_id = IbcPortId::from_str(&result).unwrap();
         Ok(PortId(port_id))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ModuleId(String);
+
+impl ModuleId {
+    pub fn new(s: String) -> Self {
+        let ibc_module_id = IbcModuleId::from_str(&s).unwrap();
+        Self(ibc_module_id.to_string())
+    }
+    pub fn module_id(&self) -> IbcModuleId {
+        IbcModuleId::from_str(&self.0).unwrap()
+    }
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+impl<'a> PrimaryKey<'a> for ModuleId {
+    type Prefix = ();
+    type SubPrefix = ();
+    type Suffix = ();
+    type SuperSuffix = ();
+
+    fn key(&self) -> Vec<Key> {
+        vec![Key::Ref(self.as_bytes())]
+    }
+}
+
+impl KeyDeserialize for ModuleId {
+    type Output = ModuleId;
+    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
+        let result = String::from_utf8(value)
+            .map_err(StdError::invalid_utf8)
+            .unwrap();
+        let module_id = IbcModuleId::from_str(&result).unwrap();
+        Ok(ModuleId(module_id.to_string()))
     }
 }

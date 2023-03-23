@@ -11,6 +11,7 @@ pub mod ics26_routing;
 pub mod msg;
 pub mod state;
 pub mod storage_keys;
+pub mod traits;
 pub mod types;
 
 pub use crate::error::ContractError;
@@ -23,7 +24,13 @@ use crate::{
 use cosmwasm_schema::cw_serde;
 use cw_storage_plus::{Item, Map};
 pub use ibc::core::{
-    ics02_client::client_type::ClientType as IbcClientType,
+    ics02_client::{
+        client_type::ClientType as IbcClientType,
+        msgs::{
+            create_client::MsgCreateClient, update_client::MsgUpdateClient,
+            upgrade_client::MsgUpgradeClient,
+        },
+    },
     ics03_connection::connection::ConnectionEnd,
     ics04_channel::channel::ChannelEnd,
     ics04_channel::packet::Sequence,
@@ -31,6 +38,9 @@ pub use ibc::core::{
         ChannelId as IbcChannelId, ClientId as IbcClientId, ConnectionId as IbcConnectionId,
         PortId as IbcPortId,
     },
+    ics26_routing::context::ModuleId as IbcModuleId,
     ics26_routing::context::{Module, ModuleId},
 };
 use serde::{Deserialize, Serialize};
+
+use cosmwasm_std::{Addr, Deps, DepsMut};
