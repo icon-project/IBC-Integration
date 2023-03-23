@@ -12,8 +12,11 @@ use cw_ibc_core::ConnectionEnd;
 use cw_ibc_core::IbcClientId;
 use ibc::core::ics03_connection::connection::Counterparty;
 use ibc::core::ics03_connection::connection::State;
+use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 use ibc::core::ics03_connection::version::Version;
+use ibc_proto::ibc::core::client::v1::Height;
 use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterparty;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
 use ibc_proto::ibc::core::connection::v1::{
@@ -204,5 +207,72 @@ fn connection_open_try_bad_client_id_name_too_short() {
         ..default_raw_try_msg.clone()
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg.clone());
+    assert_eq!(res_msg.is_ok(), false)
+}
+
+#[test]
+fn test_to_and_from_connection_open_ack() {
+    let raw = get_dummy_raw_msg_conn_open_ack(10, 34);
+    let msg = MsgConnectionOpenAck::try_from(raw.clone()).unwrap();
+    let raw_back = RawMsgConnectionOpenAck::from(msg.clone());
+    let msg_back = MsgConnectionOpenAck::try_from(raw_back.clone()).unwrap();
+    assert_eq!(raw, raw_back);
+    assert_eq!(msg, msg_back);
+}
+
+#[test]
+fn connection_open_ack_from_raw_good_parameter() {
+    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
+    let res_msg = MsgConnectionOpenAck::try_from(default_raw_ack_msg.clone());
+    assert_eq!(res_msg.is_ok(), true)
+}
+
+#[test]
+fn conecction_open_ack_bad_connection_id() {
+    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
+    let ack_msg = RawMsgConnectionOpenAck {
+        connection_id: "con007".to_string(),
+        ..default_raw_ack_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenAck::try_from(ack_msg.clone());
+    assert_eq!(res_msg.is_ok(), false)
+}
+
+#[test]
+fn connection_open_ack_bad_version() {
+    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
+    let ack_msg = RawMsgConnectionOpenAck {
+        version: None,
+        ..default_raw_ack_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenAck::try_from(ack_msg.clone());
+    assert_eq!(res_msg.is_ok(), false)
+}
+
+#[test]
+fn connection_open_ack_bad_proof_height() {
+    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
+    let ack_msg = RawMsgConnectionOpenAck {
+        proof_height: Some(Height {
+            revision_number: 1,
+            revision_height: 0,
+        }),
+        ..default_raw_ack_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenAck::try_from(ack_msg.clone());
+    assert_eq!(res_msg.is_ok(), false)
+}
+
+#[test]
+fn connection_open_ack_bad_consensus_height_and_height_is_0() {
+    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
+    let ack_msg = RawMsgConnectionOpenAck {
+        consensus_height: Some(Height {
+            revision_number: 1,
+            revision_height: 0,
+        }),
+        ..default_raw_ack_msg
+    };
+    let res_msg = MsgConnectionOpenAck::try_from(ack_msg.clone());
     assert_eq!(res_msg.is_ok(), false)
 }
