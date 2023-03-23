@@ -113,29 +113,6 @@ impl<'a> CwCallService<'a> {
             }),
         }
     }
-
-    // pub fn execute(
-    //     &mut self,
-    //     deps: DepsMut,
-    //     env: Env,
-    //     info: MessageInfo,
-    //     msg: ExecuteMsg,
-    // ) -> Result<Response, ContractError> {
-    //     match msg {
-    //         ExecuteMsg::SetAdmin { address } => self.add_admin(deps.storage, info, address),
-    //         ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
-    //         ExecuteMsg::SetProtocolFeeHandler { address } => {
-    //             self.set_protocol_feehandler(deps, env, info, address)
-    //         }
-    //         ExecuteMsg::SendCallMessage { to, data, rollback } => {
-    //             self.send_packet(env, deps, info, to, data, rollback, 0)
-    //         }
-    //         ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
-    //         ExecuteMsg::ExecuteRollback { sequence_no } => {
-    //             self.execute_rollback(deps, info, sequence_no)
-    //         }
-    //     }
-    // }
 }
 
 impl<'a> CwCallService<'a> {
