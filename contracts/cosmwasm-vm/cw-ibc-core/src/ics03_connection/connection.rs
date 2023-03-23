@@ -97,10 +97,6 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn commitment_prefix(&self) -> CommitmentPrefix {
-        CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() // TODO
-    }
-
     pub fn init_connection_counter(
         &self,
         store: &mut dyn Storage,
@@ -121,6 +117,10 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
+    pub fn commitment_prefix(&self) -> CommitmentPrefix {
+        CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() //TODO
+    }
+
     fn host_current_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
         todo!()
     }
