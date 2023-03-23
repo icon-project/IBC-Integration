@@ -106,11 +106,7 @@ pub fn make_send_packet_event(
     let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
         error: ChannelError::NonUtf8PacketData,
     })?;
-    let hex_data = String::from_utf8(hex::encode(packet.data.clone())).map_err(|_| {
-        ContractError::IbcChannelError {
-            error: ChannelError::NonUtf8PacketData,
-        }
-    })?;
+    let hex_data = hex::encode(&packet.data.clone());
 
     Ok(Event::new(IbcEventType::SendPacket.as_str())
         .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)
@@ -141,19 +137,11 @@ pub fn make_write_ack_event(
     let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
         error: ChannelError::NonUtf8PacketData,
     })?;
-    let hex_data = String::from_utf8(hex::encode(packet.data.clone())).map_err(|_| {
-        ContractError::IbcChannelError {
-            error: ChannelError::NonUtf8PacketData,
-        }
-    })?;
+    let hex_data = hex::encode(packet.data.clone());
     let ack_data = std::str::from_utf8(&ack).map_err(|_| ContractError::IbcChannelError {
         error: ChannelError::NonUtf8PacketData,
     })?;
-    let ack_hex_data = String::from_utf8(hex::encode(ack.clone())).map_err(|_| {
-        ContractError::IbcChannelError {
-            error: ChannelError::NonUtf8PacketData,
-        }
-    })?;
+    let ack_hex_data = hex::encode(ack.clone());
 
     Ok(Event::new(IbcEventType::WriteAck.as_str())
         .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)

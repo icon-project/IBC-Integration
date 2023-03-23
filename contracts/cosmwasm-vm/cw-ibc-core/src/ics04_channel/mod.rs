@@ -23,4 +23,3 @@ use ibc::core::{
     ContextError,
 };
 use ibc::events::IbcEventType;
-use subtle_encoding::hex;
