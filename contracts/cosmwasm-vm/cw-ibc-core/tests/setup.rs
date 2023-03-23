@@ -6,16 +6,19 @@ use cosmwasm_std::{
     },
     Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
 };
-
-use core::prelude::*;
-use ibc::core::ics03_connection::version::Version;
+use ibc::core::ics03_connection::version::get_compatible_versions;
 use ibc::core::ics24_host::identifier::ClientId;
 use ibc::core::ics24_host::identifier::ConnectionId;
+use ibc::Height;
+use ibc::{
+    core::ics03_connection::version::Version,
+    mock::{client_state::MockClientState, header::MockHeader},
+};
+use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 use ibc_proto::ibc::core::commitment::v1::MerklePrefix;
 use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterparty;
-use ibc_proto::ibc::core::connection::v1::{
-    MsgConnectionOpenInit as RawMsgConnectionOpenInit, Version as RawVersion,
-};
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
 
 pub struct MockEnvBuilder {
     env: Env,
@@ -120,4 +123,42 @@ pub fn get_dummy_raw_counterparty(conn_id: Option<u64>) -> RawCounterparty {
 
 pub fn get_dummy_bech32_account() -> String {
     "cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng".to_string()
+}
+
+pub fn get_dummy_raw_msg_conn_open_try(
+    proof_height: u64,
+    consensus_height: u64,
+) -> RawMsgConnectionOpenTry {
+    let client_state_height = Height::new(0, consensus_height).unwrap();
+
+    #[allow(deprecated)]
+    RawMsgConnectionOpenTry {
+        client_id: ClientId::default().to_string(),
+        previous_connection_id: ConnectionId::default().to_string(),
+        client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
+        counterparty: Some(get_dummy_raw_counterparty(Some(0))),
+        delay_period: 0,
+        counterparty_versions: get_compatible_versions()
+            .iter()
+            .map(|v| v.clone().into())
+            .collect(),
+        proof_init: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: proof_height,
+        }),
+        proof_consensus: get_dummy_proof(),
+        consensus_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: consensus_height,
+        }),
+        proof_client: get_dummy_proof(),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_proof() -> Vec<u8> {
+    "Y29uc2Vuc3VzU3RhdGUvaWJjb25lY2xpZW50LzIy"
+        .as_bytes()
+        .to_vec()
 }
