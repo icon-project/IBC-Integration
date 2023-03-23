@@ -116,3 +116,27 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 }
+
+//TODO : Implement Methods
+#[allow(dead_code)]
+#[allow(unused_variables)]
+impl<'a> CwIbcCoreContext<'a> {
+    fn host_current_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn host_oldest_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn client_consensus_state(
+        &self,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
+    ) -> Result<
+        Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
+        ibc::core::ContextError,
+    > {
+        todo!()
+    }
+}
