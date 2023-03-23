@@ -9,7 +9,10 @@ use cosmwasm_std::{
 
 use cw_ibc_core::types::{ClientId, ClientType};
 use ibc::{
-    core::ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+    core::{
+        ics03_connection::version::{get_compatible_versions, Version},
+        ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+    },
     mock::{
         client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
         misbehaviour::Misbehaviour,
@@ -17,7 +20,6 @@ use ibc::{
     signer::Signer,
     Height,
 };
-use ibc_proto::ibc::core::channel::v1::Counterparty as RawCounterparty;
 use ibc_proto::ibc::core::channel::v1::{
     MsgChannelOpenAck as RawMsgChannelOpenAck, MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
     MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
@@ -27,7 +29,13 @@ use ibc_proto::ibc::core::client::v1::{
     MsgUpdateClient as RawMessageUpdateCelint, MsgUpgradeClient as RawMessageUpgradeClient,
 };
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
+use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterpartyConnection;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
 use ibc_proto::ibc::core::{channel::v1::Channel as RawChannel, client::v1::Height as RawHeight};
+use ibc_proto::ibc::core::{
+    channel::v1::Counterparty as RawCounterparty, commitment::v1::MerklePrefix,
+};
 use ibc_proto::ics23::CommitmentProof;
 pub struct MockEnvBuilder {
     env: Env,
@@ -106,10 +114,23 @@ fn test() {
     assert_ne!(mock, mock_env_builder)
 }
 
-pub fn get_dummy_raw_counterparty(channel_id: String) -> RawCounterparty {
+pub fn get_dummy_raw_counterparty_for_channel(channel_id: String) -> RawCounterparty {
     RawCounterparty {
         port_id: PortId::default().to_string(),
         channel_id,
+    }
+}
+pub fn get_dummy_raw_counterparty(conn_id: Option<u64>) -> RawCounterpartyConnection {
+    let connection_id = match conn_id {
+        Some(id) => ConnectionId::new(id).to_string(),
+        None => "".to_string(),
+    };
+    RawCounterpartyConnection {
+        client_id: ClientId::default().as_str().to_string(),
+        connection_id,
+        prefix: Some(MerklePrefix {
+            key_prefix: b"ibc".to_vec(),
+        }),
     }
 }
 
@@ -122,7 +143,7 @@ pub fn get_dummy_raw_channel_end(channel_id: Option<u64>) -> RawChannel {
     RawChannel {
         state: 1,
         ordering: 2,
-        counterparty: Some(get_dummy_raw_counterparty(channel_id)),
+        counterparty: Some(get_dummy_raw_counterparty_for_channel(channel_id)),
         connection_hops: vec![ConnectionId::default().to_string()],
         version: "".to_string(), // The version is not validated.
     }
@@ -256,5 +277,47 @@ pub fn get_dummy_raw_msg_create_client() -> RawMessageCreateClient {
         client_state: Some(mock_client_state.into()),
         consensus_state: Some(mock_consenus_state.into()),
         signer: get_dummy_account_id().as_ref().to_string(),
+    }
+}
+
+pub fn get_dummy_raw_msg_conn_open_init() -> RawMsgConnectionOpenInit {
+    RawMsgConnectionOpenInit {
+        client_id: ClientId::default().as_str().to_string(),
+        counterparty: Some(get_dummy_raw_counterparty(None)),
+        version: Some(Version::default().into()),
+        delay_period: 0,
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_conn_open_try(
+    proof_height: u64,
+    consensus_height: u64,
+) -> RawMsgConnectionOpenTry {
+    let client_state_height = Height::new(0, consensus_height).unwrap();
+
+    #[allow(deprecated)]
+    RawMsgConnectionOpenTry {
+        client_id: ClientId::default().as_str().to_string(),
+        previous_connection_id: ConnectionId::default().to_string(),
+        client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
+        counterparty: Some(get_dummy_raw_counterparty(Some(0))),
+        delay_period: 0,
+        counterparty_versions: get_compatible_versions()
+            .iter()
+            .map(|v| v.clone().into())
+            .collect(),
+        proof_init: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: proof_height,
+        }),
+        proof_consensus: get_dummy_proof(),
+        consensus_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: consensus_height,
+        }),
+        proof_client: get_dummy_proof(),
+        signer: get_dummy_bech32_account(),
     }
 }
