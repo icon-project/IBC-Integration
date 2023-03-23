@@ -1,5 +1,7 @@
 use super::*;
 
+pub const CHANNEL_ID_ATTRIBUTE_KEY: &str = "channel_id";
+
 // Makes OpenInitChannel IBC Event
 pub fn make_open_init_channel_event(channel_id: &ChannelId, msg: &MsgChannelOpenInit) -> Event {
     Event::new(IbcEventType::OpenInitChannel.as_str())
@@ -42,7 +44,7 @@ pub fn make_open_confirm_channel_event(msg: &MsgChannelOpenConfirm) -> Event {
 }
 
 // Event for created channel id
-pub fn event_channel_id_create(channel_id: ChannelId) -> Event {
-    Event::new("ChannelId Created")
-        .add_attribute("channel_id", channel_id.ibc_channel_id().as_str())
+pub fn event_channel_id_generated(channel_id: ChannelId) -> Event {
+    Event::new("channel_id_created")
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.ibc_channel_id().as_str())
 }
