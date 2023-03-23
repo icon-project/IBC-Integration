@@ -3,8 +3,10 @@ use std::str::FromStr;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        event_channel_id_generated, MsgChannelCloseConfirm, MsgChannelCloseInit, MsgChannelOpenAck,
-        MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
+        event_channel_id_generated, make_open_ack_channel_event, make_open_confirm_channel_event,
+        make_open_init_channel_event, make_open_try_channel_event, MsgChannelCloseConfirm,
+        MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
+        MsgChannelOpenTry,
     },
     types::{ChannelId, PortId},
     ChannelEnd, Sequence,
@@ -14,6 +16,7 @@ use ibc::{
         channel::{Counterparty, Order, State},
         Version,
     },
+    events::IbcEventType,
     signer::Signer,
 };
 use ibc_proto::ibc::core::{
@@ -702,4 +705,56 @@ fn channel_close_confirm_from_raw() {
         signer: Signer::from_str("cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng").unwrap(),
     };
     assert_eq!(res_msg.unwrap(), expected);
+}
+
+#[test]
+fn create_open_ack_channel_event_test() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
+    let message = MsgChannelOpenAck::try_from(default_raw_msg.clone()).unwrap();
+    let event = make_open_ack_channel_event(&message);
+
+    assert_eq!(IbcEventType::OpenAckChannel.as_str(), event.ty);
+    assert_eq!("channel-0", event.attributes[1].value);
+    assert_eq!("defaultPort", event.attributes[0].value);
+    assert_eq!("channel_id", event.attributes[1].key);
+}
+
+#[test]
+fn create_open_confirm_channel_event_test() {
+    let proof_height = 10;
+    let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
+    let message = MsgChannelOpenConfirm::try_from(default_raw_msg.clone()).unwrap();
+    let event = make_open_confirm_channel_event(&message);
+
+    assert_eq!(IbcEventType::OpenConfirmChannel.as_str(), event.ty);
+    assert_eq!("channel-0", event.attributes[1].value);
+    assert_eq!("defaultPort", event.attributes[0].value);
+    assert_eq!("port_id", event.attributes[0].key);
+}
+
+#[test]
+fn create_open_init_channel_event_test() {
+    let default_raw_msg = get_dummy_raw_msg_chan_open_init(Some(10));
+    let message = MsgChannelOpenInit::try_from(default_raw_msg.clone()).unwrap();
+    let channel_id = ChannelId::new(10);
+    let event = make_open_init_channel_event(&channel_id, &message);
+
+    assert_eq!(IbcEventType::OpenInitChannel.as_str(), event.ty);
+    assert_eq!("channel-10", event.attributes[1].value);
+    assert_eq!("defaultPort", event.attributes[0].value);
+    assert_eq!("version", event.attributes[4].key);
+}
+
+#[test]
+fn create_open_try_channel_event_test() {
+    let default_raw_msg = get_dummy_raw_msg_chan_open_try(10);
+    let message = MsgChannelOpenTry::try_from(default_raw_msg.clone()).unwrap();
+    let channel_id = ChannelId::new(11);
+    let event = make_open_try_channel_event(&channel_id, &message);
+
+    assert_eq!(IbcEventType::OpenTryChannel.as_str(), event.ty);
+    assert_eq!("counterparty_port_id", event.attributes[2].key);
+    assert_eq!("channel-11", event.attributes[1].value);
+    assert_eq!("defaultPort", event.attributes[0].value);
 }

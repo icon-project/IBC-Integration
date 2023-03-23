@@ -20,3 +20,4 @@ use ibc::core::{
     ContextError,
 };
 use ibc::events::IbcEventType;
+use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
