@@ -3,7 +3,7 @@ use std::str::FromStr;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        event_channel_id_generated, make_open_ack_channel_event, make_open_confirm_channel_event,
+        make_channel_id_generated_event, make_open_ack_channel_event, make_open_confirm_channel_event,
         make_open_init_channel_event, make_open_try_channel_event, MsgChannelCloseConfirm,
         MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
         MsgChannelOpenTry,
@@ -573,7 +573,7 @@ fn channel_open_ack_from_raw_bad_channel_id_parameter() {
 #[test]
 fn create_channel_id_event_test() {
     let client_id = ChannelId::new(10);
-    let event = event_channel_id_generated(client_id);
+    let event = make_channel_id_generated_event(client_id);
 
     assert_eq!("channel_id_created", event.ty);
     assert_eq!("channel-10", event.attributes[0].value);
