@@ -47,7 +47,7 @@ public class IBCClient extends IBCHost {
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
         // update commitments
         // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
-        Height updateHeight = response.getUpdate().getHeight();
+        Height updateHeight = Height.decode(response.getUpdate().getHeight());
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 updateHeight.getRevisionNumber(),
                 updateHeight.getRevisionHeight());
@@ -72,7 +72,7 @@ public class IBCClient extends IBCHost {
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
         // update commitments
         // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),response.clientStateCommitment);
-        Height updateHeight = response.getUpdate().getHeight();
+        Height updateHeight =  Height.decode(response.getUpdate().getHeight());
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 updateHeight.getRevisionNumber(),
                 updateHeight.getRevisionHeight());
