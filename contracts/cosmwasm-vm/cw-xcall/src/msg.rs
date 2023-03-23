@@ -28,24 +28,24 @@ pub enum ExecuteMsg {
         sequence_no: u128,
     },
 
-    #[cfg(feature = "nonibc")]
+    #[cfg(not(feature = "native_ibc"))]
     IbcChannelOpen {
         msg: IbcChannelOpenMsg,
     },
 
-    #[cfg(feature = "nonibc")]
+    #[cfg(not(feature = "native_ibc"))]
     IbcChannelConnect {
         msg: IbcChannelConnectMsg,
     },
-    #[cfg(feature = "nonibc")]
+    #[cfg(not(feature = "native_ibc"))]
     IbcChannelClose {
         msg: IbcChannelCloseMsg,
     },
-    #[cfg(feature = "nonibc")]
+    #[cfg(not(feature = "native_ibc"))]
     IbcPacketReceive {
         msg: IbcPacketReceiveMsg,
     },
-    #[cfg(feature = "nonibc")]
+    #[cfg(not(feature = "native_ibc"))]
     IbcPacketAck {
         msg: IbcPacketAckMsg,
     },

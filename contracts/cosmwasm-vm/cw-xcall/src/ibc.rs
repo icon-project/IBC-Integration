@@ -4,7 +4,7 @@ pub const IBC_VERSION: &str = "xcall-1";
 pub const APP_ORDER: IbcOrder = IbcOrder::Unordered;
 
 /// Handles the `OpenInit` and `OpenTry` parts of the IBC handshake.
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_channel_open(
     _deps: DepsMut,
     _env: Env,
@@ -23,7 +23,7 @@ pub fn ibc_channel_open(
     }))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_channel_connect(
     deps: DepsMut,
     _env: Env,
@@ -47,7 +47,7 @@ pub fn ibc_channel_connect(
     Ok(IbcBasicResponse::new().add_attribute("method", "ibc_channel_connect"))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_channel_close(
     _deps: DepsMut,
     _env: Env,
@@ -61,7 +61,7 @@ pub fn ibc_channel_close(
         .add_attribute("channel", channel))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_receive(
     deps: DepsMut,
     env: Env,
@@ -87,7 +87,7 @@ fn do_ibc_packet_receive(
     call_service.receive_packet_data(deps, msg.packet)
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_ack(
     _deps: DepsMut,
     _env: Env,
@@ -101,7 +101,7 @@ pub fn ibc_packet_ack(
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_timeout(
     _deps: DepsMut,
     _env: Env,

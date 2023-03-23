@@ -41,7 +41,7 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::ExecuteRollback { sequence_no } => {
                 self.execute_rollback(deps, info, sequence_no)
             }
-            #[cfg(feature = "nonibc")]
+            #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 let response = ibc_channel_open(deps, env, msg).map_err(|error| return error)?;
 
@@ -50,7 +50,7 @@ impl<'a> CwCallService<'a> {
                     None => Ok(Response::new()),
                 }
             }
-            #[cfg(feature = "nonibc")]
+            #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelConnect { msg } => {
                 let response = ibc_channel_connect(deps, env, msg).map_err(|error| return error)?;
 
@@ -59,7 +59,7 @@ impl<'a> CwCallService<'a> {
                     .add_events(response.events)
                     .add_submessages(response.messages))
             }
-            #[cfg(feature = "nonibc")]
+            #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelClose { msg } => {
                 let response = ibc_channel_close(deps, env, msg).map_err(|error| return error)?;
                 Ok(Response::new()
@@ -67,7 +67,7 @@ impl<'a> CwCallService<'a> {
                     .add_events(response.events)
                     .add_submessages(response.messages))
             }
-            #[cfg(feature = "nonibc")]
+            #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketReceive { msg } => {
                 let response = ibc_packet_receive(deps, env, msg).map_err(|error| {
                     return ContractError::Std(StdError::NotFound {
@@ -83,7 +83,7 @@ impl<'a> CwCallService<'a> {
 
                 Ok(response_data)
             }
-            #[cfg(feature = "nonibc")]
+            #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketAck { msg } => {
                 let response = ibc_packet_ack(deps, env, msg).map_err(|error| return error)?;
                 Ok(Response::new()
