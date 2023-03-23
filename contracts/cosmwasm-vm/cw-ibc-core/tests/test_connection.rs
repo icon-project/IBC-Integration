@@ -166,14 +166,14 @@ fn test_to_and_from_connection_open_confirm() {
 }
 
 #[test]
-fn connection_open_init_from_raw_good_parameter() {
+fn connection_open_init_from_raw_valid_parameter() {
     let default_raw_init_msg = get_dummy_raw_msg_conn_open_init();
     let res_msg = MsgConnectionOpenInit::try_from(default_raw_init_msg.clone());
     assert_eq!(res_msg.is_ok(), true)
 }
 
 #[test]
-fn connection_bad_client_id_parameter() {
+fn connection_invalid_client_id_parameter() {
     let default_raw_init_msg = RawMsgConnectionOpenInit {
         client_id: "client".to_string(),
         counterparty: Some(get_dummy_raw_counterparty(None)),
@@ -186,7 +186,7 @@ fn connection_bad_client_id_parameter() {
 }
 
 #[test]
-fn connection_open_init_bad_destination_connection_id() {
+fn connection_open_init_invalid_destination_connection_id() {
     let default_raw_init_msg = get_dummy_raw_msg_conn_open_init;
     let default_raw_init_msg = RawMsgConnectionOpenInit {
         counterparty: Some(RawCounterparty {
@@ -201,7 +201,7 @@ fn connection_open_init_bad_destination_connection_id() {
 }
 
 #[test]
-fn connection_open_try_from_raw_good_parameter() {
+fn connection_open_try_from_raw_valid_parameter() {
     let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
     let res_msg = MsgConnectionOpenTry::try_from(default_raw_try_msg.clone());
     assert_eq!(res_msg.is_ok(), true)
@@ -222,7 +222,7 @@ fn connection_open_try_destination_client_id_with_lower_case_and_special_charact
 }
 
 #[test]
-fn connection_open_try_bad_client_id_name_too_short() {
+fn connection_open_try_invalid_client_id_name_too_short() {
     let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
     let try_msg = RawMsgConnectionOpenTry {
         client_id: "client".to_string(),
