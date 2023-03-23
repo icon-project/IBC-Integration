@@ -38,8 +38,8 @@ This specification must satisfy the client interface defined in ICS 2.
 
 ```typescript
 // Id of blockchain originating the btp blocks
-SRC_NETWORK_ID : string
-// The btp network type
+SRC_NETWORK_ID : string 
+// The btp network type 
 NETWORK_TYPE_ID : unit64
 // The btp network id
 NETWORK_ID : unit64
@@ -64,7 +64,7 @@ interface ClientState {
 
 ### Consensus state
 
-The client tracks the messageRoot for each block update
+The client tracks the messageRoot for each block update 
 
 ```typescript
 interface ConsensusState {
@@ -85,6 +85,7 @@ interface BTPBlockHeader {
   updateNumber: uint64
   prev: []byte
   messagesRoot: []byte
+  messageCount: uint64
   nextValidators: [][]byte
 }
 ```
@@ -116,7 +117,7 @@ function createNetworkSectionHash( header: BTPBlockHeader) internal pure returns
 function createNetworkTypeSectionDecisionHash(
         header: BTPBlockHeader,
         srcNetworkId: string,
-        networkType: uint64
+        networkType: uint64 
     ) : []byte  {
     byte[][] ntsd  = byte[][] {
         encodeString(srcNetworkId),
@@ -144,7 +145,7 @@ function createNetworkTypeSectionHash(header: BTPBlockHeader) : []byte {
 ### Proof specs
 
 ```typescript
-function verifyBlockProof(
+function verifyBlockProof( 
         header: BTPBlockHeader,
         signatures : [][]byte,
         validators: [][]byte
@@ -159,7 +160,7 @@ function verifyBlockProof(
                 votes++
             }
         }
-        // assert 2/3 of validators has signed the networkSectionDecision
+        // assert 2/3 of validators has signed the networkSectionDecision 
         assert(hasQuorumOf(validators.length, votes), Errors.ERR_UNKNOWN);
     }
 }
@@ -179,7 +180,7 @@ function verifyMembership(
 
 
 ### `Misbehaviour`
-
+ 
 The `Misbehaviour` type is used for detecting misbehaviour and freezing the client - to prevent further packet flow - if applicable.
 
 TODO:
@@ -235,7 +236,7 @@ function verifyHeader(blockUpdate: BlockUpdate) {
     clientState = provableStore.get("clients/{NETWORK_ID}/clientState")
     // assert header has correct networkId
     assert(header.networkId == NETWORK_ID)
-
+    
     // assert trusting period has not yet passed
     assert(header.mainHeight - clientState.latestHeight < clientState.trustingPeriod)
 
@@ -265,12 +266,12 @@ function updateState(header: BTPBlockHeader) {
     clientState.latestHeight = header.mainHeight
     clientState.networkSectionHash = header.getNetworkSectionHash()
     provableStore.set("clients/{NETWORK_ID}/clientState", clientState)
-
+    
     // create recorded consensus state, save it
     consensusState = ConsensusState{header.messageRoot}
     provableStore.set("clients/{NETWORK_ID}/consensusStates/{header.mainHeight}", consensusState)
 
-    //TODO VERIFY NEED
+    //TODO VERIFY NEED  
     {
             // these may be stored as private metadata within the client in order to verify
             // that the delay period has passed in proof verification
@@ -304,7 +305,7 @@ function verifyMembership(
     assert(clientState.latestHeight >= height)
     // check that the client is unfrozen or frozen at a higher height
     assert(clientState.frozenHeight === null || clientState.frozenHeight > height)
-    //TODO VERIFY NEED
+    //TODO VERIFY NEED   
     {
         // assert that enough time has elapsed
         assert(currentTimestamp() >= processedTime + delayPeriodTime)
@@ -316,7 +317,7 @@ function verifyMembership(
     // ibc-go provides the identifier-prefixed store to this method
     // so that all state reads are for the client in question
     messageRoot = provableStore.get("clients/{NETWORK_ID}/consensusStates/{height}")
-    // verify that concatination of <path, value> exists in the message root.
+    // verify that concatination of <path, value> exists in the message root. 
     if !verifyMembership(root, proof, path, value) {
       return error
     }
@@ -334,7 +335,7 @@ function verifyNonMembership(
     assert(clientState.latestHeight >= height)
     // check that the client is unfrozen or frozen at a higher height
     assert(clientState.frozenHeight === null || clientState.frozenHeight > height)
-    //TODO VERIFY NEED
+    //TODO VERIFY NEED   
     {
         // assert that enough time has elapsed
         assert(currentTimestamp() >= processedTime + delayPeriodTime)
@@ -342,13 +343,13 @@ function verifyNonMembership(
         assert(currentHeight() >= processedHeight + delayPeriodBlocks)
 
     }
-
+    
     // fetch the previously verified message root & verify membership
     // Implementations may choose how to pass in the identifier
     // ibc-go provides the identifier-prefixed store to this method
     // so that all state reads are for the client in question
     messageRoot = provableStore.get("clients/{NETWORK_ID}/consensusStates/{height}")
-    // verify that concatination of <path, ABSENCE> exists in the message root.
+    // verify that concatination of <path, ABSENCE> exists in the message root. 
     if !verifyMembership(root, proof, path) {
       return error
     }
