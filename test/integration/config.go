@@ -1,14 +1,34 @@
 package integration_test
 
+import (
+	"fmt"
+
+	"github.com/icon-project/ibc-integration/test/chains"
+	"github.com/spf13/viper"
+)
+
 type Config struct {
-	Environment      string `mapstructure:"environment"`
-	URL              string `mapstructure:"url"`
-	KeystoreFile     string `mapstructure:"keystore_file"`
-	KeystorePassword string `mapstructure:"keystore_password"`
-	ChainId          string `mapstructure:"chain_id"`
-	Bech32Prefix     string `mapstructure:"bech32_prefix"`
-	GasAdjustment    string `mapstructure:"gas_adjustment"`
-	GasPrice         string `mapstructure:"gas_price"`
-	Bin              string `mapstructure:"bin"`
-	TrustingPeriod   string `mapstructure:"trusting_period"`
+	Chain            Chain             `mapstructure:"chain"`
+	KeystoreFile     string            `mapstructure:"keystore_file"`
+	KeystorePassword string            `mapstructure:"keystore_password"`
+	Contracts        map[string]string `mapstructure:"contracts"`
+	InitMessage      string            `mapstructure:"init_message"`
+}
+
+type Chain struct {
+	Name        string             `mapstructure:"name"`
+	version     string             `mapstructure:"version"`
+	Environment string             `mapstructure:"environment"`
+	ChainConfig chains.ChainConfig `mapstructure:"chain_config"`
+	URL         string             `mapstructure:"url"`
+	NID         string             `mapstructure:"nid"`
+}
+
+func GetConfig() *Config {
+	var config Config
+	if err := viper.Unmarshal(&config); err != nil {
+		fmt.Println(err)
+	}
+
+	return &config
 }

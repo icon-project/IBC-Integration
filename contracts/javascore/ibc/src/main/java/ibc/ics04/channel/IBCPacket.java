@@ -1,17 +1,17 @@
 package ibc.ics04.channel;
 
-import java.math.BigInteger;
-
+import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
+import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
 import icon.proto.core.connection.ConnectionEnd;
-import ibc.ics24.host.IBCCommitment;
-
 import score.Context;
 import score.DictDB;
+
+import java.math.BigInteger;
 
 // TODO verify packet commitments follow a correct format
 public class IBCPacket extends IBCChannelHandshake {
@@ -412,12 +412,12 @@ public class IBCPacket extends IBCChannelHandshake {
     }
 
     private boolean isZero(Height height) {
-        return height.getRevisionNumber().equals(0) && height.getRevisionHeight().equals(0);
+        return height.getRevisionNumber().equals(BigInteger.ZERO) && height.getRevisionHeight().equals(BigInteger.ZERO);
     }
 
     private boolean lt(Height h1, Height h2) {
         return h1.getRevisionNumber().compareTo(h2.getRevisionNumber()) < 0
                 || (h1.getRevisionNumber().equals(h2.getRevisionNumber())
-                        && h1.getRevisionHeight().compareTo(h2.getRevisionHeight()) < 0);
+                && h1.getRevisionHeight().compareTo(h2.getRevisionHeight()) < 0);
     }
 }

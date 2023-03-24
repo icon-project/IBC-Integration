@@ -4,15 +4,14 @@ import score.Context;
 
 public class MerkleTree {
     /**
-     * @dev returns empty hash
+     * returns empty hash
      */
     public static byte[] emptyHash() {
         return Context.hash("sha-256", new byte[0]);
     }
 
     /**
-     * @dev returns tmhash(0x00 || leaf)
-     *
+     * returns tmhash(0x00 || leaf)
      */
     public static byte[] leafHash(byte[] leaf) {
         byte leafPrefix = 0x00;
@@ -23,7 +22,7 @@ public class MerkleTree {
     }
 
     /**
-     * @dev returns tmhash(0x01 || left || right)
+     * returns tmhash(0x01 || left || right)
      */
     public static byte[] innerHash(byte[] leaf, byte[] right) {
         byte innerPrefix = 0x01;
@@ -35,8 +34,8 @@ public class MerkleTree {
     }
 
     /**
-     * @dev returns the largest power of 2 less than length
-     *
+     * returns the largest power of 2 less than length
+     * <p>
      *      TODO: This public static byte[] can be optimized with bit shifting
      *      approach:
      *      https://www.baeldung.com/java-largest-power-of-2-less-than-number
@@ -55,9 +54,8 @@ public class MerkleTree {
     }
 
     /**
-     * @dev computes a Merkle tree where the leaves are the byte slice in the
-     *      provided order
-     *      Follows RFC-6962
+     * computes a Merkle tree where the leaves are the byte slice in the provided order
+     * Follows RFC-6962
      */
     public static byte[] merkleRootHash(byte[][] data, int start, int total) {
         if (total == 0) {

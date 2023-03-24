@@ -1,5 +1,22 @@
 package ibc.tendermint;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ByteString;
+import com.iconloop.score.test.Account;
+import com.iconloop.score.test.Score;
+import com.iconloop.score.test.ServiceManager;
+import com.iconloop.score.test.TestBase;
+import foundation.icon.ee.util.Crypto;
+import ibc.tendermint.light.TendermintLight.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+import score.Context;
+
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -31,6 +48,7 @@ import foundation.icon.ee.util.Crypto;
 import static org.mockito.Mockito.spy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.spy;
 
 public class LightClientTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();
@@ -54,6 +72,21 @@ public class LightClientTestBase extends TestBase {
     protected static final String BLOCK_SET_ADJACENT = BLOCK_SET_BASE_PATH + "adjacent/";
     protected static final String BLOCK_SET_MALICIOUS = BLOCK_SET_BASE_PATH + "malicious/";
     protected String blockSetPath = BLOCK_SET_SIMPLE;
+
+    static {
+        trustLevel = Fraction.newBuilder()
+                .setNumerator(BigInteger.TWO.longValue())
+                .setDenominator(BigInteger.valueOf(3).longValue()).build();
+
+        trustingPeriod = Duration.newBuilder()
+                .setSeconds(day.multiply(BigInteger.valueOf(10000)).longValue())
+                .setNanos(0).build();
+
+        maxClockDrift = Duration.newBuilder()
+                .setSeconds(10)
+                .setNanos(0).build();
+
+    }
 
     private String getCommitPath(int order) {
         return blockSetPath + "commit." + order + ".json";
