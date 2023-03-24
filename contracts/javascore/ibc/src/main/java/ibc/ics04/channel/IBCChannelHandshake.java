@@ -264,7 +264,7 @@ public class IBCChannelHandshake extends IBCConnection {
             String channelId,
             Channel channel) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 BigInteger.ZERO,
@@ -273,7 +273,6 @@ public class IBCChannelHandshake extends IBCConnection {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 IBCCommitment.channelPath(portId, channelId),
                 channel.encode());
-        Context.require(ok, "failed to verify channel state");
 
     }
 

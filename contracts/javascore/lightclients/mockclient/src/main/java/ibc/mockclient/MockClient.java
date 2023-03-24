@@ -3,13 +3,13 @@ package ibc.mockclient;
 import java.math.BigInteger;
 import score.Context;
 import score.annotation.External;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
 import ibc.icon.structs.messages.UpdateClientResponse;
+import ibc.icon.interfaces.ILightClient;
 import icon.proto.core.client.Height;
 
 import ibc.ics24.host.IBCCommitment;
 
-public class MockClient {
+public class MockClient implements ILightClient {
 
     public MockClient() {
     }
@@ -42,26 +42,28 @@ public class MockClient {
 
     @External
     public UpdateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
-        ConsensusStateUpdate update = new ConsensusStateUpdate(IBCCommitment.keccak256(consensusStateBytes),
-                new Height().encode());
-        UpdateClientResponse response = new UpdateClientResponse(IBCCommitment.keccak256(clientStateBytes), update,
-                true);
+        UpdateClientResponse response = new UpdateClientResponse(
+            IBCCommitment.keccak256(clientStateBytes),
+            IBCCommitment.keccak256(consensusStateBytes),  
+            new Height().encode()
+        );
 
         return response;
     }
 
     @External(readonly = true)
     public UpdateClientResponse updateClient(String clientId, byte[] clientMessageBytes) {
-        ConsensusStateUpdate update = new ConsensusStateUpdate(IBCCommitment.keccak256(new byte[1]),
-                new Height().encode());
-        UpdateClientResponse response = new UpdateClientResponse(IBCCommitment.keccak256(clientMessageBytes), update,
-                true);
+        UpdateClientResponse response = new UpdateClientResponse(
+            IBCCommitment.keccak256(clientMessageBytes),
+            IBCCommitment.keccak256(clientMessageBytes),
+            new Height().encode()
+        );
 
         return response;
     }
 
     @External
-    public boolean verifyMembership(
+    public void verifyMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
@@ -70,12 +72,10 @@ public class MockClient {
             byte[] prefix,
             byte[] path,
             byte[] value) {
-
-        return true;
     }
 
     @External
-    public boolean verifyNonMembership(
+    public void verifyNonMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
@@ -83,7 +83,5 @@ public class MockClient {
             byte[] proof,
             byte[] prefix,
             byte[] path) {
-
-        return true;
     }
 }

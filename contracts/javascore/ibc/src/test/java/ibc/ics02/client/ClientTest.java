@@ -8,7 +8,6 @@ import com.iconloop.score.test.TestBase;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.interfaces.ILightClient;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.icon.structs.messages.UpdateClientResponse;
@@ -97,8 +96,7 @@ public class ClientTest extends TestBase {
         Height consensusHeight = Height.newBuilder()
                 .setRevisionHeight(1)
                 .setRevisionNumber(2).build();
-        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.toByteArray());
-        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, update, true);
+        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, consensusStateCommitment, consensusHeight.toByteArray());
         when(lightClient.mock.createClient(msg.getClientType() + "-" + BigInteger.ZERO, msg.getClientState(),
                 msg.getConsensusState())).thenReturn(response);
 
@@ -148,9 +146,7 @@ public class ClientTest extends TestBase {
                 .setRevisionHeight(1)
                 .setRevisionNumber(2).build();
 
-        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.toByteArray());
-
-        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, update, true);
+        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, consensusStateCommitment, consensusHeight.toByteArray());
 
         when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(response);
 

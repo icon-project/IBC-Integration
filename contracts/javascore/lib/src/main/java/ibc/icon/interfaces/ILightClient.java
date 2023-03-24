@@ -46,7 +46,7 @@ public interface ILightClient {
      * a given CommitmentPath at the specified height. The caller is expected to construct the full CommitmentPath
      * from a CommitmentPrefix and a standardized path (as defined in ICS 24).
      */
-    Boolean verifyMembership(
+    void verifyMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
@@ -61,7 +61,7 @@ public interface ILightClient {
      * CommitmentPath at a specified height. The caller is expected to construct the full CommitmentPath from a
      * CommitmentPrefix and a standardized path (as defined in ICS 24).
      */
-    Boolean verifyNonMembership(
+    void verifyNonMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,

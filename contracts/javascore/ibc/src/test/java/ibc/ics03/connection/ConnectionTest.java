@@ -183,65 +183,6 @@ public class ConnectionTest extends TestBase {
     }
 
     @Test
-    void connectionOpenTry_invalidStates() {
-        // Arrange
-        MsgConnectionOpenTry msg = new MsgConnectionOpenTry();
-        msg.setClientId(clientId);
-        msg.setCounterparty(counterparty.toByteArray());
-        msg.setDelayPeriod(delayPeriod);
-        msg.setClientStateBytes(new byte[1]);
-        msg.setCounterpartyVersions(new byte[][] { version.toByteArray() });
-        msg.setProofInit(new byte[2]);
-        msg.setProofClient(new byte[3]);
-        msg.setProofConsensus(new byte[4]);
-        msg.setProofHeight(proofHeight.toByteArray());
-        msg.setConsensusHeight(consensusHeight.toByteArray());
-
-        Counterparty expectedCounterparty = Counterparty.newBuilder()
-                .setClientId(msg.getClientId())
-                .setConnectionId("")
-                .setPrefix(prefix).build();
-
-        ConnectionEnd counterpartyConnection = ConnectionEnd.newBuilder()
-                .setClientId(counterparty.getClientId())
-                .addVersions(0, version)
-                .setState(ConnectionEnd.State.STATE_INIT)
-                .setDelayPeriod(msg.getDelayPeriod().longValue())
-                .setCounterparty(expectedCounterparty).build();
-
-        // verifyConnectionState
-        byte[] connectionPath = IBCCommitment.connectionPath(msg.getCounterparty().getConnectionId());
-        when(lightClient.mock.verifyMembership(msg.getClientId(),
-                msg.getProofHeightRaw(), BigInteger.ZERO,
-                BigInteger.ZERO, msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), connectionPath,
-                counterpartyConnection.toByteArray()))
-                .thenReturn(false).thenReturn(true);
-
-        // verifyClientState
-        byte[] clientStatePath = IBCCommitment.clientStatePath(msg.getCounterparty().getClientId());
-        when(lightClient.mock.verifyMembership(msg.getClientId(), msg.getProofHeightRaw(), BigInteger.ZERO,
-                BigInteger.ZERO, msg.getProofClient(), prefix.getKeyPrefix().toByteArray(), clientStatePath,
-                msg.getClientStateBytes()))
-                .thenReturn(false);
-
-        // Act & Assert
-        String expectedErrorMessage = "failed to verify connection state";
-        Executable clientVerificationFailed = () -> connection.invoke(owner,
-                "_connectionOpenTry", msg);
-        AssertionError e = assertThrows(AssertionError.class,
-                clientVerificationFailed);
-        assertTrue(e.getMessage().contains(expectedErrorMessage));
-
-        expectedErrorMessage = "failed to verify clientState";
-        Executable stateVerificationFailed = () -> connection.invoke(owner,
-                "_connectionOpenTry", msg);
-        e = assertThrows(AssertionError.class,
-                stateVerificationFailed);
-        assertTrue(e.getMessage().contains(expectedErrorMessage));
-
-    }
-
-    @Test
     void connectionOpenTry() {
         // Arrange
         MsgConnectionOpenTry msg = new MsgConnectionOpenTry();
@@ -270,27 +211,25 @@ public class ConnectionTest extends TestBase {
 
         String expectedConnectionId = "connection-0";
 
-        // verifyConnectionState
-        byte[] connectionPath = IBCCommitment.connectionPath(msg.getCounterparty().getConnectionId());
-        when(lightClient.mock.verifyMembership(msg.getClientId(),
-                msg.getProofHeightRaw(), BigInteger.ZERO,
-                BigInteger.ZERO, msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), connectionPath,
-                counterpartyConnection.toByteArray())).thenReturn(true);
-
-        // verifyClientState
-        byte[] clientStatePath = IBCCommitment.clientStatePath(msg.getCounterparty().getClientId());
-        when(lightClient.mock.verifyMembership(msg.getClientId(), msg.getProofHeightRaw(), BigInteger.ZERO,
-                BigInteger.ZERO, msg.getProofClient(), prefix.getKeyPrefix().toByteArray(), clientStatePath,
-                msg.getClientStateBytes()))
-                .thenReturn(true);
-
         // Act
         connection.invoke(owner, "_connectionOpenTry", msg);
 
         // Assert
+        // verifyConnectionState
+        byte[] connectionPath = IBCCommitment.connectionPath(msg.getCounterparty().getConnectionId());
+        verify(lightClient.mock).verifyMembership(msg.getClientId(),
+                msg.getProofHeightRaw(), BigInteger.ZERO,
+                BigInteger.ZERO, msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), connectionPath,
+                counterpartyConnection.toByteArray());
+
+        // verifyClientState
+        byte[] clientStatePath = IBCCommitment.clientStatePath(msg.getCounterparty().getClientId());
+        verify(lightClient.mock).verifyMembership(msg.getClientId(), msg.getProofHeightRaw(), BigInteger.ZERO,
+                BigInteger.ZERO, msg.getProofClient(), prefix.getKeyPrefix().toByteArray(), clientStatePath,
+                msg.getClientStateBytes());
+
         ConnectionEnd expectedConnection = ConnectionEnd.newBuilder(baseConnection)
                 .setState(ConnectionEnd.State.STATE_TRYOPEN).build();
-
 
         byte[] connectionKey = IBCCommitment.connectionCommitmentKey(expectedConnectionId);
         verify(connectionSpy)
@@ -365,23 +304,21 @@ public class ConnectionTest extends TestBase {
                 .setDelayPeriod(delayPeriod.longValue())
                 .setCounterparty(expectedCounterparty).build();
 
-        // verifyConnectionState
-        byte[] connectionPath = IBCCommitment.connectionPath(msg.getCounterpartyConnectionID());
-        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
-                msg.getProofTry(), prefix.getKeyPrefix().toByteArray(), connectionPath,
-                counterpartyConnection.toByteArray()))
-                .thenReturn(true);
-
-        // verifyClientState
-        byte[] clientStatePath = IBCCommitment.clientStatePath(counterparty.getClientId());
-        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
-                msg.getProofClient(), prefix.getKeyPrefix().toByteArray(), clientStatePath, msg.getClientStateBytes()))
-                .thenReturn(true);
-
         // Act
         connection.invoke(owner, "_connectionOpenAck", msg);
 
         // Assert
+        // verifyConnectionState
+        byte[] connectionPath = IBCCommitment.connectionPath(msg.getCounterpartyConnectionID());
+        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofTry(), prefix.getKeyPrefix().toByteArray(), connectionPath,
+                counterpartyConnection.toByteArray());
+
+        // verifyClientState
+        byte[] clientStatePath = IBCCommitment.clientStatePath(counterparty.getClientId());
+        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofClient(), prefix.getKeyPrefix().toByteArray(), clientStatePath, msg.getClientStateBytes());
+
         Counterparty counterparty = Counterparty.newBuilder(baseConnection.getCounterparty())
                 .setConnectionId(msg.getCounterpartyConnectionID()).build();
         ConnectionEnd expectedConnection = ConnectionEnd.newBuilder(baseConnection)
@@ -438,17 +375,16 @@ public class ConnectionTest extends TestBase {
                 .setDelayPeriod(delayPeriod.longValue())
                 .setCounterparty(expectedCounterparty).build();
 
-        // verifyConnectionState
-        byte[] connectionPath = IBCCommitment.connectionPath(counterparty.getConnectionId());
-        when(lightClient.mock.verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
-                msg.getProofAck(), prefix.getKeyPrefix().toByteArray(), connectionPath,
-                counterpartyConnection.toByteArray()))
-                .thenReturn(true);
-
         // Act
         connection.invoke(owner, "_connectionOpenConfirm", msg);
 
         // Assert
+        // verifyConnectionState
+        byte[] connectionPath = IBCCommitment.connectionPath(counterparty.getConnectionId());
+        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeightRaw(), BigInteger.ZERO, BigInteger.ZERO,
+                msg.getProofAck(), prefix.getKeyPrefix().toByteArray(), connectionPath,
+                counterpartyConnection.toByteArray());
+
         ConnectionEnd expectedConnection = ConnectionEnd.newBuilder(baseConnection)
                 .setState(ConnectionEnd.State.STATE_OPEN).build();
 

@@ -80,14 +80,6 @@ public class IBCHandlerTestBase extends TestBase {
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
         module = new MockContract<>(IIBCModuleScoreInterface.class, IIBCModule.class, sm, owner);
 
-        when(lightClient.mock.verifyMembership(any(String.class), any(byte[].class), any(BigInteger.class),
-                any(BigInteger.class),
-                any(byte[].class), any(byte[].class), any(byte[].class), any(byte[].class))).thenReturn(true);
-
-        when(lightClient.mock.verifyNonMembership(any(String.class), any(byte[].class), any(BigInteger.class),
-                any(BigInteger.class),
-                any(byte[].class), any(byte[].class), any(byte[].class))).thenReturn(true);
-
         when(lightClient.mock.getClientState(any(String.class))).thenReturn(new byte[0]);
 
         prefix = MerklePrefix.newBuilder()
@@ -109,9 +101,10 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setClientType(clientType);
         msg.setBtpNetworkId(4);
 
-        ConsensusStateUpdate update = new ConsensusStateUpdate(new byte[0],
+        UpdateClientResponse response = new UpdateClientResponse(
+                new byte[0], 
+                new byte[0],
                 Height.getDefaultInstance().toByteArray());
-        UpdateClientResponse response = new UpdateClientResponse(new byte[0], update, true);
         when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
                 .thenReturn(response);
 
@@ -136,9 +129,7 @@ public class IBCHandlerTestBase extends TestBase {
                 .setRevisionHeight(1)
                 .setRevisionNumber(2).build();
 
-        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.toByteArray());
-
-        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, update, true);
+        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, consensusStateCommitment, consensusHeight.toByteArray());
 
         when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(response);
 

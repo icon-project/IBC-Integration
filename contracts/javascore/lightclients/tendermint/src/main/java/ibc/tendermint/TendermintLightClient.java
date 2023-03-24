@@ -8,8 +8,8 @@ import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
+import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.messages.ConsensusStateUpdate;
 import ibc.icon.structs.messages.UpdateClientResponse;
 import icon.proto.core.client.Height;
 
@@ -18,7 +18,7 @@ import static score.Context.require;
 import icon.proto.clients.tendermint.*;
 import ibc.ics24.host.IBCCommitment;
 
-public class TendermintLightClient extends Tendermint {
+public class TendermintLightClient extends Tendermint implements ILightClient {
     public final Address ibcHandler;
 
     public static final String CLIENT_STATES = "CLIENT_STATES";
@@ -97,10 +97,11 @@ public class TendermintLightClient extends Tendermint {
 
         clientStates.set(clientId, clientStateBytes);
         consensusStates.at(clientId).set(clientState.getLatestHeight(), consensusStateBytes);
-        ConsensusStateUpdate update = new ConsensusStateUpdate(IBCCommitment.keccak256(consensusStateBytes),
-                newHeight(clientState.getLatestHeight()).encode());
-        UpdateClientResponse response = new UpdateClientResponse(IBCCommitment.keccak256(clientStateBytes), update,
-                true);
+        UpdateClientResponse response = new UpdateClientResponse(
+                        IBCCommitment.keccak256(clientStateBytes), 
+                        IBCCommitment.keccak256(consensusStateBytes),
+                        newHeight(clientState.getLatestHeight()).encode()
+        );
 
         return response;
     }
@@ -156,11 +157,11 @@ public class TendermintLightClient extends Tendermint {
             processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                     BigInteger.valueOf(Context.getBlockTimestamp()));
 
-            ConsensusStateUpdate consensusStateUpdate = new ConsensusStateUpdate(
+            UpdateClientResponse response = new UpdateClientResponse(
+                    IBCCommitment.keccak256(encodedClientState), 
                     IBCCommitment.keccak256(encodedConsensusState),
-                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode());
-            UpdateClientResponse response = new UpdateClientResponse(IBCCommitment.keccak256(encodedClientState),
-                    consensusStateUpdate, true);
+                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode()
+            );
 
             return response;
         }
@@ -180,16 +181,18 @@ public class TendermintLightClient extends Tendermint {
                 BigInteger.valueOf(Context.getBlockHeight()));
         processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                 BigInteger.valueOf(Context.getBlockTimestamp()));
-        ConsensusStateUpdate consensusStateUpdate = new ConsensusStateUpdate(
-                IBCCommitment.keccak256(encodedConsensusState), newHeight(clientState.getLatestHeight()).encode());
-        UpdateClientResponse response = new UpdateClientResponse(IBCCommitment.keccak256(encodedClientState),
-                consensusStateUpdate, true);
+
+        UpdateClientResponse response = new UpdateClientResponse(
+                IBCCommitment.keccak256(encodedClientState), 
+                IBCCommitment.keccak256(encodedConsensusState),
+                newHeight(clientState.getLatestHeight()).encode()
+        );
 
         return response;
     }
 
     @External
-    public boolean verifyMembership(
+    public void verifyMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
@@ -208,12 +211,12 @@ public class TendermintLightClient extends Tendermint {
 
         byte[] root = consensusState.getRoot().getHash();
 
-        return true;
+        Context.require(true, "Verification failed");
 
     }
 
     @External
-    public boolean verifyNonMembership(
+    public void verifyNonMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
@@ -231,7 +234,7 @@ public class TendermintLightClient extends Tendermint {
 
         byte[] root = consensusState.getRoot().getHash();
 
-        return true;
+        Context.require(true, "Verification failed");
     }
 
     // checkValidity checks if the Tendermint header is valid.

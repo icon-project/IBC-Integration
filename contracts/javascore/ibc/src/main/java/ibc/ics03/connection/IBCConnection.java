@@ -192,7 +192,7 @@ public class IBCConnection extends IBCClient {
     private void verifyClientState(ConnectionEnd connection, byte[] height, byte[] path, byte[] proof,
             byte[] clientStatebytes) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 BigInteger.ZERO,
@@ -201,7 +201,6 @@ public class IBCConnection extends IBCClient {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path,
                 clientStatebytes);
-        Context.require(ok, "failed to verify clientState");
     }
 
     private void verifyClientConsensusState(ConnectionEnd connection, byte[] height, Height consensusHeight,
@@ -211,7 +210,7 @@ public class IBCConnection extends IBCClient {
                 consensusHeight.getRevisionHeight());
 
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 BigInteger.ZERO,
@@ -220,14 +219,12 @@ public class IBCConnection extends IBCClient {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 consensusPath,
                 consensusStateBytes);
-        Context.require(ok, "failed to verify consensus state");
-
     }
 
     private void verifyConnectionState(ConnectionEnd connection, byte[] height, byte[] proof, String connectionId,
             ConnectionEnd counterpartyConnection) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 BigInteger.ZERO,
@@ -236,7 +233,6 @@ public class IBCConnection extends IBCClient {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 IBCCommitment.connectionPath(connectionId),
                 counterpartyConnection.encode());
-        Context.require(ok, "failed to verify connection state");
     }
 
     /* Internal functions */

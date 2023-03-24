@@ -356,7 +356,8 @@ public class PacketTest extends TestBase {
 
         // Act & Assert
         String expectedErrorMessage = "block timestamp >= packet timeout timestamp";
-        Executable lowTimeoutTimestamp = () -> packet.invoke(owner, "_recvPacket", basePacket, new byte[0], new byte[0]);
+        Executable lowTimeoutTimestamp = () -> packet.invoke(owner, "_recvPacket", basePacket, new byte[0],
+                new byte[0]);
         AssertionError e = assertThrows(AssertionError.class,
                 lowTimeoutTimestamp);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -372,10 +373,6 @@ public class PacketTest extends TestBase {
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
         byte[] commitmentBytes = createPacketCommitment(basePacket);
-
-        when(lightClient.mock.verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
-                BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes)).thenReturn(true);
 
         packet.invoke(owner, "_recvPacket", basePacket, proof, proofHeight.encode());
 
@@ -400,18 +397,18 @@ public class PacketTest extends TestBase {
                 basePacket.getSourceChannel(), basePacket.getSequence().add(BigInteger.ONE));
         byte[] commitmentBytes = createPacketCommitment(basePacket);
 
-        when(lightClient.mock.verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
-                BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath1, commitmentBytes)).thenReturn(true);
-        when(lightClient.mock.verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
-                BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath2, commitmentBytes)).thenReturn(true);
         // Act
         basePacket.setSequence(BigInteger.TWO);
         packet.invoke(owner, "_recvPacket", basePacket, proof, proofHeight.encode());
+
         // Assert
         basePacket.setSequence(BigInteger.ONE);
         packet.invoke(owner, "_recvPacket", basePacket, proof, proofHeight.encode());
+
+        verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
+                BigInteger.ZERO, proof, prefix.getKeyPrefix(), commitmentPath1, commitmentBytes);
+        verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
+                BigInteger.ZERO, proof, prefix.getKeyPrefix(), commitmentPath2, commitmentBytes);
     }
 
     @Test
@@ -421,13 +418,6 @@ public class PacketTest extends TestBase {
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         basePacket.setSequence(BigInteger.TWO);
         byte[] proof = new byte[1];
-
-        byte[] commitmentPath = IBCCommitment.packetCommitmentPath(basePacket.getSourcePort(),
-                basePacket.getSourceChannel(), basePacket.getSequence());
-        byte[] commitmentBytes = createPacketCommitment(basePacket);
-
-        when(lightClient.mock.verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
-                BigInteger.ZERO, proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes)).thenReturn(true);
 
         // Act & Assert
         String expectedErrorMessage = "packet sequence != next receive sequence";
@@ -448,14 +438,13 @@ public class PacketTest extends TestBase {
                 basePacket.getSourceChannel(), basePacket.getSequence());
         byte[] commitmentBytes = createPacketCommitment(basePacket);
 
-        when(lightClient.mock.verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
-                BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes)).thenReturn(true);
         // Act
         packet.invoke(owner, "_recvPacket", basePacket, proof, proofHeight.encode());
 
         // Assert
         assertTrue((boolean) packet.call("getPacketReceipt", portId, channelId, basePacket.getSequence()));
+        verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
+                BigInteger.ZERO, proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes);
     }
 
     @Test
@@ -469,15 +458,15 @@ public class PacketTest extends TestBase {
                 basePacket.getSourceChannel(), basePacket.getSequence());
         byte[] commitmentBytes = createPacketCommitment(basePacket);
 
-        when(lightClient.mock.verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
-                BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes)).thenReturn(true);
         // Act
         packet.invoke(owner, "_recvPacket", basePacket, proof, proofHeight.encode());
 
         // Assert
         assertEquals(basePacket.getSequence().add(BigInteger.ONE),
                 packet.call("getNextSequenceReceive", portId, channelId));
+        verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
+                BigInteger.ZERO,
+                proof, prefix.getKeyPrefix(), commitmentPath, commitmentBytes);
     }
 
     @Test
@@ -512,17 +501,17 @@ public class PacketTest extends TestBase {
         byte[] acknowledgement = new byte[4];
         byte[] proof = new byte[5];
 
-        byte[] commitmentPath = IBCCommitment.packetAcknowledgementCommitmentPath(basePacket.getDestinationPort(),
-                basePacket.getDestinationChannel(), basePacket.getSequence());
-        when(lightClient.mock.verifyMembership(clientId, proofHeight.encode(),
-                baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath,
-                IBCCommitment.sha256(acknowledgement))).thenReturn(true);
-
         // Act
         packet.invoke(owner, "_acknowledgePacket", basePacket, acknowledgement, proof, proofHeight.encode());
 
         // Assert
+        byte[] commitmentPath = IBCCommitment.packetAcknowledgementCommitmentPath(basePacket.getDestinationPort(),
+                basePacket.getDestinationChannel(), basePacket.getSequence());
+        verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(),
+                baseConnection.getDelayPeriod(), BigInteger.ZERO,
+                proof, prefix.getKeyPrefix(), commitmentPath,
+                IBCCommitment.sha256(acknowledgement));
+
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
         Object storedCommitment = packet.call("getCommitment", packetCommitmentKey);
@@ -589,16 +578,16 @@ public class PacketTest extends TestBase {
         when(lightClient.mock.getTimestampAtHeight(clientId, latestHeight.encode())).thenReturn(BigInteger.ZERO);
         packet.invoke(owner, "_sendPacket", basePacket);
 
-
-        byte[] commitmentPath = IBCCommitment.packetReceiptCommitmentPath(basePacket.getDestinationPort(),
-                basePacket.getDestinationChannel(), basePacket.getSequence());
-        when(lightClient.mock.verifyNonMembership(clientId, proofHeight.encode(),
-                baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath)).thenReturn(true);
         // Act
         packet.invoke(owner, "_timeoutPacket", basePacket, proofHeight.encode(), proof, BigInteger.ZERO);
 
         // Assert
+        byte[] commitmentPath = IBCCommitment.packetReceiptCommitmentPath(basePacket.getDestinationPort(),
+                basePacket.getDestinationChannel(), basePacket.getSequence());
+        verify(lightClient.mock).verifyNonMembership(clientId, proofHeight.encode(),
+                baseConnection.getDelayPeriod(), BigInteger.ZERO,
+                proof, prefix.getKeyPrefix(), commitmentPath);
+
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
         Object storedCommitment = packet.call("getCommitment", packetCommitmentKey);
@@ -624,16 +613,15 @@ public class PacketTest extends TestBase {
         when(lightClient.mock.getTimestampAtHeight(clientId, latestHeight.encode())).thenReturn(BigInteger.ZERO);
         packet.invoke(owner, "_sendPacket", basePacket, basePacket.getSequence());
 
-
-        byte[] commitmentPath = IBCCommitment.nextSequenceRecvCommitmentPath(basePacket.getDestinationPort(),
-                basePacket.getDestinationChannel());
-        when(lightClient.mock.verifyMembership(clientId, proofHeight.encode(),
-                baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath, basePacket.getSequence().toByteArray())).thenReturn(true);
-        // Act
         packet.invoke(owner, "_timeoutPacket", basePacket, proofHeight.encode(), proof, basePacket.getSequence());
 
         // Assert
+        byte[] commitmentPath = IBCCommitment.nextSequenceRecvCommitmentPath(basePacket.getDestinationPort(),
+                basePacket.getDestinationChannel());
+        verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(),
+                baseConnection.getDelayPeriod(), BigInteger.ZERO,
+                proof, prefix.getKeyPrefix(), commitmentPath, basePacket.getSequence().toByteArray());
+
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
         Object storedCommitment = packet.call("getCommitment", packetCommitmentKey);

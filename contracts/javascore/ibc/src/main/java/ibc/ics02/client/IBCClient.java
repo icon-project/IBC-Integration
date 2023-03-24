@@ -37,16 +37,15 @@ public class IBCClient extends IBCHost {
         btpNetworkId.set(clientId, msg.getBtpNetworkId());
         ILightClient client = getClient(clientId);
         UpdateClientResponse response = client.createClient(clientId, msg.getClientState(), msg.getConsensusState());
-        Context.require(response.isOk());
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
-        Height updateHeight = Height.decode(response.getUpdate().getHeight());
+        Height updateHeight = Height.decode(response.getHeight());
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 updateHeight.getRevisionNumber(),
                 updateHeight.getRevisionHeight());
 
         sendBTPMessage(clientId, ByteUtil.join(clientKey, response.getClientStateCommitment()));
-        sendBTPMessage(clientId, ByteUtil.join(consensusKey, response.getUpdate().getConsensusStateCommitment()));
+        sendBTPMessage(clientId, ByteUtil.join(consensusKey, response.getConsensusStateCommitment()));
 
         return clientId;
     }
@@ -56,19 +55,18 @@ public class IBCClient extends IBCHost {
         ILightClient client = getClient(clientId);
 
         UpdateClientResponse response = client.updateClient(clientId, msg.getClientMessage());
-        Context.require(response.isOk());
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
 
-        Height updateHeight = Height.decode(response.getUpdate().getHeight());
+        Height updateHeight = Height.decode(response.getHeight());
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 updateHeight.getRevisionNumber(),
                 updateHeight.getRevisionHeight());
 
         sendBTPMessage(clientId, ByteUtil.join(clientKey, response.getClientStateCommitment()));
-        sendBTPMessage(clientId, ByteUtil.join(consensusKey, response.getUpdate().getConsensusStateCommitment()));
+        sendBTPMessage(clientId, ByteUtil.join(consensusKey, response.getConsensusStateCommitment()));
 
-        return response.getUpdate().getHeight();
+        return response.getHeight();
     }
 
     private String generateClientIdentifier(String clientType) {

@@ -324,7 +324,7 @@ public class IBCPacket extends IBCChannelHandshake {
             byte[] path,
             byte[] commitmentBytes) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 connection.getDelayPeriod(),
@@ -333,7 +333,6 @@ public class IBCPacket extends IBCChannelHandshake {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path,
                 commitmentBytes);
-        Context.require(ok, "failed to verify packet commitment");
     }
 
     private void verifyPacketAcknowledgement(
@@ -343,7 +342,7 @@ public class IBCPacket extends IBCChannelHandshake {
             byte[] path,
             byte[] acknowledgementCommitmentBytes) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 connection.getDelayPeriod(),
@@ -352,7 +351,6 @@ public class IBCPacket extends IBCChannelHandshake {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path,
                 acknowledgementCommitmentBytes);
-        Context.require(ok, "failed to verify packet acknowledgement commitment");
     }
 
     private void verifyNextSequenceRecv(
@@ -362,7 +360,7 @@ public class IBCPacket extends IBCChannelHandshake {
             byte[] path,
             byte[] commitmentBytes) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 connection.getDelayPeriod(),
@@ -371,7 +369,6 @@ public class IBCPacket extends IBCChannelHandshake {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path,
                 commitmentBytes);
-        Context.require(ok, "failed to verify next sequence");
     }
 
     private void verifyPacketReceiptAbsence(
@@ -380,7 +377,7 @@ public class IBCPacket extends IBCChannelHandshake {
             byte[] proof,
             byte[] path) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyNonMembership(
+        client.verifyNonMembership(
                 connection.getClientId(),
                 height,
                 connection.getDelayPeriod(),
@@ -388,7 +385,6 @@ public class IBCPacket extends IBCChannelHandshake {
                 proof,
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path);
-        Context.require(ok, "failed to verify receipt absence");
     }
 
     /* Internal functions */
