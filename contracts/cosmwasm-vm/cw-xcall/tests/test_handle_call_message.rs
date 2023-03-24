@@ -77,7 +77,10 @@ fn test_execute_call_having_request_id_without_rollback() {
                 "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"
             );
 
-            assert_eq!("\"aGVsbG8=\"", to_string(msg).unwrap())
+            assert_eq!(
+                "\"eyJ4X2NhbGxfbWVzc2FnZSI6eyJkYXRhIjpbMTA0LDEwMSwxMDgsMTA4LDExMV19fQ==\"",
+                to_string(msg).unwrap()
+            )
         }
         _ => {}
     }
@@ -277,7 +280,8 @@ fn execute_rollback_success() {
             msg,
             funds: _,
         }) => {
-            assert_eq!(vec![1, 2, 3], msg.0)
+            let data = String::from_utf8(msg.0.clone()).unwrap();
+            assert_eq!("{\"x_call_message\":{\"data\":[1,2,3]}}", data)
         }
         _ => todo!(),
     }

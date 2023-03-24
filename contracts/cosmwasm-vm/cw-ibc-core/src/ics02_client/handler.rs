@@ -1,5 +1,3 @@
-use cosmwasm_std::Addr;
-
 use super::*;
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
