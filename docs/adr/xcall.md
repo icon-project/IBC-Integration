@@ -28,7 +28,7 @@ document and will be added later.
 
 XCall is an application module to implement IBCModule interface. The xcall is defined
 by [IIP52](https://github.com/icon-project/IIPs/blob/master/IIPS/iip-52.md). To be used in ICON-IBC, some specs
-defined on the IIP52 is modified to support IBC standards.
+has been added to support IBC standards.
 
 This was designed taking an example of IBC Module and xcall contract.
 
@@ -59,7 +59,7 @@ type CSMessageRequest struct {
 	from address // cross-chain address of sender 
 	to string // cross-chain address of receiver
 	sn uint // sequence number
-	rollback boolean // (Optional) The data for restoring the caller state when an error occurred
+	rollback boolean // (Optional) if Rollback needed on source chain if call request fails on destination chain.
 	data []byte
 }
 
@@ -88,7 +88,7 @@ type PacketData struct {
 
 ### Flow Diagram
 
-![xCallArchitecture.png](xCallArchitecture.png))
+![xCallArchitecture.png](xCallArchitecture.png)
 
 ### Events
 
