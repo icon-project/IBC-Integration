@@ -20,25 +20,30 @@ use ibc::{
     signer::Signer,
     Height,
 };
+use ibc_proto::ibc::core::channel::v1::Channel as RawChannel;
+pub use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use ibc_proto::ibc::core::channel::v1::{
     MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
     MsgChannelCloseInit as RawMsgChannelCloseInit, MsgChannelOpenAck as RawMsgChannelOpenAck,
     MsgChannelOpenConfirm as RawMsgChannelOpenConfirm, MsgChannelOpenInit as RawMsgChannelOpenInit,
     MsgChannelOpenTry as RawMsgChannelOpenTry,
 };
+use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 use ibc_proto::ibc::core::client::v1::{
     MsgCreateClient as RawMessageCreateClient, MsgSubmitMisbehaviour as RawMessageMisbehaviour,
     MsgUpdateClient as RawMessageUpdateCelint, MsgUpgradeClient as RawMessageUpgradeClient,
 };
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterpartyConnection;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
+use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
-use ibc_proto::ibc::core::{channel::v1::Channel as RawChannel, client::v1::Height as RawHeight};
 use ibc_proto::ibc::core::{
     channel::v1::Counterparty as RawCounterparty, commitment::v1::MerklePrefix,
 };
 use ibc_proto::ics23::CommitmentProof;
+
 pub struct MockEnvBuilder {
     env: Env,
 }
@@ -342,5 +347,58 @@ pub fn get_dummy_raw_msg_conn_open_try(
         }),
         proof_client: get_dummy_proof(),
         signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_conn_open_ack(
+    proof_height: u64,
+    consensus_height: u64,
+) -> RawMsgConnectionOpenAck {
+    let client_state_height = Height::new(0, consensus_height).unwrap();
+    RawMsgConnectionOpenAck {
+        connection_id: ConnectionId::new(0).to_string(),
+        counterparty_connection_id: ConnectionId::new(1).to_string(),
+        proof_try: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: proof_height,
+        }),
+        proof_consensus: get_dummy_proof(),
+        consensus_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: consensus_height,
+        }),
+        client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
+        proof_client: get_dummy_proof(),
+        version: Some(Version::default().into()),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_conn_open_confirm() -> RawMsgConnectionOpenConfirm {
+    RawMsgConnectionOpenConfirm {
+        connection_id: "srcconnection".to_string(),
+        proof_ack: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: 10,
+        }),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_packet(timeout_height: u64, timeout_timestamp: u64) -> RawPacket {
+    RawPacket {
+        sequence: 1,
+        source_port: PortId::default().to_string(),
+        source_channel: ChannelId::default().to_string(),
+        destination_port: PortId::default().to_string(),
+        destination_channel: ChannelId::default().to_string(),
+        data: vec![0],
+        timeout_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: timeout_height,
+        }),
+        timeout_timestamp,
     }
 }
