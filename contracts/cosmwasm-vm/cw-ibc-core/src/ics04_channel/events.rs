@@ -45,6 +45,8 @@ pub fn make_open_confirm_channel_event(msg: &MsgChannelOpenConfirm) -> Event {
 
 // Event for created channel id
 pub fn event_channel_id_generated(channel_id: ChannelId) -> Event {
-    Event::new("channel_id_created")
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.ibc_channel_id().as_str())
+    Event::new("channel_id_created").add_attribute(
+        CHANNEL_ID_ATTRIBUTE_KEY,
+        channel_id.ibc_channel_id().as_str(),
+    )
 }
