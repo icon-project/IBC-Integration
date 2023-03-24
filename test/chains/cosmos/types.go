@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v6/chain/cosmos"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -28,7 +29,7 @@ type CosmosTestnet struct {
 	bin              string
 	keystorePath     string
 	keyPassword      string
-	scorePaths       map[string]string
+	contracts        chains.Contracts
 	defaultStepLimit string
 	url              string
 	Client           rpcclient.Client

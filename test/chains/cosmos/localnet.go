@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewCosmosLocalnet(t *testing.T, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keyPassword string, contracts map[string]string) (chains.Chain, error) {
+func NewCosmosLocalnet(t *testing.T, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keyPassword string, contracts chains.Contracts) (chains.Chain, error) {
 	chain := cosmos.NewCosmosChain(t.Name(), chainConfig, numValidators, numFullNodes, log)
 	return &CosmosLocalnet{
 		CosmosChain: chain,
@@ -23,15 +23,17 @@ func NewCosmosLocalnet(t *testing.T, log *zap.Logger, chainConfig ibc.ChainConfi
 	}, nil
 }
 
-func (c *CosmosLocalnet) DeployContract(ctx context.Context) (context.Context, error) {
+func (c *CosmosLocalnet) DeployContract(ctx context.Context, contract string) (context.Context, error) {
 	users := interchaintest.GetAndFundTestUsers(c.t, ctx, "default", int64(100_000_000), c.CosmosChain)
 	destUser := users[0]
 	c.keyName = destUser.KeyName()
 
-	// Get Contract Name from context
-	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
-	contractName := ctxValue.ContractName
-	codeId, _ := c.CosmosChain.StoreContract(ctx, c.keyName, c.filepath[contractName])
+	// Check if contract exists
+	if  c.filepath[contract] == "" {
+		return ctx, fmt.Errorf("contract: %s not found in config", contract)
+	}
+
+	codeId, _ := c.CosmosChain.StoreContract(ctx, c.keyName, c.filepath[contract])
 
 	// Get Init Message from context
 	ctxVal := ctx.Value(chains.InitMessage{}).(chains.InitMessage)
@@ -41,6 +43,8 @@ func (c *CosmosLocalnet) DeployContract(ctx context.Context) (context.Context, e
 		ContractAddress: address,
 	}), err
 }
+
+
 
 func (c *CosmosLocalnet) QueryContract(ctx context.Context) (context.Context, error) {
 	ctxValue := ctx.Value(chains.ContractKey{}).(chains.ContractKey)

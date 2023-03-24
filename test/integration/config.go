@@ -8,11 +8,10 @@ import (
 )
 
 type Config struct {
-	Chain            Chain             `mapstructure:"chain"`
-	KeystoreFile     string            `mapstructure:"keystore_file"`
-	KeystorePassword string            `mapstructure:"keystore_password"`
-	Contracts        map[string]string `mapstructure:"contracts"`
-	InitMessage      string            `mapstructure:"init_message"`
+	Chain            Chain            `mapstructure:"chain"`
+	KeystoreFile     string           `mapstructure:"keystore_file"`
+	KeystorePassword string           `mapstructure:"keystore_password"`
+	Contracts        chains.Contracts `mapstructure:"contracts"`
 }
 
 type Chain struct {

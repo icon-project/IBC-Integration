@@ -33,10 +33,9 @@ type IconLocalnet struct {
 	findTxMu                  sync.Mutex
 	keystorePath, keyPassword string
 	scorePaths                map[string]string
-	initMessage               string
 }
 
-func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keystorePath string, keyPassword string, scorePaths map[string]string, initMessage string) chains.Chain {
+func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keystorePath string, keyPassword string, scorePaths map[string]string) chains.Chain {
 	return &IconLocalnet{
 		testName:      testName,
 		cfg:           chainConfig,
@@ -46,7 +45,6 @@ func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConf
 		keystorePath:  keystorePath,
 		keyPassword:   keyPassword,
 		scorePaths:    scorePaths,
-		initMessage:   initMessage,
 	}
 }
 
@@ -328,7 +326,7 @@ func (c *IconLocalnet) GetBalance(ctx context.Context, address string, denom str
 // }
 
 // DeployContract implements chains.Chain
-func (c *IconLocalnet) DeployContract(ctx context.Context) (context.Context, error) {
+func (c *IconLocalnet) DeployContract(ctx context.Context, contract string) (context.Context, error) {
 	// TODO get scorepath
 	scoreAddress, _ := c.getFullNode().DeployContract(ctx, c.scorePaths["bmc"], c.keystorePath, c.initMessage)
 	return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
@@ -354,5 +352,9 @@ func (c *IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error
 
 // QueryContract implements chains.Chain
 func (*IconLocalnet) QueryContract(ctx context.Context) (context.Context, error) {
+	panic("unimplemented")
+}
+
+func (*IconLocalnet) AddAdmin(ctx context.Context) {
 	panic("unimplemented")
 }

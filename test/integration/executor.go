@@ -20,6 +20,7 @@ type Executor struct {
 	ctx    context.Context
 	cfg    *Config
 	logger *zap.Logger
+	state  State
 }
 
 func NewExecutor(t *testing.T) *Executor {
@@ -30,6 +31,7 @@ func NewExecutor(t *testing.T) *Executor {
 		cfg:    cfg,
 		ctx:    context.Background(),
 		logger: zaptest.NewLogger(t),
+		state: NewState(),
 	}
 }
 
@@ -38,7 +40,7 @@ func (e *Executor) EnsureChainIsRunningAndContractIsDeployed() (context.Context,
 	switch e.cfg.Chain.Name {
 	case "icon":
 		e.chain, err = icon.NewIconChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.Chain.NID, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger, e.cfg.InitMessage)
-	case "cosmos":
+	case "cosmos", "archway":
 		e.chain, err = cosmos.NewCosmosChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger)
 	default:
 		err = fmt.Errorf("unknown chain: %s", e.cfg.Chain.Name)
@@ -47,22 +49,6 @@ func (e *Executor) EnsureChainIsRunningAndContractIsDeployed() (context.Context,
 	if err != nil {
 		return nil, err
 	}
-
-	/* Get the contract name for testing from config file and add to context.
-	For now assuming there will be only one contract mentioned in the config file */
-	var contractName string
-	for k := range e.cfg.Contracts {
-		contractName = k
-	}
-	e.ctx = context.WithValue(e.ctx, chains.ContractName{}, chains.ContractName{
-		ContractName: contractName,
-	})
-
-	// Add init message to context
-	initMsg := e.cfg.InitMessage
-	e.ctx = context.WithValue(e.ctx, chains.InitMessage{}, chains.InitMessage{
-		InitMsg: initMsg,
-	})
 
 	// Wait for at least one block to complete
 	time.Sleep(time.Second * 1)
@@ -74,6 +60,28 @@ func (e *Executor) EnsureChainIsRunningAndContractIsDeployed() (context.Context,
 	ctxValue := e.ctx.Value(chains.ContractKey{}).(chains.ContractKey)
 	fmt.Printf("\n Contract Addresses: %s", ctxValue.ContractAddress)
 	return e.ctx, nil
+}
+
+func (e *Executor) isTheContractOwner(user, contract string) error {
+	owner := e.state.Get(fmt.Sprintf("%s.%s", CONTRACT_OWNERS, contract))
+	if owner == nil {
+		return fmt.Errorf("%s.%s not found in state", WALLETS, user)
+	}
+
+	e.state.Set(fmt.Sprintf("%s.%s", WALLETS, user), owner)
+
+	return nil
+}
+
+func (e *Executor) contractIsDeployedAndInitialized(contract string) error {
+	var err error
+
+	e.ctx, err = e.chain.DeployContract(e.ctx, contract)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *Executor) adminAddressToBeAdded(param *godog.DocString) error {

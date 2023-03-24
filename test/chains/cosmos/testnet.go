@@ -11,19 +11,23 @@ import (
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 )
 
-func NewCosmosTestnet(bin, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
+func NewCosmosTestnet(bin, keystorePath, keyPassword, defaultStepLimit, url string, contracts chains.Contracts) chains.Chain {
 	return &CosmosTestnet{
 		bin:              bin,
 		keystorePath:     keystorePath,
 		keyPassword:      keyPassword,
-		scorePaths:       scorePaths,
+		contracts:        contracts,
 		defaultStepLimit: defaultStepLimit,
 		url:              url,
 		Client:           nil,
 	}
 }
 
-func (c *CosmosTestnet) DeployContract(ctx context.Context) (context.Context, error) {
+func (c *CosmosTestnet) AddAdmin(ctx context.Context) {
+	panic("not implemented") // TODO: Implement
+}
+
+func (c *CosmosTestnet) DeployContract(ctx context.Context, contract string) (context.Context, error) {
 	panic("not implemented") // TODO: Implement
 }
 

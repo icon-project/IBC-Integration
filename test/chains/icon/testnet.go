@@ -21,7 +21,6 @@ type IconTestnet struct {
 	scorePaths       map[string]string
 	defaultStepLimit string
 	url              string
-	initMessage      string
 }
 
 type ContractInfo struct {
@@ -35,7 +34,7 @@ type Block struct {
 }
 
 // DeployContract implements chains.Chain
-func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, error) {
+func (it *IconTestnet) DeployContract(ctx context.Context, contract string) (context.Context, error) {
 	var result *types.TransactionResult
 	var output string
 
@@ -48,7 +47,7 @@ func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, err
 	// 	return nil, fmt.Errorf("cannot find contract %v in config", contract)
 	// }
 
-	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths["bmc"], "--param", it.initMessage,
+	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths["bmc"], "--param", "",
 		"--key_store", it.keystorePath, "--key_password", it.keyPassword, "--step_limit", it.defaultStepLimit,
 		"--content_type", "application/java",
 		"--uri", it.url, "--nid", it.nid).Output()
@@ -102,7 +101,11 @@ func (*IconTestnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, e
 	panic("unimplemented")
 }
 
-func NewIconTestnet(bin, nid, initMessage, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
+func (*IconTestnet) AddAdmin(ctx context.Context) {
+	panic("unimplemented")
+}
+
+func NewIconTestnet(bin, nid, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
 	return &IconTestnet{
 		bin:              bin,
 		nid:              nid,
@@ -111,7 +114,6 @@ func NewIconTestnet(bin, nid, initMessage, keystorePath, keyPassword, defaultSte
 		scorePaths:       scorePaths,
 		defaultStepLimit: defaultStepLimit,
 		url:              url,
-		initMessage:      initMessage,
 	}
 }
 

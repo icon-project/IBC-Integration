@@ -5,9 +5,7 @@ type ContractKey struct {
 }
 type LastBlock struct{}
 
-type ContractName struct {
-	ContractName string
-}
+type ContractsName string
 
 type InitMessage struct {
 	InitMsg string

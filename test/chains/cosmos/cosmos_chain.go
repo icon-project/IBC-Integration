@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewCosmosChain(t *testing.T, ctx context.Context, environment string, chainConfig chains.ChainConfig, keystorePath string, keyPassword string, url string, contractPaths map[string]string, logger *zap.Logger) (chains.Chain, error) {
+func NewCosmosChain(t *testing.T, ctx context.Context, environment string, chainConfig chains.ChainConfig, keystorePath string, keyPassword string, url string, contracts chains.Contracts, logger *zap.Logger) (chains.Chain, error) {
 	switch environment {
 	case "local", "localnet":
 		client, network := interchaintest.DockerSetup(t)

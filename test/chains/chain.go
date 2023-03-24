@@ -13,7 +13,8 @@ const (
 )
 
 type Chain interface {
-	DeployContract(ctx context.Context) (context.Context, error)
+	AddAdmin(ctx context.Context)
+	DeployContract(ctx context.Context, contract string) (context.Context, error)
 	QueryContract(ctx context.Context) (context.Context, error)
 	ExecuteContract(ctx context.Context) (context.Context, error)
 	GetLastBlock(ctx context.Context) (context.Context, error)
@@ -61,4 +62,20 @@ func (c *ChainConfig) GetIBCChainConfig() ibc.ChainConfig {
 		TrustingPeriod: c.TrustingPeriod,
 		NoHostMount:    c.NoHostMount,
 	}
+}
+
+type Contract struct {
+	Path     string      `mapstructure:"path"`
+	InitData interface{} `mapstructure:"init_data"`
+}
+
+type Contracts []Contract
+
+func (c *Contracts) Paths() []string {
+	paths := make([]string, 0)
+	for _, contract := range *c {
+		paths = append(paths, contract.Path)
+	}
+
+	return paths
 }
