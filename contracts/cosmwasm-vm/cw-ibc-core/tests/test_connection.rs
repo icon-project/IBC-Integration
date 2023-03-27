@@ -347,3 +347,8 @@ fn connection_open_confirm_invalid_proof_height() {
     let res_msg = MsgConnectionOpenConfirm::try_from(confirm_msg.clone());
     assert_eq!(res_msg.is_err(), false)
 }
+
+#[test]
+fn connection_open_init_event(){
+    
+}
