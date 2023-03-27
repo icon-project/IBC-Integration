@@ -50,10 +50,10 @@ public class ProtoGen {
 
             final Importer importer = injector.getInstance(Importer.class);
 
-            Iterator it = FileUtils.iterateFiles(new File(path), new String[] { "proto" },
+            Iterator<File> it = FileUtils.iterateFiles(new File(path), new String[] { "proto" },
                     true);
             while (it.hasNext()) {
-                File file = (File) it.next();
+                File file = it.next();
                 String filePath = file.getPath().replace(path + "/", "");
                 final ProtoContext protoContext = importer.importFile(fileReader, filePath);
                 final Proto proto = protoContext.getProto();
@@ -88,7 +88,7 @@ public class ProtoGen {
         }
     }
 
-    private static TypeSpec.Builder createEnum(io.protostuff.compiler.model.Enum protoEnum) throws Exception {
+    private static TypeSpec.Builder createEnum(io.protostuff.compiler.model.Enum protoEnum) {
         TypeSpec.Builder enumSpec = TypeSpec.classBuilder(protoEnum.getName())
                 .addModifiers(Modifier.PUBLIC);
         for (EnumConstant _enum : protoEnum.getConstants()) {
@@ -100,8 +100,7 @@ public class ProtoGen {
         return enumSpec;
     }
 
-    private static TypeSpec.Builder createMessage(Message protoMessage)
-            throws Exception {
+    private static TypeSpec.Builder createMessage(Message protoMessage) {
         TypeSpec.Builder messageSpec = TypeSpec.classBuilder(protoMessage.getName())
                 .addModifiers(Modifier.PUBLIC)
                 .superclass(ProtoMessage.class);
@@ -346,7 +345,7 @@ public class ProtoGen {
             case "uint64":
             case "sint32":
             case "sint64":
-                return "encodeVarIntArrayArray";
+                return "encodeVarIntArray";
             case "fixed32":
             case "sfixed32":
                 throw new IllegalArgumentException("Type currently not supported " + field.getTypeName());
