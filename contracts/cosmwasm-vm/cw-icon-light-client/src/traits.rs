@@ -1,10 +1,9 @@
-use std::error::Error;
-
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::MerkleNode;
 use common::utils::keccak256;
-use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::Height};
+use cosmwasm_std::Addr;
+use ibc_proto::{google::protobuf::Any};
 use prost::{DecodeError, Message};
 use serde::Deserialize;
 use serde::Serialize;
@@ -17,11 +16,39 @@ pub struct ConsensusStateUpdate {
     pub height: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Config {
     pub src_network_id: String,
     pub network_id: u64,
     pub network_type_id: u128,
+    pub owner: Addr,
+}
+
+impl Config {
+    pub fn new(
+        src_network_id: String,
+        network_id: u64,
+        network_type_id: u128,
+        owner: Addr,
+    ) -> Self {
+        Self {
+            src_network_id,
+            network_id,
+            network_type_id,
+            owner,
+        }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            src_network_id: "icon".to_string(),
+            network_id: 1,
+            network_type_id: 1,
+            owner: Addr::unchecked("test"),
+        }
+    }
 }
 
 pub trait ILightClient {
@@ -36,7 +63,6 @@ pub trait ILightClient {
         client_state_bytes: Any,
         consensus_state_bytes: Any,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
-
 
     /**
      * @dev updateClient updates the client corresponding to `clientId`.
@@ -68,6 +94,7 @@ pub trait ILightClient {
         delay_block_period: u64,
         proof: &Vec<MerkleNode>,
         value: &[u8],
+        path: &[u8],
     ) -> Result<bool, Self::Error>;
 
     /**
@@ -77,20 +104,15 @@ pub trait ILightClient {
     fn verify_non_membership(
         &self,
         client_id: &str,
-        height: &Height,
+        height: u64,
         delay_time_period: u64,
         delay_block_period: u64,
-        proof: &[u8],
-        prefix: &[u8],
+        proof: &Vec<MerkleNode>,
         path: &[u8],
     ) -> Result<bool, Self::Error>;
-
-  
 }
 
-pub trait IStoreReader {
-
-}
+pub trait IStoreReader {}
 pub trait IContext {
     type Error;
 
@@ -111,14 +133,27 @@ pub trait IContext {
 
     fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error>;
     fn insert_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<(), Self::Error>;
+    fn insert_blocknumber_at_height(&self, client_id: &str, height: u64)
+        -> Result<(), Self::Error>;
 
     fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
     fn get_config(&self) -> Result<Config, Self::Error>;
+
+    fn insert_config(&self, config: &Config) -> Result<(), Self::Error>;
+
+    fn get_current_block_time(&self) -> u64;
+    fn get_current_block_height(&self) -> u64;
+    fn get_processed_time_at_height(
+        &self,
+        client_id: &str,
+        height: u64,
+    ) -> Result<u64, Self::Error>;
+    fn get_processed_block_at_height(
+        &self,
+        client_id: &str,
+        height: u64,
+    ) -> Result<u64, Self::Error>;
 }
-
-
-
-
 
 pub trait AnyTypes: Message + Default {
     fn get_type_url() -> String;

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::traits::AnyTypes;
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
@@ -7,7 +5,7 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::utils::{calculate_root, keccak256};
-use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::Height};
+use ibc_proto::{google::protobuf::Any};
 use prost::Message;
 
 const HEADER_TYPE_URL: &str = "/icon.lightclient.v1.SignedHeader";
@@ -55,7 +53,7 @@ impl<'a> IconClient<'a> {
         let decision = header
             .get_network_type_section_decision_hash(&config.src_network_id, config.network_type_id);
         let validators_map = common::utils::to_lookup(&state.validators);
-        for (i, signature) in signatures.iter().enumerate() {
+        for (_i, signature) in signatures.iter().enumerate() {
             let signer = self.context.recover_signer(decision.as_slice(), signature);
             if let Some(val) = signer {
                 if let Some(_expected) = validators_map.get(&val.to_vec()) {
@@ -71,6 +69,32 @@ impl<'a> IconClient<'a> {
             return Err(ContractError::InSuffcientQuorum);
         }
         Ok(true)
+    }
+
+    fn validate_delay_args(
+        &self,
+        client_id: &str,
+        height: u64,
+        delay_time: u64,
+        delay_block: u64,
+    ) -> Result<(), ContractError> {
+        let processed_time = self
+            .context
+            .get_processed_time_at_height(client_id, height)?;
+        let processed_height = self
+            .context
+            .get_processed_block_at_height(client_id, height)?;
+        let current_time = self.context.get_current_block_time();
+        let current_height = self.context.get_current_block_height();
+        if !current_time >= (processed_time + delay_time) {
+            return Err(ContractError::NotEnoughtTimeElapsed);
+        }
+
+        if !current_height >= (processed_height + delay_block) {
+            return Err(ContractError::NotEnoughtBlocksElapsed);
+        }
+
+        Ok(())
     }
 }
 
@@ -105,8 +129,6 @@ impl ILightClient for IconClient<'_> {
         ))
     }
 
-    
-
     fn update_client(
         &self,
         client_id: &str,
@@ -117,8 +139,9 @@ impl ILightClient for IconClient<'_> {
         let btp_header = signed_header.header.clone().unwrap();
         let mut state = self.context.get_client_state(client_id)?;
         let config = self.context.get_config()?;
-        if state.latest_height != (btp_header.main_height - 1) {
-            return Err(ContractError::InvalidHeightUpdate {
+
+        if (btp_header.main_height - state.latest_height) < state.trusting_period {
+            return Err(ContractError::TrustingPeriodElapsed {
                 saved_height: state.latest_height,
                 update_height: btp_header.main_height,
             });
@@ -152,6 +175,8 @@ impl ILightClient for IconClient<'_> {
         )?;
         self.context
             .insert_timestamp_at_height(client_id, btp_header.main_height)?;
+        self.context
+            .insert_blocknumber_at_height(client_id, btp_header.main_height)?;
         let commitment = keccak256(&consensus_state.to_any().encode_to_vec());
 
         Ok((
@@ -170,12 +195,15 @@ impl ILightClient for IconClient<'_> {
         delay_time_period: u64,
         delay_block_period: u64,
         proof: &Vec<MerkleNode>,
-       
+        path: &[u8],
         value: &[u8],
     ) -> Result<bool, Self::Error> {
-        let leaf = keccak256(value);
-        let message_root = calculate_root(leaf, proof);
+        //  assert(clientState.frozenHeight === null || clientState.frozenHeight > height)
+        let _ =
+            self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
         let consensus_state = self.context.get_consensus_state(&client_id, height)?;
+        let leaf = keccak256(&[path, value].concat());
+        let message_root = calculate_root(leaf, proof);
         if consensus_state.message_root != message_root {
             return Err(ContractError::InvalidMessageRoot(hex::encode(message_root)));
         }
@@ -186,15 +214,20 @@ impl ILightClient for IconClient<'_> {
     fn verify_non_membership(
         &self,
         client_id: &str,
-        height: &Height,
+        height: u64,
         delay_time_period: u64,
         delay_block_period: u64,
-        proof: &[u8],
-        prefix: &[u8],
+        proof: &Vec<MerkleNode>,
         path: &[u8],
     ) -> Result<bool, Self::Error> {
-        todo!()
+        return self.verify_membership(
+            client_id,
+            height,
+            delay_time_period,
+            delay_block_period,
+            proof,
+            &[],
+            path,
+        );
     }
-
-   
 }

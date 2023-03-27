@@ -2,7 +2,7 @@ use cosmwasm_std::StdError;
 use prost::DecodeError;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
@@ -32,8 +32,8 @@ pub enum ContractError {
     ClientStateAlreadyExists(String),
     #[error("Config not found or initialized")]
     ConfigNotFound,
-    #[error("Failed to save {update_height:?} client is at {saved_height:?}")]
-    InvalidHeightUpdate {
+    #[error("Trusting Period elapsed. Height: {update_height:?} client is at {saved_height:?}")]
+    TrustingPeriodElapsed {
         saved_height: u64,
         update_height: u64,
     },
@@ -43,4 +43,16 @@ pub enum ContractError {
     InvalidMessageRoot(String),
     #[error("Failed to save processed time")]
     FailedToSaveProcessedTime,
+    #[error("Processed time not found for {client_id:?} at height {height:?}")]
+    ProcessedTimeNotFound { client_id: String, height: u64 },
+    #[error("Processed height not found for {client_id:?} at height {height:?}")]
+    ProcessedHeightNotFound { client_id: String, height: u64 },
+    #[error("Too early to process by time elapsed")]
+    NotEnoughtTimeElapsed,
+    #[error("Too early to process by block elapsed")]
+    NotEnoughtBlocksElapsed,
+    #[error("Failed to init contract")]
+    FailedToInitContract,
+    #[error("Failed to save config")]
+    FailedToSaveConfig,
 }

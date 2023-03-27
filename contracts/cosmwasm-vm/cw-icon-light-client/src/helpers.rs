@@ -1,4 +1,3 @@
-use common::icon::icon::types::v1::MerkleNode;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
