@@ -97,8 +97,10 @@ public class IBCConnection extends IBCClient {
     }
 
     public byte[] _connectionOpenAck(MsgConnectionOpenAck msg) {
-        ConnectionEnd connection = ConnectionEnd.decode(connections.get(msg.getConnectionId()));
-        Context.require(connection != null, "connection does not exist");
+        byte[] connectionPb = connections.get(msg.getConnectionId());
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+
         int state = connection.getState();
         // TODO should we allow the state to be TRY_OPEN?
         Context.require(state == ConnectionEnd.State.STATE_INIT || state == ConnectionEnd.State.STATE_TRYOPEN,
@@ -156,8 +158,10 @@ public class IBCConnection extends IBCClient {
     }
 
     public byte[] _connectionOpenConfirm(MsgConnectionOpenConfirm msg) {
-        ConnectionEnd connection = ConnectionEnd.decode(connections.get(msg.getConnectionId()));
-        Context.require(connection != null, "connection does not exist");
+        byte[] connectionPb = connections.get(msg.getConnectionId());
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+
         int state = connection.getState();
         Context.require(state == ConnectionEnd.State.STATE_TRYOPEN, "connection state is not TRYOPEN");
 

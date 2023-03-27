@@ -1,6 +1,5 @@
 package ibc.ics04.channel;
 
-import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.ics24.host.IBCCommitment;
@@ -17,7 +16,10 @@ import java.math.BigInteger;
 public class IBCPacket extends IBCChannelHandshake {
 
     public void _sendPacket(Packet packet) {
-        Channel channel = Channel.decode(channels.at(packet.getSourcePort()).get(packet.getSourceChannel()));
+        byte[] channelPb = channels.at(packet.getSourcePort()).get(packet.getSourceChannel());
+        Context.require(channelPb != null, "channel does not exist");
+        Channel channel = Channel.decode(channelPb);
+
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
         Context.require(
                 packet.getDestinationPort().equals(channel.getCounterparty().getPortId()),

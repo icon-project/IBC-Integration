@@ -109,7 +109,7 @@ public class TendermintHelper {
     public static Timestamp getCurrentTime() {
         BigInteger timeInMicro = BigInteger.valueOf(Context.getBlockTimestamp());
         BigInteger seconds = timeInMicro.divide(MICRO_SECONDS_IN_A_SECOND);
-        BigInteger microSeconds = timeInMicro.subtract(seconds.multiply(MICRO_SECONDS_IN_A_SECOND));
+        BigInteger microSeconds = timeInMicro.remainder(MICRO_SECONDS_IN_A_SECOND);
         BigInteger nanoSeconds = microSeconds.multiply(BigInteger.valueOf(1000));
 
         Timestamp currentTime = new Timestamp();

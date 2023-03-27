@@ -96,8 +96,9 @@ public class IBCChannelHandshake extends IBCConnection {
     }
 
     public byte[] _channelOpenAck(MsgChannelOpenAck msg) {
-        Channel channel = Channel.decode(channels.at(msg.getPortId()).get(msg.getChannelId()));
-        Context.require(channel != null, "channel does not exist");
+        byte[] channelPb = channels.at(msg.getPortId()).get(msg.getChannelId());
+        Context.require(channelPb != null, "channel does not exist");
+        Channel channel = Channel.decode(channelPb);
         Context.require(channel.getConnectionHops().size() == 1);
 
         Context.require(
