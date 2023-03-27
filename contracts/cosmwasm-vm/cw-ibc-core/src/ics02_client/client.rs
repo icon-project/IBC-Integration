@@ -83,8 +83,8 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    // query to get impls for client id
-    pub fn get_client_impls(
+    // query to get implementation for client id
+    pub fn get_client_implementations(
         &self,
         store: &dyn Storage,
         client_id: ClientId,
@@ -136,7 +136,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn store_client_impl(
+    pub fn store_client_implementations(
         &self,
         store: &mut dyn Storage,
         client_id: ClientId,
