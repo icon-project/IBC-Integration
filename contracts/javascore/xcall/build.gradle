@@ -1,0 +1,50 @@
+version = '0.1.0'
+
+dependencies {
+    implementation project(':ibc')
+    compileOnly("foundation.icon:javaee-api:$javaeeVersion")
+    implementation("foundation.icon:javaee-scorex:$scorexVersion")
+    implementation project(':lib')
+    implementation project(':score-util')
+
+    // for generating ScoreClient
+    annotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
+    compileOnly("foundation.icon:javaee-score-client:$scoreClientVersion")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
+
+    testImplementation("foundation.icon:javaee-unittest:$javaeeUnittestVersion")
+    testAnnotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
+    testImplementation("foundation.icon:javaee-score-client:$scoreClientVersion")
+}
+
+optimizedJar {
+    dependsOn(project(':lib').jar)
+    dependsOn(project(':score-util').jar)
+    mainClassName = 'foundation.icon.btp.xcall.CallServiceImpl'
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+deployJar {
+    endpoints {
+        berlin {
+            uri = 'https://berlin.net.solidwallet.io/api/v3'
+            nid = 0x7
+        }
+        lisbon {
+            uri = 'https://lisbon.net.solidwallet.io/api/v3'
+            nid = 0x2
+        }
+        local {
+            uri = 'http://localhost:9082/api/v3'
+            nid = 0x3
+        }
+    }
+    keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
+    password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
+    parameters {
+
+    }
+}
