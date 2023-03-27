@@ -1,14 +1,19 @@
 package ibc.icon.structs.messages;
 
 public class UpdateClientResponse {
+    // current client state
     private byte[] clientStateCommitment;
-    private ConsensusStateUpdate update;
-    private boolean ok;
+    // commitment for updated consensusState
+    private byte[] consensusStateCommitment;
+    // updated height
+    private byte[] height;
 
-    public UpdateClientResponse(byte[] clientStateCommitment, ConsensusStateUpdate update, boolean ok) {
+    
+
+    public UpdateClientResponse(byte[] clientStateCommitment, byte[] consensusStateCommitment, byte[] height) {
         this.clientStateCommitment = clientStateCommitment;
-        this.update = update;
-        this.ok = ok;
+        this.consensusStateCommitment = consensusStateCommitment;
+        this.height = height;
     }
 
     public byte[] getClientStateCommitment() {
@@ -19,20 +24,19 @@ public class UpdateClientResponse {
         this.clientStateCommitment = clientStateCommitment;
     }
 
-    public ConsensusStateUpdate getUpdate() {
-        return update;
+    public byte[] getConsensusStateCommitment() {
+        return consensusStateCommitment;
     }
 
-    public void setUpdate(ConsensusStateUpdate update) {
-        this.update = update;
+    public void setConsensusStateCommitment(byte[] consensusStateCommitment) {
+        this.consensusStateCommitment = consensusStateCommitment;
     }
 
-    public boolean isOk() {
-        return ok;
+    public byte[] getHeight() {
+        return height;
     }
 
-    public void setOk(boolean ok) {
-        this.ok = ok;
+    public void setHeight(byte[] height) {
+        this.height = height;
     }
-
 }

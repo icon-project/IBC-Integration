@@ -6,6 +6,8 @@ import score.annotation.External;
 
 import java.math.BigInteger;
 
+import ibc.icon.structs.messages.MsgCreateClient;
+
 public class IBCHandler extends IBCHandlerPacket {
 
     public static final String name = "ICON IBC Handler";
@@ -46,13 +48,10 @@ public class IBCHandler extends IBCHandlerPacket {
         super.setExpectedTimePerBlock(expectedTimePerBlock);
     }
 
-    /**
-     * set id of BTP network
-     */
     @External
-    public void setBTPNetworkId(int id) {
+    public String createClient(MsgCreateClient msg) {
         onlyOwner();
-        setBTPNetworkId(id);
+        return super.createClient(msg);
     }
 
     public static void onlyOwner() {

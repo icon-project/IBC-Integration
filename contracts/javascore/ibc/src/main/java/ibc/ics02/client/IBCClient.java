@@ -17,20 +17,14 @@ import java.math.BigInteger;
 
 public class IBCClient extends IBCHost {
 
-    Logger logger = new Logger("ibc-core");
+    static Logger logger = new Logger("ibc-core");
 
-    /**
-     * Registers a client to registry
-     *
-     * @param clientType  Type of client
-     * @param lightClient Light client contract address
-     */
     public void registerClient(String clientType, Address lightClient) {
         Context.require(clientRegistry.get(clientType) == null, "Already registered.");
         clientRegistry.set(clientType, lightClient);
     }
 
-    public String createClient(MsgCreateClient msg) {
+    public String _createClient(MsgCreateClient msg) {
         String clientType = msg.getClientType();
         Address lightClientAddr = clientRegistry.get(clientType);
         NullChecker.requireNotNull(lightClientAddr, "Register client before creation.");
@@ -40,46 +34,39 @@ public class IBCClient extends IBCHost {
 
         clientTypes.set(clientId, msg.getClientType());
         clientImplementations.set(clientId, lightClientAddr);
+        btpNetworkId.set(clientId, msg.getBtpNetworkId());
         ILightClient client = getClient(clientId);
         UpdateClientResponse response = client.createClient(clientId, msg.getClientState(), msg.getConsensusState());
-        Context.require(response.isOk());
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
-        // update commitments
-        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId), response.clientStateCommitment);
-        Height updateHeight = response.getUpdate().getHeight();
+        Height updateHeight = Height.decode(response.getHeight());
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 updateHeight.getRevisionNumber(),
                 updateHeight.getRevisionHeight());
-        // commitments.set(consensusKey, response.update.consensusStateCommitment);
 
-        sendBTPMessage(ByteUtil.join(clientKey, response.getClientStateCommitment()));
-        sendBTPMessage(ByteUtil.join(consensusKey, response.getUpdate().getConsensusStateCommitment()));
+        sendBTPMessage(clientId, ByteUtil.join(clientKey, response.getClientStateCommitment()));
+        sendBTPMessage(clientId, ByteUtil.join(consensusKey, response.getConsensusStateCommitment()));
 
         return clientId;
     }
 
-    public void updateClient(MsgUpdateClient msg) {
+    public byte[] _updateClient(MsgUpdateClient msg) {
         String clientId = msg.getClientId();
         ILightClient client = getClient(clientId);
 
-        // Should be required on client side
-        // Context.require(commitments.get(IBCCommitment.clientStateCommitmentKey(clientId))
-        // != null);
         UpdateClientResponse response = client.updateClient(clientId, msg.getClientMessage());
-        Context.require(response.isOk());
 
         byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
-        // update commitments
-        // commitments.set(IBCCommitment.clientStateCommitmentKey(clientId),response.clientStateCommitment);
-        Height updateHeight = response.getUpdate().getHeight();
+
+        Height updateHeight = Height.decode(response.getHeight());
         byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
                 updateHeight.getRevisionNumber(),
                 updateHeight.getRevisionHeight());
-        // commitments.set(consensusKey, response.update.consensusStateCommitment);
 
-        sendBTPMessage(ByteUtil.join(clientKey, response.getClientStateCommitment()));
-        sendBTPMessage(ByteUtil.join(consensusKey, response.getUpdate().getConsensusStateCommitment()));
+        sendBTPMessage(clientId, ByteUtil.join(clientKey, response.getClientStateCommitment()));
+        sendBTPMessage(clientId, ByteUtil.join(consensusKey, response.getConsensusStateCommitment()));
+
+        return response.getHeight();
     }
 
     private String generateClientIdentifier(String clientType) {

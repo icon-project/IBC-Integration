@@ -66,4 +66,6 @@ public interface IIBCModule {
     byte[] onRecvPacket(byte[] calldata, Address relayer);
 
     void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer);
+
+    void onTimeoutPacket(byte[] calldata, Address relayer);
 }

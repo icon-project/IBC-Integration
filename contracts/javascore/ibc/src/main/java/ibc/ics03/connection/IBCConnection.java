@@ -1,6 +1,9 @@
 package ibc.ics03.connection;
 
-import ibc.icon.interfaces.IIBCConnection;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
+
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Logger;
@@ -17,10 +20,6 @@ import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-
 public class IBCConnection extends IBCClient {
     public static final String v1Identifier = "1";
     public static final List<String> supportedV1Features = List.of("ORDER_ORDERED", "ORDER_UNORDERED");
@@ -28,7 +27,7 @@ public class IBCConnection extends IBCClient {
 
     Logger logger = new Logger("ibc-core");
 
-    public String connectionOpenInit(MsgConnectionOpenInit msg) {
+    public String _connectionOpenInit(MsgConnectionOpenInit msg) {
         String connectionId = generateConnectionIdentifier();
         Context.require(connections.get(connectionId) == null, "connectionId already exists");
         ILightClient client = getClient(msg.getClientId());
@@ -42,13 +41,13 @@ public class IBCConnection extends IBCClient {
         connection.setCounterparty(msg.getCounterparty());
 
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(connectionId, encodedConnection);
+        updateConnectionCommitment(connection.getClientId(), connectionId, encodedConnection);
         connections.set(connectionId, encodedConnection);
 
         return connectionId;
     }
 
-    public String connectionOpenTry(MsgConnectionOpenTry msg) {
+    public String _connectionOpenTry(MsgConnectionOpenTry msg) {
         List<Version> counterpartyVersions = msg.getCounterpartyVersions();
         // TODO: investigate need to self client validation
         Context.require(counterpartyVersions.size() > 0, "counterpartyVersions length must be greater than 0");
@@ -91,15 +90,17 @@ public class IBCConnection extends IBCClient {
         // TODO we should also verify a consensus state
 
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(connectionId, encodedConnection);
+        updateConnectionCommitment(connection.getClientId(), connectionId, encodedConnection);
         connections.set(connectionId, encodedConnection);
 
         return connectionId;
     }
 
-    public void connectionOpenAck(MsgConnectionOpenAck msg) {
-        ConnectionEnd connection = ConnectionEnd.decode(connections.get(msg.getConnectionId()));
-        Context.require(connection != null, "connection does not exist");
+    public byte[] _connectionOpenAck(MsgConnectionOpenAck msg) {
+        byte[] connectionPb = connections.get(msg.getConnectionId());
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+
         int state = connection.getState();
         // TODO should we allow the state to be TRY_OPEN?
         Context.require(state == ConnectionEnd.State.STATE_INIT || state == ConnectionEnd.State.STATE_TRYOPEN,
@@ -108,10 +109,10 @@ public class IBCConnection extends IBCClient {
             Context.require(isSupportedVersion(msg.getVersion()),
                     "connection state is in INIT but the provided version is not supported");
         } else {
-            Context.require(connection.getVersions().size() == 1
+            Context.require(
+                    connection.getVersions().size() == 1
                             && Arrays.equals(connection.getVersions().get(0).encode(), msg.getVersionRaw()),
-                    "connection state is in TRYOPEN but the provided version is not set in the previous connection " +
-                            "versions");
+                    "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
         }
 
         // TODO: investigate need to self client validation
@@ -150,14 +151,17 @@ public class IBCConnection extends IBCClient {
         connection.getCounterparty().setConnectionId(msg.getCounterpartyConnectionID());
 
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(msg.getConnectionId(), encodedConnection);
+        updateConnectionCommitment(connection.getClientId(), msg.getConnectionId(), encodedConnection);
         connections.set(msg.getConnectionId(), encodedConnection);
 
+        return encodedConnection;
     }
 
-    public void connectionOpenConfirm(MsgConnectionOpenConfirm msg) {
-        ConnectionEnd connection = ConnectionEnd.decode(connections.get(msg.getConnectionId()));
-        Context.require(connection != null, "connection does not exist");
+    public byte[] _connectionOpenConfirm(MsgConnectionOpenConfirm msg) {
+        byte[] connectionPb = connections.get(msg.getConnectionId());
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+
         int state = connection.getState();
         Context.require(state == ConnectionEnd.State.STATE_TRYOPEN, "connection state is not TRYOPEN");
 
@@ -181,16 +185,18 @@ public class IBCConnection extends IBCClient {
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(msg.getConnectionId(), encodedConnection);
+        updateConnectionCommitment(connection.getClientId(), msg.getConnectionId(), encodedConnection);
         connections.set(msg.getConnectionId(), encodedConnection);
+
+        return encodedConnection;
     }
 
     /* Verification functions */
 
     private void verifyClientState(ConnectionEnd connection, byte[] height, byte[] path, byte[] proof,
-                                   byte[] clientStatebytes) {
+            byte[] clientStatebytes) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 BigInteger.ZERO,
@@ -199,17 +205,16 @@ public class IBCConnection extends IBCClient {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path,
                 clientStatebytes);
-        Context.require(ok, "failed to verify clientState");
     }
 
     private void verifyClientConsensusState(ConnectionEnd connection, byte[] height, Height consensusHeight,
-                                            byte[] proof, byte[] consensusStateBytes) {
+            byte[] proof, byte[] consensusStateBytes) {
         byte[] consensusPath = IBCCommitment.consensusStatePath(connection.getCounterparty().getClientId(),
                 consensusHeight.getRevisionNumber(),
                 consensusHeight.getRevisionHeight());
 
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 BigInteger.ZERO,
@@ -218,14 +223,12 @@ public class IBCConnection extends IBCClient {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 consensusPath,
                 consensusStateBytes);
-        Context.require(ok, "failed to verify consensus state");
-
     }
 
     private void verifyConnectionState(ConnectionEnd connection, byte[] height, byte[] proof, String connectionId,
-                                       ConnectionEnd counterpartyConnection) {
+            ConnectionEnd counterpartyConnection) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 BigInteger.ZERO,
@@ -234,7 +237,6 @@ public class IBCConnection extends IBCClient {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 IBCCommitment.connectionPath(connectionId),
                 counterpartyConnection.encode());
-        Context.require(ok, "failed to verify connection state");
     }
 
     /* Internal functions */
@@ -263,11 +265,9 @@ public class IBCConnection extends IBCClient {
         return true;
     }
 
-    private void updateConnectionCommitment(String connectionId, byte[] connectionBytes) {
-        sendBTPMessage(ByteUtil.join(IBCCommitment.connectionCommitmentKey(connectionId),
+    private void updateConnectionCommitment(String clientId, String connectionId, byte[] connectionBytes) {
+        sendBTPMessage(clientId, ByteUtil.join(IBCCommitment.connectionCommitmentKey(connectionId),
                 IBCCommitment.keccak256(connectionBytes)));
-        // commitments.set(IBCCommitment.connectionCommitmentKey(connectionId),
-        // IBCCommitment.keccak256(connection.toBytes()));>
     }
 
 }

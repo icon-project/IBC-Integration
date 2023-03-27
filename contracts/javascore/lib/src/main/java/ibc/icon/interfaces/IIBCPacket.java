@@ -1,6 +1,7 @@
 package ibc.icon.interfaces;
 
-import icon.proto.core.channel.Packet;
+import ibc.icon.structs.messages.MsgPacketAcknowledgement;
+import ibc.icon.structs.messages.MsgPacketRecv;
 
 import java.math.BigInteger;
 
@@ -18,7 +19,7 @@ public interface IIBCPacket {
      * {@code @dev} recvPacket is called by a module in order to receive & process an IBC
      * packet sent on the corresponding channel end on the counterparty chain.
      */
-    void recvPacket(Packet packet, byte[] proof, byte[] proofHeight);
+    void recvPacket(MsgPacketRecv msg);
 
     /**
      * {@code @dev} writeAcknowledgement writes the packet execution acknowledgement to the
@@ -34,5 +35,11 @@ public interface IIBCPacket {
      * which is no longer necessary since the packet has been received and acted upon. It will also increment
      * NextSequenceAck in case of ORDERED channels.
      */
-    void acknowledgePacket(Packet packet, byte[] acknowledgement, byte[] proof, byte[] proofHeight);
+    void acknowledgePacket(MsgPacketAcknowledgement msg);
+
+    /**
+     * {@code @dev} requestTimeout is called by a module in order to prove the
+     * absence of a packet on a channel.
+     */
+    void requestTimeout(byte[] packetPb);
 }

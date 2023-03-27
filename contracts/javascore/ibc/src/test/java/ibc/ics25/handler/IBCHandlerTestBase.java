@@ -1,18 +1,32 @@
 package ibc.ics25.handler;
 
+import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
+
+import java.math.BigInteger;
+import java.util.List;
+
+import org.mockito.ArgumentCaptor;
+
 import com.google.protobuf.ByteString;
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
+
+import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.structs.messages.*;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
-import org.mockito.ArgumentCaptor;
 import test.proto.core.channel.ChannelOuterClass.Channel;
 import test.proto.core.channel.ChannelOuterClass.Packet;
 import test.proto.core.client.Client.Height;
@@ -20,13 +34,6 @@ import test.proto.core.connection.Connection.ConnectionEnd;
 import test.proto.core.connection.Connection.Counterparty;
 import test.proto.core.connection.Connection.MerklePrefix;
 import test.proto.core.connection.Connection.Version;
-
-import java.math.BigInteger;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 public class IBCHandlerTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();
@@ -68,14 +75,11 @@ public class IBCHandlerTestBase extends TestBase {
 
         handlerSpy = (IBCHandler) spy(handler.getInstance());
         handler.setInstance(handlerSpy);
-        doNothing().when(handlerSpy).sendBTPMessage(any(byte[].class));
+        doNothing().when(handlerSpy).sendBTPMessage(any(String.class), any(byte[].class));
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
         module = new MockContract<>(IIBCModuleScoreInterface.class, IIBCModule.class, sm, owner);
 
-        when(lightClient.mock.verifyMembership(any(String.class), any(byte[].class), any(BigInteger.class),
-                any(BigInteger.class),
-                any(byte[].class), any(byte[].class), any(byte[].class), any(byte[].class))).thenReturn(true);
         when(lightClient.mock.getClientState(any(String.class))).thenReturn(new byte[0]);
 
         prefix = MerklePrefix.newBuilder()
@@ -95,18 +99,20 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setClientState(new byte[0]);
         msg.setConsensusState(new byte[0]);
         msg.setClientType(clientType);
+        msg.setBtpNetworkId(4);
 
-        ConsensusStateUpdate update = new ConsensusStateUpdate(new byte[0],
+        UpdateClientResponse response = new UpdateClientResponse(
+                new byte[0], 
+                new byte[0],
                 Height.getDefaultInstance().toByteArray());
-        UpdateClientResponse response = new UpdateClientResponse(new byte[0], update, true);
         when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
                 .thenReturn(response);
 
         // Act
-        handler.invoke(module.account, "createClient", msg);
+        handler.invoke(owner, "createClient", msg);
 
         // Assert
-        verify(handlerSpy).GeneratedClientIdentifier(clientIdCaptor.capture());
+        verify(handlerSpy).CreateClient(clientIdCaptor.capture(), eq(msg.getClientState()));
         clientId = clientIdCaptor.getValue();
     }
 
@@ -123,9 +129,7 @@ public class IBCHandlerTestBase extends TestBase {
                 .setRevisionHeight(1)
                 .setRevisionNumber(2).build();
 
-        ConsensusStateUpdate update = new ConsensusStateUpdate(consensusStateCommitment, consensusHeight.toByteArray());
-
-        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, update, true);
+        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, consensusStateCommitment, consensusHeight.toByteArray());
 
         when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(response);
 
@@ -148,7 +152,7 @@ public class IBCHandlerTestBase extends TestBase {
         handler.invoke(module.account, "connectionOpenInit", msg);
 
         // Assert
-        verify(handlerSpy).GeneratedConnectionIdentifier(connectionIdCaptor.capture());
+        verify(handlerSpy).ConnectionOpenInit(eq(clientId), connectionIdCaptor.capture(), eq(counterparty.toByteArray()));
         connectionId = connectionIdCaptor.getValue();
     }
 
@@ -163,7 +167,7 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setDelayPeriod(delayPeriod);
         msg.setClientId(clientId);
         msg.setClientStateBytes(new byte[0]);
-        msg.setCounterpartyVersions(new byte[][]{baseVersion.toByteArray()});
+        msg.setCounterpartyVersions(new byte[][] { baseVersion.toByteArray() });
         msg.setProofInit(new byte[0]);
         msg.setProofClient(new byte[0]);
         msg.setProofConsensus(new byte[0]);
@@ -174,7 +178,7 @@ public class IBCHandlerTestBase extends TestBase {
         handler.invoke(module.account, "connectionOpenTry", msg);
 
         // Assert
-        verify(handlerSpy).GeneratedConnectionIdentifier(connectionIdCaptor.capture());
+        verify(handlerSpy).ConnectionOpenTry(eq(clientId), connectionIdCaptor.capture(), eq(counterparty.toByteArray()));
         connectionId = connectionIdCaptor.getValue();
     }
 
@@ -236,7 +240,7 @@ public class IBCHandlerTestBase extends TestBase {
         handler.invoke(module.account, "channelOpenInit", msg);
 
         // Assert
-        verify(handlerSpy).GeneratedChannelIdentifier(channelIdCaptor.capture());
+        verify(handlerSpy).ChannelOpenInit(eq(msg.getPortId()), channelIdCaptor.capture(), eq(channel.toByteArray()));
         channelId = channelIdCaptor.getValue();
 
         verify(module.mock).onChanOpenInit(
@@ -250,7 +254,6 @@ public class IBCHandlerTestBase extends TestBase {
 
     void tryOpenChannel() {
         // Arrange
-
         Channel.Counterparty counterparty = Channel.Counterparty.newBuilder()
                 .setPortId(counterPartyPortId)
                 .setChannelId(counterPartyChannelId).build();
@@ -273,7 +276,7 @@ public class IBCHandlerTestBase extends TestBase {
         handler.invoke(module.account, "channelOpenTry", msg);
 
         // Assert
-        verify(handlerSpy).GeneratedChannelIdentifier(channelIdCaptor.capture());
+        verify(handlerSpy).ChannelOpenTry(eq(msg.getPortId()), channelIdCaptor.capture(), eq(channel.toByteArray()));
         channelId = channelIdCaptor.getValue();
 
         verify(module.mock).onChanOpenTry(channel.getOrderingValue(), channel.getConnectionHopsList(), portId,
@@ -433,6 +436,28 @@ public class IBCHandlerTestBase extends TestBase {
         // Assert
         verify(handlerSpy).AcknowledgePacket(msg.getPacketRaw(), msg.getAcknowledgement());
         verify(module.mock).onAcknowledgementPacket(msg.getPacketRaw(), msg.getAcknowledgement(), relayer.getAddress());
+    }
+
+    void requestTimeout(Packet packet) {
+        handler.invoke(relayer, "requestTimeout", packet.toByteArray());
+        verify(handlerSpy).TimeoutRequest(packet.toByteArray());
+
+    }
+
+    void timeoutPacket() throws Exception{
+        MsgPacketTimeout msg = new MsgPacketTimeout();
+        BigInteger nextRecv = (BigInteger)handler.call("getNextSequenceReceive", portId, channelId);
+        Packet packet = Packet.parseFrom(lastPacketCaptor.getValue());
+        msg.setPacket(packet.toByteArray());
+        msg.setNextSequenceRecv(nextRecv);
+        msg.setProof(new byte[2]);
+        msg.setProofHeight(packet.getTimeoutHeight().toByteArray());
+        // when(lightClient.mock.getTimestampAtHeight(any(String.class), eq(msg.getProofHeightRaw())).thenReturn(sm.get);
+
+        handler.invoke(relayer, "timeoutPacket", msg);
+
+        verify(handlerSpy).PacketTimeout(msg.getPacketRaw());
+        verify(module.mock).onTimeoutPacket(msg.getPacketRaw(), relayer.getAddress());
     }
 
     protected Packet getBasePacket() {
