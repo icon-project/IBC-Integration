@@ -208,14 +208,14 @@ pub fn make_packet_timeout_event(packet: Packet, channel_order: &Order) -> Event
 }
 
 // Makes CloseInitChannel event
-pub fn make_close_init_channel_event(msg: &MsgChannelCloseInit) -> Event {
+pub fn create_close_init_channel_event(msg: &MsgChannelCloseInit) -> Event {
     Event::new(IbcEventType::CloseInitChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_a.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_a.as_str())
 }
 
 // Makes CloseConfirmChannel event
-pub fn make_close_confirm_channel_event(msg: &MsgChannelCloseConfirm) -> Event {
+pub fn create_close_confirm_channel_event(msg: &MsgChannelCloseConfirm) -> Event {
     Event::new(IbcEventType::CloseConfirmChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_b.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_b.as_str())

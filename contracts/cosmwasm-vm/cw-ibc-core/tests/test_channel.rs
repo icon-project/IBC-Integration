@@ -7,7 +7,7 @@ use cw_ibc_core::{
         make_open_confirm_channel_event, make_open_init_channel_event, make_open_try_channel_event,
         make_packet_timeout_event, make_send_packet_event, make_write_ack_event,
         MsgChannelCloseConfirm, MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm,
-        MsgChannelOpenInit, MsgChannelOpenTry, make_close_init_channel_event, make_close_confirm_channel_event,
+        MsgChannelOpenInit, MsgChannelOpenTry, create_close_init_channel_event, create_close_confirm_channel_event,
     },
     types::{ChannelId, PortId},
     ChannelEnd, IbcConnectionId, Sequence,
@@ -828,20 +828,20 @@ fn test_make_timout_packet_event() {
 }
 
 #[test]
-pub fn test_make_close_init_channel_event() {
+pub fn test_create_close_init_channel_event() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
-    let event = make_close_init_channel_event(&msg);
+    let event = create_close_init_channel_event(&msg);
 
     assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
 }
 
 #[test]
-pub fn test_make_close_confirm_channel_event() {
+pub fn test_create_close_confirm_channel_event() {
     let proof_height = 10;
     let raw = get_dummy_raw_msg_chan_close_confirm(proof_height);
     let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
-    let event = make_close_confirm_channel_event(&msg);
+    let event = create_close_confirm_channel_event(&msg);
 
     assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }
