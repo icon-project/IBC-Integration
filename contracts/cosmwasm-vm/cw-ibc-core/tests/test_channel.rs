@@ -74,7 +74,7 @@ fn test_channel_sequence_initialisation() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
+#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
 fn test_channel_sequence_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
