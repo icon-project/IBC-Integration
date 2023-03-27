@@ -15,6 +15,7 @@ import java.math.BigInteger;
 // TODO verify packet commitments follow a correct format
 public class IBCPacket extends IBCChannelHandshake {
 
+
     public void _sendPacket(Packet packet) {
         byte[] channelPb = channels.at(packet.getSourcePort()).get(packet.getSourceChannel());
         Context.require(channelPb != null, "channel does not exist");

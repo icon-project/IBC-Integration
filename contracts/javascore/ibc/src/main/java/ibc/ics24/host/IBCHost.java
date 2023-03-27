@@ -10,7 +10,7 @@ import ibc.icon.score.util.NullChecker;
 
 public class IBCHost extends IBCStore {
     private static final String TAG = "IBCHOST: ";
-    private static final Address chainScore = new Address(new byte[Address.LENGTH]);
+    private static final Address chainScore = Address.fromString("cx0000000000000000000000000000000000000000");
 
     /***
      * claimCapability allows the IBC app module to claim a capability that core IBC

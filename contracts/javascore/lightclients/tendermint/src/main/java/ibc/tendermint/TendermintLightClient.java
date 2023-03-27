@@ -97,6 +97,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         clientStates.set(clientId, clientStateBytes);
         consensusStates.at(clientId).set(clientState.getLatestHeight(), consensusStateBytes);
+
         UpdateClientResponse response = new UpdateClientResponse(
                         IBCCommitment.keccak256(clientStateBytes), 
                         IBCCommitment.keccak256(consensusStateBytes),
@@ -163,6 +164,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                     newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode()
             );
 
+
             return response;
         }
 
@@ -181,6 +183,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 BigInteger.valueOf(Context.getBlockHeight()));
         processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                 BigInteger.valueOf(Context.getBlockTimestamp()));
+
 
         UpdateClientResponse response = new UpdateClientResponse(
                 IBCCommitment.keccak256(encodedClientState), 
@@ -212,7 +215,6 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         byte[] root = consensusState.getRoot().getHash();
 
         Context.require(true, "Verification failed");
-
     }
 
     @External
