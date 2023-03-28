@@ -1,3 +1,5 @@
+use ibc::core::ics02_client::error::ClientError;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -83,8 +85,8 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    // query to get impls for client id
-    pub fn get_client_impls(
+    // query to get implementation for client id
+    pub fn get_client_implementations(
         &self,
         store: &dyn Storage,
         client_id: ClientId,
@@ -136,7 +138,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn store_client_impl(
+    pub fn store_client_implementations(
         &self,
         store: &mut dyn Storage,
         client_id: ClientId,
@@ -148,6 +150,27 @@ impl<'a> CwIbcCoreContext<'a> {
             .save(store, client_id, &client)
         {
             Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+    pub fn check_client_registered(
+        &self,
+        store: &dyn Storage,
+        client_type: ClientType,
+    ) -> Result<(), ContractError> {
+        match self
+            .ibc_store()
+            .client_registry()
+            .may_load(store, client_type)
+        {
+            Ok(result) => match result {
+                Some(_) => Err(ContractError::IbcClientError {
+                    error: ClientError::Other {
+                        description: "Client Implementation Already Exist".to_string(),
+                    },
+                }),
+                None => Ok(()),
+            },
             Err(error) => Err(ContractError::Std(error)),
         }
     }

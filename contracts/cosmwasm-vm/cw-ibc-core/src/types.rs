@@ -1,12 +1,3 @@
-use cosmwasm_std::StdError;
-use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
-
-use ibc::core::ics24_host::error::ValidationError;
-use std::{
-    fmt::{Display, Error as FmtError, Formatter},
-    str::FromStr,
-};
-
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
@@ -23,10 +14,16 @@ impl ClientId {
         self.0.as_bytes()
     }
 
-    pub fn new(client_type: ClientType, counter: u64) -> Result<Self, ValidationError> {
+    pub fn new(client_type: ClientType, counter: u64) -> Result<Self, ContractError> {
         match IbcClientId::new(client_type.client_type(), counter) {
             Ok(result) => Ok(Self(result)),
-            Err(error) => Err(error),
+            Err(error) => Err(ContractError::IbcClientError {
+                error: ClientError::ClientIdentifierConstructor {
+                    client_type: client_type.client_type(),
+                    counter,
+                    validation_error: error,
+                },
+            }),
         }
     }
     pub fn default() -> Self {

@@ -22,7 +22,16 @@ use crate::{
     types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
 };
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::StdError;
+use cosmwasm_std::{Addr, DepsMut};
 use cw_storage_plus::{Item, Map};
+use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
+use ibc::core::{
+    ics02_client::error::ClientError,
+    ics04_channel::error::{ChannelError, PacketError},
+    ics05_port::error::PortError,
+    ContextError,
+};
 pub use ibc::core::{
     ics02_client::{
         client_type::ClientType as IbcClientType,
@@ -42,5 +51,8 @@ pub use ibc::core::{
     ics26_routing::context::{Module, ModuleId},
 };
 use serde::{Deserialize, Serialize};
-
-use cosmwasm_std::{Addr, Deps, DepsMut};
+use std::{
+    fmt::{Display, Error as FmtError, Formatter},
+    str::FromStr,
+};
+use thiserror::Error;
