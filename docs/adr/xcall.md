@@ -24,6 +24,8 @@ transaction themselves, so the burden of transaction fee for transaction executi
 This is a WIP, some specs might be changed later with the development. The logic for fees are not included in this
 document and will be added later.
 
+Cross-chain address refer to BTP Address (for now).
+
 ## Design
 
 XCall is an application module to implement IBCModule interface. The xcall is defined
