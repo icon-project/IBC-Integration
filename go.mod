@@ -6,8 +6,6 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/avast/retry-go/v4 v4.0.4
 	github.com/cosmos/cosmos-sdk v0.46.2
-	github.com/cucumber/godog v0.12.6
-	github.com/cosmos/ibc-go/v6 v6.0.0-20221104144119-b1f494c64328
 	github.com/docker/docker v20.10.19+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
@@ -17,10 +15,10 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230228221006-4e43739472a1
 	github.com/stretchr/testify v1.8.1
+	github.com/tendermint/tendermint v0.34.24
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.1.0
-	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 	modernc.org/sqlite v1.17.3
 )
 
@@ -60,9 +58,8 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.19.2-0.20220916140702-9b6be3095313 // indirect
+	github.com/cosmos/ibc-go/v6 v6.0.0-20221104144119-b1f494c64328 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
-	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
-	github.com/cucumber/messages-go/v16 v16.0.1 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
@@ -112,8 +109,8 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-getter v1.7.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-memdb v1.3.2 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
+	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -189,7 +186,6 @@ require (
 	github.com/tendermint/btcd v0.1.1 // indirect
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/tendermint/tendermint v0.34.24 // indirect
 	github.com/tendermint/tm-db v0.6.7 // indirect
 	github.com/tinylib/msgp v1.1.2 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
@@ -217,6 +213,7 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 	google.golang.org/grpc v1.53.0 // indirect
+	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
