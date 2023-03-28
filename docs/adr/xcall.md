@@ -147,7 +147,7 @@ sendCallMessage(String _to, byte[] _data, @Optional byte[] _rollback);{
 		destination_port: destination_port,
 		data: CSMessageRequest({
 			from: msg.sender,
-			to: destinationAddress,
+			to: _to,
 			sn: sn,
 			rollback: rollback,
 			data: _data
