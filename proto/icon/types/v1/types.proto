@@ -2,37 +2,33 @@ syntax = "proto3";
 
 package icon.types.v1;
 
-import "gogoproto/gogo.proto";
+// import "gogoproto/gogo.proto";
 
 // go_package output 
 option go_package = "libraries/go/common/icon;icon";
-option (gogoproto.goproto_getters_all)  = false;
+// option (gogoproto.goproto_getters_all)  = false;
 
 
 // BlockIdFlag indicates which BlcokID the signature is for
 enum BlockIDFlag {
-    option (gogoproto.goproto_enum_stringer) = true;
-    option (gogoproto.goproto_enum_prefix)   = false;
   
-    BLOCK_ID_FLAG_UNKNOWN = 0 [(gogoproto.enumvalue_customname) = "BlockIDFlagUnknown"];
-    BLOCK_ID_FLAG_ABSENT  = 1 [(gogoproto.enumvalue_customname) = "BlockIDFlagAbsent"];
-    BLOCK_ID_FLAG_COMMIT  = 2 [(gogoproto.enumvalue_customname) = "BlockIDFlagCommit"];
-    BLOCK_ID_FLAG_NIL     = 3 [(gogoproto.enumvalue_customname) = "BlockIDFlagNil"];
+    BLOCK_ID_FLAG_UNKNOWN = 0 ;
+    BLOCK_ID_FLAG_ABSENT  = 1 ;
+    BLOCK_ID_FLAG_COMMIT  = 2 ;
+    BLOCK_ID_FLAG_NIL     = 3 ;
   }
 
 
 // SignedMsgType is a type of signed message in the consensus.
 enum SignedMsgType {
-    option (gogoproto.goproto_enum_stringer) = true;
-    option (gogoproto.goproto_enum_prefix)   = false;
   
-    SIGNED_MSG_TYPE_UNKNOWN = 0 [(gogoproto.enumvalue_customname) = "UnknownType"];
+    SIGNED_MSG_TYPE_UNKNOWN = 0 ;
     // Votes
-    SIGNED_MSG_TYPE_PREVOTE   = 1 [(gogoproto.enumvalue_customname) = "PrevoteType"];
-    SIGNED_MSG_TYPE_PRECOMMIT = 2 [(gogoproto.enumvalue_customname) = "PrecommitType"];
+    SIGNED_MSG_TYPE_PREVOTE   = 1 ;
+    SIGNED_MSG_TYPE_PRECOMMIT = 2 ;
   
     // Proposals
-    SIGNED_MSG_TYPE_PROPOSAL = 32 [(gogoproto.enumvalue_customname) = "ProposalType"];
+    SIGNED_MSG_TYPE_PROPOSAL = 32 ;
 }
 
 message SignedHeader {
@@ -56,6 +52,10 @@ message BTPHeader{
 message  MerkleNode {
     int32 Dir   = 1;
     bytes value = 2;
+}
+
+message MerkleProofs {
+    repeated MerkleNode proofs =1 ;
 }
 
 
