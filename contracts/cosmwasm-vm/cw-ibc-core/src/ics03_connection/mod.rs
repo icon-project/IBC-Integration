@@ -1,6 +1,7 @@
 //! ICS 03: Connection implementation for connecting a client
 pub mod connection;
 pub mod event;
+pub mod handler;
 use crate::context::CwIbcCoreContext;
 use crate::types::{ClientId, ConnectionId};
 use crate::ContractError;
