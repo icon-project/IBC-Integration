@@ -6,7 +6,6 @@ package icon.types.v1;
 
 // go_package output 
 option go_package = "libraries/go/common/icon;icon";
-// option (gogoproto.goproto_getters_all)  = false;
 
 
 // BlockIdFlag indicates which BlcokID the signature is for
