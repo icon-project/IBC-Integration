@@ -207,14 +207,14 @@ pub fn make_packet_timeout_event(packet: Packet, channel_order: &Order) -> Event
         .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order.as_str())
 }
 
-// Makes CloseInitChannel event
+// Creates CloseInitChannel event
 pub fn create_close_init_channel_event(msg: &MsgChannelCloseInit) -> Event {
     Event::new(IbcEventType::CloseInitChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_a.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_a.as_str())
 }
 
-// Makes CloseConfirmChannel event
+// Creates CloseConfirmChannel event
 pub fn create_close_confirm_channel_event(msg: &MsgChannelCloseConfirm) -> Event {
     Event::new(IbcEventType::CloseConfirmChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_b.as_str())
