@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 pub mod setup;
-use cosmwasm_std::testing::MockStorage;
 use cw_ibc_core::ics03_connection::event::event_open_ack;
 use cw_ibc_core::ics03_connection::event::event_open_confirm;
 use cw_ibc_core::ics03_connection::event::event_open_init;
@@ -73,16 +72,18 @@ fn test_get_connection() {
 
 #[test]
 fn test_connection_sequence() {
-    let mut store = MockStorage::default();
+    let mut store = deps();
     let contract = CwIbcCoreContext::new();
     contract
-        .connection_next_sequence_init(&mut store, u128::default())
+        .connection_next_sequence_init(store.as_mut().storage, u128::default())
         .unwrap();
-    let result = contract.connection_counter(&mut store).unwrap();
+    let result = contract.connection_counter(store.as_ref().storage).unwrap();
 
     assert_eq!(0, result);
 
-    let increment_sequence = contract.increase_connection_counter(&mut store).unwrap();
+    let increment_sequence = contract
+        .increase_connection_counter(store.as_mut().storage)
+        .unwrap();
     assert_eq!(1, increment_sequence);
 }
 
@@ -131,11 +132,13 @@ fn test_set_connection_fail() {
 #[test]
 #[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
 fn test_connection_sequence_fail() {
-    let mut store = MockStorage::default();
+    let mut store = deps();
     let contract = CwIbcCoreContext::new();
-    contract.connection_counter(&mut store).unwrap();
+    contract.connection_counter(store.as_ref().storage).unwrap();
 
-    contract.increase_connection_counter(&mut store).unwrap();
+    contract
+        .increase_connection_counter(store.as_mut().storage)
+        .unwrap();
 }
 
 #[test]
