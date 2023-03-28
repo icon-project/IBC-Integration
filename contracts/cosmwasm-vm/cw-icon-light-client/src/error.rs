@@ -55,4 +55,6 @@ pub enum ContractError {
     FailedToInitContract,
     #[error("Failed to save config")]
     FailedToSaveConfig,
+    #[error("Client state frozen at {0}")]
+    ClientStateFrozen(u64),
 }

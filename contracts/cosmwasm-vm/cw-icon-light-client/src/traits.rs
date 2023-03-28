@@ -1,9 +1,10 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
+use common::icon::icon::types::v1::BtpHeader;
 use common::icon::icon::types::v1::MerkleNode;
 use common::utils::keccak256;
 use cosmwasm_std::Addr;
-use ibc_proto::{google::protobuf::Any};
+use ibc_proto::google::protobuf::Any;
 use prost::{DecodeError, Message};
 use serde::Deserialize;
 use serde::Serialize;
@@ -60,8 +61,9 @@ pub trait ILightClient {
     fn create_client(
         &self,
         client_id: &str,
-        client_state_bytes: Any,
-        consensus_state_bytes: Any,
+        trusting_period: u64,
+        max_clock_drift: u64,
+        header: BtpHeader,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
 
     /**

@@ -9,27 +9,33 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    
     CreateClient {
         client_id: String,
-        client_state_bytes: Vec<u8>,
-        consensus_state_bytes: Vec<u8>,
+        trusting_period: u64,
+        max_clock_drift: u64,
+        btp_header_bytes: Vec<u8>,
     },
     UpdateClient {
         client_id: String,
         signed_header: Vec<u8>,
     },
     VerifyMembership {
-        client_id:String,
+        client_id: String,
         message_bytes: Vec<u8>,
-        path:Vec<u8>,
-        proofs: Vec<Vec<u8>>,
+        path: Vec<u8>,
+        proofs: Vec<u8>,
         height: u64,
+        delay_time_period:u64,
+        delay_block_period:u64,
     },
     VerifyNonMembership {
-        client_id:String,
-        path:Vec<u8>,
-        proofs: Vec<Vec<u8>>,
+        client_id: String,
+        path: Vec<u8>,
+        proofs: Vec<u8>,
         height: u64,
+        delay_time_period:u64,
+        delay_block_period:u64,
     },
 }
 

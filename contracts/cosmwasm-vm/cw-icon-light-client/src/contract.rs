@@ -1,12 +1,9 @@
 use std::cell::RefCell;
 
-use common::icon::icon::types::v1::MerkleNode;
+use common::icon::icon::types::v1::{BtpHeader, MerkleNode, MerkleProofs};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
-    
-};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
 use ibc_proto::google::protobuf::Any;
 
@@ -53,13 +50,14 @@ pub fn execute(
     match msg {
         ExecuteMsg::CreateClient {
             client_id,
-            client_state_bytes,
-            consensus_state_bytes,
+            trusting_period,
+            max_clock_drift,
+            btp_header_bytes,
         } => {
-            let client_state_any = any_from_byte(&client_state_bytes);
-            let consensus_state_any = any_from_byte(&consensus_state_bytes);
+            let btp_header = BtpHeader::decode(btp_header_bytes.as_slice())
+                .map_err(|e| ContractError::DecodeError(e))?;
             let (state_byte, update) =
-                client.create_client(&client_id, client_state_any, consensus_state_any)?;
+                client.create_client(&client_id, trusting_period, max_clock_drift, btp_header)?;
 
             Ok(Response::new()
                 .add_attribute("client_state_hash", hex::encode(state_byte))
@@ -73,8 +71,8 @@ pub fn execute(
             client_id,
             signed_header,
         } => {
-            let (state_byte, update) =
-                client.update_client(&client_id, any_from_byte(&signed_header))?;
+            let header_any = any_from_byte(&signed_header)?;
+            let (state_byte, update) = client.update_client(&client_id, header_any)?;
             Ok(Response::new()
                 .add_attribute("client_state_hash", hex::encode(state_byte))
                 .add_attribute(
@@ -89,36 +87,49 @@ pub fn execute(
             proofs,
             path,
             height,
+            delay_time_period,
+            delay_block_period,
         } => {
-           let proofs=proofs.into_iter().map(|bytes|{
-              let node= MerkleNode::decode(bytes.as_slice()).unwrap();
-              node
-           }).collect::<Vec<MerkleNode>>();
-           let result =client.verify_membership(
-            &client_id, height, 0, 0, &proofs, &message_bytes, &path)?;
+            let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
+                .map_err(|e| ContractError::DecodeError(e))?;
+            let result = client.verify_membership(
+                &client_id,
+                height,
+                delay_time_period,
+                delay_block_period,
+                &proofs_decoded.proofs,
+                &message_bytes,
+                &path,
+            )?;
             Ok(Response::new().add_attribute("membership", result.to_string()))
-        },
+        }
         ExecuteMsg::VerifyNonMembership {
             client_id,
-           
+
             proofs,
             path,
             height,
+            delay_time_period,
+            delay_block_period,
         } => {
-           let proofs=proofs.into_iter().map(|bytes|{
-              let node= MerkleNode::decode(bytes.as_slice()).unwrap();
-              node
-           }).collect::<Vec<MerkleNode>>();
-           let result =client.verify_non_membership(
-            &client_id, height, 0, 0, &proofs, &path)?;
+            let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
+                .map_err(|e| ContractError::DecodeError(e))?;
+            let result = client.verify_non_membership(
+                &client_id,
+                height,
+                delay_time_period,
+                delay_block_period,
+                &proofs_decoded.proofs,
+                &path,
+            )?;
             Ok(Response::new().add_attribute("non-membership", result.to_string()))
         }
     }
 }
 
-pub fn any_from_byte(bytes: &[u8]) -> Any {
-    let any = Any::decode(bytes).unwrap();
-    any
+pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
+    let any = Any::decode(bytes).map_err(|e| ContractError::DecodeError(e))?;
+    Ok(any)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

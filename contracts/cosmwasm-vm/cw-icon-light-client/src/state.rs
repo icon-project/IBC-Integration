@@ -381,7 +381,7 @@ mod tests {
         let result = QueryHandler::get_client_state_any(&storage, client_id).unwrap();
         let decoded: Any = Message::decode(result.as_slice()).unwrap();
         let decoded_client_state = ClientState::from_any(decoded).unwrap();
-        assert_eq!(client_state,decoded_client_state)
+        assert_eq!(client_state, decoded_client_state)
     }
 
     #[test]

@@ -5,7 +5,7 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::utils::{calculate_root, keccak256};
-use ibc_proto::{google::protobuf::Any};
+use ibc_proto::google::protobuf::Any;
 use prost::Message;
 
 const HEADER_TYPE_URL: &str = "/icon.lightclient.v1.SignedHeader";
@@ -104,13 +104,24 @@ impl ILightClient for IconClient<'_> {
     fn create_client(
         &self,
         client_id: &str,
-        client_state_bytes: Any,
-        consensus_state_bytes: Any,
+        trusting_period: u64,
+        max_clock_drift: u64,
+        btp_header: BtpHeader,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {
-        let client_state = ClientState::from_any(client_state_bytes.clone())
-            .map_err(|e| ContractError::DecodeError(e))?;
-        let consensus_state = ConsensusState::from_any(consensus_state_bytes.clone())
-            .map_err(|e| ContractError::DecodeError(e))?;
+        let client_state = ClientState {
+            frozen_height: 0,
+            latest_height: btp_header.main_height,
+            trusting_period,
+            max_clock_drift,
+            network_section_hash: btp_header.get_network_section_hash().try_into().unwrap(),
+            validators: btp_header.next_validators,
+        };
+        let consensus_state = ConsensusState {
+            message_root: btp_header.message_root,
+        };
+
+        let client_state_bytes = client_state.to_any().encode_to_vec();
+        let consensus_state_bytes = consensus_state.to_any().encode_to_vec();
 
         self.context
             .insert_client_state(&client_id, client_state.clone())?;
@@ -198,7 +209,11 @@ impl ILightClient for IconClient<'_> {
         path: &[u8],
         value: &[u8],
     ) -> Result<bool, Self::Error> {
-        //  assert(clientState.frozenHeight === null || clientState.frozenHeight > height)
+        let state = self.context.get_client_state(client_id)?;
+        if state.frozen_height != 0 && height > state.frozen_height {
+            return Err(ContractError::ClientStateFrozen(state.frozen_height));
+        }
+
         let _ =
             self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
         let consensus_state = self.context.get_consensus_state(&client_id, height)?;
