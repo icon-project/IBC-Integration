@@ -328,3 +328,15 @@ impl KeyDeserialize for ModuleId {
         Ok(ModuleId(module_id.to_string()))
     }
 }
+
+impl From<IbcConnectionId> for ConnectionId {
+    fn from(conn: IbcConnectionId) -> Self {
+        ConnectionId(conn)
+    }
+}
+
+impl From<IbcPortId> for PortId {
+    fn from(port_id: IbcPortId) -> Self {
+        PortId(port_id)
+    }
+}

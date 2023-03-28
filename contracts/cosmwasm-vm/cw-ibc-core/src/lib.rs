@@ -44,3 +44,10 @@ pub use ibc::core::{
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Deps, DepsMut};
+
+pub use cosmwasm_std::{Response, MessageInfo, Reply};
+pub use ibc::core::ics04_channel::msgs::{
+    chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
+    chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
+    chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
+};
