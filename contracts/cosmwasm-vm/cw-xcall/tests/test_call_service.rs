@@ -6,6 +6,7 @@ use cw_xcall::{instantiate, msg::InstantiateMsg, state::CwCallService};
 use setup::*;
 
 #[test]
+
 fn proper_instantiate() {
     let mut mock_deps = deps();
     let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);

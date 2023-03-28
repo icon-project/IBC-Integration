@@ -27,6 +27,28 @@ pub enum ExecuteMsg {
     ExecuteRollback {
         sequence_no: u128,
     },
+
+    #[cfg(not(feature = "native_ibc"))]
+    IbcChannelOpen {
+        msg: IbcChannelOpenMsg,
+    },
+
+    #[cfg(not(feature = "native_ibc"))]
+    IbcChannelConnect {
+        msg: IbcChannelConnectMsg,
+    },
+    #[cfg(not(feature = "native_ibc"))]
+    IbcChannelClose {
+        msg: IbcChannelCloseMsg,
+    },
+    #[cfg(not(feature = "native_ibc"))]
+    IbcPacketReceive {
+        msg: IbcPacketReceiveMsg,
+    },
+    #[cfg(not(feature = "native_ibc"))]
+    IbcPacketAck {
+        msg: IbcPacketAckMsg,
+    },
 }
 
 #[cw_serde]
@@ -38,13 +60,4 @@ pub enum QueryMsg {
     GetProtocolFee {},
     #[returns(Address)]
     GetProtocolFeeHandler {},
-}
-
-#[cw_serde]
-pub enum IbcExecuteMsg {
-    Event {
-        sequence_no: i128,
-        rollback: Vec<u8>,
-        message: CallServiceMessageRequest,
-    },
 }

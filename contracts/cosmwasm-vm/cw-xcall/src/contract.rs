@@ -1,3 +1,7 @@
+use crate::ibc::{
+    ibc_channel_close, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, ibc_packet_receive,
+};
+
 use super::*;
 
 // version info for migration info
@@ -36,6 +40,56 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {
                 self.execute_rollback(deps, info, sequence_no)
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcChannelOpen { msg } => {
+                let response = ibc_channel_open(deps, env, msg).map_err(|error| return error)?;
+
+                match response {
+                    Some(data) => Ok(Response::new().add_attribute("version", data.version)),
+                    None => Ok(Response::new()),
+                }
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcChannelConnect { msg } => {
+                let response = ibc_channel_connect(deps, env, msg).map_err(|error| return error)?;
+
+                Ok(Response::new()
+                    .add_attributes(response.attributes)
+                    .add_events(response.events)
+                    .add_submessages(response.messages))
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcChannelClose { msg } => {
+                let response = ibc_channel_close(deps, env, msg).map_err(|error| return error)?;
+                Ok(Response::new()
+                    .add_attributes(response.attributes)
+                    .add_events(response.events)
+                    .add_submessages(response.messages))
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcPacketReceive { msg } => {
+                let response = ibc_packet_receive(deps, env, msg).map_err(|error| {
+                    return ContractError::Std(StdError::NotFound {
+                        kind: error.to_string(),
+                    });
+                })?;
+
+                let response_data = Response::new()
+                    .add_attributes(response.attributes)
+                    .add_events(response.events)
+                    .add_submessages(response.messages)
+                    .set_data(response.acknowledgement);
+
+                Ok(response_data)
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcPacketAck { msg } => {
+                let response = ibc_packet_ack(deps, env, msg).map_err(|error| return error)?;
+                Ok(Response::new()
+                    .add_attributes(response.attributes)
+                    .add_events(response.events)
+                    .add_submessages(response.messages))
             }
         }
     }
