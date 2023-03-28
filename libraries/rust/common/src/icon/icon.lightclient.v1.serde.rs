@@ -1,503 +1,5 @@
 // @generated
-impl serde::Serialize for ClientState {
-    #[allow(deprecated)]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut len = 0;
-        if !self.chain_id.is_empty() {
-            len += 1;
-        }
-        if self.trust_level.is_some() {
-            len += 1;
-        }
-        if self.trusting_period.is_some() {
-            len += 1;
-        }
-        if self.unbonding_period.is_some() {
-            len += 1;
-        }
-        if self.max_clock_drift.is_some() {
-            len += 1;
-        }
-        if self.frozen_height.is_some() {
-            len += 1;
-        }
-        if self.latest_height.is_some() {
-            len += 1;
-        }
-        if !self.upgrade_path.is_empty() {
-            len += 1;
-        }
-        if self.allow_update_after_expiry {
-            len += 1;
-        }
-        if self.allow_update_after_misbehaviour {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.ClientState", len)?;
-        if !self.chain_id.is_empty() {
-            struct_ser.serialize_field("chain_id", &self.chain_id)?;
-        }
-        if let Some(v) = self.trust_level.as_ref() {
-            struct_ser.serialize_field("trust_level", v)?;
-        }
-        if let Some(v) = self.trusting_period.as_ref() {
-            struct_ser.serialize_field("trusting_period", v)?;
-        }
-        if let Some(v) = self.unbonding_period.as_ref() {
-            struct_ser.serialize_field("unbonding_period", v)?;
-        }
-        if let Some(v) = self.max_clock_drift.as_ref() {
-            struct_ser.serialize_field("max_clock_drift", v)?;
-        }
-        if let Some(v) = self.frozen_height.as_ref() {
-            struct_ser.serialize_field("frozen_height", v)?;
-        }
-        if let Some(v) = self.latest_height.as_ref() {
-            struct_ser.serialize_field("latest_height", v)?;
-        }
-        if !self.upgrade_path.is_empty() {
-            struct_ser.serialize_field("upgrade_path", &self.upgrade_path)?;
-        }
-        if self.allow_update_after_expiry {
-            struct_ser.serialize_field("allow_update_after_expiry", &self.allow_update_after_expiry)?;
-        }
-        if self.allow_update_after_misbehaviour {
-            struct_ser.serialize_field("allow_update_after_misbehaviour", &self.allow_update_after_misbehaviour)?;
-        }
-        struct_ser.end()
-    }
-}
-impl<'de> serde::Deserialize<'de> for ClientState {
-    #[allow(deprecated)]
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        const FIELDS: &[&str] = &[
-            "chain_id",
-            "chainId",
-            "trust_level",
-            "trustLevel",
-            "trusting_period",
-            "trustingPeriod",
-            "unbonding_period",
-            "unbondingPeriod",
-            "max_clock_drift",
-            "maxClockDrift",
-            "frozen_height",
-            "frozenHeight",
-            "latest_height",
-            "latestHeight",
-            "upgrade_path",
-            "upgradePath",
-            "allow_update_after_expiry",
-            "allowUpdateAfterExpiry",
-            "allow_update_after_misbehaviour",
-            "allowUpdateAfterMisbehaviour",
-        ];
-
-        #[allow(clippy::enum_variant_names)]
-        enum GeneratedField {
-            ChainId,
-            TrustLevel,
-            TrustingPeriod,
-            UnbondingPeriod,
-            MaxClockDrift,
-            FrozenHeight,
-            LatestHeight,
-            UpgradePath,
-            AllowUpdateAfterExpiry,
-            AllowUpdateAfterMisbehaviour,
-        }
-        impl<'de> serde::Deserialize<'de> for GeneratedField {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                struct GeneratedVisitor;
-
-                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-                    type Value = GeneratedField;
-
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                        write!(formatter, "expected one of: {:?}", &FIELDS)
-                    }
-
-                    #[allow(unused_variables)]
-                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        match value {
-                            "chainId" | "chain_id" => Ok(GeneratedField::ChainId),
-                            "trustLevel" | "trust_level" => Ok(GeneratedField::TrustLevel),
-                            "trustingPeriod" | "trusting_period" => Ok(GeneratedField::TrustingPeriod),
-                            "unbondingPeriod" | "unbonding_period" => Ok(GeneratedField::UnbondingPeriod),
-                            "maxClockDrift" | "max_clock_drift" => Ok(GeneratedField::MaxClockDrift),
-                            "frozenHeight" | "frozen_height" => Ok(GeneratedField::FrozenHeight),
-                            "latestHeight" | "latest_height" => Ok(GeneratedField::LatestHeight),
-                            "upgradePath" | "upgrade_path" => Ok(GeneratedField::UpgradePath),
-                            "allowUpdateAfterExpiry" | "allow_update_after_expiry" => Ok(GeneratedField::AllowUpdateAfterExpiry),
-                            "allowUpdateAfterMisbehaviour" | "allow_update_after_misbehaviour" => Ok(GeneratedField::AllowUpdateAfterMisbehaviour),
-                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-                deserializer.deserialize_identifier(GeneratedVisitor)
-            }
-        }
-        struct GeneratedVisitor;
-        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = ClientState;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.lightclient.v1.ClientState")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<ClientState, V::Error>
-                where
-                    V: serde::de::MapAccess<'de>,
-            {
-                let mut chain_id__ = None;
-                let mut trust_level__ = None;
-                let mut trusting_period__ = None;
-                let mut unbonding_period__ = None;
-                let mut max_clock_drift__ = None;
-                let mut frozen_height__ = None;
-                let mut latest_height__ = None;
-                let mut upgrade_path__ = None;
-                let mut allow_update_after_expiry__ = None;
-                let mut allow_update_after_misbehaviour__ = None;
-                while let Some(k) = map.next_key()? {
-                    match k {
-                        GeneratedField::ChainId => {
-                            if chain_id__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("chainId"));
-                            }
-                            chain_id__ = Some(map.next_value()?);
-                        }
-                        GeneratedField::TrustLevel => {
-                            if trust_level__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("trustLevel"));
-                            }
-                            trust_level__ = map.next_value()?;
-                        }
-                        GeneratedField::TrustingPeriod => {
-                            if trusting_period__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("trustingPeriod"));
-                            }
-                            trusting_period__ = map.next_value()?;
-                        }
-                        GeneratedField::UnbondingPeriod => {
-                            if unbonding_period__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("unbondingPeriod"));
-                            }
-                            unbonding_period__ = map.next_value()?;
-                        }
-                        GeneratedField::MaxClockDrift => {
-                            if max_clock_drift__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("maxClockDrift"));
-                            }
-                            max_clock_drift__ = map.next_value()?;
-                        }
-                        GeneratedField::FrozenHeight => {
-                            if frozen_height__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("frozenHeight"));
-                            }
-                            frozen_height__ = map.next_value()?;
-                        }
-                        GeneratedField::LatestHeight => {
-                            if latest_height__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("latestHeight"));
-                            }
-                            latest_height__ = map.next_value()?;
-                        }
-                        GeneratedField::UpgradePath => {
-                            if upgrade_path__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("upgradePath"));
-                            }
-                            upgrade_path__ = Some(map.next_value()?);
-                        }
-                        GeneratedField::AllowUpdateAfterExpiry => {
-                            if allow_update_after_expiry__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("allowUpdateAfterExpiry"));
-                            }
-                            allow_update_after_expiry__ = Some(map.next_value()?);
-                        }
-                        GeneratedField::AllowUpdateAfterMisbehaviour => {
-                            if allow_update_after_misbehaviour__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("allowUpdateAfterMisbehaviour"));
-                            }
-                            allow_update_after_misbehaviour__ = Some(map.next_value()?);
-                        }
-                    }
-                }
-                Ok(ClientState {
-                    chain_id: chain_id__.unwrap_or_default(),
-                    trust_level: trust_level__,
-                    trusting_period: trusting_period__,
-                    unbonding_period: unbonding_period__,
-                    max_clock_drift: max_clock_drift__,
-                    frozen_height: frozen_height__,
-                    latest_height: latest_height__,
-                    upgrade_path: upgrade_path__.unwrap_or_default(),
-                    allow_update_after_expiry: allow_update_after_expiry__.unwrap_or_default(),
-                    allow_update_after_misbehaviour: allow_update_after_misbehaviour__.unwrap_or_default(),
-                })
-            }
-        }
-        deserializer.deserialize_struct("icon.lightclient.v1.ClientState", FIELDS, GeneratedVisitor)
-    }
-}
-impl serde::Serialize for ConsensusState {
-    #[allow(deprecated)]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut len = 0;
-        if self.timestamp != 0 {
-            len += 1;
-        }
-        if !self.root.is_empty() {
-            len += 1;
-        }
-        if !self.next_validator_hash.is_empty() {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.ConsensusState", len)?;
-        if self.timestamp != 0 {
-            struct_ser.serialize_field("timestamp", ToString::to_string(&self.timestamp).as_str())?;
-        }
-        if !self.root.is_empty() {
-            struct_ser.serialize_field("root", pbjson::private::base64::encode(&self.root).as_str())?;
-        }
-        if !self.next_validator_hash.is_empty() {
-            struct_ser.serialize_field("next_validator_hash", pbjson::private::base64::encode(&self.next_validator_hash).as_str())?;
-        }
-        struct_ser.end()
-    }
-}
-impl<'de> serde::Deserialize<'de> for ConsensusState {
-    #[allow(deprecated)]
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        const FIELDS: &[&str] = &[
-            "timestamp",
-            "root",
-            "next_validator_hash",
-            "nextValidatorHash",
-        ];
-
-        #[allow(clippy::enum_variant_names)]
-        enum GeneratedField {
-            Timestamp,
-            Root,
-            NextValidatorHash,
-        }
-        impl<'de> serde::Deserialize<'de> for GeneratedField {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                struct GeneratedVisitor;
-
-                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-                    type Value = GeneratedField;
-
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                        write!(formatter, "expected one of: {:?}", &FIELDS)
-                    }
-
-                    #[allow(unused_variables)]
-                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        match value {
-                            "timestamp" => Ok(GeneratedField::Timestamp),
-                            "root" => Ok(GeneratedField::Root),
-                            "nextValidatorHash" | "next_validator_hash" => Ok(GeneratedField::NextValidatorHash),
-                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-                deserializer.deserialize_identifier(GeneratedVisitor)
-            }
-        }
-        struct GeneratedVisitor;
-        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = ConsensusState;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.lightclient.v1.ConsensusState")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<ConsensusState, V::Error>
-                where
-                    V: serde::de::MapAccess<'de>,
-            {
-                let mut timestamp__ = None;
-                let mut root__ = None;
-                let mut next_validator_hash__ = None;
-                while let Some(k) = map.next_key()? {
-                    match k {
-                        GeneratedField::Timestamp => {
-                            if timestamp__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("timestamp"));
-                            }
-                            timestamp__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::Root => {
-                            if root__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("root"));
-                            }
-                            root__ = 
-                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::NextValidatorHash => {
-                            if next_validator_hash__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("nextValidatorHash"));
-                            }
-                            next_validator_hash__ = 
-                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
-                        }
-                    }
-                }
-                Ok(ConsensusState {
-                    timestamp: timestamp__.unwrap_or_default(),
-                    root: root__.unwrap_or_default(),
-                    next_validator_hash: next_validator_hash__.unwrap_or_default(),
-                })
-            }
-        }
-        deserializer.deserialize_struct("icon.lightclient.v1.ConsensusState", FIELDS, GeneratedVisitor)
-    }
-}
-impl serde::Serialize for Fraction {
-    #[allow(deprecated)]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut len = 0;
-        if self.numerator != 0 {
-            len += 1;
-        }
-        if self.denominator != 0 {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.Fraction", len)?;
-        if self.numerator != 0 {
-            struct_ser.serialize_field("numerator", ToString::to_string(&self.numerator).as_str())?;
-        }
-        if self.denominator != 0 {
-            struct_ser.serialize_field("denominator", ToString::to_string(&self.denominator).as_str())?;
-        }
-        struct_ser.end()
-    }
-}
-impl<'de> serde::Deserialize<'de> for Fraction {
-    #[allow(deprecated)]
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        const FIELDS: &[&str] = &[
-            "numerator",
-            "denominator",
-        ];
-
-        #[allow(clippy::enum_variant_names)]
-        enum GeneratedField {
-            Numerator,
-            Denominator,
-        }
-        impl<'de> serde::Deserialize<'de> for GeneratedField {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                struct GeneratedVisitor;
-
-                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-                    type Value = GeneratedField;
-
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                        write!(formatter, "expected one of: {:?}", &FIELDS)
-                    }
-
-                    #[allow(unused_variables)]
-                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        match value {
-                            "numerator" => Ok(GeneratedField::Numerator),
-                            "denominator" => Ok(GeneratedField::Denominator),
-                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-                deserializer.deserialize_identifier(GeneratedVisitor)
-            }
-        }
-        struct GeneratedVisitor;
-        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = Fraction;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.lightclient.v1.Fraction")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<Fraction, V::Error>
-                where
-                    V: serde::de::MapAccess<'de>,
-            {
-                let mut numerator__ = None;
-                let mut denominator__ = None;
-                while let Some(k) = map.next_key()? {
-                    match k {
-                        GeneratedField::Numerator => {
-                            if numerator__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("numerator"));
-                            }
-                            numerator__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::Denominator => {
-                            if denominator__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("denominator"));
-                            }
-                            denominator__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                    }
-                }
-                Ok(Fraction {
-                    numerator: numerator__.unwrap_or_default(),
-                    denominator: denominator__.unwrap_or_default(),
-                })
-            }
-        }
-        deserializer.deserialize_struct("icon.lightclient.v1.Fraction", FIELDS, GeneratedVisitor)
-    }
-}
-impl serde::Serialize for Header {
+impl serde::Serialize for BlockUpdate {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
@@ -508,26 +10,14 @@ impl serde::Serialize for Header {
         if self.header.is_some() {
             len += 1;
         }
-        if self.trusted_height.is_some() {
-            len += 1;
-        }
-        if self.trusted_validators.is_some() {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.Header", len)?;
+        let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.BlockUpdate", len)?;
         if let Some(v) = self.header.as_ref() {
             struct_ser.serialize_field("header", v)?;
-        }
-        if let Some(v) = self.trusted_height.as_ref() {
-            struct_ser.serialize_field("trusted_height", v)?;
-        }
-        if let Some(v) = self.trusted_validators.as_ref() {
-            struct_ser.serialize_field("trusted_validators", v)?;
         }
         struct_ser.end()
     }
 }
-impl<'de> serde::Deserialize<'de> for Header {
+impl<'de> serde::Deserialize<'de> for BlockUpdate {
     #[allow(deprecated)]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
@@ -535,17 +25,11 @@ impl<'de> serde::Deserialize<'de> for Header {
     {
         const FIELDS: &[&str] = &[
             "header",
-            "trusted_height",
-            "trustedHeight",
-            "trusted_validators",
-            "trustedValidators",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
             Header,
-            TrustedHeight,
-            TrustedValidators,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -568,8 +52,6 @@ impl<'de> serde::Deserialize<'de> for Header {
                     {
                         match value {
                             "header" => Ok(GeneratedField::Header),
-                            "trustedHeight" | "trusted_height" => Ok(GeneratedField::TrustedHeight),
-                            "trustedValidators" | "trusted_validators" => Ok(GeneratedField::TrustedValidators),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -579,19 +61,17 @@ impl<'de> serde::Deserialize<'de> for Header {
         }
         struct GeneratedVisitor;
         impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = Header;
+            type Value = BlockUpdate;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.lightclient.v1.Header")
+                formatter.write_str("struct icon.lightclient.v1.BlockUpdate")
             }
 
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<Header, V::Error>
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<BlockUpdate, V::Error>
                 where
                     V: serde::de::MapAccess<'de>,
             {
                 let mut header__ = None;
-                let mut trusted_height__ = None;
-                let mut trusted_validators__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::Header => {
@@ -600,28 +80,302 @@ impl<'de> serde::Deserialize<'de> for Header {
                             }
                             header__ = map.next_value()?;
                         }
-                        GeneratedField::TrustedHeight => {
-                            if trusted_height__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("trustedHeight"));
-                            }
-                            trusted_height__ = map.next_value()?;
-                        }
-                        GeneratedField::TrustedValidators => {
-                            if trusted_validators__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("trustedValidators"));
-                            }
-                            trusted_validators__ = map.next_value()?;
-                        }
                     }
                 }
-                Ok(Header {
+                Ok(BlockUpdate {
                     header: header__,
-                    trusted_height: trusted_height__,
-                    trusted_validators: trusted_validators__,
                 })
             }
         }
-        deserializer.deserialize_struct("icon.lightclient.v1.Header", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("icon.lightclient.v1.BlockUpdate", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for ClientState {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if self.trusting_period != 0 {
+            len += 1;
+        }
+        if self.frozen_height != 0 {
+            len += 1;
+        }
+        if self.max_clock_drift != 0 {
+            len += 1;
+        }
+        if self.latest_height != 0 {
+            len += 1;
+        }
+        if !self.network_section_hash.is_empty() {
+            len += 1;
+        }
+        if !self.validators.is_empty() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.ClientState", len)?;
+        if self.trusting_period != 0 {
+            struct_ser.serialize_field("trusting_period", ToString::to_string(&self.trusting_period).as_str())?;
+        }
+        if self.frozen_height != 0 {
+            struct_ser.serialize_field("frozen_height", ToString::to_string(&self.frozen_height).as_str())?;
+        }
+        if self.max_clock_drift != 0 {
+            struct_ser.serialize_field("max_clock_drift", ToString::to_string(&self.max_clock_drift).as_str())?;
+        }
+        if self.latest_height != 0 {
+            struct_ser.serialize_field("latest_height", ToString::to_string(&self.latest_height).as_str())?;
+        }
+        if !self.network_section_hash.is_empty() {
+            struct_ser.serialize_field("network_section_hash", pbjson::private::base64::encode(&self.network_section_hash).as_str())?;
+        }
+        if !self.validators.is_empty() {
+            struct_ser.serialize_field("validators", &self.validators.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for ClientState {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "trusting_period",
+            "trustingPeriod",
+            "frozen_height",
+            "frozenHeight",
+            "max_clock_drift",
+            "maxClockDrift",
+            "latest_height",
+            "latestHeight",
+            "network_section_hash",
+            "networkSectionHash",
+            "validators",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            TrustingPeriod,
+            FrozenHeight,
+            MaxClockDrift,
+            LatestHeight,
+            NetworkSectionHash,
+            Validators,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "trustingPeriod" | "trusting_period" => Ok(GeneratedField::TrustingPeriod),
+                            "frozenHeight" | "frozen_height" => Ok(GeneratedField::FrozenHeight),
+                            "maxClockDrift" | "max_clock_drift" => Ok(GeneratedField::MaxClockDrift),
+                            "latestHeight" | "latest_height" => Ok(GeneratedField::LatestHeight),
+                            "networkSectionHash" | "network_section_hash" => Ok(GeneratedField::NetworkSectionHash),
+                            "validators" => Ok(GeneratedField::Validators),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = ClientState;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct icon.lightclient.v1.ClientState")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<ClientState, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut trusting_period__ = None;
+                let mut frozen_height__ = None;
+                let mut max_clock_drift__ = None;
+                let mut latest_height__ = None;
+                let mut network_section_hash__ = None;
+                let mut validators__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::TrustingPeriod => {
+                            if trusting_period__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("trustingPeriod"));
+                            }
+                            trusting_period__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::FrozenHeight => {
+                            if frozen_height__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("frozenHeight"));
+                            }
+                            frozen_height__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::MaxClockDrift => {
+                            if max_clock_drift__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("maxClockDrift"));
+                            }
+                            max_clock_drift__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::LatestHeight => {
+                            if latest_height__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("latestHeight"));
+                            }
+                            latest_height__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::NetworkSectionHash => {
+                            if network_section_hash__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("networkSectionHash"));
+                            }
+                            network_section_hash__ = 
+                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::Validators => {
+                            if validators__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("validators"));
+                            }
+                            validators__ = 
+                                Some(map.next_value::<Vec<::pbjson::private::BytesDeserialize<_>>>()?
+                                    .into_iter().map(|x| x.0).collect())
+                            ;
+                        }
+                    }
+                }
+                Ok(ClientState {
+                    trusting_period: trusting_period__.unwrap_or_default(),
+                    frozen_height: frozen_height__.unwrap_or_default(),
+                    max_clock_drift: max_clock_drift__.unwrap_or_default(),
+                    latest_height: latest_height__.unwrap_or_default(),
+                    network_section_hash: network_section_hash__.unwrap_or_default(),
+                    validators: validators__.unwrap_or_default(),
+                })
+            }
+        }
+        deserializer.deserialize_struct("icon.lightclient.v1.ClientState", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for ConsensusState {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if !self.message_root.is_empty() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.ConsensusState", len)?;
+        if !self.message_root.is_empty() {
+            struct_ser.serialize_field("message_root", pbjson::private::base64::encode(&self.message_root).as_str())?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for ConsensusState {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "message_root",
+            "messageRoot",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            MessageRoot,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "messageRoot" | "message_root" => Ok(GeneratedField::MessageRoot),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = ConsensusState;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct icon.lightclient.v1.ConsensusState")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<ConsensusState, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut message_root__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::MessageRoot => {
+                            if message_root__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("messageRoot"));
+                            }
+                            message_root__ = 
+                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
+                        }
+                    }
+                }
+                Ok(ConsensusState {
+                    message_root: message_root__.unwrap_or_default(),
+                })
+            }
+        }
+        deserializer.deserialize_struct("icon.lightclient.v1.ConsensusState", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for Misbehaviour {
