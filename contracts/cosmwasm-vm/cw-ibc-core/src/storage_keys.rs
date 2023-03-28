@@ -5,7 +5,7 @@ use super::*;
 pub enum StorageKey {
     ClientRegistry,
     ClientTypes,
-    ClientImpls,
+    ClientImplementations,
     NextSequenceSend,
     NextSequenceReceieve,
     NextSequenceAcknowledgement,
@@ -17,6 +17,11 @@ pub enum StorageKey {
     Channels,
     Router,
     PortToModule,
+    Commitments,
+    BlockTime,
+    BlockHeight,
+    Capabilities,
+    PacketReceipts,
 }
 
 impl StorageKey {
@@ -24,7 +29,7 @@ impl StorageKey {
         match self {
             StorageKey::ClientRegistry => "client_registry",
             StorageKey::ClientTypes => "client_types",
-            StorageKey::ClientImpls => "client_impls",
+            StorageKey::ClientImplementations => "client_implementations",
             StorageKey::NextSequenceSend => "next_sequence_send",
             StorageKey::NextSequenceReceieve => "next_sequence_recv",
             StorageKey::NextSequenceAcknowledgement => "next_sequence_ack",
@@ -36,6 +41,11 @@ impl StorageKey {
             StorageKey::Channels => "channels",
             StorageKey::Router => "router",
             StorageKey::PortToModule => "port_to_module",
+            StorageKey::Commitments => "commitments",
+            StorageKey::BlockTime => "block_time",
+            StorageKey::BlockHeight => "block_height",
+            StorageKey::Capabilities => "capabilities",
+            StorageKey::PacketReceipts => "packet_receipts",
         }
     }
 }

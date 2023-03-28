@@ -1,9 +1,17 @@
 use std::time::Duration;
 
 pub mod setup;
-use cosmwasm_std::testing::MockStorage;
+use cw_ibc_core::ics03_connection::event::event_open_ack;
+use cw_ibc_core::ics03_connection::event::event_open_init;
+use cw_ibc_core::types::ClientType;
+use cw_ibc_core::IbcClientType;
+use ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
+use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
+use ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
+use ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
+use ibc::events::IbcEventType;
 use setup::*;
 
 use cw_ibc_core::context::CwIbcCoreContext;
@@ -68,16 +76,18 @@ fn test_get_connection() {
 
 #[test]
 fn test_connection_sequence() {
-    let mut store = MockStorage::default();
+    let mut store = deps();
     let contract = CwIbcCoreContext::new();
     contract
-        .connection_next_sequence_init(&mut store, u128::default())
+        .connection_next_sequence_init(store.as_mut().storage, u128::default())
         .unwrap();
-    let result = contract.connection_counter(&mut store).unwrap();
+    let result = contract.connection_counter(store.as_ref().storage).unwrap();
 
     assert_eq!(0, result);
 
-    let increment_sequence = contract.increase_connection_counter(&mut store).unwrap();
+    let increment_sequence = contract
+        .increase_connection_counter(store.as_mut().storage)
+        .unwrap();
     assert_eq!(1, increment_sequence);
 }
 
@@ -126,11 +136,9 @@ fn test_set_connection_fail() {
 #[test]
 #[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
 fn test_connection_sequence_fail() {
-    let mut store = MockStorage::default();
+    let store = deps();
     let contract = CwIbcCoreContext::new();
-    contract.connection_counter(&mut store).unwrap();
-
-    contract.increase_connection_counter(&mut store).unwrap();
+    contract.connection_counter(store.as_ref().storage).unwrap();
 }
 
 #[test]
@@ -346,4 +354,66 @@ fn connection_open_confirm_invalid_proof_height() {
     };
     let res_msg = MsgConnectionOpenConfirm::try_from(confirm_msg.clone());
     assert_eq!(res_msg.is_err(), false)
+}
+
+#[test]
+fn connection_to_verify_correct_connection_id() {
+    let connection_id = ConnectionId::new(10);
+    let client_id = ClientId::default();
+    let counterparty_client_id = ClientId::default();
+    let event = event_open_init(connection_id, client_id, counterparty_client_id);
+    let attribute = event
+        .attributes
+        .iter()
+        .find(|attr| attr.key == CONN_ID_ATTRIBUTE_KEY)
+        .expect("Missing attribute");
+    assert_eq!(attribute.value, "connection-10");
+}
+
+#[test]
+fn connection_to_verify_correct_client_id() {
+    let connection_id = ConnectionId::new(10);
+    let client_id = ClientId::default();
+    let counterparty_client_id = ClientId::default();
+    let event = event_open_init(connection_id, client_id, counterparty_client_id);
+    let attribute = event
+        .attributes
+        .iter()
+        .find(|attr| attr.key == CLIENT_ID_ATTRIBUTE_KEY)
+        .expect("Missing attribute");
+    assert_eq!(attribute.value, "07-tendermint-0");
+}
+
+#[test]
+fn connection_to_verify_correct_counterparty_client_id() {
+    let connection_id = ConnectionId::new(10);
+    let client_id = ClientId::default();
+    let counterparty_client_id = ClientId::default();
+    let event = event_open_init(connection_id, client_id, counterparty_client_id);
+    let attribute = event
+        .attributes
+        .iter()
+        .find(|attr| attr.key == COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY)
+        .expect("Missing attribute");
+    assert_eq!(attribute.value, "07-tendermint-0");
+}
+
+#[test]
+fn connection_to_verify_correct_counterparty_conn_id() {
+    let connection_id = ConnectionId::new(10);
+    let client_id = ClientId::default();
+    let counterparty_client_id = ClientId::default();
+    let counterparty_conn_id = ConnectionId::new(1);
+    let event = event_open_ack(
+        connection_id,
+        client_id,
+        counterparty_conn_id,
+        counterparty_client_id,
+    );
+    let attribute = event
+        .attributes
+        .iter()
+        .find(|attr| attr.key == COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY)
+        .expect("Missing attribute");
+    assert_eq!(attribute.value, "connection-1");
 }
