@@ -59,6 +59,7 @@ public class CallServiceImpl implements IIBCModule {
 
     public CallServiceImpl(Address _ibc) {
         this.ibcHandler.set(_ibc);
+        admin.set(Context.getOwner());
 
 
     }
@@ -150,7 +151,7 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     @External(readonly = true)
-    public Address getIBCAddress() {
+    public Address getIBCHandler() {
         return ibcHandler.get();
     }
 
@@ -212,29 +213,34 @@ public class CallServiceImpl implements IIBCModule {
         }
     }
 
-    @EventLog(indexed=3)
-    public void CallMessage(String _from, String _to, BigInteger _sn, BigInteger _reqId) {}
+    @EventLog(indexed = 3)
+    public void CallMessage(String _from, String _to, BigInteger _sn, BigInteger _reqId) {
+    }
 
-    @EventLog(indexed=1)
-    public void CallExecuted(BigInteger _reqId, int _code, String _msg) {}
+    @EventLog(indexed = 1)
+    public void CallExecuted(BigInteger _reqId, int _code, String _msg) {
+    }
 
-    @EventLog(indexed=1)
-    public void ResponseMessage(BigInteger _sn, int _code, String _msg) {}
+    @EventLog(indexed = 1)
+    public void ResponseMessage(BigInteger _sn, int _code, String _msg) {
+    }
 
-    @EventLog(indexed=1)
-    public void RollbackMessage(BigInteger _sn) {}
+    @EventLog(indexed = 1)
+    public void RollbackMessage(BigInteger _sn) {
+    }
 
-    @EventLog(indexed=1)
-    public void RollbackExecuted(BigInteger _sn, int _code, String _msg) {}
+    @EventLog(indexed = 1)
+    public void RollbackExecuted(BigInteger _sn, int _code, String _msg) {
+    }
 
-    @EventLog(indexed=3)
-    public void CallMessageSent(Address _from, String _to, BigInteger _sn, BigInteger _nsn) {}
+    @EventLog(indexed = 3)
+    public void CallMessageSent(Address _from, String _to, BigInteger _sn, BigInteger _nsn) {
+    }
 
 
     /* ========== Interfaces with BMC ========== */
     @External
     public void handleBTPMessage(String _from, String _svc, BigInteger _sn, byte[] _msg) {
-
         CSMessage msg = CSMessage.fromBytes(_msg);
         switch (msg.getType()) {
             case CSMessage.REQUEST:
@@ -261,14 +267,13 @@ public class CallServiceImpl implements IIBCModule {
     private void handleRequest(String netFrom, BigInteger sn, byte[] data) {
         CSMessageRequest msgReq = CSMessageRequest.fromBytes(data);
         String to = msgReq.getTo();
-        String caller = Context.getCaller().toString();
 
         BigInteger reqId = getNextReqId();
-        CSMessageRequest req = new CSMessageRequest(caller, to, msgReq.getSn(), msgReq.needRollback(), msgReq.getData());
+        CSMessageRequest req = new CSMessageRequest(netFrom, to, msgReq.getSn(), msgReq.needRollback(), msgReq.getData());
         proxyReqs.set(reqId, req);
 
         // emit event to notify the user
-        CallMessage(caller, to, msgReq.getSn(), reqId);
+        CallMessage(netFrom, to, msgReq.getSn(), reqId);
     }
 
     private void handleResponse(String netFrom, BigInteger sn, byte[] data) {
@@ -369,8 +374,18 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     @External
-    public byte[] onRecvPacket(Packet calldata, Address relayer) {
+    public byte[] onRecvPacket(Packet _pct, Address _relayer) {
+        onlyIBCHandler();
+        byte[] _msg = _pct.getData().getBytes();
+        String _from = _pct.getSourcePort() + "/" + _pct.getSourceChannel();
+        BigInteger _sn = _pct.getSequence();
+
+        handleBTPMessage(_from, _from, _sn, _msg);
+
+
         return new byte[0];
+
+
     }
 
     @External
