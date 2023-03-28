@@ -2,7 +2,6 @@ version: v1
 name: buf.build/icon/package
 deps:
   - buf.build/cosmos/ibc
-  - buf.build/cosmos/gogo-proto:bee5511075b7499da6178d9e4aaa628b
   - buf.build/googleapis/googleapis:783e4b5374fa488ab068d08af9658438
 breaking:
   use:
