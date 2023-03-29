@@ -152,7 +152,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         1.into(),
                     )?;
-                    let channel_id_event = make_channel_id_generated_event(channel_id.clone());
+                    let channel_id_event = create_channel_id_generated_event(channel_id.clone());
                     return Ok(Response::new().add_event(channel_id_event));
                 }
                 None => return Err(ContractError::IbcChannelError { error: ChannelError::Other { description: "Data from module is Missing".to_string() } }),

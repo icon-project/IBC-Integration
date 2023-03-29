@@ -2,12 +2,6 @@ version: v1
 managed:
   enabled: true
 plugins:
-  - name: gocosmos
-    out: ..
-    opt: plugins=grpc,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types
-  - name: grpc-gateway
-    out: ..
-    opt: logtostderr=true,allow_colon_final_segments=true
   - name: prost
     out: ../libraries/rust/common/src/icon
     opt:
@@ -26,3 +20,6 @@ plugins:
     strategy: all
     opt:
       - no_features
+  - name: grpc-gateway
+    out: ..
+    opt: logtostderr=true,allow_colon_final_segments=true
