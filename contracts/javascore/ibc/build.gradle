@@ -6,7 +6,10 @@ dependencies {
     implementation project(':lib')
     implementation project(':score-util')
 
+    testImplementation 'com.google.protobuf:protobuf-javalite:3.13.0'
+    testImplementation 'foundation.icon:javaee-rt:0.9.3'
     testImplementation("org.mockito:mockito-core:$mockitoCoreVersion")
+    testImplementation("org.mockito:mockito-inline:$mockitoCoreVersion")
     testImplementation("foundation.icon:javaee-unittest:$javaeeUnittestVersion")
     testAnnotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
     testImplementation project(':test-lib')
@@ -30,6 +33,11 @@ jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
+}
+
+tasks.named('compileJava') {
+    dependsOn(':score-util:jar')
+    dependsOn(':lib:jar')
 }
 
 optimizedJar {
