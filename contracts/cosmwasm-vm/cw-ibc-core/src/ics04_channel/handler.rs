@@ -24,13 +24,17 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             Err(error) => return Err(error),
         };
         let channel_id_on_a = ChannelId::new(counter); // creating new channel_id
-        let contract_address = match self
+        let module_id = match self
             .lookup_module_by_port(deps.storage, PortId::from(message.port_id_on_a.clone()))
         {
             Ok(addr) => addr,
             Err(error) => return Err(error),
         };
-
+        let module_id = types::ModuleId::from(module_id);
+        let contract_address = match self.get_route(deps.storage, module_id) {
+            Ok(addr) => addr,
+            Err(error) => return Err(error),
+        };
         // Store the channel details
         let counter_party = Counterparty::new(message.port_id_on_b.clone(), None);
         let channel_end = ChannelEnd::new(
@@ -155,7 +159,13 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let channel_id_event = create_channel_id_generated_event(channel_id.clone());
                     return Ok(Response::new().add_event(channel_id_event));
                 }
-                None => return Err(ContractError::IbcChannelError { error: ChannelError::Other { description: "Data from module is Missing".to_string() } }),
+                None => {
+                    return Err(ContractError::IbcChannelError {
+                        error: ChannelError::Other {
+                            description: "Data from module is Missing".to_string(),
+                        },
+                    })
+                }
             },
             cosmwasm_std::SubMsgResult::Err(_) => {
                 return Err(ContractError::IbcChannelError {

@@ -1,6 +1,6 @@
 use std::{str::FromStr, time::Duration};
 
-use cosmwasm_std::to_binary;
+use cosmwasm_std::{to_binary, Addr};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };
@@ -843,7 +843,7 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
     let raw = get_dummy_raw_msg_chan_open_init(None);
     let msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
 
-    let res = contract
+    contract
         .validate_channel_open_init(deps.as_mut(), info, &msg)
         .unwrap();
 }
@@ -856,11 +856,16 @@ fn test_validate_open_init_channel() {
     let raw = get_dummy_raw_msg_chan_open_init(None);
     let mut msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id =
-        ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
+    let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = PortId::from(msg.port_id_on_a.clone());
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
+        .unwrap();
+
+    let module = Addr::unchecked("contractaddress");
+    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    contract
+        .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
 
     let ss = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -893,7 +898,7 @@ fn test_validate_open_init_channel() {
     let data = cw_xcall::msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
-        module_id.to_string(),
+        "contractaddress".to_string(),
         data,
         &info,
         EXECUTE_ON_CHANNEL_OPEN_INIT,
@@ -935,7 +940,7 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
         .unwrap();
 
-    let res = contract
+    contract
         .validate_channel_open_init(deps.as_mut(), info, &msg)
         .unwrap();
 }
