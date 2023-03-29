@@ -37,4 +37,7 @@ pub enum ContractError {
 
     #[error("IbcChannelError {error}")]
     IbcChannelError { error: ChannelError },
+
+    #[error("VersionNotSupported")]
+    VersionNotSupported {},
 }
