@@ -4,7 +4,7 @@ use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     // write method to increment next client sequence
-    pub fn increase_client_counter(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+    pub fn increase_client_counter(&self, store: &mut dyn Storage) -> Result<u64, ContractError> {
         match self.ibc_store().next_client_sequence().update(
             store,
             |mut seq| -> Result<_, ContractError> {
@@ -19,7 +19,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // query to get next client sequence
-    pub fn client_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+    pub fn client_counter(&self, store: &dyn Storage) -> Result<u64, ContractError> {
         match self.ibc_store().next_client_sequence().may_load(store) {
             Ok(result) => match result {
                 Some(sequence) => Ok(sequence),
@@ -32,7 +32,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn init_client_counter(
         &self,
         store: &mut dyn Storage,
-        sequence_no: u128,
+        sequence_no: u64,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -188,7 +188,7 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn decode_client_state(
+    pub fn decode_client_state(
         &self,
         client_state: ibc_proto::google::protobuf::Any,
     ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ibc::core::ContextError>

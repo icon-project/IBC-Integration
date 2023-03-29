@@ -326,3 +326,4 @@ fn check_for_genereted_client_id_event() {
         client_id.ibc_client_id().as_str()
     )
 }
+
