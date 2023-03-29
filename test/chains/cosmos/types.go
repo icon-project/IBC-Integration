@@ -20,6 +20,12 @@ type Query struct {
 	GetProtocolFee *GetProtocolFee `json:"get_protocol_fee,omitempty"`
 }
 
+type Admin struct {
+	SetAdmin struct {
+		Address string `json:"address"`
+	} `json:"set_admin"`
+}
+
 type GetProtocolFee struct{}
 
 type GetAdmin struct{}

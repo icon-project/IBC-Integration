@@ -3,13 +3,10 @@ package icon
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os/exec"
-	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
-	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 )
 
@@ -35,9 +32,9 @@ type Block struct {
 }
 
 // DeployContract implements chains.Chain
-func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, error) {
-	var result *types.TransactionResult
-	var output string
+func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
+	// var result *types.TransactionResult
+	// var output string
 
 	// Build Params
 	// "--param", initMessage
@@ -48,30 +45,31 @@ func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, err
 	// 	return nil, fmt.Errorf("cannot find contract %v in config", contract)
 	// }
 
-	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths["bmc"], "--param", it.initMessage,
-		"--key_store", it.keystorePath, "--key_password", it.keyPassword, "--step_limit", it.defaultStepLimit,
-		"--content_type", "application/java",
-		"--uri", it.url, "--nid", it.nid).Output()
-	if err != nil {
-		fmt.Println(err)
-	}
-	json.Unmarshal(hash, &output)
-	time.Sleep(3 * time.Second)
+	// hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths["bmc"], "--param", it.initMessage,
+	// 	"--key_store", it.keystorePath, "--key_password", it.keyPassword, "--step_limit", it.defaultStepLimit,
+	// 	"--content_type", "application/java",
+	// 	"--uri", it.url, "--nid", it.nid).Output()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// json.Unmarshal(hash, &output)
+	// time.Sleep(3 * time.Second)
 
-	out, err := exec.Command(it.bin, "rpc", "txresult", output, "--uri", it.url).Output()
-	if err != nil {
-		return nil, err
-	}
+	// out, err := exec.Command(it.bin, "rpc", "txresult", output, "--uri", it.url).Output()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	json.Unmarshal(out, &result)
+	// json.Unmarshal(out, &result)
 
-	return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
-		ContractAddress: string(result.SCOREAddress),
-	}), nil
+	// return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
+	// 	ContractAddress: string(result.SCOREAddress),
+	// }), nil
+	return nil, nil
 }
 
 // ExecuteContract implements chains.Chain
-func (*IconTestnet) ExecuteContract(ctx context.Context) (context.Context, error) {
+func (*IconTestnet) ExecuteContract(ctx context.Context, contractAddress, methodName, param string) (context.Context, error) {
 	panic("unimplemented")
 }
 
@@ -94,7 +92,7 @@ func (it *IconTestnet) GetLastBlock(ctx context.Context) (context.Context, error
 }
 
 // QueryContract implements chains.Chain
-func (*IconTestnet) QueryContract(ctx context.Context) (context.Context, error) {
+func (*IconTestnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
 	panic("unimplemented")
 }
 
@@ -134,3 +132,11 @@ func NewIconTestnet(bin, nid, initMessage, keystorePath, keyPassword, defaultSte
 // 	json.Unmarshal(output, &hash)
 // 	return hash, err
 // }
+
+func (it *IconTestnet) SetAdminParams(ctx context.Context) string {
+	return ""
+}
+
+func (it *IconTestnet) CreateKey(ctx context.Context, keyName string) error {
+	return nil
+}

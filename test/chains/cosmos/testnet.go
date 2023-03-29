@@ -23,15 +23,15 @@ func NewCosmosTestnet(bin, keystorePath, keyPassword, defaultStepLimit, url stri
 	}
 }
 
-func (c *CosmosTestnet) DeployContract(ctx context.Context) (context.Context, error) {
+func (c *CosmosTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (c *CosmosTestnet) QueryContract(ctx context.Context) (context.Context, error) {
+func (c *CosmosTestnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (c *CosmosTestnet) ExecuteContract(ctx context.Context) (context.Context, error) {
+func (c *CosmosTestnet) ExecuteContract(ctx context.Context, contractAddress, methodName, param string) (context.Context, error) {
 	panic("not implemented") // TODO: Implement
 }
 
@@ -69,4 +69,12 @@ func (c *CosmosTestnet) Height(ctx context.Context) (uint64, error) {
 		fmt.Println(err)
 	}
 	return uint64(0), err
+}
+
+func (c *CosmosTestnet) SetAdminParams(ctx context.Context) string {
+	return ""
+}
+
+func (it *CosmosTestnet) CreateKey(ctx context.Context, keyName string) error {
+	return nil
 }

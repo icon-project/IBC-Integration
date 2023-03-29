@@ -1,7 +1,8 @@
 package chains
 
 type ContractKey struct {
-	ContractAddress string
+	ContractAddress map[string]string
+	ContractOwner   string
 }
 type LastBlock struct{}
 
@@ -18,5 +19,16 @@ type Param struct {
 }
 
 type Query struct {
-	Query string
+	Method string
+	Param  string
 }
+
+type Mykey string
+
+type Admins struct {
+	Admin map[string]string
+}
+
+type AdminKey string
+
+var Response interface{}
