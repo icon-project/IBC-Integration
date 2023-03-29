@@ -75,7 +75,7 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(sequence_no)
     }
 
-    pub fn connection_counter(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+    pub fn connection_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
         match self.ibc_store().next_connection_sequence().load(store) {
             Ok(u128) => Ok(u128),
             Err(error) => Err(ContractError::Std(error)),
@@ -97,7 +97,46 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
+    pub fn init_connection_counter(
+        &self,
+        store: &mut dyn Storage,
+        sequence_no: u128,
+    ) -> Result<(), ContractError> {
+        match self
+            .ibc_store()
+            .next_connection_sequence()
+            .save(store, &sequence_no)
+        {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+}
+
+//TODO : Implement Methods
+#[allow(dead_code)]
+#[allow(unused_variables)]
+impl<'a> CwIbcCoreContext<'a> {
     pub fn commitment_prefix(&self) -> CommitmentPrefix {
-        CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() // TODO
+        CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() //TODO
+    }
+
+    fn host_current_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn host_oldest_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
+        todo!()
+    }
+
+    fn client_consensus_state(
+        &self,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
+    ) -> Result<
+        Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
+        ibc::core::ContextError,
+    > {
+        todo!()
     }
 }

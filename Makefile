@@ -12,8 +12,8 @@ export GO111MODULE = on
 
 protoVer=v0.7
 protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
-containerProtoGen=$(PROJECT_NAME)-proto-gen-$(protoVer)
-containerProtoGenSwagger=$(PROJECT_NAME)-proto-gen-swagger-$(protoVer)
+containerProtoGenGo=$(PROJECT_NAME)-proto-gen-go-$(protoVer)
+containerProtoGenRust=$(PROJECT_NAME)-proto-gen-rust-$(protoVer)
 containerProtoFmt=$(PROJECT_NAME)-proto-fmt-$(protoVer)
 
 proto-all: proto-format proto-lint proto-gen
@@ -27,13 +27,13 @@ proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json
 
 proto-gen-go:
-	@echo "Generating Protobuf files"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
+	@echo "Generating Go Protobuf files"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenGo}$$"; then docker start -a $(containerProtoGenGo); else docker run   --name $(containerProtoGenGo) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
 		sh ./scripts/protocgen_go.sh; fi
 
 proto-gen-rust:
-	@echo "Generating Protobuf files"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
+	@echo "Generating Rust Protobuf files"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenRust}$$"; then docker start -a $(containerProtoGenRust); else docker run  --name $(containerProtoGenRust) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
 		sh ./scripts/protocgen_rust.sh; fi
 
 .PHONY: proto-all proto-gen proto-gen-any proto-swagger-gen proto-format proto-lint proto-check-breaking proto-update-deps

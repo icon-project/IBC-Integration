@@ -83,15 +83,15 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    // query to get impls for client id
-    pub fn get_client_impls(
+    // query to get implementation for client id
+    pub fn get_client_implementations(
         &self,
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<String, ContractError> {
         match self
             .ibc_store()
-            .client_impls()
+            .client_implementations()
             .may_load(store, client_id.clone())
         {
             Ok(result) => match result {
@@ -136,7 +136,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn store_client_impl(
+    pub fn store_client_implementations(
         &self,
         store: &mut dyn Storage,
         client_id: ClientId,
@@ -144,7 +144,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
-            .client_impls()
+            .client_implementations()
             .save(store, client_id, &client)
         {
             Ok(_) => Ok(()),
