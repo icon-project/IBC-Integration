@@ -22,10 +22,9 @@ use crate::{
     types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
 };
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::StdError;
-use cosmwasm_std::{Addr, DepsMut};
-use cw_storage_plus::{Item, Map};
-use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
+use cosmwasm_std::{Addr, Deps, DepsMut, StdError};
+use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};
+use ibc::core::ics24_host::error::ValidationError;
 use ibc::core::{
     ics02_client::error::ClientError,
     ics04_channel::error::{ChannelError, PacketError},
