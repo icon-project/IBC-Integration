@@ -1,4 +1,4 @@
-use super::{event::event_open_init, *};
+use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_open_init(
