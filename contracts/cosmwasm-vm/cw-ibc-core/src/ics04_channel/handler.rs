@@ -155,7 +155,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let channel_id_event = make_channel_id_generated_event(channel_id.clone());
                     return Ok(Response::new().add_event(channel_id_event));
                 }
-                None => todo!(),
+                None => return Err(ContractError::IbcChannelError { error: ChannelError::Other { description: "Data from module is Missing".to_string() } }),
             },
             cosmwasm_std::SubMsgResult::Err(_) => {
                 return Err(ContractError::IbcChannelError {
