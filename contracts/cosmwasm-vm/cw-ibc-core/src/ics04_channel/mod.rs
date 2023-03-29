@@ -29,5 +29,7 @@ use ibc::core::{
 use ibc::events::IbcEventType;
 pub use traits::*;
 
+use ibc::core::ics03_connection::connection::State as ConnectionState;
 // Constants for Reply messages
 pub const EXECUTE_ON_CHANNEL_OPEN_INIT: u64 = 41;
+pub const EXECUTE_ON_CHANNEL_OPEN_TRY: u64 = 42;
