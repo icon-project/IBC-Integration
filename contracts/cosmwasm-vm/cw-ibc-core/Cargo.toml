@@ -42,6 +42,7 @@ ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-
 ibc-proto = { version = "0.26.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
 sha2 = { version = "0.10.6", default-features = false }
 hex ="0.4.3"
+sha3 = { version = "0.10.6", default-features = false }
 
 [dev-dependencies]
 cw-multi-test = "0.16.2"

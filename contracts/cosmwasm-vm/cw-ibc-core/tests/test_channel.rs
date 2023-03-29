@@ -3,11 +3,13 @@ use std::str::FromStr;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        make_ack_packet_event, make_channel_id_generated_event, make_open_ack_channel_event,
-        make_open_confirm_channel_event, make_open_init_channel_event, make_open_try_channel_event,
-        make_packet_timeout_event, make_send_packet_event, make_write_ack_event,
-        MsgChannelCloseConfirm, MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm,
-        MsgChannelOpenInit, MsgChannelOpenTry, create_close_init_channel_event, create_close_confirm_channel_event,
+        create_ack_packet_event, create_channel_id_generated_event,
+        create_close_confirm_channel_event, create_close_init_channel_event,
+        create_open_ack_channel_event, create_open_confirm_channel_event,
+        create_open_init_channel_event, create_open_try_channel_event, create_packet_timeout_event,
+        create_send_packet_event, create_write_ack_event, MsgChannelCloseConfirm,
+        MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
+        MsgChannelOpenTry,
     },
     types::{ChannelId, PortId},
     ChannelEnd, IbcConnectionId, Sequence,
@@ -575,7 +577,7 @@ fn channel_open_ack_from_raw_bad_channel_id_parameter() {
 #[test]
 fn create_channel_id_event_test() {
     let client_id = ChannelId::new(10);
-    let event = make_channel_id_generated_event(client_id);
+    let event = create_channel_id_generated_event(client_id);
 
     assert_eq!("channel_id_created", event.ty);
     assert_eq!("channel-10", event.attributes[0].value);
@@ -714,7 +716,7 @@ fn create_open_ack_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
     let message = MsgChannelOpenAck::try_from(default_raw_msg.clone()).unwrap();
-    let event = make_open_ack_channel_event(&message);
+    let event = create_open_ack_channel_event(&message);
 
     assert_eq!(IbcEventType::OpenAckChannel.as_str(), event.ty);
     assert_eq!("channel-0", event.attributes[1].value);
@@ -727,7 +729,7 @@ fn create_open_confirm_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let message = MsgChannelOpenConfirm::try_from(default_raw_msg.clone()).unwrap();
-    let event = make_open_confirm_channel_event(&message);
+    let event = create_open_confirm_channel_event(&message);
 
     assert_eq!(IbcEventType::OpenConfirmChannel.as_str(), event.ty);
     assert_eq!("channel-0", event.attributes[1].value);
@@ -740,7 +742,7 @@ fn create_open_init_channel_event_test() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_init(Some(10));
     let message = MsgChannelOpenInit::try_from(default_raw_msg.clone()).unwrap();
     let channel_id = ChannelId::new(10);
-    let event = make_open_init_channel_event(&channel_id, &message);
+    let event = create_open_init_channel_event(&channel_id, &message);
 
     assert_eq!(IbcEventType::OpenInitChannel.as_str(), event.ty);
     assert_eq!("channel-10", event.attributes[1].value);
@@ -753,7 +755,7 @@ fn create_open_try_channel_event_test() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_try(10);
     let message = MsgChannelOpenTry::try_from(default_raw_msg.clone()).unwrap();
     let channel_id = ChannelId::new(11);
-    let event = make_open_try_channel_event(&channel_id, &message);
+    let event = create_open_try_channel_event(&channel_id, &message);
 
     assert_eq!(IbcEventType::OpenTryChannel.as_str(), event.ty);
     assert_eq!("counterparty_port_id", event.attributes[2].key);
@@ -762,20 +764,20 @@ fn create_open_try_channel_event_test() {
 }
 
 #[test]
-fn test_make_send_packet_event() {
+fn test_create_send_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
     let msg = Packet::try_from(raw.clone()).unwrap();
     let raw_back = RawPacket::from(msg.clone());
     let msg_back = Packet::try_from(raw_back.clone()).unwrap();
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    let event = make_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
+    let event = create_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
     assert_eq!(IbcEventType::SendPacket.as_str(), event.unwrap().ty)
 }
 
 #[test]
 #[should_panic(expected = "NonUtf8PacketData")]
-fn test_make_send_packet_event_fail() {
+fn test_create_send_packet_event_fail() {
     let raw = get_dummy_raw_packet(15, 0);
 
     let raw = RawPacket {
@@ -783,24 +785,25 @@ fn test_make_send_packet_event_fail() {
         ..raw.clone()
     };
     let msg = Packet::try_from(raw.clone()).unwrap();
-    let _event = make_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+    let _event =
+        create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
 }
 
 #[test]
-fn test_make_write_ack_packet_event() {
+fn test_create_write_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
     let msg = Packet::try_from(raw.clone()).unwrap();
     let raw_back = RawPacket::from(msg.clone());
     let msg_back = Packet::try_from(raw_back.clone()).unwrap();
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    let event = make_write_ack_event(msg_back, vec![0], &IbcConnectionId::default());
+    let event = create_write_ack_event(msg_back, vec![0], &IbcConnectionId::default());
     assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
 }
 
 #[test]
 #[should_panic(expected = "NonUtf8PacketData")]
-fn test_make_write_ack_packet_event_fail() {
+fn test_create_write_ack_packet_event_fail() {
     let raw = get_dummy_raw_packet(15, 0);
 
     let raw = RawPacket {
@@ -808,22 +811,23 @@ fn test_make_write_ack_packet_event_fail() {
         ..raw.clone()
     };
     let msg = Packet::try_from(raw.clone()).unwrap();
-    let _event = make_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+    let _event =
+        create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
 }
 
 #[test]
-fn test_make_ack_packet_event() {
+fn test_create_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
     let packet = Packet::try_from(raw.clone()).unwrap();
-    let event = make_ack_packet_event(packet, &Order::Ordered, &IbcConnectionId::default());
+    let event = create_ack_packet_event(packet, &Order::Ordered, &IbcConnectionId::default());
     assert_eq!("acknowledge_packet", event.ty)
 }
 
 #[test]
-fn test_make_timout_packet_event() {
+fn test_create_timout_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
     let packet = Packet::try_from(raw.clone()).unwrap();
-    let event = make_packet_timeout_event(packet, &Order::Ordered);
+    let event = create_packet_timeout_event(packet, &Order::Ordered);
     assert_eq!("timeout_packet", event.ty)
 }
 
