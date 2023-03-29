@@ -1,16 +1,101 @@
 package ibc.icon.structs.messages;
 
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.core.connection.Version;
+import icon.proto.core.client.Height;
+import icon.proto.core.connection.Version;
 
 public class MsgConnectionOpenAck {
-    public String connectionId;
-    public byte[] clientStateBytes; // client state for chainA on chainB
-    public Version version; // version that ChainB chose in ConnOpenTry
-    public String counterpartyConnectionID;
-    public byte[] proofTry; // proof that connectionEnd was added to ChainB state in ConnOpenTry
-    public byte[] proofClient; // proof of client state on chainB for chainA
-    public byte[] proofConsensus; // proof that chainB has stored ConsensusState of chainA on its client
-    public Height proofHeight; // height that relayer conpublic classed proofTry
-    public Height consensusHeight; // latest height of chainA that chainB has stored on its chainA client
+    private String connectionId;
+    private byte[] clientStateBytes; // client state for chainA on chainB
+    private byte[] version; // version that ChainB chose in ConnOpenTry
+    private String counterpartyConnectionID;
+    private byte[] proofTry; // proof that connectionEnd was added to ChainB state in ConnOpenTry
+    private byte[] proofClient; // proof of client state on chainB for chainA
+    private byte[] proofConsensus; // proof that chainB has stored ConsensusState of chainA on its client
+    private byte[] proofHeight; // height that relayer conpublic classed proofTry
+    private byte[] consensusHeight; // latest height of chainA that chainB has stored on its chainA client
+
+    public String getConnectionId() {
+        return connectionId;
+    }
+
+    public void setConnectionId(String connectionId) {
+        this.connectionId = connectionId;
+    }
+
+    public byte[] getClientStateBytes() {
+        return clientStateBytes;
+    }
+
+    public void setClientStateBytes(byte[] clientStateBytes) {
+        this.clientStateBytes = clientStateBytes;
+    }
+
+    public byte[] getVersionRaw() {
+        return version;
+    }
+
+    public Version getVersion() {
+        return Version.decode(version);
+    }
+
+    public void setVersion(byte[] version) {
+        this.version = version;
+    }
+
+    public String getCounterpartyConnectionID() {
+        return counterpartyConnectionID;
+    }
+
+    public void setCounterpartyConnectionID(String counterpartyConnectionID) {
+        this.counterpartyConnectionID = counterpartyConnectionID;
+    }
+
+    public byte[] getProofTry() {
+        return proofTry;
+    }
+
+    public void setProofTry(byte[] proofTry) {
+        this.proofTry = proofTry;
+    }
+
+    public byte[] getProofClient() {
+        return proofClient;
+    }
+
+    public void setProofClient(byte[] proofClient) {
+        this.proofClient = proofClient;
+    }
+
+    public byte[] getProofConsensus() {
+        return proofConsensus;
+    }
+
+    public void setProofConsensus(byte[] proofConsensus) {
+        this.proofConsensus = proofConsensus;
+    }
+
+    public byte[] getProofHeightRaw() {
+        return proofHeight;
+    }
+
+    public Height getProofHeight() {
+        return Height.decode(proofHeight);
+    }
+
+    public void setProofHeight(byte[] proofHeight) {
+        this.proofHeight = proofHeight;
+    }
+
+    public byte[] getConsensusHeightRaw() {
+        return consensusHeight;
+    }
+
+    public Height getConsensusHeight() {
+        return Height.decode(consensusHeight);
+    }
+
+    public void setConsensusHeight(byte[] consensusHeight) {
+        this.consensusHeight = consensusHeight;
+    }
+
 }
