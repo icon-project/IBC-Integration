@@ -41,7 +41,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
         self.store_connection(deps.storage, conn_id.clone(), conn_end)
             .unwrap();
-        let event = event_open_init(conn_id, client_id, counterparty_client_id);
+        let event = create_open_init_event(conn_id, client_id, counterparty_client_id);
         return Ok(Response::new().add_event(event));
     }
 }

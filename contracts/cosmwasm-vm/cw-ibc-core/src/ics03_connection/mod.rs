@@ -3,7 +3,7 @@ pub mod connection;
 pub mod event;
 pub mod handler;
 use crate::context::CwIbcCoreContext;
-use crate::ics03_connection::event::event_open_init;
+use crate::ics03_connection::event::create_open_init_event;
 use crate::types::{ClientId, ConnectionId};
 use crate::ContractError;
 use cosmwasm_std::DepsMut;

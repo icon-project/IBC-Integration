@@ -3,6 +3,7 @@ use std::time::Duration;
 pub mod setup;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
+use cw_ibc_core::types::ClientType;
 use ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
