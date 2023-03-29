@@ -77,6 +77,12 @@ impl ClientType {
     }
 }
 
+impl From<IbcClientType> for ClientType {
+    fn from(value: IbcClientType) -> Self {
+        Self(value)
+    }
+}
+
 impl<'a> PrimaryKey<'a> for ClientType {
     type Prefix = ();
 
