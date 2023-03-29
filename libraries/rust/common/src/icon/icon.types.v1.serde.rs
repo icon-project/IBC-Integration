@@ -34,7 +34,7 @@ impl serde::Serialize for BtpHeader {
         if !self.message_root.is_empty() {
             len += 1;
         }
-        if !self.next_proof_context.is_empty() {
+        if !self.next_validators.is_empty() {
             len += 1;
         }
         let mut struct_ser = serializer.serialize_struct("icon.types.v1.BTPHeader", len)?;
@@ -42,7 +42,7 @@ impl serde::Serialize for BtpHeader {
             struct_ser.serialize_field("main_height", ToString::to_string(&self.main_height).as_str())?;
         }
         if self.round != 0 {
-            struct_ser.serialize_field("Round", &self.round)?;
+            struct_ser.serialize_field("round", &self.round)?;
         }
         if !self.next_proof_context_hash.is_empty() {
             struct_ser.serialize_field("next_proof_context_hash", pbjson::private::base64::encode(&self.next_proof_context_hash).as_str())?;
@@ -65,8 +65,8 @@ impl serde::Serialize for BtpHeader {
         if !self.message_root.is_empty() {
             struct_ser.serialize_field("message_root", pbjson::private::base64::encode(&self.message_root).as_str())?;
         }
-        if !self.next_proof_context.is_empty() {
-            struct_ser.serialize_field("next_proof_context", pbjson::private::base64::encode(&self.next_proof_context).as_str())?;
+        if !self.next_validators.is_empty() {
+            struct_ser.serialize_field("nextValidators", &self.next_validators.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
         }
         struct_ser.end()
     }
@@ -80,7 +80,7 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
         const FIELDS: &[&str] = &[
             "main_height",
             "mainHeight",
-            "Round",
+            "round",
             "next_proof_context_hash",
             "nextProofContextHash",
             "network_section_to_root",
@@ -95,8 +95,7 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
             "messageCount",
             "message_root",
             "messageRoot",
-            "next_proof_context",
-            "nextProofContext",
+            "nextValidators",
         ];
 
         #[allow(clippy::enum_variant_names)]
@@ -110,7 +109,7 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
             PrevNetworkSectionHash,
             MessageCount,
             MessageRoot,
-            NextProofContext,
+            NextValidators,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -133,7 +132,7 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                     {
                         match value {
                             "mainHeight" | "main_height" => Ok(GeneratedField::MainHeight),
-                            "Round" => Ok(GeneratedField::Round),
+                            "round" => Ok(GeneratedField::Round),
                             "nextProofContextHash" | "next_proof_context_hash" => Ok(GeneratedField::NextProofContextHash),
                             "networkSectionToRoot" | "network_section_to_root" => Ok(GeneratedField::NetworkSectionToRoot),
                             "networkId" | "network_id" => Ok(GeneratedField::NetworkId),
@@ -141,7 +140,7 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                             "prevNetworkSectionHash" | "prev_network_section_hash" => Ok(GeneratedField::PrevNetworkSectionHash),
                             "messageCount" | "message_count" => Ok(GeneratedField::MessageCount),
                             "messageRoot" | "message_root" => Ok(GeneratedField::MessageRoot),
-                            "nextProofContext" | "next_proof_context" => Ok(GeneratedField::NextProofContext),
+                            "nextValidators" => Ok(GeneratedField::NextValidators),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -170,7 +169,7 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                 let mut prev_network_section_hash__ = None;
                 let mut message_count__ = None;
                 let mut message_root__ = None;
-                let mut next_proof_context__ = None;
+                let mut next_validators__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::MainHeight => {
@@ -183,7 +182,7 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                         }
                         GeneratedField::Round => {
                             if round__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("Round"));
+                                return Err(serde::de::Error::duplicate_field("round"));
                             }
                             round__ = 
                                 Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
@@ -243,12 +242,13 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                                 Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
                             ;
                         }
-                        GeneratedField::NextProofContext => {
-                            if next_proof_context__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("nextProofContext"));
+                        GeneratedField::NextValidators => {
+                            if next_validators__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("nextValidators"));
                             }
-                            next_proof_context__ = 
-                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            next_validators__ = 
+                                Some(map.next_value::<Vec<::pbjson::private::BytesDeserialize<_>>>()?
+                                    .into_iter().map(|x| x.0).collect())
                             ;
                         }
                     }
@@ -263,7 +263,7 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                     prev_network_section_hash: prev_network_section_hash__.unwrap_or_default(),
                     message_count: message_count__.unwrap_or_default(),
                     message_root: message_root__.unwrap_or_default(),
-                    next_proof_context: next_proof_context__.unwrap_or_default(),
+                    next_validators: next_validators__.unwrap_or_default(),
                 })
             }
         }
@@ -347,358 +347,6 @@ impl<'de> serde::Deserialize<'de> for BlockIdFlag {
             }
         }
         deserializer.deserialize_any(GeneratedVisitor)
-    }
-}
-impl serde::Serialize for CommitVoteItem {
-    #[allow(deprecated)]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut len = 0;
-        if self.timestamp != 0 {
-            len += 1;
-        }
-        if !self.signature.is_empty() {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.types.v1.CommitVoteItem", len)?;
-        if self.timestamp != 0 {
-            struct_ser.serialize_field("timestamp", ToString::to_string(&self.timestamp).as_str())?;
-        }
-        if !self.signature.is_empty() {
-            struct_ser.serialize_field("signature", pbjson::private::base64::encode(&self.signature).as_str())?;
-        }
-        struct_ser.end()
-    }
-}
-impl<'de> serde::Deserialize<'de> for CommitVoteItem {
-    #[allow(deprecated)]
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        const FIELDS: &[&str] = &[
-            "timestamp",
-            "signature",
-        ];
-
-        #[allow(clippy::enum_variant_names)]
-        enum GeneratedField {
-            Timestamp,
-            Signature,
-        }
-        impl<'de> serde::Deserialize<'de> for GeneratedField {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                struct GeneratedVisitor;
-
-                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-                    type Value = GeneratedField;
-
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                        write!(formatter, "expected one of: {:?}", &FIELDS)
-                    }
-
-                    #[allow(unused_variables)]
-                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        match value {
-                            "timestamp" => Ok(GeneratedField::Timestamp),
-                            "signature" => Ok(GeneratedField::Signature),
-                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-                deserializer.deserialize_identifier(GeneratedVisitor)
-            }
-        }
-        struct GeneratedVisitor;
-        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = CommitVoteItem;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.types.v1.CommitVoteItem")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<CommitVoteItem, V::Error>
-                where
-                    V: serde::de::MapAccess<'de>,
-            {
-                let mut timestamp__ = None;
-                let mut signature__ = None;
-                while let Some(k) = map.next_key()? {
-                    match k {
-                        GeneratedField::Timestamp => {
-                            if timestamp__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("timestamp"));
-                            }
-                            timestamp__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::Signature => {
-                            if signature__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("signature"));
-                            }
-                            signature__ = 
-                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
-                        }
-                    }
-                }
-                Ok(CommitVoteItem {
-                    timestamp: timestamp__.unwrap_or_default(),
-                    signature: signature__.unwrap_or_default(),
-                })
-            }
-        }
-        deserializer.deserialize_struct("icon.types.v1.CommitVoteItem", FIELDS, GeneratedVisitor)
-    }
-}
-impl serde::Serialize for CommitVoteList {
-    #[allow(deprecated)]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut len = 0;
-        if self.round != 0 {
-            len += 1;
-        }
-        if self.block_part_set_id.is_some() {
-            len += 1;
-        }
-        if self.items.is_some() {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.types.v1.CommitVoteList", len)?;
-        if self.round != 0 {
-            struct_ser.serialize_field("round", &self.round)?;
-        }
-        if let Some(v) = self.block_part_set_id.as_ref() {
-            struct_ser.serialize_field("block_part_set_id", v)?;
-        }
-        if let Some(v) = self.items.as_ref() {
-            struct_ser.serialize_field("items", v)?;
-        }
-        struct_ser.end()
-    }
-}
-impl<'de> serde::Deserialize<'de> for CommitVoteList {
-    #[allow(deprecated)]
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        const FIELDS: &[&str] = &[
-            "round",
-            "block_part_set_id",
-            "blockPartSetId",
-            "items",
-        ];
-
-        #[allow(clippy::enum_variant_names)]
-        enum GeneratedField {
-            Round,
-            BlockPartSetId,
-            Items,
-        }
-        impl<'de> serde::Deserialize<'de> for GeneratedField {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                struct GeneratedVisitor;
-
-                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-                    type Value = GeneratedField;
-
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                        write!(formatter, "expected one of: {:?}", &FIELDS)
-                    }
-
-                    #[allow(unused_variables)]
-                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        match value {
-                            "round" => Ok(GeneratedField::Round),
-                            "blockPartSetId" | "block_part_set_id" => Ok(GeneratedField::BlockPartSetId),
-                            "items" => Ok(GeneratedField::Items),
-                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-                deserializer.deserialize_identifier(GeneratedVisitor)
-            }
-        }
-        struct GeneratedVisitor;
-        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = CommitVoteList;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.types.v1.CommitVoteList")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<CommitVoteList, V::Error>
-                where
-                    V: serde::de::MapAccess<'de>,
-            {
-                let mut round__ = None;
-                let mut block_part_set_id__ = None;
-                let mut items__ = None;
-                while let Some(k) = map.next_key()? {
-                    match k {
-                        GeneratedField::Round => {
-                            if round__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("round"));
-                            }
-                            round__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::BlockPartSetId => {
-                            if block_part_set_id__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("blockPartSetId"));
-                            }
-                            block_part_set_id__ = map.next_value()?;
-                        }
-                        GeneratedField::Items => {
-                            if items__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("items"));
-                            }
-                            items__ = map.next_value()?;
-                        }
-                    }
-                }
-                Ok(CommitVoteList {
-                    round: round__.unwrap_or_default(),
-                    block_part_set_id: block_part_set_id__,
-                    items: items__,
-                })
-            }
-        }
-        deserializer.deserialize_struct("icon.types.v1.CommitVoteList", FIELDS, GeneratedVisitor)
-    }
-}
-impl serde::Serialize for Hr {
-    #[allow(deprecated)]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut len = 0;
-        if self.height != 0 {
-            len += 1;
-        }
-        if self.rount != 0 {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.types.v1.HR", len)?;
-        if self.height != 0 {
-            struct_ser.serialize_field("height", ToString::to_string(&self.height).as_str())?;
-        }
-        if self.rount != 0 {
-            struct_ser.serialize_field("rount", &self.rount)?;
-        }
-        struct_ser.end()
-    }
-}
-impl<'de> serde::Deserialize<'de> for Hr {
-    #[allow(deprecated)]
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        const FIELDS: &[&str] = &[
-            "height",
-            "rount",
-        ];
-
-        #[allow(clippy::enum_variant_names)]
-        enum GeneratedField {
-            Height,
-            Rount,
-        }
-        impl<'de> serde::Deserialize<'de> for GeneratedField {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                struct GeneratedVisitor;
-
-                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-                    type Value = GeneratedField;
-
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                        write!(formatter, "expected one of: {:?}", &FIELDS)
-                    }
-
-                    #[allow(unused_variables)]
-                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        match value {
-                            "height" => Ok(GeneratedField::Height),
-                            "rount" => Ok(GeneratedField::Rount),
-                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-                deserializer.deserialize_identifier(GeneratedVisitor)
-            }
-        }
-        struct GeneratedVisitor;
-        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = Hr;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.types.v1.HR")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<Hr, V::Error>
-                where
-                    V: serde::de::MapAccess<'de>,
-            {
-                let mut height__ = None;
-                let mut rount__ = None;
-                while let Some(k) = map.next_key()? {
-                    match k {
-                        GeneratedField::Height => {
-                            if height__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("height"));
-                            }
-                            height__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::Rount => {
-                            if rount__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("rount"));
-                            }
-                            rount__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                    }
-                }
-                Ok(Hr {
-                    height: height__.unwrap_or_default(),
-                    rount: rount__.unwrap_or_default(),
-                })
-            }
-        }
-        deserializer.deserialize_struct("icon.types.v1.HR", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for MerkleNode {
@@ -813,7 +461,7 @@ impl<'de> serde::Deserialize<'de> for MerkleNode {
         deserializer.deserialize_struct("icon.types.v1.MerkleNode", FIELDS, GeneratedVisitor)
     }
 }
-impl serde::Serialize for PartSetId {
+impl serde::Serialize for MerkleProofs {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
@@ -821,37 +469,29 @@ impl serde::Serialize for PartSetId {
     {
         use serde::ser::SerializeStruct;
         let mut len = 0;
-        if self.count != 0 {
+        if !self.proofs.is_empty() {
             len += 1;
         }
-        if !self.hash.is_empty() {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.types.v1.PartSetID", len)?;
-        if self.count != 0 {
-            struct_ser.serialize_field("count", &self.count)?;
-        }
-        if !self.hash.is_empty() {
-            struct_ser.serialize_field("hash", pbjson::private::base64::encode(&self.hash).as_str())?;
+        let mut struct_ser = serializer.serialize_struct("icon.types.v1.MerkleProofs", len)?;
+        if !self.proofs.is_empty() {
+            struct_ser.serialize_field("proofs", &self.proofs)?;
         }
         struct_ser.end()
     }
 }
-impl<'de> serde::Deserialize<'de> for PartSetId {
+impl<'de> serde::Deserialize<'de> for MerkleProofs {
     #[allow(deprecated)]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         const FIELDS: &[&str] = &[
-            "count",
-            "hash",
+            "proofs",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
-            Count,
-            Hash,
+            Proofs,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -873,8 +513,7 @@ impl<'de> serde::Deserialize<'de> for PartSetId {
                         E: serde::de::Error,
                     {
                         match value {
-                            "count" => Ok(GeneratedField::Count),
-                            "hash" => Ok(GeneratedField::Hash),
+                            "proofs" => Ok(GeneratedField::Proofs),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -884,45 +523,33 @@ impl<'de> serde::Deserialize<'de> for PartSetId {
         }
         struct GeneratedVisitor;
         impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = PartSetId;
+            type Value = MerkleProofs;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.types.v1.PartSetID")
+                formatter.write_str("struct icon.types.v1.MerkleProofs")
             }
 
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<PartSetId, V::Error>
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<MerkleProofs, V::Error>
                 where
                     V: serde::de::MapAccess<'de>,
             {
-                let mut count__ = None;
-                let mut hash__ = None;
+                let mut proofs__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
-                        GeneratedField::Count => {
-                            if count__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("count"));
+                        GeneratedField::Proofs => {
+                            if proofs__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("proofs"));
                             }
-                            count__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::Hash => {
-                            if hash__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("hash"));
-                            }
-                            hash__ = 
-                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            proofs__ = Some(map.next_value()?);
                         }
                     }
                 }
-                Ok(PartSetId {
-                    count: count__.unwrap_or_default(),
-                    hash: hash__.unwrap_or_default(),
+                Ok(MerkleProofs {
+                    proofs: proofs__.unwrap_or_default(),
                 })
             }
         }
-        deserializer.deserialize_struct("icon.types.v1.PartSetID", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("icon.types.v1.MerkleProofs", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for SignedHeader {
@@ -936,15 +563,15 @@ impl serde::Serialize for SignedHeader {
         if self.header.is_some() {
             len += 1;
         }
-        if self.commit_vote_list.is_some() {
+        if !self.signatures.is_empty() {
             len += 1;
         }
         let mut struct_ser = serializer.serialize_struct("icon.types.v1.SignedHeader", len)?;
         if let Some(v) = self.header.as_ref() {
             struct_ser.serialize_field("header", v)?;
         }
-        if let Some(v) = self.commit_vote_list.as_ref() {
-            struct_ser.serialize_field("commit_vote_list", v)?;
+        if !self.signatures.is_empty() {
+            struct_ser.serialize_field("signatures", &self.signatures.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
         }
         struct_ser.end()
     }
@@ -957,14 +584,13 @@ impl<'de> serde::Deserialize<'de> for SignedHeader {
     {
         const FIELDS: &[&str] = &[
             "header",
-            "commit_vote_list",
-            "commitVoteList",
+            "signatures",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
             Header,
-            CommitVoteList,
+            Signatures,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -987,7 +613,7 @@ impl<'de> serde::Deserialize<'de> for SignedHeader {
                     {
                         match value {
                             "header" => Ok(GeneratedField::Header),
-                            "commitVoteList" | "commit_vote_list" => Ok(GeneratedField::CommitVoteList),
+                            "signatures" => Ok(GeneratedField::Signatures),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -1008,7 +634,7 @@ impl<'de> serde::Deserialize<'de> for SignedHeader {
                     V: serde::de::MapAccess<'de>,
             {
                 let mut header__ = None;
-                let mut commit_vote_list__ = None;
+                let mut signatures__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::Header => {
@@ -1017,17 +643,20 @@ impl<'de> serde::Deserialize<'de> for SignedHeader {
                             }
                             header__ = map.next_value()?;
                         }
-                        GeneratedField::CommitVoteList => {
-                            if commit_vote_list__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("commitVoteList"));
+                        GeneratedField::Signatures => {
+                            if signatures__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("signatures"));
                             }
-                            commit_vote_list__ = map.next_value()?;
+                            signatures__ = 
+                                Some(map.next_value::<Vec<::pbjson::private::BytesDeserialize<_>>>()?
+                                    .into_iter().map(|x| x.0).collect())
+                            ;
                         }
                     }
                 }
                 Ok(SignedHeader {
                     header: header__,
-                    commit_vote_list: commit_vote_list__,
+                    signatures: signatures__.unwrap_or_default(),
                 })
             }
         }
@@ -1111,287 +740,5 @@ impl<'de> serde::Deserialize<'de> for SignedMsgType {
             }
         }
         deserializer.deserialize_any(GeneratedVisitor)
-    }
-}
-impl serde::Serialize for ValidatorSet {
-    #[allow(deprecated)]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut len = 0;
-        if !self.validators.is_empty() {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.types.v1.ValidatorSet", len)?;
-        if !self.validators.is_empty() {
-            struct_ser.serialize_field("validators", &self.validators.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
-        }
-        struct_ser.end()
-    }
-}
-impl<'de> serde::Deserialize<'de> for ValidatorSet {
-    #[allow(deprecated)]
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        const FIELDS: &[&str] = &[
-            "validators",
-        ];
-
-        #[allow(clippy::enum_variant_names)]
-        enum GeneratedField {
-            Validators,
-        }
-        impl<'de> serde::Deserialize<'de> for GeneratedField {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                struct GeneratedVisitor;
-
-                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-                    type Value = GeneratedField;
-
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                        write!(formatter, "expected one of: {:?}", &FIELDS)
-                    }
-
-                    #[allow(unused_variables)]
-                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        match value {
-                            "validators" => Ok(GeneratedField::Validators),
-                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-                deserializer.deserialize_identifier(GeneratedVisitor)
-            }
-        }
-        struct GeneratedVisitor;
-        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = ValidatorSet;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.types.v1.ValidatorSet")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<ValidatorSet, V::Error>
-                where
-                    V: serde::de::MapAccess<'de>,
-            {
-                let mut validators__ = None;
-                while let Some(k) = map.next_key()? {
-                    match k {
-                        GeneratedField::Validators => {
-                            if validators__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("validators"));
-                            }
-                            validators__ = 
-                                Some(map.next_value::<Vec<::pbjson::private::BytesDeserialize<_>>>()?
-                                    .into_iter().map(|x| x.0).collect())
-                            ;
-                        }
-                    }
-                }
-                Ok(ValidatorSet {
-                    validators: validators__.unwrap_or_default(),
-                })
-            }
-        }
-        deserializer.deserialize_struct("icon.types.v1.ValidatorSet", FIELDS, GeneratedVisitor)
-    }
-}
-impl serde::Serialize for Vote {
-    #[allow(deprecated)]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut len = 0;
-        if self.height != 0 {
-            len += 1;
-        }
-        if self.round != 0 {
-            len += 1;
-        }
-        if self.r#type != 0 {
-            len += 1;
-        }
-        if !self.block_id.is_empty() {
-            len += 1;
-        }
-        if self.block_part_set_id.is_some() {
-            len += 1;
-        }
-        if self.timestamp != 0 {
-            len += 1;
-        }
-        let mut struct_ser = serializer.serialize_struct("icon.types.v1.Vote", len)?;
-        if self.height != 0 {
-            struct_ser.serialize_field("height", ToString::to_string(&self.height).as_str())?;
-        }
-        if self.round != 0 {
-            struct_ser.serialize_field("round", &self.round)?;
-        }
-        if self.r#type != 0 {
-            let v = SignedMsgType::from_i32(self.r#type)
-                .ok_or_else(|| serde::ser::Error::custom(format!("Invalid variant {}", self.r#type)))?;
-            struct_ser.serialize_field("type", &v)?;
-        }
-        if !self.block_id.is_empty() {
-            struct_ser.serialize_field("block_id", pbjson::private::base64::encode(&self.block_id).as_str())?;
-        }
-        if let Some(v) = self.block_part_set_id.as_ref() {
-            struct_ser.serialize_field("block_part_set_id", v)?;
-        }
-        if self.timestamp != 0 {
-            struct_ser.serialize_field("timestamp", ToString::to_string(&self.timestamp).as_str())?;
-        }
-        struct_ser.end()
-    }
-}
-impl<'de> serde::Deserialize<'de> for Vote {
-    #[allow(deprecated)]
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        const FIELDS: &[&str] = &[
-            "height",
-            "round",
-            "type",
-            "block_id",
-            "blockId",
-            "block_part_set_id",
-            "blockPartSetId",
-            "timestamp",
-        ];
-
-        #[allow(clippy::enum_variant_names)]
-        enum GeneratedField {
-            Height,
-            Round,
-            Type,
-            BlockId,
-            BlockPartSetId,
-            Timestamp,
-        }
-        impl<'de> serde::Deserialize<'de> for GeneratedField {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                struct GeneratedVisitor;
-
-                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-                    type Value = GeneratedField;
-
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                        write!(formatter, "expected one of: {:?}", &FIELDS)
-                    }
-
-                    #[allow(unused_variables)]
-                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        match value {
-                            "height" => Ok(GeneratedField::Height),
-                            "round" => Ok(GeneratedField::Round),
-                            "type" => Ok(GeneratedField::Type),
-                            "blockId" | "block_id" => Ok(GeneratedField::BlockId),
-                            "blockPartSetId" | "block_part_set_id" => Ok(GeneratedField::BlockPartSetId),
-                            "timestamp" => Ok(GeneratedField::Timestamp),
-                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-                deserializer.deserialize_identifier(GeneratedVisitor)
-            }
-        }
-        struct GeneratedVisitor;
-        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = Vote;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct icon.types.v1.Vote")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<Vote, V::Error>
-                where
-                    V: serde::de::MapAccess<'de>,
-            {
-                let mut height__ = None;
-                let mut round__ = None;
-                let mut r#type__ = None;
-                let mut block_id__ = None;
-                let mut block_part_set_id__ = None;
-                let mut timestamp__ = None;
-                while let Some(k) = map.next_key()? {
-                    match k {
-                        GeneratedField::Height => {
-                            if height__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("height"));
-                            }
-                            height__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::Round => {
-                            if round__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("round"));
-                            }
-                            round__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::Type => {
-                            if r#type__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("type"));
-                            }
-                            r#type__ = Some(map.next_value::<SignedMsgType>()? as i32);
-                        }
-                        GeneratedField::BlockId => {
-                            if block_id__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("blockId"));
-                            }
-                            block_id__ = 
-                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::BlockPartSetId => {
-                            if block_part_set_id__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("blockPartSetId"));
-                            }
-                            block_part_set_id__ = map.next_value()?;
-                        }
-                        GeneratedField::Timestamp => {
-                            if timestamp__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("timestamp"));
-                            }
-                            timestamp__ = 
-                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
-                            ;
-                        }
-                    }
-                }
-                Ok(Vote {
-                    height: height__.unwrap_or_default(),
-                    round: round__.unwrap_or_default(),
-                    r#type: r#type__.unwrap_or_default(),
-                    block_id: block_id__.unwrap_or_default(),
-                    block_part_set_id: block_part_set_id__,
-                    timestamp: timestamp__.unwrap_or_default(),
-                })
-            }
-        }
-        deserializer.deserialize_struct("icon.types.v1.Vote", FIELDS, GeneratedVisitor)
     }
 }

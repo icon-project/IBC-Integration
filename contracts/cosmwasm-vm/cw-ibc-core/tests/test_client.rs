@@ -64,7 +64,7 @@ fn store_client_implement_success() {
     let light_client_address = "light-client".to_string();
 
     contract
-        .store_client_impl(
+        .store_client_implementations(
             mock.as_mut().storage,
             client_id.clone(),
             light_client_address.clone(),
@@ -72,7 +72,7 @@ fn store_client_implement_success() {
         .unwrap();
 
     let result = contract
-        .get_client_impls(mock.as_ref().storage, client_id)
+        .get_client_implementations(mock.as_ref().storage, client_id)
         .unwrap();
 
     assert_eq!(light_client_address, result)
@@ -88,7 +88,7 @@ fn store_client_implement_failure() {
     let client_id = ClientId::new(client_type, 1).unwrap();
 
     contract
-        .get_client_impls(mock.as_ref().storage, client_id)
+        .get_client_implementations(mock.as_ref().storage, client_id)
         .unwrap();
 }
 

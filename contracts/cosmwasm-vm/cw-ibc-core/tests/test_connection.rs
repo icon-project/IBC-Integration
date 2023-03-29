@@ -1,10 +1,10 @@
 use std::time::Duration;
 
 pub mod setup;
-use cw_ibc_core::ics03_connection::event::event_open_ack;
-use cw_ibc_core::ics03_connection::event::event_open_confirm;
-use cw_ibc_core::ics03_connection::event::event_open_init;
-use cw_ibc_core::ics03_connection::event::event_open_try;
+use cw_ibc_core::ics03_connection::event::create_open_ack_event;
+use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
+use cw_ibc_core::ics03_connection::event::create_open_init_event;
+use cw_ibc_core::ics03_connection::event::create_open_try_event;
 use ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
@@ -361,7 +361,7 @@ fn create_connection_open_init_event() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    let event = event_open_init(connection_id, client_id, counterparty_client_id);
+    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
     assert_eq!(IbcEventType::OpenInitConnection.as_str(), event.ty);
     assert_eq!("connection-10", event.attributes[0].value);
     assert_eq!("07-tendermint-0", event.attributes[1].value);
@@ -374,7 +374,7 @@ fn create_connection_open_ack_event() {
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
     let counterparty_connection_id = ConnectionId::new(20);
-    let event = event_open_ack(
+    let event = create_open_ack_event(
         connection_id,
         client_id,
         counterparty_connection_id,
@@ -392,7 +392,7 @@ fn create_connection_open_try_event() {
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
     let counterparty_connection_id = ConnectionId::new(20);
-    let event = event_open_try(
+    let event = create_open_try_event(
         connection_id,
         client_id,
         counterparty_connection_id,
@@ -407,7 +407,7 @@ fn create_conection_open_confirm_event() {
     let client_id_on_b = ClientId::default();
     let counterparty_connection_id_on_a = ConnectionId::new(2);
     let counterparty_client_id_on_a = ClientId::default();
-    let event = event_open_confirm(
+    let event = create_open_confirm_event(
         connection_id_on_b,
         client_id_on_b,
         counterparty_connection_id_on_a,
@@ -417,13 +417,12 @@ fn create_conection_open_confirm_event() {
     assert_eq!("connection-10", event.attributes[0].value);
 }
 
-
 #[test]
 fn connection_to_verify_correct_connection_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    let event = event_open_init(connection_id, client_id, counterparty_client_id);
+    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
     let attribute = event
         .attributes
         .iter()
@@ -437,7 +436,7 @@ fn connection_to_verify_correct_client_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    let event = event_open_init(connection_id, client_id, counterparty_client_id);
+    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
     let attribute = event
         .attributes
         .iter()
@@ -451,7 +450,7 @@ fn connection_to_verify_correct_counterparty_client_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    let event = event_open_init(connection_id, client_id, counterparty_client_id);
+    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
     let attribute = event
         .attributes
         .iter()
@@ -466,7 +465,7 @@ fn connection_to_verify_correct_counterparty_conn_id() {
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
     let counterparty_conn_id = ConnectionId::new(1);
-    let event = event_open_ack(
+    let event = create_open_ack_event(
         connection_id,
         client_id,
         counterparty_conn_id,

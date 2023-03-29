@@ -1,11 +1,5 @@
 use super::*;
 
-fn hash(data: impl AsRef<[u8]>) -> Vec<u8> {
-    use sha2::Digest;
-
-    sha2::Sha256::digest(&data).to_vec()
-}
-
 impl<'a> CwIbcCoreContext<'a> {
     pub fn client_state_path(&self, client_id: &ClientId) -> Vec<u8> {
         ClientStatePath::new(client_id).to_string().into_bytes()
@@ -66,7 +60,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn client_state_commitment_key(&self, client_id: &ClientId) -> Vec<u8> {
-        hash(&self.client_state_path(client_id))
+        keccak256(&self.client_state_path(client_id))
     }
 
     pub fn consensus_state_commitment_key(
@@ -76,15 +70,15 @@ impl<'a> CwIbcCoreContext<'a> {
         revision_height: u64,
     ) -> Vec<u8> {
         let height = Height::new(revision_number, revision_height).unwrap();
-        hash(&self.consensus_state_path(client_id, &height))
+        keccak256(&self.consensus_state_path(client_id, &height))
     }
 
     pub fn connection_commitment_key(&self, connection_id: &ConnectionId) -> Vec<u8> {
-        hash(&self.connection_path(connection_id))
+        keccak256(&self.connection_path(connection_id))
     }
 
     pub fn channel_commitment_key(&self, port_id: &PortId, channel_id: &ChannelId) -> Vec<u8> {
-        hash(&self.channel_path(port_id, channel_id))
+        keccak256(&self.channel_path(port_id, channel_id))
     }
 
     pub fn packet_commitment_key(
@@ -93,7 +87,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        hash(&self.packet_commitment_path(port_id, channel_id, sequence))
+        keccak256(&self.packet_commitment_path(port_id, channel_id, sequence))
     }
 
     pub fn packet_acknowledgement_commitment_key(
@@ -102,7 +96,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        hash(&self.packet_acknowledgement_commitment_path(port_id, channel_id, sequence))
+        keccak256(&self.packet_acknowledgement_commitment_path(port_id, channel_id, sequence))
     }
 
     pub fn packet_receipt_commitment_key(
@@ -111,7 +105,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        hash(&self.packet_receipt_commitment_path(port_id, channel_id, sequence))
+        keccak256(&self.packet_receipt_commitment_path(port_id, channel_id, sequence))
     }
 
     pub fn next_sequence_recv_commitment_key(
@@ -119,6 +113,18 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &PortId,
         channel_id: &ChannelId,
     ) -> Vec<u8> {
-        hash(&self.next_seq_recv_commitment_path(port_id, channel_id))
+        keccak256(&self.next_seq_recv_commitment_path(port_id, channel_id))
     }
+}
+
+pub fn sha256(data: impl AsRef<[u8]>) -> Vec<u8> {
+    use sha2::Digest;
+    sha2::Sha256::digest(&data).to_vec()
+}
+
+pub fn keccak256(data: impl AsRef<[u8]>) -> Vec<u8> {
+    use sha3::{Digest, Keccak256};
+    let mut hasher = Keccak256::new();
+    hasher.update(data);
+    hasher.finalize().to_vec()
 }
