@@ -15,6 +15,15 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         info: MessageInfo,
         message: &MsgChannelOpenInit,
     ) -> Result<cosmwasm_std::Response, ContractError> {
+        // connection hops should be 1
+        if message.connection_hops_on_a.len() != 1 {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::InvalidConnectionHopsLength {
+                    expected: 1,
+                    actual: message.connection_hops_on_a.len(),
+                },
+            });
+        }
         let connection_id = ConnectionId::from(message.connection_hops_on_a[0].clone());
         // An IBC connection running on the local (host) chain should exist.
         let conn_end_on_a = self.connection_end(deps.storage, connection_id.clone())?;

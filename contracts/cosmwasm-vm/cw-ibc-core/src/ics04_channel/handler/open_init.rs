@@ -50,15 +50,6 @@ pub fn channel_open_init_msg_validate(
     message: &MsgChannelOpenInit,
     conn_end_on_a: ConnectionEnd,
 ) -> Result<(), ContractError> {
-    // connection hops should be 1
-    if message.connection_hops_on_a.len() != 1 {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::InvalidConnectionHopsLength {
-                expected: 1,
-                actual: message.connection_hops_on_a.len(),
-            },
-        });
-    }
     let conn_version = match conn_end_on_a.versions() {
         [version] => version,
         _ => {
