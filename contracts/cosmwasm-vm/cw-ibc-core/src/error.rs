@@ -1,5 +1,6 @@
 use cosmwasm_std::StdError;
 use ibc::core::{
+    ics03_connection::error::ConnectionError,
     ics04_channel::error::{ChannelError, PacketError},
     ics05_port::error::PortError,
     ContextError,
@@ -38,6 +39,6 @@ pub enum ContractError {
     #[error("IbcChannelError {error}")]
     IbcChannelError { error: ChannelError },
 
-    #[error("VersionNotSupported")]
-    VersionNotSupported {},
+    #[error("IbcConnectionError {error}")]
+    IbcConnectionError { error: ConnectionError },
 }

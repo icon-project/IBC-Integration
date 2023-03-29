@@ -1,5 +1,3 @@
-use cosmwasm_std::Response;
-
 use super::{event::event_open_init, *};
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -23,7 +21,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 if v.contains(&version) {
                     vec![version]
                 } else {
-                    return Err(ContractError::VersionNotSupported {});
+                    return Err(ContractError::IbcConnectionError {
+                        error: (ConnectionError::EmptyVersions),
+                    });
                 }
             }
             None => v,

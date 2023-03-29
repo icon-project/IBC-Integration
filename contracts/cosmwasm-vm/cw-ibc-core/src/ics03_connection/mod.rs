@@ -7,8 +7,10 @@ use crate::types::{ClientId, ConnectionId};
 use crate::ContractError;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
+use cosmwasm_std::Response;
 use cosmwasm_std::Storage;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
+use ibc::core::ics03_connection::error::ConnectionError;
 use ibc::core::ics03_connection::{
     connection::{Counterparty, State},
     msgs::conn_open_init::MsgConnectionOpenInit,
