@@ -13,7 +13,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => return Err(error),
         };
         let conn_id = connection_id((counter as u128).try_into().unwrap());
-        let _client_id_on_a = self.connection_end(deps.storage, conn_id.clone());
+        // TODO validation required.
         let v = get_compatible_versions();
 
         let versions = match message.version {
