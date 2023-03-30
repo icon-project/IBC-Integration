@@ -144,7 +144,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         deps.storage,
                         port_id.clone(),
                         channel_id.clone(),
-                        channel_end,
+                        channel_end.clone(),
                     )?;
                     let _sequence = self.increase_channel_sequence(deps.storage)?;
                     self.store_next_sequence_send(
@@ -166,7 +166,16 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         1.into(),
                     )?;
                     let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-                    return Ok(Response::new().add_event(channel_id_event));
+                    let main_event = create_open_init_channel_event(
+                        &channel_id,
+                        &port_id.ibc_port_id(),
+                        channel_end.counterparty().port_id(),
+                        &channel_end.connection_hops()[0],
+                        channel_end.version(),
+                    );
+                    return Ok(Response::new()
+                        .add_event(channel_id_event)
+                        .add_event(main_event));
                 }
                 None => {
                     return Err(ContractError::IbcChannelError {

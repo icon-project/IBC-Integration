@@ -745,7 +745,13 @@ fn create_open_init_channel_event_test() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_init(Some(10));
     let message = MsgChannelOpenInit::try_from(default_raw_msg.clone()).unwrap();
     let channel_id = ChannelId::new(10);
-    let event = create_open_init_channel_event(&channel_id, &message);
+    let event = create_open_init_channel_event(
+        &channel_id,
+        &message.port_id_on_a,
+        &message.port_id_on_a,
+        &message.connection_hops_on_a[0],
+        &message.version_proposal,
+    );
 
     assert_eq!(IbcEventType::OpenInitChannel.as_str(), event.ty);
     assert_eq!("channel-10", event.attributes[1].value);

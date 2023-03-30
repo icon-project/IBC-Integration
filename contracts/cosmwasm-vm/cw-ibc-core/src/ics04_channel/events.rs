@@ -1,3 +1,5 @@
+use ibc::core::ics04_channel::Version;
+
 use super::*;
 
 pub const CHANNEL_ID_ATTRIBUTE_KEY: &str = "channel_id";
@@ -22,16 +24,19 @@ pub const PKT_ACK_HEX_ATTRIBUTE_KEY: &str = "packet_ack_hex";
 pub const PKT_CONNECTION_ID_ATTRIBUTE_KEY: &str = "packet_connection";
 
 // Creates OpenInitChannel IBC Event
-pub fn create_open_init_channel_event(channel_id: &ChannelId, msg: &MsgChannelOpenInit) -> Event {
+pub fn create_open_init_channel_event(
+    channel_id: &ChannelId,
+    port_id_on_a: &IbcPortId,
+    port_id_on_b: &IbcPortId,
+    connection_hops_on_a: &IbcConnectionId,
+    version_proposal: &Version,
+) -> Event {
     Event::new(IbcEventType::OpenInitChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_a.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_a.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str())
-        .add_attribute(
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            msg.port_id_on_b.as_str(),
-        )
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, msg.connection_hops_on_a[0].as_str())
-        .add_attribute(VERSION_ATTRIBUTE_KEY, msg.version_proposal.as_str())
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, port_id_on_b.as_str())
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_hops_on_a.as_str())
+        .add_attribute(VERSION_ATTRIBUTE_KEY, version_proposal.as_str())
 }
 
 // Creates OpenInitChannel IBC Event
