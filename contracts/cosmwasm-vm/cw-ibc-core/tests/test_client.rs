@@ -130,9 +130,9 @@ fn test_create_client_event() {
     let client_type = ClientType::new("new_cleint_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
     let result = create_client_event(
-        client_id.ibc_client_id().clone(),
-        client_type.client_type(),
-        height,
+        client_id.ibc_client_id().as_str(),
+        client_type.client_type().as_str(),
+        &height.to_string(),
     );
 
     assert_eq!("create_client", result.ty)
@@ -326,4 +326,3 @@ fn check_for_genereted_client_id_event() {
         client_id.ibc_client_id().as_str()
     )
 }
-
