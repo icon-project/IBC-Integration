@@ -15,6 +15,19 @@ pub struct Clientstate {
     validators: Vec<Vec<u8>>,
 }
 
+impl TryFrom<&[u8]> for Clientstate {
+    type Error = ClientError;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        match serde_json_wasm::from_slice(&value) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(ClientError::Other {
+                description: error.to_string(),
+            }),
+        }
+    }
+}
+
 impl Clientstate {
     pub fn new(
         trusting_period: u64,
@@ -291,19 +304,23 @@ impl ClientState for Clientstate {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct ConsensusState {
-    root: CommitmentRoot,
+    message_root: Vec<u8>,
 }
 
 impl ConsensusState {
     pub fn new(message_root: Vec<u8>) -> Result<Self, ClientError> {
-        Ok(Self {
-            root: CommitmentRoot::from_bytes(&message_root),
-        })
+        Ok(Self { message_root })
     }
-    pub fn message_root(&self) -> &CommitmentRoot {
-        &self.root
+    pub fn message_root(&self) -> Vec<u8> {
+        self.message_root.clone()
     }
 }
+
+// impl AsRef<CommitmentRoot> for ConsensusState {
+//     fn as_ref(&self) -> &CommitmentRoot {
+//         &CommitmentRoot::from_bytes(&self.message_root)
+//     }
+// }
 
 impl Protobuf<Any> for ConsensusState {}
 
@@ -312,9 +329,9 @@ impl TryFrom<Any> for ConsensusState {
 
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
         use bytes::Buf;
-        use core::ops::Deref;
         use ibc::core::ics02_client::error::ClientError as Error;
         use prost::Message;
+        use std::ops::Deref;
 
         fn decode_consensus_state<B: Buf>(buf: B) -> Result<ConsensusState, Error> {
             RawConsensusState::decode(buf)
@@ -358,14 +375,14 @@ impl TryFrom<RawConsensusState> for ConsensusState {
 impl From<ConsensusState> for RawConsensusState {
     fn from(value: ConsensusState) -> Self {
         Self {
-            message_root: value.message_root().clone().into_vec(),
+            message_root: value.message_root(),
         }
     }
 }
 
 impl ibc::core::ics02_client::consensus_state::ConsensusState for ConsensusState {
     fn root(&self) -> &CommitmentRoot {
-        &self.root
+        todo!()
     }
 
     fn timestamp(&self) -> ibc::timestamp::Timestamp {
@@ -377,5 +394,30 @@ impl ibc::core::ics02_client::consensus_state::ConsensusState for ConsensusState
         Self: Sized,
     {
         Box::new(self)
+    }
+}
+
+impl TryFrom<Vec<u8>> for ConsensusState {
+    type Error = ClientError;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let result: ConsensusState =
+            serde_json_wasm::from_slice(&value.clone()).map_err(|error| ClientError::Other {
+                description: error.to_string(),
+            })?;
+
+        Ok(result)
+    }
+}
+
+impl TryFrom<ConsensusState> for Vec<u8> {
+    type Error = ClientError;
+
+    fn try_from(value: ConsensusState) -> Result<Self, Self::Error> {
+        serde_json_wasm::to_vec(&value).map_err(|error| {
+            return ClientError::Other {
+                description: error.to_string(),
+            };
+        })
     }
 }

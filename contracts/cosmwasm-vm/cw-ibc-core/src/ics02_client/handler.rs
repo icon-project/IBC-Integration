@@ -9,6 +9,19 @@ pub struct CreateClientResponse {
 }
 
 impl CreateClientResponse {
+    pub fn new(
+        client_type: String,
+        height: String,
+        client_state_commitment: Vec<u8>,
+        consensus_state_commitment: Vec<u8>,
+    ) -> Self {
+        Self {
+            client_type,
+            height,
+            client_state_commitment,
+            consensus_state_commitment,
+        }
+    }
     pub fn client_type(&self) -> ClientType {
         ClientType::new(self.client_type.to_owned())
     }

@@ -1,11 +1,19 @@
 pub mod setup;
 
+use std::str::FromStr;
+
+use cosmwasm_std::{to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
-    ics02_client::events::{
-        client_misbehaviour_event, create_client_event, generated_client_id_event,
-        update_client_event, upgrade_client_event,
+    ics02_client::{
+        events::{
+            client_misbehaviour_event, create_client_event, generated_client_id_event,
+            update_client_event, upgrade_client_event,
+        },
+        handler::CreateClientResponse,
+        types::{Clientstate, ConsensusState},
     },
+    traits::IbcClient,
     types::{ClientId, ClientType},
     MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
 };
@@ -14,8 +22,10 @@ use ibc::{
     mock::{
         client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
     },
+    signer::Signer,
     Height,
 };
+
 use setup::*;
 
 #[test]
@@ -325,4 +335,278 @@ fn check_for_genereted_client_id_event() {
         event.attributes[0].value,
         client_id.ibc_client_id().as_str()
     )
+}
+
+#[test]
+fn check_for_create_client_message() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    contract
+        .init_client_counter(deps.as_mut().storage, 0)
+        .unwrap();
+
+    let client_state: Clientstate = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root".as_bytes().to_vec(),
+    }
+    .try_into()
+    .unwrap();
+
+    let client_type = ClientType::new("iconclient".to_string());
+    let light_client = Addr::unchecked("lightclient");
+    contract.register_client(deps.as_mut(), client_type, light_client);
+
+    let signer = Signer::from_str("new_signer").unwrap();
+
+    let create_client_message =
+        MsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
+
+    let response = contract
+        .create_client(deps.as_mut(), info, create_client_message)
+        .unwrap();
+
+    assert_eq!(response.messages[0].id, 21);
+
+    assert_eq!(response.attributes[0].value, "create_client");
+}
+
+#[test]
+fn check_for_create_client_message_response() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    contract
+        .init_client_counter(deps.as_mut().storage, 0)
+        .unwrap();
+
+    let client_state: Clientstate = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root".as_bytes().to_vec(),
+    }
+    .try_into()
+    .unwrap();
+
+    let client_type = ClientType::new("iconclient".to_string());
+    let light_client = Addr::unchecked("lightclient");
+    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+
+    let signer = Signer::from_str("new_signer").unwrap();
+
+    let create_client_message = MsgCreateClient::new(
+        client_state.clone().into(),
+        consenus_state.clone().into(),
+        signer,
+    );
+
+    let response = contract
+        .create_client(deps.as_mut(), info, create_client_message)
+        .unwrap();
+    assert_eq!(response.messages[0].id, 21);
+
+    assert_eq!(response.attributes[0].value, "create_client");
+
+    let mock_reponse_data = CreateClientResponse::new(
+        client_type.as_str().to_string(),
+        "10-15".to_string(),
+        to_vec(&client_state).unwrap(),
+        to_vec(&consenus_state).unwrap(),
+    );
+
+    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
+
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 21,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: Some(mock_data_binary),
+        }),
+    };
+
+    let result = contract
+        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .unwrap();
+
+    assert_eq!(result.attributes[0].value, "execute_create_client_reply");
+    assert_eq!(result.attributes[1].value, "iconclient-0");
+
+    assert_eq!(result.events[0].ty, "create_client");
+    assert_eq!(result.events[0].attributes[0].value, "iconclient-0");
+    assert_eq!(result.events[0].attributes[1].value, "iconclient");
+    assert_eq!(result.events[0].attributes[2].value, "10-15");
+}
+
+#[test]
+fn check_for_client_state_from_storage() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    contract
+        .init_client_counter(deps.as_mut().storage, 0)
+        .unwrap();
+
+    let client_state: Clientstate = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root".as_bytes().to_vec(),
+    }
+    .try_into()
+    .unwrap();
+
+    let client_type = ClientType::new("iconclient".to_string());
+    let light_client = Addr::unchecked("lightclient");
+    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+
+    let signer = Signer::from_str("new_signer").unwrap();
+
+    let create_client_message = MsgCreateClient::new(
+        client_state.clone().into(),
+        consenus_state.clone().into(),
+        signer,
+    );
+
+    contract
+        .create_client(deps.as_mut(), info, create_client_message)
+        .unwrap();
+
+    let mock_reponse_data = CreateClientResponse::new(
+        client_type.as_str().to_string(),
+        "10-15".to_string(),
+        to_vec(&client_state).unwrap(),
+        to_vec(&consenus_state).unwrap(),
+    );
+
+    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
+
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 21,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: Some(mock_data_binary),
+        }),
+    };
+
+    contract
+        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .unwrap();
+
+    let client_id = ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
+
+    let client_state = contract
+        .client_state(deps.as_ref().storage, &client_id)
+        .unwrap();
+
+    assert_eq!(client_state.client_type().as_str(), "iconclient");
+}
+
+#[test]
+fn check_for_consensus_state_from_storage() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    contract
+        .init_client_counter(deps.as_mut().storage, 0)
+        .unwrap();
+
+    let client_state: Clientstate = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: vec![1, 2, 3, 4],
+    }
+    .try_into()
+    .unwrap();
+
+    let client_type = ClientType::new("iconclient".to_string());
+    let light_client = Addr::unchecked("lightclient");
+    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+
+    let signer = Signer::from_str("new_signer").unwrap();
+
+    let create_client_message = MsgCreateClient::new(
+        client_state.clone().into(),
+        consenus_state.clone().into(),
+        signer,
+    );
+
+    contract
+        .create_client(deps.as_mut(), info, create_client_message)
+        .unwrap();
+
+    let mock_reponse_data = CreateClientResponse::new(
+        client_type.as_str().to_string(),
+        "10-15".to_string(),
+        to_vec(&client_state).unwrap(),
+        consenus_state.clone().try_into().unwrap(),
+    );
+
+    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
+
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 21,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: Some(mock_data_binary),
+        }),
+    };
+
+    contract
+        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .unwrap();
+
+    let client_id = ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
+
+    let height = Height::new(10, 15).unwrap();
+
+    let consensus_state_result =
+        contract.consensus_state(deps.as_ref().storage, &client_id, &height);
+
+    assert!(consensus_state_result.is_ok())
 }

@@ -27,7 +27,6 @@ use cosmwasm_std::{
     StdResult,
 };
 use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};
-use ibc::core::ics24_host::error::ValidationError;
 use ibc::core::{
     ics02_client::error::ClientError,
     ics04_channel::error::{ChannelError, PacketError},

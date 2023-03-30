@@ -194,12 +194,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .load(store, client_key)
             .map_err(|error| ContractError::Std(error))?;
 
-        let client_state: Clientstate =
-            Protobuf::<Any>::decode_vec(&client_state_data).map_err(|error| {
-                ContractError::IbcDecodeError {
-                    error: error.to_string(),
-                }
-            })?;
+        let client_state: Clientstate = client_state_data.as_slice().try_into().unwrap();
 
         Ok(Box::new(client_state))
     }
@@ -232,10 +227,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .load(store, conesnus_state_key)
             .map_err(|error| ContractError::Std(error))?;
 
-        let consensus_state: ConsensusState = Protobuf::<Any>::decode_vec(&consenus_state_data)
-            .map_err(|error| ContractError::IbcDecodeError {
-                error: error.to_string(),
-            })?;
+        let consensus_state: ConsensusState = consenus_state_data.try_into().unwrap();
 
         Ok(Box::new(consensus_state))
     }
