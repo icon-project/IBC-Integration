@@ -53,10 +53,6 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 }
 
-pub fn connection_id(counter: u64) -> ConnectionId {
-    ConnectionId::new(counter)
-}
-
 pub fn get_compatible_versions() -> Vec<Version> {
     vec![Version::default()]
 }
