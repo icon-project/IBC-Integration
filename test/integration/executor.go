@@ -36,6 +36,8 @@ func (e *Executor) walletAddressShouldBeAddedToTheListOfXCallAdmins(admin string
 	contractAddress := e.GetContractAddress("xcall")
 	e.ctx, _ = e.chain.QueryContract(e.ctx, contractAddress, "get_admin", "")
 	ctxValue := e.ctx.Value(chains.AdminKey("Admins")).(chains.Admins)
+
+	// Test if the address of the given key is present in the response
 	if strings.Contains(fmt.Sprint(chains.Response), ctxValue.Admin[admin]) {
 		return nil
 	} else {
@@ -45,7 +47,7 @@ func (e *Executor) walletAddressShouldBeAddedToTheListOfXCallAdmins(admin string
 
 func (e *Executor) executesAdd_adminInXcallWithWalletAddress(owner, admin string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, "set_admin", admin)
+	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, owner, "set_admin", admin)
 	return err
 }
 
@@ -54,21 +56,25 @@ func (e *Executor) isAnAdminWalletWhoNeedsToBeAddedToTheListOfXCallAdmins(keyNam
 }
 
 func (e *Executor) isTheContractOwner(owner, contractName string) (err error) {
-	e.ctx = context.WithValue(e.ctx, chains.ContractName{}, chains.ContractName{
-		ContractName: contractName,
-	})
+	// Check if there is already an existing contract owner
+	ctxValue, ok := e.ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+	if !ok {
+		e.ctx = context.WithValue(e.ctx, chains.ContractName{}, chains.ContractName{
+			ContractName: contractName,
+		})
 
-	// Add init message to context
-	initMsg := e.cfg.InitMessage
-	e.ctx = context.WithValue(e.ctx, chains.InitMessage{}, chains.InitMessage{
-		InitMsg: initMsg,
-	})
+		// Add init message to context
+		initMsg := e.cfg.InitMessage
+		e.ctx = context.WithValue(e.ctx, chains.InitMessage{}, chains.InitMessage{
+			InitMsg: initMsg,
+		})
 
-	// Deploy Contract for Testing
-	e.ctx, err = e.chain.DeployContract(e.ctx, owner)
-	ctxValue := e.ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-	fmt.Printf("\n Contract Addresses of %s : %s \n", contractName, ctxValue.ContractAddress[contractName])
-	return err
+		// Deploy Contract for Testing
+		e.ctx, err = e.chain.DeployContract(e.ctx, owner)
+		fmt.Printf("\n Contract Addresses of %s : %s \n", contractName, ctxValue.ContractAddress[contractName])
+		return err
+	}
+	return nil
 }
 
 func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
@@ -89,6 +95,29 @@ func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
 	ctx, _ := e.chain.GetLastBlock(e.ctx)
 	fmt.Printf("Chain is running. Current Chain height: %d \n", ctx.Value(chains.LastBlock{}).(uint64))
 	return e.ctx, nil
+}
+
+func (e *Executor) nonOwnerOfContractExecutesAdd_adminInXcallWithWalletAddress(nonOwner, admin string) (err error) {
+	// Build a wallet for the non owner
+	e.chain.BuildWallets(e.ctx, nonOwner)
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, nonOwner, "set_admin", admin)
+	// Above call should return an error
+	if err != nil {
+		return nil
+	}
+	return fmt.Errorf("admin added when non owner executes transaction")
+}
+
+func (e *Executor) walletAddressShouldNotBeAddedToTheListOfXCallAdmins(admin string) error {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, _ = e.chain.QueryContract(e.ctx, contractAddress, "get_admin", "")
+	ctxValue := e.ctx.Value(chains.AdminKey("Admins")).(chains.Admins)
+	if strings.Contains(fmt.Sprint(chains.Response), ctxValue.Admin[admin]) {
+		return fmt.Errorf("given key is added to admin list, Non Owner should not be able to add admin")
+	} else {
+		return nil
+	}
 }
 
 func (e *Executor) GetContractAddress(contractName string) string {
