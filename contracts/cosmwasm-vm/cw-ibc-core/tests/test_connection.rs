@@ -401,7 +401,7 @@ fn connection_open_init() {
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
         .unwrap();
     let result1 =
-        contract.connection_open_init(res_msg, deps.as_mut(), client_id, counterparty_client_id);
+        contract.connection_open_init(res_msg, deps.as_mut(), client_id);
     assert_eq!(result1.is_ok(), true);
 }
 
@@ -425,7 +425,7 @@ fn test_validate_open_init_connection_fail() {
         )
         .unwrap();
     contract
-        .connection_open_init(res_msg, deps.as_mut(), client_id, counterparty_client_id)
+        .connection_open_init(res_msg, deps.as_mut(), client_id)
         .unwrap();
 }
 
