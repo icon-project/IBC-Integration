@@ -338,7 +338,7 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 }
 
 // ExecuteContract implements chains.Chain
-func (*IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, methodName, param string) (context.Context, error) {
+func (*IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	panic("unimplemented")
 }
 
@@ -360,4 +360,8 @@ func (*IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodN
 
 func (it *IconLocalnet) SetAdminParams(ctx context.Context) string {
 	return ""
+}
+
+func (it *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
+	return nil
 }

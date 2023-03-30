@@ -31,7 +31,7 @@ func (c *CosmosTestnet) QueryContract(ctx context.Context, contractAddress, meth
 	panic("not implemented") // TODO: Implement
 }
 
-func (c *CosmosTestnet) ExecuteContract(ctx context.Context, contractAddress, methodName, param string) (context.Context, error) {
+func (c *CosmosTestnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	panic("not implemented") // TODO: Implement
 }
 
@@ -75,6 +75,6 @@ func (c *CosmosTestnet) SetAdminParams(ctx context.Context) string {
 	return ""
 }
 
-func (it *CosmosTestnet) CreateKey(ctx context.Context, keyName string) error {
+func (it *CosmosTestnet) BuildWallets(ctx context.Context, keyName string) error {
 	return nil
 }

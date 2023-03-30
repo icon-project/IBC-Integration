@@ -69,7 +69,7 @@ func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (cont
 }
 
 // ExecuteContract implements chains.Chain
-func (*IconTestnet) ExecuteContract(ctx context.Context, contractAddress, methodName, param string) (context.Context, error) {
+func (*IconTestnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	panic("unimplemented")
 }
 
@@ -138,5 +138,9 @@ func (it *IconTestnet) SetAdminParams(ctx context.Context) string {
 }
 
 func (it *IconTestnet) CreateKey(ctx context.Context, keyName string) error {
+	return nil
+}
+
+func (it *IconTestnet) BuildWallets(ctx context.Context, keyName string) error {
 	return nil
 }
