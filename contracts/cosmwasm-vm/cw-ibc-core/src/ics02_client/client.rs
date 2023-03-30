@@ -181,9 +181,9 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    fn client_state(
+    pub fn client_state(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ContractError> {
         let client_key = self.client_state_commitment_key(client_id);
@@ -213,12 +213,31 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(Box::new(client_state))
     }
 
-    fn consensus_state(
+    pub fn consensus_state(
         &self,
-        client_cons_state_path: &ibc::core::ics24_host::path::ClientConsensusStatePath,
+        store: &dyn Storage,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
     ) -> Result<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>, ContractError>
     {
-        todo!()
+        let conesnus_state_key = self.consensus_state_commitment_key(
+            client_id,
+            height.revision_number(),
+            height.revision_height(),
+        );
+
+        let consenus_state_data = self
+            .ibc_store()
+            .commitments()
+            .load(store, conesnus_state_key)
+            .map_err(|error| ContractError::Std(error))?;
+
+        let consensus_state: ConsensusState = Protobuf::<Any>::decode_vec(&consenus_state_data)
+            .map_err(|error| ContractError::IbcDecodeError {
+                error: error.to_string(),
+            })?;
+
+        Ok(Box::new(consensus_state))
     }
 
     fn next_consensus_state(
