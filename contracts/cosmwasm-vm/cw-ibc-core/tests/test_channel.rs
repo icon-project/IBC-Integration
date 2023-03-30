@@ -3,11 +3,13 @@ use std::str::FromStr;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        create_ack_packet_event, create_channel_id_generated_event, create_open_ack_channel_event,
-        create_open_confirm_channel_event, create_open_init_channel_event,
-        create_open_try_channel_event, create_packet_timeout_event, create_send_packet_event,
-        create_write_ack_event, MsgChannelCloseConfirm, MsgChannelCloseInit, MsgChannelOpenAck,
-        MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
+        create_ack_packet_event, create_channel_id_generated_event,
+        create_close_confirm_channel_event, create_close_init_channel_event,
+        create_open_ack_channel_event, create_open_confirm_channel_event,
+        create_open_init_channel_event, create_open_try_channel_event, create_packet_timeout_event,
+        create_send_packet_event, create_write_ack_event, MsgChannelCloseConfirm,
+        MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
+        MsgChannelOpenTry,
     },
     types::{ChannelId, PortId},
     ChannelEnd, IbcConnectionId, Sequence,
@@ -827,4 +829,23 @@ fn test_create_timout_packet_event() {
     let packet = Packet::try_from(raw.clone()).unwrap();
     let event = create_packet_timeout_event(packet, &Order::Ordered);
     assert_eq!("timeout_packet", event.ty)
+}
+
+#[test]
+pub fn test_create_close_init_channel_event() {
+    let raw = get_dummy_raw_msg_chan_close_init();
+    let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
+    let event = create_close_init_channel_event(&msg);
+
+    assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
+}
+
+#[test]
+pub fn test_create_close_confirm_channel_event() {
+    let proof_height = 10;
+    let raw = get_dummy_raw_msg_chan_close_confirm(proof_height);
+    let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
+    let event = create_close_confirm_channel_event(&msg);
+
+    assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }
