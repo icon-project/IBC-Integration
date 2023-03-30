@@ -1,0 +1,7 @@
+# global owners: used as fallback if nobody owns the code
+
+# cosmwasm contracts
+/contracts/cosmwasm-vm @shreyasbhat0 @MuhammedIrfan
+
+# tests
+/test @hemz10 @MuhammedIrfan

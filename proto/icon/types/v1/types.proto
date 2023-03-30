@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package icon.types.v1;
+
+// import "gogoproto/gogo.proto";
+
+// go_package output 
+option go_package = "libraries/go/common/icon;icon";
+
+
+// BlockIdFlag indicates which BlcokID the signature is for
+enum BlockIDFlag {
+  
+    BLOCK_ID_FLAG_UNKNOWN = 0 ;
+    BLOCK_ID_FLAG_ABSENT  = 1 ;
+    BLOCK_ID_FLAG_COMMIT  = 2 ;
+    BLOCK_ID_FLAG_NIL     = 3 ;
+  }
+
+
+// SignedMsgType is a type of signed message in the consensus.
+enum SignedMsgType {
+  
+    SIGNED_MSG_TYPE_UNKNOWN = 0 ;
+    // Votes
+    SIGNED_MSG_TYPE_PREVOTE   = 1 ;
+    SIGNED_MSG_TYPE_PRECOMMIT = 2 ;
+  
+    // Proposals
+    SIGNED_MSG_TYPE_PROPOSAL = 32 ;
+}
+
+message SignedHeader {
+    BTPHeader       header        =   1;
+    repeated  bytes signatures    =   2;
+}
+
+message BTPHeader{
+    uint64      main_height     = 1;
+    uint32      round           = 2;
+    bytes       next_proof_context_hash = 3;
+    repeated    MerkleNode network_section_to_root  = 4;
+	uint64      network_id      = 5;
+	uint64      update_number   = 6;
+	bytes       prev_network_section_hash   = 7; 
+    uint64      message_count   = 8;
+    bytes       message_root    = 9;
+    repeated    bytes nextValidators = 10; 
+}
+
+message  MerkleNode {
+    int32 Dir   = 1;
+    bytes value = 2;
+}
+
+message MerkleProofs {
+    repeated MerkleNode proofs =1 ;
+}
+
+
+
