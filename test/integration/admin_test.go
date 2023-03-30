@@ -20,6 +20,9 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" is an admin wallet who needs to be added to the list of xCall admins$`, executor.isAnAdminWalletWhoNeedsToBeAddedToTheListOfXCallAdmins)
 			ctx.Step(`^"([^"]*)" is the "([^"]*)" contract owner$`, executor.isTheContractOwner)
 			ctx.Step(`^"([^"]*)" wallet address should be added to the list of xCall admins$`, executor.walletAddressShouldBeAddedToTheListOfXCallAdmins)
+
+			ctx.Step(`^"([^"]*)" non owner of contract executes add_admin in xcall with "([^"]*)" wallet address$`, executor.nonOwnerOfContractExecutesAdd_adminInXcallWithWalletAddress)
+			ctx.Step(`^"([^"]*)" wallet address should not be added to the list of xCall admins$`, executor.walletAddressShouldNotBeAddedToTheListOfXCallAdmins)
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/admin.feature"}, TestingT: t, StopOnFailure: false},
 	}
