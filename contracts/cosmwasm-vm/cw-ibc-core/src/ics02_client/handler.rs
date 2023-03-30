@@ -1,17 +1,28 @@
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{
-    from_binary, to_binary, Attribute, CosmosMsg, Empty, MessageInfo, Reply, Response, SubMsg,
-    WasmMsg,
-};
-
-use ibc::core::ics02_client::error::ClientError;
-
-use super::*;
+use super::{events::create_client_event, *};
 
 #[cw_serde]
-pub struct CallBackData {
+pub struct CreateClientResponse {
     client_type: String,
-    consensus_height: String,
+    height: String,
+    client_state_commitment: Vec<u8>,
+    consensus_state_commitment: Vec<u8>,
+}
+
+impl CreateClientResponse {
+    pub fn client_type(&self) -> ClientType {
+        ClientType::new(self.client_type.to_owned())
+    }
+
+    pub fn height(&self) -> Height {
+        Height::from_str(&self.height).unwrap()
+    }
+
+    pub fn client_state_commitment(&self) -> &[u8] {
+        &self.client_state_commitment
+    }
+    pub fn consensus_state_commitment(&self) -> &[u8] {
+        &self.consensus_state_commitment
+    }
 }
 
 #[cw_serde]
@@ -32,7 +43,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let client_state = self
             .decode_client_state(message.client_state.clone())
-            .map_err(|error| return ContractError::IbcContextError { error })?;
+            .map_err(|error| return error)?;
 
         let client_type = ClientType::from(client_state.client_type());
 
@@ -98,17 +109,50 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         message: Reply,
-    ) -> Result<IbcClientId, ContractError> {
+    ) -> Result<Response, ContractError> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => {
-                let call_backdata: CallBackData = from_binary(&result.data.unwrap()).unwrap();
+                let call_backdata: CreateClientResponse =
+                    from_binary(&result.data.unwrap()).unwrap();
                 let client_counter = self.client_counter(deps.as_ref().storage)?;
+                let client_type = ClientType::new(call_backdata.client_type.clone());
+                let client_id = ClientId::new(client_type.clone(), client_counter)?;
+                let light_client_address =
+                    self.get_client_from_registry(deps.as_ref().storage, client_type.clone())?;
 
-                let client_type = ClientType::new(call_backdata.client_type);
+                self.store_client_type(deps.storage, client_id.clone(), client_type.clone())?;
 
-                let client_id = ClientId::new(client_type, client_counter)?;
+                self.store_client_implementations(
+                    deps.storage,
+                    client_id.clone(),
+                    light_client_address,
+                )?;
 
-                Ok(client_id.ibc_client_id().clone())
+                self.store_client_state(
+                    deps.storage,
+                    client_id.ibc_client_id(),
+                    call_backdata.client_state_commitment.clone(),
+                )?;
+
+                self.store_consensus_state(
+                    deps.storage,
+                    client_id.ibc_client_id(),
+                    call_backdata.height(),
+                    call_backdata.consensus_state_commitment.clone(),
+                )?;
+
+                self.increase_client_counter(deps.storage)?;
+
+                let event = create_client_event(
+                    client_id.ibc_client_id().as_str(),
+                    &client_type.client_type().as_str(),
+                    &call_backdata.height().to_string(),
+                );
+
+                Ok(Response::new()
+                    .add_event(event)
+                    .add_attribute("method", "execute_create_client_reply")
+                    .add_attribute("client_id", client_id.ibc_client_id().to_string()))
             }
             cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
                 error: ClientError::Other { description: error },
