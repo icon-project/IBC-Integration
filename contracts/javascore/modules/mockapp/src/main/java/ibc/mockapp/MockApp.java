@@ -18,6 +18,10 @@ public class MockApp implements IIBCModule {
         this.ibcHandler  = ibcHandler;
     }
 
+    public static final VarDB<String> srcChan = Context.newVarDB("srcChan", String.class);
+    public static final VarDB<String> srcPort = Context.newVarDB("srcPort", String.class);
+    public static final VarDB<String> dstChan = Context.newVarDB("dstChan", String.class);
+    public static final VarDB<String> dstPort = Context.newVarDB("dstPort", String.class);
     public static final VarDB<BigInteger> sendCount = Context.newVarDB("sendPacket", BigInteger.class);
     public static final VarDB<BigInteger> recvCount = Context.newVarDB("recvPacket", BigInteger.class);
 
@@ -32,12 +36,12 @@ public class MockApp implements IIBCModule {
         sendCount.set(currCount.add(BigInteger.ONE));
 
         Packet pct = new Packet();
-        pct.setSequence(sendCount().add(BigInteger.ONE));
+        pct.setSequence(sendCount());
         pct.setData(data);
-        pct.setDestinationPort("transfer");
-        pct.setDestinationChannel("channel-0");
-        pct.setSourcePort("transfer");
-        pct.setSourceChannel("channel-1");
+        pct.setDestinationPort(dstPort.getOrDefault("xcall"));
+        pct.setDestinationChannel(dstChan.getOrDefault("channel-0"));
+        pct.setSourcePort(srcPort.getOrDefault("xcall"));
+        pct.setSourceChannel(srcChan.getOrDefault("channel-0"));
 
         Height hgt = new Height();
         hgt.setRevisionHeight(BigInteger.ZERO);
@@ -61,27 +65,38 @@ public class MockApp implements IIBCModule {
     @External
     public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
             byte[] counterpartyPb, String version) {
+        srcChan.set(channelId);
+        srcPort.set(portId);
         Context.println("Unimplemented method 'onChanOpenInit'");
     }
 
     @External
     public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
             byte[] counterpartyPb, String version, String counterpartyVersion) {
+        dstChan.set(channelId);
+        dstPort.set(portId);
         Context.println("Unimplemented method 'onChanOpenTry'");
     }
 
     @External
     public void onChanOpenAck(String portId, String channelId, String counterpartyVersion) {
+        Context.require(portId.equals(srcPort.get()));
+        Context.require(channelId.equals(srcChan.get()));
         Context.println("onChanOpenAck");
     }
 
     @External
     public void onChanOpenConfirm(String portId, String channelId) {
+        Context.require(portId.equals(dstPort.get()));
+        Context.require(channelId.equals(dstChan.get()));
         Context.println("onChanOpenConfirm");
     }
 
     @External
     public void onChanCloseInit(String portId, String channelId) {
+        Context.require(Context.getOwner().equals(Context.getCaller()), "Owner guard");
+        Context.require(portId.equals(srcPort.get()));
+        Context.require(channelId.equals(srcChan.get()));
         Context.println("onChanCloseInit");
     }
 
