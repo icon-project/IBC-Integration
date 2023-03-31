@@ -15,3 +15,7 @@ project(':tendermint').name = "tendermint"
 include(':mockclient')
 project(':mockclient').projectDir = file("lightclients/mockclient")
 project(':mockclient').name = "mockclient"
+
+include(':mockapp')
+project(':mockapp').projectDir = file("modules/mockapp")
+project(':mockapp').name = "mockapp"
