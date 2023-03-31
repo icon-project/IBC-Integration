@@ -41,4 +41,7 @@ pub enum ContractError {
 
     #[error("IbcConnectionError {error}")]
     IbcConnectionError { error: ConnectionError },
+
+    #[error("IbcClientError {error}")]
+    IbcClientError { error: ClientError },
 }
