@@ -5,6 +5,7 @@ buildscript {
     }
     dependencies {
         classpath("foundation.icon:gradle-javaee-plugin:$javaeePluginVersion")
+        classpath 'com.squareup.wire:wire-gradle-plugin:4.5.0'
     }
 }
 
