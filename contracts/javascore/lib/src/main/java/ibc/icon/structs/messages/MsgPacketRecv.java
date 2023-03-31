@@ -1,10 +1,42 @@
 package ibc.icon.structs.messages;
 
-import ibc.icon.structs.proto.core.channel.Packet;
-import ibc.icon.structs.proto.core.client.Height;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
 
 public class MsgPacketRecv {
-    public Packet packet;
-    public byte[] proof;
-    public Height proofHeight;
+    private byte[] packet;
+    private byte[] proof;
+    private byte[] proofHeight;
+
+    public byte[] getPacketRaw() {
+        return packet;
+    }
+
+    public Packet getPacket() {
+        return Packet.decode(packet);
+    }
+
+    public void setPacket(byte[] packet) {
+        this.packet = packet;
+    }
+
+    public byte[] getProof() {
+        return proof;
+    }
+
+    public void setProof(byte[] proof) {
+        this.proof = proof;
+    }
+
+    public byte[] getProofHeightRaw() {
+        return proofHeight;
+    }
+
+    public Height getProofHeight() {
+        return Height.decode(proofHeight);
+    }
+
+    public void setProofHeight(byte[] proofHeight) {
+        this.proofHeight = proofHeight;
+    }
 }

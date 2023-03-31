@@ -2,13 +2,16 @@ use std::time::Duration;
 
 pub mod setup;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
+use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
+use cw_ibc_core::ics03_connection::event::create_open_try_event;
 use ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
+use ibc::events::IbcEventType;
 use setup::*;
 
 use cw_ibc_core::context::CwIbcCoreContext;
@@ -351,6 +354,67 @@ fn connection_open_confirm_invalid_proof_height() {
     };
     let res_msg = MsgConnectionOpenConfirm::try_from(confirm_msg.clone());
     assert_eq!(res_msg.is_err(), false)
+}
+
+#[test]
+fn create_connection_open_init_event() {
+    let connection_id = ConnectionId::new(10);
+    let client_id = ClientId::default();
+    let counterparty_client_id = ClientId::default();
+    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
+    assert_eq!(IbcEventType::OpenInitConnection.as_str(), event.ty);
+    assert_eq!("connection-10", event.attributes[0].value);
+    assert_eq!("07-tendermint-0", event.attributes[1].value);
+    assert_eq!("07-tendermint-0", event.attributes[2].value);
+}
+
+#[test]
+fn create_connection_open_ack_event() {
+    let connection_id = ConnectionId::new(10);
+    let client_id = ClientId::default();
+    let counterparty_client_id = ClientId::default();
+    let counterparty_connection_id = ConnectionId::new(20);
+    let event = create_open_ack_event(
+        connection_id,
+        client_id,
+        counterparty_connection_id,
+        counterparty_client_id,
+    );
+    assert_eq!(IbcEventType::OpenAckConnection.as_str(), event.ty);
+    assert_eq!("connection-10", event.attributes[0].value);
+    assert_eq!("07-tendermint-0", event.attributes[1].value);
+    assert_eq!("connection-20", event.attributes[2].value);
+}
+
+#[test]
+fn create_connection_open_try_event() {
+    let connection_id = ConnectionId::new(10);
+    let client_id = ClientId::default();
+    let counterparty_client_id = ClientId::default();
+    let counterparty_connection_id = ConnectionId::new(20);
+    let event = create_open_try_event(
+        connection_id,
+        client_id,
+        counterparty_connection_id,
+        counterparty_client_id,
+    );
+    assert_eq!(IbcEventType::OpenTryConnection.as_str(), event.ty);
+}
+
+#[test]
+fn create_conection_open_confirm_event() {
+    let connection_id_on_b = ConnectionId::new(10);
+    let client_id_on_b = ClientId::default();
+    let counterparty_connection_id_on_a = ConnectionId::new(2);
+    let counterparty_client_id_on_a = ClientId::default();
+    let event = create_open_confirm_event(
+        connection_id_on_b,
+        client_id_on_b,
+        counterparty_connection_id_on_a,
+        counterparty_client_id_on_a,
+    );
+    assert_eq!(IbcEventType::OpenConfirmConnection.as_str(), event.ty);
+    assert_eq!("connection-10", event.attributes[0].value);
 }
 
 #[test]

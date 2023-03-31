@@ -9,11 +9,13 @@ use cw_ibc_core::traits::*;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        create_ack_packet_event, create_channel_id_generated_event, create_open_ack_channel_event,
-        create_open_confirm_channel_event, create_open_init_channel_event,
-        create_open_try_channel_event, create_packet_timeout_event, create_send_packet_event,
-        create_write_ack_event, MsgChannelCloseConfirm, MsgChannelCloseInit, MsgChannelOpenAck,
-        MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
+        create_ack_packet_event, create_channel_id_generated_event,
+        create_close_confirm_channel_event, create_close_init_channel_event,
+        create_open_ack_channel_event, create_open_confirm_channel_event,
+        create_open_init_channel_event, create_open_try_channel_event, create_packet_timeout_event,
+        create_send_packet_event, create_write_ack_event, MsgChannelCloseConfirm,
+        MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
+        MsgChannelOpenTry,
     },
     types::{ChannelId, ConnectionId, ModuleId, PortId},
     ChannelEnd, ConnectionEnd, IbcClientId, IbcConnectionId, Sequence,
@@ -852,6 +854,25 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
     contract
         .validate_channel_open_init(deps.as_mut(), info, &msg)
         .unwrap();
+}
+
+#[test]
+pub fn test_create_close_init_channel_event() {
+    let raw = get_dummy_raw_msg_chan_close_init();
+    let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
+    let event = create_close_init_channel_event(&msg);
+
+    assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
+}
+
+#[test]
+pub fn test_create_close_confirm_channel_event() {
+    let proof_height = 10;
+    let raw = get_dummy_raw_msg_chan_close_confirm(proof_height);
+    let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
+    let event = create_close_confirm_channel_event(&msg);
+
+    assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }
 
 #[test]
