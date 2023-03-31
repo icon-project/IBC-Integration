@@ -873,3 +873,18 @@ fn fails_on_updating_non_existing_client() {
         .update_client(deps.as_mut(), info, update_client_message)
         .unwrap();
 }
+
+#[test]
+#[should_panic(expected = "IbcClientError { error: Other { description: \"response_error\" } }")]
+fn fails_on_error_ressponse() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+
+    let reply_message = Reply {
+        id: 22,
+        result: cosmwasm_std::SubMsgResult::Err("response_error".to_string()),
+    };
+    contract
+        .execute_update_client_reply(deps.as_mut(), reply_message)
+        .unwrap();
+}
