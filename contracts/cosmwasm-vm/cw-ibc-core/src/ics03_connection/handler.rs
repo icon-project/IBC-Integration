@@ -5,6 +5,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         message: MsgConnectionOpenInit,
         deps: DepsMut,
+        // client_id : ClientId
     ) -> Result<Response, ContractError> {
         //validate
         let _validate = match self.client_state(deps.storage, &message.client_id_on_a) {
@@ -38,7 +39,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
         let conn_id = ConnectionId::new(self.connection_counter(deps.storage)?.try_into().unwrap());
         let r = message.counterparty.client_id().clone();
-        let client_id_on_b = crate::ClientId::from(r.clone());
+        let client_id_on_b = crate::ClientId::from(r);
         let event = create_open_init_event(
             conn_id.clone(),
             crate::ClientId::from(message.client_id_on_a.clone()),
@@ -48,7 +49,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Ok(counter) => counter,
             Err(error) => return Err(error),
         };
-        let client_id = crate::ClientId::from(r);
+        let client_id = ClientId::from(message.client_id_on_a.clone());
         self.store_connection_to_client(deps.storage, client_id, conn_id.clone())?;
         self.store_connection(deps.storage, conn_id, conn_end)
             .unwrap();

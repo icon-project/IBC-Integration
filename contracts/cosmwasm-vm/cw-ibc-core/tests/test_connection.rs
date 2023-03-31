@@ -1,6 +1,8 @@
 use std::time::Duration;
 
 pub mod setup;
+use cosmwasm_std::to_vec;
+use cw_ibc_core::ics02_client::types::ClientState;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
 use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
@@ -368,6 +370,7 @@ fn test_get_compatible_versions() {
 #[test]
 fn connection_open_init() {
     let mut deps = deps();
+
     let message = RawMsgConnectionOpenInit {
         client_id: "client_id_on_a".to_string(),
         counterparty: Some(get_dummy_raw_counterparty(None)),
@@ -375,45 +378,51 @@ fn connection_open_init() {
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
+
     let res_msg =
         ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
             message.clone(),
         )
         .unwrap();
-    let conn_id = ConnectionId::new(1);
-    let ex = CommitmentPrefix::try_from("ex".to_string().as_bytes().to_vec());
-    let counterparty = Counterparty::new(IbcClientId::default(), None, ex.unwrap());
-    let conn_end = ConnectionEnd::new(
-        State::Open,
-        IbcClientId::default(),
-        counterparty,
-        vec![Version::default()],
-        Duration::default(),
-    );
-    let counterparty_client_id = ClientId::new(ClientType::new("client_2".to_string()), 2).unwrap();
-    let client_id = ClientId::new(ClientType::new("client_1".to_string()), 1).unwrap();
+    let client_id = ClientId::from(res_msg.client_id_on_a.clone());
+
     let contract = CwIbcCoreContext::new();
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let cl = to_vec(&client_state);
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &res_msg.client_id_on_a.clone(),
+            cl.unwrap(),
+        )
+        .unwrap();
+    contract
+        .client_state(&mut deps.storage, &res_msg.client_id_on_a)
+        .unwrap();
     contract
         .connection_next_sequence_init(&mut deps.storage, u128::default())
         .unwrap();
-    contract.connection_counter(&mut deps.storage).unwrap();
-    let _increment_sequence = contract
-        .increase_connection_counter(&mut deps.storage)
-        .unwrap();
-    contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
-        .unwrap();
-    let result1 = contract.connection_open_init(res_msg, deps.as_mut());
-    assert_eq!(result1.is_ok(), true);
+
+    let res = contract.connection_open_init(res_msg, deps.as_mut());
+    println!("{:?}", res);
+    assert_eq!(res.is_ok(), true);
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
+#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
 fn test_validate_open_init_connection_fail() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let counterparty_client_id = ClientId::new(ClientType::new("client_2".to_string()), 2).unwrap();
-    let client_id = ClientId::new(ClientType::new("client_1".to_string()), 1).unwrap();
     let message = RawMsgConnectionOpenInit {
         client_id: "client_id_on_a".to_string(),
         counterparty: Some(get_dummy_raw_counterparty(None)),
