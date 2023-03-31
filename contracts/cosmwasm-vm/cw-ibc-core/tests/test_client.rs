@@ -842,3 +842,34 @@ fn check_for_update_client_message() {
 
     assert_eq!("iconclient-0", result.events[0].attributes[0].value)
 }
+
+#[test]
+#[should_panic(expected = "InvalidClientId { client_id: \"iconclient-0\" }")]
+fn fails_on_updating_non_existing_client() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let client_id = ClientId::from_str("iconclient-0").unwrap();
+    let signer = Signer::from_str("new_signer").unwrap();
+    let update_client_message = MsgUpdateClient {
+        client_id: client_id.ibc_client_id().clone(),
+        header: client_state.clone().into(),
+        signer,
+    };
+
+    contract
+        .update_client(deps.as_mut(), info, update_client_message)
+        .unwrap();
+}
