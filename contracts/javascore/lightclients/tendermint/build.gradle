@@ -69,6 +69,6 @@ deployJar {
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-
+        arg('ibcHandler', 'hxb6b5791be0b5ef67063b3c10b840fb81514db2fd')
     }
 }
