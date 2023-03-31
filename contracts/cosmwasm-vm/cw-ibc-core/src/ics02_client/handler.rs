@@ -1,4 +1,7 @@
-use super::{events::create_client_event, *};
+use super::{
+    events::{create_client_event, update_client_event},
+    *,
+};
 
 #[cw_serde]
 pub struct CreateClientResponse {
@@ -269,7 +272,17 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         update_client_response.consensus_state_commitment().to_vec(),
                     )?;
 
+                    let client_type = ClientType::from(client_id.clone());
+
+                    let event = update_client_event(
+                        client_type.client_type(),
+                        height,
+                        vec![height],
+                        client_id.ibc_client_id(),
+                    );
+
                     Ok(Response::new()
+                        .add_event(event)
                         .add_attribute("methods", "execute_update_client_reply")
                         .add_attribute("height", height))
                 }

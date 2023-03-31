@@ -158,7 +158,7 @@ fn check_for_update_client_event() {
         client_type.client_type(),
         height,
         vec![height],
-        message.clone(),
+        &message.client_id,
     );
 
     assert_eq!("update_client", result.ty);

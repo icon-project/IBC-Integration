@@ -100,6 +100,16 @@ impl From<IbcClientType> for ClientType {
     }
 }
 
+impl From<ClientId> for ClientType {
+    fn from(value: ClientId) -> Self {
+        let data: Vec<&str> = value.as_str().split("-").collect();
+
+        println!("{data:?}");
+
+        ClientType::new(data[0].to_string())
+    }
+}
+
 impl<'a> PrimaryKey<'a> for ClientType {
     type Prefix = ();
 
