@@ -1,5 +1,11 @@
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 
+use cosmwasm_std::{to_binary, Addr};
+use cw_ibc_core::ics04_channel::open_init::{
+    create_channel_submesssage, on_chan_open_init_submessage,
+};
+use cw_ibc_core::ics04_channel::EXECUTE_ON_CHANNEL_OPEN_INIT;
+use cw_ibc_core::traits::*;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
@@ -11,8 +17,8 @@ use cw_ibc_core::{
         MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
         MsgChannelOpenTry,
     },
-    types::{ChannelId, PortId},
-    ChannelEnd, IbcConnectionId, Sequence,
+    types::{ChannelId, ConnectionId, ModuleId, PortId},
+    ChannelEnd, ConnectionEnd, IbcClientId, IbcConnectionId, Sequence,
 };
 use ibc::{
     core::ics04_channel::{
@@ -32,7 +38,6 @@ use ibc_proto::ibc::core::{
     },
     client::v1::Height,
 };
-
 pub mod setup;
 use setup::*;
 
@@ -66,7 +71,7 @@ fn test_add_channel() {
 fn test_channel_sequence_initialisation() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
-    let _store = ctx.init_channel_counter(mock_deps.as_mut().storage, u128::default());
+    let _store = ctx.init_channel_counter(mock_deps.as_mut().storage, u64::default());
     let result = ctx.channel_counter(mock_deps.as_ref().storage);
 
     assert_eq!(0, result.unwrap());
@@ -76,7 +81,7 @@ fn test_channel_sequence_initialisation() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
+#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
 fn test_channel_sequence_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
@@ -742,7 +747,13 @@ fn create_open_init_channel_event_test() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_init(Some(10));
     let message = MsgChannelOpenInit::try_from(default_raw_msg.clone()).unwrap();
     let channel_id = ChannelId::new(10);
-    let event = create_open_init_channel_event(&channel_id, &message);
+    let event = create_open_init_channel_event(
+        &channel_id,
+        &message.port_id_on_a,
+        &message.port_id_on_a,
+        &message.connection_hops_on_a[0],
+        &message.version_proposal,
+    );
 
     assert_eq!(IbcEventType::OpenInitChannel.as_str(), event.ty);
     assert_eq!("channel-10", event.attributes[1].value);
@@ -832,6 +843,20 @@ fn test_create_timout_packet_event() {
 }
 
 #[test]
+#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
+fn test_validate_open_init_channel_fail_missing_connection_end() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let raw = get_dummy_raw_msg_chan_open_init(None);
+    let msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
+
+    contract
+        .validate_channel_open_init(deps.as_mut(), info, &msg)
+        .unwrap();
+}
+
+#[test]
 pub fn test_create_close_init_channel_event() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
@@ -848,4 +873,101 @@ pub fn test_create_close_confirm_channel_event() {
     let event = create_close_confirm_channel_event(&msg);
 
     assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
+}
+
+#[test]
+fn test_validate_open_init_channel() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let raw = get_dummy_raw_msg_chan_open_init(None);
+    let mut msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
+    let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
+    let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let port_id = PortId::from(msg.port_id_on_a.clone());
+    contract
+        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
+        .unwrap();
+
+    let module = Addr::unchecked("contractaddress");
+    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    contract
+        .add_route(&mut deps.storage, cx_module_id.clone(), &module)
+        .unwrap();
+
+    let ss = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+        "hello".to_string().as_bytes().to_vec(),
+    );
+    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+        IbcClientId::default(),
+        None,
+        ss.unwrap(),
+    );
+    let conn_end = ConnectionEnd::new(
+        ibc::core::ics03_connection::connection::State::Open,
+        IbcClientId::default(),
+        counter_party,
+        vec![ibc::core::ics03_connection::version::Version::default()],
+        Duration::default(),
+    );
+    let conn_id = ConnectionId::new(5);
+    msg.connection_hops_on_a = vec![conn_id.connection_id().clone()];
+    msg.version_proposal = Version::from_str("xcall-1").unwrap();
+    let contract = CwIbcCoreContext::new();
+    contract
+        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .unwrap();
+
+    let res = contract.validate_channel_open_init(deps.as_mut(), info.clone(), &msg);
+
+    let channel_id_expect = ChannelId::new(0);
+    let expected = on_chan_open_init_submessage(&msg, &channel_id_expect, &conn_id);
+    let data = cw_xcall::msg::ExecuteMsg::IbcChannelOpen { msg: expected };
+    let data = to_binary(&data).unwrap();
+    let on_chan_open_init = create_channel_submesssage(
+        "contractaddress".to_string(),
+        data,
+        &info,
+        EXECUTE_ON_CHANNEL_OPEN_INIT,
+    );
+
+    assert_eq!(res.is_ok(), true);
+    assert_eq!(res.unwrap().messages[0], on_chan_open_init)
+}
+
+#[test]
+#[should_panic(expected = "error: UnknownPort { port_id: PortId(\"defaultPort\")")]
+fn test_validate_open_init_channel_fail_missing_module_id() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let raw = get_dummy_raw_msg_chan_open_init(None);
+    let mut msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
+    let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
+    let ss = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+        "hello".to_string().as_bytes().to_vec(),
+    );
+    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+        IbcClientId::default(),
+        None,
+        ss.unwrap(),
+    );
+    let conn_end = ConnectionEnd::new(
+        ibc::core::ics03_connection::connection::State::Open,
+        IbcClientId::default(),
+        counter_party,
+        vec![ibc::core::ics03_connection::version::Version::default()],
+        Duration::default(),
+    );
+    let conn_id = ConnectionId::new(5);
+    msg.connection_hops_on_a = vec![conn_id.connection_id().clone()];
+    msg.version_proposal = Version::from_str("xcall-1").unwrap();
+    let contract = CwIbcCoreContext::new();
+    contract
+        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .unwrap();
+
+    contract
+        .validate_channel_open_init(deps.as_mut(), info, &msg)
+        .unwrap();
 }
