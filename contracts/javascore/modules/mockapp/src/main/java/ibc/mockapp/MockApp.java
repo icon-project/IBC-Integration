@@ -1,6 +1,7 @@
 package ibc.mockapp;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 import ibc.icon.interfaces.IIBCModule;
 import icon.proto.core.client.Height;
@@ -28,6 +29,16 @@ public class MockApp implements IIBCModule {
     @External(readonly = true)
     public String name() {
         return "IBC Mock App";
+    }
+
+    @External(readonly = true)
+    public Map<String, String> getInfo() {
+        return Map.of(
+            "srcPort", srcPort.getOrDefault(""), 
+            "srcChan", srcChan.getOrDefault(""), 
+            "dstPort", dstPort.getOrDefault(""), 
+            "dstChan", dstChan.getOrDefault("")
+        );
     }
 
     @External 
@@ -67,7 +78,7 @@ public class MockApp implements IIBCModule {
             byte[] counterpartyPb, String version) {
         srcChan.set(channelId);
         srcPort.set(portId);
-        Context.println("Unimplemented method 'onChanOpenInit'");
+        Context.println("onChanOpenInit");
     }
 
     @External
@@ -75,7 +86,7 @@ public class MockApp implements IIBCModule {
             byte[] counterpartyPb, String version, String counterpartyVersion) {
         dstChan.set(channelId);
         dstPort.set(portId);
-        Context.println("Unimplemented method 'onChanOpenTry'");
+        Context.println("onChanOpenTry");
     }
 
     @External
@@ -109,7 +120,7 @@ public class MockApp implements IIBCModule {
     public byte[] onRecvPacket(byte[] calldata, Address relayer) {
         BigInteger currCount = recvCount.getOrDefault(BigInteger.ZERO);
         recvCount.set(currCount.add(BigInteger.ONE));
-        Context.println("Unimplemented method 'onRecvPacket'");
+        Context.println("onRecvPacket");
         if (calldata.length > 0) {
             return new byte[1];
         } 
@@ -118,12 +129,12 @@ public class MockApp implements IIBCModule {
 
     @External
     public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer) {
-        Context.println("Unimplemented method 'onAcknowledgementPacket'");
+        Context.println("onAcknowledgementPacket");
     }
 
     @External
     public void onTimeoutPacket(byte[] calldata, Address relayer) {
-        Context.println("Unimplemented method 'onTimeoutPacket'");
+        Context.println("onTimeoutPacket");
     }
 
 }
