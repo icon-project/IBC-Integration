@@ -1,7 +1,5 @@
 package ibc.icon.interfaces;
 
-import java.util.List;
-
 import foundation.icon.score.client.ScoreInterface;
 import score.Address;
 
@@ -19,7 +17,7 @@ public interface IIBCModule {
      */
     void onChanOpenInit(
             int order,
-            List<String> connectionHops,
+            String[] connectionHops,
             String portId,
             String channelId,
             byte[] counterpartyPb,
@@ -35,7 +33,7 @@ public interface IIBCModule {
      */
     void onChanOpenTry(
             int order,
-            List<String> connectionHops,
+            String[] connectionHops,
             String portId,
             String channelId,
             byte[] counterpartyPb,
