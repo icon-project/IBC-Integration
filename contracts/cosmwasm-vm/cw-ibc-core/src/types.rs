@@ -315,6 +315,9 @@ impl ModuleId {
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
 }
 
 impl<'a> PrimaryKey<'a> for ModuleId {
@@ -336,5 +339,23 @@ impl KeyDeserialize for ModuleId {
             .unwrap();
         let module_id = IbcModuleId::from_str(&result).unwrap();
         Ok(ModuleId(module_id.to_string()))
+    }
+}
+
+impl From<IbcConnectionId> for ConnectionId {
+    fn from(conn: IbcConnectionId) -> Self {
+        ConnectionId(conn)
+    }
+}
+
+impl From<IbcPortId> for PortId {
+    fn from(port_id: IbcPortId) -> Self {
+        PortId(port_id)
+    }
+}
+
+impl From<IbcModuleId> for ModuleId {
+    fn from(module: IbcModuleId) -> Self {
+        ModuleId(module.to_string())
     }
 }
