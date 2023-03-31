@@ -10,7 +10,7 @@ use cw_ibc_core::{
             client_misbehaviour_event, create_client_event, generated_client_id_event,
             update_client_event, upgrade_client_event,
         },
-        handler::CreateClientResponse,
+        handler::{CreateClientResponse, UpdateClientResponse},
         types::{ClientState, ConsensusState},
     },
     traits::IbcClient,
@@ -710,4 +710,135 @@ fn fails_on_create_client_message_without_proper_initialisation() {
     contract
         .create_client(deps.as_mut(), info, create_client_message)
         .unwrap();
+}
+
+#[test]
+fn check_for_update_client_message() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    contract
+        .init_client_counter(deps.as_mut().storage, 0)
+        .unwrap();
+
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root".as_bytes().to_vec(),
+    }
+    .try_into()
+    .unwrap();
+
+    let client_type = ClientType::new("iconclient".to_string());
+    let light_client = Addr::unchecked("lightclient");
+    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+
+    let signer = Signer::from_str("new_signer").unwrap();
+
+    let create_client_message = MsgCreateClient::new(
+        client_state.clone().into(),
+        consenus_state.clone().into(),
+        signer.clone(),
+    );
+
+    let response = contract
+        .create_client(deps.as_mut(), info.clone(), create_client_message)
+        .unwrap();
+    assert_eq!(response.messages[0].id, 21);
+
+    assert_eq!(response.attributes[0].value, "create_client");
+
+    let mock_reponse_data = CreateClientResponse::new(
+        client_type.as_str().to_string(),
+        "0-25".to_string(),
+        to_vec(&client_state).unwrap(),
+        to_vec(&consenus_state).unwrap(),
+    );
+
+    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
+
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 21,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: Some(mock_data_binary),
+        }),
+    };
+
+    let client_id = ClientId::from_str("iconclient-0").unwrap();
+
+    contract
+        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .unwrap();
+
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 3,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let update_client_message = MsgUpdateClient {
+        client_id: client_id.ibc_client_id().clone(),
+        header: client_state.clone().into(),
+        signer,
+    };
+
+    let result = contract
+        .update_client(deps.as_mut(), info, update_client_message)
+        .unwrap();
+
+    assert_eq!(
+        client_id.ibc_client_id().as_str(),
+        result.attributes[1].value
+    );
+
+    let mock_reponse_data = UpdateClientResponse::new(
+        "10-15".to_string(),
+        client_id.ibc_client_id().as_str().to_string(),
+        to_vec(&client_state).unwrap(),
+        to_vec(&consenus_state).unwrap(),
+    );
+
+    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
+
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 22,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: Some(mock_data_binary),
+        }),
+    };
+
+    let update_response = contract.execute_update_client_reply(deps.as_mut(), reply_message);
+
+    assert!(update_response.is_ok());
+
+    let result = update_response.unwrap();
+
+    assert_eq!("execute_update_client_reply", result.attributes[0].value);
+
+    assert_eq!("10-15", result.attributes[1].value);
+
+    assert_eq!("update_client", result.events[0].ty);
+
+    assert_eq!("iconclient-0", result.events[0].attributes[0].value)
 }
