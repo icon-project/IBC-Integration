@@ -6,7 +6,7 @@ pub const ICON_CONSENSUS_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientStat
 const CLIENT_TYPE: &str = "iconclient";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Clientstate {
+pub struct ClientState {
     trusting_period: u64,
     frozen_height: Option<u64>,
     max_clock_drift: u64,
@@ -15,7 +15,7 @@ pub struct Clientstate {
     validators: Vec<Vec<u8>>,
 }
 
-impl TryFrom<&[u8]> for Clientstate {
+impl TryFrom<&[u8]> for ClientState {
     type Error = ClientError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
@@ -28,7 +28,7 @@ impl TryFrom<&[u8]> for Clientstate {
     }
 }
 
-impl Clientstate {
+impl ClientState {
     pub fn new(
         trusting_period: u64,
         frozen_height: u64,
@@ -59,8 +59,8 @@ impl Clientstate {
     }
 }
 
-impl Protobuf<RawClientState> for Clientstate {}
-impl TryFrom<RawClientState> for Clientstate {
+impl Protobuf<RawClientState> for ClientState {}
+impl TryFrom<RawClientState> for ClientState {
     type Error = ClientError;
 
     fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
@@ -78,8 +78,8 @@ impl TryFrom<RawClientState> for Clientstate {
     }
 }
 
-impl From<Clientstate> for RawClientState {
-    fn from(value: Clientstate) -> Self {
+impl From<ClientState> for RawClientState {
+    fn from(value: ClientState) -> Self {
         let frozen_height = match value.frozen_height {
             Some(value) => value,
             None => 0,
@@ -95,9 +95,9 @@ impl From<Clientstate> for RawClientState {
     }
 }
 
-impl Protobuf<Any> for Clientstate {}
+impl Protobuf<Any> for ClientState {}
 
-impl TryFrom<Any> for Clientstate {
+impl TryFrom<Any> for ClientState {
     type Error = ClientError;
 
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
@@ -106,7 +106,7 @@ impl TryFrom<Any> for Clientstate {
         use ibc::core::ics02_client::error::ClientError as Error;
         use prost::Message;
 
-        fn decode_client_state<B: Buf>(buf: B) -> Result<Clientstate, Error> {
+        fn decode_client_state<B: Buf>(buf: B) -> Result<ClientState, Error> {
             RawClientState::decode(buf)
                 .map_err(|error| ClientError::Decode(error))?
                 .try_into()
@@ -123,8 +123,8 @@ impl TryFrom<Any> for Clientstate {
     }
 }
 
-impl From<Clientstate> for Any {
-    fn from(client_state: Clientstate) -> Self {
+impl From<ClientState> for Any {
+    fn from(client_state: ClientState) -> Self {
         Any {
             type_url: ICON_CLIENT_STATE_TYPE_URL.to_string(),
             value: Protobuf::<RawClientState>::encode_vec(&client_state)
@@ -136,7 +136,7 @@ impl From<Clientstate> for Any {
 //TODO : Implement Methods
 #[allow(dead_code)]
 #[allow(unused_variables)]
-impl ClientState for Clientstate {
+impl IbcClientState for ClientState {
     fn chain_id(&self) -> ibc::core::ics24_host::identifier::ChainId {
         todo!()
     }
@@ -183,7 +183,7 @@ impl ClientState for Clientstate {
         ctx: &dyn ibc::core::ValidationContext,
         client_id: IbcClientId,
         misbehaviour: Any,
-    ) -> Result<Box<dyn ClientState>, ContextError> {
+    ) -> Result<Box<dyn IbcClientState>, ContextError> {
         todo!()
     }
 
@@ -302,25 +302,25 @@ impl ClientState for Clientstate {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct ConsensusState {
-    message_root: Vec<u8>,
+    message_root: CommitmentRoot,
 }
 
 impl ConsensusState {
     pub fn new(message_root: Vec<u8>) -> Result<Self, ClientError> {
-        Ok(Self { message_root })
+        let commitment_root = CommitmentRoot::from(message_root);
+        Ok(Self {
+            message_root: commitment_root,
+        })
     }
-    pub fn message_root(&self) -> Vec<u8> {
-        self.message_root.clone()
+    pub fn message_root(&self) -> &CommitmentRoot {
+        &self.message_root
+    }
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.message_root.as_bytes()
     }
 }
-
-// impl AsRef<CommitmentRoot> for ConsensusState {
-//     fn as_ref(&self) -> &CommitmentRoot {
-//         &CommitmentRoot::from_bytes(&self.message_root)
-//     }
-// }
 
 impl Protobuf<Any> for ConsensusState {}
 
@@ -375,14 +375,14 @@ impl TryFrom<RawConsensusState> for ConsensusState {
 impl From<ConsensusState> for RawConsensusState {
     fn from(value: ConsensusState) -> Self {
         Self {
-            message_root: value.message_root(),
+            message_root: value.message_root().clone().into_vec(),
         }
     }
 }
 
 impl ibc::core::ics02_client::consensus_state::ConsensusState for ConsensusState {
     fn root(&self) -> &CommitmentRoot {
-        todo!()
+        &self.message_root()
     }
 
     fn timestamp(&self) -> ibc::timestamp::Timestamp {
@@ -401,12 +401,16 @@ impl TryFrom<Vec<u8>> for ConsensusState {
     type Error = ClientError;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let result: ConsensusState =
+        let result: ConsensusStateReponse =
             serde_json_wasm::from_slice(&value.clone()).map_err(|error| ClientError::Other {
                 description: error.to_string(),
             })?;
 
-        Ok(result)
+        let commit = CommitmentRoot::from(hex::decode(result.message_root).unwrap());
+
+        Ok(Self {
+            message_root: commit,
+        })
     }
 }
 
@@ -420,4 +424,9 @@ impl TryFrom<ConsensusState> for Vec<u8> {
             };
         })
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct ConsensusStateReponse {
+    pub message_root: String,
 }

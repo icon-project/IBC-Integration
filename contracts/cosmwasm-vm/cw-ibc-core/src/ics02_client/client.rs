@@ -1,6 +1,3 @@
-use ibc::core::ics02_client::error::ClientError;
-use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
-
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -194,7 +191,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .load(store, client_key)
             .map_err(|error| ContractError::Std(error))?;
 
-        let client_state: Clientstate = client_state_data.as_slice().try_into().unwrap();
+        let client_state: ClientState = client_state_data.as_slice().try_into().unwrap();
 
         Ok(Box::new(client_state))
     }
@@ -202,8 +199,8 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn decode_client_state(
         &self,
         client_state: ibc_proto::google::protobuf::Any,
-    ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ContractError> {
-        let client_state: Clientstate = Clientstate::try_from(client_state).unwrap();
+    ) -> Result<Box<dyn IbcClientState>, ContractError> {
+        let client_state: ClientState = ClientState::try_from(client_state).unwrap();
 
         Ok(Box::new(client_state))
     }
@@ -213,8 +210,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
-    ) -> Result<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>, ContractError>
-    {
+    ) -> Result<Box<dyn IbcConsensusState>, ContractError> {
         let conesnus_state_key = self.consensus_state_commitment_key(
             client_id,
             height.revision_number(),
@@ -227,7 +223,8 @@ impl<'a> CwIbcCoreContext<'a> {
             .load(store, conesnus_state_key)
             .map_err(|error| ContractError::Std(error))?;
 
-        let consensus_state: ConsensusState = consenus_state_data.try_into().unwrap();
+        let consensus_state: ConsensusState =
+            ConsensusState::try_from(consenus_state_data).unwrap();
 
         Ok(Box::new(consensus_state))
     }

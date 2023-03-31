@@ -11,7 +11,7 @@ use cw_ibc_core::{
             update_client_event, upgrade_client_event,
         },
         handler::CreateClientResponse,
-        types::{Clientstate, ConsensusState},
+        types::{ClientState, ConsensusState},
     },
     traits::IbcClient,
     types::{ClientId, ClientType},
@@ -347,7 +347,7 @@ fn check_for_create_client_message() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: Clientstate = common::icon::icon::lightclient::v1::ClientState {
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
         max_clock_drift: 5,
@@ -392,7 +392,7 @@ fn check_for_create_client_message_response() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: Clientstate = common::icon::icon::lightclient::v1::ClientState {
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
         max_clock_drift: 5,
@@ -470,7 +470,7 @@ fn check_for_client_state_from_storage() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: Clientstate = common::icon::icon::lightclient::v1::ClientState {
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
         max_clock_drift: 5,
@@ -486,6 +486,8 @@ fn check_for_client_state_from_storage() {
     }
     .try_into()
     .unwrap();
+
+    println!("1 {:?}", consenus_state);
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
@@ -507,7 +509,7 @@ fn check_for_client_state_from_storage() {
         client_type.as_str().to_string(),
         "10-15".to_string(),
         to_vec(&client_state).unwrap(),
-        to_vec(&consenus_state).unwrap(),
+        consenus_state.try_into().unwrap(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -545,7 +547,7 @@ fn check_for_consensus_state_from_storage() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: Clientstate = common::icon::icon::lightclient::v1::ClientState {
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
         max_clock_drift: 5,
@@ -608,5 +610,9 @@ fn check_for_consensus_state_from_storage() {
     let consensus_state_result =
         contract.consensus_state(deps.as_ref().storage, &client_id, &height);
 
-    assert!(consensus_state_result.is_ok())
+    assert!(consensus_state_result.is_ok());
+    assert_eq!(
+        [1, 2, 3, 4],
+        consensus_state_result.unwrap().root().as_bytes()
+    )
 }
