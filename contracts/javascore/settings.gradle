@@ -1,9 +1,17 @@
 rootProject.name = 'javascore'
 include(
         'score-util',
+        'proto-util',
         'lib',
         'test-lib',
         'ibc',
         // 'xcall',
-        // 'lightclients:archway',
 )
+
+include(':tendermint')
+project(':tendermint').projectDir = file("lightclients/tendermint")
+project(':tendermint').name = "tendermint"
+
+include(':mockclient')
+project(':mockclient').projectDir = file("lightclients/mockclient")
+project(':mockclient').name = "mockclient"
