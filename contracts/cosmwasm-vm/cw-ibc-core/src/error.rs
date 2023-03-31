@@ -3,7 +3,7 @@ use ibc::core::{
     ics03_connection::error::ConnectionError,
     ics04_channel::error::{ChannelError, PacketError},
     ics05_port::error::PortError,
-    ContextError,
+    ContextError, ics02_client::error::ClientError,
 };
 use thiserror::Error;
 
