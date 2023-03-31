@@ -1,4 +1,5 @@
 use super::*;
+
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, ClientType, String>,
     client_types: Map<'a, ClientId, ClientType>,
@@ -6,7 +7,7 @@ pub struct CwIbcStore<'a> {
     next_sequence_send: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_recv: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_ack: Map<'a, (PortId, ChannelId), Sequence>,
-    next_client_sequence: Item<'a, u128>,
+    next_client_sequence: Item<'a, u64>,
     next_connection_sequence: Item<'a, u128>,
     next_channel_sequence: Item<'a, u64>,
     client_connections: Map<'a, ClientId, ConnectionId>,
@@ -71,7 +72,7 @@ impl<'a> CwIbcStore<'a> {
         &self.next_sequence_ack
     }
 
-    pub fn next_client_sequence(&self) -> &Item<'a, u128> {
+    pub fn next_client_sequence(&self) -> &Item<'a, u64> {
         &self.next_client_sequence
     }
     pub fn next_connection_sequence(&self) -> &Item<'a, u128> {
