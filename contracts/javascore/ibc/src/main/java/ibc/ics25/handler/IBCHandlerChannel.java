@@ -1,5 +1,7 @@
 package ibc.ics25.handler;
 
+import java.util.List;
+
 import ibc.icon.interfaces.IIBCChannelHandshake;
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
 import ibc.icon.structs.messages.*;
@@ -47,7 +49,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
         String id = _channelOpenInit(msg);
         module.onChanOpenInit(
                 channel.getOrdering(),
-                channel.getConnectionHops(),
+                connectionHopsToArray(channel.getConnectionHops()),
                 msg.getPortId(),
                 id,
                 channel.getCounterparty().encode(),
@@ -66,7 +68,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
         String id = _channelOpenTry(msg);
         module.onChanOpenTry(
                 channel.getOrdering(),
-                channel.getConnectionHops(),
+                connectionHopsToArray(channel.getConnectionHops()),
                 msg.getPortId(),
                 id,
                 channel.getCounterparty().encode(),
@@ -110,6 +112,15 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
         byte[] channel = _channelCloseConfirm(msg);
         module.onChanCloseConfirm(msg.getPortId(), msg.getChannelId());
         ChannelCloseConfirm(msg.getPortId(), msg.getChannelId(), channel);
+    }
+
+    private String[] connectionHopsToArray(List<String> hops) {
+        String[] hopsArray = new String[hops.size()];
+        for(int i = 0; i < hops.size(); i++){
+            hopsArray[i] = hops.get(i);
+        }
+
+        return hopsArray;
     }
 
 }
