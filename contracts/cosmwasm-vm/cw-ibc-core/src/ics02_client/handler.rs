@@ -41,6 +41,7 @@ impl CreateClientResponse {
 #[cw_serde]
 pub enum LightClientMessage {
     CreateClient {
+        client_id: String,
         client_state: Vec<u8>,
         consensus_state: Vec<u8>,
     },
@@ -57,13 +58,17 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let client_state = self
             .decode_client_state(message.client_state.clone())
             .map_err(|error| return error)?;
+        let client_counter = self.client_counter(deps.as_ref().storage)?;
 
         let client_type = ClientType::from(client_state.client_type());
+
+        let client_id = ClientId::new(client_type.clone(), client_counter)?;
 
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
 
         let create_client_message = LightClientMessage::CreateClient {
+            client_id: client_id.ibc_client_id().to_string(),
             client_state: message.client_state.value,
             consensus_state: message.consensus_state.value,
         };
