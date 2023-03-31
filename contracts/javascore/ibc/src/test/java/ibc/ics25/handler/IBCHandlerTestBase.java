@@ -245,7 +245,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         verify(module.mock).onChanOpenInit(
                 channel.getOrderingValue(),
-                channel.getConnectionHopsList(),
+                channel.getConnectionHopsList().toArray(new String[0]),
                 msg.getPortId(),
                 channelId,
                 channel.getCounterparty().toByteArray(),
@@ -279,7 +279,7 @@ public class IBCHandlerTestBase extends TestBase {
         verify(handlerSpy).ChannelOpenTry(eq(msg.getPortId()), channelIdCaptor.capture(), eq(channel.toByteArray()));
         channelId = channelIdCaptor.getValue();
 
-        verify(module.mock).onChanOpenTry(channel.getOrderingValue(), channel.getConnectionHopsList(), portId,
+        verify(module.mock).onChanOpenTry(channel.getOrderingValue(), channel.getConnectionHopsList().toArray(new String[0]), portId,
                 channelId, channel.getCounterparty().toByteArray(), channel.getVersion(), msg.getCounterpartyVersion());
     }
 
