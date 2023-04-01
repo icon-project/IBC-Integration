@@ -164,9 +164,56 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn upgrade_client(
         &self,
         deps: DepsMut,
-        message: ibc::core::ics02_client::msgs::upgrade_client::MsgUpgradeClient,
-    ) {
-        todo!()
+        message: MsgUpgradeClient,
+    ) -> Result<Response, ContractError> {
+        let old_client_state = self.client_state(deps.as_ref().storage, &message.client_id)?;
+
+        //Check Client Frozen
+        if old_client_state.is_frozen() {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::ClientFrozen {
+                    client_id: message.client_id,
+                },
+            });
+        }
+
+        let old_consensus_state = self.consensus_state(
+            deps.as_ref().storage,
+            &message.client_id,
+            &old_client_state.latest_height(),
+        )?;
+
+        let now = self.host_timestamp()?;
+        let duration = now
+            .duration_since(&old_consensus_state.timestamp())
+            .ok_or_else(|| ClientError::InvalidConsensusStateTimestamp {
+                time1: old_consensus_state.timestamp(),
+                time2: now,
+            })
+            .map_err(|error| ContractError::IbcClientError { error })?;
+
+        // Check if the latest consensus state is within the trust period.
+        if old_client_state.expired(duration) {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::HeaderNotWithinTrustPeriod {
+                    latest_time: old_consensus_state.timestamp(),
+                    update_time: now,
+                },
+            });
+        };
+
+        // Validate the upgraded client state and consensus state and verify proofs against the root
+        old_client_state
+            .verify_upgrade_client(
+                message.client_state.clone(),
+                message.consensus_state.clone(),
+                message.proof_upgrade_client.clone(),
+                message.proof_upgrade_consensus_state,
+                old_consensus_state.root(),
+            )
+            .map_err(|error| ContractError::IbcClientError { error })?;
+
+        Ok(Response::new())
     }
 
     fn register_client(&self, deps: DepsMut, client_type: ClientType, light_client: Addr) {

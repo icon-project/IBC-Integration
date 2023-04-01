@@ -26,7 +26,11 @@ pub trait IbcClient {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError>;
-    fn upgrade_client(&self, deps: DepsMut, message: MsgUpgradeClient);
+    fn upgrade_client(
+        &self,
+        deps: DepsMut,
+        message: MsgUpgradeClient,
+    ) -> Result<Response, ContractError>;
     fn register_client(&self, deps: DepsMut, client_type: ClientType, light_client: Addr);
     fn generate_client_identifier(
         &self,

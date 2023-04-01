@@ -255,7 +255,7 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn host_timestamp(&self) -> Result<ibc::timestamp::Timestamp, ContractError> {
+    pub fn host_timestamp(&self) -> Result<ibc::timestamp::Timestamp, ContractError> {
         todo!()
     }
 
