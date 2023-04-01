@@ -3,6 +3,11 @@ use super::*;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientId(IbcClientId);
 
+impl Default for ClientId {
+    fn default() -> Self {
+        Self(IbcClientId::default())
+    }
+}
 impl ClientId {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
@@ -14,15 +19,19 @@ impl ClientId {
         self.0.as_bytes()
     }
 
-    pub fn new(client_type: ClientType, counter: u64) -> Result<Self, ValidationError> {
+    pub fn new(client_type: ClientType, counter: u64) -> Result<Self, ContractError> {
         match IbcClientId::new(client_type.client_type(), counter) {
             Ok(result) => Ok(Self(result)),
-            Err(error) => Err(error),
+            Err(error) => Err(ContractError::IbcClientError {
+                error: ClientError::ClientIdentifierConstructor {
+                    client_type: client_type.client_type(),
+                    counter,
+                    validation_error: error,
+                },
+            }),
         }
     }
-    pub fn default() -> Self {
-        Self(IbcClientId::default())
-    }
+
     pub fn ibc_client_id(&self) -> &IbcClientId {
         &self.0
     }
@@ -68,6 +77,12 @@ impl ClientType {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+}
+
+impl From<IbcClientType> for ClientType {
+    fn from(value: IbcClientType) -> Self {
+        Self(value)
     }
 }
 
@@ -161,6 +176,12 @@ impl KeyDeserialize for ConnectionId {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChannelId(IbcChannelId);
 
+impl Default for ChannelId {
+    fn default() -> Self {
+        Self(IbcChannelId::default())
+    }
+}
+
 impl<'a> PrimaryKey<'a> for ChannelId {
     type Prefix = ();
     type SubPrefix = ();
@@ -199,10 +220,6 @@ impl ChannelId {
         self.0.as_bytes()
     }
 
-    pub fn default() -> Self {
-        Self(IbcChannelId::default())
-    }
-
     pub fn ibc_channel_id(&self) -> &IbcChannelId {
         &self.0
     }
@@ -222,6 +239,12 @@ impl Display for ChannelId {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PortId(IbcPortId);
+
+impl Default for PortId {
+    fn default() -> Self {
+        Self(IbcPortId::default())
+    }
+}
 
 impl<'a> PrimaryKey<'a> for PortId {
     type Prefix = ();
@@ -248,10 +271,6 @@ impl PortId {
     /// Get this identifier as a borrowed byte slice
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
-    }
-
-    pub fn default() -> Self {
-        Self(IbcPortId::default())
     }
 
     pub fn ibc_port_id(&self) -> &IbcPortId {
