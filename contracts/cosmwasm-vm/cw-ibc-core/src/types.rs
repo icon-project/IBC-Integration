@@ -8,6 +8,20 @@ impl Default for ClientId {
         Self(IbcClientId::default())
     }
 }
+impl From<IbcClientId> for ClientId {
+    fn from(value: IbcClientId) -> Self {
+        Self(value)
+    }
+}
+impl FromStr for ClientId {
+    type Err = ibc::core::ics24_host::error::ValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let r = IbcClientId::from_str(s)?;
+        Ok(Self(r))
+    }
+}
+
 impl ClientId {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
@@ -83,6 +97,13 @@ impl ClientType {
 impl From<IbcClientType> for ClientType {
     fn from(value: IbcClientType) -> Self {
         Self(value)
+    }
+}
+
+impl From<ClientId> for ClientType {
+    fn from(value: ClientId) -> Self {
+        let data: Vec<&str> = value.as_str().split("-").collect();
+        ClientType::new(data[0].to_string())
     }
 }
 
