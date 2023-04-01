@@ -2,6 +2,7 @@ use super::{
     events::{create_client_event, update_client_event},
     *,
 };
+use cosmwasm_std::to_vec;
 
 #[cw_serde]
 pub struct CreateClientResponse {
@@ -52,9 +53,17 @@ pub enum LightClientMessage {
         client_id: String,
         header: Vec<u8>,
     },
+    VerifyUpgradeClient {
+        upgraded_client_state: Vec<u8>,
+        upgraded_consensus_state: Vec<u8>,
+        proof_upgrade_client: Vec<u8>,
+        proof_upgrade_consensus_state: Vec<u8>,
+    },
 }
 pub const EXECUTE_CREATE_CLIENT: u64 = 21;
 pub const EXECUTE_UPDATE_CLIENT: u64 = 22;
+pub const VERIFY_UPGRADE_CLIENT: u64 = 231;
+pub const EXECUT_UPGRADE_CLIENT: u64 = 232;
 
 #[cw_serde]
 pub struct UpdateClientResponse {
@@ -164,6 +173,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn upgrade_client(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: MsgUpgradeClient,
     ) -> Result<Response, ContractError> {
         let old_client_state = self.client_state(deps.as_ref().storage, &message.client_id)?;
@@ -203,17 +213,29 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         };
 
         // Validate the upgraded client state and consensus state and verify proofs against the root
-        old_client_state
-            .verify_upgrade_client(
-                message.client_state.clone(),
-                message.consensus_state.clone(),
-                message.proof_upgrade_client.clone(),
-                message.proof_upgrade_consensus_state,
-                old_consensus_state.root(),
-            )
-            .map_err(|error| ContractError::IbcClientError { error })?;
 
-        Ok(Response::new())
+        let wasm_exec_message = LightClientMessage::VerifyUpgradeClient {
+            upgraded_client_state: message.client_state.value,
+            upgraded_consensus_state: message.consensus_state.value,
+            proof_upgrade_client: to_vec(&message.proof_upgrade_client).unwrap(),
+            proof_upgrade_consensus_state: to_vec(&message.proof_upgrade_consensus_state).unwrap(),
+        };
+
+        let client_id = ClientId::from(message.client_id);
+
+        let address = self.get_client_implementations(deps.storage, client_id)?;
+
+        let wasm_msg: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: address,
+            msg: to_binary(&wasm_exec_message).unwrap(),
+            funds: info.funds,
+        });
+
+        let sub_message = SubMsg::reply_always(wasm_msg, VERIFY_UPGRADE_CLIENT);
+
+        Ok(Response::new()
+            .add_submessage(sub_message)
+            .add_attribute("method", "verify_upgrade_client"))
     }
 
     fn register_client(&self, deps: DepsMut, client_type: ClientType, light_client: Addr) {
