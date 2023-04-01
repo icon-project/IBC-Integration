@@ -1,25 +1,30 @@
 package ibc.ics25.handler;
 
+import ibc.icon.interfaces.IIBCClient;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.ics04.channel.IBCPacket;
 import score.annotation.EventLog;
 import score.annotation.External;
 
-public abstract class IBCHandlerClient extends IBCPacket {
+public abstract class IBCHandlerClient extends IBCPacket implements IIBCClient {
 
     @EventLog(indexed = 1)
-    public void GeneratedClientIdentifier(String identifier) {
+    public void CreateClient(String identifier, byte[] clientState) {
+    }
+
+
+    @EventLog(indexed = 1)
+    public void UpdateClient(String identifier, byte[] consensusHeight, byte[] clientMessage ) {
     }
 
     /**
      * createClient creates a new client state and populates it with a given
      * consensus state
      */
-    @External
     public String createClient(MsgCreateClient msg) {
-        String id = super.createClient(msg);
-        GeneratedClientIdentifier(id);
+        String id = _createClient(msg);
+        CreateClient(id, msg.getClientState());
 
         return id;
     }
@@ -30,7 +35,9 @@ public abstract class IBCHandlerClient extends IBCPacket {
      */
     @External
     public void updateClient(MsgUpdateClient msg) {
-        super.updateClient(msg);
+        byte[] consensusHeight = _updateClient(msg);
+        UpdateClient(msg.getClientId(), consensusHeight,  msg.getClientMessage());
+
     }
 
 }

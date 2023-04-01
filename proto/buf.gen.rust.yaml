@@ -1,0 +1,25 @@
+version: v1
+managed:
+  enabled: true
+plugins:
+  - name: prost
+    out: ../libraries/rust/common/src/icon
+    opt:
+      - compile_well_known_types
+      - extern_path=.google.protobuf=::pbjson_types
+      - extern_path=.ibc.core.client=::ibc_proto::ibc::core::client
+      - file_descriptor_set
+      - retain_enum_prefix
+  - name: prost-serde
+    out: ../libraries/rust/common/src/icon
+    opt:
+      - retain_enum_prefix
+      - preserve_proto_field_names
+  - name: prost-crate
+    out: ../libraries/rust/common/src/icon
+    strategy: all
+    opt:
+      - no_features
+  - name: grpc-gateway
+    out: ..
+    opt: logtostderr=true,allow_colon_final_segments=true

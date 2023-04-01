@@ -1,11 +1,3 @@
-use cosmwasm_std::StdError;
-use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
-use ibc::core::ics24_host::error::ValidationError;
-use std::{
-    fmt::{Display, Error as FmtError, Formatter},
-    str::FromStr,
-};
-
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
@@ -30,6 +22,9 @@ impl ClientId {
     }
     pub fn default() -> Self {
         Self(IbcClientId::default())
+    }
+    pub fn ibc_client_id(&self) -> &IbcClientId {
+        &self.0
     }
 }
 
@@ -63,6 +58,9 @@ impl KeyDeserialize for ClientId {
 pub struct ClientType(IbcClientType);
 
 impl ClientType {
+    pub fn new(cleint_type: String) -> ClientType {
+        ClientType(IbcClientType::new(cleint_type))
+    }
     pub fn client_type(&self) -> IbcClientType {
         self.0.clone()
     }
@@ -120,6 +118,13 @@ impl ConnectionId {
     /// Get this identifier as a borrowed byte slice
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+    pub fn connection_id(&self) -> &IbcConnectionId {
+        &self.0
+    }
+
+    pub fn default() -> Self {
+        Self(IbcConnectionId::default())
     }
 }
 
@@ -186,7 +191,7 @@ impl ChannelId {
 
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 
     /// Get this identifier as a borrowed byte slice
@@ -196,6 +201,16 @@ impl ChannelId {
 
     pub fn default() -> Self {
         Self(IbcChannelId::default())
+    }
+
+    pub fn ibc_channel_id(&self) -> &IbcChannelId {
+        &self.0
+    }
+}
+
+impl From<IbcChannelId> for ChannelId {
+    fn from(channel_id: IbcChannelId) -> Self {
+        Self(channel_id)
     }
 }
 
@@ -227,7 +242,7 @@ impl PortId {
 
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
-        &self.0.as_str()
+        self.0.as_str()
     }
 
     /// Get this identifier as a borrowed byte slice
@@ -235,8 +250,12 @@ impl PortId {
         self.0.as_bytes()
     }
 
-    pub fn dafault() -> Self {
+    pub fn default() -> Self {
         Self(IbcPortId::default())
+    }
+
+    pub fn ibc_port_id(&self) -> &IbcPortId {
+        &self.0
     }
 }
 
@@ -260,5 +279,64 @@ impl KeyDeserialize for PortId {
             .unwrap();
         let port_id = IbcPortId::from_str(&result).unwrap();
         Ok(PortId(port_id))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ModuleId(String);
+
+impl ModuleId {
+    pub fn new(s: String) -> Self {
+        let ibc_module_id = IbcModuleId::from_str(&s).unwrap();
+        Self(ibc_module_id.to_string())
+    }
+    pub fn module_id(&self) -> IbcModuleId {
+        IbcModuleId::from_str(&self.0).unwrap()
+    }
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+impl<'a> PrimaryKey<'a> for ModuleId {
+    type Prefix = ();
+    type SubPrefix = ();
+    type Suffix = ();
+    type SuperSuffix = ();
+
+    fn key(&self) -> Vec<Key> {
+        vec![Key::Ref(self.as_bytes())]
+    }
+}
+
+impl KeyDeserialize for ModuleId {
+    type Output = ModuleId;
+    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
+        let result = String::from_utf8(value)
+            .map_err(StdError::invalid_utf8)
+            .unwrap();
+        let module_id = IbcModuleId::from_str(&result).unwrap();
+        Ok(ModuleId(module_id.to_string()))
+    }
+}
+
+impl From<IbcConnectionId> for ConnectionId {
+    fn from(conn: IbcConnectionId) -> Self {
+        ConnectionId(conn)
+    }
+}
+
+impl From<IbcPortId> for PortId {
+    fn from(port_id: IbcPortId) -> Self {
+        PortId(port_id)
+    }
+}
+
+impl From<IbcModuleId> for ModuleId {
+    fn from(module: IbcModuleId) -> Self {
+        ModuleId(module.to_string())
     }
 }
