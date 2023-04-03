@@ -27,20 +27,25 @@ func NewCosmosLocalnet(t *testing.T, log *zap.Logger, chainConfig ibc.ChainConfi
 
 func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// Fund user to deploy contract
-	user, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
-	contractOwner := user.KeyName()
+	contractOwner, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
 
 	// Get Contract Name from context
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
 	contractName := ctxValue.ContractName
-	codeId, _ := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath[contractName])
+	codeId, err := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath[contractName])
+	if err != nil {
+		return ctx, err
+	}
 
 	// Get Init Message from context
 	ctxVal := ctx.Value(chains.InitMessage{}).(chains.InitMessage)
 	initMessage := ctxVal.InitMsg
 	address, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, codeId, initMessage, true)
-	var contracts chains.ContractKey
+	if err != nil {
+		return nil, err
+	}
 
+	var contracts chains.ContractKey
 	contracts.ContractAddress = map[string]string{
 		contractName: address,
 	}
@@ -54,6 +59,7 @@ func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (co
 func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
 	// get query msg
 	queryMsg := c.GetQueryParam(methodName)
+	chains.Response = ""
 	err := c.CosmosChain.QueryContract(ctx, contractAddress, queryMsg, &chains.Response)
 	fmt.Printf("Response is : %s \n", chains.Response)
 	return ctx, err
@@ -91,6 +97,8 @@ func (c *CosmosLocalnet) SetAdminParams(ctx context.Context, keyName string) (co
 	if err != nil {
 		adminWallet, _ := c.CosmosChain.BuildWallet(ctx, keyName, "")
 		adminKey := adminWallet.FormattedAddress()
+		// fund admin wallet
+		c.BuildWallets(ctx, adminWallet.KeyName())
 		// Update the value of the "address" key
 		admin.SetAdmin.Address = adminKey
 		// Marshal the struct back into JSON
@@ -144,20 +152,31 @@ func (c *CosmosLocalnet) GetAndFundTestUser(
 	keyNamePrefix string,
 	amount int64,
 	chain ibc.Chain,
-) (ibc.Wallet, error) {
-	chainCfg := c.CosmosChain.Config()
-	user, err := chain.BuildWallet(ctx, keyNamePrefix, "")
+) (string, error) {
+	addr, err := c.CosmosChain.GetAddress(ctx, keyNamePrefix)
+	adminAddr, _ := types.Bech32ifyAddressBytes(c.CosmosChain.Config().Bech32Prefix, addr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get source user wallet: %w", err)
-	}
+		chainCfg := c.CosmosChain.Config()
+		user, err := chain.BuildWallet(ctx, keyNamePrefix, "")
+		if err != nil {
+			return "", fmt.Errorf("failed to get source user wallet: %w", err)
+		}
 
-	err = chain.SendFunds(ctx, chains.FaucetAccountKeyName, ibc.WalletAmount{
-		Address: user.FormattedAddress(),
-		Amount:  amount,
-		Denom:   chainCfg.Denom,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get funds from faucet: %w", err)
+		err = chain.SendFunds(ctx, chains.FaucetAccountKeyName, ibc.WalletAmount{
+			Address: user.FormattedAddress(),
+			Amount:  amount,
+			Denom:   chainCfg.Denom,
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to get funds from faucet: %w", err)
+		}
+		return user.KeyName(), nil
+	} else {
+		err = chain.SendFunds(ctx, chains.FaucetAccountKeyName, ibc.WalletAmount{
+			Address: adminAddr,
+			Amount:  amount,
+			Denom:   c.CosmosChain.Config().Denom,
+		})
+		return keyNamePrefix, err
 	}
-	return user, nil
 }
