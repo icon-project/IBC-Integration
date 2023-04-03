@@ -1,4 +1,7 @@
-use super::{events::create_client_event, *};
+use super::{
+    events::{create_client_event, update_client_event},
+    *,
+};
 
 #[cw_serde]
 pub struct CreateClientResponse {
@@ -41,11 +44,56 @@ impl CreateClientResponse {
 #[cw_serde]
 pub enum LightClientMessage {
     CreateClient {
+        client_id: String,
         client_state: Vec<u8>,
         consensus_state: Vec<u8>,
     },
+    UpdateClient {
+        client_id: String,
+        header: Vec<u8>,
+    },
 }
 pub const EXECUTE_CREATE_CLIENT: u64 = 21;
+pub const EXECUTE_UPDATE_CLIENT: u64 = 22;
+
+#[cw_serde]
+pub struct UpdateClientResponse {
+    height: String,
+    client_id: String,
+    client_state_commitment: Vec<u8>,
+    consensus_state_commitment: Vec<u8>,
+}
+
+impl UpdateClientResponse {
+    pub fn new(
+        height: String,
+        client_id: String,
+        client_state_commitment: Vec<u8>,
+        consensus_state_commitment: Vec<u8>,
+    ) -> Self {
+        Self {
+            height,
+            client_id,
+            client_state_commitment,
+            consensus_state_commitment,
+        }
+    }
+    pub fn height(&self) -> Height {
+        Height::from_str(&self.height).unwrap()
+    }
+
+    pub fn client_state_commitment(&self) -> &[u8] {
+        &self.client_state_commitment
+    }
+    pub fn consensus_state_commitment(&self) -> &[u8] {
+        &self.consensus_state_commitment
+    }
+    pub fn client_id(&self) -> Result<ClientId, ContractError> {
+        ClientId::from_str(&self.client_id).map_err(|error| ContractError::IbcDecodeError {
+            error: error.to_string(),
+        })
+    }
+}
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn create_client(
@@ -57,13 +105,17 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let client_state = self
             .decode_client_state(message.client_state.clone())
             .map_err(|error| return error)?;
+        let client_counter = self.client_counter(deps.as_ref().storage)?;
 
         let client_type = ClientType::from(client_state.client_type());
+
+        let client_id = ClientId::new(client_type.clone(), client_counter)?;
 
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
 
         let create_client_message = LightClientMessage::CreateClient {
+            client_id: client_id.ibc_client_id().to_string(),
             client_state: message.client_state.value,
             consensus_state: message.consensus_state.value,
         };
@@ -187,6 +239,59 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                     .add_attribute("method", "execute_create_client_reply")
                     .add_attribute("client_id", client_id.ibc_client_id().to_string()))
             }
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
+                error: ClientError::Other { description: error },
+            }),
+        }
+    }
+    fn execute_update_client_reply(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
+                Some(data) => {
+                    let update_client_response: UpdateClientResponse =
+                        from_binary(&data).map_err(|error| ContractError::Std(error))?;
+
+                    let client_id = update_client_response.client_id()?;
+
+                    let height = update_client_response.height();
+
+                    self.store_client_state(
+                        deps.storage,
+                        client_id.ibc_client_id(),
+                        update_client_response.client_state_commitment().to_vec(),
+                    )?;
+
+                    self.store_consensus_state(
+                        deps.storage,
+                        client_id.ibc_client_id(),
+                        height,
+                        update_client_response.consensus_state_commitment().to_vec(),
+                    )?;
+
+                    let client_type = ClientType::from(client_id.clone());
+
+                    let event = update_client_event(
+                        client_type.client_type(),
+                        height,
+                        vec![height],
+                        client_id.ibc_client_id(),
+                    );
+
+                    Ok(Response::new()
+                        .add_event(event)
+                        .add_attribute("methods", "execute_update_client_reply")
+                        .add_attribute("height", height))
+                }
+                None => Err(ContractError::IbcClientError {
+                    error: ClientError::Other {
+                        description: "UNKNOWN ERROR".to_string(),
+                    },
+                }),
+            },
             cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
                 error: ClientError::Other { description: error },
             }),

@@ -21,12 +21,6 @@ impl FromStr for ClientId {
         Ok(Self(r))
     }
 }
-
-impl Default for ClientId {
-    fn default() -> Self {
-        Self(IbcClientId::default())
-    }
-}
 impl ClientId {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
