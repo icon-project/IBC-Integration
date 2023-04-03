@@ -12,29 +12,29 @@ import score.Context;
 import score.annotation.EventLog;
 import score.annotation.External;
 
-public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
-    @EventLog
+public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
+    @EventLog(indexed = 1)
     public void SendPacket(byte[] packet) {
     }
 
-    @EventLog
+    @EventLog(indexed = 1)
     public void RecvPacket(byte[] packet) {
     }
 
-    @EventLog
+    @EventLog(indexed = 3)
     public void WriteAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
             byte[] acknowledgement) {
     }
 
-    @EventLog
+    @EventLog(indexed = 1)
     public void AcknowledgePacket(byte[] packet, byte[] acknowledgement) {
     }
 
-    @EventLog
+    @EventLog(indexed = 1)
     public void TimeoutRequest(byte[] packet) {
     }
 
-    @EventLog
+    @EventLog(indexed = 1)
     public void PacketTimeout(byte[] packet) {
     }
 
@@ -51,12 +51,12 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBC
 
     @External
     public void recvPacket(MsgPacketRecv msg) {
-        Packet packet = msg.getPacket();
+        Packet packet = Packet.decode(msg.getPacket());
         IIBCModule module = lookupModuleByChannel(packet.getDestinationPort(),
                 packet.getDestinationChannel());
 
-        byte[] acknowledgement = module.onRecvPacket(msg.getPacketRaw(), Context.getCaller());
-        _recvPacket(packet, msg.getProof(), msg.getProofHeightRaw());
+        byte[] acknowledgement = module.onRecvPacket(msg.getPacket(), Context.getCaller());
+        _recvPacket(packet, msg.getProof(), msg.getProofHeight());
 
         if (acknowledgement.length > 0) {
             _writeAcknowledgement(
@@ -68,7 +68,7 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBC
                     packet.getDestinationChannel(), packet.getSequence(), acknowledgement);
         }
 
-        RecvPacket(msg.getPacketRaw());
+        RecvPacket(msg.getPacket());
     }
 
     @External
@@ -90,14 +90,14 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBC
 
     @External
     public void acknowledgePacket(MsgPacketAcknowledgement msg) {
-        Packet packet = msg.getPacket();
+        Packet packet = Packet.decode(msg.getPacket());
         IIBCModule module = lookupModuleByChannel(packet.getSourcePort(), packet.getSourceChannel());
 
-        module.onAcknowledgementPacket(msg.getPacketRaw(), msg.getAcknowledgement(),
+        module.onAcknowledgementPacket(msg.getPacket(), msg.getAcknowledgement(),
                 Context.getCaller());
-        _acknowledgePacket(packet, msg.getAcknowledgement(), msg.getProof(), msg.getProofHeightRaw());
+        _acknowledgePacket(packet, msg.getAcknowledgement(), msg.getProof(), msg.getProofHeight());
 
-        AcknowledgePacket(msg.getPacketRaw(), msg.getAcknowledgement());
+        AcknowledgePacket(msg.getPacket(), msg.getAcknowledgement());
     }
 
     @External
@@ -110,12 +110,12 @@ public abstract class IBCHandlerPacket extends IBCHandlerChannel implements IIBC
 
     @External
     public void timeoutPacket(MsgPacketTimeout msg) {
-        Packet packet = msg.getPacket();
+        Packet packet = Packet.decode(msg.getPacket());
         IIBCModule module = lookupModuleByChannel(packet.getSourcePort(), packet.getSourceChannel());
-        module.onTimeoutPacket(msg.getPacketRaw(), Context.getCaller());
-        _timeoutPacket(packet, msg.getProofHeightRaw(), msg.getProof(), msg.getNextSequenceRecv());
+        module.onTimeoutPacket(msg.getPacket(), Context.getCaller());
+        _timeoutPacket(packet, msg.getProofHeight(), msg.getProof(), msg.getNextSequenceRecv());
 
-        PacketTimeout(msg.getPacketRaw());
+        PacketTimeout(msg.getPacket());
     }
 
 }

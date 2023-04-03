@@ -42,10 +42,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Increment the sequence number for channel
-    pub fn increase_channel_sequence(
-        &self,
-        store: &mut dyn Storage,
-    ) -> Result<u128, ContractError> {
+    pub fn increase_channel_sequence(&self, store: &mut dyn Storage) -> Result<u64, ContractError> {
         let sequence = self.ibc_store().next_channel_sequence().update(
             store,
             |mut req_id| -> Result<_, ContractError> {
@@ -61,7 +58,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn init_channel_counter(
         &self,
         store: &mut dyn Storage,
-        sequence_no: u128,
+        sequence_no: u64,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -250,7 +247,7 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(sequence)
     }
     // Get the channel sequence number
-    pub fn channel_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+    pub fn channel_counter(&self, store: &dyn Storage) -> Result<u64, ContractError> {
         match self.ibc_store().next_channel_sequence().load(store) {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),

@@ -214,7 +214,7 @@ public class ChannelHandshakeTest extends TestBase {
         byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
 
         verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
-                IBCCommitment.keccak256(msg.getChannelRaw())));
+                IBCCommitment.keccak256(msg.getChannel())));
         assertEquals(BigInteger.ONE, channel.call("getNextChannelSequence"));
         assertEquals(BigInteger.ONE, channel.call("getNextSequenceReceive", portId,
                 channelId));
@@ -321,7 +321,7 @@ public class ChannelHandshakeTest extends TestBase {
         channel.invoke(owner, "_channelOpenTry", msg);
 
         // Assert
-        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeightRaw(),
+        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeight(),
                 BigInteger.ZERO, BigInteger.ZERO,
                 msg.getProofInit(), prefix.getKeyPrefix().toByteArray(),
                 IBCCommitment.channelPath(portId, channelId), expectedChannel.toByteArray());
@@ -365,7 +365,7 @@ public class ChannelHandshakeTest extends TestBase {
         channel.invoke(owner, "_channelOpenAck", msg);
 
         // Assert
-        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeightRaw(),
+        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeight(),
                 BigInteger.ZERO, BigInteger.ZERO,
                 msg.getProofTry(), prefix.getKeyPrefix().toByteArray(), 
                 IBCCommitment.channelPath(portId, channelId),counterpartyChannel.toByteArray());
@@ -409,7 +409,7 @@ public class ChannelHandshakeTest extends TestBase {
         channel.invoke(owner, "_channelOpenConfirm", msg);
 
         // Assert
-        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeightRaw(),
+        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeight(),
                 BigInteger.ZERO, BigInteger.ZERO,
                 msg.getProofAck(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId, channelId),
                 counterpartyChannel.toByteArray());
@@ -468,7 +468,7 @@ public class ChannelHandshakeTest extends TestBase {
         channel.invoke(owner, "_channelCloseConfirm", msg);
 
         // Assert
-        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeightRaw(),
+        verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeight(),
                 BigInteger.ZERO, BigInteger.ZERO,
                 msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId,
                         channelId),
