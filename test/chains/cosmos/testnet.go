@@ -23,11 +23,11 @@ func NewCosmosTestnet(bin, keystorePath, keyPassword, defaultStepLimit, url stri
 	}
 }
 
-func (c *CosmosTestnet) DeployContract(ctx context.Context) (context.Context, error) {
+func (c *CosmosTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (c *CosmosTestnet) QueryContract(ctx context.Context) (context.Context, error) {
+func (c *CosmosTestnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
 	panic("not implemented") // TODO: Implement
 }
 
