@@ -1,3 +1,5 @@
+use ibc::core::ics03_connection::error::ConnectionError;
+
 use super::*;
 
 #[derive(Error, Debug)]
