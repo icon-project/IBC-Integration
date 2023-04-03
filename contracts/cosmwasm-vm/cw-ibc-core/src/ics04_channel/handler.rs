@@ -1,12 +1,12 @@
-use std::str::FromStr;
-
-use cosmwasm_std::{
-    from_binary, to_binary, Binary, CosmosMsg, Empty, MessageInfo, Response, SubMsg, WasmMsg,
-};
-pub mod open_init;
 use super::*;
-use cosmwasm_std::Reply;
-use open_init::*;
+pub mod open_init;
+pub mod open_try;
+use self::{
+    open_init::{
+        channel_open_init_msg_validate, create_channel_submesssage, on_chan_open_init_submessage,
+    },
+    open_try::channel_open_try_msg_validate,
+};
 
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_open_init(
@@ -80,9 +80,106 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_open_try(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: &MsgChannelOpenTry,
     ) -> Result<Response, ContractError> {
-        todo!()
+        if message.connection_hops_on_b.len() != 1 {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::InvalidConnectionHopsLength {
+                    expected: 1,
+                    actual: message.connection_hops_on_b.len(),
+                },
+            });
+        }
+        let connection_id = ConnectionId::from(message.connection_hops_on_b[0].clone());
+        let conn_end_on_b = self.connection_end(deps.storage, connection_id.clone())?;
+
+        channel_open_try_msg_validate(&message, &conn_end_on_b)?;
+
+        let counter = match self.channel_counter(deps.storage) {
+            Ok(counter) => counter,
+            Err(error) => return Err(error),
+        };
+        let channel_id_on_b = ChannelId::new(counter); // creating new channel_id
+
+        let counter_party = Counterparty::new(
+            message.port_id_on_a.clone(),
+            Some(message.chan_id_on_a.clone()),
+        );
+        let channel_end = ChannelEnd::new(
+            State::Uninitialized,
+            message.ordering,
+            counter_party,
+            message.connection_hops_on_b.clone(),
+            message.version_supported_on_a.clone(),
+        );
+        self.store_channel_end(
+            deps.storage,
+            PortId::from(message.port_id_on_b.clone()),
+            channel_id_on_b.clone(),
+            channel_end,
+        )?;
+
+        let client_id_on_b = conn_end_on_b.client_id();
+        let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
+        let consensus_state_of_a_on_b =
+            self.consensus_state(deps.storage, &client_id_on_b, &message.proof_height_on_a)?;
+        let prefix_on_a = conn_end_on_b.counterparty().prefix();
+        let port_id_on_a = message.port_id_on_a.clone();
+        let chan_id_on_a = message.chan_id_on_a.clone();
+        let conn_id_on_a =
+            conn_end_on_b
+                .counterparty()
+                .connection_id()
+                .ok_or(ContractError::IbcChannelError {
+                    error: ChannelError::UndefinedConnectionCounterparty {
+                        connection_id: message.connection_hops_on_b[0].clone(),
+                    },
+                })?;
+        if client_state_of_a_on_b.is_frozen() {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::FrozenClient {
+                    client_id: client_id_on_b.clone(),
+                },
+            });
+        }
+
+        let expected_chan_end_on_a = ChannelEnd::new(
+            State::Init,
+            message.ordering,
+            Counterparty::new(message.port_id_on_b.clone(), None),
+            vec![conn_id_on_a.clone()],
+            message.version_supported_on_a.clone(),
+        );
+        let chan_end_path_on_a = self.channel_path(&port_id_on_a, &chan_id_on_a);
+        let vector = to_vec(&expected_chan_end_on_a);
+
+        let create_client_message = LightClientChannelMessage::OpenTry {
+            proof_height: message.proof_height_on_a.to_string(),
+            counterparty_prefix: prefix_on_a.clone().into_vec(),
+            proof: message.proof_chan_end_on_a.clone().into(),
+            root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
+            counterparty_chan_end_path: chan_end_path_on_a,
+            expected_counterparty_channel_end: vector.unwrap(),
+        };
+        let client_type = ClientType::from(client_state_of_a_on_b.client_type());
+
+        let light_client_address =
+            self.get_client_from_registry(deps.as_ref().storage, client_type)?;
+        let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: light_client_address,
+            msg: to_binary(&create_client_message).unwrap(),
+            funds: info.funds,
+        });
+
+        let sub_msg: SubMsg = SubMsg::reply_always(
+            create_client_message,
+            EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT,
+        );
+
+        Ok(Response::new()
+            .add_attribute("action", "Light client channel open try call")
+            .add_submessage(sub_msg))
     }
 
     fn validate_channel_open_ack(
@@ -165,31 +262,108 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         1.into(),
                     )?;
+
+                    self.store_channel(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                        channel_end,
+                    )?;
                     let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-                    let main_event = create_open_init_channel_event(
-                        &channel_id,
-                        &port_id.ibc_port_id(),
-                        channel_end.counterparty().port_id(),
-                        &channel_end.connection_hops()[0],
-                        channel_end.version(),
-                    );
-                    return Ok(Response::new()
-                        .add_event(channel_id_event)
-                        .add_event(main_event));
+                    Ok(Response::new().add_event(channel_id_event))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcChannelError {
-                    error: ChannelError::NoCommonVersion,
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
+                error: ChannelError::Other { description: error },
+            }),
+        }
+    }
+
+    fn execute_channel_open_try(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
+                Some(res) => {
+                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
+                    let channel_id =
+                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let mut channel_end =
+                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+
+                    if channel_end.state != State::Uninitialized {
+                        return Err(ContractError::IbcChannelError {
+                            error: ChannelError::UnknownState { state: 5 },
+                        });
+                    }
+                    channel_end.state = State::TryOpen;
+                    self.store_channel_end(
+                        deps.storage,
+                        port_id.clone(),
+                        channel_id.clone(),
+                        channel_end.clone(),
+                    )?;
+                    let _sequence = self.increase_channel_sequence(deps.storage)?;
+                    self.store_next_sequence_send(
+                        deps.storage,
+                        port_id.clone(),
+                        channel_id.clone(),
+                        1.into(),
+                    )?;
+                    self.store_next_sequence_recv(
+                        deps.storage,
+                        port_id.clone(),
+                        channel_id.clone(),
+                        1.into(),
+                    )?;
+                    self.store_next_sequence_ack(
+                        deps.storage,
+                        port_id.clone(),
+                        channel_id.clone(),
+                        1.into(),
+                    )?;
+                    let channel_id_event = create_channel_id_generated_event(channel_id.clone());
+                    let main_event = create_open_try_channel_event(
+                        &channel_id.ibc_channel_id().as_str(),
+                        &port_id.clone().ibc_port_id().as_str(),
+                        channel_end.counterparty().port_id().as_str(),
+                        &channel_end
+                            .counterparty()
+                            .channel_id
+                            .clone()
+                            .unwrap()
+                            .as_str(),
+                        &channel_end.connection_hops()[0].as_str(),
+                        channel_end.version().as_str(),
+                    );
+
+                    self.store_channel(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                        channel_end,
+                    )?;
+                    Ok(Response::new()
+                        .add_event(channel_id_event)
+                        .add_event(main_event))
+                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
+                error: ChannelError::Other { description: error },
+            }),
         }
     }
 }
