@@ -29,6 +29,12 @@ public class IBCHandler extends IBCHandlerPacket {
         super.registerClient(clientType, client);
     }
 
+    @External
+    public void createClient(MsgCreateClient msg) {
+        onlyOwner();
+        super.createClient(msg);
+    }
+
     /**
      * bindPort binds to an unallocated port, failing if the port has already
      * been allocated.
@@ -46,12 +52,6 @@ public class IBCHandler extends IBCHandlerPacket {
     public void setExpectedTimePerBlock(BigInteger expectedTimePerBlock) {
         onlyOwner();
         super.setExpectedTimePerBlock(expectedTimePerBlock);
-    }
-
-    @External
-    public String createClient(MsgCreateClient msg) {
-        onlyOwner();
-        return super.createClient(msg);
     }
 
     public static void onlyOwner() {

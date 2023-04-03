@@ -1,0 +1,3 @@
+[submodule "contracts/javascore/gochain-btp"]
+	path = contracts/javascore/gochain-btp
+	url = git@github.com:izyak/gochain-btp.git

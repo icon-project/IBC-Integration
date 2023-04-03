@@ -19,6 +19,7 @@ import icon.proto.core.connection.Version;
 import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
+import scorex.util.ArrayList;
 
 public class IBCConnection extends IBCClient {
     public static final String v1Identifier = "1";
@@ -38,7 +39,7 @@ public class IBCConnection extends IBCClient {
         connection.setVersions(getSupportedVersions());
         connection.setState(ConnectionEnd.State.STATE_INIT);
         connection.setDelayPeriod(msg.getDelayPeriod());
-        connection.setCounterparty(msg.getCounterparty());
+        connection.setCounterparty(Counterparty.decode(msg.getCounterparty()));
 
         byte[] encodedConnection = connection.encode();
         updateConnectionCommitment(connection.getClientId(), connectionId, encodedConnection);
@@ -48,14 +49,14 @@ public class IBCConnection extends IBCClient {
     }
 
     public String _connectionOpenTry(MsgConnectionOpenTry msg) {
-        List<Version> counterpartyVersions = msg.getCounterpartyVersions();
+        List<Version> counterpartyVersions = decodeCounterpartyVersions(msg.getCounterpartyVersions());
         // TODO: investigate need to self client validation
         Context.require(counterpartyVersions.size() > 0, "counterpartyVersions length must be greater than 0");
 
         String connectionId = generateConnectionIdentifier();
         Context.require(connections.get(connectionId) == null, "connectionId already exists");
 
-        Counterparty counterparty = msg.getCounterparty();
+        Counterparty counterparty = Counterparty.decode(msg.getCounterparty());
         ConnectionEnd connection = new ConnectionEnd();
         connection.setClientId(msg.getClientId());
         connection.setVersions(getSupportedVersions());
@@ -78,12 +79,12 @@ public class IBCConnection extends IBCClient {
         expectedConnection.setDelayPeriod(msg.getDelayPeriod());
         expectedConnection.setCounterparty(expectedCounterparty);
 
-        verifyConnectionState(connection, msg.getProofHeightRaw(), msg.getProofInit(), counterparty.getConnectionId(),
+        verifyConnectionState(connection, msg.getProofHeight(), msg.getProofInit(), counterparty.getConnectionId(),
                 expectedConnection);
 
         verifyClientState(
                 connection,
-                msg.getProofHeightRaw(),
+                msg.getProofHeight(),
                 IBCCommitment.clientStatePath(connection.getCounterparty().getClientId()),
                 msg.getProofClient(),
                 msg.getClientStateBytes());
@@ -106,12 +107,12 @@ public class IBCConnection extends IBCClient {
         Context.require(state == ConnectionEnd.State.STATE_INIT || state == ConnectionEnd.State.STATE_TRYOPEN,
                 "connection state is not INIT or TRYOPEN");
         if (state == ConnectionEnd.State.STATE_INIT) {
-            Context.require(isSupportedVersion(msg.getVersion()),
+            Context.require(isSupportedVersion(Version.decode(msg.getVersion())),
                     "connection state is in INIT but the provided version is not supported");
         } else {
             Context.require(
                     connection.getVersions().size() == 1
-                            && Arrays.equals(connection.getVersions().get(0).encode(), msg.getVersionRaw()),
+                            && Arrays.equals(connection.getVersions().get(0).encode(), msg.getVersion()),
                     "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
         }
 
@@ -129,17 +130,17 @@ public class IBCConnection extends IBCClient {
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getClientId());
-        expectedConnection.setVersions(List.of(msg.getVersion()));
+        expectedConnection.setVersions(List.of(Version.decode(msg.getVersion())));
         expectedConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
         expectedConnection.setDelayPeriod(connection.getDelayPeriod());
         expectedConnection.setCounterparty(expectedCounterparty);
 
-        verifyConnectionState(connection, msg.getProofHeightRaw(), msg.getProofTry(), msg.getCounterpartyConnectionID(),
+        verifyConnectionState(connection, msg.getProofHeight(), msg.getProofTry(), msg.getCounterpartyConnectionID(),
                 expectedConnection);
 
         verifyClientState(
                 connection,
-                msg.getProofHeightRaw(),
+                msg.getProofHeight(),
                 IBCCommitment.clientStatePath(connection.getCounterparty().getClientId()),
                 msg.getProofClient(),
                 msg.getClientStateBytes());
@@ -180,7 +181,7 @@ public class IBCConnection extends IBCClient {
         expectedConnection.setDelayPeriod(connection.getDelayPeriod());
         expectedConnection.setCounterparty(expectedCounterparty);
 
-        verifyConnectionState(connection, msg.getProofHeightRaw(), msg.getProofAck(),
+        verifyConnectionState(connection, msg.getProofHeight(), msg.getProofAck(),
                 connection.getCounterparty().getConnectionId(), expectedConnection);
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
@@ -258,6 +259,14 @@ public class IBCConnection extends IBCClient {
         version.setIdentifier(v1Identifier);
 
         return List.of(version);
+    }
+
+    public List<Version> decodeCounterpartyVersions(byte[][] counterpartyVersions) {
+        List<Version> versions = new ArrayList<>();
+        for (int i = 0; i < counterpartyVersions.length; i++) {
+            versions.add(Version.decode(counterpartyVersions[i]));
+        }
+        return versions;
     }
 
     // TODO implement

@@ -2,8 +2,6 @@ package ibc.icon.structs.messages;
 
 import java.math.BigInteger;
 
-import icon.proto.core.connection.Counterparty;
-
 public class MsgConnectionOpenInit {
     private String clientId;
     private byte[] counterparty;
@@ -17,12 +15,8 @@ public class MsgConnectionOpenInit {
         this.clientId = clientId;
     }
 
-    public byte[] getCounterpartyRaw() {
+    public byte[] getCounterparty() {
         return counterparty;
-    }
-
-    public Counterparty getCounterparty() {
-        return Counterparty.decode(counterparty);
     }
 
     public void setCounterparty(byte[] counterparty) {

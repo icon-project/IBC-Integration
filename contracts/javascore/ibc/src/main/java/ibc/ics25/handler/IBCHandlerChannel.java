@@ -9,7 +9,7 @@ import icon.proto.core.channel.Channel;
 import score.annotation.EventLog;
 import score.annotation.External;
 
-public abstract class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChannelHandshake {
+public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChannelHandshake {
 
     @EventLog(indexed = 2)
     public void ChannelOpenInit(String portId, String channelId, byte[] channel) {
@@ -45,7 +45,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
     public String channelOpenInit(MsgChannelOpenInit msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         // TODO optimize to not do decoding twice
-        Channel channel = msg.getChannel();
+        Channel channel = Channel.decode(msg.getChannel());
         String id = _channelOpenInit(msg);
         module.onChanOpenInit(
                 channel.getOrdering(),
@@ -56,7 +56,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
                 channel.getVersion());
         claimCapability(channelCapabilityPath(msg.getPortId(), id), module._address());
 
-        ChannelOpenInit(msg.getPortId(), id, msg.getChannelRaw());
+        ChannelOpenInit(msg.getPortId(), id, msg.getChannel());
         return id;
     }
 
@@ -64,7 +64,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
     public String channelOpenTry(MsgChannelOpenTry msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         // TODO optimize to not do decoding twice
-        Channel channel = msg.getChannel();
+        Channel channel = Channel.decode(msg.getChannel());
         String id = _channelOpenTry(msg);
         module.onChanOpenTry(
                 channel.getOrdering(),
@@ -76,7 +76,7 @@ public abstract class IBCHandlerChannel extends IBCHandlerConnection implements 
                 msg.getCounterpartyVersion());
         claimCapability(channelCapabilityPath(msg.getPortId(), id), module._address());
 
-        ChannelOpenTry(msg.getPortId(), id, msg.getChannelRaw());
+        ChannelOpenTry(msg.getPortId(), id, msg.getChannel());
 
         return id;
     }

@@ -2,6 +2,7 @@ package ibc.tendermint;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Map;
 
 import score.Address;
 import score.BranchDB;
@@ -10,7 +11,6 @@ import score.DictDB;
 import score.annotation.External;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.messages.UpdateClientResponse;
 import icon.proto.core.client.Height;
 
 import static ibc.tendermint.TendermintHelper.*;
@@ -87,7 +87,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
      * @dev createClient creates a new client with the given state
      */
     @External
-    public UpdateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
+    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
         onlyHandler();
         Context.require(clientStates.get(clientId) == null, "Client already exists");
         ClientState clientState = ClientState.decode(clientStateBytes);
@@ -98,20 +98,18 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         clientStates.set(clientId, clientStateBytes);
         consensusStates.at(clientId).set(clientState.getLatestHeight(), consensusStateBytes);
 
-        UpdateClientResponse response = new UpdateClientResponse(
-                        IBCCommitment.keccak256(clientStateBytes), 
-                        IBCCommitment.keccak256(consensusStateBytes),
-                        newHeight(clientState.getLatestHeight()).encode()
-        );
-
-        return response;
+        return Map.of(
+                "clientStateCommitment", IBCCommitment.keccak256(clientStateBytes),
+                "consensusStateCommitment", IBCCommitment.keccak256(consensusStateBytes),  
+                "height", newHeight(clientState.getLatestHeight()).encode()
+            );
     }
 
     /**
      * @dev checkHeaderAndUpdateState validates the header
      */
     @External(readonly = true)
-    public UpdateClientResponse updateClient(String clientId, byte[] clientMessageBytes) {
+    public Map<String, byte[]> updateClient(String clientId, byte[] clientMessageBytes) {
         onlyHandler();
         TmHeader tmHeader = TmHeader.decode(clientMessageBytes);
         boolean conflictingHeader = false;
@@ -158,14 +156,11 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
             processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                     BigInteger.valueOf(Context.getBlockTimestamp()));
 
-            UpdateClientResponse response = new UpdateClientResponse(
-                    IBCCommitment.keccak256(encodedClientState), 
-                    IBCCommitment.keccak256(encodedConsensusState),
-                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode()
+            return Map.of(
+                "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
+                "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),  
+                "height", newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode()
             );
-
-
-            return response;
         }
 
         // TODO: check consensus state monotonicity
@@ -184,14 +179,11 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                 BigInteger.valueOf(Context.getBlockTimestamp()));
 
-
-        UpdateClientResponse response = new UpdateClientResponse(
-                IBCCommitment.keccak256(encodedClientState), 
-                IBCCommitment.keccak256(encodedConsensusState),
-                newHeight(clientState.getLatestHeight()).encode()
-        );
-
-        return response;
+        return Map.of(
+                "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
+                "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),  
+                "height", newHeight(clientState.getLatestHeight()).encode()
+            );
     }
 
     @External

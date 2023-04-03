@@ -1,8 +1,5 @@
 package ibc.icon.structs.messages;
 
-import icon.proto.core.channel.Channel;
-import icon.proto.core.client.Height;
-
 public class MsgChannelOpenTry {
     private String portId;
     private String previousChannelId;
@@ -27,12 +24,8 @@ public class MsgChannelOpenTry {
         this.previousChannelId = previousChannelId;
     }
 
-    public byte[] getChannelRaw() {
+    public byte[] getChannel() {
         return channel;
-    }
-
-    public Channel getChannel() {
-        return Channel.decode(channel);
     }
 
     public void setChannel(byte[] channel) {
@@ -55,12 +48,8 @@ public class MsgChannelOpenTry {
         this.proofInit = proofInit;
     }
 
-    public byte[] getProofHeightRaw() {
+    public byte[] getProofHeight() {
         return proofHeight;
-    }
-
-    public Height getProofHeight() {
-        return Height.decode(proofHeight);
     }
 
     public void setProofHeight(byte[] proofHeight) {
