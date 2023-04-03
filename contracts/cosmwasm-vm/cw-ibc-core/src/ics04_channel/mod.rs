@@ -31,3 +31,8 @@ pub use traits::*;
 
 // Constants for Reply messages
 pub const EXECUTE_ON_CHANNEL_OPEN_INIT: u64 = 41;
+
+
+pub const EXECUTE_ON_CHANNEL_CLOSE_INIT: u64 = 45;
+
+use ibc::core::ics03_connection::connection::State as ConnectionState;
