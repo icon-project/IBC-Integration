@@ -1,15 +1,12 @@
-use std::str::FromStr;
-
-use cosmwasm_std::{
-    from_binary, to_binary, to_vec, Binary, CosmosMsg, Empty, MessageInfo, Response, SubMsg,
-    WasmMsg,
-};
+use super::*;
 pub mod open_init;
 pub mod open_try;
-use super::*;
-use cosmwasm_std::Reply;
-use open_init::*;
-use open_try::*;
+use self::{
+    open_init::{
+        channel_open_init_msg_validate, create_channel_submesssage, on_chan_open_init_submessage,
+    },
+    open_try::channel_open_try_msg_validate,
+};
 
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_open_init(
@@ -244,7 +241,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         deps.storage,
                         port_id.clone(),
                         channel_id.clone(),
-                        channel_end,
+                        channel_end.clone(),
                     )?;
                     let _sequence = self.increase_channel_sequence(deps.storage)?;
                     self.store_next_sequence_send(
@@ -265,22 +262,25 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         1.into(),
                     )?;
+
+                    self.store_channel(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                        channel_end,
+                    )?;
                     let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-                    return Ok(Response::new().add_event(channel_id_event));
+                    Ok(Response::new().add_event(channel_id_event))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcChannelError {
-                    error: ChannelError::NoCommonVersion,
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
+                error: ChannelError::Other { description: error },
+            }),
         }
     }
 
@@ -332,30 +332,38 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     )?;
                     let channel_id_event = create_channel_id_generated_event(channel_id.clone());
                     let main_event = create_open_try_channel_event(
-                        &channel_id,
-                        &port_id.clone().ibc_port_id(),
-                        channel_end.counterparty().port_id(),
-                        &channel_end.counterparty().channel_id.clone().unwrap(),
-                        &channel_end.connection_hops()[0],
-                        channel_end.version(),
+                        &channel_id.ibc_channel_id().as_str(),
+                        &port_id.clone().ibc_port_id().as_str(),
+                        channel_end.counterparty().port_id().as_str(),
+                        &channel_end
+                            .counterparty()
+                            .channel_id
+                            .clone()
+                            .unwrap()
+                            .as_str(),
+                        &channel_end.connection_hops()[0].as_str(),
+                        channel_end.version().as_str(),
                     );
-                    return Ok(Response::new()
+
+                    self.store_channel(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                        channel_end,
+                    )?;
+                    Ok(Response::new()
                         .add_event(channel_id_event)
-                        .add_event(main_event));
+                        .add_event(main_event))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcChannelError {
-                    error: ChannelError::NoCommonVersion,
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
+                error: ChannelError::Other { description: error },
+            }),
         }
     }
 }

@@ -1,5 +1,3 @@
-use common::icon::icon::lightclient::v1::ClientState;
-
 use super::*;
 
 #[cw_serde]

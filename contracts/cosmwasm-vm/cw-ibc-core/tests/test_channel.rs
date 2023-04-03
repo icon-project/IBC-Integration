@@ -771,12 +771,12 @@ fn create_open_try_channel_event_test() {
     let message = MsgChannelOpenTry::try_from(default_raw_msg.clone()).unwrap();
     let channel_id = ChannelId::new(11);
     let event = create_open_try_channel_event(
-        &channel_id,
-        &message.port_id_on_b,
-        &message.port_id_on_a,
-        &message.chan_id_on_a,
-        &message.connection_hops_on_b[0],
-        &message.version_supported_on_a,
+        &channel_id.as_str(),
+        &message.port_id_on_b.as_str(),
+        &message.port_id_on_a.as_str(),
+        &message.chan_id_on_a.as_str(),
+        &message.connection_hops_on_b[0].as_str(),
+        &message.version_supported_on_a.as_str(),
     );
 
     assert_eq!(IbcEventType::OpenTryChannel.as_str(), event.ty);
