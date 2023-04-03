@@ -7,14 +7,22 @@ pub struct InstantiateMsg {
     pub network_type_id: u128,
 }
 
+impl Default for InstantiateMsg {
+    fn default() -> Self {
+        Self {
+            src_network_id: "0x3.icon".to_string(),
+            network_id: 1,
+            network_type_id: 1,
+        }
+    }
+}
+
 #[cw_serde]
 pub enum ExecuteMsg {
-    
     CreateClient {
         client_id: String,
-        trusting_period: u64,
-        max_clock_drift: u64,
-        btp_header_bytes: Vec<u8>,
+        client_state: Vec<u8>,
+        consensus_state: Vec<u8>,
     },
     UpdateClient {
         client_id: String,
@@ -26,16 +34,16 @@ pub enum ExecuteMsg {
         path: Vec<u8>,
         proofs: Vec<u8>,
         height: u64,
-        delay_time_period:u64,
-        delay_block_period:u64,
+        delay_time_period: u64,
+        delay_block_period: u64,
     },
     VerifyNonMembership {
         client_id: String,
         path: Vec<u8>,
         proofs: Vec<u8>,
         height: u64,
-        delay_time_period:u64,
-        delay_block_period:u64,
+        delay_time_period: u64,
+        delay_block_period: u64,
     },
 }
 

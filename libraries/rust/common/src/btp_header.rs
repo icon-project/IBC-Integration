@@ -1,8 +1,7 @@
-use bytes::BytesMut;
-
+use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use crate::rlp::RlpStream;
 use crate::{
     icon::icon::types::v1::BtpHeader,
-    rlp,
     utils::{calculate_root, keccak256},
 };
 
@@ -12,41 +11,54 @@ impl BtpHeader {
         src_network_id: &str,
         network_type: u128,
     ) -> [u8; 32] {
-        let mut ntsd = Vec::with_capacity(5);
+        keccak256(&self.get_network_type_section_decision_rlp(src_network_id, network_type))
+    }
 
-        ntsd.push(rlp::encode(&src_network_id));
-        ntsd.push(rlp::encode(&network_type));
-        ntsd.push(rlp::encode(&self.main_height));
-        ntsd.push(rlp::encode(&self.round));
-        ntsd.push(rlp::encode(
-            &self.get_network_type_section_hash().as_slice(),
-        ));
-        let encoded = rlp::encode_list::<BytesMut, BytesMut>(&ntsd);
-        keccak256(&encoded)
+    pub fn get_network_type_section_decision_rlp(
+        &self,
+        src_network_id: &str,
+        network_type: u128,
+    ) -> Vec<u8> {
+        let mut ntsd = RlpStream::new_list(5);
+
+        ntsd.append(&src_network_id);
+        ntsd.append(&network_type);
+        ntsd.append(&self.main_height);
+        ntsd.append(&self.round);
+        ntsd.append(&self.get_network_type_section_hash().as_slice());
+
+        let encoded = ntsd.as_raw().to_vec();
+        encoded
+    }
+
+    pub fn get_network_section_rlp(&self) -> Vec<u8> {
+        let mut ns = RlpStream::new_list(5);
+
+        ns.append(&Into::<u128>::into(self.network_id));
+        ns.append(&self.update_number);
+        ns.append(&self.prev_network_section_hash);
+        ns.append(&self.message_count);
+        ns.append(&self.message_root);
+
+        let encoded = ns.as_raw().to_vec();
+        encoded
     }
 
     pub fn get_network_section_hash(&self) -> [u8; 32] {
-        let mut ns = Vec::with_capacity(5);
-
-        ns.push(rlp::encode(&self.network_id));
-
-        ns.push(rlp::encode(&self.round));
-
-        ns.push(rlp::encode(&self.prev_network_section_hash));
-
-        ns.push(rlp::encode(&self.message_count));
-        ns.push(rlp::encode(&self.message_root));
-        let encoded = rlp::encode_list::<BytesMut, BytesMut>(&ns);
-
-        keccak256(&encoded)
+        keccak256(&self.get_network_section_rlp())
     }
 
     pub fn get_network_type_section_hash(&self) -> [u8; 32] {
-        let mut nts = Vec::with_capacity(2);
-        nts.push(rlp::encode(&self.next_proof_context_hash));
-        nts.push(rlp::encode(&self.get_network_section_root().as_slice()));
-        let encoded = rlp::encode_list::<BytesMut, BytesMut>(&nts);
-        keccak256(&rlp::encode_list(&encoded))
+        keccak256(&self.get_network_type_section_rlp())
+    }
+
+    pub fn get_network_type_section_rlp(&self) -> Vec<u8> {
+        let mut nts = RlpStream::new_list(2);
+        nts.append(&self.next_proof_context_hash);
+        nts.append(&self.get_network_section_root().as_slice());
+
+        let encoded = nts.as_raw().to_vec();
+        encoded
     }
 
     pub fn get_network_section_root(&self) -> [u8; 32] {
@@ -55,13 +67,31 @@ impl BtpHeader {
             &self.network_section_to_root,
         )
     }
+
+    pub fn to_client_state(&self, trusting_period: u64, max_clock_drift: u64) -> ClientState {
+        ClientState {
+            trusting_period,
+            frozen_height: 0,
+            max_clock_drift,
+            latest_height: self.main_height,
+            network_section_hash: self.get_network_section_hash().to_vec(),
+            validators: self.next_validators.clone(),
+        }
+    }
+
+    pub fn to_consensus_state(&self) -> ConsensusState {
+        ConsensusState {
+            message_root: self.message_root.clone(),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use test_utils::get_test_headers;
+
     use super::*;
     use hex_literal::hex;
-    use ibc_proto::google::protobuf::Any;
     use prost::Message;
 
     #[test]
@@ -72,70 +102,51 @@ mod tests {
     }
 
     #[test]
-    fn test_get_network_type_section_decision_hash() {
-        let header = BtpHeader {
-            network_id: 1,
-            main_height: 1234,
-            round: 5678,
-            prev_network_section_hash: [0; 32].to_vec(),
-            message_count: 5,
-            message_root: [0; 32].to_vec(),
-            next_proof_context_hash: [0; 32].to_vec(),
-            network_section_to_root: vec![],
-            update_number: todo!(),
-            next_validators: todo!(),
-        };
-        let src_network_id = "foo";
-        let network_type = 12345;
-        let expected_hash = [
-            190, 96, 183, 170, 36, 171, 128, 60, 17, 34, 137, 16, 54, 74, 150, 155, 209, 33, 112,
-            107, 201, 200, 55, 105, 94, 121, 105, 197, 3, 187, 130, 233,
-        ];
-        let hash = header.get_network_type_section_decision_hash(src_network_id, network_type);
-        assert_eq!(hash, expected_hash);
-    }
-
-    #[test]
-    fn test_get_network_section_hash() {
-        let header = BtpHeader {
-            network_id: 1,
-            main_height: 1234,
-            round: 5678,
-            prev_network_section_hash: [0; 32].to_vec(),
-            message_count: 5,
-            message_root: [0; 32].to_vec(),
-            next_proof_context_hash: [0; 32].to_vec(),
-            network_section_to_root: vec![],
-            update_number: todo!(),
-            next_validators: todo!(),
-        };
-        let expected_hash = [
-            192, 78, 178, 69, 183, 178, 167, 32, 62, 191, 88, 100, 214, 216, 23, 132, 114, 215,
-            179, 74, 31, 190, 110, 193, 190, 22, 102, 160, 114, 24, 235, 226,
-        ];
+    fn test_network_section() {
+        let expected=hex!("f8450102a0d3cd05ddbec4846c124bff569ab5531f6284a521f64c80b82110aa016937ed7601a084d8e19eb09626e4a94212d3a9db54bc16a75dfd791858c0fab3032b944f657a");
+        let header = &get_test_headers()[1];
+        let rlp_bytes = header.get_network_section_rlp();
+        assert_eq!(hex::encode(expected), hex::encode(rlp_bytes));
+        let expected_hash =
+            hex!("688587a1efabcb22f532a8bf0cb541a1e487365b0ac77ce166c211296900f68d");
         let hash = header.get_network_section_hash();
-        assert_eq!(hash, expected_hash);
+        assert_eq!(hex::encode(expected_hash), hex::encode(hash));
     }
 
     #[test]
-    fn test_get_network_type_section_hash() {
-        let header = BtpHeader {
-            network_id: 1,
-            main_height: 1234,
-            round: 5678,
-            prev_network_section_hash: [0; 32].to_vec(),
-            message_count: 5,
-            message_root: [0; 32].to_vec(),
-            next_proof_context_hash: [0; 32].to_vec(),
-            network_section_to_root: vec![],
-            update_number: todo!(),
-            next_validators: todo!(),
-        };
-        let expected_hash = [
-            165, 193, 202, 176, 167, 227, 192, 73, 161, 85, 182, 153, 150, 221, 59, 174, 109, 231,
-            33, 238, 186, 88, 180, 143, 71, 187, 153, 148, 110, 40, 85, 6,
-        ];
+    fn test_network_type_section() {
+        let expected=hex!("f842a0d090304264eeee3c3562152f2dc355601b0b423a948824fd0a012c11c3fc2fb4a0688587a1efabcb22f532a8bf0cb541a1e487365b0ac77ce166c211296900f68d");
+        let header = &get_test_headers()[1];
+        let rlp_bytes = header.get_network_type_section_rlp();
+        assert_eq!(hex::encode(expected), hex::encode(rlp_bytes));
+        let expected_hash =
+            hex!("d6be1d816f18e5e134f5bfe5de755d5aba7af6988a67c1e0fe9bf1a7965dea94");
         let hash = header.get_network_type_section_hash();
-        assert_eq!(hash, expected_hash);
+        assert_eq!(hex::encode(expected_hash), hex::encode(hash));
+    }
+
+    #[test]
+    fn test_get_network_type_section_decision() {
+        let expected=hex!("ef883078332e69636f6e0182507200a0d6be1d816f18e5e134f5bfe5de755d5aba7af6988a67c1e0fe9bf1a7965dea94");
+        let header = &get_test_headers()[1];
+        let rlp_bytes = header.get_network_type_section_decision_rlp("0x3.icon", 1);
+        assert_eq!(hex::encode(expected), hex::encode(rlp_bytes));
+        let expected_hash =
+            hex!("d3441d4cc7b6472976a357cd81f77a54c25d914b3adf99721309bc705fa116c2");
+        let hash = header.get_network_type_section_decision_hash("0x3.icon", 1);
+        assert_eq!(hex::encode(expected_hash), hex::encode(hash));
+    }
+
+    #[test]
+    fn test_get_network_section_hash_sequence() {
+        let headers = get_test_headers();
+        for (i, header) in headers.iter().enumerate() {
+            if i == headers.len() - 1 {
+                break;
+            }
+            let expected = &headers[i + 1].prev_network_section_hash;
+            let current = header.get_network_section_hash();
+            assert_eq!(hex::encode(expected), hex::encode(current))
+        }
     }
 }

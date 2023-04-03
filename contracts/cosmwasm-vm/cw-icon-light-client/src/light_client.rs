@@ -104,37 +104,27 @@ impl ILightClient for IconClient<'_> {
     fn create_client(
         &self,
         client_id: &str,
-        trusting_period: u64,
-        max_clock_drift: u64,
-        btp_header: BtpHeader,
+        client_state: ClientState,
+        consensus_state: ConsensusState,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {
-        let client_state = ClientState {
-            frozen_height: 0,
-            latest_height: btp_header.main_height,
-            trusting_period,
-            max_clock_drift,
-            network_section_hash: btp_header.get_network_section_hash().try_into().unwrap(),
-            validators: btp_header.next_validators,
-        };
-        let consensus_state = ConsensusState {
-            message_root: btp_header.message_root,
-        };
-
-        let client_state_bytes = client_state.to_any().encode_to_vec();
-        let consensus_state_bytes = consensus_state.to_any().encode_to_vec();
-
+        let exists = self.context.get_client_state(client_id).is_ok();
+        if exists {
+            return Err(ContractError::ClientStateAlreadyExists(
+                client_id.to_string(),
+            ));
+        }
         self.context
             .insert_client_state(&client_id, client_state.clone())?;
         self.context.insert_consensus_state(
             &client_id,
             client_state.latest_height.into(),
-            consensus_state,
+            consensus_state.clone(),
         )?;
 
         Ok((
-            keccak256(&client_state_bytes.encode_to_vec()).into(),
+            client_state.get_keccak_hash().into(),
             ConsensusStateUpdate {
-                consensus_state_commitment: keccak256(&consensus_state_bytes.encode_to_vec()),
+                consensus_state_commitment: consensus_state.get_keccak_hash(),
                 height: client_state.latest_height,
             },
         ))

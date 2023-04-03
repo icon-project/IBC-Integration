@@ -49,3 +49,4 @@ common={path="../../../libraries/rust/common"}
 cosmwasm = "0.7.2"
 cw-multi-test = "0.16.2"
 hex-literal="*"
+test-utils={path="../../../libraries/rust/test-utils"}

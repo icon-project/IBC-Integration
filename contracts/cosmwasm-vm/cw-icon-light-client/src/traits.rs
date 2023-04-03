@@ -1,6 +1,5 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
-use common::icon::icon::types::v1::BtpHeader;
 use common::icon::icon::types::v1::MerkleNode;
 use common::utils::keccak256;
 use cosmwasm_std::Addr;
@@ -61,9 +60,8 @@ pub trait ILightClient {
     fn create_client(
         &self,
         client_id: &str,
-        trusting_period: u64,
-        max_clock_drift: u64,
-        header: BtpHeader,
+        client_state: ClientState,
+        consensus_state: ConsensusState,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
 
     /**
@@ -176,5 +174,14 @@ pub trait AnyTypes: Message + Default {
             type_url: Self::get_type_url(),
             value: self.encode_to_vec(),
         };
+    }
+
+    fn get_keccak_hash(&self) -> [u8; 32] {
+        let bytes = self.encode_to_vec();
+        return keccak256(&bytes);
+    }
+    fn get_keccak_hash_string(&self) -> String {
+        let hash = self.get_keccak_hash();
+        return hex::encode(hash);
     }
 }

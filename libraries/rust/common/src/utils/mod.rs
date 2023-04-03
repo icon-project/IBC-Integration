@@ -35,3 +35,16 @@ pub fn to_lookup<T: Eq + PartialEq + Hash + Clone>(vec: &Vec<T>) -> HashMap<T, b
     }
     return hash_map;
 }
+
+// solidity bytes32 equivalent
+pub fn bytes32(s: &[u8]) -> Option<[u8; 32]> {
+    let s_len = s.len();
+
+    if s_len > 32 {
+        return None;
+    }
+
+    let mut result: [u8; 32] = Default::default();
+    result[..s_len].clone_from_slice(s);
+    Some(result)
+}
