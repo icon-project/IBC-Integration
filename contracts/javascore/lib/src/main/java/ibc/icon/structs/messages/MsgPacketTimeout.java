@@ -2,21 +2,14 @@ package ibc.icon.structs.messages;
 
 import java.math.BigInteger;
 
-import icon.proto.core.channel.Packet;
-import icon.proto.core.client.Height;
-
 public class MsgPacketTimeout {
     private byte[] packet;
     private byte[] proof;
     private byte[] proofHeight;
     private BigInteger nextSequenceRecv;
     
-    public byte[] getPacketRaw() {
+    public byte[] getPacket() {
         return packet;
-    }
-
-    public Packet getPacket() {
-        return Packet.decode(packet);
     }
 
     public void setPacket(byte[] packet) {
@@ -31,12 +24,8 @@ public class MsgPacketTimeout {
         this.proof = proof;
     }
 
-    public byte[] getProofHeightRaw() {
+    public byte[] getProofHeight() {
         return proofHeight;
-    }
-
-    public Height getProofHeight() {
-        return Height.decode(proofHeight);
     }
 
     public void setProofHeight(byte[] proofHeight) {

@@ -1,8 +1,27 @@
 package ibc.icon.interfaces;
 
 import ibc.icon.structs.messages.*;
+import score.annotation.EventLog;
 
 public interface IIBCChannelHandshake {
+    @EventLog(indexed = 2)
+    public void ChannelOpenInit(String portId, String channelId, byte[] channel);
+
+    @EventLog(indexed = 2)
+    public void ChannelOpenTry(String portId, String channelId, byte[] channel);
+
+    @EventLog(indexed = 2)
+    public void ChannelOpenAck(String portId, String channelId, byte[] channel);
+
+    @EventLog(indexed = 2)
+    public void ChannelOpenConfirm(String portId, String channelId, byte[] channel);
+
+    @EventLog(indexed = 2)
+    public void ChannelCloseInit(String portId, String channelId, byte[] channel);
+
+    @EventLog(indexed = 2)
+    public void ChannelCloseConfirm(String portId, String channelId, byte[] channel);
+    
     /**
      * {@code @dev} channelOpenInit is called by a module to initiate a channel opening
      * handshake with a module on another chain.

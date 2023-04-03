@@ -1,12 +1,6 @@
 package ibc.icon.structs.messages;
 
 import java.math.BigInteger;
-import java.util.List;
-
-import icon.proto.core.client.Height;
-import icon.proto.core.connection.Counterparty;
-import icon.proto.core.connection.Version;
-import scorex.util.ArrayList;
 
 public class MsgConnectionOpenTry {
     private String previousConnectionId;
@@ -31,12 +25,8 @@ public class MsgConnectionOpenTry {
         this.previousConnectionId = previousConnectionId;
     }
 
-    public byte[] getCounterpartyRaw() {
+    public byte[] getCounterparty() {
         return counterparty;
-    }
-
-    public Counterparty getCounterparty() {
-        return Counterparty.decode(counterparty);
     }
 
     public void setCounterparty(byte[] counterparty) {
@@ -67,17 +57,17 @@ public class MsgConnectionOpenTry {
         this.clientStateBytes = clientStateBytes;
     }
 
-    public byte[][] getCounterpartyVersionsRaw() {
+    public byte[][] getCounterpartyVersions() {
         return counterpartyVersions;
     }
 
-    public List<Version> getCounterpartyVersions() {
-        List<Version> versions = new ArrayList<>();
-        for (int i = 0; i < counterpartyVersions.length; i++) {
-            versions.add(Version.decode(counterpartyVersions[i]));
-        }
-        return versions;
-    }
+    // public List<Version> getCounterpartyVersions() {
+    //     List<Version> versions = new ArrayList<>();
+    //     for (int i = 0; i < counterpartyVersions.length; i++) {
+    //         versions.add(Version.decode(counterpartyVersions[i]));
+    //     }
+    //     return versions;
+    // }
 
     public void setCounterpartyVersions(byte[][] counterpartyVersions) {
         this.counterpartyVersions = counterpartyVersions;
@@ -107,24 +97,17 @@ public class MsgConnectionOpenTry {
         this.proofConsensus = proofConsensus;
     }
 
-    public byte[] getProofHeightRaw() {
+    public byte[] getProofHeight() {
         return proofHeight;
     }
 
-    public Height getProofHeight() {
-        return Height.decode(proofHeight);
-    }
 
     public void setProofHeight(byte[] proofHeight) {
         this.proofHeight = proofHeight;
     }
 
-    public byte[] getConsensusHeightRaw() {
+    public byte[] getConsensusHeight() {
         return consensusHeight;
-    }
-
-    public Height getConsensusHeight() {
-        return Height.decode(consensusHeight);
     }
 
     public void setConsensusHeight(byte[] consensusHeight) {

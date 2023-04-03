@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 import org.mockito.ArgumentCaptor;
 
@@ -101,12 +102,13 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setClientType(clientType);
         msg.setBtpNetworkId(4);
 
-        UpdateClientResponse response = new UpdateClientResponse(
-                new byte[0], 
-                new byte[0],
-                Height.getDefaultInstance().toByteArray());
         when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
-                .thenReturn(response);
+                .thenReturn(Map.of(
+                    "clientStateCommitment", new byte[0],
+                    "consensusStateCommitment", new byte[0],  
+                    "height",Height.getDefaultInstance().toByteArray()
+            ));
+;
 
         // Act
         handler.invoke(owner, "createClient", msg);
@@ -129,10 +131,11 @@ public class IBCHandlerTestBase extends TestBase {
                 .setRevisionHeight(1)
                 .setRevisionNumber(2).build();
 
-        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, consensusStateCommitment, consensusHeight.toByteArray());
-
-        when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(response);
-
+        when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(Map.of(
+            "clientStateCommitment", clientStateCommitment,
+            "consensusStateCommitment", consensusStateCommitment,  
+            "height", consensusHeight.toByteArray()
+        ));
         // Act
         handler.invoke(relayer, "updateClient", msg);
     }
@@ -434,8 +437,8 @@ public class IBCHandlerTestBase extends TestBase {
         handler.invoke(relayer, "acknowledgePacket", msg);
 
         // Assert
-        verify(handlerSpy).AcknowledgePacket(msg.getPacketRaw(), msg.getAcknowledgement());
-        verify(module.mock).onAcknowledgementPacket(msg.getPacketRaw(), msg.getAcknowledgement(), relayer.getAddress());
+        verify(handlerSpy).AcknowledgePacket(msg.getPacket(), msg.getAcknowledgement());
+        verify(module.mock).onAcknowledgementPacket(msg.getPacket(), msg.getAcknowledgement(), relayer.getAddress());
     }
 
     void requestTimeout(Packet packet) {
@@ -452,12 +455,12 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setNextSequenceRecv(nextRecv);
         msg.setProof(new byte[2]);
         msg.setProofHeight(packet.getTimeoutHeight().toByteArray());
-        // when(lightClient.mock.getTimestampAtHeight(any(String.class), eq(msg.getProofHeightRaw())).thenReturn(sm.get);
+        // when(lightClient.mock.getTimestampAtHeight(any(String.class), eq(msg.getProofHeight())).thenReturn(sm.get);
 
         handler.invoke(relayer, "timeoutPacket", msg);
 
-        verify(handlerSpy).PacketTimeout(msg.getPacketRaw());
-        verify(module.mock).onTimeoutPacket(msg.getPacketRaw(), relayer.getAddress());
+        verify(handlerSpy).PacketTimeout(msg.getPacket());
+        verify(module.mock).onTimeoutPacket(msg.getPacket(), relayer.getAddress());
     }
 
     protected Packet getBasePacket() {
