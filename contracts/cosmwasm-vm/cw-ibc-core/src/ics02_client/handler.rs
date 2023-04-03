@@ -1,5 +1,5 @@
 use super::{
-    events::{create_client_event, update_client_event},
+    events::{create_client_event, update_client_event, upgrade_client_event},
     *,
 };
 use cosmwasm_std::to_vec;
@@ -53,7 +53,7 @@ pub enum LightClientMessage {
         client_id: String,
         header: Vec<u8>,
     },
-    VerifyUpgradeClient {
+    UpgradeClient {
         upgraded_client_state: Vec<u8>,
         upgraded_consensus_state: Vec<u8>,
         proof_upgrade_client: Vec<u8>,
@@ -62,8 +62,7 @@ pub enum LightClientMessage {
 }
 pub const EXECUTE_CREATE_CLIENT: u64 = 21;
 pub const EXECUTE_UPDATE_CLIENT: u64 = 22;
-pub const VERIFY_UPGRADE_CLIENT: u64 = 231;
-pub const EXECUT_UPGRADE_CLIENT: u64 = 232;
+pub const EXECUT_UPGRADE_CLIENT: u64 = 23;
 
 #[cw_serde]
 pub struct UpdateClientResponse {
@@ -101,6 +100,45 @@ impl UpdateClientResponse {
         ClientId::from_str(&self.client_id).map_err(|error| ContractError::IbcDecodeError {
             error: error.to_string(),
         })
+    }
+}
+#[cw_serde]
+pub struct UpgradeClientResponse {
+    client_id: String,
+    height: String,
+    client_state_commitment: Vec<u8>,
+    consesnus_state_commitment: Vec<u8>,
+}
+
+impl UpgradeClientResponse {
+    pub fn new(
+        client_state_commitment: Vec<u8>,
+        consesnus_state_commitment: Vec<u8>,
+        client_id: String,
+        height: String,
+    ) -> Self {
+        {
+            Self {
+                height,
+                client_id,
+                client_state_commitment,
+                consesnus_state_commitment,
+            }
+        }
+    }
+
+    pub fn client_id(&self) -> ClientId {
+        ClientId::from_str(&self.client_id).unwrap()
+    }
+
+    pub fn client_state_commitment(&self) -> &[u8] {
+        &self.client_state_commitment
+    }
+    pub fn consesnus_state_commitment(&self) -> &[u8] {
+        &self.consesnus_state_commitment
+    }
+    pub fn height(&self) -> Height {
+        Height::from_str(&self.height).unwrap()
     }
 }
 
@@ -214,7 +252,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         // Validate the upgraded client state and consensus state and verify proofs against the root
 
-        let wasm_exec_message = LightClientMessage::VerifyUpgradeClient {
+        let wasm_exec_message = LightClientMessage::UpgradeClient {
             upgraded_client_state: message.client_state.value,
             upgraded_consensus_state: message.consensus_state.value,
             proof_upgrade_client: to_vec(&message.proof_upgrade_client).unwrap(),
@@ -223,7 +261,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let client_id = ClientId::from(message.client_id);
 
-        let address = self.get_client_implementations(deps.storage, client_id)?;
+        let address = self.get_client_implementations(deps.storage, client_id.clone())?;
 
         let wasm_msg: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: address,
@@ -231,11 +269,12 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
 
-        let sub_message = SubMsg::reply_always(wasm_msg, VERIFY_UPGRADE_CLIENT);
+        let sub_message = SubMsg::reply_always(wasm_msg, EXECUT_UPGRADE_CLIENT);
 
         Ok(Response::new()
             .add_submessage(sub_message)
-            .add_attribute("method", "verify_upgrade_client"))
+            .add_attribute("method", "upgrade_client")
+            .add_attribute("client_id", client_id.ibc_client_id().as_str()))
     }
 
     fn register_client(&self, deps: DepsMut, client_type: ClientType, light_client: Addr) {
@@ -354,6 +393,59 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .add_event(event)
                         .add_attribute("methods", "execute_update_client_reply")
                         .add_attribute("height", height))
+                }
+                None => Err(ContractError::IbcClientError {
+                    error: ClientError::Other {
+                        description: "UNKNOWN ERROR".to_string(),
+                    },
+                }),
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
+                error: ClientError::Other { description: error },
+            }),
+        }
+    }
+    fn execute_upgrade_client_reply(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
+                Some(data) => {
+                    let response: UpgradeClientResponse =
+                        from_binary(&data).map_err(|error| ContractError::Std(error))?;
+                    let client_id = ClientId::from_str(&response.client_id).map_err(|error| {
+                        ContractError::IbcClientError {
+                            error: ClientError::InvalidClientIdentifier(error),
+                        }
+                    })?;
+
+                    self.store_client_state(
+                        deps.storage,
+                        client_id.ibc_client_id(),
+                        response.client_state_commitment.clone(),
+                    )?;
+
+                    self.store_consensus_state(
+                        deps.storage,
+                        client_id.ibc_client_id(),
+                        response.height(),
+                        response.consesnus_state_commitment.clone(),
+                    )?;
+
+                    let client_type = ClientType::from(client_id.clone());
+
+                    let event = upgrade_client_event(
+                        client_type.client_type(),
+                        response.height(),
+                        client_id.ibc_client_id().clone(),
+                    );
+
+                    Ok(Response::new()
+                        .add_event(event)
+                        .add_attribute("method", "execute_upgrade_client_reply")
+                        .add_attribute("client_id", client_id.ibc_client_id().as_str()))
                 }
                 None => Err(ContractError::IbcClientError {
                     error: ClientError::Other {
