@@ -1,11 +1,4 @@
-use cosmwasm_std::StdError;
-use ibc::core::{
-    ics03_connection::error::ConnectionError,
-    ics04_channel::error::{ChannelError, PacketError},
-    ics05_port::error::PortError,
-    ContextError,
-};
-use thiserror::Error;
+use super::*;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -41,4 +34,7 @@ pub enum ContractError {
 
     #[error("IbcConnectionError {error}")]
     IbcConnectionError { error: ConnectionError },
+
+    #[error("IbcClientError {error}")]
+    IbcClientError { error: ClientError },
 }
