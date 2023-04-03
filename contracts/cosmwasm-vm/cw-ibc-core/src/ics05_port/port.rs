@@ -22,4 +22,20 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
+
+    pub fn store_module_by_port(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        module_id: ModuleId,
+    ) -> Result<(), ContractError> {
+        match self
+            .ibc_store()
+            .port_to_moulde()
+            .save(store, port_id, &module_id)
+        {
+            Ok(_) => Ok(()),
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
 }

@@ -84,9 +84,29 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn update_client(
         &self,
         deps: DepsMut,
-        message: ibc::core::ics02_client::msgs::update_client::MsgUpdateClient,
-    ) {
-        todo!()
+        info: MessageInfo,
+        message: MsgUpdateClient,
+    ) -> Result<Response, ContractError> {
+        let client_id = ClientId::from(message.client_id);
+
+        let light_client_address =
+            self.get_client_implementations(deps.as_ref().storage, client_id.clone())?;
+
+        let message = LightClientMessage::UpdateClient {
+            client_id: client_id.as_str().to_string().clone(),
+            header: message.header.value,
+        };
+
+        let client_update_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: light_client_address,
+            msg: to_binary(&message).unwrap(),
+            funds: info.funds,
+        });
+        let sub_msg: SubMsg = SubMsg::reply_always(client_update_message, EXECUTE_UPDATE_CLIENT);
+        Ok(Response::new()
+            .add_submessage(sub_msg)
+            .add_attribute("method", "update_client")
+            .add_attribute("client_id", client_id.as_str()))
     }
 
     fn upgrade_client(

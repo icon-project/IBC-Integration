@@ -8,6 +8,25 @@ impl Default for ClientId {
         Self(IbcClientId::default())
     }
 }
+impl From<IbcClientId> for ClientId {
+    fn from(value: IbcClientId) -> Self {
+        Self(value)
+    }
+}
+impl FromStr for ClientId {
+    type Err = ibc::core::ics24_host::error::ValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let r = IbcClientId::from_str(s)?;
+        Ok(Self(r))
+    }
+}
+
+impl Default for ClientId {
+    fn default() -> Self {
+        Self(IbcClientId::default())
+    }
+}
 impl ClientId {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
@@ -87,6 +106,13 @@ impl ClientType {
 impl From<IbcClientType> for ClientType {
     fn from(value: IbcClientType) -> Self {
         Self(value)
+    }
+}
+
+impl From<ClientId> for ClientType {
+    fn from(value: ClientId) -> Self {
+        let data: Vec<&str> = value.as_str().split("-").collect();
+        ClientType::new(data[0].to_string())
     }
 }
 
@@ -319,6 +345,9 @@ impl ModuleId {
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
 }
 
 impl<'a> PrimaryKey<'a> for ModuleId {
@@ -340,5 +369,23 @@ impl KeyDeserialize for ModuleId {
             .unwrap();
         let module_id = IbcModuleId::from_str(&result).unwrap();
         Ok(ModuleId(module_id.to_string()))
+    }
+}
+
+impl From<IbcConnectionId> for ConnectionId {
+    fn from(conn: IbcConnectionId) -> Self {
+        ConnectionId(conn)
+    }
+}
+
+impl From<IbcPortId> for PortId {
+    fn from(port_id: IbcPortId) -> Self {
+        PortId(port_id)
+    }
+}
+
+impl From<IbcModuleId> for ModuleId {
+    fn from(module: IbcModuleId) -> Self {
+        ModuleId(module.to_string())
     }
 }

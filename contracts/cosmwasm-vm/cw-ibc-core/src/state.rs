@@ -9,7 +9,7 @@ pub struct CwIbcStore<'a> {
     next_sequence_ack: Map<'a, (PortId, ChannelId), Sequence>,
     next_client_sequence: Item<'a, u64>,
     next_connection_sequence: Item<'a, u128>,
-    next_channel_sequence: Item<'a, u128>,
+    next_channel_sequence: Item<'a, u64>,
     client_connections: Map<'a, ClientId, ConnectionId>,
     connections: Map<'a, ConnectionId, Vec<u8>>,
     channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
@@ -78,7 +78,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn next_connection_sequence(&self) -> &Item<'a, u128> {
         &self.next_connection_sequence
     }
-    pub fn next_channel_sequence(&self) -> &Item<'a, u128> {
+    pub fn next_channel_sequence(&self) -> &Item<'a, u64> {
         &self.next_channel_sequence
     }
     pub fn connections(&self) -> &Map<'a, ConnectionId, Vec<u8>> {

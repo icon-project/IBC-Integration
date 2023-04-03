@@ -10,7 +10,6 @@ import ibc.icon.score.util.ByteUtil;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
-import ibc.icon.structs.messages.UpdateClientResponse;
 import ibc.icon.test.MockContract;
 import ibc.ics24.host.IBCCommitment;
 import test.proto.core.client.Client.Height;
@@ -20,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
@@ -96,9 +96,12 @@ public class ClientTest extends TestBase {
         Height consensusHeight = Height.newBuilder()
                 .setRevisionHeight(1)
                 .setRevisionNumber(2).build();
-        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, consensusStateCommitment, consensusHeight.toByteArray());
         when(lightClient.mock.createClient(msg.getClientType() + "-" + BigInteger.ZERO, msg.getClientState(),
-                msg.getConsensusState())).thenReturn(response);
+                msg.getConsensusState())).thenReturn(Map.of(
+                        "clientStateCommitment", clientStateCommitment,
+                        "consensusStateCommitment", consensusStateCommitment,  
+                        "height", consensusHeight.toByteArray()
+                ));
 
         // Act
         client.invoke(owner, "registerClient", msg.getClientType(), lightClient.getAddress());
@@ -146,9 +149,12 @@ public class ClientTest extends TestBase {
                 .setRevisionHeight(1)
                 .setRevisionNumber(2).build();
 
-        UpdateClientResponse response = new UpdateClientResponse(clientStateCommitment, consensusStateCommitment, consensusHeight.toByteArray());
+        when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(Map.of(
+                "clientStateCommitment", clientStateCommitment,
+                "consensusStateCommitment", consensusStateCommitment,  
+                "height", consensusHeight.toByteArray()
+        ));
 
-        when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(response);
 
         // Act
         client.invoke(owner, "_updateClient", msg);
