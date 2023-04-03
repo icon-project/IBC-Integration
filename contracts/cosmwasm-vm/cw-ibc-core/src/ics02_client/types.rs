@@ -150,7 +150,10 @@ impl IbcClientState for ClientState {
     }
 
     fn frozen_height(&self) -> Option<ibc::Height> {
-        todo!()
+        match self.frozen_height {
+            Some(x) => Some(ibc::Height::new(x, x).unwrap()),
+            None => None,
+        }
     }
 
     fn expired(&self, elapsed: std::time::Duration) -> bool {

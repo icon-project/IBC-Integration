@@ -259,12 +259,22 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    fn store_channel(
-        &mut self,
-        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
+    pub fn store_channel(
+        &self,
+        store: &mut dyn Storage,
+        port_id: &IbcPortId,
+        channel_id: &IbcChannelId,
         channel_end: ibc::core::ics04_channel::channel::ChannelEnd,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    ) -> Result<(), ContractError> {
+        let channel_commitemtn_key = self.channel_commitment_key(port_id, channel_id);
+
+        let channel_end_bytes = to_vec(&channel_end).map_err(|error| ContractError::Std(error))?;
+
+        self.ibc_store()
+            .commitments()
+            .save(store, channel_commitemtn_key, &channel_end_bytes)?;
+
+        Ok(())
     }
 
     fn increase_channel_counter(&mut self) {
