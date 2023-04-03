@@ -231,7 +231,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             &old_client_state.latest_height(),
         )?;
 
-        let now = self.host_timestamp()?;
+        let now = self.host_timestamp(deps.as_ref().storage)?;
         let duration = now
             .duration_since(&old_consensus_state.timestamp())
             .ok_or_else(|| ClientError::InvalidConsensusStateTimestamp {
