@@ -3,20 +3,20 @@ use super::*;
 impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_open_init(
         &self,
-        message: MsgConnectionOpenInit,
         deps: DepsMut,
-        // client_id : ClientId
+        message: MsgConnectionOpenInit,
     ) -> Result<Response, ContractError> {
-        //validate
-        let _validate = match self.client_state(deps.storage, &message.client_id_on_a) {
-            Ok(validate) => validate,
-            Err(error) => return Err(error),
-        };
-        let v = get_compatible_versions();
+        let connection_identifier = self.generate_connection_idenfier(deps.storage)?;
+
+        self.client_state(deps.storage, &message.client_id_on_a.clone())?;
+
+        let client_id = ClientId::from(message.client_id_on_a.clone());
+
+        self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
 
         let versions = match message.version {
             Some(version) => {
-                if v.contains(&version) {
+                if self.get_compatible_versions().contains(&version) {
                     vec![version]
                 } else {
                     return Err(ContractError::IbcConnectionError {
@@ -24,39 +24,55 @@ impl<'a> CwIbcCoreContext<'a> {
                     });
                 }
             }
-            None => v,
+            None => self.get_compatible_versions(),
         };
-        let conn_end = ConnectionEnd::new(
+
+        let connection_end = ConnectionEnd::new(
             State::Init,
-            message.client_id_on_a.clone(),
-            Counterparty::new(
-                message.counterparty.client_id().clone(),
-                None,
-                message.counterparty.prefix().clone(),
-            ),
+            message.client_id_on_a,
+            message.counterparty.clone(),
             versions,
             message.delay_period,
         );
-        let conn_id = ConnectionId::new(self.connection_counter(deps.storage)?.try_into().unwrap());
-        let r = message.counterparty.client_id().clone();
-        let client_id_on_b = crate::ClientId::from(r);
-        let event = create_open_init_event(
-            conn_id.clone(),
-            crate::ClientId::from(message.client_id_on_a.clone()),
-            client_id_on_b,
-        );
-        let counter = match self.increase_connection_counter(deps.storage) {
-            Ok(counter) => counter,
-            Err(error) => return Err(error),
-        };
-        let client_id = ClientId::from(message.client_id_on_a.clone());
-        self.store_connection_to_client(deps.storage, client_id, conn_id.clone())?;
-        self.store_connection(deps.storage, conn_id, conn_end)
-            .unwrap();
-        return Ok(Response::new().add_event(event));
-    }
-}
 
-pub fn get_compatible_versions() -> Vec<Version> {
-    vec![Version::default()]
+        self.update_connection_commitment(
+            deps.storage,
+            connection_identifier.clone(),
+            connection_end.clone(),
+        )?;
+        self.store_connection_to_client(
+            deps.storage,
+            client_id.clone(),
+            connection_identifier.clone(),
+        )?;
+        self.store_connection(deps.storage, connection_identifier.clone(), connection_end)
+            .unwrap();
+
+        let event = create_open_init_event(
+            connection_identifier.connection_id().as_str(),
+            client_id.as_str(),
+            message.counterparty.client_id().as_str(),
+        );
+
+        return Ok(Response::new()
+            .add_attribute("method", "connection_open_init")
+            .add_attribute("connection_id", connection_identifier.as_str())
+            .add_event(event));
+    }
+
+    pub fn generate_connection_idenfier(
+        &self,
+        store: &mut dyn Storage,
+    ) -> Result<ConnectionId, ContractError> {
+        let counter = self.connection_counter(store)?;
+
+        let connection_id = ConnectionId::new(counter);
+
+        self.increase_connection_counter(store)?;
+
+        Ok(connection_id)
+    }
+    pub fn get_compatible_versions(&self) -> Vec<Version> {
+        vec![Version::default()]
+    }
 }
