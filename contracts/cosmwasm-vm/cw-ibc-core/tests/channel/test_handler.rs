@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 #[should_panic(expected = "UndefinedConnectionCounterparty")]
-fn test_validate_open_try_channel_fail_missinf_counterparty() {
+fn test_validate_open_try_channel_fail_missing_counterparty() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
@@ -159,4 +159,45 @@ fn test_execute_open_try_from_light_client() {
     let res = contract.execute_open_try_from_light_client(deps.as_mut(), info.clone(), reply);
     assert_eq!(res.is_ok(), true);
     assert_eq!(res.unwrap().messages[0], on_chan_open_try)
+}
+
+#[test]
+#[should_panic(expected = "ChannelNotFound")]
+fn test_execute_open_try_from_light_client_fail_missing_channel_end() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let raw = get_dummy_raw_msg_chan_open_try(10);
+    let msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let channel_id_on_b = ChannelId::new(0);
+
+    let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let port_id = PortId::from(msg.port_id_on_a.clone());
+    contract
+        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
+        .unwrap();
+
+    let module = Addr::unchecked("contractaddress");
+    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    contract
+        .add_route(&mut deps.storage, cx_module_id.clone(), &module)
+        .unwrap();
+
+    let expected_data = cosmwasm_std::IbcEndpoint {
+        port_id: PortId::from(msg.port_id_on_b.clone()).to_string(),
+        channel_id: channel_id_on_b.clone().to_string(),
+    };
+    let response = SubMsgResponse {
+        data: Some(to_binary(&expected_data).unwrap()),
+        events: vec![Event::new("action").add_attribute("action", "channel open try execution")],
+    };
+    let result: SubMsgResult = SubMsgResult::Ok(response);
+    let reply = Reply {
+        id: EXECUTE_ON_CHANNEL_OPEN_TRY,
+        result,
+    };
+
+    contract
+        .execute_open_try_from_light_client(deps.as_mut(), info.clone(), reply)
+        .unwrap();
 }

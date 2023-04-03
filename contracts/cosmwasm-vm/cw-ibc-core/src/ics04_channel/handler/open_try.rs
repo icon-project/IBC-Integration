@@ -91,7 +91,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Err(error) => return Err(error),
                     };
 
-                    // Generate event for calling on channel open init in x-call
+                    // Generate event for calling on channel open try in x-call
                     let sub_message = on_chan_open_try_submessage(
                         &channel_end,
                         &port_id,
