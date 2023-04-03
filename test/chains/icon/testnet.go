@@ -92,7 +92,7 @@ func (it *IconTestnet) GetLastBlock(ctx context.Context) (context.Context, error
 }
 
 // QueryContract implements chains.Chain
-func (*IconTestnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
+func (*IconTestnet) QueryContract(ctx context.Context) (context.Context, error) {
 	panic("unimplemented")
 }
 
