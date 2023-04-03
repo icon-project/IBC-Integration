@@ -1,17 +1,14 @@
 use super::*;
 
 pub fn create_open_init_event(
-    connection_id: ConnectionId,
-    client_id: ClientId,
-    counterparty_client_id: ClientId,
+    connection_id: &str,
+    client_id: &str,
+    counterparty_client_id: &str,
 ) -> Event {
     Event::new(IbcEventType::OpenInitConnection.as_str())
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_id.as_str())
-        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
-        .add_attribute(
-            COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,
-            counterparty_client_id.as_str(),
-        )
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_id)
+        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id)
+        .add_attribute(COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY, counterparty_client_id)
 }
 
 pub fn create_open_try_event(
