@@ -127,8 +127,10 @@ impl UpgradeClientResponse {
         }
     }
 
-    pub fn client_id(&self) -> ClientId {
-        ClientId::from_str(&self.client_id).unwrap()
+    pub fn client_id(&self) -> Result<ClientId, ContractError> {
+        ClientId::from_str(&self.client_id).map_err(|error| ContractError::IbcClientError {
+            error: ClientError::InvalidClientIdentifier(error),
+        })
     }
 
     pub fn client_state_commitment(&self) -> &[u8] {
@@ -415,23 +417,19 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 Some(data) => {
                     let response: UpgradeClientResponse =
                         from_binary(&data).map_err(|error| ContractError::Std(error))?;
-                    let client_id = ClientId::from_str(&response.client_id).map_err(|error| {
-                        ContractError::IbcClientError {
-                            error: ClientError::InvalidClientIdentifier(error),
-                        }
-                    })?;
+                    let client_id = response.client_id()?;
 
                     self.store_client_state(
                         deps.storage,
                         client_id.ibc_client_id(),
-                        response.client_state_commitment.clone(),
+                        response.client_state_commitment().to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
                         client_id.ibc_client_id(),
                         response.height(),
-                        response.consesnus_state_commitment.clone(),
+                        response.consesnus_state_commitment().to_vec(),
                     )?;
 
                     let client_type = ClientType::from(client_id.clone());
@@ -449,7 +447,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 }
                 None => Err(ContractError::IbcClientError {
                     error: ClientError::Other {
-                        description: "UNKNOWN ERROR".to_string(),
+                        description: "Invalid Response Data".to_string(),
                     },
                 }),
             },
