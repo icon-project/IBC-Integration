@@ -1,9 +1,9 @@
 package ibc.icon.interfaces;
 
 import foundation.icon.score.client.ScoreInterface;
-import ibc.icon.structs.messages.UpdateClientResponse;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 /**
  * This defines an interface for Light Client contract can be integrated with ibc-solidity. You can register the
@@ -15,7 +15,7 @@ public interface ILightClient {
      * createClient creates a new client with the given state. If succeeded, it returns a commitment for the initial
      * state.
      */
-    UpdateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes);
+    Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes);
 
     /**
      * getTimestampAtHeight returns the timestamp of the consensus state at the given height.
@@ -39,7 +39,7 @@ public interface ILightClient {
      * 4. update state(s) with the client message
      * 5. persist the state(s) on the host
      */
-    UpdateClientResponse updateClient(String clientId, byte[] clientMessageBytes);
+    Map<String, byte[]> updateClient(String clientId, byte[] clientMessageBytes);
 
     /**
      * verifyMembership is a generic proof verification method which verifies a proof of the existence of a value at

@@ -35,6 +35,9 @@ type Block struct {
 func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// var result *types.TransactionResult
 	// var output string
+func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
+	// var result *types.TransactionResult
+	// var output string
 
 	// Build Params
 	// "--param", initMessage
@@ -54,14 +57,32 @@ func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (cont
 	// }
 	// json.Unmarshal(hash, &output)
 	// time.Sleep(3 * time.Second)
+	// hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths["bmc"], "--param", it.initMessage,
+	// 	"--key_store", it.keystorePath, "--key_password", it.keyPassword, "--step_limit", it.defaultStepLimit,
+	// 	"--content_type", "application/java",
+	// 	"--uri", it.url, "--nid", it.nid).Output()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// json.Unmarshal(hash, &output)
+	// time.Sleep(3 * time.Second)
 
+	// out, err := exec.Command(it.bin, "rpc", "txresult", output, "--uri", it.url).Output()
+	// if err != nil {
+	// 	return nil, err
+	// }
 	// out, err := exec.Command(it.bin, "rpc", "txresult", output, "--uri", it.url).Output()
 	// if err != nil {
 	// 	return nil, err
 	// }
 
 	// json.Unmarshal(out, &result)
+	// json.Unmarshal(out, &result)
 
+	// return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
+	// 	ContractAddress: string(result.SCOREAddress),
+	// }), nil
+	return nil, nil
 	// return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
 	// 	ContractAddress: string(result.SCOREAddress),
 	// }), nil
@@ -92,6 +113,7 @@ func (it *IconTestnet) GetLastBlock(ctx context.Context) (context.Context, error
 }
 
 // QueryContract implements chains.Chain
+func (*IconTestnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
 func (*IconTestnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
 	panic("unimplemented")
 }

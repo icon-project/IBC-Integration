@@ -329,7 +329,13 @@ func (c *IconLocalnet) GetBalance(ctx context.Context, address string, denom str
 
 // DeployContract implements chains.Chain
 func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
+func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// TODO get scorepath
+	// scoreAddress, _ := c.getFullNode().DeployContract(ctx, c.scorePaths["bmc"], c.keystorePath, c.initMessage)
+	// return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
+	// 	ContractAddress: string(scoreAddress),
+	// }), nil
+	return nil, nil
 	// scoreAddress, _ := c.getFullNode().DeployContract(ctx, c.scorePaths["bmc"], c.keystorePath, c.initMessage)
 	// return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
 	// 	ContractAddress: string(scoreAddress),
@@ -354,6 +360,7 @@ func (c *IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error
 }
 
 // QueryContract implements chains.Chain
+func (*IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
 func (*IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
 	panic("unimplemented")
 }

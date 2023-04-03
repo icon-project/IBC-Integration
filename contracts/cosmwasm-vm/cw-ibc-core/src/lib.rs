@@ -22,10 +22,24 @@ use crate::{
     types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
 };
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Deps, DepsMut, StdError};
-use cw_storage_plus::{Item, Map};
-use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
-use ibc::core::ics24_host::error::ValidationError;
+use cosmwasm_std::{
+    entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
+    StdResult,
+};
+
+use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};
+pub use ibc::core::ics04_channel::msgs::{
+    chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
+    chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
+    chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
+};
+
+use ibc::core::{
+    ics02_client::error::ClientError,
+    ics04_channel::error::{ChannelError, PacketError},
+    ics05_port::error::PortError,
+    ContextError,
+};
 pub use ibc::core::{
     ics02_client::{
         client_type::ClientType as IbcClientType,
@@ -44,8 +58,48 @@ pub use ibc::core::{
     ics26_routing::context::ModuleId as IbcModuleId,
     ics26_routing::context::{Module, ModuleId},
 };
+use ics04_channel::context::CwIbcCoreContext;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Error as FmtError, Formatter},
     str::FromStr,
 };
+use thiserror::Error;
+
+#[entry_point]
+pub fn instantiate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: msg::InstantiateMsg,
+) -> Result<Response, ContractError> {
+    let call_service = CwIbcCoreContext::default();
+
+    call_service.instantiate(deps, env, info, msg)
+}
+
+#[entry_point]
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: msg::ExecuteMsg,
+) -> Result<Response, ContractError> {
+    let mut call_service = CwIbcCoreContext::default();
+
+    call_service.execute(deps, env, info, msg)
+}
+
+#[entry_point]
+pub fn query(deps: Deps, env: Env, msg: msg::QueryMsg) -> StdResult<Binary> {
+    let call_service = CwIbcCoreContext::default();
+
+    call_service.query(deps, env, msg)
+}
+
+#[entry_point]
+pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
+    let call_service = CwIbcCoreContext::default();
+
+    call_service.reply(deps, env, msg)
+}

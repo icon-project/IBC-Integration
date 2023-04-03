@@ -1,13 +1,9 @@
 use super::*;
 
-pub fn create_client_event(
-    client_id: IbcClientId,
-    client_type: IbcClientType,
-    consensus_height: Height,
-) -> Event {
+pub fn create_client_event(client_id: &str, client_type: &str, consensus_height: &str) -> Event {
     Event::new(IbcEventType::CreateClient.as_str())
-        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
-        .add_attribute(CLIENT_TYPE_ATTRIBUTE_KEY, client_type.as_str())
+        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id)
+        .add_attribute(CLIENT_TYPE_ATTRIBUTE_KEY, client_type)
         .add_attribute(CONSENSUS_HEIGHT_ATTRIBUTE_KEY, consensus_height)
 }
 
@@ -15,7 +11,7 @@ pub fn update_client_event(
     client_type: IbcClientType,
     consensus_height: Height,
     consensus_heights: Vec<Height>,
-    message: MsgUpdateClient,
+    client_id: &IbcClientId,
 ) -> Event {
     let consensus_heights: Vec<String> = consensus_heights
         .into_iter()
@@ -23,7 +19,7 @@ pub fn update_client_event(
         .collect();
 
     Event::new(IbcEventType::UpdateClient.as_str())
-        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, message.client_id.as_str())
+        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
         .add_attribute(CLIENT_TYPE_ATTRIBUTE_KEY, client_type.as_str())
         .add_attribute(CONSENSUS_HEIGHT_ATTRIBUTE_KEY, consensus_height)
         .add_attribute(CONSENSUS_HEIGHTS_ATTRIBUTE_KEY, consensus_heights.join(","))
