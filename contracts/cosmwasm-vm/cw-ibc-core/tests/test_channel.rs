@@ -1087,8 +1087,8 @@ fn test_validate_open_try_channel() {
 }
 
 #[test]
-#[should_panic(expected = "error: UnknownPort { port_id: PortId(\"defaultPort\")")]
-fn test_validate_open_try_channel_fail_missing_module_id() {
+#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
+fn test_validate_open_try_channel_fail_missing_client_state() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
