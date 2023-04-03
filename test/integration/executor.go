@@ -1,10 +1,8 @@
 package integration
-package integration
 
 import (
 	"context"
 	"fmt"
-	"strings"
 	"strings"
 	"testing"
 
@@ -82,7 +80,6 @@ func (e *Executor) isTheContractOwner(owner, contractName string) (err error) {
 func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
 	var err error
 	switch e.cfg.Chain.ChainConfig.Type {
-	switch e.cfg.Chain.ChainConfig.Type {
 	case "icon":
 		e.chain, err = icon.NewIconChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.Chain.NID, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger, e.cfg.InitMessage)
 	case "cosmos":
@@ -94,9 +91,6 @@ func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
 	if err != nil {
 		return nil, err
 	}
-	// To Make sure that chain is running
-	ctx, _ := e.chain.GetLastBlock(e.ctx)
-	fmt.Printf("Chain is running. Current Chain height: %d \n", ctx.Value(chains.LastBlock{}).(uint64))
 	// To Make sure that chain is running
 	ctx, _ := e.chain.GetLastBlock(e.ctx)
 	fmt.Printf("Chain is running. Current Chain height: %d \n", ctx.Value(chains.LastBlock{}).(uint64))
