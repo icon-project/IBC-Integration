@@ -1,28 +1,28 @@
 use std::time::Duration;
 
 pub mod setup;
+use cosmwasm_std::to_vec;
+use cw_ibc_core::context::CwIbcCoreContext;
+use cw_ibc_core::ics02_client::types::ClientState;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
 use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
 use cw_ibc_core::ics03_connection::event::create_open_try_event;
-use ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
-use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
-use ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
-use ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
-use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
-use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
-use ibc::events::IbcEventType;
-use setup::*;
-
-use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::types::ClientId;
 use cw_ibc_core::types::ConnectionId;
 use cw_ibc_core::ConnectionEnd;
 use cw_ibc_core::IbcClientId;
 use ibc::core::ics03_connection::connection::Counterparty;
 use ibc::core::ics03_connection::connection::State;
+use ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
+use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
+use ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
+use ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
+use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::core::ics03_connection::version::Version;
+use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
+use ibc::events::IbcEventType;
 use ibc_proto::ibc::core::client::v1::Height;
 use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterparty;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
@@ -31,6 +31,7 @@ use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
+use setup::*;
 
 #[test]
 fn test_set_connection() {
@@ -79,7 +80,7 @@ fn test_connection_sequence() {
     let mut store = deps();
     let contract = CwIbcCoreContext::new();
     contract
-        .connection_next_sequence_init(store.as_mut().storage, u128::default())
+        .connection_next_sequence_init(store.as_mut().storage, u64::default())
         .unwrap();
     let result = contract.connection_counter(store.as_ref().storage).unwrap();
 
@@ -134,7 +135,7 @@ fn test_set_connection_fail() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
+#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
 fn test_connection_sequence_fail() {
     let store = deps();
     let contract = CwIbcCoreContext::new();
@@ -357,11 +358,86 @@ fn connection_open_confirm_invalid_proof_height() {
 }
 
 #[test]
+fn connection_open_init() {
+    let mut deps = deps();
+
+    let message = RawMsgConnectionOpenInit {
+        client_id: "client_id_on_a".to_string(),
+        counterparty: Some(get_dummy_raw_counterparty(None)),
+        version: None,
+        delay_period: 0,
+        signer: get_dummy_bech32_account(),
+    };
+
+    let res_msg =
+        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+            message.clone(),
+        )
+        .unwrap();
+
+    let contract = CwIbcCoreContext::new();
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let cl = to_vec(&client_state);
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &res_msg.client_id_on_a.clone(),
+            cl.unwrap(),
+        )
+        .unwrap();
+    contract
+        .client_state(&mut deps.storage, &res_msg.client_id_on_a)
+        .unwrap();
+    contract
+        .connection_next_sequence_init(&mut deps.storage, u64::default())
+        .unwrap();
+
+    let res = contract.connection_open_init(deps.as_mut(), res_msg);
+    assert_eq!(res.is_ok(), true);
+}
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
+fn test_validate_open_init_connection_fail() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let message = RawMsgConnectionOpenInit {
+        client_id: "client_id_on_a".to_string(),
+        counterparty: Some(get_dummy_raw_counterparty(None)),
+        version: None,
+        delay_period: 0,
+        signer: get_dummy_bech32_account(),
+    };
+    let res_msg =
+        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+            message.clone(),
+        )
+        .unwrap();
+    contract
+        .connection_open_init(deps.as_mut(), res_msg)
+        .unwrap();
+}
+
+#[test]
 fn create_connection_open_init_event() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
+    let event = create_open_init_event(
+        connection_id.as_str(),
+        client_id.as_str(),
+        counterparty_client_id.as_str(),
+    );
     assert_eq!(IbcEventType::OpenInitConnection.as_str(), event.ty);
     assert_eq!("connection-10", event.attributes[0].value);
     assert_eq!("07-tendermint-0", event.attributes[1].value);
@@ -422,7 +498,11 @@ fn connection_to_verify_correct_connection_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
+    let event = create_open_init_event(
+        connection_id.as_str(),
+        client_id.as_str(),
+        counterparty_client_id.as_str(),
+    );
     let attribute = event
         .attributes
         .iter()
@@ -436,7 +516,11 @@ fn connection_to_verify_correct_client_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
+    let event = create_open_init_event(
+        connection_id.as_str(),
+        client_id.as_str(),
+        counterparty_client_id.as_str(),
+    );
     let attribute = event
         .attributes
         .iter()
@@ -450,7 +534,11 @@ fn connection_to_verify_correct_counterparty_client_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    let event = create_open_init_event(connection_id, client_id, counterparty_client_id);
+    let event = create_open_init_event(
+        connection_id.as_str(),
+        client_id.as_str(),
+        counterparty_client_id.as_str(),
+    );
     let attribute = event
         .attributes
         .iter()
