@@ -67,8 +67,11 @@ func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, met
 
 func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodaName, param string) (context.Context, error) {
 	// get param for executing a method in the contract
-	ctx, params := c.GetExecuteParam(ctx, methodaName, param)
-	err := c.CosmosChain.ExecuteContract(ctx, keyName, contractAddress, params)
+	ctx, params, err := c.GetExecuteParam(ctx, methodaName, param)
+	if err != nil {
+		return ctx, err
+	}
+	err = c.CosmosChain.ExecuteContract(ctx, keyName, contractAddress, params)
 	return ctx, err
 }
 
@@ -85,44 +88,28 @@ func (c *CosmosLocalnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.
 	return nil, nil
 }
 
-func (c *CosmosLocalnet) SetAdminParams(ctx context.Context, keyName string) (context.Context, string) {
+func (c *CosmosLocalnet) SetAdminParams(ctx context.Context, keyName string) (context.Context, string, error) {
 	var admin Admin
 	var admins chains.Admins
 	originalJSON := `{"set_admin":{"address":""}}`
 	json.Unmarshal([]byte(originalJSON), &admin)
 
-	// Check if an wallet is already created for given key
+	// Check if the given wallet exists if not create a wallet
 	addr, err := c.CosmosChain.GetAddress(ctx, keyName)
-	adminAddr, _ := types.Bech32ifyAddressBytes(c.CosmosChain.Config().Bech32Prefix, addr)
 	if err != nil {
-		adminWallet, _ := c.CosmosChain.BuildWallet(ctx, keyName, "")
-		adminKey := adminWallet.FormattedAddress()
-		// fund admin wallet
-		c.BuildWallets(ctx, adminWallet.KeyName())
-		// Update the value of the "address" key
-		admin.SetAdmin.Address = adminKey
-		// Marshal the struct back into JSON
-		updatedJSON, _ := json.Marshal(admin)
-		// Print the updated JSON string
-		fmt.Println(string(updatedJSON))
-		admins.Admin = map[string]string{
-			keyName: adminKey,
-		}
-		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
-			Admin: admins.Admin,
-		}), string(updatedJSON)
-	} else {
-		admin.SetAdmin.Address = adminAddr
-		updatedJSON, _ := json.Marshal(admin)
-		fmt.Println(string(updatedJSON))
-		admins.Admin = map[string]string{
-			keyName: adminAddr,
-		}
-		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
-			Admin: admins.Admin,
-		}), string(updatedJSON)
+		c.BuildWallets(ctx, keyName)
+		addr, _ = c.CosmosChain.GetAddress(ctx, keyName)
 	}
-
+	adminAddr, _ := types.Bech32ifyAddressBytes(c.CosmosChain.Config().Bech32Prefix, addr)
+	admin.SetAdmin.Address = adminAddr
+	updatedJSON, _ := json.Marshal(admin)
+	fmt.Println(string(updatedJSON))
+	admins.Admin = map[string]string{
+		keyName: adminAddr,
+	}
+	return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+		Admin: admins.Admin,
+	}), string(updatedJSON), nil
 }
 
 func (c *CosmosLocalnet) GetQueryParam(method string) Query {
@@ -135,14 +122,15 @@ func (c *CosmosLocalnet) GetQueryParam(method string) Query {
 	return queryMsg
 }
 
-func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodaName, param string) (context.Context, string) {
+func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodaName, param string) (context.Context, string, error) {
 	if strings.Contains(methodaName, "admin") {
 		return c.SetAdminParams(ctx, param)
 	}
-	return ctx, ""
+	return ctx, "", nil
 }
 
 func (c *CosmosLocalnet) BuildWallets(ctx context.Context, keyName string) error {
+	// Build Wallet and fund user
 	_, err := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
 	return err
 }
@@ -153,8 +141,8 @@ func (c *CosmosLocalnet) GetAndFundTestUser(
 	amount int64,
 	chain ibc.Chain,
 ) (string, error) {
-	addr, err := c.CosmosChain.GetAddress(ctx, keyNamePrefix)
-	adminAddr, _ := types.Bech32ifyAddressBytes(c.CosmosChain.Config().Bech32Prefix, addr)
+	// Check if the address for the given key is already created
+	_, err := c.CosmosChain.GetAddress(ctx, keyNamePrefix)
 	if err != nil {
 		chainCfg := c.CosmosChain.Config()
 		user, err := chain.BuildWallet(ctx, keyNamePrefix, "")
@@ -170,13 +158,9 @@ func (c *CosmosLocalnet) GetAndFundTestUser(
 		if err != nil {
 			return "", fmt.Errorf("failed to get funds from faucet: %w", err)
 		}
+		fmt.Printf("Address of %s is : %s \n", user.KeyName(), user.FormattedAddress())
 		return user.KeyName(), nil
 	} else {
-		err = chain.SendFunds(ctx, chains.FaucetAccountKeyName, ibc.WalletAmount{
-			Address: adminAddr,
-			Amount:  amount,
-			Denom:   c.CosmosChain.Config().Denom,
-		})
 		return keyNamePrefix, err
 	}
 }
