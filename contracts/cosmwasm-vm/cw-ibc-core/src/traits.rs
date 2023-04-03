@@ -90,13 +90,11 @@ pub trait ExecuteChannel {
         &self,
         deps: DepsMut,
         message: Reply,
-        // message: &MsgChannelOpenInit,
     ) -> Result<Response, ContractError>;
 
     fn execute_channel_open_try(
         &self,
         deps: DepsMut,
         message: Reply,
-        // message: &MsgChannelOpenInit,
     ) -> Result<Response, ContractError>;
 }
