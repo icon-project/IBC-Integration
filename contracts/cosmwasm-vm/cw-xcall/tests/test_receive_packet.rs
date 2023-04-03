@@ -65,8 +65,6 @@ fn test_receive_packet_for_call_message_request() {
 
     let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
 
-    // let result = contract.receive_packet_data(mock_deps.as_mut(), packet);
-
     assert!(result.is_ok());
 
     let result = result.unwrap();
