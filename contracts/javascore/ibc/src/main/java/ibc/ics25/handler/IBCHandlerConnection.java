@@ -8,7 +8,7 @@ import ibc.icon.structs.messages.MsgConnectionOpenTry;
 import score.annotation.EventLog;
 import score.annotation.External;
 
-public abstract class IBCHandlerConnection extends IBCHandlerClient implements IIBCConnection {
+public class IBCHandlerConnection extends IBCHandlerClient implements IIBCConnection {
 
     @EventLog(indexed = 1)
     public void ConnectionOpenInit(String clientId, String connectionId, byte[] counterparty) {
@@ -27,19 +27,15 @@ public abstract class IBCHandlerConnection extends IBCHandlerClient implements I
     }
 
     @External
-    public String connectionOpenInit(MsgConnectionOpenInit msg) {
+    public void connectionOpenInit(MsgConnectionOpenInit msg) {
         String id = _connectionOpenInit(msg);
-        ConnectionOpenInit(msg.getClientId(), id, msg.getCounterpartyRaw());
-
-        return id;
+        ConnectionOpenInit(msg.getClientId(), id, msg.getCounterparty());
     }
 
     @External
-    public String connectionOpenTry(MsgConnectionOpenTry msg) {
+    public void connectionOpenTry(MsgConnectionOpenTry msg) {
         String id = _connectionOpenTry(msg);
-        ConnectionOpenTry(msg.getClientId(), id, msg.getCounterpartyRaw());
-
-        return id;
+        ConnectionOpenTry(msg.getClientId(), id, msg.getCounterparty());
     }
 
     @External

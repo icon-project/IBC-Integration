@@ -20,7 +20,7 @@ import score.Context;
 public class IBCChannelHandshake extends IBCConnection {
 
     public String _channelOpenInit(MsgChannelOpenInit msg) {
-        Channel channel = msg.getChannel();
+        Channel channel = Channel.decode(msg.getChannel());
         Context.require(channel.getConnectionHops().size() == 1, "connection_hops length must be 1");
 
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
@@ -38,18 +38,18 @@ public class IBCChannelHandshake extends IBCConnection {
         // TODO: authenticates a port binding
 
         String channelId = generateChannelIdentifier();
-        channels.at(msg.getPortId()).set(channelId, msg.getChannelRaw());
+        channels.at(msg.getPortId()).set(channelId, msg.getChannel());
         nextSequenceSends.at(msg.getPortId()).set(channelId, BigInteger.ONE);
         nextSequenceReceives.at(msg.getPortId()).set(channelId, BigInteger.ONE);
         nextSequenceAcknowledgements.at(msg.getPortId()).set(channelId, BigInteger.ONE);
 
-        updateChannelCommitment(connection.getClientId(), msg.getPortId(), channelId, msg.getChannelRaw());
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), channelId, msg.getChannel());
 
         return channelId;
     }
 
     public String _channelOpenTry(MsgChannelOpenTry msg) {
-        Channel channel = msg.getChannel();
+        Channel channel = Channel.decode(msg.getChannel());
         Context.require(channel.getConnectionHops().size() == 1, "connection_hops length must be 1");
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
         Context.require(connectionPb != null, "connection does not exist");
@@ -78,19 +78,19 @@ public class IBCChannelHandshake extends IBCConnection {
 
         verifyChannelState(
                 connection,
-                msg.getProofHeightRaw(),
+                msg.getProofHeight(),
                 msg.getProofInit(),
                 channel.getCounterparty().getPortId(),
                 channel.getCounterparty().getChannelId(),
                 expectedChannel);
 
         String channelId = generateChannelIdentifier();
-        channels.at(msg.getPortId()).set(channelId, msg.getChannelRaw());
+        channels.at(msg.getPortId()).set(channelId, msg.getChannel());
         nextSequenceSends.at(msg.getPortId()).set(channelId, BigInteger.ONE);
         nextSequenceReceives.at(msg.getPortId()).set(channelId, BigInteger.ONE);
         nextSequenceAcknowledgements.at(msg.getPortId()).set(channelId, BigInteger.ONE);
 
-        updateChannelCommitment(connection.getClientId(), msg.getPortId(), channelId, msg.getChannelRaw());
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), channelId, msg.getChannel());
 
         return channelId;
     }
@@ -127,7 +127,7 @@ public class IBCChannelHandshake extends IBCConnection {
 
         verifyChannelState(
                 connection,
-                msg.getProofHeightRaw(),
+                msg.getProofHeight(),
                 msg.getProofTry(),
                 channel.getCounterparty().getPortId(),
                 msg.getCounterpartyChannelId(),
@@ -169,7 +169,7 @@ public class IBCChannelHandshake extends IBCConnection {
         expectedChannel.setVersion(channel.getVersion());
         verifyChannelState(
                 connection,
-                msg.getProofHeightRaw(),
+                msg.getProofHeight(),
                 msg.getProofAck(),
                 channel.getCounterparty().getPortId(),
                 channel.getCounterparty().getChannelId(),
@@ -235,7 +235,7 @@ public class IBCChannelHandshake extends IBCConnection {
 
         verifyChannelState(
                 connection,
-                msg.getProofHeightRaw(),
+                msg.getProofHeight(),
                 msg.getProofInit(),
                 channel.getCounterparty().getPortId(),
                 channel.getCounterparty().getChannelId(),

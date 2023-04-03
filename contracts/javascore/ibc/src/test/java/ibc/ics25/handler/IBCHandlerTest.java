@@ -219,7 +219,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         msg.setProof(new byte[0]);
         msg.setProofHeight(baseHeight.toByteArray());
 
-        when(module.mock.onRecvPacket(msg.getPacketRaw(), relayer.getAddress())).thenReturn(new byte[0]);
+        when(module.mock.onRecvPacket(msg.getPacket(), relayer.getAddress())).thenReturn(new byte[0]);
 
         // Act
         handler.invoke(owner, "setExpectedTimePerBlock", expectedTimePerBlock);
