@@ -871,7 +871,8 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
 pub fn test_create_close_init_channel_event() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
-    let event = create_close_init_channel_event(&msg);
+    let event =
+        create_close_init_channel_event(&msg.port_id_on_a.as_str(), &msg.chan_id_on_a.as_str());
 
     assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
 }

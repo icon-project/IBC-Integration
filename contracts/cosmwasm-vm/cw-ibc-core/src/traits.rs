@@ -73,6 +73,7 @@ pub trait ValidateChannel {
     fn validate_channel_close_init(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: &MsgChannelCloseInit,
     ) -> Result<Response, ContractError>;
 
@@ -96,5 +97,12 @@ pub trait ExecuteChannel {
         &self,
         deps: DepsMut,
         message: Reply,
+    ) -> Result<Response, ContractError>;
+
+    fn execute_channel_close_init(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+        // message: &MsgChannelOpenInit,
     ) -> Result<Response, ContractError>;
 }
