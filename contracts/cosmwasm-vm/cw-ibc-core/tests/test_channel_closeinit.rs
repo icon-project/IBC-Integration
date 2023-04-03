@@ -1,10 +1,12 @@
 pub mod setup;
-use cw_ibc_core::ics04_channel::close_init::on_chan_close_init_submessage;
+use cw_ibc_core::ics04_channel::close_init::{
+    channel_close_init_validate, on_chan_close_init_submessage,
+};
 use setup::*;
 
 use std::{str::FromStr, time::Duration};
 
-use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse, SubMsgResult};
+use cosmwasm_std::{to_binary, Addr, Event, IbcOrder, Reply, SubMsgResponse, SubMsgResult};
 use cw_ibc_core::ics04_channel::open_init::create_channel_submesssage;
 use cw_ibc_core::ics04_channel::EXECUTE_ON_CHANNEL_CLOSE_INIT;
 use cw_ibc_core::traits::*;
@@ -111,19 +113,15 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
-
     let module = Addr::unchecked("contractaddress");
     let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
-
     let connection_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
-
     let channel_id = ChannelId::from(msg.chan_id_on_a.clone());
     let port_id = PortId::from(msg.port_id_on_a.clone());
-
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
@@ -134,7 +132,6 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
         connection_hops: vec![connection_id.connection_id().clone()],
         version: Version::new("xcall".to_string()),
     };
-
     contract
         .store_channel_end(&mut deps.storage, port_id, channel_id, channel_end.clone())
         .unwrap();
@@ -156,19 +153,15 @@ fn test_execute_close_init_channel() {
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
-
     let module = Addr::unchecked("contractaddress");
     let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
-
     let connection_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
-
     let channel_id = ChannelId::from(msg.chan_id_on_a.clone());
     let port_id = PortId::from(msg.port_id_on_a.clone());
-
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
@@ -179,7 +172,6 @@ fn test_execute_close_init_channel() {
         connection_hops: vec![connection_id.connection_id().clone()],
         version: Version::new("xcall".to_string()),
     };
-
     contract
         .store_channel_end(
             &mut deps.storage,
@@ -188,12 +180,10 @@ fn test_execute_close_init_channel() {
             channel_end.clone(),
         )
         .unwrap();
-
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.ibc_port_id().clone().to_string(),
         channel_id: channel_id.ibc_channel_id().clone().to_string(),
     };
-
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
         events: vec![Event::new("Action").add_attribute("method", "channel_close_init")],
@@ -208,7 +198,6 @@ fn test_execute_close_init_channel() {
     assert!(result.is_ok());
 }
 
-
 #[test]
 #[should_panic(expected = "ChannelNotFound")]
 fn test_execute_close_init_channel_fail() {
@@ -222,21 +211,17 @@ fn test_execute_close_init_channel_fail() {
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
-
     let module = Addr::unchecked("contractaddress");
     let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
-
     let channel_id = ChannelId::from(msg.chan_id_on_a.clone());
     let port_id = PortId::from(msg.port_id_on_a.clone());
-
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.ibc_port_id().clone().to_string(),
         channel_id: channel_id.ibc_channel_id().clone().to_string(),
     };
-
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
         events: vec![Event::new("Action").add_attribute("method", "channel_close_init")],
@@ -247,5 +232,77 @@ fn test_execute_close_init_channel_fail() {
         result,
     };
 
-    contract.execute_channel_close_init(deps.as_mut(), reply).unwrap();
+    contract
+        .execute_channel_close_init(deps.as_mut(), reply)
+        .unwrap();
+}
+
+#[test]
+fn test_channel_close_init_validate() {
+    let raw = get_dummy_raw_msg_chan_close_init();
+    let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
+    let connection_id = ConnectionId::new(5);
+    let channel_id = ChannelId::from(msg.chan_id_on_a.clone());
+    let port_id = PortId::from(msg.port_id_on_a.clone());
+    let channel_end = ChannelEnd {
+        state: State::Open,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: port_id.ibc_port_id().clone(),
+            channel_id: Some(channel_id.ibc_channel_id().clone()),
+        },
+        connection_hops: vec![connection_id.connection_id().clone()],
+        version: Version::new("xcall".to_string()),
+    };
+    let channel_close_init_validate = channel_close_init_validate(&channel_end, &msg);
+
+    assert!(channel_close_init_validate.is_ok())
+}
+
+#[test]
+#[should_panic(expected = "InvalidChannelState")]
+fn test_channel_close_init_validate_fail() {
+    let raw = get_dummy_raw_msg_chan_close_init();
+    let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
+    let connection_id = ConnectionId::new(5);
+    let channel_id = ChannelId::from(msg.chan_id_on_a.clone());
+    let port_id = PortId::from(msg.port_id_on_a.clone());
+    let channel_end = ChannelEnd {
+        state: State::Closed,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: port_id.ibc_port_id().clone(),
+            channel_id: Some(channel_id.ibc_channel_id().clone()),
+        },
+        connection_hops: vec![connection_id.connection_id().clone()],
+        version: Version::new("xcall".to_string()),
+    };
+    channel_close_init_validate(&channel_end, &msg).unwrap();
+}
+
+#[test]
+fn test_on_chan_close_init_submessage() {
+    let raw = get_dummy_raw_msg_chan_close_init();
+    let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
+    let connection_id = ConnectionId::new(5);
+    let channel_id = ChannelId::from(msg.chan_id_on_a.clone());
+    let port_id = PortId::from(msg.port_id_on_a.clone());
+    let channel_end = ChannelEnd {
+        state: State::Open,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: port_id.ibc_port_id().clone(),
+            channel_id: Some(channel_id.ibc_channel_id().clone()),
+        },
+        connection_hops: vec![connection_id.connection_id().clone()],
+        version: Version::new("xcall".to_string()),
+    };
+    let channel_close_init_validate =
+        on_chan_close_init_submessage(&msg, &channel_end, &connection_id);
+
+    assert_eq!("xcall", channel_close_init_validate.channel().version);
+    assert_eq!(
+        IbcOrder::Unordered,
+        channel_close_init_validate.channel().order
+    );
 }
