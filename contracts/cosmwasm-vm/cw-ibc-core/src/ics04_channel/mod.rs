@@ -5,6 +5,8 @@ pub mod events;
 pub use events::*;
 pub mod handler;
 pub use handler::*;
+pub mod chan_types;
+pub use chan_types::*;
 
 pub use super::*;
 use crate::context::CwIbcCoreContext;
@@ -28,8 +30,10 @@ use ibc::core::{
 };
 use ibc::events::IbcEventType;
 pub use traits::*;
+pub use crate::types::*;
 
 use ibc::core::ics03_connection::connection::State as ConnectionState;
 // Constants for Reply messages
 pub const EXECUTE_ON_CHANNEL_OPEN_INIT: u64 = 41;
 pub const EXECUTE_ON_CHANNEL_OPEN_TRY: u64 = 42;
+pub const EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT: u64 = 421;

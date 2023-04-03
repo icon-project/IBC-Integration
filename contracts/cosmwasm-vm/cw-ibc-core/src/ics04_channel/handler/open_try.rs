@@ -28,20 +28,19 @@ pub fn channel_open_try_msg_validate(
         });
     }
 
-    // TODO verification 
-
     Ok(())
 }
 
 pub fn on_chan_open_try_submessage(
-    msg: &MsgChannelOpenTry,
+    msg: &ChannelEnd,
+    port_id: &PortId,
     channel_id: &ChannelId,
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = port_id.clone();
     let channel_id = channel_id.ibc_channel_id();
-    let counter_party_port_id = msg.port_id_on_a.clone();
-    let counter_party_channel = msg.chan_id_on_a.clone();
+    let counter_party_port_id = msg.counterparty().port_id.clone();
+    let counter_party_channel = msg.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),
@@ -54,12 +53,78 @@ pub fn on_chan_open_try_submessage(
         endpoint,
         counter_party,
         cosmwasm_std::IbcOrder::Unordered,
-        msg.version_supported_on_a.to_string(),
+        msg.version.to_string(),
         connection_id.connection_id().to_string(),
     );
     let data = cosmwasm_std::IbcChannelOpenMsg::OpenTry {
         channel: ibc_channel,
-        counterparty_version: msg.version_supported_on_a.to_string(),
+        counterparty_version: msg.version.to_string(),
     };
     data
+}
+
+impl<'a> CwIbcCoreContext<'a> {
+    pub fn execute_open_try_from_light_client(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
+                Some(res) => {
+                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
+                    let channel_id =
+                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let channel_end =
+                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    // Getting the module address for on channel open try call
+                    let module_id = match self.lookup_module_by_port(deps.storage, port_id.clone())
+                    {
+                        Ok(addr) => addr,
+                        Err(error) => return Err(error),
+                    };
+                    let module_id = types::ModuleId::from(module_id);
+                    let contract_address = match self.get_route(deps.storage, module_id) {
+                        Ok(addr) => addr,
+                        Err(error) => return Err(error),
+                    };
+
+                    // Generate event for calling on channel open init in x-call
+                    let sub_message = on_chan_open_try_submessage(
+                        &channel_end,
+                        &port_id,
+                        &channel_id,
+                        &channel_end.connection_hops[0].clone().into(),
+                    );
+                    let data = cw_xcall::msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
+                    let data = to_binary(&data).unwrap();
+                    let on_chan_open_try = create_channel_submesssage(
+                        contract_address.to_string(),
+                        data,
+                        &info,
+                        EXECUTE_ON_CHANNEL_OPEN_TRY,
+                    );
+
+                    Ok(Response::new()
+                        .add_attribute("action", "channel")
+                        .add_attribute("method", "channel_opne_init_module_validation")
+                        .add_submessage(on_chan_open_try))
+                }
+                None => {
+                    return Err(ContractError::IbcChannelError {
+                        error: ChannelError::Other {
+                            description: "Data from module is Missing".to_string(),
+                        },
+                    })
+                }
+            },
+            cosmwasm_std::SubMsgResult::Err(_) => {
+                return Err(ContractError::IbcChannelError {
+                    error: ChannelError::NoCommonVersion,
+                })
+            }
+        }
+    }
 }

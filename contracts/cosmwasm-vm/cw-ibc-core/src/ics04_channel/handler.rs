@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{
-    from_binary, to_binary, Binary, CosmosMsg, Empty, MessageInfo, Response, SubMsg, WasmMsg,
+    from_binary, to_binary, to_vec, Binary, CosmosMsg, Empty, MessageInfo, Response, SubMsg,
+    WasmMsg,
 };
 pub mod open_init;
 pub mod open_try;
@@ -96,30 +97,13 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let connection_id = ConnectionId::from(message.connection_hops_on_b[0].clone());
         let conn_end_on_b = self.connection_end(deps.storage, connection_id.clone())?;
 
-        // TODO
-        // Verification //
         channel_open_try_msg_validate(&message, &conn_end_on_b)?;
-
-        // TODO
-        // Verification
 
         let counter = match self.channel_counter(deps.storage) {
             Ok(counter) => counter,
             Err(error) => return Err(error),
         };
         let channel_id_on_b = ChannelId::new(counter); // creating new channel_id
-                                                       // Getting the module address for on channel open try call
-        let module_id = match self
-            .lookup_module_by_port(deps.storage, PortId::from(message.port_id_on_b.clone()))
-        {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
-        let module_id = types::ModuleId::from(module_id);
-        let contract_address = match self.get_route(deps.storage, module_id) {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
 
         let counter_party = Counterparty::new(
             message.port_id_on_a.clone(),
@@ -139,21 +123,66 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             channel_end,
         )?;
 
-        // Generate event for calling on channel open init in x-call
-        let sub_message = on_chan_open_try_submessage(&message, &channel_id_on_b, &connection_id);
-        let data = cw_xcall::msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
-        let data = to_binary(&data).unwrap();
-        let on_chan_open_try = create_channel_submesssage(
-            contract_address.to_string(),
-            data,
-            &info,
-            EXECUTE_ON_CHANNEL_OPEN_TRY,
+        let client_id_on_b = conn_end_on_b.client_id();
+        let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
+        let consensus_state_of_a_on_b =
+            self.consensus_state(deps.storage, &client_id_on_b, &message.proof_height_on_a)?;
+        let prefix_on_a = conn_end_on_b.counterparty().prefix();
+        let port_id_on_a = message.port_id_on_a.clone();
+        let chan_id_on_a = message.chan_id_on_a.clone();
+        let conn_id_on_a =
+            conn_end_on_b
+                .counterparty()
+                .connection_id()
+                .ok_or(ContractError::IbcChannelError {
+                    error: ChannelError::UndefinedConnectionCounterparty {
+                        connection_id: message.connection_hops_on_b[0].clone(),
+                    },
+                })?;
+        if client_state_of_a_on_b.is_frozen() {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::FrozenClient {
+                    client_id: client_id_on_b.clone(),
+                },
+            });
+        }
+
+        let expected_chan_end_on_a = ChannelEnd::new(
+            State::Init,
+            message.ordering,
+            Counterparty::new(message.port_id_on_b.clone(), None),
+            vec![conn_id_on_a.clone()],
+            message.version_supported_on_a.clone(),
+        );
+        let chan_end_path_on_a = self.channel_path(&port_id_on_a, &chan_id_on_a);
+        let vector = to_vec(&expected_chan_end_on_a);
+
+        let create_client_message = LightClientChannelMessage::OpenTry {
+            proof_height: message.proof_height_on_a.to_string(),
+            counterparty_prefix: prefix_on_a.clone().into_vec(),
+            proof: message.proof_chan_end_on_a.clone().into(),
+            root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
+            counterparty_chan_end_path: chan_end_path_on_a,
+            expected_counterparty_channel_end: vector.unwrap(),
+        };
+        let client_type = ClientType::from(client_state_of_a_on_b.client_type());
+
+        let light_client_address =
+            self.get_client_from_registry(deps.as_ref().storage, client_type)?;
+        let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: light_client_address,
+            msg: to_binary(&create_client_message).unwrap(),
+            funds: info.funds,
+        });
+
+        let sub_msg: SubMsg = SubMsg::reply_always(
+            create_client_message,
+            EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT,
         );
 
         Ok(Response::new()
-            .add_attribute("action", "channel")
-            .add_attribute("method", "channel_opne_init_validation")
-            .add_submessage(on_chan_open_try))
+            .add_attribute("action", "Light client channel open try call")
+            .add_submessage(sub_msg))
     }
 
     fn validate_channel_open_ack(
