@@ -289,12 +289,12 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
     fn generate_client_identifier(
         &self,
-        deps: DepsMut,
+        store: &mut dyn Storage,
         client_type: ClientType,
     ) -> Result<ClientId, ContractError> {
-        let client_seqence = self.client_counter(deps.as_ref().storage)?;
+        let client_seqence = self.client_counter(store)?;
         let client_identifer = ClientId::new(client_type, client_seqence.try_into().unwrap())?;
-        self.increase_client_counter(deps.storage)?;
+        self.increase_client_counter(store)?;
         Ok(client_identifer)
     }
 
@@ -307,9 +307,11 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => {
                 let call_backdata: CreateClientResponse =
                     from_binary(&result.data.unwrap()).unwrap();
-                let client_counter = self.client_counter(deps.as_ref().storage)?;
+
                 let client_type = ClientType::new(call_backdata.client_type.clone());
-                let client_id = ClientId::new(client_type.clone(), client_counter)?;
+                let client_id =
+                    self.generate_client_identifier(deps.storage, client_type.clone())?;
+
                 let light_client_address =
                     self.get_client_from_registry(deps.as_ref().storage, client_type.clone())?;
 
@@ -333,8 +335,6 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                     call_backdata.height(),
                     call_backdata.consensus_state_commitment.clone(),
                 )?;
-
-                self.increase_client_counter(deps.storage)?;
 
                 let event = create_client_event(
                     client_id.ibc_client_id().as_str(),

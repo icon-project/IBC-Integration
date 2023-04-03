@@ -10,7 +10,7 @@ use cw_ibc_core::{
             client_misbehaviour_event, create_client_event, generated_client_id_event,
             update_client_event, upgrade_client_event,
         },
-        handler::{CreateClientResponse, UpdateClientResponse},
+        handler::{CreateClientResponse, UpdateClientResponse, UpgradeClientResponse},
         types::{ClientState, ConsensusState},
     },
     traits::IbcClient,
@@ -1187,4 +1187,129 @@ fn fails_on_upgrade_client_frozen_client() {
     contract
         .upgrade_client(deps.as_mut(), info, upgrdade_client_message)
         .unwrap();
+}
+
+#[test]
+fn check_for_execute_upgrade_client() {
+    let mut deps = deps();
+
+    let info = create_mock_info("alice", "umlg", 2000);
+    let env = mock_env();
+
+    let contract = CwIbcCoreContext::default();
+
+    contract
+        .init_client_counter(deps.as_mut().storage, 0)
+        .unwrap();
+
+    contract
+        .ibc_store()
+        .expected_time_per_block()
+        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .unwrap();
+
+    let client_type = ClientType::new("iconclient".to_string());
+    let light_client = Addr::unchecked("lightclient");
+
+    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2000000000,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root".as_bytes().to_vec(),
+    }
+    .try_into()
+    .unwrap();
+
+    let mock_reponse_data = CreateClientResponse::new(
+        client_type.as_str().to_string(),
+        "0-100".to_string(),
+        to_vec(&client_state).unwrap(),
+        to_vec(&consenus_state).unwrap(),
+    );
+
+    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
+
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 21,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: Some(mock_data_binary),
+        }),
+    };
+
+    let client_id = ClientId::from_str("iconclient-0").unwrap();
+
+    contract
+        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .unwrap();
+
+    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 200000000,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 8],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let upgrade_consenus_state: ConsensusState =
+        common::icon::icon::lightclient::v1::ConsensusState {
+            message_root: "message_root_new".as_bytes().to_vec(),
+        }
+        .try_into()
+        .unwrap();
+    let signer = Signer::from_str("new_signer").unwrap();
+
+    let upgrdade_client_message = MsgUpgradeClient {
+        client_id: client_id.ibc_client_id().clone(),
+        client_state: upgrade_client_state.clone().into(),
+        consensus_state: upgrade_consenus_state.clone().into(),
+        proof_upgrade_client: get_dummy_merkle_proof(),
+        proof_upgrade_consensus_state: get_dummy_merkle_proof(),
+        signer,
+    };
+
+    contract
+        .upgrade_client(deps.as_mut(), info, upgrdade_client_message)
+        .unwrap();
+
+    let upgrade_client_response = UpgradeClientResponse::new(
+        to_vec(&upgrade_client_state).unwrap(),
+        to_vec(&upgrade_consenus_state).unwrap(),
+        client_id.ibc_client_id().to_string(),
+        "0-100".to_string(),
+    );
+
+    let mock_data_binary = to_binary(&upgrade_client_response).unwrap();
+
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 23,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: Some(mock_data_binary),
+        }),
+    };
+
+    let result = contract
+        .execute_upgrade_client_reply(deps.as_mut(), reply_message)
+        .unwrap();
+
+    assert_eq!("iconclient-0", result.attributes[1].value);
+
+    assert_eq!("upgrade_client", result.events[0].ty)
 }

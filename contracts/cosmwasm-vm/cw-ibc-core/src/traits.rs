@@ -1,5 +1,3 @@
-use cosmwasm_std::Reply;
-
 use super::*;
 
 pub trait IbcClient {
@@ -40,7 +38,7 @@ pub trait IbcClient {
     fn register_client(&self, deps: DepsMut, client_type: ClientType, light_client: Addr);
     fn generate_client_identifier(
         &self,
-        deps: DepsMut,
+        store: &mut dyn Storage,
         client_type: ClientType,
     ) -> Result<ClientId, ContractError>;
 }
