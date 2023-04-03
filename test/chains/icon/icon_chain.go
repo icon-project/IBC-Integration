@@ -41,7 +41,6 @@ func NewIconChain(t *testing.T, ctx context.Context, environment string, chainCo
 			SkipPathCreation: false},
 		),
 		)
-
 		return localchain, nil
 	case "testnet":
 		return NewIconTestnet(chainConfig.Bin, nid, initMessage, keystorePath, keyPassword, "5000000000", url, scorePaths), nil
