@@ -431,12 +431,19 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         deps.storage,
                         port_id.clone(),
                         channel_id.clone(),
+                        channel_end.clone(),
+                    )?;
+
+                    self.store_channel(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
                         channel_end,
                     )?;
 
                     let event = create_close_init_channel_event(
-                        &port_id.ibc_port_id(),
-                        channel_id.ibc_channel_id(),
+                        &port_id.ibc_port_id().as_str(),
+                        channel_id.ibc_channel_id().as_str(),
                     );
                     Ok(Response::new().add_event(event))
                 }
