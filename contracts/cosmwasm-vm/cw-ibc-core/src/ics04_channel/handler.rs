@@ -424,8 +424,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
                     let channel_id =
                         ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    let mut channel_end = self.channel_end(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                    )?;
+
                     channel_end.set_state(State::Closed); // State change
                     self.store_channel_end(
                         deps.storage,
@@ -455,9 +459,9 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     })
                 }
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
+            cosmwasm_std::SubMsgResult::Err(error) => {
                 return Err(ContractError::IbcChannelError {
-                    error: ChannelError::NoCommonVersion,
+                    error: ChannelError::Other { description: error },
                 })
             }
         }

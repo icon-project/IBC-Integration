@@ -180,6 +180,14 @@ fn test_execute_close_init_channel() {
             channel_end.clone(),
         )
         .unwrap();
+    contract
+        .store_channel(
+            deps.as_mut().storage,
+            port_id.ibc_port_id(),
+            channel_id.ibc_channel_id(),
+            channel_end,
+        )
+        .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.ibc_port_id().clone().to_string(),
         channel_id: channel_id.ibc_channel_id().clone().to_string(),
