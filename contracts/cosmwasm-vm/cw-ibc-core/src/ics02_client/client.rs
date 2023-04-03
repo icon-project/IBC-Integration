@@ -251,7 +251,7 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn host_height(&self) -> Result<ibc::Height, ContractError> {
+    pub fn host_height(&self) -> Result<ibc::Height, ContractError> {
         todo!()
     }
 
@@ -259,7 +259,7 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn host_consensus_state(
+    pub fn host_consensus_state(
         &self,
         height: &ibc::Height,
     ) -> Result<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>, ContractError>
@@ -267,11 +267,11 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn validate_self_client(
+    pub fn validate_self_client(
         &self,
         client_state_of_host_on_counterparty: ibc_proto::google::protobuf::Any,
     ) -> Result<(), ContractError> {
-        todo!()
+        Ok(())
     }
 
     fn client_update_time(
