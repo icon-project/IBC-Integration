@@ -223,7 +223,7 @@ fn test_upgrade_client_event() {
         signer,
     };
 
-    let event = upgrade_client_event(client_type.client_type(), height, msg);
+    let event = upgrade_client_event(client_type.client_type(), height, msg.client_id);
 
     assert_eq!("upgrade_client", event.ty);
 
