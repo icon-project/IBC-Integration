@@ -29,6 +29,12 @@ public class IBCHandler extends IBCHandlerPacket {
         super.registerClient(clientType, client);
     }
 
+    @External
+    public void createClient(MsgCreateClient msg) {
+        onlyOwner();
+        super.createClient(msg);
+    }
+
     /**
      * bindPort binds to an unallocated port, failing if the port has already
      * been allocated.

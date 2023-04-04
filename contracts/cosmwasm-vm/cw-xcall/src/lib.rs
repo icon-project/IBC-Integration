@@ -37,6 +37,7 @@ use crate::{
         storage_keys::StorageKey,
     },
 };
+use common::types::message::CrossContractMessage::XCallMessage;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Binary, Coin, CosmosMsg,
@@ -46,13 +47,15 @@ use cosmwasm_std::{
     IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Never,
     QuerierWrapper, Reply, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
 };
+
 use cw2::set_contract_version;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use schemars::_serde_json::to_string;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-#[cfg_attr(not(feature = "library"), entry_point)]
+
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -64,7 +67,7 @@ pub fn instantiate(
     call_service.instantiate(deps, env, info, msg)
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -76,14 +79,14 @@ pub fn execute(
     call_service.execute(deps, env, info, msg)
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let call_service = CwCallService::default();
 
     call_service.query(deps, env, msg)
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     let call_service = CwCallService::default();
 

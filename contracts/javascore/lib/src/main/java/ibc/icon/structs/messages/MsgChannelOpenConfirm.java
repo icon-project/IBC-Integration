@@ -1,7 +1,5 @@
 package ibc.icon.structs.messages;
 
-import icon.proto.core.client.Height;
-
 public class MsgChannelOpenConfirm {
     private String portId;
     private String channelId;
@@ -32,13 +30,10 @@ public class MsgChannelOpenConfirm {
         this.proofAck = proofAck;
     }
 
-    public byte[] getProofHeightRaw() {
+    public byte[] getProofHeight() {
         return proofHeight;
     }
 
-    public Height getProofHeight() {
-        return Height.decode(proofHeight);
-    }
 
     public void setProofHeight(byte[] proofHeight) {
         this.proofHeight = proofHeight;

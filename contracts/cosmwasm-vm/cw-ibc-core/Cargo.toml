@@ -2,6 +2,8 @@
 name = "cw-ibc-core"
 version = "0.1.0"
 edition = "2021"
+authors = {workspace = true}
+
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -13,17 +15,6 @@ exclude = [
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
@@ -47,7 +38,17 @@ cw2 = "1.0.1"
 schemars = "0.8.12"
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.39" }
-ibc = {version="0.32.0", feature = ["serde"]}
+ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde", "borsh"]}
+ibc-proto = { version = "0.26.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
+sha2 = { version = "0.10.6", default-features = false }
+hex ="0.4.3"
+sha3 = { version = "0.10.6", default-features = false }
+bytes = { version = "1.4.0", default-features = false }
+common = { path="../../../libraries/rust/common" }
+prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
+serde-json-wasm = "0.5.0"
+cw-xcall = {path="../cw-xcall"}
 
 [dev-dependencies]
 cw-multi-test = "0.16.2"
+getrandom = {version = "0.2", default-features = false, features = ["custom"]}

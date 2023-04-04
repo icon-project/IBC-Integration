@@ -7,7 +7,7 @@ import ibc.ics04.channel.IBCPacket;
 import score.annotation.EventLog;
 import score.annotation.External;
 
-public abstract class IBCHandlerClient extends IBCPacket implements IIBCClient {
+public class IBCHandlerClient extends IBCPacket implements IIBCClient {
 
     @EventLog(indexed = 1)
     public void CreateClient(String identifier, byte[] clientState) {
@@ -15,18 +15,16 @@ public abstract class IBCHandlerClient extends IBCPacket implements IIBCClient {
 
 
     @EventLog(indexed = 1)
-    public void UpdateClient(String identifier, byte[] consensusHeight, byte[] clientMessage ) {
+    public void UpdateClient(String identifier, byte[] consensusHeight, byte[] clientMessage) {
     }
 
     /**
      * createClient creates a new client state and populates it with a given
      * consensus state
      */
-    public String createClient(MsgCreateClient msg) {
+    public void createClient(MsgCreateClient msg) {
         String id = _createClient(msg);
         CreateClient(id, msg.getClientState());
-
-        return id;
     }
 
     /**
@@ -36,7 +34,7 @@ public abstract class IBCHandlerClient extends IBCPacket implements IIBCClient {
     @External
     public void updateClient(MsgUpdateClient msg) {
         byte[] consensusHeight = _updateClient(msg);
-        UpdateClient(msg.getClientId(), consensusHeight,  msg.getClientMessage());
+        UpdateClient(msg.getClientId(), consensusHeight, msg.getClientMessage());
 
     }
 

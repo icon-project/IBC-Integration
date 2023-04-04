@@ -14,9 +14,12 @@ impl<'a> CwCallService<'a> {
         self.ensure_request_not_null(request_id, &proxy_reqs)
             .unwrap();
 
+        let message = XCallMessage {
+            data: proxy_reqs.data().to_vec(),
+        };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: proxy_reqs.to().to_string(),
-            msg: proxy_reqs.data().into(),
+            msg: to_binary(&message).unwrap(),
             funds: info.funds,
         });
 
@@ -41,9 +44,12 @@ impl<'a> CwCallService<'a> {
         self.ensure_rollback_enabled(call_request.enabled())
             .unwrap();
 
+        let message = XCallMessage {
+            data: call_request.rollback().to_vec(),
+        };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: call_request.to().to_string(),
-            msg: call_request.rollback().into(),
+            msg: to_binary(&message).unwrap(),
             funds: info.funds,
         });
 

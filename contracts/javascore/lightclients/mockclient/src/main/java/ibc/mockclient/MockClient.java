@@ -1,13 +1,13 @@
 package ibc.mockclient;
 
-import java.math.BigInteger;
+import ibc.icon.interfaces.ILightClient;
+import ibc.ics24.host.IBCCommitment;
+import icon.proto.core.client.Height;
 import score.Context;
 import score.annotation.External;
-import ibc.icon.structs.messages.UpdateClientResponse;
-import ibc.icon.interfaces.ILightClient;
-import icon.proto.core.client.Height;
 
-import ibc.ics24.host.IBCCommitment;
+import java.math.BigInteger;
+import java.util.Map;
 
 public class MockClient implements ILightClient {
 
@@ -32,34 +32,30 @@ public class MockClient implements ILightClient {
     public byte[] getConsensusState(
             String clientId,
             byte[] height) {
-        return null;
+        return new byte[0];
     }
 
     @External(readonly = true)
     public byte[] getClientState(String clientId) {
-        return null;
+        return new byte[0];
     }
 
     @External
-    public UpdateClientResponse createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
-        UpdateClientResponse response = new UpdateClientResponse(
-            IBCCommitment.keccak256(clientStateBytes),
-            IBCCommitment.keccak256(consensusStateBytes),  
-            new Height().encode()
+    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
+        return Map.of(
+                "clientStateCommitment", IBCCommitment.keccak256(clientStateBytes),
+                "consensusStateCommitment", IBCCommitment.keccak256(consensusStateBytes),
+                "height", new Height().encode()
         );
-
-        return response;
     }
 
     @External(readonly = true)
-    public UpdateClientResponse updateClient(String clientId, byte[] clientMessageBytes) {
-        UpdateClientResponse response = new UpdateClientResponse(
-            IBCCommitment.keccak256(clientMessageBytes),
-            IBCCommitment.keccak256(clientMessageBytes),
-            new Height().encode()
+    public Map<String, byte[]> updateClient(String clientId, byte[] clientMessageBytes) {
+        return Map.of(
+                "clientStateCommitment", IBCCommitment.keccak256(clientMessageBytes),
+                "consensusStateCommitment", IBCCommitment.keccak256(clientMessageBytes),
+                "height", new Height().encode()
         );
-
-        return response;
     }
 
     @External

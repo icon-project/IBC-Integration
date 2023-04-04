@@ -1,8 +1,5 @@
 package ibc.icon.structs.messages;
 
-import icon.proto.core.client.Height;
-import icon.proto.core.connection.Version;
-
 public class MsgConnectionOpenAck {
     private String connectionId;
     private byte[] clientStateBytes; // client state for chainA on chainB
@@ -30,12 +27,8 @@ public class MsgConnectionOpenAck {
         this.clientStateBytes = clientStateBytes;
     }
 
-    public byte[] getVersionRaw() {
+    public byte[] getVersion() {
         return version;
-    }
-
-    public Version getVersion() {
-        return Version.decode(version);
     }
 
     public void setVersion(byte[] version) {
@@ -74,28 +67,21 @@ public class MsgConnectionOpenAck {
         this.proofConsensus = proofConsensus;
     }
 
-    public byte[] getProofHeightRaw() {
+    public byte[] getProofHeight() {
         return proofHeight;
-    }
-
-    public Height getProofHeight() {
-        return Height.decode(proofHeight);
     }
 
     public void setProofHeight(byte[] proofHeight) {
         this.proofHeight = proofHeight;
     }
 
-    public byte[] getConsensusHeightRaw() {
+    public byte[] getConsensusHeight() {
         return consensusHeight;
-    }
-
-    public Height getConsensusHeight() {
-        return Height.decode(consensusHeight);
     }
 
     public void setConsensusHeight(byte[] consensusHeight) {
         this.consensusHeight = consensusHeight;
     }
+
 
 }
