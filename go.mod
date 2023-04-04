@@ -4,23 +4,23 @@ go 1.18
 
 require (
 	github.com/atotto/clipboard v0.1.4
-	github.com/avast/retry-go/v4 v4.0.4
+	github.com/avast/retry-go/v4 v4.3.3
 	github.com/cosmos/cosmos-sdk v0.46.2
 	github.com/cucumber/godog v0.12.6
-	github.com/docker/docker v20.10.19+incompatible
+	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-connections v0.4.0
-	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
+	github.com/gdamore/tcell/v2 v2.6.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/icon-project/icon-bridge v0.0.11
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
 	github.com/spf13/viper v1.14.0
-	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230228221006-4e43739472a1
-	github.com/stretchr/testify v1.8.1
+	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230315014810-9fc26b81d7cd
+	github.com/stretchr/testify v1.8.2
 	github.com/tendermint/tendermint v0.34.24
 	go.uber.org/multierr v1.8.0
-	go.uber.org/zap v1.23.0
+	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
-	modernc.org/sqlite v1.17.3
+	modernc.org/sqlite v1.21.0
 )
 
 require (
@@ -127,7 +127,7 @@ require (
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
-	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.3 // indirect
 	github.com/labstack/echo/v4 v4.9.0 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
@@ -138,7 +138,7 @@ require (
 	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
-	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b // indirect
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
@@ -171,8 +171,8 @@ require (
 	github.com/rakyll/statik v0.1.7 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/regen-network/cosmos-proto v0.3.1 // indirect
-	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/cors v1.8.2 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
@@ -224,15 +224,15 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
 	lukechampine.com/blake3 v1.1.6 // indirect
-	lukechampine.com/uint128 v1.1.1 // indirect
-	modernc.org/cc/v3 v3.36.0 // indirect
-	modernc.org/ccgo/v3 v3.16.6 // indirect
-	modernc.org/libc v1.16.7 // indirect
-	modernc.org/mathutil v1.4.1 // indirect
-	modernc.org/memory v1.1.1 // indirect
-	modernc.org/opt v0.1.1 // indirect
-	modernc.org/strutil v1.1.1 // indirect
-	modernc.org/token v1.0.0 // indirect
+	lukechampine.com/uint128 v1.2.0 // indirect
+	modernc.org/cc/v3 v3.40.0 // indirect
+	modernc.org/ccgo/v3 v3.16.13 // indirect
+	modernc.org/libc v1.22.3 // indirect
+	modernc.org/mathutil v1.5.0 // indirect
+	modernc.org/memory v1.5.0 // indirect
+	modernc.org/opt v0.1.3 // indirect
+	modernc.org/strutil v1.1.3 // indirect
+	modernc.org/token v1.0.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
