@@ -1,4 +1,6 @@
-use super::*;
+use cosmwasm_std::{to_binary, to_vec, CosmosMsg, MessageInfo, Reply};
+
+use super::{conn_types::LightClientConnectionMessage, *};
 
 impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_open_init(
@@ -87,6 +89,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         message: MsgConnectionOpenTry,
         deps: DepsMut,
+        info: MessageInfo,
     ) -> Result<Response, ContractError> {
         //TODO validate
         self.validate_self_client(message.client_state_of_b_on_a.clone())?;
@@ -106,129 +109,180 @@ impl<'a> CwIbcCoreContext<'a> {
                 .into(),
             });
         }
-        let client_id_on_a = message.counterparty.client_id();
-
-        //TODO verify proofs
-        let client_state_of_a_on_b = self
-            .client_state(deps.storage, &message.client_id_on_b.clone())
-            .map_err(|_| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: "failed to fetch client state".to_string(),
-                },
-            })?;
-        let _client_consensus_state_path_on_b =
-            ClientConsensusStatePath::new(&message.client_id_on_b, &message.proofs_height_on_a);
-        let consensus_state_of_a_on_b = self
-            .consensus_state(
-                deps.storage,
-                &message.client_id_on_b,
-                &message.proofs_height_on_a,
-            )
-            .map_err(|_| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: "failed to fetch consensus state".to_string(),
-                },
-            })?;
         let prefix_on_a = message.counterparty.prefix();
         let prefix_on_b = self.commitment_prefix();
+        let client_id_on_a = ClientId::from(message.counterparty.client_id().clone());
+
+        let client_address = self.get_client(deps.as_ref().storage, client_id_on_a)?;
+
+        let client_consensus_state_path_on_b =
+            self.consensus_state_path(&message.client_id_on_b, &message.consensus_height_of_b_on_a);
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Init,
-            client_id_on_a.clone(),
+            message.counterparty.client_id().clone(),
             Counterparty::new(message.client_id_on_b.clone(), None, prefix_on_b),
             message.versions_on_a.clone(),
             message.delay_period,
         );
 
-        client_state_of_a_on_b
-            .verify_connection_state(
-                message.proofs_height_on_a,
-                prefix_on_a,
-                &message.proof_conn_end_on_a,
-                consensus_state_of_a_on_b.root(),
-                &ConnectionPath::new(&message.counterparty.connection_id.clone().unwrap()),
-                &expected_conn_end_on_a,
-            )
-            .map_err(|e| ContractError::IbcConnectionError {
-                error: ConnectionError::VerifyConnectionState(e),
-            })?;
-
-        client_state_of_a_on_b
-            .verify_client_full_state(
-                message.proofs_height_on_a,
-                prefix_on_a,
-                &message.proof_client_state_of_b_on_a,
-                consensus_state_of_a_on_b.root(),
-                &ClientStatePath::new(client_id_on_a),
-                message.client_state_of_b_on_a.clone(),
-            )
-            .map_err(|e| ContractError::IbcConnectionError {
-                error: ConnectionError::ClientStateVerificationFailure {
-                    client_id: message.client_id_on_b.clone(),
-                    client_error: e,
-                },
-            })?;
-
-        let expected_consensus_state_of_b_on_a = self
-            .host_consensus_state(&message.consensus_height_of_b_on_a)
-            .map_err(|_| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: "failed to fetch host consensus state".to_string(),
-                },
-            })?;
-
-        let client_cons_state_path_on_a = ClientConsensusStatePath::new(
-            &message.client_id_on_b,
-            &message.consensus_height_of_b_on_a,
-        );
-        client_state_of_a_on_b
-            .verify_client_consensus_state(
-                message.proofs_height_on_a,
-                prefix_on_a,
-                &message.proof_consensus_state_of_b_on_a,
-                consensus_state_of_a_on_b.root(),
-                &client_cons_state_path_on_a,
-                expected_consensus_state_of_b_on_a.as_ref(),
-            )
-            .map_err(|e| ContractError::IbcConnectionError {
-                error: ConnectionError::ClientStateVerificationFailure {
-                    client_id: client_id_on_a.clone(),
-                    client_error: e,
-                },
-            })?;
-
-        //new connection
-        let conn_id = ConnectionId::new(self.connection_counter(deps.storage)?.try_into().unwrap());
-        let conn_end = ConnectionEnd::new(
-            State::TryOpen,
-            message.client_id_on_b.clone(),
-            message.counterparty.clone(),
-            message.versions_on_a.clone(),
-            message.delay_period,
-        );
-        let r = message.counterparty.client_id().clone();
-        let client_id_on_b = crate::ClientId::from(r);
-        let event = create_open_try_event(
-            conn_id.clone(),
-            crate::ClientId::from(message.client_id_on_b.clone()),
-            message
-                .counterparty
-                .connection_id
-                .unwrap_or_default()
-                .into(),
-            client_id_on_b,
-        );
-        let counter = match self.increase_connection_counter(deps.storage) {
-            Ok(counter) => counter,
-            Err(error) => return Err(error),
+        let client_message = LightClientConnectionMessage::OpenTry {
+            proof_height: message.proofs_height_on_a.to_string(),
+            counterparty_prefix: prefix_on_a.as_bytes().to_vec(),
+            client_state_proof: to_vec(&message.client_state_of_b_on_a).unwrap(),
+            consensus_state_proof: to_vec(&message.proof_consensus_state_of_b_on_a).unwrap(),
+            counterparty_chan_end_path: client_consensus_state_path_on_b,
+            expected_counterparty_connection_end: to_vec(&expected_conn_end_on_a).unwrap(),
         };
-        self.store_connection_to_client(
-            deps.storage,
-            crate::ClientId::from(message.client_id_on_b.clone()),
-            conn_id.clone(),
-        )?;
-        self.store_connection(deps.storage, conn_id.clone(), conn_end)
-            .unwrap();
+
+        let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: client_address,
+            msg: to_binary(&client_message).unwrap(),
+            funds: info.funds,
+        });
 
         Ok(Response::new())
     }
+
+    pub fn excute_connection_open_try(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
+                Some(data) => todo!(),
+                None => Err(ContractError::IbcConnectionError {
+                    error: ConnectionError::Other {
+                        description: "UNKNOWN ERROR".to_string(),
+                    },
+                }),
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcConnectionError {
+                error: ConnectionError::Other { description: error },
+            }),
+        }
+    }
 }
+
+//new connection
+// let conn_id = ConnectionId::new(self.connection_counter(deps.storage)?.try_into().unwrap());
+// let conn_end = ConnectionEnd::new(
+//     State::TryOpen,
+//     message.client_id_on_b.clone(),
+//     message.counterparty.clone(),
+//     message.versions_on_a.clone(),
+//     message.delay_period,
+// );
+// let r = message.counterparty.client_id().clone();
+// let client_id_on_b = crate::ClientId::from(r);
+// let event = create_open_try_event(
+//     conn_id.clone(),
+//     crate::ClientId::from(message.client_id_on_b.clone()),
+//     message
+//         .counterparty
+//         .connection_id
+//         .unwrap_or_default()
+//         .into(),
+//     client_id_on_b,
+// );
+// let counter = match self.increase_connection_counter(deps.storage) {
+//     Ok(counter) => counter,
+//     Err(error) => return Err(error),
+// };
+// self.store_connection_to_client(
+//     deps.storage,
+//     crate::ClientId::from(message.client_id_on_b.clone()),
+//     conn_id.clone(),
+// )?;
+// self.store_connection(deps.storage, conn_id.clone(), conn_end)
+//     .unwrap();
+
+// Ok(Response::new())
+
+//TODO verify proofs
+// let client_state_of_a_on_b = self
+//     .client_state(deps.storage, &message.client_id_on_b.clone())
+//     .map_err(|_| ContractError::IbcConnectionError {
+//         error: ConnectionError::Other {
+//             description: "failed to fetch client state".to_string(),
+//         },
+//     })?;
+// let _client_consensus_state_path_on_b =
+//     ClientConsensusStatePath::new(&message.client_id_on_b, &message.proofs_height_on_a);
+// let consensus_state_of_a_on_b = self
+//     .consensus_state(
+//         deps.storage,
+//         &message.client_id_on_b,
+//         &message.proofs_height_on_a,
+//     )
+//     .map_err(|_| ContractError::IbcConnectionError {
+//         error: ConnectionError::Other {
+//             description: "failed to fetch consensus state".to_string(),
+//         },
+//     })?;
+// let prefix_on_a = message.counterparty.prefix();
+// let prefix_on_b = self.commitment_prefix();
+// let expected_conn_end_on_a = ConnectionEnd::new(
+//     State::Init,
+//     client_id_on_a.clone(),
+//     Counterparty::new(message.client_id_on_b.clone(), None, prefix_on_b),
+//     message.versions_on_a.clone(),
+//     message.delay_period,
+// );
+
+// client_state_of_a_on_b
+//     .verify_connection_state(
+//         message.proofs_height_on_a,
+//         prefix_on_a,
+//         &message.proof_conn_end_on_a,
+//         consensus_state_of_a_on_b.root(),
+//         &ConnectionPath::new(&message.counterparty.connection_id.clone().unwrap()),
+//         &expected_conn_end_on_a,
+//     )
+//     .map_err(|e| ContractError::IbcConnectionError {
+//         error: ConnectionError::VerifyConnectionState(e),
+//     })?;
+
+// client_state_of_a_on_b
+//     .verify_client_full_state(
+//         message.proofs_height_on_a,
+//         prefix_on_a,
+//         &message.proof_client_state_of_b_on_a,
+//         consensus_state_of_a_on_b.root(),
+//         &ClientStatePath::new(client_id_on_a),
+//         message.client_state_of_b_on_a.clone(),
+//     )
+//     .map_err(|e| ContractError::IbcConnectionError {
+//         error: ConnectionError::ClientStateVerificationFailure {
+//             client_id: message.client_id_on_b.clone(),
+//             client_error: e,
+//         },
+//     })?;
+
+// let expected_consensus_state_of_b_on_a = self
+//     .host_consensus_state(&message.consensus_height_of_b_on_a)
+//     .map_err(|_| ContractError::IbcConnectionError {
+//         error: ConnectionError::Other {
+//             description: "failed to fetch host consensus state".to_string(),
+//         },
+//     })?;
+
+// let client_cons_state_path_on_a = ClientConsensusStatePath::new(
+//     &message.client_id_on_b,
+//     &message.consensus_height_of_b_on_a,
+// );
+// client_state_of_a_on_b
+//     .verify_client_consensus_state(
+//         message.proofs_height_on_a,
+//         prefix_on_a,
+//         &message.proof_consensus_state_of_b_on_a,
+//         consensus_state_of_a_on_b.root(),
+//         &client_cons_state_path_on_a,
+//         expected_consensus_state_of_b_on_a.as_ref(),
+//     )
+//     .map_err(|e| ContractError::IbcConnectionError {
+//         error: ConnectionError::ClientStateVerificationFailure {
+//             client_id: client_id_on_a.clone(),
+//             client_error: e,
+//         },
+//     })?;
