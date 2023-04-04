@@ -20,3 +20,11 @@ Feature: xCall admin management
     When "Eve" executes add_admin in xcall with "Bob" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
     And "Bob" wallet address should not be added as admin
+
+  Scenario: An admin cannot add another admin to the xCall
+    Given "Alice" is the "xcall" contract owner
+    And "Alice" has already added "Bob" wallet address to the list of xCall admins
+    And "Diana" is an admin wallet who needs to be added to the list of xCall admins
+    When "Bob" executes add_admin in xcall with "Diana" wallet address
+    Then xCall returns an error message that only the contract owner can perform this action
+    And "Diana" wallet address should not be added as admin
