@@ -40,20 +40,21 @@ pub fn create_open_init_channel_event(
 }
 
 // Creates OpenInitChannel IBC Event
-pub fn create_open_try_channel_event(channel_id: &ChannelId, msg: &MsgChannelOpenTry) -> Event {
+pub fn create_open_try_channel_event(
+    channel_id: &str,
+    port_id_on_b: &str,
+    port_id_on_a: &str,
+    chan_id_on_a: &str,
+    connection_hops_on_b: &str,
+    version_supported_on_a: &str,
+) -> Event {
     Event::new(IbcEventType::OpenTryChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_b.as_str())
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str())
-        .add_attribute(
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            msg.port_id_on_a.as_str(),
-        )
-        .add_attribute(
-            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
-            msg.chan_id_on_a.as_str(),
-        )
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, msg.connection_hops_on_b[0].as_str())
-        .add_attribute(VERSION_ATTRIBUTE_KEY, msg.version_supported_on_a.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, port_id_on_a)
+        .add_attribute(COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_a)
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_hops_on_b)
+        .add_attribute(VERSION_ATTRIBUTE_KEY, version_supported_on_a)
 }
 
 // Creates OpenAckChannel  IBC Event
@@ -213,10 +214,10 @@ pub fn create_packet_timeout_event(packet: Packet, channel_order: &Order) -> Eve
 }
 
 // Creates CloseInitChannel event
-pub fn create_close_init_channel_event(msg: &MsgChannelCloseInit) -> Event {
+pub fn create_close_init_channel_event(port_id: &str, channel_id: &str) -> Event {
     Event::new(IbcEventType::CloseInitChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_a.as_str())
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_a.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
 }
 
 // Creates CloseConfirmChannel event

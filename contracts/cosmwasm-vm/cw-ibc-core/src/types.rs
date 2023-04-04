@@ -21,7 +21,6 @@ impl FromStr for ClientId {
         Ok(Self(r))
     }
 }
-
 impl ClientId {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {

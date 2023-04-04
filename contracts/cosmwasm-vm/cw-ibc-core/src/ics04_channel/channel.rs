@@ -259,12 +259,22 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    fn store_channel(
-        &mut self,
-        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
+    pub fn store_channel(
+        &self,
+        store: &mut dyn Storage,
+        port_id: &IbcPortId,
+        channel_id: &IbcChannelId,
         channel_end: ibc::core::ics04_channel::channel::ChannelEnd,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    ) -> Result<(), ContractError> {
+        let channel_commitemtn_key = self.channel_commitment_key(port_id, channel_id);
+
+        let channel_end_bytes = to_vec(&channel_end).map_err(|error| ContractError::Std(error))?;
+
+        self.ibc_store()
+            .commitments()
+            .save(store, channel_commitemtn_key, &channel_end_bytes)?;
+
+        Ok(())
     }
 
     fn increase_channel_counter(&mut self) {
@@ -317,11 +327,29 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn channel_end(
+    pub fn channel_end(
         &self,
-        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
-    ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ibc::core::ContextError> {
-        todo!()
+        store: &mut dyn Storage,
+        port_id: &IbcPortId,
+        channel_id: &IbcChannelId,
+    ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ContractError> {
+        let channel_commitemtn_key = self.channel_commitment_key(port_id, channel_id);
+
+        let channel_end_bytes = self
+            .ibc_store()
+            .commitments()
+            .load(store, channel_commitemtn_key)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: "ChannelNotFound".to_string(),
+            })?;
+
+        let channel_end: ChannelEnd =
+            serde_json_wasm::from_slice(&channel_end_bytes).map_err(|error| {
+                ContractError::IbcDecodeError {
+                    error: error.to_string(),
+                }
+            })?;
+        Ok(channel_end)
     }
 
     fn get_packet_commitment(
