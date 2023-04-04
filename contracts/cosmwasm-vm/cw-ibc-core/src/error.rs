@@ -1,3 +1,5 @@
+use ibc::core::ics03_connection::error::ConnectionError;
+
 use super::*;
 
 #[derive(Error, Debug)]
@@ -31,6 +33,9 @@ pub enum ContractError {
 
     #[error("IbcChannelError {error}")]
     IbcChannelError { error: ChannelError },
+
+    #[error("IbcConnectionError {error}")]
+    IbcConnectionError { error: ConnectionError },
 
     #[error("IbcClientError {error}")]
     IbcClientError { error: ClientError },

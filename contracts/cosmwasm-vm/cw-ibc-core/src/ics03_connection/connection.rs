@@ -7,7 +7,13 @@ impl<'a> CwIbcCoreContext<'a> {
         conn_id: ConnectionId,
         conn_end: ConnectionEnd,
     ) -> Result<(), ContractError> {
-        let data = conn_end.encode_vec().unwrap();
+        let data = conn_end
+            .encode_vec()
+            .map_err(|error| ContractError::IbcConnectionError {
+                error: ConnectionError::Other {
+                    description: error.to_string(),
+                },
+            })?;
         match self.ibc_store().connections().save(store, conn_id, &data) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
@@ -62,7 +68,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn increase_connection_counter(
         &self,
         store: &mut dyn Storage,
-    ) -> Result<u128, ContractError> {
+    ) -> Result<u64, ContractError> {
         let sequence_no = self.ibc_store().next_connection_sequence().update(
             store,
             |mut seq| -> Result<_, ContractError> {
@@ -75,9 +81,9 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(sequence_no)
     }
 
-    pub fn connection_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+    pub fn connection_counter(&self, store: &dyn Storage) -> Result<u64, ContractError> {
         match self.ibc_store().next_connection_sequence().load(store) {
-            Ok(u128) => Ok(u128),
+            Ok(result) => Ok(result),
             Err(error) => Err(ContractError::Std(error)),
         }
     }
@@ -85,7 +91,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_next_sequence_init(
         &self,
         store: &mut dyn Storage,
-        sequence: u128,
+        sequence: u64,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -100,7 +106,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn init_connection_counter(
         &self,
         store: &mut dyn Storage,
-        sequence_no: u128,
+        sequence_no: u64,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -110,6 +116,51 @@ impl<'a> CwIbcCoreContext<'a> {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
+    }
+    pub fn check_for_connection(
+        &self,
+        store: &dyn Storage,
+        client_id: ClientId,
+    ) -> Result<(), ContractError> {
+        match self
+            .ibc_store()
+            .client_connections()
+            .may_load(store, client_id)
+        {
+            Ok(result) => match result {
+                Some(id) => Err(ContractError::IbcConnectionError {
+                    error: ConnectionError::Other {
+                        description: format!("Connection Already Exists {}", id.as_str()),
+                    },
+                }),
+                None => Ok(()),
+            },
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+
+    pub fn update_connection_commitment(
+        &self,
+        store: &mut dyn Storage,
+        connection_id: ConnectionId,
+        connection_end: ConnectionEnd,
+    ) -> Result<(), ContractError> {
+        let connection_commit_key = self.connection_commitment_key(connection_id.connection_id());
+
+        let connection_end_bytes =
+            connection_end
+                .encode_vec()
+                .map_err(|error| ContractError::IbcConnectionError {
+                    error: ConnectionError::Other {
+                        description: error.to_string(),
+                    },
+                })?;
+
+        self.ibc_store()
+            .commitments()
+            .save(store, connection_commit_key, &connection_end_bytes)?;
+
+        Ok(())
     }
 }
 
