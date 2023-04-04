@@ -10,9 +10,9 @@ use cw_ibc_core::{
             client_misbehaviour_event, create_client_event, generated_client_id_event,
             update_client_event, upgrade_client_event,
         },
-        handler::{CreateClientResponse, UpdateClientResponse, UpgradeClientResponse},
         types::{ClientState, ConsensusState},
     },
+    msg::{CreateClientResponse, UpdateClientResponse, UpgradeClientResponse},
     traits::IbcClient,
     types::{ClientId, ClientType},
     MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
@@ -20,8 +20,7 @@ use cw_ibc_core::{
 use ibc::{
     core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
     mock::{
-        self, client_state::MockClientState, consensus_state::MockConsensusState,
-        header::MockHeader,
+        client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
     },
     signer::Signer,
     Height,

@@ -21,43 +21,44 @@ use crate::{
     storage_keys::StorageKey,
     types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
 };
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
     StdResult, Storage,
 };
 
+use context::CwIbcCoreContext;
 use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};
 pub use ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
     chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
 };
-use ibc::core::{
-    ics02_client::error::ClientError,
-    ics04_channel::error::{ChannelError, PacketError},
-    ics05_port::error::PortError,
-    ContextError,
-};
-pub use ibc::core::{
-    ics02_client::{
-        client_type::ClientType as IbcClientType,
-        msgs::{
-            create_client::MsgCreateClient, update_client::MsgUpdateClient,
-            upgrade_client::MsgUpgradeClient,
+use ibc::core::{ics05_port::error::PortError, ContextError};
+pub use ibc::{
+    core::{
+        ics02_client::{
+            client_type::ClientType as IbcClientType,
+            error::ClientError,
+            msgs::{
+                create_client::MsgCreateClient, update_client::MsgUpdateClient,
+                upgrade_client::MsgUpgradeClient,
+            },
         },
+        ics03_connection::connection::ConnectionEnd,
+        ics04_channel::{
+            channel::ChannelEnd,
+            error::{ChannelError, PacketError},
+            packet::Sequence,
+        },
+        ics24_host::identifier::{
+            ChannelId as IbcChannelId, ClientId as IbcClientId, ConnectionId as IbcConnectionId,
+            PortId as IbcPortId,
+        },
+        ics26_routing::context::ModuleId as IbcModuleId,
     },
-    ics03_connection::connection::ConnectionEnd,
-    ics04_channel::channel::ChannelEnd,
-    ics04_channel::packet::Sequence,
-    ics24_host::identifier::{
-        ChannelId as IbcChannelId, ClientId as IbcClientId, ConnectionId as IbcConnectionId,
-        PortId as IbcPortId,
-    },
-    ics26_routing::context::ModuleId as IbcModuleId,
-    ics26_routing::context::{Module, ModuleId},
+    Height,
 };
-use ics04_channel::context::CwIbcCoreContext;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Error as FmtError, Formatter},
