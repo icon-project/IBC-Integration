@@ -80,9 +80,6 @@ func (e *Executor) walletAddressShouldBeAddedAsAdmin(admin string) (err error) {
 func (e *Executor) executesAdd_adminInXcallWithWalletAddress(keyName, admin string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
 	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "set_admin", admin)
-	// if e.error != nil {
-	// 	return e.error
-	// }
 	return nil
 }
 
@@ -173,6 +170,19 @@ func (e *Executor) walletAddressShouldStillBeInTheListOfXCallAdmins(admin string
 func (e *Executor) xCallReturnsAnErrorMessageThatTheAdminAlreadyExists() error {
 	if e.error == nil {
 		return fmt.Errorf("contract did not return an error message that admin already exists")
+	}
+	return nil
+}
+
+func (e *Executor) noWalletAddressShouldBeInTheListOfXCallAdmins() (err error) {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, "get_admin", "")
+	return err
+}
+
+func (e *Executor) xCallReturnsAnErrorMessageThatTheNullValueCannotBeAddedAsAdmin() error {
+	if e.error == nil {
+		return fmt.Errorf("no Error message was returned when adding null value as admin")
 	}
 	return nil
 }
