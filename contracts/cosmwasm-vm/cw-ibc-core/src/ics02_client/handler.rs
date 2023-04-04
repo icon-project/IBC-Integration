@@ -190,8 +190,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let client_id = ClientId::from(message.client_id);
 
-        let light_client_address =
-            self.get_client_implementations(deps.as_ref().storage, client_id.clone())?;
+        let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
         let message = LightClientMessage::UpdateClient {
             client_id: client_id.as_str().to_string().clone(),
@@ -199,7 +198,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         };
 
         let client_update_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: light_client_address,
+            contract_addr: client_address,
             msg: to_binary(&message).unwrap(),
             funds: info.funds,
         });
@@ -263,10 +262,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let client_id = ClientId::from(message.client_id);
 
-        let address = self.get_client_implementations(deps.storage, client_id.clone())?;
+        let client_address = self.get_client(deps.storage, client_id.clone())?;
 
         let wasm_msg: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: address,
+            contract_addr: client_address,
             msg: to_binary(&wasm_exec_message).unwrap(),
             funds: info.funds,
         });
