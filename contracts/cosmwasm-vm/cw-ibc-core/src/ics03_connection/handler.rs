@@ -1,3 +1,5 @@
+use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -74,5 +76,9 @@ impl<'a> CwIbcCoreContext<'a> {
     }
     pub fn get_compatible_versions(&self) -> Vec<Version> {
         vec![Version::default()]
+    }
+
+    pub fn connection_open_ack(&self,deps:DepsMut, msg : MsgConnectionOpenAck){
+
     }
 }
