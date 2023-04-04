@@ -15,11 +15,11 @@ const (
 type Chain interface {
 	DeployContract(ctx context.Context, keyName string) (context.Context, error)
 	QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error)
-	ExecuteContract(ctx context.Context, contractAddress, methodName, param string) (context.Context, error)
+	ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error)
 	GetLastBlock(ctx context.Context) (context.Context, error)
 	GetBlockByHeight(ctx context.Context) (context.Context, error)
 	FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error)
-	CreateKey(ctx context.Context, keyName string) error
+	BuildWallets(ctx context.Context, keyName string) error
 }
 
 type ChainConfig struct {
