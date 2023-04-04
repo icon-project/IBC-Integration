@@ -8,6 +8,9 @@ use self::{
     open_try::channel_open_try_msg_validate,
 };
 
+pub mod close_init;
+use close_init::*;
+
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_open_init(
         &self,
@@ -201,9 +204,51 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_close_init(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: &MsgChannelCloseInit,
     ) -> Result<Response, ContractError> {
-        todo!()
+        let port_id = PortId::from(message.port_id_on_a.clone());
+        let channel_id = ChannelId::from(message.chan_id_on_a.clone());
+        let chan_end_on_a = self.get_channel_end(deps.storage, port_id, channel_id)?;
+
+        channel_close_init_validate(&chan_end_on_a, &message)?;
+        let connection_id = ConnectionId::from(chan_end_on_a.connection_hops()[0].clone());
+        let conn_end_on_a = self.connection_end(deps.storage, connection_id.clone())?;
+
+        if !conn_end_on_a.state_matches(&ConnectionState::Open) {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::ConnectionNotOpen {
+                    connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                },
+            });
+        }
+
+        let module_id = match self
+            .lookup_module_by_port(deps.storage, PortId::from(message.port_id_on_a.clone()))
+        {
+            Ok(addr) => addr,
+            Err(error) => return Err(error),
+        };
+        let module_id = types::ModuleId::from(module_id);
+        let contract_address = match self.get_route(deps.storage, module_id) {
+            Ok(addr) => addr,
+            Err(error) => return Err(error),
+        };
+
+        let sub_message = on_chan_close_init_submessage(&message, &chan_end_on_a, &connection_id);
+        let data = cw_xcall::msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
+        let data = to_binary(&data).unwrap();
+        let on_chan_close_init = create_channel_submesssage(
+            contract_address.to_string(),
+            data,
+            &info,
+            EXECUTE_ON_CHANNEL_CLOSE_INIT,
+        );
+
+        Ok(Response::new()
+            .add_attribute("action", "channel")
+            .add_attribute("method", "channel_close_init_validation")
+            .add_submessage(on_chan_close_init))
     }
 
     fn validate_channel_close_confirm(
@@ -364,6 +409,61 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
                 error: ChannelError::Other { description: error },
             }),
+        }
+    }
+
+    fn execute_channel_close_init(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
+                Some(res) => {
+                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
+                    let channel_id =
+                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let mut channel_end = self.channel_end(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                    )?;
+
+                    channel_end.set_state(State::Closed); // State change
+                    self.store_channel_end(
+                        deps.storage,
+                        port_id.clone(),
+                        channel_id.clone(),
+                        channel_end.clone(),
+                    )?;
+
+                    self.store_channel(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                        channel_end,
+                    )?;
+
+                    let event = create_close_init_channel_event(
+                        &port_id.ibc_port_id().as_str(),
+                        channel_id.ibc_channel_id().as_str(),
+                    );
+                    Ok(Response::new().add_event(event))
+                }
+                None => {
+                    return Err(ContractError::IbcChannelError {
+                        error: ChannelError::Other {
+                            description: "Data from module is Missing".to_string(),
+                        },
+                    })
+                }
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                return Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other { description: error },
+                })
+            }
         }
     }
 }
