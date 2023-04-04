@@ -2,13 +2,15 @@ use std::time::Duration;
 
 pub mod setup;
 use cosmwasm_std::to_vec;
-use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics02_client::types::ClientState;
+use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
 use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
-use cw_ibc_core::types::ClientType;
 use cw_ibc_core::ics03_connection::event::create_open_try_event;
+use cw_ibc_core::types::ClientType;
+use ibc_proto::google::protobuf::Any;
+use setup::*;
 use cw_ibc_core::types::ClientId;
 use cw_ibc_core::types::ConnectionId;
 use cw_ibc_core::ConnectionEnd;
@@ -33,7 +35,7 @@ use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
-use setup::*;
+
 
 #[test]
 fn test_set_connection() {
@@ -575,4 +577,112 @@ fn connection_to_verify_correct_counterparty_conn_id() {
         .find(|attr| attr.key == COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY)
         .expect("Missing attribute");
     assert_eq!(attribute.value, "connection-1");
+}
+
+#[test]
+fn test_connection_open_try() {
+    let mut deps = deps();
+
+let versions = vec![ibc_proto::ibc::core::connection::v1::Version{ identifier: "identifier".to_string(), features: vec!["hello".to_string()] }];
+    let message = RawMsgConnectionOpenTry {
+        client_id: "clientidd".to_string(),
+        previous_connection_id: 1.to_string(),
+        client_state: Some(Any{ type_url: "type.googleapis.com/my.package.MyMessage".to_string(),
+        value: vec![1, 2, 3],}),
+        counterparty: Some(get_dummy_raw_counterparty(None)),
+        delay_period: 0,
+        proof_height: Some(Height { revision_number: 1, revision_height: 1 }),
+        proof_init: vec![1],
+        proof_client: vec![1],
+        proof_consensus: vec![1],
+        consensus_height: Some(Height { revision_number: 2, revision_height: 2 }),
+        signer: "signer".to_string(),
+        counterparty_versions: versions,
+        
+    };
+    let res_msg = ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
+        message.clone(),
+    )
+    .unwrap();
+    let contract = CwIbcCoreContext::new();
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let cl = to_vec(&client_state);
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &res_msg.client_id_on_b.clone(),
+            cl.unwrap(),
+        )
+        .unwrap();
+    contract
+        .client_state(&mut deps.storage, &res_msg.client_id_on_b)
+        .unwrap();
+    contract
+        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .unwrap();
+    let res = contract.connection_open_try(res_msg, deps.as_mut());
+    assert_eq!(res.is_ok(), true);
+}
+
+#[test]
+#[should_panic]
+fn test_open_try_fails_empty_version(){
+    let mut deps = deps();
+        let message = RawMsgConnectionOpenTry {
+            client_id: "clientidd".to_string(),
+            previous_connection_id: 1.to_string(),
+            client_state: Some(Any{ type_url: "type.googleapis.com/my.package.MyMessage".to_string(),
+            value: vec![1, 2, 3],}),
+            counterparty: Some(get_dummy_raw_counterparty(None)),
+            delay_period: 0,
+            proof_height: Some(Height { revision_number: 1, revision_height: 1 }),
+            proof_init: vec![1],
+            proof_client: vec![1],
+            proof_consensus: vec![1],
+            consensus_height: Some(Height { revision_number: 2, revision_height: 2 }),
+            signer: "signer".to_string(),
+            counterparty_versions: vec![ibc_proto::ibc::core::connection::v1::Version::default()],
+            
+        };
+        let res_msg = ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
+            message.clone(),
+        )
+        .unwrap();
+        let contract = CwIbcCoreContext::new();
+        let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+            trusting_period: 2,
+            frozen_height: 0,
+            max_clock_drift: 5,
+            latest_height: 100,
+            network_section_hash: vec![1, 2, 3],
+            validators: vec!["hash".as_bytes().to_vec()],
+        }
+        .try_into()
+        .unwrap();
+    
+        let cl = to_vec(&client_state);
+        contract
+            .store_client_state(
+                &mut deps.storage,
+                &res_msg.client_id_on_b.clone(),
+                cl.unwrap(),
+            )
+            .unwrap();
+        contract
+            .client_state(&mut deps.storage, &res_msg.client_id_on_b)
+            .unwrap();
+        contract
+            .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+            .unwrap();
+       contract.connection_open_try(res_msg, deps.as_mut());
 }

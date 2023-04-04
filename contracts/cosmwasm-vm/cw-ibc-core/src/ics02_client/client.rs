@@ -252,7 +252,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn host_height(&self) -> Result<ibc::Height, ContractError> {
-        todo!()
+        Ok(ibc::Height::new(10,10).unwrap())
     }
 
     fn host_timestamp(&self) -> Result<ibc::timestamp::Timestamp, ContractError> {
