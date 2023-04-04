@@ -1,7 +1,3 @@
-use std::{ops::Add, time::Duration};
-
-use ibc::timestamp::Timestamp;
-
 use super::*;
 
 pub const ICON_CLIENT_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
