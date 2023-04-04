@@ -65,6 +65,7 @@ pub trait ValidateChannel {
     fn validate_channel_open_ack(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: &MsgChannelOpenAck,
     ) -> Result<Response, ContractError>;
 
@@ -114,6 +115,12 @@ pub trait ExecuteChannel {
         message: Reply,
     ) -> Result<Response, ContractError>;
     fn execute_channel_open_confirm(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError>;
+
+    fn execute_channel_open_ack(
         &self,
         deps: DepsMut,
         message: Reply,
