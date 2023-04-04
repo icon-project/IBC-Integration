@@ -4,13 +4,11 @@ pub use channel::*;
 pub mod events;
 pub use events::*;
 pub mod handler;
-pub use handler::*;
-pub mod chan_types;
 pub use super::*;
 use crate::context::CwIbcCoreContext;
 pub use crate::types::*;
-pub use chan_types::*;
 pub use channel::*;
+pub use handler::*;
 
 use cosmwasm_std::Event;
 use cosmwasm_std::Reply;
@@ -36,6 +34,7 @@ use ibc::core::{
     ContextError,
 };
 use ibc::events::IbcEventType;
+pub use msg::LightClientMessage;
 use std::str::FromStr;
 pub use traits::*;
 

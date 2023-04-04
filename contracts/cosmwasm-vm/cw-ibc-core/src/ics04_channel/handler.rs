@@ -159,7 +159,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_a = self.channel_path(&port_id_on_a, &chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
 
-        let create_client_message = LightClientChannelMessage::ChannelVerify {
+        let create_client_message = LightClientMessage::VerifyChannel {
             proof_height: message.proof_height_on_a.to_string(),
             counterparty_prefix: prefix_on_a.clone().into_vec(),
             proof: message.proof_chan_end_on_a.clone().into(),
@@ -244,7 +244,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         );
         let chan_end_path_on_b = self.channel_path(&port_id_on_b, &message.chan_id_on_b);
         let vector = to_vec(&expected_chan_end_on_b);
-        let create_client_message = LightClientChannelMessage::ChannelVerify {
+        let create_client_message = LightClientMessage::VerifyChannel {
             proof_height: message.proof_height_on_b.to_string(),
             counterparty_prefix: prefix_on_b.clone().into_vec(),
             proof: message.proof_chan_end_on_b.clone().into(),
@@ -596,7 +596,9 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_end.counterparty().channel_id().unwrap().as_str(),
                         channel_end.connection_hops()[0].as_str(),
                     );
-                    Ok(Response::new().add_event(event))
+                    Ok(Response::new()
+                        .add_event(event)
+                        .add_attribute("method", "execute_channel_open_ack"))
                 }
                 None => {
                     return Err(ContractError::IbcChannelError {
