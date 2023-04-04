@@ -1,23 +1,16 @@
 package ibc.ics25.handler;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.verify;
-
-import java.math.BigInteger;
-
+import com.iconloop.score.test.Account;
+import ibc.icon.structs.messages.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
-
-import com.iconloop.score.test.Account;
-
-import ibc.icon.structs.messages.*;
 import test.proto.core.channel.ChannelOuterClass.Packet;
+
+import java.math.BigInteger;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class IBCHandlerTest extends IBCHandlerTestBase {
     @BeforeEach
@@ -219,7 +212,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         msg.setProof(new byte[0]);
         msg.setProofHeight(baseHeight.toByteArray());
 
-        when(module.mock.onRecvPacket(msg.getPacketRaw(), relayer.getAddress())).thenReturn(new byte[0]);
+        when(module.mock.onRecvPacket(msg.getPacket(), relayer.getAddress())).thenReturn(new byte[0]);
 
         // Act
         handler.invoke(owner, "setExpectedTimePerBlock", expectedTimePerBlock);

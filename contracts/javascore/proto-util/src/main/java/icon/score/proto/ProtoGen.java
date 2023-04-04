@@ -61,8 +61,7 @@ public class ProtoGen {
                 String targetPath = "build/generated/sources";
                 String relativePath = filePath.replace("/" + file.getName(), "");
                 String targetPackage = basePackage + "." + relativePath.replace("/", ".");
-                targetPackage = targetPackage.replaceAll("[0-9]", "");
-                targetPackage = targetPackage.replaceAll("-", "");
+                targetPackage = targetPackage.replaceAll("[0-9]+-", "");
 
                 final List<io.protostuff.compiler.model.Enum> enums = proto.getEnums();
                 for (io.protostuff.compiler.model.Enum _enum : enums) {
