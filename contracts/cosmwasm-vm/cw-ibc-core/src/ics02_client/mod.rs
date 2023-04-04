@@ -24,6 +24,7 @@ use ibc::core::ics04_channel::channel::ChannelEnd;
 use ibc::core::ics04_channel::packet::Sequence;
 use ibc::core::ics23_commitment::commitment::CommitmentRoot;
 use ibc::core::ContextError;
+use ibc::timestamp::Timestamp;
 use ibc::{
     core::ics02_client::events::{
         CLIENT_ID_ATTRIBUTE_KEY, CLIENT_TYPE_ATTRIBUTE_KEY, CONSENSUS_HEIGHTS_ATTRIBUTE_KEY,
@@ -42,4 +43,5 @@ use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use serde::Deserialize;
 use serde::Serialize;
 use std::str::FromStr;
+use std::time::Duration;
 use types::*;
