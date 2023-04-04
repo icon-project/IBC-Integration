@@ -172,6 +172,22 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
+    pub fn get_client(
+        &self,
+        store: &dyn Storage,
+        client_id: ClientId,
+    ) -> Result<String, ContractError> {
+        let client = self.get_client_implementations(store, client_id.clone())?;
+
+        if client.is_empty() {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::ClientNotFound {
+                    client_id: client_id.ibc_client_id().clone(),
+                },
+            });
+        }
+        Ok(client)
+    }
 }
 
 //TODO : Implement Methods

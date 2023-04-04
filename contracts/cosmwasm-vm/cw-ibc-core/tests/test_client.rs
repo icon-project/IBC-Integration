@@ -1472,3 +1472,65 @@ fn fails_on_storing_already_registered_client_into_registry() {
         Addr::unchecked(light_client_address),
     )
 }
+
+#[test]
+fn sucess_on_getting_client() {
+    let mut mock_deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_id = ClientId::new(client_type, 0).unwrap();
+
+    let client_address = "newclientaddress".to_string();
+
+    contract
+        .store_client_implementations(
+            mock_deps.as_mut().storage,
+            client_id.clone(),
+            client_address.clone(),
+        )
+        .unwrap();
+
+    let result = contract
+        .get_client(mock_deps.as_ref().storage, client_id)
+        .unwrap();
+
+    assert_eq!(result, client_address)
+}
+
+#[test]
+#[should_panic(expected = "InvalidClientId { client_id: \"new_cleint_type-0\" }")]
+fn fails_on_getting_client_invalid_client() {
+    let mock_deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_id = ClientId::new(client_type, 0).unwrap();
+
+    contract
+        .get_client(mock_deps.as_ref().storage, client_id)
+        .unwrap();
+}
+
+#[test]
+#[should_panic(
+    expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"new_cleint_type-0\") } }"
+)]
+fn fails_on_getting_client_empty_client() {
+    let mut mock_deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_id = ClientId::new(client_type, 0).unwrap();
+
+    let client_address = "".to_string();
+
+    contract
+        .store_client_implementations(
+            mock_deps.as_mut().storage,
+            client_id.clone(),
+            client_address.clone(),
+        )
+        .unwrap();
+
+    contract
+        .get_client(mock_deps.as_ref().storage, client_id)
+        .unwrap();
+}
