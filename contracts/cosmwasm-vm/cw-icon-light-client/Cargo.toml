@@ -37,7 +37,16 @@ cw2 = "1.0.1"
 schemars = "0.8.10"
 serde = { version = "1.0.152", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.38" }
+ibc-proto={version="0.28.0", default-features = false}
+prost = { version = "0.11.8", default-features = false, features = ["prost-derive"] }
+prost-types = { version = "0.11.8", default-features = false }
+hex="*"
+bytes="*"
+common={path="../../../libraries/rust/common"}
+
 
 [dev-dependencies]
 cosmwasm = "0.7.2"
 cw-multi-test = "0.16.2"
+hex-literal="*"
+test-utils={path="../../../libraries/rust/test-utils"}
