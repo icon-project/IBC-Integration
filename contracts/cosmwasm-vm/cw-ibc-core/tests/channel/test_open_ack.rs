@@ -1,8 +1,7 @@
+use super::*;
 use cw_ibc_core::ics04_channel::{
     open_ack::on_chan_open_ack_submessage, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
 };
-
-use super::*;
 
 #[test]
 #[should_panic(expected = "UndefinedConnectionCounterparty")]
@@ -15,13 +14,13 @@ fn test_validate_open_ack_channel_fail_missing_counterparty() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let port_id = PortId::from(msg.port_id_on_a.clone());
 
-    let ss = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let committment = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
     let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
         IbcClientId::default(),
         None,
-        ss.unwrap(),
+        committment.unwrap(),
     );
     let conn_end = ConnectionEnd::new(
         ibc::core::ics03_connection::connection::State::Open,
@@ -115,14 +114,14 @@ fn test_validate_open_ack_channel() {
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
 
-    let ss = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let commitement = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
     let connection_id = IbcConnectionId::new(5);
     let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
         IbcClientId::default(),
         Some(connection_id),
-        ss.unwrap(),
+        commitement.unwrap(),
     );
     let conn_end = ConnectionEnd::new(
         ibc::core::ics03_connection::connection::State::Open,
