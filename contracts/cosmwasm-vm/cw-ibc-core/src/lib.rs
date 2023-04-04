@@ -24,7 +24,7 @@ use crate::{
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
-    StdResult,
+    StdResult, Storage,
 };
 
 use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};

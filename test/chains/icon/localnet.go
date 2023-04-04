@@ -306,39 +306,27 @@ func (c *IconLocalnet) GetBalance(ctx context.Context, address string, denom str
 	return c.getFullNode().GetBalance(ctx, address)
 }
 
-// // DeployContract takes a file path to smart contract and initialization message and returns the instantiated contract/SCORE address.
-// func (c *IconLocalnet) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
-// 	return c.getFullNode().DeployContract(ctx, scorePath, keystorePath, initMessage)
-// }
-
-// func (c *IconLocalnet) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
-// 	return c.getFullNode().QueryContract(ctx, scoreAddress, methodName, params)
-// }
-
-// func (c *IconLocalnet) GetTransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
-// 	return c.getFullNode().TransactionResult(ctx, hash)
-// }
-
-// func (c *IconLocalnet) WaitForBlocks(ctx context.Context, numBlocks int) {
-// 	testutil.WaitForBlocks(ctx, numBlocks, c.getFullNode())
-// }
-
-// func (c *IconLocalnet) ExecuteContract(ctx context.Context, scoreAddress, keystorePath, methodName, params string) (string, error) {
-// 	return c.getFullNode().ExecuteContract(ctx, scoreAddress, methodName, keystorePath, params)
-// }
-
 // DeployContract implements chains.Chain
 func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
+	// Get Contract Name from context
+	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
+	contractName := ctxValue.ContractName
+
 	// TODO get scorepath
-	// scoreAddress, _ := c.getFullNode().DeployContract(ctx, c.scorePaths["bmc"], c.keystorePath, c.initMessage)
-	// return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
-	// 	ContractAddress: string(scoreAddress),
-	// }), nil
-	return nil, nil
+	scoreAddress, err := c.getFullNode().DeployContract(ctx, c.scorePaths[contractName], c.keystorePath, c.initMessage)
+	var contracts chains.ContractKey
+
+	contracts.ContractAddress = map[string]string{
+		contractName: scoreAddress,
+	}
+	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
+		ContractAddress: contracts.ContractAddress,
+		ContractOwner:   keyName,
+	}), err
 }
 
 // ExecuteContract implements chains.Chain
-func (*IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, methodName, param string) (context.Context, error) {
+func (*IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	panic("unimplemented")
 }
 
@@ -359,5 +347,9 @@ func (*IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodN
 }
 
 func (it *IconLocalnet) SetAdminParams(ctx context.Context) string {
-	return ""
+	panic("unimplemented")
+}
+
+func (it *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
+	panic("unimplemented")
 }
