@@ -10,6 +10,8 @@ use self::{
 
 pub mod close_init;
 use close_init::*;
+pub mod open_ack;
+use open_ack::*;
 
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_open_init(
@@ -157,7 +159,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_a = self.channel_path(&port_id_on_a, &chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
 
-        let create_client_message = LightClientChannelMessage::OpenTry {
+        let create_client_message = LightClientChannelMessage::ChannelVerify {
             proof_height: message.proof_height_on_a.to_string(),
             counterparty_prefix: prefix_on_a.clone().into_vec(),
             proof: message.proof_chan_end_on_a.clone().into(),
@@ -188,9 +190,93 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_open_ack(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: &MsgChannelOpenAck,
     ) -> Result<Response, ContractError> {
-        todo!()
+        let mut chan_end_on_a = self.get_channel_end(
+            deps.storage,
+            message.port_id_on_a.clone().into(),
+            message.chan_id_on_a.clone().into(),
+        )?;
+        channel_open_ack_validate(message, &chan_end_on_a)?;
+        let conn_end_on_a = self.connection_end(
+            deps.storage,
+            chan_end_on_a.connection_hops()[0].clone().into(),
+        )?;
+        if !conn_end_on_a.state_matches(&ConnectionState::Open) {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::ConnectionNotOpen {
+                    connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                },
+            });
+        }
+        let client_id_on_a = conn_end_on_a.client_id();
+        let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        let consensus_state_of_b_on_a =
+            self.consensus_state(deps.storage, &client_id_on_a, &message.proof_height_on_b)?;
+        let prefix_on_b = conn_end_on_a.counterparty().prefix();
+        let port_id_on_b = &chan_end_on_a.counterparty().port_id;
+        let conn_id_on_b =
+            conn_end_on_a
+                .counterparty()
+                .connection_id()
+                .ok_or(ContractError::IbcChannelError {
+                    error: ChannelError::UndefinedConnectionCounterparty {
+                        connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                    },
+                })?;
+        if client_state_of_b_on_a.is_frozen() {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::FrozenClient {
+                    client_id: client_id_on_a.clone(),
+                },
+            });
+        }
+        let expected_chan_end_on_b = ChannelEnd::new(
+            State::TryOpen,
+            chan_end_on_a.ordering().clone(),
+            Counterparty::new(
+                message.port_id_on_a.clone(),
+                Some(message.chan_id_on_a.clone()),
+            ),
+            vec![conn_id_on_b.clone()],
+            message.version_on_b.clone(),
+        );
+        let chan_end_path_on_b = self.channel_path(&port_id_on_b, &message.chan_id_on_b);
+        let vector = to_vec(&expected_chan_end_on_b);
+        let create_client_message = LightClientChannelMessage::ChannelVerify {
+            proof_height: message.proof_height_on_b.to_string(),
+            counterparty_prefix: prefix_on_b.clone().into_vec(),
+            proof: message.proof_chan_end_on_b.clone().into(),
+            root: consensus_state_of_b_on_a.clone().root().clone().into_vec(),
+            counterparty_chan_end_path: chan_end_path_on_b,
+            expected_counterparty_channel_end: vector.unwrap(),
+        };
+        let client_type = ClientType::from(client_state_of_b_on_a.client_type());
+        let light_client_address =
+            self.get_client_from_registry(deps.as_ref().storage, client_type)?;
+        let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: light_client_address,
+            msg: to_binary(&create_client_message).unwrap(),
+            funds: info.funds,
+        });
+        let sub_msg: SubMsg = SubMsg::reply_always(
+            create_client_message,
+            EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT,
+        );
+
+        chan_end_on_a.set_version(message.version_on_b.clone());
+        chan_end_on_a.set_counterparty_channel_id(message.chan_id_on_b.clone());
+        self.store_channel_end(
+            deps.storage,
+            message.port_id_on_a.clone().into(),
+            message.chan_id_on_a.clone().into(),
+            chan_end_on_a,
+        )?;
+
+        Ok(Response::new()
+            .add_attribute("action", "Light client channel open ack call")
+            .add_submessage(sub_msg))
     }
 
     fn validate_channel_open_confirm(
@@ -448,6 +534,67 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let event = create_close_init_channel_event(
                         &port_id.ibc_port_id().as_str(),
                         channel_id.ibc_channel_id().as_str(),
+                    );
+                    Ok(Response::new().add_event(event))
+                }
+                None => {
+                    return Err(ContractError::IbcChannelError {
+                        error: ChannelError::Other {
+                            description: "Data from module is Missing".to_string(),
+                        },
+                    })
+                }
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                return Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other { description: error },
+                })
+            }
+        }
+    }
+
+    fn execute_channel_open_ack(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
+                Some(res) => {
+                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
+                    let channel_id =
+                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let mut channel_end =
+                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    if !channel_end.state_matches(&State::Init) {
+                        return Err(ContractError::IbcChannelError {
+                            error: ChannelError::InvalidChannelState {
+                                channel_id: channel_id.ibc_channel_id().clone(),
+                                state: channel_end.state,
+                            },
+                        });
+                    }
+                    channel_end.set_state(State::Open); // State Change
+                    self.store_channel_end(
+                        deps.storage,
+                        port_id.clone(),
+                        channel_id.clone(),
+                        channel_end.clone(),
+                    )?;
+                    self.store_channel(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                        channel_end.clone(),
+                    )?;
+
+                    let event = create_open_ack_channel_event(
+                        port_id.ibc_port_id().as_str(),
+                        channel_id.ibc_channel_id().as_str(),
+                        channel_end.counterparty().port_id().as_str(),
+                        channel_end.counterparty().channel_id().unwrap().as_str(),
+                        channel_end.connection_hops()[0].as_str(),
                     );
                     Ok(Response::new().add_event(event))
                 }

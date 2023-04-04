@@ -2,7 +2,7 @@ use super::*;
 
 #[cw_serde]
 pub enum LightClientChannelMessage {
-    OpenTry {
+    ChannelVerify {
         proof_height: String,
         counterparty_prefix: Vec<u8>,
         proof: Vec<u8>,
