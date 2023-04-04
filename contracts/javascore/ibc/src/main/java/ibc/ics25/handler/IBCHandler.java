@@ -54,12 +54,6 @@ public class IBCHandler extends IBCHandlerPacket {
         super.setExpectedTimePerBlock(expectedTimePerBlock);
     }
 
-    @External
-    public String createClient(MsgCreateClient msg) {
-        onlyOwner();
-        return super.createClient(msg);
-    }
-
     public static void onlyOwner() {
         Address caller = Context.getCaller();
         Address owner = Context.getOwner();
