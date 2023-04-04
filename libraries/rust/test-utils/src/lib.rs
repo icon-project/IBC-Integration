@@ -10,7 +10,10 @@ use std::{
 use serde::Deserialize;
 
 use common::icon::icon::types::v1::BtpHeader;
+use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::Attribute;
+
+pub mod constants;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -28,8 +31,17 @@ pub struct TestHeader {
 }
 #[derive(Debug, Deserialize)]
 pub struct TestHeaderData {
-    pub header: TestHeader,
+    pub signed_header: TestSignedHeader,
     pub encoded_protobuf: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct TestSignedHeader {
+    #[serde(rename(deserialize = "BTPHeader"))]
+    pub btp_header:TestHeader,
+    pub signature:Vec<String>
+
 }
 
 impl TryFrom<TestHeader> for BtpHeader {
@@ -58,6 +70,25 @@ impl TryFrom<TestHeader> for BtpHeader {
     }
 }
 
+
+impl TryFrom<TestSignedHeader> for SignedHeader {
+    type Error = hex::FromHexError;
+
+    fn try_from(value: TestSignedHeader) -> Result<Self, Self::Error> {
+        let btp_header:BtpHeader=value.btp_header.try_into()?;
+        let signatures=value.signature.iter().map(|s|{
+            hex::decode(s.replace("0x", "")).unwrap()
+        }).collect();
+        return Ok(SignedHeader {
+            header:Some(btp_header),
+            signatures
+
+        })
+
+    }
+
+}
+
 pub fn load_test_headers() -> Vec<TestHeaderData> {
     let mut root = get_project_root().unwrap();
     root.push("test_data/test_headers.json");
@@ -73,11 +104,23 @@ pub fn get_test_headers() -> Vec<BtpHeader> {
     return load_test_headers()
         .into_iter()
         .map(|th| {
-            let btp: BtpHeader = th.header.try_into().unwrap();
+            let btp: BtpHeader = th.signed_header.btp_header.try_into().unwrap();
             btp
         })
         .collect::<Vec<BtpHeader>>();
 }
+
+pub fn get_test_signed_headers() -> Vec<SignedHeader> {
+    return load_test_headers()
+        .into_iter()
+        .map(|th| {
+            let btp: SignedHeader = th.signed_header.try_into().unwrap();
+            btp
+        })
+        .collect::<Vec<SignedHeader>>();
+}
+
+
 
 pub fn get_project_root() -> io::Result<PathBuf> {
     let path = env::current_dir()?;

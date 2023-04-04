@@ -273,6 +273,7 @@ impl QueryHandler {
 mod tests {
     use super::*;
 
+    use common::icon::icon::types::v1::SignedHeader;
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockStorage},
         StdResult,
@@ -280,6 +281,8 @@ mod tests {
     use hex_literal::hex;
     use ibc_proto::google::protobuf::Any;
     use prost::Message;
+    use test_utils::get_test_signed_headers;
+    use test_utils::constants::{TESTNET_NETWORK_TYPE_ID,TESTNET_SRC_NETWORK_ID};
 
     #[test]
     fn test_get_consensus_state() {
@@ -449,6 +452,23 @@ mod tests {
         let result = context.recover_signer(msg.as_slice(), &signature);
         assert_eq!(address, result.unwrap());
     }
+
+    #[ignore]
+    #[test]
+    fn test_cwcontext_recover_signer_relay_data() {
+        let mut deps = mock_dependencies();
+        
+        let signed_header:SignedHeader= get_test_signed_headers()[0].clone();
+        let btp_header=signed_header.header.clone().unwrap();
+        let mut msg = btp_header.get_network_type_section_decision_hash(TESTNET_SRC_NETWORK_ID, TESTNET_NETWORK_TYPE_ID.into());
+        let address = "d6d594b040bff300eee91f7665ac8dcf89eb0871015306";
+        let mut signature = signed_header.signatures[0].clone();
+        let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let result = context.recover_signer(msg.as_slice(), &signature).unwrap();
+        assert_eq!(address, hex::encode(result));
+    }
+
+
 
     #[test]
     fn test_cwcontext_get_config() {

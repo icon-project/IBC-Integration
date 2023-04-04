@@ -1,4 +1,5 @@
 use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+
 use crate::rlp::RlpStream;
 use crate::{
     icon::icon::types::v1::BtpHeader,
@@ -88,7 +89,9 @@ impl BtpHeader {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::get_test_headers;
+    use test_utils::{get_test_headers, get_test_signed_headers, constants::{TESTNET_SRC_NETWORK_ID, TESTNET_NETWORK_TYPE_ID}, load_test_headers, TestHeader};
+    use crate::icon::icon::types::v1::SignedHeader;
+    
 
     use super::*;
     use hex_literal::hex;
@@ -100,40 +103,53 @@ mod tests {
         let header = BtpHeader::decode(relay_bytes.as_slice());
         assert!(header.is_ok());
     }
+    #[ignore]
+    #[test]
+    fn relay_bytes_to_signed_header(){
+        let headers= load_test_headers();
+        for header in headers {
+            let buff= hex::decode(header.encoded_protobuf.replace("0x", "")).unwrap();
+            let decoded= SignedHeader::decode(buff.as_slice());
+          
+            assert!(decoded.is_ok());
+
+        }
+
+    }
 
     #[test]
     fn test_network_section() {
-        let expected=hex!("f8450102a0d3cd05ddbec4846c124bff569ab5531f6284a521f64c80b82110aa016937ed7601a084d8e19eb09626e4a94212d3a9db54bc16a75dfd791858c0fab3032b944f657a");
+        let expected=hex!("f8450102a074463d2395972061ca8807d262b0757454ed160bf43bc98d4d7a713647891a0a04a06fc96aeaecd1ed511dd7ee363638a0d76fc9d19e859f48afde692082909966b3");
         let header = &get_test_headers()[1];
         let rlp_bytes = header.get_network_section_rlp();
         assert_eq!(hex::encode(expected), hex::encode(rlp_bytes));
         let expected_hash =
-            hex!("688587a1efabcb22f532a8bf0cb541a1e487365b0ac77ce166c211296900f68d");
+            hex!("690319e26cfc39f139791fd9b0cf1015b7923ea40311444dd604f3cb46cc63b2");
         let hash = header.get_network_section_hash();
         assert_eq!(hex::encode(expected_hash), hex::encode(hash));
     }
 
     #[test]
     fn test_network_type_section() {
-        let expected=hex!("f842a0d090304264eeee3c3562152f2dc355601b0b423a948824fd0a012c11c3fc2fb4a0688587a1efabcb22f532a8bf0cb541a1e487365b0ac77ce166c211296900f68d");
+        let expected=hex!("f842a0d090304264eeee3c3562152f2dc355601b0b423a948824fd0a012c11c3fc2fb4a0690319e26cfc39f139791fd9b0cf1015b7923ea40311444dd604f3cb46cc63b2");
         let header = &get_test_headers()[1];
         let rlp_bytes = header.get_network_type_section_rlp();
         assert_eq!(hex::encode(expected), hex::encode(rlp_bytes));
         let expected_hash =
-            hex!("d6be1d816f18e5e134f5bfe5de755d5aba7af6988a67c1e0fe9bf1a7965dea94");
+            hex!("2b2aa1cc61539d0ef83d0e9997703e18da44a5d44824757b2b38cdbf931c33d6");
         let hash = header.get_network_type_section_hash();
         assert_eq!(hex::encode(expected_hash), hex::encode(hash));
     }
 
     #[test]
     fn test_get_network_type_section_decision() {
-        let expected=hex!("ef883078332e69636f6e0182507200a0d6be1d816f18e5e134f5bfe5de755d5aba7af6988a67c1e0fe9bf1a7965dea94");
+        let expected=hex!("f0883078332e69636f6e01830143b900a02b2aa1cc61539d0ef83d0e9997703e18da44a5d44824757b2b38cdbf931c33d6");
         let header = &get_test_headers()[1];
-        let rlp_bytes = header.get_network_type_section_decision_rlp("0x3.icon", 1);
+        let rlp_bytes = header.get_network_type_section_decision_rlp(TESTNET_SRC_NETWORK_ID, TESTNET_NETWORK_TYPE_ID.into());
         assert_eq!(hex::encode(expected), hex::encode(rlp_bytes));
         let expected_hash =
-            hex!("d3441d4cc7b6472976a357cd81f77a54c25d914b3adf99721309bc705fa116c2");
-        let hash = header.get_network_type_section_decision_hash("0x3.icon", 1);
+            hex!("8490fee35ce9f11a81c776311cfb42956ac0aa19d3c92bb832c2cef88bff4904");
+        let hash = header.get_network_type_section_decision_hash(TESTNET_SRC_NETWORK_ID, TESTNET_NETWORK_TYPE_ID.into());
         assert_eq!(hex::encode(expected_hash), hex::encode(hash));
     }
 
@@ -149,4 +165,6 @@ mod tests {
             assert_eq!(hex::encode(expected), hex::encode(current))
         }
     }
+
+   
 }
