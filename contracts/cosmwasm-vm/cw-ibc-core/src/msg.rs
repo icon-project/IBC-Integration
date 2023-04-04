@@ -27,6 +27,14 @@ pub enum LightClientMessage {
         proof_upgrade_client: Vec<u8>,
         proof_upgrade_consensus_state: Vec<u8>,
     },
+    VerifyChannel {
+        proof_height: String,
+        counterparty_prefix: Vec<u8>,
+        proof: Vec<u8>,
+        root: Vec<u8>,
+        counterparty_chan_end_path: Vec<u8>,
+        expected_counterparty_channel_end: Vec<u8>,
+    },
 }
 
 #[cw_serde]
