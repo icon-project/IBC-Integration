@@ -28,10 +28,10 @@ pub fn update_client_event(
 pub fn upgrade_client_event(
     client_type: IbcClientType,
     consensus_height: Height,
-    message: MsgUpgradeClient,
+    client_id: IbcClientId,
 ) -> Event {
     Event::new(IbcEventType::UpgradeClient.as_str())
-        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, message.client_id.as_str())
+        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
         .add_attribute(CLIENT_TYPE_ATTRIBUTE_KEY, client_type.as_str())
         .add_attribute(CONSENSUS_HEIGHT_ATTRIBUTE_KEY, consensus_height)
 }

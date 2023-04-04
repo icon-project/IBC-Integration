@@ -255,8 +255,14 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn host_timestamp(&self) -> Result<ibc::timestamp::Timestamp, ContractError> {
-        todo!()
+    pub fn host_timestamp(
+        &self,
+        store: &dyn Storage,
+    ) -> Result<ibc::timestamp::Timestamp, ContractError> {
+        //TODO Update timestamp logic
+        let duration = self.ibc_store().expected_time_per_block().load(store)?;
+        let block_time = Duration::from_secs(duration as u64);
+        Ok(Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap())
     }
 
     fn host_consensus_state(
