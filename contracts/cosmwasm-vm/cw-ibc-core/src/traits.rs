@@ -91,6 +91,7 @@ pub trait ValidateChannel {
     fn validate_channel_close_confirm(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: &MsgChannelCloseConfirm,
     ) -> Result<Response, ContractError>;
 }

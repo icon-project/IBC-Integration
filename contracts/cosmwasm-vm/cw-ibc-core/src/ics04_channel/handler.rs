@@ -13,6 +13,9 @@ use close_init::*;
 pub mod open_ack;
 use open_ack::*;
 
+pub mod close_confirm;
+pub use close_confirm::*;
+
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_open_init(
         &self,
@@ -340,9 +343,92 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_close_confirm(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: &MsgChannelCloseConfirm,
     ) -> Result<Response, ContractError> {
-        todo!()
+        let chan_end_on_b = self.get_channel_end(
+            deps.storage,
+            message.port_id_on_b.clone().into(),
+            message.chan_id_on_b.clone().into(),
+        )?;
+        channel_close_confirm_validate(&message, &chan_end_on_b)?;
+        let conn_end_on_b = self.connection_end(
+            deps.storage,
+            chan_end_on_b.connection_hops()[0].clone().into(),
+        )?;
+        if !conn_end_on_b.state_matches(&ConnectionState::Open) {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::ConnectionNotOpen {
+                    connection_id: chan_end_on_b.connection_hops()[0].clone(),
+                },
+            });
+        }
+
+        let client_id_on_b = conn_end_on_b.client_id();
+        let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
+        let consensus_state_of_a_on_b =
+            self.consensus_state(deps.storage, &client_id_on_b, &message.proof_height_on_a)?;
+        let prefix_on_a = conn_end_on_b.counterparty().prefix();
+        let port_id_on_a = &chan_end_on_b.counterparty().port_id;
+        let chan_id_on_a =
+            chan_end_on_b
+                .counterparty()
+                .channel_id()
+                .ok_or(ContractError::IbcChannelError {
+                    error: ChannelError::InvalidCounterpartyChannelId,
+                })?;
+        let conn_id_on_a =
+            conn_end_on_b
+                .counterparty()
+                .connection_id()
+                .ok_or(ContractError::IbcChannelError {
+                    error: ChannelError::UndefinedConnectionCounterparty {
+                        connection_id: chan_end_on_b.connection_hops()[0].clone(),
+                    },
+                })?;
+        if client_state_of_a_on_b.is_frozen() {
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::FrozenClient {
+                    client_id: client_id_on_b.clone(),
+                },
+            });
+        }
+        let expected_chan_end_on_a = ChannelEnd::new(
+            State::Closed,
+            chan_end_on_b.ordering().clone(),
+            Counterparty::new(
+                message.port_id_on_b.clone(),
+                Some(message.chan_id_on_b.clone()),
+            ),
+            vec![conn_id_on_a.clone()],
+            chan_end_on_b.version().clone(),
+        );
+        let chan_end_path_on_a = self.channel_path(&port_id_on_a, chan_id_on_a);
+        let vector = to_vec(&expected_chan_end_on_a);
+        let create_client_message = LightClientMessage::VerifyChannel {
+            proof_height: message.proof_height_on_a.to_string(),
+            counterparty_prefix: prefix_on_a.clone().into_vec(),
+            proof: message.proof_chan_end_on_a.clone().into(),
+            root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
+            counterparty_chan_end_path: chan_end_path_on_a,
+            expected_counterparty_channel_end: vector.unwrap(),
+        };
+        let client_type = ClientType::from(client_state_of_a_on_b.client_type());
+        let light_client_address =
+            self.get_client_from_registry(deps.as_ref().storage, client_type)?;
+        let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: light_client_address,
+            msg: to_binary(&create_client_message).unwrap(),
+            funds: info.funds,
+        });
+        let sub_msg: SubMsg = SubMsg::reply_always(
+            create_client_message,
+            EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT,
+        );
+
+        Ok(Response::new()
+            .add_attribute("action", "light_client_channel_close_confirm_call")
+            .add_submessage(sub_msg))
     }
 }
 
