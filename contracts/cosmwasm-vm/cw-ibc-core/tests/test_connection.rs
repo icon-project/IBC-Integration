@@ -704,13 +704,6 @@ fn connection_open_try_validate() {
     )
     .unwrap();
     res_msg.client_id_on_b = IbcClientId::default();
-    // contract
-    //     .ibc_store()
-    //     .expected_time_per_block()
-    //     .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
-    //     .unwrap();
-
-    // let client_type = ClientType::new("iconclient".to_string());
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
     }
@@ -736,52 +729,6 @@ fn connection_open_try_validate() {
         )
         .unwrap();
 
-    // let connection_state: VerifyConnectionState = VerifyConnectionState::new(
-    //     "hi".to_string(),
-    //     vec![1],
-    //     vec![2],
-    //     vec![3],
-    //     vec![4],
-    //     vec![5],
-    // );
-    // let conn_id = ConnectionId::new(1);
-    // let client_id = ClientId::from_str("iconclient-1").unwrap();
-    // let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    // let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-    //     "hello".as_bytes().to_vec(),
-    // )
-    // .unwrap();
-    // let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
-    //     counterparty_client_id.ibc_client_id().clone(),
-    //     None,
-    //     counterparty_prefix.clone(),
-    // );
-
-    // let height = ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
-
-    // contract.validate_self_client(client_state.into()).unwrap();
-    // contract.consensus_state_path(client_id.into(), &height);
-
-    // let mock_response_data = OpenTryResponse::new(
-    //     conn_id.as_str().to_owned(),
-    //     client_id.ibc_client_id().to_string(),
-    //     counterparty_client_id.ibc_client_id().to_string(),
-    //     "".to_string(),
-    //     counterparty_prefix.as_bytes().to_vec(),
-    //     to_vec(&versions).unwrap(),
-    //     23,
-    // );
-    // let mock_data_binary = to_binary(&mock_response_data).unwrap();
-    // let events = Event::new("open_try");
-    // let response = SubMsgResponse {
-    //     data: Some(mock_data_binary),
-    //     events: vec![events],
-    // };
-    // let result: SubMsgResult = SubMsgResult::Ok(response);
-    // let reply_msg = Reply {
-    //     id: EXECUTE_CONNECTION_OPENTRY,
-    //     result,
-    // };
     let cl = to_vec(&client_state);
     
     contract
