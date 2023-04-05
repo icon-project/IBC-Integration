@@ -16,7 +16,7 @@ use cosmwasm_std::Response;
 use cosmwasm_std::Storage;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics03_connection::error::ConnectionError;
-use ibc::core::ics03_connection::{
+pub use ibc::core::ics03_connection::{
     connection::{Counterparty, State},
     msgs::conn_open_init::MsgConnectionOpenInit,
     version::Version,
