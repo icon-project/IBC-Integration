@@ -1,7 +1,10 @@
-use cw_ibc_core::ics04_channel::{open_confirm::on_chan_open_confirm_submessage, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE};
+use cosmwasm_std::IbcChannel;
+use cw_ibc_core::ics04_channel::{
+    open_confirm::{channel_open_confirm_validate, on_chan_open_confirm_submessage},
+    EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
+};
 
 use super::*;
-
 
 #[test]
 #[should_panic(expected = "UndefinedConnectionCounterparty")]
@@ -288,7 +291,8 @@ fn test_execute_open_confirm_from_light_client() {
         &info,
         EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
     );
-    let res = contract.execute_open_confirm_from_light_client_reply(deps.as_mut(), info.clone(), reply);
+    let res =
+        contract.execute_open_confirm_from_light_client_reply(deps.as_mut(), info.clone(), reply);
     assert_eq!(res.is_ok(), true);
     assert_eq!(res.unwrap().messages[0], on_chan_open_confirm)
 }
@@ -401,4 +405,63 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
     contract
         .execute_channel_open_confirm(deps.as_mut(), reply)
         .unwrap();
+}
+
+#[test]
+pub fn test_channel_open_confirm_validate() {
+    let raw = get_dummy_raw_msg_chan_open_confirm(10);
+    let msg = MsgChannelOpenConfirm::try_from(raw.clone()).unwrap();
+    let conn_id = ConnectionId::new(5);
+    let port_id = PortId::from(msg.port_id_on_b.clone());
+    let channel_end = ChannelEnd {
+        state: State::TryOpen,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: port_id.ibc_port_id().clone(),
+            channel_id: Some(msg.chan_id_on_b.clone()),
+        },
+        connection_hops: vec![conn_id.connection_id().clone()],
+        version: Version::new("xcall".to_string()),
+    };
+    let res = channel_open_confirm_validate(&msg, &channel_end);
+
+    assert!(res.is_ok())
+}
+#[test]
+pub fn test_on_chan_open_confirm_submessage() {
+    let raw = get_dummy_raw_msg_chan_open_confirm(10);
+    let msg = MsgChannelOpenConfirm::try_from(raw.clone()).unwrap();
+    let conn_id = ConnectionId::new(5);
+    let port_id = PortId::from(msg.port_id_on_b.clone());
+    let channel_end = ChannelEnd {
+        state: State::TryOpen,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: port_id.ibc_port_id().clone(),
+            channel_id: Some(msg.chan_id_on_b.clone()),
+        },
+        connection_hops: vec![conn_id.connection_id().clone()],
+        version: Version::new("xcall".to_string()),
+    };
+    let endpoint = cosmwasm_std::IbcEndpoint {
+        port_id: port_id.ibc_port_id().to_string(),
+        channel_id: msg.chan_id_on_b.to_string(),
+    };
+    let counter_party = cosmwasm_std::IbcEndpoint {
+        port_id: channel_end.remote.port_id.to_string(),
+        channel_id: channel_end.clone().remote.channel_id.unwrap().to_string(),
+    };
+    let res =
+        on_chan_open_confirm_submessage(&channel_end, &port_id, &msg.chan_id_on_b.clone().into());
+    let expected = cosmwasm_std::IbcChannelConnectMsg::OpenConfirm {
+        channel: IbcChannel::new(
+            endpoint,
+            counter_party,
+            cosmwasm_std::IbcOrder::Unordered,
+            "xcall".to_string(),
+            conn_id.connection_id().to_string(),
+        ),
+    };
+
+    assert_eq!(res.unwrap(), expected);
 }
