@@ -2,6 +2,7 @@
 pub mod connection;
 pub mod event;
 pub mod handler;
+pub mod conn2_types;
 use crate::context::CwIbcCoreContext;
 use crate::ics03_connection::event::create_open_init_event;
 use crate::types::{ClientId, ConnectionId};
