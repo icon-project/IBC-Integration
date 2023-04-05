@@ -7,7 +7,7 @@ use cw_ibc_core::ics04_channel::open_init::{
 };
 use cw_ibc_core::ics04_channel::open_try::on_chan_open_try_submessage;
 use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY};
-use cw_ibc_core::types::ClientType;
+use cw_ibc_core::types::{ClientId, ClientType};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
@@ -744,7 +744,13 @@ fn create_open_confirm_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let message = MsgChannelOpenConfirm::try_from(default_raw_msg.clone()).unwrap();
-    let event = create_open_confirm_channel_event(&message);
+    let event = create_open_confirm_channel_event(
+        &message.port_id_on_b.as_str(),
+        &message.chan_id_on_b.as_str(),
+        PortId::default().as_str(),
+        ClientId::default().as_str(),
+        ConnectionId::default().as_str(),
+    );
 
     assert_eq!(IbcEventType::OpenConfirmChannel.as_str(), event.ty);
     assert_eq!("channel-0", event.attributes[1].value);

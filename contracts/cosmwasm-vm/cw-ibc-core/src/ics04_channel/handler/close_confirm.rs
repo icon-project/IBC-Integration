@@ -4,7 +4,7 @@ pub fn channel_close_confirm_validate(
     message: &MsgChannelCloseConfirm,
     chan_end_on_b: &ChannelEnd,
 ) -> Result<(), ContractError> {
-    if !chan_end_on_b.state_matches(&State::Closed) {
+    if chan_end_on_b.state_matches(&State::Closed) {
         return Err(ContractError::IbcChannelError {
             error: ChannelError::ChannelClosed {
                 channel_id: message.chan_id_on_b.clone(),

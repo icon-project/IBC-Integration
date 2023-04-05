@@ -716,7 +716,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
                     let mut channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    if !channel_end.state_matches(&State::Closed) {
+                    if channel_end.state_matches(&State::Closed) {
                         return Err(ContractError::IbcChannelError {
                             error: ChannelError::InvalidChannelState {
                                 channel_id: channel_id.ibc_channel_id().clone(),
