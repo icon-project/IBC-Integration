@@ -20,7 +20,10 @@ use cw_ibc_core::{
     MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
 };
 use ibc::{
-    core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
+    core::{
+        ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
+        ics23_commitment::commitment::CommitmentRoot,
+    },
     mock::{
         client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
     },
@@ -28,6 +31,7 @@ use ibc::{
     Height,
 };
 
+use ibc_proto::ics23::CommitmentProof;
 use setup::*;
 
 #[test]
@@ -1824,4 +1828,28 @@ fn success_on_execute_misbehaviour() {
         client_id.ibc_client_id().as_str(),
         result.events[0].attributes[0].value
     );
+}
+
+#[test]
+fn success_on_raw_from_consensus_state() {
+    let raw = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root".as_bytes().to_vec(),
+    };
+
+    let consenus_state: ConsensusState = raw.clone().try_into().unwrap();
+
+    let raw_message: common::icon::icon::lightclient::v1::ConsensusState =
+        consenus_state.try_into().unwrap();
+
+    assert_eq!(raw, raw_message)
+}
+
+#[test]
+#[should_panic(
+    expected = "UnknownConsensusStateType { consensus_state_type: \"/ibc.mock.ConsensusState\" }"
+)]
+fn fails_on_raw_from_consensus_state() {
+    let raw = get_dummy_raw_msg_create_client();
+
+    TryInto::<ConsensusState>::try_into(raw.consensus_state.unwrap().clone()).unwrap();
 }
