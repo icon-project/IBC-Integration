@@ -3,6 +3,7 @@ pub mod connection;
 pub mod event;
 pub mod handler;
 pub mod conn1_types;
+pub use conn1_types::*;
 use crate::context::CwIbcCoreContext;
 use crate::ics03_connection::event::create_open_init_event;
 use crate::types::{ClientId, ConnectionId};
@@ -25,3 +26,4 @@ use ibc::{
     events::IbcEventType,
 };
 use ibc_proto::protobuf::Protobuf;
+pub use ibc::core::ics24_host::identifier::ConnectionId as IbcConnectionId;

@@ -1,4 +1,7 @@
-use cosmwasm_std::{to_binary, CosmosMsg, MessageInfo, SubMsg};
+use std::str::FromStr;
+use std::time::Duration;
+
+use cosmwasm_std::{from_binary, to_binary, CosmosMsg, MessageInfo, SubMsg};
 use cosmwasm_std::{to_vec, Reply};
 use ibc::core::ics03_connection::connection::Counterparty;
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
@@ -6,6 +9,7 @@ use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 use crate::ics03_connection::conn1_types::VerifyClientConsesnusState;
 use crate::ics03_connection::conn1_types::VerifyClientFullState;
 use crate::ics03_connection::conn1_types::VerifyConnectionState;
+use crate::ics03_connection::event::create_open_ack_event;
 
 use super::conn1_types::LightClientConnectionMessage;
 use super::*;
@@ -203,11 +207,104 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("method", "connection_open_ack"))
     }
 
-    pub fn execute_open_ack(
+    pub fn excute_connection_open_ack(
         &self,
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        Ok(Response::new())
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
+                Some(data) => {
+                    let response: OpenAckResponse =
+                        from_binary(&data).map_err(|error| ContractError::Std(error))?;
+
+                    let connection_id =
+                        IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
+                            ContractError::IbcDecodeError {
+                                error: error.to_string(),
+                            }
+                        })?;
+
+                    let version: Version =
+                        serde_json_wasm::from_slice(&response.version).map_err(|error| {
+                            ContractError::IbcDecodeError {
+                                error: error.to_string(),
+                            }
+                        })?;
+
+                    let mut conn_end =
+                        self.connection_end(deps.storage, connection_id.clone().into())?;
+
+                    if !conn_end.state_matches(&State::Init) {
+                        return Err(ContractError::IbcConnectionError {
+                            error: ConnectionError::ConnectionMismatch {
+                                connection_id: connection_id.clone(),
+                            },
+                        });
+                    }
+                    let counter_party_client_id =
+                        ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
+                            ContractError::IbcDecodeError {
+                                error: error.to_string(),
+                            }
+                        })?;
+
+                    let counterparty_conn_id = match response.counterparty_connection_id.is_empty()
+                    {
+                        true => None,
+                        false => {
+                            let connection_id =
+                                IbcConnectionId::from_str(&response.counterparty_connection_id)
+                                    .unwrap();
+                            Some(connection_id.clone())
+                        }
+                    };
+
+                    let counterparty_prefix = CommitmentPrefix::try_from(
+                        response.counterparty_prefix,
+                    )
+                    .map_err(|error| ContractError::IbcConnectionError {
+                        error: ConnectionError::Other {
+                            description: error.to_string(),
+                        },
+                    })?;
+
+                    let counterparty = Counterparty::new(
+                        counter_party_client_id.ibc_client_id().clone(),
+                        counterparty_conn_id.clone(),
+                        counterparty_prefix,
+                    );
+
+                    conn_end.set_state(State::Open);
+                    conn_end.set_version(version.clone());
+                    conn_end.set_counterparty(counterparty.clone());
+
+                    let counter_conn_id = ConnectionId::from(counterparty_conn_id.unwrap());
+
+                    let event = create_open_ack_event(
+                        connection_id.clone().into(),
+                        conn_end.client_id().clone().into(),
+                        counter_conn_id,
+                        counterparty.client_id().clone().into(),
+                    );
+
+                    self.store_connection(deps.storage, connection_id.clone().into(), conn_end)
+                        .unwrap();
+
+                    Ok(Response::new()
+                        .add_attribute("method", "excute_connection_open_try")
+                        .add_attribute("connection_id", connection_id.as_str())
+                        .add_event(event))
+                }
+                None => Err(ContractError::IbcConnectionError {
+                    error: ConnectionError::Other {
+                        description: "UNKNOWN ERROR".to_string(),
+                    },
+                }),
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcConnectionError {
+                error: ConnectionError::Other { description: error },
+            }),
+        }
     }
 }

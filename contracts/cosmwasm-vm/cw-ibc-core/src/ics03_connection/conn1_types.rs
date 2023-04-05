@@ -100,34 +100,10 @@ impl VerifyClientConsesnusState {
 }
 
 #[cw_serde]
-pub struct OpenTryResponse {
-    conn_id: String,
-    client_id: String,
-    counterparty_client_id: String,
-    counterparty_connection_id: String,
-    counterparty_prefix: Vec<u8>,
-    versions: Vec<u8>,
-    delay_period: u64,
-}
-
-impl OpenTryResponse {
-    pub fn new(
-        conn_id: String,
-        client_id: String,
-        counterparty_client_id: String,
-        counterparty_connection_id: String,
-        counterparty_prefix: Vec<u8>,
-        versions: Vec<u8>,
-        delay_period: u64,
-    ) -> Self {
-        Self {
-            conn_id,
-            client_id,
-            counterparty_client_id,
-            counterparty_connection_id,
-            counterparty_prefix,
-            versions,
-            delay_period,
-        }
-    }
+pub struct OpenAckResponse {
+    pub conn_id: String,
+    pub version: Vec<u8>,
+    pub counterparty_client_id: String,
+    pub counterparty_connection_id: String,
+    pub counterparty_prefix: Vec<u8>,
 }
