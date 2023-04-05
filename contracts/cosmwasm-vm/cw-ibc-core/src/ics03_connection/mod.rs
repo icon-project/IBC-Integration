@@ -13,9 +13,7 @@ use cosmwasm_std::Storage;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics03_connection::error::ConnectionError;
 use ibc::core::ics03_connection::{
-    connection::{Counterparty, State},
-    msgs::conn_open_init::MsgConnectionOpenInit,
-    version::Version,
+    connection::State, msgs::conn_open_init::MsgConnectionOpenInit, version::Version,
 };
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 use ibc::{
