@@ -1,12 +1,7 @@
-use std::{str::FromStr, time::Duration};
-
-use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
-
 use super::{
     conn_types::{LightClientConnectionMessage, VerifyClientConsesnusState, VerifyConnectionState},
     *,
 };
-use crate::ics03_connection::conn_types::VerifyClientFullState;
 
 pub const EXECUTE_CONNECTION_OPENTRY: u64 = 31;
 

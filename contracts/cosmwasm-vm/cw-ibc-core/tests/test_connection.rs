@@ -669,36 +669,8 @@ fn connection_open_try_validate() {
     contract
         .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
-    // let versions = vec![ibc_proto::ibc::core::connection::v1::Version {
-    //     identifier: "identifier".to_string(),
-    //     features: vec!["hello".to_string()],
-    // }];
-    // let message = RawMsgConnectionOpenTry {
-    //     client_id: "iconclient-1".to_string(),
-    //     previous_connection_id: 1.to_string(),
-    //     client_state: Some(Any {
-    //         type_url: "type.googleapis.com/my.package.MyMessage".to_string(),
-    //         value: vec![1, 2, 3],
-    //     }),
-    //     counterparty: Some(get_dummy_raw_counterparty(None)),
-    //     delay_period: 0,
-    //     proof_height: Some(Height {
-    //         revision_number: 1,
-    //         revision_height: 1,
-    //     }),
-    //     proof_init: vec![1],
-    //     proof_client: vec![1],
-    //     proof_consensus: vec![1],
-    //     consensus_height: Some(Height {
-    //         revision_number: 1,
-    //         revision_height: 1,
-    //     }),
-    //     signer: "signer".to_string(),
-    //     counterparty_versions: versions,
-    // };
 
     let mut message = get_dummy_raw_msg_conn_open_try(10, 10);
-    // message.client_id = "iconclient".to_string();
 
     let mut res_msg =
         ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
@@ -753,5 +725,68 @@ fn connection_open_try_validate() {
         .unwrap();
 
     let res = contract.connection_open_try(res_msg, deps.as_mut(), info);
-    println!("{:?}", res);
+    assert_eq!(res.is_ok(), true);
+}
+
+#[test]
+#[should_panic(expected = "InvalidClientId")]
+fn open_try_validate_fails() {
+    let mut deps = deps();
+    let info = create_mock_info("alice", "umlg", 2000);
+    let env = mock_env();
+    let contract = CwIbcCoreContext::default();
+    contract
+        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .unwrap();
+
+    let mut message = get_dummy_raw_msg_conn_open_try(10, 10);
+
+    let mut res_msg =
+        ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
+            message.clone(),
+        )
+        .unwrap();
+    res_msg.client_id_on_b = IbcClientId::default();
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "helloconnectionmessage".as_bytes().to_vec(),
+    }
+    .try_into()
+    .unwrap();
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let light_client = Addr::unchecked("lightclient");
+
+    let cl = to_vec(&client_state);
+
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &res_msg.client_id_on_b.clone(),
+            cl.unwrap(),
+        )
+        .unwrap();
+
+    let consenus_state = to_vec(&consenus_state).unwrap();
+
+    contract
+        .store_consensus_state(
+            &mut deps.storage,
+            &res_msg.client_id_on_b.clone(),
+            res_msg.proofs_height_on_a.clone(),
+            consenus_state,
+        )
+        .unwrap();
+
+    contract
+        .connection_open_try(res_msg, deps.as_mut(), info)
+        .unwrap();
 }

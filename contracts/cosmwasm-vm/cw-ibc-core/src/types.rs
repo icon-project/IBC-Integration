@@ -139,13 +139,14 @@ impl KeyDeserialize for ClientType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConnectionId(IbcConnectionId);
 
-impl FromStr for ConnectionId{
+impl FromStr for ConnectionId {
     type Err = ContractError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let conn_id = IbcConnectionId::from_str(s).map_err(|error|{
-            ContractError::IbcDecodeError { error: error.to_string() }
-        })?;
+        let conn_id =
+            IbcConnectionId::from_str(s).map_err(|error| ContractError::IbcDecodeError {
+                error: error.to_string(),
+            })?;
 
         Ok(Self(conn_id))
     }

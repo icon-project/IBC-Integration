@@ -27,7 +27,7 @@ impl VerifyConnectionState {
         counterparty_conn_end_path: Vec<u8>,
         expected_counterparty_connection_end: Vec<u8>,
     ) -> Self {
-       Self {
+        Self {
             proof_height,
             counterparty_prefix,
             proof,
@@ -55,7 +55,7 @@ impl VerifyClientFullState {
         root: Vec<u8>,
         client_state_path: Vec<u8>,
         expected_client_state: Vec<u8>,
-    ) -> Self{
+    ) -> Self {
         Self {
             proof_height,
             counterparty_prefix,
@@ -97,14 +97,36 @@ impl VerifyClientConsesnusState {
     }
 }
 
-// proof_height: String,
-//         counterparty_prefix: Vec<u8>,
-//         client_state_proof: Vec<u8>,
-//         consensus_state_proof: Vec<u8>,
-//         root: Vec<u8>,
-//         counterparty_chan_end_path: Vec<u8>,
-//         expected_counterparty_connection_end: Vec<u8>,
-//         client_state_path: Vec<u8>,
-//         expected_client_state: Vec<u8>,
-//         conesenus_state_path: Vec<u8>,
-//         expected_conesenus_state: Vec<u8>,
+#[cw_serde]
+pub struct OpenTryResponse {
+    conn_id: String,
+    client_id: String,
+    counterparty_client_id: String,
+    counterparty_connection_id: String,
+    counterparty_prefix: Vec<u8>,
+    versions: Vec<u8>,
+    delay_period: u64,
+}
+
+impl OpenTryResponse {
+    pub fn new(
+        conn_id: String,
+        client_id: String,
+        counterparty_client_id: String,
+        counterparty_connection_id: String,
+        counterparty_prefix: Vec<u8>,
+        versions: Vec<u8>,
+        delay_period: u64,
+    ) -> Self {
+        Self {
+            conn_id,
+            client_id,
+            counterparty_client_id,
+            counterparty_connection_id,
+            counterparty_prefix,
+            versions,
+            delay_period,
+        }
+    }
+}
+
