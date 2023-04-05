@@ -701,4 +701,65 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
             }
         }
     }
+
+    fn execute_channel_close_confirm(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
+                Some(res) => {
+                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
+                    let channel_id =
+                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let mut channel_end =
+                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    if !channel_end.state_matches(&State::Closed) {
+                        return Err(ContractError::IbcChannelError {
+                            error: ChannelError::InvalidChannelState {
+                                channel_id: channel_id.ibc_channel_id().clone(),
+                                state: channel_end.state,
+                            },
+                        });
+                    }
+                    channel_end.set_state(State::Closed); // State Change
+                    self.store_channel_end(
+                        deps.storage,
+                        port_id.clone(),
+                        channel_id.clone(),
+                        channel_end.clone(),
+                    )?;
+                    self.store_channel(
+                        deps.storage,
+                        port_id.ibc_port_id(),
+                        channel_id.ibc_channel_id(),
+                        channel_end.clone(),
+                    )?;
+
+                    let event = create_open_confirm_channel_event(
+                        port_id.ibc_port_id().as_str(),
+                        channel_id.ibc_channel_id().as_str(),
+                        channel_end.counterparty().port_id().as_str(),
+                        channel_end.counterparty().channel_id().unwrap().as_str(),
+                        channel_end.connection_hops()[0].as_str(),
+                    );
+                    Ok(Response::new().add_event(event))
+                }
+                None => {
+                    return Err(ContractError::IbcChannelError {
+                        error: ChannelError::Other {
+                            description: "Data from module is Missing".to_string(),
+                        },
+                    })
+                }
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                return Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other { description: error },
+                })
+            }
+        }
+    }
 }
