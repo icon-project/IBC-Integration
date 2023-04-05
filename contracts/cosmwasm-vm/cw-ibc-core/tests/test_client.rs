@@ -12,7 +12,9 @@ use cw_ibc_core::{
         },
         types::{ClientState, ConsensusState},
     },
-    msg::{CreateClientResponse, UpdateClientResponse, UpgradeClientResponse},
+    msg::{
+        CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
+    },
     traits::IbcClient,
     types::{ClientId, ClientType},
     MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
@@ -1624,4 +1626,202 @@ fn fails_on_getting_client_state() {
     contract
         .get_client_state(deps.as_mut().storage, client_id)
         .unwrap();
+}
+
+#[test]
+fn sucess_on_misbehaviour_validate() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("alice", "umlg", 2000);
+    contract
+        .init_client_counter(deps.as_mut().storage, 10)
+        .unwrap();
+
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let client_id = ClientId::from_str("iconlightclient-10").unwrap();
+
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            client_id.clone(),
+            "clientaddress".to_string(),
+        )
+        .unwrap();
+
+    contract
+        .store_client_state(
+            deps.as_mut().storage,
+            client_id.ibc_client_id(),
+            to_vec(&client_state).unwrap(),
+        )
+        .unwrap();
+    let height = Height::new(10, 15).unwrap();
+    let mock_header = MockHeader::new(height);
+
+    let misbehaviour = ibc::mock::misbehaviour::Misbehaviour {
+        client_id: client_id.ibc_client_id().clone(),
+        header1: mock_header,
+        header2: mock_header,
+    };
+
+    let misbehaviour_message = MsgSubmitMisbehaviour {
+        client_id: client_id.ibc_client_id().clone(),
+        misbehaviour: misbehaviour.into(),
+        signer: get_dummy_account_id(),
+    };
+
+    let result = contract.misbehaviour(deps.as_mut(), info, misbehaviour_message);
+
+    assert!(result.is_ok())
+}
+
+#[test]
+#[should_panic(
+    expected = "IbcClientError { error: ClientFrozen { client_id: ClientId(\"iconlightclient-10\") } }"
+)]
+fn fails_on_frozen_client_on_misbehaviour_validate() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("alice", "umlg", 2000);
+    contract
+        .init_client_counter(deps.as_mut().storage, 10)
+        .unwrap();
+
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 10,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let client_id = ClientId::from_str("iconlightclient-10").unwrap();
+
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            client_id.clone(),
+            "clientaddress".to_string(),
+        )
+        .unwrap();
+
+    contract
+        .store_client_state(
+            deps.as_mut().storage,
+            client_id.ibc_client_id(),
+            to_vec(&client_state).unwrap(),
+        )
+        .unwrap();
+    let height = Height::new(10, 15).unwrap();
+    let mock_header = MockHeader::new(height);
+
+    let misbehaviour = ibc::mock::misbehaviour::Misbehaviour {
+        client_id: client_id.ibc_client_id().clone(),
+        header1: mock_header,
+        header2: mock_header,
+    };
+
+    let misbehaviour_message = MsgSubmitMisbehaviour {
+        client_id: client_id.ibc_client_id().clone(),
+        misbehaviour: misbehaviour.into(),
+        signer: get_dummy_account_id(),
+    };
+
+    contract
+        .misbehaviour(deps.as_mut(), info, misbehaviour_message)
+        .unwrap();
+}
+
+#[test]
+#[should_panic(
+    expected = "IbcClientError { error: Other { description: \"Invalid Response Data\" } }"
+)]
+fn fails_on_empty_response_misbehaviour() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 23,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: None,
+        }),
+    };
+
+    contract
+        .execute_misbehaviour_reply(deps.as_mut(), reply_message)
+        .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "IbcClientError { error: Other { description: \"UnkownError\" } }")]
+fn fails_on_error_response_misbehaviour() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+
+    let reply_message = Reply {
+        id: 23,
+        result: cosmwasm_std::SubMsgResult::Err("UnkownError".to_string()),
+    };
+
+    contract
+        .execute_misbehaviour_reply(deps.as_mut(), reply_message)
+        .unwrap();
+}
+
+#[test]
+fn success_on_execute_misbehaviour() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 10,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let client_id = ClientId::from_str("iconlightclient-10").unwrap();
+
+    let response_message_data = MisbehaviourResponse::new(
+        client_id.ibc_client_id().to_string(),
+        to_vec(&client_state).unwrap(),
+    );
+
+    let event = Event::new("empty");
+
+    let reply_message = Reply {
+        id: 23,
+        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
+            events: vec![event],
+            data: Some(to_binary(&response_message_data).unwrap()),
+        }),
+    };
+
+    let result = contract
+        .execute_misbehaviour_reply(deps.as_mut(), reply_message)
+        .unwrap();
+
+    assert_eq!("client_misbehaviour", result.events[0].ty);
+    assert_eq!(
+        client_id.ibc_client_id().as_str(),
+        result.events[0].attributes[0].value
+    );
 }
