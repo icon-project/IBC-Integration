@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 pub mod setup;
-use common::icon::icon::lightclient::v1::ConsensusState;
+// use common::icon::icon::lightclient::v1::ConsensusState;
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::to_binary;
 use cosmwasm_std::to_vec;
@@ -13,6 +13,7 @@ use cosmwasm_std::SubMsgResponse;
 use cosmwasm_std::SubMsgResult;
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics02_client::types::ClientState;
+use cw_ibc_core::ics02_client::types::ConsensusState;
 use cw_ibc_core::ics03_connection::conn_types::VerifyConnectionState;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
 use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
@@ -699,10 +700,11 @@ fn connection_open_try_validate() {
     let mut message = get_dummy_raw_msg_conn_open_try(10, 10);
     // message.client_id = "iconclient".to_string();
 
-    let mut res_msg = ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
-        message.clone(),
-    )
-    .unwrap();
+    let mut res_msg =
+        ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
+            message.clone(),
+        )
+        .unwrap();
     res_msg.client_id_on_b = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
@@ -730,7 +732,7 @@ fn connection_open_try_validate() {
         .unwrap();
 
     let cl = to_vec(&client_state);
-    
+
     contract
         .store_client_state(
             &mut deps.storage,
@@ -740,7 +742,7 @@ fn connection_open_try_validate() {
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
-    println!("{:?}",consenus_state);
+
     contract
         .store_consensus_state(
             &mut deps.storage,
