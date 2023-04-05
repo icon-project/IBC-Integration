@@ -1853,3 +1853,34 @@ fn fails_on_raw_from_consensus_state() {
 
     TryInto::<ConsensusState>::try_into(raw.consensus_state.unwrap().clone()).unwrap();
 }
+
+#[test]
+#[should_panic(expected = "Other { description: \"Invalid type\" }")]
+fn fails_on_deserialising_invalid_bytes_to_client_state() {
+    let data = get_dummy_raw_msg_create_client();
+
+    TryInto::<ClientState>::try_into(data.client_state.unwrap().value.as_slice()).unwrap();
+}
+
+#[test]
+#[should_panic(
+    expected = "Other { description: \"ClientState max-clock-drift must be greater than zero\" }"
+)]
+fn fails_on_max_drift_less_than_zero() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+
+    contract
+        .init_client_counter(deps.as_mut().storage, 0)
+        .unwrap();
+
+    TryInto::<ClientState>::try_into(common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 0,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    })
+    .unwrap();
+}
