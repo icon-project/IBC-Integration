@@ -1,8 +1,11 @@
+use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
+
 use super::*;
 
 pub const EXECUTE_CREATE_CLIENT: u64 = 21;
 pub const EXECUTE_UPDATE_CLIENT: u64 = 22;
-pub const EXECUT_UPGRADE_CLIENT: u64 = 23;
+pub const EXECUTE_UPGRADE_CLIENT: u64 = 23;
+pub const MISBEHAVIOUR: u64 = 23;
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn create_client(
@@ -130,7 +133,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
 
-        let sub_message = SubMsg::reply_always(wasm_msg, EXECUT_UPGRADE_CLIENT);
+        let sub_message = SubMsg::reply_always(wasm_msg, EXECUTE_UPGRADE_CLIENT);
 
         Ok(Response::new()
             .add_submessage(sub_message)
@@ -322,5 +325,51 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 error: ClientError::Other { description: error },
             }),
         }
+    }
+
+    fn misbehaviour(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        message: MsgSubmitMisbehaviour,
+    ) -> Result<Response, ContractError> {
+        let client_id = ClientId::from(message.client_id);
+
+        let client_state = self.client_state(deps.as_ref().storage, client_id.ibc_client_id())?;
+
+        if client_state.is_frozen() {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::ClientFrozen {
+                    client_id: client_id.ibc_client_id().clone(),
+                },
+            });
+        }
+        let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
+
+        let clinet_message = LightClientMessage::Misbehaviour {
+            client_id: client_id.ibc_client_id().to_string(),
+            misbehaviour: to_vec(&message.misbehaviour)
+                .map_err(|error| ContractError::Std(error))?,
+        };
+
+        let wasm_exec_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: client_address,
+            msg: to_binary(&clinet_message).map_err(|error| ContractError::Std(error))?,
+            funds: info.funds,
+        });
+
+        let sub_message = SubMsg::reply_always(wasm_exec_message, MISBEHAVIOUR);
+
+        Ok(Response::new()
+            .add_submessage(sub_message)
+            .add_attribute("method", "misbehaviour"))
+    }
+
+    fn execute_misbehaviour_reply(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        todo!()
     }
 }
