@@ -22,7 +22,7 @@ use cw_ibc_core::{
     types::{ChannelId, ConnectionId, PortId},
     ChannelEnd, ConnectionEnd, IbcClientId, IbcConnectionId, Sequence,
 };
-use cw_ibc_core::{traits::*, IbcClientType};
+use cw_ibc_core::{traits::*, IbcClientType, IbcPortId};
 use ibc::{
     core::ics04_channel::{
         channel::{Counterparty, Order, State},
@@ -725,7 +725,13 @@ fn create_open_ack_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
     let message = MsgChannelOpenAck::try_from(default_raw_msg.clone()).unwrap();
-    let event = create_open_ack_channel_event(&message);
+    let event = create_open_ack_channel_event(
+        &message.port_id_on_a.as_str(),
+        &message.chan_id_on_a.as_str(),
+        IbcPortId::default().as_str(),
+        &message.chan_id_on_b.as_str(),
+        ConnectionId::default().connection_id().as_str(),
+    );
 
     assert_eq!(IbcEventType::OpenAckChannel.as_str(), event.ty);
     assert_eq!("channel-0", event.attributes[1].value);
