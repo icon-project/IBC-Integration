@@ -244,8 +244,10 @@ fn create_misbehaviour_event_test() {
     let client_type = ClientType::new("new_cleint_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
 
-    let event =
-        client_misbehaviour_event(client_id.ibc_client_id().clone(), client_type.client_type());
+    let event = client_misbehaviour_event(
+        client_id.ibc_client_id().as_str(),
+        client_type.client_type().as_str(),
+    );
 
     assert_eq!("client_misbehaviour", event.ty)
 }

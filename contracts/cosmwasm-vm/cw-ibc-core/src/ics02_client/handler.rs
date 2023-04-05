@@ -1,6 +1,8 @@
+use std::str::FromStr;
+
 use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
 
-use super::*;
+use super::{events::client_misbehaviour_event, *};
 
 pub const EXECUTE_CREATE_CLIENT: u64 = 21;
 pub const EXECUTE_UPDATE_CLIENT: u64 = 22;
@@ -370,6 +372,45 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        todo!()
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
+                Some(response) => {
+                    let misbehaviour_response = from_binary::<MisbehaviourResponse>(&response)
+                        .map_err(|error| ContractError::Std(error))?;
+
+                    let client_id = misbehaviour_response.client_id()?;
+
+                    let client_type = ClientType::try_from(client_id.clone()).map_err(|error| {
+                        ContractError::IbcDecodeError {
+                            error: error.to_string(),
+                        }
+                    })?;
+
+                    let event = client_misbehaviour_event(
+                        client_id.ibc_client_id().as_str(),
+                        client_type.client_type().as_str(),
+                    );
+
+                    self.store_client_state(
+                        deps.storage,
+                        client_id.ibc_client_id(),
+                        misbehaviour_response.client_state_commitment,
+                    )?;
+
+                    Ok(Response::new()
+                        .add_event(event)
+                        .add_attribute("method", "execute_misbheaviour_reply")
+                        .add_attribute("client_id", client_id.ibc_client_id().as_str()))
+                }
+                None => Err(ContractError::IbcClientError {
+                    error: ClientError::Other {
+                        description: "Invalid Response Data".to_string(),
+                    },
+                }),
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
+                error: ClientError::Other { description: error },
+            }),
+        }
     }
 }
