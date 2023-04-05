@@ -7,43 +7,40 @@ Feature: xCall admin management
       | Owner | Non Owner         | Admin               |
       | Alice | Eve, Frank, Grace | Bob, Diana, Charlie |
 
-  Scenario: 001 - Adding an admin wallet to the xCall
+  Background:
     Given "Alice" is the "xcall" contract owner
-    And "Bob" is an admin wallet who needs to be added to the list of xCall admins
+
+  Scenario: 001 - Adding an admin wallet to the xCall
+    Given "Bob" is an admin wallet who needs to be added to the list of xCall admins
     When "Alice" executes add_admin in xcall with "Bob" wallet address
     Then "Bob" wallet address should be added as admin
 
   Scenario: 002 - Non Owner Adding an admin wallet to the xCall
-    Given "Alice" is the "xcall" contract owner
-    And "Bob" is an admin wallet who needs to be added to the list of xCall admins
+    Given "Bob" is an admin wallet who needs to be added to the list of xCall admins
     And "Eve" is not the contract owner of the xCall smart contract
     When "Eve" executes add_admin in xcall with "Bob" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
     And "Bob" wallet address should not be added as admin
 
   Scenario: 003 - An admin cannot add another admin to the xCall
-    Given "Alice" is the "xcall" contract owner
-    And "Alice" has already added "Bob" wallet address to the list of xCall admins
+    Given "Alice" has already added "Bob" wallet address to the list of xCall admins
     And "Diana" is an admin wallet who needs to be added to the list of xCall admins
     When "Bob" executes add_admin in xcall with "Diana" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
     And "Diana" wallet address should not be added as admin
 
   Scenario: 004 - Preventing the addition of an existing admin wallet to xCall
-    Given "Alice" is the "xcall" contract owner
-    And "Alice" has already added "Bob" wallet address to the list of xCall admins
+    Given "Alice" has already added "Bob" wallet address to the list of xCall admins
     When "Alice" executes add_admin in xcall with "Bob" wallet address
     Then xCall returns an error message that the admin already exists
     And "Bob" wallet address should still be in the list of xCall admins
 
   Scenario: 005 - Preventing the addition of null value as an admin wallet to xCall
-    Given "Alice" is the "xcall" contract owner
     When "Alice" executes add_admin in xcall with "Null" wallet address
     Then xCall returns an error message that the null value cannot be added as admin
     And no wallet address should be in the list of xCall admins
 
   Scenario: 006 - Preventing the addition of junk characters as an admin wallet to xCall
-    Given "Alice" is the "xcall" contract owner
     When "Alice" executes add_admin in xcall with "Junk" wallet address
     Then xCall returns an error message that  wallet address of the new admin is not a valid address
     And no wallet address should be in the list of xCall admins
