@@ -188,6 +188,24 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         Ok(client)
     }
+
+    pub fn get_client_state(
+        &self,
+        store: &dyn Storage,
+        client_id: ClientId,
+    ) -> Result<Vec<u8>, ContractError> {
+        let client_key = self.client_state_commitment_key(client_id.ibc_client_id());
+
+        let client_state = self
+            .ibc_store()
+            .commitments()
+            .load(store, client_key)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: format!("NotFound ClientId({})", client_id.ibc_client_id().as_str()),
+            })?;
+
+        Ok(client_state)
+    }
 }
 
 //TODO : Implement Methods

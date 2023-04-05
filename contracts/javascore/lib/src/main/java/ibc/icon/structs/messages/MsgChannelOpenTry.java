@@ -2,7 +2,6 @@ package ibc.icon.structs.messages;
 
 public class MsgChannelOpenTry {
     private String portId;
-    private String previousChannelId;
     private byte[] channel;
     private String counterpartyVersion;
     private byte[] proofInit;
@@ -14,14 +13,6 @@ public class MsgChannelOpenTry {
 
     public void setPortId(String portId) {
         this.portId = portId;
-    }
-
-    public String getPreviousChannelId() {
-        return previousChannelId;
-    }
-
-    public void setPreviousChannelId(String previousChannelId) {
-        this.previousChannelId = previousChannelId;
     }
 
     public byte[] getChannel() {

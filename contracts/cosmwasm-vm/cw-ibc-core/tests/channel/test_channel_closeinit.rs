@@ -1,8 +1,7 @@
-pub mod setup;
+use super::*;
 use cw_ibc_core::ics04_channel::close_init::{
     channel_close_init_validate, on_chan_close_init_submessage,
 };
-use setup::*;
 
 use std::{str::FromStr, time::Duration};
 
@@ -148,18 +147,7 @@ fn test_execute_close_init_channel() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = PortId::from(msg.port_id_on_a.clone());
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
-    let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
-    contract
-        .add_route(&mut deps.storage, cx_module_id.clone(), &module)
-        .unwrap();
     let connection_id = ConnectionId::new(5);
-    let contract = CwIbcCoreContext::new();
     let channel_id = ChannelId::from(msg.chan_id_on_a.clone());
     let port_id = PortId::from(msg.port_id_on_a.clone());
     let channel_end = ChannelEnd {
