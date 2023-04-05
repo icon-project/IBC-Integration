@@ -47,11 +47,13 @@ func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// To Make sure that chain is running
 	ctx, err := e.chain.GetLastBlock(e.ctx)
 	if err != nil {
 		return nil, err
 	}
+
 	fmt.Printf("Chain is running. Current Chain height: %d \n", ctx.Value(chains.LastBlock{}).(uint64))
 	return e.ctx, err
 }
@@ -183,6 +185,13 @@ func (e *Executor) noWalletAddressShouldBeInTheListOfXCallAdmins() (err error) {
 func (e *Executor) xCallReturnsAnErrorMessageThatTheNullValueCannotBeAddedAsAdmin() error {
 	if e.error == nil {
 		return fmt.Errorf("no Error message was returned when adding null value as admin")
+	}
+	return nil
+}
+
+func (e *Executor) xCallReturnsAnErrorMessageThatWalletAddressOfTheNewAdminIsNotAValidAddress() error {
+	if e.error == nil {
+		return fmt.Errorf("no Error message was returned when adding junk address as admin")
 	}
 	return nil
 }
