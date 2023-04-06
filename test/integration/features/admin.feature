@@ -50,3 +50,8 @@ Feature: xCall admin management
     And "Diana" is an admin wallet who needs to be added to the list of xCall admins
     When "Alice" executes update_admin in xcall with "Diana" wallet address
     Then xCall should update xCall admins, replacing Bob's address with "Diana" address
+
+  Scenario: Contract owner can remove an existing admin wallet in xCall
+    Given "Alice" has already added "Bob" wallet address to the list of xCall admins
+    When "Alice" executes remove_admin in xcall with "Bob" wallet address
+    Then xCall should remove "Bob" wallet address as admin
