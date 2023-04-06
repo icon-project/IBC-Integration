@@ -2,10 +2,14 @@ package ibc.icon.interfaces;
 
 import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
+import ibc.icon.structs.messages.MsgPacketTimeout;
 import score.annotation.EventLog;
 
 import java.math.BigInteger;
 
+import foundation.icon.score.client.ScoreClient;
+
+@ScoreClient
 public interface IIBCPacket {
 
     @EventLog(indexed = 1)
@@ -62,4 +66,11 @@ public interface IIBCPacket {
      * absence of a packet on a channel.
      */
     void requestTimeout(byte[] packetPb);
+
+
+    /**
+     * {@code @dev} requestTimeout is called by a module in order to prove the
+     * absence of a packet on a channel.
+     */
+    void timeoutPacket(MsgPacketTimeout msg);
 }

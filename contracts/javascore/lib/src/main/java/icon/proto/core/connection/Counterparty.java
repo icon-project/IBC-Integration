@@ -10,7 +10,7 @@ public class Counterparty extends ProtoMessage {
 
   private String connectionId = "";
 
-  private MerklePrefix prefix;
+  private MerklePrefix prefix = new MerklePrefix();
 
   public String getClientId() {
     return this.clientId;
