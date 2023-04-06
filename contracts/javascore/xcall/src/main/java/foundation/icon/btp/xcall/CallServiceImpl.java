@@ -17,11 +17,11 @@
 package foundation.icon.btp.xcall;
 
 import ibc.icon.interfaces.IIBCModule;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.channel.Packet;
-import ibc.icon.structs.proto.core.client.Height;
 import ibc.ics25.handler.IBCHandler;
+import icon.proto.core.channel.Channel.Counterparty;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
+import java.math.BigInteger;
 import score.Address;
 import score.Context;
 import score.DictDB;
@@ -33,10 +33,9 @@ import score.annotation.External;
 import score.annotation.Optional;
 import score.annotation.Payable;
 
-import java.math.BigInteger;
-
 
 public class CallServiceImpl implements IIBCModule {
+
     public static final int MAX_DATA_SIZE = 2048;
     public static final int MAX_ROLLBACK_SIZE = 1024;
 
@@ -46,7 +45,8 @@ public class CallServiceImpl implements IIBCModule {
     private final VarDB<BigInteger> timeoutHeight = Context.newVarDB("timeoutHeight", BigInteger.class);
 
     private final DictDB<BigInteger, CallRequest> requests = Context.newDictDB("requests", CallRequest.class);
-    private final DictDB<BigInteger, CSMessageRequest> proxyReqs = Context.newDictDB("proxyReqs", CSMessageRequest.class);
+    private final DictDB<BigInteger, CSMessageRequest> proxyReqs = Context.newDictDB("proxyReqs",
+            CSMessageRequest.class);
 
     // for fee-related operations
     private final VarDB<Address> admin = Context.newVarDB("admin", Address.class);
@@ -129,7 +129,7 @@ public class CallServiceImpl implements IIBCModule {
 
         Packet pct = new Packet();
         pct.setSequence(getNextSn());
-        pct.setData(msgReq.toString());
+        pct.setData(msgReq.toBytes());
         pct.setDestinationPort(getDestinationPort());
         pct.setDestinationChannel(getDestinationChannel());
         pct.setSourcePort(getSourcePort());
@@ -143,7 +143,7 @@ public class CallServiceImpl implements IIBCModule {
         pct.setTimeoutTimestamp(BigInteger.ZERO);
 
         IBCHandler ibc = new IBCHandler();
-        ibc.sendPacket(pct);
+        ibc.sendPacket(pct.encode());
 
         CallMessageSent(caller, _to, sn, sn);
         return sn;
@@ -269,7 +269,8 @@ public class CallServiceImpl implements IIBCModule {
         String to = msgReq.getTo();
 
         BigInteger reqId = getNextReqId();
-        CSMessageRequest req = new CSMessageRequest(netFrom, to, msgReq.getSn(), msgReq.needRollback(), msgReq.getData());
+        CSMessageRequest req = new CSMessageRequest(netFrom, to, msgReq.getSn(), msgReq.needRollback(),
+                msgReq.getData());
         proxyReqs.set(reqId, req);
 
         // emit event to notify the user
@@ -342,23 +343,38 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     @External
-    public void onChanOpenInit(Channel.Order order, String[] connectionHops, String portId, String channelId, Counterparty counterparty, String version) {
-
+    public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
+            byte[] counterpartyPb, String version) {
+        sourcePort.set(portId);
+        sourceChannel.set(channelId);
+        Counterparty counterparty = Counterparty.decode(counterpartyPb);
+        destinationPort.set(counterparty.getPortId());
+        Context.println("onChanOpenInit");
     }
 
     @External
-    public void onChanOpenTry(Channel.Order order, String[] connectionHops, String portId, String channelId, Counterparty counterparty, String version, String counterpartyVersion) {
-
+    public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
+            byte[] counterpartyPb, String version, String counterpartyVersion) {
+        sourcePort.set(portId);
+        sourceChannel.set(channelId);
+        Counterparty counterparty = Counterparty.decode(counterpartyPb);
+        destinationChannel.set(counterparty.getChannelId());
+        destinationPort.set(counterparty.getPortId());
+        Context.println("onChanOpenTry");
     }
 
     @External
     public void onChanOpenAck(String portId, String channelId, String counterpartyVersion) {
-
+        Context.require(portId.equals(sourcePort.get()), "port not matched");
+        Context.require(channelId.equals(sourceChannel.get()), "Channel not matched");
+        Context.println("onChanOpenAck");
     }
 
     @External
     public void onChanOpenConfirm(String portId, String channelId) {
-
+        Context.require(portId.equals(sourcePort.get()), "port not matched");
+        Context.require(channelId.equals(sourceChannel.get()), "Channel not matched");
+        Context.println("onChanOpenConfirm");
     }
 
     @External
@@ -374,34 +390,29 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     @External
-    public byte[] onRecvPacket(Packet _pct, Address _relayer) {
+    public byte[] onRecvPacket(byte[] calldata, Address relayer) {
         onlyIBCHandler();
-        byte[] _msg = _pct.getData().getBytes();
-        String _from = _pct.getSourcePort() + "/" + _pct.getSourceChannel();
-        BigInteger _sn = _pct.getSequence();
+        Packet packet = Packet.decode(calldata);
+        byte[] _msg = packet.getData();
+        String _from = packet.getSourcePort() + "/" + packet.getSourceChannel();
+        BigInteger _sn = packet.getSequence();
 
         handleBTPMessage(_from, _from, _sn, _msg);
-
 
         return new byte[0];
 
 
     }
 
+
     @External
-    public void onAcknowledgementPacket(Packet calldata, byte[] acknowledgement, Address relayer) {
-
+    public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer) {
+        Context.println("onAcknowledgementPacket");
     }
 
-    private void setSourceChannelAndPort(String channel, String port) {
-        sourcePort.set(port);
-        sourceChannel.set(channel);
-    }
-
-    private void setDestinationChannelAndPort(String channel, String port) {
-        destinationPort.set(port);
-        destinationChannel.set(channel);
-
+    @Override
+    public void onTimeoutPacket(byte[] calldata, Address relayer) {
+        Context.println("onTimeoutPacket");
     }
 
     private String getDestinationPort() {
