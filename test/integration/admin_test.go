@@ -26,6 +26,8 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" is not the contract owner of the xCall smart contract$`, executor.isNotTheContractOwnerOfTheXCallSmartContract)
 			ctx.Step(`^xCall returns an error message that only the contract owner can perform this action$`, executor.xCallReturnsAnErrorMessageThatOnlyTheContractOwnerCanPerformThisAction)
 			ctx.Step(`^"([^"]*)" has already added "([^"]*)" wallet address to the list of xCall admins$`, executor.hasAlreadyAddedWalletAddressToTheListOfXCallAdmins)
+			ctx.Step(`^"([^"]*)" wallet address should still be in the list of xCall admins$`, executor.walletAddressShouldStillBeInTheListOfXCallAdmins)
+			ctx.Step(`^xCall returns an error message that the admin already exists$`, executor.xCallReturnsAnErrorMessageThatTheAdminAlreadyExists)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/admin.feature"}, TestingT: t, StopOnFailure: false},
