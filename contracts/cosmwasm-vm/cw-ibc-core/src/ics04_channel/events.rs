@@ -58,22 +58,19 @@ pub fn create_open_try_channel_event(
 }
 
 // Creates OpenAckChannel  IBC Event
-pub fn create_open_ack_channel_event(msg: &MsgChannelOpenAck) -> Event {
+pub fn create_open_ack_channel_event(
+    port_id_on_a: &str,
+    chan_id_on_a: &str,
+    port_id_on_b: &str,
+    chan_id_on_b: &str,
+    connection_id: &str,
+) -> Event {
     Event::new(IbcEventType::OpenAckChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_a.as_str())
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_a.as_str())
-        .add_attribute(
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            PortId::default().ibc_port_id().as_str(),
-        )
-        .add_attribute(
-            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
-            msg.chan_id_on_b.as_str(),
-        )
-        .add_attribute(
-            CONN_ID_ATTRIBUTE_KEY,
-            ConnectionId::default().connection_id().as_str(),
-        )
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_a)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_a)
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
+        .add_attribute(COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_b)
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_id)
 }
 
 // Creates OpenConfirmChannel IBC Event
