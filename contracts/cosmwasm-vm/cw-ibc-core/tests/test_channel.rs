@@ -1197,3 +1197,37 @@ fn test_execute_open_try_channel() {
     assert_eq!(result.as_ref().unwrap().events[0].ty, "channel_id_created");
     assert_eq!(result.unwrap().events[1].ty, "channel_open_try")
 }
+
+#[test]
+fn test_get_channel() {
+    let ctx = CwIbcCoreContext::new();
+    let port_id = PortId::default();
+    let channel_id = ChannelId::default();
+    let channel_end = ChannelEnd::new(
+        State::Init,
+        Order::None,
+        Counterparty::default(),
+        Vec::default(),
+        Version::from("ics-20".to_string()),
+    );
+    let mut mock_deps = deps();
+    ctx.store_channel_end(
+        mock_deps.as_mut().storage,
+        port_id.clone(),
+        channel_id.clone(),
+        channel_end.clone(),
+    ).unwrap();
+    let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id);
+
+    assert_eq!(channel_end, retrived_channel_end.unwrap())
+}
+
+#[test]
+#[should_panic(expected = "ChannelNotFound")]
+fn test_get_channel_fail() {
+    let ctx = CwIbcCoreContext::new();
+    let port_id = PortId::default();
+    let channel_id = ChannelId::default();
+    let mock_deps = deps();
+    ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id).unwrap();
+}
