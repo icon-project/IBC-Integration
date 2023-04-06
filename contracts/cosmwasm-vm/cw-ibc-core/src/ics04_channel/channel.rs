@@ -42,10 +42,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // Increment the sequence number for channel
-    pub fn increase_channel_sequence(
-        &self,
-        store: &mut dyn Storage,
-    ) -> Result<u128, ContractError> {
+    pub fn increase_channel_sequence(&self, store: &mut dyn Storage) -> Result<u64, ContractError> {
         let sequence = self.ibc_store().next_channel_sequence().update(
             store,
             |mut req_id| -> Result<_, ContractError> {
@@ -61,7 +58,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn init_channel_counter(
         &self,
         store: &mut dyn Storage,
-        sequence_no: u128,
+        sequence_no: u64,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -250,7 +247,7 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(sequence)
     }
     // Get the channel sequence number
-    pub fn channel_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+    pub fn channel_counter(&self, store: &dyn Storage) -> Result<u64, ContractError> {
         match self.ibc_store().next_channel_sequence().load(store) {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
@@ -262,12 +259,22 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    fn store_channel(
-        &mut self,
-        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
+    pub fn store_channel(
+        &self,
+        store: &mut dyn Storage,
+        port_id: &IbcPortId,
+        channel_id: &IbcChannelId,
         channel_end: ibc::core::ics04_channel::channel::ChannelEnd,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    ) -> Result<(), ContractError> {
+        let channel_commitemtn_key = self.channel_commitment_key(port_id, channel_id);
+
+        let channel_end_bytes = to_vec(&channel_end).map_err(|error| ContractError::Std(error))?;
+
+        self.ibc_store()
+            .commitments()
+            .save(store, channel_commitemtn_key, &channel_end_bytes)?;
+
+        Ok(())
     }
 
     fn increase_channel_counter(&mut self) {
@@ -320,11 +327,29 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn channel_end(
+    pub fn channel_end(
         &self,
-        channel_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
-    ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ibc::core::ContextError> {
-        todo!()
+        store: &mut dyn Storage,
+        port_id: &IbcPortId,
+        channel_id: &IbcChannelId,
+    ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ContractError> {
+        let channel_commitemtn_key = self.channel_commitment_key(port_id, channel_id);
+
+        let channel_end_bytes = self
+            .ibc_store()
+            .commitments()
+            .load(store, channel_commitemtn_key)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: "ChannelNotFound".to_string(),
+            })?;
+
+        let channel_end: ChannelEnd =
+            serde_json_wasm::from_slice(&channel_end_bytes).map_err(|error| {
+                ContractError::IbcDecodeError {
+                    error: error.to_string(),
+                }
+            })?;
+        Ok(channel_end)
     }
 
     fn get_packet_commitment(

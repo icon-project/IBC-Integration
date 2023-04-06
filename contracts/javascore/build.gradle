@@ -5,8 +5,11 @@ buildscript {
     }
     dependencies {
         classpath("foundation.icon:gradle-javaee-plugin:$javaeePluginVersion")
+        classpath 'com.squareup.wire:wire-gradle-plugin:4.5.0'
     }
 }
+
+def scoreIntegrationTest = new HashMap<String, String>()
 
 subprojects {
     repositories {
@@ -21,9 +24,37 @@ subprojects {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    sourceSets {
+        intTest {
+            compileClasspath += sourceSets.main.output
+            runtimeClasspath += sourceSets.main.output
+            java {
+            }
+        }
+    }
+
+    configurations {
+        intTestImplementation.extendsFrom testImplementation
+        intTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+        intTestRuntimeOnly.extendsFrom testRuntimeOnly
+    }
+
+    scoreIntegrationTest.put('env.props', new File(project(':test-lib').projectDir, 'conf/env.props'))
+
+    afterEvaluate { project ->
+        scoreIntegrationTest.put(project.name, project.getTasks().getByName("optimizedJar").outputJarName)
+    }
+
 
     // need to add this option to retrieve formal parameter names
     compileJava {
         options.compilerArgs += ['-parameters']
+    }
+}
+gradle.taskGraph.whenReady { taskGraph ->
+    taskGraph.getAllTasks().eachWithIndex { task, n ->
+        if (task.name == 'integrationTest') {
+            scoreIntegrationTest.each { key, val -> task.systemProperty key, val }
+        }
     }
 }

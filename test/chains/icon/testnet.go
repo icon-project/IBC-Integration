@@ -35,20 +35,15 @@ type Block struct {
 }
 
 // DeployContract implements chains.Chain
-func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, error) {
+func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	var result *types.TransactionResult
 	var output string
 
-	// Build Params
-	// "--param", initMessage
+	// Get Contract Name from context
+	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
+	contractName := ctxValue.ContractName
 
-	// contract := ctx.Value(chains.ContractKey{}).(string)
-	// contractPath := it.scorePaths[contract]
-	// if contract == "" {
-	// 	return nil, fmt.Errorf("cannot find contract %v in config", contract)
-	// }
-
-	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths["bmc"], "--param", it.initMessage,
+	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths[contractName], "--param", it.initMessage,
 		"--key_store", it.keystorePath, "--key_password", it.keyPassword, "--step_limit", it.defaultStepLimit,
 		"--content_type", "application/java",
 		"--uri", it.url, "--nid", it.nid).Output()
@@ -62,17 +57,26 @@ func (it *IconTestnet) DeployContract(ctx context.Context) (context.Context, err
 	if err != nil {
 		return nil, err
 	}
-
 	json.Unmarshal(out, &result)
+	var contracts chains.ContractKey
 
-	return context.WithValue(ctx, chains.ContractKey{}, chains.ContractKey{
-		ContractAddress: string(result.SCOREAddress),
-	}), nil
+	contracts.ContractAddress = map[string]string{
+		contractName: string(result.SCOREAddress),
+	}
+
+	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
+		ContractAddress: contracts.ContractAddress,
+		ContractOwner:   keyName,
+	}), err
 }
 
 // ExecuteContract implements chains.Chain
-func (*IconTestnet) ExecuteContract(ctx context.Context) (context.Context, error) {
-	panic("unimplemented")
+func (*IconTestnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
+	var hash string
+	output, err := exec.Command("it.Config.Bin", "rpc", "sendtx", "call", "--to", "scoreAddress", "--method", methodName, "--key_store", "keystorePath",
+		"--key_password", "gochain", "--step_limit", "5000000000", "--param", "params").Output()
+	json.Unmarshal(output, &hash)
+	return ctx, err
 }
 
 // GetBalance implements chains.Chain
@@ -94,8 +98,16 @@ func (it *IconTestnet) GetLastBlock(ctx context.Context) (context.Context, error
 }
 
 // QueryContract implements chains.Chain
-func (*IconTestnet) QueryContract(ctx context.Context) (context.Context, error) {
-	panic("unimplemented")
+func (it *IconTestnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
+	if params != "" {
+		output, _ := exec.Command("it.Config.Bin", "rpc", "call", "--to", "scoreAddress", "--method", methodName, "--param", params, "--uri", "it.Config.URL").Output()
+		fmt.Println(output)
+		return ctx, nil
+	} else {
+		output, _ := exec.Command("it.Config.Bin", "rpc", "call", "--to", "scoreAddress", "--method", methodName, "--uri", "it.Config.URL").Output()
+		fmt.Println(output)
+		return ctx, nil
+	}
 }
 
 func (*IconTestnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error) {
@@ -115,22 +127,14 @@ func NewIconTestnet(bin, nid, initMessage, keystorePath, keyPassword, defaultSte
 	}
 }
 
-// // This function queries any method in deployed smartcontract given score address, method name along with params if any, to return the result
-// func (it *Testnet) QueryContract(scoreAddress, methodName, params string) (string, error) {
-// 	if params != "" {
-// 		output, _ := exec.Command(it.Config.Bin, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--param", params, "--uri", it.Config.URL).Output()
-// 		return string(output), nil
-// 	} else {
-// 		output, _ := exec.Command(it.Config.Bin, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", it.Config.URL).Output()
-// 		return string(output), nil
-// 	}
-// }
+func (it *IconTestnet) SetAdminParams(ctx context.Context) string {
+	panic("unimplemented")
+}
 
-// // This function takes method name and params along with score address and keystore path to execute any method in contract that is already deployed
-// func (it *Testnet) ExecuteContract(scoreAddress, keystorePath, methodName, params string) (string, error) {
-// 	var hash string
-// 	output, err := exec.Command(it.Config.Bin, "rpc", "sendtx", "call", "--to", scoreAddress, "--method", methodName, "--key_store", keystorePath,
-// 		"--key_password", "gochain", "--step_limit", "5000000000", "--param", params).Output()
-// 	json.Unmarshal(output, &hash)
-// 	return hash, err
-// }
+func (it *IconTestnet) CreateKey(ctx context.Context, keyName string) error {
+	panic("unimplemented")
+}
+
+func (it *IconTestnet) BuildWallets(ctx context.Context, keyName string) error {
+	panic("unimplemented")
+}

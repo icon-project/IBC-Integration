@@ -1,17 +1,23 @@
 package ibc.ics25.handler;
 
-import com.iconloop.score.test.Account;
-import ibc.icon.structs.messages.*;
-import ibc.icon.structs.proto.core.channel.Packet;
-import ibc.icon.structs.proto.core.client.Height;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
+
+import java.math.BigInteger;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
-import java.math.BigInteger;
+import com.iconloop.score.test.Account;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import ibc.icon.structs.messages.*;
+import test.proto.core.channel.ChannelOuterClass.Packet;
 
 public class IBCHandlerTest extends IBCHandlerTestBase {
     @BeforeEach
@@ -25,7 +31,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
-    void establishCommunication() {
+    void establishCommunication() throws Exception {
         createClient();
 
         createConnection();
@@ -38,7 +44,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
-    void connection_FromCounterparty() {
+    void connection_FromCounterparty() throws Exception {
         createClient();
 
         tryOpenConnection();
@@ -51,7 +57,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
-    void connection_ChannelFromCounterparty() {
+    void connection_ChannelFromCounterparty() throws Exception {
         createClient();
 
         createConnection();
@@ -64,7 +70,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
-    void connection_ConnectionFromCounterparty() {
+    void connection_ConnectionFromCounterparty() throws Exception {
         createClient();
 
         tryOpenConnection();
@@ -77,7 +83,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
-    void receivePackets_withSeparateAck() {
+    void receivePackets_withSeparateAck() throws Exception {
         establishCommunication();
 
         receivePacket();
@@ -85,14 +91,14 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
-    void receivePackets_withAckResponse() {
+    void receivePackets_withAckResponse() throws Exception {
         establishCommunication();
 
         receivePacket_withAcK();
     }
 
     @Test
-    void sendAndAckPacket() {
+    void sendAndAckPacket() throws Exception {
         establishCommunication();
 
         sendPacket();
@@ -100,7 +106,22 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
-    void channel_WithoutPortAllocations() {
+    void sendAndTimeoutPacket() throws Exception {
+        establishCommunication();
+
+        sendPacket();
+        timeoutPacket();
+    }
+
+    @Test
+    void requestTimeoutPacket() throws Exception {
+        establishCommunication();
+
+        requestTimeout(getBaseCounterPacket());
+    }
+
+    @Test
+    void channel_WithoutPortAllocations() throws Exception {
         // Arrange
         createClient();
 
@@ -114,12 +135,12 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         MsgChannelCloseInit msgCloseInit = new MsgChannelCloseInit();
         MsgChannelCloseConfirm msgCloseConfirm = new MsgChannelCloseConfirm();
 
-        msgInit.portId = portId;
-        msgTry.portId = portId;
-        msgAck.portId = portId;
-        msgConfirm.portId = portId;
-        msgCloseInit.portId = portId;
-        msgCloseConfirm.portId = portId;
+        msgInit.setPortId(portId);
+        msgTry.setPortId(portId);
+        msgAck.setPortId(portId);
+        msgConfirm.setPortId(portId);
+        msgCloseInit.setPortId(portId);
+        msgCloseConfirm.setPortId(portId);
 
         // Act && Assert
         String expectedErrorMessage = "Module not found";
@@ -146,7 +167,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     }
 
     @Test
-    void sendPacket_WithoutAuthorization() {
+    void sendPacket_WithoutAuthorization() throws Exception {
         // Arrange
         establishCommunication();
         Account nonAuthModule = sm.createAccount();
@@ -154,13 +175,13 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
 
         // Act && Assert
         String expectedErrorMessage = "failed to authenticate " + nonAuthModule.getAddress();
-        Executable sendNonAuthPacket = () -> handler.invoke(nonAuthModule, "sendPacket", packet);
+        Executable sendNonAuthPacket = () -> handler.invoke(nonAuthModule, "sendPacket", packet.toByteArray());
         AssertionError e = assertThrows(AssertionError.class, sendNonAuthPacket);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
     }
 
     @Test
-    void writePacketAck_WithoutAuthorization() {
+    void writePacketAck_WithoutAuthorization() throws Exception {
         // Arrange
         Account nonAuthModule = sm.createAccount();
         byte[] acknowledgement = new byte[1];
@@ -168,20 +189,20 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
 
         // Act
         receivePacket();
-        Packet lastPacket = Packet.fromBytes(lastPacketCaptor.getValue());
+        Packet lastPacket = Packet.parseFrom(lastPacketCaptor.getValue());
 
         // Assert
         String expectedErrorMessage = "failed to authenticate " + nonAuthModule.getAddress();
         Executable nonAuthPacketAck = () -> handler.invoke(nonAuthModule, "writeAcknowledgement",
-                lastPacket.getDestinationPort(), lastPacket.getDestinationChannel(), lastPacket.getSequence(),
-                acknowledgement);
+                lastPacket.getDestinationPort(), lastPacket.getDestinationChannel(),
+                BigInteger.valueOf(lastPacket.getSequence()), acknowledgement);
         AssertionError e = assertThrows(AssertionError.class, nonAuthPacketAck);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
 
     }
 
     @Test
-    void setExpectedTimePerBlock() {
+    void setExpectedTimePerBlock() throws Exception {
         // Arrange
         // 10 seconds delay
         delayPeriod = BigInteger.valueOf(10).multiply(BigInteger.TEN.pow(6));
@@ -194,23 +215,23 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         Packet packet = getBaseCounterPacket();
 
         MsgPacketRecv msg = new MsgPacketRecv();
-        msg.packet = packet;
-        msg.proof = new byte[0];
-        msg.proofHeight = new Height(BigInteger.ONE, BigInteger.ONE);
+        msg.setPacket(packet.toByteArray());
+        msg.setProof(new byte[0]);
+        msg.setProofHeight(baseHeight.toByteArray());
 
-        when(module.mock.onRecvPacket(msg.packet, relayer.getAddress())).thenReturn(new byte[0]);
+        when(module.mock.onRecvPacket(msg.getPacket(), relayer.getAddress())).thenReturn(new byte[0]);
 
         // Act
         handler.invoke(owner, "setExpectedTimePerBlock", expectedTimePerBlock);
         handler.invoke(relayer, "recvPacket", msg);
 
-        verify(lightClient.mock).verifyMembership(any(String.class), any(Height.class), eq(delayPeriod),
-                eq(expectedDelayTime), any(byte[].class), any(String.class), any(byte[].class), any(byte[].class));
+        verify(lightClient.mock).verifyMembership(any(String.class), any(byte[].class), eq(delayPeriod),
+                eq(expectedDelayTime), any(byte[].class), any(byte[].class), any(byte[].class), any(byte[].class));
     }
 
     @Test
     void handlerAdminPermissions() {
-        // TODO: should porbably be a admin and not a owner.
+        // TODO: should be a admin and not a owner.
         assertOnlyCallableBy(owner, "bindPort", portId);
         assertOnlyCallableBy(owner, "registerClient", clientType, lightClient.getAddress());
         assertOnlyCallableBy(owner, "setExpectedTimePerBlock", BigInteger.TWO);

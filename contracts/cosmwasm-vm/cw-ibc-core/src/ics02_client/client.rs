@@ -2,7 +2,7 @@ use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     // write method to increment next client sequence
-    pub fn increase_client_counter(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+    pub fn increase_client_counter(&self, store: &mut dyn Storage) -> Result<u64, ContractError> {
         match self.ibc_store().next_client_sequence().update(
             store,
             |mut seq| -> Result<_, ContractError> {
@@ -17,7 +17,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     // query to get next client sequence
-    pub fn client_counter(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+    pub fn client_counter(&self, store: &dyn Storage) -> Result<u64, ContractError> {
         match self.ibc_store().next_client_sequence().may_load(store) {
             Ok(result) => match result {
                 Some(sequence) => Ok(sequence),
@@ -30,7 +30,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn init_client_counter(
         &self,
         store: &mut dyn Storage,
-        sequence_no: u128,
+        sequence_no: u64,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -83,8 +83,8 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    // query to get impls for client id
-    pub fn get_client_impls(
+    // query to get implementation for client id
+    pub fn get_client_implementations(
         &self,
         store: &dyn Storage,
         client_id: ClientId,
@@ -136,7 +136,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn store_client_impl(
+    pub fn store_client_implementations(
         &self,
         store: &mut dyn Storage,
         client_id: ClientId,
@@ -151,36 +151,116 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
+    pub fn check_client_registered(
+        &self,
+        store: &dyn Storage,
+        client_type: ClientType,
+    ) -> Result<(), ContractError> {
+        match self
+            .ibc_store()
+            .client_registry()
+            .may_load(store, client_type)
+        {
+            Ok(result) => match result {
+                Some(_) => Err(ContractError::IbcClientError {
+                    error: ClientError::Other {
+                        description: "Client Implementation Already Exist".to_string(),
+                    },
+                }),
+                None => Ok(()),
+            },
+            Err(error) => Err(ContractError::Std(error)),
+        }
+    }
+    pub fn get_client(
+        &self,
+        store: &dyn Storage,
+        client_id: ClientId,
+    ) -> Result<String, ContractError> {
+        let client = self.get_client_implementations(store, client_id.clone())?;
+
+        if client.is_empty() {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::ClientNotFound {
+                    client_id: client_id.ibc_client_id().clone(),
+                },
+            });
+        }
+        Ok(client)
+    }
+
+    pub fn get_client_state(
+        &self,
+        store: &dyn Storage,
+        client_id: ClientId,
+    ) -> Result<Vec<u8>, ContractError> {
+        let client_key = self.client_state_commitment_key(client_id.ibc_client_id());
+
+        let client_state = self
+            .ibc_store()
+            .commitments()
+            .load(store, client_key)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: format!("NotFound ClientId({})", client_id.ibc_client_id().as_str()),
+            })?;
+
+        Ok(client_state)
+    }
 }
 
 //TODO : Implement Methods
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    fn client_state(
+    pub fn client_state(
         &self,
+        store: &dyn Storage,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
-    ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ibc::core::ContextError>
-    {
-        todo!()
+    ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ContractError> {
+        let client_key = self.client_state_commitment_key(client_id);
+
+        let client_state_data = self
+            .ibc_store()
+            .commitments()
+            .load(store, client_key)
+            .map_err(|error| ContractError::Std(error))?;
+
+        let client_state: ClientState = client_state_data.as_slice().try_into().unwrap();
+
+        Ok(Box::new(client_state))
     }
 
-    fn decode_client_state(
+    pub fn decode_client_state(
         &self,
         client_state: ibc_proto::google::protobuf::Any,
-    ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ibc::core::ContextError>
-    {
-        todo!()
+    ) -> Result<Box<dyn IbcClientState>, ContractError> {
+        let client_state: ClientState = ClientState::try_from(client_state).unwrap();
+
+        Ok(Box::new(client_state))
     }
 
-    fn consensus_state(
+    pub fn consensus_state(
         &self,
-        client_cons_state_path: &ibc::core::ics24_host::path::ClientConsensusStatePath,
-    ) -> Result<
-        Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>,
-        ibc::core::ContextError,
-    > {
-        todo!()
+        store: &dyn Storage,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
+    ) -> Result<Box<dyn IbcConsensusState>, ContractError> {
+        let conesnus_state_key = self.consensus_state_commitment_key(
+            client_id,
+            height.revision_number(),
+            height.revision_height(),
+        );
+
+        let consenus_state_data = self
+            .ibc_store()
+            .commitments()
+            .load(store, conesnus_state_key)
+            .map_err(|error| ContractError::Std(error))?;
+
+        let consensus_state: ConsensusState =
+            ConsensusState::try_from(consenus_state_data).unwrap();
+
+        Ok(Box::new(consensus_state))
     }
 
     fn next_consensus_state(
@@ -189,7 +269,7 @@ impl<'a> CwIbcCoreContext<'a> {
         height: &ibc::Height,
     ) -> Result<
         Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
-        ibc::core::ContextError,
+        ContractError,
     > {
         todo!()
     }
@@ -200,33 +280,37 @@ impl<'a> CwIbcCoreContext<'a> {
         height: &ibc::Height,
     ) -> Result<
         Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
-        ibc::core::ContextError,
+        ContractError,
     > {
         todo!()
     }
 
-    fn host_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
+    fn host_height(&self) -> Result<ibc::Height, ContractError> {
         todo!()
     }
 
-    fn host_timestamp(&self) -> Result<ibc::timestamp::Timestamp, ibc::core::ContextError> {
-        todo!()
+    pub fn host_timestamp(
+        &self,
+        store: &dyn Storage,
+    ) -> Result<ibc::timestamp::Timestamp, ContractError> {
+        //TODO Update timestamp logic
+        let duration = self.ibc_store().expected_time_per_block().load(store)?;
+        let block_time = Duration::from_secs(duration as u64);
+        Ok(Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap())
     }
 
     fn host_consensus_state(
         &self,
         height: &ibc::Height,
-    ) -> Result<
-        Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>,
-        ibc::core::ContextError,
-    > {
+    ) -> Result<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>, ContractError>
+    {
         todo!()
     }
 
     fn validate_self_client(
         &self,
         client_state_of_host_on_counterparty: ibc_proto::google::protobuf::Any,
-    ) -> Result<(), ibc::core::ContextError> {
+    ) -> Result<(), ContractError> {
         todo!()
     }
 
@@ -234,7 +318,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
-    ) -> Result<ibc::timestamp::Timestamp, ibc::core::ContextError> {
+    ) -> Result<ibc::timestamp::Timestamp, ContractError> {
         todo!()
     }
 
@@ -242,7 +326,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
-    ) -> Result<ibc::Height, ibc::core::ContextError> {
+    ) -> Result<ibc::Height, ContractError> {
         todo!()
     }
 
@@ -251,26 +335,45 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 }
 
-//TODO : Implement Methods
-#[allow(dead_code)]
-#[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    fn store_client_state(
-        &mut self,
-        client_state_path: ibc::core::ics24_host::path::ClientStatePath,
-        client_state: Box<dyn ibc::core::ics02_client::client_state::ClientState>,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    pub fn store_client_state(
+        &self,
+        store: &mut dyn Storage,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        client_state: Vec<u8>,
+    ) -> Result<(), ContractError> {
+        let client_key = self.client_state_commitment_key(client_id);
+
+        self.ibc_store()
+            .commitments()
+            .save(store, client_key, &client_state)?;
+
+        Ok(())
     }
 
-    fn store_consensus_state(
-        &mut self,
-        consensus_state_path: ibc::core::ics24_host::path::ClientConsensusStatePath,
-        consensus_state: Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    pub fn store_consensus_state(
+        &self,
+        store: &mut dyn Storage,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: ibc::Height,
+        consensus_state: Vec<u8>,
+    ) -> Result<(), ContractError> {
+        let consensus_key = self.consensus_state_commitment_key(
+            client_id,
+            height.revision_number(),
+            height.revision_height(),
+        );
+
+        self.ibc_store()
+            .commitments()
+            .save(store, consensus_key, &consensus_state)?;
+
+        Ok(())
     }
 
+    //TODO : Implement Methods
+    #[allow(dead_code)]
+    #[allow(unused_variables)]
     fn store_update_time(
         &mut self,
         client_id: ibc::core::ics24_host::identifier::ClientId,
@@ -280,6 +383,9 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
+    //TODO : Implement Methods
+    #[allow(dead_code)]
+    #[allow(unused_variables)]
     fn store_update_height(
         &mut self,
         client_id: ibc::core::ics24_host::identifier::ClientId,

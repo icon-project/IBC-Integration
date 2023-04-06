@@ -1,3 +1,5 @@
+use ibc::core::ics04_channel::Version;
+
 use super::*;
 
 pub const CHANNEL_ID_ATTRIBUTE_KEY: &str = "channel_id";
@@ -21,57 +23,58 @@ pub const PKT_ACK_ATTRIBUTE_KEY: &str = "packet_ack";
 pub const PKT_ACK_HEX_ATTRIBUTE_KEY: &str = "packet_ack_hex";
 pub const PKT_CONNECTION_ID_ATTRIBUTE_KEY: &str = "packet_connection";
 
-// Makes OpenInitChannel IBC Event
-pub fn make_open_init_channel_event(channel_id: &ChannelId, msg: &MsgChannelOpenInit) -> Event {
+// Creates OpenInitChannel IBC Event
+pub fn create_open_init_channel_event(
+    channel_id: &ChannelId,
+    port_id_on_a: &IbcPortId,
+    port_id_on_b: &IbcPortId,
+    connection_hops_on_a: &IbcConnectionId,
+    version_proposal: &Version,
+) -> Event {
     Event::new(IbcEventType::OpenInitChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_a.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_a.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str())
-        .add_attribute(
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            msg.port_id_on_b.as_str(),
-        )
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, msg.connection_hops_on_a[0].as_str())
-        .add_attribute(VERSION_ATTRIBUTE_KEY, msg.version_proposal.as_str())
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, port_id_on_b.as_str())
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_hops_on_a.as_str())
+        .add_attribute(VERSION_ATTRIBUTE_KEY, version_proposal.as_str())
 }
 
-// Makes OpenInitChannel IBC Event
-pub fn make_open_try_channel_event(channel_id: &ChannelId, msg: &MsgChannelOpenTry) -> Event {
+// Creates OpenInitChannel IBC Event
+pub fn create_open_try_channel_event(
+    channel_id: &str,
+    port_id_on_b: &str,
+    port_id_on_a: &str,
+    chan_id_on_a: &str,
+    connection_hops_on_b: &str,
+    version_supported_on_a: &str,
+) -> Event {
     Event::new(IbcEventType::OpenTryChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_b.as_str())
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str())
-        .add_attribute(
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            msg.port_id_on_a.as_str(),
-        )
-        .add_attribute(
-            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
-            msg.chan_id_on_a.as_str(),
-        )
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, msg.connection_hops_on_b[0].as_str())
-        .add_attribute(VERSION_ATTRIBUTE_KEY, msg.version_supported_on_a.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, port_id_on_a)
+        .add_attribute(COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_a)
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_hops_on_b)
+        .add_attribute(VERSION_ATTRIBUTE_KEY, version_supported_on_a)
 }
 
-// Makes OpenAckChannel  IBC Event
-pub fn make_open_ack_channel_event(msg: &MsgChannelOpenAck) -> Event {
+// Creates OpenAckChannel  IBC Event
+pub fn create_open_ack_channel_event(
+    port_id_on_a: &str,
+    chan_id_on_a: &str,
+    port_id_on_b: &str,
+    chan_id_on_b: &str,
+    connection_id: &str,
+) -> Event {
     Event::new(IbcEventType::OpenAckChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_a.as_str())
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_a.as_str())
-        .add_attribute(
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            PortId::default().ibc_port_id().as_str(),
-        )
-        .add_attribute(
-            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
-            msg.chan_id_on_b.as_str(),
-        )
-        .add_attribute(
-            CONN_ID_ATTRIBUTE_KEY,
-            ConnectionId::default().connection_id().as_str(),
-        )
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_a)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_a)
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
+        .add_attribute(COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_b)
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_id)
 }
 
-// Makes OpenConfirmChannel IBC Event
-pub fn make_open_confirm_channel_event(msg: &MsgChannelOpenConfirm) -> Event {
+// Creates OpenConfirmChannel IBC Event
+pub fn create_open_confirm_channel_event(msg: &MsgChannelOpenConfirm) -> Event {
     Event::new(IbcEventType::OpenConfirmChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_b.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_b.as_str())
@@ -90,15 +93,15 @@ pub fn make_open_confirm_channel_event(msg: &MsgChannelOpenConfirm) -> Event {
 }
 
 // Event for created channel id
-pub fn make_channel_id_generated_event(channel_id: ChannelId) -> Event {
+pub fn create_channel_id_generated_event(channel_id: ChannelId) -> Event {
     Event::new("channel_id_created").add_attribute(
         CHANNEL_ID_ATTRIBUTE_KEY,
         channel_id.ibc_channel_id().as_str(),
     )
 }
 
-// Makes SendPacket event
-pub fn make_send_packet_event(
+// Creates SendPacket event
+pub fn create_send_packet_event(
     packet: Packet,
     channel_order: &Order,
     dst_connection_id: &IbcConnectionId,
@@ -128,8 +131,8 @@ pub fn make_send_packet_event(
         .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id.as_str()))
 }
 
-// Makes WriteAcknowledgement event
-pub fn make_write_ack_event(
+// Creates WriteAcknowledgement event
+pub fn create_write_ack_event(
     packet: Packet,
     ack: Vec<u8>,
     dst_connection_id: &IbcConnectionId,
@@ -164,8 +167,8 @@ pub fn make_write_ack_event(
         .add_attribute(PKT_ACK_HEX_ATTRIBUTE_KEY, ack_hex_data))
 }
 
-// Makes AcknowledgePacket event
-pub fn make_ack_packet_event(
+// Creates AcknowledgePacket event
+pub fn create_ack_packet_event(
     packet: Packet,
     channel_order: &Order,
     dst_connection_id: &IbcConnectionId,
@@ -188,8 +191,8 @@ pub fn make_ack_packet_event(
         .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id.as_str())
 }
 
-// Makes TimeoutPacket event
-pub fn make_packet_timeout_event(packet: Packet, channel_order: &Order) -> Event {
+// Creates TimeoutPacket event
+pub fn create_packet_timeout_event(packet: Packet, channel_order: &Order) -> Event {
     Event::new(IbcEventType::Timeout.as_str())
         .add_attribute(
             PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
@@ -205,4 +208,18 @@ pub fn make_packet_timeout_event(packet: Packet, channel_order: &Order) -> Event
         .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
         .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
         .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order.as_str())
+}
+
+// Creates CloseInitChannel event
+pub fn create_close_init_channel_event(port_id: &str, channel_id: &str) -> Event {
+    Event::new(IbcEventType::CloseInitChannel.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
+}
+
+// Creates CloseConfirmChannel event
+pub fn create_close_confirm_channel_event(msg: &MsgChannelCloseConfirm) -> Event {
+    Event::new(IbcEventType::CloseConfirmChannel.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_b.as_str())
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_b.as_str())
 }

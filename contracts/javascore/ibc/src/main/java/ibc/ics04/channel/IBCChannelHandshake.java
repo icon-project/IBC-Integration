@@ -1,243 +1,271 @@
 package ibc.ics04.channel;
 
-import ibc.icon.interfaces.IIBCChannelHandshake;
+import java.math.BigInteger;
+import java.util.List;
+
 import ibc.icon.interfaces.ILightClient;
-import ibc.icon.structs.messages.*;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.icon.structs.proto.core.connection.ConnectionEnd;
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.structs.messages.MsgChannelCloseConfirm;
+import ibc.icon.structs.messages.MsgChannelCloseInit;
+import ibc.icon.structs.messages.MsgChannelOpenAck;
+import ibc.icon.structs.messages.MsgChannelOpenConfirm;
+import ibc.icon.structs.messages.MsgChannelOpenInit;
+import ibc.icon.structs.messages.MsgChannelOpenTry;
+import icon.proto.core.channel.Channel;
+import icon.proto.core.connection.ConnectionEnd;
 import ibc.ics03.connection.IBCConnection;
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
-import java.math.BigInteger;
+public class IBCChannelHandshake extends IBCConnection {
 
-public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHandshake {
+    public String _channelOpenInit(MsgChannelOpenInit msg) {
+        Channel channel = Channel.decode(msg.getChannel());
+        Context.require(channel.getConnectionHops().size() == 1, "connection_hops length must be 1");
 
-    public String channelOpenInit(MsgChannelOpenInit msg) {
-        Context.require(msg.channel.getConnectionHops().length == 1, "connection_hops length must be 1");
+        byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
 
-        ConnectionEnd connection = connections.get(msg.channel.getConnectionHops()[0]);
-        Context.require(connection != null, "connection does not exist");
         Context.require(
-                connection.getVersions().length == 1,
+                connection.getVersions().size() == 1,
                 "single version must be negotiated on connection before opening channel");
 
-        Context.require(msg.channel.channelState().equals(Channel.State.STATE_INIT),
+        Context.require(channel.getState() == Channel.State.STATE_INIT,
                 "channel state must be STATE_INIT");
 
         // TODO: verifySupportedFeature
         // TODO: authenticates a port binding
 
         String channelId = generateChannelIdentifier();
-        channels.at(msg.portId).set(channelId, msg.channel);
-        nextSequenceSends.at(msg.portId).set(channelId, BigInteger.ONE);
-        nextSequenceReceives.at(msg.portId).set(channelId, BigInteger.ONE);
-        nextSequenceAcknowledgements.at(msg.portId).set(channelId, BigInteger.ONE);
+        channels.at(msg.getPortId()).set(channelId, msg.getChannel());
+        nextSequenceSends.at(msg.getPortId()).set(channelId, BigInteger.ONE);
+        nextSequenceReceives.at(msg.getPortId()).set(channelId, BigInteger.ONE);
+        nextSequenceAcknowledgements.at(msg.getPortId()).set(channelId, BigInteger.ONE);
 
-        updateChannelCommitment(msg.portId, channelId, msg.channel);
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), channelId, msg.getChannel());
 
         return channelId;
     }
 
-    public String channelOpenTry(MsgChannelOpenTry msg) {
-        Context.require(msg.channel.getConnectionHops().length == 1, "connection_hops length must be 1");
-        ConnectionEnd connection = connections.get(msg.channel.getConnectionHops()[0]);
-        Context.require(connection != null, "connection does not exist");
+    public String _channelOpenTry(MsgChannelOpenTry msg) {
+        Channel channel = Channel.decode(msg.getChannel());
+        Context.require(channel.getConnectionHops().size() == 1, "connection_hops length must be 1");
+        byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+
         Context.require(
-                connection.getVersions().length == 1,
+                connection.getVersions().size() == 1,
                 "single version must be negotiated on connection before opening channel");
-        Context.require(msg.channel.channelState().equals(Channel.State.STATE_TRYOPEN),
+        Context.require(channel.getState() == Channel.State.STATE_TRYOPEN,
                 "channel state must be STATE_TRYOPEN");
 
         // TODO verifySupportedFeature
 
         // TODO authenticates a port binding
 
-        Counterparty expectedCounterparty = new Counterparty();
-        expectedCounterparty.setPortId(msg.portId);
+        Channel.Counterparty expectedCounterparty = new Channel.Counterparty();
+        expectedCounterparty.setPortId(msg.getPortId());
         expectedCounterparty.setChannelId("");
 
         Channel expectedChannel = new Channel();
-        expectedChannel.updateState(Channel.State.STATE_INIT);
-        expectedChannel.updateOrder(msg.channel.channelOrdering());
+        expectedChannel.setState(Channel.State.STATE_INIT);
+        expectedChannel.setOrdering(channel.getOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(getCounterpartyHops(msg.channel.getConnectionHops()[0]));
-        expectedChannel.setVersion(msg.counterpartyVersion);
+        expectedChannel.setConnectionHops(List.of(connection.getCounterparty().getConnectionId()));
+        expectedChannel.setVersion(msg.getCounterpartyVersion());
 
         verifyChannelState(
                 connection,
-                msg.proofHeight,
-                msg.proofInit,
-                msg.channel.getCounterparty().getPortId(),
-                msg.channel.getCounterparty().getChannelId(),
+                msg.getProofHeight(),
+                msg.getProofInit(),
+                channel.getCounterparty().getPortId(),
+                channel.getCounterparty().getChannelId(),
                 expectedChannel);
 
         String channelId = generateChannelIdentifier();
-        channels.at(msg.portId).set(channelId, msg.channel);
-        nextSequenceSends.at(msg.portId).set(channelId, BigInteger.ONE);
-        nextSequenceReceives.at(msg.portId).set(channelId, BigInteger.ONE);
-        nextSequenceAcknowledgements.at(msg.portId).set(channelId, BigInteger.ONE);
+        channels.at(msg.getPortId()).set(channelId, msg.getChannel());
+        nextSequenceSends.at(msg.getPortId()).set(channelId, BigInteger.ONE);
+        nextSequenceReceives.at(msg.getPortId()).set(channelId, BigInteger.ONE);
+        nextSequenceAcknowledgements.at(msg.getPortId()).set(channelId, BigInteger.ONE);
 
-        updateChannelCommitment(msg.portId, channelId, msg.channel);
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), channelId, msg.getChannel());
 
         return channelId;
     }
 
-    public void channelOpenAck(MsgChannelOpenAck msg) {
-        Channel channel = channels.at(msg.portId).get(msg.channelId);
-        Context.require(channel != null, "channel does not exist");
-        Context.require(channel.getConnectionHops().length == 1);
+    public byte[] _channelOpenAck(MsgChannelOpenAck msg) {
+        byte[] channelPb = channels.at(msg.getPortId()).get(msg.getChannelId());
+        Context.require(channelPb != null, "channel does not exist");
+        Channel channel = Channel.decode(channelPb);
+        Context.require(channel.getConnectionHops().size() == 1);
 
         Context.require(
-                channel.channelState().equals(Channel.State.STATE_INIT)
-                        || channel.channelState().equals(Channel.State.STATE_TRYOPEN),
+                channel.getState() == Channel.State.STATE_INIT
+                        || channel.getState() == Channel.State.STATE_TRYOPEN,
                 "invalid channel state");
 
         // TODO authenticates a port binding
 
-        ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
-        Context.require(connection != null, "connection does not exist");
-        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+        byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+        Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
                 "connection state is not OPEN");
 
-        Counterparty expectedCounterparty = new Counterparty();
-        expectedCounterparty.setPortId(msg.portId);
-        expectedCounterparty.setChannelId(msg.channelId);
+        Channel.Counterparty expectedCounterparty = new Channel.Counterparty();
+        expectedCounterparty.setPortId(msg.getPortId());
+        expectedCounterparty.setChannelId(msg.getChannelId());
 
         Channel expectedChannel = new Channel();
-        expectedChannel.updateState(Channel.State.STATE_TRYOPEN);
-        expectedChannel.updateOrder(channel.channelOrdering());
+        expectedChannel.setState(Channel.State.STATE_TRYOPEN);
+        expectedChannel.setOrdering(channel.getOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
-        expectedChannel.setVersion(msg.counterpartyVersion);
+        expectedChannel.setConnectionHops(List.of(connection.getCounterparty().getConnectionId()));
+        expectedChannel.setVersion(msg.getCounterpartyVersion());
 
         verifyChannelState(
                 connection,
-                msg.proofHeight,
-                msg.proofTry,
+                msg.getProofHeight(),
+                msg.getProofTry(),
                 channel.getCounterparty().getPortId(),
-                msg.counterpartyChannelId,
+                msg.getCounterpartyChannelId(),
                 expectedChannel);
-        channel.updateState(Channel.State.STATE_OPEN);
-        channel.setVersion(msg.counterpartyVersion);
-        channel.getCounterparty().setChannelId(msg.counterpartyChannelId);
+        channel.setState(Channel.State.STATE_OPEN);
+        channel.setVersion(msg.getCounterpartyVersion());
+        channel.getCounterparty().setChannelId(msg.getCounterpartyChannelId());
 
-        updateChannelCommitment(msg.portId, msg.channelId, channel);
-        channels.at(msg.portId).set(msg.channelId, channel);
+        byte[] encodedChannel = channel.encode();
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
+        channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
+
+        return encodedChannel;
     }
 
-    public void channelOpenConfirm(MsgChannelOpenConfirm msg) {
-        Channel channel = channels.at(msg.portId).get(msg.channelId);
+    public byte[] _channelOpenConfirm(MsgChannelOpenConfirm msg) {
+        Channel channel = Channel.decode(channels.at(msg.getPortId()).get(msg.getChannelId()));
         Context.require(channel != null, "channel does not exist");
-        Context.require(channel.getConnectionHops().length == 1);
-        Context.require(channel.channelState().equals(Channel.State.STATE_TRYOPEN), "channel state is not TRYOPEN");
+        Context.require(channel.getConnectionHops().size() == 1);
+        Context.require(channel.getState() == Channel.State.STATE_TRYOPEN, "channel state is not TRYOPEN");
 
         // TODO authenticates a port binding
 
-        ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
-        Context.require(connection != null, "connection does not exist");
-        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+        byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+        Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
                 "connection state is not OPEN");
 
-        Counterparty expectedCounterparty = new Counterparty();
-        expectedCounterparty.setPortId(msg.portId);
-        expectedCounterparty.setChannelId(msg.channelId);
+        Channel.Counterparty expectedCounterparty = new Channel.Counterparty();
+        expectedCounterparty.setPortId(msg.getPortId());
+        expectedCounterparty.setChannelId(msg.getChannelId());
 
         Channel expectedChannel = new Channel();
-        expectedChannel.updateState(Channel.State.STATE_OPEN);
-        expectedChannel.updateOrder(channel.channelOrdering());
+        expectedChannel.setState(Channel.State.STATE_OPEN);
+        expectedChannel.setOrdering(channel.getOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
+        expectedChannel.setConnectionHops(List.of(connection.getCounterparty().getConnectionId()));
         expectedChannel.setVersion(channel.getVersion());
-
         verifyChannelState(
                 connection,
-                msg.proofHeight,
-                msg.proofAck,
+                msg.getProofHeight(),
+                msg.getProofAck(),
                 channel.getCounterparty().getPortId(),
                 channel.getCounterparty().getChannelId(),
                 expectedChannel);
 
-        channel.updateState(Channel.State.STATE_OPEN);
+        channel.setState(Channel.State.STATE_OPEN);
 
-        updateChannelCommitment(msg.portId, msg.channelId, channel);
-        channels.at(msg.portId).set(msg.channelId, channel);
+        byte[] encodedChannel = channel.encode();
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
+        channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
+
+        return encodedChannel;
     }
 
-    public void channelCloseInit(MsgChannelCloseInit msg) {
-        Channel channel = channels.at(msg.portId).get(msg.channelId);
+    public byte[] _channelCloseInit(MsgChannelCloseInit msg) {
+        Channel channel = Channel.decode(channels.at(msg.getPortId()).get(msg.getChannelId()));
         Context.require(channel != null, "channel does not exist");
-        Context.require(channel.channelState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
+        Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
 
         // TODO authenticates a port binding
 
-        ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
-        Context.require(connection != null, "connection does not exist");
-        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+        byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+
+        Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
                 "connection state is not OPEN");
 
-        channel.updateState(Channel.State.STATE_CLOSED);
+        channel.setState(Channel.State.STATE_CLOSED);
 
-        updateChannelCommitment(msg.portId, msg.channelId, channel);
-        channels.at(msg.portId).set(msg.channelId, channel);
+        byte[] encodedChannel = channel.encode();
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
+        channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
+
+        return encodedChannel;
     }
 
-    public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
-        Channel channel = channels.at(msg.portId).get(msg.channelId);
+    public byte[] _channelCloseConfirm(MsgChannelCloseConfirm msg) {
+        Channel channel = Channel.decode(channels.at(msg.getPortId()).get(msg.getChannelId()));
         Context.require(channel != null, "channel does not exist");
-        Context.require(channel.channelState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
-        Context.require(channel.getConnectionHops().length == 1);
+        Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
+        Context.require(channel.getConnectionHops().size() == 1);
 
         // TODO authenticates a port binding
 
-        ConnectionEnd connection = connections.get(channel.getConnectionHops()[0]);
-        Context.require(connection != null, "connection does not exist");
-        Context.require(connection.connectionState().equals(ConnectionEnd.State.STATE_OPEN),
+        byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
+        Context.require(connectionPb != null, "connection does not exist");
+        ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+
+        Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
                 "connection state is not OPEN");
 
-        Counterparty expectedCounterparty = new Counterparty();
-        expectedCounterparty.setPortId(msg.portId);
-        expectedCounterparty.setChannelId(msg.channelId);
+        Channel.Counterparty expectedCounterparty = new Channel.Counterparty();
+        expectedCounterparty.setPortId(msg.getPortId());
+        expectedCounterparty.setChannelId(msg.getChannelId());
 
         Channel expectedChannel = new Channel();
-        expectedChannel.updateState(Channel.State.STATE_CLOSED);
-        expectedChannel.updateOrder(channel.channelOrdering());
+        expectedChannel.setState(Channel.State.STATE_CLOSED);
+        expectedChannel.setOrdering(channel.getOrdering());
         expectedChannel.setCounterparty(expectedCounterparty);
-        expectedChannel.setConnectionHops(getCounterpartyHops(channel.getConnectionHops()[0]));
+        expectedChannel.setConnectionHops(List.of(connection.getCounterparty().getConnectionId()));
         expectedChannel.setVersion(channel.getVersion());
 
         verifyChannelState(
                 connection,
-                msg.proofHeight,
-                msg.proofInit,
+                msg.getProofHeight(),
+                msg.getProofInit(),
                 channel.getCounterparty().getPortId(),
                 channel.getCounterparty().getChannelId(),
                 expectedChannel);
 
-        channel.updateState(Channel.State.STATE_CLOSED);
+        channel.setState(Channel.State.STATE_CLOSED);
 
-        updateChannelCommitment(msg.portId, msg.channelId, channel);
-        channels.at(msg.portId).set(msg.channelId, channel);
+        byte[] encodedChannel = channel.encode();
+        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
+        channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
+
+        return encodedChannel;
     }
 
-    private void updateChannelCommitment(String portId, String channelId, Channel channel) {
-        commitments.set(IBCCommitment.channelCommitmentKey(portId, channelId),
-                IBCCommitment.keccak256(channel.toBytes()));
+    protected void updateChannelCommitment(String clientId, String portId, String channelId, byte[] channel) {
+        sendBTPMessage(clientId, ByteUtil.join(IBCCommitment.channelCommitmentKey(portId, channelId),
+                IBCCommitment.keccak256(channel)));
     }
 
     /* Verification functions */
 
     private void verifyChannelState(
             ConnectionEnd connection,
-            Height height,
+            byte[] height,
             byte[] proof,
             String portId,
             String channelId,
             Channel channel) {
         ILightClient client = getClient(connection.getClientId());
-        boolean ok = client.verifyMembership(
+        client.verifyMembership(
                 connection.getClientId(),
                 height,
                 BigInteger.ZERO,
@@ -245,18 +273,11 @@ public class IBCChannelHandshake extends IBCConnection implements IIBCChannelHan
                 proof,
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 IBCCommitment.channelPath(portId, channelId),
-                channel.toBytes());
-        Context.require(ok, "failed to verify channel state");
+                channel.encode());
 
     }
 
     /* Internal functions */
-
-    private String[] getCounterpartyHops(String connectionId) {
-        String hop = connections.get(connectionId).getCounterparty().getConnectionId();
-        String[] hops = new String[]{hop};
-        return hops;
-    }
 
     private String generateChannelIdentifier() {
         BigInteger currChannelSequence = nextChannelSequence.getOrDefault(BigInteger.ZERO);

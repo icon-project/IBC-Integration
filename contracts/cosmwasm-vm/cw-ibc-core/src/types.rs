@@ -1,17 +1,26 @@
-use cosmwasm_std::StdError;
-use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
-
-use ibc::core::ics24_host::error::ValidationError;
-use std::{
-    fmt::{Display, Error as FmtError, Formatter},
-    str::FromStr,
-};
-
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientId(IbcClientId);
 
+impl Default for ClientId {
+    fn default() -> Self {
+        Self(IbcClientId::default())
+    }
+}
+impl From<IbcClientId> for ClientId {
+    fn from(value: IbcClientId) -> Self {
+        Self(value)
+    }
+}
+impl FromStr for ClientId {
+    type Err = ibc::core::ics24_host::error::ValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let r = IbcClientId::from_str(s)?;
+        Ok(Self(r))
+    }
+}
 impl ClientId {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
@@ -23,17 +32,25 @@ impl ClientId {
         self.0.as_bytes()
     }
 
-    pub fn new(client_type: ClientType, counter: u64) -> Result<Self, ValidationError> {
+    pub fn new(client_type: ClientType, counter: u64) -> Result<Self, ContractError> {
         match IbcClientId::new(client_type.client_type(), counter) {
             Ok(result) => Ok(Self(result)),
-            Err(error) => Err(error),
+            Err(error) => Err(ContractError::IbcClientError {
+                error: ClientError::ClientIdentifierConstructor {
+                    client_type: client_type.client_type(),
+                    counter,
+                    validation_error: error,
+                },
+            }),
         }
     }
-    pub fn default() -> Self {
-        Self(IbcClientId::default())
-    }
+
     pub fn ibc_client_id(&self) -> &IbcClientId {
         &self.0
+    }
+
+    pub fn from(client_id: IbcClientId) -> Self {
+        Self(client_id)
     }
 }
 
@@ -77,6 +94,19 @@ impl ClientType {
     /// Get this identifier as a borrowed `&str`
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+}
+
+impl From<IbcClientType> for ClientType {
+    fn from(value: IbcClientType) -> Self {
+        Self(value)
+    }
+}
+
+impl From<ClientId> for ClientType {
+    fn from(value: ClientId) -> Self {
+        let data: Vec<&str> = value.as_str().split("-").collect();
+        ClientType::new(data[0].to_string())
     }
 }
 
@@ -170,6 +200,12 @@ impl KeyDeserialize for ConnectionId {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChannelId(IbcChannelId);
 
+impl Default for ChannelId {
+    fn default() -> Self {
+        Self(IbcChannelId::default())
+    }
+}
+
 impl<'a> PrimaryKey<'a> for ChannelId {
     type Prefix = ();
     type SubPrefix = ();
@@ -208,10 +244,6 @@ impl ChannelId {
         self.0.as_bytes()
     }
 
-    pub fn default() -> Self {
-        Self(IbcChannelId::default())
-    }
-
     pub fn ibc_channel_id(&self) -> &IbcChannelId {
         &self.0
     }
@@ -231,6 +263,12 @@ impl Display for ChannelId {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PortId(IbcPortId);
+
+impl Default for PortId {
+    fn default() -> Self {
+        Self(IbcPortId::default())
+    }
+}
 
 impl<'a> PrimaryKey<'a> for PortId {
     type Prefix = ();
@@ -257,10 +295,6 @@ impl PortId {
     /// Get this identifier as a borrowed byte slice
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
-    }
-
-    pub fn default() -> Self {
-        Self(IbcPortId::default())
     }
 
     pub fn ibc_port_id(&self) -> &IbcPortId {
@@ -305,6 +339,9 @@ impl ModuleId {
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
 }
 
 impl<'a> PrimaryKey<'a> for ModuleId {
@@ -326,5 +363,23 @@ impl KeyDeserialize for ModuleId {
             .unwrap();
         let module_id = IbcModuleId::from_str(&result).unwrap();
         Ok(ModuleId(module_id.to_string()))
+    }
+}
+
+impl From<IbcConnectionId> for ConnectionId {
+    fn from(conn: IbcConnectionId) -> Self {
+        ConnectionId(conn)
+    }
+}
+
+impl From<IbcPortId> for PortId {
+    fn from(port_id: IbcPortId) -> Self {
+        PortId(port_id)
+    }
+}
+
+impl From<IbcModuleId> for ModuleId {
+    fn from(module: IbcModuleId) -> Self {
+        ModuleId(module.to_string())
     }
 }

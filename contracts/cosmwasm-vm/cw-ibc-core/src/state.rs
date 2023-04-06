@@ -1,4 +1,5 @@
 use super::*;
+
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, ClientType, String>,
     client_types: Map<'a, ClientId, ClientType>,
@@ -6,13 +7,13 @@ pub struct CwIbcStore<'a> {
     next_sequence_send: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_recv: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_ack: Map<'a, (PortId, ChannelId), Sequence>,
-    next_client_sequence: Item<'a, u128>,
-    next_connection_sequence: Item<'a, u128>,
-    next_channel_sequence: Item<'a, u128>,
+    next_client_sequence: Item<'a, u64>,
+    next_connection_sequence: Item<'a, u64>,
+    next_channel_sequence: Item<'a, u64>,
     client_connections: Map<'a, ClientId, ConnectionId>,
     connections: Map<'a, ConnectionId, Vec<u8>>,
     channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
-    port_to_moudle: Map<'a, PortId, ModuleId>,
+    port_to_moudle: Map<'a, PortId, IbcModuleId>,
     /// Stores address based on the capabilty names
     capabilities: Map<'a, Vec<u8>, Vec<String>>,
     /// store commitments based on keys (PacketCommitment,AckCommitment,Connection,Channel,Client)
@@ -71,13 +72,13 @@ impl<'a> CwIbcStore<'a> {
         &self.next_sequence_ack
     }
 
-    pub fn next_client_sequence(&self) -> &Item<'a, u128> {
+    pub fn next_client_sequence(&self) -> &Item<'a, u64> {
         &self.next_client_sequence
     }
-    pub fn next_connection_sequence(&self) -> &Item<'a, u128> {
+    pub fn next_connection_sequence(&self) -> &Item<'a, u64> {
         &self.next_connection_sequence
     }
-    pub fn next_channel_sequence(&self) -> &Item<'a, u128> {
+    pub fn next_channel_sequence(&self) -> &Item<'a, u64> {
         &self.next_channel_sequence
     }
     pub fn connections(&self) -> &Map<'a, ConnectionId, Vec<u8>> {
@@ -89,7 +90,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn channels(&self) -> &Map<'a, (PortId, ChannelId), ChannelEnd> {
         &self.channels
     }
-    pub fn port_to_moulde(&self) -> &Map<'a, PortId, ModuleId> {
+    pub fn port_to_moulde(&self) -> &Map<'a, PortId, IbcModuleId> {
         &self.port_to_moudle
     }
     pub fn capabilities(&self) -> &Map<'a, Vec<u8>, Vec<String>> {

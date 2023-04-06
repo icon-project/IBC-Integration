@@ -2,11 +2,30 @@ package ibc.icon.interfaces;
 
 import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
-import ibc.icon.structs.proto.core.channel.Packet;
+import score.annotation.EventLog;
 
 import java.math.BigInteger;
 
 public interface IIBCPacket {
+
+    @EventLog(indexed = 1)
+    public void SendPacket(byte[] packet);
+
+    @EventLog(indexed = 1)
+    public void RecvPacket(byte[] packet);
+
+    @EventLog(indexed = 3)
+    public void WriteAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
+            byte[] acknowledgement);
+
+    @EventLog(indexed = 1)
+    public void AcknowledgePacket(byte[] packet, byte[] acknowledgement);
+
+    @EventLog(indexed = 1)
+    public void TimeoutRequest(byte[] packet);
+
+    @EventLog(indexed = 1)
+    public void PacketTimeout(byte[] packet);
 
     /**
      * {@code @dev} sendPacket is called by a module in order to send an IBC packet on a
@@ -14,7 +33,7 @@ public interface IIBCPacket {
      * The packet sequence generated for the packet to be sent is returned. An
      * error is returned if one occurs.
      */
-    void sendPacket(Packet packet);
+    void sendPacket(byte[] packetPb);
 
     /**
      * {@code @dev} recvPacket is called by a module in order to receive & process an IBC
@@ -37,4 +56,10 @@ public interface IIBCPacket {
      * NextSequenceAck in case of ORDERED channels.
      */
     void acknowledgePacket(MsgPacketAcknowledgement msg);
+
+    /**
+     * {@code @dev} requestTimeout is called by a module in order to prove the
+     * absence of a packet on a channel.
+     */
+    void requestTimeout(byte[] packetPb);
 }
