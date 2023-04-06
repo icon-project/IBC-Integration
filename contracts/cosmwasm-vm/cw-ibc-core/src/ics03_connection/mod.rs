@@ -1,5 +1,6 @@
 //! ICS 03: Connection implementation for connecting a client
 pub mod connection;
+pub mod delay;
 pub mod event;
 pub mod handler;
 use crate::context::CwIbcCoreContext;
