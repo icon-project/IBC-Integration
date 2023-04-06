@@ -36,4 +36,6 @@ pub enum ContractError {
     DecodeFailed { error: String },
     #[error("OnlyAdmin")]
     OnlyAdmin,
+    #[error("AdminAddressCannotBeNull")]
+    AdminAddressCannotBeNull {},
 }
