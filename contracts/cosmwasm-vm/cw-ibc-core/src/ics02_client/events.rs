@@ -36,10 +36,10 @@ pub fn upgrade_client_event(
         .add_attribute(CONSENSUS_HEIGHT_ATTRIBUTE_KEY, consensus_height)
 }
 
-pub fn client_misbehaviour_event(client_id: IbcClientId, client_type: IbcClientType) -> Event {
+pub fn client_misbehaviour_event(client_id: &str, client_type: &str) -> Event {
     Event::new(IbcEventType::ClientMisbehaviour.as_str())
-        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
-        .add_attribute(CLIENT_TYPE_ATTRIBUTE_KEY, client_type.as_str())
+        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id)
+        .add_attribute(CLIENT_TYPE_ATTRIBUTE_KEY, client_type)
 }
 
 pub fn generated_client_id_event(client_id: IbcClientId) -> Event {
