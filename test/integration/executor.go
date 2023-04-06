@@ -22,6 +22,13 @@ type Executor struct {
 	error
 }
 
+const (
+	SET_ADMIN    string = "set_admin"
+	UPDATE_ADMIN string = "update_admin"
+	REMOVE_ADMIN string = "remove_admin"
+	GET_ADMIN    string = "get_admin"
+)
+
 func NewExecutor(t *testing.T) *Executor {
 	cfg := GetConfig()
 
@@ -63,7 +70,7 @@ func (e *Executor) GetContractAddress(contractName string) string {
 
 func (e *Executor) walletAddressShouldBeAddedAsAdmin(admin string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, "get_admin", "")
+	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, GET_ADMIN, "")
 	if err != nil {
 		return err
 	}
@@ -79,7 +86,7 @@ func (e *Executor) walletAddressShouldBeAddedAsAdmin(admin string) (err error) {
 
 func (e *Executor) executesAdd_adminInXcallWithWalletAddress(keyName, admin string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "set_admin", admin)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, SET_ADMIN, admin)
 	// if e.error != nil {
 	// 	return e.error
 	// }
@@ -109,7 +116,7 @@ func (e *Executor) nonOwnerOfContractExecutesAdd_adminInXcallWithWalletAddress(n
 	// Build a wallet for the non owner
 	e.chain.BuildWallets(e.ctx, nonOwner)
 	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, nonOwner, "set_admin", admin)
+	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, nonOwner, SET_ADMIN, admin)
 	// Above call should return an error
 	if err != nil {
 		return nil
@@ -119,7 +126,7 @@ func (e *Executor) nonOwnerOfContractExecutesAdd_adminInXcallWithWalletAddress(n
 
 func (e *Executor) walletAddressShouldNotBeAddedAsAdmin(admin string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, "get_admin", "")
+	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, GET_ADMIN, "")
 	if err != nil {
 		return err
 	}
@@ -133,7 +140,7 @@ func (e *Executor) walletAddressShouldNotBeAddedAsAdmin(admin string) (err error
 
 func (e *Executor) anAdminExecutesAdd_adminInXcallWithWalletAddress(admin1, admin2 string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, admin1, "set_admin", admin2)
+	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, admin1, SET_ADMIN, admin2)
 	if err != nil {
 		return nil
 	}
