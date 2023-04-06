@@ -30,8 +30,10 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^xCall returns an error message that the admin already exists$`, executor.xCallReturnsAnErrorMessageThatTheAdminAlreadyExists)
 			ctx.Step(`^no wallet address should be in the list of xCall admins$`, executor.noWalletAddressShouldBeInTheListOfXCallAdmins)
 			ctx.Step(`^xCall returns an error message that the null value cannot be added as admin$`, executor.xCallReturnsAnErrorMessageThatTheNullValueCannotBeAddedAsAdmin)
-
 			ctx.Step(`^xCall returns an error message that  wallet address of the new admin is not a valid address$`, executor.xCallReturnsAnErrorMessageThatWalletAddressOfTheNewAdminIsNotAValidAddress)
+
+			ctx.Step(`^"([^"]*)" executes update_admin in xcall with "([^"]*)" wallet address$`, executor.executesUpdate_adminInXcallWithWalletAddress)
+			ctx.Step(`^xCall should update xCall admins, replacing Bob\'s address with "([^"]*)" address$`, executor.xCallShouldUpdateXCallAdminsReplacingBobsAddressWithAddress)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/admin.feature"}, TestingT: t, StopOnFailure: false},

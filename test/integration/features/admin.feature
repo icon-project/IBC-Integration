@@ -10,7 +10,7 @@ Feature: xCall admin management
   Background:
     Given "Alice" is the "xcall" contract owner
 
-  Scenario: 001 - Adding an admin wallet to the xCall
+  Scenario: 001 - Contract owner Adding an admin wallet to the xCall
     Given "Bob" is an admin wallet who needs to be added to the list of xCall admins
     When "Alice" executes add_admin in xcall with "Bob" wallet address
     Then "Bob" wallet address should be added as admin
@@ -45,3 +45,8 @@ Feature: xCall admin management
     Then xCall returns an error message that  wallet address of the new admin is not a valid address
     And no wallet address should be in the list of xCall admins
 
+  Scenario: 007 Contract owner can update an existing admin wallet in xCall
+    Given "Alice" has already added "Bob" wallet address to the list of xCall admins
+    And "Diana" is an admin wallet who needs to be added to the list of xCall admins
+    When "Alice" executes update_admin in xcall with "Diana" wallet address
+    Then xCall should update xCall admins, replacing Bob's address with "Diana" address

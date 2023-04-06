@@ -89,9 +89,6 @@ func (e *Executor) walletAddressShouldBeAddedAsAdmin(admin string) (err error) {
 func (e *Executor) executesAdd_adminInXcallWithWalletAddress(keyName, admin string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
 	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, SET_ADMIN, admin)
-	// if e.error != nil {
-	// 	return e.error
-	// }
 	return nil
 }
 
@@ -204,4 +201,15 @@ func (e *Executor) xCallReturnsAnErrorMessageThatWalletAddressOfTheNewAdminIsNot
 		return fmt.Errorf("no Error message was returned when adding junk address as admin")
 	}
 	return nil
+}
+
+func (e *Executor) executesUpdate_adminInXcallWithWalletAddress(keyName, admin string) error {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, UPDATE_ADMIN, admin)
+	return nil
+}
+
+func (e *Executor) xCallShouldUpdateXCallAdminsReplacingBobsAddressWithAddress(admin string) error {
+	err := e.walletAddressShouldBeAddedAsAdmin(admin)
+	return err
 }
