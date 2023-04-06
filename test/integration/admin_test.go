@@ -31,6 +31,8 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^no wallet address should be in the list of xCall admins$`, executor.noWalletAddressShouldBeInTheListOfXCallAdmins)
 			ctx.Step(`^xCall returns an error message that the null value cannot be added as admin$`, executor.xCallReturnsAnErrorMessageThatTheNullValueCannotBeAddedAsAdmin)
 
+			ctx.Step(`^xCall returns an error message that  wallet address of the new admin is not a valid address$`, executor.xCallReturnsAnErrorMessageThatWalletAddressOfTheNewAdminIsNotAValidAddress)
+
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/admin.feature"}, TestingT: t, StopOnFailure: false},
 	}
