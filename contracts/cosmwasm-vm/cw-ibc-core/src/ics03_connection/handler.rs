@@ -1,16 +1,4 @@
-use std::str::FromStr;
-
-use crate::ics03_connection::conn2_types::OpenConfirmResponse;
-use crate::ics03_connection::conn2_types::VerifyConnectionState;
-use crate::ics03_connection::event::create_open_confirm_event;
-use crate::IbcConnectionId;
-use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
-use ibc::core::ics03_connection::{
-    connection::Counterparty, msgs::conn_open_confirm::MsgConnectionOpenConfirm,
-};
-
 use super::{conn2_types::LightClientConnectionMessage, *};
-
 pub const EXECUTE_CONNECTION_OPENCONFIRM: u64 = 33;
 
 impl<'a> CwIbcCoreContext<'a> {

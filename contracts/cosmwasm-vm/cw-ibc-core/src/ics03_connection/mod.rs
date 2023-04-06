@@ -25,3 +25,12 @@ use ibc::{
     events::IbcEventType,
 };
 use ibc_proto::protobuf::Protobuf;
+use std::str::FromStr;
+use crate::ics03_connection::conn2_types::OpenConfirmResponse;
+use crate::ics03_connection::conn2_types::VerifyConnectionState;
+use crate::ics03_connection::event::create_open_confirm_event;
+use crate::IbcConnectionId;
+use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
+use ibc::core::ics03_connection::{
+    connection::Counterparty, msgs::conn_open_confirm::MsgConnectionOpenConfirm,
+};
