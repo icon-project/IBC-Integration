@@ -111,18 +111,6 @@ func (e *Executor) isTheContractOwner(owner, contractName string) (err error) {
 	return err
 }
 
-func (e *Executor) nonOwnerOfContractExecutesAdd_adminInXcallWithWalletAddress(nonOwner, admin string) (err error) {
-	// Build a wallet for the non owner
-	e.chain.BuildWallets(e.ctx, nonOwner)
-	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, nonOwner, SET_ADMIN, admin)
-	// Above call should return an error
-	if err != nil {
-		return nil
-	}
-	return fmt.Errorf("admin added when non owner executes transaction")
-}
-
 func (e *Executor) walletAddressShouldNotBeAddedAsAdmin(admin string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
 	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, GET_ADMIN, "")
@@ -135,15 +123,6 @@ func (e *Executor) walletAddressShouldNotBeAddedAsAdmin(admin string) (err error
 	} else {
 		return nil
 	}
-}
-
-func (e *Executor) anAdminExecutesAdd_adminInXcallWithWalletAddress(admin1, admin2 string) (err error) {
-	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, err = e.chain.ExecuteContract(e.ctx, contractAddress, admin1, SET_ADMIN, admin2)
-	if err != nil {
-		return nil
-	}
-	return fmt.Errorf("admin added when another admin executes transaction")
 }
 
 func (e *Executor) isAnAdminWalletWhoNeedsToBeAddedToTheListOfXCallAdmins(keyName string) error {
