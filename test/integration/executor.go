@@ -154,11 +154,25 @@ func (e *Executor) xCallReturnsAnErrorMessageThatOnlyTheContractOwnerCanPerformT
 	if e.error == nil {
 		return fmt.Errorf("contract did not return an error message")
 	}
-	// fmt.Println(e.error)
 	return nil
 }
 
 func (e *Executor) hasAlreadyAddedWalletAddressToTheListOfXCallAdmins(keyName, admin string) (err error) {
 	err = e.executesAdd_adminInXcallWithWalletAddress(keyName, admin)
 	return err
+}
+
+func (e *Executor) walletAddressShouldStillBeInTheListOfXCallAdmins(admin string) error {
+	err := e.walletAddressShouldBeAddedAsAdmin(admin)
+	if err != nil {
+		return fmt.Errorf("existing admin list is modified")
+	}
+	return nil
+}
+
+func (e *Executor) xCallReturnsAnErrorMessageThatTheAdminAlreadyExists() error {
+	if e.error == nil {
+		return fmt.Errorf("contract did not return an error message that admin already exists")
+	}
+	return nil
 }
