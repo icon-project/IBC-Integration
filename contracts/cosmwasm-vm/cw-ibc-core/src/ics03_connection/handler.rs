@@ -1,18 +1,5 @@
-use std::str::FromStr;
-use std::time::Duration;
-
-use cosmwasm_std::{from_binary, to_binary, CosmosMsg, MessageInfo, SubMsg};
-use cosmwasm_std::{to_vec, Reply};
-use ibc::core::ics03_connection::connection::Counterparty;
-use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
-
-use crate::ics03_connection::conn1_types::VerifyClientConsesnusState;
-use crate::ics03_connection::conn1_types::VerifyClientFullState;
-use crate::ics03_connection::conn1_types::VerifyConnectionState;
-use crate::ics03_connection::event::create_open_ack_event;
-
-use super::conn1_types::LightClientConnectionMessage;
 use super::*;
+use super::conn1_types::LightClientConnectionMessage;
 
 pub const EXECUTE_CONNECTION_OPENACK: u64 = 32;
 
@@ -131,7 +118,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
 
         let client_cons_state_path_on_a =
-            self.consensus_state(deps.storage, client_id_on_b, &msg.proofs_height_on_b)?;
+            self.consensus_state(deps.storage, client_id_on_a, &msg.proofs_height_on_b)?;
         let consensus_state_of_b_on_a = self
             .consensus_state(deps.storage, client_id_on_a, &msg.proofs_height_on_b)
             .map_err(|_| ContractError::IbcConnectionError {
