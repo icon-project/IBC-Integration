@@ -3,6 +3,7 @@ use std::str::FromStr;
 use crate::ics03_connection::conn2_types::OpenConfirmResponse;
 use crate::ics03_connection::conn2_types::VerifyConnectionState;
 use crate::ics03_connection::event::create_open_confirm_event;
+use crate::IbcConnectionId;
 use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
 use ibc::core::ics03_connection::{
     connection::Counterparty, msgs::conn_open_confirm::MsgConnectionOpenConfirm,
@@ -95,8 +96,8 @@ impl<'a> CwIbcCoreContext<'a> {
         info: MessageInfo,
     ) -> Result<Response, ContractError> {
         let conn_end_on_b = self.connection_end(deps.storage, msg.conn_id_on_b.clone().into())?;
-        let client_id_on_a = conn_end_on_b.client_id();
-        let client_id_on_b = conn_end_on_b.counterparty().client_id();
+        let client_id_on_b = conn_end_on_b.client_id();
+        let client_id_on_a = conn_end_on_b.counterparty().client_id();
         if !conn_end_on_b.state_matches(&State::TryOpen) {
             return Err(ContractError::IbcConnectionError {
                 error: ConnectionError::ConnectionMismatch {
@@ -104,14 +105,14 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        let client_state_of_a_on_b =
+        let _client_state_of_a_on_b =
             self.client_state(deps.storage, client_id_on_b)
                 .map_err(|_| ContractError::IbcConnectionError {
                     error: ConnectionError::Other {
                         description: "failed to fetch client state".to_string(),
                     },
                 })?;
-        let client_cons_state_path_on_b =
+        let _client_cons_state_path_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
         let consensus_state_of_a_on_b = self
             .consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)
@@ -134,7 +135,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(msg.conn_id_on_b.clone()),
                 prefix_on_b,
             ),
-            vec![msg.version.clone()],
+            conn_end_on_b.versions().to_vec(),
             conn_end_on_b.delay_period(),
         );
 
@@ -186,7 +187,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let mut conn_end =
                         self.connection_end(deps.storage, connection_id.clone().into())?;
 
-                    if !conn_end.state_matches(&State::Init) {
+                    if !conn_end.state_matches(&State::TryOpen) {
                         return Err(ContractError::IbcConnectionError {
                             error: ConnectionError::ConnectionMismatch {
                                 connection_id: connection_id.clone(),

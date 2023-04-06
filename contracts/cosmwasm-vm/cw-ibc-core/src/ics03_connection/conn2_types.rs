@@ -6,7 +6,7 @@ use super::*;
 pub enum LightClientConnectionMessage {
     OpenAck {
         verify_connection_state: VerifyConnectionState,
-    }
+    },
 }
 
 #[cw_serde]
@@ -41,7 +41,6 @@ impl VerifyConnectionState {
 #[cw_serde]
 pub struct OpenConfirmResponse {
     pub conn_id: String,
-    pub version: Vec<u8>,
     pub counterparty_client_id: String,
     pub counterparty_connection_id: String,
     pub counterparty_prefix: Vec<u8>,
