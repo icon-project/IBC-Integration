@@ -93,23 +93,34 @@ func (c *CosmosLocalnet) SetAdminParams(ctx context.Context, keyName string) (co
 	var admins chains.Admins
 	originalJSON := `{"set_admin":{"address":""}}`
 	json.Unmarshal([]byte(originalJSON), &admin)
-
-	// Check if the given wallet exists if not create a wallet
-	addr, err := c.CosmosChain.GetAddress(ctx, keyName)
-	if err != nil {
-		c.BuildWallets(ctx, keyName)
-		addr, _ = c.CosmosChain.GetAddress(ctx, keyName)
+	if strings.ToLower(keyName) == "null" {
+		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+			Admin: admins.Admin,
+		}), string(originalJSON), nil
+	} else if strings.ToLower(keyName) == "junk" {
+		admin.SetAdmin.Address = "$%#^!(&^%^)"
+		updatedJSON, _ := json.Marshal(admin)
+		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+			Admin: admins.Admin,
+		}), string(updatedJSON), nil
+	} else {
+		// Check if the given wallet exists if not create a wallet
+		addr, err := c.CosmosChain.GetAddress(ctx, keyName)
+		if err != nil {
+			c.BuildWallets(ctx, keyName)
+			addr, _ = c.CosmosChain.GetAddress(ctx, keyName)
+		}
+		adminAddr, _ := types.Bech32ifyAddressBytes(c.CosmosChain.Config().Bech32Prefix, addr)
+		admin.SetAdmin.Address = adminAddr
+		updatedJSON, _ := json.Marshal(admin)
+		fmt.Println(string(updatedJSON))
+		admins.Admin = map[string]string{
+			keyName: adminAddr,
+		}
+		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+			Admin: admins.Admin,
+		}), string(updatedJSON), nil
 	}
-	adminAddr, _ := types.Bech32ifyAddressBytes(c.CosmosChain.Config().Bech32Prefix, addr)
-	admin.SetAdmin.Address = adminAddr
-	updatedJSON, _ := json.Marshal(admin)
-	fmt.Println(string(updatedJSON))
-	admins.Admin = map[string]string{
-		keyName: adminAddr,
-	}
-	return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
-		Admin: admins.Admin,
-	}), string(updatedJSON), nil
 }
 
 func (c *CosmosLocalnet) GetQueryParam(method string) Query {

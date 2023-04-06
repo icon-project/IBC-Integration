@@ -1,8 +1,13 @@
-use super::*;
+use std::str::FromStr;
+
+use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
+
+use super::{events::client_misbehaviour_event, *};
 
 pub const EXECUTE_CREATE_CLIENT: u64 = 21;
 pub const EXECUTE_UPDATE_CLIENT: u64 = 22;
-pub const EXECUT_UPGRADE_CLIENT: u64 = 23;
+pub const EXECUTE_UPGRADE_CLIENT: u64 = 23;
+pub const MISBEHAVIOUR: u64 = 23;
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn create_client(
@@ -130,7 +135,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
 
-        let sub_message = SubMsg::reply_always(wasm_msg, EXECUT_UPGRADE_CLIENT);
+        let sub_message = SubMsg::reply_always(wasm_msg, EXECUTE_UPGRADE_CLIENT);
 
         Ok(Response::new()
             .add_submessage(sub_message)
@@ -310,6 +315,91 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                     Ok(Response::new()
                         .add_event(event)
                         .add_attribute("method", "execute_upgrade_client_reply")
+                        .add_attribute("client_id", client_id.ibc_client_id().as_str()))
+                }
+                None => Err(ContractError::IbcClientError {
+                    error: ClientError::Other {
+                        description: "Invalid Response Data".to_string(),
+                    },
+                }),
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
+                error: ClientError::Other { description: error },
+            }),
+        }
+    }
+
+    fn misbehaviour(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        message: MsgSubmitMisbehaviour,
+    ) -> Result<Response, ContractError> {
+        let client_id = ClientId::from(message.client_id);
+
+        let client_state = self.client_state(deps.as_ref().storage, client_id.ibc_client_id())?;
+
+        if client_state.is_frozen() {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::ClientFrozen {
+                    client_id: client_id.ibc_client_id().clone(),
+                },
+            });
+        }
+        let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
+
+        let clinet_message = LightClientMessage::Misbehaviour {
+            client_id: client_id.ibc_client_id().to_string(),
+            misbehaviour: to_vec(&message.misbehaviour)
+                .map_err(|error| ContractError::Std(error))?,
+        };
+
+        let wasm_exec_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: client_address,
+            msg: to_binary(&clinet_message).map_err(|error| ContractError::Std(error))?,
+            funds: info.funds,
+        });
+
+        let sub_message = SubMsg::reply_always(wasm_exec_message, MISBEHAVIOUR);
+
+        Ok(Response::new()
+            .add_submessage(sub_message)
+            .add_attribute("method", "misbehaviour"))
+    }
+
+    fn execute_misbehaviour_reply(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
+                Some(response) => {
+                    let misbehaviour_response = from_binary::<MisbehaviourResponse>(&response)
+                        .map_err(|error| ContractError::Std(error))?;
+
+                    let client_id = misbehaviour_response.client_id()?;
+
+                    let client_type = ClientType::try_from(client_id.clone()).map_err(|error| {
+                        ContractError::IbcDecodeError {
+                            error: error.to_string(),
+                        }
+                    })?;
+
+                    let event = client_misbehaviour_event(
+                        client_id.ibc_client_id().as_str(),
+                        client_type.client_type().as_str(),
+                    );
+
+                    self.store_client_state(
+                        deps.storage,
+                        client_id.ibc_client_id(),
+                        misbehaviour_response.client_state_commitment,
+                    )?;
+
+                    Ok(Response::new()
+                        .add_event(event)
+                        .add_attribute("method", "execute_misbheaviour_reply")
                         .add_attribute("client_id", client_id.ibc_client_id().as_str()))
                 }
                 None => Err(ContractError::IbcClientError {
