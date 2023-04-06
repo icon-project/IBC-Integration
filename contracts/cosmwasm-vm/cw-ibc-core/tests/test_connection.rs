@@ -1,7 +1,9 @@
+use std::error::Error;
 use std::time::Duration;
 
 pub mod setup;
 use cosmwasm_std::to_vec;
+use cosmwasm_std::StdError;
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics02_client::types::ClientState;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
@@ -11,6 +13,7 @@ use cw_ibc_core::ics03_connection::event::create_open_try_event;
 use cw_ibc_core::types::ClientId;
 use cw_ibc_core::types::ConnectionId;
 use cw_ibc_core::ConnectionEnd;
+use cw_ibc_core::ContractError;
 use cw_ibc_core::IbcClientId;
 use ibc::core::ics03_connection::connection::Counterparty;
 use ibc::core::ics03_connection::connection::State;
@@ -31,6 +34,7 @@ use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
+use ibc_proto::protobuf::Protobuf;
 use setup::*;
 
 #[test]
@@ -565,4 +569,58 @@ fn connection_to_verify_correct_counterparty_conn_id() {
         .find(|attr| attr.key == COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY)
         .expect("Missing attribute");
     assert_eq!(attribute.value, "connection-1");
+}
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
+fn query_get_connection_fails() {
+    let mut deps = deps();
+    let mn = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+        "hello".to_string().as_bytes().to_vec(),
+    );
+    let counter_party = Counterparty::new(IbcClientId::default(), None, mn.unwrap());
+    let conn_id = ConnectionId::new(5);
+    let contract = CwIbcCoreContext::new();
+    contract
+        .connection_end(deps.as_ref().storage, conn_id)
+        .unwrap();
+}
+
+#[test]
+fn test_update_connection_commitment() {
+    let mut deps = deps();
+    let conn_id = ConnectionId::new(1);
+    let conn_end = ConnectionEnd::default();
+
+    let contract = CwIbcCoreContext::new();
+    let res =
+        contract.update_connection_commitment(&mut deps.storage, conn_id.clone(), conn_end.clone());
+    assert_eq!(res.is_ok(), true)
+}
+
+#[test]
+fn test_check_connection() {
+    let mut deps = deps();
+    let ss = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+        "hello".to_string().as_bytes().to_vec(),
+    );
+    let counter_party = Counterparty::new(IbcClientId::default(), None, ss.unwrap());
+    let conn_end = ConnectionEnd::new(
+        State::Open,
+        IbcClientId::default(),
+        counter_party,
+        vec![Version::default()],
+        Duration::default(),
+    );
+    let client_id = ClientId::default();
+    let conn_id = ConnectionId::new(5);
+    let contract = CwIbcCoreContext::new();
+    contract
+        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .unwrap();
+    contract
+        .connection_end(deps.as_ref().storage, conn_id)
+        .unwrap();
+    let res = contract.check_for_connection(&mut deps.storage, client_id);
+    assert_eq!(res.is_ok(), true);
 }
