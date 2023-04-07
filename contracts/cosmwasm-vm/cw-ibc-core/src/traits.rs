@@ -1,4 +1,4 @@
-use cosmwasm_std::Reply;
+use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
 
 use super::*;
 
@@ -26,13 +26,36 @@ pub trait IbcClient {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError>;
-    fn upgrade_client(&self, deps: DepsMut, message: MsgUpgradeClient);
+    fn upgrade_client(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        message: MsgUpgradeClient,
+    ) -> Result<Response, ContractError>;
+    fn execute_upgrade_client_reply(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError>;
     fn register_client(&self, deps: DepsMut, client_type: ClientType, light_client: Addr);
     fn generate_client_identifier(
         &self,
-        deps: DepsMut,
+        store: &mut dyn Storage,
         client_type: ClientType,
     ) -> Result<ClientId, ContractError>;
+
+    fn misbehaviour(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        message: MsgSubmitMisbehaviour,
+    ) -> Result<Response, ContractError>;
+
+    fn execute_misbehaviour_reply(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError>;
 }
 
 pub trait ValidateChannel {
@@ -57,6 +80,7 @@ pub trait ValidateChannel {
     fn validate_channel_open_ack(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: &MsgChannelOpenAck,
     ) -> Result<Response, ContractError>;
 
@@ -104,5 +128,11 @@ pub trait ExecuteChannel {
         deps: DepsMut,
         message: Reply,
         // message: &MsgChannelOpenInit,
+    ) -> Result<Response, ContractError>;
+
+    fn execute_channel_open_ack(
+        &self,
+        deps: DepsMut,
+        message: Reply,
     ) -> Result<Response, ContractError>;
 }

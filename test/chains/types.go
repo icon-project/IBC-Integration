@@ -1,5 +1,7 @@
 package chains
 
+const FaucetAccountKeyName = "faucet"
+
 type ContractKey struct {
 	ContractAddress map[string]string
 	ContractOwner   string

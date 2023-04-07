@@ -13,18 +13,27 @@ impl<'a> CwCallService<'a> {
         info: MessageInfo,
         admin: Address,
     ) -> Result<Response, ContractError> {
-        match self.owner().may_load(store)? {
-            Some(owner) => {
-                if info.sender == owner.to_string() {
-                    self.admin().save(store, &admin)?;
-                    Ok(Response::new()
-                        .add_attribute("method", "add_admin")
-                        .add_attribute("admin", admin.to_string()))
-                } else {
-                    Err(ContractError::Unauthorized {})
-                }
+        if admin.is_empty() {
+            return Err(ContractError::AdminAddressCannotBeNull {});
+        }
+
+        let owner = self
+            .owner()
+            .load(store)
+            .map_err(|_| ContractError::Unauthorized {})?;
+
+        if info.sender != owner.to_string() {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        match self.admin().may_load(store)? {
+            Some(_) => Err(ContractError::AdminAlreadyExist),
+            None => {
+                self.admin().save(store, &admin)?;
+                Ok(Response::new()
+                    .add_attribute("method", "add_admin")
+                    .add_attribute("admin", admin.to_string()))
             }
-            None => Err(ContractError::Unauthorized {}),
         }
     }
 
@@ -34,19 +43,22 @@ impl<'a> CwCallService<'a> {
         info: MessageInfo,
         new_admin: Address,
     ) -> Result<Response, ContractError> {
+        if new_admin.is_empty() {
+            return Err(ContractError::AdminAddressCannotBeNull {});
+        }
         let owner = self.owner().load(store)?;
+
+        if info.sender != owner.to_string() {
+            return Err(ContractError::Unauthorized {});
+        }
 
         self.admin()
             .update(store, |mut current_admin| -> Result<_, ContractError> {
-                if info.sender == owner.to_string() {
-                    if current_admin == new_admin {
-                        Err(ContractError::AdminAlreadyExist)
-                    } else {
-                        current_admin = new_admin.clone();
-                        Ok(current_admin)
-                    }
+                if current_admin == new_admin {
+                    Err(ContractError::AdminAlreadyExist)
                 } else {
-                    Err(ContractError::Unauthorized {})
+                    current_admin = new_admin.clone();
+                    Ok(current_admin)
                 }
             })?;
 

@@ -146,18 +146,23 @@ impl IbcClientState for ClientState {
     }
 
     fn latest_height(&self) -> ibc::Height {
-        todo!()
+        Height::new(0, self.latest_height).unwrap()
     }
 
     fn frozen_height(&self) -> Option<ibc::Height> {
-        match self.frozen_height {
-            Some(x) => Some(ibc::Height::new(x, x).unwrap()),
+        let height = match self.frozen_height {
+            Some(height) => Some(Height::new(0, height).unwrap()),
             None => None,
-        }
+        };
+
+        height
     }
 
     fn expired(&self, elapsed: std::time::Duration) -> bool {
-        todo!()
+        //TODO: Implement logic
+
+        let trusting_period = Duration::from_secs(self.trusting_period);
+        elapsed.as_secs() > trusting_period.as_secs()
     }
 
     fn zero_custom_fields(&mut self) {
@@ -389,7 +394,10 @@ impl ibc::core::ics02_client::consensus_state::ConsensusState for ConsensusState
     }
 
     fn timestamp(&self) -> ibc::timestamp::Timestamp {
-        todo!()
+        // TODO: Update the timestamp logic
+
+        let block_time = Duration::from_secs(3);
+        Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap()
     }
 
     fn into_box(self) -> Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>

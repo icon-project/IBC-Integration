@@ -42,7 +42,7 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
     }
 
     @External
-    public String channelOpenInit(MsgChannelOpenInit msg) {
+    public void channelOpenInit(MsgChannelOpenInit msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         // TODO optimize to not do decoding twice
         Channel channel = Channel.decode(msg.getChannel());
@@ -57,11 +57,10 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
         claimCapability(channelCapabilityPath(msg.getPortId(), id), module._address());
 
         ChannelOpenInit(msg.getPortId(), id, msg.getChannel());
-        return id;
     }
 
     @External
-    public String channelOpenTry(MsgChannelOpenTry msg) {
+    public void channelOpenTry(MsgChannelOpenTry msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         // TODO optimize to not do decoding twice
         Channel channel = Channel.decode(msg.getChannel());
@@ -77,8 +76,6 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
         claimCapability(channelCapabilityPath(msg.getPortId(), id), module._address());
 
         ChannelOpenTry(msg.getPortId(), id, msg.getChannel());
-
-        return id;
     }
 
     @External

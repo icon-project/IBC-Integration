@@ -172,6 +172,40 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
+    pub fn get_client(
+        &self,
+        store: &dyn Storage,
+        client_id: ClientId,
+    ) -> Result<String, ContractError> {
+        let client = self.get_client_implementations(store, client_id.clone())?;
+
+        if client.is_empty() {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::ClientNotFound {
+                    client_id: client_id.ibc_client_id().clone(),
+                },
+            });
+        }
+        Ok(client)
+    }
+
+    pub fn get_client_state(
+        &self,
+        store: &dyn Storage,
+        client_id: ClientId,
+    ) -> Result<Vec<u8>, ContractError> {
+        let client_key = self.client_state_commitment_key(client_id.ibc_client_id());
+
+        let client_state = self
+            .ibc_store()
+            .commitments()
+            .load(store, client_key)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: format!("NotFound ClientId({})", client_id.ibc_client_id().as_str()),
+            })?;
+
+        Ok(client_state)
+    }
 }
 
 //TODO : Implement Methods
@@ -255,8 +289,14 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn host_timestamp(&self) -> Result<ibc::timestamp::Timestamp, ContractError> {
-        todo!()
+    pub fn host_timestamp(
+        &self,
+        store: &dyn Storage,
+    ) -> Result<ibc::timestamp::Timestamp, ContractError> {
+        //TODO Update timestamp logic
+        let duration = self.ibc_store().expected_time_per_block().load(store)?;
+        let block_time = Duration::from_secs(duration as u64);
+        Ok(Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap())
     }
 
     fn host_consensus_state(
