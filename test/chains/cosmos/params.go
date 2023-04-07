@@ -26,7 +26,7 @@ func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodName, param 
 		return c.SetAdminParams(ctx, param)
 	} else if strings.Contains(methodName, "update_admin") {
 		return c.UpdateAdminParams(ctx, param)
-	} else if strings.Contains(methodaName, "remove_admin") {
+	} else if strings.Contains(methodName, "remove_admin") {
 		originalJSON := `{"remove_admin":{}}`
 		return ctx, string(originalJSON), nil
 	}

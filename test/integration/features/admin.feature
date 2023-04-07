@@ -46,12 +46,12 @@ Feature: xCall admin management
     And no wallet address should be as admin
 
   Scenario: 007 Contract owner can update an existing admin wallet in xCall
-    Given "Alice" has already added "Bob" wallet address to the list of xCall admins
-    And "Diana" is an admin wallet who needs to be added to the list of xCall admins
+    Given "Alice" has already added "Bob" wallet address as admin
+    And "Diana" is an admin wallet who needs to be added as admin
     When "Alice" executes update_admin in xcall with "Diana" wallet address
     Then xCall should update xCall admin with "Diana" address
 
   Scenario: 008 Contract owner can remove an existing admin wallet in xCall
-    Given "Alice" has already added "Bob" wallet address to the list of xCall admins
+    Given "Alice" has already added "Bob" wallet address as admin
     When "Alice" executes remove_admin in xcall with "Bob" wallet address
     Then xCall should remove "Bob" wallet address as admin

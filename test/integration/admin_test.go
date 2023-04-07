@@ -31,7 +31,6 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^xCall returns an error message that  wallet address of the new admin is not a valid address$`, executor.xCallReturnsAnErrorMessageThatWalletAddressOfTheNewAdminIsNotAValidAddress)
 			ctx.Step(`^"([^"]*)" executes update_admin in xcall with "([^"]*)" wallet address$`, executor.executesUpdate_adminInXcallWithWalletAddress)
 			ctx.Step(`^xCall should update xCall admin with "([^"]*)" address$`, executor.xCallShouldUpdateXCallAdminWithAddress)
-			ctx.Step(`^xCall should update xCall admins, replacing Bob\'s address with "([^"]*)" address$`, executor.xCallShouldUpdateXCallAdminsReplacingBobsAddressWithAddress)
 			ctx.Step(`^"([^"]*)" executes remove_admin in xcall with "([^"]*)" wallet address$`, executor.executesRemove_adminInXcallWithWalletAddress)
 			ctx.Step(`^xCall should remove "([^"]*)" wallet address as admin$`, executor.xCallShouldRemoveWalletAddressAsAdmin)
 
