@@ -125,7 +125,7 @@ func (e *Executor) walletAddressShouldNotBeAddedAsAdmin(admin string) (err error
 	}
 }
 
-func (e *Executor) isAnAdminWalletWhoNeedsToBeAddedToTheListOfXCallAdmins(keyName string) error {
+func (e *Executor) isAnAdminWalletWhoNeedsToBeAddedAsAdmin(keyName string) error {
 	return e.chain.BuildWallets(e.ctx, keyName)
 }
 
@@ -140,11 +140,11 @@ func (e *Executor) xCallReturnsAnErrorMessageThatOnlyTheContractOwnerCanPerformT
 	return nil
 }
 
-func (e *Executor) hasAlreadyAddedWalletAddressToTheListOfXCallAdmins(keyName, admin string) (err error) {
+func (e *Executor) hasAlreadyAddedWalletAddressAsAdmin(keyName, admin string) (err error) {
 	return e.executesAdd_adminInXcallWithWalletAddress(keyName, admin)
 }
 
-func (e *Executor) walletAddressShouldStillBeInTheListOfXCallAdmins(admin string) error {
+func (e *Executor) walletAddressShouldStillBeAsAdmin(admin string) error {
 	err := e.walletAddressShouldBeAddedAsAdmin(admin)
 	if err != nil {
 		return fmt.Errorf("existing admin list is modified")
@@ -159,7 +159,7 @@ func (e *Executor) xCallReturnsAnErrorMessageThatTheAdminAlreadyExists() error {
 	return nil
 }
 
-func (e *Executor) noWalletAddressShouldBeInTheListOfXCallAdmins() (err error) {
+func (e *Executor) noWalletAddressShouldBeAsAdmin() (err error) {
 	contractAddress := e.GetContractAddress("xcall")
 	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, "get_admin", "")
 	return err
@@ -185,7 +185,7 @@ func (e *Executor) executesUpdate_adminInXcallWithWalletAddress(keyName, admin s
 	return nil
 }
 
-func (e *Executor) xCallShouldUpdateXCallAdminsReplacingBobsAddressWithAddress(admin string) error {
+func (e *Executor) xCallShouldUpdateXCallAdminWithAddress(admin string) error {
 	return e.walletAddressShouldBeAddedAsAdmin(admin)
 }
 

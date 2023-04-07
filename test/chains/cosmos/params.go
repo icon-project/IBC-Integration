@@ -21,10 +21,10 @@ func (c *CosmosLocalnet) GetQueryParam(method string) Query {
 	return queryMsg
 }
 
-func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodaName, param string) (context.Context, string, error) {
-	if strings.Contains(methodaName, "set_admin") {
+func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodName, param string) (context.Context, string, error) {
+	if strings.Contains(methodName, "set_admin") {
 		return c.SetAdminParams(ctx, param)
-	} else if strings.Contains(methodaName, "update_admin") {
+	} else if strings.Contains(methodName, "update_admin") {
 		return c.UpdateAdminParams(ctx, param)
 	} else if strings.Contains(methodaName, "remove_admin") {
 		originalJSON := `{"remove_admin":{}}`
