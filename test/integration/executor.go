@@ -126,13 +126,11 @@ func (e *Executor) walletAddressShouldNotBeAddedAsAdmin(admin string) (err error
 }
 
 func (e *Executor) isAnAdminWalletWhoNeedsToBeAddedAsAdmin(keyName string) error {
-	err := e.chain.BuildWallets(e.ctx, keyName)
-	return err
+	return e.chain.BuildWallets(e.ctx, keyName)
 }
 
 func (e *Executor) isNotTheContractOwnerOfTheXCallSmartContract(keyName string) error {
-	err := e.chain.BuildWallets(e.ctx, keyName)
-	return err
+	return e.chain.BuildWallets(e.ctx, keyName)
 }
 
 func (e *Executor) xCallReturnsAnErrorMessageThatOnlyTheContractOwnerCanPerformThisAction() error {
@@ -143,8 +141,7 @@ func (e *Executor) xCallReturnsAnErrorMessageThatOnlyTheContractOwnerCanPerformT
 }
 
 func (e *Executor) hasAlreadyAddedWalletAddressAsAdmin(keyName, admin string) (err error) {
-	err = e.executesAdd_adminInXcallWithWalletAddress(keyName, admin)
-	return err
+	return e.executesAdd_adminInXcallWithWalletAddress(keyName, admin)
 }
 
 func (e *Executor) walletAddressShouldStillBeAsAdmin(admin string) error {
@@ -189,6 +186,15 @@ func (e *Executor) executesUpdate_adminInXcallWithWalletAddress(keyName, admin s
 }
 
 func (e *Executor) xCallShouldUpdateXCallAdminWithAddress(admin string) error {
-	err := e.walletAddressShouldBeAddedAsAdmin(admin)
-	return err
+	return e.walletAddressShouldBeAddedAsAdmin(admin)
+}
+
+func (e *Executor) executesRemove_adminInXcallWithWalletAddress(keyName, admin string) error {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, REMOVE_ADMIN, admin)
+	return nil
+}
+
+func (e *Executor) xCallShouldRemoveWalletAddressAsAdmin(admin string) error {
+	return e.walletAddressShouldNotBeAddedAsAdmin(admin)
 }
