@@ -7,7 +7,7 @@ import ibc.icon.score.util.ProtoMessage;
 public class CanonicalBlockID extends ProtoMessage {
   private byte[] hash = new byte[0];
 
-  private CanonicalPartSetHeader partSetHeader;
+  private CanonicalPartSetHeader partSetHeader = new CanonicalPartSetHeader();
 
   public byte[] getHash() {
     return this.hash;
