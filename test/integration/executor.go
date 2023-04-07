@@ -86,7 +86,7 @@ func (e *Executor) walletAddressShouldBeAddedAsAdmin(admin string) (err error) {
 	}
 }
 
-func (e *Executor) executesAdd_adminInXcallWithWalletAddress(keyName, admin string) (err error) {
+func (e *Executor) executesSet_adminInXcallWithWalletAddress(keyName, admin string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
 	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, SET_ADMIN, admin)
 	return nil
@@ -141,7 +141,7 @@ func (e *Executor) xCallReturnsAnErrorMessageThatOnlyTheContractOwnerCanPerformT
 }
 
 func (e *Executor) hasAlreadyAddedWalletAddressAsAdmin(keyName, admin string) (err error) {
-	return e.executesAdd_adminInXcallWithWalletAddress(keyName, admin)
+	return e.executesSet_adminInXcallWithWalletAddress(keyName, admin)
 }
 
 func (e *Executor) walletAddressShouldStillBeAsAdmin(admin string) error {
@@ -197,4 +197,11 @@ func (e *Executor) executesRemove_adminInXcall(keyName string) error {
 
 func (e *Executor) xCallShouldRemoveWalletAddressAsAdmin(admin string) error {
 	return e.walletAddressShouldNotBeAddedAsAdmin(admin)
+}
+
+func (e *Executor) xCallReturnsAnErrorMessageThatAdminIsAlreadySet() error {
+	if e.error == nil {
+		return fmt.Errorf("owner was able to set admin twice")
+	}
+	return nil
 }
