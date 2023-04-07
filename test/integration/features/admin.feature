@@ -63,3 +63,10 @@ Feature: xCall admin management
     When "Eve" executes update_admin in xcall with "Diana" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
     And "Diana" wallet address should not be added as admin
+
+  Scenario: 010 owner cannot update admin with already existing admin in xCall
+    Given "Alice" is the "xcall" contract owner
+    And "Alice" has already added "Bob" wallet address as admin
+    When "Alice" executes update_admin in xcall with "Bob" wallet address
+    Then xCall returns an error message that the admin already exists
+    And "Bob" wallet address should still be as admin
