@@ -194,7 +194,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("method", "connection_open_ack"))
     }
 
-    pub fn excute_connection_open_ack(
+    pub fn execute_connection_open_ack(
         &self,
         deps: DepsMut,
         message: Reply,

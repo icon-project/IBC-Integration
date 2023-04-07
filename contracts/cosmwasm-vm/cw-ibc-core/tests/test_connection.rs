@@ -797,6 +797,6 @@ fn connection_open_ack_executes() {
         id: EXECUTE_CONNECTION_OPENACK,
         result,
     };
-    let res = contract.excute_connection_open_ack(deps.as_mut(), reply_msg);
+    let res = contract.execute_connection_open_ack(deps.as_mut(), reply_msg);
     assert_eq!(res.is_ok(), true); 
 }
