@@ -643,3 +643,53 @@ fn connection_open_init_fails_of_clientstate() {
     let res = contract.connection_open_init(deps.as_mut(), res_msg);
     assert!(res.is_err());
 }
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
+fn connection_open_init_validate_invalid_client_id() {
+    let mut deps = deps();
+
+    let message = RawMsgConnectionOpenInit {
+        client_id: "client_id_on_a".to_string(),
+        counterparty: Some(get_dummy_raw_counterparty(None)),
+        version: None,
+        delay_period: 0,
+        signer: get_dummy_bech32_account(),
+    };
+    let sequence: u64 = 24;
+    let res_msg =
+        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+            message.clone(),
+        )
+        .unwrap();
+    let client_id = ClientId::default();
+    let contract = CwIbcCoreContext::new();
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let cl = to_vec(&client_state);
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &res_msg.client_id_on_a.clone(),
+            cl.unwrap(),
+        )
+        .unwrap();
+    contract
+        .client_state(&mut deps.storage, client_id.ibc_client_id())
+        .unwrap();
+    contract
+        .connection_next_sequence_init(&mut deps.storage, sequence)
+        .unwrap();
+    contract
+        .connection_open_init(deps.as_mut(), res_msg)
+        .unwrap();
+}
