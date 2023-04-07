@@ -20,7 +20,7 @@ public class Packet extends ProtoMessage {
 
   private byte[] data = new byte[0];
 
-  private Height timeoutHeight;
+  private Height timeoutHeight = new icon.proto.core.client.Height();
 
   private BigInteger timeoutTimestamp = BigInteger.ZERO;
 

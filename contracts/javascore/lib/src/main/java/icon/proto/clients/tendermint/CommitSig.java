@@ -10,7 +10,7 @@ public class CommitSig extends ProtoMessage {
 
   private byte[] validatorAddress = new byte[0];
 
-  private Timestamp timestamp;
+  private Timestamp timestamp = new Timestamp();
 
   private byte[] signature = new byte[0];
 
