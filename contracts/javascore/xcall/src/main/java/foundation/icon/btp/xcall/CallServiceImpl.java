@@ -17,7 +17,6 @@
 package foundation.icon.btp.xcall;
 
 import ibc.icon.interfaces.IIBCModule;
-import ibc.ics25.handler.IBCHandler;
 import icon.proto.core.channel.Channel.Counterparty;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
@@ -82,11 +81,11 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     private void onlyAdmin() {
-        checkCallerOrThrow(this.admin(), "Only admin allowed to call method");
+        checkCallerOrThrow(this.admin(), "Only admin is allowed to call method");
     }
 
     private void onlyIBCHandler() {
-        checkCallerOrThrow(ibcHandler.get(), "OnlyIBCHandler");
+        checkCallerOrThrow(ibcHandler.get(), "Only IBCHandler allowed");
     }
 
 //    private void checkService(String _svc) {
@@ -121,7 +120,7 @@ public class CallServiceImpl implements IIBCModule {
         Context.require(_data.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
         Context.require(_rollback == null || _rollback.length <= MAX_ROLLBACK_SIZE, "MaxRollbackSizeExceeded");
 
-        boolean needResponse = _rollback != null;
+        boolean needResponse = _rollback != null && _rollback.length > 0;
 
         if (needResponse) {
             CallRequest req = new CallRequest(caller, _to, _rollback);
@@ -138,16 +137,19 @@ public class CallServiceImpl implements IIBCModule {
         pct.setSourcePort(getSourcePort());
         pct.setSourceChannel(getSourceChannel());
 
+        BigInteger _timoutHeight = this.timeoutHeight.get();
         Height hgt = new Height();
-        BigInteger timeoutHeight = BigInteger.valueOf(Context.getBlockHeight()).add(this.timeoutHeight.get());
+        BigInteger timeoutHeight = BigInteger.valueOf(Context.getBlockHeight()).add(_timoutHeight);
         hgt.setRevisionHeight(timeoutHeight);
 
         pct.setTimeoutHeight(hgt);
 
-        pct.setTimeoutTimestamp(BigInteger.ZERO);
+        //TODO set packet timeout
+        BigInteger timeout = BigInteger.valueOf(Context.getBlockTimestamp())
+                .add(_timoutHeight.multiply(BigInteger.TWO));
+        pct.setTimeoutTimestamp(timeout);
 
-        IBCHandler ibc = new IBCHandler();
-        ibc.sendPacket(pct.encode());
+        Context.call(this.ibcHandler.get(), "sendPacket", new Object[]{pct.encode()});
 
         CallMessageSent(caller, _to, sn, sn);
         return sn;
@@ -354,9 +356,11 @@ public class CallServiceImpl implements IIBCModule {
     @External
     public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
             byte[] counterpartyPb, String version) {
+        onlyIBCHandler();
         sourcePort.set(portId);
         sourceChannel.set(channelId);
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
+        destinationChannel.set(counterparty.getChannelId());
         destinationPort.set(counterparty.getPortId());
         Context.println("onChanOpenInit");
     }
@@ -364,6 +368,7 @@ public class CallServiceImpl implements IIBCModule {
     @External
     public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
             byte[] counterpartyPb, String version, String counterpartyVersion) {
+        onlyIBCHandler();
         sourcePort.set(portId);
         sourceChannel.set(channelId);
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
@@ -373,7 +378,9 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     @External
-    public void onChanOpenAck(String portId, String channelId, String counterpartyVersion) {
+    public void onChanOpenAck(String portId, String channelId, String counterpartyChannelId,
+            String counterpartyVersion) {
+        onlyIBCHandler();
         Context.require(portId.equals(sourcePort.get()), "port not matched");
         Context.require(channelId.equals(sourceChannel.get()), "Channel not matched");
         Context.println("onChanOpenAck");
@@ -381,6 +388,7 @@ public class CallServiceImpl implements IIBCModule {
 
     @External
     public void onChanOpenConfirm(String portId, String channelId) {
+        onlyIBCHandler();
         Context.require(portId.equals(sourcePort.get()), "port not matched");
         Context.require(channelId.equals(sourceChannel.get()), "Channel not matched");
         Context.println("onChanOpenConfirm");

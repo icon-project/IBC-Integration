@@ -2,22 +2,26 @@ version = '0.1.0'
 
 dependencies {
     implementation project(':ibc')
-    compileOnly("foundation.icon:javaee-api:$javaeeVersion")
-    implementation("foundation.icon:javaee-scorex:$scorexVersion")
     implementation project(':lib')
     implementation project(':score-util')
-
-    // for generating ScoreClient
-    annotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
-    compileOnly("foundation.icon:javaee-score-client:$scoreClientVersion")
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
-
-    testImplementation("foundation.icon:javaee-unittest:$javaeeUnittestVersion")
-    testAnnotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
-    testImplementation("foundation.icon:javaee-score-client:$scoreClientVersion")
+    implementation project(':test-lib')
 }
+
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
 
 optimizedJar {
     dependsOn(project(':lib').jar)
