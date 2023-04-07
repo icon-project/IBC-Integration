@@ -60,12 +60,11 @@ public class CallServiceImpl implements IIBCModule {
     public CallServiceImpl(Address _ibc) {
         this.ibcHandler.set(_ibc);
         admin.set(Context.getOwner());
-
-
     }
 
+    @External
     public void setTimeoutHeight(BigInteger _timeoutHeight) {
-        onlyOwner();
+        onlyAdmin();
         this.timeoutHeight.set(_timeoutHeight);
     }
 
@@ -80,6 +79,10 @@ public class CallServiceImpl implements IIBCModule {
 
     private void onlyOwner() {
         checkCallerOrThrow(Context.getOwner(), "OnlyOwner");
+    }
+
+    private void onlyAdmin() {
+        checkCallerOrThrow(this.admin(), "Only admin allowed to call method");
     }
 
     private void onlyIBCHandler() {
@@ -114,7 +117,7 @@ public class CallServiceImpl implements IIBCModule {
     public BigInteger sendCallMessage(String _to, byte[] _data, @Optional byte[] _rollback) {
         BigInteger sn = getNextSn();
         Address caller = Context.getCaller();
-        Context.require(caller.isContract() || _rollback == null, "RollbackNotPossible");
+        Context.require(caller.isContract(), "Only contract is allowed to send call message ");
         Context.require(_data.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
         Context.require(_rollback == null || _rollback.length <= MAX_ROLLBACK_SIZE, "MaxRollbackSizeExceeded");
 
@@ -136,8 +139,9 @@ public class CallServiceImpl implements IIBCModule {
         pct.setSourceChannel(getSourceChannel());
 
         Height hgt = new Height();
-        hgt.setRevisionHeight(timeoutHeight.get());
-        hgt.setRevisionNumber(BigInteger.ZERO);
+        BigInteger timeoutHeight = BigInteger.valueOf(Context.getBlockHeight()).add(this.timeoutHeight.get());
+        hgt.setRevisionHeight(timeoutHeight);
+
         pct.setTimeoutHeight(hgt);
 
         pct.setTimeoutTimestamp(BigInteger.ZERO);
@@ -190,7 +194,7 @@ public class CallServiceImpl implements IIBCModule {
     public void executeRollback(BigInteger _sn) {
         CallRequest req = requests.get(_sn);
         Context.require(req != null, "InvalidSerialNum");
-        Context.require(req.enabled(), "RollbackNotEnabled");
+        Context.require(req.isEnabled(), "RollbackNotEnabled");
         cleanupCallRequest(_sn);
         String caller = Context.getCaller().toString();
 
@@ -241,6 +245,11 @@ public class CallServiceImpl implements IIBCModule {
     /* ========== Interfaces with BMC ========== */
     @External
     public void handleBTPMessage(String _from, String _svc, BigInteger _sn, byte[] _msg) {
+        onlyIBCHandler();
+        handleReceivedPacket(_from, _svc, _sn, _msg);
+    }
+
+    private void handleReceivedPacket(String _from, String _svc, BigInteger _sn, byte[] _msg) {
         CSMessage msg = CSMessage.fromBytes(_msg);
         switch (msg.getType()) {
             case CSMessage.REQUEST:
@@ -397,7 +406,7 @@ public class CallServiceImpl implements IIBCModule {
         String _from = packet.getSourcePort() + "/" + packet.getSourceChannel();
         BigInteger _sn = packet.getSequence();
 
-        handleBTPMessage(_from, _from, _sn, _msg);
+        handleReceivedPacket(_from, _from, _sn, _msg);
 
         return new byte[0];
 

@@ -68,7 +68,7 @@ public class CallRequest {
         return req;
     }
 
-    public boolean enabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
