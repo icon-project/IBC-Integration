@@ -82,7 +82,7 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
     public void channelOpenAck(MsgChannelOpenAck msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         byte[] channel = _channelOpenAck(msg);
-        module.onChanOpenAck(msg.getPortId(), msg.getChannelId(), msg.getCounterpartyVersion());
+        module.onChanOpenAck(msg.getPortId(), msg.getChannelId(), msg.getCounterpartyChannelId(), msg.getCounterpartyVersion());
         ChannelOpenAck(msg.getPortId(), msg.getChannelId(), channel);
     }
 
