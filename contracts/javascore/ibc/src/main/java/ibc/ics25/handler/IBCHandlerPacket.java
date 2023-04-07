@@ -58,7 +58,7 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
         byte[] acknowledgement = module.onRecvPacket(msg.getPacket(), Context.getCaller());
         _recvPacket(packet, msg.getProof(), msg.getProofHeight());
 
-        if (acknowledgement.length > 0) {
+        if (acknowledgement != null && acknowledgement.length > 0) {
             _writeAcknowledgement(
                     packet.getDestinationPort(),
                     packet.getDestinationChannel(),

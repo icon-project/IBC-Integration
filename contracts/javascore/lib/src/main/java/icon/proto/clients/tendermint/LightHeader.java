@@ -7,15 +7,15 @@ import java.lang.String;
 import java.math.BigInteger;
 
 public class LightHeader extends ProtoMessage {
-  private Consensus version;
+  private Consensus version = new Consensus();
 
   private String chainId = "";
 
   private BigInteger height = BigInteger.ZERO;
 
-  private Timestamp time;
+  private Timestamp time = new Timestamp();
 
-  private BlockID lastBlockId;
+  private BlockID lastBlockId = new BlockID();
 
   private byte[] lastCommitHash = new byte[0];
 

@@ -14,9 +14,9 @@ public class CanonicalVote extends ProtoMessage {
 
   private BigInteger round = BigInteger.ZERO;
 
-  private BlockID blockId;
+  private BlockID blockId = new BlockID();
 
-  private Timestamp timestamp;
+  private Timestamp timestamp = new Timestamp();
 
   private String chainId = "";
 

@@ -12,7 +12,7 @@ public class Commit extends ProtoMessage {
 
   private BigInteger round = BigInteger.ZERO;
 
-  private BlockID blockId;
+  private BlockID blockId = new BlockID();
 
   private List<CommitSig> signatures = new ArrayList<>();
 

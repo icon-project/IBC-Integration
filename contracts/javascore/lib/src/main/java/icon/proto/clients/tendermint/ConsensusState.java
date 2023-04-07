@@ -5,9 +5,9 @@ import ibc.icon.score.util.Proto;
 import ibc.icon.score.util.ProtoMessage;
 
 public class ConsensusState extends ProtoMessage {
-  private Timestamp timestamp;
+  private Timestamp timestamp = new Timestamp();
 
-  private MerkleRoot root;
+  private MerkleRoot root = new MerkleRoot();
 
   private byte[] nextValidatorsHash = new byte[0];
 
