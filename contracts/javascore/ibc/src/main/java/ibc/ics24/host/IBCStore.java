@@ -1,6 +1,7 @@
 package ibc.ics24.host;
 
 import ibc.icon.interfaces.ILightClient;
+import ibc.icon.interfaces.IIBCHost;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.NullChecker;
 import ibc.ics05.port.ModuleManager;
@@ -9,7 +10,7 @@ import score.annotation.External;
 
 import java.math.BigInteger;
 
-public abstract class IBCStore extends ModuleManager {
+public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String COMMITMENTS = "commitments";
     private static final String CLIENT_REGISTRY = "clientRegistry";
     private static final String CLIENT_TYPES = "clientTypes";
