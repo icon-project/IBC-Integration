@@ -189,9 +189,9 @@ func (e *Executor) xCallShouldUpdateXCallAdminWithAddress(admin string) error {
 	return e.walletAddressShouldBeAddedAsAdmin(admin)
 }
 
-func (e *Executor) executesRemove_adminInXcallWithWalletAddress(keyName, admin string) error {
+func (e *Executor) executesRemove_adminInXcall(keyName string) error {
 	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, REMOVE_ADMIN, admin)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, REMOVE_ADMIN, "")
 	return nil
 }
 
