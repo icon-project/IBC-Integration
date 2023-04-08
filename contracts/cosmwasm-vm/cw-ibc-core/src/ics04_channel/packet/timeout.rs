@@ -117,11 +117,11 @@ impl<'a> CwIbcCoreContext<'a> {
             let data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
                 error: e.to_string(),
             })?;
-            self.ibc_store()
-                .commitments()
-                .save(deps.storage, seq_recv_path_on_b.clone(), &data)
-                .map_err(|error| ContractError::Std(error))?;
-            // ATTENTION: storing packet in the committmen for reply
+            // self.ibc_store()
+            //     .commitments()
+            //     .save(deps.storage, seq_recv_path_on_b.clone(), &data)
+            //     .map_err(|error| ContractError::Std(error))?;
+            // // ATTENTION: storing packet in the committmen for reply
 
             LightClientPacketMessage::VerifyNextSequenceRecv {
                 height: msg.proof_height_on_b.to_string(),
@@ -130,6 +130,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 root: consensus_state_of_b_on_a.root().clone().into_vec(),
                 seq_recv_path: seq_recv_path_on_b,
                 sequence: msg.packet.seq_on_a.into(),
+                packet_data: data,
             }
         } else {
             let receipt_path_on_b = self.packet_receipt_commitment_path(
@@ -145,11 +146,11 @@ impl<'a> CwIbcCoreContext<'a> {
             let data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
                 error: e.to_string(),
             })?;
-            self.ibc_store()
-                .commitments()
-                .save(deps.storage, receipt_path_on_b.clone(), &data)
-                .map_err(|error| ContractError::Std(error))?;
-            // ATTENTION: storing packet in the committmen for reply
+            // self.ibc_store()
+            //     .commitments()
+            //     .save(deps.storage, receipt_path_on_b.clone(), &data)
+            //     .map_err(|error| ContractError::Std(error))?;
+            // // ATTENTION: storing packet in the committmen for reply
 
             LightClientPacketMessage::VerifyPacketReceiptAbsence {
                 height: msg.proof_height_on_b.to_string(),
@@ -157,6 +158,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 proof: msg.proof_unreceived_on_b.into(),
                 root: consensus_state_of_b_on_a.root().clone().into_vec(),
                 receipt_path: receipt_path_on_b,
+                packet_data: data,
             }
         };
         let client_type = ClientType::from(client_state_of_b_on_a.client_type());
@@ -186,21 +188,26 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let path = from_binary::<Vec<u8>>(&res).unwrap();
+                    let packet_data = from_binary::<PacketDataResponse>(&res).map_err(|e| {
+                        ContractError::IbcDecodeError {
+                            error: e.to_string(),
+                        }
+                    })?;
+                    let data = Packet::from(packet_data.packet.clone());
 
-                    let data_bytes = self
-                        .ibc_store()
-                        .commitments()
-                        .load(deps.storage, path.clone())
-                        .map_err(|error| ContractError::Std(error))?;
+                    // let data_bytes = self
+                    //     .ibc_store()
+                    //     .commitments()
+                    //     .load(deps.storage, path.clone())
+                    //     .map_err(|error| ContractError::Std(error))?;
 
-                    let packet_data: PacketData = serde_json_wasm::from_slice(&data_bytes)
-                        .map_err(|error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        })?;
+                    // let packet_data: PacketData = serde_json_wasm::from_slice(&data_bytes)
+                    //     .map_err(|error| ContractError::IbcDecodeError {
+                    //         error: error.to_string(),
+                    //     })?;
 
                     //ATTENTION
-                    self.ibc_store().commitments().remove(deps.storage, path);
+                    // self.ibc_store().commitments().remove(deps.storage, path);
                     //
 
                     let port_id = PortId::from(packet_data.packet.port_id_on_a.clone());
@@ -224,7 +231,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         port_id: packet_data.packet.port_id_on_b.to_string(),
                         channel_id: packet_data.packet.chan_id_on_b.to_string(),
                     };
-                    let data = Binary::from(packet_data.packet.data);
+                    let data = Binary::from(data.data);
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
                         ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
                             IbcTimeoutBlock {
@@ -282,9 +289,8 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn execute_timeout_packet(
-        &mut self,
+        &self,
         deps: DepsMut,
-        info: MessageInfo,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -309,8 +315,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     }
                     self.delete_packet_commitment(
                         deps.storage,
-                        &port_id,
-                        &channel_id,
+                        &port_id.clone(),
+                        &channel_id.clone(),
                         data.sequence.into(),
                     )?;
                     let chan_end_on_a = {
@@ -319,8 +325,8 @@ impl<'a> CwIbcCoreContext<'a> {
                             chan_end_on_a.state = State::Closed;
                             self.store_channel_end(
                                 deps.storage,
-                                port_id,
-                                channel_id,
+                                port_id.clone(),
+                                channel_id.clone(),
                                 chan_end_on_a.clone(),
                             )?;
 
@@ -330,18 +336,21 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     };
 
-                    let events = Event::new(IbcEventType::Timeout.as_str())
+                    let event = Event::new(IbcEventType::Timeout.as_str())
                         .add_attribute("channel_order", chan_end_on_a.ordering().as_str());
-
+                    let mut events = vec![event];
                     if let Order::Ordered = chan_end_on_a.ordering {
-                        let conn_id_on_a = chan_end_on_a.connection_hops()[0].clone();
-                        // EVENT
+                        let close_init = create_close_init_channel_event(
+                            port_id.ibc_port_id().as_str(),
+                            channel_id.ibc_channel_id().as_str(),
+                        );
+                        events.push(close_init);
                     }
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
                         .add_attribute("method", "execute_timeout_packet")
-                        .add_event(events))
+                        .add_events(events))
                 }
                 None => {
                     return Err(ContractError::IbcChannelError {

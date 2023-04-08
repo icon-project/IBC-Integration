@@ -289,8 +289,8 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn store_packet_commitment(
-        &mut self,
+    pub fn store_packet_commitment(
+        &self,
         store: &mut dyn Storage,
         poirt_id: &PortId,
         channel_id: &ChannelId,
