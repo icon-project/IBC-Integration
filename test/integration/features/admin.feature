@@ -70,10 +70,16 @@ Feature: xCall admin management
     When "Alice" executes update_admin in xcall with "Bob" wallet address
     Then xCall returns an error message that the admin already exists
     And "Bob" wallet address should still be as admin
-  
+
   Scenario: 011 owner cannot update admin with null value as an admin to xCall
     Given "Alice" has already added "Bob" wallet address as admin
     When "Alice" executes update_admin in xcall with "Null" wallet address
     Then xCall returns an error message that the null value cannot be added as admin
     And "Bob" wallet address should still be as admin
 
+  Scenario: 012 Admin cannot update admin in xCall
+    Given "Alice" has already added "Bob" wallet address as admin
+    And "Diana" is an admin wallet who needs to be added as admin
+    When "Bob" executes update_admin in xcall with "Diana" wallet address
+    Then xCall returns an error message that only the contract owner can perform this action
+    And "Bob" wallet address should still be as admin
