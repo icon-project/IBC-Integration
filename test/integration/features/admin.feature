@@ -83,3 +83,10 @@ Feature: xCall admin management
     When "Bob" executes update_admin in xcall with "Diana" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
     And "Bob" wallet address should still be as admin
+
+  Scenario: 013 Non owner cannot remove admin
+    And "Alice" has already added "Bob" wallet address as admin
+    And "Eve" is not the contract owner of the xCall smart contract
+    When "Eve" executes remove_admin in xcall with "Bob" wallet address
+    Then xCall returns an error message that only the contract owner can perform this action
+    And "Bob" wallet address should still be as admin
