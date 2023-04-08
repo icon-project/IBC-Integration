@@ -8,7 +8,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        msg: MsgTimeout,
+        msg: &MsgTimeout,
     ) -> Result<Response, ContractError> {
         let chan_end_on_a = self.channel_end(
             deps.storage,
@@ -93,8 +93,17 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-
+        // TODO
         // self.verify_conn_delay_passed(msg.proof_height_on_b, &conn_end_on_a)?;
+
+         // ATTENTION: storing packet in the committment
+         let data = PacketData {
+            packet: msg.packet.clone(),
+            signer: msg.signer.clone(),
+        };
+        let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
+            error: e.to_string(),
+        })?;
 
         let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
             if msg.packet.seq_on_a < msg.next_seq_recv_on_b {
@@ -109,14 +118,6 @@ impl<'a> CwIbcCoreContext<'a> {
                 &msg.packet.port_id_on_b.clone(),
                 &msg.packet.chan_id_on_b.clone(),
             );
-            // ATTENTION: storing packet in the committment
-            let data = PacketData {
-                packet: msg.packet.clone(),
-                signer: msg.signer,
-            };
-            let data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
-                error: e.to_string(),
-            })?;
             // self.ibc_store()
             //     .commitments()
             //     .save(deps.storage, seq_recv_path_on_b.clone(), &data)
@@ -126,11 +127,11 @@ impl<'a> CwIbcCoreContext<'a> {
             LightClientPacketMessage::VerifyNextSequenceRecv {
                 height: msg.proof_height_on_b.to_string(),
                 prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                proof: msg.proof_unreceived_on_b.into(),
+                proof: msg.proof_unreceived_on_b.clone().into(),
                 root: consensus_state_of_b_on_a.root().clone().into_vec(),
                 seq_recv_path: seq_recv_path_on_b,
                 sequence: msg.packet.seq_on_a.into(),
-                packet_data: data,
+                packet_data: packet_data,
             }
         } else {
             let receipt_path_on_b = self.packet_receipt_commitment_path(
@@ -138,14 +139,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 &msg.packet.chan_id_on_b,
                 msg.packet.seq_on_a,
             );
-            // ATTENTION: storing packet in the committment
-            let data = PacketData {
-                packet: msg.packet.clone(),
-                signer: msg.signer,
-            };
-            let data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
-                error: e.to_string(),
-            })?;
+           
             // self.ibc_store()
             //     .commitments()
             //     .save(deps.storage, receipt_path_on_b.clone(), &data)
@@ -155,10 +149,10 @@ impl<'a> CwIbcCoreContext<'a> {
             LightClientPacketMessage::VerifyPacketReceiptAbsence {
                 height: msg.proof_height_on_b.to_string(),
                 prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                proof: msg.proof_unreceived_on_b.into(),
+                proof: msg.proof_unreceived_on_b.clone().into(),
                 root: consensus_state_of_b_on_a.root().clone().into_vec(),
                 receipt_path: receipt_path_on_b,
-                packet_data: data,
+                packet_data: packet_data,
             }
         };
         let client_type = ClientType::from(client_state_of_b_on_a.client_type());

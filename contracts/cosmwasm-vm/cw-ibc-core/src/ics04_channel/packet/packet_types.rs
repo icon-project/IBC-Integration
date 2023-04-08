@@ -25,6 +25,8 @@ pub enum LightClientPacketMessage {
         sequence: u64,
         packet_data: Vec<u8>,
     },
+    TimeoutOnClose{
+    }
 }
 
 pub enum TimeoutMsgType {
