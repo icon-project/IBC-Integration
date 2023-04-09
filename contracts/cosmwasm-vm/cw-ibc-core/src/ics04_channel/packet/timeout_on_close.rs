@@ -8,10 +8,10 @@ impl<'a> CwIbcCoreContext<'a> {
         msg: &MsgTimeoutOnClose,
     ) -> Result<Response, ContractError> {
         let packet = &msg.packet.clone();
-        let chan_end_on_a = self.channel_end(
+        let chan_end_on_a = self.get_channel_end(
             deps.storage,
-            &msg.packet.port_id_on_a.clone().into(),
-            &msg.packet.chan_id_on_a.clone().into(),
+            msg.packet.port_id_on_a.clone().into(),
+            msg.packet.chan_id_on_a.clone().into(),
         )?;
         let counterparty = Counterparty::new(
             msg.packet.port_id_on_b.clone(),

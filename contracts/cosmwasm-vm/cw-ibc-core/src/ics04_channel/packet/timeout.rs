@@ -10,10 +10,10 @@ impl<'a> CwIbcCoreContext<'a> {
         info: MessageInfo,
         msg: &MsgTimeout,
     ) -> Result<Response, ContractError> {
-        let chan_end_on_a = self.channel_end(
+        let chan_end_on_a = self.get_channel_end(
             deps.storage,
-            &msg.packet.port_id_on_a.clone().into(),
-            &msg.packet.chan_id_on_a.clone().into(),
+            msg.packet.port_id_on_a.clone().into(),
+            msg.packet.chan_id_on_a.clone().into(),
         )?;
         if !chan_end_on_a.state_matches(&State::Open) {
             return Err(ContractError::IbcPackketError {
