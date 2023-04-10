@@ -5,6 +5,9 @@ pub mod events;
 pub mod handler;
 pub mod types;
 
+use crate::types::{
+    CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
+};
 use crate::{
     context::CwIbcCoreContext,
     msg::*,
@@ -20,6 +23,7 @@ use cosmwasm_std::{
     Storage, SubMsg,
 };
 use events::{create_client_event, update_client_event, upgrade_client_event};
+use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
 use ibc::core::{
     ics02_client::{
         client_state::ClientState as IbcClientState,
