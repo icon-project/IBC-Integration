@@ -12,11 +12,11 @@ use cw_ibc_core::{
         },
         types::{ClientState, ConsensusState},
     },
-    msg::{
-        CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
-    },
     traits::IbcClient,
     types::{ClientId, ClientType},
+    types::{
+        CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
+    },
     MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
 };
 use ibc::{
