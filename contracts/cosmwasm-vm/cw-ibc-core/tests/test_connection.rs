@@ -48,6 +48,7 @@ use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
+use ibc_proto::protobuf::Protobuf;
 use setup::*;
 
 #[test]
@@ -1480,4 +1481,54 @@ fn connection_open_init_validate_invalid_client_id() {
     contract
         .connection_open_init(deps.as_mut(), res_msg)
         .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
+fn query_get_connection_fails() {
+    let deps = deps();
+    let conn_id = ConnectionId::new(5);
+    let contract = CwIbcCoreContext::new();
+    contract
+        .connection_end(deps.as_ref().storage, conn_id)
+        .unwrap();
+}
+
+#[test]
+fn test_update_connection_commitment() {
+    let mut deps = deps();
+    let conn_id = ConnectionId::new(1);
+    let conn_end = ConnectionEnd::default();
+
+    let contract = CwIbcCoreContext::new();
+    let res =
+        contract.update_connection_commitment(&mut deps.storage, conn_id.clone(), conn_end.clone());
+    assert_eq!(res.is_ok(), true)
+}
+
+#[test]
+fn test_check_connection() {
+    let mut deps = deps();
+    let commitment_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+        "hello".to_string().as_bytes().to_vec(),
+    );
+    let counter_party = Counterparty::new(IbcClientId::default(), None, commitment_prefix.unwrap());
+    let conn_end = ConnectionEnd::new(
+        State::Open,
+        IbcClientId::default(),
+        counter_party,
+        vec![Version::default()],
+        Duration::default(),
+    );
+    let client_id = ClientId::default();
+    let conn_id = ConnectionId::new(5);
+    let contract = CwIbcCoreContext::new();
+    contract
+        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .unwrap();
+    contract
+        .connection_end(deps.as_ref().storage, conn_id)
+        .unwrap();
+    let res = contract.check_for_connection(&mut deps.storage, client_id);
+    assert_eq!(res.is_ok(), true);
 }
