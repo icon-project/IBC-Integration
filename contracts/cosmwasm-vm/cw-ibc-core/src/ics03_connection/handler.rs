@@ -59,14 +59,14 @@ impl<'a> CwIbcCoreContext<'a> {
             client_id.as_str(),
             message.counterparty.client_id().as_str(),
         );
-        let counter = match self.increase_connection_counter(deps.storage) {
-            Ok(counter) => counter,
-            Err(error) => return Err(error),
-        };
+        self.increase_connection_counter(deps.storage)?;
         self.store_connection_to_client(deps.storage, client_id, connection_identifier.clone())?;
         self.store_connection(deps.storage, connection_identifier.clone(), connection_end)
             .unwrap();
-        return Ok(Response::new().add_event(event));
+        return Ok(Response::new()
+            .add_event(event)
+            .add_attribute("method", "connection_open_init")
+            .add_attribute("connection_id", connection_identifier.as_str()));
     }
 
     pub fn generate_connection_idenfier(
