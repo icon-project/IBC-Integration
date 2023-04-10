@@ -139,6 +139,19 @@ impl KeyDeserialize for ClientType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConnectionId(IbcConnectionId);
 
+impl FromStr for ConnectionId {
+    type Err = ContractError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let conn_id =
+            IbcConnectionId::from_str(s).map_err(|error| ContractError::IbcDecodeError {
+                error: error.to_string(),
+            })?;
+
+        Ok(Self(conn_id))
+    }
+}
+
 impl ConnectionId {
     pub fn new(identifier: u64) -> Self {
         Self(IbcConnectionId::new(identifier))
@@ -382,4 +395,272 @@ impl From<IbcModuleId> for ModuleId {
     fn from(module: IbcModuleId) -> Self {
         ModuleId(module.to_string())
     }
+}
+
+#[cw_serde]
+pub struct CreateClientResponse {
+    client_type: String,
+    height: String,
+    client_state_commitment: Vec<u8>,
+    consensus_state_commitment: Vec<u8>,
+}
+
+impl CreateClientResponse {
+    pub fn new(
+        client_type: String,
+        height: String,
+        client_state_commitment: Vec<u8>,
+        consensus_state_commitment: Vec<u8>,
+    ) -> Self {
+        Self {
+            client_type,
+            height,
+            client_state_commitment,
+            consensus_state_commitment,
+        }
+    }
+    pub fn client_type(&self) -> ClientType {
+        ClientType::new(self.client_type.to_owned())
+    }
+
+    pub fn height(&self) -> Height {
+        Height::from_str(&self.height).unwrap()
+    }
+
+    pub fn client_state_commitment(&self) -> &[u8] {
+        &self.client_state_commitment
+    }
+    pub fn consensus_state_commitment(&self) -> &[u8] {
+        &self.consensus_state_commitment
+    }
+}
+
+#[cw_serde]
+pub struct UpdateClientResponse {
+    height: String,
+    client_id: String,
+    client_state_commitment: Vec<u8>,
+    consensus_state_commitment: Vec<u8>,
+}
+
+impl UpdateClientResponse {
+    pub fn new(
+        height: String,
+        client_id: String,
+        client_state_commitment: Vec<u8>,
+        consensus_state_commitment: Vec<u8>,
+    ) -> Self {
+        Self {
+            height,
+            client_id,
+            client_state_commitment,
+            consensus_state_commitment,
+        }
+    }
+    pub fn height(&self) -> Height {
+        Height::from_str(&self.height).unwrap()
+    }
+
+    pub fn client_state_commitment(&self) -> &[u8] {
+        &self.client_state_commitment
+    }
+    pub fn consensus_state_commitment(&self) -> &[u8] {
+        &self.consensus_state_commitment
+    }
+    pub fn client_id(&self) -> Result<ClientId, ContractError> {
+        ClientId::from_str(&self.client_id).map_err(|error| ContractError::IbcDecodeError {
+            error: error.to_string(),
+        })
+    }
+}
+#[cw_serde]
+pub struct UpgradeClientResponse {
+    client_id: String,
+    height: String,
+    client_state_commitment: Vec<u8>,
+    consesnus_state_commitment: Vec<u8>,
+}
+
+impl UpgradeClientResponse {
+    pub fn new(
+        client_state_commitment: Vec<u8>,
+        consesnus_state_commitment: Vec<u8>,
+        client_id: String,
+        height: String,
+    ) -> Self {
+        {
+            Self {
+                height,
+                client_id,
+                client_state_commitment,
+                consesnus_state_commitment,
+            }
+        }
+    }
+
+    pub fn client_id(&self) -> Result<ClientId, ContractError> {
+        ClientId::from_str(&self.client_id).map_err(|error| ContractError::IbcClientError {
+            error: ClientError::InvalidClientIdentifier(error),
+        })
+    }
+
+    pub fn client_state_commitment(&self) -> &[u8] {
+        &self.client_state_commitment
+    }
+    pub fn consesnus_state_commitment(&self) -> &[u8] {
+        &self.consesnus_state_commitment
+    }
+    pub fn height(&self) -> Height {
+        Height::from_str(&self.height).unwrap()
+    }
+}
+
+#[cw_serde]
+pub struct MisbehaviourResponse {
+    client_id: String,
+    pub client_state_commitment: Vec<u8>,
+}
+
+impl MisbehaviourResponse {
+    pub fn new(client_id: String, client_state_commitment: Vec<u8>) -> Self {
+        Self {
+            client_id,
+            client_state_commitment,
+        }
+    }
+    pub fn client_id(&self) -> Result<ClientId, ContractError> {
+        ClientId::from_str(&self.client_id).map_err(|error| ContractError::IbcClientError {
+            error: ClientError::InvalidClientIdentifier(error),
+        })
+    }
+}
+
+#[cw_serde]
+pub struct VerifyConnectionState {
+    proof_height: String,
+    counterparty_prefix: Vec<u8>,
+    proof: Vec<u8>,
+    root: Vec<u8>,
+    counterparty_conn_end_path: Vec<u8>,
+    expected_counterparty_connection_end: Vec<u8>,
+}
+impl VerifyConnectionState {
+    pub fn new(
+        proof_height: String,
+        counterparty_prefix: Vec<u8>,
+        proof: Vec<u8>,
+        root: Vec<u8>,
+        counterparty_conn_end_path: Vec<u8>,
+        expected_counterparty_connection_end: Vec<u8>,
+    ) -> Self {
+        Self {
+            proof_height,
+            counterparty_prefix,
+            proof,
+            root,
+            counterparty_conn_end_path,
+            expected_counterparty_connection_end,
+        }
+    }
+}
+
+#[cw_serde]
+pub struct VerifyClientFullState {
+    proof_height: String,
+    counterparty_prefix: Vec<u8>,
+    client_state_proof: Vec<u8>,
+    root: Vec<u8>,
+    client_state_path: Vec<u8>,
+    expected_client_state: Vec<u8>,
+}
+impl VerifyClientFullState {
+    pub fn new(
+        proof_height: String,
+        counterparty_prefix: Vec<u8>,
+        client_state_proof: Vec<u8>,
+        root: Vec<u8>,
+        client_state_path: Vec<u8>,
+        expected_client_state: Vec<u8>,
+    ) -> Self {
+        Self {
+            proof_height,
+            counterparty_prefix,
+            client_state_proof,
+            root,
+            client_state_path,
+            expected_client_state,
+        }
+    }
+}
+
+#[cw_serde]
+pub struct VerifyClientConsesnusState {
+    proof_height: String,
+    counterparty_prefix: Vec<u8>,
+    consensus_state_proof: Vec<u8>,
+    root: Vec<u8>,
+    conesenus_state_path: Vec<u8>,
+    expected_conesenus_state: Vec<u8>,
+}
+
+impl VerifyClientConsesnusState {
+    pub fn new(
+        proof_height: String,
+        counterparty_prefix: Vec<u8>,
+        consensus_state_proof: Vec<u8>,
+        root: Vec<u8>,
+        conesenus_state_path: Vec<u8>,
+        expected_conesenus_state: Vec<u8>,
+    ) -> Self {
+        Self {
+            proof_height,
+            counterparty_prefix,
+            consensus_state_proof,
+            root,
+            conesenus_state_path,
+            expected_conesenus_state,
+        }
+    }
+}
+
+#[cw_serde]
+pub struct OpenTryResponse {
+    pub conn_id: String,
+    pub client_id: String,
+    pub counterparty_client_id: String,
+    pub counterparty_connection_id: String,
+    pub counterparty_prefix: Vec<u8>,
+    pub versions: Vec<u8>,
+    pub delay_period: u64,
+}
+
+impl OpenTryResponse {
+    pub fn new(
+        conn_id: String,
+        client_id: String,
+        counterparty_client_id: String,
+        counterparty_connection_id: String,
+        counterparty_prefix: Vec<u8>,
+        versions: Vec<u8>,
+        delay_period: u64,
+    ) -> Self {
+        Self {
+            conn_id,
+            client_id,
+            counterparty_client_id,
+            counterparty_connection_id,
+            counterparty_prefix,
+            versions,
+            delay_period,
+        }
+    }
+}
+
+#[cw_serde]
+pub struct OpenAckResponse {
+    pub conn_id: String,
+    pub version: Vec<u8>,
+    pub counterparty_client_id: String,
+    pub counterparty_connection_id: String,
+    pub counterparty_prefix: Vec<u8>,
 }
