@@ -93,11 +93,14 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        // TODO
-        // self.verify_conn_delay_passed(msg.proof_height_on_b, &conn_end_on_a)?;
 
-         // ATTENTION: storing packet in the committment
-         let data = PacketData {
+        self.verify_connection_delay_passed(
+            deps.storage,
+            msg.proof_height_on_b,
+            conn_end_on_a.clone(),
+        )?;
+
+        let data = PacketData {
             packet: msg.packet.clone(),
             signer: msg.signer.clone(),
         };
@@ -118,11 +121,6 @@ impl<'a> CwIbcCoreContext<'a> {
                 &msg.packet.port_id_on_b.clone(),
                 &msg.packet.chan_id_on_b.clone(),
             );
-            // self.ibc_store()
-            //     .commitments()
-            //     .save(deps.storage, seq_recv_path_on_b.clone(), &data)
-            //     .map_err(|error| ContractError::Std(error))?;
-            // // ATTENTION: storing packet in the committmen for reply
 
             LightClientPacketMessage::VerifyNextSequenceRecv {
                 height: msg.proof_height_on_b.to_string(),
@@ -139,12 +137,6 @@ impl<'a> CwIbcCoreContext<'a> {
                 &msg.packet.chan_id_on_b,
                 msg.packet.seq_on_a,
             );
-           
-            // self.ibc_store()
-            //     .commitments()
-            //     .save(deps.storage, receipt_path_on_b.clone(), &data)
-            //     .map_err(|error| ContractError::Std(error))?;
-            // // ATTENTION: storing packet in the committmen for reply
 
             LightClientPacketMessage::VerifyPacketReceiptAbsence {
                 height: msg.proof_height_on_b.to_string(),
@@ -188,22 +180,6 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     })?;
                     let data = Packet::from(packet_data.packet.clone());
-
-                    // let data_bytes = self
-                    //     .ibc_store()
-                    //     .commitments()
-                    //     .load(deps.storage, path.clone())
-                    //     .map_err(|error| ContractError::Std(error))?;
-
-                    // let packet_data: PacketData = serde_json_wasm::from_slice(&data_bytes)
-                    //     .map_err(|error| ContractError::IbcDecodeError {
-                    //         error: error.to_string(),
-                    //     })?;
-
-                    //ATTENTION
-                    // self.ibc_store().commitments().remove(deps.storage, path);
-                    //
-
                     let port_id = PortId::from(packet_data.packet.port_id_on_a.clone());
                     // Getting the module address for on packet timeout call
                     let module_id = match self.lookup_module_by_port(deps.storage, port_id.clone())

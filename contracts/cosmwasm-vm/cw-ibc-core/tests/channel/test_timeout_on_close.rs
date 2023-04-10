@@ -1,13 +1,4 @@
-use cw_ibc_core::{ics04_channel::compute_packet_commitment, types::ClientId};
-use ibc::{
-    core::{
-        ics03_connection::version::get_compatible_versions,
-        ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose,
-    },
-    timestamp::ZERO_DURATION,
-};
-
-use super::{test_timeout::get_dummy_raw_msg_timeout_on_close, *};
+use super::*;
 
 #[test]
 fn test_timeout_on_close_packet_validate_to_light_client() {
@@ -121,8 +112,14 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
             consenus_state,
         )
         .unwrap();
+    let env = mock_env();
+    contract
+        .ibc_store()
+        .expected_time_per_block()
+        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .unwrap();
 
     let res = contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, &msg);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id , 54)
+    assert_eq!(res.unwrap().messages[0].id, 54)
 }

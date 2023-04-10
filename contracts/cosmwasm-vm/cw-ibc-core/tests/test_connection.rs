@@ -826,10 +826,9 @@ fn connection_validate_delay() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
         .unwrap();
-    contract.host_timestamp(&mut deps.storage).unwrap();
 
     let result =
-        contract.verify_connection_delay_passed(deps.as_mut(), packet_proof_height, conn_end);
+        contract.verify_connection_delay_passed(&deps.storage, packet_proof_height, conn_end);
     assert_eq!(result.is_ok(), true)
 }
 
@@ -842,7 +841,7 @@ fn connection_validate_delay_fails() {
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
     contract
-        .verify_connection_delay_passed(deps.as_mut(), packet_proof_height, conn_end)
+        .verify_connection_delay_passed(&deps.storage, packet_proof_height, conn_end)
         .unwrap();
 }
 

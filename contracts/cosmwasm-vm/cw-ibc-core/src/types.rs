@@ -672,3 +672,12 @@ pub struct OpenConfirmResponse {
     pub counterparty_connection_id: String,
     pub counterparty_prefix: Vec<u8>,
 }
+#[cw_serde]
+pub struct VerifyChannelState {
+    pub proof_height: String,
+    pub counterparty_prefix: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub counterparty_chan_end_path: Vec<u8>,
+    pub expected_counterparty_channel_end: Vec<u8>,
+}

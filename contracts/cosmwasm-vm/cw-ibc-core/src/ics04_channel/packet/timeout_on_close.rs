@@ -99,9 +99,13 @@ impl<'a> CwIbcCoreContext<'a> {
         let chan_end_path_on_b =
             self.channel_path(&port_id_on_b.into(), &chan_id_on_b.clone().into());
         let vector = to_vec(&expected_chan_end_on_b);
-        // TODO
-        // self.verify_conn_delay_passed(msg.proof_height_on_b, &conn_end_on_a)?;
-        let verify_channel_state = LightClientMessage::VerifyChannel {
+
+        self.verify_connection_delay_passed(
+            deps.storage,
+            msg.proof_height_on_b,
+            conn_end_on_a.clone(),
+        )?;
+        let verify_channel_state = VerifyChannelState {
             proof_height: msg.proof_height_on_b.to_string(),
             counterparty_prefix: prefix_on_b.clone().into_vec(),
             proof: msg.proof_unreceived_on_b.clone().into(),
@@ -158,9 +162,15 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_type = ClientType::from(client_state_of_b_on_a.client_type());
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
+
+        let light_client_message = LightClientMessage::TimeoutOnCLose {
+            verify_channel_state: verify_channel_state,
+            next_seq_recv_verification_result: next_seq_recv_verification_result,
+        };
+
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: light_client_address,
-            msg: to_binary(&(verify_channel_state, next_seq_recv_verification_result)).unwrap(),
+            msg: to_binary(&light_client_message).unwrap(),
             funds: info.funds,
         });
         let sub_msg: SubMsg = SubMsg::reply_always(

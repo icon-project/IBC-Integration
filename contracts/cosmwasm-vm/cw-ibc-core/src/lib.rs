@@ -21,7 +21,7 @@ use crate::{
     storage_keys::StorageKey,
     types::{
         ChannelId, ClientId, ClientType, ConnectionId, PortId, VerifyClientConsesnusState,
-        VerifyClientFullState, VerifyConnectionState,
+        VerifyClientFullState, VerifyConnectionState, VerifyChannelState
     },
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
@@ -69,6 +69,7 @@ use std::{
     str::FromStr,
 };
 use thiserror::Error;
+use crate::ics04_channel::LightClientPacketMessage;
 
 #[entry_point]
 pub fn instantiate(

@@ -165,12 +165,14 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let vector = to_vec(&expected_chan_end_on_a);
 
         let create_client_message = LightClientMessage::VerifyChannel {
-            proof_height: message.proof_height_on_a.to_string(),
-            counterparty_prefix: prefix_on_a.clone().into_vec(),
-            proof: message.proof_chan_end_on_a.clone().into(),
-            root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
-            counterparty_chan_end_path: chan_end_path_on_a,
-            expected_counterparty_channel_end: vector.unwrap(),
+            verify_channel_state: VerifyChannelState {
+                proof_height: message.proof_height_on_a.to_string(),
+                counterparty_prefix: prefix_on_a.clone().into_vec(),
+                proof: message.proof_chan_end_on_a.clone().into(),
+                root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
+                counterparty_chan_end_path: chan_end_path_on_a,
+                expected_counterparty_channel_end: vector.unwrap(),
+            },
         };
         let client_type = ClientType::from(client_state_of_a_on_b.client_type());
 
@@ -250,12 +252,14 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_b = self.channel_path(&port_id_on_b, &message.chan_id_on_b);
         let vector = to_vec(&expected_chan_end_on_b);
         let create_client_message = LightClientMessage::VerifyChannel {
-            proof_height: message.proof_height_on_b.to_string(),
-            counterparty_prefix: prefix_on_b.clone().into_vec(),
-            proof: message.proof_chan_end_on_b.clone().into(),
-            root: consensus_state_of_b_on_a.clone().root().clone().into_vec(),
-            counterparty_chan_end_path: chan_end_path_on_b,
-            expected_counterparty_channel_end: vector.unwrap(),
+            verify_channel_state: VerifyChannelState {
+                proof_height: message.proof_height_on_b.to_string(),
+                counterparty_prefix: prefix_on_b.clone().into_vec(),
+                proof: message.proof_chan_end_on_b.clone().into(),
+                root: consensus_state_of_b_on_a.clone().root().clone().into_vec(),
+                counterparty_chan_end_path: chan_end_path_on_b,
+                expected_counterparty_channel_end: vector.unwrap(),
+            },
         };
         let client_type = ClientType::from(client_state_of_b_on_a.client_type());
         let light_client_address =
@@ -352,12 +356,14 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let vector = to_vec(&expected_chan_end_on_a);
         let create_client_message = LightClientMessage::VerifyChannel {
-            proof_height: message.proof_height_on_a.to_string(),
-            counterparty_prefix: prefix_on_a.clone().into_vec(),
-            proof: message.proof_chan_end_on_a.clone().into(),
-            root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
-            counterparty_chan_end_path: chan_end_path_on_a,
-            expected_counterparty_channel_end: vector.unwrap(),
+            verify_channel_state: VerifyChannelState {
+                proof_height: message.proof_height_on_a.to_string(),
+                counterparty_prefix: prefix_on_a.clone().into_vec(),
+                proof: message.proof_chan_end_on_a.clone().into(),
+                root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
+                counterparty_chan_end_path: chan_end_path_on_a,
+                expected_counterparty_channel_end: vector.unwrap(),
+            },
         };
         let client_type = ClientType::from(client_state_of_a_on_b.client_type());
         let light_client_address =
@@ -493,12 +499,14 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_a = self.channel_path(&port_id_on_a, chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
         let create_client_message = LightClientMessage::VerifyChannel {
-            proof_height: message.proof_height_on_a.to_string(),
-            counterparty_prefix: prefix_on_a.clone().into_vec(),
-            proof: message.proof_chan_end_on_a.clone().into(),
-            root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
-            counterparty_chan_end_path: chan_end_path_on_a,
-            expected_counterparty_channel_end: vector.unwrap(),
+            verify_channel_state: VerifyChannelState {
+                proof_height: message.proof_height_on_a.to_string(),
+                counterparty_prefix: prefix_on_a.clone().into_vec(),
+                proof: message.proof_chan_end_on_a.clone().into(),
+                root: consensus_state_of_a_on_b.clone().root().clone().into_vec(),
+                counterparty_chan_end_path: chan_end_path_on_a,
+                expected_counterparty_channel_end: vector.unwrap(),
+            },
         };
         let client_type = ClientType::from(client_state_of_a_on_b.client_type());
         let light_client_address =
