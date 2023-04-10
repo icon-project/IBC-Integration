@@ -590,7 +590,7 @@ fn connection_open_try_execute() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let raw = get_dummy_raw_msg_conn_open_try(10, 10);
-    let mut msg = MsgConnectionOpenTry::try_from(raw.clone()).unwrap();
+
     let _store = contract.init_connection_counter(deps.as_mut().storage, u64::default());
 
     let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -658,13 +658,12 @@ fn connection_open_try_execute() {
 fn connection_open_try_validate() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
-    let env = mock_env();
     let contract = CwIbcCoreContext::default();
     contract
         .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
-    let mut message = get_dummy_raw_msg_conn_open_try(10, 10);
+    let message = get_dummy_raw_msg_conn_open_try(10, 10);
 
     let mut res_msg =
         ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
@@ -727,13 +726,13 @@ fn connection_open_try_validate() {
 fn open_try_validate_fails() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
-    let env = mock_env();
+
     let contract = CwIbcCoreContext::default();
     contract
         .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
-    let mut message = get_dummy_raw_msg_conn_open_try(10, 10);
+    let message = get_dummy_raw_msg_conn_open_try(10, 10);
 
     let mut res_msg =
         ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
@@ -757,15 +756,13 @@ fn open_try_validate_fails() {
     .try_into()
     .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
-
-    let cl = to_vec(&client_state);
+    let client_state_bytes = to_vec(&client_state);
 
     contract
         .store_client_state(
             &mut deps.storage,
             &res_msg.client_id_on_b.clone(),
-            cl.unwrap(),
+            client_state_bytes.unwrap(),
         )
         .unwrap();
 
