@@ -238,6 +238,7 @@ public class ProtoGen {
         }
 
         if (field.getType().isMessage()) {
+            fieldSpec.initializer("new $L()", getTypeName(field));
             return fieldSpec.build();
         }
 

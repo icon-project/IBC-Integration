@@ -16,7 +16,7 @@ public class ConnectionEnd extends ProtoMessage {
 
   private int state = 0;
 
-  private Counterparty counterparty;
+  private Counterparty counterparty = new Counterparty();
 
   private BigInteger delayPeriod = BigInteger.ZERO;
 

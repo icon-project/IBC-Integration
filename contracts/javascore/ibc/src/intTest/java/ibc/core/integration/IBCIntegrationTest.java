@@ -3,11 +3,14 @@ package ibc.core.integration;
 import static ibc.icon.integration.ScoreIntegrationTest.createWalletWithBalance;
 import static ibc.icon.integration.ScoreIntegrationTest.deploy;
 import static ibc.icon.integration.ScoreIntegrationTest.setupPrep;
+import static ibc.icon.integration.ScoreIntegrationTest.waitByHeight;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
@@ -17,11 +20,12 @@ import foundation.icon.jsonrpc.model.TransactionResult;
 import foundation.icon.score.client.DefaultScoreClient;
 import foundation.icon.score.client.Wallet;
 import ibc.icon.integration.ScoreIntegrationTest;
-import ibc.icon.interfaces.IIBCClientScoreClient;
 import ibc.icon.interfaces.IIBCChannelHandshakeScoreClient;
+import ibc.icon.interfaces.IIBCClientScoreClient;
 import ibc.icon.interfaces.IIBCConnectionScoreClient;
-import ibc.icon.interfaces.IIBCHostScoreClient;
 import ibc.icon.interfaces.IIBCHandlerScoreClient;
+import ibc.icon.interfaces.IIBCHostScoreClient;
+import ibc.icon.interfaces.IIBCPacketScoreClient;
 import ibc.icon.structs.messages.MsgChannelCloseConfirm;
 import ibc.icon.structs.messages.MsgChannelCloseInit;
 import ibc.icon.structs.messages.MsgChannelOpenAck;
@@ -33,8 +37,13 @@ import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
 import ibc.icon.structs.messages.MsgConnectionOpenInit;
 import ibc.icon.structs.messages.MsgConnectionOpenTry;
 import ibc.icon.structs.messages.MsgCreateClient;
+import ibc.icon.structs.messages.MsgPacketAcknowledgement;
+import ibc.icon.structs.messages.MsgPacketRecv;
+import ibc.icon.structs.messages.MsgPacketTimeout;
 import ibc.icon.structs.messages.MsgUpdateClient;
 import icon.proto.core.channel.Channel;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
 import icon.proto.core.connection.MerklePrefix;
 import icon.proto.core.connection.Version;
 import score.Address;
@@ -54,7 +63,7 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
     static String clientID;
     static String prevConnectionId;
     static String prevChannelId;
-
+    static Packet prevSentPacket = new Packet();
 
     @BeforeAll
     static void setup() throws Exception {
@@ -70,7 +79,6 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
     @Order(0)
     void registerClient() {
         getClientInterface(owner).registerClient(clientType, mockLightClient._address());
-
     }
 
     @Test
@@ -214,7 +222,6 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
         client.channelOpenAck(msgAck);
     }
 
-
     @Test
     @Order(7)
     void closeChannel_fromICON() {
@@ -282,6 +289,147 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
         assertEquals(Channel.State.STATE_CLOSED, channel.getState());
     }
 
+    @Test
+    @Order(20)
+    void setupNewChannel() {
+        establishChannel_fromICON();
+    }
+
+    @Test
+    @Order(21)
+    void sendPacket() {
+        Consumer<TransactionResult> consumer = getPacketInterface(relayer).SendPacket((logs) -> {prevSentPacket = Packet.decode(logs.get(0).getPacket());}, null);
+        byte[] data = "test".getBytes();
+        consumer.accept(mockApp._send("sendPacket", Map.of("data", data)));
+
+        assertArrayEquals(data, prevSentPacket.getData());
+    }
+
+
+    @Test
+    @Order(21)
+    void recvPacket() {
+        BigInteger currRecvCount = getHostInterface(relayer).getNextSequenceReceive(port, prevChannelId);
+        IIBCPacketScoreClient client = getPacketInterface(relayer);
+
+        Packet pct = new Packet();
+        pct.setSequence(currRecvCount);
+        pct.setData("test".getBytes());
+        pct.setDestinationPort(port);
+        pct.setDestinationChannel(prevChannelId);
+        pct.setSourcePort(counterpartyPortId);
+        pct.setSourceChannel(counterpartyChannelId);
+
+        Height hgt = new Height();
+        pct.setTimeoutHeight(hgt);
+
+        pct.setTimeoutTimestamp(BigInteger.ZERO);
+
+        MsgPacketRecv msg = new MsgPacketRecv();
+        msg.setPacket(pct.encode());
+        msg.setProof(new byte[0]);
+        msg.setProofHeight(new byte[0]);
+
+        var consumer = client.WriteAcknowledgement((logs) -> {assertArrayEquals("ack".getBytes(), logs.get(0).getAcknowledgement());}, null);
+        client.recvPacket(msg);
+    }
+
+    @Test
+    @Order(21)
+    void recvPacket_manualAck() {
+        BigInteger currRecvCount = getHostInterface(relayer).getNextSequenceReceive(port, prevChannelId);
+        IIBCPacketScoreClient client = getPacketInterface(relayer);
+
+        Packet pct = new Packet();
+        pct.setSequence(currRecvCount);
+        pct.setData("skip ack".getBytes());
+        pct.setDestinationPort(port);
+        pct.setDestinationChannel(prevChannelId);
+        pct.setSourcePort(counterpartyPortId);
+        pct.setSourceChannel(counterpartyChannelId);
+        pct.setTimeoutHeight(new Height());
+        pct.setTimeoutTimestamp(BigInteger.ZERO);
+
+        MsgPacketRecv msg = new MsgPacketRecv();
+        msg.setPacket(pct.encode());
+        msg.setProof(new byte[0]);
+        msg.setProofHeight(new byte[0]);
+
+        var emptyConsumer = client.WriteAcknowledgement((logs) -> {assertEquals(0, logs.size());}, null);
+        client.recvPacket(emptyConsumer, msg);
+
+        byte[] ack = "ack".getBytes();
+        Consumer<TransactionResult> consumer = client.WriteAcknowledgement((logs) -> {assertArrayEquals(ack, logs.get(0).getAcknowledgement());}, null);
+        consumer.accept(mockApp._send("ackPacket", Map.of("sequence", currRecvCount, "ack", ack)));
+    }
+
+    @Test
+    @Order(21)
+    void acknowledgePacket() {
+        sendPacket();
+        IIBCPacketScoreClient client = getPacketInterface(relayer);
+
+        MsgPacketAcknowledgement msg = new MsgPacketAcknowledgement();
+        msg.setPacket(prevSentPacket.encode());
+        msg.setAcknowledgement("counterparty ack".getBytes());
+        msg.setProof(new byte[0]);
+        msg.setProofHeight(new byte[0]);
+
+        client.acknowledgePacket(msg);
+    }
+
+    @Test
+    @Order(21)
+    void requestTimeout() {
+        BigInteger currRecvCount = getHostInterface(relayer).getNextSequenceReceive(port, prevChannelId);
+        IIBCPacketScoreClient client = getPacketInterface(relayer);
+
+        BigInteger currentHeight = mockApp._lastBlockHeight();
+        Height timeoutHeight = new Height();
+        timeoutHeight.setRevisionHeight(currentHeight);
+        Packet pct = new Packet();
+        pct.setSequence(currRecvCount);
+        pct.setData("timeout".getBytes());
+        pct.setDestinationPort(port);
+        pct.setDestinationChannel(prevChannelId);
+        pct.setSourcePort(counterpartyPortId);
+        pct.setSourceChannel(counterpartyChannelId);
+        pct.setTimeoutHeight(timeoutHeight);
+        pct.setTimeoutTimestamp(BigInteger.ZERO);
+
+        client.requestTimeout(pct.encode());
+    }
+
+    // Will close the Channel
+    @Test
+    @Order(22)
+    void timeoutPacket() {
+        BigInteger currRecvCount = getHostInterface(relayer).getNextSequenceReceive(port, prevChannelId);
+        IIBCPacketScoreClient client = getPacketInterface(relayer);
+
+        BigInteger currentHeight = mockApp._lastBlockHeight();
+        BigInteger timeoutHeight = currentHeight.add(BigInteger.TEN);
+
+        // TODO: make adaptable to block time
+        Consumer<TransactionResult> consumer = getPacketInterface(relayer).SendPacket((logs) -> {prevSentPacket = Packet.decode(logs.get(0).getPacket());}, null);
+        consumer.accept(mockApp._send("sendPacket", Map.of("data", "test".getBytes(), "timeoutHeight", timeoutHeight)));
+        waitByHeight(timeoutHeight);
+
+        MsgPacketTimeout msg = new MsgPacketTimeout();
+        msg.setPacket(prevSentPacket.encode());
+        msg.setNextSequenceRecv(currRecvCount);
+        msg.setProof(new byte[0]);
+        Height proofHeight = new Height();
+        proofHeight.setRevisionHeight(timeoutHeight);
+        msg.setProofHeight(proofHeight.encode());
+        client.timeoutPacket(msg);
+
+        byte[] channelPb = getHostInterface(relayer).getChannel(port, prevChannelId);
+        Channel channel = Channel.decode(channelPb);
+
+        assertEquals(Channel.State.STATE_CLOSED, channel.getState());
+    }
+
     IIBCClientScoreClient getClientInterface(Wallet wallet) {
         return new IIBCClientScoreClient(chain.getEndpointURL(), chain.networkId, wallet, ibcClient._address());
     }
@@ -294,6 +442,10 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
         return new IIBCChannelHandshakeScoreClient(chain.getEndpointURL(), chain.networkId, wallet, ibcClient._address());
     }
 
+    IIBCPacketScoreClient getPacketInterface(Wallet wallet) {
+        return new IIBCPacketScoreClient(chain.getEndpointURL(), chain.networkId, wallet, ibcClient._address());
+    }
+
     IIBCHandlerScoreClient getHandlerInterface(Wallet wallet) {
         return new IIBCHandlerScoreClient(chain.getEndpointURL(), chain.networkId, wallet, ibcClient._address());
     }
@@ -301,7 +453,6 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
     IIBCHostScoreClient getHostInterface(Wallet wallet) {
         return new IIBCHostScoreClient(chain.getEndpointURL(), chain.networkId, wallet, ibcClient._address());
     }
-
 
     int openBTPNetwork(Wallet wallet, Address score) {
         DefaultScoreClient govScore =  new DefaultScoreClient(chain.getEndpointURL(), chain.networkId, wallet,  new foundation.icon.jsonrpc.Address("cx0000000000000000000000000000000000000001"));
