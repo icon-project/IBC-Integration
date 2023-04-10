@@ -16,7 +16,7 @@
 
 package foundation.icon.btp.xcall.sample;
 
-import foundation.icon.btp.xcall.CallServiceReceiver;
+import foundation.icon.btp.xcall.interfaces.CallServiceReceiver;
 import foundation.icon.score.client.ScoreClient;
 import score.Address;
 import score.Context;
