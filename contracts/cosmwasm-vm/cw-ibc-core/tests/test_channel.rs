@@ -748,7 +748,7 @@ fn create_open_confirm_channel_event_test() {
         &message.port_id_on_b.as_str(),
         &message.chan_id_on_b.as_str(),
         PortId::default().as_str(),
-        ClientId::default().as_str(),
+        ChannelId::default().as_str(),
         ConnectionId::default().as_str(),
     );
 
