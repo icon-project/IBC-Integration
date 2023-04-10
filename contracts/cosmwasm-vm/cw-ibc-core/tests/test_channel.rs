@@ -7,7 +7,7 @@ use cw_ibc_core::ics04_channel::open_init::{
 };
 use cw_ibc_core::ics04_channel::open_try::on_chan_open_try_submessage;
 use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY};
-use cw_ibc_core::types::{ClientId, ClientType};
+use cw_ibc_core::types::ClientType;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
@@ -1222,7 +1222,8 @@ fn test_get_channel() {
         port_id.clone(),
         channel_id.clone(),
         channel_end.clone(),
-    ).unwrap();
+    )
+    .unwrap();
     let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id);
 
     assert_eq!(channel_end, retrived_channel_end.unwrap())
@@ -1235,5 +1236,6 @@ fn test_get_channel_fail() {
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
     let mock_deps = deps();
-    ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id).unwrap();
+    ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id)
+        .unwrap();
 }

@@ -1,3 +1,4 @@
+pub mod constants;
 pub mod context;
 pub mod contract;
 mod error;
@@ -20,8 +21,8 @@ use crate::{
     ics26_routing::router::CwIbcRouter,
     storage_keys::StorageKey,
     types::{
-        ChannelId, ClientId, ClientType, ConnectionId, PortId, VerifyClientConsesnusState,
-        VerifyClientFullState, VerifyConnectionState, VerifyChannelState
+        ChannelId, ClientId, ClientType, ConnectionId, PortId, VerifyChannelState,
+        VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState,
     },
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
@@ -30,9 +31,10 @@ use cosmwasm_std::{
     StdResult, Storage,
 };
 
+use crate::ics04_channel::LightClientPacketMessage;
+pub use constants::*;
 use context::CwIbcCoreContext;
 use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};
-use ibc::core::ics03_connection::error::ConnectionError;
 pub use ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
@@ -63,13 +65,13 @@ pub use ibc::{
     },
     Height,
 };
+pub use ics24_host::commitment::*;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Error as FmtError, Formatter},
     str::FromStr,
 };
 use thiserror::Error;
-use crate::ics04_channel::LightClientPacketMessage;
 
 #[entry_point]
 pub fn instantiate(

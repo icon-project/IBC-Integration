@@ -10,6 +10,7 @@ use cosmwasm_std::Event;
 use cosmwasm_std::Reply;
 use cosmwasm_std::SubMsgResponse;
 use cosmwasm_std::SubMsgResult;
+use cw_ibc_core::constants::*;
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics02_client::types::ClientState;
 use cw_ibc_core::ics02_client::types::ConsensusState;
@@ -17,10 +18,6 @@ use cw_ibc_core::ics03_connection::event::create_open_ack_event;
 use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
 use cw_ibc_core::ics03_connection::event::create_open_try_event;
-use cw_ibc_core::ics03_connection::handler::EXECUTE_CONNECTION_OPENACK;
-use cw_ibc_core::ics03_connection::handler::EXECUTE_CONNECTION_OPENCONFIRM;
-
-use cw_ibc_core::ics03_connection::handler::EXECUTE_CONNECTION_OPENTRY;
 use cw_ibc_core::types::ClientId;
 use cw_ibc_core::types::ConnectionId;
 use cw_ibc_core::types::OpenAckResponse;
@@ -48,7 +45,6 @@ use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
-use ibc_proto::protobuf::Protobuf;
 use setup::*;
 
 #[test]
@@ -835,7 +831,7 @@ fn connection_validate_delay() {
 #[test]
 #[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
 fn connection_validate_delay_fails() {
-    let mut deps = deps();
+    let deps = deps();
     let _env = mock_env();
     let packet_proof_height = ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
     let conn_end = ConnectionEnd::default();

@@ -4,10 +4,6 @@ use ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 
 pub mod timeout;
 pub use timeout::*;
-pub mod functions;
-pub use functions::*;
-pub mod packet_types;
-pub use packet_types::*;
 pub mod timeout_on_close;
 pub use timeout_on_close::*;
 

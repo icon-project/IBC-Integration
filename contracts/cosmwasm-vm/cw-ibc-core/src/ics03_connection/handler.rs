@@ -1,9 +1,4 @@
 use super::*;
-pub const EXECUTE_CONNECTION_OPENCONFIRM: u64 = 33;
-
-pub const EXECUTE_CONNECTION_OPENACK: u64 = 32;
-
-pub const EXECUTE_CONNECTION_OPENTRY: u64 = 31;
 
 impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_open_init(

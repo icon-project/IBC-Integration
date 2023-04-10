@@ -4,6 +4,7 @@ pub mod client;
 pub mod events;
 pub mod handler;
 pub mod types;
+pub use super::*;
 
 use crate::types::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
