@@ -42,7 +42,7 @@ func (cs ClientState) ClientType() string {
 
 func (cs ClientState) GetLatestHeight() exported.Height {
 	return types.Height{
-		RevisionNumber: uint64(cs.LatestHeight),
+		RevisionHeight: uint64(cs.LatestHeight),
 	}
 }
 
