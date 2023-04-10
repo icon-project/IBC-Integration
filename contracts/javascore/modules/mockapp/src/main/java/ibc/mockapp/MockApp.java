@@ -6,10 +6,12 @@ import java.util.Map;
 import ibc.icon.interfaces.IIBCModule;
 import icon.proto.core.client.Height;
 import icon.proto.core.channel.Packet;
+import icon.proto.core.channel.Channel.Counterparty;
 import score.Address;
 import score.Context;
 import score.VarDB;
 import score.annotation.External;
+import score.annotation.Optional;
 
 public class MockApp implements IIBCModule {
 
@@ -42,25 +44,29 @@ public class MockApp implements IIBCModule {
     }
 
     @External
-    public void sendPacket(byte[] data) {
+    public void sendPacket(byte[] data, @Optional BigInteger timeoutHeight, @Optional BigInteger timeoutTimestamp) {
         BigInteger currCount = sendCount.getOrDefault(BigInteger.ZERO);
         sendCount.set(currCount.add(BigInteger.ONE));
 
         Packet pct = new Packet();
         pct.setSequence(sendCount());
         pct.setData(data);
-        pct.setDestinationPort(dstPort.getOrDefault("xcall"));
-        pct.setDestinationChannel(dstChan.getOrDefault("channel-0"));
-        pct.setSourcePort(srcPort.getOrDefault("xcall"));
-        pct.setSourceChannel(srcChan.getOrDefault("channel-0"));
+        pct.setDestinationPort(dstPort.get());
+        pct.setDestinationChannel(dstChan.get());
+        pct.setSourcePort(srcPort.get());
+        pct.setSourceChannel(srcChan.get());
 
         Height hgt = new Height();
-        hgt.setRevisionHeight(BigInteger.ZERO);
-        hgt.setRevisionNumber(BigInteger.ZERO);
+        hgt.setRevisionHeight(timeoutHeight);
         pct.setTimeoutHeight(hgt);
 
-        pct.setTimeoutTimestamp(BigInteger.ZERO);
+        pct.setTimeoutTimestamp(timeoutTimestamp);
         Context.call(this.ibcHandler, "sendPacket", pct.encode());
+    }
+
+    @External
+    public void ackPacket(BigInteger sequence, byte[] ack) {
+        Context.call(this.ibcHandler, "writeAcknowledgement", srcPort.get(), srcChan.get(), sequence, ack);
     }
 
     @External(readonly = true)
@@ -78,28 +84,34 @@ public class MockApp implements IIBCModule {
             byte[] counterpartyPb, String version) {
         srcChan.set(channelId);
         srcPort.set(portId);
+        Counterparty counterparty = Counterparty.decode(counterpartyPb);
+        dstPort.set(counterparty.getPortId());
         Context.println("onChanOpenInit");
     }
 
     @External
     public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
             byte[] counterpartyPb, String version, String counterpartyVersion) {
-        dstChan.set(channelId);
-        dstPort.set(portId);
+        srcChan.set(channelId);
+        srcPort.set(portId);
+        Counterparty counterparty = Counterparty.decode(counterpartyPb);
+        dstChan.set(counterparty.getChannelId());
+        dstPort.set(counterparty.getPortId());
         Context.println("onChanOpenTry");
     }
 
     @External
-    public void onChanOpenAck(String portId, String channelId, String counterpartyVersion) {
+    public void onChanOpenAck(String portId, String channelId, String counterpartyChannelId, String counterpartyVersion) {
         Context.require(portId.equals(srcPort.get()));
         Context.require(channelId.equals(srcChan.get()));
+        dstChan.set(counterpartyChannelId);
         Context.println("onChanOpenAck");
     }
 
     @External
     public void onChanOpenConfirm(String portId, String channelId) {
-        Context.require(portId.equals(dstPort.get()));
-        Context.require(channelId.equals(dstChan.get()));
+        Context.require(portId.equals(srcPort.get()));
+        Context.require(channelId.equals(srcChan.get()));
         Context.println("onChanOpenConfirm");
     }
 
@@ -120,10 +132,12 @@ public class MockApp implements IIBCModule {
         BigInteger currCount = recvCount.getOrDefault(BigInteger.ZERO);
         recvCount.set(currCount.add(BigInteger.ONE));
         Context.println("onRecvPacket");
-        if (calldata.length > 0) {
-            return new byte[1];
+        Packet packet = Packet.decode(calldata);
+        if (new String(packet.getData()).equals("skip ack")){
+            return null;
         }
-        return null;
+
+        return "ack".getBytes();
     }
 
     @External
