@@ -1,3 +1,5 @@
+use cosmwasm_std::Addr;
+
 use super::*;
 
 #[cw_serde]

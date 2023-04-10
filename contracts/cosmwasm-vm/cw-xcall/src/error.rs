@@ -38,4 +38,6 @@ pub enum ContractError {
     OnlyAdmin,
     #[error("AdminAddressCannotBeNull")]
     AdminAddressCannotBeNull {},
+    #[error("InvalidAddress {address}")]
+    InvalidAddress { address: String },
 }
