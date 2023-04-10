@@ -314,24 +314,24 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(())
     }
 
-    fn client_update_time(
+    pub fn client_update_time(
         &self,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
     ) -> Result<ibc::timestamp::Timestamp, ContractError> {
-        todo!()
+        Ok(Timestamp::none())
     }
 
-    fn client_update_height(
+    pub fn client_update_height(
         &self,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
     ) -> Result<ibc::Height, ContractError> {
-        todo!()
+        Ok(ibc::Height::new(10, 10).unwrap())
     }
 
-    fn max_expected_time_per_block(&self) -> std::time::Duration {
-        todo!()
+    pub fn max_expected_time_per_block(&self) -> std::time::Duration {
+        Duration::new(60, 60)
     }
 }
 

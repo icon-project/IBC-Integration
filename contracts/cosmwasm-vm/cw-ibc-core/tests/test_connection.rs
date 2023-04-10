@@ -585,6 +585,54 @@ fn connection_to_verify_correct_counterparty_conn_id() {
         .expect("Missing attribute");
     assert_eq!(attribute.value, "connection-1");
 }
+
+#[test]
+fn connection_validate_delay() {
+    let mut deps = deps();
+    let env = mock_env();
+    let packet_proof_height = ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
+    let conn_end = ConnectionEnd::default();
+    let contract = CwIbcCoreContext::new();
+    contract
+        .ibc_store()
+        .expected_time_per_block()
+        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .unwrap();
+    contract.host_timestamp(&mut deps.storage).unwrap();
+
+    let result =
+        contract.verify_connection_delay_passed(deps.as_mut(), packet_proof_height, conn_end);
+    assert_eq!(result.is_ok(), true)
+}
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
+fn connection_validate_delay_fails() {
+    let mut deps = deps();
+    let _env = mock_env();
+    let packet_proof_height = ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
+    let conn_end = ConnectionEnd::default();
+    let contract = CwIbcCoreContext::new();
+    contract
+        .verify_connection_delay_passed(deps.as_mut(), packet_proof_height, conn_end)
+        .unwrap();
+}
+
+#[test]
+fn test_block_delay() {
+    let mut deps = deps();
+    let env = mock_env();
+    let delay_time = Duration::new(1, 1);
+    let contract = CwIbcCoreContext::new();
+    contract
+        .ibc_store()
+        .expected_time_per_block()
+        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .unwrap();
+    let result = contract.block_delay(&delay_time);
+    assert_eq!(result, true as u64)
+}
+
 #[test]
 fn connection_open_try_execute() {
     let mut deps = deps();
