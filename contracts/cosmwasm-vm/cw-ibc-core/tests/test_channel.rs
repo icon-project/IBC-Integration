@@ -7,7 +7,7 @@ use cw_ibc_core::ics04_channel::open_init::{
 };
 use cw_ibc_core::ics04_channel::open_try::on_chan_open_try_submessage;
 use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY};
-use cw_ibc_core::types::ClientType;
+use cw_ibc_core::types::{ClientId, ClientType};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
