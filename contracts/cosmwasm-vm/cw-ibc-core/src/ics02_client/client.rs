@@ -299,7 +299,7 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap())
     }
 
-    fn host_consensus_state(
+    pub fn host_consensus_state(
         &self,
         height: &ibc::Height,
     ) -> Result<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>, ContractError>
@@ -307,11 +307,11 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn validate_self_client(
+    pub fn validate_self_client(
         &self,
         client_state_of_host_on_counterparty: ibc_proto::google::protobuf::Any,
     ) -> Result<(), ContractError> {
-        todo!()
+        Ok(())
     }
 
     pub fn client_update_time(
