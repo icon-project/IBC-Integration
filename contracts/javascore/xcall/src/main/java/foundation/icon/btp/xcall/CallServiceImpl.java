@@ -32,6 +32,7 @@ import score.Address;
 import score.Context;
 import score.DictDB;
 import score.RevertedException;
+import score.UserRevertException;
 import score.UserRevertedException;
 import score.VarDB;
 import score.annotation.EventLog;
@@ -108,10 +109,8 @@ public class CallServiceImpl extends AbstractCallService {
 
         boolean needResponse = _rollback != null && _rollback.length > 0;
 
-        if (needResponse) {
-            CallRequest req = new CallRequest(caller, _to, _rollback);
-            requests.set(sn, req);
-        }
+        CallRequest req = new CallRequest(caller, _to, _rollback);
+        requests.set(sn, req);
 
         CSMessageRequest msgReq = new CSMessageRequest(caller.toString(), _to, sn, needResponse, _data);
 
@@ -145,12 +144,6 @@ public class CallServiceImpl extends AbstractCallService {
     @External(readonly = true)
     public Address getIBCHandler() {
         return ibcHandler.get();
-    }
-
-    @External
-    public void temp(Address address) {
-        ILightClient client=new ILightClientScoreInterface(address);
-        client.createClient("temp",new byte[0],new byte[0]);
     }
 
     @External
@@ -423,7 +416,7 @@ public class CallServiceImpl extends AbstractCallService {
 
     @Override
     public void onTimeoutPacket(byte[] calldata, Address relayer) {
-        Context.println("onTimeoutPacket");
+        throw new UserRevertException("Method not implemented");
     }
 
     private String getDestinationPort() {
