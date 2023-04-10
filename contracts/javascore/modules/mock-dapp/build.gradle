@@ -5,6 +5,8 @@ dependencies {
 }
 
 optimizedJar {
+    dependsOn(project(':lib').jar)
+    dependsOn(project(':score-util').jar)
     mainClassName = 'ibc.mock.MockDApp'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
