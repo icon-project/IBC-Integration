@@ -1,10 +1,8 @@
 //! ICS 03: Connection implementation for connecting a client
-pub mod conn_types;
 pub mod connection;
 pub mod event;
 pub mod handler;
 use crate::context::CwIbcCoreContext;
-use crate::ics03_connection::conn_types::VerifyClientFullState;
 use crate::ics03_connection::event::create_open_init_event;
 use crate::ics03_connection::event::create_open_try_event;
 use crate::types::{ClientId, ConnectionId};
@@ -36,4 +34,5 @@ use ibc::{
 use ibc_proto::protobuf::Protobuf;
 use std::{str::FromStr, time::Duration};
 
+use crate::types::{VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState};
 use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};

@@ -19,7 +19,10 @@ use crate::state::CwIbcStore;
 use crate::{
     ics26_routing::router::CwIbcRouter,
     storage_keys::StorageKey,
-    types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
+    types::{
+        ChannelId, ClientId, ClientType, ConnectionId, PortId, VerifyClientConsesnusState,
+        VerifyClientFullState, VerifyConnectionState,
+    },
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{

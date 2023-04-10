@@ -1,7 +1,4 @@
-use super::{
-    conn_types::{LightClientConnectionMessage, VerifyClientConsesnusState, VerifyConnectionState},
-    *,
-};
+use super::*;
 
 pub const EXECUTE_CONNECTION_OPENTRY: u64 = 31;
 
@@ -170,7 +167,7 @@ impl<'a> CwIbcCoreContext<'a> {
             conensus_state_path_on_a,
             client_consensus_state_path_on_b,
         );
-        let client_message = LightClientConnectionMessage::OpenTry {
+        let client_message = crate::msg::LightClientMessage::VerifyOpenTry {
             verify_connection_state,
             verify_client_full_satate,
             vefiry_client_consensus_state,
