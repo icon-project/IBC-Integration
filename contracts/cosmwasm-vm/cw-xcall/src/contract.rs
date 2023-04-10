@@ -91,6 +91,8 @@ impl<'a> CwCallService<'a> {
                     .add_events(response.events)
                     .add_submessages(response.messages))
             }
+            ExecuteMsg::UpdateAdmin { address } => self.update_admin(deps.storage, info, address),
+            ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
         }
     }
 

@@ -5,9 +5,9 @@ import ibc.icon.score.util.Proto;
 import ibc.icon.score.util.ProtoMessage;
 
 public class SignedHeader extends ProtoMessage {
-  private LightHeader header;
+  private LightHeader header = new LightHeader();
 
-  private Commit commit;
+  private Commit commit = new Commit();
 
   public LightHeader getHeader() {
     return this.header;

@@ -35,6 +35,10 @@ pub enum LightClientMessage {
         counterparty_chan_end_path: Vec<u8>,
         expected_counterparty_channel_end: Vec<u8>,
     },
+    Misbehaviour {
+        client_id: String,
+        misbehaviour: Vec<u8>,
+    },
 }
 
 #[cw_serde]
@@ -152,5 +156,25 @@ impl UpgradeClientResponse {
     }
     pub fn height(&self) -> Height {
         Height::from_str(&self.height).unwrap()
+    }
+}
+
+#[cw_serde]
+pub struct MisbehaviourResponse {
+    client_id: String,
+    pub client_state_commitment: Vec<u8>,
+}
+
+impl MisbehaviourResponse {
+    pub fn new(client_id: String, client_state_commitment: Vec<u8>) -> Self {
+        Self {
+            client_id,
+            client_state_commitment,
+        }
+    }
+    pub fn client_id(&self) -> Result<ClientId, ContractError> {
+        ClientId::from_str(&self.client_id).map_err(|error| ContractError::IbcClientError {
+            error: ClientError::InvalidClientIdentifier(error),
+        })
     }
 }
