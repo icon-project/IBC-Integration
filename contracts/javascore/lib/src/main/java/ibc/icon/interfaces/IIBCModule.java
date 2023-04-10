@@ -44,7 +44,7 @@ public interface IIBCModule {
      * OnChanOpenAck will error if the counterparty selected version String is invalid to abort the handshake. It may
      * also perform custom ACK logic.
      */
-    void onChanOpenAck(String portId, String channelId, String counterpartyVersion);
+    void onChanOpenAck(String portId, String channelId, String counterpartyChannelId, String counterpartyVersion);
 
     /**
      * OnChanOpenConfirm will perform custom CONFIRM logic and may error to abort the handshake.
