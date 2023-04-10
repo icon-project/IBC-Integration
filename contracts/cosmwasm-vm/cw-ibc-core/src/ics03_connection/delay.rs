@@ -5,12 +5,12 @@ use super::*;
 impl<'a> CwIbcCoreContext<'a> {
     pub fn verify_connection_delay_passed(
         &self,
-        deps: DepsMut,
+        store: &dyn Storage,
         packet_proof_height: Height,
         connection_end: ConnectionEnd,
     ) -> Result<(), ContractError> {
         // Fetch the current host chain time and height.
-        let current_host_time = self.host_timestamp(deps.storage)?;
+        let current_host_time = self.host_timestamp(store)?;
         let current_host_height = self.host_height()?;
 
         // Fetch the latest time and height that the counterparty client was updated on the host chain.

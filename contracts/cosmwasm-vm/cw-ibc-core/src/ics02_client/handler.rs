@@ -1,10 +1,5 @@
 use super::{events::client_misbehaviour_event, *};
 
-pub const EXECUTE_CREATE_CLIENT: u64 = 21;
-pub const EXECUTE_UPDATE_CLIENT: u64 = 22;
-pub const EXECUTE_UPGRADE_CLIENT: u64 = 23;
-pub const MISBEHAVIOUR: u64 = 23;
-
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn create_client(
         &self,

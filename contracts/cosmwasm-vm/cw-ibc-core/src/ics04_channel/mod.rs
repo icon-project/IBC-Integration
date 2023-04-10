@@ -38,15 +38,9 @@ pub use msg::LightClientMessage;
 use std::str::FromStr;
 pub use traits::*;
 
-// Constants for Reply messages
+pub mod packet;
+use ibc::core::ics04_channel::commitment::PacketCommitment;
+pub use packet::*;
 
-pub const EXECUTE_ON_CHANNEL_OPEN_INIT: u64 = 41;
-pub const EXECUTE_ON_CHANNEL_OPEN_TRY: u64 = 42;
-pub const EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT: u64 = 421;
-pub const EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT: u64 = 431;
-pub const EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE: u64 = 432;
-pub const EXECUTE_ON_CHANNEL_CLOSE_INIT: u64 = 45;
-pub const EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT: u64 = 461;
-pub const EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE: u64 = 462;
-pub const EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT: u64 = 441;
-pub const EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE: u64 = 442;
+use cosmwasm_std::{IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
+use ibc::timestamp::Expiry;

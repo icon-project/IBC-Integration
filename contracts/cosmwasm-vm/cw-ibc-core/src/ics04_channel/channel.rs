@@ -289,38 +289,93 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
-    fn store_packet_commitment(
-        &mut self,
-        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
+    pub fn store_packet_commitment(
+        &self,
+        store: &mut dyn Storage,
+        poirt_id: &PortId,
+        channel_id: &ChannelId,
+        sequence: Sequence,
         commitment: ibc::core::ics04_channel::commitment::PacketCommitment,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    ) -> Result<(), ContractError> {
+        let commitment_path = self.packet_commitment_path(
+            poirt_id.ibc_port_id(),
+            channel_id.ibc_channel_id(),
+            sequence,
+        );
+        let commitment_bytes = to_vec(&commitment).map_err(|error| ContractError::Std(error))?;
+        self.ibc_store()
+            .commitments()
+            .save(store, commitment_path, &commitment_bytes)?;
+
+        Ok(())
     }
 
-    fn delete_packet_commitment(
-        &mut self,
-        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    pub fn delete_packet_commitment(
+        &self,
+        store: &mut dyn Storage,
+        poirt_id: &PortId,
+        channel_id: &ChannelId,
+        sequence: Sequence,
+    ) -> Result<(), ContractError> {
+        let commitment_path = self.packet_commitment_path(
+            poirt_id.ibc_port_id(),
+            channel_id.ibc_channel_id(),
+            sequence,
+        );
+        self.ibc_store()
+            .commitments()
+            .remove(store, commitment_path);
+
+        Ok(())
     }
 
-    fn store_packet_receipt(
-        &mut self,
-        receipt_path: &ibc::core::ics24_host::path::ReceiptPath,
+    pub fn store_packet_receipt(
+        &self,
+        store: &mut dyn Storage,
+        poirt_id: &PortId,
+        channel_id: &ChannelId,
+        sequence: Sequence,
         receipt: ibc::core::ics04_channel::packet::Receipt,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    ) -> Result<(), ContractError> {
+        let commitment_path = self.packet_receipt_commitment_path(
+            poirt_id.ibc_port_id(),
+            channel_id.ibc_channel_id(),
+            sequence,
+        );
+        let ok = match receipt {
+            ibc::core::ics04_channel::packet::Receipt::Ok => true,
+        };
+        let commitment_bytes = to_vec(&ok).map_err(|error| ContractError::Std(error))?;
+        self.ibc_store()
+            .commitments()
+            .save(store, commitment_path, &commitment_bytes)?;
+
+        Ok(())
     }
 
-    fn store_packet_acknowledgement(
-        &mut self,
-        ack_path: &ibc::core::ics24_host::path::AckPath,
+    pub fn store_packet_acknowledgement(
+        &self,
+        store: &mut dyn Storage,
+        poirt_id: &PortId,
+        channel_id: &ChannelId,
+        sequence: Sequence,
         ack_commitment: ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
-    ) -> Result<(), ibc::core::ContextError> {
-        todo!()
+    ) -> Result<(), ContractError> {
+        let commitment_path = self.packet_acknowledgement_commitment_path(
+            poirt_id.ibc_port_id(),
+            channel_id.ibc_channel_id(),
+            sequence,
+        );
+        let commitment_bytes = ack_commitment.into_vec();
+
+        self.ibc_store()
+            .commitments()
+            .save(store, commitment_path, &commitment_bytes)?;
+
+        Ok(())
     }
 
-    fn delete_packet_acknowledgement(
+    pub fn delete_packet_acknowledgement(
         &mut self,
         ack_path: &ibc::core::ics24_host::path::AckPath,
     ) -> Result<(), ibc::core::ContextError> {
@@ -352,28 +407,90 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(channel_end)
     }
 
-    fn get_packet_commitment(
+    pub fn get_packet_commitment(
         &self,
-        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
-    ) -> Result<ibc::core::ics04_channel::commitment::PacketCommitment, ibc::core::ContextError>
+        store: &mut dyn Storage,
+        poirt_id: &PortId,
+        channel_id: &ChannelId,
+        sequence: Sequence,
+    ) -> Result<ibc::core::ics04_channel::commitment::PacketCommitment, ContractError> {
+        let commitment_path = self.packet_commitment_path(
+            poirt_id.ibc_port_id(),
+            channel_id.ibc_channel_id(),
+            sequence,
+        );
+        let commitment_end_bytes = self
+            .ibc_store()
+            .commitments()
+            .load(store, commitment_path)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: "PacketCommitmentNotFound".to_string(),
+            })?;
+        let commitment: PacketCommitment = serde_json_wasm::from_slice(&commitment_end_bytes)
+            .map_err(|error| ContractError::IbcDecodeError {
+                error: error.to_string(),
+            })?;
+
+        Ok(commitment)
+    }
+
+    pub fn get_packet_receipt(
+        &self,
+        store: &mut dyn Storage,
+        poirt_id: &PortId,
+        channel_id: &ChannelId,
+        sequence: Sequence,
+    ) -> Result<ibc::core::ics04_channel::packet::Receipt, ContractError> {
+        let commitment_path = self.packet_receipt_commitment_path(
+            poirt_id.ibc_port_id(),
+            channel_id.ibc_channel_id(),
+            sequence,
+        );
+        let commitment_end_bytes = self
+            .ibc_store()
+            .commitments()
+            .load(store, commitment_path)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: "PacketCommitmentNotFound".to_string(),
+            })?;
+        let commitment: bool =
+            serde_json_wasm::from_slice(&commitment_end_bytes).map_err(|error| {
+                ContractError::IbcDecodeError {
+                    error: error.to_string(),
+                }
+            })?;
+        match commitment {
+            true => Ok(ibc::core::ics04_channel::packet::Receipt::Ok),
+            false => Err(ContractError::IbcPackketError {
+                error: PacketError::PacketReceiptNotFound { sequence },
+            }),
+        }
+    }
+
+    pub fn get_packet_acknowledgement(
+        &self,
+        store: &mut dyn Storage,
+        poirt_id: &PortId,
+        channel_id: &ChannelId,
+        sequence: Sequence,
+    ) -> Result<ibc::core::ics04_channel::commitment::AcknowledgementCommitment, ContractError>
     {
-        todo!()
-    }
+        let commitment_path = self.packet_acknowledgement_commitment_path(
+            poirt_id.ibc_port_id(),
+            channel_id.ibc_channel_id(),
+            sequence,
+        );
+        let commitment_end_bytes = self
+            .ibc_store()
+            .commitments()
+            .load(store, commitment_path)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: "PacketCommitmentNotFound".to_string(),
+            })?;
+        let commitment = ibc::core::ics04_channel::commitment::AcknowledgementCommitment::from(
+            commitment_end_bytes,
+        );
 
-    fn get_packet_receipt(
-        &self,
-        receipt_path: &ibc::core::ics24_host::path::ReceiptPath,
-    ) -> Result<ibc::core::ics04_channel::packet::Receipt, ibc::core::ContextError> {
-        todo!()
-    }
-
-    fn get_packet_acknowledgement(
-        &self,
-        ack_path: &ibc::core::ics24_host::path::AckPath,
-    ) -> Result<
-        ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
-        ibc::core::ContextError,
-    > {
-        todo!()
+        Ok(commitment)
     }
 }
