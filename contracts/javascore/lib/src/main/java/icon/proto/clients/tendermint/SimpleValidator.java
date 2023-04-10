@@ -6,7 +6,7 @@ import ibc.icon.score.util.ProtoMessage;
 import java.math.BigInteger;
 
 public class SimpleValidator extends ProtoMessage {
-  private PublicKey pubKey;
+  private PublicKey pubKey = new PublicKey();
 
   private BigInteger votingPower = BigInteger.ZERO;
 

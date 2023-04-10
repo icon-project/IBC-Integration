@@ -105,7 +105,7 @@ public class IBCHandlerTestBase extends TestBase {
         when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
                 .thenReturn(Map.of(
                     "clientStateCommitment", new byte[0],
-                    "consensusStateCommitment", new byte[0],  
+                    "consensusStateCommitment", new byte[0],
                     "height",Height.getDefaultInstance().toByteArray()
             ));
 ;
@@ -133,7 +133,7 @@ public class IBCHandlerTestBase extends TestBase {
 
         when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(Map.of(
             "clientStateCommitment", clientStateCommitment,
-            "consensusStateCommitment", consensusStateCommitment,  
+            "consensusStateCommitment", consensusStateCommitment,
             "height", consensusHeight.toByteArray()
         ));
         // Act
@@ -303,7 +303,7 @@ public class IBCHandlerTestBase extends TestBase {
         Channel channel = Channel.parseFrom((byte[]) handler.call("getChannel", portId, channelId));
         assertEquals(Channel.State.STATE_OPEN, channel.getState());
 
-        verify(module.mock).onChanOpenAck(portId, channelId, msg.getCounterpartyVersion());
+        verify(module.mock).onChanOpenAck(portId, channelId, msg.getCounterpartyChannelId(), msg.getCounterpartyVersion());
     }
 
     void confirmChannel() throws Exception {

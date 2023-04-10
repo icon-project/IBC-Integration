@@ -10,13 +10,13 @@ import java.math.BigInteger;
 public class ClientState extends ProtoMessage {
   private String chainId = "";
 
-  private Fraction trustLevel;
+  private Fraction trustLevel = new Fraction();
 
-  private Duration trustingPeriod;
+  private Duration trustingPeriod = new Duration();
 
-  private Duration unbondingPeriod;
+  private Duration unbondingPeriod = new Duration();
 
-  private Duration maxClockDrift;
+  private Duration maxClockDrift = new Duration();
 
   private BigInteger frozenHeight = BigInteger.ZERO;
 

@@ -6,13 +6,13 @@ import ibc.icon.score.util.ProtoMessage;
 import java.math.BigInteger;
 
 public class TmHeader extends ProtoMessage {
-  private SignedHeader signedHeader;
+  private SignedHeader signedHeader = new SignedHeader();
 
-  private ValidatorSet validatorSet;
+  private ValidatorSet validatorSet = new ValidatorSet();
 
   private BigInteger trustedHeight = BigInteger.ZERO;
 
-  private ValidatorSet trustedValidators;
+  private ValidatorSet trustedValidators = new ValidatorSet();
 
   public SignedHeader getSignedHeader() {
     return this.signedHeader;

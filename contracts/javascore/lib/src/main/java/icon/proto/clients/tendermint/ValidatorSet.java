@@ -10,7 +10,7 @@ import scorex.util.ArrayList;
 public class ValidatorSet extends ProtoMessage {
   private List<Validator> validators = new ArrayList<>();
 
-  private Validator proposer;
+  private Validator proposer = new Validator();
 
   private BigInteger totalVotingPower = BigInteger.ZERO;
 
