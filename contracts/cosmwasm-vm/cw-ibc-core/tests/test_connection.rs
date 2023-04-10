@@ -1415,9 +1415,13 @@ fn connection_open_init_fails_of_clientstate() {
     .try_into()
     .unwrap();
 
-    let cl = to_vec(&client_state);
+    let client_state_bytes = to_vec(&client_state).unwrap();
     contract
-        .store_client_state(&mut deps.storage, client_id.ibc_client_id(), cl.unwrap())
+        .store_client_state(
+            &mut deps.storage,
+            client_id.ibc_client_id(),
+            client_state_bytes,
+        )
         .unwrap();
 
     contract
@@ -1459,12 +1463,12 @@ fn connection_open_init_validate_invalid_client_id() {
     .try_into()
     .unwrap();
 
-    let cl = to_vec(&client_state);
+    let client_state_bytes = to_vec(&client_state).unwrap();
     contract
         .store_client_state(
             &mut deps.storage,
             &res_msg.client_id_on_a.clone(),
-            cl.unwrap(),
+            client_state_bytes,
         )
         .unwrap();
     contract
