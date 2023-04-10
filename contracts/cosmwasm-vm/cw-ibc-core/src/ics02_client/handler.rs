@@ -1,7 +1,3 @@
-use std::str::FromStr;
-
-use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
-
 use super::{events::client_misbehaviour_event, *};
 
 pub const EXECUTE_CREATE_CLIENT: u64 = 21;
