@@ -744,7 +744,13 @@ fn create_open_confirm_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let message = MsgChannelOpenConfirm::try_from(default_raw_msg.clone()).unwrap();
-    let event = create_open_confirm_channel_event(&message);
+    let event = create_open_confirm_channel_event(
+        &message.port_id_on_b.as_str(),
+        &message.chan_id_on_b.as_str(),
+        PortId::default().as_str(),
+        ChannelId::default().as_str(),
+        ConnectionId::default().as_str(),
+    );
 
     assert_eq!(IbcEventType::OpenConfirmChannel.as_str(), event.ty);
     assert_eq!("channel-0", event.attributes[1].value);
