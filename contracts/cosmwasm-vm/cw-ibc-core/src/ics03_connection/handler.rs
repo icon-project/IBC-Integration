@@ -1,4 +1,5 @@
 use super::*;
+pub const EXECUTE_CONNECTION_OPENCONFIRM: u64 = 33;
 
 pub const EXECUTE_CONNECTION_OPENACK: u64 = 32;
 
@@ -492,6 +493,174 @@ impl<'a> CwIbcCoreContext<'a> {
                     Ok(Response::new()
                         .add_attribute("method", "excute_connection_open_try")
                         .add_attribute("connection_id", connection_id.connection_id().as_str())
+                        .add_event(event))
+                }
+                None => Err(ContractError::IbcConnectionError {
+                    error: ConnectionError::Other {
+                        description: "UNKNOWN ERROR".to_string(),
+                    },
+                }),
+            },
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcConnectionError {
+                error: ConnectionError::Other { description: error },
+            }),
+        }
+    }
+    pub fn connection_open_confirm(
+        &self,
+        msg: MsgConnectionOpenConfirm,
+        deps: DepsMut,
+        info: MessageInfo,
+    ) -> Result<Response, ContractError> {
+        let conn_end_on_b = self.connection_end(deps.storage, msg.conn_id_on_b.clone().into())?;
+        let client_id_on_b = conn_end_on_b.client_id();
+        let client_id_on_a = conn_end_on_b.counterparty().client_id();
+        if !conn_end_on_b.state_matches(&State::TryOpen) {
+            return Err(ContractError::IbcConnectionError {
+                error: ConnectionError::ConnectionMismatch {
+                    connection_id: msg.conn_id_on_b.clone(),
+                },
+            });
+        }
+        let _client_state_of_a_on_b =
+            self.client_state(deps.storage, client_id_on_b)
+                .map_err(|_| ContractError::IbcConnectionError {
+                    error: ConnectionError::Other {
+                        description: "failed to fetch client state".to_string(),
+                    },
+                })?;
+        let _client_cons_state_path_on_b =
+            self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
+        let consensus_state_of_a_on_b = self
+            .consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)
+            .map_err(|_| ContractError::IbcConnectionError {
+                error: ConnectionError::Other {
+                    description: "failed to fetch consennsus state".to_string(),
+                },
+            })?;
+        let prefix_on_a = conn_end_on_b.counterparty().prefix();
+        let prefix_on_b = self.commitment_prefix();
+
+        let client_address =
+            self.get_client(deps.as_ref().storage, client_id_on_b.clone().into())?;
+
+        let expected_conn_end_on_a = ConnectionEnd::new(
+            State::Open,
+            client_id_on_a.clone(),
+            Counterparty::new(
+                client_id_on_b.clone().into(),
+                Some(msg.conn_id_on_b.clone()),
+                prefix_on_b,
+            ),
+            conn_end_on_b.versions().to_vec(),
+            conn_end_on_b.delay_period(),
+        );
+
+        let connection_path = self.connection_path(&msg.conn_id_on_b);
+        let verify_connection_state = VerifyConnectionState::new(
+            msg.proof_height_on_a.to_string(),
+            to_vec(&prefix_on_a).map_err(|error| ContractError::Std(error))?,
+            to_vec(&msg.proof_conn_end_on_a).map_err(|error| ContractError::Std(error))?,
+            consensus_state_of_a_on_b.root().as_bytes().to_vec(),
+            connection_path,
+            to_vec(&expected_conn_end_on_a).map_err(|error| ContractError::Std(error))?,
+        );
+        let client_message = crate::msg::LightClientMessage::VerifyOpenConfirm {
+            verify_connection_state,
+        };
+
+        let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+            contract_addr: client_address.to_string(),
+            msg: to_binary(&client_message).unwrap(),
+            funds: info.funds,
+        });
+
+        let sub_message =
+            SubMsg::reply_always(wasm_execute_message, EXECUTE_CONNECTION_OPENCONFIRM);
+
+        Ok(Response::new()
+            .add_submessage(sub_message)
+            .add_attribute("method", "connection_open_ack"))
+    }
+
+    pub fn execute_connection_openconfirm(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        match message.result {
+            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
+                Some(data) => {
+                    let response: OpenConfirmResponse =
+                        from_binary(&data).map_err(|error| ContractError::Std(error))?;
+
+                    let connection_id =
+                        IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
+                            ContractError::IbcDecodeError {
+                                error: error.to_string(),
+                            }
+                        })?;
+
+                    let mut conn_end =
+                        self.connection_end(deps.storage, connection_id.clone().into())?;
+
+                    if !conn_end.state_matches(&State::TryOpen) {
+                        return Err(ContractError::IbcConnectionError {
+                            error: ConnectionError::ConnectionMismatch {
+                                connection_id: connection_id.clone(),
+                            },
+                        });
+                    }
+                    let counter_party_client_id =
+                        ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
+                            ContractError::IbcDecodeError {
+                                error: error.to_string(),
+                            }
+                        })?;
+
+                    let counterparty_conn_id = match response.counterparty_connection_id.is_empty()
+                    {
+                        true => None,
+                        false => {
+                            let connection_id =
+                                IbcConnectionId::from_str(&response.counterparty_connection_id)
+                                    .unwrap();
+                            Some(connection_id.clone())
+                        }
+                    };
+
+                    let counterparty_prefix = CommitmentPrefix::try_from(
+                        response.counterparty_prefix,
+                    )
+                    .map_err(|error| ContractError::IbcConnectionError {
+                        error: ConnectionError::Other {
+                            description: error.to_string(),
+                        },
+                    })?;
+
+                    let counterparty = Counterparty::new(
+                        counter_party_client_id.ibc_client_id().clone(),
+                        counterparty_conn_id.clone(),
+                        counterparty_prefix,
+                    );
+
+                    conn_end.set_state(State::Open);
+
+                    let counter_conn_id = ConnectionId::from(counterparty_conn_id.unwrap());
+
+                    let event = create_open_confirm_event(
+                        connection_id.clone().into(),
+                        conn_end.client_id().clone().into(),
+                        counter_conn_id,
+                        counterparty.client_id().clone().into(),
+                    );
+
+                    self.store_connection(deps.storage, connection_id.clone().into(), conn_end)
+                        .unwrap();
+
+                    Ok(Response::new()
+                        .add_attribute("method", "excute_connection_open_ack")
+                        .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }
                 None => Err(ContractError::IbcConnectionError {

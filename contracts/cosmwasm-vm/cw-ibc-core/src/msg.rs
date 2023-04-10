@@ -44,4 +44,7 @@ pub enum LightClientMessage {
         verify_client_full_satate: VerifyClientFullState,
         vefiry_client_consensus_state: VerifyClientConsesnusState,
     },
+    VerifyOpenConfirm {
+        verify_connection_state: VerifyConnectionState,
+    },
 }

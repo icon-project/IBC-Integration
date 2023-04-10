@@ -664,3 +664,11 @@ pub struct OpenAckResponse {
     pub counterparty_connection_id: String,
     pub counterparty_prefix: Vec<u8>,
 }
+
+#[cw_serde]
+pub struct OpenConfirmResponse {
+    pub conn_id: String,
+    pub counterparty_client_id: String,
+    pub counterparty_connection_id: String,
+    pub counterparty_prefix: Vec<u8>,
+}
