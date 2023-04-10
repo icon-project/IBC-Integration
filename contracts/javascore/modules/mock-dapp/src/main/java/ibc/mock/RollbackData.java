@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall.sample;
+package ibc.mock;
 
 import score.ByteArrayObjectWriter;
 import score.Context;

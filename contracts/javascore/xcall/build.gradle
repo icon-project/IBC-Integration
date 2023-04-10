@@ -4,6 +4,7 @@ dependencies {
     implementation project(':lib')
     implementation project(':score-util')
     testImplementation project(':test-lib')
+    intTestImplementation project(':mock-dapp')
 }
 
 
@@ -50,4 +51,27 @@ deployJar {
     parameters {
 
     }
+}
+
+
+task integrationTest(type: Test) {
+    useJUnitPlatform()
+
+    rootProject.allprojects {
+        if (it.getTasks().findByName('optimizedJar')) {
+            dependsOn(it.getTasks().getByName('optimizedJar'))
+        }
+    }
+
+    options {
+        testLogging.showStandardStreams = true
+        description = 'Runs integration tests.'
+        group = 'verification'
+
+        testClassesDirs = sourceSets.intTest.output.classesDirs
+        classpath = sourceSets.intTest.runtimeClasspath
+
+        systemProperty "java", optimizedJar.outputJarName
+    }
+
 }

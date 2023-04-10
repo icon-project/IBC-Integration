@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall;
+package ibc.xcall.integration;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
