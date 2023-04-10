@@ -1,3 +1,5 @@
+use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
+
 use super::*;
 
 pub trait IbcClient {
@@ -41,6 +43,19 @@ pub trait IbcClient {
         store: &mut dyn Storage,
         client_type: ClientType,
     ) -> Result<ClientId, ContractError>;
+
+    fn misbehaviour(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        message: MsgSubmitMisbehaviour,
+    ) -> Result<Response, ContractError>;
+
+    fn execute_misbehaviour_reply(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError>;
 }
 
 pub trait ValidateChannel {
