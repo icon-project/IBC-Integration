@@ -36,7 +36,7 @@ func (cs ClientState) GetChainID() string {
 	return "icon"
 }
 
-// ClientType is tendermint.
+// ClientType is icon
 func (cs ClientState) ClientType() string {
 	return "07-icon"
 }
