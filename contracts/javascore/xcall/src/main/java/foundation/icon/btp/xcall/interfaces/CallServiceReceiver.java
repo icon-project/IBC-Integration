@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall;
+package foundation.icon.btp.xcall.interfaces;
 
+import foundation.icon.score.client.ScoreInterface;
 import score.annotation.External;
 
+@ScoreInterface
 public interface CallServiceReceiver {
 
     /**

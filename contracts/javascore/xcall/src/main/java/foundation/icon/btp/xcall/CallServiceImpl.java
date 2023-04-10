@@ -16,7 +16,14 @@
 
 package foundation.icon.btp.xcall;
 
-import ibc.icon.interfaces.IIBCModule;
+import foundation.icon.btp.xcall.data.CSMessage;
+import foundation.icon.btp.xcall.data.CSMessageRequest;
+import foundation.icon.btp.xcall.data.CSMessageResponse;
+import foundation.icon.btp.xcall.data.CallRequest;
+import foundation.icon.btp.xcall.interfaces.CallServiceReceiver;
+import foundation.icon.btp.xcall.interfaces.CallServiceReceiverScoreInterface;
+import ibc.icon.interfaces.ILightClient;
+import ibc.icon.interfaces.ILightClientScoreInterface;
 import icon.proto.core.channel.Channel.Counterparty;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
@@ -33,28 +40,7 @@ import score.annotation.Optional;
 import score.annotation.Payable;
 
 
-public class CallServiceImpl implements IIBCModule {
-
-    public static final int MAX_DATA_SIZE = 2048;
-    public static final int MAX_ROLLBACK_SIZE = 1024;
-
-    private final VarDB<Address> ibcHandler = Context.newVarDB("ibcHandler", Address.class);
-    private final VarDB<BigInteger> sn = Context.newVarDB("sn", BigInteger.class);
-    private final VarDB<BigInteger> reqId = Context.newVarDB("reqId", BigInteger.class);
-    private final VarDB<BigInteger> timeoutHeight = Context.newVarDB("timeoutHeight", BigInteger.class);
-
-    private final DictDB<BigInteger, CallRequest> requests = Context.newDictDB("requests", CallRequest.class);
-    private final DictDB<BigInteger, CSMessageRequest> proxyReqs = Context.newDictDB("proxyReqs",
-            CSMessageRequest.class);
-
-    // for fee-related operations
-    private final VarDB<Address> admin = Context.newVarDB("admin", Address.class);
-    private final VarDB<Address> feeHandler = Context.newVarDB("feeHandler", Address.class);
-    private final VarDB<BigInteger> protocolFee = Context.newVarDB("protocolFee", BigInteger.class);
-    private final VarDB<String> sourcePort = Context.newVarDB("sourcePort", String.class);
-    private final VarDB<String> sourceChannel = Context.newVarDB("sourceChannel", String.class);
-    private final VarDB<String> destinationPort = Context.newVarDB("destinationPort", String.class);
-    private final VarDB<String> destinationChannel = Context.newVarDB("destinationChannel", String.class);
+public class CallServiceImpl extends AbstractCallService {
 
     public CallServiceImpl(Address _ibc) {
         this.ibcHandler.set(_ibc);
@@ -131,7 +117,7 @@ public class CallServiceImpl implements IIBCModule {
 
         Packet pct = new Packet();
         pct.setSequence(getNextSn());
-        pct.setData(msgReq.toBytes());
+        pct.setData(createMessage(CSMessage.REQUEST, msgReq.toBytes()));
         pct.setDestinationPort(getDestinationPort());
         pct.setDestinationChannel(getDestinationChannel());
         pct.setSourcePort(getSourcePort());
@@ -162,6 +148,12 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     @External
+    public void temp(Address address) {
+        ILightClient client=new ILightClientScoreInterface(address);
+        client.createClient("temp",new byte[0],new byte[0]);
+    }
+
+    @External
     public void executeCall(BigInteger _reqId) {
         CSMessageRequest req = proxyReqs.get(_reqId);
         Context.require(req != null, "InvalidRequestId");
@@ -170,7 +162,7 @@ public class CallServiceImpl implements IIBCModule {
 
         CSMessageResponse msgRes = null;
         try {
-            DAppProxy proxy = new DAppProxy(Address.fromString(req.getTo()));
+            CallServiceReceiver proxy = new CallServiceReceiverScoreInterface(Address.fromString(req.getTo()));
             proxy.handleCallMessage(req.getFrom(), req.getData());
             msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.SUCCESS, "");
         } catch (UserRevertedException e) {
@@ -202,7 +194,7 @@ public class CallServiceImpl implements IIBCModule {
 
         CSMessageResponse msgRes = null;
         try {
-            DAppProxy proxy = new DAppProxy(req.getFrom());
+            CallServiceReceiver proxy = new CallServiceReceiverScoreInterface(req.getFrom());
             proxy.handleCallMessage(caller, req.getRollback());
             msgRes = new CSMessageResponse(_sn, CSMessageResponse.SUCCESS, "");
         } catch (UserRevertedException e) {
@@ -409,6 +401,10 @@ public class CallServiceImpl implements IIBCModule {
     @External
     public byte[] onRecvPacket(byte[] calldata, Address relayer) {
         onlyIBCHandler();
+
+        BigInteger newRecvCount = recvCount.getOrDefault(BigInteger.ZERO).add(BigInteger.ONE);
+        recvCount.set(newRecvCount);
+
         Packet packet = Packet.decode(calldata);
         byte[] _msg = packet.getData();
         String _from = packet.getSourcePort() + "/" + packet.getSourceChannel();
@@ -417,8 +413,6 @@ public class CallServiceImpl implements IIBCModule {
         handleReceivedPacket(_from, _from, _sn, _msg);
 
         return new byte[0];
-
-
     }
 
 

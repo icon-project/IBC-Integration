@@ -7,6 +7,11 @@ import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
+import foundation.icon.btp.xcall.data.CSMessage;
+import foundation.icon.btp.xcall.data.CSMessageRequest;
+import foundation.icon.btp.xcall.interfaces.CallServiceReceiver;
+import foundation.icon.btp.xcall.interfaces.CallServiceReceiverScoreInterface;
+import ibc.icon.test.MockContract;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
@@ -23,6 +28,7 @@ public class CallServiceTestBase extends TestBase {
 
     protected final ServiceManager sm = getServiceManager();
     protected final Account owner = sm.createAccount();
+    protected final Account relayer = sm.createAccount();
 
     protected Score client;
 
@@ -33,6 +39,8 @@ public class CallServiceTestBase extends TestBase {
     protected final String portId = "port-id";
     protected final String channelId = "channel-id";
     protected final String connectionId = "connection-id";
+
+    protected MockContract<CallServiceReceiver> mockDApp;
 
 
     protected final BigInteger TIMEOUT_HEIGHT = BigInteger.valueOf(997L);
@@ -45,7 +53,7 @@ public class CallServiceTestBase extends TestBase {
     protected final MockedStatic<Context> contextMock = Mockito.mockStatic(Context.class, Mockito.CALLS_REAL_METHODS);
 
     public void setup() throws Exception {
-
+        mockDApp = new MockContract<>(CallServiceReceiverScoreInterface.class, CallServiceReceiver.class, sm, owner);
         client = sm.deploy(owner, CallServiceImpl.class, MOCK_CONTRACT_ADDRESS.get("ibcHandler").getAddress());
         clientSpy = (CallServiceImpl) spy(client.getInstance());
         client.setInstance(clientSpy);
@@ -77,7 +85,7 @@ public class CallServiceTestBase extends TestBase {
         onChanOpenAck(MOCK_CONTRACT_ADDRESS.get("ibcHandler"));
 
         contextMock.when(Context::getValue).thenReturn(BigInteger.ONE);
-        Packet packet = getBasePacket(_to, _data, rollback);
+        Packet packet = getRequestPacket(_to, _data, rollback);
 
         contextMock.when(() -> {
             Context.call(this.MOCK_CONTRACT_ADDRESS.get("ibcHandler").getAddress(), "sendPacket",
@@ -91,7 +99,16 @@ public class CallServiceTestBase extends TestBase {
     }
 
 
-    protected Packet getBasePacket(String _to, byte[] data, byte[] rollback) {
+    protected byte[] onRecvPacket(String _to, byte[] _data, byte[] rollback) {
+        Packet packet = getRequestPacket(_to, _data, rollback);
+        byte[] data = packet.encode();
+        client.invoke(MOCK_CONTRACT_ADDRESS.get("ibcHandler"), "onRecvPacket", data, relayer.getAddress());
+        verify(clientSpy).CallMessage(portId + "/" + channelId, _to, BigInteger.ONE, BigInteger.ONE);
+        return data;
+    }
+
+
+    protected Packet getRequestPacket(String _to, byte[] data, byte[] rollback) {
         BigInteger nextRecvId = BigInteger.ONE;
         Height height = new Height();
         height.setRevisionNumber(BigInteger.ZERO);
@@ -100,10 +117,12 @@ public class CallServiceTestBase extends TestBase {
         CSMessageRequest msg = new CSMessageRequest(MOCK_CONTRACT_ADDRESS.get("dApp").getAddress().toString(), _to,
                 nextRecvId, rollback != null && rollback.length > 0, data);
 
+        CSMessage message = new CSMessage(CSMessage.REQUEST, msg.toBytes());
+
         nextRecvId = nextRecvId.add(BigInteger.ONE);
         Packet packet = new Packet();
         packet.setSequence(nextRecvId);
-        packet.setData(msg.toBytes());
+        packet.setData(message.toBytes());
         packet.setSourcePort(portId);
         packet.setSourceChannel(channelId);
         packet.setDestinationPort(counterPartyPortId);

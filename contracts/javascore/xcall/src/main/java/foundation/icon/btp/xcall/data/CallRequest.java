@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall;
+package foundation.icon.btp.xcall.data;
 
 import score.Address;
 import score.ObjectReader;

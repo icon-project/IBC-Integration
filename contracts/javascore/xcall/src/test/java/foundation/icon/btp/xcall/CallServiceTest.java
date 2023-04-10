@@ -2,7 +2,9 @@ package foundation.icon.btp.xcall;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
 
+import java.math.BigInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
@@ -80,6 +82,32 @@ public class CallServiceTest extends CallServiceTestBase {
         String _to = "to-address";
         byte[] _rollback = "rollback".getBytes();
         sendCallMessage(_to, _data, _rollback);
+    }
+
+    @Test
+    @Order(7)
+    void onRecvPacket() {
+        byte[] _data = "sendCallMessageWithRollback".getBytes();
+        String _to = "to-address";
+        byte[] _rollback = "rollback".getBytes();
+        onRecvPacket(_to, _data, _rollback);
+    }
+
+
+    @Test
+    @Order(7)
+    void executeCall() {
+        //[116, 101, 115, 116, 45, 109, 101, 115, 115, 97, 103, 101]
+        byte[] _data = "test-message".getBytes();
+        String _to = mockDApp.getAddress().toString();
+        byte[] _rollback = "rollback".getBytes();
+        onRecvPacket(_to, _data, _rollback);
+        System.out.println("_to = " + _to);
+
+        doNothing().when(mockDApp.mock).handleCallMessage(portId + "/" + channelId, _data);
+
+        client.invoke(sm.createAccount(), "executeCall", BigInteger.ONE);
+
     }
 
 }

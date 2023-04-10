@@ -14,56 +14,45 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall;
+package foundation.icon.btp.xcall.data;
 
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
 
-import java.math.BigInteger;
+public class CSMessage {
+    public static final int REQUEST = 1;
+    public static final int RESPONSE = 2;
 
-public class CSMessageResponse {
-    public static final int SUCCESS = 0;
-    public static final int FAILURE = -1;
-    public static final int IBC_ERROR = -2;
+    private final int type;
+    private final byte[] data;
 
-    private final BigInteger sn;
-    private final int code;
-    private final String msg;
-
-    public CSMessageResponse(BigInteger sn, int code, String msg) {
-        this.sn = sn;
-        this.code = code;
-        this.msg = msg;
+    public CSMessage(int type, byte[] data) {
+        this.type = type;
+        this.data = data;
     }
 
-    public BigInteger getSn() {
-        return sn;
+    public int getType() {
+        return type;
     }
 
-    public int getCode() {
-        return code;
+    public byte[] getData() {
+        return data;
     }
 
-    public String getMsg() {
-        return msg;
-    }
-
-    public static void writeObject(ObjectWriter w, CSMessageResponse m) {
-        w.beginList(3);
-        w.write(m.sn);
-        w.write(m.code);
-        w.writeNullable(m.msg);
+    public static void writeObject(ObjectWriter w, CSMessage m) {
+        w.beginList(2);
+        w.write(m.type);
+        w.writeNullable(m.data);
         w.end();
     }
 
-    public static CSMessageResponse readObject(ObjectReader r) {
+    public static CSMessage readObject(ObjectReader r) {
         r.beginList();
-        CSMessageResponse m = new CSMessageResponse(
-                r.readBigInteger(),
+        CSMessage m = new CSMessage(
                 r.readInt(),
-                r.readNullable(String.class)
+                r.readNullable(byte[].class)
         );
         r.end();
         return m;
@@ -71,11 +60,11 @@ public class CSMessageResponse {
 
     public byte[] toBytes() {
         ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
-        CSMessageResponse.writeObject(writer, this);
+        CSMessage.writeObject(writer, this);
         return writer.toByteArray();
     }
 
-    public static CSMessageResponse fromBytes(byte[] bytes) {
+    public static CSMessage fromBytes(byte[] bytes) {
         ObjectReader reader = Context.newByteArrayObjectReader("RLPn", bytes);
         return readObject(reader);
     }

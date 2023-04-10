@@ -19,6 +19,9 @@ package foundation.icon.btp.xcall;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import foundation.icon.btp.xcall.data.CSMessageRequest;
+import foundation.icon.btp.xcall.data.CSMessageResponse;
+
 public class AssertCallService {
     public static void assertEqualsCSMessageRequest(CSMessageRequest exp, CSMessageRequest got) {
         assertEquals(exp.getFrom(), got.getFrom());
