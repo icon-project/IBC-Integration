@@ -402,7 +402,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("method", "connection_open_try"))
     }
 
-    pub fn excute_connection_open_try(
+    pub fn execute_connection_open_try(
         &self,
         deps: DepsMut,
         message: Reply,

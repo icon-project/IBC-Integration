@@ -632,10 +632,10 @@ fn connection_open_ack_validate_fail() {
         )
         .unwrap();
 
-    let cl = to_vec(&client_state);
+    let client_state_bytes = to_vec(&client_state).unwrap();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id.clone(), cl.unwrap())
+        .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
@@ -658,7 +658,7 @@ fn connection_open_ack_validate_fail() {
 fn connection_open_ack_validate() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
-    let env = mock_env();
+
     let contract = CwIbcCoreContext::default();
     contract
         .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
@@ -723,10 +723,10 @@ fn connection_open_ack_validate() {
         )
         .unwrap();
 
-    let cl = to_vec(&client_state);
+    let client_state_bytes = to_vec(&client_state).unwrap();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id.clone(), cl.unwrap())
+        .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
@@ -862,9 +862,10 @@ fn test_block_delay() {
 fn connection_open_try_execute() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let raw = get_dummy_raw_msg_conn_open_try(10, 10);
 
-    let _store = contract.init_connection_counter(deps.as_mut().storage, u64::default());
+    contract
+        .init_connection_counter(deps.as_mut().storage, u64::default())
+        .unwrap();
 
     let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".as_bytes().to_vec(),
@@ -922,7 +923,7 @@ fn connection_open_try_execute() {
         result,
     };
 
-    let res = contract.excute_connection_open_try(deps.as_mut(), reply_msg);
+    let res = contract.execute_connection_open_try(deps.as_mut(), reply_msg);
 
     assert_eq!(res.is_ok(), true)
 }
