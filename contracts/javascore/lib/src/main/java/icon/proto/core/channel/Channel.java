@@ -13,7 +13,7 @@ public class Channel extends ProtoMessage {
 
   private int ordering = 0;
 
-  private Counterparty counterparty;
+  private Counterparty counterparty = new Counterparty();
 
   private List<String> connectionHops = new ArrayList<>();
 
@@ -191,7 +191,7 @@ public class Channel extends ProtoMessage {
 
     private int ordering = 0;
 
-    private Counterparty counterparty;
+    private Counterparty counterparty = new Counterparty();
 
     private List<String> connectionHops = new ArrayList<>();
 

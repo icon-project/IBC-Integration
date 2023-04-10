@@ -8,7 +8,7 @@ import java.math.BigInteger;
 public class Validator extends ProtoMessage {
   private byte[] address = new byte[0];
 
-  private PublicKey pubKey;
+  private PublicKey pubKey = new PublicKey();
 
   private BigInteger votingPower = BigInteger.ZERO;
 

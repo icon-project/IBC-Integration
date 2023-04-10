@@ -141,3 +141,100 @@ fn update_existing_admin() {
 
     assert_eq!(result, admin_two());
 }
+
+#[test]
+#[should_panic(expected = "AdminAlreadyExist")]
+fn add_existing_admin() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+
+    let contract = CwCallService::default();
+
+    contract
+        .add_owner(
+            mock_deps.as_mut().storage,
+            Address::from(&mock_info.sender.to_string()),
+        )
+        .unwrap();
+
+    let response = contract
+        .add_admin(mock_deps.as_mut().storage, mock_info.clone(), admin_one())
+        .unwrap();
+
+    assert_eq!(response.attributes[0].value, "add_admin");
+
+    assert_eq!(response.attributes[1].value, admin_one().to_string());
+
+    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
+
+    assert_eq!(result, admin_one());
+
+    contract
+        .add_admin(mock_deps.as_mut().storage, mock_info.clone(), admin_one())
+        .unwrap();
+}
+
+#[test]
+fn remove_existing_admin_and_add_admin() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+
+    let contract = CwCallService::default();
+
+    contract
+        .add_owner(
+            mock_deps.as_mut().storage,
+            Address::from(&mock_info.sender.to_string()),
+        )
+        .unwrap();
+
+    let response = contract
+        .add_admin(mock_deps.as_mut().storage, mock_info.clone(), admin_one())
+        .unwrap();
+
+    assert_eq!(response.attributes[0].value, "add_admin");
+
+    assert_eq!(response.attributes[1].value, admin_one().to_string());
+
+    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
+
+    assert_eq!(result, admin_one());
+
+    contract
+        .remove_admin(mock_deps.as_mut().storage, mock_info.clone())
+        .unwrap();
+    contract
+        .add_admin(mock_deps.as_mut().storage, mock_info.clone(), admin_one())
+        .unwrap();
+
+    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
+
+    assert_eq!(result, admin_one());
+}
+
+#[test]
+#[should_panic(expected = " AdminAddressCannotBeNull")]
+fn add_admin_with_empty_address() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+
+    let contract = CwCallService::default();
+
+    contract
+        .add_owner(
+            mock_deps.as_mut().storage,
+            Address::from(&mock_info.sender.to_string()),
+        )
+        .unwrap();
+
+    contract
+        .add_admin(
+            mock_deps.as_mut().storage,
+            mock_info.clone(),
+            Address::from(""),
+        )
+        .unwrap();
+}

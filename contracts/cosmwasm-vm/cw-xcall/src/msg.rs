@@ -27,6 +27,10 @@ pub enum ExecuteMsg {
     ExecuteRollback {
         sequence_no: u128,
     },
+    UpdateAdmin {
+        address: Address,
+    },
+    RemoveAdmin {},
 
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelOpen {

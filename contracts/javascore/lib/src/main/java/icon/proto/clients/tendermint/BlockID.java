@@ -7,7 +7,7 @@ import ibc.icon.score.util.ProtoMessage;
 public class BlockID extends ProtoMessage {
   private byte[] hash = new byte[0];
 
-  private PartSetHeader partSetHeader;
+  private PartSetHeader partSetHeader = new PartSetHeader();
 
   public byte[] getHash() {
     return this.hash;
