@@ -1,4 +1,4 @@
-package tendermint
+package icon
 
 import (
 	"time"
@@ -13,31 +13,32 @@ import (
 
 var _ exported.ClientState = (*ClientState)(nil)
 
-// NewClientState creates a new ClientState instance
 func NewClientState(
-	chainID string, trustLevel Fraction,
-	trustingPeriod, ubdPeriod, maxClockDrift *Duration,
-	latestHeight int64,
+	TrustingPeriod uint64,
+	FrozenHeight uint64,
+	MaxClockDrift uint64,
+	LatestHeight uint64,
+	NetworkSectionHash []byte,
+	Validators [][]byte,
 ) *ClientState {
 	return &ClientState{
-		ChainId:         chainID,
-		TrustLevel:      &trustLevel,
-		TrustingPeriod:  trustingPeriod,
-		UnbondingPeriod: ubdPeriod,
-		MaxClockDrift:   maxClockDrift,
-		LatestHeight:    latestHeight,
-		FrozenHeight:    0,
+		TrustingPeriod,
+		FrozenHeight,
+		MaxClockDrift,
+		LatestHeight,
+		NetworkSectionHash,
+		Validators,
 	}
 }
 
 // GetChainID returns the chain-id
 func (cs ClientState) GetChainID() string {
-	return cs.ChainId
+	return "icon"
 }
 
 // ClientType is tendermint.
 func (cs ClientState) ClientType() string {
-	return "07-tendermint"
+	return "07-icon"
 }
 
 func (cs ClientState) GetLatestHeight() exported.Height {
@@ -53,7 +54,7 @@ func (cs ClientState) GetTimestampAtHeight(
 	cdc codec.BinaryCodec,
 	height exported.Height,
 ) (uint64, error) {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) Status(
@@ -61,30 +62,30 @@ func (cs ClientState) Status(
 	clientStore sdk.KVStore,
 	cdc codec.BinaryCodec,
 ) exported.Status {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 
 }
 
 func (cs ClientState) IsExpired(latestTimestamp, now time.Time) bool {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) Validate() error {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 
 }
 
 func (cs ClientState) GetProofSpecs() []*ics23.ProofSpec {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) ZeroCustomFields() exported.ClientState {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 
 }
 
 func (cs ClientState) Initialize(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore, consState exported.ConsensusState) error {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 
 }
 
@@ -99,7 +100,7 @@ func (cs ClientState) VerifyMembership(
 	path exported.Path,
 	value []byte,
 ) error {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) VerifyNonMembership(
@@ -112,40 +113,40 @@ func (cs ClientState) VerifyNonMembership(
 	proof []byte,
 	path exported.Path,
 ) error {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs *ClientState) verifyMisbehaviour(ctx sdk.Context, clientStore sdk.KVStore, cdc codec.BinaryCodec, misbehaviour *tmclient.Misbehaviour) error {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func checkMisbehaviourHeader(
 	clientState *ClientState, consState *ConsensusState, header *tmclient.Header, currentTimestamp time.Time,
 ) error {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) ExportMetadata(store sdk.KVStore) []exported.GenesisMetadata {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) VerifyClientMessage(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore, clientMsg exported.ClientMessage) error {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) CheckForMisbehaviour(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore, clientMsg exported.ClientMessage) bool {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) UpdateStateOnMisbehaviour(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore, clientMsg exported.ClientMessage) {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 func (cs ClientState) UpdateState(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore, clientMsg exported.ClientMessage) []exported.Height {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) CheckSubstituteAndUpdateState(ctx sdk.Context, cdc codec.BinaryCodec, subjectClientStore, substituteClientStore sdk.KVStore, substituteClient exported.ClientState) error {
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }
 
 func (cs ClientState) VerifyUpgradeAndUpdateState(
@@ -158,5 +159,5 @@ func (cs ClientState) VerifyUpgradeAndUpdateState(
 	proofUpgradeConsState []byte,
 ) error {
 
-	panic("Icon Tendermint Light Client: Do not use")
+	panic("Icon Light Client: Do not use")
 }

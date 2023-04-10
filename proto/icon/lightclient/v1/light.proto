@@ -11,7 +11,10 @@ option go_package = "libraries/go/common/icon;icon";
 
 import "icon/types/v1/types.proto";
 
+import "gogoproto/gogo.proto";
+
 message ClientState {
+  option (gogoproto.goproto_getters) = false;
 
   uint64 trusting_period = 1;
   uint64 frozen_height = 2;
