@@ -39,7 +39,7 @@ pub enum LightClientMessage {
         client_id: String,
         misbehaviour: Vec<u8>,
     },
-    VerifyOpenTry {
+    VerifyConection {
         verify_connection_state: VerifyConnectionState,
         verify_client_full_satate: VerifyClientFullState,
         vefiry_client_consensus_state: VerifyClientConsesnusState,
