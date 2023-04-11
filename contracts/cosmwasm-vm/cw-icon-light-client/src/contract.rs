@@ -6,7 +6,7 @@ use common::icon::icon::types::v1::MerkleProofs;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
-use cw_ibc_core::msg::CreateClientResponse;
+use cw_ibc_core::types::CreateClientResponse;
 use ibc_proto::google::protobuf::Any;
 
 use crate::constants::{
@@ -73,15 +73,14 @@ pub fn execute(
                 )
                 .add_attribute(HEIGHT, update.height.to_string());
 
-            let client_response= CreateClientResponse::new(
+            let client_response = CreateClientResponse::new(
                 "icon-light-client".to_string(),
                 update.height.to_string(),
                 state_byte,
-                update.consensus_state_commitment.into()
+                update.consensus_state_commitment.into(),
             );
 
-            response.data = to_binary(&client_response)
-            .ok();
+            response.data = to_binary(&client_response).ok();
 
             Ok(response)
         }
