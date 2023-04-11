@@ -98,7 +98,13 @@ impl<'a> CwCallService<'a> {
 
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
-            QueryMsg::GetAdmin {} => to_binary(&self.query_admin(deps.storage).unwrap()),
+            QueryMsg::GetAdmin {} => match self.query_admin(deps.storage) {
+                Ok(admin) => Ok(to_binary(&admin)?),
+                Err(error) => Err(StdError::NotFound {
+                    kind: error.to_string(),
+                }),
+            },
+
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
         }
