@@ -7,7 +7,7 @@ import (
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 
 	volumetypes "github.com/docker/docker/api/types/volume"
-	ibctest "github.com/strangelove-ventures/interchaintest/v6"
+	ibctest "github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )

@@ -1,9 +1,8 @@
 syntax = "proto3";
 package icon.proto.core.connection;
 
-option go_package = "github.com/hyperledger-labs/yui-ibc-solidity/pkg/ibc/core/connection";
 
-
+option go_package = "libraries/go/common/icon;icon";
 
 // ICS03 - Connection Data Structures as defined in
 // https://github.com/cosmos/ibc/blob/master/spec/core/ics-003-connection-semantics#data-structures

@@ -10,8 +10,8 @@ export GO111MODULE = on
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=v0.7
-protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
+protoVer=0.11.1
+protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 containerProtoGenGo=$(PROJECT_NAME)-proto-gen-go-$(protoVer)
 containerProtoGenRust=$(PROJECT_NAME)-proto-gen-rust-$(protoVer)
 containerProtoFmt=$(PROJECT_NAME)-proto-fmt-$(protoVer)
