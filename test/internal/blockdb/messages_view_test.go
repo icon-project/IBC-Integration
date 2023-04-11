@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/types"
-	ibctest "github.com/strangelove-ventures/interchaintest/v6"
-	"github.com/strangelove-ventures/interchaintest/v6/ibc"
-	"github.com/strangelove-ventures/interchaintest/v6/relayer"
-	"github.com/strangelove-ventures/interchaintest/v6/testreporter"
-	"github.com/strangelove-ventures/interchaintest/v6/testutil"
+	ibctest "github.com/strangelove-ventures/interchaintest/v7"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v7/relayer"
+	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
+	"github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )
@@ -278,12 +278,12 @@ WHERE type = "/ibc.applications.transfer.v1.MsgTransfer" AND chain_id = ?
 		return
 	}
 
-	if !rf.Capabilities()[relayer.FlushPackets] {
+	if !rf.Capabilities()[relayer.Flush] {
 		t.Skip("cannot continue due to missing capability FlushPackets")
 	}
 
 	t.Run("relay packet", func(t *testing.T) {
-		require.NoError(t, r.FlushPackets(ctx, eRep, pathName, gaia0ChannelID))
+		require.NoError(t, r.Flush(ctx, eRep, pathName, gaia0ChannelID))
 		require.NoError(t, testutil.WaitForBlocks(ctx, 2, gaia0))
 
 		const qMsgRecvPacket = `SELECT
@@ -304,12 +304,12 @@ WHERE type = "/ibc.core.channel.v1.MsgRecvPacket" AND chain_id = ?
 		return
 	}
 
-	if !rf.Capabilities()[relayer.FlushAcknowledgements] {
+	if !rf.Capabilities()[relayer.Flush] {
 		t.Skip("cannot continue due to missing capability FlushAcknowledgements")
 	}
 
 	t.Run("relay acknowledgement", func(t *testing.T) {
-		require.NoError(t, r.FlushAcknowledgements(ctx, eRep, pathName, gaia0ChannelID))
+		require.NoError(t, r.Flush(ctx, eRep, pathName, gaia0ChannelID))
 		require.NoError(t, testutil.WaitForBlocks(ctx, 2, gaia1))
 
 		const qMsgAck = `SELECT

@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/strangelove-ventures/interchaintest/v6/ibc"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
 func (c *CosmosLocalnet) GetQueryParam(method string) Query {
