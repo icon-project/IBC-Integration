@@ -225,9 +225,6 @@ fn test_packet_data() {
 
 #[test]
 fn test_timeout_packet_validate_to_light_client() {
-    use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
-    use ibc::core::ics03_connection::connection::State as ConnectionState;
-
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
