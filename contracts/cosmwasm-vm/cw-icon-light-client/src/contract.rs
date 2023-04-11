@@ -73,12 +73,14 @@ pub fn execute(
                 )
                 .add_attribute(HEIGHT, update.height.to_string());
 
-            response.data = to_binary(&CreateClientResponse {
-                client_type: "icon-light-client".to_string(),
-                height: update.height.to_string(),
-                client_state_commitment: state_byte,
-                consensus_state_commitment: update.consensus_state_commitment.into(),
-            })
+            let client_response= CreateClientResponse::new(
+                "icon-light-client".to_string(),
+                update.height.to_string(),
+                state_byte,
+                update.consensus_state_commitment.into()
+            );
+
+            response.data = to_binary(&client_response)
             .ok();
 
             Ok(response)
