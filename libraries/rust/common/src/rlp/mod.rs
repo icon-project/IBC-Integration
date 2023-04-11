@@ -104,3 +104,22 @@ where
     stream.append_list(object);
     stream.out()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_solidity_encoding() {
+        let expected = "00";
+        let zero: u64 = 0;
+        let tag: u64 = 128;
+        let false_val = false;
+        let result = super::encode(&zero).to_vec();
+        assert_eq!(expected, hex::encode(result));
+        let result = super::encode(&false_val).to_vec();
+        assert_eq!(expected, hex::encode(result));
+        let result = super::encode(&tag).to_vec();
+        assert_eq!("820080", hex::encode(result));
+    }
+}
