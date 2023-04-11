@@ -162,7 +162,10 @@ func (e *Executor) xCallReturnsAnErrorMessageThatTheAdminAlreadyExists() error {
 func (e *Executor) noWalletAddressShouldBeAsAdmin() (err error) {
 	contractAddress := e.GetContractAddress("xcall")
 	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, "get_admin", "")
-	return err
+	if err == nil {
+		return fmt.Errorf("get_admin did not return an error message which means there is an admin set")
+	}
+	return nil
 }
 
 func (e *Executor) xCallReturnsAnErrorMessageThatTheNullValueCannotBeAddedAsAdmin() error {
@@ -196,12 +199,32 @@ func (e *Executor) executesRemove_adminInXcall(keyName string) error {
 }
 
 func (e *Executor) xCallShouldRemoveWalletAddressAsAdmin(admin string) error {
-	return e.walletAddressShouldNotBeAddedAsAdmin(admin)
+	err := e.walletAddressShouldNotBeAddedAsAdmin(admin)
+	if err == nil {
+		return fmt.Errorf("admin is not removed ")
+	}
+	return nil
 }
 
 func (e *Executor) xCallReturnsAnErrorMessageThatAdminIsAlreadySet() error {
 	if e.error == nil {
 		return fmt.Errorf("owner was able to set admin twice")
+	}
+	return nil
+}
+
+func (e *Executor) thereAreNoAdminWalletsAddedAsAdmin() (err error) {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, GET_ADMIN, "")
+	if err != nil {
+		return nil
+	}
+	return err
+}
+
+func (e *Executor) xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTheXCallSmartContract() error {
+	if e.error == nil {
+		return fmt.Errorf("owner was able to update admin even though admin was not set initially")
 	}
 	return nil
 }
