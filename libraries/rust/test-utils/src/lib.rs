@@ -10,6 +10,7 @@ use std::{
 use serde::Deserialize;
 
 use common::icon::icon::types::v1::BtpHeader;
+use common::icon::icon::types::v1::MerkleNode;
 use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::Attribute;
 
@@ -21,7 +22,7 @@ pub struct TestHeader {
     pub main_height: u64,
     pub round: u32,
     pub next_proof_context_hash: String,
-    pub network_section_to_root: Vec<String>,
+    pub network_section_to_root: Vec<TestMerkleNode>,
     pub network_id: u64,
     pub update_number: u64,
     pub prev_network_section_hash: String,
@@ -43,6 +44,25 @@ pub struct TestSignedHeader {
     pub signature: Vec<String>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct TestMerkleNode {
+    pub dir: i32,
+    pub value: String,
+}
+
+impl TryFrom<TestMerkleNode> for MerkleNode {
+    type Error = hex::FromHexError;
+
+    fn try_from(value: TestMerkleNode) -> Result<Self, Self::Error> {
+        let node = MerkleNode {
+            dir: value.dir,
+            value: hex::decode(value.value.replace("0x", "")).unwrap(),
+        };
+        Ok(node)
+    }
+}
+
 impl TryFrom<TestHeader> for BtpHeader {
     type Error = hex::FromHexError;
 
@@ -52,7 +72,14 @@ impl TryFrom<TestHeader> for BtpHeader {
             message_count: value.message_count,
             message_root: hex::decode(value.message_root.replace("0x", ""))?,
             network_id: value.network_id,
-            network_section_to_root: vec![],
+            network_section_to_root: value
+                .network_section_to_root
+                .into_iter()
+                .map(|tn| {
+                    let node: MerkleNode = tn.try_into().unwrap();
+                    node
+                })
+                .collect(),
             next_proof_context_hash: hex::decode(value.next_proof_context_hash.replace("0x", ""))?,
             next_validators: value
                 .next_validators
