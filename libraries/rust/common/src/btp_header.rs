@@ -89,9 +89,11 @@ impl BtpHeader {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::{get_test_headers, get_test_signed_headers, constants::{TESTNET_SRC_NETWORK_ID, TESTNET_NETWORK_TYPE_ID}, load_test_headers, TestHeader};
     use crate::icon::icon::types::v1::SignedHeader;
-    
+    use test_utils::{
+        constants::{TESTNET_NETWORK_TYPE_ID, TESTNET_SRC_NETWORK_ID},
+        get_test_headers, get_test_signed_headers, load_test_headers, TestHeader,
+    };
 
     use super::*;
     use hex_literal::hex;
@@ -105,16 +107,14 @@ mod tests {
     }
     #[ignore]
     #[test]
-    fn relay_bytes_to_signed_header(){
-        let headers= load_test_headers();
+    fn relay_bytes_to_signed_header() {
+        let headers = load_test_headers();
         for header in headers {
-            let buff= hex::decode(header.encoded_protobuf.replace("0x", "")).unwrap();
-            let decoded= SignedHeader::decode(buff.as_slice());
-          
+            let buff = hex::decode(header.encoded_protobuf.replace("0x", "")).unwrap();
+            let decoded = SignedHeader::decode(buff.as_slice());
+
             assert!(decoded.is_ok());
-
         }
-
     }
 
     #[test]
@@ -145,11 +145,17 @@ mod tests {
     fn test_get_network_type_section_decision() {
         let expected=hex!("f0883078332e69636f6e01830143b900a02b2aa1cc61539d0ef83d0e9997703e18da44a5d44824757b2b38cdbf931c33d6");
         let header = &get_test_headers()[1];
-        let rlp_bytes = header.get_network_type_section_decision_rlp(TESTNET_SRC_NETWORK_ID, TESTNET_NETWORK_TYPE_ID.into());
+        let rlp_bytes = header.get_network_type_section_decision_rlp(
+            TESTNET_SRC_NETWORK_ID,
+            TESTNET_NETWORK_TYPE_ID.into(),
+        );
         assert_eq!(hex::encode(expected), hex::encode(rlp_bytes));
         let expected_hash =
             hex!("8490fee35ce9f11a81c776311cfb42956ac0aa19d3c92bb832c2cef88bff4904");
-        let hash = header.get_network_type_section_decision_hash(TESTNET_SRC_NETWORK_ID, TESTNET_NETWORK_TYPE_ID.into());
+        let hash = header.get_network_type_section_decision_hash(
+            TESTNET_SRC_NETWORK_ID,
+            TESTNET_NETWORK_TYPE_ID.into(),
+        );
         assert_eq!(hex::encode(expected_hash), hex::encode(hash));
     }
 
@@ -165,6 +171,4 @@ mod tests {
             assert_eq!(hex::encode(expected), hex::encode(current))
         }
     }
-
-   
 }

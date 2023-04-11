@@ -43,6 +43,7 @@ prost-types = { version = "0.11.8", default-features = false }
 hex="*"
 bytes="*"
 common={path="../../../libraries/rust/common"}
+cw-ibc-core={path="../cw-ibc-core"}
 
 
 [dev-dependencies]

@@ -43,10 +43,10 @@ pub enum LightClientMessage {
 
 #[cw_serde]
 pub struct CreateClientResponse {
-    client_type: String,
-    height: String,
-    client_state_commitment: Vec<u8>,
-    consensus_state_commitment: Vec<u8>,
+    pub client_type: String,
+    pub height: String,
+    pub client_state_commitment: Vec<u8>,
+    pub consensus_state_commitment: Vec<u8>,
 }
 
 impl CreateClientResponse {

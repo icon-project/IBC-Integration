@@ -6,6 +6,7 @@ use common::icon::icon::types::v1::MerkleProofs;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
+use cw_ibc_core::msg::CreateClientResponse;
 use ibc_proto::google::protobuf::Any;
 
 use crate::constants::{
@@ -64,13 +65,23 @@ pub fn execute(
             let (state_byte, update) =
                 client.create_client(&client_id, client_state, consensus_state)?;
 
-            Ok(Response::new()
-                .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte))
+            let mut response = Response::new()
+                .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte.clone()))
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
                     hex::encode(update.consensus_state_commitment),
                 )
-                .add_attribute(HEIGHT, update.height.to_string()))
+                .add_attribute(HEIGHT, update.height.to_string());
+
+            response.data = to_binary(&CreateClientResponse {
+                client_type: "icon-light-client".to_string(),
+                height: update.height.to_string(),
+                client_state_commitment: state_byte,
+                consensus_state_commitment: update.consensus_state_commitment.into(),
+            })
+            .ok();
+
+            Ok(response)
         }
         ExecuteMsg::UpdateClient {
             client_id,
@@ -159,7 +170,8 @@ mod tests {
 
     use common::icon::icon::types::v1::BtpHeader;
     use cosmwasm_std::{
-        testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage}, OwnedDeps, Response,
+        testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
+        OwnedDeps, Response,
     };
     use cw2::get_contract_version;
     use test_utils::{get_test_headers, to_attribute_map};

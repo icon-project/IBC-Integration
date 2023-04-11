@@ -39,9 +39,8 @@ pub struct TestHeaderData {
 #[serde(rename_all = "PascalCase")]
 pub struct TestSignedHeader {
     #[serde(rename(deserialize = "BTPHeader"))]
-    pub btp_header:TestHeader,
-    pub signature:Vec<String>
-
+    pub btp_header: TestHeader,
+    pub signature: Vec<String>,
 }
 
 impl TryFrom<TestHeader> for BtpHeader {
@@ -70,23 +69,21 @@ impl TryFrom<TestHeader> for BtpHeader {
     }
 }
 
-
 impl TryFrom<TestSignedHeader> for SignedHeader {
     type Error = hex::FromHexError;
 
     fn try_from(value: TestSignedHeader) -> Result<Self, Self::Error> {
-        let btp_header:BtpHeader=value.btp_header.try_into()?;
-        let signatures=value.signature.iter().map(|s|{
-            hex::decode(s.replace("0x", "")).unwrap()
-        }).collect();
+        let btp_header: BtpHeader = value.btp_header.try_into()?;
+        let signatures = value
+            .signature
+            .iter()
+            .map(|s| hex::decode(s.replace("0x", "")).unwrap())
+            .collect();
         return Ok(SignedHeader {
-            header:Some(btp_header),
-            signatures
-
-        })
-
+            header: Some(btp_header),
+            signatures,
+        });
     }
-
 }
 
 pub fn load_test_headers() -> Vec<TestHeaderData> {
@@ -119,8 +116,6 @@ pub fn get_test_signed_headers() -> Vec<SignedHeader> {
         })
         .collect::<Vec<SignedHeader>>();
 }
-
-
 
 pub fn get_project_root() -> io::Result<PathBuf> {
     let path = env::current_dir()?;
