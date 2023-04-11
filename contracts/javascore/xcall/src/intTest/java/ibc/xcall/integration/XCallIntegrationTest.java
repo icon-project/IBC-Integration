@@ -4,7 +4,11 @@ import static ibc.icon.integration.ScoreIntegrationTest.createWalletWithBalance;
 import static ibc.icon.integration.ScoreIntegrationTest.deploy;
 import static ibc.icon.integration.ScoreIntegrationTest.setupPrep;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import foundation.icon.btp.xcall.data.CSMessage;
+import foundation.icon.btp.xcall.data.CSMessageRequest;
+import foundation.icon.btp.xcall.interfaces.CallServiceScoreClient;
 import foundation.icon.jsonrpc.model.TransactionResult;
 import foundation.icon.score.client.DefaultScoreClient;
 import foundation.icon.score.client.Wallet;
@@ -17,12 +21,15 @@ import ibc.icon.interfaces.IIBCHostScoreClient;
 import ibc.icon.interfaces.IIBCPacketScoreClient;
 import ibc.icon.structs.messages.MsgChannelOpenAck;
 import ibc.icon.structs.messages.MsgChannelOpenInit;
+import ibc.icon.structs.messages.MsgConnectionOpenAck;
+import ibc.icon.structs.messages.MsgConnectionOpenInit;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgPacketRecv;
-import ibc.mock.RollbackData;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
+import icon.proto.core.connection.MerklePrefix;
+import icon.proto.core.connection.Version;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +38,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import score.Address;
-import score.annotation.Optional;
 
 public class XCallIntegrationTest implements ScoreIntegrationTest {
 
@@ -57,11 +63,68 @@ public class XCallIntegrationTest implements ScoreIntegrationTest {
         owner = createWalletWithBalance(BigInteger.TEN.pow(22));
         relayer = createWalletWithBalance(BigInteger.TEN.pow(22));
         ibcClient = deploy(owner, "ibc", Map.of());
-        xCall = deploy(owner, "xcall", Map.of("_ibc", ibcClient._address()));
+        xCall = deploy(owner, "xcall",
+                Map.of("_ibc", ibcClient._address(), "_timeoutHeight", BigInteger.valueOf(1000)));
 
         mockLightClient = deploy(owner, "mockclient", Map.of());
         mockApp = deploy(owner, "mock-dapp", Map.of("_callService", xCall._address()));
         setupPrep();
+
+
+    }
+
+
+    @Test
+    @Order(0)
+    void createClient() {
+        getClientInterface(owner).registerClient(clientType, mockLightClient._address());
+
+        //create client
+        int networkId = openBTPNetwork(owner, ibcClient._address());
+        MsgCreateClient msg = new MsgCreateClient();
+        msg.setClientType(clientType);
+        msg.setConsensusState(new byte[0]);
+        msg.setClientState(new byte[0]);
+        msg.setBtpNetworkId(networkId);
+
+        IIBCClientScoreClient client = getClientInterface(owner);
+        var consumer = client.CreateClient((logs) -> {clientID = logs.get(0).getIdentifier();}, null);
+        client.createClient(consumer, msg);
+
+//connection
+        IIBCConnectionScoreClient connection = getConnectionInterface(relayer);
+
+        MsgConnectionOpenInit msgInit = new MsgConnectionOpenInit();
+        MerklePrefix prefix = new MerklePrefix();
+        prefix.setKeyPrefix("ibc".getBytes());
+        icon.proto.core.connection.Counterparty counterparty = new icon.proto.core.connection.Counterparty();
+        counterparty.setClientId(counterPartyClientId);
+        counterparty.setConnectionId(counterPartyConnectionId);
+        counterparty.setPrefix(prefix);
+        msgInit.setClientId(clientID);
+        msgInit.setCounterparty(counterparty.encode());
+        msgInit.setDelayPeriod(BigInteger.ZERO);
+
+        var connectionConsumer = connection.ConnectionOpenInit(
+                (logs) -> {prevConnectionId = logs.get(0).getConnectionId();}, null);
+        connection.connectionOpenInit(connectionConsumer, msgInit);
+
+        MsgConnectionOpenAck msgAck = new MsgConnectionOpenAck();
+        Version version = new Version();
+        version.setFeatures(List.of("f1"));
+        version.setIdentifier("id");
+        msgAck.setConnectionId(prevConnectionId);
+        msgAck.setClientStateBytes(new byte[0]);
+        msgAck.setVersion(version.encode());
+        msgAck.setCounterpartyConnectionID(counterPartyConnectionId);
+        msgAck.setProofTry(new byte[0]);
+        msgAck.setProofClient(new byte[0]);
+        msgAck.setProofConsensus(new byte[0]);
+        msgAck.setProofHeight(new byte[0]);
+        msgAck.setConsensusHeight(new byte[0]);
+
+        connection.connectionOpenAck(msgAck);
+
     }
 
 
@@ -77,6 +140,7 @@ public class XCallIntegrationTest implements ScoreIntegrationTest {
         IIBCChannelHandshakeScoreClient client = getChannelInterface(relayer);
         Channel.Counterparty counterparty = new Channel.Counterparty();
         counterparty.setPortId(counterpartyPortId);
+        counterparty.setChannelId(counterpartyChannelId);
 
         Channel channel = new Channel();
         channel.setState(Channel.State.STATE_INIT);
@@ -104,28 +168,34 @@ public class XCallIntegrationTest implements ScoreIntegrationTest {
     }
 
     @Test
-    @Order(21)
+    @Order(3)
     void sendPacket() {
 
         Consumer<TransactionResult> consumer = getPacketInterface(relayer).SendPacket(
                 (logs) -> {prevSentPacket = Packet.decode(logs.get(0).getPacket());}, null);
         byte[] data = "data".getBytes();
-        byte[] rollback = new RollbackData(BigInteger.ONE, "rollback".getBytes()).toBytes();
-        consumer.accept(mockApp._send("sendMessage", Map.of("_to", data, "_data", data, "_rollback", rollback)));
+        byte[] rollback = "rollback".getBytes();
+        consumer.accept(mockApp._send("sendMessage",
+                Map.of("_to", xCall._address().toString(), "_data", data, "_rollback", rollback)));
 
-        assertArrayEquals(data, prevSentPacket.getData());
+        CSMessageRequest request = CSMessageRequest.fromBytes(CSMessage.fromBytes(prevSentPacket.getData()).getData());
+        assertArrayEquals(data, request.getData());
+        assertEquals(xCall._address().toString(), request.getTo());
+        assertEquals(mockApp._address().toString(), request.getFrom());
+
     }
 
 
     @Test
-    @Order(21)
+    @Order(4)
     void recvPacket() {
         BigInteger currRecvCount = getHostInterface(relayer).getNextSequenceReceive(port, prevChannelId);
-        IIBCPacketScoreClient client = getPacketInterface(relayer);
+
+        CallServiceScoreClient client = getCallService(relayer);
 
         Packet pct = new Packet();
         pct.setSequence(currRecvCount);
-        pct.setData("test".getBytes());
+        pct.setData(prevSentPacket.getData());
         pct.setDestinationPort(port);
         pct.setDestinationChannel(prevChannelId);
         pct.setSourcePort(counterpartyPortId);
@@ -141,9 +211,13 @@ public class XCallIntegrationTest implements ScoreIntegrationTest {
         msg.setProof(new byte[0]);
         msg.setProofHeight(new byte[0]);
 
-        var consumer = client.WriteAcknowledgement(
-                (logs) -> {assertArrayEquals("ack".getBytes(), logs.get(0).getAcknowledgement());}, null);
-        client.recvPacket(msg);
+        var consumer = client.CallMessage((logs) -> {
+            assertEquals(counterpartyPortId + "/" + counterpartyChannelId, logs.get(0).get_from());
+            assertEquals(BigInteger.ONE, logs.get(0).get_sn());
+            assertEquals(xCall._address().toString(), logs.get(0).get_to());
+        }, null);
+
+        consumer.accept(ibcClient._send("recvPacket", Map.of("msg", msg)));
     }
 
     IIBCClientScoreClient getClientInterface(Wallet wallet) {
@@ -169,6 +243,10 @@ public class XCallIntegrationTest implements ScoreIntegrationTest {
 
     IIBCHostScoreClient getHostInterface(Wallet wallet) {
         return new IIBCHostScoreClient(chain.getEndpointURL(), chain.networkId, wallet, ibcClient._address());
+    }
+
+    CallServiceScoreClient getCallService(Wallet wallet) {
+        return new CallServiceScoreClient(chain.getEndpointURL(), chain.networkId, wallet, xCall._address());
     }
 
     int openBTPNetwork(Wallet wallet, Address score) {

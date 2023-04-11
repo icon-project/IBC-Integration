@@ -7,7 +7,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import foundation.icon.btp.xcall.data.CSMessageResponse;
-import foundation.icon.btp.xcall.interfaces.CallServiceReceiverScoreInterface;
+import ibc.icon.interfaces.ICallServiceReceiverScoreInterface;
 import java.math.BigInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,8 +119,8 @@ public class CallServiceTest extends CallServiceTestBase {
         String _to = dApp.getAddress().toString();
         byte[] _rollback = "rollback".getBytes();
         onRecvPacket(_to, _data, _rollback);
-        try (MockedConstruction<CallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
-                CallServiceReceiverScoreInterface.class, (mock, context) -> {
+        try (MockedConstruction<ICallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
+                ICallServiceReceiverScoreInterface.class, (mock, context) -> {
                     doNothing().when(mock).handleCallMessage(portId + "/" + channelId, _data);
                 })) {
             client.invoke(sm.createAccount(), "executeCall", BigInteger.ONE);
@@ -138,8 +138,8 @@ public class CallServiceTest extends CallServiceTestBase {
         byte[] _rollback = "rollback".getBytes();
         onRecvPacket(_to, _data, _rollback);
 
-        try (MockedConstruction<CallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
-                CallServiceReceiverScoreInterface.class, (mock, context) -> {
+        try (MockedConstruction<ICallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
+                ICallServiceReceiverScoreInterface.class, (mock, context) -> {
                     doNothing().when(mock).handleCallMessage(portId + "/" + channelId, _data);
                 })) {
 
@@ -161,8 +161,8 @@ public class CallServiceTest extends CallServiceTestBase {
         byte[] _rollback = "rollback".getBytes();
         onRecvPacket(_to, _data, _rollback);
 
-        try (MockedConstruction<CallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
-                CallServiceReceiverScoreInterface.class, (mock, context) -> {
+        try (MockedConstruction<ICallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
+                ICallServiceReceiverScoreInterface.class, (mock, context) -> {
                     doThrow(new UserRevertedException("Invalid request")).when(mock)
                             .handleCallMessage(portId + "/" + channelId, _data);
                 })) {
@@ -197,8 +197,8 @@ public class CallServiceTest extends CallServiceTestBase {
         onRecvResponsePacket(CSMessageResponse.FAILURE, "Exception");
         verify(clientSpy).RollbackMessage(BigInteger.ONE);
 
-        try (MockedConstruction<CallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
-                CallServiceReceiverScoreInterface.class, (mock, context) -> {
+        try (MockedConstruction<ICallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
+                ICallServiceReceiverScoreInterface.class, (mock, context) -> {
                     doNothing().when(mock).handleCallMessage(portId + "/" + channelId, _rollback);
                 })) {
             client.invoke(sm.createAccount(), "executeRollback", BigInteger.ONE);
@@ -219,8 +219,8 @@ public class CallServiceTest extends CallServiceTestBase {
         onRecvResponsePacket(CSMessageResponse.FAILURE, "Exception");
         verify(clientSpy).RollbackMessage(BigInteger.ONE);
 
-        try (MockedConstruction<CallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
-                CallServiceReceiverScoreInterface.class, (mock, context) -> {
+        try (MockedConstruction<ICallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
+                ICallServiceReceiverScoreInterface.class, (mock, context) -> {
                     doNothing().when(mock).handleCallMessage(portId + "/" + channelId, _rollback);
                 })) {
             client.invoke(sm.createAccount(), "executeRollback", BigInteger.ONE);

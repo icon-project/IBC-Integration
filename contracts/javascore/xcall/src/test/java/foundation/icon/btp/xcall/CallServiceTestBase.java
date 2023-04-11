@@ -10,8 +10,8 @@ import com.iconloop.score.test.TestBase;
 import foundation.icon.btp.xcall.data.CSMessage;
 import foundation.icon.btp.xcall.data.CSMessageRequest;
 import foundation.icon.btp.xcall.data.CSMessageResponse;
-import foundation.icon.btp.xcall.interfaces.CallServiceReceiver;
-import foundation.icon.btp.xcall.interfaces.CallServiceReceiverScoreInterface;
+import ibc.icon.interfaces.ICallServiceReceiver;
+import ibc.icon.interfaces.ICallServiceReceiverScoreInterface;
 import ibc.icon.interfaces.IMock;
 import ibc.icon.interfaces.IMockScoreInterface;
 import ibc.icon.test.MockContract;
@@ -41,7 +41,7 @@ public class CallServiceTestBase extends TestBase {
     protected final String channelId = "channel-id";
     protected final String connectionId = "connection-id";
 
-    protected MockContract<CallServiceReceiver> dApp;
+    protected MockContract<ICallServiceReceiver> dApp;
     protected MockContract<IMock> ibcHandler;
 
 
@@ -51,10 +51,10 @@ public class CallServiceTestBase extends TestBase {
     protected final MockedStatic<Context> contextMock = Mockito.mockStatic(Context.class, Mockito.CALLS_REAL_METHODS);
 
     public void setup() throws Exception {
-        dApp = new MockContract<>(CallServiceReceiverScoreInterface.class, CallServiceReceiver.class, sm, owner);
+        dApp = new MockContract<>(ICallServiceReceiverScoreInterface.class, ICallServiceReceiver.class, sm, owner);
         ibcHandler = new MockContract<>(IMockScoreInterface.class, IMock.class, sm, owner);
 
-        client = sm.deploy(owner, CallServiceImpl.class, ibcHandler.getAddress());
+        client = sm.deploy(owner, CallServiceImpl.class, ibcHandler.getAddress(), BigInteger.valueOf(1000));
         clientSpy = (CallServiceImpl) spy(client.getInstance());
         client.setInstance(clientSpy);
 
@@ -124,7 +124,6 @@ public class CallServiceTestBase extends TestBase {
 
         CSMessage message = new CSMessage(CSMessage.REQUEST, msg.toBytes());
 
-        nextRecvId = nextRecvId.add(BigInteger.ONE);
         Packet packet = new Packet();
         packet.setSequence(nextRecvId);
         packet.setData(message.toBytes());

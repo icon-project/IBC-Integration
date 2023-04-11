@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall.interfaces;
+package ibc.icon.interfaces;
 
 import foundation.icon.score.client.ScoreInterface;
 import score.annotation.External;
 
 @ScoreInterface
-public interface CallServiceReceiver {
+public interface ICallServiceReceiver {
 
     /**
      * Handles the call message received from the source chain.

@@ -20,8 +20,9 @@ import foundation.icon.btp.xcall.data.CSMessage;
 import foundation.icon.btp.xcall.data.CSMessageRequest;
 import foundation.icon.btp.xcall.data.CSMessageResponse;
 import foundation.icon.btp.xcall.data.CallRequest;
-import foundation.icon.btp.xcall.interfaces.CallServiceReceiver;
-import foundation.icon.btp.xcall.interfaces.CallServiceReceiverScoreInterface;
+import ibc.icon.interfaces.ICallServiceReceiver;
+
+import ibc.icon.interfaces.ICallServiceReceiverScoreInterface;
 import icon.proto.core.channel.Channel.Counterparty;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
@@ -39,9 +40,10 @@ import score.annotation.Payable;
 
 public class CallServiceImpl extends AbstractCallService {
 
-    public CallServiceImpl(Address _ibc) {
+    public CallServiceImpl(Address _ibc, BigInteger _timeoutHeight) {
         this.ibcHandler.set(_ibc);
         admin.set(Context.getOwner());
+        this.timeoutHeight.set(_timeoutHeight);
     }
 
     @External
@@ -111,7 +113,7 @@ public class CallServiceImpl extends AbstractCallService {
         CSMessageRequest msgReq = new CSMessageRequest(caller.toString(), _to, sn, needResponse, _data);
 
         Packet pct = new Packet();
-        pct.setSequence(getNextSn());
+        pct.setSequence(sn);
         pct.setData(createMessage(CSMessage.REQUEST, msgReq.toBytes()));
         pct.setDestinationPort(getDestinationPort());
         pct.setDestinationChannel(getDestinationChannel());
@@ -151,7 +153,7 @@ public class CallServiceImpl extends AbstractCallService {
 
         CSMessageResponse msgRes = null;
         try {
-            CallServiceReceiver proxy = new CallServiceReceiverScoreInterface(Address.fromString(req.getTo()));
+            ICallServiceReceiver proxy = new ICallServiceReceiverScoreInterface(Address.fromString(req.getTo()));
             proxy.handleCallMessage(req.getFrom(), req.getData());
             msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.SUCCESS, "");
         } catch (UserRevertedException e) {
@@ -183,7 +185,7 @@ public class CallServiceImpl extends AbstractCallService {
 
         CSMessageResponse msgRes = null;
         try {
-            CallServiceReceiver proxy = new CallServiceReceiverScoreInterface(req.getFrom());
+            ICallServiceReceiver proxy = new ICallServiceReceiverScoreInterface(req.getFrom());
             proxy.handleCallMessage(caller, req.getRollback());
             msgRes = new CSMessageResponse(_sn, CSMessageResponse.SUCCESS, "");
         } catch (UserRevertedException e) {

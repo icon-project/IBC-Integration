@@ -4,7 +4,6 @@ dependencies {
     implementation project(':lib')
     implementation project(':score-util')
     testImplementation project(':test-lib')
-    intTestImplementation project(':mock-dapp')
 }
 
 
@@ -20,6 +19,10 @@ jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
+}
+
+tasks.named('compileIntTestJava') {
+    dependsOn(':mock-dapp:optimizedJar')
 }
 
 

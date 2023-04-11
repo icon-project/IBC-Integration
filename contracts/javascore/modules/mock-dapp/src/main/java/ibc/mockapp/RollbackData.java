@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package ibc.mock;
+package ibc.mockapp;
 
+import java.math.BigInteger;
 import score.ByteArrayObjectWriter;
 import score.Context;
 import score.ObjectReader;
 import score.ObjectWriter;
-
-import java.math.BigInteger;
 
 public class RollbackData {
     private final BigInteger id;

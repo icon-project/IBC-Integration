@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package ibc.mock;
+package ibc.mockapp;
 
-import foundation.icon.btp.xcall.interfaces.CallServiceReceiver;
-import foundation.icon.score.client.ScoreClient;
+import ibc.icon.interfaces.ICallServiceReceiver;
 import java.math.BigInteger;
 import score.Address;
 import score.Context;
@@ -29,8 +28,8 @@ import score.annotation.External;
 import score.annotation.Optional;
 import score.annotation.Payable;
 
-@ScoreClient
-public class MockDApp implements CallServiceReceiver {
+
+public class MockDApp implements ICallServiceReceiver {
     private final Address callSvc;
     private final VarDB<BigInteger> id = Context.newVarDB("id", BigInteger.class);
     private final DictDB<BigInteger, RollbackData> rollbacks = Context.newDictDB("rollbacks", RollbackData.class);
@@ -78,7 +77,6 @@ public class MockDApp implements CallServiceReceiver {
         }
     }
 
-    @Override
     @External
     public void handleCallMessage(String _from, byte[] _data) {
         onlyCallService();
