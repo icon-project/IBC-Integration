@@ -54,7 +54,9 @@ impl<'a> IconClient<'a> {
             .get_network_type_section_decision_hash(&config.src_network_id, config.network_type_id);
         let validators_map = common::utils::to_lookup(&state.validators);
         for (_i, signature) in signatures.iter().enumerate() {
-            let signer = self.context.recover_signer(decision.as_slice(), signature);
+            let signer = self
+                .context
+                .recover_icon_signer(decision.as_slice(), signature);
             if let Some(val) = signer {
                 if let Some(_expected) = validators_map.get(&val.to_vec()) {
                     votes = votes + 1;
