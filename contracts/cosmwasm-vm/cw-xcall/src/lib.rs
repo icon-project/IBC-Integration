@@ -40,8 +40,8 @@ use crate::{
 use common::types::message::CrossContractMessage::XCallMessage;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Binary, Coin, CosmosMsg,
-    Deps, DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse,
+    attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse,
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse,
     IbcEndpoint, IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
     IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Never,
