@@ -1,4 +1,4 @@
-use cosmwasm_std::to_vec;
+use cosmwasm_std:: to_vec;
 use cw_ibc_core::context::CwIbcCoreContext;
 pub mod setup;
 use setup::*;
@@ -28,7 +28,9 @@ fn test_get_capability() {
     let name = to_vec(&u128::default()).unwrap();
     let address = vec!["hello".to_string()];
     let contract = CwIbcCoreContext::default();
-    contract.store_capability(&mut deps.storage, name.clone(), address).unwrap();
+    contract
+        .store_capability(&mut deps.storage, name.clone(), address)
+        .unwrap();
     let result = contract.get_capability(&mut deps.storage, name);
     assert_eq!(result.is_ok(), true)
 }
