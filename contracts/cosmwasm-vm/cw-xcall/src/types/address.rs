@@ -1,3 +1,5 @@
+use cosmwasm_std::Addr;
+
 use super::*;
 
 #[cw_serde]
@@ -45,5 +47,8 @@ impl Address {
     }
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }

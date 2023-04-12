@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/strangelove-ventures/interchaintest/v6/chain/cosmos"
+	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -20,10 +20,16 @@ type Query struct {
 	GetProtocolFee *GetProtocolFee `json:"get_protocol_fee,omitempty"`
 }
 
-type Admin struct {
+type SetAdmin struct {
 	SetAdmin struct {
 		Address string `json:"address"`
 	} `json:"set_admin"`
+}
+
+type UpdateAdmin struct {
+	UpdateAdmin struct {
+		Address string `json:"address"`
+	} `json:"update_admin"`
 }
 
 type GetProtocolFee struct{}

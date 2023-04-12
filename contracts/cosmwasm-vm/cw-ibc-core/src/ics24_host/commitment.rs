@@ -1,3 +1,8 @@
+use ibc::{
+    core::ics04_channel::{commitment::PacketCommitment, timeout::TimeoutHeight},
+    timestamp::Timestamp,
+};
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -115,6 +120,14 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Vec<u8> {
         keccak256(&self.next_seq_recv_commitment_path(port_id, channel_id))
     }
+
+    pub fn port_path(&self, port_id: &PortId) -> Vec<u8> {
+        PortPath(port_id.clone()).to_string().into_bytes()
+    }
+
+    pub fn port_commitment_key(&self, port_id: &PortId) -> Vec<u8> {
+        keccak256(&self.port_path(port_id))
+    }
 }
 
 pub fn sha256(data: impl AsRef<[u8]>) -> Vec<u8> {
@@ -127,4 +140,23 @@ pub fn keccak256(data: impl AsRef<[u8]>) -> Vec<u8> {
     let mut hasher = Keccak256::new();
     hasher.update(data);
     hasher.finalize().to_vec()
+}
+
+pub fn compute_packet_commitment(
+    packet_data: &[u8],
+    timeout_height: &TimeoutHeight,
+    timeout_timestamp: &Timestamp,
+) -> PacketCommitment {
+    let mut hash_input = timeout_timestamp.nanoseconds().to_be_bytes().to_vec();
+
+    let revision_number = timeout_height.commitment_revision_number().to_be_bytes();
+    hash_input.append(&mut revision_number.to_vec());
+
+    let revision_height = timeout_height.commitment_revision_height().to_be_bytes();
+    hash_input.append(&mut revision_height.to_vec());
+
+    let packet_data_hash = sha256(packet_data);
+    hash_input.append(&mut packet_data_hash.to_vec());
+
+    sha256(&hash_input).into()
 }

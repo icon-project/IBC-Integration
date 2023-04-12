@@ -12,26 +12,21 @@ use cw_ibc_core::{
         },
         types::{ClientState, ConsensusState},
     },
-    msg::{
-        CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
-    },
     traits::IbcClient,
     types::{ClientId, ClientType},
+    types::{
+        CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
+    },
     MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
 };
 use ibc::{
-    core::{
-        ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
-        ics23_commitment::commitment::CommitmentRoot,
-    },
+    core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
     mock::{
         client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
     },
     signer::Signer,
     Height,
 };
-
-use ibc_proto::ics23::CommitmentProof;
 use setup::*;
 
 #[test]

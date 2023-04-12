@@ -1,3 +1,4 @@
+pub mod constants;
 pub mod context;
 pub mod contract;
 mod error;
@@ -19,7 +20,10 @@ use crate::state::CwIbcStore;
 use crate::{
     ics26_routing::router::CwIbcRouter,
     storage_keys::StorageKey,
-    types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
+    types::{
+        ChannelId, ClientId, ClientType, ConnectionId, PortId, VerifyChannelState,
+        VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState,
+    },
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
@@ -27,6 +31,8 @@ use cosmwasm_std::{
     StdResult, Storage,
 };
 
+use crate::ics04_channel::LightClientPacketMessage;
+pub use constants::*;
 use context::CwIbcCoreContext;
 use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};
 pub use ibc::core::ics04_channel::msgs::{
@@ -59,6 +65,7 @@ pub use ibc::{
     },
     Height,
 };
+pub use ics24_host::commitment::*;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Error as FmtError, Formatter},
@@ -66,7 +73,7 @@ use std::{
 };
 use thiserror::Error;
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -78,7 +85,7 @@ pub fn instantiate(
     call_service.instantiate(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -90,14 +97,14 @@ pub fn execute(
     call_service.execute(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: msg::QueryMsg) -> StdResult<Binary> {
     let call_service = CwIbcCoreContext::default();
 
     call_service.query(deps, env, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     let call_service = CwIbcCoreContext::default();
 

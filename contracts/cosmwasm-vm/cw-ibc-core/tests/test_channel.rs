@@ -744,7 +744,13 @@ fn create_open_confirm_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let message = MsgChannelOpenConfirm::try_from(default_raw_msg.clone()).unwrap();
-    let event = create_open_confirm_channel_event(&message);
+    let event = create_open_confirm_channel_event(
+        &message.port_id_on_b.as_str(),
+        &message.chan_id_on_b.as_str(),
+        PortId::default().as_str(),
+        ChannelId::default().as_str(),
+        ConnectionId::default().as_str(),
+    );
 
     assert_eq!(IbcEventType::OpenConfirmChannel.as_str(), event.ty);
     assert_eq!("channel-0", event.attributes[1].value);
@@ -1196,4 +1202,40 @@ fn test_execute_open_try_channel() {
     assert!(result.is_ok());
     assert_eq!(result.as_ref().unwrap().events[0].ty, "channel_id_created");
     assert_eq!(result.unwrap().events[1].ty, "channel_open_try")
+}
+
+#[test]
+fn test_get_channel() {
+    let ctx = CwIbcCoreContext::new();
+    let port_id = PortId::default();
+    let channel_id = ChannelId::default();
+    let channel_end = ChannelEnd::new(
+        State::Init,
+        Order::None,
+        Counterparty::default(),
+        Vec::default(),
+        Version::from("ics-20".to_string()),
+    );
+    let mut mock_deps = deps();
+    ctx.store_channel_end(
+        mock_deps.as_mut().storage,
+        port_id.clone(),
+        channel_id.clone(),
+        channel_end.clone(),
+    )
+    .unwrap();
+    let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id);
+
+    assert_eq!(channel_end, retrived_channel_end.unwrap())
+}
+
+#[test]
+#[should_panic(expected = "ChannelNotFound")]
+fn test_get_channel_fail() {
+    let ctx = CwIbcCoreContext::new();
+    let port_id = PortId::default();
+    let channel_id = ChannelId::default();
+    let mock_deps = deps();
+    ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id)
+        .unwrap();
 }

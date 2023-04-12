@@ -17,8 +17,8 @@ import (
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 
 	// icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
-	"github.com/strangelove-ventures/interchaintest/v6/ibc"
-	// "github.com/strangelove-ventures/interchaintest/v6/testutil"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	// "github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )

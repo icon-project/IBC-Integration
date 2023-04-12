@@ -40,8 +40,8 @@ use crate::{
 use common::types::message::CrossContractMessage::XCallMessage;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Binary, Coin, CosmosMsg,
-    Deps, DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse,
+    attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse,
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse,
     IbcEndpoint, IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
     IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Never,
@@ -67,7 +67,7 @@ pub fn instantiate(
     call_service.instantiate(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -79,14 +79,14 @@ pub fn execute(
     call_service.execute(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let call_service = CwCallService::default();
 
     call_service.query(deps, env, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     let call_service = CwCallService::default();
 

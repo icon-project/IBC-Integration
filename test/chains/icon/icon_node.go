@@ -20,7 +20,7 @@ import (
 	iconclient "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	iconlog "github.com/icon-project/icon-bridge/common/log"
-	"github.com/strangelove-ventures/interchaintest/v6/ibc"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"go.uber.org/zap"
 )
 
