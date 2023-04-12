@@ -19,7 +19,7 @@ pub struct CwIbcStore<'a> {
     /// store commitments based on keys (PacketCommitment,AckCommitment,Connection,Channel,Client)
     commitments: Map<'a, Vec<u8>, Vec<u8>>,
     /// Stores block duration
-    expected_time_per_block: Item<'a, u128>,
+    expected_time_per_block: Item<'a, u64>,
     /// Stores packet receipts based on PortId,ChannelId and Sequence
     packet_receipts: Map<'a, (String, String, u64), u64>,
 }
@@ -99,7 +99,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn commitments(&self) -> &Map<'a, Vec<u8>, Vec<u8>> {
         &self.commitments
     }
-    pub fn expected_time_per_block(&self) -> &Item<'a, u128> {
+    pub fn expected_time_per_block(&self) -> &Item<'a, u64> {
         &self.expected_time_per_block
     }
     pub fn packet_receipts(&self) -> &Map<'a, (String, String, u64), u64> {

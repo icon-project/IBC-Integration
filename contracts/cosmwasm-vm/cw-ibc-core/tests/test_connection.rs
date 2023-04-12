@@ -820,7 +820,7 @@ fn connection_validate_delay() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let result =
@@ -850,7 +850,7 @@ fn test_block_delay() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
     let result = contract.block_delay(&delay_time);
     assert_eq!(result, true as u64)

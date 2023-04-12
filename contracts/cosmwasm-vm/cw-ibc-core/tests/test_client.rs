@@ -906,7 +906,7 @@ fn check_for_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let client_type = ClientType::new("iconclient".to_string());
@@ -1007,7 +1007,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let client_type = ClientType::new("iconclient".to_string());
@@ -1108,7 +1108,7 @@ fn fails_on_upgrade_client_frozen_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let client_type = ClientType::new("iconclient".to_string());
@@ -1206,7 +1206,7 @@ fn check_for_execute_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let client_type = ClientType::new("iconclient".to_string());
@@ -1333,7 +1333,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -1394,7 +1394,7 @@ fn fails_on_unknown_response_on_execute_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let reply_message = Reply {
@@ -1425,7 +1425,7 @@ fn fails_on_null_response_data_on_execute_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let event = Event::new("empty");

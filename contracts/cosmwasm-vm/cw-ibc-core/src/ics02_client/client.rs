@@ -295,7 +295,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<ibc::timestamp::Timestamp, ContractError> {
         //TODO Update timestamp logic
         let duration = self.ibc_store().expected_time_per_block().load(store)?;
-        let block_time = Duration::from_secs(duration as u64);
+        let block_time = Duration::from_secs(duration);
         Ok(Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap())
     }
 
