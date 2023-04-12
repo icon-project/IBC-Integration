@@ -6,13 +6,14 @@ pub mod timeout;
 pub use timeout::*;
 pub mod timeout_on_close;
 pub use timeout_on_close::*;
+pub mod send_packet;
+pub use send_packet::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     pub fn timeout_packet_validate(
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        // module_id: ModuleId,
         timeout_msg_type: TimeoutMsgType,
     ) -> Result<Response, ContractError> {
         match &timeout_msg_type {
