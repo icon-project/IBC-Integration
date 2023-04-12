@@ -1,4 +1,4 @@
-use cosmwasm_std:: to_vec;
+use cosmwasm_std::to_vec;
 use cw_ibc_core::context::CwIbcCoreContext;
 pub mod setup;
 use setup::*;
@@ -14,7 +14,7 @@ fn test_set_capability() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<alloc::string::String>\" })")]
+#[should_panic(expected = "IbcDecodeError { error: \"CapabilityNotFound\" }")]
 fn test_get_capability_fail() {
     let mut deps = deps();
     let name = to_vec(&u128::default()).unwrap();
