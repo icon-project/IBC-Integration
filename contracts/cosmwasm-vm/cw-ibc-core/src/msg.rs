@@ -28,7 +28,7 @@ pub enum LightClientMessage {
         proof_upgrade_consensus_state: Vec<u8>,
     },
     VerifyChannel {
-        verify_channel_state: VerifyChannelState
+        verify_channel_state: VerifyChannelState,
     },
     Misbehaviour {
         client_id: String,
@@ -42,8 +42,8 @@ pub enum LightClientMessage {
     VerifyOpenConfirm {
         verify_connection_state: VerifyConnectionState,
     },
-    TimeoutOnCLose{
+    TimeoutOnCLose {
         verify_channel_state: VerifyChannelState,
-        next_seq_recv_verification_result: LightClientPacketMessage
-    }
+        next_seq_recv_verification_result: LightClientPacketMessage,
+    },
 }

@@ -19,6 +19,7 @@ ibc-proto = { version = "0.28.0", default-features = false }
 keccak-hash="0.10.0"
 hex="*"
 hex-literal="*"
+cosmwasm-schema = "1.2.1"
 
 [dev-dependencies]
 test-utils={path="../test-utils"}

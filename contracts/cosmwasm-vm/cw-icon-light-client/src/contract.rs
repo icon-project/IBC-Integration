@@ -14,9 +14,9 @@ use crate::constants::{
 };
 use crate::error::ContractError;
 use crate::light_client::IconClient;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{CwContext, QueryHandler};
 use crate::traits::{Config, IContext, ILightClient};
+use common::client_msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use prost::Message;
 
 // version info for migration info
@@ -180,10 +180,10 @@ mod tests {
     use crate::traits::AnyTypes;
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
-        msg::ExecuteMsg,
         state::QueryHandler,
         ContractError,
     };
+    use common::client_msg::ExecuteMsg;
     use prost::Message;
 
     use super::{execute, instantiate, Config, InstantiateMsg, CONTRACT_NAME, CONTRACT_VERSION};
