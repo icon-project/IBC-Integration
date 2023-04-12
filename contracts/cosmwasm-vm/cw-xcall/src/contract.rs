@@ -29,7 +29,11 @@ impl<'a> CwCallService<'a> {
         msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
         match msg {
-            ExecuteMsg::SetAdmin { address } => self.add_admin(deps.storage, info, address),
+            ExecuteMsg::SetAdmin { address } => {
+                let validated_address =
+                    CwCallService::validate_address(deps.api, address.as_str())?;
+                self.add_admin(deps.storage, info, validated_address)
+            }
             ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
@@ -91,14 +95,24 @@ impl<'a> CwCallService<'a> {
                     .add_events(response.events)
                     .add_submessages(response.messages))
             }
-            ExecuteMsg::UpdateAdmin { address } => self.update_admin(deps.storage, info, address),
+            ExecuteMsg::UpdateAdmin { address } => {
+                let validated_address =
+                    CwCallService::validate_address(deps.api, address.as_str())?;
+                self.update_admin(deps.storage, info, validated_address)
+            }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
         }
     }
 
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
-            QueryMsg::GetAdmin {} => to_binary(&self.query_admin(deps.storage).unwrap()),
+            QueryMsg::GetAdmin {} => match self.query_admin(deps.storage) {
+                Ok(admin) => Ok(to_binary(&admin)?),
+                Err(error) => Err(StdError::NotFound {
+                    kind: error.to_string(),
+                }),
+            },
+
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
         }

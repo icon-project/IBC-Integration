@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
-	"github.com/strangelove-ventures/interchaintest/v6/ibc"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
 const (
