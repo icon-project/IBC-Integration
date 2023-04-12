@@ -193,9 +193,13 @@ public class XCallIntegrationTest implements ScoreIntegrationTest {
 
         CallServiceScoreClient client = getCallService(relayer);
 
+        CSMessage req = new CSMessage(CSMessage.REQUEST,
+                new CSMessageRequest("xyz", mockApp._address().toString(), BigInteger.TEN, false,
+                        "_data".getBytes()).toBytes());
+
         Packet pct = new Packet();
         pct.setSequence(currRecvCount);
-        pct.setData(prevSentPacket.getData());
+        pct.setData(req.toBytes());
         pct.setDestinationPort(port);
         pct.setDestinationChannel(prevChannelId);
         pct.setSourcePort(counterpartyPortId);
@@ -213,8 +217,8 @@ public class XCallIntegrationTest implements ScoreIntegrationTest {
 
         var consumer = client.CallMessage((logs) -> {
             assertEquals(counterpartyPortId + "/" + counterpartyChannelId, logs.get(0).get_from());
-            assertEquals(BigInteger.ONE, logs.get(0).get_sn());
-            assertEquals(xCall._address().toString(), logs.get(0).get_to());
+            assertEquals(BigInteger.TEN, logs.get(0).get_sn());
+            assertEquals(mockApp._address().toString(), logs.get(0).get_to());
         }, null);
 
         consumer.accept(ibcClient._send("recvPacket", Map.of("msg", msg)));

@@ -101,14 +101,16 @@ public class CallServiceImpl extends AbstractCallService {
     public BigInteger sendCallMessage(String _to, byte[] _data, @Optional byte[] _rollback) {
         BigInteger sn = getNextSn();
         Address caller = Context.getCaller();
-        Context.require(caller.isContract(), "Only contract is allowed to send call message ");
+        Context.require(caller.isContract() || _rollback == null, "RollbackNotPossible");
         Context.require(_data.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
         Context.require(_rollback == null || _rollback.length <= MAX_ROLLBACK_SIZE, "MaxRollbackSizeExceeded");
 
         boolean needResponse = _rollback != null && _rollback.length > 0;
 
-        CallRequest req = new CallRequest(caller, _to, _rollback);
-        requests.set(sn, req);
+        if (needResponse) {
+            CallRequest req = new CallRequest(caller, _to, _rollback);
+            requests.set(sn, req);
+        }
 
         CSMessageRequest msgReq = new CSMessageRequest(caller.toString(), _to, sn, needResponse, _data);
 
@@ -126,11 +128,7 @@ public class CallServiceImpl extends AbstractCallService {
         hgt.setRevisionHeight(timeoutHeight);
 
         pct.setTimeoutHeight(hgt);
-
-        //TODO set packet timeout
-        BigInteger timeout = BigInteger.valueOf(Context.getBlockTimestamp())
-                .add(_timoutHeight.multiply(BigInteger.TWO));
-        pct.setTimeoutTimestamp(timeout);
+        pct.setTimeoutTimestamp(BigInteger.ZERO);
 
         Context.call(this.ibcHandler.get(), "sendPacket", new Object[]{pct.encode()});
 
@@ -399,6 +397,13 @@ public class CallServiceImpl extends AbstractCallService {
         Packet packet = Packet.decode(calldata);
         byte[] _msg = packet.getData();
         String _from = packet.getSourcePort() + "/" + packet.getSourceChannel();
+
+        Context.println(packet.getSourcePort()+"-->"+packet.getSourceChannel());
+        Context.println(destinationPort.get()+"<--"+destinationChannel.get());
+
+        Context.require(packet.getSourcePort().equals(destinationPort.get()),"source port not matched");
+        Context.require(packet.getSourceChannel().equals(destinationChannel.get()),"source channel not matched");
+
         BigInteger _sn = packet.getSequence();
 
         handleReceivedPacket(_from, _from, _sn, _msg);

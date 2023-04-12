@@ -97,20 +97,22 @@ public class CallServiceTestBase extends TestBase {
     }
 
 
-    protected byte[] onRecvPacket(String _to, byte[] _data, byte[] rollback) {
-        Packet packet = getRequestPacket(_to, _data, rollback);
+    protected void onRecvPacket(String _from, byte[] _data, byte[] rollback) {
+        onChanOpenInit(ibcHandler.account);
+        onChanOpenAck(ibcHandler.account);
+
+        Packet packet = getRecvRequestPacket(_from, _data, rollback);
         byte[] data = packet.encode();
         client.invoke(ibcHandler.account, "onRecvPacket", data, relayer.getAddress());
-        verify(clientSpy).CallMessage(portId + "/" + channelId, _to, BigInteger.ONE, BigInteger.ONE);
-        return data;
+        verify(clientSpy).CallMessage(counterPartyPortId + "/" + counterPartyChannelId, dApp.getAddress().toString(),
+                BigInteger.ONE, BigInteger.ONE);
     }
 
-    protected byte[] onRecvResponsePacket(int code, String msg) {
+    protected void onRecvResponsePacket(int code, String msg) {
         Packet packet = getResponsePacket(code, msg);
         byte[] data = packet.encode();
         client.invoke(ibcHandler.account, "onRecvPacket", data, relayer.getAddress());
         verify(clientSpy).ResponseMessage(BigInteger.ONE, code, msg);
-        return data;
     }
 
     protected Packet getRequestPacket(String _to, byte[] data, byte[] rollback) {
@@ -132,35 +134,50 @@ public class CallServiceTestBase extends TestBase {
         packet.setDestinationPort(counterPartyPortId);
         packet.setDestinationChannel(counterPartyChannelId);
         packet.setTimeoutHeight(height);
-        packet.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp() + 2_000_000)
-                .add(TIMEOUT_HEIGHT.multiply(BigInteger.TWO)));
+        packet.setTimeoutTimestamp(BigInteger.ZERO);
 
         return packet;
 
     }
 
-    protected Packet getResponsePacket(int code, String message) {
+    protected Packet getRecvRequestPacket(String _from, byte[] data, byte[] rollback) {
         BigInteger nextRecvId = BigInteger.ONE;
-        Height height = new Height();
-        height.setRevisionNumber(BigInteger.ZERO);
-        height.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight()).add(BigInteger.ONE).add(TIMEOUT_HEIGHT));
+
+        CSMessageRequest msg = new CSMessageRequest(_from, dApp.getAddress().toString(), nextRecvId,
+                rollback != null && rollback.length > 0, data);
+
+        CSMessage message = new CSMessage(CSMessage.REQUEST, msg.toBytes());
+
+        return getResponsePacket(nextRecvId, message);
+
+    }
+
+    protected Packet getResponsePacket(int code, String message) {
+
         CSMessageResponse msg = new CSMessageResponse(BigInteger.ONE, code, message);
 
         CSMessage _message = new CSMessage(CSMessage.RESPONSE, msg.toBytes());
 
-        nextRecvId = nextRecvId.add(BigInteger.ONE);
+        return getResponsePacket(BigInteger.ONE, _message);
+
+    }
+
+    private Packet getResponsePacket(BigInteger nextRecvId, CSMessage _message) {
+
+        Height height = new Height();
+        height.setRevisionNumber(BigInteger.ZERO);
+        height.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight()).add(BigInteger.ONE).add(TIMEOUT_HEIGHT));
+
         Packet packet = new Packet();
         packet.setSequence(nextRecvId);
         packet.setData(_message.toBytes());
-        packet.setSourcePort(portId);
-        packet.setSourceChannel(channelId);
-        packet.setDestinationPort(counterPartyPortId);
-        packet.setDestinationChannel(counterPartyChannelId);
+        packet.setSourcePort(counterPartyPortId);
+        packet.setSourceChannel(counterPartyChannelId);
+        packet.setDestinationPort(portId);
+        packet.setDestinationChannel(channelId);
         packet.setTimeoutHeight(height);
-        packet.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp() + 2_000_000)
-                .add(TIMEOUT_HEIGHT.multiply(BigInteger.TWO)));
+        packet.setTimeoutTimestamp(BigInteger.ZERO);
 
         return packet;
-
     }
 }

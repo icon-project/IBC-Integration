@@ -140,7 +140,7 @@ public class CallServiceTest extends CallServiceTestBase {
 
         try (MockedConstruction<ICallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
                 ICallServiceReceiverScoreInterface.class, (mock, context) -> {
-                    doNothing().when(mock).handleCallMessage(portId + "/" + channelId, _data);
+                    doNothing().when(mock).handleCallMessage(counterPartyPortId + "/" + counterPartyChannelId, _data);
                 })) {
 
             client.invoke(sm.createAccount(), "executeCall", BigInteger.ONE);
@@ -164,7 +164,7 @@ public class CallServiceTest extends CallServiceTestBase {
         try (MockedConstruction<ICallServiceReceiverScoreInterface> mocked = Mockito.mockConstruction(
                 ICallServiceReceiverScoreInterface.class, (mock, context) -> {
                     doThrow(new UserRevertedException("Invalid request")).when(mock)
-                            .handleCallMessage(portId + "/" + channelId, _data);
+                            .handleCallMessage(counterPartyPortId + "/" + counterPartyChannelId, _data);
                 })) {
             client.invoke(sm.createAccount(), "executeCall", BigInteger.ONE);
             verify(clientSpy).CallExecuted(BigInteger.ONE, -1, "UserReverted(0)");
