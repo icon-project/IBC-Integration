@@ -2,8 +2,8 @@ syntax = "proto3";
 package icon.proto.core.channel;
 
 
-option go_package = "github.com/hyperledger-labs/yui-ibc-solidity/pkg/ibc/core/channel";
 
+option go_package = "libraries/go/common/icon;icon";
 
 import "core/02-client/Client.proto";
 
