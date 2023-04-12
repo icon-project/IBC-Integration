@@ -12,8 +12,6 @@ import foundation.icon.btp.xcall.data.CSMessageRequest;
 import foundation.icon.btp.xcall.data.CSMessageResponse;
 import ibc.icon.interfaces.ICallServiceReceiver;
 import ibc.icon.interfaces.ICallServiceReceiverScoreInterface;
-import ibc.icon.interfaces.IMock;
-import ibc.icon.interfaces.IMockScoreInterface;
 import ibc.icon.test.MockContract;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
@@ -42,7 +40,7 @@ public class CallServiceTestBase extends TestBase {
     protected final String connectionId = "connection-id";
 
     protected MockContract<ICallServiceReceiver> dApp;
-    protected MockContract<IMock> ibcHandler;
+    protected Account ibcHandler;
 
 
     protected final BigInteger TIMEOUT_HEIGHT = BigInteger.valueOf(997L);
@@ -52,7 +50,7 @@ public class CallServiceTestBase extends TestBase {
 
     public void setup() throws Exception {
         dApp = new MockContract<>(ICallServiceReceiverScoreInterface.class, ICallServiceReceiver.class, sm, owner);
-        ibcHandler = new MockContract<>(IMockScoreInterface.class, IMock.class, sm, owner);
+        ibcHandler =  Account.newScoreAccount(1001);
 
         client = sm.deploy(owner, CallServiceImpl.class, ibcHandler.getAddress(), BigInteger.valueOf(1000));
         clientSpy = (CallServiceImpl) spy(client.getInstance());
@@ -81,8 +79,8 @@ public class CallServiceTestBase extends TestBase {
     }
 
     protected void sendCallMessage(String _to, byte[] _data, byte[] rollback) {
-        onChanOpenInit(ibcHandler.account);
-        onChanOpenAck(ibcHandler.account);
+        onChanOpenInit(ibcHandler);
+        onChanOpenAck(ibcHandler);
 
         contextMock.when(Context::getValue).thenReturn(BigInteger.ONE);
         Packet packet = getRequestPacket(_to, _data, rollback);
@@ -98,12 +96,12 @@ public class CallServiceTestBase extends TestBase {
 
 
     protected void onRecvPacket(String _from, byte[] _data, byte[] rollback) {
-        onChanOpenInit(ibcHandler.account);
-        onChanOpenAck(ibcHandler.account);
+        onChanOpenInit(ibcHandler);
+        onChanOpenAck(ibcHandler);
 
         Packet packet = getRecvRequestPacket(_from, _data, rollback);
         byte[] data = packet.encode();
-        client.invoke(ibcHandler.account, "onRecvPacket", data, relayer.getAddress());
+        client.invoke(ibcHandler, "onRecvPacket", data, relayer.getAddress());
         verify(clientSpy).CallMessage(counterPartyPortId + "/" + counterPartyChannelId, dApp.getAddress().toString(),
                 BigInteger.ONE, BigInteger.ONE);
     }
@@ -111,7 +109,7 @@ public class CallServiceTestBase extends TestBase {
     protected void onRecvResponsePacket(int code, String msg) {
         Packet packet = getResponsePacket(code, msg);
         byte[] data = packet.encode();
-        client.invoke(ibcHandler.account, "onRecvPacket", data, relayer.getAddress());
+        client.invoke(ibcHandler, "onRecvPacket", data, relayer.getAddress());
         verify(clientSpy).ResponseMessage(BigInteger.ONE, code, msg);
     }
 

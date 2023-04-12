@@ -52,13 +52,13 @@ public class CallServiceTest extends CallServiceTestBase {
     @Test
     @Order(2)
     void onChanOpenInit() {
-        onChanOpenInit(ibcHandler.account);
+        onChanOpenInit(ibcHandler);
     }
 
     @Test
     @Order(3)
     void onChanOpenAck_unauthorized() {
-        onChanOpenInit(ibcHandler.account);
+        onChanOpenInit(ibcHandler);
 
         Executable executable = () -> onChanOpenAck(sm.createAccount());
         AssertionError e = assertThrows(AssertionError.class, executable);
@@ -68,8 +68,8 @@ public class CallServiceTest extends CallServiceTestBase {
     @Test
     @Order(4)
     void onChanOpenAck() {
-        onChanOpenInit(ibcHandler.account);
-        onChanOpenAck(ibcHandler.account);
+        onChanOpenInit(ibcHandler);
+        onChanOpenAck(ibcHandler);
     }
 
 
