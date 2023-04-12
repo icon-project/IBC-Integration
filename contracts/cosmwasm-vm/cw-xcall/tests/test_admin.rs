@@ -263,8 +263,9 @@ fn add_invalid_char_as_admin() {
     let mut mock_deps = deps();
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
 
-    let contract = CwCallService::default();
+    let mut contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -274,10 +275,13 @@ fn add_invalid_char_as_admin() {
         .unwrap();
 
     contract
-        .add_admin(
-            mock_deps.as_mut().storage,
+        .execute(
+            mock_deps.as_mut(),
+            mock_env,
             mock_info.clone(),
-            "*************".into(),
+            cw_xcall::msg::ExecuteMsg::SetAdmin {
+                address: "*************".into(),
+            },
         )
         .unwrap();
 }
@@ -288,8 +292,9 @@ fn update_admin_invalid_chars() {
     let mut mock_deps = deps();
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
 
-    let contract = CwCallService::default();
+    let mut contract = CwCallService::default();
 
     contract
         .add_owner(
@@ -299,7 +304,14 @@ fn update_admin_invalid_chars() {
         .unwrap();
 
     contract
-        .add_admin(mock_deps.as_mut().storage, mock_info.clone(), admin_one())
+        .execute(
+            mock_deps.as_mut(),
+            mock_env.clone(),
+            mock_info.clone(),
+            cw_xcall::msg::ExecuteMsg::SetAdmin {
+                address: admin_one(),
+            },
+        )
         .unwrap();
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
@@ -307,10 +319,75 @@ fn update_admin_invalid_chars() {
     assert_eq!(result, admin_one());
 
     contract
-        .update_admin(
-            mock_deps.as_mut().storage,
+        .execute(
+            mock_deps.as_mut(),
+            mock_env,
             mock_info.clone(),
-            "*****%%%%%@@@###!1234hello".into(),
+            cw_xcall::msg::ExecuteMsg::UpdateAdmin {
+                address: "*****%%%%%@@@###!1234hello".into(),
+            },
+        )
+        .unwrap();
+}
+
+#[test]
+#[should_panic(
+    expected = "Std(GenericErr { msg: \"Invalid input: human address too short for this mock implementation (must be >= 3).\" })"
+)]
+fn validate_address_add_admin_size_lessthan_3() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
+
+    let mut contract = CwCallService::default();
+
+    contract
+        .add_owner(
+            mock_deps.as_mut().storage,
+            Address::from(&mock_info.sender.to_string()),
+        )
+        .unwrap();
+
+    contract
+        .execute(
+            mock_deps.as_mut(),
+            mock_env,
+            mock_info.clone(),
+            cw_xcall::msg::ExecuteMsg::SetAdmin {
+                address: "sm".into(),
+            },
+        )
+        .unwrap();
+}
+
+#[test]
+#[should_panic(
+    expected = "Std(GenericErr { msg: \"Invalid input: human address too long for this mock implementation (must be <= 90).\" })"
+)]
+fn validate_address_add_admin_size_more_than_45() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
+
+    let mut contract = CwCallService::default();
+
+    contract
+        .add_owner(
+            mock_deps.as_mut().storage,
+            Address::from(&mock_info.sender.to_string()),
+        )
+        .unwrap();
+
+    contract
+        .execute(
+            mock_deps.as_mut(),
+            mock_env,
+            mock_info.clone(),
+            cw_xcall::msg::ExecuteMsg::SetAdmin {
+                address: "eddiuo6lbp05golmz3rb5n7hbi4c5hhyh0rb1w6cslyjt5mhwd0chn3x254lyorpx4dzvrvsc9h2em44be2rj193dwe".into(),
+            },
         )
         .unwrap();
 }

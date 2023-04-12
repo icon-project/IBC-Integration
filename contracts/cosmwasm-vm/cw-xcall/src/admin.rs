@@ -19,12 +19,6 @@ impl<'a> CwCallService<'a> {
         if admin.is_empty() {
             return Err(ContractError::AdminAddressCannotBeNull {});
         }
-        //TODO : Check for address length
-        if !admin.to_string().chars().all(|x| x.is_alphanumeric()) {
-            return Err(ContractError::InvalidAddress {
-                address: admin.to_string(),
-            });
-        }
 
         let owner = self
             .owner()
@@ -96,5 +90,19 @@ impl<'a> CwCallService<'a> {
         } else {
             Err(ContractError::Unauthorized {})
         }
+    }
+
+    pub fn validate_address(api: &dyn Api, address: &str) -> Result<Address, ContractError> {
+        if !address.chars().all(|x| x.is_alphanumeric()) {
+            return Err(ContractError::InvalidAddress {
+                address: address.to_string(),
+            });
+        }
+
+        let validated_address = api
+            .addr_validate(address)
+            .map_err(|error| ContractError::Std(error))?;
+
+        Ok(validated_address.as_str().into())
     }
 }

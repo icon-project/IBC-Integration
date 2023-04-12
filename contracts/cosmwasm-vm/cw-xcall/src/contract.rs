@@ -29,7 +29,11 @@ impl<'a> CwCallService<'a> {
         msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
         match msg {
-            ExecuteMsg::SetAdmin { address } => self.add_admin(deps.storage, info, address),
+            ExecuteMsg::SetAdmin { address } => {
+                let validated_address =
+                    CwCallService::validate_address(deps.api, address.as_str())?;
+                self.add_admin(deps.storage, info, validated_address)
+            }
             ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
@@ -91,7 +95,11 @@ impl<'a> CwCallService<'a> {
                     .add_events(response.events)
                     .add_submessages(response.messages))
             }
-            ExecuteMsg::UpdateAdmin { address } => self.update_admin(deps.storage, info, address),
+            ExecuteMsg::UpdateAdmin { address } => {
+                let validated_address =
+                    CwCallService::validate_address(deps.api, address.as_str())?;
+                self.update_admin(deps.storage, info, validated_address)
+            }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
         }
     }
