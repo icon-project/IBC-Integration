@@ -20,20 +20,19 @@ use crate::state::CwIbcStore;
 use crate::{
     ics26_routing::router::CwIbcRouter,
     storage_keys::StorageKey,
-    types::{
-        ChannelId, ClientId, ClientType, ConnectionId, PortId, VerifyChannelState,
-        VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState,
-    },
+    types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
 };
+use common::client_msg::{
+    LightClientPacketMessage, VerifyChannelState, VerifyClientConsesnusState,
+    VerifyClientFullState, VerifyConnectionState,
+};
+pub use constants::*;
+use context::CwIbcCoreContext;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
     StdResult, Storage,
 };
-
-use crate::ics04_channel::LightClientPacketMessage;
-pub use constants::*;
-use context::CwIbcCoreContext;
 use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};
 pub use ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,

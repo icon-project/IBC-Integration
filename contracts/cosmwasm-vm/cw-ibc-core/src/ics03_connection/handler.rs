@@ -176,7 +176,7 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&client_cons_state_path_on_a.clone())
                 .map_err(|error| ContractError::Std(error))?,
         );
-        let client_message = crate::msg::LightClientMessage::VerifyConection {
+        let client_message = crate::ics04_channel::LightClientMessage::VerifyConection {
             verify_connection_state,
             verify_client_full_satate,
             vefiry_client_consensus_state,
@@ -379,7 +379,7 @@ impl<'a> CwIbcCoreContext<'a> {
             conensus_state_path_on_a,
             client_consensus_state_path_on_b,
         );
-        let client_message = crate::msg::LightClientMessage::VerifyConection {
+        let client_message = crate::ics04_channel::LightClientMessage::VerifyConection {
             verify_connection_state,
             verify_client_full_satate,
             vefiry_client_consensus_state,
@@ -560,7 +560,7 @@ impl<'a> CwIbcCoreContext<'a> {
             connection_path,
             to_vec(&expected_conn_end_on_a).map_err(|error| ContractError::Std(error))?,
         );
-        let client_message = crate::msg::LightClientMessage::VerifyOpenConfirm {
+        let client_message = crate::ics04_channel::LightClientMessage::VerifyOpenConfirm {
             verify_connection_state,
         };
 

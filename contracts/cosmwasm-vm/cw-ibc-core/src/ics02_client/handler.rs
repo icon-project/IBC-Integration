@@ -1,4 +1,5 @@
 use super::{events::client_misbehaviour_event, *};
+use common::client_msg::ExecuteMsg as LightClientMessage;
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn create_client(
@@ -50,7 +51,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let message = LightClientMessage::UpdateClient {
             client_id: client_id.as_str().to_string().clone(),
-            header: message.header.value,
+            signed_header: message.header.value,
         };
 
         let client_update_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {

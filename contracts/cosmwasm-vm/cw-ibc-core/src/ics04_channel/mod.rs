@@ -10,6 +10,7 @@ pub use crate::types::*;
 pub use channel::*;
 pub use handler::*;
 
+pub use common::client_msg::ExecuteMsg as LightClientMessage;
 use cosmwasm_std::Event;
 use cosmwasm_std::Reply;
 use cosmwasm_std::Storage;
@@ -34,7 +35,6 @@ use ibc::core::{
     ContextError,
 };
 use ibc::events::IbcEventType;
-pub use msg::LightClientMessage;
 use std::str::FromStr;
 pub use traits::*;
 

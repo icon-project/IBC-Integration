@@ -141,6 +141,9 @@ pub fn execute(
             )?;
             Ok(Response::new().add_attribute(NON_MEMBERSHIP, result.to_string()))
         }
+        _ => {
+            todo!()
+        }
     }
 }
 
