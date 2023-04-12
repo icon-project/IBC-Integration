@@ -47,27 +47,30 @@ impl<'a> IconClient<'a> {
         header: &BtpHeader,
         signatures: &Vec<Vec<u8>>,
     ) -> Result<bool, ContractError> {
-        let mut votes = 0_u128;
+        let mut votes = u128::default();
         let state = self.context.get_client_state(client_id)?;
         let config = self.context.get_config()?;
         let decision = header
             .get_network_type_section_decision_hash(&config.src_network_id, config.network_type_id);
         let validators_map = common::utils::to_lookup(&state.validators);
-        for (_i, signature) in signatures.iter().enumerate() {
+
+        let num_validators = state.validators.len() as u128;
+
+        for signature in signatures {
             let signer = self
                 .context
                 .recover_icon_signer(decision.as_slice(), signature);
             if let Some(val) = signer {
-                if let Some(_expected) = validators_map.get(&val.to_vec()) {
+                if validators_map.contains_key(&val) {
                     votes = votes + 1;
                 }
             }
 
-            if Self::has_quorum_of(state.validators.len() as u128, votes) {
+            if Self::has_quorum_of(num_validators, votes) {
                 break;
             }
         }
-        if !Self::has_quorum_of(state.validators.len() as u128, votes) {
+        if !Self::has_quorum_of(num_validators, votes) {
             return Err(ContractError::InSuffcientQuorum);
         }
         Ok(true)
