@@ -287,6 +287,18 @@ impl Display for ChannelId {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PortId(IbcPortId);
 
+impl FromStr for PortId {
+    type Err = ContractError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let port_id = IbcPortId::from_str(s).map_err(|error| ContractError::IbcDecodeError {
+            error: error.to_string(),
+        })?;
+
+        Ok(Self(port_id))
+    }
+}
+
 impl Default for PortId {
     fn default() -> Self {
         Self(IbcPortId::default())
