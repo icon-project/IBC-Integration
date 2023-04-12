@@ -302,3 +302,117 @@ fn execute_recieve_packet() {
     assert!(res.is_ok());
     assert_eq!(res.unwrap().events[0].ty, "test")
 }
+
+#[test]
+fn execute_recieve_packet_ordered() {
+    let contract = CwIbcCoreContext::default();
+    let mut deps = deps();
+    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let packet = msg.packet.clone();
+
+    let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
+    let event = Event::new("test")
+        .add_attribute("key", packet.port_id_on_b.as_str())
+        .add_attribute("key", packet.chan_id_on_b.as_str())
+        .add_attribute("key", packet.seq_on_a.to_string());
+    let acknowledgement = cw_xcall::ack::make_ack_success();
+    let ack = ack.add_event(event);
+    let ack = ack.set_ack(acknowledgement);
+    let data_bin = to_binary(&ack).unwrap();
+    let result = SubMsgResponse {
+        data: Some(data_bin),
+        events: vec![],
+    };
+    let result: SubMsgResult = SubMsgResult::Ok(result);
+    let reply = Reply { id: 0, result };
+
+    let chan_end_on_b = ChannelEnd::new(
+        State::Open,
+        Order::Ordered,
+        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+        vec![IbcConnectionId::default()],
+        Version::new("ics20-1".to_string()),
+    );
+    contract
+        .store_channel_end(
+            &mut deps.storage,
+            packet.port_id_on_b.clone().into(),
+            packet.chan_id_on_b.clone().into(),
+            chan_end_on_b.clone(),
+        )
+        .unwrap();
+    contract
+        .store_next_sequence_recv(
+            &mut deps.storage,
+            packet.port_id_on_b.clone().into(),
+            packet.chan_id_on_b.clone().into(),
+            1.into(),
+        )
+        .unwrap();
+
+    let res = contract.execute_recieve_packet(deps.as_mut(), reply);
+    let seq = contract.get_next_sequence_recv(
+        &deps.storage,
+        packet.port_id_on_b.clone().into(),
+        packet.chan_id_on_b.clone().into(),
+    );
+    assert!(res.is_ok());
+    assert_eq!(res.unwrap().events[0].ty, "test");
+    assert!(seq.is_ok());
+    assert_eq!(seq.unwrap(), 2.into())
+}
+#[test]
+#[should_panic(expected = "ibc::core::ics04_channel::packet::Sequence")]
+fn execute_recieve_packet_ordered_fail_missing_sequence() {
+    let contract = CwIbcCoreContext::default();
+    let mut deps = deps();
+    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let packet = msg.packet.clone();
+
+    let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
+    let event = Event::new("test")
+        .add_attribute("key", packet.port_id_on_b.as_str())
+        .add_attribute("key", packet.chan_id_on_b.as_str())
+        .add_attribute("key", packet.seq_on_a.to_string());
+    let acknowledgement = cw_xcall::ack::make_ack_success();
+    let ack = ack.add_event(event);
+    let ack = ack.set_ack(acknowledgement);
+    let data_bin = to_binary(&ack).unwrap();
+    let result = SubMsgResponse {
+        data: Some(data_bin),
+        events: vec![],
+    };
+    let result: SubMsgResult = SubMsgResult::Ok(result);
+    let reply = Reply { id: 0, result };
+
+    let chan_end_on_b = ChannelEnd::new(
+        State::Open,
+        Order::Ordered,
+        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+        vec![IbcConnectionId::default()],
+        Version::new("ics20-1".to_string()),
+    );
+    contract
+        .store_channel_end(
+            &mut deps.storage,
+            packet.port_id_on_b.clone().into(),
+            packet.chan_id_on_b.clone().into(),
+            chan_end_on_b.clone(),
+        )
+        .unwrap();
+    contract
+        .execute_recieve_packet(deps.as_mut(), reply)
+        .unwrap();
+}
+
+
+#[test]
+#[should_panic(expected="ChannelNotFound")]
+fn test_recieve_packet_fail_missing_channel() {
+    let contract = CwIbcCoreContext::default();
+    let mut deps = deps();
+    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    
+    contract.validate_recieve_packet(deps.as_mut(), info, &msg).unwrap();
+}
