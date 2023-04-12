@@ -13,7 +13,9 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self.ibc_store().capabilities().save(store, name, &address) {
             Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
+            Err(error) => Err(ContractError::IbcDecodeError {
+                error: format!("FailToStore {}", error),
+            }),
         }
     }
 
@@ -26,6 +28,8 @@ impl<'a> CwIbcCoreContext<'a> {
             .ibc_store()
             .capabilities()
             .load(store, name)
-            .map_err(|error| ContractError::Std(error))?)
+            .map_err(|_| ContractError::IbcDecodeError {
+                error: "CapabilityNotFound".into(),
+            })?)
     }
 }

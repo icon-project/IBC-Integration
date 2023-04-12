@@ -14,7 +14,7 @@ fn test_set_capability() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<alloc::string::String>\" })")]
+#[should_panic(expected = "IbcDecodeError { error: \"CapabilityNotFound\" }")]
 fn test_get_capability_fail() {
     let mut deps = deps();
     let name = to_vec(&u128::default()).unwrap();
@@ -28,7 +28,9 @@ fn test_get_capability() {
     let name = to_vec(&u128::default()).unwrap();
     let address = vec!["hello".to_string()];
     let contract = CwIbcCoreContext::default();
-    contract.store_capability(&mut deps.storage, name.clone(), address).unwrap();
+    contract
+        .store_capability(&mut deps.storage, name.clone(), address)
+        .unwrap();
     let result = contract.get_capability(&mut deps.storage, name);
     assert_eq!(result.is_ok(), true)
 }
