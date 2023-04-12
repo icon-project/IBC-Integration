@@ -16,56 +16,39 @@
 
 package foundation.icon.btp.xcall;
 
-import ibc.icon.interfaces.IIBCModule;
-import ibc.icon.structs.proto.core.channel.Channel;
-import ibc.icon.structs.proto.core.channel.Counterparty;
-import ibc.icon.structs.proto.core.channel.Packet;
-import ibc.icon.structs.proto.core.client.Height;
-import ibc.ics25.handler.IBCHandler;
+import foundation.icon.btp.xcall.data.CSMessage;
+import foundation.icon.btp.xcall.data.CSMessageRequest;
+import foundation.icon.btp.xcall.data.CSMessageResponse;
+import foundation.icon.btp.xcall.data.CallRequest;
+import ibc.icon.interfaces.ICallServiceReceiver;
+
+import ibc.icon.interfaces.ICallServiceReceiverScoreInterface;
+import icon.proto.core.channel.Channel.Counterparty;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
+import java.math.BigInteger;
 import score.Address;
 import score.Context;
-import score.DictDB;
 import score.RevertedException;
+import score.UserRevertException;
 import score.UserRevertedException;
-import score.VarDB;
 import score.annotation.EventLog;
 import score.annotation.External;
 import score.annotation.Optional;
 import score.annotation.Payable;
 
-import java.math.BigInteger;
 
+public class CallServiceImpl extends AbstractCallService {
 
-public class CallServiceImpl implements IIBCModule {
-    public static final int MAX_DATA_SIZE = 2048;
-    public static final int MAX_ROLLBACK_SIZE = 1024;
-
-    private final VarDB<Address> ibcHandler = Context.newVarDB("ibcHandler", Address.class);
-    private final VarDB<BigInteger> sn = Context.newVarDB("sn", BigInteger.class);
-    private final VarDB<BigInteger> reqId = Context.newVarDB("reqId", BigInteger.class);
-    private final VarDB<BigInteger> timeoutHeight = Context.newVarDB("timeoutHeight", BigInteger.class);
-
-    private final DictDB<BigInteger, CallRequest> requests = Context.newDictDB("requests", CallRequest.class);
-    private final DictDB<BigInteger, CSMessageRequest> proxyReqs = Context.newDictDB("proxyReqs", CSMessageRequest.class);
-
-    // for fee-related operations
-    private final VarDB<Address> admin = Context.newVarDB("admin", Address.class);
-    private final VarDB<Address> feeHandler = Context.newVarDB("feeHandler", Address.class);
-    private final VarDB<BigInteger> protocolFee = Context.newVarDB("protocolFee", BigInteger.class);
-    private final VarDB<String> sourcePort = Context.newVarDB("sourcePort", String.class);
-    private final VarDB<String> sourceChannel = Context.newVarDB("sourceChannel", String.class);
-    private final VarDB<String> destinationPort = Context.newVarDB("destinationPort", String.class);
-    private final VarDB<String> destinationChannel = Context.newVarDB("destinationChannel", String.class);
-
-    public CallServiceImpl(Address _ibc) {
+    public CallServiceImpl(Address _ibc, BigInteger _timeoutHeight) {
         this.ibcHandler.set(_ibc);
         admin.set(Context.getOwner());
-
-
+        this.timeoutHeight.set(_timeoutHeight);
     }
 
+    @External
     public void setTimeoutHeight(BigInteger _timeoutHeight) {
-        onlyOwner();
+        onlyAdmin();
         this.timeoutHeight.set(_timeoutHeight);
     }
 
@@ -82,8 +65,12 @@ public class CallServiceImpl implements IIBCModule {
         checkCallerOrThrow(Context.getOwner(), "OnlyOwner");
     }
 
+    private void onlyAdmin() {
+        checkCallerOrThrow(this.admin(), "Only admin is allowed to call method");
+    }
+
     private void onlyIBCHandler() {
-        checkCallerOrThrow(ibcHandler.get(), "OnlyIBCHandler");
+        checkCallerOrThrow(ibcHandler.get(), "Only IBCHandler allowed");
     }
 
 //    private void checkService(String _svc) {
@@ -118,7 +105,7 @@ public class CallServiceImpl implements IIBCModule {
         Context.require(_data.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
         Context.require(_rollback == null || _rollback.length <= MAX_ROLLBACK_SIZE, "MaxRollbackSizeExceeded");
 
-        boolean needResponse = _rollback != null;
+        boolean needResponse = _rollback != null && _rollback.length > 0;
 
         if (needResponse) {
             CallRequest req = new CallRequest(caller, _to, _rollback);
@@ -128,22 +115,22 @@ public class CallServiceImpl implements IIBCModule {
         CSMessageRequest msgReq = new CSMessageRequest(caller.toString(), _to, sn, needResponse, _data);
 
         Packet pct = new Packet();
-        pct.setSequence(getNextSn());
-        pct.setData(msgReq.toString());
+        pct.setSequence(sn);
+        pct.setData(createMessage(CSMessage.REQUEST, msgReq.toBytes()));
         pct.setDestinationPort(getDestinationPort());
         pct.setDestinationChannel(getDestinationChannel());
         pct.setSourcePort(getSourcePort());
         pct.setSourceChannel(getSourceChannel());
 
+        BigInteger _timoutHeight = this.timeoutHeight.get();
         Height hgt = new Height();
-        hgt.setRevisionHeight(timeoutHeight.get());
-        hgt.setRevisionNumber(BigInteger.ZERO);
-        pct.setTimeoutHeight(hgt);
+        BigInteger timeoutHeight = BigInteger.valueOf(Context.getBlockHeight()).add(_timoutHeight);
+        hgt.setRevisionHeight(timeoutHeight);
 
+        pct.setTimeoutHeight(hgt);
         pct.setTimeoutTimestamp(BigInteger.ZERO);
 
-        IBCHandler ibc = new IBCHandler();
-        ibc.sendPacket(pct);
+        Context.call(this.ibcHandler.get(), "sendPacket", new Object[]{pct.encode()});
 
         CallMessageSent(caller, _to, sn, sn);
         return sn;
@@ -164,7 +151,7 @@ public class CallServiceImpl implements IIBCModule {
 
         CSMessageResponse msgRes = null;
         try {
-            DAppProxy proxy = new DAppProxy(Address.fromString(req.getTo()));
+            ICallServiceReceiver proxy = new ICallServiceReceiverScoreInterface(Address.fromString(req.getTo()));
             proxy.handleCallMessage(req.getFrom(), req.getData());
             msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.SUCCESS, "");
         } catch (UserRevertedException e) {
@@ -190,13 +177,13 @@ public class CallServiceImpl implements IIBCModule {
     public void executeRollback(BigInteger _sn) {
         CallRequest req = requests.get(_sn);
         Context.require(req != null, "InvalidSerialNum");
-        Context.require(req.enabled(), "RollbackNotEnabled");
+        Context.require(req.isEnabled(), "RollbackNotEnabled");
         cleanupCallRequest(_sn);
         String caller = Context.getCaller().toString();
 
         CSMessageResponse msgRes = null;
         try {
-            DAppProxy proxy = new DAppProxy(req.getFrom());
+            ICallServiceReceiver proxy = new ICallServiceReceiverScoreInterface(req.getFrom());
             proxy.handleCallMessage(caller, req.getRollback());
             msgRes = new CSMessageResponse(_sn, CSMessageResponse.SUCCESS, "");
         } catch (UserRevertedException e) {
@@ -241,6 +228,11 @@ public class CallServiceImpl implements IIBCModule {
     /* ========== Interfaces with BMC ========== */
     @External
     public void handleBTPMessage(String _from, String _svc, BigInteger _sn, byte[] _msg) {
+        onlyIBCHandler();
+        handleReceivedPacket(_from, _svc, _sn, _msg);
+    }
+
+    private void handleReceivedPacket(String _from, String _svc, BigInteger _sn, byte[] _msg) {
         CSMessage msg = CSMessage.fromBytes(_msg);
         switch (msg.getType()) {
             case CSMessage.REQUEST:
@@ -269,7 +261,8 @@ public class CallServiceImpl implements IIBCModule {
         String to = msgReq.getTo();
 
         BigInteger reqId = getNextReqId();
-        CSMessageRequest req = new CSMessageRequest(netFrom, to, msgReq.getSn(), msgReq.needRollback(), msgReq.getData());
+        CSMessageRequest req = new CSMessageRequest(netFrom, to, msgReq.getSn(), msgReq.needRollback(),
+                msgReq.getData());
         proxyReqs.set(reqId, req);
 
         // emit event to notify the user
@@ -342,23 +335,44 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     @External
-    public void onChanOpenInit(Channel.Order order, String[] connectionHops, String portId, String channelId, Counterparty counterparty, String version) {
-
+    public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
+            byte[] counterpartyPb, String version) {
+        onlyIBCHandler();
+        sourcePort.set(portId);
+        sourceChannel.set(channelId);
+        Counterparty counterparty = Counterparty.decode(counterpartyPb);
+        destinationChannel.set(counterparty.getChannelId());
+        destinationPort.set(counterparty.getPortId());
+        Context.println("onChanOpenInit");
     }
 
     @External
-    public void onChanOpenTry(Channel.Order order, String[] connectionHops, String portId, String channelId, Counterparty counterparty, String version, String counterpartyVersion) {
-
+    public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
+            byte[] counterpartyPb, String version, String counterpartyVersion) {
+        onlyIBCHandler();
+        sourcePort.set(portId);
+        sourceChannel.set(channelId);
+        Counterparty counterparty = Counterparty.decode(counterpartyPb);
+        destinationChannel.set(counterparty.getChannelId());
+        destinationPort.set(counterparty.getPortId());
+        Context.println("onChanOpenTry");
     }
 
     @External
-    public void onChanOpenAck(String portId, String channelId, String counterpartyVersion) {
-
+    public void onChanOpenAck(String portId, String channelId, String counterpartyChannelId,
+            String counterpartyVersion) {
+        onlyIBCHandler();
+        Context.require(portId.equals(sourcePort.get()), "port not matched");
+        Context.require(channelId.equals(sourceChannel.get()), "Channel not matched");
+        Context.println("onChanOpenAck");
     }
 
     @External
     public void onChanOpenConfirm(String portId, String channelId) {
-
+        onlyIBCHandler();
+        Context.require(portId.equals(sourcePort.get()), "port not matched");
+        Context.require(channelId.equals(sourceChannel.get()), "Channel not matched");
+        Context.println("onChanOpenConfirm");
     }
 
     @External
@@ -374,34 +388,38 @@ public class CallServiceImpl implements IIBCModule {
     }
 
     @External
-    public byte[] onRecvPacket(Packet _pct, Address _relayer) {
+    public byte[] onRecvPacket(byte[] calldata, Address relayer) {
         onlyIBCHandler();
-        byte[] _msg = _pct.getData().getBytes();
-        String _from = _pct.getSourcePort() + "/" + _pct.getSourceChannel();
-        BigInteger _sn = _pct.getSequence();
 
-        handleBTPMessage(_from, _from, _sn, _msg);
+        BigInteger newRecvCount = recvCount.getOrDefault(BigInteger.ZERO).add(BigInteger.ONE);
+        recvCount.set(newRecvCount);
 
+        Packet packet = Packet.decode(calldata);
+        byte[] _msg = packet.getData();
+        String _from = packet.getSourcePort() + "/" + packet.getSourceChannel();
+
+        Context.println(packet.getSourcePort()+"-->"+packet.getSourceChannel());
+        Context.println(destinationPort.get()+"<--"+destinationChannel.get());
+
+        Context.require(packet.getSourcePort().equals(destinationPort.get()),"source port not matched");
+        Context.require(packet.getSourceChannel().equals(destinationChannel.get()),"source channel not matched");
+
+        BigInteger _sn = packet.getSequence();
+
+        handleReceivedPacket(_from, _from, _sn, _msg);
 
         return new byte[0];
-
-
     }
+
 
     @External
-    public void onAcknowledgementPacket(Packet calldata, byte[] acknowledgement, Address relayer) {
-
+    public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer) {
+        Context.println("onAcknowledgementPacket");
     }
 
-    private void setSourceChannelAndPort(String channel, String port) {
-        sourcePort.set(port);
-        sourceChannel.set(channel);
-    }
-
-    private void setDestinationChannelAndPort(String channel, String port) {
-        destinationPort.set(port);
-        destinationChannel.set(channel);
-
+    @Override
+    public void onTimeoutPacket(byte[] calldata, Address relayer) {
+        throw new UserRevertException("Method not implemented");
     }
 
     private String getDestinationPort() {

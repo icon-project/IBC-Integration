@@ -1,23 +1,30 @@
 version = '0.1.0'
 
 dependencies {
-    implementation project(':ibc')
-    compileOnly("foundation.icon:javaee-api:$javaeeVersion")
-    implementation("foundation.icon:javaee-scorex:$scorexVersion")
     implementation project(':lib')
     implementation project(':score-util')
-
-    // for generating ScoreClient
-    annotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
-    compileOnly("foundation.icon:javaee-score-client:$scoreClientVersion")
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
-
-    testImplementation("foundation.icon:javaee-unittest:$javaeeUnittestVersion")
-    testAnnotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
-    testImplementation("foundation.icon:javaee-score-client:$scoreClientVersion")
+    testImplementation project(':test-lib')
 }
+
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
+tasks.named('compileIntTestJava') {
+    dependsOn(':mock-dapp:optimizedJar')
+}
+
 
 optimizedJar {
     dependsOn(project(':lib').jar)
@@ -45,6 +52,30 @@ deployJar {
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-
+        arg('_ibc', 'hxb6b5791be0b5ef67063b3c10b840fb81514db2fd')
+        arg('_timeoutHeight', '0x3e8')
     }
+}
+
+
+task integrationTest(type: Test) {
+    useJUnitPlatform()
+
+    rootProject.allprojects {
+        if (it.getTasks().findByName('optimizedJar')) {
+            dependsOn(it.getTasks().getByName('optimizedJar'))
+        }
+    }
+
+    options {
+        testLogging.showStandardStreams = true
+        description = 'Runs integration tests.'
+        group = 'verification'
+
+        testClassesDirs = sourceSets.intTest.output.classesDirs
+        classpath = sourceSets.intTest.runtimeClasspath
+
+        systemProperty "java", optimizedJar.outputJarName
+    }
+
 }

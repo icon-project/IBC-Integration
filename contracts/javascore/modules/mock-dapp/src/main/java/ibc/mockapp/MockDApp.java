@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall.sample;
+package ibc.mockapp;
 
-import foundation.icon.btp.xcall.CallServiceReceiver;
-import foundation.icon.score.client.ScoreClient;
+import ibc.icon.interfaces.ICallServiceReceiver;
+import java.math.BigInteger;
 import score.Address;
 import score.Context;
 import score.DictDB;
@@ -28,18 +28,14 @@ import score.annotation.External;
 import score.annotation.Optional;
 import score.annotation.Payable;
 
-import java.math.BigInteger;
 
-@ScoreClient
-public class DAppProxySample implements CallServiceReceiver {
+public class MockDApp implements ICallServiceReceiver {
     private final Address callSvc;
-    private final String callSvcBtpAddr;
     private final VarDB<BigInteger> id = Context.newVarDB("id", BigInteger.class);
     private final DictDB<BigInteger, RollbackData> rollbacks = Context.newDictDB("rollbacks", RollbackData.class);
 
-    public DAppProxySample(Address _callService) {
+    public MockDApp(Address _callService) {
         this.callSvc = _callService;
-        this.callSvcBtpAddr = Context.call(String.class, this.callSvc, "getBtpAddress");
     }
 
     private void onlyCallService() {
@@ -81,12 +77,11 @@ public class DAppProxySample implements CallServiceReceiver {
         }
     }
 
-    @Override
     @External
     public void handleCallMessage(String _from, byte[] _data) {
         onlyCallService();
         Context.println("handleCallMessage: from=" + _from + ", data=" + new String(_data));
-        if (callSvcBtpAddr.equals(_from)) {
+        if (Context.getAddress().equals(Address.fromString(_from))) {
             // handle rollback data here
             // In this example, just compare it with the stored one.
             RollbackData received = RollbackData.fromBytes(_data);

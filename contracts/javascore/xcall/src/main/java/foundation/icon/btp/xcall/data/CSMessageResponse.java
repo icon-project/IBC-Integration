@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall;
+package foundation.icon.btp.xcall.data;
 
 import score.ByteArrayObjectWriter;
 import score.Context;
@@ -23,59 +23,47 @@ import score.ObjectWriter;
 
 import java.math.BigInteger;
 
-public class CSMessageRequest {
-    private final String from;
-    private final String to;
+public class CSMessageResponse {
+    public static final int SUCCESS = 0;
+    public static final int FAILURE = -1;
+    public static final int IBC_ERROR = -2;
+
     private final BigInteger sn;
-    private final boolean rollback;
-    private final byte[] data;
+    private final int code;
+    private final String msg;
 
-    public CSMessageRequest(String from, String to, BigInteger sn, boolean rollback, byte[] data) {
-        this.from = from;
-        this.to = to;
+    public CSMessageResponse(BigInteger sn, int code, String msg) {
         this.sn = sn;
-        this.rollback = rollback;
-        this.data = data;
-    }
-
-    public String getFrom() {
-        return from;
-    }
-
-    public String getTo() {
-        return to;
+        this.code = code;
+        this.msg = msg;
     }
 
     public BigInteger getSn() {
         return sn;
     }
 
-    public boolean needRollback() {
-        return rollback;
+    public int getCode() {
+        return code;
     }
 
-    public byte[] getData() {
-        return data;
+    public String getMsg() {
+        return msg;
     }
 
-    public static void writeObject(ObjectWriter w, CSMessageRequest m) {
-        w.beginList(5);
-        w.write(m.from);
-        w.write(m.to);
+    public static void writeObject(ObjectWriter w, CSMessageResponse m) {
+        w.beginList(3);
         w.write(m.sn);
-        w.write(m.rollback);
-        w.writeNullable(m.data);
+        w.write(m.code);
+        w.writeNullable(m.msg);
         w.end();
     }
 
-    public static CSMessageRequest readObject(ObjectReader r) {
+    public static CSMessageResponse readObject(ObjectReader r) {
         r.beginList();
-        CSMessageRequest m = new CSMessageRequest(
-                r.readString(),
-                r.readString(),
+        CSMessageResponse m = new CSMessageResponse(
                 r.readBigInteger(),
-                r.readBoolean(),
-                r.readNullable(byte[].class)
+                r.readInt(),
+                r.readNullable(String.class)
         );
         r.end();
         return m;
@@ -83,11 +71,11 @@ public class CSMessageRequest {
 
     public byte[] toBytes() {
         ByteArrayObjectWriter writer = Context.newByteArrayObjectWriter("RLPn");
-        CSMessageRequest.writeObject(writer, this);
+        CSMessageResponse.writeObject(writer, this);
         return writer.toByteArray();
     }
 
-    public static CSMessageRequest fromBytes(byte[] bytes) {
+    public static CSMessageResponse fromBytes(byte[] bytes) {
         ObjectReader reader = Context.newByteArrayObjectReader("RLPn", bytes);
         return readObject(reader);
     }

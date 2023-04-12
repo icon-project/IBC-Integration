@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package foundation.icon.btp.xcall;
+package foundation.icon.btp.xcall.data;
 
 import score.Address;
 import score.ObjectReader;
@@ -68,7 +68,7 @@ public class CallRequest {
         return req;
     }
 
-    public boolean enabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
