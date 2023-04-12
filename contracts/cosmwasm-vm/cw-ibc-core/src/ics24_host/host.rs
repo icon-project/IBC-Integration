@@ -71,7 +71,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self.ibc_store().expected_time_per_block().save(store,  &expected_time_per_block) {
             Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
+            Err(error) => Err(ContractError::IbcDecodeError { error: format!("FailedToStore {}", error) }),
         }
     }
 
