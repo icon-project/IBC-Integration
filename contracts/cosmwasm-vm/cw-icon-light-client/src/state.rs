@@ -21,6 +21,8 @@ const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS
 
 const CONFIG: Item<Config> = Item::new("CONFIG");
 
+const ADDRESS_TYPE_PREFIX: u8 = 0x00;
+
 pub struct CwContext<'a> {
     pub deps_mut: RefCell<DepsMut<'a>>,
 
@@ -97,12 +99,24 @@ impl<'a> IContext for CwContext<'a> {
             .api
             .secp256k1_recover_pubkey(msg, &rs, v)
             .unwrap();
-        let pubkey_hash = keccak256(&pubkey);
+        let pubkey_hash = keccak256(&pubkey[1..]);
         let address: Option<[u8; 20]> = pubkey_hash.as_slice()[12..]
             .try_into()
             .ok()
             .map(|arr: [u8; 20]| arr.into());
         address
+    }
+
+    fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>> {
+        return self
+            .recover_signer(msg, signature)
+            .map(|addr| return self.to_icon_address(addr.as_slice()));
+    }
+
+    fn to_icon_address(&self, address: &[u8]) -> Vec<u8> {
+        let mut raw = [ADDRESS_TYPE_PREFIX; 21];
+        raw[1..21].copy_from_slice(&address[..]);
+        raw.to_vec()
     }
 
     fn get_config(&self) -> Result<Config, Self::Error> {
@@ -446,29 +460,62 @@ mod tests {
 
         // Recover signer
         let msg = keccak256(b"test message");
-        let address = hex!("5c42b6096c4601ceabacdb471cb1cdfe6bc46586");
+        let address = "8efcaf2c4ebbf88bf07f3bb44a2869c4c675ad7a";
         let signature = hex!("c8b2b5eeb7b54620a0246b2355e42ce6d3bdf1648cd8eae298ebbbe5c3bacc197d5e8bfddb0f1e33778b7fc558c54d35e47c88daa24fff243aa743088e5503d701");
         let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
         let result = context.recover_signer(msg.as_slice(), &signature);
-        assert_eq!(address, result.unwrap());
+        assert_eq!(address, hex::encode(result.unwrap()));
     }
 
-    #[ignore]
     #[test]
     fn test_cwcontext_recover_signer_relay_data() {
         let mut deps = mock_dependencies();
 
         let signed_header: SignedHeader = get_test_signed_headers()[0].clone();
         let btp_header = signed_header.header.clone().unwrap();
-        let mut msg = btp_header.get_network_type_section_decision_hash(
+
+        let network_type_section_rlp = btp_header.get_network_type_section_rlp();
+        assert_eq!("f842a0d090304264eeee3c3562152f2dc355601b0b423a948824fd0a012c11c3fc2fb4a074463d2395972061ca8807d262b0757454ed160bf43bc98d4d7a713647891a0a",hex::encode(network_type_section_rlp));
+
+        let network_type_section_hash = btp_header.get_network_type_section_hash();
+        assert_eq!(
+            "f9a63040c595b934bc78921cd9b56c5d085df8c7cb79c0f7473f083b7c7c8684",
+            hex::encode(network_type_section_hash)
+        );
+
+        let msg = btp_header.get_network_type_section_decision_hash(
             TESTNET_SRC_NETWORK_ID,
             TESTNET_NETWORK_TYPE_ID.into(),
         );
-        let address = "d6d594b040bff300eee91f7665ac8dcf89eb0871015306";
-        let mut signature = signed_header.signatures[0].clone();
+        let address = "00b040bff300eee91f7665ac8dcf89eb0871015306";
+        let signature = signed_header.signatures[0].clone();
         let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
-        let result = context.recover_signer(msg.as_slice(), &signature).unwrap();
+        let result = context
+            .recover_icon_signer(msg.as_slice(), &signature)
+            .unwrap();
         assert_eq!(address, hex::encode(result));
+    }
+
+    #[test]
+    fn test_cwcontext_signed_relay_data() {
+        let mut deps = mock_dependencies();
+
+        let signed_headers: Vec<SignedHeader> = get_test_signed_headers().clone();
+        for signed_header in signed_headers.into_iter() {
+            let btp_header = signed_header.header.clone().unwrap();
+
+            let msg = btp_header.get_network_type_section_decision_hash(
+                TESTNET_SRC_NETWORK_ID,
+                TESTNET_NETWORK_TYPE_ID.into(),
+            );
+            let address = "00b040bff300eee91f7665ac8dcf89eb0871015306";
+            let signature = signed_header.signatures[0].clone();
+            let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+            let result = context
+                .recover_icon_signer(msg.as_slice(), &signature)
+                .unwrap();
+            assert_eq!(address, hex::encode(result));
+        }
     }
 
     #[test]

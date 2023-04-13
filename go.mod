@@ -10,7 +10,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.6
 	github.com/cosmos/ibc-go/v7 v7.0.0
 	github.com/cucumber/godog v0.12.6
-	github.com/docker/docker v20.10.19+incompatible
+	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gdamore/tcell/v2 v2.6.0
 	github.com/gogo/protobuf v1.3.3
