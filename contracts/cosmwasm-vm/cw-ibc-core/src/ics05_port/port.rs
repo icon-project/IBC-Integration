@@ -29,13 +29,9 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: PortId,
         module_id: ModuleId,
     ) -> Result<(), ContractError> {
-        match self
+        Ok(self
             .ibc_store()
             .port_to_moulde()
-            .save(store, port_id, &module_id)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .save(store, port_id, &module_id)?)
     }
 }

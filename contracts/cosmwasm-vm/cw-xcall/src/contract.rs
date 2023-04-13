@@ -47,7 +47,7 @@ impl<'a> CwCallService<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
-                let response = ibc_channel_open(deps, env, msg).map_err(|error| return error)?;
+                let response = ibc_channel_open(deps, env, msg)?;
 
                 match response {
                     Some(data) => Ok(Response::new().add_attribute("version", data.version)),
@@ -56,7 +56,7 @@ impl<'a> CwCallService<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelConnect { msg } => {
-                let response = ibc_channel_connect(deps, env, msg).map_err(|error| return error)?;
+                let response = ibc_channel_connect(deps, env, msg)?;
 
                 Ok(Response::new()
                     .add_attributes(response.attributes)
@@ -65,7 +65,7 @@ impl<'a> CwCallService<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelClose { msg } => {
-                let response = ibc_channel_close(deps, env, msg).map_err(|error| return error)?;
+                let response = ibc_channel_close(deps, env, msg)?;
                 Ok(Response::new()
                     .add_attributes(response.attributes)
                     .add_events(response.events)
@@ -74,9 +74,9 @@ impl<'a> CwCallService<'a> {
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketReceive { msg } => {
                 let response = ibc_packet_receive(deps, env, msg).map_err(|error| {
-                    return ContractError::Std(StdError::NotFound {
+                    ContractError::Std(StdError::NotFound {
                         kind: error.to_string(),
-                    });
+                    })
                 })?;
 
                 let response_data = Response::new()
@@ -89,7 +89,7 @@ impl<'a> CwCallService<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketAck { msg } => {
-                let response = ibc_packet_ack(deps, env, msg).map_err(|error| return error)?;
+                let response = ibc_packet_ack(deps, env, msg)?;
                 Ok(Response::new()
                     .add_attributes(response.attributes)
                     .add_events(response.events)
