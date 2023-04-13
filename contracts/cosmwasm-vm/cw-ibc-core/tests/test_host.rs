@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use cosmwasm_std::to_vec;
 use cw_ibc_core::context::CwIbcCoreContext;
 pub mod setup;
@@ -112,4 +114,39 @@ fn test_lookup_modules() {
 
     let result = contract.lookup_modules(&mut deps.storage, name);
     assert_eq!(result.is_ok(), true)
+}
+
+#[test]
+fn test_set_expected_time_per_block() {
+    let mut deps = deps();
+    let expected_time_per_block = Duration::from_secs(20);
+    let contract = CwIbcCoreContext::default();
+    let block_delay = contract.calc_block_delay(&expected_time_per_block);
+    let result = contract.set_expected_time_per_block(&mut deps.storage, block_delay);
+    assert_eq!(result.is_ok(), true)
+}
+
+#[test]
+fn test_get_expected_time_per_block() {
+    let mut deps = deps();
+    let expected_time_per_block = Duration::from_secs(60);
+    let contract = CwIbcCoreContext::default();
+    let block_delay = contract.calc_block_delay(&expected_time_per_block);
+    contract
+        .set_expected_time_per_block(&mut deps.storage, block_delay)
+        .unwrap();
+    let result = contract
+        .get_expected_time_per_block(&mut deps.storage)
+        .unwrap();
+    assert_eq!(61, result)
+}
+
+#[test]
+#[should_panic(expected = "IbcDecodeError { error: \"NotFound\" }")]
+fn test_get_expected_time_per_block_fails() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    contract
+        .get_expected_time_per_block(&mut deps.storage)
+        .unwrap();
 }

@@ -8,7 +8,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<ModuleId, ContractError> {
         match self
             .ibc_store()
-            .port_to_moulde()
+            .port_to_module()
             .may_load(store, port_id.clone())
         {
             Ok(result) => match result {
@@ -29,13 +29,9 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: PortId,
         module_id: ModuleId,
     ) -> Result<(), ContractError> {
-        match self
+        Ok(self
             .ibc_store()
-            .port_to_moulde()
-            .save(store, port_id, &module_id)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .port_to_module()
+            .save(store, port_id, &module_id)?)
     }
 }

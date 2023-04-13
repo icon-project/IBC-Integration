@@ -33,7 +33,7 @@ use crate::{
         call_request::CallRequest,
         message::{CallServiceMessage, CallServiceMessageType},
         request::CallServiceMessageRequest,
-        response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
+        response::{to_int, CallServiceMessageResponse, CallServiceResponseType},
         storage_keys::StorageKey,
     },
 };
