@@ -173,7 +173,7 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         data: &[u8],
     ) -> Result<IbcReceiveResponse, ContractError> {
-        let message: CallServiceMessageReponse = data.try_into()?;
+        let message: CallServiceMessageResponse = data.try_into()?;
         let response_sequence_no = message.sequence_no();
 
         let mut call_request = self.query_request(deps.storage, response_sequence_no)?;
@@ -193,7 +193,7 @@ impl<'a> CwCallService<'a> {
         }
 
         match message.response_code() {
-            CallServiceResponseType::CallServiceResponseSucess => {
+            CallServiceResponseType::CallServiceResponseSuccess => {
                 let event = match message.message().is_empty() {
                     true => event_response_message(
                         response_sequence_no,

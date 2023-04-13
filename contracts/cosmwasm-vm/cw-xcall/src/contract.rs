@@ -138,7 +138,7 @@ impl<'a> CwCallService<'a> {
         let owner = Address::from(info.sender.as_str());
 
         self.add_owner(deps.storage, owner)?;
-        self.init_last_sequnce_no(deps.storage, last_sequence_no)?;
+        self.init_last_sequence_no(deps.storage, last_sequence_no)?;
         self.init_last_request_id(deps.storage, last_request_id)?;
 
         Ok(Response::new())
@@ -148,14 +148,14 @@ impl<'a> CwCallService<'a> {
         let sequence_no = self.last_sequence_no().load(deps.storage)?;
 
         let response = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageReponse::new(
+            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageResponse::new(
                 sequence_no,
-                CallServiceResponseType::CallServiceResponseSucess,
+                CallServiceResponseType::CallServiceResponseSuccess,
                 "",
             ),
             cosmwasm_std::SubMsgResult::Err(err) => {
                 let error_message = format!("CallService Reverted : {err}");
-                CallServiceMessageReponse::new(
+                CallServiceMessageResponse::new(
                     sequence_no,
                     CallServiceResponseType::CallServiceResponseFailure,
                     &error_message,
@@ -188,9 +188,9 @@ impl<'a> CwCallService<'a> {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let code = 0;
 
-                let message_response = CallServiceMessageReponse::new(
+                let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
-                    CallServiceResponseType::CallServiceResponseSucess,
+                    CallServiceResponseType::CallServiceResponseSuccess,
                     "",
                 );
                 let event = event_call_executed(req_id, code, "");
@@ -199,7 +199,7 @@ impl<'a> CwCallService<'a> {
             cosmwasm_std::SubMsgResult::Err(err) => {
                 let code = -1;
                 let error_message = format!("CallService Reverted : {err}");
-                let message_response = CallServiceMessageReponse::new(
+                let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseFailure,
                     &error_message,
