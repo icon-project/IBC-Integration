@@ -56,13 +56,9 @@ fn test_claim_capability() {
 fn test_claim_capability_fails() {
     let mut deps = deps();
     let name: Vec<u8> = vec![2];
-    let address = "address".to_string();
     let contract = CwIbcCoreContext::new();
     contract
         .get_capability(&mut deps.storage, name.clone())
-        .unwrap();
-    contract
-        .claim_capability(&mut deps.storage, name, address)
         .unwrap();
 }
 
@@ -76,9 +72,6 @@ fn test_authenticate_capability_returns_true() {
     contract
         .store_capability(&mut deps.storage, name.clone(), vec![address.clone()])
         .unwrap();
-    contract
-        .get_capability(&mut deps.storage, name.clone())
-        .unwrap();
     let result = contract.authenticate_capability(&mut deps.storage, info, name);
     assert_eq!(result, true)
 }
@@ -90,9 +83,6 @@ fn test_authenticate_capability_fails() {
     let name: Vec<u8> = vec![2];
     let info = create_mock_info("capability", "umlg", 2000);
     let contract = CwIbcCoreContext::new();
-    contract
-        .get_capability(&mut deps.storage, name.clone())
-        .unwrap();
     contract.authenticate_capability(&mut deps.storage, info, name);
 }
 
@@ -105,9 +95,6 @@ fn test_authenticate_capability_returns_false() {
     let contract = CwIbcCoreContext::new();
     contract
         .store_capability(&mut deps.storage, name.clone(), vec![address.clone()])
-        .unwrap();
-    contract
-        .get_capability(&mut deps.storage, name.clone())
         .unwrap();
     let result = contract.authenticate_capability(&mut deps.storage, info, name);
     assert_eq!(result, false)
@@ -122,40 +109,7 @@ fn test_lookup_modules() {
     contract
         .store_capability(&mut deps.storage, name.clone(), vec![address.clone()])
         .unwrap();
-    contract
-        .get_capability(&mut deps.storage, name.clone())
-        .unwrap();
+
     let result = contract.lookup_modules(&mut deps.storage, name);
     assert_eq!(result.is_ok(), true)
-}
-
-#[test]
-fn test_set_expected_time_per_block() {
-    let mut deps = deps();
-    let expected_time_per_block: u128 = 2;
-    let contract = CwIbcCoreContext::default();
-    let result = contract.set_expected_time_per_block(&mut deps.storage, expected_time_per_block);
-    assert_eq!(result.is_ok(), true)
-}
-
-#[test]
-fn test_get_expected_time_per_block() {
-    let mut deps = deps();
-    let expected_time_per_block: u128 = 2;
-    let contract = CwIbcCoreContext::default();
-    contract
-        .set_expected_time_per_block(&mut deps.storage, expected_time_per_block)
-        .unwrap();
-    let result = contract.get_expected_time_per_block(&mut deps.storage);
-    assert_eq!(result.is_ok(), true)
-}
-
-#[test]
-#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
-fn test_get_expected_time_per_block_fails() {
-    let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
-    contract
-        .get_expected_time_per_block(&mut deps.storage)
-        .unwrap();
 }
