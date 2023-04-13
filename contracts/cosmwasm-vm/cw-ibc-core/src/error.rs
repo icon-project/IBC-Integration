@@ -29,7 +29,7 @@ pub enum ContractError {
     IbcPortError { error: PortError },
 
     #[error("IbcPackketError {error}")]
-    IbcPackketError { error: String },
+    IbcPackketError { error: PacketError },
 
     #[error("IbcChannelError {error}")]
     IbcChannelError { error: ChannelError },

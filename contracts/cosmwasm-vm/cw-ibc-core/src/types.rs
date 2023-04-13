@@ -749,3 +749,19 @@ pub struct PacketDataResponse {
     pub packet: PacketResponse,
     pub signer: Signer,
 }
+
+#[cw_serde]
+pub struct VerifyPacketData {
+    pub height: String,
+    pub prefix: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub commitment_path: Vec<u8>,
+    pub commitment: Vec<u8>,
+}
+
+impl PacketData {
+    pub fn new(packet: Packet, signer: Signer) -> Self {
+        Self { packet, signer }
+    }
+}

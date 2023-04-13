@@ -16,8 +16,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::ChannelClosed {
                     channel_id: msg.packet.chan_id_on_a.clone(),
-                }
-                .to_string(),
+                },
             });
         }
         let counterparty = Counterparty::new(
@@ -29,8 +28,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 error: PacketError::InvalidPacketCounterparty {
                     port_id: msg.packet.port_id_on_b.clone(),
                     channel_id: msg.packet.chan_id_on_b.clone(),
-                }
-                .to_string(),
+                },
             });
         }
         let conn_id_on_a = chan_end_on_a.connection_hops()[0].clone();
@@ -59,8 +57,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::IncorrectPacketCommitment {
                     sequence: msg.packet.seq_on_a,
-                }
-                .to_string(),
+                },
             });
         }
         let client_id_on_a = conn_end_on_a.client_id();
@@ -75,8 +72,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 error: PacketError::PacketTimeoutHeightNotReached {
                     timeout_height: msg.packet.timeout_height_on_b,
                     chain_height: msg.proof_height_on_b,
-                }
-                .to_string(),
+                },
             });
         }
         let consensus_state_of_b_on_a =
@@ -91,8 +87,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 error: PacketError::PacketTimeoutTimestampNotReached {
                     timeout_timestamp: msg.packet.timeout_timestamp_on_b,
                     chain_timestamp: timestamp_of_b,
-                }
-                .to_string(),
+                },
             });
         }
 
@@ -116,8 +111,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     error: PacketError::InvalidPacketSequence {
                         given_sequence: msg.packet.seq_on_a,
                         next_sequence: msg.next_seq_recv_on_b,
-                    }
-                    .to_string(),
+                    },
                 });
             }
             let seq_recv_path_on_b = self.next_seq_recv_commitment_path(
@@ -251,7 +245,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }),
             },
             cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPackketError {
-                error: PacketError::InvalidProof.to_string(),
+                error: PacketError::InvalidProof,
             }),
         }
     }
@@ -327,7 +321,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }),
             },
             cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPackketError {
-                error: PacketError::InvalidProof.to_string(),
+                error: PacketError::InvalidProof,
             }),
         }
     }

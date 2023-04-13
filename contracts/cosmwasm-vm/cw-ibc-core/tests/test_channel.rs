@@ -200,9 +200,7 @@ fn test_channel_sequence_ack_increment() {
 }
 
 #[test]
-#[should_panic(
-    expected = "IbcPackketError { error: \"Missing sequence number for ack packets on port `defaultPort` and channel `channel-0`\" }"
-)]
+#[should_panic(expected = "MissingNextAckSeq")]
 fn test_channel_sequence_ack_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();

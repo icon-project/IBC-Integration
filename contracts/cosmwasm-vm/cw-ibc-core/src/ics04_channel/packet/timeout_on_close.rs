@@ -22,8 +22,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 error: PacketError::InvalidPacketCounterparty {
                     port_id: msg.packet.port_id_on_b.clone(),
                     channel_id: msg.packet.chan_id_on_b.clone(),
-                }
-                .to_string(),
+                },
             });
         }
         let conn_id_on_a = chan_end_on_a.connection_hops()[0].clone();
@@ -52,8 +51,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::IncorrectPacketCommitment {
                     sequence: msg.packet.seq_on_a,
-                }
-                .to_string(),
+                },
             });
         }
         let client_id_on_a = conn_end_on_a.client_id();
@@ -63,8 +61,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::FrozenClient {
                     client_id: client_id_on_a.clone(),
-                }
-                .to_string(),
+                },
             });
         }
         let consensus_state_of_b_on_a =
@@ -76,8 +73,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 .counterparty()
                 .channel_id()
                 .ok_or(ContractError::IbcPackketError {
-                    error: PacketError::Channel(ChannelError::InvalidCounterpartyChannelId)
-                        .to_string(),
+                    error: PacketError::Channel(ChannelError::InvalidCounterpartyChannelId),
                 })?;
         let conn_id_on_b =
             conn_end_on_a
@@ -86,8 +82,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 .ok_or(ContractError::IbcPackketError {
                     error: PacketError::UndefinedConnectionCounterparty {
                         connection_id: chan_end_on_a.connection_hops()[0].clone(),
-                    }
-                    .to_string(),
+                    },
                 })?;
         let expected_conn_hops_on_b = vec![conn_id_on_b.clone()];
         let expected_counterparty = Counterparty::new(
@@ -131,8 +126,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     error: PacketError::InvalidPacketSequence {
                         given_sequence: msg.packet.seq_on_a,
                         next_sequence: msg.next_seq_recv_on_b,
-                    }
-                    .to_string(),
+                    },
                 });
             }
             let seq_recv_path_on_b = self.next_seq_recv_commitment_path(

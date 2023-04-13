@@ -20,7 +20,7 @@ Feature: xCall admin management
     And "Eve" is not the contract owner of the xCall smart contract
     When "Eve" executes set_admin in xcall with "Bob" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
-    And "Bob" wallet address should not be added as admin
+    And no wallet address should be as admin
 
   Scenario: 003 - An admin cannot add another admin to the xCall
     Given "Alice" has already added "Bob" wallet address as admin
@@ -97,3 +97,10 @@ Feature: xCall admin management
     When "Alice" executes set_admin in xcall with "Diana" wallet address
     Then xCall returns an error message that admin is already set
     And "Bob" wallet address should still be as admin
+
+  Scenario: 015 Contract owner cannot update admin before adding any admin wallet address to xCall
+    Given  there are no admin wallets added as admin
+    And "Diana" is an admin wallet who needs to be added as admin
+    When "Alice" executes update_admin in xcall with "Diana" wallet address
+    Then xCall returns an error message that there are no admin wallets added to the xCall smart contract
+    And no wallet address should be as admin

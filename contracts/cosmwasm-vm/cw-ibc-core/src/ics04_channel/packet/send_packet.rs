@@ -11,8 +11,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::ChannelClosed {
                     channel_id: packet.chan_id_on_a,
-                }
-                .to_string(),
+                },
             });
         }
         let counterparty = Counterparty::new(
@@ -24,8 +23,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 error: PacketError::InvalidPacketCounterparty {
                     port_id: packet.port_id_on_b,
                     channel_id: packet.chan_id_on_b,
-                }
-                .to_string(),
+                },
             });
         }
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
@@ -36,8 +34,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::FrozenClient {
                     client_id: conn_end_on_a.client_id().clone(),
-                }
-                .to_string(),
+                },
             });
         }
         let latest_height_on_a = client_state_of_b_on_a.latest_height();
@@ -46,8 +43,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 error: PacketError::LowPacketHeight {
                     chain_height: latest_height_on_a,
                     timeout_height: packet.timeout_height_on_b,
-                }
-                .to_string(),
+                },
             });
         }
         let consensus_state_of_b_on_a =
@@ -56,7 +52,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let packet_timestamp = packet.timeout_timestamp_on_b;
         if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {
             return Err(ContractError::IbcPackketError {
-                error: PacketError::LowPacketTimestamp.to_string(),
+                error: PacketError::LowPacketTimestamp,
             });
         }
         let next_seq_send_on_a = self.get_next_sequence_send(
@@ -69,8 +65,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 error: PacketError::InvalidPacketSequence {
                     given_sequence: packet.seq_on_a,
                     next_sequence: next_seq_send_on_a,
-                }
-                .to_string(),
+                },
             });
         }
         self.increase_next_sequence_send(

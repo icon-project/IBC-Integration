@@ -121,8 +121,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: PacketError::MissingNextSendSeq {
                             port_id: port_id.ibc_port_id().clone(),
                             channel_id: channel_id.ibc_channel_id().clone(),
-                        }
-                        .to_string(),
+                        },
                     }),
                 }
             },
@@ -181,8 +180,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: PacketError::MissingNextRecvSeq {
                             port_id: port_id.ibc_port_id().clone(),
                             channel_id: channel_id.ibc_channel_id().clone(),
-                        }
-                        .to_string(),
+                        },
                     }),
                 }
             },
@@ -241,8 +239,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: PacketError::MissingNextAckSeq {
                             port_id: port_id.ibc_port_id().clone(),
                             channel_id: channel_id.ibc_channel_id().clone(),
-                        }
-                        .to_string(),
+                        },
                     }),
                 }
             },
@@ -453,7 +450,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match commitment {
             true => Ok(ibc::core::ics04_channel::packet::Receipt::Ok),
             false => Err(ContractError::IbcPackketError {
-                error: PacketError::PacketReceiptNotFound { sequence }.to_string(),
+                error: PacketError::PacketReceiptNotFound { sequence },
             }),
         }
     }
