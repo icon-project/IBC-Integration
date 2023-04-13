@@ -190,6 +190,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer,
+        acknowledgement:None
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -215,6 +216,7 @@ fn test_packet_data() {
     let packet_data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer.clone(),
+        acknowledgement:None
     };
     let bin = to_binary(&packet_data);
     let data = from_binary::<PacketDataResponse>(&bin.unwrap());

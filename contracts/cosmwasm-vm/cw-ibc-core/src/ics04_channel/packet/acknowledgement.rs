@@ -1,38 +1,49 @@
+use cosmwasm_std::{IbcAcknowledgement, IbcPacketAckMsg};
+use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
-    pub fn timeout_packet_validate_to_light_client(
+    pub fn acknowledgement_packet_validate(
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        msg: &MsgTimeout,
+        msg: &MsgAcknowledgement,
     ) -> Result<Response, ContractError> {
+        let packet = &msg.packet;
         let chan_end_on_a = self.get_channel_end(
             deps.storage,
-            msg.packet.port_id_on_a.clone().into(),
-            msg.packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone().into(),
+            packet.chan_id_on_a.clone().into(),
         )?;
         if !chan_end_on_a.state_matches(&State::Open) {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::ChannelClosed {
-                    channel_id: msg.packet.chan_id_on_a.clone(),
+                    channel_id: packet.chan_id_on_a.clone(),
                 },
             });
         }
         let counterparty = Counterparty::new(
-            msg.packet.port_id_on_b.clone(),
-            Some(msg.packet.chan_id_on_b.clone()),
+            packet.port_id_on_b.clone(),
+            Some(packet.chan_id_on_b.clone()),
         );
         if !chan_end_on_a.counterparty_matches(&counterparty) {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::InvalidPacketCounterparty {
-                    port_id: msg.packet.port_id_on_b.clone(),
-                    channel_id: msg.packet.chan_id_on_b.clone(),
+                    port_id: packet.port_id_on_b.clone(),
+                    channel_id: packet.chan_id_on_b.clone(),
                 },
             });
         }
-        let conn_id_on_a = chan_end_on_a.connection_hops()[0].clone();
-        let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a.into())?;
+        let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
+        let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a.clone().into())?;
+        if !conn_end_on_a.state_matches(&ConnectionState::Open) {
+            return Err(ContractError::IbcPackketError {
+                error: PacketError::ConnectionNotOpen {
+                    connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                },
+            });
+        }
         let commitment_on_a = match self.get_packet_commitment(
             deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
@@ -47,123 +58,94 @@ impl<'a> CwIbcCoreContext<'a> {
             // prevent an entire relay transaction from failing and consuming unnecessary fees.
             Err(_) => return Ok(Response::new()),
         };
-
-        let expected_commitment_on_a = compute_packet_commitment(
-            &msg.packet.data,
-            &msg.packet.timeout_height_on_b,
-            &msg.packet.timeout_timestamp_on_b,
-        );
-        if commitment_on_a != expected_commitment_on_a {
+        if commitment_on_a
+            != compute_packet_commitment(
+                &packet.data,
+                &packet.timeout_height_on_b,
+                &packet.timeout_timestamp_on_b,
+            )
+        {
             return Err(ContractError::IbcPackketError {
                 error: PacketError::IncorrectPacketCommitment {
-                    sequence: msg.packet.seq_on_a,
+                    sequence: packet.seq_on_a,
                 },
             });
+        }
+
+        if let Order::Ordered = chan_end_on_a.ordering {
+            let next_seq_ack = self.get_next_sequence_ack(
+                deps.storage,
+                packet.port_id_on_a.clone().into(),
+                packet.chan_id_on_a.clone().into(),
+            )?;
+            if packet.seq_on_a != next_seq_ack {
+                return Err(ContractError::IbcPackketError {
+                    error: PacketError::InvalidPacketSequence {
+                        given_sequence: packet.seq_on_a,
+                        next_sequence: next_seq_ack,
+                    },
+                });
+            }
         }
         let client_id_on_a = conn_end_on_a.client_id();
-        let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
-
-        if msg
-            .packet
-            .timeout_height_on_b
-            .has_expired(msg.proof_height_on_b)
-        {
+        let client_state_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        // The client must not be frozen.
+        if client_state_on_a.is_frozen() {
             return Err(ContractError::IbcPackketError {
-                error: PacketError::PacketTimeoutHeightNotReached {
-                    timeout_height: msg.packet.timeout_height_on_b,
-                    chain_height: msg.proof_height_on_b,
+                error: PacketError::FrozenClient {
+                    client_id: client_id_on_a.clone(),
                 },
             });
         }
-        let consensus_state_of_b_on_a =
+        let consensus_state =
             self.consensus_state(deps.storage, &client_id_on_a, &msg.proof_height_on_b)?;
-        let timestamp_of_b = consensus_state_of_b_on_a.timestamp();
-        if let Expiry::Expired = msg
-            .packet
-            .timeout_timestamp_on_b
-            .check_expiry(&timestamp_of_b)
-        {
-            return Err(ContractError::IbcPackketError {
-                error: PacketError::PacketTimeoutTimestampNotReached {
-                    timeout_timestamp: msg.packet.timeout_timestamp_on_b,
-                    chain_timestamp: timestamp_of_b,
-                },
-            });
-        }
-
+        let ack_commitment = compute_ack_commitment(&msg.acknowledgement);
         self.verify_connection_delay_passed(
             deps.storage,
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;
-
         let data = PacketData {
             packet: msg.packet.clone(),
             signer: msg.signer.clone(),
-            acknowledgement: None,
+            acknowledgement: Some(msg.acknowledgement.clone()),
         };
-        let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
-            error: e.to_string(),
-        })?;
-
-        let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
-            if msg.packet.seq_on_a < msg.next_seq_recv_on_b {
-                return Err(ContractError::IbcPackketError {
-                    error: PacketError::InvalidPacketSequence {
-                        given_sequence: msg.packet.seq_on_a,
-                        next_sequence: msg.next_seq_recv_on_b,
-                    },
-                });
-            }
-            let seq_recv_path_on_b = self.next_seq_recv_commitment_path(
-                &msg.packet.port_id_on_b.clone(),
-                &msg.packet.chan_id_on_b.clone(),
-            );
-
-            LightClientPacketMessage::VerifyNextSequenceRecv {
-                height: msg.proof_height_on_b.to_string(),
-                prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                proof: msg.proof_unreceived_on_b.clone().into(),
-                root: consensus_state_of_b_on_a.root().clone().into_vec(),
-                seq_recv_path: seq_recv_path_on_b,
-                sequence: msg.packet.seq_on_a.into(),
-                packet_data: packet_data,
-            }
-        } else {
-            let receipt_path_on_b = self.packet_receipt_commitment_path(
-                &msg.packet.port_id_on_b,
-                &msg.packet.chan_id_on_b,
-                msg.packet.seq_on_a,
-            );
-
-            LightClientPacketMessage::VerifyPacketReceiptAbsence {
-                height: msg.proof_height_on_b.to_string(),
-                prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                proof: msg.proof_unreceived_on_b.clone().into(),
-                root: consensus_state_of_b_on_a.root().clone().into_vec(),
-                receipt_path: receipt_path_on_b,
-                packet_data: packet_data,
-            }
+        let ack_path_on_b = self.packet_acknowledgement_commitment_path(
+            &packet.port_id_on_b.clone().into(),
+            &packet.chan_id_on_b,
+            packet.seq_on_a,
+        );
+        let verify_packet_acknowledge = VerifyPacketAcknowledgement {
+            height: msg.proof_height_on_b.to_string(),
+            prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
+            proof: msg.proof_acked_on_b.clone().into(),
+            root: consensus_state.root().clone().into_vec(),
+            ack_path: ack_path_on_b,
+            ack: ack_commitment.into_vec(),
         };
-        let client_type = ClientType::from(client_state_of_b_on_a.client_type());
+        let packet_data = to_vec(&data)?;
+        let light_client_message = LightClientMessage::VerifyPacketAcknowledgement {
+            verify_packet_acknowledge,
+            packet_data,
+        };
         let light_client_address =
-            self.get_client_from_registry(deps.as_ref().storage, client_type)?;
+            self.get_client(deps.as_ref().storage, client_id_on_a.clone().into())?;
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: light_client_address,
-            msg: to_binary(&next_seq_recv_verification_result).unwrap(),
+            msg: to_binary(&light_client_message).unwrap(),
             funds: info.funds,
         });
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
-            VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT,
+            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT,
         );
 
         Ok(Response::new()
-            .add_attribute("action", "Light client packet timeout call")
+            .add_attribute("action", "Light client packet acklowledgement call")
             .add_submessage(sub_msg))
     }
 
-    pub fn timeout_packet_validate_reply_from_light_client(
+    pub fn acknowledgement_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
         info: MessageInfo,
@@ -177,7 +159,15 @@ impl<'a> CwIbcCoreContext<'a> {
                             error: e.to_string(),
                         }
                     })?;
-                    let data = Packet::from(packet_data.packet.clone());
+                    let packet = Packet::from(packet_data.packet.clone());
+                    let acknowledgement = match packet_data.acknowledgement {
+                        Some(ack) => ack,
+                        None => {
+                            return Err(ContractError::IbcPackketError {
+                                error: PacketError::InvalidAcknowledgement,
+                            })
+                        }
+                    };
                     let port_id = PortId::from(packet_data.packet.port_id_on_a.clone());
                     // Getting the module address for on packet timeout call
                     let module_id = match self.lookup_module_by_port(deps.storage, port_id.clone())
@@ -199,7 +189,6 @@ impl<'a> CwIbcCoreContext<'a> {
                         port_id: packet_data.packet.port_id_on_b.to_string(),
                         channel_id: packet_data.packet.chan_id_on_b.to_string(),
                     };
-                    let data = Binary::from(data.data);
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
                         ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
                             IbcTimeoutBlock {
@@ -214,16 +203,20 @@ impl<'a> CwIbcCoreContext<'a> {
                             }
                         }
                     };
-                    let timeout = IbcTimeout::with_block(timeoutblock);
+                    let timestamp = packet_data.packet.timeout_timestamp_on_b.nanoseconds();
+                    let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
+                    let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
+
                     let ibc_packet = IbcPacket::new(
-                        data,
+                        packet.data,
                         src,
                         dest,
                         packet_data.packet.seq_on_a.into(),
                         timeout,
                     );
                     let address = Addr::unchecked(packet_data.signer.to_string());
-                    let cosm_msg = cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address);
+                    let ack = IbcAcknowledgement::new(acknowledgement.as_bytes());
+                    let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
                     let create_client_message: CosmosMsg =
                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                             contract_addr: contract_address.to_string(),
@@ -232,12 +225,12 @@ impl<'a> CwIbcCoreContext<'a> {
                         });
                     let sub_msg: SubMsg = SubMsg::reply_on_success(
                         create_client_message,
-                        VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
+                        VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
                     );
 
                     Ok(Response::new()
                         .add_attribute("action", "packet")
-                        .add_attribute("method", "packet_timeout_module_validation")
+                        .add_attribute("method", "packet_acknowledgement_module")
                         .add_submessage(sub_msg))
                 }
                 None => {
@@ -256,7 +249,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn execute_timeout_packet(
+    pub fn acknowledgement_packet_execute(
         &self,
         deps: DepsMut,
         message: Reply,
@@ -264,18 +257,31 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<IbcPacket>(&res).unwrap();
+                    let reply = from_binary::<IbcPacketAckMsg>(&res).unwrap();
+                    let packet = reply.original_packet;
                     let channel_id =
-                        ChannelId::from(IbcChannelId::from_str(&data.src.channel_id).unwrap());
-                    let port_id = PortId::from(IbcPortId::from_str(&data.src.port_id).unwrap());
+                        ChannelId::from(IbcChannelId::from_str(&packet.src.channel_id).unwrap());
+                    let port_id = PortId::from(IbcPortId::from_str(&packet.src.port_id).unwrap());
                     let chan_end_on_a =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
+                    let event = create_ack_packet_event(
+                        &packet.src.port_id,
+                        &packet.src.channel_id,
+                        &packet.sequence.to_string(),
+                        &packet.dest.port_id,
+                        &packet.dest.channel_id,
+                        &packet.timeout.block().unwrap().height.to_string(),
+                        &packet.timeout.timestamp().unwrap().to_string(),
+                        chan_end_on_a.ordering.as_str(),
+                        conn_id_on_a.as_str(),
+                    );
                     if self
                         .get_packet_commitment(
                             deps.storage,
                             &port_id,
                             &channel_id,
-                            data.sequence.into(),
+                            packet.sequence.into(),
                         )
                         .is_err()
                     {
@@ -285,40 +291,21 @@ impl<'a> CwIbcCoreContext<'a> {
                         deps.storage,
                         &port_id.clone(),
                         &channel_id.clone(),
-                        data.sequence.into(),
+                        packet.sequence.into(),
                     )?;
-                    let chan_end_on_a = {
-                        if let Order::Ordered = chan_end_on_a.ordering {
-                            let mut chan_end_on_a = chan_end_on_a;
-                            chan_end_on_a.state = State::Closed;
-                            self.store_channel_end(
-                                deps.storage,
-                                port_id.clone(),
-                                channel_id.clone(),
-                                chan_end_on_a.clone(),
-                            )?;
-
-                            chan_end_on_a
-                        } else {
-                            chan_end_on_a
-                        }
-                    };
-
-                    let event = Event::new(IbcEventType::Timeout.as_str())
-                        .add_attribute("channel_order", chan_end_on_a.ordering().as_str());
-                    let mut events = vec![event];
                     if let Order::Ordered = chan_end_on_a.ordering {
-                        let close_init = create_close_init_channel_event(
-                            port_id.ibc_port_id().as_str(),
-                            channel_id.ibc_channel_id().as_str(),
-                        );
-                        events.push(close_init);
+                        // Note: in validation, we verified that `msg.packet.sequence == nextSeqRecv`
+                        // (where `nextSeqRecv` is the value in the store)
+                        self.increase_next_sequence_ack(
+                            deps.storage,
+                            port_id.clone(),
+                            channel_id.clone(),
+                        )?;
                     }
-
                     Ok(Response::new()
                         .add_attribute("action", "packet")
-                        .add_attribute("method", "execute_timeout_packet")
-                        .add_events(events))
+                        .add_attribute("method", "execute_acknowledgement_packet")
+                        .add_event(event))
                 }
                 None => {
                     return Err(ContractError::IbcChannelError {

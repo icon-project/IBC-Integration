@@ -50,4 +50,8 @@ pub enum LightClientMessage {
         verify_packet_data: VerifyPacketData,
         packet_data: Vec<u8>,
     },
+    VerifyPacketAcknowledgement {
+        verify_packet_acknowledge: VerifyPacketAcknowledgement,
+        packet_data: Vec<u8>,
+    },
 }

@@ -92,7 +92,7 @@ impl<'a> CwIbcCoreContext<'a> {
             conn_end_on_b.clone(),
         )?;
 
-        let packet_data = PacketData::new(packet.clone(), msg.signer.clone());
+        let packet_data = PacketData::new(packet.clone(), msg.signer.clone(), None);
         let packet_data = to_vec(&packet_data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
         })?;
@@ -243,7 +243,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_opne_init_module_validation")
+                        .add_attribute("method", "channel_recieve_packet_validation")
                         .add_submessage(sub_msg))
                 }
                 None => {

@@ -22,7 +22,8 @@ use crate::{
     storage_keys::StorageKey,
     types::{
         ChannelId, ClientId, ClientType, ConnectionId, PortId, VerifyChannelState,
-        VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState,VerifyPacketData,
+        VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState,
+        VerifyPacketAcknowledgement, VerifyPacketData,
     },
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};

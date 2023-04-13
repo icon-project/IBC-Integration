@@ -116,6 +116,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let data = PacketData {
             packet: msg.packet.clone(),
             signer: msg.signer.clone(),
+            acknowledgement: None,
         };
         let packet_date = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
