@@ -241,19 +241,19 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
     ) -> Result<Box<dyn IbcConsensusState>, ContractError> {
-        let conesnus_state_key = self.consensus_state_commitment_key(
+        let consensus_state_key = self.consensus_state_commitment_key(
             client_id,
             height.revision_number(),
             height.revision_height(),
         );
 
-        let consenus_state_data = self
+        let consensus_state_data = self
             .ibc_store()
             .commitments()
-            .load(store, conesnus_state_key)?;
+            .load(store, consensus_state_key)?;
 
         let consensus_state: ConsensusState =
-            ConsensusState::try_from(consenus_state_data).unwrap();
+            ConsensusState::try_from(consensus_state_data).unwrap();
 
         Ok(Box::new(consensus_state))
     }

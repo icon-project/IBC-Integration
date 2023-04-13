@@ -83,7 +83,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         Ok(Response::new()
             .add_attribute("action", "channel")
-            .add_attribute("method", "channel_opne_init_validation")
+            .add_attribute("method", "channel_open_init_validation")
             .add_submessage(on_chan_open_init))
     }
 

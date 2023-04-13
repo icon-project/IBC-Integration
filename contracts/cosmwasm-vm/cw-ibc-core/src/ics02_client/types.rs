@@ -400,7 +400,7 @@ impl TryFrom<Vec<u8>> for ConsensusState {
     type Error = ClientError;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let result: ConsensusStateReponse =
+        let result: ConsensusStateResponse =
             serde_json_wasm::from_slice(&value).map_err(|error| ClientError::Other {
                 description: error.to_string(),
             })?;
@@ -428,6 +428,6 @@ impl TryFrom<ConsensusState> for Vec<u8> {
 }
 
 #[derive(Debug, Deserialize)]
-struct ConsensusStateReponse {
+struct ConsensusStateResponse {
     pub message_root: String,
 }

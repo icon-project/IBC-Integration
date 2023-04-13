@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {

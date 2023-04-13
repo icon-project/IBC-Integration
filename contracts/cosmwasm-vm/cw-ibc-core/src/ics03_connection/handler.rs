@@ -123,7 +123,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .consensus_state(deps.storage, client_id_on_a, &msg.proofs_height_on_b)
             .map_err(|_| ContractError::IbcConnectionError {
                 error: ConnectionError::Other {
-                    description: "failed to fetch consennsus state".to_string(),
+                    description: "failed to fetch consensus state".to_string(),
                 },
             })?;
         let prefix_on_a = self.commitment_prefix();
@@ -153,7 +153,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         let client_state_path = self.client_state_path(client_id_on_a);
-        let verify_client_full_satate = VerifyClientFullState::new(
+        let verify_client_full_state = VerifyClientFullState::new(
             msg.proofs_height_on_b.to_string(),
             to_vec(&prefix_on_b)?,
             to_vec(&msg.proof_client_state_of_a_on_b)?,
@@ -164,7 +164,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let consensus_state_path_on_b =
             self.consensus_state_path(client_id_on_b, &msg.consensus_height_of_a_on_b);
-        let vefiry_client_consensus_state = VerifyClientConsesnusState::new(
+        let verify_client_consensus_state = VerifyClientConsensusState::new(
             msg.proofs_height_on_b.to_string(),
             to_vec(&prefix_on_b)?,
             to_vec(&msg.proof_consensus_state_of_a_on_b)?,
@@ -172,10 +172,10 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_path_on_b,
             to_vec(&client_cons_state_path_on_a.clone())?,
         );
-        let client_message = crate::msg::LightClientMessage::VerifyConection {
+        let client_message = crate::msg::LightClientMessage::VerifyConnection {
             verify_connection_state,
-            verify_client_full_satate,
-            vefiry_client_consensus_state,
+            verify_client_full_state,
+            verify_client_consensus_state,
         };
 
         let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -274,7 +274,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         .unwrap();
 
                     Ok(Response::new()
-                        .add_attribute("method", "excute_connection_open_try")
+                        .add_attribute("method", "execute_connection_open_try")
                         .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }
@@ -352,7 +352,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         let client_state_path = self.client_state_path(&message.client_id_on_b);
-        let verify_client_full_satate = VerifyClientFullState::new(
+        let verify_client_full_state = VerifyClientFullState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
             to_vec(&message.proof_client_state_of_b_on_a).map_err(ContractError::Std)?,
@@ -360,20 +360,20 @@ impl<'a> CwIbcCoreContext<'a> {
             client_state_path,
             to_vec(&message.client_state_of_b_on_a).map_err(ContractError::Std)?,
         );
-        let conensus_state_path_on_a =
+        let consensus_state_path_on_a =
             self.consensus_state_path(&message.client_id_on_b, &message.consensus_height_of_b_on_a);
-        let vefiry_client_consensus_state = VerifyClientConsesnusState::new(
+        let verify_client_consensus_state = VerifyClientConsensusState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
             to_vec(&message.proof_consensus_state_of_b_on_a).map_err(ContractError::Std)?,
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
-            conensus_state_path_on_a,
+            consensus_state_path_on_a,
             client_consensus_state_path_on_b,
         );
-        let client_message = crate::msg::LightClientMessage::VerifyConection {
+        let client_message = crate::msg::LightClientMessage::VerifyConnection {
             verify_connection_state,
-            verify_client_full_satate,
-            vefiry_client_consensus_state,
+            verify_client_full_state,
+            verify_client_consensus_state,
         };
 
         let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -477,7 +477,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         .unwrap();
 
                     Ok(Response::new()
-                        .add_attribute("method", "excute_connection_open_try")
+                        .add_attribute("method", "execute_connection_open_try")
                         .add_attribute("connection_id", connection_id.connection_id().as_str())
                         .add_event(event))
                 }
@@ -521,7 +521,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)
             .map_err(|_| ContractError::IbcConnectionError {
                 error: ConnectionError::Other {
-                    description: "failed to fetch consennsus state".to_string(),
+                    description: "failed to fetch consensus state".to_string(),
                 },
             })?;
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
@@ -643,7 +643,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         .unwrap();
 
                     Ok(Response::new()
-                        .add_attribute("method", "excute_connection_open_ack")
+                        .add_attribute("method", "execute_connection_open_ack")
                         .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }

@@ -89,8 +89,8 @@ impl KeyDeserialize for ClientId {
 pub struct ClientType(IbcClientType);
 
 impl ClientType {
-    pub fn new(cleint_type: String) -> ClientType {
-        ClientType(IbcClientType::new(cleint_type))
+    pub fn new(client_type: String) -> ClientType {
+        ClientType(IbcClientType::new(client_type))
     }
     pub fn client_type(&self) -> IbcClientType {
         self.0.clone()
@@ -479,13 +479,13 @@ pub struct UpgradeClientResponse {
     client_id: String,
     height: String,
     client_state_commitment: Vec<u8>,
-    consesnus_state_commitment: Vec<u8>,
+    consensus_state_commitment: Vec<u8>,
 }
 
 impl UpgradeClientResponse {
     pub fn new(
         client_state_commitment: Vec<u8>,
-        consesnus_state_commitment: Vec<u8>,
+        consensus_state_commitment: Vec<u8>,
         client_id: String,
         height: String,
     ) -> Self {
@@ -494,7 +494,7 @@ impl UpgradeClientResponse {
                 height,
                 client_id,
                 client_state_commitment,
-                consesnus_state_commitment,
+                consensus_state_commitment,
             }
         }
     }
@@ -508,8 +508,8 @@ impl UpgradeClientResponse {
     pub fn client_state_commitment(&self) -> &[u8] {
         &self.client_state_commitment
     }
-    pub fn consesnus_state_commitment(&self) -> &[u8] {
-        &self.consesnus_state_commitment
+    pub fn consensus_state_commitment(&self) -> &[u8] {
+        &self.consensus_state_commitment
     }
     pub fn height(&self) -> Height {
         Height::from_str(&self.height).unwrap()
@@ -595,31 +595,31 @@ impl VerifyClientFullState {
 }
 
 #[cw_serde]
-pub struct VerifyClientConsesnusState {
+pub struct VerifyClientConsensusState {
     proof_height: String,
     counterparty_prefix: Vec<u8>,
     consensus_state_proof: Vec<u8>,
     root: Vec<u8>,
-    conesenus_state_path: Vec<u8>,
-    expected_conesenus_state: Vec<u8>,
+    consensus_state_path: Vec<u8>,
+    expected_consensus_state: Vec<u8>,
 }
 
-impl VerifyClientConsesnusState {
+impl VerifyClientConsensusState {
     pub fn new(
         proof_height: String,
         counterparty_prefix: Vec<u8>,
         consensus_state_proof: Vec<u8>,
         root: Vec<u8>,
-        conesenus_state_path: Vec<u8>,
-        expected_conesenus_state: Vec<u8>,
+        consensus_state_path: Vec<u8>,
+        expected_consensus_state: Vec<u8>,
     ) -> Self {
         Self {
             proof_height,
             counterparty_prefix,
             consensus_state_proof,
             root,
-            conesenus_state_path,
-            expected_conesenus_state,
+            consensus_state_path,
+            expected_consensus_state,
         }
     }
 }

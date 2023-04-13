@@ -13,7 +13,7 @@ impl<'a> CwIbcCoreContext<'a> {
             msg.packet.chan_id_on_a.clone().into(),
         )?;
         if !chan_end_on_a.state_matches(&State::Open) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::ChannelClosed {
                     channel_id: msg.packet.chan_id_on_a.clone(),
                 },
@@ -24,7 +24,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(msg.packet.chan_id_on_b.clone()),
         );
         if !chan_end_on_a.counterparty_matches(&counterparty) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketCounterparty {
                     port_id: msg.packet.port_id_on_b.clone(),
                     channel_id: msg.packet.chan_id_on_b.clone(),
@@ -54,7 +54,7 @@ impl<'a> CwIbcCoreContext<'a> {
             &msg.packet.timeout_timestamp_on_b,
         );
         if commitment_on_a != expected_commitment_on_a {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::IncorrectPacketCommitment {
                     sequence: msg.packet.seq_on_a,
                 },
@@ -68,7 +68,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .timeout_height_on_b
             .has_expired(msg.proof_height_on_b)
         {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::PacketTimeoutHeightNotReached {
                     timeout_height: msg.packet.timeout_height_on_b,
                     chain_height: msg.proof_height_on_b,
@@ -83,7 +83,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .timeout_timestamp_on_b
             .check_expiry(&timestamp_of_b)
         {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::PacketTimeoutTimestampNotReached {
                     timeout_timestamp: msg.packet.timeout_timestamp_on_b,
                     chain_timestamp: timestamp_of_b,
@@ -107,7 +107,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
             if msg.packet.seq_on_a < msg.next_seq_recv_on_b {
-                return Err(ContractError::IbcPackketError {
+                return Err(ContractError::IbcPacketError {
                     error: PacketError::InvalidPacketSequence {
                         given_sequence: msg.packet.seq_on_a,
                         next_sequence: msg.next_seq_recv_on_b,
@@ -235,7 +235,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_opne_init_module_validation")
+                        .add_attribute("method", "channel_open_init_module_validation")
                         .add_submessage(sub_msg))
                 }
                 None => Err(ContractError::IbcChannelError {
@@ -244,7 +244,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     },
                 }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPackketError {
+            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidProof,
             }),
         }
@@ -320,7 +320,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     },
                 }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPackketError {
+            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidProof,
             }),
         }

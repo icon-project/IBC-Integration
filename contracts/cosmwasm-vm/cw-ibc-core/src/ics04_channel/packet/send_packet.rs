@@ -8,7 +8,7 @@ impl<'a> CwIbcCoreContext<'a> {
             packet.chan_id_on_a.clone().into(),
         )?;
         if chan_end_on_a.state_matches(&State::Closed) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::ChannelClosed {
                     channel_id: packet.chan_id_on_a,
                 },
@@ -19,7 +19,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(packet.chan_id_on_b.clone()),
         );
         if !chan_end_on_a.counterparty_matches(&counterparty) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketCounterparty {
                     port_id: packet.port_id_on_b,
                     channel_id: packet.chan_id_on_b,
@@ -31,7 +31,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_id_on_a = conn_end_on_a.client_id();
         let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
         if client_state_of_b_on_a.is_frozen() {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::FrozenClient {
                     client_id: conn_end_on_a.client_id().clone(),
                 },
@@ -39,7 +39,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let latest_height_on_a = client_state_of_b_on_a.latest_height();
         if packet.timeout_height_on_b.has_expired(latest_height_on_a) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::LowPacketHeight {
                     chain_height: latest_height_on_a,
                     timeout_height: packet.timeout_height_on_b,
@@ -51,7 +51,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let latest_timestamp = consensus_state_of_b_on_a.timestamp();
         let packet_timestamp = packet.timeout_timestamp_on_b;
         if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::LowPacketTimestamp,
             });
         }
@@ -61,7 +61,7 @@ impl<'a> CwIbcCoreContext<'a> {
             packet.chan_id_on_a.clone().into(),
         )?;
         if packet.seq_on_a != next_seq_send_on_a {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketSequence {
                     given_sequence: packet.seq_on_a,
                     next_sequence: next_seq_send_on_a,

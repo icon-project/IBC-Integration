@@ -114,7 +114,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_opne_init_module_validation")
+                        .add_attribute("method", "channel_open_init_module_validation")
                         .add_submessage(on_chan_open_try))
                 }
                 None => Err(ContractError::IbcChannelError {
