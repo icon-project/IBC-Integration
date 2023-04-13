@@ -73,7 +73,7 @@ use std::{
 };
 use thiserror::Error;
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -85,7 +85,7 @@ pub fn instantiate(
     call_service.instantiate(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -97,14 +97,14 @@ pub fn execute(
     call_service.execute(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: msg::QueryMsg) -> StdResult<Binary> {
     let call_service = CwIbcCoreContext::default();
 
     call_service.query(deps, env, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     let call_service = CwIbcCoreContext::default();
 

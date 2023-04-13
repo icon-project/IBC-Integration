@@ -120,6 +120,14 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Vec<u8> {
         keccak256(&self.next_seq_recv_commitment_path(port_id, channel_id))
     }
+
+    pub fn port_path(&self, port_id: &PortId) -> Vec<u8> {
+        PortPath(port_id.clone()).to_string().into_bytes()
+    }
+
+    pub fn port_commitment_key(&self, port_id: &PortId) -> Vec<u8> {
+        keccak256(&self.port_path(port_id))
+    }
 }
 
 pub fn sha256(data: impl AsRef<[u8]>) -> Vec<u8> {
