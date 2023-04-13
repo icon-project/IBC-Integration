@@ -852,8 +852,8 @@ fn test_block_delay() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
-    let result = contract.block_delay(&delay_time);
-    assert_eq!(result, true as u64)
+    let result = contract.calc_block_delay(&delay_time);
+    assert_eq!(2, result)
 }
 
 #[test]

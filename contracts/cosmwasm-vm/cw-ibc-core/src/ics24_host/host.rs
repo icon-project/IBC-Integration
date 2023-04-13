@@ -1,9 +1,3 @@
-use std::time::Duration;
-
-use cosmwasm_std::{Storage, Timestamp};
-
-use crate::ContractError;
-
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -54,10 +48,6 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn calculate_block_delay(timestamp: Timestamp) -> u64 {
-        //TODO :Validate Block delay
-        Duration::from_secs(timestamp.plus_seconds(300).seconds()).as_secs()
-    }
     pub fn claim_capability(
         &self,
         store: &mut dyn Storage,
@@ -107,5 +97,14 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::Unauthorized {});
         }
         Ok(capabilities)
+    }
+
+    pub fn calc_block_delay(&self, delay_period_time: &Duration) -> u64 {
+        let delay = calculate_block_delay(delay_period_time, &self.max_expected_time_per_block());
+
+        delay_period_time
+            .checked_add(Duration::from_secs(delay))
+            .unwrap()
+            .as_secs()
     }
 }

@@ -326,7 +326,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn max_expected_time_per_block(&self) -> std::time::Duration {
-        Duration::new(60, 60)
+        Duration::from_secs(60)
     }
 }
 

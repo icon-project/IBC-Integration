@@ -21,7 +21,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         // Fetch the connection delay time and height periods.
         let conn_delay_time_period = connection_end.delay_period();
-        let conn_delay_height_period = self.block_delay(&conn_delay_time_period);
+        let conn_delay_height_period = self.calc_block_delay(&conn_delay_time_period);
 
         let earliest_valid_time =
             (last_client_update_time + conn_delay_time_period).map_err(|e| {
@@ -49,9 +49,5 @@ impl<'a> CwIbcCoreContext<'a> {
         }
 
         Ok(())
-    }
-
-    pub fn block_delay(&self, delay_period_time: &Duration) -> u64 {
-        calculate_block_delay(delay_period_time, &self.max_expected_time_per_block())
     }
 }
