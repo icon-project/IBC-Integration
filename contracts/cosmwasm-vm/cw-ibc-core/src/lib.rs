@@ -40,7 +40,7 @@ pub use ibc::core::ics04_channel::msgs::{
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
     chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
 };
-use ibc::core::{ics05_port::error::PortError, ContextError};
+use ibc::core::ics05_port::error::PortError;
 pub use ibc::{
     core::{
         ics02_client::{

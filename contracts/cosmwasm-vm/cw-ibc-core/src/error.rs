@@ -20,7 +20,7 @@ pub enum ContractError {
     InvalidNextClientSequence {},
 
     #[error("IbcContextError {error}")]
-    IbcContextError { error: ContextError },
+    IbcContextError { error: String },
 
     #[error("IbcDecodeError {error}")]
     IbcDecodeError { error: String },
@@ -29,7 +29,7 @@ pub enum ContractError {
     IbcPortError { error: PortError },
 
     #[error("IbcPackketError {error}")]
-    IbcPackketError { error: PacketError },
+    IbcPackketError { error: String },
 
     #[error("IbcChannelError {error}")]
     IbcChannelError { error: ChannelError },

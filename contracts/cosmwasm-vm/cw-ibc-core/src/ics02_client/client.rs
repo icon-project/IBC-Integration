@@ -219,11 +219,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ContractError> {
         let client_key = self.client_state_commitment_key(client_id);
 
-        let client_state_data = self
-            .ibc_store()
-            .commitments()
-            .load(store, client_key)
-            .map_err(|error| ContractError::Std(error))?;
+        let client_state_data = self.ibc_store().commitments().load(store, client_key)?;
 
         let client_state: ClientState = client_state_data.as_slice().try_into().unwrap();
 
@@ -254,8 +250,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let consenus_state_data = self
             .ibc_store()
             .commitments()
-            .load(store, conesnus_state_key)
-            .map_err(|error| ContractError::Std(error))?;
+            .load(store, conesnus_state_key)?;
 
         let consensus_state: ConsensusState =
             ConsensusState::try_from(consenus_state_data).unwrap();
@@ -379,7 +374,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: ibc::core::ics24_host::identifier::ClientId,
         height: ibc::Height,
         timestamp: ibc::timestamp::Timestamp,
-    ) -> Result<(), ibc::core::ContextError> {
+    ) -> Result<(), ContractError> {
         todo!()
     }
 
@@ -391,7 +386,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: ibc::core::ics24_host::identifier::ClientId,
         height: ibc::Height,
         host_height: ibc::Height,
-    ) -> Result<(), ibc::core::ContextError> {
+    ) -> Result<(), ContractError> {
         todo!()
     }
 }

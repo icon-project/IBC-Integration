@@ -829,7 +829,7 @@ fn connection_validate_delay() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
+#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
 fn connection_validate_delay_fails() {
     let deps = deps();
     let _env = mock_env();

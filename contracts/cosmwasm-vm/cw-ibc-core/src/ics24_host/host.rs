@@ -26,13 +26,12 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &mut dyn Storage,
         name: Vec<u8>,
     ) -> Result<Vec<String>, ContractError> {
-        Ok(self
-            .ibc_store()
+        self.ibc_store()
             .capabilities()
             .load(store, name)
             .map_err(|_| ContractError::IbcDecodeError {
                 error: "CapabilityNotFound".into(),
-            })?)
+            })
     }
     pub fn set_expected_time_per_block(
         &self,

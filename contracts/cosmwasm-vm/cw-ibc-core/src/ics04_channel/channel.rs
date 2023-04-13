@@ -14,11 +14,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, (port_id.clone(), channel_id.clone()))?
         {
             Some(request) => Ok(request),
-            None => Err(ContractError::IbcContextError {
-                error: ContextError::ChannelError(ChannelError::ChannelNotFound {
+            None => Err(ContractError::IbcChannelError {
+                error: ChannelError::ChannelNotFound {
                     port_id: port_id.ibc_port_id().clone(),
                     channel_id: channel_id.ibc_channel_id().clone(),
-                }),
+                },
             }),
         }
     }
@@ -121,7 +121,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: PacketError::MissingNextSendSeq {
                             port_id: port_id.ibc_port_id().clone(),
                             channel_id: channel_id.ibc_channel_id().clone(),
-                        },
+                        }
+                        .to_string(),
                     }),
                 }
             },
@@ -180,7 +181,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: PacketError::MissingNextRecvSeq {
                             port_id: port_id.ibc_port_id().clone(),
                             channel_id: channel_id.ibc_channel_id().clone(),
-                        },
+                        }
+                        .to_string(),
                     }),
                 }
             },
@@ -239,7 +241,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: PacketError::MissingNextAckSeq {
                             port_id: port_id.ibc_port_id().clone(),
                             channel_id: channel_id.ibc_channel_id().clone(),
-                        },
+                        }
+                        .to_string(),
                     }),
                 }
             },
@@ -268,25 +271,13 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let channel_commitemtn_key = self.channel_commitment_key(port_id, channel_id);
 
-        let channel_end_bytes = to_vec(&channel_end).map_err(|error| ContractError::Std(error))?;
+        let channel_end_bytes = to_vec(&channel_end).map_err(ContractError::Std)?;
 
         self.ibc_store()
             .commitments()
             .save(store, channel_commitemtn_key, &channel_end_bytes)?;
 
         Ok(())
-    }
-
-    fn increase_channel_counter(&mut self) {
-        todo!()
-    }
-
-    fn emit_ibc_event(&mut self, event: ibc::events::IbcEvent) {
-        todo!()
-    }
-
-    fn log_message(&mut self, message: String) {
-        todo!()
     }
 
     pub fn store_packet_commitment(
@@ -302,7 +293,7 @@ impl<'a> CwIbcCoreContext<'a> {
             channel_id.ibc_channel_id(),
             sequence,
         );
-        let commitment_bytes = to_vec(&commitment).map_err(|error| ContractError::Std(error))?;
+        let commitment_bytes = to_vec(&commitment).map_err(ContractError::Std)?;
         self.ibc_store()
             .commitments()
             .save(store, commitment_path, &commitment_bytes)?;
@@ -313,12 +304,12 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn delete_packet_commitment(
         &self,
         store: &mut dyn Storage,
-        poirt_id: &PortId,
+        port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<(), ContractError> {
         let commitment_path = self.packet_commitment_path(
-            poirt_id.ibc_port_id(),
+            port_id.ibc_port_id(),
             channel_id.ibc_channel_id(),
             sequence,
         );
@@ -345,7 +336,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let ok = match receipt {
             ibc::core::ics04_channel::packet::Receipt::Ok => true,
         };
-        let commitment_bytes = to_vec(&ok).map_err(|error| ContractError::Std(error))?;
+        let commitment_bytes = to_vec(&ok).map_err(ContractError::Std)?;
         self.ibc_store()
             .commitments()
             .save(store, commitment_path, &commitment_bytes)?;
@@ -378,7 +369,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn delete_packet_acknowledgement(
         &mut self,
         ack_path: &ibc::core::ics24_host::path::AckPath,
-    ) -> Result<(), ibc::core::ContextError> {
+    ) -> Result<(), ContractError> {
         todo!()
     }
 
@@ -462,7 +453,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match commitment {
             true => Ok(ibc::core::ics04_channel::packet::Receipt::Ok),
             false => Err(ContractError::IbcPackketError {
-                error: PacketError::PacketReceiptNotFound { sequence },
+                error: PacketError::PacketReceiptNotFound { sequence }.to_string(),
             }),
         }
     }
