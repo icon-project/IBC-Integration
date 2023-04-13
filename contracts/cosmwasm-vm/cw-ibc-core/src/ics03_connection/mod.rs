@@ -8,17 +8,18 @@ use crate::ics03_connection::event::create_open_ack_event;
 use crate::ics03_connection::event::create_open_confirm_event;
 use crate::ics03_connection::event::create_open_init_event;
 use crate::ics03_connection::event::create_open_try_event;
-use crate::types::{ClientId, ConnectionId};
+use crate::types::ConnectionId;
 use crate::types::{OpenAckResponse, OpenTryResponse};
 use crate::ContractError;
-use common::client_msg::{
-    VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState,
-};
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
 use cosmwasm_std::Response;
 use cosmwasm_std::Storage;
 use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
+use cw_common::client_msg::{
+    VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState,
+};
+use cw_common::types::ClientId;
 
 pub use super::*;
 use crate::types::OpenConfirmResponse;

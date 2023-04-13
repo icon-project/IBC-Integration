@@ -10,7 +10,6 @@ pub use crate::types::*;
 pub use channel::*;
 pub use handler::*;
 
-pub use common::client_msg::ExecuteMsg as LightClientMessage;
 use cosmwasm_std::Event;
 use cosmwasm_std::Reply;
 use cosmwasm_std::Storage;
@@ -18,6 +17,7 @@ use cosmwasm_std::{
     from_binary, to_binary, to_vec, Binary, CosmosMsg, Empty, MessageInfo, Response, SubMsg,
     WasmMsg,
 };
+pub use cw_common::client_msg::ExecuteMsg as LightClientMessage;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
 use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 pub use ibc::core::ics04_channel::channel::Counterparty;

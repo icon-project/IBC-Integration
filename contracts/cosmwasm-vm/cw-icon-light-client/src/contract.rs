@@ -6,7 +6,7 @@ use common::icon::icon::types::v1::MerkleProofs;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
-use cw_ibc_core::types::CreateClientResponse;
+use cw_common::client_response::CreateClientResponse;
 use ibc_proto::google::protobuf::Any;
 
 use crate::constants::{
@@ -16,7 +16,7 @@ use crate::error::ContractError;
 use crate::light_client::IconClient;
 use crate::state::{CwContext, QueryHandler};
 use crate::traits::{Config, IContext, ILightClient};
-use common::client_msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use cw_common::client_msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use prost::Message;
 
 // version info for migration info
@@ -186,7 +186,7 @@ mod tests {
         state::QueryHandler,
         ContractError,
     };
-    use common::client_msg::ExecuteMsg;
+    use cw_common::client_msg::ExecuteMsg;
     use prost::Message;
 
     use super::{execute, instantiate, Config, InstantiateMsg, CONTRACT_NAME, CONTRACT_VERSION};

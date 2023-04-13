@@ -1,5 +1,5 @@
 use super::{events::client_misbehaviour_event, *};
-use common::client_msg::ExecuteMsg as LightClientMessage;
+use cw_common::client_msg::ExecuteMsg as LightClientMessage;
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn create_client(
@@ -229,7 +229,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                     let update_client_response: UpdateClientResponse =
                         from_binary(&data).map_err(|error| ContractError::Std(error))?;
 
-                    let client_id = update_client_response.client_id()?;
+                    let client_id = update_client_response
+                        .client_id()
+                        .map_err(|e| ContractError::from(e))?;
 
                     let height = update_client_response.height();
 
@@ -281,7 +283,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 Some(data) => {
                     let response: UpgradeClientResponse =
                         from_binary(&data).map_err(|error| ContractError::Std(error))?;
-                    let client_id = response.client_id()?;
+                    let client_id = response.client_id().map_err(|e| ContractError::from(e))?;
 
                     self.store_client_state(
                         deps.storage,
@@ -370,7 +372,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                     let misbehaviour_response = from_binary::<MisbehaviourResponse>(&response)
                         .map_err(|error| ContractError::Std(error))?;
 
-                    let client_id = misbehaviour_response.client_id()?;
+                    let client_id = misbehaviour_response
+                        .client_id()
+                        .map_err(|e| ContractError::from(e))?;
 
                     let client_type = ClientType::try_from(client_id.clone()).map_err(|error| {
                         ContractError::IbcDecodeError {
