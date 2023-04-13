@@ -51,10 +51,37 @@ pub struct TestMerkleNode {
     pub value: String,
 }
 
-impl TryFrom<TestMerkleNode> for MerkleNode {
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TestMessageData {
+    pub btp_header: TestHeader,
+    pub btp_header_encoded: String,
+    pub commitment_key: String,
+    pub commitment_path: String,
+    pub height: u64,
+    pub messages: Vec<String>,
+    pub packet: TestPacket,
+    pub packet_encoded: String,
+    pub proof: Vec<TestMerkleNode>,
+    pub validators: Vec<String>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TestPacket {
+    pub data: String,
+    pub destination_channel: String,
+    pub destination_port: String,
+    pub sequence: u64,
+    pub source_channel: String,
+    pub source_port: String,
+}
+
+
+impl TryFrom<&TestMerkleNode> for MerkleNode {
     type Error = hex::FromHexError;
 
-    fn try_from(value: TestMerkleNode) -> Result<Self, Self::Error> {
+    fn try_from(value: &TestMerkleNode) -> Result<Self, Self::Error> {
         let node = MerkleNode {
             dir: value.dir,
             value: hex::decode(value.value.replace("0x", "")).unwrap(),
@@ -76,7 +103,7 @@ impl TryFrom<TestHeader> for BtpHeader {
                 .network_section_to_root
                 .into_iter()
                 .map(|tn| {
-                    let node: MerkleNode = tn.try_into().unwrap();
+                    let node: MerkleNode = (&tn).try_into().unwrap();
                     node
                 })
                 .collect(),
@@ -114,14 +141,25 @@ impl TryFrom<TestSignedHeader> for SignedHeader {
 }
 
 pub fn load_test_headers() -> Vec<TestHeaderData> {
+    return load_test_data::<TestHeaderData>("test_data/test_headers.json");
+}
+
+pub fn load_test_messages() -> Vec<TestMessageData> {
+    return load_test_data::<TestMessageData>("test_data/test_messages.json");
+}
+
+
+
+pub fn load_test_data<T:for<'a> Deserialize<'a>>(path:&str)->Vec<T>{
     let mut root = get_project_root().unwrap();
-    root.push("test_data/test_headers.json");
+    root.push(path);
     let mut file = File::open(root).unwrap();
     let mut data = String::new();
     file.read_to_string(&mut data).unwrap();
-    let data: Vec<TestHeaderData> =
-        serde_json::from_str(&data).expect("JSON was not well-formatted");
+    let data: Vec<T> =
+    serde_json::from_str(&data).expect("JSON was not well-formatted");
     data
+
 }
 
 pub fn get_test_headers() -> Vec<BtpHeader> {
@@ -168,4 +206,35 @@ pub fn to_attribute_map(attrs: &Vec<Attribute>) -> HashMap<String, String> {
         map.insert(attr.key.clone(), attr.value.clone());
     }
     return map;
+}
+
+#[cfg(test)]
+mod tests {
+     use super::*;
+     use common::utils::keccak256;
+     use common::utils::calculate_root;
+    #[test]
+    fn test_message_data(){
+        let data=load_test_messages();
+        for (i,msg) in data.iter().enumerate() {
+            if i==0 {
+                continue;
+            }
+            let path = hex::decode(&msg.commitment_path).unwrap();
+            let expected_key =keccak256(&path);
+            let key = hex::decode(&msg.commitment_key).unwrap();
+            assert_eq!(hex::encode(&expected_key),hex::encode(&key));
+
+            let message_bytes=hex::decode(&msg.messages[0]).unwrap();
+            let leaf = keccak256([key,keccak256(&message_bytes).into()].concat().as_slice());
+            let proof=msg.proof.iter().map(|tn|{
+                let node:MerkleNode= tn.try_into().unwrap();
+                node
+            }).collect::<Vec<MerkleNode>>();
+            let root= calculate_root(leaf,&proof);
+            assert_eq!("",hex::encode(root));
+        }
+
+    }
+
 }

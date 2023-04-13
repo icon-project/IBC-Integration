@@ -48,3 +48,5 @@ pub fn bytes32(s: &[u8]) -> Option<[u8; 32]> {
     result[..s_len].clone_from_slice(s);
     Some(result)
 }
+
+
