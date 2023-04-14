@@ -1,5 +1,10 @@
+use std::str::FromStr;
+
 use cosmwasm_std::to_vec;
-use cw_ibc_core::context::CwIbcCoreContext;
+use cw_ibc_core::{
+    context::CwIbcCoreContext,
+    types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
+};
 pub mod setup;
 
 use ibc::core::ics24_host::validate::{
@@ -121,85 +126,99 @@ fn test_lookup_modules() {
 }
 
 #[test]
-fn invalid_port_id_min() {
-    // invalid min port id
-    let id = validate_port_identifier("p");
-    assert!(id.is_err())
+fn test_validate_client_id() {
+    let id = ClientId::default();
+    let result = validate_client_identifier(id.as_str());
+    assert_eq!(result.is_ok(), true)
 }
 
 #[test]
-fn invalid_port_id_max() {
-    let id = validate_port_identifier(
-        "9anxkcme6je544d5lnj46zqiiiygfqzf8w4bjecbnyj4lj6s7zlpst67yln64tixp9anxkcme6je544d5lnj46zqiiiygfqzf8w4bjecbnyj4lj6s7zlpst67yln64tixp",
+#[should_panic(expected = "InvalidLength")]
+fn test_validate_client_id_fail_invalid_min_length() {
+    let client_type = ClientType::new("new".to_string());
+    let client_id = ClientId::new(client_type, 1).unwrap();
+    validate_client_identifier(client_id.as_str()).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn test_validate_client_id_fail_invalid_max_length() {
+    let client_type = ClientType::new(
+        "newhauyduiwe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropssrt".to_string(),
     );
-    assert!(id.is_err())
+    let client_id = ClientId::new(client_type, 1).unwrap();
+    validate_client_identifier(client_id.as_str()).unwrap();
 }
 
 #[test]
-fn valid_port_id() {
-    let id = validate_port_identifier("f8w4bjecbnyj4lj6s7zlpst67yln");
-    assert!(id.is_ok())
+fn test_validate_connection_id() {
+    let conn_id = ConnectionId::default();
+    let result = validate_connection_identifier(conn_id.as_str());
+    assert_eq!(result.is_ok(), true)
 }
 
 #[test]
-fn invalid_connection_id_min() {
-    let id = validate_connection_identifier("connect01");
-    assert!(id.is_err())
+#[should_panic(expected = "IbcDecodeError")]
+fn test_validate_connection_id_fail_invalid_min_length() {
+    let s = "qwertykey";
+    let conn_id = ConnectionId::from_str(s).unwrap();
+    validate_connection_identifier(conn_id.as_str()).unwrap();
 }
 
 #[test]
-fn valid_connection_id() {
-    let id = validate_connection_identifier("connection");
-    assert!(id.is_ok())
+#[should_panic(expected = "IbcDecodeError")]
+fn test_validate_connection_id_fail_invalid_max_length() {
+    let s = "qwertykeywe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropsttt5";
+    let conn_id = ConnectionId::from_str(s).unwrap();
+    validate_connection_identifier(conn_id.as_str()).unwrap();
 }
 
 #[test]
-fn invalid_channel_id_min() {
-    let id = validate_channel_identifier("channel");
-    assert!(id.is_err())
+fn test_validate_channel_id() {
+    let channel_id = ChannelId::default();
+    let result = validate_channel_identifier(channel_id.as_str());
+    assert_eq!(result.is_ok(), true)
 }
 
 #[test]
-fn invalid_channel_id_max() {
-    // invalid channel id, string length is 65 (Max - 64)
-    let id = validate_channel_identifier(
-        "ihhankr30iy4nna65hjl2wjod7182io1t2s7u3ip3wqtbbn1sl0rgcntqc540r36r",
-    );
-    assert!(id.is_err())
+#[should_panic(expected = "Empty")]
+fn test_validate_id_empty() {
+    let id = "";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
 }
 
 #[test]
-fn parse_invalid_client_id_min() {
-    // invalid min client id (Min - 9)
-    let id = validate_client_identifier("client");
-    assert!(id.is_err())
+#[should_panic(expected = "ContainSeparator")]
+fn test_validate_id_have_path_separator() {
+    let id = "id/1";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
 }
 
 #[test]
-fn valid_client_id() {
-    // Max - 64
-    let id = validate_client_identifier(
-        "f0isrs5enif9e4td3r2jcbxoevhz6u1fthn4aforq7ams52jn5m48eiesfht9ckp",
-    );
-    assert!(id.is_ok())
+#[should_panic(expected = "InvalidCharacter")]
+fn test_validate_id_have_invalid_chars() {
+    let id = "channel@01";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
 }
 
 #[test]
-fn invalid_id_path_separator() {
-    // invalid id with path separator
-    let id = validate_identifier("id/1", 1, 10);
-    assert!(id.is_err())
+fn test_port_id() {
+    let port_id = PortId::default();
+    let result = validate_port_identifier(port_id.as_str());
+    assert_eq!(result.is_ok(), true)
 }
 
 #[test]
-fn invalid_id_chars() {
-    let id = validate_identifier("channel@01", 1, 10);
-    assert!(id.is_err())
-}
-
-#[test]
-fn invalid_id_empty() {
-    // id empty
-    let id = validate_identifier("", 1, 10);
-    assert!(id.is_err())
+#[should_panic(expected = "IbcDecodeError")]
+fn test_validate_port_id_fail_invalid_min_length() {
+    let s = "q";
+    let id = PortId::from_str(s).unwrap();
+    let result = validate_port_identifier(id.as_str());
+    assert_eq!(result.is_ok(), true)
 }
