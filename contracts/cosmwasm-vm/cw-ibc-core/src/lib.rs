@@ -41,6 +41,7 @@ pub use ibc::core::ics04_channel::msgs::{
     chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
 };
 use ibc::core::ics05_port::error::PortError;
+use ibc::core::{ics03_connection::error::ConnectionError, ics24_host::error::ValidationError};
 pub use ibc::{
     core::{
         ics02_client::{

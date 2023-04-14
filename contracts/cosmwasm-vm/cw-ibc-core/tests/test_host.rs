@@ -160,3 +160,101 @@ fn test_get_expected_time_per_block_fails() {
         .get_expected_time_per_block(&mut deps.storage)
         .unwrap();
 }
+
+#[test]
+fn test_validate_client_id() {
+    let id = ClientId::default();
+    let result = validate_client_identifier(id.as_str());
+    assert_eq!(result.is_ok(), true)
+}
+
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn test_validate_client_id_fail_invalid_min_length() {
+    let client_type = ClientType::new("new".to_string());
+    let client_id = ClientId::new(client_type, 1).unwrap();
+    validate_client_identifier(client_id.as_str()).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidLength")]
+fn test_validate_client_id_fail_invalid_max_length() {
+    let client_type = ClientType::new(
+        "newhauyduiwe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropssrt".to_string(),
+    );
+    let client_id = ClientId::new(client_type, 1).unwrap();
+    validate_client_identifier(client_id.as_str()).unwrap();
+}
+
+#[test]
+fn test_validate_connection_id() {
+    let conn_id = ConnectionId::default();
+    let result = validate_connection_identifier(conn_id.as_str());
+    assert_eq!(result.is_ok(), true)
+}
+
+#[test]
+#[should_panic(expected = "IbcDecodeError")]
+fn test_validate_connection_id_fail_invalid_min_length() {
+    let s = "qwertykey";
+    let conn_id = ConnectionId::from_str(s).unwrap();
+    validate_connection_identifier(conn_id.as_str()).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "IbcDecodeError")]
+fn test_validate_connection_id_fail_invalid_max_length() {
+    let s = "qwertykeywe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropsttt5";
+    let conn_id = ConnectionId::from_str(s).unwrap();
+    validate_connection_identifier(conn_id.as_str()).unwrap();
+}
+
+#[test]
+fn test_validate_channel_id() {
+    let channel_id = ChannelId::default();
+    let result = validate_channel_identifier(channel_id.as_str());
+    assert_eq!(result.is_ok(), true)
+}
+
+#[test]
+#[should_panic(expected = "Empty")]
+fn test_validate_id_empty() {
+    let id = "";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "ContainSeparator")]
+fn test_validate_id_have_path_separator() {
+    let id = "id/1";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidCharacter")]
+fn test_validate_id_have_invalid_chars() {
+    let id = "channel@01";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
+}
+
+#[test]
+fn test_port_id() {
+    let port_id = PortId::default();
+    let result = validate_port_identifier(port_id.as_str());
+    assert_eq!(result.is_ok(), true)
+}
+
+#[test]
+#[should_panic(expected = "IbcDecodeError")]
+fn test_validate_port_id_fail_invalid_min_length() {
+    let s = "q";
+    let id = PortId::from_str(s).unwrap();
+    let result = validate_port_identifier(id.as_str());
+    assert_eq!(result.is_ok(), true)
+}
