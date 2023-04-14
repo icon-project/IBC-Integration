@@ -68,6 +68,7 @@ public class IBCHandlerTestBase extends TestBase {
     protected Version baseVersion;
     protected String portId = "portId";
 
+    protected BigInteger timeoutHeight = BigInteger.valueOf(100);
     protected BigInteger nextRecvId = BigInteger.ONE;
     protected Height baseHeight;
 
@@ -466,7 +467,7 @@ public class IBCHandlerTestBase extends TestBase {
     protected Packet getBasePacket() {
         Height timeoutHeight = Height.newBuilder()
                 .setRevisionNumber(1)
-                .setRevisionHeight(sm.getBlock().getHeight() + 100).build();
+                .setRevisionHeight(sm.getBlock().getHeight() + this.timeoutHeight.longValue()).build();
 
         BigInteger nextPacketSeq = (BigInteger) handler.call("getNextSequenceSend", portId, channelId);
 
@@ -476,8 +477,7 @@ public class IBCHandlerTestBase extends TestBase {
                 .setSourceChannel(channelId)
                 .setDestinationPort(counterPartyPortId)
                 .setDestinationChannel(counterPartyChannelId)
-                .setTimeoutHeight(timeoutHeight)
-                .setTimeoutTimestamp(sm.getBlock().getTimestamp() * 2).build();
+                .setTimeoutHeight(timeoutHeight).build();
 
         when(lightClient.mock.getLatestHeight(clientId)).thenReturn(Height.getDefaultInstance().toByteArray());
         when(lightClient.mock.getTimestampAtHeight(any(String.class), any(byte[].class))).thenReturn(BigInteger.ONE);
@@ -488,7 +488,7 @@ public class IBCHandlerTestBase extends TestBase {
     protected Packet getBaseCounterPacket() {
         Height timeoutHeight = Height.newBuilder()
                 .setRevisionNumber(1)
-                .setRevisionHeight(sm.getBlock().getHeight() + 100).build();
+                .setRevisionHeight(sm.getBlock().getHeight() +  this.timeoutHeight.longValue()).build();
 
         Packet packet = Packet.newBuilder()
                 .setSequence(nextRecvId.longValue())
@@ -497,8 +497,7 @@ public class IBCHandlerTestBase extends TestBase {
                 .setSourceChannel(counterPartyChannelId)
                 .setSourcePort(counterPartyPortId)
                 .setData(ByteString.copyFrom(new byte[7]))
-                .setTimeoutHeight(timeoutHeight)
-                .setTimeoutTimestamp(sm.getBlock().getTimestamp() * 2).build();
+                .setTimeoutHeight(timeoutHeight).build();
 
         nextRecvId = nextRecvId.add(BigInteger.ONE);
 
