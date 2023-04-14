@@ -8,8 +8,8 @@ pub mod timeout_on_close;
 pub use timeout_on_close::*;
 pub mod send_packet;
 pub use send_packet::*;
-pub mod recieve_packet;
-pub use recieve_packet::*;
+pub mod receive_packet;
+pub use receive_packet::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     pub fn timeout_packet_validate(

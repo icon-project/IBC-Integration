@@ -24,11 +24,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         conn_id: ConnectionId,
     ) -> Result<ConnectionEnd, ContractError> {
-        let data = self
-            .ibc_store()
-            .connections()
-            .load(store, conn_id)
-            .map_err(|error| ContractError::Std(error))?;
+        let data = self.ibc_store().connections().load(store, conn_id)?;
 
         let connection_end =
             ConnectionEnd::decode(&*data).map_err(|error| ContractError::IbcDecodeError {
@@ -59,11 +55,10 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<ConnectionId, ContractError> {
-        Ok(self
-            .ibc_store()
+        self.ibc_store()
             .client_connections()
             .load(store, client_id)
-            .map_err(|error| ContractError::Std(error))?)
+            .map_err(ContractError::Std)
     }
     pub fn increase_connection_counter(
         &self,
@@ -172,11 +167,11 @@ impl<'a> CwIbcCoreContext<'a> {
         CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() //TODO
     }
 
-    fn host_current_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
+    fn host_current_height(&self) -> Result<ibc::Height, ContractError> {
         todo!()
     }
 
-    fn host_oldest_height(&self) -> Result<ibc::Height, ibc::core::ContextError> {
+    fn host_oldest_height(&self) -> Result<ibc::Height, ContractError> {
         todo!()
     }
 
@@ -186,7 +181,7 @@ impl<'a> CwIbcCoreContext<'a> {
         height: &ibc::Height,
     ) -> Result<
         Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
-        ibc::core::ContextError,
+        ContractError,
     > {
         todo!()
     }

@@ -219,11 +219,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ContractError> {
         let client_key = self.client_state_commitment_key(client_id);
 
-        let client_state_data = self
-            .ibc_store()
-            .commitments()
-            .load(store, client_key)
-            .map_err(|error| ContractError::Std(error))?;
+        let client_state_data = self.ibc_store().commitments().load(store, client_key)?;
 
         let client_state: ClientState = client_state_data.as_slice().try_into().unwrap();
 
@@ -245,20 +241,19 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
     ) -> Result<Box<dyn IbcConsensusState>, ContractError> {
-        let conesnus_state_key = self.consensus_state_commitment_key(
+        let consensus_state_key = self.consensus_state_commitment_key(
             client_id,
             height.revision_number(),
             height.revision_height(),
         );
 
-        let consenus_state_data = self
+        let consensus_state_data = self
             .ibc_store()
             .commitments()
-            .load(store, conesnus_state_key)
-            .map_err(|error| ContractError::Std(error))?;
+            .load(store, consensus_state_key)?;
 
         let consensus_state: ConsensusState =
-            ConsensusState::try_from(consenus_state_data).unwrap();
+            ConsensusState::try_from(consensus_state_data).unwrap();
 
         Ok(Box::new(consensus_state))
     }
@@ -295,7 +290,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<ibc::timestamp::Timestamp, ContractError> {
         //TODO Update timestamp logic
         let duration = self.ibc_store().expected_time_per_block().load(store)?;
-        let block_time = Duration::from_secs(duration as u64);
+        let block_time = Duration::from_secs(duration);
         Ok(Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap())
     }
 
@@ -331,7 +326,7 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn max_expected_time_per_block(&self) -> std::time::Duration {
-        Duration::new(60, 60)
+        Duration::from_secs(60)
     }
 }
 
@@ -379,7 +374,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: ibc::core::ics24_host::identifier::ClientId,
         height: ibc::Height,
         timestamp: ibc::timestamp::Timestamp,
-    ) -> Result<(), ibc::core::ContextError> {
+    ) -> Result<(), ContractError> {
         todo!()
     }
 
@@ -391,7 +386,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: ibc::core::ics24_host::identifier::ClientId,
         height: ibc::Height,
         host_height: ibc::Height,
-    ) -> Result<(), ibc::core::ContextError> {
+    ) -> Result<(), ContractError> {
         todo!()
     }
 }

@@ -99,9 +99,7 @@ impl<'a> CwCallService<'a> {
             });
         }
 
-        let validated_address = api
-            .addr_validate(address)
-            .map_err(|error| ContractError::Std(error))?;
+        let validated_address = api.addr_validate(address).map_err(ContractError::Std)?;
 
         Ok(validated_address.as_str().into())
     }
