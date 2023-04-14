@@ -164,7 +164,9 @@ impl<'a> CwIbcCoreContext<'a> {
                         Some(ack) => ack,
                         None => {
                             return Err(ContractError::IbcPackketError {
-                                error: PacketError::InvalidAcknowledgement,
+                                error: PacketError::PacketAcknowledgementNotFound {
+                                    sequence: packet.seq_on_a,
+                                },
                             })
                         }
                     };
