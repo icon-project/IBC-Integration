@@ -40,7 +40,7 @@ pub fn get_dummy_raw_msg_recv_packet(height: u64) -> RawMsgRecvPacket {
 }
 
 #[test]
-fn test_recieve_packet() {
+fn test_receive_packet() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
@@ -122,7 +122,7 @@ fn test_recieve_packet() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
     let light_client = Addr::unchecked("lightclient");
     contract
@@ -140,14 +140,14 @@ fn test_recieve_packet() {
             chan_end_on_b.clone(),
         )
         .unwrap();
-    let res = contract.validate_recieve_packet(deps.as_mut(), info, &msg);
+    let res = contract.validate_receive_packet(deps.as_mut(), info, &msg);
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 531);
 }
 
 #[test]
-fn test_recieve_packet_validate_reply_from_light_client() {
+fn test_receive_packet_validate_reply_from_light_client() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
@@ -202,14 +202,14 @@ fn test_recieve_packet_validate_reply_from_light_client() {
         .unwrap();
 
     let res =
-        contract.recieve_packet_validate_reply_from_light_client(deps.as_mut(), info, message);
+        contract.receive_packet_validate_reply_from_light_client(deps.as_mut(), info, message);
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 532)
 }
 
 #[test]
 #[should_panic(expected = "PacketCommitmentNotFound")]
-fn test_recieve_packet_validate_reply_from_light_client_fail() {
+fn test_receive_packet_validate_reply_from_light_client_fail() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
@@ -255,12 +255,12 @@ fn test_recieve_packet_validate_reply_from_light_client_fail() {
         .unwrap();
 
     contract
-        .recieve_packet_validate_reply_from_light_client(deps.as_mut(), info, message)
+        .receive_packet_validate_reply_from_light_client(deps.as_mut(), info, message)
         .unwrap();
 }
 
 #[test]
-fn execute_recieve_packet() {
+fn execute_receive_packet() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
@@ -298,13 +298,13 @@ fn execute_recieve_packet() {
         )
         .unwrap();
 
-    let res = contract.execute_recieve_packet(deps.as_mut(), reply);
+    let res = contract.execute_receive_packet(deps.as_mut(), reply);
     assert!(res.is_ok());
     assert_eq!(res.unwrap().events[0].ty, "test")
 }
 
 #[test]
-fn execute_recieve_packet_ordered() {
+fn execute_receive_packet_ordered() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
@@ -350,7 +350,7 @@ fn execute_recieve_packet_ordered() {
         )
         .unwrap();
 
-    let res = contract.execute_recieve_packet(deps.as_mut(), reply);
+    let res = contract.execute_receive_packet(deps.as_mut(), reply);
     let seq = contract.get_next_sequence_recv(
         &deps.storage,
         packet.port_id_on_b.clone().into(),
@@ -363,7 +363,7 @@ fn execute_recieve_packet_ordered() {
 }
 #[test]
 #[should_panic(expected = "ibc::core::ics04_channel::packet::Sequence")]
-fn execute_recieve_packet_ordered_fail_missing_sequence() {
+fn execute_receive_packet_ordered_fail_missing_sequence() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
@@ -401,18 +401,19 @@ fn execute_recieve_packet_ordered_fail_missing_sequence() {
         )
         .unwrap();
     contract
-        .execute_recieve_packet(deps.as_mut(), reply)
+        .execute_receive_packet(deps.as_mut(), reply)
         .unwrap();
 }
 
-
 #[test]
-#[should_panic(expected="ChannelNotFound")]
-fn test_recieve_packet_fail_missing_channel() {
+#[should_panic(expected = "ChannelNotFound")]
+fn test_receive_packet_fail_missing_channel() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    
-    contract.validate_recieve_packet(deps.as_mut(), info, &msg).unwrap();
+
+    contract
+        .validate_receive_packet(deps.as_mut(), info, &msg)
+        .unwrap();
 }

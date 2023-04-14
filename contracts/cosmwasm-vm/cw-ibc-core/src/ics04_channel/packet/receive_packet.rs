@@ -8,7 +8,7 @@ use ibc::core::ics04_channel::{
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
-    pub fn validate_recieve_packet(
+    pub fn validate_receive_packet(
         &self,
         deps: DepsMut,
         info: MessageInfo,
@@ -21,7 +21,7 @@ impl<'a> CwIbcCoreContext<'a> {
             msg.packet.chan_id_on_b.clone().into(),
         )?;
         if !chan_end_on_b.state_matches(&State::Open) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidChannelState {
                     channel_id: msg.packet.chan_id_on_a.clone(),
                     state: chan_end_on_b.state,
@@ -33,7 +33,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(msg.packet.chan_id_on_a.clone()),
         );
         if !chan_end_on_b.counterparty_matches(&counterparty) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketCounterparty {
                     port_id: msg.packet.port_id_on_a.clone(),
                     channel_id: msg.packet.chan_id_on_a.clone(),
@@ -43,7 +43,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
         let conn_end_on_b = self.connection_end(deps.storage, conn_id_on_b.clone().into())?;
         if !conn_end_on_b.state_matches(&ConnectionState::Open) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::ConnectionNotOpen {
                     connection_id: chan_end_on_b.connection_hops()[0].clone(),
                 },
@@ -51,7 +51,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let latest_height = self.host_height()?;
         if msg.packet.timeout_height_on_b.has_expired(latest_height) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::LowPacketHeight {
                     chain_height: latest_height,
                     timeout_height: msg.packet.timeout_height_on_b,
@@ -60,7 +60,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let latest_timestamp = self.host_timestamp(deps.storage)?;
         if let Expiry::Expired = latest_timestamp.check_expiry(&msg.packet.timeout_timestamp_on_b) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::LowPacketTimestamp,
             });
         }
@@ -68,7 +68,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
         // The client must not be frozen.
         if client_state_of_a_on_b.is_frozen() {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::FrozenClient {
                     client_id: client_id_on_b.clone(),
                 },
@@ -116,14 +116,14 @@ impl<'a> CwIbcCoreContext<'a> {
         });
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
-            VALIDATE_ON_PACKET_RECIEVE_ON_LIGHT_CLIENT,
+            VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT,
         );
         Ok(Response::new()
-            .add_attribute("action", "Light client packet recieve validate call")
+            .add_attribute("action", "Light client packet receive validate call")
             .add_submessage(sub_msg))
     }
 
-    pub fn recieve_packet_validate_reply_from_light_client(
+    pub fn receive_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
         info: MessageInfo,
@@ -152,7 +152,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             packet.chan_id_on_b.clone().into(),
                         )?;
                         if packet.seq_on_a > next_seq_recv {
-                            return Err(ContractError::IbcPackketError {
+                            return Err(ContractError::IbcPacketError {
                                 error: PacketError::InvalidPacketSequence {
                                     given_sequence: packet.seq_on_a,
                                     next_sequence: next_seq_recv,
@@ -174,7 +174,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         );
                         match packet_rec {
                             Ok(_receipt) => {}
-                            Err(ContractError::IbcPackketError {
+                            Err(ContractError::IbcPacketError {
                                 error: PacketError::PacketReceiptNotFound { sequence },
                             }) if sequence == packet.seq_on_a => {}
                             Err(e) => return Err(e),
@@ -238,12 +238,12 @@ impl<'a> CwIbcCoreContext<'a> {
                         });
                     let sub_msg: SubMsg = SubMsg::reply_on_success(
                         create_client_message,
-                        VALIDATE_ON_PACKET_RECIEVE_ON_MODULE,
+                        VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
                     );
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_opne_init_module_validation")
+                        .add_attribute("method", "channel_open_init_module_validation")
                         .add_submessage(sub_msg))
                 }
                 None => {
@@ -255,7 +255,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
             },
             cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcPackketError {
+                return Err(ContractError::IbcPacketError {
                     error: PacketError::InvalidProof,
                 })
             }
@@ -276,7 +276,7 @@ impl<'a> CwIbcCoreContext<'a> {
             )
             .is_ok()
         {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::AcknowledgementExists {
                     sequence: packet.seq_on_a,
                 },
@@ -285,7 +285,7 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(())
     }
 
-    pub fn execute_recieve_packet(
+    pub fn execute_receive_packet(
         &self,
         deps: DepsMut,
         message: Reply,
@@ -335,7 +335,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     if packet_already_received {
                         return Ok(
-                            Response::new().add_attribute("message", "Packet already recieved")
+                            Response::new().add_attribute("message", "Packet already received")
                         );
                     }
                     // state changes
@@ -367,13 +367,13 @@ impl<'a> CwIbcCoreContext<'a> {
                         let acknowledgement = match acknowledgement {
                             cw_xcall::ack::Ack::Result(binary) => binary,
                             cw_xcall::ack::Ack::Error(e) => {
-                                return Err(ContractError::IbcPackketError {
+                                return Err(ContractError::IbcPacketError {
                                     error: PacketError::AppModule { description: e },
                                 })
                             }
                         };
                         let acknowledgement = Acknowledgement::try_from(acknowledgement.0)
-                            .map_err(|e| ContractError::IbcPackketError { error: e })?;
+                            .map_err(|e| ContractError::IbcPacketError { error: e })?;
                         self.store_packet_acknowledgement(
                             deps.storage,
                             &port_id,
@@ -385,7 +385,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
-                        .add_attribute("method", "execute_recieve_packet")
+                        .add_attribute("method", "execute_receive_packet")
                         .add_attribute("message", "success: packet receive")
                         .add_attribute("messsage", "success: packet write acknowledgement")
                         .add_events(data.events))
@@ -399,7 +399,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
             },
             cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcPackketError {
+                return Err(ContractError::IbcPacketError {
                     error: PacketError::InvalidProof,
                 })
             }

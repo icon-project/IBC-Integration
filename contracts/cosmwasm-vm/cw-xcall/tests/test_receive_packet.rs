@@ -11,7 +11,7 @@ use cw_xcall::{
     state::CwCallService,
     types::{
         address::Address, call_request::CallRequest, message::CallServiceMessage,
-        request::CallServiceMessageRequest, response::CallServiceMessageReponse,
+        request::CallServiceMessageRequest, response::CallServiceMessageResponse,
     },
 };
 use setup::*;
@@ -97,9 +97,9 @@ fn test_receive_packet_for_call_message_response() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let data = CallServiceMessageReponse::new(
+    let data = CallServiceMessageResponse::new(
         1,
-        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSucess,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
         "",
     );
 
@@ -163,9 +163,9 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let data = CallServiceMessageReponse::new(
+    let data = CallServiceMessageResponse::new(
         1,
-        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSucess,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
         "",
     );
 
@@ -224,7 +224,7 @@ fn handle_response_emit_rollback_event() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let data = CallServiceMessageReponse::new(
+    let data = CallServiceMessageResponse::new(
         1,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseFailure,
         "",

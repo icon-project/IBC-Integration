@@ -20,14 +20,34 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &mut dyn Storage,
         name: Vec<u8>,
     ) -> Result<Vec<String>, ContractError> {
-        Ok(self
-            .ibc_store()
+        self.ibc_store()
             .capabilities()
             .load(store, name)
             .map_err(|_| ContractError::IbcDecodeError {
                 error: "CapabilityNotFound".into(),
-            })?)
+            })
     }
+    pub fn set_expected_time_per_block(
+        &self,
+        store: &mut dyn Storage,
+        expected_time_per_block: u64,
+    ) -> Result<(), ContractError> {
+        self.ibc_store()
+            .expected_time_per_block()
+            .save(store, &expected_time_per_block)?;
+
+        Ok(())
+    }
+
+    pub fn get_expected_time_per_block(&self, store: &dyn Storage) -> Result<u64, ContractError> {
+        match self.ibc_store().expected_time_per_block().may_load(store)? {
+            Some(time) => Ok(time),
+            None => Err(ContractError::IbcDecodeError {
+                error: "NotFound".to_string(),
+            }),
+        }
+    }
+
     pub fn claim_capability(
         &self,
         store: &mut dyn Storage,
@@ -77,5 +97,14 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::Unauthorized {});
         }
         Ok(capabilities)
+    }
+
+    pub fn calc_block_delay(&self, delay_period_time: &Duration) -> u64 {
+        let delay = calculate_block_delay(delay_period_time, &self.max_expected_time_per_block());
+
+        delay_period_time
+            .checked_add(Duration::from_secs(delay))
+            .unwrap()
+            .as_secs()
     }
 }

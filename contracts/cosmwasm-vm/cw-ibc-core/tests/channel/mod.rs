@@ -25,6 +25,6 @@ pub mod test_handler;
 pub mod test_open_ack;
 pub mod test_open_confirm;
 pub mod test_packet;
-pub mod test_recieve_packet;
+pub mod test_receive_packet;
 pub mod test_timeout;
 pub mod test_timeout_on_close;

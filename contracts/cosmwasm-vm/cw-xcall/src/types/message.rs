@@ -77,8 +77,8 @@ impl From<CallServiceMessageRequest> for CallServiceMessage {
     }
 }
 
-impl From<CallServiceMessageReponse> for CallServiceMessage {
-    fn from(value: CallServiceMessageReponse) -> Self {
+impl From<CallServiceMessageResponse> for CallServiceMessage {
+    fn from(value: CallServiceMessageResponse) -> Self {
         Self {
             message_type: CallServiceMessageType::CallServiceResponse,
             payload: rlp::encode(&value).to_vec(),
