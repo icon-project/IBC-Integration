@@ -638,6 +638,6 @@ public class PacketTest extends TestBase {
                         packet.getTimeoutTimestamp().toByteArray(),
                         packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
                         packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
-                        packet.getData())));
+                        IBCCommitment.sha256(packet.getData()))));
     }
 }

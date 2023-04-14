@@ -407,7 +407,7 @@ public class IBCPacket extends IBCChannelHandshake {
                         packet.getTimeoutTimestamp().toByteArray(),
                         packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
                         packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
-                        packet.getData()));
+                        IBCCommitment.sha256(packet.getData())));
     }
 
     private boolean isZero(Height height) {
