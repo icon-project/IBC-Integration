@@ -4,7 +4,7 @@ use super::*;
 pub enum CallServiceResponseType {
     CallServiceIbcError = -2,
     CallServiceResponseFailure,
-    CallServiceResponseSucess,
+    CallServiceResponseSuccess,
 }
 
 pub fn to_int(response_type: &CallServiceResponseType) -> i8 {
@@ -12,13 +12,13 @@ pub fn to_int(response_type: &CallServiceResponseType) -> i8 {
 }
 
 #[cw_serde]
-pub struct CallServiceMessageReponse {
+pub struct CallServiceMessageResponse {
     sequence_no: u128,
     response_code: CallServiceResponseType,
     message: String,
 }
 
-impl CallServiceMessageReponse {
+impl CallServiceMessageResponse {
     pub fn new(sequence_no: u128, response_code: CallServiceResponseType, message: &str) -> Self {
         Self {
             sequence_no,
@@ -57,7 +57,7 @@ impl Encodable for CallServiceResponseType {
         match self {
             CallServiceResponseType::CallServiceIbcError => stream.append::<u128>(&2),
             CallServiceResponseType::CallServiceResponseFailure => stream.append::<u128>(&1),
-            CallServiceResponseType::CallServiceResponseSucess => stream.append::<u128>(&0),
+            CallServiceResponseType::CallServiceResponseSuccess => stream.append::<u128>(&0),
         };
     }
 }
@@ -67,7 +67,7 @@ impl Decodable for CallServiceResponseType {
         let data = rlp.data()?;
         let rlp = rlp::Rlp::new(data);
         match rlp.as_val::<u8>()? {
-            0 => Ok(Self::CallServiceResponseSucess),
+            0 => Ok(Self::CallServiceResponseSuccess),
             1 => Ok(Self::CallServiceResponseFailure),
             2 => Ok(Self::CallServiceIbcError),
             _ => Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
@@ -75,7 +75,7 @@ impl Decodable for CallServiceResponseType {
     }
 }
 
-impl Encodable for CallServiceMessageReponse {
+impl Encodable for CallServiceMessageResponse {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
         stream
             .begin_list(3)
@@ -85,7 +85,7 @@ impl Encodable for CallServiceMessageReponse {
     }
 }
 
-impl Decodable for CallServiceMessageReponse {
+impl Decodable for CallServiceMessageResponse {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
         Ok(Self {
             sequence_no: rlp.val_at(0)?,
@@ -95,7 +95,7 @@ impl Decodable for CallServiceMessageReponse {
     }
 }
 
-impl TryFrom<&Vec<u8>> for CallServiceMessageReponse {
+impl TryFrom<&Vec<u8>> for CallServiceMessageResponse {
     type Error = ContractError;
     fn try_from(value: &Vec<u8>) -> Result<Self, Self::Error> {
         let rlp = rlp::Rlp::new(value as &[u8]);
@@ -105,7 +105,7 @@ impl TryFrom<&Vec<u8>> for CallServiceMessageReponse {
     }
 }
 
-impl TryFrom<&[u8]> for CallServiceMessageReponse {
+impl TryFrom<&[u8]> for CallServiceMessageResponse {
     type Error = ContractError;
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let rlp = rlp::Rlp::new(value);

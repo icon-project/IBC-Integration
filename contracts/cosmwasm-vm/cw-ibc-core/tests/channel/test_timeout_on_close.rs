@@ -116,7 +116,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let res = contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, &msg);

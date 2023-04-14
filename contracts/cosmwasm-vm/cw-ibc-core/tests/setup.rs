@@ -232,7 +232,7 @@ pub fn get_dummy_raw_msg_chan_open_try(proof_height: u64) -> RawMsgChannelOpenTr
 
 pub fn get_dummy_raw_msg_update_client_message() -> RawMessageUpdateCelint {
     let height = Height::new(10, 15).unwrap();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
     RawMessageUpdateCelint {
         client_id: client_id.ibc_client_id().to_string(),
@@ -263,7 +263,7 @@ pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMessageMisbehaviour {
     let height = Height::new(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
 
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
 
     let mis_b = Misbehaviour {

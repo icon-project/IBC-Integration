@@ -17,7 +17,7 @@ impl<'a> CwIbcCoreContext<'a> {
             packet.chan_id_on_a.clone().into(),
         )?;
         if !chan_end_on_a.state_matches(&State::Open) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::ChannelClosed {
                     channel_id: packet.chan_id_on_a.clone(),
                 },
@@ -28,7 +28,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(packet.chan_id_on_b.clone()),
         );
         if !chan_end_on_a.counterparty_matches(&counterparty) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketCounterparty {
                     port_id: packet.port_id_on_b.clone(),
                     channel_id: packet.chan_id_on_b.clone(),
@@ -38,7 +38,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a.clone().into())?;
         if !conn_end_on_a.state_matches(&ConnectionState::Open) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::ConnectionNotOpen {
                     connection_id: chan_end_on_a.connection_hops()[0].clone(),
                 },
@@ -65,7 +65,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 &packet.timeout_timestamp_on_b,
             )
         {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::IncorrectPacketCommitment {
                     sequence: packet.seq_on_a,
                 },
@@ -79,7 +79,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet.chan_id_on_a.clone().into(),
             )?;
             if packet.seq_on_a != next_seq_ack {
-                return Err(ContractError::IbcPackketError {
+                return Err(ContractError::IbcPacketError {
                     error: PacketError::InvalidPacketSequence {
                         given_sequence: packet.seq_on_a,
                         next_sequence: next_seq_ack,
@@ -91,7 +91,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state_on_a = self.client_state(deps.storage, client_id_on_a)?;
         // The client must not be frozen.
         if client_state_on_a.is_frozen() {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::FrozenClient {
                     client_id: client_id_on_a.clone(),
                 },
@@ -163,7 +163,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let acknowledgement = match packet_data.acknowledgement {
                         Some(ack) => ack,
                         None => {
-                            return Err(ContractError::IbcPackketError {
+                            return Err(ContractError::IbcPacketError {
                                 error: PacketError::PacketAcknowledgementNotFound {
                                     sequence: packet.seq_on_a,
                                 },
@@ -244,7 +244,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
             },
             cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcPackketError {
+                return Err(ContractError::IbcPacketError {
                     error: PacketError::InvalidProof,
                 })
             }
@@ -318,7 +318,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
             },
             cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcPackketError {
+                return Err(ContractError::IbcPacketError {
                     error: PacketError::InvalidProof,
                 })
             }

@@ -19,7 +19,7 @@ impl TryFrom<&[u8]> for ClientState {
     type Error = ClientError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        match serde_json_wasm::from_slice(&value) {
+        match serde_json_wasm::from_slice(value) {
             Ok(result) => Ok(result),
             Err(error) => Err(ClientError::Other {
                 description: error.to_string(),
@@ -42,7 +42,7 @@ impl ClientState {
             _ => Some(frozen_height),
         };
 
-        if max_clock_drift <= 0 {
+        if max_clock_drift == 0 {
             return Err(ClientError::Other {
                 description: "ClientState max-clock-drift must be greater than zero".to_string(),
             });
@@ -71,8 +71,7 @@ impl TryFrom<RawClientState> for ClientState {
             raw.latest_height,
             raw.network_section_hash,
             raw.validators,
-        )
-        .map_err(|error| error)?;
+        )?;
 
         Ok(client_state)
     }
@@ -80,10 +79,7 @@ impl TryFrom<RawClientState> for ClientState {
 
 impl From<ClientState> for RawClientState {
     fn from(value: ClientState) -> Self {
-        let frozen_height = match value.frozen_height {
-            Some(value) => value,
-            None => 0,
-        };
+        let frozen_height = value.frozen_height.unwrap_or(0);
         Self {
             trusting_period: value.trusting_period,
             frozen_height,
@@ -108,14 +104,12 @@ impl TryFrom<Any> for ClientState {
 
         fn decode_client_state<B: Buf>(buf: B) -> Result<ClientState, Error> {
             RawClientState::decode(buf)
-                .map_err(|error| ClientError::Decode(error))?
+                .map_err(ClientError::Decode)?
                 .try_into()
         }
 
         match raw.type_url.as_str() {
-            ICON_CLIENT_STATE_TYPE_URL => {
-                decode_client_state(raw.value.deref()).map_err(|error| error)
-            }
+            ICON_CLIENT_STATE_TYPE_URL => decode_client_state(raw.value.deref()),
             _ => Err(ClientError::UnknownClientStateType {
                 client_state_type: raw.type_url,
             }),
@@ -150,12 +144,8 @@ impl IbcClientState for ClientState {
     }
 
     fn frozen_height(&self) -> Option<ibc::Height> {
-        let height = match self.frozen_height {
-            Some(height) => Some(Height::new(0, height).unwrap()),
-            None => None,
-        };
-
-        height
+        self.frozen_height
+            .map(|height| Height::new(0, height).unwrap())
     }
 
     fn expired(&self, elapsed: std::time::Duration) -> bool {
@@ -326,7 +316,7 @@ impl ConsensusState {
         &self.message_root
     }
     pub fn as_bytes(&self) -> &[u8] {
-        &self.message_root.as_bytes()
+        self.message_root.as_bytes()
     }
 }
 
@@ -343,14 +333,12 @@ impl TryFrom<Any> for ConsensusState {
 
         fn decode_consensus_state<B: Buf>(buf: B) -> Result<ConsensusState, Error> {
             RawConsensusState::decode(buf)
-                .map_err(|error| ClientError::Decode(error))?
+                .map_err(ClientError::Decode)?
                 .try_into()
         }
 
         match raw.type_url.as_str() {
-            ICON_CONSENSUS_STATE_TYPE_URL => {
-                decode_consensus_state(raw.value.deref()).map_err(|error| error)
-            }
+            ICON_CONSENSUS_STATE_TYPE_URL => decode_consensus_state(raw.value.deref()),
             _ => Err(ClientError::UnknownConsensusStateType {
                 consensus_state_type: raw.type_url,
             }),
@@ -390,7 +378,7 @@ impl From<ConsensusState> for RawConsensusState {
 
 impl ibc::core::ics02_client::consensus_state::ConsensusState for ConsensusState {
     fn root(&self) -> &CommitmentRoot {
-        &self.message_root()
+        self.message_root()
     }
 
     fn timestamp(&self) -> ibc::timestamp::Timestamp {
@@ -412,12 +400,16 @@ impl TryFrom<Vec<u8>> for ConsensusState {
     type Error = ClientError;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let result: ConsensusStateReponse =
-            serde_json_wasm::from_slice(&value.clone()).map_err(|error| ClientError::Other {
+        let result: ConsensusStateResponse =
+            serde_json_wasm::from_slice(&value).map_err(|error| ClientError::Other {
                 description: error.to_string(),
             })?;
 
-        let commit = CommitmentRoot::from(hex::decode(result.message_root).unwrap());
+        let commit = CommitmentRoot::from(hex::decode(result.message_root).map_err(|error| {
+            ClientError::Other {
+                description: error.to_string(),
+            }
+        })?);
 
         Ok(Self {
             message_root: commit,
@@ -429,15 +421,13 @@ impl TryFrom<ConsensusState> for Vec<u8> {
     type Error = ClientError;
 
     fn try_from(value: ConsensusState) -> Result<Self, Self::Error> {
-        serde_json_wasm::to_vec(&value).map_err(|error| {
-            return ClientError::Other {
-                description: error.to_string(),
-            };
+        serde_json_wasm::to_vec(&value).map_err(|error| ClientError::Other {
+            description: error.to_string(),
         })
     }
 }
 
 #[derive(Debug, Deserialize)]
-struct ConsensusStateReponse {
+struct ConsensusStateResponse {
     pub message_root: String,
 }

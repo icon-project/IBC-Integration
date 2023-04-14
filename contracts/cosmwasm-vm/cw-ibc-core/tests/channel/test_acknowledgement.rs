@@ -435,7 +435,7 @@ fn test_acknowledgement_packet_validate_ordered() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
@@ -547,7 +547,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
@@ -646,7 +646,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);

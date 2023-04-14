@@ -106,7 +106,7 @@ pub fn create_send_packet_event(
     let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
         error: ChannelError::NonUtf8PacketData,
     })?;
-    let hex_data = hex::encode(&packet.data.clone());
+    let hex_data = hex::encode(&packet.data);
 
     Ok(Event::new(IbcEventType::SendPacket.as_str())
         .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)

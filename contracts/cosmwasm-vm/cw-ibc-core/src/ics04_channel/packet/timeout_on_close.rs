@@ -18,7 +18,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(msg.packet.chan_id_on_b.clone()),
         );
         if !chan_end_on_a.counterparty_matches(&counterparty) {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketCounterparty {
                     port_id: msg.packet.port_id_on_b.clone(),
                     channel_id: msg.packet.chan_id_on_b.clone(),
@@ -31,7 +31,7 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
             &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a.into(),
+            msg.packet.seq_on_a,
         ) {
             Ok(commitment_on_a) => commitment_on_a,
 
@@ -48,7 +48,7 @@ impl<'a> CwIbcCoreContext<'a> {
             &msg.packet.timeout_timestamp_on_b,
         );
         if commitment_on_a != expected_commitment_on_a {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::IncorrectPacketCommitment {
                     sequence: msg.packet.seq_on_a,
                 },
@@ -58,28 +58,28 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
 
         if client_state_of_b_on_a.is_frozen() {
-            return Err(ContractError::IbcPackketError {
+            return Err(ContractError::IbcPacketError {
                 error: PacketError::FrozenClient {
                     client_id: client_id_on_a.clone(),
                 },
             });
         }
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, &client_id_on_a, &msg.proof_height_on_b)?;
+            self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
         let port_id_on_b = chan_end_on_a.counterparty().port_id.clone();
         let chan_id_on_b =
             chan_end_on_a
                 .counterparty()
                 .channel_id()
-                .ok_or(ContractError::IbcPackketError {
+                .ok_or(ContractError::IbcPacketError {
                     error: PacketError::Channel(ChannelError::InvalidCounterpartyChannelId),
                 })?;
         let conn_id_on_b =
             conn_end_on_a
                 .counterparty()
                 .connection_id()
-                .ok_or(ContractError::IbcPackketError {
+                .ok_or(ContractError::IbcPacketError {
                     error: PacketError::UndefinedConnectionCounterparty {
                         connection_id: chan_end_on_a.connection_hops()[0].clone(),
                     },
@@ -96,8 +96,7 @@ impl<'a> CwIbcCoreContext<'a> {
             expected_conn_hops_on_b,
             chan_end_on_a.version().clone(),
         );
-        let chan_end_path_on_b =
-            self.channel_path(&port_id_on_b.into(), &chan_id_on_b.clone().into());
+        let chan_end_path_on_b = self.channel_path(&port_id_on_b, chan_id_on_b);
         let vector = to_vec(&expected_chan_end_on_b);
 
         self.verify_connection_delay_passed(
@@ -118,13 +117,13 @@ impl<'a> CwIbcCoreContext<'a> {
             signer: msg.signer.clone(),
             acknowledgement: None,
         };
-        let packet_date = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
+        let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
         })?;
 
         let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
             if msg.packet.seq_on_a < msg.next_seq_recv_on_b {
-                return Err(ContractError::IbcPackketError {
+                return Err(ContractError::IbcPacketError {
                     error: PacketError::InvalidPacketSequence {
                         given_sequence: msg.packet.seq_on_a,
                         next_sequence: msg.next_seq_recv_on_b,
@@ -143,7 +142,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 root: consensus_state_of_b_on_a.root().clone().into_vec(),
                 seq_recv_path: seq_recv_path_on_b,
                 sequence: msg.packet.seq_on_a.into(),
-                packet_data: packet_date,
+                packet_data,
             }
         } else {
             let receipt_path_on_b = self.packet_receipt_commitment_path(
@@ -157,7 +156,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 proof: msg.proof_unreceived_on_b.clone().into(),
                 root: consensus_state_of_b_on_a.root().clone().into_vec(),
                 receipt_path: receipt_path_on_b,
-                packet_data: packet_date,
+                packet_data,
             }
         };
         let client_type = ClientType::from(client_state_of_b_on_a.client_type());
@@ -165,8 +164,8 @@ impl<'a> CwIbcCoreContext<'a> {
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
 
         let light_client_message = LightClientMessage::TimeoutOnCLose {
-            verify_channel_state: verify_channel_state,
-            next_seq_recv_verification_result: next_seq_recv_verification_result,
+            verify_channel_state,
+            next_seq_recv_verification_result,
         };
 
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {

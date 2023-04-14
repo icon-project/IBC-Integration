@@ -34,10 +34,10 @@ pub enum LightClientMessage {
         client_id: String,
         misbehaviour: Vec<u8>,
     },
-    VerifyConection {
+    VerifyConnection {
         verify_connection_state: VerifyConnectionState,
-        verify_client_full_satate: VerifyClientFullState,
-        vefiry_client_consensus_state: VerifyClientConsesnusState,
+        verify_client_full_state: VerifyClientFullState,
+        verify_client_consensus_state: VerifyClientConsensusState,
     },
     VerifyOpenConfirm {
         verify_connection_state: VerifyConnectionState,

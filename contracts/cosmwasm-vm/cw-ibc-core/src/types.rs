@@ -13,14 +13,9 @@ use ibc::{
 
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Default, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientId(IbcClientId);
 
-impl Default for ClientId {
-    fn default() -> Self {
-        Self(IbcClientId::default())
-    }
-}
 impl From<IbcClientId> for ClientId {
     fn from(value: IbcClientId) -> Self {
         Self(value)
@@ -97,8 +92,8 @@ impl KeyDeserialize for ClientId {
 pub struct ClientType(IbcClientType);
 
 impl ClientType {
-    pub fn new(cleint_type: String) -> ClientType {
-        ClientType(IbcClientType::new(cleint_type))
+    pub fn new(client_type: String) -> ClientType {
+        ClientType(IbcClientType::new(client_type))
     }
     pub fn client_type(&self) -> IbcClientType {
         self.0.clone()
@@ -118,7 +113,7 @@ impl From<IbcClientType> for ClientType {
 
 impl From<ClientId> for ClientType {
     fn from(value: ClientId) -> Self {
-        let data: Vec<&str> = value.as_str().split("-").collect();
+        let data: Vec<&str> = value.as_str().split('-').collect();
         ClientType::new(data[0].to_string())
     }
 }
@@ -149,7 +144,7 @@ impl KeyDeserialize for ClientType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Default, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConnectionId(IbcConnectionId);
 
 impl FromStr for ConnectionId {
@@ -187,10 +182,6 @@ impl ConnectionId {
     pub fn connection_id(&self) -> &IbcConnectionId {
         &self.0
     }
-
-    pub fn default() -> Self {
-        Self(IbcConnectionId::default())
-    }
 }
 
 impl<'a> PrimaryKey<'a> for ConnectionId {
@@ -223,14 +214,8 @@ impl KeyDeserialize for ConnectionId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Default, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChannelId(IbcChannelId);
-
-impl Default for ChannelId {
-    fn default() -> Self {
-        Self(IbcChannelId::default())
-    }
-}
 
 impl<'a> PrimaryKey<'a> for ChannelId {
     type Prefix = ();
@@ -287,7 +272,7 @@ impl Display for ChannelId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Default, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PortId(IbcPortId);
 
 impl FromStr for PortId {
@@ -299,12 +284,6 @@ impl FromStr for PortId {
         })?;
 
         Ok(Self(port_id))
-    }
-}
-
-impl Default for PortId {
-    fn default() -> Self {
-        Self(IbcPortId::default())
     }
 }
 
@@ -503,13 +482,13 @@ pub struct UpgradeClientResponse {
     client_id: String,
     height: String,
     client_state_commitment: Vec<u8>,
-    consesnus_state_commitment: Vec<u8>,
+    consensus_state_commitment: Vec<u8>,
 }
 
 impl UpgradeClientResponse {
     pub fn new(
         client_state_commitment: Vec<u8>,
-        consesnus_state_commitment: Vec<u8>,
+        consensus_state_commitment: Vec<u8>,
         client_id: String,
         height: String,
     ) -> Self {
@@ -518,7 +497,7 @@ impl UpgradeClientResponse {
                 height,
                 client_id,
                 client_state_commitment,
-                consesnus_state_commitment,
+                consensus_state_commitment,
             }
         }
     }
@@ -532,8 +511,8 @@ impl UpgradeClientResponse {
     pub fn client_state_commitment(&self) -> &[u8] {
         &self.client_state_commitment
     }
-    pub fn consesnus_state_commitment(&self) -> &[u8] {
-        &self.consesnus_state_commitment
+    pub fn consensus_state_commitment(&self) -> &[u8] {
+        &self.consensus_state_commitment
     }
     pub fn height(&self) -> Height {
         Height::from_str(&self.height).unwrap()
@@ -619,31 +598,31 @@ impl VerifyClientFullState {
 }
 
 #[cw_serde]
-pub struct VerifyClientConsesnusState {
+pub struct VerifyClientConsensusState {
     proof_height: String,
     counterparty_prefix: Vec<u8>,
     consensus_state_proof: Vec<u8>,
     root: Vec<u8>,
-    conesenus_state_path: Vec<u8>,
-    expected_conesenus_state: Vec<u8>,
+    consensus_state_path: Vec<u8>,
+    expected_consensus_state: Vec<u8>,
 }
 
-impl VerifyClientConsesnusState {
+impl VerifyClientConsensusState {
     pub fn new(
         proof_height: String,
         counterparty_prefix: Vec<u8>,
         consensus_state_proof: Vec<u8>,
         root: Vec<u8>,
-        conesenus_state_path: Vec<u8>,
-        expected_conesenus_state: Vec<u8>,
+        consensus_state_path: Vec<u8>,
+        expected_consensus_state: Vec<u8>,
     ) -> Self {
         Self {
             proof_height,
             counterparty_prefix,
             consensus_state_proof,
             root,
-            conesenus_state_path,
-            expected_conesenus_state,
+            consensus_state_path,
+            expected_consensus_state,
         }
     }
 }
@@ -762,7 +741,7 @@ impl From<PacketResponse> for Packet {
             chan_id_on_a: packet.chan_id_on_a,
             port_id_on_b: packet.port_id_on_b,
             chan_id_on_b: packet.chan_id_on_b,
-            data: data,
+            data,
             timeout_height_on_b: packet.timeout_height_on_b,
             timeout_timestamp_on_b: packet.timeout_timestamp_on_b,
         }
