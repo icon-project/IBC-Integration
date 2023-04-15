@@ -3,6 +3,7 @@ use cosmwasm_std::IbcReceiveResponse;
 use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
 use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
+use ibc::core::ics04_channel::msgs::PacketMsg;
 use ibc::core::ics04_channel::packet::Receipt;
 use ibc::timestamp::Timestamp;
 use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
@@ -417,5 +418,37 @@ fn test_receive_packet_fail_missing_channel() {
 
     contract
         .validate_receive_packet(deps.as_mut(), info, &msg)
+        .unwrap();
+}
+
+#[test]
+fn test_lookup_module_packet() {
+    let mut deps = deps();
+    let ctx = CwIbcCoreContext::default();
+    let module_id =
+        ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
+    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    ctx.store_module_by_port(
+        &mut deps.storage,
+        msg.packet.port_id_on_a.clone().into(),
+        module_id.clone(),
+    )
+    .unwrap();
+    let channel_msg = PacketMsg::Recv(msg);
+    let res = ctx.lookup_module_packet(&mut deps.storage, &channel_msg);
+
+    assert!(res.is_ok());
+    assert_eq!("contractaddress", res.unwrap().to_string())
+}
+
+#[test]
+#[should_panic(expected = "UnknownPort")]
+fn test_lookup_module_packet_fail() {
+    let mut deps = deps();
+    let ctx = CwIbcCoreContext::default();
+    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let channel_msg = PacketMsg::Recv(msg);
+
+    ctx.lookup_module_packet(&mut deps.storage, &channel_msg)
         .unwrap();
 }
