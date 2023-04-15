@@ -44,7 +44,7 @@ func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
 	var err error
 	switch e.cfg.Chain.ChainConfig.Type {
 	case "icon":
-		e.chain, err = icon.NewIconChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.Chain.NID, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger, e.cfg.InitMessage)
+		e.chain, err = icon.NewIconChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.Chain.NID, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger)
 	case "cosmos":
 		e.chain, err = cosmos.NewCosmosChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger)
 	default:
@@ -61,7 +61,7 @@ func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
 		return nil, err
 	}
 
-	fmt.Printf("Chain is running. Current Chain height: %d \n", ctx.Value(chains.LastBlock{}).(uint64))
+	fmt.Printf("%s Chain is running. Current Chain height: %d \n", e.cfg.Chain.ChainConfig.Name, ctx.Value(chains.LastBlock{}).(uint64))
 	return e.ctx, err
 }
 
@@ -99,7 +99,7 @@ func (e *Executor) isTheContractOwner(owner, contractName string) (err error) {
 	})
 
 	// Add init message to context
-	initMsg := e.cfg.InitMessage
+	initMsg := e.cfg.InitMessage[contractName]
 	e.ctx = context.WithValue(e.ctx, chains.InitMessage{}, chains.InitMessage{
 		InitMsg: initMsg,
 	})
@@ -226,5 +226,13 @@ func (e *Executor) xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTh
 	if e.error == nil {
 		return fmt.Errorf("owner was able to update admin even though admin was not set initially")
 	}
+	return nil
+}
+
+func (e *Executor) contractDeployedOnlyWhenTheChainIs(contractName, chainName string) error {
+	if e.cfg.Chain.ChainConfig.Type == chainName {
+		return e.isTheContractOwner("", strings.ToLower(contractName))
+	}
+	fmt.Println("Given chain is not Icon, so deploying BMC contract is not required")
 	return nil
 }
