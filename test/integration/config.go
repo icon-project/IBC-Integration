@@ -12,7 +12,7 @@ type Config struct {
 	KeystoreFile     string            `mapstructure:"keystore_file"`
 	KeystorePassword string            `mapstructure:"keystore_password"`
 	Contracts        map[string]string `mapstructure:"contracts"`
-	InitMessage      string            `mapstructure:"init_message"`
+	InitMessage      map[string]string `mapstructure:"init_message"`
 }
 
 type Chain struct {
