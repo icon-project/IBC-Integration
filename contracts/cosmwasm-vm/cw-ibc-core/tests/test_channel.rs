@@ -853,7 +853,17 @@ fn test_create_write_ack_packet_event_fail() {
 fn test_create_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
     let packet = Packet::try_from(raw.clone()).unwrap();
-    let event = create_ack_packet_event(packet, &Order::Ordered, &IbcConnectionId::default());
+    let event = create_ack_packet_event(
+        packet.port_id_on_a.as_str(),
+        packet.chan_id_on_a.as_str(),
+        &packet.seq_on_a.to_string(),
+        packet.port_id_on_b.as_str(),
+        packet.chan_id_on_b.as_str(),
+        &packet.timeout_height_on_b.to_string(),
+        &packet.timeout_timestamp_on_b.to_string(),
+        &Order::Ordered.as_str(),
+        &IbcConnectionId::default().as_str()
+    );
     assert_eq!("acknowledge_packet", event.ty)
 }
 

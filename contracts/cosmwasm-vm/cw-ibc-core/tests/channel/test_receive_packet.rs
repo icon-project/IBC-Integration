@@ -168,6 +168,7 @@ fn test_receive_packet_validate_reply_from_light_client() {
     let data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer,
+        acknowledgement:None
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -230,6 +231,7 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
     let data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer,
+        acknowledgement:None
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
