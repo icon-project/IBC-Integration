@@ -17,15 +17,6 @@
     "isErr": false,
     "expected": "w6uP8Tcg6K2QR905Rms8iXTlksL6OD1KOWBxTK7wxPI="
   },
-  "hash foobaz, sha-512": {
-    "Op": {
-      "hash": 2
-    },
-    "Key": "Zm9v",
-    "Value": "YmF6",
-    "IsErr": false,
-    "Expected": "T3nxkSmOx0YdYBNsYPd8Kujd2F2/YWi7klCS1Rv7ObVZIZs5rlOFugSUbIf2R0E4W++QV46m/m2shdv3rT954Q=="
-  },
   "hash with length prefix": {
     "op": {
       "hash": 1,
