@@ -1,9 +1,9 @@
 pub mod setup;
 use std::str::FromStr;
 
+use cw_common::types::PortId;
 use cw_ibc_core::{
-    context::CwIbcCoreContext, ics04_channel::ChannelMsg, keccak256, types::PortId,
-    MsgChannelOpenInit,
+    context::CwIbcCoreContext, ics04_channel::ChannelMsg, keccak256, MsgChannelOpenInit,
 };
 use setup::*;
 
@@ -59,7 +59,7 @@ fn check_for_port_path_key() {
 
 #[test]
 #[should_panic(
-    expected = "IbcDecodeError { error: \"identifier `s` has invalid length `1` must be between `2`-`128` characters\" }"
+    expected = "DecodeError { error: \"identifier `s` has invalid length `1` must be between `2`-`128` characters\" }"
 )]
 fn fails_on_invalid_length_for_port_id() {
     PortId::from_str("s").unwrap();

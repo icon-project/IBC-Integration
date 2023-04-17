@@ -1,8 +1,13 @@
+use std::str::FromStr;
 use std::time::Duration;
 
 use cosmwasm_std::to_vec;
+use cw_common::types::{ClientId, ClientType, ConnectionId, PortId};
 use cw_ibc_core::context::CwIbcCoreContext;
 pub mod setup;
+
+use ibc::core::ics24_host::validate::validate_identifier;
+
 use setup::*;
 
 #[test]
@@ -149,4 +154,68 @@ fn test_get_expected_time_per_block_fails() {
     contract
         .get_expected_time_per_block(&mut deps.storage)
         .unwrap();
+}
+
+#[test]
+fn test_validate_client_id_fail_invalid_min_length() {
+    let client_type = ClientType::new("new".to_string());
+    let client_id = ClientId::new(client_type, 1);
+    assert_eq!(client_id.is_err(), true)
+}
+
+#[test]
+fn test_validate_client_id_fail_invalid_max_length() {
+    let client_type = ClientType::new(
+        "newhauyduiwe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropssrt".to_string(),
+    );
+    let client_id = ClientId::new(client_type, 1);
+    assert_eq!(client_id.is_err(), true)
+}
+
+#[test]
+fn test_validate_connection_id_fail_invalid_min_length() {
+    let s = "qwertykey";
+    let conn_id = ConnectionId::from_str(s);
+    assert_eq!(conn_id.is_err(), true)
+}
+
+#[test]
+fn test_validate_connection_id_fail_invalid_max_length() {
+    let s = "qwertykeywe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropsttt5";
+    let conn_id = ConnectionId::from_str(s);
+    assert_eq!(conn_id.is_err(), true)
+}
+
+#[test]
+#[should_panic(expected = "Empty")]
+fn test_validate_id_empty() {
+    let id = "";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "ContainSeparator")]
+fn test_validate_id_have_path_separator() {
+    let id = "id/1";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidCharacter")]
+fn test_validate_id_have_invalid_chars() {
+    let id = "channel@01";
+    let min = 1;
+    let max = 10;
+    validate_identifier(id, min, max).unwrap();
+}
+
+#[test]
+fn test_validate_port_id_fail_invalid_min_length() {
+    let s = "q";
+    let id = PortId::from_str(s);
+    assert_eq!(id.is_err(), true)
 }

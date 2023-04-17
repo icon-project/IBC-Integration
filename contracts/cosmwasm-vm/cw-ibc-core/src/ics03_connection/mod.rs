@@ -8,18 +8,20 @@ use crate::ics03_connection::event::create_open_ack_event;
 use crate::ics03_connection::event::create_open_confirm_event;
 use crate::ics03_connection::event::create_open_init_event;
 use crate::ics03_connection::event::create_open_try_event;
-use crate::types::{ClientId, ConnectionId};
-use crate::types::{OpenAckResponse, OpenTryResponse};
-use crate::types::{VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState};
 use crate::ContractError;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
 use cosmwasm_std::Response;
 use cosmwasm_std::Storage;
 use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
+use cw_common::client_msg::{
+    VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState,
+};
+use cw_common::client_response::{OpenAckResponse, OpenTryResponse};
+use cw_common::types::{ClientId, ConnectionId};
 
 pub use super::*;
-use crate::types::OpenConfirmResponse;
+use cw_common::client_response::OpenConfirmResponse;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics03_connection::error::ConnectionError;
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
@@ -31,6 +33,7 @@ pub use ibc::core::ics03_connection::{
 };
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 pub use ibc::core::ics24_host::identifier::ConnectionId as IbcConnectionId;
+use ibc::Height;
 use ibc::{
     core::ics03_connection::events::{
         CLIENT_ID_ATTRIBUTE_KEY, CONN_ID_ATTRIBUTE_KEY, COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,
@@ -38,6 +41,5 @@ use ibc::{
     },
     events::IbcEventType,
 };
-use ibc::{core::ics04_channel::context::calculate_block_delay, Height};
 use ibc_proto::protobuf::Protobuf;
 use std::{str::FromStr, time::Duration};

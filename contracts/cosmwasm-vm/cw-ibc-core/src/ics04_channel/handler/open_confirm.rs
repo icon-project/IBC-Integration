@@ -46,7 +46,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = types::ModuleId::from(module_id);
+                    let module_id = cw_common::types::ModuleId::from(module_id);
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),

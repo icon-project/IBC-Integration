@@ -6,7 +6,6 @@ pub use events::*;
 pub mod handler;
 pub use super::*;
 use crate::context::CwIbcCoreContext;
-pub use crate::types::*;
 pub use channel::*;
 pub use handler::*;
 
@@ -17,6 +16,7 @@ use cosmwasm_std::{
     from_binary, to_binary, to_vec, Binary, CosmosMsg, Empty, MessageInfo, Response, SubMsg,
     WasmMsg,
 };
+pub use cw_common::client_msg::ExecuteMsg as LightClientMessage;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
 use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 pub use ibc::core::ics04_channel::channel::Counterparty;
@@ -31,7 +31,6 @@ pub use ibc::core::ics04_channel::msgs::{
 };
 use ibc::core::ics04_channel::packet::Packet;
 use ibc::events::IbcEventType;
-pub use msg::LightClientMessage;
 use std::str::FromStr;
 pub use traits::*;
 
@@ -40,4 +39,5 @@ use ibc::core::ics04_channel::commitment::PacketCommitment;
 pub use packet::*;
 
 use cosmwasm_std::{IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
+use cw_common::{client_response::*, types::*};
 use ibc::timestamp::Expiry;
