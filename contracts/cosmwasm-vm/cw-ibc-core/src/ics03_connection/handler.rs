@@ -172,7 +172,7 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_path_on_b,
             to_vec(&client_cons_state_path_on_a.clone())?,
         );
-        let client_message = crate::ics04_channel::LightClientMessage::VerifyConection {
+        let client_message = crate::ics04_channel::LightClientMessage::VerifyConnection {
             verify_connection_state,
             verify_client_full_state,
             verify_client_consensus_state,
@@ -370,7 +370,7 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_path_on_a,
             client_consensus_state_path_on_b,
         );
-        let client_message = crate::ics04_channel::LightClientMessage::VerifyConection {
+        let client_message = crate::ics04_channel::LightClientMessage::VerifyConnection {
             verify_connection_state,
             verify_client_full_state,
             verify_client_consensus_state,

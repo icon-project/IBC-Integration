@@ -5,7 +5,7 @@ use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::IbcAcknowledgement;
 use cosmwasm_std::{Binary, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
 use cw_common::types::ClientId;
-use cw_ibc_core::ics04_channel::{PacketData, PacketDataResponse};
+use cw_common::{client_response::PacketDataResponse, types::PacketData};
 use cw_ibc_core::ics24_host::commitment::compute_packet_commitment;
 use cw_ibc_core::IbcChannelId;
 use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;

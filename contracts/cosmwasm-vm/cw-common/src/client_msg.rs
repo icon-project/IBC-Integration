@@ -1,3 +1,4 @@
+use super::*;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]
@@ -26,16 +27,6 @@ pub enum QueryMsg {
     GetConsensusState { client_id: String, height: u64 },
     #[returns(Vec<u8>)]
     GetClientState { client_id: String },
-}
-
-#[cw_serde]
-pub struct VerifyChannelState {
-    pub proof_height: String,
-    pub counterparty_prefix: Vec<u8>,
-    pub proof: Vec<u8>,
-    pub root: Vec<u8>,
-    pub counterparty_chan_end_path: Vec<u8>,
-    pub expected_counterparty_channel_end: Vec<u8>,
 }
 
 #[cw_serde]
@@ -119,7 +110,7 @@ impl VerifyClientFullState {
 }
 
 #[cw_serde]
-pub struct VerifyClientConsesnusState {
+pub struct VerifyClientConsensusState {
     proof_height: String,
     counterparty_prefix: Vec<u8>,
     consensus_state_proof: Vec<u8>,
@@ -128,7 +119,7 @@ pub struct VerifyClientConsesnusState {
     expected_conesenus_state: Vec<u8>,
 }
 
-impl VerifyClientConsesnusState {
+impl VerifyClientConsensusState {
     pub fn new(
         proof_height: String,
         counterparty_prefix: Vec<u8>,
@@ -189,10 +180,10 @@ pub enum ExecuteMsg {
         client_id: String,
         misbehaviour: Vec<u8>,
     },
-    VerifyConection {
+    VerifyConnection {
         verify_connection_state: VerifyConnectionState,
-        verify_client_full_satate: VerifyClientFullState,
-        vefiry_client_consensus_state: VerifyClientConsesnusState,
+        verify_client_full_state: VerifyClientFullState,
+        verify_client_consensus_state: VerifyClientConsensusState,
     },
     VerifyOpenConfirm {
         verify_connection_state: VerifyConnectionState,
@@ -200,5 +191,13 @@ pub enum ExecuteMsg {
     TimeoutOnCLose {
         verify_channel_state: VerifyChannelState,
         next_seq_recv_verification_result: LightClientPacketMessage,
+    },
+    VerifyPacketData {
+        verify_packet_data: VerifyPacketData,
+        packet_data: Vec<u8>,
+    },
+    VerifyPacketAcknowledgement {
+        verify_packet_acknowledge: VerifyPacketAcknowledgement,
+        packet_data: Vec<u8>,
     },
 }

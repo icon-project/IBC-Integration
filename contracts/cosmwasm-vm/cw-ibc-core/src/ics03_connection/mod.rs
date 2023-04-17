@@ -8,8 +8,6 @@ use crate::ics03_connection::event::create_open_ack_event;
 use crate::ics03_connection::event::create_open_confirm_event;
 use crate::ics03_connection::event::create_open_init_event;
 use crate::ics03_connection::event::create_open_try_event;
-use crate::types::ConnectionId;
-use crate::types::{OpenAckResponse, OpenTryResponse};
 use crate::ContractError;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
@@ -19,10 +17,11 @@ use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply
 use cw_common::client_msg::{
     VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState,
 };
-use cw_common::types::ClientId;
+use cw_common::client_response::{OpenAckResponse, OpenTryResponse};
+use cw_common::types::{ClientId, ConnectionId};
 
 pub use super::*;
-use crate::types::OpenConfirmResponse;
+use cw_common::client_response::OpenConfirmResponse;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics03_connection::error::ConnectionError;
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;

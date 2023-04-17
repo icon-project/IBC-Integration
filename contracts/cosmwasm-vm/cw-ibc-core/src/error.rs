@@ -59,6 +59,7 @@ impl From<CwErrors> for ContractError {
             CwErrors::InvalidClientId(err) => Self::IbcDecodeError {
                 error: err.to_string(),
             },
+            CwErrors::DecodeError { error } => Self::IbcDecodeError { error },
         }
     }
 }

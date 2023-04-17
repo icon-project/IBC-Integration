@@ -191,11 +191,12 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let contract_address =
-                        match self.get_route(deps.storage, types::ModuleId::from(module_id)) {
-                            Ok(addr) => addr,
-                            Err(error) => return Err(error),
-                        };
+                    let contract_address = match self
+                        .get_route(deps.storage, cw_common::types::ModuleId::from(module_id))
+                    {
+                        Ok(addr) => addr,
+                        Err(error) => return Err(error),
+                    };
 
                     let src = IbcEndpoint {
                         port_id: packet_data.packet.port_id_on_b.to_string(),

@@ -6,7 +6,6 @@ pub use events::*;
 pub mod handler;
 pub use super::*;
 use crate::context::CwIbcCoreContext;
-pub use crate::types::*;
 pub use channel::*;
 pub use handler::*;
 
@@ -40,4 +39,5 @@ use ibc::core::ics04_channel::commitment::PacketCommitment;
 pub use packet::*;
 
 use cosmwasm_std::{IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
+use cw_common::{client_response::*, types::*};
 use ibc::timestamp::Expiry;

@@ -1,7 +1,8 @@
 use std::{str::FromStr, time::Duration};
 
 use cosmwasm_std::{to_binary, to_vec, Addr, Event, Reply, SubMsgResponse, SubMsgResult};
-use cw_common::types::ClientType;
+
+use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};
 use cw_ibc_core::ics02_client::types::{ClientState, ConsensusState};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
@@ -19,7 +20,6 @@ use cw_ibc_core::{
         MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
         MsgChannelOpenTry,
     },
-    types::{ChannelId, ConnectionId, PortId},
     ChannelEnd, ConnectionEnd, IbcClientId, IbcConnectionId, Sequence,
 };
 use cw_ibc_core::{traits::*, IbcClientType, IbcPortId};
@@ -862,7 +862,7 @@ fn test_create_ack_packet_event() {
         &packet.timeout_height_on_b.to_string(),
         &packet.timeout_timestamp_on_b.to_string(),
         &Order::Ordered.as_str(),
-        &IbcConnectionId::default().as_str()
+        &IbcConnectionId::default().as_str(),
     );
     assert_eq!("acknowledge_packet", event.ty)
 }
@@ -924,7 +924,7 @@ fn test_validate_open_init_channel() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -1035,7 +1035,7 @@ fn test_validate_open_try_channel() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();

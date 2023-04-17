@@ -9,4 +9,7 @@ pub enum CwErrors {
         validation_error: ValidationError,
     },
     InvalidClientId(ValidationError),
+    DecodeError {
+        error: String,
+    },
 }
