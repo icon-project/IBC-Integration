@@ -10,6 +10,8 @@ pub mod send_packet;
 pub use send_packet::*;
 pub mod receive_packet;
 pub use receive_packet::*;
+pub mod acknowledgement;
+pub use acknowledgement::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     pub fn timeout_packet_validate(

@@ -100,6 +100,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let data = PacketData {
             packet: msg.packet.clone(),
             signer: msg.signer.clone(),
+            acknowledgement: None,
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
@@ -234,8 +235,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     );
 
                     Ok(Response::new()
-                        .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_open_init_module_validation")
+                        .add_attribute("action", "packet")
+                        .add_attribute("method", "packet_timeout_module_validation")
                         .add_submessage(sub_msg))
                 }
                 None => Err(ContractError::IbcChannelError {
@@ -310,7 +311,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     }
 
                     Ok(Response::new()
-                        .add_attribute("action", "channel")
+                        .add_attribute("action", "packet")
                         .add_attribute("method", "execute_timeout_packet")
                         .add_events(events))
                 }

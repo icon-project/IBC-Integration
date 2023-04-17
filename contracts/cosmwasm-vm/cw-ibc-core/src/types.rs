@@ -1,6 +1,9 @@
 use ibc::{
     core::ics04_channel::{
-        msgs::{timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose},
+        msgs::{
+            acknowledgement::Acknowledgement, timeout::MsgTimeout,
+            timeout_on_close::MsgTimeoutOnClose,
+        },
         packet::Packet,
         timeout::TimeoutHeight,
     },
@@ -714,6 +717,7 @@ pub enum TimeoutMsgType {
 pub struct PacketData {
     pub packet: Packet,
     pub signer: Signer,
+    pub acknowledgement: Option<Acknowledgement>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -748,6 +752,7 @@ impl From<PacketResponse> for Packet {
 pub struct PacketDataResponse {
     pub packet: PacketResponse,
     pub signer: Signer,
+    pub acknowledgement: Option<Acknowledgement>,
 }
 
 #[cw_serde]
@@ -761,7 +766,21 @@ pub struct VerifyPacketData {
 }
 
 impl PacketData {
-    pub fn new(packet: Packet, signer: Signer) -> Self {
-        Self { packet, signer }
+    pub fn new(packet: Packet, signer: Signer, acknowledgement: Option<Acknowledgement>) -> Self {
+        Self {
+            packet,
+            signer,
+            acknowledgement,
+        }
     }
+}
+
+#[cw_serde]
+pub struct VerifyPacketAcknowledgement {
+    pub height: String,
+    pub prefix: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub ack_path: Vec<u8>,
+    pub ack: Vec<u8>,
 }

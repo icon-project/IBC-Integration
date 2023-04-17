@@ -36,6 +36,7 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^xCall returns an error message that admin is already set$`, executor.xCallReturnsAnErrorMessageThatAdminIsAlreadySet)
 			ctx.Step(`^there are no admin wallets added as admin$`, executor.thereAreNoAdminWalletsAddedAsAdmin)
 			ctx.Step(`^xCall returns an error message that there are no admin wallets added to the xCall smart contract$`, executor.xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTheXCallSmartContract)
+			ctx.Step(`^"([^"]*)" contract deployed only when the chain is "([^"]*)"$`, executor.contractDeployedOnlyWhenTheChainIs)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},

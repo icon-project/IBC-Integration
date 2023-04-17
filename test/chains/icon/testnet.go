@@ -114,7 +114,7 @@ func (*IconTestnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, e
 	panic("unimplemented")
 }
 
-func NewIconTestnet(bin, nid, initMessage, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
+func NewIconTestnet(bin, nid, keystorePath, keyPassword, defaultStepLimit, url string, scorePaths map[string]string) chains.Chain {
 	return &IconTestnet{
 		bin:              bin,
 		nid:              nid,
@@ -123,7 +123,6 @@ func NewIconTestnet(bin, nid, initMessage, keystorePath, keyPassword, defaultSte
 		scorePaths:       scorePaths,
 		defaultStepLimit: defaultStepLimit,
 		url:              url,
-		initMessage:      initMessage,
 	}
 }
 
