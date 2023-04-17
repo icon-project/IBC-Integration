@@ -2,10 +2,8 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use cosmwasm_std::to_vec;
-use cw_ibc_core::{
-    context::CwIbcCoreContext,
-    types::{ClientId, ClientType, ConnectionId, PortId},
-};
+use cw_common::types::{ClientId, ClientType, ConnectionId, PortId};
+use cw_ibc_core::context::CwIbcCoreContext;
 pub mod setup;
 
 use ibc::core::ics24_host::validate::validate_identifier;
