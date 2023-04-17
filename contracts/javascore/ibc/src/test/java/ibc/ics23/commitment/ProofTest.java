@@ -106,7 +106,7 @@ public class ProofTest {
             }
 
             if (rightBranchesAreEmpty(testCase.spec.getInnerSpec(), testCase.op) != testCase.isRight) {
-                fail("Expected rightBranchesAreEmpty to be :" + testCase.isRight + " but it wasn't");
+                fail("Expected rightBranchesAreEmpty to be: " + testCase.isRight + " but it wasn't");
             }
         }
     }

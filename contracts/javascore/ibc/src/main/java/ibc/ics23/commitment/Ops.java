@@ -1,6 +1,7 @@
 package ibc.ics23.commitment;
 
 import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import icon.proto.core.commitment.*;
 import score.Context;
 import score.UserRevertedException;
@@ -60,7 +61,8 @@ public class Ops {
         if (lenOp == LengthOp.NO_PREFIX) {
             return data;
         } else if (lenOp == LengthOp.VAR_PROTO) {
-            //TODO: Implement var proto operation
+            byte[] encoded = Proto.encodeVarInt(BigInteger.valueOf(data.length));
+            return ByteUtil.join(encoded, data);
         } else if (lenOp == LengthOp.REQUIRE_32_BYTES) {
             if (data.length != 32) {
                 throw new UserRevertedException("Length of data should be 32");
