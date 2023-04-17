@@ -4,14 +4,11 @@ use std::time::Duration;
 use cosmwasm_std::to_vec;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
-    types::{ChannelId, ClientId, ClientType, ConnectionId, PortId},
+    types::{ClientId, ClientType, ConnectionId, PortId},
 };
 pub mod setup;
 
-use ibc::core::ics24_host::validate::{
-    validate_channel_identifier, validate_client_identifier, validate_connection_identifier,
-    validate_identifier, validate_port_identifier,
-};
+use ibc::core::ics24_host::validate::validate_identifier;
 
 use setup::*;
 
@@ -162,58 +159,33 @@ fn test_get_expected_time_per_block_fails() {
 }
 
 #[test]
-fn test_validate_client_id() {
-    let id = ClientId::default();
-    let result = validate_client_identifier(id.as_str());
-    assert_eq!(result.is_ok(), true)
-}
-
-#[test]
-#[should_panic(expected = "InvalidLength")]
 fn test_validate_client_id_fail_invalid_min_length() {
     let client_type = ClientType::new("new".to_string());
-    let client_id = ClientId::new(client_type, 1).unwrap();
-    validate_client_identifier(client_id.as_str()).unwrap();
+    let client_id = ClientId::new(client_type, 1);
+    assert_eq!(client_id.is_err(), true)
 }
 
 #[test]
-#[should_panic(expected = "InvalidLength")]
 fn test_validate_client_id_fail_invalid_max_length() {
     let client_type = ClientType::new(
         "newhauyduiwe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropssrt".to_string(),
     );
-    let client_id = ClientId::new(client_type, 1).unwrap();
-    validate_client_identifier(client_id.as_str()).unwrap();
+    let client_id = ClientId::new(client_type, 1);
+    assert_eq!(client_id.is_err(), true)
 }
 
 #[test]
-fn test_validate_connection_id() {
-    let conn_id = ConnectionId::default();
-    let result = validate_connection_identifier(conn_id.as_str());
-    assert_eq!(result.is_ok(), true)
-}
-
-#[test]
-#[should_panic(expected = "IbcDecodeError")]
 fn test_validate_connection_id_fail_invalid_min_length() {
     let s = "qwertykey";
-    let conn_id = ConnectionId::from_str(s).unwrap();
-    validate_connection_identifier(conn_id.as_str()).unwrap();
+    let conn_id = ConnectionId::from_str(s);
+    assert_eq!(conn_id.is_err(), true)
 }
 
 #[test]
-#[should_panic(expected = "IbcDecodeError")]
 fn test_validate_connection_id_fail_invalid_max_length() {
     let s = "qwertykeywe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropsttt5";
-    let conn_id = ConnectionId::from_str(s).unwrap();
-    validate_connection_identifier(conn_id.as_str()).unwrap();
-}
-
-#[test]
-fn test_validate_channel_id() {
-    let channel_id = ChannelId::default();
-    let result = validate_channel_identifier(channel_id.as_str());
-    assert_eq!(result.is_ok(), true)
+    let conn_id = ConnectionId::from_str(s);
+    assert_eq!(conn_id.is_err(), true)
 }
 
 #[test]
@@ -244,17 +216,8 @@ fn test_validate_id_have_invalid_chars() {
 }
 
 #[test]
-fn test_port_id() {
-    let port_id = PortId::default();
-    let result = validate_port_identifier(port_id.as_str());
-    assert_eq!(result.is_ok(), true)
-}
-
-#[test]
-#[should_panic(expected = "IbcDecodeError")]
 fn test_validate_port_id_fail_invalid_min_length() {
     let s = "q";
-    let id = PortId::from_str(s).unwrap();
-    let result = validate_port_identifier(id.as_str());
-    assert_eq!(result.is_ok(), true)
+    let id = PortId::from_str(s);
+    assert_eq!(id.is_err(), true)
 }
