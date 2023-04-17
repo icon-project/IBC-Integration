@@ -5,7 +5,6 @@ import ibc.icon.structs.messages.MsgPacketRecv;
 import ibc.icon.structs.messages.MsgPacketTimeout;
 import score.annotation.EventLog;
 
-import java.math.BigInteger;
 
 import foundation.icon.score.client.ScoreClient;
 
@@ -18,9 +17,8 @@ public interface IIBCPacket {
     @EventLog(indexed = 1)
     public void RecvPacket(byte[] packet);
 
-    @EventLog(indexed = 3)
-    public void WriteAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement);
+    @EventLog(indexed = 1)
+    public void WriteAcknowledgement(byte[] packet, byte[] acknowledgement);
 
     @EventLog(indexed = 1)
     public void AcknowledgePacket(byte[] packet, byte[] acknowledgement);
@@ -49,8 +47,7 @@ public interface IIBCPacket {
      * {@code @dev} writeAcknowledgement writes the packet execution acknowledgement to the
      * state,which will be verified by the counterparty chain using AcknowledgePacket.
      */
-    void writeAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-                              byte[] acknowledgement);
+    void writeAcknowledgement(byte[] packet, byte[] acknowledgement);
 
     /**
      * {@code @dev} AcknowledgePacket is called by a module to process the acknowledgement
