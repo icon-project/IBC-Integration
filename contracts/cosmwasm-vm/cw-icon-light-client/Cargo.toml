@@ -43,7 +43,7 @@ prost-types = { version = "0.11.8", default-features = false }
 hex="*"
 bytes="*"
 common={path="../../../libraries/rust/common"}
-cw-ibc-core={path="../cw-ibc-core"}
+cw-ibc-core={path="../cw-ibc-core",features=["library"]}
 
 
 [dev-dependencies]
@@ -51,3 +51,4 @@ cosmwasm = "0.7.2"
 cw-multi-test = "0.16.2"
 hex-literal="*"
 test-utils={path="../../../libraries/rust/test-utils"}
+getrandom = {version = "0.2", default-features = false, features = ["custom"]}

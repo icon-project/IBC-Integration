@@ -33,7 +33,7 @@ use crate::{
         call_request::CallRequest,
         message::{CallServiceMessage, CallServiceMessageType},
         request::CallServiceMessageRequest,
-        response::{to_int, CallServiceMessageReponse, CallServiceResponseType},
+        response::{to_int, CallServiceMessageResponse, CallServiceResponseType},
         storage_keys::StorageKey,
     },
 };
@@ -67,7 +67,7 @@ pub fn instantiate(
     call_service.instantiate(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -79,14 +79,14 @@ pub fn execute(
     call_service.execute(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let call_service = CwCallService::default();
 
     call_service.query(deps, env, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     let call_service = CwCallService::default();
 

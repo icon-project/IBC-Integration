@@ -10,7 +10,7 @@ use crate::ics03_connection::event::create_open_init_event;
 use crate::ics03_connection::event::create_open_try_event;
 use crate::types::{ClientId, ConnectionId};
 use crate::types::{OpenAckResponse, OpenTryResponse};
-use crate::types::{VerifyClientConsesnusState, VerifyClientFullState, VerifyConnectionState};
+use crate::types::{VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState};
 use crate::ContractError;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
@@ -23,6 +23,7 @@ use crate::types::OpenConfirmResponse;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics03_connection::error::ConnectionError;
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
+use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 pub use ibc::core::ics03_connection::{
     connection::{Counterparty, State},
     msgs::{conn_open_confirm::MsgConnectionOpenConfirm, conn_open_init::MsgConnectionOpenInit},
@@ -30,10 +31,6 @@ pub use ibc::core::ics03_connection::{
 };
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 pub use ibc::core::ics24_host::identifier::ConnectionId as IbcConnectionId;
-use ibc::core::{
-    ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry,
-    ics24_host::path::{ClientConsensusStatePath, ClientStatePath, ConnectionPath},
-};
 use ibc::{
     core::ics03_connection::events::{
         CLIENT_ID_ATTRIBUTE_KEY, CONN_ID_ATTRIBUTE_KEY, COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,

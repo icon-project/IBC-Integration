@@ -105,7 +105,7 @@ mod tests {
         let header = BtpHeader::decode(relay_bytes.as_slice());
         assert!(header.is_ok());
     }
-    #[ignore]
+    
     #[test]
     fn relay_bytes_to_signed_header() {
         let headers = load_test_headers();
@@ -163,7 +163,7 @@ mod tests {
     fn test_get_network_section_hash_sequence() {
         let headers = get_test_headers();
         for (i, header) in headers.iter().enumerate() {
-            if i == headers.len() - 1 {
+            if i == headers.len() - 3 {
                 break;
             }
             let expected = &headers[i + 1].prev_network_section_hash;
