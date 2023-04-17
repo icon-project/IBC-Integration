@@ -16,11 +16,11 @@ class OpsTest {
 
     @Test
     public void testLeafOp() throws IOException {
-        Map<String, LoadOpsTestData.LeafOpTestStruct> cases = LoadOpsTestData.loadLeafOpTestData();
+        Map<String, LoadOpsTestData.LeafOpTestData> cases = LoadOpsTestData.loadLeafOpTestData();
 
-        for (Map.Entry<String, LoadOpsTestData.LeafOpTestStruct> entry : cases.entrySet()) {
+        for (Map.Entry<String, LoadOpsTestData.LeafOpTestData> entry : cases.entrySet()) {
             String name = entry.getKey();
-            LoadOpsTestData.LeafOpTestStruct tc = entry.getValue();
+            LoadOpsTestData.LeafOpTestData tc = entry.getValue();
 
             assertDoesNotThrow(() -> {
                 byte[] res = applyOp(tc.op, tc.key, tc.value);
@@ -46,9 +46,9 @@ class OpsTest {
 
     @Test
     public void testInnerOp() throws IOException {
-        Map<String, LoadOpsTestData.InnerOpTestStruct> cases = LoadOpsTestData.loadInnerOpTestData();
+        Map<String, LoadOpsTestData.InnerOpTestData> cases = LoadOpsTestData.loadInnerOpTestData();
         for (String name : cases.keySet()) {
-            LoadOpsTestData.InnerOpTestStruct tc = cases.get(name);
+            LoadOpsTestData.InnerOpTestData tc = cases.get(name);
             try {
                 byte[] res = applyOp(tc.op, tc.child);
                 // short-circuit with error case
@@ -72,9 +72,9 @@ class OpsTest {
 
     @Test
     public void testDoHash() throws IOException {
-        Map<String, LoadOpsTestData.DoHashTestStruct> cases = LoadOpsTestData.loadDoHashTestData();
+        Map<String, LoadOpsTestData.DoHashTestData> cases = LoadOpsTestData.loadDoHashTestData();
         for (String name : cases.keySet()) {
-            LoadOpsTestData.DoHashTestStruct tc = cases.get(name);
+            LoadOpsTestData.DoHashTestData tc = cases.get(name);
             try {
                 byte[] res = doHash(tc.hashOp, tc.preimage.getBytes());
                 String hexRes = bytesToHex(res);

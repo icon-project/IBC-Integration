@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class LoadOpsTestData {
 
-    public static class LeafOpTestStruct {
+    public static class LeafOpTestData {
         public LeafOp op;
         public byte[] key;
         public byte[] value;
@@ -19,7 +19,7 @@ public class LoadOpsTestData {
         public byte[] expected;
     }
 
-    public static Map<String, LeafOpTestStruct> loadLeafOpTestData() throws IOException {
+    public static Map<String, LeafOpTestData> loadLeafOpTestData() throws IOException {
         // Get the input stream using the ClassLoader
         InputStream inputStream = LoadOpsTestData.class.getResourceAsStream("/TestLeafOpData.json");
 
@@ -30,14 +30,14 @@ public class LoadOpsTestData {
         });
     }
 
-    public static class InnerOpTestStruct {
+    public static class InnerOpTestData {
         public InnerOp op;
         public byte[] child;
         public boolean isErr;
         public byte[] expected;
     }
 
-    public static Map<String, InnerOpTestStruct> loadInnerOpTestData() throws IOException {
+    public static Map<String, InnerOpTestData> loadInnerOpTestData() throws IOException {
         // Get the input stream using the ClassLoader
         InputStream inputStream = LoadOpsTestData.class.getResourceAsStream("/TestInnerOpData.json");
 
@@ -48,13 +48,13 @@ public class LoadOpsTestData {
         });
     }
 
-    public static class DoHashTestStruct {
+    public static class DoHashTestData {
         public int hashOp;
         public String preimage;
         public String expectedHash;
     }
 
-    public static Map<String, DoHashTestStruct> loadDoHashTestData() throws IOException {
+    public static Map<String, DoHashTestData> loadDoHashTestData() throws IOException {
         // Get the input stream using the ClassLoader
         InputStream inputStream = LoadOpsTestData.class.getResourceAsStream("/TestDoHashData.json");
 
