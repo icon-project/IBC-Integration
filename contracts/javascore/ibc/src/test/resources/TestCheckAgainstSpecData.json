@@ -1,11 +1,11 @@
 {
   "accepts leaf with valid inner proofs": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "leaf": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
@@ -20,64 +20,64 @@
         }
       ]
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       }
     },
-    "IsErr": false
+    "isErr": false
   },
   "accepts one proper leaf": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "leaf": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       }
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       }
     },
-    "IsErr": false
+    "isErr": false
   },
   "allows depth limited in proper range": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "leaf": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
@@ -96,60 +96,60 @@
         }
       ]
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       },
-      "max_depth": 4,
-      "min_depth": 2
+      "maxDepth": 4,
+      "minDepth": 2
     },
-    "IsErr": false
+    "isErr": false
   },
   "empty proof fails": {
-    "Proof": {
+    "proof": {
       "key": "Zm9v",
       "value": "YmFy"
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       }
     },
-    "IsErr": true
+    "isErr": true
   },
   "reject depth limited with too few inner nodes": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "leaf": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
@@ -160,35 +160,35 @@
         }
       ]
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       },
-      "max_depth": 4,
-      "min_depth": 2
+      "maxDepth": 4,
+      "minDepth": 2
     },
-    "IsErr": true
+    "isErr": true
   },
   "reject depth limited with too many inner nodes": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "leaf": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
@@ -215,35 +215,35 @@
         }
       ]
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       },
-      "max_depth": 4,
-      "min_depth": 2
+      "maxDepth": 4,
+      "minDepth": 2
     },
-    "IsErr": true
+    "isErr": true
   },
   "rejects invalid inner proof (hash mismatch)": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "leaf": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
@@ -262,28 +262,28 @@
         }
       ]
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       }
     },
-    "IsErr": true
+    "isErr": true
   },
   "rejects invalid leaf": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "leaf": {
@@ -292,33 +292,33 @@
         "prefix": "AA=="
       }
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       }
     },
-    "IsErr": true
+    "isErr": true
   },
   "rejects leaf with invalid inner proofs": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "leaf": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
@@ -338,28 +338,28 @@
         }
       ]
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       }
     },
-    "IsErr": true
+    "isErr": true
   },
   "rejects only inner proof": {
-    "Proof": {
+    "proof": {
       "key": "Zm9vZA==",
       "value": "YmFy",
       "path": [
@@ -369,24 +369,24 @@
         }
       ]
     },
-    "Spec": {
-      "leaf_spec": {
+    "spec": {
+      "leafSpec": {
         "hash": 1,
-        "prehash_value": 1,
+        "prehashValue": 1,
         "length": 1,
         "prefix": "AA=="
       },
-      "inner_spec": {
-        "child_order": [
+      "innerSpec": {
+        "childOrder": [
           0,
           1
         ],
-        "child_size": 33,
-        "min_prefix_length": 4,
-        "max_prefix_length": 12,
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
         "hash": 1
       }
     },
-    "IsErr": true
+    "isErr": true
   }
 }

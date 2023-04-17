@@ -1,111 +1,111 @@
 {
   "empty spec allows prefix": {
-    "Leaf": {
+    "leaf": {
       "prefix": "qrs="
     },
-    "Spec": {},
-    "IsErr": false
+    "spec": {},
+    "isErr": false
   },
   "empty spec doesn't allow hashop": {
-    "Leaf": {
+    "leaf": {
       "hash": 1
     },
-    "Spec": {},
-    "IsErr": true
+    "spec": {},
+    "isErr": true
   },
   "empty spec, empty leaf": {
-    "Leaf": {},
-    "Spec": {},
-    "IsErr": false
+    "leaf": {},
+    "spec": {},
+    "isErr": false
   },
   "leaf and spec differ on hash": {
-    "Leaf": {
+    "leaf": {
       "hash": 1,
-      "prehash_value": 1,
+      "prehashValue": 1,
       "length": 1,
       "prefix": "AA=="
     },
-    "Spec": {
+    "spec": {
       "hash": 2,
-      "prehash_value": 1,
+      "prehashValue": 1,
       "length": 1,
       "prefix": "AA=="
     },
-    "IsErr": true
+    "isErr": true
   },
   "leaf and spec differ on length": {
-    "Leaf": {
+    "leaf": {
       "hash": 2,
-      "prehash_value": 1,
+      "prehashValue": 1,
       "prefix": "AA=="
     },
-    "Spec": {
+    "spec": {
       "hash": 2,
-      "prehash_value": 1,
+      "prehashValue": 1,
       "length": 1,
       "prefix": "AA=="
     },
-    "IsErr": true
+    "isErr": true
   },
   "leaf and spec differ on prehash key": {
-    "Leaf": {
+    "leaf": {
       "hash": 2,
-      "prehash_key": 1,
-      "prehash_value": 1,
+      "prehashKey": 1,
+      "prehashValue": 1,
       "length": 1,
       "prefix": "AA=="
     },
-    "Spec": {
+    "spec": {
       "hash": 2,
-      "prehash_value": 1,
+      "prehashValue": 1,
       "length": 1,
       "prefix": "AA=="
     },
-    "IsErr": true
+    "isErr": true
   },
   "leaf and spec differ on prehash value": {
-    "Leaf": {
+    "leaf": {
       "hash": 2,
       "length": 1,
       "prefix": "AA=="
     },
-    "Spec": {
+    "spec": {
       "hash": 2,
-      "prehash_value": 1,
+      "prehashValue": 1,
       "length": 1,
       "prefix": "AA=="
     },
-    "IsErr": true
+    "isErr": true
   },
   "leaf and spec match, all fields full": {
-    "Leaf": {
+    "leaf": {
       "hash": 2,
-      "prehash_value": 1,
+      "prehashValue": 1,
       "length": 1,
       "prefix": "AA=="
     },
-    "Spec": {
+    "spec": {
       "hash": 2,
-      "prehash_value": 1,
+      "prehashValue": 1,
       "length": 1,
       "prefix": "AA=="
     },
-    "IsErr": false
+    "isErr": false
   },
   "leaf with empty prefix (but spec has one)": {
-    "Leaf": {},
-    "Spec": {
+    "leaf": {},
+    "spec": {
       "prefix": "uw=="
     },
-    "IsErr": true
+    "isErr": true
   },
   "spec with different prefixes": {
-    "Leaf": {
+    "leaf": {
       "prefix": "qrs="
     },
-    "Spec": {
+    "spec": {
       "prefix": "uw=="
     },
-    "IsErr": true
+    "isErr": true
   }
 }
