@@ -386,7 +386,7 @@ public class Proof {
         for (int i = 0; i < rightBranches; i++) {
             int idx = getPosition(spec.getChildOrder(), i);
             int from = idx * spec.getChildSize().intValue();
-            if (Arrays.equals(spec.getEmptyChild(),
+            if (!Arrays.equals(spec.getEmptyChild(),
                     Arrays.copyOfRange(op.getSuffix(), from, from + spec.getChildSize().intValue()))) {
                 return false;
             }
