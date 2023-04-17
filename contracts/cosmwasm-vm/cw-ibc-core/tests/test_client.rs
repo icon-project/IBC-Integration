@@ -3,6 +3,10 @@ pub mod setup;
 use std::str::FromStr;
 
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
+use cw_common::client_response::{
+    CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
+};
+use cw_common::types::{ClientId, ClientType};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::{
@@ -13,10 +17,6 @@ use cw_ibc_core::{
         types::{ClientState, ConsensusState},
     },
     traits::IbcClient,
-    types::{ClientId, ClientType},
-    types::{
-        CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
-    },
     MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
 };
 use ibc::{
@@ -1317,7 +1317,7 @@ fn check_for_execute_upgrade_client() {
 
 #[test]
 #[should_panic(
-    expected = "IbcClientError { error: InvalidClientIdentifier(InvalidLength { id: \"hello\", length: 5, min: 9, max: 64 }) }"
+    expected = "IbcDecodeError { error: \"identifier `hello` has invalid length `5` must be between `9`-`64` characters\" }"
 )]
 fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     let mut deps = deps();

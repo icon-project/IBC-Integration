@@ -56,7 +56,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         self.ibc_store().capabilities().update(
             store,
-            name.clone(),
+            name,
             |update| -> Result<_, ContractError> {
                 match update {
                     Some(mut value) => {
@@ -84,7 +84,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if capability.contains(&caller) {
             return true;
         }
-        return false;
+        false
     }
 
     pub fn lookup_modules(
