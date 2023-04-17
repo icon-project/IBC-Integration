@@ -361,6 +361,7 @@ public class CallServiceImpl extends AbstractCallService {
         onlyIBCHandler();
         Context.require(portId.equals(sourcePort.get()), "port not matched");
         Context.require(channelId.equals(sourceChannel.get()), "Channel not matched");
+        destinationChannel.set(counterpartyChannelId);
         Context.println("onChanOpenAck");
     }
 
