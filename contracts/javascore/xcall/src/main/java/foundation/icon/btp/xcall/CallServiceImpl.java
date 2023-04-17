@@ -73,9 +73,6 @@ public class CallServiceImpl extends AbstractCallService {
         checkCallerOrThrow(ibcHandler.get(), "Only IBCHandler allowed");
     }
 
-//    private void checkService(String _svc) {
-//        Context.require(NAME.equals(_svc), "InvalidServiceName");
-//    }
 
     private BigInteger getNextSn() {
         BigInteger _sn = this.sn.getOrDefault(BigInteger.ZERO);
