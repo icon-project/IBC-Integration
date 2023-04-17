@@ -9,7 +9,6 @@ import java.util.Map;
 import static ibc.icon.score.util.StringUtil.bytesToHex;
 import static ibc.ics23.commitment.Ops.applyOp;
 import static ibc.ics23.commitment.Ops.doHash;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class OpsTest {
@@ -18,29 +17,31 @@ class OpsTest {
     public void testLeafOp() throws IOException {
         Map<String, LoadOpsTestData.LeafOpTestData> cases = LoadOpsTestData.loadLeafOpTestData();
 
-        for (Map.Entry<String, LoadOpsTestData.LeafOpTestData> entry : cases.entrySet()) {
-            String name = entry.getKey();
-            LoadOpsTestData.LeafOpTestData tc = entry.getValue();
+        for (String name : cases.keySet()) {
+            LoadOpsTestData.LeafOpTestData tc = cases.get(name);
 
-            assertDoesNotThrow(() -> {
-                byte[] res = applyOp(tc.op, tc.key, tc.value);
-                boolean isErr = tc.isErr;
-                byte[] expected = tc.expected;
+            byte[] res = new byte[0];
+            Throwable err = null;
+            try {
+                res = applyOp(tc.op, tc.key, tc.value);
+            } catch (Throwable e) {
+                err = e;
+            }
+            byte[] expected = tc.expected;
 
-                // short-circuit with error case
-                if (isErr && res == null) {
-                    fail("Expected error, but got none");
-                }
+            // short-circuit with error case
+            if (tc.isErr && err == null) {
+                fail("Expected error, but got none");
+            }
 
-                if (!isErr && res == null) {
-                    fail("Expected result, but got none");
-                }
+            if (!tc.isErr && err != null) {
+                fail(err);
+            }
 
-                if (!isErr && !Arrays.equals(res, expected)) {
-                    fail("Bad result: " + name + ":" + bytesToHex(res) + " vs " + bytesToHex(expected));
-                }
-                System.out.println("LeafOp Test Passed: " + name);
-            });
+            if (!Arrays.equals(res, expected)) {
+                fail("Bad result: " + name + ":" + bytesToHex(res) + " vs " + bytesToHex(expected));
+            }
+            System.out.println("LeafOp Test Passed: " + name);
         }
     }
 

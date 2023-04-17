@@ -264,7 +264,7 @@ public class Proof {
     private static List<InnerOp> sliceInnerOps(List<InnerOp> array, int start, int end) {
         List<InnerOp> slice = new ArrayList<>(end - start);
         for (int i = start; i < end; i++) {
-            slice.set(i, array.get(i));
+            slice.add(array.get(i));
         }
         return slice;
     }

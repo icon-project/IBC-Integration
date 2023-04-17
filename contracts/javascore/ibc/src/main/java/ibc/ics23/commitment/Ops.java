@@ -15,10 +15,10 @@ public class Ops {
 
     //LeafOp operations
     public static byte[] applyOp(LeafOp leafOp, byte[] key, byte[] value) {
-        if (key.length == 0) {
+        if (key == null || key.length == 0) {
             throw new UserRevertedException("Leaf Op Needs key");
         }
-        if (value.length == 0) {
+        if (value == null || value.length == 0) {
             throw new UserRevertedException("Leaf Op Needs Value");
         }
         byte[] pKey = prepareLeafData(leafOp.getPrehashKey(), leafOp.getLength(), key);
@@ -72,14 +72,19 @@ public class Ops {
                 throw new UserRevertedException("Length of data should be 64");
             }
         } else if (lenOp == LengthOp.FIXED32_LITTLE) {
-            BigInteger size = BigInteger.valueOf(data.length);
-            byte[] sizeB = size.toByteArray();
-            byte[] littleE = new byte[4];
-            littleE[0] = sizeB[3];
-            littleE[1] = sizeB[2];
-            littleE[2] = sizeB[1];
-            littleE[3] = sizeB[0];
-            return ByteUtil.join(littleE, data);
+            int size = data.length;
+            int mask = 0x7F; // Mask for lower 7 bits
+            byte[] result = new byte[4]; // 4 bytes for uint32 size
+
+            // Encode size as little-endian bytes
+            for (int i = 0; i < 4; i++) {
+                result[i] = (byte) (size & mask); // Get lower 7 bits
+                size >>= 7; // Shift right by 7 bits
+                if (size != 0) {
+                    result[i] |= 0x80; // Set MSB to 1 for continuation
+                }
+            }
+            return ByteUtil.join(result, data);
         } else {
             throw new UserRevertedException("Unsupported lenOp");
         }

@@ -55,7 +55,7 @@
     "key": "Zm9v",
     "value": null,
     "isErr": true,
-    "expected": null
+    "expected": ""
   },
   "requires value": {
     "op": {
@@ -64,6 +64,6 @@
     "key": null,
     "value": "YmFy",
     "isErr": true,
-    "expected": null
+    "expected": ""
   }
 }
