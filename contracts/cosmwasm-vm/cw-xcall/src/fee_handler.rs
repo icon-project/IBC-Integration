@@ -12,23 +12,23 @@ impl<'a> CwCallService<'a> {
         self.add_feehandler(deps.storage, &address)?;
 
         if address.len().ne(&0) {
-            let accured_fees = self.get_balance(deps.querier, env.contract.address.to_string())?;
+            let accrued_fees = self.get_balance(deps.querier, env.contract.address.to_string())?;
 
-            if accured_fees.amount.u128() > 0 {
+            if accrued_fees.amount.u128() > 0 {
                 let message: CosmosMsg<Empty> = CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
                     to_address: address.to_string(),
-                    amount: vec![accured_fees],
+                    amount: vec![accrued_fees],
                 });
 
                 return Ok(Response::new()
                     .add_message(message)
-                    .add_attribute("action", "accured_fees")
+                    .add_attribute("action", "accrued_fees")
                     .add_attribute("method", "setprotocol_feehandler"));
             }
         };
 
         Ok(Response::new()
-            .add_attribute("action", "accured_fees")
+            .add_attribute("action", "accrued_fees")
             .add_attribute("method", "setprotocol_feehandler"))
     }
 

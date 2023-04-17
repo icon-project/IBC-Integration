@@ -10,6 +10,8 @@ use cosmwasm_std::Event;
 use cosmwasm_std::Reply;
 use cosmwasm_std::SubMsgResponse;
 use cosmwasm_std::SubMsgResult;
+use cw_common::client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse};
+use cw_common::types::{ClientId, ConnectionId};
 use cw_ibc_core::constants::*;
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics02_client::types::ClientState;
@@ -18,11 +20,7 @@ use cw_ibc_core::ics03_connection::event::create_open_ack_event;
 use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
 use cw_ibc_core::ics03_connection::event::create_open_try_event;
-use cw_ibc_core::types::ClientId;
-use cw_ibc_core::types::ConnectionId;
-use cw_ibc_core::types::OpenAckResponse;
-use cw_ibc_core::types::OpenConfirmResponse;
-use cw_ibc_core::types::OpenTryResponse;
+
 use cw_ibc_core::ConnectionEnd;
 use cw_ibc_core::IbcClientId;
 use ibc::core::ics03_connection::connection::Counterparty;
@@ -157,7 +155,7 @@ fn test_connection_sequence_fail() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"cw_ibc_core::types::ConnectionId\" })")]
+#[should_panic(expected = "Std(NotFound { kind: \"cw_common::types::ConnectionId\" })")]
 fn test_client_connection_fail() {
     let deps = deps();
     let client_id = ClientId::default();
@@ -820,7 +818,7 @@ fn connection_validate_delay() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let result =
@@ -829,7 +827,7 @@ fn connection_validate_delay() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
+#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
 fn connection_validate_delay_fails() {
     let deps = deps();
     let _env = mock_env();
@@ -850,10 +848,10 @@ fn test_block_delay() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
-    let result = contract.block_delay(&delay_time);
-    assert_eq!(result, true as u64)
+    let result = contract.calc_block_delay(&delay_time);
+    assert_eq!(2, result)
 }
 
 #[test]

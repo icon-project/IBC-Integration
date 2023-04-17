@@ -1,13 +1,14 @@
 use std::{str::FromStr, time::Duration};
 
 use cosmwasm_std::{to_binary, to_vec, Addr, Event, Reply, SubMsgResponse, SubMsgResult};
+
+use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};
 use cw_ibc_core::ics02_client::types::{ClientState, ConsensusState};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };
 use cw_ibc_core::ics04_channel::open_try::on_chan_open_try_submessage;
 use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY};
-use cw_ibc_core::types::ClientType;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
@@ -19,7 +20,6 @@ use cw_ibc_core::{
         MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
         MsgChannelOpenTry,
     },
-    types::{ChannelId, ConnectionId, PortId},
     ChannelEnd, ConnectionEnd, IbcClientId, IbcConnectionId, Sequence,
 };
 use cw_ibc_core::{traits::*, IbcClientType, IbcPortId};
@@ -98,18 +98,18 @@ fn test_channel_sequence_send() {
     let ctx = CwIbcCoreContext::new();
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
-    let sequene = Sequence::from(6);
+    let sequence = Sequence::from(6);
     let mut mock_deps = deps();
 
     let _store = ctx.store_next_sequence_send(
         mock_deps.as_mut().storage,
         port_id.clone(),
         channel_id.clone(),
-        sequene,
+        sequence,
     );
     let result = ctx.get_next_sequence_send(mock_deps.as_ref().storage, port_id, channel_id);
 
-    assert_eq!(sequene, result.unwrap())
+    assert_eq!(sequence, result.unwrap())
 }
 
 #[test]
@@ -215,7 +215,7 @@ fn test_channel_sequence_ack_fail() {
 }
 
 #[test]
-#[should_panic(expected = "MissingNextSendSeq")]
+#[should_panic(expected = "IbcPacketError")]
 fn test_channel_sequence_send_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
@@ -230,7 +230,7 @@ fn test_channel_sequence_send_fail() {
 }
 
 #[test]
-#[should_panic(expected = "MissingNextRecvSeq")]
+#[should_panic(expected = "IbcPacketError")]
 fn test_channel_sequence_recv_fail() {
     let ctx = CwIbcCoreContext::new();
     let mut mock_deps = deps();
@@ -853,7 +853,17 @@ fn test_create_write_ack_packet_event_fail() {
 fn test_create_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
     let packet = Packet::try_from(raw.clone()).unwrap();
-    let event = create_ack_packet_event(packet, &Order::Ordered, &IbcConnectionId::default());
+    let event = create_ack_packet_event(
+        packet.port_id_on_a.as_str(),
+        packet.chan_id_on_a.as_str(),
+        &packet.seq_on_a.to_string(),
+        packet.port_id_on_b.as_str(),
+        packet.chan_id_on_b.as_str(),
+        &packet.timeout_height_on_b.to_string(),
+        &packet.timeout_timestamp_on_b.to_string(),
+        &Order::Ordered.as_str(),
+        &IbcConnectionId::default().as_str(),
+    );
     assert_eq!("acknowledge_packet", event.ty)
 }
 
@@ -914,7 +924,7 @@ fn test_validate_open_init_channel() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -1025,7 +1035,7 @@ fn test_validate_open_try_channel() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();

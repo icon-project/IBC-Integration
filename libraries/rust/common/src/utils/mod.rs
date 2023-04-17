@@ -18,7 +18,7 @@ pub fn sha256(data: impl AsRef<[u8]>) -> Vec<u8> {
 }
 
 pub fn calculate_root(leaf: [u8; 32], pathes: &[MerkleNode]) -> [u8; 32] {
-    let mut temp = leaf.clone();
+    let mut temp = leaf;
 
     for path in pathes {
        // let mut out = [0u8; 32];

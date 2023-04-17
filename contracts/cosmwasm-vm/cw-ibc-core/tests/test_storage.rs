@@ -1,6 +1,7 @@
 pub mod setup;
 use cosmwasm_std::{testing::mock_env, Addr};
-use cw_ibc_core::{context::CwIbcCoreContext, types::ModuleId};
+use cw_common::types::ModuleId;
+use cw_ibc_core::context::CwIbcCoreContext;
 use setup::*;
 
 #[test]

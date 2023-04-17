@@ -24,7 +24,6 @@ pub fn channel_open_confirm_validate(
     Ok(())
 }
 
-
 impl<'a> CwIbcCoreContext<'a> {
     pub fn execute_open_confirm_from_light_client_reply(
         &self,
@@ -47,18 +46,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = types::ModuleId::from(module_id);
+                    let module_id = cw_common::types::ModuleId::from(module_id);
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
 
                     // Generate event for calling on channel open try in x-call
-                    let sub_message = on_chan_open_confirm_submessage(
-                        &channel_end,
-                        &port_id,
-                        &channel_id,
-                    )?;
+                    let sub_message =
+                        on_chan_open_confirm_submessage(&channel_end, &port_id, &channel_id)?;
                     let data = cw_xcall::msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
                     let data = to_binary(&data).unwrap();
                     let on_chan_open_try = create_channel_submesssage(
@@ -73,21 +69,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "channel_open_confirm_module_validation")
                         .add_submessage(on_chan_open_try))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                return Err(ContractError::IbcChannelError {
-                    error: ChannelError::VerifyChannelFailed(ClientError::Other {
-                        description: error,
-                    }),
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
+                error: ChannelError::VerifyChannelFailed(ClientError::Other { description: error }),
+            }),
         }
     }
 }

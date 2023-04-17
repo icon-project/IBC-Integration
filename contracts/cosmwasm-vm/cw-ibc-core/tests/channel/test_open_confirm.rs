@@ -112,7 +112,7 @@ fn test_validate_open_confirm_channel() {
     let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = PortId::from(msg.port_id_on_b.clone());
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -249,7 +249,7 @@ fn test_execute_open_confirm_from_light_client() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
