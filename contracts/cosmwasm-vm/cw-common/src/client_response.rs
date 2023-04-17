@@ -96,7 +96,7 @@ impl UpdateClientResponse {
         Height::from_str(&self.height).unwrap()
     }
     pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id).map_err(|error| CwErrors::InvalidClientId(error))
+        ClientId::from_str(&self.client_id).map_err(CwErrors::InvalidClientId)
     }
 }
 
@@ -143,7 +143,7 @@ impl UpgradeClientResponse {
     }
 
     pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id).map_err(|error| CwErrors::InvalidClientId(error))
+        ClientId::from_str(&self.client_id).map_err(CwErrors::InvalidClientId)
     }
 }
 
@@ -164,7 +164,7 @@ impl MisbehaviourResponse {
         &self.client_id
     }
     pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id).map_err(|error| CwErrors::InvalidClientId(error))
+        ClientId::from_str(&self.client_id).map_err(CwErrors::InvalidClientId)
     }
 }
 

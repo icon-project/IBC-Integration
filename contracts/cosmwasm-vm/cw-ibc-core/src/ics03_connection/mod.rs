@@ -33,6 +33,7 @@ pub use ibc::core::ics03_connection::{
 };
 use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 pub use ibc::core::ics24_host::identifier::ConnectionId as IbcConnectionId;
+use ibc::Height;
 use ibc::{
     core::ics03_connection::events::{
         CLIENT_ID_ATTRIBUTE_KEY, CONN_ID_ATTRIBUTE_KEY, COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,
@@ -40,6 +41,5 @@ use ibc::{
     },
     events::IbcEventType,
 };
-use ibc::{core::ics04_channel::context::calculate_block_delay, Height};
 use ibc_proto::protobuf::Protobuf;
 use std::{str::FromStr, time::Duration};

@@ -7,7 +7,7 @@ pub mod types;
 pub use super::*;
 
 use crate::{
-    context::CwIbcCoreContext, msg::*, traits::IbcClient, ContractError, IbcClientId, IbcClientType,
+    context::CwIbcCoreContext, traits::IbcClient, ContractError, IbcClientId, IbcClientType,
 };
 use common::icon::icon::lightclient::v1::{
     ClientState as RawClientState, ConsensusState as RawConsensusState,

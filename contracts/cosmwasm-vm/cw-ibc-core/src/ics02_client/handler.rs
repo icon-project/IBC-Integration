@@ -228,7 +228,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     let client_id = update_client_response
                         .client_id()
-                        .map_err(|e| ContractError::from(e))?;
+                        .map_err(ContractError::from)?;
 
                     let height = update_client_response.height();
 
@@ -279,8 +279,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let response: UpgradeClientResponse =
-                        from_binary(&data).map_err(|error| ContractError::Std(error))?;
-                    let client_id = response.client_id().map_err(|e| ContractError::from(e))?;
+                        from_binary(&data).map_err(ContractError::Std)?;
+                    let client_id = response.client_id().map_err(ContractError::from)?;
 
                     self.store_client_state(
                         deps.storage,
@@ -369,7 +369,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     let client_id = misbehaviour_response
                         .client_id()
-                        .map_err(|e| ContractError::from(e))?;
+                        .map_err(ContractError::from)?;
 
                     let client_type = ClientType::try_from(client_id.clone()).map_err(|error| {
                         ContractError::IbcDecodeError {

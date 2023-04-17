@@ -186,8 +186,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let port_id = PortId::from(packet_data.packet.port_id_on_a.clone());
                     // Getting the module address for on packet timeout call
-                    let module_id = match self.lookup_module_by_port(deps.storage, port_id.clone())
-                    {
+                    let module_id = match self.lookup_module_by_port(deps.storage, port_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
@@ -247,19 +246,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "channel_recieve_packet_validation")
                         .add_submessage(sub_msg))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcPacketError {
-                    error: PacketError::InvalidProof,
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPacketError {
+                error: PacketError::InvalidProof,
+            }),
         }
     }
 
@@ -314,12 +309,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         // Note: ibc-go doesn't make the check for `Order::None` channels
                         Order::None => false,
                         Order::Unordered => self
-                            .get_packet_receipt(
-                                deps.storage,
-                                &port_id,
-                                &channel_id,
-                                seq.clone().into(),
-                            )
+                            .get_packet_receipt(deps.storage, &port_id, &channel_id, seq.into())
                             .is_ok(),
                         Order::Ordered => {
                             let next_seq_recv = self.get_next_sequence_recv(
@@ -346,8 +336,8 @@ impl<'a> CwIbcCoreContext<'a> {
                             Order::Unordered => {
                                 self.store_packet_receipt(
                                     deps.storage,
-                                    &port_id.clone(),
-                                    &channel_id.clone(),
+                                    &port_id,
+                                    &channel_id,
                                     seq.clone().into(),
                                     Receipt::Ok,
                                 )?;
@@ -388,22 +378,18 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("action", "channel")
                         .add_attribute("method", "execute_receive_packet")
                         .add_attribute("message", "success: packet receive")
-                        .add_attribute("messsage", "success: packet write acknowledgement")
+                        .add_attribute("message", "success: packet write acknowledgement")
                         .add_events(data.events))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcPacketError {
-                    error: PacketError::InvalidProof,
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPacketError {
+                error: PacketError::InvalidProof,
+            }),
         }
     }
 }
