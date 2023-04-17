@@ -105,7 +105,7 @@ mod tests {
         let header = BtpHeader::decode(relay_bytes.as_slice());
         assert!(header.is_ok());
     }
-    
+
     #[test]
     fn relay_bytes_to_signed_header() {
         let headers = load_test_headers();

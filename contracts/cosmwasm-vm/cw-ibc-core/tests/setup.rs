@@ -7,7 +7,7 @@ use cosmwasm_std::{
     Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
 };
 
-use cw_ibc_core::types::{ClientId, ClientType};
+use cw_common::types::{ClientId, ClientType};
 use ibc::{
     core::{
         ics03_connection::version::{get_compatible_versions, Version},

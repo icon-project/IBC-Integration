@@ -13,29 +13,20 @@ pub mod msg;
 pub mod state;
 pub mod storage_keys;
 pub mod traits;
-pub mod types;
-
 pub use crate::error::ContractError;
+
 use crate::state::CwIbcStore;
-use crate::{
-    ics26_routing::router::CwIbcRouter,
-    storage_keys::StorageKey,
-    types::{
-        ChannelId, ClientId, ClientType, ConnectionId, PortId, VerifyChannelState,
-        VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState,
-        VerifyPacketAcknowledgement, VerifyPacketData,
-    },
-};
+use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
+pub use constants::*;
+use context::CwIbcCoreContext;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
     StdResult, Storage,
 };
-
-use crate::ics04_channel::LightClientPacketMessage;
-pub use constants::*;
-use context::CwIbcCoreContext;
-use cw_storage_plus::{Item, Key, KeyDeserialize, Map, Prefixer, PrimaryKey};
+use cw_common::client_msg::LightClientPacketMessage;
+use cw_common::types::{ChannelId, ClientId, ClientType, ConnectionId, PortId};
+use cw_storage_plus::{Item, Map};
 pub use ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
@@ -67,11 +58,6 @@ pub use ibc::{
     Height,
 };
 pub use ics24_host::commitment::*;
-use serde::{Deserialize, Serialize};
-use std::{
-    fmt::{Display, Error as FmtError, Formatter},
-    str::FromStr,
-};
 use thiserror::Error;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
