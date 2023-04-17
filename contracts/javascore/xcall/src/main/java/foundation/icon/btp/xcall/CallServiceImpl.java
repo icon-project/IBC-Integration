@@ -111,8 +111,10 @@ public class CallServiceImpl extends AbstractCallService {
 
         CSMessageRequest msgReq = new CSMessageRequest(caller.toString(), _to, sn, needResponse, _data);
 
+        BigInteger seqNum = (BigInteger) Context.call(this.ibcHandler.get(), "getNextSequenceSend", getSourcePort(), getSourceChannel());
+
         Packet pct = new Packet();
-        pct.setSequence(sn);
+        pct.setSequence(seqNum);
         pct.setData(createMessage(CSMessage.REQUEST, msgReq.toBytes()));
         pct.setDestinationPort(getDestinationPort());
         pct.setDestinationChannel(getDestinationChannel());
@@ -129,7 +131,7 @@ public class CallServiceImpl extends AbstractCallService {
 
         Context.call(this.ibcHandler.get(), "sendPacket", new Object[]{pct.encode()});
 
-        CallMessageSent(caller, _to, sn, sn);
+        CallMessageSent(caller, _to, sn, seqNum);
         return sn;
 
     }

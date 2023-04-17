@@ -89,6 +89,10 @@ public class CallServiceTestBase extends TestBase {
             Context.call(this.ibcHandler.getAddress(), "sendPacket", new Object[]{packet.encode()});
         }).thenAnswer((Answer<Void>) invocation -> null);
 
+        contextMock.when(() -> {
+            Context.call(this.ibcHandler.getAddress(), "getNextSequenceSend", portId, channelId);
+        }).thenReturn(BigInteger.ONE);
+
         client.invoke(dApp.account, "sendCallMessage", _to, _data, rollback);
 
         verify(clientSpy).CallMessageSent(dApp.getAddress(), _to, BigInteger.ONE, BigInteger.ONE);
