@@ -2,10 +2,12 @@ package ibc.ics23.commitment;
 
 import icon.proto.core.commitment.*;
 import score.UserRevertedException;
+import scorex.util.ArrayList;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static ibc.ics23.commitment.Compress.*;
 import static ibc.ics23.commitment.Proof.*;
 
 public class Ics23 {
@@ -72,5 +74,38 @@ public class Ics23 {
 
     private static boolean isRight(ExistenceProof right, byte[] key) {
         return isExistenceProofEmpty(right) || Ops.compare(right.getKey(), key) > 0;
+    }
+
+    public static CommitmentProof combineProofs(List<CommitmentProof> proofs) {
+        List<BatchEntry> entries = new ArrayList<>();
+
+        for (CommitmentProof proof : proofs) {
+            var exist = proof.getExist();
+            var nonExist = proof.getNonexist();
+            var batch = proof.getBatch();
+            var comp = proof.getCompressed();
+
+            if (!isExistenceProofEmpty(exist)) {
+                var entry = new BatchEntry();
+                entry.setExist(exist);
+                entries.add(entry);
+            } else if (!isNonExistenceProofEmpty(nonExist)) {
+                var entry = new BatchEntry();
+                entry.setNonexist(nonExist);
+                entries.add(entry);
+            } else if (!isBatchProofEmpty(batch)) {
+                entries.addAll(batch.getEntries());
+            } else if (!isCompressedBatchProofEmpty(comp)) {
+                var decompressedProof = decompress(proof);
+                entries.addAll(decompressedProof.getBatch().getEntries());
+            } else {
+                throw new UserRevertedException("Proof neither exist or non-exist");
+            }
+        }
+        var batch = new CommitmentProof();
+        var batchProof = new BatchProof();
+        batchProof.setEntries(entries);
+        batch.setBatch(batchProof);
+        return compress(batch);
     }
 }
