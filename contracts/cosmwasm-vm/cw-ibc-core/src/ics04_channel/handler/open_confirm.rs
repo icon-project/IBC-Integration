@@ -69,21 +69,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "channel_open_confirm_module_validation")
                         .add_submessage(on_chan_open_try))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                return Err(ContractError::IbcChannelError {
-                    error: ChannelError::VerifyChannelFailed(ClientError::Other {
-                        description: error,
-                    }),
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
+                error: ChannelError::VerifyChannelFailed(ClientError::Other { description: error }),
+            }),
         }
     }
 }

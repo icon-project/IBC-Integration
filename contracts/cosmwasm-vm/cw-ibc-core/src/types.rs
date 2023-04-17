@@ -1,6 +1,9 @@
 use ibc::{
     core::ics04_channel::{
-        msgs::{timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose},
+        msgs::{
+            acknowledgement::Acknowledgement, timeout::MsgTimeout,
+            timeout_on_close::MsgTimeoutOnClose,
+        },
         packet::Packet,
         timeout::TimeoutHeight,
     },
@@ -48,10 +51,6 @@ impl ConnectionId {
     pub fn connection_id(&self) -> &IbcConnectionId {
         &self.0
     }
-
-    pub fn default() -> Self {
-        Self(IbcConnectionId::default())
-    }
 }
 
 impl<'a> PrimaryKey<'a> for ConnectionId {
@@ -84,14 +83,8 @@ impl KeyDeserialize for ConnectionId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Default, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChannelId(IbcChannelId);
-
-impl Default for ChannelId {
-    fn default() -> Self {
-        Self(IbcChannelId::default())
-    }
-}
 
 impl<'a> PrimaryKey<'a> for ChannelId {
     type Prefix = ();
@@ -148,7 +141,7 @@ impl Display for ChannelId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Default, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PortId(IbcPortId);
 
 impl FromStr for PortId {
@@ -160,12 +153,6 @@ impl FromStr for PortId {
         })?;
 
         Ok(Self(port_id))
-    }
-}
-
-impl Default for PortId {
-    fn default() -> Self {
-        Self(IbcPortId::default())
     }
 }
 
@@ -342,6 +329,7 @@ pub enum TimeoutMsgType {
 pub struct PacketData {
     pub packet: Packet,
     pub signer: Signer,
+    pub acknowledgement: Option<Acknowledgement>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -365,7 +353,7 @@ impl From<PacketResponse> for Packet {
             chan_id_on_a: packet.chan_id_on_a,
             port_id_on_b: packet.port_id_on_b,
             chan_id_on_b: packet.chan_id_on_b,
-            data: data,
+            data,
             timeout_height_on_b: packet.timeout_height_on_b,
             timeout_timestamp_on_b: packet.timeout_timestamp_on_b,
         }
@@ -376,4 +364,35 @@ impl From<PacketResponse> for Packet {
 pub struct PacketDataResponse {
     pub packet: PacketResponse,
     pub signer: Signer,
+    pub acknowledgement: Option<Acknowledgement>,
+}
+
+#[cw_serde]
+pub struct VerifyPacketData {
+    pub height: String,
+    pub prefix: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub commitment_path: Vec<u8>,
+    pub commitment: Vec<u8>,
+}
+
+impl PacketData {
+    pub fn new(packet: Packet, signer: Signer, acknowledgement: Option<Acknowledgement>) -> Self {
+        Self {
+            packet,
+            signer,
+            acknowledgement,
+        }
+    }
+}
+
+#[cw_serde]
+pub struct VerifyPacketAcknowledgement {
+    pub height: String,
+    pub prefix: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub ack_path: Vec<u8>,
+    pub ack: Vec<u8>,
 }

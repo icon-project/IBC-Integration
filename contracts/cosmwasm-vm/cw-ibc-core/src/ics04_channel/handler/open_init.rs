@@ -24,10 +24,9 @@ pub fn on_chan_open_init_submessage(
         msg.version_proposal.to_string(),
         connection_id.connection_id().to_string(),
     );
-    let data = cosmwasm_std::IbcChannelOpenMsg::OpenInit {
+    cosmwasm_std::IbcChannelOpenMsg::OpenInit {
         channel: ibc_channel,
-    };
-    data
+    }
 }
 
 pub fn create_channel_submesssage(
@@ -38,7 +37,7 @@ pub fn create_channel_submesssage(
 ) -> SubMsg {
     let on_channel: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: address,
-        msg: msg,
+        msg,
         funds: fund.funds.clone(),
     });
     let sub_msg: SubMsg = SubMsg::reply_on_success(on_channel, id);

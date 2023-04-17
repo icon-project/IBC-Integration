@@ -106,7 +106,7 @@ pub fn create_send_packet_event(
     let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
         error: ChannelError::NonUtf8PacketData,
     })?;
-    let hex_data = hex::encode(&packet.data.clone());
+    let hex_data = hex::encode(&packet.data);
 
     Ok(Event::new(IbcEventType::SendPacket.as_str())
         .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)
@@ -166,26 +166,33 @@ pub fn create_write_ack_event(
 
 // Creates AcknowledgePacket event
 pub fn create_ack_packet_event(
-    packet: Packet,
-    channel_order: &Order,
-    dst_connection_id: &IbcConnectionId,
+    // packet: Packet,
+    port_id: &str,
+    chan_id: &str,
+    seq_on_a :&str,
+    dst_port_id: &str,
+    dst_chan_id: &str,
+    timeout_height_on_b:&str,
+    timeout_timestamp_on_b:&str,
+    channel_order: &str,
+    dst_connection_id: &str,
 ) -> Event {
     Event::new(IbcEventType::AckPacket.as_str())
         .add_attribute(
             PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
-            packet.timeout_height_on_b.to_event_attribute_value(),
+            timeout_height_on_b,
         )
         .add_attribute(
             PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
-            packet.timeout_timestamp_on_b.nanoseconds().to_string(),
+            timeout_timestamp_on_b,
         )
-        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.seq_on_a.to_string())
-        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.port_id_on_a.as_str())
-        .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_a.as_str())
-        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
-        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
-        .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order.as_str())
-        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id.as_str())
+        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, seq_on_a)
+        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, port_id)
+        .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, chan_id)
+        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, dst_port_id)
+        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, dst_chan_id)
+        .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order)
+        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id)
 }
 
 // Creates TimeoutPacket event

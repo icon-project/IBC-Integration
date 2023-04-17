@@ -21,6 +21,9 @@ use ibc::{
     Height,
 };
 use ibc_proto::ibc::core::channel::v1::Channel as RawChannel;
+use ibc_proto::ibc::core::channel::v1::MsgAcknowledgement as RawMsgAcknowledgement;
+use ibc_proto::ibc::core::channel::v1::MsgTimeout as RawMsgTimeout;
+use ibc_proto::ibc::core::channel::v1::MsgTimeoutOnClose as RawMsgTimeoutOnClose;
 pub use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use ibc_proto::ibc::core::channel::v1::{
     MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
@@ -229,7 +232,7 @@ pub fn get_dummy_raw_msg_chan_open_try(proof_height: u64) -> RawMsgChannelOpenTr
 
 pub fn get_dummy_raw_msg_update_client_message() -> RawMessageUpdateCelint {
     let height = Height::new(10, 15).unwrap();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
     RawMessageUpdateCelint {
         client_id: client_id.ibc_client_id().to_string(),
@@ -260,7 +263,7 @@ pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMessageMisbehaviour {
     let height = Height::new(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
 
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
 
     let mis_b = Misbehaviour {
@@ -400,5 +403,56 @@ pub fn get_dummy_raw_packet(timeout_height: u64, timeout_timestamp: u64) -> RawP
             revision_height: timeout_height,
         }),
         timeout_timestamp,
+    }
+}
+
+pub fn get_dummy_raw_msg_acknowledgement(height: u64) -> RawMsgAcknowledgement {
+    get_dummy_raw_msg_ack_with_packet(get_dummy_raw_packet(height, 1), height)
+}
+
+pub fn get_dummy_raw_msg_ack_with_packet(packet: RawPacket, height: u64) -> RawMsgAcknowledgement {
+    RawMsgAcknowledgement {
+        packet: Some(packet),
+        acknowledgement: get_dummy_proof(),
+        proof_acked: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: height,
+        }),
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_timeout(
+    proof_height: u64,
+    timeout_height: u64,
+    timeout_timestamp: u64,
+) -> RawMsgTimeout {
+    RawMsgTimeout {
+        packet: Some(get_dummy_raw_packet(timeout_height, timeout_timestamp)),
+        proof_unreceived: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: proof_height,
+        }),
+        next_sequence_recv: 1,
+        signer: get_dummy_bech32_account(),
+    }
+}
+
+pub fn get_dummy_raw_msg_timeout_on_close(
+    height: u64,
+    timeout_timestamp: u64,
+) -> RawMsgTimeoutOnClose {
+    RawMsgTimeoutOnClose {
+        packet: Some(get_dummy_raw_packet(height, timeout_timestamp)),
+        proof_unreceived: get_dummy_proof(),
+        proof_close: get_dummy_proof(),
+        proof_height: Some(RawHeight {
+            revision_number: 0,
+            revision_height: height,
+        }),
+        next_sequence_recv: 1,
+        signer: get_dummy_bech32_account(),
     }
 }

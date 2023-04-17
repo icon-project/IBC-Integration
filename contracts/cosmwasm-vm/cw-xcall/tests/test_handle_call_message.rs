@@ -34,7 +34,7 @@ fn test_execute_call_having_request_id_without_rollback() {
     let cw_callservice = CwCallService::default();
 
     let request_id = 123456;
-    let proxy_reqs = CallServiceMessageRequest::new(
+    let proxy_requests = CallServiceMessageRequest::new(
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
@@ -42,7 +42,7 @@ fn test_execute_call_having_request_id_without_rollback() {
         vec![104, 101, 108, 108, 111],
     );
     cw_callservice
-        .insert_request(deps.as_mut().storage, request_id, proxy_reqs)
+        .insert_request(deps.as_mut().storage, request_id, proxy_requests)
         .unwrap();
 
     let src = IbcEndpoint {
@@ -103,7 +103,7 @@ fn test_successful_reply_message() {
     let contract = CwCallService::default();
 
     let request_id = 123456;
-    let proxy_reqs = CallServiceMessageRequest::new(
+    let proxy_requests = CallServiceMessageRequest::new(
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
@@ -111,7 +111,7 @@ fn test_successful_reply_message() {
         vec![],
     );
     contract
-        .insert_request(mock_deps.as_mut().storage, request_id, proxy_reqs)
+        .insert_request(mock_deps.as_mut().storage, request_id, proxy_requests)
         .unwrap();
 
     contract
@@ -138,7 +138,7 @@ fn test_failed_reply_message() {
     let contract = CwCallService::default();
 
     let request_id = 123456;
-    let proxy_reqs = CallServiceMessageRequest::new(
+    let proxy_requests = CallServiceMessageRequest::new(
         Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
@@ -146,7 +146,7 @@ fn test_failed_reply_message() {
         vec![],
     );
     contract
-        .insert_request(mock_deps.as_mut().storage, request_id, proxy_reqs)
+        .insert_request(mock_deps.as_mut().storage, request_id, proxy_requests)
         .unwrap();
 
     contract

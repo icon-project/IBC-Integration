@@ -53,7 +53,7 @@ impl<'a> CwCallService<'a> {
         Ok(())
     }
 
-    pub fn enusre_call_request_not_null(
+    pub fn ensure_call_request_not_null(
         &self,
         sequence_no: u128,
         message: &CallRequest,

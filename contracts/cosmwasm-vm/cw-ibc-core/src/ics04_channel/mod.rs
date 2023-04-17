@@ -23,6 +23,7 @@ use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 pub use ibc::core::ics04_channel::channel::Counterparty;
 use ibc::core::ics04_channel::channel::Order;
 pub use ibc::core::ics04_channel::channel::State;
+use ibc::core::ics04_channel::error::{ChannelError, PacketError};
 pub use ibc::core::ics04_channel::events::*;
 pub use ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
@@ -30,10 +31,6 @@ pub use ibc::core::ics04_channel::msgs::{
     chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry, ChannelMsg,
 };
 use ibc::core::ics04_channel::packet::Packet;
-use ibc::core::{
-    ics04_channel::error::{ChannelError, PacketError},
-    ContextError,
-};
 use ibc::events::IbcEventType;
 use std::str::FromStr;
 pub use traits::*;

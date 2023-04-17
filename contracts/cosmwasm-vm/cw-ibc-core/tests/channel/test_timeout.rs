@@ -1,39 +1,5 @@
 use super::*;
 
-pub fn get_dummy_raw_msg_timeout(
-    proof_height: u64,
-    timeout_height: u64,
-    timeout_timestamp: u64,
-) -> RawMsgTimeout {
-    RawMsgTimeout {
-        packet: Some(get_dummy_raw_packet(timeout_height, timeout_timestamp)),
-        proof_unreceived: get_dummy_proof(),
-        proof_height: Some(RawHeight {
-            revision_number: 0,
-            revision_height: proof_height,
-        }),
-        next_sequence_recv: 1,
-        signer: get_dummy_bech32_account(),
-    }
-}
-
-pub fn get_dummy_raw_msg_timeout_on_close(
-    height: u64,
-    timeout_timestamp: u64,
-) -> RawMsgTimeoutOnClose {
-    RawMsgTimeoutOnClose {
-        packet: Some(get_dummy_raw_packet(height, timeout_timestamp)),
-        proof_unreceived: get_dummy_proof(),
-        proof_close: get_dummy_proof(),
-        proof_height: Some(RawHeight {
-            revision_number: 0,
-            revision_height: height,
-        }),
-        next_sequence_recv: 1,
-        signer: get_dummy_bech32_account(),
-    }
-}
-
 #[test]
 fn test_execute_timeout_packet() {
     let height = 2;
@@ -190,6 +156,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer,
+        acknowledgement: None,
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -215,6 +182,7 @@ fn test_packet_data() {
     let packet_data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer.clone(),
+        acknowledgement: None,
     };
     let bin = to_binary(&packet_data);
     let data = from_binary::<PacketDataResponse>(&bin.unwrap());
@@ -335,7 +303,7 @@ fn test_timeout_packet_validate_to_light_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let res = contract.timeout_packet_validate_to_light_client(deps.as_mut(), info, &msg);
