@@ -34,7 +34,6 @@ public class CallServiceTest extends CallServiceTestBase {
 
 
     @Test
-    @Order(0)
     void setTimeoutHeight_unauthorized() {
         Executable call = () -> client.invoke(sm.createAccount(), "setTimeoutHeight", TIMEOUT_HEIGHT);
         AssertionError e = assertThrows(AssertionError.class, call);
