@@ -48,6 +48,7 @@ message ClientState {
 
 // ConsensusState defines the consensus state from Tendermint.
 message ConsensusState {
+  option (gogoproto.goproto_getters) = false;
   // timestamp that corresponds to the block height in which the ConsensusState
   // was stored.
   Timestamp timestamp = 1;
