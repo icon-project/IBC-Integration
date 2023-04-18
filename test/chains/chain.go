@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DefaultNumValidators = 2
+	DefaultNumValidators = 1
 	DefaultNumFullNodes  = 1
 )
 
