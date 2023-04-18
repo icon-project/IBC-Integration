@@ -181,22 +181,27 @@ pub enum ExecuteMsg {
         misbehaviour: Vec<u8>,
     },
     VerifyConnection {
+        client_id: String,
         verify_connection_state: VerifyConnectionState,
         verify_client_full_state: VerifyClientFullState,
         verify_client_consensus_state: VerifyClientConsensusState,
     },
     VerifyOpenConfirm {
+        client_id: String,
         verify_connection_state: VerifyConnectionState,
     },
     TimeoutOnCLose {
+        client_id: String,
         verify_channel_state: VerifyChannelState,
         next_seq_recv_verification_result: LightClientPacketMessage,
     },
     VerifyPacketData {
+        client_id: String,
         verify_packet_data: VerifyPacketData,
         packet_data: Vec<u8>,
     },
     VerifyPacketAcknowledgement {
+        client_id: String,
         verify_packet_acknowledge: VerifyPacketAcknowledgement,
         packet_data: Vec<u8>,
     },
