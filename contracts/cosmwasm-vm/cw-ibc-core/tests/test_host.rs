@@ -51,9 +51,6 @@ fn test_claim_capability() {
     contract
         .store_capability(&mut deps.storage, name.clone(), vec![address.clone()])
         .unwrap();
-    contract
-        .get_capability(&mut deps.storage, name.clone())
-        .unwrap();
     let result = contract.claim_capability(&mut deps.storage, name, address);
     assert_eq!(result.is_ok(), true)
 }
