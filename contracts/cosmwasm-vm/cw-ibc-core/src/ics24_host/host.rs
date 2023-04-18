@@ -60,7 +60,7 @@ impl<'a> CwIbcCoreContext<'a> {
             |update| -> Result<_, ContractError> {
                 match update {
                     Some(mut value) => {
-                        if !value.contains(&address) {
+                        if value.contains(&address) {
                             return Err(ContractError::IbcContextError {
                                 error: "Capability already claimed".to_string(),
                             });
@@ -69,7 +69,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(value)
                     }
                     None => Err(ContractError::IbcDecodeError {
-                        error: "CapabilityNotFound".into(),
+                        error: "KeyNotFound".into(),
                     }),
                 }
             },

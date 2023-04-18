@@ -47,14 +47,12 @@ fn test_claim_capability() {
     let mut deps = deps();
     let name: Vec<u8> = vec![2];
     let address = "address".to_string();
+    let address_to_claim = "address-2".to_string();
     let contract = CwIbcCoreContext::new();
     contract
         .store_capability(&mut deps.storage, name.clone(), vec![address.clone()])
         .unwrap();
-    contract
-        .get_capability(&mut deps.storage, name.clone())
-        .unwrap();
-    let result = contract.claim_capability(&mut deps.storage, name.clone(), address.clone());
+    let result = contract.claim_capability(&mut deps.storage, name.clone(), address_to_claim);
     assert_eq!(result.is_ok(), true);
 }
 
@@ -233,10 +231,7 @@ fn test_already_claimed_capability() {
     contract
         .get_capability(&mut deps.storage, name.clone())
         .unwrap();
-    let result = contract.claim_capability(&mut deps.storage, name.clone(), address.clone());
-    assert_eq!(result.is_ok(), true);
-
     contract
-        .claim_capability(&mut deps.storage, name, "2".to_string())
+        .claim_capability(&mut deps.storage, name.clone(), address.clone())
         .unwrap();
 }
