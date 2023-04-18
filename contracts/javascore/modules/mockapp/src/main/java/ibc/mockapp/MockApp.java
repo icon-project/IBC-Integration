@@ -56,11 +56,13 @@ public class MockApp implements IIBCModule {
         pct.setSourcePort(srcPort.get());
         pct.setSourceChannel(srcChan.get());
 
+        if (timeoutHeight.equals(BigInteger.ZERO)) {
+            timeoutHeight = BigInteger.valueOf(Context.getBlockHeight() + 100);
+        }
         Height hgt = new Height();
         hgt.setRevisionHeight(timeoutHeight);
         pct.setTimeoutHeight(hgt);
 
-        pct.setTimeoutTimestamp(timeoutTimestamp);
         Context.call(this.ibcHandler, "sendPacket", pct.encode());
     }
 
