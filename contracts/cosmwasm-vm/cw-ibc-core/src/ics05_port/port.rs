@@ -1,3 +1,4 @@
+use cw_common::IbcPortId;
 use ibc::core::ics04_channel::msgs::{ChannelMsg, PacketMsg};
 
 use super::*;
@@ -67,5 +68,27 @@ impl<'a> CwIbcCoreContext<'a> {
         };
         let module_id = self.lookup_module_by_port(store, port_id.clone().into())?;
         Ok(module_id)
+    }
+
+    pub fn bind_port(
+        &self,
+        store: &mut dyn Storage,
+        port_id: &IbcPortId,
+        address: String,
+    ) -> Result<(), ContractError> {
+        self.claim_capability(store, self.port_path(port_id), address)
+    }
+
+    pub fn channel_capability_path(
+        &self,
+        port_id: &IbcPortId,
+        channel_id: &IbcChannelId,
+    ) -> Vec<u8> {
+        let path = format!(
+            "ports/{}/channels/{}",
+            port_id.to_string(),
+            channel_id.to_string()
+        );
+        path.as_bytes().to_vec()
     }
 }
