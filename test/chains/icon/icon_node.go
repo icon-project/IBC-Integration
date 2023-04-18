@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -322,10 +323,12 @@ func (in *IconNode) CreateKey(ctx context.Context, password string) error {
 	in.lock.Lock()
 	defer in.lock.Unlock()
 
-	_, _, err := in.ExecBin(ctx,
+	output, _, err := in.ExecBin(ctx,
 		"ks", "gen",
 		"--password", password,
 	)
+	outputs := strings.Fields(string(output))
+	in.Address = outputs[0]
 	return err
 }
 
