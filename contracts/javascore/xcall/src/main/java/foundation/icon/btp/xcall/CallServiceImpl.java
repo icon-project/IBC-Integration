@@ -73,9 +73,6 @@ public class CallServiceImpl extends AbstractCallService {
         checkCallerOrThrow(ibcHandler.get(), "Only IBCHandler allowed");
     }
 
-//    private void checkService(String _svc) {
-//        Context.require(NAME.equals(_svc), "InvalidServiceName");
-//    }
 
     private BigInteger getNextSn() {
         BigInteger _sn = this.sn.getOrDefault(BigInteger.ZERO);
@@ -114,8 +111,10 @@ public class CallServiceImpl extends AbstractCallService {
 
         CSMessageRequest msgReq = new CSMessageRequest(caller.toString(), _to, sn, needResponse, _data);
 
+        BigInteger seqNum = (BigInteger) Context.call(this.ibcHandler.get(), "getNextSequenceSend", getSourcePort(), getSourceChannel());
+
         Packet pct = new Packet();
-        pct.setSequence(sn);
+        pct.setSequence(seqNum);
         pct.setData(createMessage(CSMessage.REQUEST, msgReq.toBytes()));
         pct.setDestinationPort(getDestinationPort());
         pct.setDestinationChannel(getDestinationChannel());
@@ -132,7 +131,7 @@ public class CallServiceImpl extends AbstractCallService {
 
         Context.call(this.ibcHandler.get(), "sendPacket", new Object[]{pct.encode()});
 
-        CallMessageSent(caller, _to, sn, sn);
+        CallMessageSent(caller, _to, sn, seqNum);
         return sn;
 
     }
@@ -364,6 +363,7 @@ public class CallServiceImpl extends AbstractCallService {
         onlyIBCHandler();
         Context.require(portId.equals(sourcePort.get()), "port not matched");
         Context.require(channelId.equals(sourceChannel.get()), "Channel not matched");
+        destinationChannel.set(counterpartyChannelId);
         Context.println("onChanOpenAck");
     }
 

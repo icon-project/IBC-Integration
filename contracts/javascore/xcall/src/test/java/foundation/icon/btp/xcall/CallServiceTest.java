@@ -34,7 +34,6 @@ public class CallServiceTest extends CallServiceTestBase {
 
 
     @Test
-    @Order(0)
     void setTimeoutHeight_unauthorized() {
         Executable call = () -> client.invoke(sm.createAccount(), "setTimeoutHeight", TIMEOUT_HEIGHT);
         AssertionError e = assertThrows(AssertionError.class, call);
@@ -42,7 +41,6 @@ public class CallServiceTest extends CallServiceTestBase {
     }
 
     @Test
-    @Order(1)
     void onChanOpenInit_unauthorized() {
         Executable executable = () -> onChanOpenInit(sm.createAccount());
         AssertionError e = assertThrows(AssertionError.class, executable);
@@ -50,13 +48,11 @@ public class CallServiceTest extends CallServiceTestBase {
     }
 
     @Test
-    @Order(2)
     void onChanOpenInit() {
         onChanOpenInit(ibcHandler);
     }
 
     @Test
-    @Order(3)
     void onChanOpenAck_unauthorized() {
         onChanOpenInit(ibcHandler);
 
@@ -66,7 +62,6 @@ public class CallServiceTest extends CallServiceTestBase {
     }
 
     @Test
-    @Order(4)
     void onChanOpenAck() {
         onChanOpenInit(ibcHandler);
         onChanOpenAck(ibcHandler);
@@ -74,7 +69,6 @@ public class CallServiceTest extends CallServiceTestBase {
 
 
     @Test
-    @Order(5)
     void sendCallMessage_withoutRollback() {
         byte[] _data = "sendCallMessageWithoutRollback".getBytes();
         String _to = "to-address";
@@ -83,7 +77,6 @@ public class CallServiceTest extends CallServiceTestBase {
 
 
     @Test
-    @Order(6)
     void sendCallMessage_withRollback() {
         byte[] _data = "sendCallMessageWithRollback".getBytes();
         String _to = "to-address";
@@ -92,7 +85,6 @@ public class CallServiceTest extends CallServiceTestBase {
     }
 
     @Test
-    @Order(7)
     void onRecvPacket() {
         byte[] _data = "sendCallMessageWithRollback".getBytes();
         String _to = "to-address";
@@ -102,7 +94,6 @@ public class CallServiceTest extends CallServiceTestBase {
 
 
     @Test
-    @Order(7)
     void onRecvResponse() {
         byte[] _data = "test-message".getBytes();
         String _to = dApp.getAddress().toString();
@@ -113,7 +104,6 @@ public class CallServiceTest extends CallServiceTestBase {
     }
 
     @Test
-    @Order(8)
     void executeCall_success() {
         byte[] _data = "test-message".getBytes();
         String _to = dApp.getAddress().toString();
@@ -131,7 +121,6 @@ public class CallServiceTest extends CallServiceTestBase {
     }
 
     @Test
-    @Order(9)
     void executeCall_execute_twice() {
         byte[] _data = "test-message".getBytes();
         String _to = dApp.getAddress().toString();
@@ -154,7 +143,6 @@ public class CallServiceTest extends CallServiceTestBase {
     }
 
     @Test
-    @Order(10)
     void executeCall_fail() {
         byte[] _data = "test-message".getBytes();
         String _to = dApp.getAddress().toString();
@@ -172,7 +160,6 @@ public class CallServiceTest extends CallServiceTestBase {
     }
 
     @Test
-    @Order(11)
     void executeRollback_without_error_response() {
         byte[] _data = "sendCallMessageWithRollback".getBytes();
         String _to = "to-address";
@@ -187,7 +174,6 @@ public class CallServiceTest extends CallServiceTestBase {
 
 
     @Test
-    @Order(11)
     void executeRollback_success() {
         byte[] _data = "sendCallMessageWithRollback".getBytes();
         String _to = "to-address";
@@ -209,7 +195,6 @@ public class CallServiceTest extends CallServiceTestBase {
 
 
     @Test
-    @Order(12)
     void executeRollback_twice() {
         byte[] _data = "sendCallMessageWithRollback".getBytes();
         String _to = "to-address";
