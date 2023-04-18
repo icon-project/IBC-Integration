@@ -82,8 +82,6 @@ public class IBCHandlerTestBase extends TestBase {
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
         module = new MockContract<>(IIBCModuleScoreInterface.class, IIBCModule.class, sm, owner);
 
-        when(lightClient.mock.getClientState(any(String.class))).thenReturn(new byte[0]);
-
         prefix = MerklePrefix.newBuilder()
                 .setKeyPrefix(ByteString.copyFrom("ibc".getBytes())).build();
         baseVersion = Version.newBuilder()
@@ -104,12 +102,11 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setBtpNetworkId(4);
 
         when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
-                .thenReturn(Map.of(
-                    "clientStateCommitment", new byte[0],
-                    "consensusStateCommitment", new byte[0],
-                    "height",Height.getDefaultInstance().toByteArray()
-            ));
-;
+            .thenReturn(Map.of(
+                "clientStateCommitment", new byte[0],
+                "consensusStateCommitment", new byte[0],
+                "height",Height.getDefaultInstance().toByteArray()
+        ));
 
         // Act
         handler.invoke(owner, "createClient", msg);
@@ -117,7 +114,11 @@ public class IBCHandlerTestBase extends TestBase {
         // Assert
         verify(handlerSpy).CreateClient(clientIdCaptor.capture(), eq(msg.getClientState()));
         clientId = clientIdCaptor.getValue();
-    }
+
+        when(lightClient.mock.getLatestHeight(clientId)).thenReturn(new byte[0]);
+        when(lightClient.mock.getClientState(clientId)).thenReturn(new byte[0]);
+        when(lightClient.mock.getConsensusState(eq(clientId), any(byte[].class))).thenReturn(new byte[0]);
+   }
 
     void updateClient() {
         // Arrange

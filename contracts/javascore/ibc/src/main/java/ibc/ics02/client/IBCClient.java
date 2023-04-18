@@ -1,14 +1,11 @@
 package ibc.ics02.client;
 
 import ibc.icon.interfaces.ILightClient;
-import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
-import ibc.ics24.host.IBCCommitment;
 import ibc.ics24.host.IBCHost;
-import icon.proto.core.client.Height;
 import score.Address;
 import score.Context;
 
@@ -37,19 +34,19 @@ public class IBCClient extends IBCHost {
         btpNetworkId.set(clientId, msg.getBtpNetworkId());
 
         ILightClient client = getClient(clientId);
-        Map<String, byte[]> response = client.createClient(clientId, msg.getClientState(), msg.getConsensusState());
-        byte[] clientStateCommitment = response.get("clientStateCommitment");
-        byte[] consensusStateCommitment = response.get("consensusStateCommitment");
-        byte[] height = response.get("height");
+        client.createClient(clientId, msg.getClientState(), msg.getConsensusState());
+        // byte[] clientStateCommitment = response.get("clientStateCommitment");
+        // byte[] consensusStateCommitment = response.get("consensusStateCommitment");
+        // byte[] height = response.get("height");
 
-        byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
-        Height updateHeight = Height.decode(height);
-        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
-                updateHeight.getRevisionNumber(),
-                updateHeight.getRevisionHeight());
+        // byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
+        // Height updateHeight = Height.decode(height);
+        // byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
+        //         updateHeight.getRevisionNumber(),
+        //         updateHeight.getRevisionHeight());
 
-        sendBTPMessage(clientId, ByteUtil.join(clientKey, clientStateCommitment));
-        sendBTPMessage(clientId, ByteUtil.join(consensusKey, consensusStateCommitment));
+        // sendBTPMessage(clientId, ByteUtil.join(clientKey, clientStateCommitment));
+        // sendBTPMessage(clientId, ByteUtil.join(consensusKey, consensusStateCommitment));
 
         return clientId;
     }
@@ -59,20 +56,20 @@ public class IBCClient extends IBCHost {
         ILightClient client = getClient(clientId);
 
         Map<String, byte[]>  response = client.updateClient(clientId, msg.getClientMessage());
-        byte[] clientStateCommitment = response.get("clientStateCommitment");
-        byte[] consensusStateCommitment = response.get("consensusStateCommitment");
-        byte[] height = response.get("height");
-        byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
+        // byte[] clientStateCommitment = response.get("clientStateCommitment");
+        // byte[] consensusStateCommitment = response.get("consensusStateCommitment");
+        // byte[] height = response.get("height");
+        // byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
 
-        Height updateHeight = Height.decode(height);
-        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
-                updateHeight.getRevisionNumber(),
-                updateHeight.getRevisionHeight());
+        // Height updateHeight = Height.decode(height);
+        // byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
+        //         updateHeight.getRevisionNumber(),
+        //         updateHeight.getRevisionHeight());
 
-        sendBTPMessage(clientId, ByteUtil.join(clientKey, clientStateCommitment));
-        sendBTPMessage(clientId, ByteUtil.join(consensusKey, consensusStateCommitment));
+        // sendBTPMessage(clientId, ByteUtil.join(clientKey, clientStateCommitment));
+        // sendBTPMessage(clientId, ByteUtil.join(consensusKey, consensusStateCommitment));
 
-        return height;
+        return response.get("height");
     }
 
     private String generateClientIdentifier(String clientType) {

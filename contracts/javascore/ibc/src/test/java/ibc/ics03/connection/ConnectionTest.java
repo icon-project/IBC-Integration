@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
 
 import java.math.BigInteger;
 
@@ -52,6 +54,8 @@ public class ConnectionTest extends TestBase {
     Version version;
     BigInteger delayPeriod = BigInteger.TEN;
     String clientId = "type-0";
+    byte[] clientStateCommitment;
+    byte[] consensusStateCommitment;
 
     ConnectionEnd baseConnection;
 
@@ -72,6 +76,21 @@ public class ConnectionTest extends TestBase {
         doNothing().when(connectionSpy).sendBTPMessage(any(String.class), any(byte[].class));
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
+        Height updateHeight = Height.getDefaultInstance();
+        byte[] clientStateBytes = new byte[2];
+        byte[] consensusStateBytes = new byte[3];
+        when(lightClient.mock.getLatestHeight(clientId)).thenReturn(updateHeight.toByteArray());
+        when(lightClient.mock.getClientState(clientId)).thenReturn(clientStateBytes);
+        when(lightClient.mock.getConsensusState(eq(clientId), any(byte[].class))).thenReturn(consensusStateBytes);
+
+        byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
+        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
+                BigInteger.valueOf(updateHeight.getRevisionNumber()),
+                BigInteger.valueOf(updateHeight.getRevisionHeight()));
+
+        clientStateCommitment = ByteUtil.join(clientKey, IBCCommitment.keccak256(clientStateBytes));
+        consensusStateCommitment = ByteUtil.join(consensusKey, IBCCommitment.keccak256(consensusStateBytes));
+
         proofHeight = Height.newBuilder()
                 .setRevisionHeight(5)
                 .setRevisionNumber(6).build();
@@ -117,6 +136,7 @@ public class ConnectionTest extends TestBase {
         // Arrange
         MsgConnectionOpenInit msg = new MsgConnectionOpenInit();
         msg.setClientId(clientId);
+        when(lightClient.mock.getClientState(clientId)).thenReturn(null);
 
         // Act & Assert
         String expectedErrorMessage = "Client state not found";
@@ -135,7 +155,6 @@ public class ConnectionTest extends TestBase {
         msg.setCounterparty(counterparty.toByteArray());
         msg.setDelayPeriod(delayPeriod);
         String expectedConnectionId = "connection-0";
-        when(lightClient.mock.getClientState(msg.getClientId())).thenReturn(new byte[0]);
 
         // Act
         connection.invoke(owner, "_connectionOpenInit", msg);
@@ -149,6 +168,8 @@ public class ConnectionTest extends TestBase {
                 .sendBTPMessage(
                         clientId,
                         ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
+        verify(connectionSpy).sendBTPMessage(clientId, clientStateCommitment);
+        verify(connectionSpy).sendBTPMessage(clientId, consensusStateCommitment);
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
     }
 
@@ -236,7 +257,8 @@ public class ConnectionTest extends TestBase {
                 .sendBTPMessage(
                         clientId,
                         ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
-
+        verify(connectionSpy).sendBTPMessage(clientId, clientStateCommitment);
+        verify(connectionSpy).sendBTPMessage(clientId, consensusStateCommitment);
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
     }
 
@@ -332,7 +354,8 @@ public class ConnectionTest extends TestBase {
                 .sendBTPMessage(
                         clientId,
                         ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
-
+        verify(connectionSpy, times(2)).sendBTPMessage(clientId, clientStateCommitment);
+        verify(connectionSpy, times(2)).sendBTPMessage(clientId, consensusStateCommitment);
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
     }
 
@@ -393,7 +416,8 @@ public class ConnectionTest extends TestBase {
                 .sendBTPMessage(
                         clientId,
                         ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
-
+        verify(connectionSpy, times(2)).sendBTPMessage(clientId, clientStateCommitment);
+        verify(connectionSpy, times(2)).sendBTPMessage(clientId, consensusStateCommitment);
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
 
     }
