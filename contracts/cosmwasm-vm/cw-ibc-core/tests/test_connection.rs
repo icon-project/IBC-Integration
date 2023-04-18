@@ -310,7 +310,7 @@ fn connection_open_ack_invalid_version() {
 }
 
 #[test]
-fn connection_open_ack_invalid_proof_height() {
+fn connection_open_ack_invalid_proof_height_zero() {
     let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
     let ack_msg = RawMsgConnectionOpenAck {
         proof_height: Some(Height {
@@ -356,7 +356,7 @@ fn connection_open_confirm_invalid_connection_id_non_alpha() {
 }
 
 #[test]
-fn connection_open_confirm_invalid_proof_height() {
+fn connection_open_confirm_invalid_proof_height_zero() {
     let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
     let confirm_msg = RawMsgConnectionOpenConfirm {
         proof_height: Some(Height {
@@ -1524,4 +1524,128 @@ fn test_check_connection() {
         .unwrap();
     let res = contract.check_for_connection(&mut deps.storage, client_id);
     assert_eq!(res.is_ok(), true);
+}
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
+fn test_connection_sequence_fails_without_initialising() {
+    let mut store = deps();
+    let contract = CwIbcCoreContext::new();
+    contract.connection_counter(store.as_ref().storage).unwrap();
+    contract
+        .increase_connection_counter(store.as_mut().storage)
+        .unwrap();
+}
+
+#[test]
+fn connection_open_try_invalid_client_id_name_too_long() {
+    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
+    let try_msg = RawMsgConnectionOpenTry {
+        client_id: "abcdasdfasdfsdfasfdwefwfsdfsfsfasfwewvxcvdvwgadvaadsefghijklmnopqrstu"
+            .to_string(),
+        ..default_raw_try_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenTry::try_from(try_msg.clone());
+    assert_eq!(res_msg.is_err(), true)
+}
+
+#[test]
+fn connection_open_try_with_valid_client_id_with_special_chars() {
+    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
+    let try_msg = RawMsgConnectionOpenTry {
+        counterparty: Some (RawCounterparty{
+            client_id: "ClientId_".to_string(),
+            ..get_dummy_raw_counterparty(Some(0))
+        }),
+        ..default_raw_try_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenTry::try_from(try_msg.clone());
+    assert_eq!(res_msg.is_ok(), true)
+}
+
+#[test]
+fn connection_open_try_empty_counterparty_versions(){
+    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
+    let try_msg = RawMsgConnectionOpenTry {
+        counterparty_versions: Vec::new(),
+        ..default_raw_try_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenTry::try_from(try_msg.clone());
+    assert_eq!(res_msg.is_ok(), false)
+}
+
+#[test]
+fn connection_open_try_invalid_proof_height_zero(){
+    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
+    let try_msg = RawMsgConnectionOpenTry {
+       proof_height: Some(Height { revision_number: 1, revision_height: 0 }),
+        ..default_raw_try_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenTry::try_from(try_msg.clone());
+    assert_eq!(res_msg.is_ok(), false)
+}
+
+#[test]
+fn connection_open_try_invalid_consensus_height_zero(){
+    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
+    let try_msg = RawMsgConnectionOpenTry {
+       consensus_height: Some(Height { revision_number: 1, revision_height: 0 }),
+        ..default_raw_try_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenTry::try_from(try_msg.clone());
+    assert_eq!(res_msg.is_ok(), false)
+}
+
+#[test]
+fn connection_open_try_empty_proof(){
+    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
+    let try_msg = RawMsgConnectionOpenTry {
+        proof_init: b"".to_vec(),
+        ..default_raw_try_msg.clone()
+    };
+    let res_msg = MsgConnectionOpenTry::try_from(try_msg.clone());
+    assert_eq!(res_msg.is_ok(), false)
+}
+
+#[test]
+#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
+fn connection_open_init_fails(){
+    let mut deps = deps();
+
+    let message = RawMsgConnectionOpenInit {
+        client_id: "client_id_on_a".to_string(),
+        counterparty: Some(get_dummy_raw_counterparty(None)),
+        version: None,
+        delay_period: 0,
+        signer: get_dummy_bech32_account(),
+    };
+
+    let res_msg =
+        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+            message.clone(),
+        )
+        .unwrap();
+
+    let contract = CwIbcCoreContext::new();
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+    }
+    .try_into()
+    .unwrap();
+
+    let cl = to_vec(&client_state);
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &res_msg.client_id_on_a.clone(),
+            cl.unwrap(),
+        )
+        .unwrap();
+    contract.connection_open_init(deps.as_mut(), res_msg).unwrap();
+  
 }
