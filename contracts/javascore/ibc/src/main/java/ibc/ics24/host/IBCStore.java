@@ -7,8 +7,10 @@ import ibc.icon.score.util.NullChecker;
 import ibc.ics05.port.ModuleManager;
 import score.*;
 import score.annotation.External;
+import scorex.util.ArrayList;
 
 import java.math.BigInteger;
+import java.util.List;
 
 public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String COMMITMENTS = "commitments";
@@ -22,6 +24,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String NEXT_SEQUENCE_ACKNOWLEDGEMENTS = "nextSequenceAcknowledgements";
     private static final String PACKET_RECEIPTS = "packetReceipts";
     private static final String CAPABILITIES = "capabilities";
+    private static final String PORT_IDS = "portIds";
     private static final String EXPECTED_TIME_PER_BLOCK = "expectedTimePerBlock";
     private static final String NEXT_CLIENT_SEQUENCE = "nextClientSequence";
     private static final String NEXT_CONNECTION_SEQUENCE = "nextConnectionSequence";
@@ -54,7 +57,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
             .newBranchDB(PACKET_RECEIPTS, Boolean.class);
 
     public static final BranchDB<byte[], ArrayDB<Address>> capabilities = Context.newBranchDB(CAPABILITIES, Address.class);
-
+    public static final ArrayDB<byte[]> portIds = Context.newArrayDB(PORT_IDS, byte[].class);
     // Host Parameters
     public static final VarDB<BigInteger> expectedTimePerBlock = Context.newVarDB(EXPECTED_TIME_PER_BLOCK, BigInteger.class);
 
@@ -126,6 +129,16 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
         }
 
         return capability;
+    }
+
+    @External(readonly = true)
+    public List<byte[]> getBindPorts() {
+        List<byte[]> ports = new ArrayList<>();
+        final int size = portIds.size();
+        for (int i = 0; i < size; i++) {
+            ports.add(i, portIds.get(i));
+        }
+        return ports;
     }
 
     @External(readonly = true)

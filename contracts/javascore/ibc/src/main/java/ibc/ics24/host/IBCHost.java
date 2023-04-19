@@ -23,6 +23,9 @@ public class IBCHost extends IBCStore {
     public void claimCapability(byte[] name, Address addr) {
         ArrayDB<Address> capability = capabilities.at(name);
         int capabilitiesCount = capability.size();
+        if (capabilitiesCount == 0) {
+            portIds.add(name);
+        }
         for (int i = 0; i < capabilitiesCount; i++) {
             Context.require(!capability.get(i).equals(addr), TAG + "Capability already claimed");
         }
