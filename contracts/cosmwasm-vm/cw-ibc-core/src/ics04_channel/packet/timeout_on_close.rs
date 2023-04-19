@@ -164,6 +164,7 @@ impl<'a> CwIbcCoreContext<'a> {
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
 
         let light_client_message = LightClientMessage::TimeoutOnCLose {
+            client_id: client_id_on_a.to_string(),
             verify_channel_state,
             next_seq_recv_verification_result,
         };
