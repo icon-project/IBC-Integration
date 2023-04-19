@@ -208,13 +208,9 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 .decode(mustGetConsensusState(clientId, height.getRevisionHeight()));
 
         byte[] root = consensusState.getRoot().getHash();
-        //TODO: use verify membership from vector commitment
-        //TODO: fix this key
-        byte[] key = new byte[0];
 
         CommitmentProof commitmentProof = CommitmentProof.decode(proof);
-        Ics23.verifyMembership(Proof.getTendermintSpec(), root, commitmentProof, key, value);
-//        Context.require(true, "Verification failed");
+        Ics23.verifyMembership(Proof.getTendermintSpec(), root, commitmentProof, path, value);
     }
 
     @External
@@ -236,12 +232,8 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         byte[] root = consensusState.getRoot().getHash();
 
-        //TODO: call verifyNonMembership of vector commitment
-        //TODO: fix this key
-        byte[] key = new byte[0];
         CommitmentProof commitmentProof = CommitmentProof.decode(proof);
-        Ics23.verifyNonMembership(Proof.getTendermintSpec(), root, commitmentProof, key);
-//        Context.require(true, "Verification failed");
+        Ics23.verifyNonMembership(Proof.getTendermintSpec(), root, commitmentProof, path);
     }
 
     // checkValidity checks if the Tendermint header is valid.
