@@ -194,8 +194,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         // Assert
         String expectedErrorMessage = "failed to authenticate " + nonAuthModule.getAddress();
         Executable nonAuthPacketAck = () -> handler.invoke(nonAuthModule, "writeAcknowledgement",
-                lastPacket.getDestinationPort(), lastPacket.getDestinationChannel(),
-                BigInteger.valueOf(lastPacket.getSequence()), acknowledgement);
+                lastPacket.toByteArray(), acknowledgement);
         AssertionError e = assertThrows(AssertionError.class, nonAuthPacketAck);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
 
@@ -206,7 +205,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         // Arrange
         // 10 seconds delay
         delayPeriod = BigInteger.valueOf(10).multiply(BigInteger.TEN.pow(6));
-        // 2 second block time
+        // 2-second block time
         BigInteger expectedTimePerBlock = BigInteger.TWO.multiply(BigInteger.TEN.pow(6));
         BigInteger expectedDelayTime = delayPeriod.add(expectedTimePerBlock).subtract(BigInteger.ONE)
                 .divide(expectedTimePerBlock);
