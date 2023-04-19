@@ -264,10 +264,20 @@ public class Proto {
         if (item.equals(BigInteger.ZERO)) {
             return new byte[0];
         }
-        long l = item.longValue();
         byte[] bs = new byte[9];
         bs[0] = (byte) (order << 3 | 1);
-        for (int i = 1; i < 9; i++) {
+        byte[] num = encodeFixed64(item);
+        System.arraycopy(num, 0, bs, 1, num.length);
+        return bs;
+    }
+
+    public static byte[] encodeFixed64(BigInteger item) {
+        byte[] bs = new byte[8];
+        if (item.equals(BigInteger.ZERO)) {
+            return bs;
+        }
+        long l = item.longValue();
+        for (int i = 0; i < 8; i++) {
             bs[i] = (byte) (l & 0xFF);
             l >>= 8;
         }
