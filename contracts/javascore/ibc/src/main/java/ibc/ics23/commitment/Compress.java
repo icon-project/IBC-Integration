@@ -117,7 +117,7 @@ public class Compress {
         int proofEntriesSize = proof.getEntries().size();
         List<BatchEntry> entries = new ArrayList<>(proofEntriesSize);
         for (int i = 0; i < proofEntriesSize; i++) {
-            entries.set(i, decompressEntry(proof.getEntries().get(i), proof.getLookupInners()));
+            entries.add(i, decompressEntry(proof.getEntries().get(i), proof.getLookupInners()));
         }
         return entries;
     }
@@ -125,6 +125,7 @@ public class Compress {
     public static BatchEntry decompressEntry(CompressedBatchEntry entry, List<InnerOp> lookup) {
         var batchEntry = new BatchEntry();
         if (!isCompressedExistenceProofEmpty(entry.getExist())) {
+            batchEntry.setExist(decompressExist(entry.getExist(), lookup));
             return batchEntry;
         }
 
@@ -152,7 +153,7 @@ public class Compress {
             BigInteger step = proof.getPath().get(i);
             Context.require(step.compareTo(BigInteger.ZERO) >= 0);
             Context.require(step.compareTo(BigInteger.valueOf(lookup.size())) < 0);
-            path.set(i, lookup.get(step.intValue()));
+            path.add(i, lookup.get(step.intValue()));
         }
         decoProof.setPath(path);
         return decoProof;
