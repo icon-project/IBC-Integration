@@ -32,20 +32,11 @@ public class Proto {
     public static DecodeResponse<byte[]> decodeBytes(byte[] data, int index) {
         DecodeResponse<byte[]> resp = new DecodeResponse<>();
 
-        int length = 0;
-        for (int shift = 0; shift < 64; shift += 7) {
-            final byte b = data[index];
-            index++;
-            length |= (long) (b & 0x7F) << shift;
-            if ((b & 0x80) == 0) {
-                break;
-            }
-        }
+        DataSize dataSize = getDataSize(data, index);
+        byte[] res = new byte[dataSize.length];
 
-        byte[] res = new byte[length];
-
-        System.arraycopy(data, index, res, 0, length);
-        resp.index = index + length;
+        System.arraycopy(data, dataSize.index, res, 0, dataSize.length);
+        resp.index = dataSize.index + dataSize.length;
         resp.res = res;
 
         return resp;
@@ -70,20 +61,12 @@ public class Proto {
     }
 
     public static DecodeResponse<BigInteger> decodeVarInt(byte[] data, int index) {
-        long result = 0;
         DecodeResponse<BigInteger> resp = new DecodeResponse<>();
 
-        for (int shift = 0; shift < 64; shift += 7) {
-            final byte b = data[index];
-            index++;
-            result |= (long) (b & 0x7F) << shift;
-            if ((b & 0x80) == 0) {
-                break;
-            }
-        }
+        DataSize dataSize = getDataSize(data, index);
 
-        resp.index = index;
-        resp.res = BigInteger.valueOf(result);
+        resp.index = dataSize.index;
+        resp.res = BigInteger.valueOf(dataSize.length);
         return resp;
     }
 
@@ -258,11 +241,10 @@ public class Proto {
         long value = item.longValue();
 
         while (true) {
+            size++;
             if ((value & ~0x7FL) == 0) {
-                size++;
                 return size;
             } else {
-                size++;
                 value >>>= 7;
             }
         }
