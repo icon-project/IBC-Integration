@@ -84,9 +84,9 @@ public class CompressedExistenceProof extends ProtoMessage {
             break;
         }
         case 4: {
-            Proto.DecodeResponse<BigInteger> resp = Proto.decodeVarInt(data, index);
+            Proto.DecodeResponse<List<BigInteger>> resp = Proto.decodeVarIntArray(data, index);
             index = resp.index;
-            obj.path.add(resp.res);
+            obj.path.addAll(resp.res);
             break;
         }
       }
