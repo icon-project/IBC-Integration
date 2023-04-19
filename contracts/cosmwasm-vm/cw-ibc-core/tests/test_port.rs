@@ -133,7 +133,7 @@ fn channel_capability_path() {
 }
 
 #[test]
-#[should_panic(expected = "CapabilityNotFound")]
+#[should_panic(expected = "KeyNotFound")]
 fn test_bind_port_fail() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
