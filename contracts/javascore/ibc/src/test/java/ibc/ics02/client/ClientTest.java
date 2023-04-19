@@ -91,32 +91,13 @@ public class ClientTest extends TestBase {
         msg.setBtpNetworkId(4);
         String expectedClientId = msg.getClientType() + "-0";
 
-        byte[] clientStateCommitment = new byte[4];
-        byte[] consensusStateCommitment = new byte[5];
-        Height consensusHeight = Height.newBuilder()
-                .setRevisionHeight(1)
-                .setRevisionNumber(2).build();
-        when(lightClient.mock.createClient(msg.getClientType() + "-" + BigInteger.ZERO, msg.getClientState(),
-                msg.getConsensusState())).thenReturn(Map.of(
-                        "clientStateCommitment", clientStateCommitment,
-                        "consensusStateCommitment", consensusStateCommitment,  
-                        "height", consensusHeight.toByteArray()
-                ));
-
         // Act
         client.invoke(owner, "registerClient", msg.getClientType(), lightClient.getAddress());
         client.invoke(owner, "_createClient", msg);
 
-        // Assert
-        byte[] clientKey = IBCCommitment.clientStateCommitmentKey(expectedClientId);
-        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(expectedClientId,
-                BigInteger.valueOf(consensusHeight.getRevisionNumber()),
-                BigInteger.valueOf(consensusHeight.getRevisionHeight()));
-        verify(clientSpy).sendBTPMessage(expectedClientId, ByteUtil.join(clientKey, clientStateCommitment));
-        verify(clientSpy).sendBTPMessage(expectedClientId, ByteUtil.join(consensusKey, consensusStateCommitment));
-
+       // Assert
         assertEquals(BigInteger.ONE, client.call("getNextClientSequence"));
-        assertEquals(4, client.call("getBTPNetworkId", expectedClientId));
+        verify(lightClient.mock).createClient(expectedClientId, msg.getClientState(), msg.getConsensusState());
     }
 
     @Test
@@ -142,31 +123,10 @@ public class ClientTest extends TestBase {
         msg.setClientId("type-0");
         msg.setClientMessage(new byte[4]);
 
-        byte[] clientStateCommitment = new byte[6];
-        byte[] consensusStateCommitment = new byte[7];
-
-        Height consensusHeight = Height.newBuilder()
-                .setRevisionHeight(1)
-                .setRevisionNumber(2).build();
-
-        when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(Map.of(
-                "clientStateCommitment", clientStateCommitment,
-                "consensusStateCommitment", consensusStateCommitment,  
-                "height", consensusHeight.toByteArray()
-        ));
-
-
         // Act
         client.invoke(owner, "_updateClient", msg);
 
         // Assert
         verify(lightClient.mock).updateClient(msg.getClientId(), msg.getClientMessage());
-
-        byte[] clientKey = IBCCommitment.clientStateCommitmentKey(msg.getClientId());
-        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(msg.getClientId(),
-                BigInteger.valueOf(consensusHeight.getRevisionNumber()),
-                BigInteger.valueOf(consensusHeight.getRevisionHeight()));
-        verify(clientSpy).sendBTPMessage(msg.getClientId(), ByteUtil.join(clientKey, clientStateCommitment));
-        verify(clientSpy).sendBTPMessage(msg.getClientId(), ByteUtil.join(consensusKey, consensusStateCommitment));
     }
 }

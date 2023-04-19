@@ -6,14 +6,12 @@ use cw_ibc_core::ics04_channel::close_init::{
 use std::{str::FromStr, time::Duration};
 
 use cosmwasm_std::{to_binary, Addr, Event, IbcOrder, Reply, SubMsgResponse, SubMsgResult};
+use cw_common::types::{ChannelId, ConnectionId, PortId};
 use cw_ibc_core::ics04_channel::open_init::create_channel_submesssage;
 use cw_ibc_core::ics04_channel::EXECUTE_ON_CHANNEL_CLOSE_INIT;
-use cw_ibc_core::traits::*;
 use cw_ibc_core::{
-    context::CwIbcCoreContext,
-    ics04_channel::MsgChannelCloseInit,
-    types::{ChannelId, ConnectionId, PortId},
-    ChannelEnd, ConnectionEnd, IbcClientId,
+    context::CwIbcCoreContext, ics04_channel::MsgChannelCloseInit, ChannelEnd, ConnectionEnd,
+    IbcClientId,
 };
 use ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},
@@ -35,7 +33,7 @@ fn test_validate_close_init_channel() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -113,7 +111,7 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -208,7 +206,7 @@ fn test_execute_close_init_channel_fail() {
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();

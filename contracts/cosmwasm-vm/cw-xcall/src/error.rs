@@ -32,10 +32,12 @@ pub enum ContractError {
     RollbackNotEnabled,
     #[error("InvalidSequenceId {id}")]
     InvalidSequenceId { id: u128 },
-    #[error("DecodeFaild {error}")]
+    #[error("DecodeFailed {error}")]
     DecodeFailed { error: String },
     #[error("OnlyAdmin")]
     OnlyAdmin,
     #[error("AdminAddressCannotBeNull")]
     AdminAddressCannotBeNull {},
+    #[error("InvalidAddress {address}")]
+    InvalidAddress { address: String },
 }

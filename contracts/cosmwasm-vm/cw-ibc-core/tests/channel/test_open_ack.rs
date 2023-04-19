@@ -1,6 +1,9 @@
 use super::*;
+use cosmwasm_std::IbcChannel;
 use cw_ibc_core::ics04_channel::{
-    open_ack::on_chan_open_ack_submessage, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
+    open_ack::{channel_open_ack_validate, on_chan_open_ack_submessage},
+    open_try::channel_open_try_msg_validate,
+    EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
 };
 
 #[test]
@@ -109,7 +112,7 @@ fn test_validate_open_ack_channel() {
     let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = PortId::from(msg.port_id_on_a.clone());
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -247,7 +250,7 @@ fn test_execute_open_ack_from_light_client() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_ibc_core::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -403,4 +406,110 @@ fn test_execute_open_ack_channel_fail_invalid_state() {
     contract
         .execute_channel_open_ack(deps.as_mut(), reply)
         .unwrap();
+}
+
+#[test]
+fn test_channel_open_ack_validate() {
+    let raw = get_dummy_raw_msg_chan_open_ack(10);
+    let msg = MsgChannelOpenAck::try_from(raw.clone()).unwrap();
+    let conn_id = ConnectionId::new(5);
+    let port_id = PortId::from(msg.port_id_on_a.clone());
+    let channel_end = ChannelEnd {
+        state: State::Init,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: port_id.ibc_port_id().clone(),
+            channel_id: Some(msg.chan_id_on_b.clone()),
+        },
+        connection_hops: vec![conn_id.connection_id().clone()],
+        version: Version::new("xcall".to_string()),
+    };
+    let res = channel_open_ack_validate(&msg, &channel_end);
+
+    assert!(res.is_ok())
+}
+
+#[test]
+#[should_panic(expected = "InvalidChannelState")]
+fn test_channel_open_ack_validate_fail() {
+    let raw = get_dummy_raw_msg_chan_open_ack(10);
+    let msg = MsgChannelOpenAck::try_from(raw.clone()).unwrap();
+    let conn_id = ConnectionId::new(5);
+    let port_id = PortId::from(msg.port_id_on_a.clone());
+    let channel_end = ChannelEnd {
+        state: State::TryOpen,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: port_id.ibc_port_id().clone(),
+            channel_id: Some(msg.chan_id_on_b.clone()),
+        },
+        connection_hops: vec![conn_id.connection_id().clone()],
+        version: Version::new("xcall".to_string()),
+    };
+    channel_open_ack_validate(&msg, &channel_end).unwrap();
+}
+
+#[test]
+pub fn test_on_chan_open_ack_submessage() {
+    let raw = get_dummy_raw_msg_chan_close_confirm(10);
+    let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
+    let conn_id = ConnectionId::new(5);
+    let port_id = PortId::from(msg.port_id_on_b.clone());
+    let channel_end = ChannelEnd {
+        state: State::Open,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: port_id.ibc_port_id().clone(),
+            channel_id: Some(msg.chan_id_on_b.clone()),
+        },
+        connection_hops: vec![conn_id.connection_id().clone()],
+        version: Version::new("xcall".to_string()),
+    };
+    let endpoint = cosmwasm_std::IbcEndpoint {
+        port_id: port_id.ibc_port_id().to_string(),
+        channel_id: msg.chan_id_on_b.to_string(),
+    };
+    let counter_party = cosmwasm_std::IbcEndpoint {
+        port_id: channel_end.remote.port_id.to_string(),
+        channel_id: channel_end.clone().remote.channel_id.unwrap().to_string(),
+    };
+    let res = on_chan_open_ack_submessage(
+        &channel_end,
+        &port_id,
+        &msg.chan_id_on_b.clone().into(),
+        &conn_id,
+    );
+    let expected = cosmwasm_std::IbcChannelConnectMsg::OpenAck {
+        channel: IbcChannel::new(
+            endpoint,
+            counter_party,
+            cosmwasm_std::IbcOrder::Unordered,
+            "xcall".to_string(),
+            conn_id.connection_id().to_string(),
+        ),
+        counterparty_version: channel_end.version().to_string(),
+    };
+
+    assert_eq!(res.unwrap(), expected);
+}
+
+#[test]
+#[should_panic(expected = "InvalidVersionLengthConnection")]
+fn test_channel_open_try_validate_fail_invalid_connection_lenght() {
+    let raw = get_dummy_raw_msg_chan_open_try(10);
+    let msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let mut connection_end = ConnectionEnd::default();
+    connection_end.set_state(ibc::core::ics03_connection::connection::State::Open);
+    channel_open_try_msg_validate(&msg, &connection_end).unwrap();
+}
+
+#[test]
+fn test_channel_open_try_validate() {
+    let raw = get_dummy_raw_msg_chan_open_try(10);
+    let msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let mut connection_end = ConnectionEnd::default();
+    connection_end.set_state(ibc::core::ics03_connection::connection::State::Open);
+    connection_end.set_version(ibc::core::ics03_connection::version::Version::default());
+    let res = channel_open_try_msg_validate(&msg, &connection_end);
+    assert!(res.is_ok());
 }

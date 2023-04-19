@@ -56,11 +56,10 @@ pub fn on_chan_open_try_submessage(
         msg.version.to_string(),
         connection_id.connection_id().to_string(),
     );
-    let data = cosmwasm_std::IbcChannelOpenMsg::OpenTry {
+    cosmwasm_std::IbcChannelOpenMsg::OpenTry {
         channel: ibc_channel,
         counterparty_version: msg.version.to_string(),
-    };
-    data
+    }
 }
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -85,7 +84,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = types::ModuleId::from(module_id);
+                    let module_id = cw_common::types::ModuleId::from(module_id);
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
@@ -109,22 +108,18 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_opne_init_module_validation")
+                        .add_attribute("method", "channel_open_init_module_validation")
                         .add_submessage(on_chan_open_try))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcChannelError {
-                    error: ChannelError::NoCommonVersion,
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcChannelError {
+                error: ChannelError::NoCommonVersion,
+            }),
         }
     }
 }

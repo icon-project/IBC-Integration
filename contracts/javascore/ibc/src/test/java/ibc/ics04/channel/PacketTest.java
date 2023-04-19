@@ -130,7 +130,6 @@ public class PacketTest extends TestBase {
         timeOutHeight.setRevisionHeight(BigInteger.valueOf(6000000));
         timeOutHeight.setRevisionNumber(BigInteger.ZERO);
         basePacket.setTimeoutHeight(timeOutHeight);
-        basePacket.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp()*2));
     }
 
     @Test
@@ -210,22 +209,21 @@ public class PacketTest extends TestBase {
     }
 
     @Test
-    void sendPacket_toLowBlockTimestamp() {
+    void sendPacket_withTimestampTimeout() {
         // Arrange
         Height latestHeight = new Height();
         latestHeight.setRevisionHeight(BigInteger.ZERO);
         latestHeight.setRevisionNumber(BigInteger.ZERO);
-        BigInteger destinationChainBlockTimestamp = BigInteger.TEN;
-        basePacket.setTimeoutTimestamp(destinationChainBlockTimestamp.subtract(BigInteger.ONE));
+        basePacket.setTimeoutTimestamp(BigInteger.ONE);
         when(lightClient.mock.getLatestHeight(clientId)).thenReturn(latestHeight.encode());
         when(lightClient.mock.getTimestampAtHeight(clientId, latestHeight.encode()))
-                .thenReturn(destinationChainBlockTimestamp);
+                .thenReturn(BigInteger.ONE);
 
         // Act & Assert
-        String expectedErrorMessage = "receiving chain block timestamp >= packet timeout timestamp";
-        Executable toLowBlockTimestamp = () -> packet.invoke(owner, "_sendPacket", basePacket);
+        String expectedErrorMessage = "Timeout timestamps are not available, use timeout height instead";
+        Executable withTimestampTimeout = () -> packet.invoke(owner, "_sendPacket", basePacket);
         AssertionError e = assertThrows(AssertionError.class,
-                toLowBlockTimestamp);
+            withTimestampTimeout);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
     }
 
@@ -483,7 +481,7 @@ public class PacketTest extends TestBase {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(baseCounterparty.getPortId(),
                 baseCounterparty.getChannelId(), sequence);
 
-        byte[] expectedCommitment = IBCCommitment.keccak256(IBCCommitment.sha256(acknowledgement));
+        byte[] expectedCommitment = IBCCommitment.sha256(acknowledgement);
         verify(packetSpy).sendBTPMessage(clientId, ByteUtil.join(ackCommitmentKey, expectedCommitment));
     }
 
@@ -633,11 +631,11 @@ public class PacketTest extends TestBase {
     }
 
     private byte[] createPacketCommitment(Packet packet) {
-        return IBCCommitment.keccak256(IBCCommitment.sha256(
+        return IBCCommitment.sha256(
                 ByteUtil.join(
                         packet.getTimeoutTimestamp().toByteArray(),
                         packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
                         packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
-                        packet.getData())));
+                        IBCCommitment.sha256(packet.getData())));
     }
 }

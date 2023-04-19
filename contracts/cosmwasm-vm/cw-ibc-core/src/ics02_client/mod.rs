@@ -4,13 +4,10 @@ pub mod client;
 pub mod events;
 pub mod handler;
 pub mod types;
+pub use super::*;
 
 use crate::{
-    context::CwIbcCoreContext,
-    msg::*,
-    traits::IbcClient,
-    types::{ClientId, ClientType},
-    ContractError, IbcClientId, IbcClientType,
+    context::CwIbcCoreContext, traits::IbcClient, ContractError, IbcClientId, IbcClientType,
 };
 use common::icon::icon::lightclient::v1::{
     ClientState as RawClientState, ConsensusState as RawConsensusState,
@@ -19,7 +16,12 @@ use cosmwasm_std::{
     from_binary, to_binary, to_vec, Addr, CosmosMsg, DepsMut, Event, MessageInfo, Reply, Response,
     Storage, SubMsg,
 };
+use cw_common::client_response::{
+    CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
+};
+use cw_common::types::{ClientId, ClientType};
 use events::{create_client_event, update_client_event, upgrade_client_event};
+use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
 use ibc::core::{
     ics02_client::{
         client_state::ClientState as IbcClientState,

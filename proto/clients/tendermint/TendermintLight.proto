@@ -1,6 +1,9 @@
 syntax = "proto3";
 package tendermint.light;
 
+option go_package = "libraries/go/common/tendermint;tendermint";
+import "gogoproto/gogo.proto";
+
 message Fraction {
   uint64 numerator = 1;
   uint64 denominator = 2;
@@ -18,6 +21,8 @@ message Consensus {
 }
 
 message ClientState {
+  option (gogoproto.goproto_getters) = false;
+
   string chain_id = 1;
   Fraction trust_level = 2;
 
@@ -43,6 +48,7 @@ message ClientState {
 
 // ConsensusState defines the consensus state from Tendermint.
 message ConsensusState {
+  option (gogoproto.goproto_getters) = false;
   // timestamp that corresponds to the block height in which the ConsensusState
   // was stored.
   Timestamp timestamp = 1;

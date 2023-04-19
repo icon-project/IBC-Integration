@@ -3,6 +3,10 @@ pub mod setup;
 use std::str::FromStr;
 
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
+use cw_common::client_response::{
+    CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
+};
+use cw_common::types::{ClientId, ClientType};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::{
@@ -12,26 +16,17 @@ use cw_ibc_core::{
         },
         types::{ClientState, ConsensusState},
     },
-    msg::{
-        CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
-    },
     traits::IbcClient,
-    types::{ClientId, ClientType},
     MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
 };
 use ibc::{
-    core::{
-        ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
-        ics23_commitment::commitment::CommitmentRoot,
-    },
+    core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
     mock::{
         client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
     },
     signer::Signer,
     Height,
 };
-
-use ibc_proto::ics23::CommitmentProof;
 use setup::*;
 
 #[test]
@@ -73,7 +68,7 @@ fn store_client_implement_success() {
     let mut mock = deps();
     let contract = CwIbcCoreContext::default();
 
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
 
     let client_id = ClientId::new(client_type, 1).unwrap();
 
@@ -95,12 +90,12 @@ fn store_client_implement_success() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidClientId { client_id: \"new_cleint_type-1\" }")]
+#[should_panic(expected = "InvalidClientId { client_id: \"new_client_type-1\" }")]
 fn store_client_implement_failure() {
     let mock = deps();
     let contract = CwIbcCoreContext::default();
 
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 1).unwrap();
 
     contract
@@ -112,7 +107,7 @@ fn store_client_implement_failure() {
 fn store_client_into_registry() {
     let mut mock = deps();
     let contract = CwIbcCoreContext::default();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let light_client_address = "light-client".to_string();
     contract
         .store_client_into_registry(
@@ -129,11 +124,11 @@ fn store_client_into_registry() {
     assert_eq!(light_client_address, result);
 }
 #[test]
-#[should_panic(expected = "InvalidClientType { client_type: \"new_cleint_type\" }")]
+#[should_panic(expected = "InvalidClientType { client_type: \"new_client_type\" }")]
 fn fails_on_querying_client_from_registry() {
     let mock = deps();
     let contract = CwIbcCoreContext::default();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     contract
         .get_client_from_registry(mock.as_ref().storage, client_type)
         .unwrap();
@@ -143,7 +138,7 @@ fn fails_on_querying_client_from_registry() {
 fn test_create_client_event() {
     let height = Height::new(15, 10).unwrap();
 
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
     let result = create_client_event(
         client_id.ibc_client_id().as_str(),
@@ -159,7 +154,7 @@ fn check_for_update_client_event() {
     let raw_message = get_dummy_raw_msg_update_client_message();
     let message: MsgUpdateClient = MsgUpdateClient::try_from(raw_message.clone()).unwrap();
     let height = Height::new(15, 10).unwrap();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let result = update_client_event(
         client_type.client_type(),
         height,
@@ -179,7 +174,7 @@ fn check_for_raw_message_to_update_client_message() {
 
 #[test]
 fn check_for_raw_message_to_updgrade_client() {
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
     let signer = get_dummy_account_id();
 
@@ -209,7 +204,7 @@ fn check_for_raw_message_to_updgrade_client() {
 
 #[test]
 fn test_upgrade_client_event() {
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
     let signer = get_dummy_account_id();
 
@@ -233,7 +228,7 @@ fn test_upgrade_client_event() {
 
     assert_eq!("upgrade_client", event.ty);
 
-    assert_eq!(event.attributes[0].value, "new_cleint_type-10")
+    assert_eq!(event.attributes[0].value, "new_client_type-10")
 }
 
 #[test]
@@ -247,7 +242,7 @@ fn create_misbehaviour_event_test() {
 
     assert_eq!(raw_message, raw_message_from_mb);
 
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
 
     let event = client_misbehaviour_event(
@@ -333,7 +328,7 @@ fn check_for_create_client_message_into_raw_message() {
 
 #[test]
 fn check_for_genereted_client_id_event() {
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
     let event = generated_client_id_event(client_id.ibc_client_id().clone());
 
@@ -911,7 +906,7 @@ fn check_for_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let client_type = ClientType::new("iconclient".to_string());
@@ -1012,7 +1007,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let client_type = ClientType::new("iconclient".to_string());
@@ -1113,7 +1108,7 @@ fn fails_on_upgrade_client_frozen_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let client_type = ClientType::new("iconclient".to_string());
@@ -1211,7 +1206,7 @@ fn check_for_execute_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let client_type = ClientType::new("iconclient".to_string());
@@ -1322,7 +1317,7 @@ fn check_for_execute_upgrade_client() {
 
 #[test]
 #[should_panic(
-    expected = "IbcClientError { error: InvalidClientIdentifier(InvalidLength { id: \"hello\", length: 5, min: 9, max: 64 }) }"
+    expected = "IbcDecodeError { error: \"identifier `hello` has invalid length `5` must be between `9`-`64` characters\" }"
 )]
 fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     let mut deps = deps();
@@ -1338,7 +1333,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -1399,7 +1394,7 @@ fn fails_on_unknown_response_on_execute_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let reply_message = Reply {
@@ -1430,7 +1425,7 @@ fn fails_on_null_response_data_on_execute_upgrade_client() {
     contract
         .ibc_store()
         .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds() as u128))
+        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let event = Event::new("empty");
@@ -1455,7 +1450,7 @@ fn fails_on_null_response_data_on_execute_upgrade_client() {
 fn fails_on_storing_already_registered_client_into_registry() {
     let mut mock_deps = deps();
     let contract = CwIbcCoreContext::default();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let light_client_address = "light-client".to_string();
     contract
         .store_client_into_registry(
@@ -1482,7 +1477,7 @@ fn fails_on_storing_already_registered_client_into_registry() {
 fn sucess_on_getting_client() {
     let mut mock_deps = deps();
     let contract = CwIbcCoreContext::default();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
     let client_address = "newclientaddress".to_string();
@@ -1503,11 +1498,11 @@ fn sucess_on_getting_client() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidClientId { client_id: \"new_cleint_type-0\" }")]
+#[should_panic(expected = "InvalidClientId { client_id: \"new_client_type-0\" }")]
 fn fails_on_getting_client_invalid_client() {
     let mock_deps = deps();
     let contract = CwIbcCoreContext::default();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
     contract
@@ -1517,12 +1512,12 @@ fn fails_on_getting_client_invalid_client() {
 
 #[test]
 #[should_panic(
-    expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"new_cleint_type-0\") } }"
+    expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"new_client_type-0\") } }"
 )]
 fn fails_on_getting_client_empty_client() {
     let mut mock_deps = deps();
     let contract = CwIbcCoreContext::default();
-    let client_type = ClientType::new("new_cleint_type".to_string());
+    let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
     let client_address = "".to_string();

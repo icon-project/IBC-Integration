@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
@@ -17,8 +18,8 @@ import (
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 
 	// icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
-	"github.com/strangelove-ventures/interchaintest/v6/ibc"
-	// "github.com/strangelove-ventures/interchaintest/v6/testutil"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	// "github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -33,10 +34,9 @@ type IconLocalnet struct {
 	findTxMu                  sync.Mutex
 	keystorePath, keyPassword string
 	scorePaths                map[string]string
-	initMessage               string
 }
 
-func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keystorePath string, keyPassword string, scorePaths map[string]string, initMessage string) chains.Chain {
+func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keystorePath string, keyPassword string, scorePaths map[string]string) chains.Chain {
 	return &IconLocalnet{
 		testName:      testName,
 		cfg:           chainConfig,
@@ -46,7 +46,6 @@ func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConf
 		keystorePath:  keystorePath,
 		keyPassword:   keyPassword,
 		scorePaths:    scorePaths,
-		initMessage:   initMessage,
 	}
 }
 
@@ -312,8 +311,18 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
 	contractName := ctxValue.ContractName
 
-	// TODO get scorepath
-	scoreAddress, err := c.getFullNode().DeployContract(ctx, c.scorePaths[contractName], c.keystorePath, c.initMessage)
+	// Get Init Message from context
+	ctxVal := ctx.Value(chains.InitMessage{}).(chains.InitMessage)
+	initMessage := ctxVal.InitMsg
+
+	if contractName == "xcall" {
+		ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+		bmcAddr := ctxValue.ContractAddress["bmc"]
+		initMessage = initMessage + bmcAddr
+	}
+
+	// Get ScoreAddress
+	scoreAddress, err := c.getFullNode().DeployContract(ctx, c.scorePaths[contractName], c.keystorePath, initMessage)
 	var contracts chains.ContractKey
 
 	contracts.ContractAddress = map[string]string{
@@ -326,30 +335,65 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 }
 
 // ExecuteContract implements chains.Chain
-func (*IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
-	panic("unimplemented")
+func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
+	ctx, execMethodName, p := c.GetExecuteParam(ctx, methodName, param)
+	hash, err := c.getFullNode().ExecuteContract(ctx, contractAddress, execMethodName, c.keystorePath, p)
+	fmt.Printf("Transaction Hash: %s\n", hash)
+	return ctx, err
 }
 
 // GetBlockByHeight implements chains.Chain
-func (*IconLocalnet) GetBlockByHeight(ctx context.Context) (context.Context, error) {
+func (c *IconLocalnet) GetBlockByHeight(ctx context.Context) (context.Context, error) {
 	panic("unimplemented")
 }
 
 // GetLastBlock implements chains.Chain
 func (c *IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error) {
+	time.Sleep(2 * time.Second)
 	h, err := c.getFullNode().Height(ctx)
 	return context.WithValue(ctx, chains.LastBlock{}, h), err
 }
 
 // QueryContract implements chains.Chain
-func (*IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
-	panic("unimplemented")
+func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
+	time.Sleep(2 * time.Second)
+
+	// get query msg
+	queryMsg := GetQueryParam(methodName)
+	output, err := c.getFullNode().QueryContract(ctx, contractAddress, queryMsg, "")
+	chains.Response = output
+	fmt.Printf("Response is : %s \n", output)
+	return ctx, err
 }
 
-func (it *IconLocalnet) SetAdminParams(ctx context.Context) string {
-	panic("unimplemented")
+func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
+	_, err := c.BuildWallet(ctx, keyName, "")
+	return err
 }
 
-func (it *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
-	panic("unimplemented")
+func (c *IconLocalnet) GetExecuteParam(ctx context.Context, methodName, params string) (context.Context, string, string) {
+	if strings.Contains(methodName, "set_admin") {
+		return c.SetAdminParams(ctx, methodName, params)
+	}
+	return ctx, "", ""
+}
+
+func GetQueryParam(methodName string) string {
+	return "admin"
+}
+
+func (c *IconLocalnet) SetAdminParams(ctx context.Context, methodaName, keyName string) (context.Context, string, string) {
+	var admins chains.Admins
+	executeMethodName := "setAdmin"
+	wallet, _ := c.BuildWallet(ctx, keyName, "")
+	addr := string(wallet.Address())
+	addr = strings.ReplaceAll(addr, `"`, "")
+	admins.Admin = map[string]string{
+		keyName: addr,
+	}
+	args := "_address=" + addr
+	fmt.Println(args)
+	return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+		Admin: admins.Admin,
+	}), executeMethodName, args
 }

@@ -36,15 +36,13 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] latestHeightRaw = client.getLatestHeight(connection.getClientId());
         Height latestHeight = Height.decode(latestHeightRaw);
 
-        Context.require(
-                isZero(packet.getTimeoutHeight()) || lt(latestHeight, packet.getTimeoutHeight()),
+        Context.require(lt(latestHeight, packet.getTimeoutHeight()),
                 "receiving chain block height >= packet timeout height");
         BigInteger latestTimestamp = client.getTimestampAtHeight(connection.getClientId(), latestHeightRaw);
         Context.require(latestTimestamp != null, "consensusState not found");
-        Context.require(
-                packet.getTimeoutTimestamp().equals(BigInteger.ZERO)
-                        || latestTimestamp.compareTo(packet.getTimeoutTimestamp()) < 0,
-                "receiving chain block timestamp >= packet timeout timestamp");
+        Context.require(packet.getTimeoutTimestamp().equals(BigInteger.ZERO),
+                "Timeout timestamps are not available, use timeout height instead");
+
 
         DictDB<String, BigInteger> nextSequenceSourcePort = nextSequenceSends.at(packet.getSourcePort());
         BigInteger nextSequenceSend = nextSequenceSourcePort.getOrDefault(packet.getSourceChannel(), BigInteger.ZERO);
@@ -58,7 +56,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(),
                 packet.getSequence());
 
-        byte[] packetCommitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] packetCommitment = createPacketCommitment(packet);
         commitments.set(packetCommitmentKey, packetCommitment);
 
         sendBTPMessage(connection.getClientId(),
@@ -99,7 +97,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
-        byte[] commitmentBytes = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitmentBytes = createPacketCommitment(packet);
 
         verifyPacketCommitment(
                 connection,
@@ -143,7 +141,7 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(destinationPortId,
                 destinationChannel, sequence);
         Context.require(commitments.get(ackCommitmentKey) == null, "acknowledgement for packet already exists");
-        byte[] ackCommitment = IBCCommitment.keccak256(IBCCommitment.sha256(acknowledgement));
+        byte[] ackCommitment = IBCCommitment.sha256(acknowledgement);
         commitments.set(ackCommitmentKey, ackCommitment);
         sendBTPMessage(connection.getClientId(), ByteUtil.join(ackCommitmentKey, ackCommitment));
 
@@ -169,7 +167,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(), packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitment = createPacketCommitment(packet);
 
         Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
@@ -260,19 +258,16 @@ public class IBCPacket extends IBCChannelHandshake {
 
         // check that timeout height or timeout timestamp has passed on the other end
         Height height = Height.decode(proofHeight);
-        BigInteger timestampAtHeight = getClient(connection.getClientId()).getTimestampAtHeight(connection.getClientId(), proofHeight);
         boolean heightTimeout = packet.getTimeoutHeight().getRevisionHeight().compareTo(BigInteger.ZERO) > 0
                 && height.getRevisionHeight().compareTo(packet.getTimeoutHeight().getRevisionHeight()) >= 0;
-        boolean timeTimeout = packet.getTimeoutTimestamp().compareTo(BigInteger.ZERO) > 0
-                && timestampAtHeight.compareTo(packet.getTimeoutTimestamp()) >= 0;
-        Context.require(heightTimeout || timeTimeout, "Packet has not yet timed out");
+        Context.require(heightTimeout, "Packet has not yet timed out");
 
         // verify we actually sent this packet, check the store
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitment = createPacketCommitment(packet);
 
         Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
@@ -407,7 +402,7 @@ public class IBCPacket extends IBCChannelHandshake {
                         packet.getTimeoutTimestamp().toByteArray(),
                         packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
                         packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
-                        packet.getData()));
+                        IBCCommitment.sha256(packet.getData())));
     }
 
     private boolean isZero(Height height) {

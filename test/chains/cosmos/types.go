@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/strangelove-ventures/interchaintest/v6/chain/cosmos"
+	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 

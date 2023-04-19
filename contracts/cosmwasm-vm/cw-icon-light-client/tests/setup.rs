@@ -1,3 +1,4 @@
+#[cfg(test)]
 use cosmwasm_std::{
     coins,
     testing::{

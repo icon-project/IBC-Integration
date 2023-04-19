@@ -29,7 +29,11 @@ impl<'a> CwCallService<'a> {
         msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
         match msg {
-            ExecuteMsg::SetAdmin { address } => self.add_admin(deps.storage, info, address),
+            ExecuteMsg::SetAdmin { address } => {
+                let validated_address =
+                    CwCallService::validate_address(deps.api, address.as_str())?;
+                self.add_admin(deps.storage, info, validated_address)
+            }
             ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
@@ -43,7 +47,7 @@ impl<'a> CwCallService<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
-                let response = ibc_channel_open(deps, env, msg).map_err(|error| return error)?;
+                let response = ibc_channel_open(deps, env, msg)?;
 
                 match response {
                     Some(data) => Ok(Response::new().add_attribute("version", data.version)),
@@ -52,7 +56,7 @@ impl<'a> CwCallService<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelConnect { msg } => {
-                let response = ibc_channel_connect(deps, env, msg).map_err(|error| return error)?;
+                let response = ibc_channel_connect(deps, env, msg)?;
 
                 Ok(Response::new()
                     .add_attributes(response.attributes)
@@ -61,7 +65,7 @@ impl<'a> CwCallService<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelClose { msg } => {
-                let response = ibc_channel_close(deps, env, msg).map_err(|error| return error)?;
+                let response = ibc_channel_close(deps, env, msg)?;
                 Ok(Response::new()
                     .add_attributes(response.attributes)
                     .add_events(response.events)
@@ -70,9 +74,9 @@ impl<'a> CwCallService<'a> {
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketReceive { msg } => {
                 let response = ibc_packet_receive(deps, env, msg).map_err(|error| {
-                    return ContractError::Std(StdError::NotFound {
+                    ContractError::Std(StdError::NotFound {
                         kind: error.to_string(),
-                    });
+                    })
                 })?;
 
                 let response_data = Response::new()
@@ -85,20 +89,30 @@ impl<'a> CwCallService<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketAck { msg } => {
-                let response = ibc_packet_ack(deps, env, msg).map_err(|error| return error)?;
+                let response = ibc_packet_ack(deps, env, msg)?;
                 Ok(Response::new()
                     .add_attributes(response.attributes)
                     .add_events(response.events)
                     .add_submessages(response.messages))
             }
-            ExecuteMsg::UpdateAdmin { address } => self.update_admin(deps.storage, info, address),
+            ExecuteMsg::UpdateAdmin { address } => {
+                let validated_address =
+                    CwCallService::validate_address(deps.api, address.as_str())?;
+                self.update_admin(deps.storage, info, validated_address)
+            }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
         }
     }
 
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
-            QueryMsg::GetAdmin {} => to_binary(&self.query_admin(deps.storage).unwrap()),
+            QueryMsg::GetAdmin {} => match self.query_admin(deps.storage) {
+                Ok(admin) => Ok(to_binary(&admin)?),
+                Err(error) => Err(StdError::NotFound {
+                    kind: error.to_string(),
+                }),
+            },
+
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
         }
@@ -124,7 +138,7 @@ impl<'a> CwCallService<'a> {
         let owner = Address::from(info.sender.as_str());
 
         self.add_owner(deps.storage, owner)?;
-        self.init_last_sequnce_no(deps.storage, last_sequence_no)?;
+        self.init_last_sequence_no(deps.storage, last_sequence_no)?;
         self.init_last_request_id(deps.storage, last_request_id)?;
 
         Ok(Response::new())
@@ -134,14 +148,14 @@ impl<'a> CwCallService<'a> {
         let sequence_no = self.last_sequence_no().load(deps.storage)?;
 
         let response = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageReponse::new(
+            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageResponse::new(
                 sequence_no,
-                CallServiceResponseType::CallServiceResponseSucess,
+                CallServiceResponseType::CallServiceResponseSuccess,
                 "",
             ),
             cosmwasm_std::SubMsgResult::Err(err) => {
                 let error_message = format!("CallService Reverted : {err}");
-                CallServiceMessageReponse::new(
+                CallServiceMessageResponse::new(
                     sequence_no,
                     CallServiceResponseType::CallServiceResponseFailure,
                     &error_message,
@@ -174,9 +188,9 @@ impl<'a> CwCallService<'a> {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let code = 0;
 
-                let message_response = CallServiceMessageReponse::new(
+                let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
-                    CallServiceResponseType::CallServiceResponseSucess,
+                    CallServiceResponseType::CallServiceResponseSuccess,
                     "",
                 );
                 let event = event_call_executed(req_id, code, "");
@@ -185,7 +199,7 @@ impl<'a> CwCallService<'a> {
             cosmwasm_std::SubMsgResult::Err(err) => {
                 let code = -1;
                 let error_message = format!("CallService Reverted : {err}");
-                let message_response = CallServiceMessageReponse::new(
+                let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseFailure,
                     &error_message,

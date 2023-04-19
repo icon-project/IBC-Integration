@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
-	"github.com/strangelove-ventures/interchaintest/v6/ibc"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
 const (
-	DefaultNumValidators = 2
+	DefaultNumValidators = 1
 	DefaultNumFullNodes  = 1
 )
 

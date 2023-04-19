@@ -45,9 +45,10 @@ hex ="0.4.3"
 sha3 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.4.0", default-features = false }
 common = { path="../../../libraries/rust/common" }
+cw-common = { path="../cw-common" }
 prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
 serde-json-wasm = "0.5.0"
-cw-xcall = {path="../cw-xcall"}
+cw-xcall = {path="../cw-xcall", features=["library"]}
 
 [dev-dependencies]
 cw-multi-test = "0.16.2"
