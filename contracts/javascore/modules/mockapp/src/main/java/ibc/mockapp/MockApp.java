@@ -65,8 +65,8 @@ public class MockApp implements IIBCModule {
     }
 
     @External
-    public void ackPacket(BigInteger sequence, byte[] ack) {
-        Context.call(this.ibcHandler, "writeAcknowledgement", srcPort.get(), srcChan.get(), sequence, ack);
+    public void ackPacket(byte[] packet, byte[] ack) {
+        Context.call(this.ibcHandler, "writeAcknowledgement", packet, ack);
     }
 
     @External(readonly = true)
