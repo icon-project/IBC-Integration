@@ -56,7 +56,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(),
                 packet.getSequence());
 
-        byte[] packetCommitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] packetCommitment = createPacketCommitment(packet);
         commitments.set(packetCommitmentKey, packetCommitment);
 
         sendBTPMessage(connection.getClientId(),
@@ -97,7 +97,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
-        byte[] commitmentBytes = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitmentBytes = createPacketCommitment(packet);
 
         verifyPacketCommitment(
                 connection,
@@ -141,7 +141,7 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(destinationPortId,
                 destinationChannel, sequence);
         Context.require(commitments.get(ackCommitmentKey) == null, "acknowledgement for packet already exists");
-        byte[] ackCommitment = IBCCommitment.keccak256(IBCCommitment.sha256(acknowledgement));
+        byte[] ackCommitment = IBCCommitment.sha256(acknowledgement);
         commitments.set(ackCommitmentKey, ackCommitment);
         sendBTPMessage(connection.getClientId(), ByteUtil.join(ackCommitmentKey, ackCommitment));
 
@@ -167,7 +167,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(), packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitment = createPacketCommitment(packet);
 
         Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
@@ -267,7 +267,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(), packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitment = createPacketCommitment(packet);
 
         Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
