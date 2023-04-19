@@ -481,7 +481,7 @@ public class PacketTest extends TestBase {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(baseCounterparty.getPortId(),
                 baseCounterparty.getChannelId(), sequence);
 
-        byte[] expectedCommitment = IBCCommitment.keccak256(IBCCommitment.sha256(acknowledgement));
+        byte[] expectedCommitment = IBCCommitment.sha256(acknowledgement);
         verify(packetSpy).sendBTPMessage(clientId, ByteUtil.join(ackCommitmentKey, expectedCommitment));
     }
 
@@ -631,11 +631,11 @@ public class PacketTest extends TestBase {
     }
 
     private byte[] createPacketCommitment(Packet packet) {
-        return IBCCommitment.keccak256(IBCCommitment.sha256(
+        return IBCCommitment.sha256(
                 ByteUtil.join(
                         packet.getTimeoutTimestamp().toByteArray(),
                         packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
                         packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
-                        IBCCommitment.sha256(packet.getData()))));
+                        IBCCommitment.sha256(packet.getData())));
     }
 }
