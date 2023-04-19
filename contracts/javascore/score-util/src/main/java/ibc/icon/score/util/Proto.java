@@ -172,7 +172,7 @@ public class Proto {
     }
 
     public static byte[] encode(int order, Boolean item) {
-        if (!item) {
+        if (item==null) {
             return new byte[0];
         }
 
