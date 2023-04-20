@@ -360,7 +360,7 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
 
         byte[] ack = "ack".getBytes();
         Consumer<TransactionResult> consumer = client.WriteAcknowledgement((logs) -> {assertArrayEquals(ack, logs.get(0).getAcknowledgement());}, null);
-        consumer.accept(mockApp._send("ackPacket", Map.of("sequence", currRecvCount, "ack", ack)));
+        consumer.accept(mockApp._send("ackPacket", Map.of("packet", pct.encode(), "ack", ack)));
     }
 
     @Test
