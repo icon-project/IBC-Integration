@@ -1,5 +1,7 @@
 use cosmwasm_std::Empty;
 use cosmwasm_std::IbcReceiveResponse;
+use cw_common::client_response::XcallPacketResponseData;
+use cw_xcall::ack::make_ack_success;
 use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
 use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
@@ -168,7 +170,7 @@ fn test_receive_packet_validate_reply_from_light_client() {
     let data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer,
-        acknowledgement:None
+        acknowledgement: None,
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -231,7 +233,7 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
     let data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer,
-        acknowledgement:None
+        acknowledgement: None,
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -266,17 +268,33 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
 fn execute_receive_packet() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
+
+    let timeout_block = IbcTimeoutBlock {
+        revision: 0,
+        height: 10,
+    };
+    let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
 
     let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
-    let event = Event::new("test")
-        .add_attribute("key", packet.port_id_on_b.as_str())
-        .add_attribute("key", packet.chan_id_on_b.as_str())
-        .add_attribute("key", packet.seq_on_a.to_string());
-    let acknowledgement = cw_xcall::ack::make_ack_success();
+    let event = Event::new("test");
+    let acknowledgement = XcallPacketResponseData {
+        packet: packet.clone(),
+        acknowledgement: make_ack_success().to_vec(),
+    };
     let ack = ack.add_event(event);
-    let ack = ack.set_ack(acknowledgement);
+    let ack_data_bin = to_binary(&acknowledgement).unwrap();
+    let ack = ack.set_ack(ack_data_bin);
     let data_bin = to_binary(&ack).unwrap();
     let result = SubMsgResponse {
         data: Some(data_bin),
@@ -288,40 +306,61 @@ fn execute_receive_packet() {
     let chan_end_on_b = ChannelEnd::new(
         State::Open,
         Order::Unordered,
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+        Counterparty::new(
+            IbcPortId::from_str(&packet.src.port_id).unwrap(),
+            Some(IbcChannelId::from_str(&packet.src.channel_id).unwrap()),
+        ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
+            IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
+            IbcChannelId::from_str(&packet.src.channel_id)
+                .unwrap()
+                .into(),
             chan_end_on_b.clone(),
         )
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
-    assert!(res.is_ok());
-    assert_eq!(res.unwrap().events[0].ty, "test")
+
+    assert_eq!(res.unwrap().events[0].ty, "receive_packet")
 }
 
 #[test]
 fn execute_receive_packet_ordered() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
+    let timeout_block = IbcTimeoutBlock {
+        revision: 0,
+        height: 10,
+    };
+    let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
 
     let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
-    let event = Event::new("test")
-        .add_attribute("key", packet.port_id_on_b.as_str())
-        .add_attribute("key", packet.chan_id_on_b.as_str())
-        .add_attribute("key", packet.seq_on_a.to_string());
-    let acknowledgement = cw_xcall::ack::make_ack_success();
+    let event = Event::new("test");
+    let acknowledgement = XcallPacketResponseData {
+        packet: packet.clone(),
+        acknowledgement: make_ack_success().to_vec(),
+    };
     let ack = ack.add_event(event);
-    let ack = ack.set_ack(acknowledgement);
+    let ack_data_bin = to_binary(&acknowledgement).unwrap();
+    let ack = ack.set_ack(ack_data_bin);
     let data_bin = to_binary(&ack).unwrap();
+
     let result = SubMsgResponse {
         data: Some(data_bin),
         events: vec![],
@@ -332,23 +371,30 @@ fn execute_receive_packet_ordered() {
     let chan_end_on_b = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+        Counterparty::new(
+            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            Some(IbcChannelId::from_str(&packet.dest.channel_id).unwrap()),
+        ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
+            IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
+            IbcChannelId::from_str(&packet.src.channel_id)
+                .unwrap()
+                .into(),
             chan_end_on_b.clone(),
         )
         .unwrap();
     contract
         .store_next_sequence_recv(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
+            IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
+            IbcChannelId::from_str(&packet.src.channel_id)
+                .unwrap()
+                .into(),
             1.into(),
         )
         .unwrap();
@@ -356,11 +402,13 @@ fn execute_receive_packet_ordered() {
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
     let seq = contract.get_next_sequence_recv(
         &deps.storage,
-        packet.port_id_on_b.clone().into(),
-        packet.chan_id_on_b.clone().into(),
+        IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
+        IbcChannelId::from_str(&packet.src.channel_id)
+            .unwrap()
+            .into(),
     );
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().events[0].ty, "test");
+    assert_eq!(res.unwrap().events[0].ty, "receive_packet");
     assert!(seq.is_ok());
     assert_eq!(seq.unwrap(), 2.into())
 }
@@ -369,18 +417,34 @@ fn execute_receive_packet_ordered() {
 fn execute_receive_packet_ordered_fail_missing_sequence() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
+    let timeout_block = IbcTimeoutBlock {
+        revision: 0,
+        height: 10,
+    };
+    let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
 
     let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
-    let event = Event::new("test")
-        .add_attribute("key", packet.port_id_on_b.as_str())
-        .add_attribute("key", packet.chan_id_on_b.as_str())
-        .add_attribute("key", packet.seq_on_a.to_string());
-    let acknowledgement = cw_xcall::ack::make_ack_success();
+    let event = Event::new("test");
+    let acknowledgement = XcallPacketResponseData {
+        packet: packet.clone(),
+        acknowledgement: make_ack_success().to_vec(),
+    };
     let ack = ack.add_event(event);
-    let ack = ack.set_ack(acknowledgement);
+    let ack_data_bin = to_binary(&acknowledgement).unwrap();
+    let ack = ack.set_ack(ack_data_bin);
     let data_bin = to_binary(&ack).unwrap();
+
     let result = SubMsgResponse {
         data: Some(data_bin),
         events: vec![],
@@ -391,15 +455,20 @@ fn execute_receive_packet_ordered_fail_missing_sequence() {
     let chan_end_on_b = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+        Counterparty::new(
+            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            Some(IbcChannelId::from_str(&packet.dest.channel_id).unwrap()),
+        ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
+            IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
+            IbcChannelId::from_str(&packet.src.channel_id)
+                .unwrap()
+                .into(),
             chan_end_on_b.clone(),
         )
         .unwrap();

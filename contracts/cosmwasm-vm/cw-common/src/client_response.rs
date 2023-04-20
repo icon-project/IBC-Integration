@@ -2,6 +2,7 @@ use super::*;
 use crate::errors::CwErrors;
 use crate::types::{ClientId, ClientType};
 use cosmwasm_schema::cw_serde;
+
 use ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement;
 use ibc::core::ics04_channel::packet::Packet;
 use ibc::core::ics04_channel::timeout::TimeoutHeight;
@@ -251,4 +252,10 @@ pub struct OpenAckResponse {
     pub counterparty_client_id: String,
     pub counterparty_connection_id: String,
     pub counterparty_prefix: Vec<u8>,
+}
+
+#[cw_serde]
+pub struct XcallPacketResponseData {
+    pub packet: IbcPacket,
+    pub acknowledgement: Vec<u8>,
 }

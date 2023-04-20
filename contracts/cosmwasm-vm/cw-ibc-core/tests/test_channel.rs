@@ -1,6 +1,10 @@
 use std::{str::FromStr, time::Duration};
 
-use cosmwasm_std::{to_binary, to_vec, Addr, Event, Reply, SubMsgResponse, SubMsgResult};
+use cosmwasm_std::testing::mock_ibc_packet_recv;
+use cosmwasm_std::{
+    to_binary, to_vec, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
+    IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
+};
 
 use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};
 use cw_ibc_core::ics02_client::types::{ClientState, ConsensusState};
@@ -829,9 +833,31 @@ fn test_create_write_ack_packet_event() {
     let msg = Packet::try_from(raw.clone()).unwrap();
     let raw_back = RawPacket::from(msg.clone());
     let msg_back = Packet::try_from(raw_back.clone()).unwrap();
+    let timeout_block = IbcTimeoutBlock {
+        revision: 0,
+        height: 10,
+    };
+    let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
+    let ibc_packet_recv_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relayer"));
+
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    let event = create_write_ack_event(msg_back, vec![0], &IbcConnectionId::default());
+    let event = create_write_ack_event(
+        ibc_packet_recv_message.packet,
+        Order::Unordered.as_str(),
+        &IbcConnectionId::default().as_str(),
+    );
     assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
 }
 

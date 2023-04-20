@@ -219,7 +219,9 @@ impl<'a> CwIbcCoreContext<'a> {
                     );
                     let address = Addr::unchecked(packet_data.signer.to_string());
                     let ack = IbcAcknowledgement::new(acknowledgement.as_bytes());
-                    let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
+                    let cosm_msg = cw_xcall::msg::ExecuteMsg::IbcPacketAck {
+                        msg: cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address),
+                    };
                     let create_client_message: CosmosMsg =
                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                             contract_addr: contract_address.to_string(),

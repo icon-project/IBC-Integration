@@ -1,3 +1,5 @@
+use crate::ack::acknowledgement_data_on_success;
+
 use super::*;
 
 impl<'a> CwCallService<'a> {
@@ -68,14 +70,14 @@ impl<'a> CwCallService<'a> {
     ) -> Result<IbcReceiveResponse, ContractError> {
         // TODO : ADD check for sender logic
 
-        let call_service_message: CallServiceMessage = message.data.try_into()?;
+        let call_service_message: CallServiceMessage = message.data.clone().try_into()?;
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
-                self.hanadle_request(deps, call_service_message.payload())
+                self.hanadle_request(deps, call_service_message.payload(), &message)
             }
             CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, call_service_message.payload())
+                self.handle_response(deps, call_service_message.payload(), &message)
             }
         }
     }
@@ -84,6 +86,7 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         data: &[u8],
+        packet: &IbcPacket,
     ) -> Result<IbcReceiveResponse, ContractError> {
         let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
@@ -107,11 +110,17 @@ impl<'a> CwCallService<'a> {
             message_request.sequence_no(),
             request_id,
         );
+        let acknowledgement_data =
+            to_binary(&cw_common::client_response::XcallPacketResponseData {
+                packet: packet.clone(),
+                acknowledgement: make_ack_success().to_vec(),
+            })
+            .map_err(ContractError::Std)?;
 
         Ok(IbcReceiveResponse::new()
             .add_attribute("action", "call_service")
             .add_attribute("method", "handle_response")
-            .set_ack(make_ack_success())
+            .set_ack(acknowledgement_data)
             .add_event(event))
     }
 
@@ -119,6 +128,7 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         data: &[u8],
+        packet: &IbcPacket,
     ) -> Result<IbcReceiveResponse, ContractError> {
         let message: CallServiceMessageResponse = data.try_into()?;
         let response_sequence_no = message.sequence_no();
@@ -126,13 +136,20 @@ impl<'a> CwCallService<'a> {
         let mut call_request = self.query_request(deps.storage, response_sequence_no)?;
 
         if call_request.is_null() {
+            let acknowledgement_data =
+                to_binary(&cw_common::client_response::XcallPacketResponseData {
+                    packet: packet.clone(),
+                    acknowledgement: make_ack_fail(format!(
+                        "handle_resposne: no request for {}",
+                        response_sequence_no
+                    ))
+                    .to_vec(),
+                })
+                .map_err(ContractError::Std)?;
             return Ok(IbcReceiveResponse::new()
                 .add_attribute("action", "call_service")
                 .add_attribute("method", "handle_response")
-                .set_ack(make_ack_fail(format!(
-                    "handle_resposne: no request for {}",
-                    response_sequence_no
-                )))
+                .set_ack(acknowledgement_data)
                 .add_attribute(
                     "message",
                     format!("handle_resposne: no request for {}", response_sequence_no),
@@ -157,7 +174,7 @@ impl<'a> CwCallService<'a> {
                 Ok(IbcReceiveResponse::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
-                    .set_ack(make_ack_success())
+                    .set_ack(acknowledgement_data_on_success(packet)?)
                     .add_event(event))
             }
             _ => {
@@ -171,7 +188,7 @@ impl<'a> CwCallService<'a> {
                 Ok(IbcReceiveResponse::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
-                    .set_ack(make_ack_success())
+                    .set_ack(acknowledgement_data_on_success(packet)?)
                     .add_event(event))
             }
         }

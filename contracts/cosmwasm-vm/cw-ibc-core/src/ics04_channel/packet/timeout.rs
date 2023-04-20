@@ -223,7 +223,9 @@ impl<'a> CwIbcCoreContext<'a> {
                         timeout,
                     );
                     let address = Addr::unchecked(packet_data.signer.to_string());
-                    let cosm_msg = cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address);
+                    let cosm_msg = cw_xcall::msg::ExecuteMsg::IbcPacketTimeout {
+                        msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
+                    };
                     let create_client_message: CosmosMsg =
                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                             contract_addr: contract_address.to_string(),

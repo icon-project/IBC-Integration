@@ -51,3 +51,11 @@ pub fn on_ack_failure(packet: IbcPacket, error: &str) -> Result<IbcBasicResponse
         .add_attribute("success", "false")
         .add_attribute("error", error))
 }
+
+pub fn acknowledgement_data_on_success(packet: &IbcPacket) -> Result<Binary, ContractError> {
+    to_binary(&cw_common::client_response::XcallPacketResponseData {
+        packet: packet.clone(),
+        acknowledgement: make_ack_success().to_vec(),
+    })
+    .map_err(ContractError::Std)
+}
