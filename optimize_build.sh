@@ -4,5 +4,5 @@ for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do
     echo "Creating intermediate hash for $NAME ..."
     sha256sum -- "$WASM" | tee -a artifacts/checksums_intermediate.txt
     echo "Optimizing $NAME ..."
-    wasm-opt -Os "$WASM" -o "artifacts/$NAME"
+    wasm-opt -O -all "$WASM"   -o "artifacts/$NAME"
   done

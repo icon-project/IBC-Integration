@@ -4,11 +4,11 @@ use std::hash::Hash;
 use crate::icon::icon::types::v1::MerkleNode;
 pub mod commitment;
 
-pub fn keccak256(input: &[u8]) -> [u8;32]{
+pub fn keccak256(input: &[u8]) -> [u8; 32] {
     use sha3::{Digest, Keccak256};
     let mut hasher = Keccak256::new();
     hasher.update(input);
-    let out:[u8;32]=hasher.finalize().to_vec().try_into().unwrap();
+    let out: [u8; 32] = hasher.finalize().to_vec().try_into().unwrap();
     out
 }
 
@@ -21,13 +21,13 @@ pub fn calculate_root(leaf: [u8; 32], pathes: &[MerkleNode]) -> [u8; 32] {
     let mut temp = leaf;
 
     for path in pathes {
-       // let mut out = [0u8; 32];
+        // let mut out = [0u8; 32];
         let input = if path.dir == 0 {
             [path.value.clone(), temp.to_vec()].concat()
         } else {
             [temp.to_vec(), path.value.clone()].concat()
         };
-        let mut out =keccak256(&input);
+        let mut out = keccak256(&input);
         temp = out.try_into().unwrap();
     }
 
@@ -55,5 +55,3 @@ pub fn bytes32(s: &[u8]) -> Option<[u8; 32]> {
     result[..s_len].clone_from_slice(s);
     Some(result)
 }
-
-

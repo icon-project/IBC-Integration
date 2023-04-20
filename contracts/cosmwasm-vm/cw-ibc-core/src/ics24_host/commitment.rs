@@ -2,26 +2,23 @@ use ibc::{
     core::ics04_channel::{commitment::PacketCommitment, timeout::TimeoutHeight},
     timestamp::Timestamp,
 };
+use cw_common::commitment as cw_commitment;
 
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     pub fn client_state_path(&self, client_id: &ClientId) -> Vec<u8> {
-        ClientStatePath::new(client_id).to_string().into_bytes()
+        cw_commitment::client_state_path(client_id)
     }
     pub fn consensus_state_path(&self, client_id: &ClientId, height: &Height) -> Vec<u8> {
-        ClientConsensusStatePath::new(client_id, height)
-            .to_string()
-            .into_bytes()
+       cw_commitment::consensus_state_path(client_id, height)
     }
     pub fn connection_path(&self, connection_id: &ConnectionId) -> Vec<u8> {
-        ConnectionPath::new(connection_id).to_string().into_bytes()
+        cw_commitment::connection_path(connection_id)
     }
 
     pub fn channel_path(&self, port_id: &PortId, channel_id: &ChannelId) -> Vec<u8> {
-        ChannelEndPath::new(port_id, channel_id)
-            .to_string()
-            .into_bytes()
+        cw_commitment::channel_path(port_id, channel_id)
     }
     pub fn packet_commitment_path(
         &self,
@@ -29,9 +26,8 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        CommitmentPath::new(port_id, channel_id, sequence)
-            .to_string()
-            .into_bytes()
+        return cw_commitment::packet_commitment_path(port_id, channel_id, sequence)
+            
     }
     pub fn packet_acknowledgement_commitment_path(
         &self,
@@ -39,9 +35,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        AckPath::new(port_id, channel_id, sequence)
-            .to_string()
-            .into_bytes()
+        cw_commitment::acknowledgement_commitment_path(port_id, channel_id, sequence)
     }
 
     pub fn packet_receipt_commitment_path(
@@ -50,22 +44,18 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        ReceiptPath::new(port_id, channel_id, sequence)
-            .to_string()
-            .into_bytes()
+        cw_commitment::receipt_commitment_path(port_id, channel_id, sequence)
     }
     pub fn next_seq_recv_commitment_path(
         &self,
         port_id: &PortId,
         channel_id: &ChannelId,
     ) -> Vec<u8> {
-        SeqRecvPath::new(port_id, channel_id)
-            .to_string()
-            .into_bytes()
+        cw_commitment::next_seq_recv_commitment_path(port_id, channel_id)
     }
 
     pub fn client_state_commitment_key(&self, client_id: &ClientId) -> Vec<u8> {
-        keccak256(self.client_state_path(client_id))
+        cw_commitment::client_state_commitment_key(client_id)
     }
 
     pub fn consensus_state_commitment_key(
@@ -74,16 +64,15 @@ impl<'a> CwIbcCoreContext<'a> {
         revision_number: u64,
         revision_height: u64,
     ) -> Vec<u8> {
-        let height = Height::new(revision_number, revision_height).unwrap();
-        keccak256(self.consensus_state_path(client_id, &height))
+        cw_commitment::consensus_state_commitment_key(client_id, revision_number, revision_height)
     }
 
     pub fn connection_commitment_key(&self, connection_id: &ConnectionId) -> Vec<u8> {
-        keccak256(self.connection_path(connection_id))
+        cw_commitment::connection_commitment_key(connection_id)
     }
 
     pub fn channel_commitment_key(&self, port_id: &PortId, channel_id: &ChannelId) -> Vec<u8> {
-        keccak256(self.channel_path(port_id, channel_id))
+        cw_commitment::channel_commitment_key(port_id, channel_id)
     }
 
     pub fn packet_commitment_key(
@@ -92,7 +81,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        keccak256(self.packet_commitment_path(port_id, channel_id, sequence))
+       cw_commitment::packet_commitment_key(port_id, channel_id, sequence)
     }
 
     pub fn packet_acknowledgement_commitment_key(
@@ -101,7 +90,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        keccak256(self.packet_acknowledgement_commitment_path(port_id, channel_id, sequence))
+        cw_commitment::packet_acknowledgement_commitment_key(port_id, channel_id, sequence)
     }
 
     pub fn packet_receipt_commitment_key(
@@ -110,7 +99,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        keccak256(self.packet_receipt_commitment_path(port_id, channel_id, sequence))
+        cw_commitment::packet_receipt_commitment_key(port_id, channel_id, sequence)
     }
 
     pub fn next_sequence_recv_commitment_key(
@@ -118,15 +107,15 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &PortId,
         channel_id: &ChannelId,
     ) -> Vec<u8> {
-        keccak256(self.next_seq_recv_commitment_path(port_id, channel_id))
+        cw_commitment::next_sequence_recv_commitment_key(port_id, channel_id)
     }
 
     pub fn port_path(&self, port_id: &PortId) -> Vec<u8> {
-        PortPath(port_id.clone()).to_string().into_bytes()
+       cw_commitment::port_path(port_id)
     }
 
     pub fn port_commitment_key(&self, port_id: &PortId) -> Vec<u8> {
-        keccak256(self.port_path(port_id))
+       cw_commitment::port_commitment_key(port_id)
     }
 }
 
@@ -147,16 +136,8 @@ pub fn compute_packet_commitment(
     timeout_height: &TimeoutHeight,
     timeout_timestamp: &Timestamp,
 ) -> PacketCommitment {
-    let mut hash_input = timeout_timestamp.nanoseconds().to_be_bytes().to_vec();
-
-    let revision_number = timeout_height.commitment_revision_number().to_be_bytes();
-    hash_input.append(&mut revision_number.to_vec());
-
-    let revision_height = timeout_height.commitment_revision_height().to_be_bytes();
-    hash_input.append(&mut revision_height.to_vec());
-
-    let packet_data_hash = sha256(packet_data);
-    hash_input.append(&mut packet_data_hash.to_vec());
-
-    sha256(&hash_input).into()
+    cw_commitment::create_packet_commitment(
+        packet_data, timeout_height.commitment_revision_number(), 
+        timeout_height.commitment_revision_height(), 
+        timeout_timestamp.nanoseconds()).into()
 }

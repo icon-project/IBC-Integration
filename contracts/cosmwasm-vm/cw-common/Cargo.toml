@@ -12,9 +12,12 @@ crate-type = ["cdylib", "rlib"]
 cosmwasm-schema = "1.2.1"
 cosmwasm-std = "1.2.2"
 ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde", "borsh"]}
+ibc-proto = { version = "0.28.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 cw-storage-plus = "1.0.1"
 hex ="0.4.3"
-
+common = { path="../../../libraries/rust/common" }
+prost = { version = "0.11.8", default-features = false, features = ["prost-derive"] }
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
+test-utils={path="../../../libraries/rust/test-utils"}

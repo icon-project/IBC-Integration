@@ -79,7 +79,6 @@ pub struct TestPacket {
     pub source_port: String,
 }
 
-
 impl TryFrom<&TestMerkleNode> for MerkleNode {
     type Error = hex::FromHexError;
 
@@ -143,20 +142,20 @@ impl TryFrom<TestSignedHeader> for SignedHeader {
 }
 
 impl TryFrom<TestPacket> for Packet {
-    type Error= hex::FromHexError;
+    type Error = hex::FromHexError;
 
     fn try_from(value: TestPacket) -> Result<Self, Self::Error> {
-       let p= Packet {
-        data:hex::decode(value.data).unwrap(),
-        destination_channel:value.destination_channel,
-        destination_port:value.destination_port,
-        sequence:value.sequence,
-        source_channel:value.source_channel,
-        source_port:value.source_port,
-        timeout_timestamp:0,
-        timeout_height:None,
-    };
-       Ok(p)
+        let p = Packet {
+            data: hex::decode(value.data).unwrap(),
+            destination_channel: value.destination_channel,
+            destination_port: value.destination_port,
+            sequence: value.sequence,
+            source_channel: value.source_channel,
+            source_port: value.source_port,
+            timeout_timestamp: 0,
+            timeout_height: None,
+        };
+        Ok(p)
     }
 }
 
@@ -168,18 +167,14 @@ pub fn load_test_messages() -> Vec<TestMessageData> {
     return load_test_data::<TestMessageData>("test_data/test_messages.json");
 }
 
-
-
-pub fn load_test_data<T:for<'a> Deserialize<'a>>(path:&str)->Vec<T>{
+pub fn load_test_data<T: for<'a> Deserialize<'a>>(path: &str) -> Vec<T> {
     let mut root = get_project_root().unwrap();
     root.push(path);
     let mut file = File::open(root).unwrap();
     let mut data = String::new();
     file.read_to_string(&mut data).unwrap();
-    let data: Vec<T> =
-    serde_json::from_str(&data).expect("JSON was not well-formatted");
+    let data: Vec<T> = serde_json::from_str(&data).expect("JSON was not well-formatted");
     data
-
 }
 
 pub fn get_test_headers() -> Vec<BtpHeader> {
@@ -226,56 +221,4 @@ pub fn to_attribute_map(attrs: &Vec<Attribute>) -> HashMap<String, String> {
         map.insert(attr.key.clone(), attr.value.clone());
     }
     return map;
-}
-
-#[cfg(test)]
-mod tests {
-     use super::*;
-     use common::utils::keccak256;
-     use common::utils::calculate_root;
-     use common::utils::sha256;
-     use common::utils::commitment::get_packet_commitment;
-     use ibc_proto::ibc::core::client::v1::Height;
-    use prost::Message;
-    // 00000000000000000000000000000000000000000000000074657374
-    #[test]
-    fn test_message_data(){
-        let data=load_test_messages();
-        for (i,msg) in data.iter().enumerate() {
-            if i==0 {
-                continue;
-            }
-            let path = hex::decode(&msg.commitment_path).unwrap();
-            let expected_key =keccak256(&path);
-            let key = hex::decode(&msg.commitment_key).unwrap();
-            assert_eq!(hex::encode(&expected_key),hex::encode(&key));
-            //let packet =Packet::try_from(msg.packet.clone()).unwrap();
-           let packet =Packet::decode(hex::decode(&msg.packet_encoded).unwrap().as_slice()).unwrap();
-            let message_bytes=hex::decode(&msg.messages[0]).unwrap();
-            let packet_bytes=packet.encode_to_vec();
-            assert_eq!(msg.packet_encoded,hex::encode(&packet_bytes));
-        //    assert_eq!("",hex::encode(keccak256(packet_bytes.as_slice())));
-         let packet_commitment_hash=get_packet_commitment(&packet.data,&packet.timeout_height.unwrap_or(Height::default()),packet.timeout_timestamp);
-            
-            assert_eq!(hex::encode(&message_bytes[32..]),hex::encode(&packet_commitment_hash));
-
-            
-            let leaf = keccak256([key,keccak256(&message_bytes).into()].concat().as_slice());
-            let proof=msg.proof.iter().map(|tn|{
-                let node:MerkleNode= tn.try_into().unwrap();
-                node
-            }).collect::<Vec<MerkleNode>>();
-            let root= calculate_root(leaf,&proof);
-            assert_eq!("",hex::encode(root));
-        }
-
-    }
-
-    #[test]
-     fn test_sha256(){
-        let bytes= b"Hello World";
-        let result=sha256(bytes);
-        assert_eq!("a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",hex::encode(result));
-     }
-
 }

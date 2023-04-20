@@ -169,23 +169,17 @@ pub fn create_ack_packet_event(
     // packet: Packet,
     port_id: &str,
     chan_id: &str,
-    seq_on_a :&str,
+    seq_on_a: &str,
     dst_port_id: &str,
     dst_chan_id: &str,
-    timeout_height_on_b:&str,
-    timeout_timestamp_on_b:&str,
+    timeout_height_on_b: &str,
+    timeout_timestamp_on_b: &str,
     channel_order: &str,
     dst_connection_id: &str,
 ) -> Event {
     Event::new(IbcEventType::AckPacket.as_str())
-        .add_attribute(
-            PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
-            timeout_height_on_b,
-        )
-        .add_attribute(
-            PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
-            timeout_timestamp_on_b,
-        )
+        .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height_on_b)
+        .add_attribute(PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY, timeout_timestamp_on_b)
         .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, seq_on_a)
         .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, port_id)
         .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, chan_id)
