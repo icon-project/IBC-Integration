@@ -336,7 +336,10 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 
 // ExecuteContract implements chains.Chain
 func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
-	panic("unimplemented")
+	ctx, execMethodName, p := c.GetExecuteParam(ctx, methodName, param)
+	hash, err := c.getFullNode().ExecuteContract(ctx, contractAddress, execMethodName, c.keystorePath, p)
+	fmt.Printf("Transaction Hash: %s\n", hash)
+	return ctx, err
 }
 
 // GetBlockByHeight implements chains.Chain
@@ -353,13 +356,44 @@ func (c *IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error
 
 // QueryContract implements chains.Chain
 func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
-	panic("unimplemented")
+	time.Sleep(2 * time.Second)
+
+	// get query msg
+	queryMsg := GetQueryParam(methodName)
+	output, err := c.getFullNode().QueryContract(ctx, contractAddress, queryMsg, "")
+	chains.Response = output
+	fmt.Printf("Response is : %s \n", output)
+	return ctx, err
 }
 
-func (c *IconLocalnet) SetAdminParams(ctx context.Context) string {
-	panic("unimplemented")
+func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
+	_, err := c.BuildWallet(ctx, keyName, "")
+	return err
 }
 
-func (it *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
-	panic("unimplemented")
+func (c *IconLocalnet) GetExecuteParam(ctx context.Context, methodName, params string) (context.Context, string, string) {
+	if strings.Contains(methodName, "set_admin") {
+		return c.SetAdminParams(ctx, methodName, params)
+	}
+	return ctx, "", ""
+}
+
+func GetQueryParam(methodName string) string {
+	return "admin"
+}
+
+func (c *IconLocalnet) SetAdminParams(ctx context.Context, methodaName, keyName string) (context.Context, string, string) {
+	var admins chains.Admins
+	executeMethodName := "setAdmin"
+	wallet, _ := c.BuildWallet(ctx, keyName, "")
+	addr := string(wallet.Address())
+	addr = strings.ReplaceAll(addr, `"`, "")
+	admins.Admin = map[string]string{
+		keyName: addr,
+	}
+	args := "_address=" + addr
+	fmt.Println(args)
+	return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+		Admin: admins.Admin,
+	}), executeMethodName, args
 }

@@ -1,3 +1,4 @@
+use cw_common::errors::CwErrors;
 use ibc::core::ics03_connection::error::ConnectionError;
 
 use super::*;
@@ -39,4 +40,29 @@ pub enum ContractError {
 
     #[error("IbcClientError {error}")]
     IbcClientError { error: ClientError },
+
+    #[error("IbcValidationError {error}")]
+    IbcValidationError { error: ValidationError },
+}
+
+impl From<CwErrors> for ContractError {
+    fn from(value: CwErrors) -> Self {
+        match value {
+            CwErrors::FailedToCreateClientId {
+                client_type,
+                counter,
+                validation_error,
+            } => Self::IbcClientError {
+                error: ClientError::ClientIdentifierConstructor {
+                    client_type: client_type.client_type(),
+                    counter,
+                    validation_error,
+                },
+            },
+            CwErrors::InvalidClientId(err) => Self::IbcDecodeError {
+                error: err.to_string(),
+            },
+            CwErrors::DecodeError { error } => Self::IbcDecodeError { error },
+        }
+    }
 }

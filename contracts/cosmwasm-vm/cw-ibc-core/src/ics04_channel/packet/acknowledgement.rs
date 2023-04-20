@@ -48,7 +48,7 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
             &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a.into(),
+            msg.packet.seq_on_a,
         ) {
             Ok(commitment_on_a) => commitment_on_a,
 
@@ -98,7 +98,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let consensus_state =
-            self.consensus_state(deps.storage, &client_id_on_a, &msg.proof_height_on_b)?;
+            self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
         let ack_commitment = compute_ack_commitment(&msg.acknowledgement);
         self.verify_connection_delay_passed(
             deps.storage,
@@ -111,7 +111,7 @@ impl<'a> CwIbcCoreContext<'a> {
             acknowledgement: Some(msg.acknowledgement.clone()),
         };
         let ack_path_on_b = self.packet_acknowledgement_commitment_path(
-            &packet.port_id_on_b.clone().into(),
+            &packet.port_id_on_b.clone(),
             &packet.chan_id_on_b,
             packet.seq_on_a,
         );
@@ -125,6 +125,7 @@ impl<'a> CwIbcCoreContext<'a> {
         };
         let packet_data = to_vec(&data)?;
         let light_client_message = LightClientMessage::VerifyPacketAcknowledgement {
+            client_id: client_id_on_a.to_string(),
             verify_packet_acknowledge,
             packet_data,
         };
@@ -172,16 +173,16 @@ impl<'a> CwIbcCoreContext<'a> {
                     };
                     let port_id = PortId::from(packet_data.packet.port_id_on_a.clone());
                     // Getting the module address for on packet timeout call
-                    let module_id = match self.lookup_module_by_port(deps.storage, port_id.clone())
+                    let module_id = match self.lookup_module_by_port(deps.storage, port_id) {
+                        Ok(addr) => addr,
+                        Err(error) => return Err(error),
+                    };
+                    let contract_address = match self
+                        .get_route(deps.storage, cw_common::types::ModuleId::from(module_id))
                     {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let contract_address =
-                        match self.get_route(deps.storage, types::ModuleId::from(module_id)) {
-                            Ok(addr) => addr,
-                            Err(error) => return Err(error),
-                        };
 
                     let src = IbcEndpoint {
                         port_id: packet_data.packet.port_id_on_a.to_string(),
@@ -235,19 +236,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "packet_acknowledgement_module")
                         .add_submessage(sub_msg))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcPacketError {
-                    error: PacketError::InvalidProof,
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPacketError {
+                error: PacketError::InvalidProof,
+            }),
         }
     }
 
@@ -291,37 +288,29 @@ impl<'a> CwIbcCoreContext<'a> {
                     }
                     self.delete_packet_commitment(
                         deps.storage,
-                        &port_id.clone(),
-                        &channel_id.clone(),
+                        &port_id,
+                        &channel_id,
                         packet.sequence.into(),
                     )?;
                     if let Order::Ordered = chan_end_on_a.ordering {
                         // Note: in validation, we verified that `msg.packet.sequence == nextSeqRecv`
                         // (where `nextSeqRecv` is the value in the store)
-                        self.increase_next_sequence_ack(
-                            deps.storage,
-                            port_id.clone(),
-                            channel_id.clone(),
-                        )?;
+                        self.increase_next_sequence_ack(deps.storage, port_id, channel_id)?;
                     }
                     Ok(Response::new()
                         .add_attribute("action", "packet")
                         .add_attribute("method", "execute_acknowledgement_packet")
                         .add_event(event))
                 }
-                None => {
-                    return Err(ContractError::IbcChannelError {
-                        error: ChannelError::Other {
-                            description: "Data from module is Missing".to_string(),
-                        },
-                    })
-                }
+                None => Err(ContractError::IbcChannelError {
+                    error: ChannelError::Other {
+                        description: "Data from module is Missing".to_string(),
+                    },
+                }),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                return Err(ContractError::IbcPacketError {
-                    error: PacketError::InvalidProof,
-                })
-            }
+            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPacketError {
+                error: PacketError::InvalidProof,
+            }),
         }
     }
 }

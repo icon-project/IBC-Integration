@@ -1,8 +1,9 @@
 pub mod setup;
-use std::str::FromStr;
+use std::str::{from_utf8, FromStr};
 
+use cw_common::types::PortId;
 use cw_ibc_core::{
-    context::CwIbcCoreContext, ics04_channel::ChannelMsg, keccak256, types::PortId,
+    context::CwIbcCoreContext, ics04_channel::ChannelMsg, keccak256, IbcChannelId,
     MsgChannelOpenInit,
 };
 use setup::*;
@@ -59,7 +60,7 @@ fn check_for_port_path_key() {
 
 #[test]
 #[should_panic(
-    expected = "IbcDecodeError { error: \"identifier `s` has invalid length `1` must be between `2`-`128` characters\" }"
+    expected = "DecodeError { error: \"identifier `s` has invalid length `1` must be between `2`-`128` characters\" }"
 )]
 fn fails_on_invalid_length_for_port_id() {
     PortId::from_str("s").unwrap();
@@ -101,4 +102,45 @@ fn test_lookup_module_channel_fail() {
     let channel_msg = ChannelMsg::OpenInit(msg);
     ctx.lookup_module_channel(&mut deps.storage, &channel_msg)
         .unwrap();
+}
+
+#[test]
+fn test_bind_port() {
+    let mut deps = deps();
+    let ctx = CwIbcCoreContext::default();
+    let path = ctx.port_path(&PortId::default().ibc_port_id());
+    ctx.store_capability(&mut deps.storage, path.clone(), vec!["".to_string()])
+        .unwrap();
+    let res = ctx.bind_port(
+        &mut deps.storage,
+        &PortId::default().ibc_port_id(),
+        "ContractAddress".to_string(),
+    );
+    assert!(res.is_ok());
+    let expected = ctx.get_capability(&mut deps.storage, path);
+    assert!(expected.is_ok());
+    assert!(expected.unwrap().contains(&"ContractAddress".to_string()))
+}
+
+#[test]
+fn channel_capability_path() {
+    let ctx = CwIbcCoreContext::default();
+    let res =
+        ctx.channel_capability_path(&PortId::default().ibc_port_id(), &IbcChannelId::default());
+    let result = from_utf8(&res);
+    assert!(result.is_ok());
+    assert_eq!("ports/defaultPort/channels/channel-0", result.unwrap())
+}
+
+#[test]
+#[should_panic(expected = "KeyNotFound")]
+fn test_bind_port_fail() {
+    let mut deps = deps();
+    let ctx = CwIbcCoreContext::default();
+    ctx.bind_port(
+        &mut deps.storage,
+        &PortId::default().ibc_port_id(),
+        "ContractAddress".to_string(),
+    )
+    .unwrap();
 }

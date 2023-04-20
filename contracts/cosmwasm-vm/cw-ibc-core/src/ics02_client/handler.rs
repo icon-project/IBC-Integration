@@ -1,4 +1,5 @@
 use super::{events::client_misbehaviour_event, *};
+use cw_common::client_msg::ExecuteMsg as LightClientMessage;
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn create_client(
@@ -47,8 +48,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
         let message = LightClientMessage::UpdateClient {
-            client_id: client_id.as_str().to_string(),
-            header: message.header.value,
+            client_id: client_id.as_str().to_string().clone(),
+            signed_header: message.header.value,
         };
 
         let client_update_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -225,7 +226,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 Some(data) => {
                     let update_client_response: UpdateClientResponse = from_binary(&data)?;
 
-                    let client_id = update_client_response.client_id()?;
+                    let client_id = update_client_response
+                        .client_id()
+                        .map_err(ContractError::from)?;
 
                     let height = update_client_response.height();
 
@@ -275,8 +278,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
-                    let response: UpgradeClientResponse = from_binary(&data)?;
-                    let client_id = response.client_id()?;
+                    let response: UpgradeClientResponse =
+                        from_binary(&data).map_err(ContractError::Std)?;
+                    let client_id = response.client_id().map_err(ContractError::from)?;
 
                     self.store_client_state(
                         deps.storage,
@@ -363,7 +367,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 Some(response) => {
                     let misbehaviour_response = from_binary::<MisbehaviourResponse>(&response)?;
 
-                    let client_id = misbehaviour_response.client_id()?;
+                    let client_id = misbehaviour_response
+                        .client_id()
+                        .map_err(ContractError::from)?;
 
                     let client_type = ClientType::try_from(client_id.clone()).map_err(|error| {
                         ContractError::IbcDecodeError {

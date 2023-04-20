@@ -69,6 +69,7 @@ public class IBCHandlerTestBase extends TestBase {
     protected Version baseVersion;
     protected String portId = "portId";
 
+    protected BigInteger timeoutHeight = BigInteger.valueOf(100);
     protected BigInteger nextRecvId = BigInteger.ONE;
     protected Height baseHeight;
 
@@ -81,8 +82,6 @@ public class IBCHandlerTestBase extends TestBase {
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
         module = new MockContract<>(IIBCModuleScoreInterface.class, IIBCModule.class, sm, owner);
-
-        when(lightClient.mock.getClientState(any(String.class))).thenReturn(new byte[0]);
 
         prefix = MerklePrefix.newBuilder()
                 .setKeyPrefix(ByteString.copyFrom("ibc".getBytes())).build();
@@ -109,7 +108,7 @@ public class IBCHandlerTestBase extends TestBase {
                         "consensusStateCommitment", new byte[0],
                         "height", Height.getDefaultInstance().toByteArray()
                 ));
-        ;
+
 
         // Act
         handler.invoke(owner, "createClient", msg);
@@ -117,7 +116,11 @@ public class IBCHandlerTestBase extends TestBase {
         // Assert
         verify(handlerSpy).CreateClient(clientIdCaptor.capture(), eq(msg.getClientState()));
         clientId = clientIdCaptor.getValue();
-    }
+
+        when(lightClient.mock.getLatestHeight(clientId)).thenReturn(new byte[0]);
+        when(lightClient.mock.getClientState(clientId)).thenReturn(new byte[0]);
+        when(lightClient.mock.getConsensusState(eq(clientId), any(byte[].class))).thenReturn(new byte[0]);
+   }
 
     void updateClient() {
         // Arrange
@@ -464,7 +467,7 @@ public class IBCHandlerTestBase extends TestBase {
     protected Packet getBasePacket() {
         Height timeoutHeight = Height.newBuilder()
                 .setRevisionNumber(1)
-                .setRevisionHeight(sm.getBlock().getHeight() + 100).build();
+                .setRevisionHeight(sm.getBlock().getHeight() + this.timeoutHeight.longValue()).build();
 
         BigInteger nextPacketSeq = (BigInteger) handler.call("getNextSequenceSend", portId, channelId);
 
@@ -474,8 +477,7 @@ public class IBCHandlerTestBase extends TestBase {
                 .setSourceChannel(channelId)
                 .setDestinationPort(counterPartyPortId)
                 .setDestinationChannel(counterPartyChannelId)
-                .setTimeoutHeight(timeoutHeight)
-                .setTimeoutTimestamp(sm.getBlock().getTimestamp() * 2).build();
+                .setTimeoutHeight(timeoutHeight).build();
 
         when(lightClient.mock.getLatestHeight(clientId)).thenReturn(Height.getDefaultInstance().toByteArray());
         when(lightClient.mock.getTimestampAtHeight(any(String.class), any(byte[].class))).thenReturn(BigInteger.ONE);
@@ -486,7 +488,7 @@ public class IBCHandlerTestBase extends TestBase {
     protected Packet getBaseCounterPacket() {
         Height timeoutHeight = Height.newBuilder()
                 .setRevisionNumber(1)
-                .setRevisionHeight(sm.getBlock().getHeight() + 100).build();
+                .setRevisionHeight(sm.getBlock().getHeight() +  this.timeoutHeight.longValue()).build();
 
         Packet packet = Packet.newBuilder()
                 .setSequence(nextRecvId.longValue())
@@ -495,8 +497,7 @@ public class IBCHandlerTestBase extends TestBase {
                 .setSourceChannel(counterPartyChannelId)
                 .setSourcePort(counterPartyPortId)
                 .setData(ByteString.copyFrom(new byte[7]))
-                .setTimeoutHeight(timeoutHeight)
-                .setTimeoutTimestamp(sm.getBlock().getTimestamp() * 2).build();
+                .setTimeoutHeight(timeoutHeight).build();
 
         nextRecvId = nextRecvId.add(BigInteger.ONE);
 

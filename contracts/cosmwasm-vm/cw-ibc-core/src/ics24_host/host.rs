@@ -56,15 +56,20 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         self.ibc_store().capabilities().update(
             store,
-            name.clone(),
+            name,
             |update| -> Result<_, ContractError> {
                 match update {
                     Some(mut value) => {
+                        if value.contains(&address) {
+                            return Err(ContractError::IbcContextError {
+                                error: "Capability already claimed".to_string(),
+                            });
+                        }
                         value.push(address);
                         Ok(value)
                     }
                     None => Err(ContractError::IbcDecodeError {
-                        error: "CapabilityNotFound".into(),
+                        error: "KeyNotFound".into(),
                     }),
                 }
             },
@@ -84,7 +89,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if capability.contains(&caller) {
             return true;
         }
-        return false;
+        false
     }
 
     pub fn lookup_modules(
