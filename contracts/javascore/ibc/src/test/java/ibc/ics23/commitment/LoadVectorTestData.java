@@ -15,7 +15,7 @@ import java.util.Map;
 import static ibc.icon.score.util.StringUtil.hexToBytes;
 import static ibc.ics23.commitment.Ics23.combineProofs;
 import static ibc.ics23.commitment.LoadProofTestData.getIavlSpec;
-import static ibc.ics23.commitment.LoadProofTestData.getTendermintSpec;
+import static ibc.ics23.commitment.Proof.getTendermintSpec;
 
 public class LoadVectorTestData {
 

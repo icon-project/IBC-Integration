@@ -4,6 +4,9 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
 
+import ibc.ics23.commitment.Ics23;
+import ibc.ics23.commitment.Proof;
+import icon.proto.core.commitment.CommitmentProof;
 import score.Address;
 import score.BranchDB;
 import score.Context;
@@ -206,7 +209,8 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         byte[] root = consensusState.getRoot().getHash();
 
-        Context.require(true, "Verification failed");
+        CommitmentProof commitmentProof = CommitmentProof.decode(proof);
+        Ics23.verifyMembership(Proof.getTendermintSpec(), root, commitmentProof, path, value);
     }
 
     @External
@@ -228,7 +232,8 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         byte[] root = consensusState.getRoot().getHash();
 
-        Context.require(true, "Verification failed");
+        CommitmentProof commitmentProof = CommitmentProof.decode(proof);
+        Ics23.verifyNonMembership(Proof.getTendermintSpec(), root, commitmentProof, path);
     }
 
     // checkValidity checks if the Tendermint header is valid.

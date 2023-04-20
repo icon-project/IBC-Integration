@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static ibc.ics23.commitment.Proof.getTendermintSpec;
+
 public class LoadProofTestData {
 
     public static class ExistenceProofTestData {
@@ -77,27 +79,6 @@ public class LoadProofTestData {
         specWithEmptyChild.setInnerSpec(innerSpec);
 
         return specWithEmptyChild;
-    }
-
-    public static ProofSpec getTendermintSpec() {
-        LeafOp leafSpec = new LeafOp();
-        leafSpec.setPrefix(new byte[]{0});
-        leafSpec.setPrehashKey(HashOp.NO_HASH);
-        leafSpec.setHash(HashOp.SHA256);
-        leafSpec.setPrehashValue(HashOp.SHA256);
-        leafSpec.setLength(LengthOp.VAR_PROTO);
-
-        InnerSpec innerSpec = new InnerSpec();
-        innerSpec.setChildOrder(List.of(BigInteger.ZERO, BigInteger.ONE));
-        innerSpec.setMinPrefixLength(BigInteger.ONE);
-        innerSpec.setMaxPrefixLength(BigInteger.ONE);
-        innerSpec.setChildSize(BigInteger.valueOf(32));
-        innerSpec.setHash(HashOp.SHA256);
-
-        var tendermintSpec = new ProofSpec();
-        tendermintSpec.setLeafSpec(leafSpec);
-        tendermintSpec.setInnerSpec(innerSpec);
-        return tendermintSpec;
     }
 
     public static ProofSpec getIavlSpec() {
