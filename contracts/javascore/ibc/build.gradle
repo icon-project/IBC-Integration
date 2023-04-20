@@ -26,22 +26,18 @@ test {
     finalizedBy jacocoTestReport
 }
 
-// jacocoTestReport {
-//     dependsOn test
-//     reports {
-//         xml.required = false
-//         csv.required = false
-//         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
-//     }
-// }
 
 jacocoTestReport {
     dependsOn test
+    doNotTrackState("Disable state tracking")
     reports {
-        xml.enabled true
+        html {
+            enabled false
+        }
+        xml {
+            enabled true
+        }
         xml.destination file("${buildDir}/reports/jacoco/report.xml")
-        html.enabled true
-        csv.enabled true
     }
     subprojects.each {
         sourceSets it.sourceSets.main
