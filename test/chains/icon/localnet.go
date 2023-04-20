@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -320,6 +321,8 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 		bmcAddr := ctxValue.ContractAddress["bmc"]
 		initMessage = initMessage + bmcAddr
 	}
+	// Check if keystore is alreadry available for given keyName
+	c.CheckForKeyStore(ctx, keyName)
 
 	// Get ScoreAddress
 	scoreAddress, err := c.getFullNode().DeployContract(ctx, c.scorePaths[contractName], c.keystorePath, initMessage)
@@ -336,10 +339,25 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 
 // ExecuteContract implements chains.Chain
 func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
+	// Check if keystore is alreadry available for given keyName
+	c.CheckForKeyStore(ctx, keyName)
+
 	ctx, execMethodName, p := c.GetExecuteParam(ctx, methodName, param)
 	hash, err := c.getFullNode().ExecuteContract(ctx, contractAddress, execMethodName, c.keystorePath, p)
+	if err != nil {
+		return ctx, err
+	}
 	fmt.Printf("Transaction Hash: %s\n", hash)
-	return ctx, err
+
+	// wait for few blocks to finish
+	time.Sleep(2 * time.Second)
+	trResult, _ := c.getFullNode().TransactionResult(ctx, hash)
+	if trResult.Status == "0x1" {
+		return ctx, err
+	} else {
+		return ctx, fmt.Errorf("%s", trResult.Failure.MessageValue)
+	}
+
 }
 
 // GetBlockByHeight implements chains.Chain
@@ -379,15 +397,17 @@ func (c *IconLocalnet) GetExecuteParam(ctx context.Context, methodName, params s
 }
 
 func GetQueryParam(methodName string) string {
-	return "admin"
+	if strings.Contains(methodName, "get_admin") {
+		return "admin"
+	}
+	return ""
 }
 
 func (c *IconLocalnet) SetAdminParams(ctx context.Context, methodaName, keyName string) (context.Context, string, string) {
 	var admins chains.Admins
 	executeMethodName := "setAdmin"
 	wallet, _ := c.BuildWallet(ctx, keyName, "")
-	addr := string(wallet.Address())
-	addr = strings.ReplaceAll(addr, `"`, "")
+	addr := wallet.FormattedAddress()
 	admins.Admin = map[string]string{
 		keyName: addr,
 	}
@@ -396,4 +416,17 @@ func (c *IconLocalnet) SetAdminParams(ctx context.Context, methodaName, keyName 
 	return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
 		Admin: admins.Admin,
 	}), executeMethodName, args
+}
+
+func (c *IconLocalnet) CheckForKeyStore(ctx context.Context, keyName string) {
+	// Check if keystore file exists for given keyname if not create a keystore file
+	jsonFile := keyName + ".json"
+	path := path.Join(c.HomeDir(), jsonFile)
+	_, _, err := c.getFullNode().Exec(ctx, []string{"cat", path}, nil)
+	if err != nil {
+		c.BuildWallet(ctx, keyName, "")
+		c.keystorePath = path
+	} else {
+		c.keystorePath = path
+	}
 }

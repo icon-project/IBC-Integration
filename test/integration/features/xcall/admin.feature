@@ -8,7 +8,7 @@ Feature: xCall admin management
       | Alice | Eve, Frank, Grace | Bob, Diana, Charlie |
 
   Background:
-    Given "BMC" contract deployed only when the chain is "icon"
+    Given "BMC" contract deployed by "Alice" only when the chain is "icon"
     And "Alice" is the "xcall" contract owner
 
   Scenario: 001 - Contract owner Adding an admin wallet to the xCall
