@@ -15,6 +15,9 @@ ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 cw-storage-plus = "1.0.1"
 hex ="0.4.3"
+serde_json = "*"
+hex-buffer-serde = "0.4.0"
+schemars = "0.8.12"
 
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
