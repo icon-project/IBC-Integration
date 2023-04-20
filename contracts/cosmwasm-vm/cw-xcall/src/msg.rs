@@ -53,6 +53,10 @@ pub enum ExecuteMsg {
     IbcPacketAck {
         msg: IbcPacketAckMsg,
     },
+    #[cfg(not(feature = "native_ibc"))]
+    IbcPacketTimeout {
+        msg: IbcPacketTimeoutMsg,
+    },
 }
 
 #[cw_serde]
