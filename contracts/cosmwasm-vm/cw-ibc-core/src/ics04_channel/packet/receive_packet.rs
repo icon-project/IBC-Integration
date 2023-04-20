@@ -97,6 +97,7 @@ impl<'a> CwIbcCoreContext<'a> {
             error: e.to_string(),
         })?;
         let light_client_message = LightClientMessage::VerifyPacketData {
+            client_id: client_id_on_b.to_string(),
             verify_packet_data: VerifyPacketData {
                 height: msg.proof_height_on_a.to_string(),
                 prefix: conn_end_on_b.counterparty().prefix().clone().into_vec(),

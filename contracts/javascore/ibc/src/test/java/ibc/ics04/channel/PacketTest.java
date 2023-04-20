@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigInteger;
 import java.util.List;
 
+import ibc.icon.score.util.Proto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -130,7 +131,6 @@ public class PacketTest extends TestBase {
         timeOutHeight.setRevisionHeight(BigInteger.valueOf(6000000));
         timeOutHeight.setRevisionNumber(BigInteger.ZERO);
         basePacket.setTimeoutHeight(timeOutHeight);
-        basePacket.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp()*2));
     }
 
     @Test
@@ -210,22 +210,21 @@ public class PacketTest extends TestBase {
     }
 
     @Test
-    void sendPacket_toLowBlockTimestamp() {
+    void sendPacket_withTimestampTimeout() {
         // Arrange
         Height latestHeight = new Height();
         latestHeight.setRevisionHeight(BigInteger.ZERO);
         latestHeight.setRevisionNumber(BigInteger.ZERO);
-        BigInteger destinationChainBlockTimestamp = BigInteger.TEN;
-        basePacket.setTimeoutTimestamp(destinationChainBlockTimestamp.subtract(BigInteger.ONE));
+        basePacket.setTimeoutTimestamp(BigInteger.ONE);
         when(lightClient.mock.getLatestHeight(clientId)).thenReturn(latestHeight.encode());
         when(lightClient.mock.getTimestampAtHeight(clientId, latestHeight.encode()))
-                .thenReturn(destinationChainBlockTimestamp);
+                .thenReturn(BigInteger.ONE);
 
         // Act & Assert
-        String expectedErrorMessage = "receiving chain block timestamp >= packet timeout timestamp";
-        Executable toLowBlockTimestamp = () -> packet.invoke(owner, "_sendPacket", basePacket);
+        String expectedErrorMessage = "Timeout timestamps are not available, use timeout height instead";
+        Executable withTimestampTimeout = () -> packet.invoke(owner, "_sendPacket", basePacket);
         AssertionError e = assertThrows(AssertionError.class,
-                toLowBlockTimestamp);
+            withTimestampTimeout);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
     }
 
@@ -483,7 +482,7 @@ public class PacketTest extends TestBase {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(baseCounterparty.getPortId(),
                 baseCounterparty.getChannelId(), sequence);
 
-        byte[] expectedCommitment = IBCCommitment.keccak256(IBCCommitment.sha256(acknowledgement));
+        byte[] expectedCommitment = IBCCommitment.sha256(acknowledgement);
         verify(packetSpy).sendBTPMessage(clientId, ByteUtil.join(ackCommitmentKey, expectedCommitment));
     }
 
@@ -556,7 +555,7 @@ public class PacketTest extends TestBase {
 
         // Assert
         verify(packetSpy).sendBTPMessage(clientId,
-                ByteUtil.join(commitmentPath, basePacket.getSequence().toByteArray()));
+                ByteUtil.join(commitmentPath, Proto.encodeFixed64(basePacket.getSequence())));
     }
 
     @Test
@@ -620,7 +619,7 @@ public class PacketTest extends TestBase {
                 basePacket.getDestinationChannel());
         verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(),
                 baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath, basePacket.getSequence().toByteArray());
+                proof, prefix.getKeyPrefix(), commitmentPath, Proto.encodeFixed64(basePacket.getSequence()));
 
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
@@ -633,11 +632,11 @@ public class PacketTest extends TestBase {
     }
 
     private byte[] createPacketCommitment(Packet packet) {
-        return IBCCommitment.keccak256(IBCCommitment.sha256(
+        return IBCCommitment.sha256(
                 ByteUtil.join(
-                        packet.getTimeoutTimestamp().toByteArray(),
-                        packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
-                        packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
-                        IBCCommitment.sha256(packet.getData()))));
+                        Proto.encodeFixed64(packet.getTimeoutTimestamp()),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber()),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight()),
+                        IBCCommitment.sha256(packet.getData())));
     }
 }

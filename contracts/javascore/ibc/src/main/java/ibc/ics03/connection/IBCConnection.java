@@ -82,13 +82,13 @@ public class IBCConnection extends IBCClient {
         verifyConnectionState(connection, msg.getProofHeight(), msg.getProofInit(), counterparty.getConnectionId(),
                 expectedConnection);
 
+        // TODO Investigate need for client verification if premissioned
         verifyClientState(
                 connection,
                 msg.getProofHeight(),
                 IBCCommitment.clientStatePath(connection.getCounterparty().getClientId()),
                 msg.getProofClient(),
                 msg.getClientStateBytes());
-        // TODO we should also verify a consensus state
 
         byte[] encodedConnection = connection.encode();
         updateConnectionCommitment(connection.getClientId(), connectionId, encodedConnection);
@@ -275,6 +275,19 @@ public class IBCConnection extends IBCClient {
     }
 
     private void updateConnectionCommitment(String clientId, String connectionId, byte[] connectionBytes) {
+        ILightClient client = getClient(clientId);
+        byte[] height = client.getLatestHeight(clientId);
+        byte[] clientStateBytes = client.getClientState(clientId);
+        byte[] consensusStateBytes = client.getConsensusState(clientId, height);
+
+        Height updateHeight = Height.decode(height);
+        byte[] clientKey = IBCCommitment.clientStateCommitmentKey(clientId);
+        byte[] consensusKey = IBCCommitment.consensusStateCommitmentKey(clientId,
+                updateHeight.getRevisionNumber(),
+                updateHeight.getRevisionHeight());
+
+        sendBTPMessage(clientId, ByteUtil.join(clientKey, IBCCommitment.keccak256(clientStateBytes)));
+        sendBTPMessage(clientId, ByteUtil.join(consensusKey, IBCCommitment.keccak256(consensusStateBytes)));
         sendBTPMessage(clientId, ByteUtil.join(IBCCommitment.connectionCommitmentKey(connectionId),
                 IBCCommitment.keccak256(connectionBytes)));
     }

@@ -40,6 +40,9 @@ pub enum ContractError {
 
     #[error("IbcClientError {error}")]
     IbcClientError { error: ClientError },
+
+    #[error("IbcValidationError {error}")]
+    IbcValidationError { error: ValidationError },
 }
 
 impl From<CwErrors> for ContractError {

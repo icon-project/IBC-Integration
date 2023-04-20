@@ -2,6 +2,7 @@ package ibc.icon.score.util;
 
 import java.math.BigInteger;
 import java.util.List;
+import scorex.util.ArrayList;
 
 public class Proto {
 
@@ -31,20 +32,11 @@ public class Proto {
     public static DecodeResponse<byte[]> decodeBytes(byte[] data, int index) {
         DecodeResponse<byte[]> resp = new DecodeResponse<>();
 
-        int length = 0;
-        for (int shift = 0; shift < 64; shift += 7) {
-            final byte b = data[index];
-            index++;
-            length |= (long) (b & 0x7F) << shift;
-            if ((b & 0x80) == 0) {
-                break;
-            }
-        }
+        DataSize dataSize = getDataSize(data, index);
+        byte[] res = new byte[dataSize.length];
 
-        byte[] res = new byte[length];
-
-        System.arraycopy(data, index, res, 0, length);
-        resp.index = index + length;
+        System.arraycopy(data, dataSize.index, res, 0, dataSize.length);
+        resp.index = dataSize.index + dataSize.length;
         resp.res = res;
 
         return resp;
@@ -69,20 +61,12 @@ public class Proto {
     }
 
     public static DecodeResponse<BigInteger> decodeVarInt(byte[] data, int index) {
-        long result = 0;
         DecodeResponse<BigInteger> resp = new DecodeResponse<>();
 
-        for (int shift = 0; shift < 64; shift += 7) {
-            final byte b = data[index];
-            index++;
-            result |= (long) (b & 0x7F) << shift;
-            if ((b & 0x80) == 0) {
-                break;
-            }
-        }
+        DataSize dataSize = getDataSize(data, index);
 
-        resp.index = index;
-        resp.res = BigInteger.valueOf(result);
+        resp.index = dataSize.index;
+        resp.res = BigInteger.valueOf(dataSize.length);
         return resp;
     }
 
@@ -171,7 +155,7 @@ public class Proto {
     }
 
     public static byte[] encode(int order, Boolean item) {
-        if (!item) {
+        if (item==null) {
             return new byte[0];
         }
 
@@ -184,14 +168,32 @@ public class Proto {
 
     public static byte[] encodeVarIntArray(int order, List<BigInteger> items) {
         int length = items.size();
-        byte[][] encodedItems = new byte[length][];
+        byte[][] encodedItems = new byte[length + 1][];
+        encodedItems[0] = new byte[]{(byte) (order << 3 | 2)};
         for (int i = 0; i < length; i++) {
-            encodedItems[i] = encode(order, items.get(i));
+            encodedItems[i + 1] = encodeVarInt(items.get(i));
         }
 
         return ByteUtil.join(encodedItems);
     }
 
+    public static DecodeResponse<List<BigInteger>> decodeVarIntArray(byte[] data, int index) {
+        DecodeResponse<List<BigInteger>> response = new DecodeResponse<>();
+
+        DataSize dataSize = getDataSize(data, index);
+
+        int dataIndex = dataSize.index;
+
+        response.index = dataSize.index + dataSize.length;
+        response.res = new ArrayList<>();
+
+        for (int i = 0; i < dataSize.length; i++) {
+            DecodeResponse<BigInteger> resp = decodeVarInt(data, dataIndex);
+            dataIndex += resp.index;
+            response.res.add(resp.res);
+        }
+        return response;
+    }
     public static byte[] encode(int order, int item) {
         return encode(order, BigInteger.valueOf(item));
     }
@@ -239,11 +241,10 @@ public class Proto {
         long value = item.longValue();
 
         while (true) {
+            size++;
             if ((value & ~0x7FL) == 0) {
-                size++;
                 return size;
             } else {
-                size++;
                 value >>>= 7;
             }
         }
@@ -263,10 +264,20 @@ public class Proto {
         if (item.equals(BigInteger.ZERO)) {
             return new byte[0];
         }
-        long l = item.longValue();
         byte[] bs = new byte[9];
         bs[0] = (byte) (order << 3 | 1);
-        for (int i = 1; i < 9; i++) {
+        byte[] num = encodeFixed64(item);
+        System.arraycopy(num, 0, bs, 1, num.length);
+        return bs;
+    }
+
+    public static byte[] encodeFixed64(BigInteger item) {
+        byte[] bs = new byte[8];
+        if (item.equals(BigInteger.ZERO)) {
+            return bs;
+        }
+        long l = item.longValue();
+        for (int i = 0; i < 8; i++) {
             bs[i] = (byte) (l & 0xFF);
             l >>= 8;
         }
@@ -284,5 +295,30 @@ public class Proto {
         System.arraycopy(input, 0, bs, prefix.length, input.length);
 
         return bs;
+    }
+
+
+    private static DataSize getDataSize(byte[] data, int index) {
+        int length = 0;
+        for (int shift = 0; shift < 64; shift += 7) {
+            final byte b = data[index];
+            index++;
+            length |= (long) (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) {
+                break;
+            }
+        }
+        return new DataSize(index, length);
+    }
+
+    private static class DataSize {
+
+        public final int index;
+        public final int length;
+
+        public DataSize(int index, int length) {
+            this.index = index;
+            this.length = length;
+        }
     }
 }

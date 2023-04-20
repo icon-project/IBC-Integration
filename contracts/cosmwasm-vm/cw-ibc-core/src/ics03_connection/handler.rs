@@ -173,6 +173,7 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&client_cons_state_path_on_a.clone())?,
         );
         let client_message = crate::ics04_channel::LightClientMessage::VerifyConnection {
+            client_id: client_id_on_a.to_string(),
             verify_connection_state,
             verify_client_full_state,
             verify_client_consensus_state,
@@ -317,7 +318,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let prefix_on_b = self.commitment_prefix();
         let client_id_on_b = ClientId::from(message.client_id_on_b.clone());
 
-        let client_address = self.get_client(deps.as_ref().storage, client_id_on_b)?;
+        let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 
         let client_consensus_state_path_on_b =
             self.consensus_state_path(&message.client_id_on_b, &message.consensus_height_of_b_on_a);
@@ -371,6 +372,7 @@ impl<'a> CwIbcCoreContext<'a> {
             client_consensus_state_path_on_b,
         );
         let client_message = crate::ics04_channel::LightClientMessage::VerifyConnection {
+            client_id: client_id_on_b.ibc_client_id().to_string(),
             verify_connection_state,
             verify_client_full_state,
             verify_client_consensus_state,
@@ -552,6 +554,7 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&expected_conn_end_on_a).map_err(ContractError::Std)?,
         );
         let client_message = crate::ics04_channel::LightClientMessage::VerifyOpenConfirm {
+            client_id: client_id_on_b.to_string(),
             verify_connection_state,
         };
 

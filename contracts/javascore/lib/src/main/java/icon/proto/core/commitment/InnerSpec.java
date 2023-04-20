@@ -89,9 +89,9 @@ public class InnerSpec extends ProtoMessage {
       index++;
       switch(order) {
         case 1: {
-            Proto.DecodeResponse<BigInteger> resp = Proto.decodeVarInt(data, index);
+            Proto.DecodeResponse<List<BigInteger>> resp = Proto.decodeVarIntArray(data, index);
             index = resp.index;
-            obj.childOrder.add(resp.res);
+            obj.childOrder.addAll(resp.res);
             break;
         }
         case 2: {
