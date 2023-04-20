@@ -81,8 +81,8 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
                 "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId + "and channel: "
                         + destinationChannel);
         _writeAcknowledgement(
-                pkt.getDestinationPort(),
-                pkt.getDestinationChannel(),
+                destinationPortId,
+                destinationChannel,
                 sequence,
                 acknowledgement);
         WriteAcknowledgement(packet, acknowledgement);
