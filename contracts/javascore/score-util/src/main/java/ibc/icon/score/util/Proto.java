@@ -179,21 +179,16 @@ public class Proto {
 
     public static DecodeResponse<List<BigInteger>> decodeVarIntArray(byte[] data, int index) {
         DecodeResponse<List<BigInteger>> response = new DecodeResponse<>();
+        Proto.DecodeResponse<byte[]> resp = Proto.decodeBytes(data, index);
 
-        DataSize dataSize = getDataSize(data, index);
-
-        int dataIndex = dataSize.index;
-
-        response.index = dataSize.index + dataSize.length;
+        response.index = resp.index;
         response.res = new ArrayList<>();
-
-        for (int i = 0; i < dataSize.length; i++) {
-            DecodeResponse<BigInteger> resp = decodeVarInt(data, dataIndex);
-            dataIndex += resp.index;
-            response.res.add(resp.res);
+        for(byte b: resp.res) {
+            response.res.add(BigInteger.valueOf(b & 0x7F));
         }
         return response;
     }
+
     public static byte[] encode(int order, int item) {
         return encode(order, BigInteger.valueOf(item));
     }

@@ -1,0 +1,392 @@
+{
+  "accepts leaf with valid inner proofs": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "leaf": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "path": [
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        }
+      ]
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      }
+    },
+    "isErr": false
+  },
+  "accepts one proper leaf": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "leaf": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      }
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      }
+    },
+    "isErr": false
+  },
+  "allows depth limited in proper range": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "leaf": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "path": [
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        }
+      ]
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      },
+      "maxDepth": 4,
+      "minDepth": 2
+    },
+    "isErr": false
+  },
+  "empty proof fails": {
+    "proof": {
+      "key": "Zm9v",
+      "value": "YmFy"
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      }
+    },
+    "isErr": true
+  },
+  "reject depth limited with too few inner nodes": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "leaf": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "path": [
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        }
+      ]
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      },
+      "maxDepth": 4,
+      "minDepth": 2
+    },
+    "isErr": true
+  },
+  "reject depth limited with too many inner nodes": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "leaf": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "path": [
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        }
+      ]
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      },
+      "maxDepth": 4,
+      "minDepth": 2
+    },
+    "isErr": true
+  },
+  "rejects invalid inner proof (hash mismatch)": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "leaf": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "path": [
+        {
+          "hash": 2,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        }
+      ]
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      }
+    },
+    "isErr": true
+  },
+  "rejects invalid leaf": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "leaf": {
+        "hash": 1,
+        "length": 1,
+        "prefix": "AA=="
+      }
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      }
+    },
+    "isErr": true
+  },
+  "rejects leaf with invalid inner proofs": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "leaf": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "path": [
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        },
+        {
+          "hash": 1,
+          "prefix": "AKq7zN0=",
+          "suffix": "uw=="
+        },
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        }
+      ]
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      }
+    },
+    "isErr": true
+  },
+  "rejects only inner proof": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "YmFy",
+      "path": [
+        {
+          "hash": 1,
+          "prefix": "qrvM3Q=="
+        }
+      ]
+    },
+    "spec": {
+      "leafSpec": {
+        "hash": 1,
+        "prehashValue": 1,
+        "length": 1,
+        "prefix": "AA=="
+      },
+      "innerSpec": {
+        "childOrder": [
+          0,
+          1
+        ],
+        "childSize": 33,
+        "minPrefixLength": 4,
+        "maxPrefixLength": 12,
+        "hash": 1
+      }
+    },
+    "isErr": true
+  }
+}
