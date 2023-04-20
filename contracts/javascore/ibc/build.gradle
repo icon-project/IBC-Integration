@@ -26,14 +26,29 @@ test {
     finalizedBy jacocoTestReport
 }
 
+// jacocoTestReport {
+//     dependsOn test
+//     reports {
+//         xml.required = false
+//         csv.required = false
+//         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+//     }
+// }
+
 jacocoTestReport {
     dependsOn test
     reports {
-        xml.required = false
-        csv.required = false
-        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+        xml.enabled true
+        xml.destination file("${buildDir}/reports/jacoco/report.xml")
+        html.enabled true
+        csv.enabled true
     }
+    subprojects.each {
+        sourceSets it.sourceSets.main
+    }
+    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
 }
+
 
 tasks.named('compileJava') {
     dependsOn(':score-util:jar')
