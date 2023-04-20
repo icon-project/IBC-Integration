@@ -229,9 +229,9 @@ func (e *Executor) xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTh
 	return nil
 }
 
-func (e *Executor) contractDeployedOnlyWhenTheChainIs(contractName, chainName string) error {
+func (e *Executor) contractDeployedByOnlyWhenTheChainIs(contractName, owner, chainName string) error {
 	if e.cfg.Chain.ChainConfig.Type == chainName {
-		return e.isTheContractOwner("", strings.ToLower(contractName))
+		return e.isTheContractOwner(owner, strings.ToLower(contractName))
 	}
 	fmt.Println("Given chain is not Icon, so deploying BMC contract is not required")
 	return nil
