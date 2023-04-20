@@ -16,7 +16,7 @@ pub mod owner;
 pub mod requests;
 pub mod state;
 pub mod types;
-
+use crate::ack::{on_ack_failure, on_ack_sucess};
 use crate::{
     ack::{make_ack_fail, make_ack_success, Ack},
     check::{check_order, check_version},

@@ -60,4 +60,135 @@ impl<'a> CwCallService<'a> {
             .add_attribute("method", "execute_call")
             .add_submessage(sub_msg))
     }
+
+    pub fn receive_packet_data(
+        &self,
+        deps: DepsMut,
+        message: IbcPacket,
+    ) -> Result<IbcReceiveResponse, ContractError> {
+        // TODO : ADD check for sender logic
+
+        let call_service_message: CallServiceMessage = message.data.try_into()?;
+
+        match call_service_message.message_type() {
+            CallServiceMessageType::CallServiceRequest => {
+                self.hanadle_request(deps, call_service_message.payload())
+            }
+            CallServiceMessageType::CallServiceResponse => {
+                self.handle_response(deps, call_service_message.payload())
+            }
+        }
+    }
+
+    pub fn hanadle_request(
+        &self,
+        deps: DepsMut,
+        data: &[u8],
+    ) -> Result<IbcReceiveResponse, ContractError> {
+        let request_id = self.increment_last_request_id(deps.storage)?;
+        let message_request: CallServiceMessageRequest = data.try_into()?;
+
+        let from = message_request.from();
+        let to = message_request.to();
+
+        let request = CallServiceMessageRequest::new(
+            from.clone(),
+            to.to_string(),
+            message_request.sequence_no(),
+            message_request.rollback().into(),
+            message_request.data().into(),
+        );
+
+        self.insert_request(deps.storage, request_id, request)?;
+
+        let event = event_call_message(
+            from.to_string(),
+            to.to_string(),
+            message_request.sequence_no(),
+            request_id,
+        );
+
+        Ok(IbcReceiveResponse::new()
+            .add_attribute("action", "call_service")
+            .add_attribute("method", "handle_response")
+            .set_ack(make_ack_success())
+            .add_event(event))
+    }
+
+    pub fn handle_response(
+        &self,
+        deps: DepsMut,
+        data: &[u8],
+    ) -> Result<IbcReceiveResponse, ContractError> {
+        let message: CallServiceMessageResponse = data.try_into()?;
+        let response_sequence_no = message.sequence_no();
+
+        let mut call_request = self.query_request(deps.storage, response_sequence_no)?;
+
+        if call_request.is_null() {
+            return Ok(IbcReceiveResponse::new()
+                .add_attribute("action", "call_service")
+                .add_attribute("method", "handle_response")
+                .set_ack(make_ack_fail(format!(
+                    "handle_resposne: no request for {}",
+                    response_sequence_no
+                )))
+                .add_attribute(
+                    "message",
+                    format!("handle_resposne: no request for {}", response_sequence_no),
+                ));
+        }
+
+        match message.response_code() {
+            CallServiceResponseType::CallServiceResponseSuccess => {
+                let event = match message.message().is_empty() {
+                    true => event_response_message(
+                        response_sequence_no,
+                        to_int(message.response_code()),
+                        "",
+                    ),
+                    false => event_response_message(
+                        response_sequence_no,
+                        to_int(message.response_code()),
+                        message.message(),
+                    ),
+                };
+                self.cleanup_request(deps.storage, response_sequence_no);
+                Ok(IbcReceiveResponse::new()
+                    .add_attribute("action", "call_service")
+                    .add_attribute("method", "handle_response")
+                    .set_ack(make_ack_success())
+                    .add_event(event))
+            }
+            _ => {
+                self.ensure_rollback_length(call_request.rollback())
+                    .unwrap();
+                call_request.set_enabled();
+                self.set_call_request(deps.storage, response_sequence_no, call_request)?;
+
+                let event = event_rollback_message(response_sequence_no);
+
+                Ok(IbcReceiveResponse::new()
+                    .add_attribute("action", "call_service")
+                    .add_attribute("method", "handle_response")
+                    .set_ack(make_ack_success())
+                    .add_event(event))
+            }
+        }
+    }
+
+    pub fn cleanup_request(&self, store: &mut dyn Storage, sequence_no: u128) {
+        self.remove_call_request(store, sequence_no);
+    }
+
+    pub fn save_config(
+        &mut self,
+        store: &mut dyn Storage,
+        config: &IbcConfig,
+    ) -> Result<(), ContractError> {
+        match self.ibc_config().save(store, config) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(ContractError::Std(err)),
+        }
+    }
 }

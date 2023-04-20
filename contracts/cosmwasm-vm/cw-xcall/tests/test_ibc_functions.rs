@@ -128,6 +128,8 @@ fn fails_on_open_channel_open_try_invalid_version() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_on_open_channel_open_try_valid_version() {
+    use cosmwasm_std::from_binary;
+
     let mut deps = deps();
 
     let mock_env = mock_env();
@@ -147,7 +149,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
     let execute_message = ExecuteMsg::IbcChannelOpen {
         msg: OpenTry {
             channel: IbcChannel::new(
-                src,
+                src.clone(),
                 dst,
                 cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
@@ -161,7 +163,10 @@ fn sucess_on_open_channel_open_try_valid_version() {
         .execute(deps.as_mut(), mock_env, mock_info, execute_message)
         .unwrap();
 
-    assert_eq!("xcall-1", result.attributes[0].value)
+    let result_data: IbcEndpoint = from_binary(&result.data.unwrap()).unwrap();
+    assert_eq!(src.channel_id, result_data.channel_id);
+
+    assert_eq!("xcall-1", result.attributes[1].value)
 }
 
 #[test]
@@ -199,7 +204,7 @@ fn sucess_on_ibc_channel_connect() {
         .execute(deps.as_mut(), mock_env, mock_info, execute_message)
         .unwrap();
 
-    assert_eq!("ibc_channel_connect", result.attributes[0].value);
+    assert_eq!("on_channel_connect", result.attributes[0].value);
 
     let ibc_config = contract.ibc_config().load(deps.as_ref().storage).unwrap();
 
@@ -325,6 +330,7 @@ fn sucess_receive_packet_for_call_message_request() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
+
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 

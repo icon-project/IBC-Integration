@@ -21,7 +21,10 @@ impl<'a> CwIbcCoreContext<'a> {
         info: MessageInfo,
         _msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        todo!()
+        set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
+            .map_err(ContractError::Std)?;
+
+        Ok(Response::new())
     }
 
     pub fn execute(

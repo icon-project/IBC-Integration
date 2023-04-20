@@ -1,7 +1,3 @@
-use crate::ibc::{
-    ibc_channel_close, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, ibc_packet_receive,
-};
-
 use super::*;
 
 // version info for migration info
@@ -46,61 +42,24 @@ impl<'a> CwCallService<'a> {
                 self.execute_rollback(deps, info, sequence_no)
             }
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcChannelOpen { msg } => {
-                let response = ibc_channel_open(deps, env, msg)?;
-
-                match response {
-                    Some(data) => Ok(Response::new().add_attribute("version", data.version)),
-                    None => Ok(Response::new()),
-                }
-            }
+            ExecuteMsg::IbcChannelOpen { msg } => Ok(self.on_channel_open(msg)?),
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelConnect { msg } => {
-                let response = ibc_channel_connect(deps, env, msg)?;
-
-                Ok(Response::new()
-                    .add_attributes(response.attributes)
-                    .add_events(response.events)
-                    .add_submessages(response.messages))
+                Ok(self.on_channel_connect(deps.storage, msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcChannelClose { msg } => {
-                let response = ibc_channel_close(deps, env, msg)?;
-                Ok(Response::new()
-                    .add_attributes(response.attributes)
-                    .add_events(response.events)
-                    .add_submessages(response.messages))
-            }
+            ExecuteMsg::IbcChannelClose { msg } => Ok(self.on_channel_close(msg)?),
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcPacketReceive { msg } => {
-                let response = ibc_packet_receive(deps, env, msg).map_err(|error| {
-                    ContractError::Std(StdError::NotFound {
-                        kind: error.to_string(),
-                    })
-                })?;
-
-                let response_data = Response::new()
-                    .add_attributes(response.attributes)
-                    .add_events(response.events)
-                    .add_submessages(response.messages)
-                    .set_data(response.acknowledgement);
-
-                Ok(response_data)
-            }
+            ExecuteMsg::IbcPacketReceive { msg } => Ok(self.on_packet_receive(deps, msg)?),
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcPacketAck { msg } => {
-                let response = ibc_packet_ack(deps, env, msg)?;
-                Ok(Response::new()
-                    .add_attributes(response.attributes)
-                    .add_events(response.events)
-                    .add_submessages(response.messages))
-            }
+            ExecuteMsg::IbcPacketAck { msg } => Ok(self.on_packet_ack(msg)?),
             ExecuteMsg::UpdateAdmin { address } => {
                 let validated_address =
                     CwCallService::validate_address(deps.api, address.as_str())?;
                 self.update_admin(deps.storage, info, validated_address)
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
+            ExecuteMsg::IbcPacketTimeout { msg } => Ok(self.on_packet_timeout(msg)?),
         }
     }
 
@@ -137,7 +96,8 @@ impl<'a> CwCallService<'a> {
         let last_request_id = u128::default();
         let owner = Address::from(info.sender.as_str());
 
-        self.add_owner(deps.storage, owner)?;
+        self.add_owner(deps.storage, owner.clone())?;
+        self.add_admin(deps.storage, info, owner)?;
         self.init_last_sequence_no(deps.storage, last_sequence_no)?;
         self.init_last_request_id(deps.storage, last_request_id)?;
 
@@ -242,5 +202,133 @@ impl<'a> CwCallService<'a> {
             SubMsgResult::Ok(_) => Ok(Response::new()),
             SubMsgResult::Err(err) => Ok(Response::new().set_data(make_ack_fail(err))),
         }
+    }
+
+    /// Handles the `OpenInit` and `OpenTry` parts of the IBC handshake.
+    fn on_channel_open(&self, msg: IbcChannelOpenMsg) -> Result<Response, ContractError> {
+        let ibc_endpoint = match msg.clone() {
+            IbcChannelOpenMsg::OpenInit { channel } => channel.endpoint,
+            IbcChannelOpenMsg::OpenTry {
+                channel,
+                counterparty_version: _,
+            } => channel.endpoint,
+        };
+        let channel = msg.channel();
+
+        check_order(&channel.order)?;
+
+        if let Some(counter_version) = msg.counterparty_version() {
+            check_version(counter_version)?;
+        }
+
+        Ok(Response::new()
+            .set_data(to_binary(&ibc_endpoint).unwrap())
+            .add_attribute("method", "on_channel_open")
+            .add_attribute("version", IBC_VERSION))
+    }
+    fn on_channel_connect(
+        &self,
+        store: &mut dyn Storage,
+        msg: IbcChannelConnectMsg,
+    ) -> Result<Response, ContractError> {
+        let ibc_endpoint = match msg.clone() {
+            IbcChannelConnectMsg::OpenAck {
+                channel,
+                counterparty_version: _,
+            } => channel.endpoint,
+            IbcChannelConnectMsg::OpenConfirm { channel } => channel.endpoint,
+        };
+        let channel = msg.channel();
+
+        check_order(&channel.order)?;
+
+        if let Some(counter_version) = msg.counterparty_version() {
+            check_version(counter_version)?;
+        }
+
+        let source = msg.channel().endpoint.clone();
+        let destination = msg.channel().counterparty_endpoint.clone();
+
+        let ibc_config = IbcConfig::new(source, destination);
+        let mut call_service = CwCallService::default();
+        call_service.save_config(store, &ibc_config)?;
+
+        Ok(Response::new()
+            .set_data(to_binary(&ibc_endpoint).unwrap())
+            .add_attribute("method", "on_channel_connect")
+            .add_attribute(
+                "source_channel_id",
+                msg.channel().endpoint.channel_id.as_str(),
+            )
+            .add_attribute("source_port_id", msg.channel().endpoint.port_id.as_str())
+            .add_attribute(
+                "destination_channel_id",
+                msg.channel().counterparty_endpoint.channel_id.as_str(),
+            )
+            .add_attribute(
+                "destination_port_id",
+                msg.channel().counterparty_endpoint.port_id.as_str(),
+            ))
+    }
+    fn on_channel_close(&self, msg: IbcChannelCloseMsg) -> Result<Response, ContractError> {
+        let ibc_endpoint = match msg.clone() {
+            IbcChannelCloseMsg::CloseInit { channel } => channel.endpoint,
+            IbcChannelCloseMsg::CloseConfirm { channel } => channel.endpoint,
+        };
+        let channel = msg.channel().endpoint.channel_id.clone();
+
+        Ok(Response::new()
+            .add_attribute("method", "ibc_channel_close")
+            .add_attribute("channel", channel)
+            .set_data(to_binary(&ibc_endpoint).unwrap()))
+    }
+    fn on_packet_receive(
+        &self,
+        deps: DepsMut,
+        msg: IbcPacketReceiveMsg,
+    ) -> Result<Response, ContractError> {
+        match self.receive_packet_data(deps, msg.packet) {
+            Ok(ibc_response) => Ok(Response::new()
+                .add_attributes(ibc_response.attributes.clone())
+                .set_data(ibc_response.acknowledgement)
+                .add_events(ibc_response.events)),
+            Err(error) => Ok(Response::new()
+                .add_attribute("method", "ibc_packet_receive")
+                .add_attribute("error", error.to_string())
+                .set_data(make_ack_fail(error.to_string()))),
+        }
+    }
+
+    fn on_packet_ack(&self, ack: IbcPacketAckMsg) -> Result<Response, ContractError> {
+        let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
+        let message: CallServiceMessage = from_binary(&ack.original_packet.data)?;
+        let message_type = match message.message_type() {
+            CallServiceMessageType::CallServiceRequest => "call_service_request",
+            CallServiceMessageType::CallServiceResponse => "call_service_response",
+        };
+
+        match ack_response {
+            Ack::Result(_) => {
+                let attributes = vec![
+                    attr("action", "acknowledge"),
+                    attr("success", "true"),
+                    attr("message_type", message_type),
+                ];
+
+                Ok(Response::new().add_attributes(attributes))
+            }
+            Ack::Error(err) => Ok(Response::new()
+                .add_attribute("action", "acknowledge")
+                .add_attribute("message_type", message_type)
+                .add_attribute("success", "false")
+                .add_attribute("error", err)),
+        }
+    }
+
+    fn on_packet_timeout(&self, _msg: IbcPacketTimeoutMsg) -> Result<Response, ContractError> {
+        let submsg = SubMsg::reply_on_error(CosmosMsg::Custom(Empty {}), ACK_FAILURE_ID);
+        Ok(Response::new()
+            .add_submessage(submsg)
+            .add_attribute("method", "ibc_packet_timeout"))
     }
 }
