@@ -57,4 +57,6 @@ pub enum ContractError {
     FailedToSaveConfig,
     #[error("Client state frozen at {0}")]
     ClientStateFrozen(u64),
+    #[error("Failed Parsing Height {0}")]
+    FailedToParseHeight(String),
 }

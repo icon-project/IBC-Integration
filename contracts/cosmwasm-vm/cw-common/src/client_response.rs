@@ -196,6 +196,32 @@ impl From<PacketResponse> for Packet {
     }
 }
 
+impl From<Packet> for PacketResponse {
+    fn from(packet: Packet) -> Self {
+        let data = hex::encode(packet.data);
+        PacketResponse {
+            seq_on_a: packet.seq_on_a,
+            port_id_on_a: packet.port_id_on_a,
+            chan_id_on_a: packet.chan_id_on_a,
+            port_id_on_b: packet.port_id_on_b,
+            chan_id_on_b: packet.chan_id_on_b,
+            data,
+            timeout_height_on_b: packet.timeout_height_on_b,
+            timeout_timestamp_on_b: packet.timeout_timestamp_on_b,
+        }
+    }
+}
+
+impl From<PacketData> for PacketDataResponse {
+    fn from(value: PacketData) -> Self {
+        PacketDataResponse { 
+            packet: PacketResponse::from(value.packet),
+            acknowledgement:value.acknowledgement,
+            signer:value.signer
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PacketDataResponse {
     pub packet: PacketResponse,

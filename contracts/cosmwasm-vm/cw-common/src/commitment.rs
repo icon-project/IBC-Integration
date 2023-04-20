@@ -214,7 +214,7 @@ mod tests {
             let packet_bytes = packet.encode_to_vec();
             assert_eq!(msg.packet_encoded, hex::encode(&packet_bytes));
 
-            assert_eq!(Packet::default(),packet);
+           assert_eq!(Packet::default(),packet);
 
             let packet_commitment_hash = packet.commitment();
 

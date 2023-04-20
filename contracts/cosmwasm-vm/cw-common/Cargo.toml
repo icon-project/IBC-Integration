@@ -19,5 +19,5 @@ hex ="0.4.3"
 common = { path="../../../libraries/rust/common" }
 prost = { version = "0.11.8", default-features = false, features = ["prost-derive"] }
 [dev-dependencies]
-getrandom = {version = "0.2", default-features = false, features = ["custom"]}
+getrandom = {version = "0.2.9", default-features = false, features = ["custom"]}
 test-utils={path="../../../libraries/rust/test-utils"}
