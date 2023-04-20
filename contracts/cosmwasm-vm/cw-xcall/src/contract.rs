@@ -59,6 +59,7 @@ impl<'a> CwCallService<'a> {
                 self.update_admin(deps.storage, info, validated_address)
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
+            #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketTimeout { msg } => Ok(self.on_packet_timeout(msg)?),
         }
     }
