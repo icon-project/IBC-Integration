@@ -95,7 +95,7 @@ pub fn create_packet_commitment(
     let revision_height = revision_height.to_be_bytes();
     hash_input.append(&mut revision_height.to_vec());
 
-    let packet_data_hash = packet_data;
+    let packet_data_hash = sha256(packet_data);
     hash_input.append(&mut packet_data_hash.to_vec());
 
     sha256(&hash_input).to_vec()
@@ -197,9 +197,9 @@ mod tests {
     fn test_packet_message_data() {
         let data = load_test_messages();
         for (i, msg) in data.iter().enumerate() {
-            if i == 0 {
-                continue;
-            }
+            // if i == 0 {
+            //     continue;
+            // }
             let msg_path = hex::decode(&msg.commitment_path).unwrap();
             let expected_key = keccak256(&msg_path);
             let msg_key = hex::decode(&msg.commitment_key).unwrap();
@@ -213,6 +213,8 @@ mod tests {
             let message_bytes = hex::decode(&msg.messages[0]).unwrap();
             let packet_bytes = packet.encode_to_vec();
             assert_eq!(msg.packet_encoded, hex::encode(&packet_bytes));
+
+            assert_eq!(Packet::default(),packet);
 
             let packet_commitment_hash = packet.commitment();
 
