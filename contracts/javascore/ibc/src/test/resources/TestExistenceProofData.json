@@ -1,0 +1,77 @@
+{
+  "cannot execute inner first": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "c29tZSBsb25nZXIgdGV4dA==",
+      "path": [
+        {
+          "hash": 1,
+          "prefix": "3q2+7wDK/gA="
+        }
+      ]
+    },
+    "isErr": true,
+    "expected": null
+  },
+  "demonstrate maliability of leaf if we change leaf algorithm": {
+    "proof": {
+      "key": "BGZvb2Q=",
+      "value": "EHNvbWUgbG9uZ2VyIHRleHQ=",
+      "leaf": {
+        "hash": 1
+      }
+    },
+    "isErr": false,
+    "expected": "to9dKY6RWuF1PdMz2h+c9gVBGl8uElFr5nWPNl5tsmU="
+  },
+  "demonstrate maliability of leaf if we change leaf prefix": {
+    "proof": {
+      "key": "b2QQ",
+      "value": "c29tZSBsb25nZXIgdGV4dA==",
+      "leaf": {
+        "hash": 1,
+        "prefix": "BGZv"
+      }
+    },
+    "isErr": false,
+    "expected": "to9dKY6RWuF1PdMz2h+c9gVBGl8uElFr5nWPNl5tsmU="
+  },
+  "executes leaf then inner op": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "c29tZSBsb25nZXIgdGV4dA==",
+      "leaf": {
+        "hash": 1,
+        "length": 1
+      },
+      "path": [
+        {
+          "hash": 1,
+          "prefix": "3q2+7wDK/gA="
+        }
+      ]
+    },
+    "isErr": false,
+    "expected": "g26iNqaQKmZcKgBMkgNk8kytUt7SCx5PIsMXm/4lsqk="
+  },
+  "executes one leaf step": {
+    "proof": {
+      "key": "Zm9vZA==",
+      "value": "c29tZSBsb25nZXIgdGV4dA==",
+      "leaf": {
+        "hash": 1,
+        "length": 1
+      }
+    },
+    "isErr": false,
+    "expected": "to9dKY6RWuF1PdMz2h+c9gVBGl8uElFr5nWPNl5tsmU="
+  },
+  "must have at least one step": {
+    "proof": {
+      "key": "Zm9v",
+      "value": "YmFy"
+    },
+    "isErr": true,
+    "expected": null
+  }
+}
