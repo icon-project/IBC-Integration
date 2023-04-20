@@ -2,6 +2,7 @@ package ibc.ics04.channel;
 
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
@@ -236,7 +237,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
             byte[] recvCommitmentKey = IBCCommitment.nextSequenceRecvCommitmentKey(packet.getDestinationPort(),
                     packet.getDestinationChannel());
-            byte[] recvCommitment = packet.getSequence().toByteArray();
+            byte[] recvCommitment = Proto.encodeFixed64(packet.getSequence());
             sendBTPMessage(connection.getClientId(), ByteUtil.join(recvCommitmentKey, recvCommitment));
         } else {
             Context.revert("unknown ordering type");
@@ -300,7 +301,7 @@ public class IBCPacket extends IBCChannelHandshake {
                     proofHeight,
                     proof,
                     nextRecvKey,
-                    nextSequenceRecv.toByteArray());
+                    Proto.encodeFixed64(nextSequenceRecv));
             channel.setState(Channel.State.STATE_CLOSED);
 
             byte[] encodedChannel = channel.encode();
@@ -399,9 +400,9 @@ public class IBCPacket extends IBCChannelHandshake {
     private byte[] createPacketCommitment(Packet packet) {
         return IBCCommitment.sha256(
                 ByteUtil.join(
-                        packet.getTimeoutTimestamp().toByteArray(),
-                        packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
-                        packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
+                        Proto.encodeFixed64(packet.getTimeoutTimestamp()),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber()),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight()),
                         IBCCommitment.sha256(packet.getData())));
     }
 
