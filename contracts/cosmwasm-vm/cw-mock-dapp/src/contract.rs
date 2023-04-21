@@ -1,3 +1,4 @@
+use std::str::from_utf8;
 use cosmwasm_std::to_vec;
 
 use super::*;
@@ -31,7 +32,10 @@ impl<'a> CwMockService<'a> {
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let sequence = self.increment_sequence(deps.storage)?;
-        let address = self.xcall_address().load(deps.storage).map_err(|_e| ContractError::ModuleAddressNotFound)?;
+        let address = self
+            .xcall_address()
+            .load(deps.storage)
+            .map_err(|_e| ContractError::ModuleAddressNotFound)?;
 
         let roll_back = match rollback.clone() {
             Some(data) => {
@@ -76,8 +80,11 @@ impl<'a> CwMockService<'a> {
                     }
                 })?;
             let seq = recieved_rollback.id;
-            let rollback_store = self.roll_back().load(deps.storage, seq)?;
-            if rollback_store != data {
+            let rollback_store = self
+                .roll_back()
+                .load(deps.storage, seq)
+                .map_err(|_e| ContractError::MisiingRollBack { sequence: seq })?;
+            if rollback_store != recieved_rollback.rollback {
                 return Err(ContractError::RollBackMismatch { sequence: seq });
             }
             self.roll_back().remove(deps.storage, seq);
@@ -87,10 +94,8 @@ impl<'a> CwMockService<'a> {
                 .add_attribute("from", from)
                 .add_attribute("sequence", seq.to_string()))
         } else {
-            let msg_data = serde_json_wasm::from_slice::<String>(&data).map_err(|e| {
-                ContractError::DecodeError {
-                    error: e.to_string(),
-                }
+            let msg_data = from_utf8(&data).map_err(|e| ContractError::DecodeError {
+                error: e.to_string(),
             })?;
             if "revertMessage" == msg_data {
                 return Err(ContractError::RevertFromDAPP);

@@ -14,4 +14,6 @@ pub enum ContractError {
     RevertFromDAPP,
     #[error("ModuleAddressNotFound")]
     ModuleAddressNotFound,
+    #[error("MisiingRollBack {sequence}")]
+    MisiingRollBack { sequence: u64 },
 }
