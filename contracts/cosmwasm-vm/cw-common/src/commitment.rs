@@ -162,6 +162,8 @@ pub fn port_commitment_key(port_id: &PortId) -> Vec<u8> {
 }
 
 
+
+
 impl ICommitment for Packet {
     fn commitment_path(&self) -> Vec<u8> {
         let port_id = PortId::from_str(&self.source_port).unwrap();

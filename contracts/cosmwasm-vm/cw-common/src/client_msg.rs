@@ -53,12 +53,12 @@ pub enum LightClientPacketMessage {
 
 #[cw_serde]
 pub struct VerifyConnectionState {
-    proof_height: String,
-    counterparty_prefix: Vec<u8>,
-    proof: Vec<u8>,
-    root: Vec<u8>,
-    counterparty_conn_end_path: Vec<u8>,
-    expected_counterparty_connection_end: Vec<u8>,
+    pub proof_height: String,
+    pub counterparty_prefix: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub counterparty_conn_end_path: Vec<u8>,
+    pub expected_counterparty_connection_end: Vec<u8>,
 }
 impl VerifyConnectionState {
     pub fn new(
@@ -82,12 +82,12 @@ impl VerifyConnectionState {
 
 #[cw_serde]
 pub struct VerifyClientFullState {
-    proof_height: String,
-    counterparty_prefix: Vec<u8>,
-    client_state_proof: Vec<u8>,
-    root: Vec<u8>,
-    client_state_path: Vec<u8>,
-    expected_client_state: Vec<u8>,
+    pub proof_height: String,
+    pub counterparty_prefix: Vec<u8>,
+    pub client_state_proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub client_state_path: Vec<u8>,
+    pub expected_client_state: Vec<u8>,
 }
 impl VerifyClientFullState {
     pub fn new(
@@ -111,12 +111,12 @@ impl VerifyClientFullState {
 
 #[cw_serde]
 pub struct VerifyClientConsensusState {
-    proof_height: String,
-    counterparty_prefix: Vec<u8>,
-    consensus_state_proof: Vec<u8>,
-    root: Vec<u8>,
-    conesenus_state_path: Vec<u8>,
-    expected_conesenus_state: Vec<u8>,
+    pub proof_height: String,
+    pub counterparty_prefix: Vec<u8>,
+    pub consensus_state_proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub conesenus_state_path: Vec<u8>,
+    pub expected_conesenus_state: Vec<u8>,
 }
 
 impl VerifyClientConsensusState {

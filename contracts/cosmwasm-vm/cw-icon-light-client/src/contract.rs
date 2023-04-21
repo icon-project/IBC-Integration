@@ -163,6 +163,62 @@ pub fn execute(
             Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()).set_data(data))
             
 
+        },
+        ExecuteMsg::VerifyPacketAcknowledgement { client_id, verify_packet_acknowledge, packet_data }=>{
+
+            let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
+            .map_err(|e| ContractError::DecodeError(e))?;
+        let height= to_height_u64(&verify_packet_acknowledge.height)?;
+        let result = client.verify_membership(
+            &client_id,
+            height,
+            0,
+            0,
+            &proofs_decoded.proofs,
+            &verify_packet_acknowledge.ack,
+            &verify_packet_acknowledge.ack_path,
+        )?;
+        let packet_data:PacketData=from_slice(&packet_data).map_err(|e|ContractError::Std(e))?;
+        let data=to_binary(&PacketDataResponse::from(packet_data)).map_err(|e|ContractError::Std(e))?;
+
+        Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()).set_data(data))
+
+        }
+        ExecuteMsg::VerifyOpenConfirm { client_id, verify_connection_state }=>{
+            let proofs_decoded = MerkleProofs::decode(verify_connection_state.proof.as_slice())
+            .map_err(|e| ContractError::DecodeError(e))?;
+        let height= to_height_u64(&verify_connection_state.proof_height)?;
+        let result = client.verify_membership(
+            &client_id,
+            height,
+            0,
+            0,
+            &proofs_decoded.proofs,
+            &verify_connection_state.expected_counterparty_connection_end,
+            &verify_connection_state.counterparty_conn_end_path,
+        )?;
+
+        Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+
+        }
+        ExecuteMsg::VerifyConnection { client_id, verify_connection_state, verify_client_full_state, verify_client_consensus_state }=>{
+            let proofs_decoded = MerkleProofs::decode(verify_connection_state.proof.as_slice())
+            .map_err(|e| ContractError::DecodeError(e))?;
+        let height= to_height_u64(&verify_connection_state.proof_height)?;
+        let result = client.verify_membership(
+            &client_id,
+            height,
+            0,
+            0,
+            &proofs_decoded.proofs,
+            &verify_connection_state.expected_counterparty_connection_end,
+            &verify_connection_state.counterparty_conn_end_path,
+        )?;
+
+        
+
+        Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+
         }
         _ => {
             todo!()
