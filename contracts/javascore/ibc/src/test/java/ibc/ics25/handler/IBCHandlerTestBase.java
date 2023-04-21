@@ -36,6 +36,7 @@ import test.proto.core.connection.Connection.Counterparty;
 import test.proto.core.connection.Connection.MerklePrefix;
 import test.proto.core.connection.Connection.Version;
 
+
 public class IBCHandlerTestBase extends TestBase {
     protected final ServiceManager sm = getServiceManager();
     protected final Account owner = sm.createAccount();
@@ -102,11 +103,12 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setBtpNetworkId(4);
 
         when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
-            .thenReturn(Map.of(
-                "clientStateCommitment", new byte[0],
-                "consensusStateCommitment", new byte[0],
-                "height",Height.getDefaultInstance().toByteArray()
-        ));
+                .thenReturn(Map.of(
+                        "clientStateCommitment", new byte[0],
+                        "consensusStateCommitment", new byte[0],
+                        "height", Height.getDefaultInstance().toByteArray()
+                ));
+
 
         // Act
         handler.invoke(owner, "createClient", msg);
@@ -134,9 +136,9 @@ public class IBCHandlerTestBase extends TestBase {
                 .setRevisionNumber(2).build();
 
         when(lightClient.mock.updateClient(msg.getClientId(), msg.getClientMessage())).thenReturn(Map.of(
-            "clientStateCommitment", clientStateCommitment,
-            "consensusStateCommitment", consensusStateCommitment,
-            "height", consensusHeight.toByteArray()
+                "clientStateCommitment", clientStateCommitment,
+                "consensusStateCommitment", consensusStateCommitment,
+                "height", consensusHeight.toByteArray()
         ));
         // Act
         handler.invoke(relayer, "updateClient", msg);
@@ -172,7 +174,7 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setDelayPeriod(delayPeriod);
         msg.setClientId(clientId);
         msg.setClientStateBytes(new byte[0]);
-        msg.setCounterpartyVersions(new byte[][] { baseVersion.toByteArray() });
+        msg.setCounterpartyVersions(new byte[][]{baseVersion.toByteArray()});
         msg.setProofInit(new byte[0]);
         msg.setProofClient(new byte[0]);
         msg.setProofConsensus(new byte[0]);
@@ -410,8 +412,7 @@ public class IBCHandlerTestBase extends TestBase {
         verify(handlerSpy).RecvPacket(lastPacketCaptor.capture());
         assertArrayEquals(packet.toByteArray(), lastPacketCaptor.getValue());
 
-        verify(handlerSpy).WriteAcknowledgement(packet.getDestinationPort(),
-                packet.getDestinationChannel(), BigInteger.valueOf(packet.getSequence()), new byte[1]);
+        verify(handlerSpy).WriteAcknowledgement(packet.toByteArray(), new byte[1]);
     }
 
     void writeAcknowledgement() throws Exception {
@@ -420,12 +421,10 @@ public class IBCHandlerTestBase extends TestBase {
         Packet lastPacket = Packet.parseFrom(lastPacketCaptor.getValue());
 
         // Act
-        handler.invoke(module.account, "writeAcknowledgement", lastPacket.getDestinationPort(),
-                lastPacket.getDestinationChannel(), BigInteger.valueOf(lastPacket.getSequence()), acknowledgement);
+        handler.invoke(module.account, "writeAcknowledgement", lastPacket.toByteArray(), acknowledgement);
 
         // Assert
-        verify(handlerSpy).WriteAcknowledgement(lastPacket.getDestinationPort(),
-                lastPacket.getDestinationChannel(), BigInteger.valueOf(lastPacket.getSequence()), acknowledgement);
+        verify(handlerSpy).WriteAcknowledgement(lastPacket.toByteArray(), acknowledgement);
     }
 
     void acknowledgePacket() throws Exception {
@@ -449,9 +448,9 @@ public class IBCHandlerTestBase extends TestBase {
 
     }
 
-    void timeoutPacket() throws Exception{
+    void timeoutPacket() throws Exception {
         MsgPacketTimeout msg = new MsgPacketTimeout();
-        BigInteger nextRecv = (BigInteger)handler.call("getNextSequenceReceive", portId, channelId);
+        BigInteger nextRecv = (BigInteger) handler.call("getNextSequenceReceive", portId, channelId);
         Packet packet = Packet.parseFrom(lastPacketCaptor.getValue());
         msg.setPacket(packet.toByteArray());
         msg.setNextSequenceRecv(nextRecv);
