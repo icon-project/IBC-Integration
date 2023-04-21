@@ -8,29 +8,29 @@ impl<'a> CwCallService<'a> {
         info: MessageInfo,
         to: String,
         data: Vec<u8>,
-        rollback: Vec<u8>,
-        time_out_height: u64,
+        rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),
-            &rollback,
+            rollback.clone(),
         )?;
+        let need_response = !rollback.is_none();
+        let rollback_data = rollback.unwrap();
 
         self.ensure_data_length(data.len())?;
-        self.ensure_rollback_length(&rollback)?;
+        self.ensure_rollback_length(&rollback_data)?;
 
         // TODO : ADD fee logic
 
-        let need_response = !rollback.is_empty();
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
 
         if need_response {
             let request = CallRequest::new(
                 Address::from(&from_address),
                 to.clone(),
-                rollback.clone(),
+                rollback_data.clone(),
                 need_response,
             );
 
@@ -41,12 +41,13 @@ impl<'a> CwCallService<'a> {
             Address::from(info.sender.as_str()),
             to,
             sequence_no,
-            rollback.to_vec(),
+            rollback_data.to_vec(),
             data.to_vec(),
         );
 
         let message: CallServiceMessage = call_request.into();
-        let packet = self.create_request_packet(deps, env, time_out_height, message.clone())?;
+        //TODO: timeoutheight , for now its 0 and needs to be set after the discussion
+        let packet = self.create_request_packet(deps, env, 0, message.clone())?;
 
         let event = event_xcall_message_sent(sequence_no, info.sender.to_string(), 0, &message);
 

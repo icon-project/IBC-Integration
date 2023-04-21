@@ -35,7 +35,7 @@ impl<'a> CwCallService<'a> {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
             ExecuteMsg::SendCallMessage { to, data, rollback } => {
-                self.send_packet(env, deps, info, to, data, rollback, 0)
+                self.send_packet(env, deps, info, to, data, rollback)
             }
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {

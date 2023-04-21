@@ -17,7 +17,7 @@ pub enum ExecuteMsg {
     SendCallMessage {
         to: String,
         data: Vec<u8>,
-        rollback: Vec<u8>,
+        rollback: Option<Vec<u8>>,
     },
 
     ExecuteCall {
