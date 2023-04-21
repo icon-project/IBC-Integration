@@ -57,7 +57,9 @@ pub struct VerifyConnectionState {
     counterparty_prefix: Vec<u8>,
     proof: Vec<u8>,
     root: Vec<u8>,
+    // commitment key of counterparty conn end
     counterparty_conn_end_path: Vec<u8>,
+    // commitment bytes of counterparty conn end
     expected_counterparty_connection_end: Vec<u8>,
 }
 impl VerifyConnectionState {
@@ -86,7 +88,9 @@ pub struct VerifyClientFullState {
     counterparty_prefix: Vec<u8>,
     client_state_proof: Vec<u8>,
     root: Vec<u8>,
+    // commitment key
     client_state_path: Vec<u8>,
+    // commitment bytes
     expected_client_state: Vec<u8>,
 }
 impl VerifyClientFullState {
@@ -115,7 +119,9 @@ pub struct VerifyClientConsensusState {
     counterparty_prefix: Vec<u8>,
     consensus_state_proof: Vec<u8>,
     root: Vec<u8>,
+    // commitment key
     conesenus_state_path: Vec<u8>,
+    // commitment byte
     expected_conesenus_state: Vec<u8>,
 }
 
@@ -175,6 +181,7 @@ pub enum ExecuteMsg {
     },
     VerifyChannel {
         verify_channel_state: VerifyChannelState,
+        // add all props that we need on response
     },
     Misbehaviour {
         client_id: String,
@@ -185,10 +192,12 @@ pub enum ExecuteMsg {
         verify_connection_state: VerifyConnectionState,
         verify_client_full_state: VerifyClientFullState,
         verify_client_consensus_state: VerifyClientConsensusState,
+        // add all props that we need on open try response
     },
     VerifyOpenConfirm {
         client_id: String,
         verify_connection_state: VerifyConnectionState,
+         // add all props that we need on response
     },
     TimeoutOnCLose {
         client_id: String,

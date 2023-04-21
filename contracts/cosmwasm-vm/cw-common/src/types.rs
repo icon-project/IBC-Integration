@@ -8,7 +8,9 @@ pub struct VerifyChannelState {
     pub counterparty_prefix: Vec<u8>,
     pub proof: Vec<u8>,
     pub root: Vec<u8>,
+    // commitment key
     pub counterparty_chan_end_path: Vec<u8>,
+    // commitment bytes
     pub expected_counterparty_channel_end: Vec<u8>,
 }
 
@@ -18,7 +20,9 @@ pub struct VerifyPacketData {
     pub prefix: Vec<u8>,
     pub proof: Vec<u8>,
     pub root: Vec<u8>,
+    // commitment key
     pub commitment_path: Vec<u8>,
+    // commitment bytes
     pub commitment: Vec<u8>,
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -44,7 +48,9 @@ pub struct VerifyPacketAcknowledgement {
     pub prefix: Vec<u8>,
     pub proof: Vec<u8>,
     pub root: Vec<u8>,
+    // commitment key
     pub ack_path: Vec<u8>,
+    // commitment byte
     pub ack: Vec<u8>,
 }
 
@@ -474,15 +480,10 @@ mod tests{
         let test= TestHex{
             bytes:hex::decode("deadbeef").unwrap()
         };
-
         let serialized = serde_json::to_value(&test).unwrap();
         assert_eq!("{\"bytes\":\"deadbeef\"}",serialized.to_string());
-
         let deserialized= serde_json::from_str::<TestHex>("{\"bytes\":\"deadbeef\"}").unwrap();
-
         assert_eq!(test,deserialized);
-        
-
     }
 
 }
