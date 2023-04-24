@@ -2,13 +2,13 @@ package ibc.ics23.commitment;
 
 import icon.proto.core.commitment.*;
 import score.UserRevertedException;
-import scorex.util.ArrayList;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
 import static ibc.ics23.commitment.Compress.isCompressedBatchProofEmpty;
+import static ibc.ics23.commitment.Ops.doHashOrNoop;
 
 public class Proof {
 
@@ -65,6 +65,16 @@ public class Proof {
         }
     }
 
+    // If we should prehash the key before comparison, do so; otherwise, return the key. Prehashing
+    // changes lexical comparison, so we do so before comparison if the spec sets
+    // `PrehashKeyBeforeComparison`.
+    public static byte[] keyForComparison(ProofSpec spec, byte[] key) {
+        if (!spec.getPrehashKeyBeforeComparison()) {
+            return key;
+        }
+        return doHashOrNoop(spec.getLeafSpec().getPrehashKey(), key);
+    }
+
     public static void verify(NonExistenceProof proof, ProofSpec spec, byte[] commitmentRoot, byte[] key) {
         byte[] leftKey = new byte[0];
         byte[] rightKey = new byte[0];
@@ -87,11 +97,11 @@ public class Proof {
             throw new UserRevertedException("Both left and right proofs missing");
         }
 
-        if (rightKey.length > 0 && Ops.compare(key, rightKey) >= 0) {
+        if (rightKey.length > 0 && Ops.compare(keyForComparison(spec, key), keyForComparison(spec, rightKey)) >= 0) {
             throw new UserRevertedException("Key is not left of right proof");
         }
 
-        if (leftKey.length > 0 && Ops.compare(key, leftKey) <= 0) {
+        if (leftKey.length > 0 && Ops.compare(keyForComparison(spec, key), keyForComparison(spec, leftKey)) <= 0) {
             throw new UserRevertedException("Key is not right of left proof");
         }
 
@@ -204,11 +214,11 @@ public class Proof {
             return false;
         }
 
-        if (!isRightMost(spec, sliceInnerOps(left, 0, leftIdx))) {
+        if (!isRightMost(spec, left.subList(0, leftIdx))) {
             return false;
         }
 
-        if (!isLeftMost(spec, sliceInnerOps(right, 0, rightIdx))) {
+        if (!isLeftMost(spec, right.subList(0, rightIdx))) {
             return false;
         }
         return true;
@@ -259,14 +269,6 @@ public class Proof {
         if (opPrefixLength < minPrefix.intValue()) return false;
         if (opPrefixLength > maxPrefix.intValue()) return false;
         return op.getSuffix().length == suffix.intValue();
-    }
-
-    private static List<InnerOp> sliceInnerOps(List<InnerOp> array, int start, int end) {
-        List<InnerOp> slice = new ArrayList<>(end - start);
-        for (int i = start; i < end; i++) {
-            slice.add(array.get(i));
-        }
-        return slice;
     }
 
     public static boolean isLeafOpEmpty(LeafOp leafOp) {
@@ -413,6 +415,50 @@ public class Proof {
         tendermintSpec.setLeafSpec(leafSpec);
         tendermintSpec.setInnerSpec(innerSpec);
         return tendermintSpec;
+    }
+
+    public static ProofSpec getIavlSpec() {
+        LeafOp leafSpec = new LeafOp();
+        leafSpec.setPrefix(new byte[]{0});
+        leafSpec.setPrehashKey(HashOp.NO_HASH);
+        leafSpec.setHash(HashOp.SHA256);
+        leafSpec.setPrehashValue(HashOp.SHA256);
+        leafSpec.setLength(LengthOp.VAR_PROTO);
+
+        InnerSpec innerSpec = new InnerSpec();
+        innerSpec.setChildOrder(List.of(BigInteger.ZERO, BigInteger.ONE));
+        innerSpec.setMinPrefixLength(BigInteger.valueOf(4));
+        innerSpec.setMaxPrefixLength(BigInteger.valueOf(12));
+        innerSpec.setChildSize(BigInteger.valueOf(33));
+        innerSpec.setHash(HashOp.SHA256);
+
+        var iavlSpec = new ProofSpec();
+        iavlSpec.setLeafSpec(leafSpec);
+        iavlSpec.setInnerSpec(innerSpec);
+        return iavlSpec;
+    }
+
+    public static ProofSpec getSmtSpec() {
+        LeafOp leafSpec = new LeafOp();
+        leafSpec.setPrefix(new byte[]{0});
+        leafSpec.setPrehashKey(HashOp.SHA256);
+        leafSpec.setHash(HashOp.SHA256);
+        leafSpec.setPrehashValue(HashOp.SHA256);
+        leafSpec.setLength(LengthOp.NO_PREFIX);
+
+        InnerSpec innerSpec = new InnerSpec();
+        innerSpec.setChildOrder(List.of(BigInteger.ZERO, BigInteger.ONE));
+        innerSpec.setMinPrefixLength(BigInteger.ONE);
+        innerSpec.setMaxPrefixLength(BigInteger.ONE);
+        innerSpec.setChildSize(BigInteger.valueOf(32));
+        innerSpec.setHash(HashOp.SHA256);
+
+        var smtSpec = new ProofSpec();
+        smtSpec.setLeafSpec(leafSpec);
+        smtSpec.setInnerSpec(innerSpec);
+        smtSpec.setMaxDepth(BigInteger.valueOf(256));
+        smtSpec.setPrehashKeyBeforeComparison(true);
+        return smtSpec;
     }
 
 }
