@@ -64,9 +64,14 @@ func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (cont
 		contractName: string(result.SCOREAddress),
 	}
 
+	// TODO: map keyname to their address
+	contracts.ContractAddress = map[string]string{
+		"keyname": "Address",
+	}
+
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
 		ContractAddress: contracts.ContractAddress,
-		ContractOwner:   keyName,
+		ContractOwner:   contracts.ContractAddress,
 	}), err
 }
 
