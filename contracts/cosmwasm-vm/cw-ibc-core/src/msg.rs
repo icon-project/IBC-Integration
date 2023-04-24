@@ -37,6 +37,8 @@ pub enum ExecuteMsg {
     // Not included in this version of ibc core
     UpgradeClient {},
 
+    ClientMisbehaviour {},
+
     // Connection Messsages
     ConnectionOpenInit {
         client_id_on_a: String,

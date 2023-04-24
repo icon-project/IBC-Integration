@@ -71,6 +71,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.update_client(deps, info, msg)
             }
             ExecuteMsg::UpgradeClient {} => todo!(),
+            ExecuteMsg::ClientMisbehaviour {} => todo!(),
             ExecuteMsg::ConnectionOpenInit {
                 client_id_on_a,
                 counterparty,
