@@ -5,13 +5,13 @@ import ibc.icon.score.util.Proto;
 import ibc.icon.score.util.ProtoMessage;
 
 public class CommitmentProof extends ProtoMessage {
-  private ExistenceProof exist;
+  private ExistenceProof exist = new ExistenceProof();
 
-  private NonExistenceProof nonexist;
+  private NonExistenceProof nonexist = new NonExistenceProof();
 
-  private BatchProof batch;
+  private BatchProof batch = new BatchProof();
 
-  private CompressedBatchProof compressed;
+  private CompressedBatchProof compressed = new CompressedBatchProof();
 
   public ExistenceProof getExist() {
     return this.exist;
