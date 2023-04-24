@@ -1,1 +1,3 @@
 contracts/javascore/lib/src/main/java/icon/proto/**/*.java linguist-generated=true
+libraries/**/*.rs linguist-generated=true
+libraries/**/*.pb.go linguist-generated=true
