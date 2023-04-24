@@ -7,6 +7,7 @@ use cosmwasm_std::{
 };
 
 use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};
+use cw_common::{IbcClientId, IbcConnectionId, IbcPortId};
 use cw_ibc_core::ics02_client::types::{ClientState, ConsensusState};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
@@ -24,9 +25,9 @@ use cw_ibc_core::{
         MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
         MsgChannelOpenTry,
     },
-    ChannelEnd, ConnectionEnd, IbcClientId, IbcConnectionId, Sequence,
+    ChannelEnd, ConnectionEnd, Sequence,
 };
-use cw_ibc_core::{traits::*, IbcClientType, IbcPortId};
+use cw_ibc_core::{traits::*, IbcClientType};
 use ibc::{
     core::ics04_channel::{
         channel::{Counterparty, Order, State},

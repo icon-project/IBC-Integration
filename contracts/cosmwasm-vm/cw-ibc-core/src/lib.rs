@@ -24,9 +24,18 @@ use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
     StdResult, Storage,
 };
+#[allow(unused_imports)]
+use cw2::set_contract_version;
 use cw_common::client_msg::LightClientPacketMessage;
 use cw_common::types::{ChannelId, ClientId, ClientType, ConnectionId, PortId};
+use cw_common::{
+    IbcChannelId, IbcClientId, IbcConnectionId, IbcPortId, MsgCreateClient, MsgUpdateClient,
+};
 use cw_storage_plus::{Item, Map};
+use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
+use ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
+use ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
+use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 pub use ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
@@ -37,12 +46,8 @@ use ibc::core::ics24_host::error::ValidationError;
 pub use ibc::{
     core::{
         ics02_client::{
-            client_type::ClientType as IbcClientType,
-            error::ClientError,
-            msgs::{
-                create_client::MsgCreateClient, update_client::MsgUpdateClient,
-                upgrade_client::MsgUpgradeClient,
-            },
+            client_type::ClientType as IbcClientType, error::ClientError,
+            msgs::upgrade_client::MsgUpgradeClient,
         },
         ics03_connection::connection::ConnectionEnd,
         ics04_channel::{
@@ -50,16 +55,21 @@ pub use ibc::{
             error::{ChannelError, PacketError},
             packet::Sequence,
         },
-        ics24_host::identifier::{
-            ChannelId as IbcChannelId, ClientId as IbcClientId, ConnectionId as IbcConnectionId,
-            PortId as IbcPortId,
-        },
         ics26_routing::context::ModuleId as IbcModuleId,
     },
     Height,
 };
 pub use ics24_host::commitment::*;
+use std::str::FromStr;
 use thiserror::Error;
+
+use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
+use ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
+use ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
+use ibc::core::ics23_commitment::commitment::CommitmentProofBytes;
+
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::traits::{IbcClient, ValidateChannel};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

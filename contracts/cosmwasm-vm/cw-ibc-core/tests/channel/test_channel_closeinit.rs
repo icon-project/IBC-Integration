@@ -7,11 +7,11 @@ use std::{str::FromStr, time::Duration};
 
 use cosmwasm_std::{to_binary, Addr, Event, IbcOrder, Reply, SubMsgResponse, SubMsgResult};
 use cw_common::types::{ChannelId, ConnectionId, PortId};
+use cw_common::IbcClientId;
 use cw_ibc_core::ics04_channel::open_init::create_channel_submesssage;
 use cw_ibc_core::ics04_channel::EXECUTE_ON_CHANNEL_CLOSE_INIT;
 use cw_ibc_core::{
     context::CwIbcCoreContext, ics04_channel::MsgChannelCloseInit, ChannelEnd, ConnectionEnd,
-    IbcClientId,
 };
 use ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},

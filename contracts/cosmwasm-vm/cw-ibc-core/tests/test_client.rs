@@ -7,6 +7,7 @@ use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
 use cw_common::types::{ClientId, ClientType};
+use cw_common::{MsgCreateClient, MsgUpdateClient};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::{
@@ -17,7 +18,7 @@ use cw_ibc_core::{
         types::{ClientState, ConsensusState},
     },
     traits::IbcClient,
-    MsgCreateClient, MsgUpdateClient, MsgUpgradeClient,
+    MsgUpgradeClient,
 };
 use ibc::{
     core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
@@ -369,7 +370,9 @@ fn check_for_create_client_message() {
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
-    contract.register_client(deps.as_mut(), client_type, light_client);
+    contract
+        .register_client(deps.as_mut(), client_type, light_client)
+        .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
@@ -414,7 +417,9 @@ fn check_for_create_client_message_response() {
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
@@ -492,7 +497,9 @@ fn check_for_client_state_from_storage() {
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
@@ -567,7 +574,9 @@ fn check_for_consensus_state_from_storage() {
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
@@ -648,7 +657,9 @@ fn fail_on_create_client_message_error_response() {
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
@@ -701,7 +712,9 @@ fn fails_on_create_client_message_without_proper_initialisation() {
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
-    contract.register_client(deps.as_mut(), client_type, light_client);
+    contract
+        .register_client(deps.as_mut(), client_type, light_client)
+        .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
@@ -742,7 +755,9 @@ fn check_for_update_client_message() {
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
@@ -912,7 +927,9 @@ fn check_for_upgrade_client() {
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
 
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2000000000,
         frozen_height: 0,
@@ -1013,7 +1030,9 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
 
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
@@ -1114,7 +1133,9 @@ fn fails_on_upgrade_client_frozen_client() {
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
 
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 3,
@@ -1212,7 +1233,9 @@ fn check_for_execute_upgrade_client() {
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
 
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2000000000,
         frozen_height: 0,
@@ -1466,11 +1489,13 @@ fn fails_on_storing_already_registered_client_into_registry() {
 
     assert_eq!(light_client_address, result);
 
-    contract.register_client(
-        mock_deps.as_mut(),
-        client_type,
-        Addr::unchecked(light_client_address),
-    )
+    contract
+        .register_client(
+            mock_deps.as_mut(),
+            client_type,
+            Addr::unchecked(light_client_address),
+        )
+        .unwrap();
 }
 
 #[test]
@@ -1564,7 +1589,9 @@ fn success_on_getting_client_state() {
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
-    contract.register_client(deps.as_mut(), client_type.clone(), light_client);
+    contract
+        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 

@@ -133,14 +133,21 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             .add_attribute("client_id", client_id.ibc_client_id().as_str()))
     }
 
-    fn register_client(&self, deps: DepsMut, client_type: ClientType, light_client: Addr) {
+    fn register_client(
+        &self,
+        deps: DepsMut,
+        client_type: ClientType,
+        light_client: Addr,
+    ) -> Result<Response, ContractError> {
         let light_client_address = light_client.to_string();
 
-        self.check_client_registered(deps.as_ref().storage, client_type.clone())
-            .unwrap();
+        self.check_client_registered(deps.as_ref().storage, client_type.clone())?;
 
-        self.store_client_into_registry(deps.storage, client_type, light_client_address)
-            .unwrap();
+        self.store_client_into_registry(deps.storage, client_type.clone(), light_client_address)?;
+
+        Ok(Response::new()
+            .add_attribute("method", "register_client")
+            .add_attribute("client_type", client_type.as_str()))
     }
 
     fn generate_client_identifier(
