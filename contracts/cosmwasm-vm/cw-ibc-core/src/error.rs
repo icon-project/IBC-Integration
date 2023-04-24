@@ -43,6 +43,9 @@ pub enum ContractError {
 
     #[error("IbcValidationError {error}")]
     IbcValidationError { error: ValidationError },
+
+    #[error("ERR_REPLY_ERROR|{code:?}|{msg:?}")]
+    ReplyError { code: u64, msg: String },
 }
 
 impl From<CwErrors> for ContractError {

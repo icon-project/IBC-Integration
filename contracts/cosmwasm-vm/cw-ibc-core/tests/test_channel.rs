@@ -1,6 +1,5 @@
 use std::{str::FromStr, time::Duration};
 
-use cosmwasm_std::testing::mock_ibc_packet_recv;
 use cosmwasm_std::{
     to_binary, to_vec, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
