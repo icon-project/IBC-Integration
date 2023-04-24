@@ -27,25 +27,6 @@ test {
 }
 
 
-jacocoTestReport {
-    dependsOn test
-    doNotTrackState("Disable state tracking")
-    reports {
-        html {
-            enabled false
-        }
-        xml {
-            enabled true
-        }
-        xml.destination file("${buildDir}/reports/jacoco/report.xml")
-    }
-    subprojects.each {
-        sourceSets it.sourceSets.main
-    }
-    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
-}
-
-
 tasks.named('compileJava') {
     dependsOn(':score-util:jar')
     dependsOn(':lib:jar')

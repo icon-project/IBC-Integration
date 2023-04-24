@@ -28,25 +28,6 @@ test {
     finalizedBy jacocoTestReport
 }
 
-jacocoTestReport {
-    dependsOn(test, ':ibc:test', ':ibc:compileTestJava', ':mockclient:compileJava', ':mockclient:test', ':ibc:jacocoTestReport', ':mockapp:compileJava', ':mockapp:test', ':lib:test', ':proto-util:compileJava', ':proto-util:test', ':score-util:test')
-    doNotTrackState("Disable state tracking")
-    reports {
-        html {
-            enabled false
-        }
-        xml {
-            enabled true
-        }
-        xml.destination file("${buildDir}/reports/jacoco/report.xml")
-    }
-    subprojects.each {
-        sourceSets it.sourceSets.main
-    }
-    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
-}
-
-
 tasks.named('compileJava') {
     dependsOn(':ibc:optimizedJar')
     dependsOn(':score-util:jar')

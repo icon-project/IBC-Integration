@@ -11,6 +11,32 @@ buildscript {
 
 def scoreIntegrationTest = new HashMap<String, String>()
 
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    apply plugin: 'jacoco'
+
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+
+    repositories {
+        mavenLocal()
+        jcenter()
+        mavenCentral()
+        google()
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$jupiterApiVersion"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$jupiterEngineVersion"    
+}
+
+
 subprojects {
     repositories {
         mavenLocal()
@@ -72,6 +98,43 @@ subprojects {
         options.compilerArgs += ['-parameters']
     }
 }
+
+test {
+    useJUnitPlatform()
+}
+
+jacoco {
+    toolVersion = "0.8.5"
+    // reportsDir = file("$buildDir/reports/jacoco")
+}
+
+task codeCoverageReport(type: JacocoReport) {
+    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+
+    subprojects.each {
+        sourceSets it.sourceSets.main
+    }
+
+    reports {
+        xml {
+            enabled true
+        }
+        xml.destination file("${buildDir}/reports/jacoco/report.xml")
+    }
+
+    inputs.files(project(":ibc").tasks.jacocoTestReport.outputs.files)
+    inputs.files(project(":tendermint").tasks.jacocoTestReport.outputs.files)
+    inputs.files(project(":xcall").tasks.jacocoTestReport.outputs.files)
+
+    sourceDirectories.from = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories.from = files(subprojects.sourceSets.main.output)
+}
+
+codeCoverageReport.dependsOn {
+    subprojects*.test
+}
+
+
 gradle.taskGraph.whenReady { taskGraph ->
     taskGraph.getAllTasks().eachWithIndex { task, n ->
         if (task.name == 'integrationTest') {
