@@ -1,8 +1,8 @@
+use cw_common::commitment as cw_commitment;
 use ibc::{
     core::ics04_channel::{commitment::PacketCommitment, timeout::TimeoutHeight},
     timestamp::Timestamp,
 };
-use cw_common::commitment as cw_commitment;
 
 use super::*;
 
@@ -11,7 +11,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_commitment::client_state_path(client_id)
     }
     pub fn consensus_state_path(&self, client_id: &ClientId, height: &Height) -> Vec<u8> {
-       cw_commitment::consensus_state_path(client_id, height)
+        cw_commitment::consensus_state_path(client_id, height)
     }
     pub fn connection_path(&self, connection_id: &ConnectionId) -> Vec<u8> {
         cw_commitment::connection_path(connection_id)
@@ -26,8 +26,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-        return cw_commitment::packet_commitment_path(port_id, channel_id, sequence)
-            
+        return cw_commitment::packet_commitment_path(port_id, channel_id, sequence);
     }
     pub fn packet_acknowledgement_commitment_path(
         &self,
@@ -81,7 +80,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Vec<u8> {
-       cw_commitment::packet_commitment_key(port_id, channel_id, sequence)
+        cw_commitment::packet_commitment_key(port_id, channel_id, sequence)
     }
 
     pub fn packet_acknowledgement_commitment_key(
@@ -111,11 +110,11 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn port_path(&self, port_id: &PortId) -> Vec<u8> {
-       cw_commitment::port_path(port_id)
+        cw_commitment::port_path(port_id)
     }
 
     pub fn port_commitment_key(&self, port_id: &PortId) -> Vec<u8> {
-       cw_commitment::port_commitment_key(port_id)
+        cw_commitment::port_commitment_key(port_id)
     }
 }
 
@@ -137,7 +136,10 @@ pub fn compute_packet_commitment(
     timeout_timestamp: &Timestamp,
 ) -> PacketCommitment {
     cw_commitment::create_packet_commitment(
-        packet_data, timeout_height.commitment_revision_number(), 
-        timeout_height.commitment_revision_height(), 
-        timeout_timestamp.nanoseconds()).into()
+        packet_data,
+        timeout_height.commitment_revision_number(),
+        timeout_height.commitment_revision_height(),
+        timeout_timestamp.nanoseconds(),
+    )
+    .into()
 }

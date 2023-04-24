@@ -214,10 +214,10 @@ impl From<Packet> for PacketResponse {
 
 impl From<PacketData> for PacketDataResponse {
     fn from(value: PacketData) -> Self {
-        PacketDataResponse { 
+        PacketDataResponse {
             packet: PacketResponse::from(value.packet),
-            acknowledgement:value.acknowledgement,
-            signer:value.signer
+            acknowledgement: value.acknowledgement,
+            signer: value.signer,
         }
     }
 }

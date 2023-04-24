@@ -3,10 +3,13 @@ use std::str::FromStr;
 use common::utils::{keccak256, sha256};
 use ibc::core::ics02_client::height::Height;
 use ibc::core::ics04_channel::packet::Sequence;
-use ibc::core::ics24_host::identifier::{ChannelId, PortId, ClientId, ConnectionId};
-use ibc::core::ics24_host::path::{self, CommitmentPath, ClientStatePath, ClientConsensusStatePath, ConnectionPath, ChannelEndPath, AckPath, ReceiptPath, SeqRecvPath, PortPath};
+use ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
+use ibc::core::ics24_host::path::{
+    self, AckPath, ChannelEndPath, ClientConsensusStatePath, ClientStatePath, CommitmentPath,
+    ConnectionPath, PortPath, ReceiptPath, SeqRecvPath,
+};
+use ibc_proto::google::protobuf::Timestamp;
 use ibc_proto::ibc::core::channel::v1::Packet;
-use ibc_proto::{google::protobuf::Timestamp};
 
 pub trait ICommitment {
     fn commitment_path(&self) -> Vec<u8>;
@@ -15,13 +18,12 @@ pub trait ICommitment {
     fn commitment_key(&self) -> Vec<u8> {
         return commitment_path_hash(&self.commitment_path()).into();
     }
-    
 }
 pub fn commitment_path_hash(path_bytes: &[u8]) -> Vec<u8> {
     return keccak256(path_bytes).into();
 }
 
-pub fn client_state_path(client_id:&ClientId) -> Vec<u8> {
+pub fn client_state_path(client_id: &ClientId) -> Vec<u8> {
     ClientStatePath::new(client_id).to_string().into_bytes()
 }
 pub fn consensus_state_path(client_id: &ClientId, height: &Height) -> Vec<u8> {
@@ -58,18 +60,11 @@ pub fn receipt_commitment_path(
         .to_string()
         .into_bytes()
 }
-pub fn next_seq_recv_commitment_path(
-    port_id: &PortId,
-    channel_id: &ChannelId,
-) -> Vec<u8> {
+pub fn next_seq_recv_commitment_path(port_id: &PortId, channel_id: &ChannelId) -> Vec<u8> {
     SeqRecvPath::new(port_id, channel_id)
         .to_string()
         .into_bytes()
 }
-
-
-
-
 
 pub fn packet_commitment_path(
     port_id: &PortId,
@@ -135,7 +130,9 @@ pub fn packet_acknowledgement_commitment_key(
     channel_id: &ChannelId,
     sequence: Sequence,
 ) -> Vec<u8> {
-    commitment_path_hash(&acknowledgement_commitment_path(port_id, channel_id, sequence))
+    commitment_path_hash(&acknowledgement_commitment_path(
+        port_id, channel_id, sequence,
+    ))
 }
 
 pub fn packet_receipt_commitment_key(
@@ -146,10 +143,7 @@ pub fn packet_receipt_commitment_key(
     commitment_path_hash(&receipt_commitment_path(port_id, channel_id, sequence))
 }
 
-pub fn next_sequence_recv_commitment_key(
-    port_id: &PortId,
-    channel_id: &ChannelId,
-) -> Vec<u8> {
+pub fn next_sequence_recv_commitment_key(port_id: &PortId, channel_id: &ChannelId) -> Vec<u8> {
     commitment_path_hash(&next_seq_recv_commitment_path(port_id, channel_id))
 }
 
@@ -161,9 +155,6 @@ pub fn port_commitment_key(port_id: &PortId) -> Vec<u8> {
     commitment_path_hash(&port_path(port_id))
 }
 
-
-
-
 impl ICommitment for Packet {
     fn commitment_path(&self) -> Vec<u8> {
         let port_id = PortId::from_str(&self.source_port).unwrap();
@@ -174,8 +165,16 @@ impl ICommitment for Packet {
 
     fn commitment(&self) -> Vec<u8> {
         let packet_data = self.data.clone();
-        let revision_number = self.timeout_height.clone().and_then(|h|Some(h.revision_number)).unwrap_or(0);
-        let revision_height = self.timeout_height.clone().and_then(|h|Some(h.revision_height)).unwrap_or(0);
+        let revision_number = self
+            .timeout_height
+            .clone()
+            .and_then(|h| Some(h.revision_number))
+            .unwrap_or(0);
+        let revision_height = self
+            .timeout_height
+            .clone()
+            .and_then(|h| Some(h.revision_height))
+            .unwrap_or(0);
         return create_packet_commitment(
             &packet_data,
             revision_number,
@@ -216,7 +215,7 @@ mod tests {
             let packet_bytes = packet.encode_to_vec();
             assert_eq!(msg.packet_encoded, hex::encode(&packet_bytes));
 
-           assert_eq!(Packet::default(),packet);
+            assert_eq!(Packet::default(), packet);
 
             let packet_commitment_hash = packet.commitment();
 
