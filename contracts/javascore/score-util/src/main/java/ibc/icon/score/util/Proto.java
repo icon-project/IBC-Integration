@@ -179,21 +179,16 @@ public class Proto {
 
     public static DecodeResponse<List<BigInteger>> decodeVarIntArray(byte[] data, int index) {
         DecodeResponse<List<BigInteger>> response = new DecodeResponse<>();
+        Proto.DecodeResponse<byte[]> resp = Proto.decodeBytes(data, index);
 
-        DataSize dataSize = getDataSize(data, index);
-
-        int dataIndex = dataSize.index;
-
-        response.index = dataSize.index + dataSize.length;
+        response.index = resp.index;
         response.res = new ArrayList<>();
-
-        for (int i = 0; i < dataSize.length; i++) {
-            DecodeResponse<BigInteger> resp = decodeVarInt(data, dataIndex);
-            dataIndex += resp.index;
-            response.res.add(resp.res);
+        for(byte b: resp.res) {
+            response.res.add(BigInteger.valueOf(b & 0x7F));
         }
         return response;
     }
+
     public static byte[] encode(int order, int item) {
         return encode(order, BigInteger.valueOf(item));
     }
@@ -266,20 +261,27 @@ public class Proto {
         }
         byte[] bs = new byte[9];
         bs[0] = (byte) (order << 3 | 1);
-        byte[] num = encodeFixed64(item);
+        byte[] num = encodeFixed64(item, true);
         System.arraycopy(num, 0, bs, 1, num.length);
         return bs;
     }
 
-    public static byte[] encodeFixed64(BigInteger item) {
+    public static byte[] encodeFixed64(BigInteger item, boolean littleEndian) {
         byte[] bs = new byte[8];
         if (item.equals(BigInteger.ZERO)) {
             return bs;
         }
         long l = item.longValue();
-        for (int i = 0; i < 8; i++) {
-            bs[i] = (byte) (l & 0xFF);
-            l >>= 8;
+        if (littleEndian) {
+            for (int i = 0; i < 8; i++) {
+                bs[i] = (byte) (l & 0xFF);
+                l >>= 8;
+            }
+        } else {
+            for (int i = 7; i >= 0; i--) {
+                bs[i] = (byte) (l & 0xFF);
+                l >>= 8;
+            }
         }
 
         return bs;

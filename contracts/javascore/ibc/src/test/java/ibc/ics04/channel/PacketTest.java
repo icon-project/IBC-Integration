@@ -555,7 +555,7 @@ public class PacketTest extends TestBase {
 
         // Assert
         verify(packetSpy).sendBTPMessage(clientId,
-                ByteUtil.join(commitmentPath, Proto.encodeFixed64(basePacket.getSequence())));
+                ByteUtil.join(commitmentPath, Proto.encodeFixed64(basePacket.getSequence(), false)));
     }
 
     @Test
@@ -619,7 +619,7 @@ public class PacketTest extends TestBase {
                 basePacket.getDestinationChannel());
         verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(),
                 baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath, Proto.encodeFixed64(basePacket.getSequence()));
+                proof, prefix.getKeyPrefix(), commitmentPath, Proto.encodeFixed64(basePacket.getSequence(), false));
 
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
@@ -634,9 +634,9 @@ public class PacketTest extends TestBase {
     private byte[] createPacketCommitment(Packet packet) {
         return IBCCommitment.sha256(
                 ByteUtil.join(
-                        Proto.encodeFixed64(packet.getTimeoutTimestamp()),
-                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber()),
-                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight()),
+                        Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(), false),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(), false),
                         IBCCommitment.sha256(packet.getData())));
     }
 }

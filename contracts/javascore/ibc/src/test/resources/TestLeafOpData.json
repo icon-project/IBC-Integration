@@ -1,0 +1,69 @@
+{
+  "hash foobar": {
+    "op": {
+      "hash": 1
+    },
+    "key": "Zm9v",
+    "value": "YmFy",
+    "isErr": false,
+    "expected": "w6uP8Tcg6K2QR905Rms8iXTlksL6OD1KOWBxTK7wxPI="
+  },
+  "hash foobar (different break)": {
+    "op": {
+      "hash": 1
+    },
+    "key": "Zg==",
+    "value": "b29iYXI=",
+    "isErr": false,
+    "expected": "w6uP8Tcg6K2QR905Rms8iXTlksL6OD1KOWBxTK7wxPI="
+  },
+  "hash with length prefix": {
+    "op": {
+      "hash": 1,
+      "length": 1
+    },
+    "key": "Zm9vZA==",
+    "value": "c29tZSBsb25nZXIgdGV4dA==",
+    "isErr": false,
+    "expected": "to9dKY6RWuF1PdMz2h+c9gVBGl8uElFr5nWPNl5tsmU="
+  },
+  "hash with length prefix (fixed 32-bit little-endian encoding)": {
+    "op": {
+      "hash": 1,
+      "length": 4
+    },
+    "key": "Zm9vZA==",
+    "value": "c29tZSBsb25nZXIgdGV4dA==",
+    "isErr": false,
+    "expected": "yFNlJDe+AlAcZ0dEvyorRdkqCp8pxLEEQBD7Pi1DqUk="
+  },
+  "hash with prehash and length prefix": {
+    "op": {
+      "hash": 1,
+      "prehashValue": 1,
+      "length": 1
+    },
+    "key": "Zm9vZA==",
+    "value": "eWV0IGFub3RoZXIgbG9uZyBzdHJpbmc=",
+    "isErr": false,
+    "expected": "h+BIPo+2JK7y4vexP0FmzaSFuqjjn0N8g9dMlL7bFI8="
+  },
+  "requires key": {
+    "op": {
+      "hash": 1
+    },
+    "key": "Zm9v",
+    "value": null,
+    "isErr": true,
+    "expected": ""
+  },
+  "requires value": {
+    "op": {
+      "hash": 1
+    },
+    "key": null,
+    "value": "YmFy",
+    "isErr": true,
+    "expected": ""
+  }
+}

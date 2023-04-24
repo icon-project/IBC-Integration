@@ -257,18 +257,15 @@ func (in *IconNode) ExecTx(ctx context.Context, initMessage string, filePath str
 // TxCommand is a helper to retrieve a full command for broadcasting a tx
 // with the chain node binary.
 func (in *IconNode) TxCommand(ctx context.Context, initMessage, filePath, keystorePath string, command ...string) []string {
-	// Write keystore file to Docker volume
+	// get password from pathname as pathname will have the password prefixed. ex - Alice.Json
 	_, key := filepath.Split(keystorePath)
-	err := in.CopyFile(ctx, keystorePath, key)
-	if err != nil {
-		return []string{"error copying keystore to Docker volume"}
-	}
-	keystore := path.Join(in.HomeDir(), key)
+	fileName := strings.Split(key, ".")
+	password := fileName[0]
 
 	command = append([]string{"rpc", "sendtx", "deploy", filePath}, command...)
 	return in.NodeCommand(append(command,
-		"--key_store", keystore,
-		"--key_password", "gochain",
+		"--key_store", keystorePath,
+		"--key_password", password,
 		"--step_limit", "5000000000",
 		"--content_type", "application/java",
 		"--param", initMessage,
@@ -323,9 +320,11 @@ func (in *IconNode) CreateKey(ctx context.Context, password string) error {
 	in.lock.Lock()
 	defer in.lock.Unlock()
 
+	fileName := password + ".json"
 	output, _, err := in.ExecBin(ctx,
 		"ks", "gen",
 		"--password", password,
+		"--out", path.Join(in.HomeDir(), fileName),
 	)
 	outputs := strings.Fields(string(output))
 	in.Address = outputs[0]
@@ -353,19 +352,16 @@ func (in *IconNode) ExecCallTx(ctx context.Context, scoreAddress, methodName, ke
 }
 
 func (in *IconNode) ExecCallTxCommand(ctx context.Context, scoreAddress, methodName, keystorePath, params string) []string {
-	// Write keystore file to Docker volume
+	// get password from pathname as pathname will have the password prefixed. ex - Alice.Json
 	_, key := filepath.Split(keystorePath)
-	err := in.CopyFile(ctx, keystorePath, key)
-	if err != nil {
-		return []string{"error copying keystore to Docker volume"}
-	}
-	keystore := path.Join(in.HomeDir(), key)
+	fileName := strings.Split(key, ".")
+	password := fileName[0]
 	command := []string{"rpc", "sendtx", "call"}
 	return in.NodeCommand(append(command,
 		"--to", scoreAddress,
 		"--method", methodName,
-		"--key_store", keystore,
-		"--key_password", "gochain",
+		"--key_store", keystorePath,
+		"--key_password", password,
 		"--step_limit", "5000000000",
 		"--param", params,
 	)...)

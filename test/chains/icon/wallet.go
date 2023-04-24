@@ -1,6 +1,8 @@
 package icon
 
 import (
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
@@ -29,7 +31,7 @@ func (w *IconWallet) KeyName() string {
 
 // Get formatted address, passing in a prefix
 func (w *IconWallet) FormattedAddress() string {
-	return types.MustBech32ifyAddressBytes(w.chainCfg.Bech32Prefix, w.address)
+	return strings.ReplaceAll(string(w.address), `"`, "")
 }
 
 // Get mnemonic, only used for relayer wallets

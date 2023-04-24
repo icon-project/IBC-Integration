@@ -1,0 +1,7 @@
+{
+  "sha256": {
+    "hashOp": 1,
+    "preimage": "food",
+    "expectedHash": "c1f026582fe6e8cb620d0c85a72fe421ddded756662a8ec00ed4c297ad10676b"
+  }
+}

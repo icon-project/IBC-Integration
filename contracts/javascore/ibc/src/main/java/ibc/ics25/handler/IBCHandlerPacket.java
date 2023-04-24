@@ -21,9 +21,8 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
     public void RecvPacket(byte[] packet) {
     }
 
-    @EventLog(indexed = 3)
-    public void WriteAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement) {
+    @EventLog(indexed = 1)
+    public void WriteAcknowledgement(byte[] packet, byte[] acknowledgement) {
     }
 
     @EventLog(indexed = 1)
@@ -64,8 +63,7 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
                     packet.getDestinationChannel(),
                     packet.getSequence(),
                     acknowledgement);
-            WriteAcknowledgement(packet.getDestinationPort(),
-                    packet.getDestinationChannel(), packet.getSequence(), acknowledgement);
+            WriteAcknowledgement(packet.encode(), acknowledgement);
         }
 
         RecvPacket(msg.getPacket());
@@ -73,10 +71,12 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
 
     @External
     public void writeAcknowledgement(
-            String destinationPortId,
-            String destinationChannel,
-            BigInteger sequence,
+            byte[] packet,
             byte[] acknowledgement) {
+        Packet pkt = Packet.decode(packet);
+        String destinationPortId = pkt.getDestinationPort();
+        String destinationChannel = pkt.getDestinationChannel();
+        BigInteger sequence = pkt.getSequence();
         Context.require(authenticateCapability(channelCapabilityPath(destinationPortId, destinationChannel)),
                 "failed to authenticate " + Context.getCaller() + " for port: " + destinationPortId + "and channel: "
                         + destinationChannel);
@@ -85,7 +85,7 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
                 destinationChannel,
                 sequence,
                 acknowledgement);
-        WriteAcknowledgement(destinationPortId, destinationChannel, sequence, acknowledgement);
+        WriteAcknowledgement(packet, acknowledgement);
     }
 
     @External
@@ -117,5 +117,4 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
 
         PacketTimeout(msg.getPacket());
     }
-
 }
