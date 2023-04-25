@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -52,13 +53,6 @@ type Wallet struct {
 	} `json:"crypto"`
 }
 
-const (
-	ALICE string = "/home/dell/iconWallets/Alice.json"
-	BOB   string = "/home/dell/iconWallets/Bob.json"
-	DIANA string = "/home/dell/iconWallets/Diana.json"
-	EVE   string = "/home/dell/iconWallets/Eve.json"
-)
-
 // DeployContract implements chains.Chain
 func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	var result *types.TransactionResult
@@ -78,7 +72,7 @@ func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (cont
 		initMessage = initMessage + bmcAddr
 	}
 
-	keyStorePath, address := GetKeyStorePathAndAddress(ctx, keyName)
+	keyStorePath, address := it.GetKeyStorePathAndAddress(ctx, keyName)
 
 	// Deploy Contract
 	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths[contractName], "--param", initMessage,
@@ -86,7 +80,7 @@ func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (cont
 		"--content_type", "application/java",
 		"--uri", it.url, "--nid", it.nid).Output()
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 	json.Unmarshal(hash, &output)
 	time.Sleep(5 * time.Second)
@@ -116,7 +110,7 @@ func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (cont
 // ExecuteContract implements chains.Chain
 func (it *IconTestnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	var hash string
-	keyStorePath, addr := GetKeyStorePathAndAddress(ctx, keyName)
+	keyStorePath, addr := it.GetKeyStorePathAndAddress(ctx, keyName)
 	ctx, methodName, param = it.GetExecuteParam(ctx, methodName, param, addr)
 	output, err := exec.Command(it.bin, "rpc", "sendtx", "call", "--to", contractAddress, "--method", methodName, "--param", param, "--key_store", keyStorePath,
 		"--key_password", keyName, "--step_limit", "5000000000", "--uri", it.url, "--nid", it.nid).Output()
@@ -176,38 +170,50 @@ func NewIconTestnet(bin, nid, keystorePath, keyPassword, defaultStepLimit, url s
 	}
 }
 
+func KeyStorePath(keyName string) string {
+	home, _ := exec.Command("sh", "-c", "echo $HOME").Output()
+	homedir := strings.ReplaceAll(string(home), "\n", "")
+	jsonFile := keyName + ".json"
+	keyStorePath := path.Join(homedir, "icontestnet", jsonFile)
+	return keyStorePath
+}
+
 func (it *IconTestnet) CreateKey(ctx context.Context, keyName string) error {
-	panic("unimplemented")
+	keyStorePath := KeyStorePath(keyName)
+	_, err := exec.Command(it.bin, "ks", "gen", "--password", keyName, "--out", keyStorePath).Output()
+	return err
 }
 
 func (it *IconTestnet) BuildWallets(ctx context.Context, keyName string) error {
 	return nil
 }
 
-func GetKeyStorePathAndAddress(ctx context.Context, keyName string) (keyStorePath, address string) {
-	if keyName == "Alice" {
-		keyStorePath = ALICE
-		addr := GetWalletAddress(keyStorePath)
-		return keyStorePath, addr
-	} else if keyName == "Bob" {
-		keyStorePath = BOB
-		addr := GetWalletAddress(keyStorePath)
-		return keyStorePath, addr
-	} else if keyName == "Diana" {
-		keyStorePath = DIANA
-		addr := GetWalletAddress(keyStorePath)
-		return keyStorePath, addr
-	} else if keyName == "Eve" {
-		keyStorePath = EVE
-		addr := GetWalletAddress(keyStorePath)
-		return keyStorePath, addr
+func (it *IconTestnet) GetKeyStorePathAndAddress(ctx context.Context, keyName string) (keyStorePath, address string) {
+	// check if keystore already exists
+	path := KeyStorePath(keyName)
+	it.checkIfKeyExists(ctx, path, keyName)
+	addr := GetWalletAddress(path)
+
+	// Transfer some funds
+	_, err := exec.Command(it.bin, "rpc", "sendtx", "transfer", "--key_store", it.keystorePath, "--key_password", it.keyPassword, "--to", addr, "--value", "100000000000000000000", "--nid", it.nid,
+		"--uri", it.url, "--step_limit", it.defaultStepLimit).Output()
+	if err != nil {
+		fmt.Println(err)
+		return "", ""
 	}
-	return "", ""
+	return path, addr
 }
 
+func (it *IconTestnet) checkIfKeyExists(ctx context.Context, keyStorePath, keyName string) error {
+	_, err := exec.Command("cat", keyStorePath).Output()
+	if err != nil {
+		return it.CreateKey(ctx, keyName)
+	}
+	return nil
+}
 func GetWalletAddress(keyStorePath string) string {
 	var walletInfo Wallet
-	wallet, _ := ioutil.ReadFile(ALICE)
+	wallet, _ := ioutil.ReadFile(keyStorePath)
 	json.Unmarshal(wallet, &walletInfo)
 	addr := walletInfo.Address
 	return addr
