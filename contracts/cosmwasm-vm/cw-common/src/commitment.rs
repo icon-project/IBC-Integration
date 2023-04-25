@@ -8,7 +8,6 @@ use ibc::core::ics24_host::path::{
     self, AckPath, ChannelEndPath, ClientConsensusStatePath, ClientStatePath, CommitmentPath,
     ConnectionPath, PortPath, ReceiptPath, SeqRecvPath,
 };
-use ibc_proto::google::protobuf::Timestamp;
 use ibc_proto::ibc::core::channel::v1::Packet;
 
 pub trait ICommitment {
@@ -193,14 +192,23 @@ mod tests {
     use common::utils::sha256;
     use prost::Message;
     use test_utils::load_test_messages;
-    // 00000000000000000000000000000000000000000000000074657374
+
     #[test]
-    fn test_packet_message_data() {
+    fn test_packet_protobuff() {
+        let data = load_test_messages();
+        for msg in data.iter() {
+            let packet =
+                Packet::decode(hex::decode(&msg.packet_encoded).unwrap().as_slice()).unwrap();
+
+            let packet_bytes = packet.encode_to_vec();
+            assert_eq!(msg.packet_encoded, hex::encode(&packet_bytes));
+        }
+    }
+
+    #[test]
+    fn test_packet_commitment() {
         let data = load_test_messages();
         for (i, msg) in data.iter().enumerate() {
-            // if i == 0 {
-            //     continue;
-            // }
             let msg_path = hex::decode(&msg.commitment_path).unwrap();
             let expected_key = keccak256(&msg_path);
             let msg_key = hex::decode(&msg.commitment_key).unwrap();
@@ -212,23 +220,29 @@ mod tests {
             assert_eq!(hex::encode(msg_path), hex::encode(calc_path));
 
             let message_bytes = hex::decode(&msg.messages[0]).unwrap();
-            let packet_bytes = packet.encode_to_vec();
-            assert_eq!(msg.packet_encoded, hex::encode(&packet_bytes));
-
-            assert_eq!(Packet::default(), packet);
 
             let packet_commitment_hash = packet.commitment();
-
             assert_eq!(
                 hex::encode(&message_bytes[32..]),
                 hex::encode(&packet_commitment_hash)
             );
+        }
+    }
 
-            let leaf = keccak256(
-                [msg_key, keccak256(&message_bytes).into()]
-                    .concat()
-                    .as_slice(),
-            );
+    #[test]
+    fn test_packet_message_verification() {
+        let data = load_test_messages();
+        for msg in data.iter() {
+            let packet =
+                Packet::decode(hex::decode(&msg.packet_encoded).unwrap().as_slice()).unwrap();
+            let key = packet.commitment_key();
+
+            let packet_bytes = packet.encode_to_vec();
+            assert_eq!(msg.packet_encoded, hex::encode(&packet_bytes));
+
+            let packet_commitment_hash = packet.commitment();
+            let leaf = keccak256([key, packet_commitment_hash].concat().as_slice());
+
             let proof = msg
                 .proof
                 .iter()
@@ -238,7 +252,10 @@ mod tests {
                 })
                 .collect::<Vec<MerkleNode>>();
             let root = calculate_root(leaf, &proof);
-            assert_eq!("", hex::encode(root));
+            assert_eq!(hex::encode(leaf), hex::encode(root));
+
+            let message_root = msg.signed_header.btp_header.message_root.clone();
+            assert_eq!(message_root, hex::encode(root));
         }
     }
 

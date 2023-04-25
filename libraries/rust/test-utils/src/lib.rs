@@ -17,7 +17,7 @@ use cosmwasm_std::Attribute;
 
 pub mod constants;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct TestHeader {
     pub main_height: u64,
@@ -37,7 +37,7 @@ pub struct TestHeaderData {
     pub encoded_protobuf: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct TestSignedHeader {
     #[serde(rename(deserialize = "BTPHeader"))]
@@ -52,7 +52,7 @@ pub struct TestMerkleNode {
     pub value: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct TestMessageData {
     #[serde(rename(deserialize = "signed_header"))]
