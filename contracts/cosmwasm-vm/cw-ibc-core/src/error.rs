@@ -46,6 +46,9 @@ pub enum ContractError {
 
     #[error("ERR_REPLY_ERROR|{code:?}|{msg:?}")]
     ReplyError { code: u64, msg: String },
+
+    #[error("InsufficientBalance")]
+    InsufficientBalance {},
 }
 
 impl From<CwErrors> for ContractError {

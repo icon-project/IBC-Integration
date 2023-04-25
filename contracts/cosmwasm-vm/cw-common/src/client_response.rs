@@ -116,13 +116,11 @@ impl UpgradeClientResponse {
         client_id: String,
         height: String,
     ) -> Self {
-        {
-            Self {
-                height,
-                client_id,
-                client_state_commitment,
-                consensus_state_commitment,
-            }
+        Self {
+            height,
+            client_id,
+            client_state_commitment,
+            consensus_state_commitment,
         }
     }
 

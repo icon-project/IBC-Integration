@@ -1,11 +1,11 @@
+use cosmwasm_std::Coin;
+
 use crate::traits::ExecuteChannel;
 
 use super::*;
 
 // version info for migration info
-#[allow(dead_code)]
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
-#[allow(dead_code)]
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[allow(unused_variables)]
@@ -23,6 +23,7 @@ impl<'a> CwIbcCoreContext<'a> {
         self.init_channel_counter(deps.storage, u64::default())?;
         self.init_client_counter(deps.storage, u64::default())?;
         self.init_connection_counter(deps.storage, u64::default())?;
+        self.set_owner(deps.storage, info.sender)?;
 
         Ok(Response::new().add_attribute("method", "instantiate"))
     }
@@ -39,6 +40,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 client_type,
                 client_address,
             } => {
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())
+                    .unwrap();
                 let client_type = ClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
@@ -47,6 +50,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 consensus_state,
                 signer,
             } => {
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())
+                    .unwrap();
                 let msg = MsgCreateClient {
                     client_state,
                     consensus_state,
@@ -59,6 +64,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 header,
                 signer,
             } => {
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())
+                    .unwrap();
                 let msg = MsgUpdateClient {
                     client_id: IbcClientId::from_str(&client_id).map_err(|error| {
                         ContractError::IbcDecodeError {
@@ -488,5 +495,35 @@ impl<'a> CwIbcCoreContext<'a> {
                 msg: "InvalidReplyID".to_string(),
             }),
         }
+    }
+
+    pub fn calculate_fee(&self, expected_gas: u128) -> u128 {
+        let fee = expected_gas * self.gas_price();
+
+        fee
+    }
+
+    pub fn gas_price(&self) -> u128 {
+        let price = GAS_NUMERATOR_DEFAULT * GAS_ADJUSTMENT_NUMERATOR_DEFAULT;
+
+        price.checked_div(GAS_DENOMINATOR).unwrap();
+
+        price as u128
+    }
+    pub fn update_fee(&self, coins: Vec<Coin>, fee: u128) -> Result<Vec<Coin>, ContractError> {
+        if coins.is_empty() {
+            return Err(ContractError::InsufficientBalance {});
+        }
+
+        let updated_coins = coins
+            .into_iter()
+            .map(|coin| {
+                let updated_balance = coin.amount.u128().checked_sub(fee).unwrap();
+
+                Coin::new(updated_balance, coin.denom)
+            })
+            .collect::<Vec<Coin>>();
+
+        Ok(updated_coins)
     }
 }

@@ -2,6 +2,7 @@ pub mod constants;
 pub mod context;
 pub mod contract;
 mod error;
+pub mod gas_estimates;
 pub mod helpers;
 pub mod ics02_client;
 pub mod ics03_connection;
@@ -14,6 +15,7 @@ pub mod state;
 pub mod storage_keys;
 pub mod traits;
 pub use crate::error::ContractError;
+use gas_estimates::*;
 
 use crate::state::CwIbcStore;
 use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};

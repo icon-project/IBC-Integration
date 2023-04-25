@@ -1,18 +1,13 @@
 pub mod setup;
-use std::str::FromStr;
 
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
-use cw_common::{
-    client_response::{CreateClientResponse, UpdateClientResponse},
-    types::ClientId,
-};
+use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::types::{ClientState, ConsensusState},
     msg::{ExecuteMsg, InstantiateMsg},
-    Height,
 };
-use ibc::mock::header::MockHeader;
+
 use setup::*;
 
 #[test]
@@ -89,7 +84,6 @@ fn test_for_create_client_execution_message() {
             data: Some(mock_data_binary),
         }),
     };
-
     let response = contract.reply(deps.as_mut(), env, reply_message).unwrap();
 
     assert_eq!(response.attributes[0].value, "execute_create_client_reply")
