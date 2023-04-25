@@ -44,6 +44,7 @@ type CosmosTestnet struct {
 	defaultStepLimit string
 	url              string
 	Client           rpcclient.Client
+	ChainID          string
 }
 
 type Result struct {
