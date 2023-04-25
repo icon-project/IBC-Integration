@@ -19,7 +19,7 @@ impl StorageKey {
             StorageKey::Address => "admin",
             StorageKey::Request => "message_request",
             StorageKey::SequenceNo => "sequenceno",
-            StorageKey::RollBack => "rollbacl",
+            StorageKey::RollBack => "rollback",
         }
     }
 }

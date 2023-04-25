@@ -95,7 +95,7 @@ fn test_handle_message() {
         "xcall".to_string(),
         "helloError".as_bytes().to_vec(),
     );
-    println!("{:?}", res);
+    assert!(res.is_ok())
 }
 
 #[test]
