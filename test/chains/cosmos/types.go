@@ -85,3 +85,26 @@ type Result struct {
 		VotingPower string `json:"VotingPower"`
 	} `json:"ValidatorInfo"`
 }
+
+type TxResul struct {
+	Height    string        `json:"height"`
+	Txhash    string        `json:"txhash"`
+	Codespace string        `json:"codespace"`
+	Code      int           `json:"code"`
+	Data      string        `json:"data"`
+	RawLog    string        `json:"raw_log"`
+	Logs      []interface{} `json:"logs"`
+	Info      string        `json:"info"`
+	GasWanted string        `json:"gas_wanted"`
+	GasUsed   string        `json:"gas_used"`
+	Tx        interface{}   `json:"tx"`
+	Timestamp string        `json:"timestamp"`
+	Events    []struct {
+		Type       string `json:"type"`
+		Attributes []struct {
+			Key   string `json:"key"`
+			Value string `json:"value"`
+			Index bool   `json:"index"`
+		} `json:"attributes"`
+	} `json:"events"`
+}

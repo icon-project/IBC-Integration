@@ -26,6 +26,8 @@ func NewCosmosTestnet(bin, keystorePath, keyPassword, defaultStepLimit, url stri
 	}
 }
 
+const amount string = "1000uconst"
+
 func (c *CosmosTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// Get Contract Name from context
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
@@ -36,8 +38,12 @@ func (c *CosmosTestnet) DeployContract(ctx context.Context, keyName string) (con
 	initMessage := ctxVal.InitMsg
 
 	// Store the contract
-	// TODO: from address
-	Res, err := exec.Command(c.bin, "tx", "wasm", "store", c.scorePaths[contractName], "--from", "xcall-owner", "--chain-id", c.ChainID, "--node",
+	Owneraddr, err := c.transferDenom(keyName, amount)
+	if err != nil {
+		return ctx, err
+	}
+
+	Res, err := exec.Command(c.bin, "tx", "wasm", "store", c.scorePaths[contractName], "--from", keyName, "--chain-id", c.ChainID, "--node",
 		c.url, "--fees", "4000uconst", "--gas", "auto", "-y", "--output", "json", "-b", "block").Output()
 	if err != nil {
 		return ctx, err
@@ -54,7 +60,7 @@ func (c *CosmosTestnet) DeployContract(ctx context.Context, keyName string) (con
 	time.Sleep(5 * time.Second)
 
 	// Instantiate the Contract
-	_, err = exec.Command(c.bin, "tx", "wasm", "instantiate", CodeID, initMessage, "--from", "xcall-owner", "--node",
+	_, err = exec.Command(c.bin, "tx", "wasm", "instantiate", CodeID, initMessage, "--from", keyName, "--node",
 		c.url, "--chain-id", c.ChainID, "--gas", "auto", "-y", "--label", "ics-20", "--fees", "264uconst", "--no-admin").Output()
 	if err != nil {
 		return ctx, err
@@ -76,7 +82,7 @@ func (c *CosmosTestnet) DeployContract(ctx context.Context, keyName string) (con
 		contractName: address,
 	}
 	contracts.ContractOwner = map[string]string{
-		keyName: "archway12758s43wawjy4kj5p7wzmq6tw8syxndvah7xd2",
+		keyName: Owneraddr,
 	}
 
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
@@ -109,10 +115,14 @@ func (c *CosmosTestnet) ExecuteContract(ctx context.Context, contractAddress, ke
 	if err != nil {
 		return ctx, err
 	}
-	// TODO: from address
-	output, err := exec.Command(c.bin, "tx", "wasm", "execute", contractAddress, params, "--from", "xcall-owner", "--chain-id", c.ChainID, "--node",
-		c.url, "--fees", "281uconst", "-y", "--output", "json").Output()
-	fmt.Println(string(output))
+	c.transferDenom(keyName, amount)
+	output, err := exec.Command(c.bin, "tx", "wasm", "execute", contractAddress, params, "--from", keyName, "--chain-id", c.ChainID, "--node",
+		c.url, "--fees", "281uconst", "-y", "--output", "json", "-b", "block").Output()
+	var result TxResul
+	json.Unmarshal(output, &result)
+	if result.Code != 0 {
+		return ctx, fmt.Errorf("%v", result.RawLog)
+	}
 	return ctx, err
 }
 
@@ -152,8 +162,9 @@ func (c *CosmosTestnet) Height(ctx context.Context) (uint64, error) {
 	return uint64(0), err
 }
 
-func (it *CosmosTestnet) BuildWallets(ctx context.Context, keyName string) error {
-	return nil
+func (c *CosmosTestnet) BuildWallets(ctx context.Context, keyName string) error {
+	_, err := c.transferDenom(keyName, amount)
+	return err
 }
 
 func (c *CosmosTestnet) GetExecuteParam(ctx context.Context, methodName, param string) (context.Context, string, error) {
@@ -179,12 +190,15 @@ func (c *CosmosTestnet) SetAdminParams(ctx context.Context, keyName string) (con
 			Admin: admins.Admin,
 		}), string(updatedJSON), nil
 	} else {
-		// TODO: handle addres
-		admin.SetAdmin.Address = "archway13wcsepcmgsjgzr3rqw2as9lu4kkzpr2gnrm982"
+		addr, err := c.transferDenom(keyName, amount)
+		if err != nil {
+			return ctx, "", err
+		}
+		admin.SetAdmin.Address = addr
 		updatedJSON, _ := json.Marshal(admin)
 		fmt.Println(string(updatedJSON))
 		admins.Admin = map[string]string{
-			keyName: "archway13wcsepcmgsjgzr3rqw2as9lu4kkzpr2gnrm982",
+			keyName: addr,
 		}
 		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
 			Admin: admins.Admin,
@@ -200,4 +214,28 @@ func (c *CosmosTestnet) GetQueryParam(method string) Query {
 		queryMsg = Query{GetProtocolFee: &GetProtocolFee{}}
 	}
 	return queryMsg
+}
+
+func (c *CosmosTestnet) transferDenom(keyName string, amount string) (string, error) {
+	// Check if the key is already created
+	_, err := exec.Command(c.bin, "keys", "show", keyName).Output()
+	if err != nil {
+		fmt.Printf("Creating address for %s\n", keyName)
+		_, err := exec.Command(c.bin, "keys", "add", keyName).Output()
+		if err != nil {
+			return "", err
+		}
+	}
+	time.Sleep(2 * time.Second)
+	addr, err := exec.Command(c.bin, "keys", "show", keyName, "--address").Output()
+	if err != nil {
+		return "", err
+	}
+	address := strings.ReplaceAll(string(addr), "\n", "")
+	_, err = exec.Command(c.bin, "tx", "bank", "send", c.keyPassword, address, amount, "--gas", "auto", "--node", c.url, "--chain-id", c.ChainID, "--fees", "200uconst", "-y").Output()
+	if err != nil {
+		return "", err
+	}
+
+	return address, nil
 }
