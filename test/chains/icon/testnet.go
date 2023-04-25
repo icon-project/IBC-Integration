@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
@@ -21,18 +23,41 @@ type IconTestnet struct {
 	scorePaths       map[string]string
 	defaultStepLimit string
 	url              string
-	initMessage      string
-}
-
-type ContractInfo struct {
-	name         string
-	ScoreAddress string
-	// any neccessary info
 }
 
 type Block struct {
 	Height int64
 }
+
+type Wallet struct {
+	Address  string `json:"address"`
+	ID       string `json:"id"`
+	Version  int    `json:"version"`
+	CoinType string `json:"coinType"`
+	Crypto   struct {
+		Cipher       string `json:"cipher"`
+		Cipherparams struct {
+			Iv string `json:"iv"`
+		} `json:"cipherparams"`
+		Ciphertext string `json:"ciphertext"`
+		Kdf        string `json:"kdf"`
+		Kdfparams  struct {
+			Dklen int    `json:"dklen"`
+			N     int    `json:"n"`
+			R     int    `json:"r"`
+			P     int    `json:"p"`
+			Salt  string `json:"salt"`
+		} `json:"kdfparams"`
+		Mac string `json:"mac"`
+	} `json:"crypto"`
+}
+
+const (
+	ALICE string = "/home/dell/iconWallets/Alice.json"
+	BOB   string = "/home/dell/iconWallets/Bob.json"
+	DIANA string = "/home/dell/iconWallets/Diana.json"
+	EVE   string = "/home/dell/iconWallets/Eve.json"
+)
 
 // DeployContract implements chains.Chain
 func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
@@ -43,15 +68,28 @@ func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (cont
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
 	contractName := ctxValue.ContractName
 
-	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths[contractName], "--param", it.initMessage,
-		"--key_store", it.keystorePath, "--key_password", it.keyPassword, "--step_limit", it.defaultStepLimit,
+	// Get Init Message from context
+	ctxVal := ctx.Value(chains.InitMessage{}).(chains.InitMessage)
+	initMessage := ctxVal.InitMsg
+
+	if contractName == "xcall" {
+		ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+		bmcAddr := ctxValue.ContractAddress["bmc"]
+		initMessage = initMessage + bmcAddr
+	}
+
+	keyStorePath, address := GetKeyStorePathAndAddress(ctx, keyName)
+
+	// Deploy Contract
+	hash, err := exec.Command(it.bin, "rpc", "sendtx", "deploy", it.scorePaths[contractName], "--param", initMessage,
+		"--key_store", keyStorePath, "--key_password", keyName, "--step_limit", it.defaultStepLimit,
 		"--content_type", "application/java",
 		"--uri", it.url, "--nid", it.nid).Output()
 	if err != nil {
 		fmt.Println(err)
 	}
 	json.Unmarshal(hash, &output)
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	out, err := exec.Command(it.bin, "rpc", "txresult", output, "--uri", it.url).Output()
 	if err != nil {
@@ -65,21 +103,23 @@ func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (cont
 	}
 
 	// TODO: map keyname to their address
-	contracts.ContractAddress = map[string]string{
-		"keyname": "Address",
+	contracts.ContractOwner = map[string]string{
+		keyName: address,
 	}
 
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
 		ContractAddress: contracts.ContractAddress,
-		ContractOwner:   contracts.ContractAddress,
+		ContractOwner:   contracts.ContractOwner,
 	}), err
 }
 
 // ExecuteContract implements chains.Chain
-func (*IconTestnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
+func (it *IconTestnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	var hash string
-	output, err := exec.Command("it.Config.Bin", "rpc", "sendtx", "call", "--to", "scoreAddress", "--method", methodName, "--key_store", "keystorePath",
-		"--key_password", "gochain", "--step_limit", "5000000000", "--param", "params").Output()
+	keyStorePath, addr := GetKeyStorePathAndAddress(ctx, keyName)
+	ctx, methodName, param = it.GetExecuteParam(ctx, methodName, param, addr)
+	output, err := exec.Command(it.bin, "rpc", "sendtx", "call", "--to", contractAddress, "--method", methodName, "--param", param, "--key_store", keyStorePath,
+		"--key_password", keyName, "--step_limit", "5000000000", "--uri", it.url, "--nid", it.nid).Output()
 	json.Unmarshal(output, &hash)
 	return ctx, err
 }
@@ -104,13 +144,18 @@ func (it *IconTestnet) GetLastBlock(ctx context.Context) (context.Context, error
 
 // QueryContract implements chains.Chain
 func (it *IconTestnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
+	time.Sleep(2 * time.Second)
+
+	queryMethodName, queryParam := it.GetQueryParam(methodName)
 	if params != "" {
-		output, _ := exec.Command("it.Config.Bin", "rpc", "call", "--to", "scoreAddress", "--method", methodName, "--param", params, "--uri", "it.Config.URL").Output()
+		output, _ := exec.Command(it.bin, "rpc", "call", "--to", contractAddress, "--method", queryMethodName, "--param", queryParam, "--uri", it.url).Output()
 		fmt.Println(output)
+		chains.Response = output
 		return ctx, nil
 	} else {
-		output, _ := exec.Command("it.Config.Bin", "rpc", "call", "--to", "scoreAddress", "--method", methodName, "--uri", "it.Config.URL").Output()
-		fmt.Println(output)
+		output, _ := exec.Command(it.bin, "rpc", "call", "--to", contractAddress, "--method", queryMethodName, "--uri", it.url).Output()
+		fmt.Println(string(output))
+		chains.Response = string(output)
 		return ctx, nil
 	}
 }
@@ -131,14 +176,83 @@ func NewIconTestnet(bin, nid, keystorePath, keyPassword, defaultStepLimit, url s
 	}
 }
 
-func (it *IconTestnet) SetAdminParams(ctx context.Context) string {
-	panic("unimplemented")
-}
-
 func (it *IconTestnet) CreateKey(ctx context.Context, keyName string) error {
 	panic("unimplemented")
 }
 
 func (it *IconTestnet) BuildWallets(ctx context.Context, keyName string) error {
-	panic("unimplemented")
+	return nil
+}
+
+func GetKeyStorePathAndAddress(ctx context.Context, keyName string) (keyStorePath, address string) {
+	if keyName == "Alice" {
+		keyStorePath = ALICE
+		addr := GetWalletAddress(keyStorePath)
+		return keyStorePath, addr
+	} else if keyName == "Bob" {
+		keyStorePath = BOB
+		addr := GetWalletAddress(keyStorePath)
+		return keyStorePath, addr
+	} else if keyName == "Diana" {
+		keyStorePath = DIANA
+		addr := GetWalletAddress(keyStorePath)
+		return keyStorePath, addr
+	} else if keyName == "Eve" {
+		keyStorePath = EVE
+		addr := GetWalletAddress(keyStorePath)
+		return keyStorePath, addr
+	}
+	return "", ""
+}
+
+func GetWalletAddress(keyStorePath string) string {
+	var walletInfo Wallet
+	wallet, _ := ioutil.ReadFile(ALICE)
+	json.Unmarshal(wallet, &walletInfo)
+	addr := walletInfo.Address
+	return addr
+}
+
+func (it *IconTestnet) GetExecuteParam(ctx context.Context, methodName, params, addr string) (context.Context, string, string) {
+	if strings.Contains(methodName, "set_admin") {
+		return it.SetAdminParams(ctx, methodName, params, addr)
+	} else if strings.Contains(methodName, "update_admin") {
+		// TODO: update admin method is not found
+		return ctx, "update_admin", ""
+	} else if strings.Contains(methodName, "remove_admin") {
+		// TODO: remove admin method is not found
+		return ctx, "remove_admin", "_address='hjsdbjd'"
+	}
+	return ctx, "", ""
+}
+
+func (c *IconTestnet) SetAdminParams(ctx context.Context, methodaName, keyName, addr string) (context.Context, string, string) {
+	var admins chains.Admins
+	executeMethodName := "setAdmin"
+	if strings.ToLower(keyName) == "null" {
+		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+			Admin: admins.Admin,
+		}), executeMethodName, ""
+	} else if strings.ToLower(keyName) == "junk" {
+		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+			Admin: admins.Admin,
+		}), executeMethodName, "$%$@&#6"
+	} else {
+		admins.Admin = map[string]string{
+			keyName: addr,
+		}
+		args := "_address=" + addr
+		fmt.Printf("Address of %s is %s\n", keyName, addr)
+		fmt.Println(args)
+		return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
+			Admin: admins.Admin,
+		}), executeMethodName, args
+	}
+}
+
+func (it *IconTestnet) GetQueryParam(method string) (methodName, params string) {
+	if strings.Contains(method, "get_admin") {
+		return "admin", ""
+	}
+	return "", ""
 }

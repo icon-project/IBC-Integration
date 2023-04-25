@@ -22,7 +22,7 @@ func (c *IconLocalnet) GetExecuteParam(ctx context.Context, methodName, params s
 	return ctx, "", ""
 }
 
-func GetQueryParam(methodName string) string {
+func (c *IconLocalnet) GetQueryParam(methodName string) string {
 	if strings.Contains(methodName, "get_admin") {
 		return "admin"
 	}
