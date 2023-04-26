@@ -11,8 +11,9 @@ use cosmwasm_std::{
 
 use cw_xcall::{
     state::{CwCallService, IbcConfig},
-    types::{address::Address, message::CallServiceMessage, request::CallServiceMessageRequest},
+    types::{ message::CallServiceMessage, request::CallServiceMessageRequest},
 };
+use cw_common::types::Address;
 use setup::*;
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";

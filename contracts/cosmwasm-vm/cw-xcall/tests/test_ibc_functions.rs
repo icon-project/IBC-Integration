@@ -4,11 +4,11 @@ use cosmwasm_std::{
     IbcChannelConnectMsg::OpenAck, IbcChannelOpenMsg::OpenInit, IbcChannelOpenMsg::OpenTry,
     IbcEndpoint, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
+use cw_common::types::{Ack, Address};
+use cw_common::xcall_msg::ExecuteMsg;
 use cw_xcall::{
-    ack::Ack,
-    msg::ExecuteMsg,
     state::CwCallService,
-    types::{address::Address, message::CallServiceMessage, request::CallServiceMessageRequest},
+    types::{message::CallServiceMessage, request::CallServiceMessageRequest},
 };
 use setup::*;
 pub mod account;

@@ -39,6 +39,7 @@ serde = { version = "1.0.152", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.38" }
 common = { path="../../../libraries/rust/common" }
 cw-common = { path="../cw-common" }
+
 [dev-dependencies]
 cosmwasm = "0.7.2"
-cw-multi-test = "0.16.2"
+getrandom = {version = "0.2", default-features = false, features = ["custom"]}

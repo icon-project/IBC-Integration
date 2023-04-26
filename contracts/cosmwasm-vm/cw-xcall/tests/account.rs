@@ -1,4 +1,4 @@
-use cw_xcall::types::address::Address;
+use cw_common::types::Address;
 
 pub fn alice() -> Address {
     Address::from("alice")

@@ -3,9 +3,10 @@ use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info},
     Coin, CosmosMsg, IbcEndpoint, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
+use cw_common::types::Address;
 use cw_xcall::{
     state::{CwCallService, IbcConfig, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
-    types::{address::Address, call_request::CallRequest, request::CallServiceMessageRequest},
+    types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
 mod account;
 mod setup;

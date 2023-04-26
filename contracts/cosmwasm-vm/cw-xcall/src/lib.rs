@@ -18,7 +18,7 @@ pub mod state;
 pub mod types;
 use crate::ack::{on_ack_failure, on_ack_sucess};
 use crate::{
-    ack::{make_ack_fail, make_ack_success, Ack},
+    ack::{make_ack_fail, make_ack_success},
     check::{check_order, check_version},
     error::ContractError,
     events::{
@@ -26,10 +26,9 @@ use crate::{
         event_rollback_message, event_xcall_message_sent,
     },
     ibc::{APP_ORDER, IBC_VERSION},
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    msg::{InstantiateMsg, QueryMsg},
     state::{CwCallService, IbcConfig, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{
-        address::Address,
         call_request::CallRequest,
         message::{CallServiceMessage, CallServiceMessageType},
         request::CallServiceMessageRequest,
@@ -47,8 +46,10 @@ use cosmwasm_std::{
     IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Never,
     QuerierWrapper, Reply, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
 };
+use cw_common::types::{Ack, Address};
 
 use cw2::set_contract_version;
+use cw_common::xcall_msg::ExecuteMsg;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use schemars::_serde_json::to_string;
