@@ -1189,7 +1189,7 @@ fn connection_open_confirm_execute() {
         counterparty_prefix: to_vec(&counterparty_prefix).unwrap(),
     };
     let mock_data_binary = to_binary(&mock_response_data).unwrap();
-    let events = Event::new("open_ack");
+    let events = Event::new("open_confirm");
     let response = SubMsgResponse {
         data: Some(mock_data_binary),
         events: vec![events],
