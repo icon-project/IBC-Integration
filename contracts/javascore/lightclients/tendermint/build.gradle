@@ -49,13 +49,9 @@ jacocoTestReport {
 
     doNotTrackState("Disable state tracking")
     reports {
-        html {
-            enabled false
-        }
-        xml {
-            enabled true
-        }
-        xml.destination file("${buildDir}/reports/jacoco/report.xml")
+        xml.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
     subprojects.each {
         sourceSets it.sourceSets.main
