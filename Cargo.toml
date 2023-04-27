@@ -4,7 +4,8 @@ members = [
     "contracts/cosmwasm-vm/cw-xcall",
     "contracts/cosmwasm-vm/cw-ibc-core",
     "contracts/cosmwasm-vm/cw-common",
-    "libraries/rust/common"
+    "libraries/rust/common",
+    "contracts/cosmwasm-vm/cw-mock-dapp",
 ]
 
 [workspace.package]
