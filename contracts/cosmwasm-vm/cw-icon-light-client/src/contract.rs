@@ -20,7 +20,10 @@ use crate::error::ContractError;
 use crate::light_client::IconClient;
 use crate::state::{CwContext, QueryHandler};
 use crate::traits::{Config, IContext, ILightClient};
-use cw_common::client_msg::{ExecuteMsg, InstantiateMsg, LightClientPacketMessage, QueryMsg};
+use cw_common::client_msg::{
+    ExecuteMsg, InstantiateMsg, LightClientPacketMessage, QueryMsg, VerifyClientConsensusState,
+    VerifyClientFullState, VerifyConnectionState,
+};
 use prost::Message;
 
 // version info for migration info
@@ -201,18 +204,7 @@ pub fn execute(
             client_id,
             verify_connection_state,
         } => {
-            let proofs_decoded = MerkleProofs::decode(verify_connection_state.proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
-            let height = to_height_u64(&verify_connection_state.proof_height)?;
-            let result = client.verify_membership(
-                &client_id,
-                height,
-                0,
-                0,
-                &proofs_decoded.proofs,
-                &verify_connection_state.expected_counterparty_connection_end,
-                &verify_connection_state.counterparty_conn_end_path,
-            )?;
+            let result = validate_connection_state(&client_id, &client, &verify_connection_state)?;
 
             Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
         }
@@ -222,26 +214,18 @@ pub fn execute(
             verify_client_full_state,
             verify_client_consensus_state,
         } => {
-            let proofs_decoded = MerkleProofs::decode(verify_connection_state.proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
-            let height = to_height_u64(&verify_connection_state.proof_height)?;
-            let result = client.verify_membership(
-                &client_id,
-                height,
-                0,
-                0,
-                &proofs_decoded.proofs,
-                &verify_connection_state.expected_counterparty_connection_end,
-                &verify_connection_state.counterparty_conn_end_path,
-            )?;
-
+            let mut result =
+                validate_connection_state(&client_id, &client, &verify_connection_state)?;
+            result = validate_client_state(&client_id, &client, &verify_client_full_state)?;
+            result = validate_consensus_state(&client_id, &client, &verify_client_consensus_state)?;
             Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
         }
 
         ExecuteMsg::VerifyChannel {
             verify_channel_state,
         } => {
-            let result = validate_channel_state(&client, &verify_channel_state)?;
+            // fix once we receive client id
+            let result = validate_channel_state("", &client, &verify_channel_state)?;
             Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
         }
         ExecuteMsg::TimeoutOnCLose {
@@ -249,8 +233,9 @@ pub fn execute(
             verify_channel_state,
             next_seq_recv_verification_result,
         } => {
-            let is_channel_valid = validate_channel_state(&client, &verify_channel_state)?;
-            let sequence_valid =
+            let is_channel_valid =
+                validate_channel_state(&client_id, &client, &verify_channel_state)?;
+            let _sequence_valid =
                 validate_next_seq_recv(&client, &client_id, next_seq_recv_verification_result)?;
             Ok(Response::new().add_attribute(MEMBERSHIP, is_channel_valid.to_string()))
         }
@@ -273,6 +258,7 @@ pub fn execute(
 }
 
 pub fn validate_channel_state(
+    client_id: &str,
     client: &IconClient,
     state: &VerifyChannelState,
 ) -> Result<bool, ContractError> {
@@ -280,13 +266,73 @@ pub fn validate_channel_state(
         MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
-        "",
+        client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
         &state.expected_counterparty_channel_end,
         &state.counterparty_chan_end_path,
+    )?;
+    Ok(result)
+}
+
+pub fn validate_connection_state(
+    client_id: &str,
+    client: &IconClient,
+    state: &VerifyConnectionState,
+) -> Result<bool, ContractError> {
+    let proofs_decoded =
+        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
+    let height = to_height_u64(&state.proof_height)?;
+    let result = client.verify_membership(
+        client_id,
+        height,
+        0,
+        0,
+        &proofs_decoded.proofs,
+        &state.expected_counterparty_connection_end,
+        &state.counterparty_conn_end_path,
+    )?;
+    Ok(result)
+}
+
+pub fn validate_client_state(
+    client_id: &str,
+    client: &IconClient,
+    state: &VerifyClientFullState,
+) -> Result<bool, ContractError> {
+    let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
+        .map_err(|e| ContractError::DecodeError(e))?;
+    let height = to_height_u64(&state.proof_height)?;
+    let result = client.verify_membership(
+        client_id,
+        height,
+        0,
+        0,
+        &proofs_decoded.proofs,
+        &state.expected_client_state,
+        &state.client_state_path,
+    )?;
+    Ok(result)
+}
+
+pub fn validate_consensus_state(
+    client_id: &str,
+    client: &IconClient,
+    state: &VerifyClientConsensusState,
+) -> Result<bool, ContractError> {
+    let proofs_decoded = MerkleProofs::decode(state.consensus_state_proof.as_slice())
+        .map_err(|e| ContractError::DecodeError(e))?;
+    let height = to_height_u64(&state.proof_height)?;
+    let result = client.verify_membership(
+        client_id,
+        height,
+        0,
+        0,
+        &proofs_decoded.proofs,
+        &state.expected_conesenus_state,
+        &state.conesenus_state_path,
     )?;
     Ok(result)
 }
