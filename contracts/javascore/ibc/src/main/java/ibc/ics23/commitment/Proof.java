@@ -36,9 +36,6 @@ public class Proof {
         }
 
         if (!isBatchProofEmpty(proof.getBatch())) {
-            if (proof.getBatch().getEntries().size() == 0) {
-                throw new UserRevertedException("Batch Proof has no entry");
-            }
             if (isBatchEntryEmpty(proof.getBatch().getEntries().get(0))) {
                 throw new UserRevertedException("Batch proof has empty entry");
             }
