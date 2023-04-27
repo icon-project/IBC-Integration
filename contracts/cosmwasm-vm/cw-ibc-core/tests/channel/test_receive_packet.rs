@@ -1,7 +1,9 @@
 use cosmwasm_std::Empty;
 use cosmwasm_std::IbcReceiveResponse;
+use cw_common::client_response::PacketResponse;
 use cw_common::client_response::XcallPacketResponseData;
-use cw_xcall::ack::make_ack_success;
+
+use cw_common::types::Ack;
 use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
 use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
@@ -12,6 +14,12 @@ use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
 use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 
 use super::*;
+
+pub fn make_ack_success() -> Binary {
+    let res = Ack::Result(b"1".into());
+
+    to_binary(&res).unwrap()
+}
 
 pub fn get_dummy_raw_packet_recv(timeout_height: u64, timeout_timestamp: u64) -> RawPacket {
     RawPacket {
@@ -46,7 +54,7 @@ pub fn get_dummy_raw_msg_recv_packet(height: u64) -> RawMsgRecvPacket {
 fn test_receive_packet() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
     let packet = msg.packet.clone();
@@ -146,14 +154,14 @@ fn test_receive_packet() {
     let res = contract.validate_receive_packet(deps.as_mut(), info, &msg);
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 531);
+    assert_eq!(res.unwrap().messages[0].id, 521);
 }
 
 #[test]
 fn test_receive_packet_validate_reply_from_light_client() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let info = create_mock_info("channel-creater", "umlg", 200000000);
 
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
     let packet = msg.packet.clone();
@@ -166,11 +174,22 @@ fn test_receive_packet_validate_reply_from_light_client() {
     contract
         .add_route(&mut deps.storage, module_id.clone().into(), &module)
         .unwrap();
+    let packet_repsone = PacketResponse {
+        seq_on_a: msg.packet.seq_on_a,
+        port_id_on_a: msg.packet.port_id_on_a.clone(),
+        chan_id_on_a: msg.packet.chan_id_on_a.clone(),
+        port_id_on_b: msg.packet.port_id_on_b,
+        chan_id_on_b: msg.packet.chan_id_on_b,
+        data: hex::encode(msg.packet.data),
+        timeout_height_on_b: msg.packet.timeout_height_on_b,
+        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
+    };
 
-    let data = PacketData {
-        packet: msg.packet.clone(),
+    let data = PacketDataResponse {
+        packet: packet_repsone,
         signer: msg.signer,
         acknowledgement: None,
+        message_info: info,
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -205,10 +224,9 @@ fn test_receive_packet_validate_reply_from_light_client() {
         )
         .unwrap();
 
-    let res =
-        contract.receive_packet_validate_reply_from_light_client(deps.as_mut(), info, message);
+    let res = contract.receive_packet_validate_reply_from_light_client(deps.as_mut(), message);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 532)
+    assert_eq!(res.unwrap().messages[0].id, 522)
 }
 
 #[test]
@@ -230,10 +248,22 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
         .add_route(&mut deps.storage, module_id.clone().into(), &module)
         .unwrap();
 
-    let data = PacketData {
-        packet: msg.packet.clone(),
+    let packet_repsone = PacketResponse {
+        seq_on_a: msg.packet.seq_on_a,
+        port_id_on_a: msg.packet.port_id_on_a.clone(),
+        chan_id_on_a: msg.packet.chan_id_on_a.clone(),
+        port_id_on_b: msg.packet.port_id_on_b,
+        chan_id_on_b: msg.packet.chan_id_on_b,
+        data: hex::encode(msg.packet.data),
+        timeout_height_on_b: msg.packet.timeout_height_on_b,
+        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
+    };
+
+    let data = PacketDataResponse {
+        packet: packet_repsone,
         signer: msg.signer,
         acknowledgement: None,
+        message_info: info,
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -260,7 +290,7 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
         .unwrap();
 
     contract
-        .receive_packet_validate_reply_from_light_client(deps.as_mut(), info, message)
+        .receive_packet_validate_reply_from_light_client(deps.as_mut(), message)
         .unwrap();
 }
 

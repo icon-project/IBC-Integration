@@ -1,3 +1,5 @@
+use cw_common::client_response::LightClientResponse;
+
 use super::*;
 
 #[test]
@@ -120,9 +122,12 @@ fn test_execute_open_try_from_light_client() {
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
 
-    let expected_data = cosmwasm_std::IbcEndpoint {
-        port_id: PortId::from(msg.port_id_on_b.clone()).to_string(),
-        channel_id: channel_id_on_b.clone().to_string(),
+    let expected_data = LightClientResponse {
+        message_info: info.clone(),
+        ibc_endpoint: cosmwasm_std::IbcEndpoint {
+            port_id: PortId::from(msg.port_id_on_b.clone()).to_string(),
+            channel_id: channel_id_on_b.clone().to_string(),
+        },
     };
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
@@ -148,15 +153,15 @@ fn test_execute_open_try_from_light_client() {
         &channel_id_on_b.clone(),
         &conn_id,
     );
-    let data = cw_xcall::msg::ExecuteMsg::IbcChannelOpen { msg: expected };
+    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_try = create_channel_submesssage(
         "contractaddress".to_string(),
         data,
-        &info,
+        info.funds,
         EXECUTE_ON_CHANNEL_OPEN_TRY,
     );
-    let res = contract.execute_open_try_from_light_client(deps.as_mut(), info.clone(), reply);
+    let res = contract.execute_open_try_from_light_client(deps.as_mut(), reply);
     assert_eq!(res.is_ok(), true);
     assert_eq!(res.unwrap().messages[0], on_chan_open_try)
 }
@@ -183,9 +188,12 @@ fn test_execute_open_try_from_light_client_fail_missing_channel_end() {
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
 
-    let expected_data = cosmwasm_std::IbcEndpoint {
-        port_id: PortId::from(msg.port_id_on_b.clone()).to_string(),
-        channel_id: channel_id_on_b.clone().to_string(),
+    let expected_data = LightClientResponse {
+        message_info: info.clone(),
+        ibc_endpoint: cosmwasm_std::IbcEndpoint {
+            port_id: PortId::from(msg.port_id_on_b.clone()).to_string(),
+            channel_id: channel_id_on_b.clone().to_string(),
+        },
     };
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
@@ -198,6 +206,6 @@ fn test_execute_open_try_from_light_client_fail_missing_channel_end() {
     };
 
     contract
-        .execute_open_try_from_light_client(deps.as_mut(), info.clone(), reply)
+        .execute_open_try_from_light_client(deps.as_mut(), reply)
         .unwrap();
 }

@@ -83,12 +83,12 @@ fn test_validate_close_init_channel() {
 
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
     let expected = on_chan_close_init_submessage(&msg, &channel_end, &connection_id);
-    let data = cw_xcall::msg::ExecuteMsg::IbcChannelClose { msg: expected };
+    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
         data,
-        &info,
+        info.funds,
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
 

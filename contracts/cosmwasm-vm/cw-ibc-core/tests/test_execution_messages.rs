@@ -1,7 +1,15 @@
 pub mod setup;
 
+use std::any::Any;
+
+use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
+use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
+use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
+use cw_ibc_core::ics02_client::types::BtpHeader;
+use cw_ibc_core::ics02_client::types::MerkleNode;
+use cw_ibc_core::ics02_client::types::SignedHeader;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::types::{ClientState, ConsensusState},
@@ -55,8 +63,8 @@ fn test_for_create_client_execution_message() {
     assert_eq!(response.attributes[0].value, "register_client");
 
     let create_client_message = ExecuteMsg::CreateClient {
-        client_state: client_state.clone().into(),
-        consensus_state: consenus_state.clone().into(),
+        client_state: client_state.clone().try_into().unwrap(),
+        consensus_state: consenus_state.clone().try_into().unwrap(),
         signer: "raw_message".parse().unwrap(),
     };
 
@@ -158,9 +166,43 @@ fn test_for_update_client_execution_messages() {
         .reply(deps.as_mut(), env.clone(), reply_message)
         .unwrap();
 
+    let merkle_node = RawMerkleNode {
+        dir: 0,
+        value: vec![0, 1, 2],
+    };
+
+    let btp_header = RawBtpHeader {
+        main_height: 27,
+        round: 0,
+        next_proof_context_hash: hex::decode(
+            "d090304264eeee3c3562152f2dc355601b0b423a948824fd0a012c11c3fc2fb4",
+        )
+        .unwrap(),
+        network_section_to_root: vec![merkle_node],
+        network_id: 1,
+        update_number: 0,
+        prev_network_section_hash: hex::decode(
+            "b791b4b069c561ca31093f825f083f6cc3c8e5ad5135625becd2ff77a8ccfa1e",
+        )
+        .unwrap(),
+        message_count: 1,
+        message_root: hex::decode(
+            "7702db70e830e07b4ff46313456fc86d677c7eeca0c011d7e7dcdd48d5aacfe2",
+        )
+        .unwrap(),
+        next_validators: vec![hex::decode("00b040bff300eee91f7665ac8dcf89eb0871015306").unwrap()],
+    };
+
+    let signed_header: SignedHeader = RawSignedHeader {
+        header: Some(btp_header),
+        signatures: vec![hex::decode("6c8b2bc2c3d31e34bd4ed9db6eff7d5dc647b13c58ae77d54e0b05141cb7a7995102587f1fa33fd56815463c6b78e100217c29ddca20fcace80510e3dab03a1600").unwrap()],
+    }
+    .try_into()
+    .unwrap();
+
     let message = ExecuteMsg::UpdateClient {
         client_id: "iconclient-0".to_string(),
-        header: client_state.clone().into(),
+        header: signed_header.try_into().unwrap(),
         signer: "signeraddress".to_string().parse().unwrap(),
     };
 
