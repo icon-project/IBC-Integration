@@ -22,6 +22,7 @@ use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
 pub use constants::*;
 use context::CwIbcCoreContext;
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Coin;
 use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
     StdResult, Storage,
@@ -38,12 +39,16 @@ use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 use ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
 use ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
 use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
+use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
+use ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
+use ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 pub use ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
     chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
 };
 use ibc::core::ics05_port::error::PortError;
+use ibc::core::ics23_commitment::commitment::CommitmentProofBytes;
 use ibc::core::ics24_host::error::ValidationError;
 pub use ibc::{
     core::{
@@ -65,13 +70,12 @@ pub use ics24_host::commitment::*;
 use std::str::FromStr;
 use thiserror::Error;
 
-use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
-use ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
-use ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
-use ibc::core::ics23_commitment::commitment::CommitmentProofBytes;
-
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::traits::{IbcClient, ValidateChannel};
+use crate::{
+    ics02_client::types::{ClientState, ConsensusState, SignedHeader},
+    traits::ExecuteChannel,
+};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

@@ -1,14 +1,9 @@
-use cosmwasm_std::Coin;
-
-use crate::traits::ExecuteChannel;
-
 use super::*;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
     pub fn instantiate(
         &self,
@@ -52,13 +47,20 @@ impl<'a> CwIbcCoreContext<'a> {
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())
                     .unwrap();
+
+                let client_state = ClientState::try_from(client_state.as_slice())
+                    .map_err(|error| ContractError::IbcClientError { error })?;
+
+                let consensus_state = ConsensusState::try_from(consensus_state)
+                    .map_err(|error| ContractError::IbcClientError { error })?;
                 let msg = MsgCreateClient {
-                    client_state,
-                    consensus_state,
+                    client_state: client_state.into(),
+                    consensus_state: consensus_state.into(),
                     signer,
                 };
                 self.create_client(deps, info, msg)
             }
+
             ExecuteMsg::UpdateClient {
                 client_id,
                 header,
@@ -66,13 +68,14 @@ impl<'a> CwIbcCoreContext<'a> {
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())
                     .unwrap();
+                let header = SignedHeader::try_from(header).map_err(|error| error)?;
                 let msg = MsgUpdateClient {
                     client_id: IbcClientId::from_str(&client_id).map_err(|error| {
                         ContractError::IbcDecodeError {
                             error: error.to_string(),
                         }
                     })?,
-                    header,
+                    header: header.into(),
                     signer,
                 };
                 self.update_client(deps, info, msg)
@@ -105,6 +108,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 self.connection_open_try(deps, info, message)
             }
+
             ExecuteMsg::ConnectionOpenAck {
                 conn_id_on_a,
                 conn_id_on_b,
@@ -117,6 +121,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 version,
                 signer,
             } => {
+                let client_state_of_a_on_b =
+                    ClientState::try_from(client_state_of_a_on_b.as_slice()).unwrap();
                 let message = MsgConnectionOpenAck {
                     conn_id_on_a: IbcConnectionId::from_str(conn_id_on_a.as_str()).map_err(
                         |error| ContractError::IbcDecodeError {
@@ -128,7 +134,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             error: error.to_string(),
                         },
                     )?,
-                    client_state_of_a_on_b,
+                    client_state_of_a_on_b: client_state_of_a_on_b.into(),
                     proof_conn_end_on_b: CommitmentProofBytes::try_from(proof_conn_end_on_b)
                         .map_err(|error| ContractError::IbcDecodeError {
                             error: error.to_string(),
@@ -317,6 +323,22 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             ExecuteMsg::SendPacket { packet } => self.send_packet(deps, packet),
+            ExecuteMsg::RequestTimeout {} => todo!(),
+
+            ExecuteMsg::BindPort { port_id, address } => {
+                let port_id = IbcPortId::from_str(&port_id).map_err(|error| {
+                    ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    }
+                })?;
+                self.bind_port(deps.storage, &port_id, address)
+            }
+            ExecuteMsg::SetExpectedTimePerBlock { block_time } => {
+                self.set_expected_time_per_block(deps.storage, block_time)?;
+                Ok(Response::new()
+                    .add_attribute("method", "set_expected_time_per_block")
+                    .add_attribute("time", block_time.to_string()))
+            }
             ExecuteMsg::ReceivePacket {
                 packet,
                 proof_commitment_on_a,
@@ -356,7 +378,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 self.acknowledgement_packet_validate(deps, info, &message)
             }
-            ExecuteMsg::RequestTimeout {} => todo!(),
             ExecuteMsg::Timeout {
                 packet,
                 next_seq_recv_on_b,
@@ -410,20 +431,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     cw_common::types::TimeoutMsgType::TimeoutOnClose(message),
                 )
             }
-            ExecuteMsg::BindPort { port_id, address } => {
-                let port_id = IbcPortId::from_str(&port_id).map_err(|error| {
-                    ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    }
-                })?;
-                self.bind_port(deps.storage, &port_id, address)
-            }
-            ExecuteMsg::SetExpectedTimePerBlock { block_time } => {
-                self.set_expected_time_per_block(deps.storage, block_time)?;
-                Ok(Response::new()
-                    .add_attribute("method", "set_expected_time_per_block")
-                    .add_attribute("time", block_time.to_string()))
-            }
         }
     }
 
@@ -448,43 +455,36 @@ impl<'a> CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_OPEN_INIT => self.execute_channel_open_init(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_TRY => self.execute_channel_open_try(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT => {
-                // self.execute_open_try_from_light_client(deps, info, message)
-                todo!()
+                self.execute_open_try_from_light_client(deps, message)
             }
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT => {
-                // self.execute_open_ack_from_light_client_reply(deps, info, message)
-                todo!()
+                self.execute_open_ack_from_light_client_reply(deps, message)
             }
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE => self.execute_channel_open_ack(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT => {
-                // self.execute_open_confirm_from_light_client_reply(deps, info, message)
-                todo!()
+                self.execute_open_confirm_from_light_client_reply(deps, message)
             }
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE => {
                 self.execute_channel_open_confirm(deps, message)
             }
             EXECUTE_ON_CHANNEL_CLOSE_INIT => self.execute_channel_close_init(deps, message),
             EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT => {
-                // self.execute_close_confirm_from_light_client_reply(deps, info, message)
-                todo!()
+                self.execute_close_confirm_from_light_client_reply(deps, message)
             }
             EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE => {
                 self.execute_channel_close_confirm(deps, message)
             }
 
             VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT => {
-                // self.timeout_packet_validate_reply_from_light_client(deps, info, message)
-                todo!()
+                self.timeout_packet_validate_reply_from_light_client(deps, message)
             }
             VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE => self.execute_timeout_packet(deps, message),
             VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT => {
-                // self.receive_packet_validate_reply_from_light_client(deps, info, message)
-                todo!()
+                self.receive_packet_validate_reply_from_light_client(deps, message)
             }
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE => self.execute_receive_packet(deps, message),
             VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT => {
-                todo!()
-                //self.acknowledgement_packet_validate_reply_from_light_client(deps, info, message)
+                self.acknowledgement_packet_validate_reply_from_light_client(deps, message)
             }
             VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE => {
                 self.acknowledgement_packet_execute(deps, message)
@@ -497,10 +497,10 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    pub fn calculate_fee(&self, expected_gas: u128) -> u128 {
-        let fee = expected_gas * self.gas_price();
+    pub fn calculate_fee(&self, expected_gas: u64) -> u128 {
+        let fee = expected_gas as u128 * self.gas_price();
 
-        fee
+        fee.checked_div(GAS_DENOMINATOR as u128).unwrap()
     }
 
     pub fn gas_price(&self) -> u128 {

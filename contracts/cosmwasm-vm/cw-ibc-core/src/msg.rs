@@ -1,14 +1,14 @@
 use ibc::{
     core::{
-        ics03_connection::{msgs::conn_open_try::MsgConnectionOpenTry, version::Version},
+        ics03_connection::version::Version,
         ics04_channel::{channel::Order, msgs::acknowledgement::Acknowledgement, packet::Packet},
     },
     signer::Signer,
 };
-use ibc_proto::google::protobuf::Any;
+
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
 use serde::{Deserialize, Serialize};
-use std::{str::FromStr, time::Duration};
+use std::time::Duration;
 
 use super::*;
 
@@ -25,13 +25,13 @@ pub enum ExecuteMsg {
         client_address: Addr,
     },
     CreateClient {
-        client_state: Any,
-        consensus_state: Any,
+        client_state: Vec<u8>,
+        consensus_state: Vec<u8>,
         signer: Signer,
     },
     UpdateClient {
         client_id: String,
-        header: Any,
+        header: Vec<u8>,
         signer: Signer,
     },
     // Not included in this version of ibc core
@@ -56,7 +56,7 @@ pub enum ExecuteMsg {
         /// ConnectionId that chain B has chosen for it's ConnectionEnd
         conn_id_on_b: ConnectionId,
         /// ClientState of client tracking chain A on chain B
-        client_state_of_a_on_b: Any,
+        client_state_of_a_on_b: Vec<u8>,
         /// proof of ConnectionEnd stored on Chain B during ConnOpenTry
         proof_conn_end_on_b: Vec<u8>,
         /// proof of ClientState tracking chain A on chain B
