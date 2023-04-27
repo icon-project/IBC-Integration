@@ -40,7 +40,7 @@ public class Ics23 {
             List<BatchEntry> proofBatchEntries = proof.getBatch().getEntries();
             for (BatchEntry proofBatchEntry : proofBatchEntries) {
                 ExistenceProof existenceProof = proofBatchEntry.getExist();
-                if (existenceProof != null && Arrays.equals(existenceProof.getKey(), key)) {
+                if (!isExistenceProofEmpty(existenceProof) && Arrays.equals(existenceProof.getKey(), key)) {
                     return existenceProof;
                 }
             }
