@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigInteger;
 import java.util.List;
 
+import ibc.icon.score.util.Proto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -481,7 +482,7 @@ public class PacketTest extends TestBase {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(baseCounterparty.getPortId(),
                 baseCounterparty.getChannelId(), sequence);
 
-        byte[] expectedCommitment = IBCCommitment.keccak256(IBCCommitment.sha256(acknowledgement));
+        byte[] expectedCommitment = IBCCommitment.sha256(acknowledgement);
         verify(packetSpy).sendBTPMessage(clientId, ByteUtil.join(ackCommitmentKey, expectedCommitment));
     }
 
@@ -554,7 +555,7 @@ public class PacketTest extends TestBase {
 
         // Assert
         verify(packetSpy).sendBTPMessage(clientId,
-                ByteUtil.join(commitmentPath, basePacket.getSequence().toByteArray()));
+                ByteUtil.join(commitmentPath, Proto.encodeFixed64(basePacket.getSequence(), false)));
     }
 
     @Test
@@ -618,7 +619,7 @@ public class PacketTest extends TestBase {
                 basePacket.getDestinationChannel());
         verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(),
                 baseConnection.getDelayPeriod(), BigInteger.ZERO,
-                proof, prefix.getKeyPrefix(), commitmentPath, basePacket.getSequence().toByteArray());
+                proof, prefix.getKeyPrefix(), commitmentPath, Proto.encodeFixed64(basePacket.getSequence(), false));
 
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
@@ -631,11 +632,11 @@ public class PacketTest extends TestBase {
     }
 
     private byte[] createPacketCommitment(Packet packet) {
-        return IBCCommitment.keccak256(IBCCommitment.sha256(
+        return IBCCommitment.sha256(
                 ByteUtil.join(
-                        packet.getTimeoutTimestamp().toByteArray(),
-                        packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
-                        packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
-                        IBCCommitment.sha256(packet.getData()))));
+                        Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(), false),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(), false),
+                        IBCCommitment.sha256(packet.getData())));
     }
 }

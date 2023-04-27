@@ -264,7 +264,7 @@ public class Proof {
     private static List<InnerOp> sliceInnerOps(List<InnerOp> array, int start, int end) {
         List<InnerOp> slice = new ArrayList<>(end - start);
         for (int i = start; i < end; i++) {
-            slice.set(i, array.get(i));
+            slice.add(array.get(i));
         }
         return slice;
     }
@@ -343,4 +343,76 @@ public class Proof {
         }
         return true;
     }
+
+    // leftBranchesAreEmpty returns true if the padding bytes correspond to all empty siblings
+    // on the left side of a branch, i.e. it's a valid placeholder on a leftmost path
+    public static boolean leftBranchesAreEmpty(InnerSpec spec, InnerOp op) {
+        int leftBranches = orderFromPadding(spec, op);
+        // count branches to left of this
+        if (leftBranches == 0) {
+            return false;
+        }
+
+        // compare prefix with the expected number of empty branches
+        int actualPrefix = op.getPrefix().length - leftBranches * spec.getChildSize().intValue();
+        if (actualPrefix < 0) {
+            return false;
+        }
+        for (int i = 0; i < leftBranches; i++) {
+            int idx = getPosition(spec.getChildOrder(), i);
+            int from = actualPrefix + idx * spec.getChildSize().intValue();
+            if (!Arrays.equals(spec.getEmptyChild(),
+                    Arrays.copyOfRange(op.getPrefix(), from, from + spec.getChildSize().intValue()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // rightBranchesAreEmpty returns true if the padding bytes correspond to all empty siblings
+    // on the right side of a branch, i.e. it's a valid placeholder on a rightmost path
+    public static boolean rightBranchesAreEmpty(InnerSpec spec, InnerOp op) {
+
+        // count branches to right of this one
+        int rightBranches = spec.getChildOrder().size() - 1 - orderFromPadding(spec, op);
+        if (rightBranches == 0) {
+            return false;
+        }
+        // compare suffix with the expected number of empty branches
+        if (op.getSuffix().length != (rightBranches * spec.getChildSize().intValue())) {
+            return false; // sanity check
+        }
+
+        for (int i = 0; i < rightBranches; i++) {
+            int idx = getPosition(spec.getChildOrder(), i);
+            int from = idx * spec.getChildSize().intValue();
+            if (!Arrays.equals(spec.getEmptyChild(),
+                    Arrays.copyOfRange(op.getSuffix(), from, from + spec.getChildSize().intValue()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static ProofSpec getTendermintSpec() {
+        LeafOp leafSpec = new LeafOp();
+        leafSpec.setPrefix(new byte[]{0});
+        leafSpec.setPrehashKey(HashOp.NO_HASH);
+        leafSpec.setHash(HashOp.SHA256);
+        leafSpec.setPrehashValue(HashOp.SHA256);
+        leafSpec.setLength(LengthOp.VAR_PROTO);
+
+        InnerSpec innerSpec = new InnerSpec();
+        innerSpec.setChildOrder(List.of(BigInteger.ZERO, BigInteger.ONE));
+        innerSpec.setMinPrefixLength(BigInteger.ONE);
+        innerSpec.setMaxPrefixLength(BigInteger.ONE);
+        innerSpec.setChildSize(BigInteger.valueOf(32));
+        innerSpec.setHash(HashOp.SHA256);
+
+        var tendermintSpec = new ProofSpec();
+        tendermintSpec.setLeafSpec(leafSpec);
+        tendermintSpec.setInnerSpec(innerSpec);
+        return tendermintSpec;
+    }
+
 }

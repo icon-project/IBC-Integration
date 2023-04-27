@@ -48,8 +48,9 @@ public class MockApp implements IIBCModule {
         BigInteger currCount = sendCount.getOrDefault(BigInteger.ZERO);
         sendCount.set(currCount.add(BigInteger.ONE));
 
+        BigInteger seq = (BigInteger) Context.call(ibcHandler, "getNextSequenceSend", srcPort.get(), srcChan.get());
         Packet pct = new Packet();
-        pct.setSequence(sendCount());
+        pct.setSequence(seq);
         pct.setData(data);
         pct.setDestinationPort(dstPort.get());
         pct.setDestinationChannel(dstChan.get());
@@ -67,8 +68,8 @@ public class MockApp implements IIBCModule {
     }
 
     @External
-    public void ackPacket(BigInteger sequence, byte[] ack) {
-        Context.call(this.ibcHandler, "writeAcknowledgement", srcPort.get(), srcChan.get(), sequence, ack);
+    public void ackPacket(byte[] packet, byte[] ack) {
+        Context.call(this.ibcHandler, "writeAcknowledgement", packet, ack);
     }
 
     @External(readonly = true)

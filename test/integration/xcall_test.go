@@ -26,7 +26,7 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" has already added "([^"]*)" wallet address as admin$`, executor.hasAlreadyAddedWalletAddressAsAdmin)
 			ctx.Step(`^"([^"]*)" wallet address should still be as admin$`, executor.walletAddressShouldStillBeAsAdmin)
 			ctx.Step(`^xCall returns an error message that the admin already exists$`, executor.xCallReturnsAnErrorMessageThatTheAdminAlreadyExists)
-			ctx.Step(`^no wallet address should be as admin$`, executor.noWalletAddressShouldBeAsAdmin)
+			ctx.Step(`^by default "([^"]*)" contract owner address should be as admin$`, executor.byDefaultContractOwnerAddressShouldBeAsAdmin)
 			ctx.Step(`^xCall returns an error message that the null value cannot be added as admin$`, executor.xCallReturnsAnErrorMessageThatTheNullValueCannotBeAddedAsAdmin)
 			ctx.Step(`^xCall returns an error message that  wallet address of the new admin is not a valid address$`, executor.xCallReturnsAnErrorMessageThatWalletAddressOfTheNewAdminIsNotAValidAddress)
 			ctx.Step(`^"([^"]*)" executes update_admin in xcall with "([^"]*)" wallet address$`, executor.executesUpdate_adminInXcallWithWalletAddress)
@@ -36,7 +36,7 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^xCall returns an error message that admin is already set$`, executor.xCallReturnsAnErrorMessageThatAdminIsAlreadySet)
 			ctx.Step(`^there are no admin wallets added as admin$`, executor.thereAreNoAdminWalletsAddedAsAdmin)
 			ctx.Step(`^xCall returns an error message that there are no admin wallets added to the xCall smart contract$`, executor.xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTheXCallSmartContract)
-			ctx.Step(`^"([^"]*)" contract deployed only when the chain is "([^"]*)"$`, executor.contractDeployedOnlyWhenTheChainIs)
+			ctx.Step(`^"([^"]*)" contract deployed by "([^"]*)" only when the chain is "([^"]*)"$`, executor.contractDeployedByOnlyWhenTheChainIs)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},

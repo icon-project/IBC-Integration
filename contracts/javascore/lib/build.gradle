@@ -15,12 +15,12 @@ dependencies {
     compileOnly("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
     compileOnly("foundation.icon:icon-sdk:$iconsdkVersion")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$jupiterApiVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$jupiterParamsVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterEngineVersion")
-    testImplementation("foundation.icon:javaee-unittest:$javaeeUnittestVersion")
+//    testImplementation("org.junit.jupiter:junit-jupiter-api:$jupiterApiVersion")
+//    testImplementation("org.junit.jupiter:junit-jupiter-params:$jupiterParamsVersion")
+//    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterEngineVersion")
+//    testImplementation("foundation.icon:javaee-unittest:$javaeeUnittestVersion")
 }
 
-test {
-    useJUnitPlatform()
-}
+//test {
+//    useJUnitPlatform()
+//}

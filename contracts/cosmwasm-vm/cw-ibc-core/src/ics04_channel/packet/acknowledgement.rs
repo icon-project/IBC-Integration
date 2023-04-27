@@ -125,6 +125,7 @@ impl<'a> CwIbcCoreContext<'a> {
         };
         let packet_data = to_vec(&data)?;
         let light_client_message = LightClientMessage::VerifyPacketAcknowledgement {
+            client_id: client_id_on_a.to_string(),
             verify_packet_acknowledge,
             packet_data,
         };

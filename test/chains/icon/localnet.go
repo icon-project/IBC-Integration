@@ -320,26 +320,49 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 		bmcAddr := ctxValue.ContractAddress["bmc"]
 		initMessage = initMessage + bmcAddr
 	}
+	var contracts chains.ContractKey
+
+	// Check if keystore is alreadry available for given keyName
+	ownerAddr := c.CheckForKeyStore(ctx, keyName)
+	if ownerAddr != "" {
+		contracts.ContractOwner = map[string]string{
+			keyName: ownerAddr,
+		}
+	}
 
 	// Get ScoreAddress
 	scoreAddress, err := c.getFullNode().DeployContract(ctx, c.scorePaths[contractName], c.keystorePath, initMessage)
-	var contracts chains.ContractKey
 
 	contracts.ContractAddress = map[string]string{
 		contractName: scoreAddress,
 	}
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
 		ContractAddress: contracts.ContractAddress,
-		ContractOwner:   keyName,
+		ContractOwner:   contracts.ContractOwner,
 	}), err
 }
 
 // ExecuteContract implements chains.Chain
 func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
-	execMethodName, p := c.GetExecuteParam(ctx, methodName, param)
-	hash, err := c.getFullNode().ExecuteContract(ctx, contractAddress, execMethodName, c.keystorePath, p)
+	// Check if keystore is alreadry available for given keyName
+	c.CheckForKeyStore(ctx, keyName)
+
+	ctx, execMethodName, params := c.GetExecuteParam(ctx, methodName, param)
+	hash, err := c.getFullNode().ExecuteContract(ctx, contractAddress, execMethodName, c.keystorePath, params)
+	if err != nil {
+		return ctx, err
+	}
 	fmt.Printf("Transaction Hash: %s\n", hash)
-	return ctx, err
+
+	// wait for few blocks to finish
+	time.Sleep(2 * time.Second)
+	trResult, _ := c.getFullNode().TransactionResult(ctx, hash)
+	if trResult.Status == "0x1" {
+		return ctx, err
+	} else {
+		return ctx, fmt.Errorf("%s", trResult.Failure.MessageValue)
+	}
+
 }
 
 // GetBlockByHeight implements chains.Chain
@@ -356,31 +379,17 @@ func (c *IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error
 
 // QueryContract implements chains.Chain
 func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
-	return ctx, nil
+	time.Sleep(2 * time.Second)
+
+	// get query msg
+	queryMsg := c.GetQueryParam(methodName)
+	output, err := c.getFullNode().QueryContract(ctx, contractAddress, queryMsg, "")
+	chains.Response = output
+	fmt.Printf("Response is : %s \n", output)
+	return ctx, err
 }
 
 func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
 	_, err := c.BuildWallet(ctx, keyName, "")
 	return err
-}
-
-func (c *IconLocalnet) GetExecuteParam(ctx context.Context, methodName, params string) (execMethodName string, args string) {
-	if strings.Contains(methodName, "set_admin") {
-		return c.SetAdminParams(ctx, methodName, params)
-	}
-	return "", ""
-}
-
-func GetQueryParam(methodName string) string {
-	return "admin"
-}
-
-func (c *IconLocalnet) SetAdminParams(ctx context.Context, methodaName, keyName string) (string, string) {
-	executeMethodName := "setAdmin"
-	wallet, _ := c.BuildWallet(ctx, keyName, "")
-	addr := string(wallet.Address())
-	addr = strings.ReplaceAll(addr, `"`, "")
-	args := "_address=" + addr
-	fmt.Println(args)
-	return executeMethodName, args
 }

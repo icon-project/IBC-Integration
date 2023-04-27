@@ -47,15 +47,13 @@ fn test_claim_capability() {
     let mut deps = deps();
     let name: Vec<u8> = vec![2];
     let address = "address".to_string();
+    let address_to_claim = "address-2".to_string();
     let contract = CwIbcCoreContext::new();
     contract
         .store_capability(&mut deps.storage, name.clone(), vec![address.clone()])
         .unwrap();
-    contract
-        .get_capability(&mut deps.storage, name.clone())
-        .unwrap();
-    let result = contract.claim_capability(&mut deps.storage, name, address);
-    assert_eq!(result.is_ok(), true)
+    let result = contract.claim_capability(&mut deps.storage, name.clone(), address_to_claim);
+    assert_eq!(result.is_ok(), true);
 }
 
 #[test]
@@ -218,4 +216,22 @@ fn test_validate_port_id_fail_invalid_min_length() {
     let s = "q";
     let id = PortId::from_str(s);
     assert_eq!(id.is_err(), true)
+}
+
+#[test]
+#[should_panic(expected = "IbcContextError { error: \"Capability already claimed\" }")]
+fn test_already_claimed_capability() {
+    let mut deps = deps();
+    let name: Vec<u8> = vec![2];
+    let address = "address".to_string();
+    let contract = CwIbcCoreContext::new();
+    contract
+        .store_capability(&mut deps.storage, name.clone(), vec![address.clone()])
+        .unwrap();
+    contract
+        .get_capability(&mut deps.storage, name.clone())
+        .unwrap();
+    contract
+        .claim_capability(&mut deps.storage, name.clone(), address.clone())
+        .unwrap();
 }

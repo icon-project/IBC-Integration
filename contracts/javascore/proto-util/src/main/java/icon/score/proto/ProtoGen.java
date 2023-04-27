@@ -50,7 +50,7 @@ public class ProtoGen {
 
             final Importer importer = injector.getInstance(Importer.class);
 
-            Iterator<File> it = FileUtils.iterateFiles(new File(path), new String[] { "proto" },
+            Iterator<File> it = FileUtils.iterateFiles(new File(path), new String[]{"proto"},
                     true);
             while (it.hasNext()) {
                 File file = it.next();
@@ -92,7 +92,7 @@ public class ProtoGen {
                 .addModifiers(Modifier.PUBLIC);
         for (EnumConstant _enum : protoEnum.getConstants()) {
             FieldSpec fieldSpec = FieldSpec.builder(int.class, _enum.getName(),
-                    Modifier.PUBLIC, Modifier.FINAL, Modifier.STATIC)
+                            Modifier.PUBLIC, Modifier.FINAL, Modifier.STATIC)
                     .initializer("$L", _enum.getValue()).build();
             enumSpec.addField(fieldSpec);
         }
@@ -203,8 +203,16 @@ public class ProtoGen {
     private static CodeBlock generateDecoder(Field field) {
         CodeBlock.Builder decodingBlock = CodeBlock.builder();
 
+        TypeName _responseType = getDecoderResponseType(field);
+
+        boolean isVarIntArray = field.isRepeated() && _responseType.equals(ClassName.get(BigInteger.class));
+
+        if (isVarIntArray) {
+            _responseType = ParameterizedTypeName.get(ClassName.get(List.class), _responseType);
+
+        }
         TypeName responseType = ParameterizedTypeName.get(ClassName.get(ibc.icon.score.util.Proto.DecodeResponse.class),
-                getDecoderResponseType(field));
+                _responseType);
         decodingBlock.addStatement("$>$T resp = $T.$L(data, index)", responseType, ibc.icon.score.util.Proto.class,
                 getDecoder(field));
         decodingBlock.addStatement("index = resp.index");
@@ -213,7 +221,9 @@ public class ProtoGen {
             result = field.getTypeName() + ".decode(resp.res)";
         }
 
-        if (field.isRepeated()) {
+        if (isVarIntArray) {
+            decodingBlock.addStatement("obj.$L.addAll($L)", toCamel(field.getName()), result);
+        } else if (field.isRepeated()) {
             decodingBlock.addStatement("obj.$L.add($L)", toCamel(field.getName()), result);
         } else {
             decodingBlock.addStatement("obj.$L = $L", toCamel(field.getName()), result);
@@ -281,7 +291,7 @@ public class ProtoGen {
             case "uint64":
             case "sint32":
             case "sint64":
-                return "decodeVarInt";
+                return field.isRepeated() ? "decodeVarIntArray" : "decodeVarInt";
             case "fixed32":
             case "sfixed32":
                 throw new IllegalArgumentException("Type currently not supported " + field.getTypeName());

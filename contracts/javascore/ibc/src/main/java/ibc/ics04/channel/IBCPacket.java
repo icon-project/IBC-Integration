@@ -2,6 +2,7 @@ package ibc.ics04.channel;
 
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Proto;
 import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
@@ -56,7 +57,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(),
                 packet.getSequence());
 
-        byte[] packetCommitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] packetCommitment = createPacketCommitment(packet);
         commitments.set(packetCommitmentKey, packetCommitment);
 
         sendBTPMessage(connection.getClientId(),
@@ -97,7 +98,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
-        byte[] commitmentBytes = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitmentBytes = createPacketCommitment(packet);
 
         verifyPacketCommitment(
                 connection,
@@ -141,7 +142,7 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(destinationPortId,
                 destinationChannel, sequence);
         Context.require(commitments.get(ackCommitmentKey) == null, "acknowledgement for packet already exists");
-        byte[] ackCommitment = IBCCommitment.keccak256(IBCCommitment.sha256(acknowledgement));
+        byte[] ackCommitment = IBCCommitment.sha256(acknowledgement);
         commitments.set(ackCommitmentKey, ackCommitment);
         sendBTPMessage(connection.getClientId(), ByteUtil.join(ackCommitmentKey, ackCommitment));
 
@@ -167,7 +168,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(), packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitment = createPacketCommitment(packet);
 
         Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
@@ -236,7 +237,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
             byte[] recvCommitmentKey = IBCCommitment.nextSequenceRecvCommitmentKey(packet.getDestinationPort(),
                     packet.getDestinationChannel());
-            byte[] recvCommitment = packet.getSequence().toByteArray();
+            byte[] recvCommitment = Proto.encodeFixed64(packet.getSequence(), false);
             sendBTPMessage(connection.getClientId(), ByteUtil.join(recvCommitmentKey, recvCommitment));
         } else {
             Context.revert("unknown ordering type");
@@ -267,7 +268,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(), packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = IBCCommitment.keccak256(createPacketCommitment(packet));
+        byte[] commitment = createPacketCommitment(packet);
 
         Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
@@ -300,7 +301,7 @@ public class IBCPacket extends IBCChannelHandshake {
                     proofHeight,
                     proof,
                     nextRecvKey,
-                    nextSequenceRecv.toByteArray());
+                    Proto.encodeFixed64(nextSequenceRecv, false));
             channel.setState(Channel.State.STATE_CLOSED);
 
             byte[] encodedChannel = channel.encode();
@@ -399,9 +400,9 @@ public class IBCPacket extends IBCChannelHandshake {
     private byte[] createPacketCommitment(Packet packet) {
         return IBCCommitment.sha256(
                 ByteUtil.join(
-                        packet.getTimeoutTimestamp().toByteArray(),
-                        packet.getTimeoutHeight().getRevisionNumber().toByteArray(),
-                        packet.getTimeoutHeight().getRevisionHeight().toByteArray(),
+                        Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(), false),
+                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(), false),
                         IBCCommitment.sha256(packet.getData())));
     }
 
