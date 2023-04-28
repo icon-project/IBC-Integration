@@ -3,14 +3,14 @@ syntax = "proto3";
 package icon.proto.core.commitment;
 
 import "core/23-commitment/proofs.proto";
-//import "gogoproto/gogo.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "libraries/go/common/icon;icon";
 
 // MerkleRoot defines a merkle root hash.
 // In the Cosmos SDK, the AppHash of a block header becomes the root.
 message MerkleRoot {
-//  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_getters) = false;
 
   bytes hash = 1;
 }
@@ -26,7 +26,7 @@ message MerklePrefix {
 // arbitrary structured object (defined by a commitment type).
 // MerklePath is represented from root-to-leaf
 message MerklePath {
-  //  option (gogoproto.goproto_stringer) = false;
+  option (gogoproto.goproto_stringer) = false;
 
   repeated string key_path = 1;
 }
