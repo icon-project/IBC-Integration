@@ -5,7 +5,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        msg: &MsgTimeout,
+        msg: MsgTimeout,
     ) -> Result<Response, ContractError> {
         let chan_end_on_a = self.get_channel_end(
             deps.storage,
@@ -96,11 +96,18 @@ impl<'a> CwIbcCoreContext<'a> {
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let data = PacketData {
             packet: msg.packet.clone(),
             signer: msg.signer.clone(),
             acknowledgement: None,
+            message_info: cw_common::types::MessageInfo {
+                sender: info.sender,
+                funds,
+            },
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
@@ -156,7 +163,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
             VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT,
-        );
+        )
+        .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
         Ok(Response::new()
             .add_attribute("action", "Light client packet timeout call")
@@ -166,7 +174,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn timeout_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
+
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -177,6 +185,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             error: e.to_string(),
                         }
                     })?;
+                    let info = packet_data.message_info;
                     let data = Packet::from(packet_data.packet.clone());
                     let port_id = PortId::from(packet_data.packet.port_id_on_a.clone());
                     // Getting the module address for on packet timeout call
@@ -223,7 +232,9 @@ impl<'a> CwIbcCoreContext<'a> {
                         timeout,
                     );
                     let address = Addr::unchecked(packet_data.signer.to_string());
-                    let cosm_msg = cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address);
+                    let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketTimeout {
+                        msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
+                    };
                     let create_client_message: CosmosMsg =
                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                             contract_addr: contract_address.to_string(),

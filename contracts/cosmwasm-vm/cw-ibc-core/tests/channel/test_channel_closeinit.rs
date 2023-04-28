@@ -7,11 +7,11 @@ use std::{str::FromStr, time::Duration};
 
 use cosmwasm_std::{to_binary, Addr, Event, IbcOrder, Reply, SubMsgResponse, SubMsgResult};
 use cw_common::types::{ChannelId, ConnectionId, PortId};
+use cw_common::IbcClientId;
 use cw_ibc_core::ics04_channel::open_init::create_channel_submesssage;
 use cw_ibc_core::ics04_channel::EXECUTE_ON_CHANNEL_CLOSE_INIT;
 use cw_ibc_core::{
     context::CwIbcCoreContext, ics04_channel::MsgChannelCloseInit, ChannelEnd, ConnectionEnd,
-    IbcClientId,
 };
 use ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},
@@ -83,12 +83,12 @@ fn test_validate_close_init_channel() {
 
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
     let expected = on_chan_close_init_submessage(&msg, &channel_end, &connection_id);
-    let data = cw_xcall::msg::ExecuteMsg::IbcChannelClose { msg: expected };
+    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
         data,
-        &info,
+        info.funds,
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
 

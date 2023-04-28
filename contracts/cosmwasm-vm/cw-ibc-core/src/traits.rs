@@ -37,7 +37,12 @@ pub trait IbcClient {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError>;
-    fn register_client(&self, deps: DepsMut, client_type: ClientType, light_client: Addr);
+    fn register_client(
+        &self,
+        deps: DepsMut,
+        client_type: ClientType,
+        light_client: Addr,
+    ) -> Result<Response, ContractError>;
     fn generate_client_identifier(
         &self,
         store: &mut dyn Storage,

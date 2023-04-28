@@ -1,8 +1,12 @@
 use std::{str::FromStr, time::Duration};
 
-use cosmwasm_std::{to_binary, to_vec, Addr, Event, Reply, SubMsgResponse, SubMsgResult};
+use cosmwasm_std::{
+    to_binary, to_vec, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
+    IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
+};
 
 use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};
+use cw_common::{IbcClientId, IbcConnectionId, IbcPortId};
 use cw_ibc_core::ics02_client::types::{ClientState, ConsensusState};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
@@ -20,9 +24,9 @@ use cw_ibc_core::{
         MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
         MsgChannelOpenTry,
     },
-    ChannelEnd, ConnectionEnd, IbcClientId, IbcConnectionId, Sequence,
+    ChannelEnd, ConnectionEnd, Sequence,
 };
-use cw_ibc_core::{traits::*, IbcClientType, IbcPortId};
+use cw_ibc_core::{traits::*, IbcClientType};
 use ibc::{
     core::ics04_channel::{
         channel::{Counterparty, Order, State},
@@ -829,9 +833,31 @@ fn test_create_write_ack_packet_event() {
     let msg = Packet::try_from(raw.clone()).unwrap();
     let raw_back = RawPacket::from(msg.clone());
     let msg_back = Packet::try_from(raw_back.clone()).unwrap();
+    let timeout_block = IbcTimeoutBlock {
+        revision: 0,
+        height: 10,
+    };
+    let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
+    let ibc_packet_recv_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relayer"));
+
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    let event = create_write_ack_event(msg_back, vec![0], &IbcConnectionId::default());
+    let event = create_write_ack_event(
+        ibc_packet_recv_message.packet,
+        Order::Unordered.as_str(),
+        &IbcConnectionId::default().as_str(),
+    );
     assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
 }
 
@@ -956,12 +982,12 @@ fn test_validate_open_init_channel() {
 
     let channel_id_expect = ChannelId::new(0);
     let expected = on_chan_open_init_submessage(&msg, &channel_id_expect, &conn_id);
-    let data = cw_xcall::msg::ExecuteMsg::IbcChannelOpen { msg: expected };
+    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
         data,
-        &info,
+        info.funds,
         EXECUTE_ON_CHANNEL_OPEN_INIT,
     );
 
@@ -1024,7 +1050,7 @@ fn test_validate_open_try_channel_fail_missing_connection_end() {
 fn test_validate_open_try_channel() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
     let mut msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());

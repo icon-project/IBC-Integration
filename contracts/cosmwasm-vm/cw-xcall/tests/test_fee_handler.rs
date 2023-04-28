@@ -3,10 +3,10 @@ use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR},
     Coin,
 };
-use cw_xcall::{state::CwCallService, types::address::Address};
+use cw_xcall::state::CwCallService;
 pub mod account;
 use account::*;
-
+use cw_common::types::Address;
 #[test]
 fn set_protocol_fee_handler() {
     let mut deps = mock_dependencies();

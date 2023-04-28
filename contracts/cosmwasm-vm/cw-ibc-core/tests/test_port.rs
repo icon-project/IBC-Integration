@@ -2,9 +2,9 @@ pub mod setup;
 use std::str::{from_utf8, FromStr};
 
 use cw_common::types::PortId;
+use cw_common::IbcChannelId;
 use cw_ibc_core::{
-    context::CwIbcCoreContext, ics04_channel::ChannelMsg, keccak256, IbcChannelId,
-    MsgChannelOpenInit,
+    context::CwIbcCoreContext, ics04_channel::ChannelMsg, keccak256, MsgChannelOpenInit,
 };
 use setup::*;
 

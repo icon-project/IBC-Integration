@@ -1,5 +1,5 @@
-use std::str::from_utf8;
 use cosmwasm_std::to_vec;
+use std::str::from_utf8;
 
 use super::*;
 
@@ -49,10 +49,10 @@ impl<'a> CwMockService<'a> {
             None => vec![],
         };
 
-        let msg = cw_xcall::msg::ExecuteMsg::SendCallMessage {
+        let msg = cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
             to,
             data,
-            rollback: roll_back,
+            rollback: Some(roll_back),
         };
         let message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: address,
