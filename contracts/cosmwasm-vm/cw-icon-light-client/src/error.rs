@@ -12,7 +12,7 @@ pub enum ContractError {
     // Add any other custom errors you like here.
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
     #[error("{0}")]
-    DecodeError(#[from] DecodeError),
+    DecodeError(String),
     #[error("Timestamp not found for {client_id:?} at height {height:?}")]
     TimestampNotFound { height: u64, client_id: String },
     #[error("Client state not found for client_id:{0}")]

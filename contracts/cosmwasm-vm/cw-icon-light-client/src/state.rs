@@ -14,8 +14,8 @@ use crate::traits::Config;
 use crate::traits::IContext;
 use crate::ContractError;
 type ClientId = String;
-const CLIENT_STATES: Map<String, ClientState> = Map::new("CLIENT_STATES");
-const CONSENSUS_STATES: Map<(ClientId, u64), ConsensusState> = Map::new("CONSENSUS_STATES");
+const CLIENT_STATES: Map<String, Vec<u8>> = Map::new("CLIENT_STATES");
+const CONSENSUS_STATES: Map<(ClientId, u64), Vec<u8>> = Map::new("CONSENSUS_STATES");
 const PROCESSED_TIMES: Map<(ClientId, u64), u64> = Map::new("PROCESSED_TIMES");
 const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS");
 
@@ -42,11 +42,12 @@ impl<'a> IContext for CwContext<'a> {
     }
 
     fn insert_client_state(&self, client_id: &str, state: ClientState) -> Result<(), Self::Error> {
+        let data = state.encode_to_vec();
         CLIENT_STATES
             .save(
                 self.deps_mut.borrow_mut().storage,
                 client_id.to_string(),
-                &state,
+                &data,
             )
             .map_err(|_e| ContractError::FailedToSaveClientState)
     }
@@ -69,11 +70,12 @@ impl<'a> IContext for CwContext<'a> {
         height: u64,
         state: ConsensusState,
     ) -> Result<(), Self::Error> {
+        let data = state.encode_to_vec();
         CONSENSUS_STATES
             .save(
                 self.deps_mut.borrow_mut().storage,
                 (client_id.to_string(), height),
-                &state,
+                &data,
             )
             .map_err(|_e| ContractError::FailedToSaveClientState)
     }
@@ -196,12 +198,14 @@ impl QueryHandler {
         client_id: &str,
         height: u64,
     ) -> Result<ConsensusState, ContractError> {
-        CONSENSUS_STATES
+        let data= CONSENSUS_STATES
             .load(storage, (client_id.to_string(), height))
             .map_err(|_e| ContractError::ConsensusStateNotFound {
                 height,
                 client_id: client_id.to_string(),
-            })
+            })?;
+        let state= ConsensusState::decode(data.as_slice()).map_err(|e|ContractError::DecodeError(e.to_string()))?;
+        Ok(state)
     }
 
     pub fn get_timestamp_at_height(
@@ -221,9 +225,13 @@ impl QueryHandler {
         storage: &dyn Storage,
         client_id: &str,
     ) -> Result<ClientState, ContractError> {
-        CLIENT_STATES
+        
+       let data= CLIENT_STATES
             .load(storage, client_id.to_string())
-            .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))
+            .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
+        let state=ClientState::decode(data.as_slice()).map_err(|e|ContractError::DecodeError(e.to_string()))?;
+        Ok(state)
+
     }
 
     pub fn get_config(storage: &dyn Storage) -> Result<Config, ContractError> {
@@ -308,7 +316,7 @@ mod tests {
             .save(
                 &mut storage,
                 (client_id.to_string(), height),
-                &consensus_state,
+                &consensus_state.encode_to_vec(),
             )
             .unwrap();
 
@@ -358,7 +366,7 @@ mod tests {
         let client_id = "test_client";
         let client_state = ClientState::default();
         CLIENT_STATES
-            .save(&mut storage, client_id.to_string(), &client_state)
+            .save(&mut storage, client_id.to_string(), &client_state.encode_to_vec())
             .unwrap();
 
         let result = QueryHandler::get_client_state(&storage, client_id).unwrap();
@@ -392,7 +400,7 @@ mod tests {
         let client_id = "test_client";
         let client_state = ClientState::default();
         CLIENT_STATES
-            .save(&mut storage, client_id.to_string(), &client_state)
+            .save(&mut storage, client_id.to_string(), &client_state.encode_to_vec())
             .unwrap();
 
         let result = QueryHandler::get_client_state_any(&storage, client_id).unwrap();
@@ -542,7 +550,7 @@ mod tests {
         ctx.insert_client_state(client_id, state.clone()).unwrap();
 
         let loaded = CLIENT_STATES.load(deps.as_ref().storage, client_id.to_string())?;
-        assert_eq!(state, loaded);
+        assert_eq!(state, ClientState::decode(loaded.as_slice()).unwrap());
         Ok(())
     }
 
@@ -559,7 +567,7 @@ mod tests {
 
         let loaded =
             CONSENSUS_STATES.load(deps.as_ref().storage, (client_id.to_string(), height))?;
-        assert_eq!(state, loaded);
+        assert_eq!(state.encode_to_vec(), loaded);
         Ok(())
     }
 

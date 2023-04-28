@@ -141,7 +141,7 @@ impl ILightClient for IconClient<'_> {
         signed_header_bytes: Any,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {
         let signed_header = SignedHeader::from_any(signed_header_bytes)
-            .map_err(|e| ContractError::DecodeError(e))?;
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
         let btp_header = signed_header.header.clone().unwrap();
         let mut state = self.context.get_client_state(client_id)?;
         let config = self.context.get_config()?;

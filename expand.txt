@@ -1,0 +1,2476 @@
+#![feature(prelude_import)]
+#[prelude_import]
+use std::prelude::rust_2021::*;
+#[macro_use]
+extern crate std;
+mod constants {
+    pub const CLIENT_STATE_HASH: &str = "client_state_hash";
+    pub const CONSENSUS_STATE_HASH: &str = "consensus_state_hash";
+    pub const HEIGHT: &str = "height";
+    pub const MEMBERSHIP: &str = "membership";
+    pub const NON_MEMBERSHIP: &str = "non-membership";
+}
+pub mod contract {
+    use std::cell::RefCell;
+    use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+    use common::icon::icon::types::v1::MerkleProofs;
+    #[cfg(not(feature = "library"))]
+    use cosmwasm_std::entry_point;
+    use cosmwasm_std::{
+        from_slice, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+        StdResult,
+    };
+    use cw2::set_contract_version;
+    use cw_common::client_response::{CreateClientResponse, PacketDataResponse};
+    use cw_common::types::{PacketData, VerifyChannelState, VerifyPacketData};
+    use ibc_proto::google::protobuf::Any;
+    use crate::constants::{
+        CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT, MEMBERSHIP, NON_MEMBERSHIP,
+    };
+    use crate::error::ContractError;
+    use crate::light_client::IconClient;
+    use crate::state::{CwContext, QueryHandler};
+    use crate::traits::{Config, IContext, ILightClient};
+    use cw_common::client_msg::{
+        ExecuteMsg, InstantiateMsg, LightClientPacketMessage, QueryMsg,
+        VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState,
+    };
+    use prost::Message;
+    const CONTRACT_NAME: &str = "crates.io:cw-icon-light-client";
+    const CONTRACT_VERSION: &str = "0.1.0";
+    pub fn instantiate(
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        msg: InstantiateMsg,
+    ) -> Result<Response, ContractError> {
+        let _ = set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
+            .map_err(|_e| ContractError::FailedToInitContract)?;
+        let config = Config::new(
+            msg.src_network_id,
+            msg.network_id,
+            msg.network_type_id,
+            info.sender,
+        );
+        let context = CwContext::new(RefCell::new(deps), _env);
+        context.insert_config(&config)?;
+        Ok(Response::default())
+    }
+    pub fn execute(
+        deps_mut: DepsMut,
+        _env: Env,
+        _info: MessageInfo,
+        msg: ExecuteMsg,
+    ) -> Result<Response, ContractError> {
+        let context = CwContext::new(RefCell::new(deps_mut), _env);
+        let client = IconClient::new(&context);
+        match msg {
+            ExecuteMsg::CreateClient { client_id, client_state, consensus_state } => {
+                let client_state = ClientState::decode(client_state.as_slice())
+                    .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                let consensus_state = ConsensusState::decode(consensus_state.as_slice())
+                    .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                let (state_byte, update) = client
+                    .create_client(&client_id, client_state, consensus_state)?;
+                let mut response = Response::new()
+                    .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte.clone()))
+                    .add_attribute(
+                        CONSENSUS_STATE_HASH,
+                        hex::encode(update.consensus_state_commitment),
+                    )
+                    .add_attribute(HEIGHT, update.height.to_string());
+                let client_response = CreateClientResponse::new(
+                    "icon-light-client".to_string(),
+                    update.height.to_string(),
+                    state_byte,
+                    update.consensus_state_commitment.into(),
+                );
+                response.data = to_binary(&client_response).ok();
+                Ok(response)
+            }
+            ExecuteMsg::UpdateClient { client_id, signed_header } => {
+                let header_any = any_from_byte(&signed_header)?;
+                let (state_byte, update) = client.update_client(&client_id, header_any)?;
+                Ok(
+                    Response::new()
+                        .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte))
+                        .add_attribute(
+                            CONSENSUS_STATE_HASH,
+                            hex::encode(update.consensus_state_commitment),
+                        )
+                        .add_attribute(HEIGHT, update.height.to_string()),
+                )
+            }
+            ExecuteMsg::VerifyMembership {
+                client_id,
+                message_bytes,
+                proofs,
+                path,
+                height,
+                delay_time_period,
+                delay_block_period,
+            } => {
+                let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
+                    .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                let result = client
+                    .verify_membership(
+                        &client_id,
+                        height,
+                        delay_time_period,
+                        delay_block_period,
+                        &proofs_decoded.proofs,
+                        &message_bytes,
+                        &path,
+                    )?;
+                Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+            }
+            ExecuteMsg::VerifyNonMembership {
+                client_id,
+                proofs,
+                path,
+                height,
+                delay_time_period,
+                delay_block_period,
+            } => {
+                let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
+                    .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                let result = client
+                    .verify_non_membership(
+                        &client_id,
+                        height,
+                        delay_time_period,
+                        delay_block_period,
+                        &proofs_decoded.proofs,
+                        &path,
+                    )?;
+                Ok(Response::new().add_attribute(NON_MEMBERSHIP, result.to_string()))
+            }
+            ExecuteMsg::VerifyPacketData {
+                client_id,
+                verify_packet_data,
+                packet_data,
+            } => {
+                let proofs_decoded = MerkleProofs::decode(
+                        verify_packet_data.proof.as_slice(),
+                    )
+                    .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                let height = to_height_u64(&verify_packet_data.height)?;
+                let result = client
+                    .verify_membership(
+                        &client_id,
+                        height,
+                        0,
+                        0,
+                        &proofs_decoded.proofs,
+                        &verify_packet_data.commitment,
+                        &verify_packet_data.commitment_path,
+                    )?;
+                let packet_data: PacketData = from_slice(&packet_data)
+                    .map_err(|e| ContractError::Std(e))?;
+                let data = to_binary(&PacketDataResponse::from(packet_data))
+                    .map_err(|e| ContractError::Std(e))?;
+                Ok(
+                    Response::new()
+                        .add_attribute(MEMBERSHIP, result.to_string())
+                        .set_data(data),
+                )
+            }
+            ExecuteMsg::VerifyPacketAcknowledgement {
+                client_id,
+                verify_packet_acknowledge,
+                packet_data,
+            } => {
+                let proofs_decoded = MerkleProofs::decode(
+                        verify_packet_acknowledge.proof.as_slice(),
+                    )
+                    .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                let height = to_height_u64(&verify_packet_acknowledge.height)?;
+                let result = client
+                    .verify_membership(
+                        &client_id,
+                        height,
+                        0,
+                        0,
+                        &proofs_decoded.proofs,
+                        &verify_packet_acknowledge.ack,
+                        &verify_packet_acknowledge.ack_path,
+                    )?;
+                let packet_data: PacketData = from_slice(&packet_data)
+                    .map_err(|e| ContractError::Std(e))?;
+                let data = to_binary(&PacketDataResponse::from(packet_data))
+                    .map_err(|e| ContractError::Std(e))?;
+                Ok(
+                    Response::new()
+                        .add_attribute(MEMBERSHIP, result.to_string())
+                        .set_data(data),
+                )
+            }
+            ExecuteMsg::VerifyOpenConfirm { client_id, verify_connection_state } => {
+                let result = validate_connection_state(
+                    &client_id,
+                    &client,
+                    &verify_connection_state,
+                )?;
+                Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+            }
+            ExecuteMsg::VerifyConnection {
+                client_id,
+                verify_connection_state,
+                verify_client_full_state,
+                verify_client_consensus_state,
+            } => {
+                let mut result = validate_connection_state(
+                    &client_id,
+                    &client,
+                    &verify_connection_state,
+                )?;
+                result = validate_client_state(
+                    &client_id,
+                    &client,
+                    &verify_client_full_state,
+                )?;
+                result = validate_consensus_state(
+                    &client_id,
+                    &client,
+                    &verify_client_consensus_state,
+                )?;
+                Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+            }
+            ExecuteMsg::VerifyChannel { verify_channel_state, message_info } => {
+                let result = validate_channel_state("", &client, &verify_channel_state)?;
+                Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+            }
+            ExecuteMsg::TimeoutOnCLose {
+                client_id,
+                verify_channel_state,
+                next_seq_recv_verification_result,
+            } => {
+                let is_channel_valid = validate_channel_state(
+                    &client_id,
+                    &client,
+                    &verify_channel_state,
+                )?;
+                let _sequence_valid = validate_next_seq_recv(
+                    &client,
+                    &client_id,
+                    next_seq_recv_verification_result,
+                )?;
+                Ok(
+                    Response::new()
+                        .add_attribute(MEMBERSHIP, is_channel_valid.to_string()),
+                )
+            }
+            ExecuteMsg::Misbehaviour { client_id, misbehaviour } => {
+                ::core::panicking::panic("not yet implemented")
+            }
+            ExecuteMsg::UpgradeClient {
+                upgraded_client_state,
+                upgraded_consensus_state,
+                proof_upgrade_client,
+                proof_upgrade_consensus_state,
+            } => ::core::panicking::panic("not yet implemented"),
+        }
+    }
+    pub fn validate_channel_state(
+        client_id: &str,
+        client: &IconClient,
+        state: &VerifyChannelState,
+    ) -> Result<bool, ContractError> {
+        let proofs_decoded = MerkleProofs::decode(state.proof.as_slice())
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        let height = to_height_u64(&state.proof_height)?;
+        let result = client
+            .verify_membership(
+                client_id,
+                height,
+                0,
+                0,
+                &proofs_decoded.proofs,
+                &state.expected_counterparty_channel_end,
+                &state.counterparty_chan_end_path,
+            )?;
+        Ok(result)
+    }
+    pub fn validate_connection_state(
+        client_id: &str,
+        client: &IconClient,
+        state: &VerifyConnectionState,
+    ) -> Result<bool, ContractError> {
+        let proofs_decoded = MerkleProofs::decode(state.proof.as_slice())
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        let height = to_height_u64(&state.proof_height)?;
+        let result = client
+            .verify_membership(
+                client_id,
+                height,
+                0,
+                0,
+                &proofs_decoded.proofs,
+                &state.expected_counterparty_connection_end,
+                &state.counterparty_conn_end_path,
+            )?;
+        Ok(result)
+    }
+    pub fn validate_client_state(
+        client_id: &str,
+        client: &IconClient,
+        state: &VerifyClientFullState,
+    ) -> Result<bool, ContractError> {
+        let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        let height = to_height_u64(&state.proof_height)?;
+        let result = client
+            .verify_membership(
+                client_id,
+                height,
+                0,
+                0,
+                &proofs_decoded.proofs,
+                &state.expected_client_state,
+                &state.client_state_path,
+            )?;
+        Ok(result)
+    }
+    pub fn validate_consensus_state(
+        client_id: &str,
+        client: &IconClient,
+        state: &VerifyClientConsensusState,
+    ) -> Result<bool, ContractError> {
+        let proofs_decoded = MerkleProofs::decode(state.consensus_state_proof.as_slice())
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        let height = to_height_u64(&state.proof_height)?;
+        let result = client
+            .verify_membership(
+                client_id,
+                height,
+                0,
+                0,
+                &proofs_decoded.proofs,
+                &state.expected_conesenus_state,
+                &state.conesenus_state_path,
+            )?;
+        Ok(result)
+    }
+    pub fn validate_next_seq_recv(
+        client: &IconClient,
+        client_id: &str,
+        state: LightClientPacketMessage,
+    ) -> Result<bool, ContractError> {
+        let result = match state {
+            LightClientPacketMessage::VerifyNextSequenceRecv {
+                height,
+                prefix,
+                proof,
+                root,
+                seq_recv_path,
+                sequence,
+                packet_data,
+            } => {
+                let proofs_decoded = MerkleProofs::decode(proof.as_slice())
+                    .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                let height = to_height_u64(&height)?;
+                let res = client
+                    .verify_membership(
+                        client_id,
+                        height,
+                        0,
+                        0,
+                        &proofs_decoded.proofs,
+                        &packet_data,
+                        &seq_recv_path,
+                    )?;
+                res
+            }
+            LightClientPacketMessage::VerifyPacketReceiptAbsence {
+                height,
+                prefix,
+                proof,
+                root,
+                receipt_path,
+                packet_data,
+            } => {
+                let proofs_decoded = MerkleProofs::decode(proof.as_slice())
+                    .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                let height = to_height_u64(&height)?;
+                let res = client
+                    .verify_non_membership(
+                        client_id,
+                        height,
+                        0,
+                        0,
+                        &proofs_decoded.proofs,
+                        &receipt_path,
+                    )?;
+                res
+            }
+        };
+        Ok(result)
+    }
+    fn to_height_u64(height: &str) -> Result<u64, ContractError> {
+        let height: u64 = height
+            .parse()
+            .map_err(|e| ContractError::FailedToParseHeight(height.to_string()))?;
+        Ok(height)
+    }
+    pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
+        let any = Any::decode(bytes)
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        Ok(any)
+    }
+    pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+        match msg {
+            QueryMsg::GetClientState { client_id } => {
+                let res = QueryHandler::get_client_state_any(deps.storage, &client_id)
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetConsensusState { client_id, height } => {
+                to_binary(
+                    &QueryHandler::get_consensus_state_any(
+                            deps.storage,
+                            &client_id,
+                            height,
+                        )
+                        .unwrap(),
+                )
+            }
+            QueryMsg::GetLatestHeight { client_id } => {
+                to_binary(
+                    &QueryHandler::get_latest_height(deps.storage, &client_id).unwrap(),
+                )
+            }
+        }
+    }
+}
+mod error {
+    use cosmwasm_std::StdError;
+    use prost::DecodeError;
+    use thiserror::Error;
+    pub enum ContractError {
+        #[error("{0}")]
+        Std(#[from] StdError),
+        #[error("Unauthorized")]
+        Unauthorized {},
+        #[error("{0}")]
+        DecodeError(String),
+        #[error("Timestamp not found for {client_id:?} at height {height:?}")]
+        TimestampNotFound { height: u64, client_id: String },
+        #[error("Client state not found for client_id:{0}")]
+        ClientStateNotFound(String),
+        #[error("Height not found in client state for client_id:{0}")]
+        HeightNotSaved(String),
+        #[error("Consensusstate not found for {client_id:?} at height {height:?}")]
+        ConsensusStateNotFound { height: u64, client_id: String },
+        #[error("Failed to save client state")]
+        FailedToSaveClientState,
+        #[error("Failed to save consensus state")]
+        FailedToSaveConsensusState,
+        #[error("Insufficient validator signatures supplied")]
+        InSuffcientQuorum,
+        #[error("Clientstate already exists for {0}")]
+        ClientStateAlreadyExists(String),
+        #[error("Config not found or initialized")]
+        ConfigNotFound,
+        #[error(
+            "Trusting Period elapsed. Height: {update_height:?} client is at {saved_height:?}"
+        )]
+        TrustingPeriodElapsed { saved_height: u64, update_height: u64 },
+        #[error("Invalid header update {0}")]
+        InvalidHeaderUpdate(String),
+        #[error("Invalid message root {0}")]
+        InvalidMessageRoot(String),
+        #[error("Failed to save processed time")]
+        FailedToSaveProcessedTime,
+        #[error("Processed time not found for {client_id:?} at height {height:?}")]
+        ProcessedTimeNotFound { client_id: String, height: u64 },
+        #[error("Processed height not found for {client_id:?} at height {height:?}")]
+        ProcessedHeightNotFound { client_id: String, height: u64 },
+        #[error("Too early to process by time elapsed")]
+        NotEnoughtTimeElapsed,
+        #[error("Too early to process by block elapsed")]
+        NotEnoughtBlocksElapsed,
+        #[error("Failed to init contract")]
+        FailedToInitContract,
+        #[error("Failed to save config")]
+        FailedToSaveConfig,
+        #[error("Client state frozen at {0}")]
+        ClientStateFrozen(u64),
+        #[error("Failed Parsing Height {0}")]
+        FailedToParseHeight(String),
+    }
+    #[allow(unused_qualifications)]
+    impl std::error::Error for ContractError {
+        fn source(&self) -> std::option::Option<&(dyn std::error::Error + 'static)> {
+            use thiserror::__private::AsDynError;
+            #[allow(deprecated)]
+            match self {
+                ContractError::Std { 0: source, .. } => {
+                    std::option::Option::Some(source.as_dyn_error())
+                }
+                ContractError::Unauthorized { .. } => std::option::Option::None,
+                ContractError::DecodeError { .. } => std::option::Option::None,
+                ContractError::TimestampNotFound { .. } => std::option::Option::None,
+                ContractError::ClientStateNotFound { .. } => std::option::Option::None,
+                ContractError::HeightNotSaved { .. } => std::option::Option::None,
+                ContractError::ConsensusStateNotFound { .. } => std::option::Option::None,
+                ContractError::FailedToSaveClientState { .. } => {
+                    std::option::Option::None
+                }
+                ContractError::FailedToSaveConsensusState { .. } => {
+                    std::option::Option::None
+                }
+                ContractError::InSuffcientQuorum { .. } => std::option::Option::None,
+                ContractError::ClientStateAlreadyExists { .. } => {
+                    std::option::Option::None
+                }
+                ContractError::ConfigNotFound { .. } => std::option::Option::None,
+                ContractError::TrustingPeriodElapsed { .. } => std::option::Option::None,
+                ContractError::InvalidHeaderUpdate { .. } => std::option::Option::None,
+                ContractError::InvalidMessageRoot { .. } => std::option::Option::None,
+                ContractError::FailedToSaveProcessedTime { .. } => {
+                    std::option::Option::None
+                }
+                ContractError::ProcessedTimeNotFound { .. } => std::option::Option::None,
+                ContractError::ProcessedHeightNotFound { .. } => {
+                    std::option::Option::None
+                }
+                ContractError::NotEnoughtTimeElapsed { .. } => std::option::Option::None,
+                ContractError::NotEnoughtBlocksElapsed { .. } => {
+                    std::option::Option::None
+                }
+                ContractError::FailedToInitContract { .. } => std::option::Option::None,
+                ContractError::FailedToSaveConfig { .. } => std::option::Option::None,
+                ContractError::ClientStateFrozen { .. } => std::option::Option::None,
+                ContractError::FailedToParseHeight { .. } => std::option::Option::None,
+            }
+        }
+    }
+    #[allow(unused_qualifications)]
+    impl std::fmt::Display for ContractError {
+        fn fmt(&self, __formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            #[allow(unused_imports)]
+            use thiserror::__private::{DisplayAsDisplay, PathAsDisplay};
+            #[allow(unused_variables, deprecated, clippy::used_underscore_binding)]
+            match self {
+                ContractError::Std(_0) => {
+                    __formatter.write_fmt(format_args!("{0}", _0.as_display()))
+                }
+                ContractError::Unauthorized {} => {
+                    __formatter.write_fmt(format_args!("Unauthorized"))
+                }
+                ContractError::DecodeError(_0) => {
+                    __formatter.write_fmt(format_args!("{0}", _0.as_display()))
+                }
+                ContractError::TimestampNotFound { height, client_id } => {
+                    __formatter
+                        .write_fmt(
+                            format_args!(
+                                "Timestamp not found for {0:?} at height {1:?}", client_id,
+                                height
+                            ),
+                        )
+                }
+                ContractError::ClientStateNotFound(_0) => {
+                    __formatter
+                        .write_fmt(
+                            format_args!(
+                                "Client state not found for client_id:{0}", _0.as_display()
+                            ),
+                        )
+                }
+                ContractError::HeightNotSaved(_0) => {
+                    __formatter
+                        .write_fmt(
+                            format_args!(
+                                "Height not found in client state for client_id:{0}", _0
+                                .as_display()
+                            ),
+                        )
+                }
+                ContractError::ConsensusStateNotFound { height, client_id } => {
+                    __formatter
+                        .write_fmt(
+                            format_args!(
+                                "Consensusstate not found for {0:?} at height {1:?}",
+                                client_id, height
+                            ),
+                        )
+                }
+                ContractError::FailedToSaveClientState {} => {
+                    __formatter.write_fmt(format_args!("Failed to save client state"))
+                }
+                ContractError::FailedToSaveConsensusState {} => {
+                    __formatter.write_fmt(format_args!("Failed to save consensus state"))
+                }
+                ContractError::InSuffcientQuorum {} => {
+                    __formatter
+                        .write_fmt(
+                            format_args!("Insufficient validator signatures supplied"),
+                        )
+                }
+                ContractError::ClientStateAlreadyExists(_0) => {
+                    __formatter
+                        .write_fmt(
+                            format_args!(
+                                "Clientstate already exists for {0}", _0.as_display()
+                            ),
+                        )
+                }
+                ContractError::ConfigNotFound {} => {
+                    __formatter
+                        .write_fmt(format_args!("Config not found or initialized"))
+                }
+                ContractError::TrustingPeriodElapsed { saved_height, update_height } => {
+                    __formatter
+                        .write_fmt(
+                            format_args!(
+                                "Trusting Period elapsed. Height: {0:?} client is at {1:?}",
+                                update_height, saved_height
+                            ),
+                        )
+                }
+                ContractError::InvalidHeaderUpdate(_0) => {
+                    __formatter
+                        .write_fmt(
+                            format_args!("Invalid header update {0}", _0.as_display()),
+                        )
+                }
+                ContractError::InvalidMessageRoot(_0) => {
+                    __formatter
+                        .write_fmt(
+                            format_args!("Invalid message root {0}", _0.as_display()),
+                        )
+                }
+                ContractError::FailedToSaveProcessedTime {} => {
+                    __formatter.write_fmt(format_args!("Failed to save processed time"))
+                }
+                ContractError::ProcessedTimeNotFound { client_id, height } => {
+                    __formatter
+                        .write_fmt(
+                            format_args!(
+                                "Processed time not found for {0:?} at height {1:?}",
+                                client_id, height
+                            ),
+                        )
+                }
+                ContractError::ProcessedHeightNotFound { client_id, height } => {
+                    __formatter
+                        .write_fmt(
+                            format_args!(
+                                "Processed height not found for {0:?} at height {1:?}",
+                                client_id, height
+                            ),
+                        )
+                }
+                ContractError::NotEnoughtTimeElapsed {} => {
+                    __formatter
+                        .write_fmt(format_args!("Too early to process by time elapsed"))
+                }
+                ContractError::NotEnoughtBlocksElapsed {} => {
+                    __formatter
+                        .write_fmt(format_args!("Too early to process by block elapsed"))
+                }
+                ContractError::FailedToInitContract {} => {
+                    __formatter.write_fmt(format_args!("Failed to init contract"))
+                }
+                ContractError::FailedToSaveConfig {} => {
+                    __formatter.write_fmt(format_args!("Failed to save config"))
+                }
+                ContractError::ClientStateFrozen(_0) => {
+                    __formatter
+                        .write_fmt(
+                            format_args!("Client state frozen at {0}", _0.as_display()),
+                        )
+                }
+                ContractError::FailedToParseHeight(_0) => {
+                    __formatter
+                        .write_fmt(
+                            format_args!("Failed Parsing Height {0}", _0.as_display()),
+                        )
+                }
+            }
+        }
+    }
+    #[allow(unused_qualifications)]
+    impl std::convert::From<StdError> for ContractError {
+        #[allow(deprecated)]
+        fn from(source: StdError) -> Self {
+            ContractError::Std { 0: source }
+        }
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for ContractError {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            match self {
+                ContractError::Std(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "Std",
+                        &__self_0,
+                    )
+                }
+                ContractError::Unauthorized {} => {
+                    ::core::fmt::Formatter::write_str(f, "Unauthorized")
+                }
+                ContractError::DecodeError(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "DecodeError",
+                        &__self_0,
+                    )
+                }
+                ContractError::TimestampNotFound {
+                    height: __self_0,
+                    client_id: __self_1,
+                } => {
+                    ::core::fmt::Formatter::debug_struct_field2_finish(
+                        f,
+                        "TimestampNotFound",
+                        "height",
+                        __self_0,
+                        "client_id",
+                        &__self_1,
+                    )
+                }
+                ContractError::ClientStateNotFound(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "ClientStateNotFound",
+                        &__self_0,
+                    )
+                }
+                ContractError::HeightNotSaved(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "HeightNotSaved",
+                        &__self_0,
+                    )
+                }
+                ContractError::ConsensusStateNotFound {
+                    height: __self_0,
+                    client_id: __self_1,
+                } => {
+                    ::core::fmt::Formatter::debug_struct_field2_finish(
+                        f,
+                        "ConsensusStateNotFound",
+                        "height",
+                        __self_0,
+                        "client_id",
+                        &__self_1,
+                    )
+                }
+                ContractError::FailedToSaveClientState => {
+                    ::core::fmt::Formatter::write_str(f, "FailedToSaveClientState")
+                }
+                ContractError::FailedToSaveConsensusState => {
+                    ::core::fmt::Formatter::write_str(f, "FailedToSaveConsensusState")
+                }
+                ContractError::InSuffcientQuorum => {
+                    ::core::fmt::Formatter::write_str(f, "InSuffcientQuorum")
+                }
+                ContractError::ClientStateAlreadyExists(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "ClientStateAlreadyExists",
+                        &__self_0,
+                    )
+                }
+                ContractError::ConfigNotFound => {
+                    ::core::fmt::Formatter::write_str(f, "ConfigNotFound")
+                }
+                ContractError::TrustingPeriodElapsed {
+                    saved_height: __self_0,
+                    update_height: __self_1,
+                } => {
+                    ::core::fmt::Formatter::debug_struct_field2_finish(
+                        f,
+                        "TrustingPeriodElapsed",
+                        "saved_height",
+                        __self_0,
+                        "update_height",
+                        &__self_1,
+                    )
+                }
+                ContractError::InvalidHeaderUpdate(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "InvalidHeaderUpdate",
+                        &__self_0,
+                    )
+                }
+                ContractError::InvalidMessageRoot(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "InvalidMessageRoot",
+                        &__self_0,
+                    )
+                }
+                ContractError::FailedToSaveProcessedTime => {
+                    ::core::fmt::Formatter::write_str(f, "FailedToSaveProcessedTime")
+                }
+                ContractError::ProcessedTimeNotFound {
+                    client_id: __self_0,
+                    height: __self_1,
+                } => {
+                    ::core::fmt::Formatter::debug_struct_field2_finish(
+                        f,
+                        "ProcessedTimeNotFound",
+                        "client_id",
+                        __self_0,
+                        "height",
+                        &__self_1,
+                    )
+                }
+                ContractError::ProcessedHeightNotFound {
+                    client_id: __self_0,
+                    height: __self_1,
+                } => {
+                    ::core::fmt::Formatter::debug_struct_field2_finish(
+                        f,
+                        "ProcessedHeightNotFound",
+                        "client_id",
+                        __self_0,
+                        "height",
+                        &__self_1,
+                    )
+                }
+                ContractError::NotEnoughtTimeElapsed => {
+                    ::core::fmt::Formatter::write_str(f, "NotEnoughtTimeElapsed")
+                }
+                ContractError::NotEnoughtBlocksElapsed => {
+                    ::core::fmt::Formatter::write_str(f, "NotEnoughtBlocksElapsed")
+                }
+                ContractError::FailedToInitContract => {
+                    ::core::fmt::Formatter::write_str(f, "FailedToInitContract")
+                }
+                ContractError::FailedToSaveConfig => {
+                    ::core::fmt::Formatter::write_str(f, "FailedToSaveConfig")
+                }
+                ContractError::ClientStateFrozen(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "ClientStateFrozen",
+                        &__self_0,
+                    )
+                }
+                ContractError::FailedToParseHeight(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(
+                        f,
+                        "FailedToParseHeight",
+                        &__self_0,
+                    )
+                }
+            }
+        }
+    }
+    #[automatically_derived]
+    impl ::core::marker::StructuralPartialEq for ContractError {}
+    #[automatically_derived]
+    impl ::core::cmp::PartialEq for ContractError {
+        #[inline]
+        fn eq(&self, other: &ContractError) -> bool {
+            let __self_tag = ::core::intrinsics::discriminant_value(self);
+            let __arg1_tag = ::core::intrinsics::discriminant_value(other);
+            __self_tag == __arg1_tag
+                && match (self, other) {
+                    (ContractError::Std(__self_0), ContractError::Std(__arg1_0)) => {
+                        *__self_0 == *__arg1_0
+                    }
+                    (
+                        ContractError::DecodeError(__self_0),
+                        ContractError::DecodeError(__arg1_0),
+                    ) => *__self_0 == *__arg1_0,
+                    (
+                        ContractError::TimestampNotFound {
+                            height: __self_0,
+                            client_id: __self_1,
+                        },
+                        ContractError::TimestampNotFound {
+                            height: __arg1_0,
+                            client_id: __arg1_1,
+                        },
+                    ) => *__self_0 == *__arg1_0 && *__self_1 == *__arg1_1,
+                    (
+                        ContractError::ClientStateNotFound(__self_0),
+                        ContractError::ClientStateNotFound(__arg1_0),
+                    ) => *__self_0 == *__arg1_0,
+                    (
+                        ContractError::HeightNotSaved(__self_0),
+                        ContractError::HeightNotSaved(__arg1_0),
+                    ) => *__self_0 == *__arg1_0,
+                    (
+                        ContractError::ConsensusStateNotFound {
+                            height: __self_0,
+                            client_id: __self_1,
+                        },
+                        ContractError::ConsensusStateNotFound {
+                            height: __arg1_0,
+                            client_id: __arg1_1,
+                        },
+                    ) => *__self_0 == *__arg1_0 && *__self_1 == *__arg1_1,
+                    (
+                        ContractError::ClientStateAlreadyExists(__self_0),
+                        ContractError::ClientStateAlreadyExists(__arg1_0),
+                    ) => *__self_0 == *__arg1_0,
+                    (
+                        ContractError::TrustingPeriodElapsed {
+                            saved_height: __self_0,
+                            update_height: __self_1,
+                        },
+                        ContractError::TrustingPeriodElapsed {
+                            saved_height: __arg1_0,
+                            update_height: __arg1_1,
+                        },
+                    ) => *__self_0 == *__arg1_0 && *__self_1 == *__arg1_1,
+                    (
+                        ContractError::InvalidHeaderUpdate(__self_0),
+                        ContractError::InvalidHeaderUpdate(__arg1_0),
+                    ) => *__self_0 == *__arg1_0,
+                    (
+                        ContractError::InvalidMessageRoot(__self_0),
+                        ContractError::InvalidMessageRoot(__arg1_0),
+                    ) => *__self_0 == *__arg1_0,
+                    (
+                        ContractError::ProcessedTimeNotFound {
+                            client_id: __self_0,
+                            height: __self_1,
+                        },
+                        ContractError::ProcessedTimeNotFound {
+                            client_id: __arg1_0,
+                            height: __arg1_1,
+                        },
+                    ) => *__self_0 == *__arg1_0 && *__self_1 == *__arg1_1,
+                    (
+                        ContractError::ProcessedHeightNotFound {
+                            client_id: __self_0,
+                            height: __self_1,
+                        },
+                        ContractError::ProcessedHeightNotFound {
+                            client_id: __arg1_0,
+                            height: __arg1_1,
+                        },
+                    ) => *__self_0 == *__arg1_0 && *__self_1 == *__arg1_1,
+                    (
+                        ContractError::ClientStateFrozen(__self_0),
+                        ContractError::ClientStateFrozen(__arg1_0),
+                    ) => *__self_0 == *__arg1_0,
+                    (
+                        ContractError::FailedToParseHeight(__self_0),
+                        ContractError::FailedToParseHeight(__arg1_0),
+                    ) => *__self_0 == *__arg1_0,
+                    _ => true,
+                }
+        }
+    }
+}
+pub mod light_client {
+    use crate::traits::AnyTypes;
+    use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
+    use crate::ContractError;
+    use common::icon::icon::lightclient::v1::ClientState;
+    use common::icon::icon::lightclient::v1::ConsensusState;
+    use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
+    use common::utils::{calculate_root, keccak256};
+    use ibc_proto::google::protobuf::Any;
+    use prost::Message;
+    const HEADER_TYPE_URL: &str = "/icon.lightclient.v1.SignedHeader";
+    const CLIENT_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
+    const CONSENSUS_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ConsensusState";
+    impl AnyTypes for ClientState {
+        fn get_type_url() -> String {
+            CLIENT_STATE_TYPE_URL.to_string()
+        }
+    }
+    impl AnyTypes for ConsensusState {
+        fn get_type_url() -> String {
+            CONSENSUS_STATE_TYPE_URL.to_string()
+        }
+    }
+    impl AnyTypes for SignedHeader {
+        fn get_type_url() -> String {
+            HEADER_TYPE_URL.to_string()
+        }
+    }
+    pub struct IconClient<'a> {
+        context: &'a dyn IContext<Error = crate::ContractError>,
+    }
+    impl<'a> IconClient<'a> {
+        pub fn new(context: &'a dyn IContext<Error = crate::ContractError>) -> Self {
+            Self { context }
+        }
+        pub fn has_quorum_of(n_validators: u128, votes: u128) -> bool {
+            votes * 3 > n_validators * 2
+        }
+        pub fn check_block_proof(
+            &self,
+            client_id: &str,
+            header: &BtpHeader,
+            signatures: &Vec<Vec<u8>>,
+        ) -> Result<bool, ContractError> {
+            let mut votes = u128::default();
+            let state = self.context.get_client_state(client_id)?;
+            let config = self.context.get_config()?;
+            let decision = header
+                .get_network_type_section_decision_hash(
+                    &config.src_network_id,
+                    config.network_type_id,
+                );
+            let validators_map = common::utils::to_lookup(&state.validators);
+            let num_validators = state.validators.len() as u128;
+            for signature in signatures {
+                let signer = self
+                    .context
+                    .recover_icon_signer(decision.as_slice(), signature);
+                if let Some(val) = signer {
+                    if validators_map.contains_key(&val) {
+                        votes = votes + 1;
+                    }
+                }
+                if Self::has_quorum_of(num_validators, votes) {
+                    break;
+                }
+            }
+            if !Self::has_quorum_of(num_validators, votes) {
+                return Err(ContractError::InSuffcientQuorum);
+            }
+            Ok(true)
+        }
+        fn validate_delay_args(
+            &self,
+            client_id: &str,
+            height: u64,
+            delay_time: u64,
+            delay_block: u64,
+        ) -> Result<(), ContractError> {
+            let processed_time = self
+                .context
+                .get_processed_time_at_height(client_id, height)?;
+            let processed_height = self
+                .context
+                .get_processed_block_at_height(client_id, height)?;
+            let current_time = self.context.get_current_block_time();
+            let current_height = self.context.get_current_block_height();
+            if !current_time >= (processed_time + delay_time) {
+                return Err(ContractError::NotEnoughtTimeElapsed);
+            }
+            if !current_height >= (processed_height + delay_block) {
+                return Err(ContractError::NotEnoughtBlocksElapsed);
+            }
+            Ok(())
+        }
+    }
+    impl ILightClient for IconClient<'_> {
+        type Error = crate::ContractError;
+        fn create_client(
+            &self,
+            client_id: &str,
+            client_state: ClientState,
+            consensus_state: ConsensusState,
+        ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {
+            let exists = self.context.get_client_state(client_id).is_ok();
+            if exists {
+                return Err(
+                    ContractError::ClientStateAlreadyExists(client_id.to_string()),
+                );
+            }
+            self.context.insert_client_state(&client_id, client_state.clone())?;
+            self.context
+                .insert_consensus_state(
+                    &client_id,
+                    client_state.latest_height.into(),
+                    consensus_state.clone(),
+                )?;
+            Ok((
+                client_state.get_keccak_hash().into(),
+                ConsensusStateUpdate {
+                    consensus_state_commitment: consensus_state.get_keccak_hash(),
+                    height: client_state.latest_height,
+                },
+            ))
+        }
+        fn update_client(
+            &self,
+            client_id: &str,
+            signed_header_bytes: Any,
+        ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {
+            let signed_header = SignedHeader::from_any(signed_header_bytes)
+                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+            let btp_header = signed_header.header.clone().unwrap();
+            let mut state = self.context.get_client_state(client_id)?;
+            let config = self.context.get_config()?;
+            if (btp_header.main_height - state.latest_height) < state.trusting_period {
+                return Err(ContractError::TrustingPeriodElapsed {
+                    saved_height: state.latest_height,
+                    update_height: btp_header.main_height,
+                });
+            }
+            if state.network_section_hash != btp_header.prev_network_section_hash {
+                return Err(
+                    ContractError::InvalidHeaderUpdate(
+                        "network section mismatch".to_string(),
+                    ),
+                );
+            }
+            if config.network_id != btp_header.network_id {
+                return Err(
+                    ContractError::InvalidHeaderUpdate("network id mismatch".to_string()),
+                );
+            }
+            let _valid = self
+                .check_block_proof(client_id, &btp_header, &signed_header.signatures)?;
+            state.validators = btp_header.next_validators.clone();
+            state.latest_height = btp_header.main_height.into();
+            state.network_section_hash = btp_header.get_network_section_hash().to_vec();
+            let consensus_state = ConsensusState {
+                message_root: btp_header.message_root,
+            };
+            self.context.insert_client_state(client_id, state.clone())?;
+            self.context
+                .insert_consensus_state(
+                    client_id,
+                    btp_header.main_height,
+                    consensus_state.clone(),
+                )?;
+            self.context.insert_timestamp_at_height(client_id, btp_header.main_height)?;
+            self.context
+                .insert_blocknumber_at_height(client_id, btp_header.main_height)?;
+            let commitment = keccak256(&consensus_state.to_any().encode_to_vec());
+            Ok((
+                keccak256(&state.to_any().encode_to_vec()).to_vec(),
+                ConsensusStateUpdate {
+                    consensus_state_commitment: commitment,
+                    height: btp_header.main_height,
+                },
+            ))
+        }
+        fn verify_membership(
+            &self,
+            client_id: &str,
+            height: u64,
+            delay_time_period: u64,
+            delay_block_period: u64,
+            proof: &Vec<MerkleNode>,
+            path: &[u8],
+            value: &[u8],
+        ) -> Result<bool, Self::Error> {
+            let state = self.context.get_client_state(client_id)?;
+            if state.frozen_height != 0 && height > state.frozen_height {
+                return Err(ContractError::ClientStateFrozen(state.frozen_height));
+            }
+            let _ = self
+                .validate_delay_args(
+                    client_id,
+                    height,
+                    delay_time_period,
+                    delay_block_period,
+                )?;
+            let consensus_state = self.context.get_consensus_state(&client_id, height)?;
+            let leaf = keccak256(&[path, value].concat());
+            let message_root = calculate_root(leaf, proof);
+            if consensus_state.message_root != message_root {
+                return Err(ContractError::InvalidMessageRoot(hex::encode(message_root)));
+            }
+            Ok(true)
+        }
+        fn verify_non_membership(
+            &self,
+            client_id: &str,
+            height: u64,
+            delay_time_period: u64,
+            delay_block_period: u64,
+            proof: &Vec<MerkleNode>,
+            path: &[u8],
+        ) -> Result<bool, Self::Error> {
+            return self
+                .verify_membership(
+                    client_id,
+                    height,
+                    delay_time_period,
+                    delay_block_period,
+                    proof,
+                    &[],
+                    path,
+                );
+        }
+    }
+}
+pub mod state {
+    use std::cell::RefCell;
+    use common::icon::icon::lightclient::v1::ClientState;
+    use common::icon::icon::lightclient::v1::ConsensusState;
+    use common::utils::keccak256;
+    use cosmwasm_std::DepsMut;
+    use cosmwasm_std::Env;
+    use cosmwasm_std::Storage;
+    use cw_storage_plus::{Item, Map};
+    use prost::Message;
+    use crate::traits::AnyTypes;
+    use crate::traits::Config;
+    use crate::traits::IContext;
+    use crate::ContractError;
+    type ClientId = String;
+    const CLIENT_STATES: Map<String, ClientState> = Map::new("CLIENT_STATES");
+    const CONSENSUS_STATES: Map<(ClientId, u64), ConsensusState> = Map::new(
+        "CONSENSUS_STATES",
+    );
+    const PROCESSED_TIMES: Map<(ClientId, u64), u64> = Map::new("PROCESSED_TIMES");
+    const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS");
+    const CONFIG: Item<Config> = Item::new("CONFIG");
+    const ADDRESS_TYPE_PREFIX: u8 = 0x00;
+    pub struct CwContext<'a> {
+        pub deps_mut: RefCell<DepsMut<'a>>,
+        pub env: Env,
+    }
+    impl<'a> CwContext<'a> {
+        pub fn new(deps_mut: RefCell<DepsMut<'a>>, env: Env) -> Self {
+            return Self { deps_mut, env };
+        }
+    }
+    impl<'a> IContext for CwContext<'a> {
+        type Error = ContractError;
+        fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error> {
+            QueryHandler::get_client_state(self.deps_mut.borrow().storage, client_id)
+        }
+        fn insert_client_state(
+            &self,
+            client_id: &str,
+            state: ClientState,
+        ) -> Result<(), Self::Error> {
+            CLIENT_STATES
+                .save(self.deps_mut.borrow_mut().storage, client_id.to_string(), &state)
+                .map_err(|_e| ContractError::FailedToSaveClientState)
+        }
+        fn get_consensus_state(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<ConsensusState, Self::Error> {
+            return QueryHandler::get_consensus_state(
+                self.deps_mut.borrow().storage,
+                client_id,
+                height,
+            );
+        }
+        fn insert_consensus_state(
+            &self,
+            client_id: &str,
+            height: u64,
+            state: ConsensusState,
+        ) -> Result<(), Self::Error> {
+            CONSENSUS_STATES
+                .save(
+                    self.deps_mut.borrow_mut().storage,
+                    (client_id.to_string(), height),
+                    &state,
+                )
+                .map_err(|_e| ContractError::FailedToSaveClientState)
+        }
+        fn get_timestamp_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, Self::Error> {
+            return QueryHandler::get_timestamp_at_height(
+                self.deps_mut.borrow().storage,
+                client_id,
+                height,
+            );
+        }
+        fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]> {
+            if signature.len() != 65 {
+                return None;
+            }
+            let mut rs = [0u8; 64];
+            rs[..].copy_from_slice(&signature[..64]);
+            let v = signature[64];
+            let pubkey = self
+                .deps_mut
+                .borrow()
+                .api
+                .secp256k1_recover_pubkey(msg, &rs, v)
+                .unwrap();
+            let pubkey_hash = keccak256(&pubkey[1..]);
+            let address: Option<[u8; 20]> = pubkey_hash
+                .as_slice()[12..]
+                .try_into()
+                .ok()
+                .map(|arr: [u8; 20]| arr.into());
+            address
+        }
+        fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>> {
+            return self
+                .recover_signer(msg, signature)
+                .map(|addr| return self.to_icon_address(addr.as_slice()));
+        }
+        fn to_icon_address(&self, address: &[u8]) -> Vec<u8> {
+            let mut raw = [ADDRESS_TYPE_PREFIX; 21];
+            raw[1..21].copy_from_slice(&address[..]);
+            raw.to_vec()
+        }
+        fn get_config(&self) -> Result<Config, Self::Error> {
+            return QueryHandler::get_config(self.deps_mut.borrow().storage);
+        }
+        fn insert_config(&self, config: &Config) -> Result<(), Self::Error> {
+            return CONFIG
+                .save(self.deps_mut.borrow_mut().storage, config)
+                .map_err(|_e| ContractError::FailedToSaveConfig);
+        }
+        fn insert_timestamp_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<(), Self::Error> {
+            let time = self.env.block.time.nanos();
+            PROCESSED_TIMES
+                .save(
+                    self.deps_mut.borrow_mut().storage,
+                    (client_id.to_string(), height),
+                    &time,
+                )
+                .map_err(|_e| ContractError::FailedToSaveProcessedTime)
+        }
+        fn insert_blocknumber_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<(), Self::Error> {
+            let block_height = self.env.block.height;
+            PROCESSED_HEIGHTS
+                .save(
+                    self.deps_mut.borrow_mut().storage,
+                    (client_id.to_string(), height),
+                    &block_height,
+                )
+                .map_err(|_e| ContractError::FailedToSaveProcessedTime)
+        }
+        fn get_current_block_time(&self) -> u64 {
+            self.env.block.time.nanos()
+        }
+        fn get_current_block_height(&self) -> u64 {
+            self.env.block.height
+        }
+        fn get_processed_time_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, Self::Error> {
+            QueryHandler::get_processed_time_at_height(
+                self.deps_mut.borrow().storage,
+                client_id,
+                height,
+            )
+        }
+        fn get_processed_block_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, Self::Error> {
+            QueryHandler::get_processed_blocknumber_at_height(
+                self.deps_mut.borrow().storage,
+                client_id,
+                height,
+            )
+        }
+    }
+    pub struct QueryHandler {}
+    impl QueryHandler {
+        pub fn get_consensus_state(
+            storage: &dyn Storage,
+            client_id: &str,
+            height: u64,
+        ) -> Result<ConsensusState, ContractError> {
+            CONSENSUS_STATES
+                .load(storage, (client_id.to_string(), height))
+                .map_err(|_e| ContractError::ConsensusStateNotFound {
+                    height,
+                    client_id: client_id.to_string(),
+                })
+        }
+        pub fn get_timestamp_at_height(
+            storage: &dyn Storage,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, ContractError> {
+            PROCESSED_TIMES
+                .load(storage, (client_id.to_string(), height))
+                .map_err(|_e| ContractError::TimestampNotFound {
+                    height,
+                    client_id: client_id.to_string(),
+                })
+        }
+        pub fn get_client_state(
+            storage: &dyn Storage,
+            client_id: &str,
+        ) -> Result<ClientState, ContractError> {
+            CLIENT_STATES
+                .load(storage, client_id.to_string())
+                .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))
+        }
+        pub fn get_config(storage: &dyn Storage) -> Result<Config, ContractError> {
+            return CONFIG.load(storage).map_err(|_e| ContractError::ConfigNotFound);
+        }
+        pub fn get_client_state_any(
+            storage: &dyn Storage,
+            client_id: &str,
+        ) -> Result<Vec<u8>, ContractError> {
+            let state = Self::get_client_state(storage, client_id)?;
+            let any_state = state.to_any();
+            Ok(any_state.encode_to_vec())
+        }
+        pub fn get_consensus_state_any(
+            storage: &dyn Storage,
+            client_id: &str,
+            height: u64,
+        ) -> Result<Vec<u8>, ContractError> {
+            let state = Self::get_consensus_state(storage, client_id, height)?;
+            let any_state = state.to_any();
+            Ok(any_state.encode_to_vec())
+        }
+        pub fn get_latest_height(
+            storage: &dyn Storage,
+            client_id: &str,
+        ) -> Result<u64, ContractError> {
+            let state = Self::get_client_state(storage, client_id)?;
+            Ok(state.latest_height)
+        }
+        pub fn get_processed_time_at_height(
+            storage: &dyn Storage,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, ContractError> {
+            PROCESSED_TIMES
+                .load(storage, (client_id.to_string(), height))
+                .map_err(|_e| ContractError::ProcessedTimeNotFound {
+                    client_id: client_id.to_string(),
+                    height: height,
+                })
+        }
+        pub fn get_processed_blocknumber_at_height(
+            storage: &dyn Storage,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, ContractError> {
+            PROCESSED_HEIGHTS
+                .load(storage, (client_id.to_string(), height))
+                .map_err(|_e| ContractError::ProcessedHeightNotFound {
+                    client_id: client_id.to_string(),
+                    height: height,
+                })
+        }
+    }
+}
+mod traits {
+    use common::icon::icon::lightclient::v1::ClientState;
+    use common::icon::icon::lightclient::v1::ConsensusState;
+    use common::icon::icon::types::v1::MerkleNode;
+    use common::utils::keccak256;
+    use cosmwasm_std::Addr;
+    use ibc_proto::google::protobuf::Any;
+    use prost::{DecodeError, Message};
+    use serde::Deserialize;
+    use serde::Serialize;
+    pub struct ConsensusStateUpdate {
+        pub consensus_state_commitment: [u8; 32],
+        pub height: u64,
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for ConsensusStateUpdate {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            ::core::fmt::Formatter::debug_struct_field2_finish(
+                f,
+                "ConsensusStateUpdate",
+                "consensus_state_commitment",
+                &self.consensus_state_commitment,
+                "height",
+                &&self.height,
+            )
+        }
+    }
+    #[automatically_derived]
+    impl ::core::clone::Clone for ConsensusStateUpdate {
+        #[inline]
+        fn clone(&self) -> ConsensusStateUpdate {
+            ConsensusStateUpdate {
+                consensus_state_commitment: ::core::clone::Clone::clone(
+                    &self.consensus_state_commitment,
+                ),
+                height: ::core::clone::Clone::clone(&self.height),
+            }
+        }
+    }
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for ConsensusStateUpdate {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
+                let mut __serde_state = match _serde::Serializer::serialize_struct(
+                    __serializer,
+                    "ConsensusStateUpdate",
+                    false as usize + 1 + 1,
+                ) {
+                    _serde::__private::Ok(__val) => __val,
+                    _serde::__private::Err(__err) => {
+                        return _serde::__private::Err(__err);
+                    }
+                };
+                match _serde::ser::SerializeStruct::serialize_field(
+                    &mut __serde_state,
+                    "consensus_state_commitment",
+                    &self.consensus_state_commitment,
+                ) {
+                    _serde::__private::Ok(__val) => __val,
+                    _serde::__private::Err(__err) => {
+                        return _serde::__private::Err(__err);
+                    }
+                };
+                match _serde::ser::SerializeStruct::serialize_field(
+                    &mut __serde_state,
+                    "height",
+                    &self.height,
+                ) {
+                    _serde::__private::Ok(__val) => __val,
+                    _serde::__private::Err(__err) => {
+                        return _serde::__private::Err(__err);
+                    }
+                };
+                _serde::ser::SerializeStruct::end(__serde_state)
+            }
+        }
+    };
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl<'de> _serde::Deserialize<'de> for ConsensusStateUpdate {
+            fn deserialize<__D>(
+                __deserializer: __D,
+            ) -> _serde::__private::Result<Self, __D::Error>
+            where
+                __D: _serde::Deserializer<'de>,
+            {
+                #[allow(non_camel_case_types)]
+                #[doc(hidden)]
+                enum __Field {
+                    __field0,
+                    __field1,
+                    __ignore,
+                }
+                #[doc(hidden)]
+                struct __FieldVisitor;
+                impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                    type Value = __Field;
+                    fn expecting(
+                        &self,
+                        __formatter: &mut _serde::__private::Formatter,
+                    ) -> _serde::__private::fmt::Result {
+                        _serde::__private::Formatter::write_str(
+                            __formatter,
+                            "field identifier",
+                        )
+                    }
+                    fn visit_u64<__E>(
+                        self,
+                        __value: u64,
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            0u64 => _serde::__private::Ok(__Field::__field0),
+                            1u64 => _serde::__private::Ok(__Field::__field1),
+                            _ => _serde::__private::Ok(__Field::__ignore),
+                        }
+                    }
+                    fn visit_str<__E>(
+                        self,
+                        __value: &str,
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            "consensus_state_commitment" => {
+                                _serde::__private::Ok(__Field::__field0)
+                            }
+                            "height" => _serde::__private::Ok(__Field::__field1),
+                            _ => _serde::__private::Ok(__Field::__ignore),
+                        }
+                    }
+                    fn visit_bytes<__E>(
+                        self,
+                        __value: &[u8],
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            b"consensus_state_commitment" => {
+                                _serde::__private::Ok(__Field::__field0)
+                            }
+                            b"height" => _serde::__private::Ok(__Field::__field1),
+                            _ => _serde::__private::Ok(__Field::__ignore),
+                        }
+                    }
+                }
+                impl<'de> _serde::Deserialize<'de> for __Field {
+                    #[inline]
+                    fn deserialize<__D>(
+                        __deserializer: __D,
+                    ) -> _serde::__private::Result<Self, __D::Error>
+                    where
+                        __D: _serde::Deserializer<'de>,
+                    {
+                        _serde::Deserializer::deserialize_identifier(
+                            __deserializer,
+                            __FieldVisitor,
+                        )
+                    }
+                }
+                #[doc(hidden)]
+                struct __Visitor<'de> {
+                    marker: _serde::__private::PhantomData<ConsensusStateUpdate>,
+                    lifetime: _serde::__private::PhantomData<&'de ()>,
+                }
+                impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                    type Value = ConsensusStateUpdate;
+                    fn expecting(
+                        &self,
+                        __formatter: &mut _serde::__private::Formatter,
+                    ) -> _serde::__private::fmt::Result {
+                        _serde::__private::Formatter::write_str(
+                            __formatter,
+                            "struct ConsensusStateUpdate",
+                        )
+                    }
+                    #[inline]
+                    fn visit_seq<__A>(
+                        self,
+                        mut __seq: __A,
+                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    where
+                        __A: _serde::de::SeqAccess<'de>,
+                    {
+                        let __field0 = match match _serde::de::SeqAccess::next_element::<
+                            [u8; 32],
+                        >(&mut __seq) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        } {
+                            _serde::__private::Some(__value) => __value,
+                            _serde::__private::None => {
+                                return _serde::__private::Err(
+                                    _serde::de::Error::invalid_length(
+                                        0usize,
+                                        &"struct ConsensusStateUpdate with 2 elements",
+                                    ),
+                                );
+                            }
+                        };
+                        let __field1 = match match _serde::de::SeqAccess::next_element::<
+                            u64,
+                        >(&mut __seq) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        } {
+                            _serde::__private::Some(__value) => __value,
+                            _serde::__private::None => {
+                                return _serde::__private::Err(
+                                    _serde::de::Error::invalid_length(
+                                        1usize,
+                                        &"struct ConsensusStateUpdate with 2 elements",
+                                    ),
+                                );
+                            }
+                        };
+                        _serde::__private::Ok(ConsensusStateUpdate {
+                            consensus_state_commitment: __field0,
+                            height: __field1,
+                        })
+                    }
+                    #[inline]
+                    fn visit_map<__A>(
+                        self,
+                        mut __map: __A,
+                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    where
+                        __A: _serde::de::MapAccess<'de>,
+                    {
+                        let mut __field0: _serde::__private::Option<[u8; 32]> = _serde::__private::None;
+                        let mut __field1: _serde::__private::Option<u64> = _serde::__private::None;
+                        while let _serde::__private::Some(__key)
+                            = match _serde::de::MapAccess::next_key::<
+                                __Field,
+                            >(&mut __map) {
+                                _serde::__private::Ok(__val) => __val,
+                                _serde::__private::Err(__err) => {
+                                    return _serde::__private::Err(__err);
+                                }
+                            } {
+                            match __key {
+                                __Field::__field0 => {
+                                    if _serde::__private::Option::is_some(&__field0) {
+                                        return _serde::__private::Err(
+                                            <__A::Error as _serde::de::Error>::duplicate_field(
+                                                "consensus_state_commitment",
+                                            ),
+                                        );
+                                    }
+                                    __field0 = _serde::__private::Some(
+                                        match _serde::de::MapAccess::next_value::<
+                                            [u8; 32],
+                                        >(&mut __map) {
+                                            _serde::__private::Ok(__val) => __val,
+                                            _serde::__private::Err(__err) => {
+                                                return _serde::__private::Err(__err);
+                                            }
+                                        },
+                                    );
+                                }
+                                __Field::__field1 => {
+                                    if _serde::__private::Option::is_some(&__field1) {
+                                        return _serde::__private::Err(
+                                            <__A::Error as _serde::de::Error>::duplicate_field("height"),
+                                        );
+                                    }
+                                    __field1 = _serde::__private::Some(
+                                        match _serde::de::MapAccess::next_value::<u64>(&mut __map) {
+                                            _serde::__private::Ok(__val) => __val,
+                                            _serde::__private::Err(__err) => {
+                                                return _serde::__private::Err(__err);
+                                            }
+                                        },
+                                    );
+                                }
+                                _ => {
+                                    let _ = match _serde::de::MapAccess::next_value::<
+                                        _serde::de::IgnoredAny,
+                                    >(&mut __map) {
+                                        _serde::__private::Ok(__val) => __val,
+                                        _serde::__private::Err(__err) => {
+                                            return _serde::__private::Err(__err);
+                                        }
+                                    };
+                                }
+                            }
+                        }
+                        let __field0 = match __field0 {
+                            _serde::__private::Some(__field0) => __field0,
+                            _serde::__private::None => {
+                                match _serde::__private::de::missing_field(
+                                    "consensus_state_commitment",
+                                ) {
+                                    _serde::__private::Ok(__val) => __val,
+                                    _serde::__private::Err(__err) => {
+                                        return _serde::__private::Err(__err);
+                                    }
+                                }
+                            }
+                        };
+                        let __field1 = match __field1 {
+                            _serde::__private::Some(__field1) => __field1,
+                            _serde::__private::None => {
+                                match _serde::__private::de::missing_field("height") {
+                                    _serde::__private::Ok(__val) => __val,
+                                    _serde::__private::Err(__err) => {
+                                        return _serde::__private::Err(__err);
+                                    }
+                                }
+                            }
+                        };
+                        _serde::__private::Ok(ConsensusStateUpdate {
+                            consensus_state_commitment: __field0,
+                            height: __field1,
+                        })
+                    }
+                }
+                #[doc(hidden)]
+                const FIELDS: &'static [&'static str] = &[
+                    "consensus_state_commitment",
+                    "height",
+                ];
+                _serde::Deserializer::deserialize_struct(
+                    __deserializer,
+                    "ConsensusStateUpdate",
+                    FIELDS,
+                    __Visitor {
+                        marker: _serde::__private::PhantomData::<ConsensusStateUpdate>,
+                        lifetime: _serde::__private::PhantomData,
+                    },
+                )
+            }
+        }
+    };
+    pub struct Config {
+        pub src_network_id: String,
+        pub network_id: u64,
+        pub network_type_id: u128,
+        pub owner: Addr,
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for Config {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            ::core::fmt::Formatter::debug_struct_field4_finish(
+                f,
+                "Config",
+                "src_network_id",
+                &self.src_network_id,
+                "network_id",
+                &self.network_id,
+                "network_type_id",
+                &self.network_type_id,
+                "owner",
+                &&self.owner,
+            )
+        }
+    }
+    #[automatically_derived]
+    impl ::core::clone::Clone for Config {
+        #[inline]
+        fn clone(&self) -> Config {
+            Config {
+                src_network_id: ::core::clone::Clone::clone(&self.src_network_id),
+                network_id: ::core::clone::Clone::clone(&self.network_id),
+                network_type_id: ::core::clone::Clone::clone(&self.network_type_id),
+                owner: ::core::clone::Clone::clone(&self.owner),
+            }
+        }
+    }
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for Config {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
+                let mut __serde_state = match _serde::Serializer::serialize_struct(
+                    __serializer,
+                    "Config",
+                    false as usize + 1 + 1 + 1 + 1,
+                ) {
+                    _serde::__private::Ok(__val) => __val,
+                    _serde::__private::Err(__err) => {
+                        return _serde::__private::Err(__err);
+                    }
+                };
+                match _serde::ser::SerializeStruct::serialize_field(
+                    &mut __serde_state,
+                    "src_network_id",
+                    &self.src_network_id,
+                ) {
+                    _serde::__private::Ok(__val) => __val,
+                    _serde::__private::Err(__err) => {
+                        return _serde::__private::Err(__err);
+                    }
+                };
+                match _serde::ser::SerializeStruct::serialize_field(
+                    &mut __serde_state,
+                    "network_id",
+                    &self.network_id,
+                ) {
+                    _serde::__private::Ok(__val) => __val,
+                    _serde::__private::Err(__err) => {
+                        return _serde::__private::Err(__err);
+                    }
+                };
+                match _serde::ser::SerializeStruct::serialize_field(
+                    &mut __serde_state,
+                    "network_type_id",
+                    &self.network_type_id,
+                ) {
+                    _serde::__private::Ok(__val) => __val,
+                    _serde::__private::Err(__err) => {
+                        return _serde::__private::Err(__err);
+                    }
+                };
+                match _serde::ser::SerializeStruct::serialize_field(
+                    &mut __serde_state,
+                    "owner",
+                    &self.owner,
+                ) {
+                    _serde::__private::Ok(__val) => __val,
+                    _serde::__private::Err(__err) => {
+                        return _serde::__private::Err(__err);
+                    }
+                };
+                _serde::ser::SerializeStruct::end(__serde_state)
+            }
+        }
+    };
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl<'de> _serde::Deserialize<'de> for Config {
+            fn deserialize<__D>(
+                __deserializer: __D,
+            ) -> _serde::__private::Result<Self, __D::Error>
+            where
+                __D: _serde::Deserializer<'de>,
+            {
+                #[allow(non_camel_case_types)]
+                #[doc(hidden)]
+                enum __Field {
+                    __field0,
+                    __field1,
+                    __field2,
+                    __field3,
+                    __ignore,
+                }
+                #[doc(hidden)]
+                struct __FieldVisitor;
+                impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                    type Value = __Field;
+                    fn expecting(
+                        &self,
+                        __formatter: &mut _serde::__private::Formatter,
+                    ) -> _serde::__private::fmt::Result {
+                        _serde::__private::Formatter::write_str(
+                            __formatter,
+                            "field identifier",
+                        )
+                    }
+                    fn visit_u64<__E>(
+                        self,
+                        __value: u64,
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            0u64 => _serde::__private::Ok(__Field::__field0),
+                            1u64 => _serde::__private::Ok(__Field::__field1),
+                            2u64 => _serde::__private::Ok(__Field::__field2),
+                            3u64 => _serde::__private::Ok(__Field::__field3),
+                            _ => _serde::__private::Ok(__Field::__ignore),
+                        }
+                    }
+                    fn visit_str<__E>(
+                        self,
+                        __value: &str,
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            "src_network_id" => _serde::__private::Ok(__Field::__field0),
+                            "network_id" => _serde::__private::Ok(__Field::__field1),
+                            "network_type_id" => _serde::__private::Ok(__Field::__field2),
+                            "owner" => _serde::__private::Ok(__Field::__field3),
+                            _ => _serde::__private::Ok(__Field::__ignore),
+                        }
+                    }
+                    fn visit_bytes<__E>(
+                        self,
+                        __value: &[u8],
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            b"src_network_id" => _serde::__private::Ok(__Field::__field0),
+                            b"network_id" => _serde::__private::Ok(__Field::__field1),
+                            b"network_type_id" => {
+                                _serde::__private::Ok(__Field::__field2)
+                            }
+                            b"owner" => _serde::__private::Ok(__Field::__field3),
+                            _ => _serde::__private::Ok(__Field::__ignore),
+                        }
+                    }
+                }
+                impl<'de> _serde::Deserialize<'de> for __Field {
+                    #[inline]
+                    fn deserialize<__D>(
+                        __deserializer: __D,
+                    ) -> _serde::__private::Result<Self, __D::Error>
+                    where
+                        __D: _serde::Deserializer<'de>,
+                    {
+                        _serde::Deserializer::deserialize_identifier(
+                            __deserializer,
+                            __FieldVisitor,
+                        )
+                    }
+                }
+                #[doc(hidden)]
+                struct __Visitor<'de> {
+                    marker: _serde::__private::PhantomData<Config>,
+                    lifetime: _serde::__private::PhantomData<&'de ()>,
+                }
+                impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                    type Value = Config;
+                    fn expecting(
+                        &self,
+                        __formatter: &mut _serde::__private::Formatter,
+                    ) -> _serde::__private::fmt::Result {
+                        _serde::__private::Formatter::write_str(
+                            __formatter,
+                            "struct Config",
+                        )
+                    }
+                    #[inline]
+                    fn visit_seq<__A>(
+                        self,
+                        mut __seq: __A,
+                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    where
+                        __A: _serde::de::SeqAccess<'de>,
+                    {
+                        let __field0 = match match _serde::de::SeqAccess::next_element::<
+                            String,
+                        >(&mut __seq) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        } {
+                            _serde::__private::Some(__value) => __value,
+                            _serde::__private::None => {
+                                return _serde::__private::Err(
+                                    _serde::de::Error::invalid_length(
+                                        0usize,
+                                        &"struct Config with 4 elements",
+                                    ),
+                                );
+                            }
+                        };
+                        let __field1 = match match _serde::de::SeqAccess::next_element::<
+                            u64,
+                        >(&mut __seq) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        } {
+                            _serde::__private::Some(__value) => __value,
+                            _serde::__private::None => {
+                                return _serde::__private::Err(
+                                    _serde::de::Error::invalid_length(
+                                        1usize,
+                                        &"struct Config with 4 elements",
+                                    ),
+                                );
+                            }
+                        };
+                        let __field2 = match match _serde::de::SeqAccess::next_element::<
+                            u128,
+                        >(&mut __seq) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        } {
+                            _serde::__private::Some(__value) => __value,
+                            _serde::__private::None => {
+                                return _serde::__private::Err(
+                                    _serde::de::Error::invalid_length(
+                                        2usize,
+                                        &"struct Config with 4 elements",
+                                    ),
+                                );
+                            }
+                        };
+                        let __field3 = match match _serde::de::SeqAccess::next_element::<
+                            Addr,
+                        >(&mut __seq) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        } {
+                            _serde::__private::Some(__value) => __value,
+                            _serde::__private::None => {
+                                return _serde::__private::Err(
+                                    _serde::de::Error::invalid_length(
+                                        3usize,
+                                        &"struct Config with 4 elements",
+                                    ),
+                                );
+                            }
+                        };
+                        _serde::__private::Ok(Config {
+                            src_network_id: __field0,
+                            network_id: __field1,
+                            network_type_id: __field2,
+                            owner: __field3,
+                        })
+                    }
+                    #[inline]
+                    fn visit_map<__A>(
+                        self,
+                        mut __map: __A,
+                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    where
+                        __A: _serde::de::MapAccess<'de>,
+                    {
+                        let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
+                        let mut __field1: _serde::__private::Option<u64> = _serde::__private::None;
+                        let mut __field2: _serde::__private::Option<u128> = _serde::__private::None;
+                        let mut __field3: _serde::__private::Option<Addr> = _serde::__private::None;
+                        while let _serde::__private::Some(__key)
+                            = match _serde::de::MapAccess::next_key::<
+                                __Field,
+                            >(&mut __map) {
+                                _serde::__private::Ok(__val) => __val,
+                                _serde::__private::Err(__err) => {
+                                    return _serde::__private::Err(__err);
+                                }
+                            } {
+                            match __key {
+                                __Field::__field0 => {
+                                    if _serde::__private::Option::is_some(&__field0) {
+                                        return _serde::__private::Err(
+                                            <__A::Error as _serde::de::Error>::duplicate_field(
+                                                "src_network_id",
+                                            ),
+                                        );
+                                    }
+                                    __field0 = _serde::__private::Some(
+                                        match _serde::de::MapAccess::next_value::<
+                                            String,
+                                        >(&mut __map) {
+                                            _serde::__private::Ok(__val) => __val,
+                                            _serde::__private::Err(__err) => {
+                                                return _serde::__private::Err(__err);
+                                            }
+                                        },
+                                    );
+                                }
+                                __Field::__field1 => {
+                                    if _serde::__private::Option::is_some(&__field1) {
+                                        return _serde::__private::Err(
+                                            <__A::Error as _serde::de::Error>::duplicate_field(
+                                                "network_id",
+                                            ),
+                                        );
+                                    }
+                                    __field1 = _serde::__private::Some(
+                                        match _serde::de::MapAccess::next_value::<u64>(&mut __map) {
+                                            _serde::__private::Ok(__val) => __val,
+                                            _serde::__private::Err(__err) => {
+                                                return _serde::__private::Err(__err);
+                                            }
+                                        },
+                                    );
+                                }
+                                __Field::__field2 => {
+                                    if _serde::__private::Option::is_some(&__field2) {
+                                        return _serde::__private::Err(
+                                            <__A::Error as _serde::de::Error>::duplicate_field(
+                                                "network_type_id",
+                                            ),
+                                        );
+                                    }
+                                    __field2 = _serde::__private::Some(
+                                        match _serde::de::MapAccess::next_value::<
+                                            u128,
+                                        >(&mut __map) {
+                                            _serde::__private::Ok(__val) => __val,
+                                            _serde::__private::Err(__err) => {
+                                                return _serde::__private::Err(__err);
+                                            }
+                                        },
+                                    );
+                                }
+                                __Field::__field3 => {
+                                    if _serde::__private::Option::is_some(&__field3) {
+                                        return _serde::__private::Err(
+                                            <__A::Error as _serde::de::Error>::duplicate_field("owner"),
+                                        );
+                                    }
+                                    __field3 = _serde::__private::Some(
+                                        match _serde::de::MapAccess::next_value::<
+                                            Addr,
+                                        >(&mut __map) {
+                                            _serde::__private::Ok(__val) => __val,
+                                            _serde::__private::Err(__err) => {
+                                                return _serde::__private::Err(__err);
+                                            }
+                                        },
+                                    );
+                                }
+                                _ => {
+                                    let _ = match _serde::de::MapAccess::next_value::<
+                                        _serde::de::IgnoredAny,
+                                    >(&mut __map) {
+                                        _serde::__private::Ok(__val) => __val,
+                                        _serde::__private::Err(__err) => {
+                                            return _serde::__private::Err(__err);
+                                        }
+                                    };
+                                }
+                            }
+                        }
+                        let __field0 = match __field0 {
+                            _serde::__private::Some(__field0) => __field0,
+                            _serde::__private::None => {
+                                match _serde::__private::de::missing_field(
+                                    "src_network_id",
+                                ) {
+                                    _serde::__private::Ok(__val) => __val,
+                                    _serde::__private::Err(__err) => {
+                                        return _serde::__private::Err(__err);
+                                    }
+                                }
+                            }
+                        };
+                        let __field1 = match __field1 {
+                            _serde::__private::Some(__field1) => __field1,
+                            _serde::__private::None => {
+                                match _serde::__private::de::missing_field("network_id") {
+                                    _serde::__private::Ok(__val) => __val,
+                                    _serde::__private::Err(__err) => {
+                                        return _serde::__private::Err(__err);
+                                    }
+                                }
+                            }
+                        };
+                        let __field2 = match __field2 {
+                            _serde::__private::Some(__field2) => __field2,
+                            _serde::__private::None => {
+                                match _serde::__private::de::missing_field(
+                                    "network_type_id",
+                                ) {
+                                    _serde::__private::Ok(__val) => __val,
+                                    _serde::__private::Err(__err) => {
+                                        return _serde::__private::Err(__err);
+                                    }
+                                }
+                            }
+                        };
+                        let __field3 = match __field3 {
+                            _serde::__private::Some(__field3) => __field3,
+                            _serde::__private::None => {
+                                match _serde::__private::de::missing_field("owner") {
+                                    _serde::__private::Ok(__val) => __val,
+                                    _serde::__private::Err(__err) => {
+                                        return _serde::__private::Err(__err);
+                                    }
+                                }
+                            }
+                        };
+                        _serde::__private::Ok(Config {
+                            src_network_id: __field0,
+                            network_id: __field1,
+                            network_type_id: __field2,
+                            owner: __field3,
+                        })
+                    }
+                }
+                #[doc(hidden)]
+                const FIELDS: &'static [&'static str] = &[
+                    "src_network_id",
+                    "network_id",
+                    "network_type_id",
+                    "owner",
+                ];
+                _serde::Deserializer::deserialize_struct(
+                    __deserializer,
+                    "Config",
+                    FIELDS,
+                    __Visitor {
+                        marker: _serde::__private::PhantomData::<Config>,
+                        lifetime: _serde::__private::PhantomData,
+                    },
+                )
+            }
+        }
+    };
+    #[automatically_derived]
+    impl ::core::marker::StructuralPartialEq for Config {}
+    #[automatically_derived]
+    impl ::core::cmp::PartialEq for Config {
+        #[inline]
+        fn eq(&self, other: &Config) -> bool {
+            self.src_network_id == other.src_network_id
+                && self.network_id == other.network_id
+                && self.network_type_id == other.network_type_id
+                && self.owner == other.owner
+        }
+    }
+    impl Config {
+        pub fn new(
+            src_network_id: String,
+            network_id: u64,
+            network_type_id: u128,
+            owner: Addr,
+        ) -> Self {
+            Self {
+                src_network_id,
+                network_id,
+                network_type_id,
+                owner,
+            }
+        }
+    }
+    impl Default for Config {
+        fn default() -> Self {
+            Self {
+                src_network_id: "icon".to_string(),
+                network_id: 1,
+                network_type_id: 1,
+                owner: Addr::unchecked("test"),
+            }
+        }
+    }
+    pub trait ILightClient {
+        type Error;
+        /**
+     * @dev createClient creates a new client with the given state.
+     * If succeeded, it returns a commitment for the initial state.
+     */
+        fn create_client(
+            &self,
+            client_id: &str,
+            client_state: ClientState,
+            consensus_state: ConsensusState,
+        ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
+        /**
+     * @dev updateClient updates the client corresponding to `clientId`.
+     * If succeeded, it returns a commitment for the updated state.
+     * If there are no updates for consensus state, this function should returns an empty array as `updates`.
+     *
+     * NOTE: updateClient is intended to perform the followings:
+     * 1. verify a given client message(e.g. header)
+     * 2. check misbehaviour such like duplicate block height
+     * 3. if misbehaviour is found, update state accordingly and return
+     * 4. update state(s) with the client message
+     * 5. persist the state(s) on the host
+     */
+        fn update_client(
+            &self,
+            client_id: &str,
+            header: Any,
+        ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
+        /**
+     * @dev verifyMembership is a generic proof verification method which verifies a proof of the existence of a value at a given CommitmentPath at the specified height.
+     * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
+     */
+        fn verify_membership(
+            &self,
+            client_id: &str,
+            height: u64,
+            delay_time_period: u64,
+            delay_block_period: u64,
+            proof: &Vec<MerkleNode>,
+            value: &[u8],
+            path: &[u8],
+        ) -> Result<bool, Self::Error>;
+        /**
+     * @dev verifyNonMembership is a generic proof verification method which verifies the absence of a given CommitmentPath at a specified height.
+     * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
+     */
+        fn verify_non_membership(
+            &self,
+            client_id: &str,
+            height: u64,
+            delay_time_period: u64,
+            delay_block_period: u64,
+            proof: &Vec<MerkleNode>,
+            path: &[u8],
+        ) -> Result<bool, Self::Error>;
+    }
+    pub trait IStoreReader {}
+    pub trait IContext {
+        type Error;
+        fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error>;
+        fn insert_client_state(
+            &self,
+            client_id: &str,
+            state: ClientState,
+        ) -> Result<(), Self::Error>;
+        fn get_consensus_state(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<ConsensusState, Self::Error>;
+        fn insert_consensus_state(
+            &self,
+            client_id: &str,
+            height: u64,
+            state: ConsensusState,
+        ) -> Result<(), Self::Error>;
+        fn get_timestamp_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, Self::Error>;
+        fn insert_timestamp_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<(), Self::Error>;
+        fn insert_blocknumber_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<(), Self::Error>;
+        fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
+        fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>>;
+        fn to_icon_address(&self, address: &[u8]) -> Vec<u8>;
+        fn get_config(&self) -> Result<Config, Self::Error>;
+        fn insert_config(&self, config: &Config) -> Result<(), Self::Error>;
+        fn get_current_block_time(&self) -> u64;
+        fn get_current_block_height(&self) -> u64;
+        fn get_processed_time_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, Self::Error>;
+        fn get_processed_block_at_height(
+            &self,
+            client_id: &str,
+            height: u64,
+        ) -> Result<u64, Self::Error>;
+    }
+    pub trait AnyTypes: Message + Default {
+        fn get_type_url() -> String;
+        fn get_type_url_hash() -> [u8; 32] {
+            keccak256(Self::get_type_url().as_bytes())
+        }
+        fn from_any(any: Any) -> Result<Self, DecodeError> {
+            if Self::get_type_url_hash() != keccak256(any.type_url.as_bytes()) {
+                return Err(DecodeError::new("Invalid typ"));
+            }
+            Self::decode(any.value.as_slice())
+        }
+        fn to_any(&self) -> Any {
+            return Any {
+                type_url: Self::get_type_url(),
+                value: self.encode_to_vec(),
+            };
+        }
+        fn get_keccak_hash(&self) -> [u8; 32] {
+            let bytes = self.encode_to_vec();
+            return keccak256(&bytes);
+        }
+        fn get_keccak_hash_string(&self) -> String {
+            let hash = self.get_keccak_hash();
+            return hex::encode(hash);
+        }
+    }
+}
+pub use crate::error::ContractError;
