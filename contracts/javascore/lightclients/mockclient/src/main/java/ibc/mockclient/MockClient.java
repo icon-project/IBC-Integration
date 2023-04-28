@@ -5,6 +5,7 @@ import java.util.Map;
 
 import score.Context;
 import score.annotation.External;
+import score.annotation.Optional;
 import ibc.icon.interfaces.ILightClient;
 import icon.proto.core.client.Height;
 
@@ -42,10 +43,10 @@ public class MockClient implements ILightClient {
     }
 
     @External
-    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
+    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes, @Optional byte[] _storagePrefix) {
         return Map.of(
             "clientStateCommitment", IBCCommitment.keccak256(clientStateBytes),
-            "consensusStateCommitment", IBCCommitment.keccak256(consensusStateBytes),  
+            "consensusStateCommitment", IBCCommitment.keccak256(consensusStateBytes),
             "height", new Height().encode()
         );
     }
@@ -54,7 +55,7 @@ public class MockClient implements ILightClient {
     public Map<String, byte[]> updateClient(String clientId, byte[] clientMessageBytes) {
         return Map.of(
             "clientStateCommitment", IBCCommitment.keccak256(clientMessageBytes),
-            "consensusStateCommitment", IBCCommitment.keccak256(clientMessageBytes),  
+            "consensusStateCommitment", IBCCommitment.keccak256(clientMessageBytes),
             "height", new Height().encode()
         );
     }

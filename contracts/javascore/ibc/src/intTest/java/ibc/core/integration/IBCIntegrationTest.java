@@ -90,6 +90,7 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
         msg.setConsensusState(new byte[0]);
         msg.setClientState(new byte[0]);
         msg.setBtpNetworkId(networkId);
+        msg.setStoragePrefix(new byte[0]);
 
         IIBCClientScoreClient client = getClientInterface(owner);
         var consumer = client.CreateClient((logs) -> {clientID = logs.get(0).getIdentifier();}, null);
