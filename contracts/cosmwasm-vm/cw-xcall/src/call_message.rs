@@ -83,11 +83,11 @@ impl<'a> CwCallService<'a> {
             let submessage: SubMsg<Empty> =
                 SubMsg::reply_always(CosmosMsg::Ibc(packet), SEND_CALL_MESSAGE_REPLY_ID);
 
-            return Ok(Response::new()
+            Ok(Response::new()
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")
                 .add_attribute("method", "send_packet")
-                .add_event(event));
+                .add_event(event))
         }
 
         #[cfg(not(feature = "native_ibc"))]
@@ -129,6 +129,7 @@ impl<'a> CwCallService<'a> {
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")
                 .add_attribute("method", "send_packet")
+                .add_attribute("sequence_no", sequence_no.to_string())
                 .add_event(event))
         }
     }
