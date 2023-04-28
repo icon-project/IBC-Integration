@@ -3,16 +3,19 @@ package icon.proto.core.commitment;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 import ibc.icon.score.util.ProtoMessage;
+import java.lang.Boolean;
 import java.math.BigInteger;
 
 public class ProofSpec extends ProtoMessage {
-  private LeafOp leafSpec;
+  private LeafOp leafSpec = new LeafOp();
 
-  private InnerSpec innerSpec;
+  private InnerSpec innerSpec = new InnerSpec();
 
   private BigInteger maxDepth = BigInteger.ZERO;
 
   private BigInteger minDepth = BigInteger.ZERO;
+
+  private boolean prehashKeyBeforeComparison = false;
 
   public LeafOp getLeafSpec() {
     return this.leafSpec;
@@ -46,12 +49,21 @@ public class ProofSpec extends ProtoMessage {
     this.minDepth = minDepth;
   }
 
+  public boolean getPrehashKeyBeforeComparison() {
+    return this.prehashKeyBeforeComparison;
+  }
+
+  public void setPrehashKeyBeforeComparison(boolean prehashKeyBeforeComparison) {
+    this.prehashKeyBeforeComparison = prehashKeyBeforeComparison;
+  }
+
   public byte[] encode() {
     return ByteUtil.join(
       Proto.encode(1, this.leafSpec),
       Proto.encode(2, this.innerSpec),
       Proto.encode(3, this.maxDepth),
-      Proto.encode(4, this.minDepth));
+      Proto.encode(4, this.minDepth),
+      Proto.encode(5, this.prehashKeyBeforeComparison));
   }
 
   public static ProofSpec decode(byte[] data) {
@@ -85,6 +97,12 @@ public class ProofSpec extends ProtoMessage {
             Proto.DecodeResponse<BigInteger> resp = Proto.decodeVarInt(data, index);
             index = resp.index;
             obj.minDepth = resp.res;
+            break;
+        }
+        case 5: {
+            Proto.DecodeResponse<Boolean> resp = Proto.decodeBoolean(data, index);
+            index = resp.index;
+            obj.prehashKeyBeforeComparison = resp.res;
             break;
         }
       }

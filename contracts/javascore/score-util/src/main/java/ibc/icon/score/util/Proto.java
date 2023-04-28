@@ -1,8 +1,9 @@
 package ibc.icon.score.util;
 
+import scorex.util.ArrayList;
+
 import java.math.BigInteger;
 import java.util.List;
-import scorex.util.ArrayList;
 
 public class Proto {
 
@@ -155,7 +156,7 @@ public class Proto {
     }
 
     public static byte[] encode(int order, Boolean item) {
-        if (item==null) {
+        if (item == null) {
             return new byte[0];
         }
 
@@ -168,24 +169,33 @@ public class Proto {
 
     public static byte[] encodeVarIntArray(int order, List<BigInteger> items) {
         int length = items.size();
-        byte[][] encodedItems = new byte[length + 1][];
+        byte[][] encodedItems = new byte[length + 2][];
         encodedItems[0] = new byte[]{(byte) (order << 3 | 2)};
+        int size = 0;
         for (int i = 0; i < length; i++) {
-            encodedItems[i + 1] = encodeVarInt(items.get(i));
+            byte[] val = encodeVarInt(items.get(i));
+            encodedItems[i + 2] = val;
+            size = size + val.length;
         }
+        encodedItems[1] = encodeVarInt(BigInteger.valueOf(size));
 
         return ByteUtil.join(encodedItems);
     }
 
     public static DecodeResponse<List<BigInteger>> decodeVarIntArray(byte[] data, int index) {
         DecodeResponse<List<BigInteger>> response = new DecodeResponse<>();
-        Proto.DecodeResponse<byte[]> resp = Proto.decodeBytes(data, index);
-
-        response.index = resp.index;
         response.res = new ArrayList<>();
-        for(byte b: resp.res) {
-            response.res.add(BigInteger.valueOf(b & 0x7F));
+        DataSize dataSize = getDataSize(data, index);
+        index = dataSize.index;
+        int startIndex = index;
+
+        while (dataSize.length > index - startIndex) {
+            DecodeResponse<BigInteger> valResp = decodeVarInt(data, index);
+            response.res.add(valResp.res);
+            index = valResp.index;
         }
+
+        response.index = index;
         return response;
     }
 

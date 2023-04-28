@@ -5,9 +5,9 @@ import ibc.icon.score.util.Proto;
 import ibc.icon.score.util.ProtoMessage;
 
 public class CompressedBatchEntry extends ProtoMessage {
-  private CompressedExistenceProof exist;
+  private CompressedExistenceProof exist = new CompressedExistenceProof();
 
-  private CompressedNonExistenceProof nonexist;
+  private CompressedNonExistenceProof nonexist = new CompressedNonExistenceProof();
 
   public CompressedExistenceProof getExist() {
     return this.exist;

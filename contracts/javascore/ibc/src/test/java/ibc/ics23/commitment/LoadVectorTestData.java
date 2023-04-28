@@ -14,8 +14,7 @@ import java.util.Map;
 
 import static ibc.icon.score.util.StringUtil.hexToBytes;
 import static ibc.ics23.commitment.Ics23.combineProofs;
-import static ibc.ics23.commitment.LoadProofTestData.getIavlSpec;
-import static ibc.ics23.commitment.Proof.getTendermintSpec;
+import static ibc.ics23.commitment.Proof.*;
 
 public class LoadVectorTestData {
 
@@ -72,15 +71,30 @@ public class LoadVectorTestData {
     }
 
     public static List<TestVectorsData> getVectorsTestData() {
+        String iavl = "iavl";
         String tendermint = "tendermint";
+        String smt = "smt";
 
         List<TestVectorsData> cases = new ArrayList<>();
+        cases.add(new TestVectorsData(iavl, "exist_left.json", getIavlSpec()));
+        cases.add(new TestVectorsData(iavl, "exist_right.json", getIavlSpec()));
+        cases.add(new TestVectorsData(iavl, "exist_middle.json", getIavlSpec()));
+        cases.add(new TestVectorsData(iavl, "nonexist_left.json", getIavlSpec()));
+        cases.add(new TestVectorsData(iavl, "nonexist_right.json", getIavlSpec()));
+        cases.add(new TestVectorsData(iavl, "nonexist_middle.json", getIavlSpec()));
         cases.add(new TestVectorsData(tendermint, "exist_left.json", getTendermintSpec()));
         cases.add(new TestVectorsData(tendermint, "exist_right.json", getTendermintSpec()));
         cases.add(new TestVectorsData(tendermint, "exist_middle.json", getTendermintSpec()));
         cases.add(new TestVectorsData(tendermint, "nonexist_left.json", getTendermintSpec()));
         cases.add(new TestVectorsData(tendermint, "nonexist_right.json", getTendermintSpec()));
         cases.add(new TestVectorsData(tendermint, "nonexist_middle.json", getTendermintSpec()));
+        cases.add(new TestVectorsData(smt, "exist_left.json", getSmtSpec()));
+        cases.add(new TestVectorsData(smt, "exist_right.json", getSmtSpec()));
+        cases.add(new TestVectorsData(smt, "exist_middle.json", getSmtSpec()));
+        cases.add(new TestVectorsData(smt, "nonexist_left.json", getSmtSpec()));
+        cases.add(new TestVectorsData(smt, "nonexist_right.json", getSmtSpec()));
+        cases.add(new TestVectorsData(smt, "nonexist_middle.json", getSmtSpec()));
+
 
         return cases;
     }
@@ -161,6 +175,7 @@ public class LoadVectorTestData {
     public static Map<String, BatchVectorData> loadBatchVectorsTestData() throws IOException {
         var tendermint = "tendermint";
         var iavl = "iavl";
+        var smt = "smt";
 
         List<String> filenames = List.of("exist_left.json",
                 "exist_right.json",
@@ -169,19 +184,34 @@ public class LoadVectorTestData {
                 "nonexist_right.json",
                 "nonexist_middle.json");
 
-        List<RefData> refsTM = new ArrayList<>();
-        List<CommitmentProof> proofs = new ArrayList<>();
         List<RefData> refsIAVL = new ArrayList<>();
+        List<RefData> refsTM = new ArrayList<>();
+        List<RefData> refsSMT = new ArrayList<>();
+
+        CommitmentProof batchIAVL;
+        CommitmentProof refsTML;
+        CommitmentProof batchSMT;
+
+        List<CommitmentProof> iavlProofs = new ArrayList<>();
+        List<CommitmentProof> tendermintProofs = new ArrayList<>();
+        List<CommitmentProof> smtProofs = new ArrayList<>();
 
         for (String filename : filenames) {
             var tendermintTestVector = getTestVector(tendermint, filename);
             var iavlTestVector = getTestVector(iavl, filename);
+            var smtTestVector = getTestVector(smt, filename);
 
-            refsTM.add(tendermintTestVector.getRefData());
-            proofs.add(tendermintTestVector.getCommitmentProof());
             refsIAVL.add(iavlTestVector.getRefData());
+            refsTM.add(tendermintTestVector.getRefData());
+            refsSMT.add(smtTestVector.getRefData());
+
+            iavlProofs.add(iavlTestVector.getCommitmentProof());
+            tendermintProofs.add(tendermintTestVector.getCommitmentProof());
+            smtProofs.add(smtTestVector.getCommitmentProof());
         }
-        CommitmentProof refsTML = combineProofs(proofs);
+        batchIAVL = combineProofs(iavlProofs);
+        refsTML = combineProofs(tendermintProofs);
+        batchSMT = combineProofs(smtProofs);
 
         var batchExistVector = getBatchVector(tendermint, "batch_exist.json");
         var batchTMExist = batchExistVector.getCommitmentProof();
@@ -191,7 +221,35 @@ public class LoadVectorTestData {
         var batchTMNonexist = batchNonExistVector.getCommitmentProof();
         var refsTMNonexist = batchNonExistVector.getRefs();
 
+        var batchIAVLExistVector = getBatchVector(iavl, "batch_exist.json");
+        var batchIAVLExist = batchIAVLExistVector.getCommitmentProof();
+        var refsIAVLExist = batchIAVLExistVector.getRefs();
+
+        var batchIAVLNonExistVector = getBatchVector(iavl, "batch_nonexist.json");
+        var batchIAVLNonExist = batchIAVLNonExistVector.getCommitmentProof();
+        var refsIAVLNonExist = batchIAVLNonExistVector.getRefs();
+
+        var batchSMTExistVector = getBatchVector(smt, "batch_exist.json");
+        var batchSMTExist = batchSMTExistVector.getCommitmentProof();
+        var refsSMTExist = batchSMTExistVector.getRefs();
+
+        var batchSMTNonExistVector = getBatchVector(smt, "batch_nonexist.json");
+        var batchSMTNonExist = batchSMTNonExistVector.getCommitmentProof();
+        var refsSMTNonExist = batchSMTNonExistVector.getRefs();
+
         Map<String, BatchVectorData> result = new HashMap<>();
+        result.put("iavl 0", new BatchVectorData(getIavlSpec(), batchIAVL, refsIAVL.get(0)));
+        result.put("iavl 1", new BatchVectorData(getIavlSpec(), batchIAVL, refsIAVL.get(1)));
+        result.put("iavl 2", new BatchVectorData(getIavlSpec(), batchIAVL, refsIAVL.get(2)));
+        result.put("iavl 3", new BatchVectorData(getIavlSpec(), batchIAVL, refsIAVL.get(3)));
+        result.put("iavl 4", new BatchVectorData(getIavlSpec(), batchIAVL, refsIAVL.get(4)));
+        result.put("iavl 5", new BatchVectorData(getIavlSpec(), batchIAVL, refsIAVL.get(5)));
+        // Note this spec only differs for non-existence proofs
+        result.put("iavl invalid 1", new BatchVectorData(getTendermintSpec(), batchIAVL, refsIAVL.get(4), true));
+        result.put("iavl invalid 2", new BatchVectorData(getIavlSpec(), batchIAVL, refsTM.get(0), true));
+        result.put("iavl batch exist", new BatchVectorData(getIavlSpec(), batchIAVLExist, refsIAVLExist.get(17)));
+        result.put("iavl batch nonexist", new BatchVectorData(getIavlSpec(), batchIAVLNonExist, refsIAVLNonExist.get(7)));
+
         result.put("tm 0", new BatchVectorData(getTendermintSpec(), refsTML, refsTM.get(0)));
         result.put("tm 1", new BatchVectorData(getTendermintSpec(), refsTML, refsTM.get(1)));
         result.put("tm 2", new BatchVectorData(getTendermintSpec(), refsTML, refsTM.get(2)));
@@ -204,14 +262,36 @@ public class LoadVectorTestData {
         result.put("tm batch exist", new BatchVectorData(getTendermintSpec(), batchTMExist, refsTMExist.get(10)));
         result.put("tm batch nonexist", new BatchVectorData(getTendermintSpec(), batchTMNonexist, refsTMNonexist.get(3)));
 
+        result.put("smt 0", new BatchVectorData(getSmtSpec(), batchSMT, refsSMT.get(0)));
+        result.put("smt 1", new BatchVectorData(getSmtSpec(), batchSMT, refsSMT.get(1)));
+        result.put("smt 2", new BatchVectorData(getSmtSpec(), batchSMT, refsSMT.get(2)));
+        result.put("smt 3", new BatchVectorData(getSmtSpec(), batchSMT, refsSMT.get(3)));
+        result.put("smt 4", new BatchVectorData(getSmtSpec(), batchSMT, refsSMT.get(4)));
+        result.put("smt 5", new BatchVectorData(getSmtSpec(), batchSMT, refsSMT.get(5)));
+        // Note this spec only differs for non-existence proofs
+        result.put("smt invalid 1", new BatchVectorData(getIavlSpec(), batchSMT, refsSMT.get(4), true));
+        result.put("smt invalid 2", new BatchVectorData(getSmtSpec(), batchSMT, refsIAVL.get(0), true));
+        result.put("smt batch exist", new BatchVectorData(getSmtSpec(), batchSMTExist, refsSMTExist.get(10)));
+        result.put("smt batch nonexist", new BatchVectorData(getSmtSpec(), batchSMTNonExist, refsSMTNonExist.get(3)));
+
         return result;
     }
 
     public static Map<String, CommitmentProof> loadDecompressBatchVectorsData() throws IOException {
+        var iavl = "iavl";
         var tendermint = "tendermint";
-        var batchNonExistVector = getBatchVector(tendermint, "batch_nonexist.json");
+        var smt = "smt";
+
+        var batchNonExistVector = getBatchVector(iavl, "batch_nonexist.json");
+        var batchIAVL = batchNonExistVector.getCommitmentProof();
+
+        batchNonExistVector = getBatchVector(tendermint, "batch_nonexist.json");
         var batchTM = batchNonExistVector.getCommitmentProof();
-        return Map.of(tendermint, batchTM);
+
+        batchNonExistVector = getBatchVector(smt, "batch_nonexist.json");
+        var batchSMT = batchNonExistVector.getCommitmentProof();
+
+        return Map.of(iavl, batchIAVL, tendermint, batchTM, smt, batchSMT);
     }
 
 }

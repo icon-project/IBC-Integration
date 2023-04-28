@@ -5,9 +5,9 @@ import ibc.icon.score.util.Proto;
 import ibc.icon.score.util.ProtoMessage;
 
 public class BatchEntry extends ProtoMessage {
-  private ExistenceProof exist;
+  private ExistenceProof exist = new ExistenceProof();
 
-  private NonExistenceProof nonexist;
+  private NonExistenceProof nonexist = new NonExistenceProof();
 
   public ExistenceProof getExist() {
     return this.exist;
