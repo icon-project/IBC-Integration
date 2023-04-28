@@ -8,7 +8,7 @@ pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
 }
 
 pub fn event_xcall_message_sent(
-    sequence_no: u128,
+    sequence_no: u64,
     from: String,
     req_id: u128,
     data: &CallServiceMessage,

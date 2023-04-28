@@ -1,7 +1,10 @@
 use super::*;
 
 #[cw_serde]
-pub struct InstantiateMsg {}
+pub struct InstantiateMsg {
+    pub timeout_height: u64,
+    pub ibc_host: Addr,
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]
