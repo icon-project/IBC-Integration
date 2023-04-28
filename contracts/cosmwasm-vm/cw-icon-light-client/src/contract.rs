@@ -221,9 +221,7 @@ pub fn execute(
             Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
         }
 
-        ExecuteMsg::VerifyChannel {
-            verify_channel_state,
-        } => {
+        ExecuteMsg::VerifyChannel {verify_channel_state, message_info } => {
             // fix once we receive client id
             let result = validate_channel_state("", &client, &verify_channel_state)?;
             Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))

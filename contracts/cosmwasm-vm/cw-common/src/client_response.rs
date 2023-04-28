@@ -206,6 +206,7 @@ impl From<PacketData> for PacketDataResponse {
             packet: PacketResponse::from(value.packet),
             acknowledgement: value.acknowledgement,
             signer: value.signer,
+            message_info: value.message_info,
         }
     }
 }
