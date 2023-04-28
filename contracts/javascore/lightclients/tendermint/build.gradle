@@ -29,7 +29,7 @@ test {
 }
 
 jacocoTestReport {
-    dependsOn(test, ':ibc:test', ':ibc:compileTestJava', ':mockclient:compileJava', ':mockclient:test', ':ibc:jacocoTestReport', ':mockapp:compileJava', ':mockapp:test', ':lib:test', ':proto-util:compileJava', ':proto-util:test', ':score-util:test')
+    dependsOn(test, ':ibc:test', ':ibc:compileTestJava', ':mockclient:compileJava', ':mockclient:test', ':ibc:jacocoTestReport', ':mockapp:compileJava', ':mockapp:test', ':mock-dapp:compileJava',':mock-dapp:test', ':lib:test', ':proto-util:compileJava', ':proto-util:test', ':score-util:test')
     doNotTrackState("Disable state tracking")
     reports {
         html {

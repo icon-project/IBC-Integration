@@ -11,10 +11,10 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: Deps,
         address: Addr,
-        rollback: &[u8],
+        rollback: Option<Vec<u8>>,
     ) -> Result<(), ContractError> {
         ensure!(
-            (is_contract(deps.querier, address) || rollback.is_empty()),
+            (is_contract(deps.querier, address) || rollback.is_none()),
             ContractError::RollbackNotPossible
         );
 

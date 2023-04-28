@@ -38,14 +38,15 @@ func (c *CosmosLocalnet) GetAndFundTestUser(
 	keyNamePrefix string,
 	amount int64,
 	chain ibc.Chain,
-) (string, error) {
+) (keyName string, address string, err error) {
 	// Check if the address for the given key is already created
-	_, err := c.CosmosChain.GetAddress(ctx, keyNamePrefix)
+	addr, err := c.CosmosChain.GetAddress(ctx, keyNamePrefix)
+	adminAddr, _ := types.Bech32ifyAddressBytes(c.CosmosChain.Config().Bech32Prefix, addr)
 	if err != nil {
 		chainCfg := c.CosmosChain.Config()
 		user, err := chain.BuildWallet(ctx, keyNamePrefix, "")
 		if err != nil {
-			return "", fmt.Errorf("failed to get source user wallet: %w", err)
+			return "", "", fmt.Errorf("failed to get source user wallet: %w", err)
 		}
 
 		err = chain.SendFunds(ctx, chains.FaucetAccountKeyName, ibc.WalletAmount{
@@ -53,13 +54,14 @@ func (c *CosmosLocalnet) GetAndFundTestUser(
 			Amount:  amount,
 			Denom:   chainCfg.Denom,
 		})
+
 		if err != nil {
-			return "", fmt.Errorf("failed to get funds from faucet: %w", err)
+			return "", "", fmt.Errorf("failed to get funds from faucet: %w", err)
 		}
 		fmt.Printf("Address of %s is : %s \n", user.KeyName(), user.FormattedAddress())
-		return user.KeyName(), nil
+		return user.KeyName(), user.FormattedAddress(), nil
 	} else {
-		return keyNamePrefix, err
+		return keyNamePrefix, adminAddr, err
 	}
 }
 

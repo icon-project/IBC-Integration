@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -321,19 +320,25 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 		bmcAddr := ctxValue.ContractAddress["bmc"]
 		initMessage = initMessage + bmcAddr
 	}
+	var contracts chains.ContractKey
+
 	// Check if keystore is alreadry available for given keyName
-	c.CheckForKeyStore(ctx, keyName)
+	ownerAddr := c.CheckForKeyStore(ctx, keyName)
+	if ownerAddr != "" {
+		contracts.ContractOwner = map[string]string{
+			keyName: ownerAddr,
+		}
+	}
 
 	// Get ScoreAddress
 	scoreAddress, err := c.getFullNode().DeployContract(ctx, c.scorePaths[contractName], c.keystorePath, initMessage)
-	var contracts chains.ContractKey
 
 	contracts.ContractAddress = map[string]string{
 		contractName: scoreAddress,
 	}
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
 		ContractAddress: contracts.ContractAddress,
-		ContractOwner:   keyName,
+		ContractOwner:   contracts.ContractOwner,
 	}), err
 }
 
@@ -342,8 +347,8 @@ func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, key
 	// Check if keystore is alreadry available for given keyName
 	c.CheckForKeyStore(ctx, keyName)
 
-	ctx, execMethodName, p := c.GetExecuteParam(ctx, methodName, param)
-	hash, err := c.getFullNode().ExecuteContract(ctx, contractAddress, execMethodName, c.keystorePath, p)
+	ctx, execMethodName, params := c.GetExecuteParam(ctx, methodName, param)
+	hash, err := c.getFullNode().ExecuteContract(ctx, contractAddress, execMethodName, c.keystorePath, params)
 	if err != nil {
 		return ctx, err
 	}
@@ -377,7 +382,7 @@ func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, metho
 	time.Sleep(2 * time.Second)
 
 	// get query msg
-	queryMsg := GetQueryParam(methodName)
+	queryMsg := c.GetQueryParam(methodName)
 	output, err := c.getFullNode().QueryContract(ctx, contractAddress, queryMsg, "")
 	chains.Response = output
 	fmt.Printf("Response is : %s \n", output)
@@ -387,46 +392,4 @@ func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, metho
 func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
 	_, err := c.BuildWallet(ctx, keyName, "")
 	return err
-}
-
-func (c *IconLocalnet) GetExecuteParam(ctx context.Context, methodName, params string) (context.Context, string, string) {
-	if strings.Contains(methodName, "set_admin") {
-		return c.SetAdminParams(ctx, methodName, params)
-	}
-	return ctx, "", ""
-}
-
-func GetQueryParam(methodName string) string {
-	if strings.Contains(methodName, "get_admin") {
-		return "admin"
-	}
-	return ""
-}
-
-func (c *IconLocalnet) SetAdminParams(ctx context.Context, methodaName, keyName string) (context.Context, string, string) {
-	var admins chains.Admins
-	executeMethodName := "setAdmin"
-	wallet, _ := c.BuildWallet(ctx, keyName, "")
-	addr := wallet.FormattedAddress()
-	admins.Admin = map[string]string{
-		keyName: addr,
-	}
-	args := "_address=" + addr
-	fmt.Println(args)
-	return context.WithValue(ctx, chains.AdminKey("Admins"), chains.Admins{
-		Admin: admins.Admin,
-	}), executeMethodName, args
-}
-
-func (c *IconLocalnet) CheckForKeyStore(ctx context.Context, keyName string) {
-	// Check if keystore file exists for given keyname if not create a keystore file
-	jsonFile := keyName + ".json"
-	path := path.Join(c.HomeDir(), jsonFile)
-	_, _, err := c.getFullNode().Exec(ctx, []string{"cat", path}, nil)
-	if err != nil {
-		c.BuildWallet(ctx, keyName, "")
-		c.keystorePath = path
-	} else {
-		c.keystorePath = path
-	}
 }

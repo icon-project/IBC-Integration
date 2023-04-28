@@ -4,8 +4,5 @@ use super::*;
 pub struct InstantiateMsg {}
 
 #[cw_serde]
-pub enum ExecuteMsg {}
-
-#[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {}

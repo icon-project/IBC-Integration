@@ -7,7 +7,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let height = 2;
     let timeout_timestamp = 5;
@@ -119,7 +119,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
-    let res = contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, &msg);
+    let res = contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, msg);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 54)
+    assert_eq!(res.unwrap().messages[0].id, 541)
 }
