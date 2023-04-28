@@ -1,4 +1,5 @@
 use super::*;
+
 #[cw_serde]
 pub struct CreateClientResponse {
     client_type: String,
