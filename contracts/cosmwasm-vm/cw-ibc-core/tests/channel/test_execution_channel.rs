@@ -54,7 +54,6 @@ fn test_for_channel_open_init_execution_message() {
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
         .unwrap();
-
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -63,6 +62,7 @@ fn test_for_channel_open_init_execution_message() {
             msg: message_raw.encode_to_vec(),
         },
     );
+
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 41);
 
@@ -132,7 +132,6 @@ fn test_for_channel_open_try_execution_message() {
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
         .unwrap();
-
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
@@ -170,7 +169,6 @@ fn test_for_channel_open_try_execution_message() {
             consenus_state,
         )
         .unwrap();
-
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -182,6 +180,7 @@ fn test_for_channel_open_try_execution_message() {
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 421);
+
     let reply_message = cosmwasm_std::IbcEndpoint {
         port_id: msg.port_id_on_a.to_string(),
         channel_id: ChannelId::default().to_string(),
@@ -193,7 +192,6 @@ fn test_for_channel_open_try_execution_message() {
         },
         ibc_endpoint: reply_message,
     };
-
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
@@ -277,7 +275,6 @@ fn test_for_channel_open_ack_execution() {
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
         .unwrap();
-
     let channel_end = ChannelEnd {
         state: State::Init,
         ordering: Order::Unordered,
@@ -296,7 +293,6 @@ fn test_for_channel_open_ack_execution() {
             channel_end,
         )
         .unwrap();
-
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
@@ -307,13 +303,11 @@ fn test_for_channel_open_ack_execution() {
     }
     .try_into()
     .unwrap();
-
     let client = to_vec(&client_state);
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
-
     contract
         .store_client_into_registry(
             &mut deps.storage,
@@ -360,7 +354,6 @@ fn test_for_channel_open_ack_execution() {
         },
         ibc_endpoint: reply_message,
     };
-
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
@@ -474,13 +467,11 @@ fn test_for_channel_open_confirm() {
     }
     .try_into()
     .unwrap();
-
     let client = to_vec(&client_state);
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
-
     contract
         .store_client_into_registry(
             &mut deps.storage,
@@ -503,7 +494,6 @@ fn test_for_channel_open_confirm() {
             consenus_state,
         )
         .unwrap();
-
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -527,7 +517,6 @@ fn test_for_channel_open_confirm() {
         },
         ibc_endpoint: reply_message,
     };
-
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
@@ -586,13 +575,11 @@ fn test_for_channel_close_init() {
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
-
     let module = Addr::unchecked("contractaddress");
     let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
-
     let commitment = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
@@ -616,10 +603,8 @@ fn test_for_channel_close_init() {
             conn_end.clone(),
         )
         .unwrap();
-
     let channel_id = ChannelId::from(msg.chan_id_on_a.clone());
     let port_id = PortId::from(msg.port_id_on_a.clone());
-
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
@@ -731,7 +716,6 @@ fn test_for_channel_close_confirm() {
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
         .unwrap();
-
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
@@ -750,7 +734,6 @@ fn test_for_channel_close_confirm() {
             channel_end,
         )
         .unwrap();
-
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
@@ -761,13 +744,11 @@ fn test_for_channel_close_confirm() {
     }
     .try_into()
     .unwrap();
-
     let client = to_vec(&client_state);
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
-
     contract
         .store_client_into_registry(
             &mut deps.storage,
@@ -790,7 +771,6 @@ fn test_for_channel_close_confirm() {
             consenus_state,
         )
         .unwrap();
-
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -824,7 +804,6 @@ fn test_for_channel_close_confirm() {
             data: Some(mock_data_binary),
         }),
     };
-
     let response = contract.reply(deps.as_mut(), env.clone(), reply_message);
 
     assert!(response.is_ok());
