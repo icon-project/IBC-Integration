@@ -6,14 +6,15 @@ use crate::account::*;
 use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
     to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcEndpoint, IbcMsg,
-    IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmQuery,
+    IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmQuery, WasmMsg, to_vec,
 };
 
 use cw_xcall::{
     state::{CwCallService, IbcConfig},
-    types::{ message::CallServiceMessage, request::CallServiceMessageRequest},
+    types::{ message::CallServiceMessage, request::CallServiceMessageRequest}, error::ContractError,
 };
-use cw_common::types::Address;
+use cw_common::{types::Address, Height};
+use cw_common::ProstMessage;
 use setup::*;
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
@@ -24,7 +25,7 @@ fn send_packet_success() {
 
     let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
 
-    let env = mock_env();
+
 
     let contract = CwCallService::default();
 
@@ -49,11 +50,8 @@ fn send_packet_success() {
         .ibc_config()
         .save(mock_deps.as_mut().storage, &ibc_config)
         .unwrap();
-    let timeout_block = IbcTimeoutBlock {
-        revision: 0,
-        height: 0,
-    };
-    let timeout = IbcTimeout::with_both(timeout_block, env.block.time.plus_seconds(300));
+  
+ 
     let data = CallServiceMessageRequest::new(
         Address::from(mock_info.sender.as_str()),
         MOCK_CONTRACT_TO_ADDR.to_string(),
@@ -64,11 +62,6 @@ fn send_packet_success() {
 
     let message: CallServiceMessage = data.try_into().unwrap();
 
-    let expected_packet = IbcMsg::SendPacket {
-        channel_id: "channel-3".to_string(),
-        data: to_binary(&message).unwrap(),
-        timeout,
-    };
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
@@ -85,15 +78,42 @@ fn send_packet_success() {
                     })
                 }
             }
+            WasmQuery::Smart { contract_addr, msg } => {
+                 SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap()))
+            }
             _ => todo!(),
         }
     });
 
+    let height =
+                Height::new(0, 10).map_err(|error| ContractError::DecodeFailed {
+                    error: error.to_string(),
+                }).unwrap();
+
+     let packet_data = cw_common::RawPacket {
+                sequence: 10,
+                source_port: ibc_config.src_endpoint().clone().port_id,
+                source_channel: ibc_config.src_endpoint().clone().channel_id,
+                destination_port: ibc_config.dst_endpoint().clone().port_id,
+                destination_channel: ibc_config.dst_endpoint().clone().channel_id,
+                data: to_vec(&message).map_err(|error| ContractError::DecodeFailed {
+                    error: error.to_string(),
+                }).unwrap(),
+                timeout_height: Some(height.into()),
+                timeout_timestamp: 0,
+            };
+
+            let message = cw_common::core_msg::ExecuteMsg::SendPacket {
+                packet: packet_data.encode_to_vec(),
+            };
+
+    contract.set_ibc_host(mock_deps.as_mut().storage, Addr::unchecked("hostaddress")).unwrap();
+    contract.set_timeout_height(mock_deps.as_mut().storage, 10).unwrap();
+
     let result = contract
         .send_packet(
-            env,
             mock_deps.as_mut(),
-            mock_info,
+            mock_info.clone(),
             MOCK_CONTRACT_TO_ADDR.to_string(),
             vec![1, 2, 3],
             Some(vec![])
@@ -101,7 +121,9 @@ fn send_packet_success() {
         )
         .unwrap();
 
-    assert_eq!(result.messages[0].msg, CosmosMsg::Ibc(expected_packet))
+    let response_data = CosmosMsg::Wasm(WasmMsg::Execute { contract_addr: "hostaddress".to_string(), msg: to_binary(&message).unwrap(), funds: mock_info.funds });
+
+    assert_eq!(result.messages[0].msg, response_data)
 }
 
 #[test]
@@ -159,7 +181,6 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
 
     let result = contract
         .send_packet(
-            env,
             mock_deps.as_mut(),
             mock_info,
             MOCK_CONTRACT_TO_ADDR.to_string(),
@@ -246,7 +267,7 @@ fn send_packet_failure_due_data_len() {
 
     let result = contract
         .send_packet(
-            env,
+       
             mock_deps.as_mut(),
             mock_info,
             MOCK_CONTRACT_TO_ADDR.to_string(),
@@ -332,7 +353,6 @@ fn send_packet_failure_due_rollback_len() {
 
     let result = contract
         .send_packet(
-            env,
             mock_deps.as_mut(),
             mock_info,
             MOCK_CONTRACT_TO_ADDR.to_string(),
@@ -392,13 +412,19 @@ fn send_packet_success_needresponse() {
                     })
                 }
             }
+            WasmQuery::Smart { contract_addr, msg } =>{
+                SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap()))
+                
+            }
             _ => todo!(),
         }
     });
 
+    contract.set_ibc_host(mock_deps.as_mut().storage, Addr::unchecked("hostaddress")).unwrap();
+    contract.set_timeout_height(mock_deps.as_mut().storage, 10).unwrap();
+
     contract
         .send_packet(
-            env,
             mock_deps.as_mut(),
             mock_info,
             MOCK_CONTRACT_TO_ADDR.to_string(),

@@ -5,6 +5,7 @@ pub const MAX_ROLLBACK_SIZE: u64 = 1024;
 pub const EXECUTE_CALL_ID: u64 = 0;
 pub const EXECUTE_ROLLBACK_ID: u64 = 1;
 pub const ACK_FAILURE_ID: u64 = 3;
+pub const SEND_CALL_MESSAGE_REPLY_ID: u64 = 2;
 
 #[cw_serde]
 pub struct IbcConfig {
@@ -49,6 +50,8 @@ pub struct CwCallService<'a> {
     ibc_config: Item<'a, IbcConfig>,
     fee_handler: Item<'a, Address>,
     fee: Item<'a, u128>,
+    ibc_host: Item<'a, Addr>,
+    timeout_height: Item<'a, u64>,
 }
 
 impl<'a> Default for CwCallService<'a> {
@@ -69,6 +72,8 @@ impl<'a> CwCallService<'a> {
             ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
             fee: Item::new(StorageKey::Fee.as_str()),
+            ibc_host: Item::new(StorageKey::IbcHost.as_str()),
+            timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
         }
     }
 
@@ -105,5 +110,29 @@ impl<'a> CwCallService<'a> {
     }
     pub fn fee(&self) -> &Item<'a, u128> {
         &self.fee
+    }
+    pub fn set_ibc_host(
+        &self,
+        store: &mut dyn Storage,
+        address: Addr,
+    ) -> Result<(), ContractError> {
+        self.ibc_host
+            .save(store, &address)
+            .map_err(ContractError::Std)
+    }
+    pub fn get_host(&self, store: &dyn Storage) -> Result<Addr, ContractError> {
+        self.ibc_host.load(store).map_err(ContractError::Std)
+    }
+    pub fn set_timeout_height(
+        &self,
+        store: &mut dyn Storage,
+        timeout_height: u64,
+    ) -> Result<(), ContractError> {
+        self.timeout_height
+            .save(store, &timeout_height)
+            .map_err(ContractError::Std)
+    }
+    pub fn get_timeout_height(&self, store: &dyn Storage) -> Result<u64, ContractError> {
+        self.timeout_height.load(store).map_err(ContractError::Std)
     }
 }
