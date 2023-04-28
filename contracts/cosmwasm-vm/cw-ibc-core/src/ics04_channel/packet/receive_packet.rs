@@ -139,7 +139,6 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn receive_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
-
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {

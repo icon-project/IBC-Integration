@@ -1,3 +1,5 @@
+use cosmwasm_std::{QueryRequest, WasmQuery};
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -11,6 +13,27 @@ impl<'a> CwIbcCoreContext<'a> {
         self.client_state(deps.storage, &message.client_id_on_a)?;
 
         let client_id = ClientId::from(message.client_id_on_a.clone());
+
+        let lightclient_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
+
+        let query_message = cw_common::client_msg::QueryMsg::GetClientState {
+            client_id: client_id.as_str().to_string(),
+        };
+
+        let query = QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: lightclient_address,
+            msg: to_binary(&query_message).map_err(ContractError::Std)?,
+        });
+
+        let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
+
+        if response.is_empty() {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::ClientNotFound {
+                    client_id: message.client_id_on_a,
+                },
+            });
+        }
 
         self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
 
