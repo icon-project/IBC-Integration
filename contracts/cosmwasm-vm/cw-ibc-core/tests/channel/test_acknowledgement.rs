@@ -272,8 +272,12 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.sender,
+        funds: info.funds,
+    };
     let packet_data = PacketDataResponse {
-        message_info: info,
+        message_info,
         packet: packet_repsone,
         signer: msg.signer.clone(),
 
@@ -322,8 +326,13 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.sender,
+        funds: info.funds,
+    };
+
     let packet_data = PacketDataResponse {
-        message_info: info,
+        message_info,
         packet: packet_repsone,
         signer: msg.signer.clone(),
 

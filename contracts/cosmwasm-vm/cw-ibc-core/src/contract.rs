@@ -28,31 +28,38 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg,
+        msg: CoreExecuteMsg,
     ) -> Result<Response, ContractError> {
         match msg {
-            ExecuteMsg::RegisterClient {
+            CoreExecuteMsg::RegisterClient {
                 client_type,
                 client_address,
             } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())
-                    .unwrap();
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let client_type = ClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
-            ExecuteMsg::CreateClient {
+            CoreExecuteMsg::CreateClient {
                 client_state,
                 consensus_state,
                 signer,
             } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())
-                    .unwrap();
-
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let client_state = ClientState::try_from(client_state.as_slice())
                     .map_err(|error| ContractError::IbcClientError { error })?;
 
                 let consensus_state = ConsensusState::try_from(consensus_state)
                     .map_err(|error| ContractError::IbcClientError { error })?;
+
+                let signer =
+                    String::from_utf8(signer).map_err(|error| ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    })?;
+
+                let signer =
+                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    })?;
                 let msg = MsgCreateClient {
                     client_state: client_state.into(),
                     consensus_state: consensus_state.into(),
@@ -60,15 +67,22 @@ impl<'a> CwIbcCoreContext<'a> {
                 };
                 self.create_client(deps, info, msg)
             }
-
-            ExecuteMsg::UpdateClient {
+            CoreExecuteMsg::UpdateClient {
                 client_id,
                 header,
                 signer,
             } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())
-                    .unwrap();
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let header = SignedHeader::try_from(header).map_err(|error| error)?;
+                let signer =
+                    String::from_utf8(signer).map_err(|error| ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    })?;
+
+                let signer =
+                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    })?;
                 let msg = MsgUpdateClient {
                     client_id: IbcClientId::from_str(&client_id).map_err(|error| {
                         ContractError::IbcDecodeError {
@@ -80,204 +94,116 @@ impl<'a> CwIbcCoreContext<'a> {
                 };
                 self.update_client(deps, info, msg)
             }
-            ExecuteMsg::UpgradeClient {} => todo!(),
-            ExecuteMsg::ClientMisbehaviour {} => todo!(),
-            ExecuteMsg::ConnectionOpenInit {
-                client_id_on_a,
-                counterparty,
-                version,
-                delay_period,
-                signer,
-            } => {
-                let msg = MsgConnectionOpenInit {
-                    client_id_on_a: IbcClientId::from_str(&client_id_on_a).map_err(|error| {
+            CoreExecuteMsg::UpgradeClient {} => {
+                unimplemented!()
+            }
+            CoreExecuteMsg::ClientMisbehaviour {} => {
+                unimplemented!()
+            }
+            CoreExecuteMsg::ConnectionOpenInit { msg } => {
+                let raw_data: RawMsgConnectionOpenInit =
+                    Message::decode(msg.as_slice()).map_err(|error| {
                         ContractError::IbcDecodeError {
                             error: error.to_string(),
                         }
-                    })?,
-                    counterparty,
-                    version,
-                    delay_period,
-                    signer,
-                };
+                    })?;
 
-                self.connection_open_init(deps, msg)
+                let message = MsgConnectionOpenInit::try_from(raw_data).unwrap();
+                self.connection_open_init(deps, message)
             }
-            ExecuteMsg::ConnectionOpenTry { msg } => {
-                let message : ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry= msg.try_into().unwrap();
+            CoreExecuteMsg::ConnectionOpenTry { msg } => {
+                let raw_data: RawMsgConnectionOpenTry =
+                    Message::decode(msg.as_slice()).map_err(|error| {
+                        ContractError::IbcDecodeError {
+                            error: error.to_string(),
+                        }
+                    })?;
 
+                let message = MsgConnectionOpenTry::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcConnectionError { error })?;
                 self.connection_open_try(deps, info, message)
             }
+            CoreExecuteMsg::ConnectionOpenAck { msg } => {
+                let raw_data: RawMsgConnectionOpenAck =
+                    Message::decode(msg.as_slice()).map_err(|error| {
+                        ContractError::IbcDecodeError {
+                            error: error.to_string(),
+                        }
+                    })?;
 
-            ExecuteMsg::ConnectionOpenAck {
-                conn_id_on_a,
-                conn_id_on_b,
-                client_state_of_a_on_b,
-                proof_conn_end_on_b,
-                proof_client_state_of_a_on_b,
-                proof_consensus_state_of_a_on_b,
-                proofs_height_on_b,
-                consensus_height_of_a_on_b,
-                version,
-                signer,
-            } => {
-                let client_state_of_a_on_b =
-                    ClientState::try_from(client_state_of_a_on_b.as_slice()).unwrap();
-                let message = MsgConnectionOpenAck {
-                    conn_id_on_a: IbcConnectionId::from_str(conn_id_on_a.as_str()).map_err(
-                        |error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        },
-                    )?,
-                    conn_id_on_b: IbcConnectionId::from_str(conn_id_on_b.as_str()).map_err(
-                        |error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        },
-                    )?,
-                    client_state_of_a_on_b: client_state_of_a_on_b.into(),
-                    proof_conn_end_on_b: CommitmentProofBytes::try_from(proof_conn_end_on_b)
-                        .map_err(|error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        })?,
-                    proof_client_state_of_a_on_b: CommitmentProofBytes::try_from(
-                        proof_client_state_of_a_on_b,
-                    )
-                    .map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?,
-                    proof_consensus_state_of_a_on_b: CommitmentProofBytes::try_from(
-                        proof_consensus_state_of_a_on_b,
-                    )
-                    .map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?,
-                    proofs_height_on_b,
-                    consensus_height_of_a_on_b,
-                    version,
-                    signer,
-                };
-
+                let message = MsgConnectionOpenAck::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcConnectionError { error })?;
                 self.connection_open_ack(deps, info, message)
             }
-            ExecuteMsg::ConnectionOpenConfirm {
-                conn_id_on_b,
-                proof_conn_end_on_a,
-                proof_height_on_a,
-                signer,
-            } => {
-                let message = MsgConnectionOpenConfirm {
-                    conn_id_on_b: IbcConnectionId::from_str(conn_id_on_b.as_str()).map_err(
-                        |error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        },
-                    )?,
-                    proof_conn_end_on_a: CommitmentProofBytes::try_from(proof_conn_end_on_a)
-                        .map_err(|error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        })?,
-                    proof_height_on_a,
-                    signer,
-                };
+            CoreExecuteMsg::ConnectionOpenConfirm { msg } => {
+                let raw_data: RawMsgConnectionOpenConfirm = Message::decode(msg.as_slice())
+                    .map_err(|error| ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    })?;
+
+                let message = MsgConnectionOpenConfirm::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcConnectionError { error })?;
                 self.connection_open_confirm(deps, info, message)
             }
-            ExecuteMsg::ChannelOpenInit {
-                port_id_on_a,
-                connection_hops_on_a,
-                port_id_on_b,
-                ordering,
-                signer,
-                version_proposal,
-            } => {
-                let message = MsgChannelOpenInit {
-                    port_id_on_a: IbcPortId::from_str(&port_id_on_a).map_err(|error| {
+            CoreExecuteMsg::ChannelOpenInit { msg } => {
+                let raw_data: RawMsgChannelOpenInit =
+                    Message::decode(msg.as_slice()).map_err(|error| {
                         ContractError::IbcDecodeError {
                             error: error.to_string(),
                         }
-                    })?,
-                    connection_hops_on_a,
-                    port_id_on_b: IbcPortId::from_str(&port_id_on_b).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?,
-                    ordering,
-                    signer,
-                    version_proposal,
-                };
+                    })?;
+
+                let message = MsgChannelOpenInit::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcChannelError { error })?;
                 self.validate_channel_open_init(deps, info, &message)
             }
-            ExecuteMsg::ChannelOpenTry { msg } => {
-                let message: MsgChannelOpenTry = MsgChannelOpenTry::try_from(msg)
+            CoreExecuteMsg::ChannelOpenTry { msg } => {
+                let raw_data: RawMsgChannelOpenTry =
+                    Message::decode(msg.as_slice()).map_err(|error| {
+                        ContractError::IbcDecodeError {
+                            error: error.to_string(),
+                        }
+                    })?;
+                let message = MsgChannelOpenTry::try_from(raw_data)
                     .map_err(|error| ContractError::IbcChannelError { error })?;
                 self.validate_channel_open_try(deps, info, &message)
             }
-            ExecuteMsg::ChannelOpenAck {
-                port_id_on_a,
-                chan_id_on_a,
-                chan_id_on_b,
-                version_on_b,
-                proof_chan_end_on_b,
-                proof_height_on_b,
-                signer,
-            } => {
-                let message = MsgChannelOpenAck {
-                    port_id_on_a: IbcPortId::from_str(&port_id_on_a).map_err(|error| {
+            CoreExecuteMsg::ChannelOpenAck { msg } => {
+                let raw_data: RawMsgChannelOpenAck =
+                    Message::decode(msg.as_slice()).map_err(|error| {
                         ContractError::IbcDecodeError {
                             error: error.to_string(),
                         }
-                    })?,
-                    chan_id_on_a: IbcChannelId::from_str(&chan_id_on_a).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?,
-                    chan_id_on_b: IbcChannelId::from_str(&chan_id_on_b).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?,
-                    version_on_b,
-                    proof_chan_end_on_b: CommitmentProofBytes::try_from(proof_chan_end_on_b)
-                        .map_err(|error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        })?,
-                    proof_height_on_b,
-                    signer,
-                };
+                    })?;
+                let message = MsgChannelOpenAck::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcChannelError { error })?;
                 self.validate_channel_open_ack(deps, info, &message)
             }
-            ExecuteMsg::ChannelOpenConfirm {
-                port_id_on_b,
-                chan_id_on_b,
-                proof_chan_end_on_a,
-                proof_height_on_a,
-                signer,
-            } => {
-                let message = MsgChannelOpenConfirm {
-                    port_id_on_b: IbcPortId::from_str(&port_id_on_b).map_err(|error| {
+            CoreExecuteMsg::ChannelOpenConfirm { msg } => {
+                let raw_data: RawMsgChannelOpenConfirm =
+                    Message::decode(msg.as_slice()).map_err(|error| {
                         ContractError::IbcDecodeError {
                             error: error.to_string(),
                         }
-                    })?,
-                    chan_id_on_b: IbcChannelId::from_str(&chan_id_on_b).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?,
-                    proof_chan_end_on_a: CommitmentProofBytes::try_from(proof_chan_end_on_a)
-                        .map_err(|error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        })?,
-                    proof_height_on_a,
-                    signer,
-                };
+                    })?;
+                let message = MsgChannelOpenConfirm::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcChannelError { error })?;
                 self.validate_channel_open_confirm(deps, info, &message)
             }
-            ExecuteMsg::ChannelCloseInit {
+            CoreExecuteMsg::ChannelCloseInit {
                 port_id_on_a,
                 chan_id_on_a,
                 signer,
             } => {
+                let signer =
+                    String::from_utf8(signer).map_err(|error| ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    })?;
+
+                let signer =
+                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    })?;
                 let message = MsgChannelCloseInit {
                     port_id_on_a: IbcPortId::from_str(&port_id_on_a).map_err(|error| {
                         ContractError::IbcDecodeError {
@@ -294,107 +220,67 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 self.validate_channel_close_init(deps, info, &message)
             }
-            ExecuteMsg::ChannelCloseConfirm {
-                port_id_on_b,
-                chan_id_on_b,
-                proof_chan_end_on_a,
-                proof_height_on_a,
-                signer,
-            } => {
-                let message = MsgChannelCloseConfirm {
-                    port_id_on_b: IbcPortId::from_str(&port_id_on_b).map_err(|error| {
+            CoreExecuteMsg::ChannelCloseConfirm { msg } => {
+                let raw_data: RawMsgChannelCloseConfirm =
+                    Message::decode(msg.as_slice()).map_err(|error| {
                         ContractError::IbcDecodeError {
                             error: error.to_string(),
                         }
-                    })?,
-                    chan_id_on_b: IbcChannelId::from_str(&chan_id_on_b).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?,
-                    proof_chan_end_on_a: CommitmentProofBytes::try_from(proof_chan_end_on_a)
-                        .map_err(|error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        })?,
-                    proof_height_on_a,
-                    signer,
-                };
+                    })?;
+
+                let message = MsgChannelCloseConfirm::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcChannelError { error })?;
 
                 self.validate_channel_close_confirm(deps, info, &message)
             }
-            ExecuteMsg::SendPacket { packet } => self.send_packet(deps, packet),
-            ExecuteMsg::RequestTimeout {} => todo!(),
-
-            ExecuteMsg::BindPort { port_id, address } => {
-                let port_id = IbcPortId::from_str(&port_id).map_err(|error| {
+            CoreExecuteMsg::SendPacket { packet } => {
+                let packet: RawPacket = Message::decode(packet.as_slice()).map_err(|error| {
                     ContractError::IbcDecodeError {
                         error: error.to_string(),
                     }
                 })?;
-                self.bind_port(deps.storage, &port_id, address)
+
+                let data: Packet = Packet::try_from(packet)
+                    .map_err(|error| ContractError::IbcPacketError { error })?;
+
+                self.send_packet(deps, data)
             }
-            ExecuteMsg::SetExpectedTimePerBlock { block_time } => {
-                self.set_expected_time_per_block(deps.storage, block_time)?;
-                Ok(Response::new()
-                    .add_attribute("method", "set_expected_time_per_block")
-                    .add_attribute("time", block_time.to_string()))
-            }
-            ExecuteMsg::ReceivePacket {
-                packet,
-                proof_commitment_on_a,
-                proof_height_on_a,
-                signer,
-            } => {
-                let message = MsgRecvPacket {
-                    packet,
-                    proof_commitment_on_a: CommitmentProofBytes::try_from(proof_commitment_on_a)
-                        .map_err(|error| ContractError::IbcDecodeError {
+            CoreExecuteMsg::ReceivePacket { msg } => {
+                let raw_data: RawMessageRecvPacket =
+                    Message::decode(msg.as_slice()).map_err(|error| {
+                        ContractError::IbcDecodeError {
                             error: error.to_string(),
-                        })?,
-                    proof_height_on_a,
-                    signer,
-                };
+                        }
+                    })?;
+
+                let message = MsgRecvPacket::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcPacketError { error })?;
 
                 self.validate_receive_packet(deps, info, &message)
             }
-            ExecuteMsg::AcknowledgementPacket {
-                packet,
-                acknowledgement,
-                proof_acked_on_b,
-                proof_height_on_b,
-                signer,
-            } => {
-                let message = MsgAcknowledgement {
-                    packet,
-                    acknowledgement,
-                    proof_acked_on_b: CommitmentProofBytes::try_from(proof_acked_on_b).map_err(
-                        |error| ContractError::IbcDecodeError {
+            CoreExecuteMsg::AcknowledgementPacket { msg } => {
+                let raw_data: RawMessageAcknowledgement =
+                    Message::decode(msg.as_slice()).map_err(|error| {
+                        ContractError::IbcDecodeError {
                             error: error.to_string(),
-                        },
-                    )?,
-                    proof_height_on_b,
-                    signer,
-                };
+                        }
+                    })?;
 
+                let message = MsgAcknowledgement::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcPacketError { error })?;
                 self.acknowledgement_packet_validate(deps, info, &message)
             }
-            ExecuteMsg::Timeout {
-                packet,
-                next_seq_recv_on_b,
-                proof_unreceived_on_b,
-                proof_height_on_b,
-                signer,
-            } => {
-                let message = MsgTimeout {
-                    packet,
-                    next_seq_recv_on_b: next_seq_recv_on_b.into(),
-                    proof_unreceived_on_b: CommitmentProofBytes::try_from(proof_unreceived_on_b)
-                        .map_err(|error| ContractError::IbcDecodeError {
+            CoreExecuteMsg::RequestTimeout {} => todo!(),
+            CoreExecuteMsg::Timeout { msg } => {
+                let raw_data: RawMessageTimeout =
+                    Message::decode(msg.as_slice()).map_err(|error| {
+                        ContractError::IbcDecodeError {
                             error: error.to_string(),
-                        })?,
-                    proof_height_on_b,
-                    signer,
-                };
+                        }
+                    })?;
+
+                let message = MsgTimeout::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcPacketError { error })?;
 
                 self.timeout_packet_validate(
                     deps,
@@ -402,38 +288,39 @@ impl<'a> CwIbcCoreContext<'a> {
                     cw_common::types::TimeoutMsgType::Timeout(message),
                 )
             }
-            ExecuteMsg::TimeoutOnClose {
-                packet,
-                next_seq_recv_on_b,
-                proof_unreceived_on_b,
-                proof_close_on_b,
-                proof_height_on_b,
-                signer,
-            } => {
-                let message = MsgTimeoutOnClose {
-                    packet,
-                    next_seq_recv_on_b: next_seq_recv_on_b.into(),
-                    proof_unreceived_on_b: CommitmentProofBytes::try_from(proof_unreceived_on_b)
-                        .map_err(|error| ContractError::IbcDecodeError {
+            CoreExecuteMsg::TimeoutOnClose { msg } => {
+                let raw_data: RawMessageTimeoutOnclose =
+                    Message::decode(msg.as_slice()).map_err(|error| {
+                        ContractError::IbcDecodeError {
                             error: error.to_string(),
-                        })?,
-                    proof_close_on_b: CommitmentProofBytes::try_from(proof_close_on_b).map_err(
-                        |error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        },
-                    )?,
-                    proof_height_on_b,
-                    signer,
-                };
+                        }
+                    })?;
+
+                let message = MsgTimeoutOnClose::try_from(raw_data)
+                    .map_err(|error| ContractError::IbcPacketError { error })?;
+
                 self.timeout_packet_validate(
                     deps,
                     info,
                     cw_common::types::TimeoutMsgType::TimeoutOnClose(message),
                 )
             }
+            CoreExecuteMsg::BindPort { port_id, address } => {
+                let port_id = IbcPortId::from_str(&port_id).map_err(|error| {
+                    ContractError::IbcDecodeError {
+                        error: error.to_string(),
+                    }
+                })?;
+                self.bind_port(deps.storage, &port_id, address)
+            }
+            CoreExecuteMsg::SetExpectedTimePerBlock { block_time } => {
+                self.set_expected_time_per_block(deps.storage, block_time)?;
+                Ok(Response::new()
+                    .add_attribute("method", "set_expected_time_per_block")
+                    .add_attribute("time", block_time.to_string()))
+            }
         }
     }
-
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         todo!()
     }

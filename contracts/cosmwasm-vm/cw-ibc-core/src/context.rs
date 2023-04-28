@@ -1,5 +1,3 @@
-use cosmwasm_std::Coin;
-
 use super::*;
 pub struct CwIbcCoreContext<'a> {
     block_height: Item<'a, u64>,

@@ -1,5 +1,5 @@
 use super::*;
-
+use cosmwasm_std::{Addr, Coin};
 #[cw_serde]
 pub struct VerifyChannelState {
     pub proof_height: String,
@@ -501,4 +501,10 @@ impl Address {
 pub enum Ack {
     Result(Binary),
     Error(String),
+}
+
+#[cw_serde]
+pub struct MessageInfo {
+    pub sender: Addr,
+    pub funds: Vec<Coin>,
 }

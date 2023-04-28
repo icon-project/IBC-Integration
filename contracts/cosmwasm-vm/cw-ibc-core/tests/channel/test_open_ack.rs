@@ -256,8 +256,13 @@ fn test_execute_open_ack_from_light_client() {
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
 
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.clone().sender,
+        funds: info.clone().funds,
+    };
+
     let expected_data = LightClientResponse {
-        message_info: info.clone(),
+        message_info,
         ibc_endpoint: cosmwasm_std::IbcEndpoint {
             port_id: PortId::from(msg.port_id_on_a.clone()).to_string(),
             channel_id: channel_id_on_b.clone().to_string(),

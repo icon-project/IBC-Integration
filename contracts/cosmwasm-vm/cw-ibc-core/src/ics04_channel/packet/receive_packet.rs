@@ -100,7 +100,7 @@ impl<'a> CwIbcCoreContext<'a> {
             packet.clone(),
             msg.signer.clone(),
             None,
-            MessageInfo {
+            cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
             },

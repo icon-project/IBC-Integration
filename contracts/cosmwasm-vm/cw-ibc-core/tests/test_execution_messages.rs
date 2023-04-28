@@ -1,20 +1,19 @@
 pub mod setup;
 
-use std::any::Any;
-
 use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
-use cw_ibc_core::ics02_client::types::BtpHeader;
-use cw_ibc_core::ics02_client::types::MerkleNode;
+
 use cw_ibc_core::ics02_client::types::SignedHeader;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::types::{ClientState, ConsensusState},
-    msg::{ExecuteMsg, InstantiateMsg},
+    msg::InstantiateMsg,
 };
+
+use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 
 use setup::*;
 
@@ -53,7 +52,7 @@ fn test_for_create_client_execution_message() {
             deps.as_mut(),
             env.clone(),
             info.clone(),
-            ExecuteMsg::RegisterClient {
+            CoreExecuteMsg::RegisterClient {
                 client_type: "iconclient".to_string(),
                 client_address: Addr::unchecked("lightclientaddress"),
             },
@@ -62,10 +61,10 @@ fn test_for_create_client_execution_message() {
 
     assert_eq!(response.attributes[0].value, "register_client");
 
-    let create_client_message = ExecuteMsg::CreateClient {
+    let create_client_message = CoreExecuteMsg::CreateClient {
         client_state: client_state.clone().try_into().unwrap(),
         consensus_state: consenus_state.clone().try_into().unwrap(),
-        signer: "raw_message".parse().unwrap(),
+        signer: "raw_message".as_bytes().into(),
     };
 
     let response = contract
@@ -114,7 +113,7 @@ fn test_for_update_client_execution_messages() {
             deps.as_mut(),
             env.clone(),
             info.clone(),
-            ExecuteMsg::RegisterClient {
+            CoreExecuteMsg::RegisterClient {
                 client_type: "iconclient".to_string(),
                 client_address: Addr::unchecked("lightclientaddress"),
             },
@@ -200,10 +199,10 @@ fn test_for_update_client_execution_messages() {
     .try_into()
     .unwrap();
 
-    let message = ExecuteMsg::UpdateClient {
+    let message = CoreExecuteMsg::UpdateClient {
         client_id: "iconclient-0".to_string(),
         header: signed_header.try_into().unwrap(),
-        signer: "signeraddress".to_string().parse().unwrap(),
+        signer: "signeraddress".to_string().as_bytes().into(),
     };
 
     let response = contract

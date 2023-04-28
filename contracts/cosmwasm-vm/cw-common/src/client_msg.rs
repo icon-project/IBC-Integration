@@ -1,6 +1,5 @@
 use super::*;
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::MessageInfo;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -140,9 +139,7 @@ impl VerifyClientConsensusState {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[serde(deny_unknown_fields, rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     CreateClient {
         client_id: String,

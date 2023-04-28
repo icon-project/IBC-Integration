@@ -184,12 +184,16 @@ fn test_receive_packet_validate_reply_from_light_client() {
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.sender,
+        funds: info.funds,
+    };
 
     let data = PacketDataResponse {
         packet: packet_repsone,
         signer: msg.signer,
         acknowledgement: None,
-        message_info: info,
+        message_info,
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -259,11 +263,16 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
 
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.sender,
+        funds: info.funds,
+    };
+
     let data = PacketDataResponse {
         packet: packet_repsone,
         signer: msg.signer,
         acknowledgement: None,
-        message_info: info,
+        message_info,
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {

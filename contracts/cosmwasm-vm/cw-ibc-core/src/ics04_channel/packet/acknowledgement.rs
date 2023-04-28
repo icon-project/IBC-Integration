@@ -110,7 +110,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let funds = self.update_fee(info.funds.clone(), fee)?;
         let data = PacketData {
-            message_info: MessageInfo {
+            message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
             },

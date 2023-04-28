@@ -48,7 +48,6 @@ pub use ibc::core::ics04_channel::msgs::{
     chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
 };
 use ibc::core::ics05_port::error::PortError;
-use ibc::core::ics23_commitment::commitment::CommitmentProofBytes;
 use ibc::core::ics24_host::error::ValidationError;
 pub use ibc::{
     core::{
@@ -66,16 +65,40 @@ pub use ibc::{
     },
     Height,
 };
+
+use cw_common::RawPacket;
+use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
+use ibc::{core::ics04_channel::packet::Packet, signer::Signer};
+
+use ibc_proto::ibc::core::{
+    channel::v1::{
+        MsgAcknowledgement as RawMessageAcknowledgement,
+        MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
+        MsgChannelOpenAck as RawMsgChannelOpenAck,
+        MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
+        MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
+        MsgRecvPacket as RawMessageRecvPacket, MsgTimeout as RawMessageTimeout,
+        MsgTimeoutOnClose as RawMessageTimeoutOnclose,
+    },
+    connection::v1::{
+        MsgConnectionOpenAck as RawMsgConnectionOpenAck,
+        MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm,
+        MsgConnectionOpenInit as RawMsgConnectionOpenInit,
+        MsgConnectionOpenTry as RawMsgConnectionOpenTry,
+    },
+};
 pub use ics24_host::commitment::*;
+use prost::Message;
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{InstantiateMsg, QueryMsg};
 use crate::traits::{IbcClient, ValidateChannel};
 use crate::{
     ics02_client::types::{ClientState, ConsensusState, SignedHeader},
     traits::ExecuteChannel,
 };
+use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -94,7 +117,7 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: msg::ExecuteMsg,
+    msg: CoreExecuteMsg,
 ) -> Result<Response, ContractError> {
     let mut call_service = CwIbcCoreContext::default();
 

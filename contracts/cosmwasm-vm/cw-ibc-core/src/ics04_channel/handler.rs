@@ -169,7 +169,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let create_client_message = LightClientMessage::VerifyChannel {
-            message_info: MessageInfo {
+            message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
             },
@@ -264,7 +264,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
-            message_info: MessageInfo {
+            message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
             },
@@ -377,7 +377,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
-            message_info: MessageInfo {
+            message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
             },
@@ -528,7 +528,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
-            message_info: MessageInfo {
+            message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
             },
