@@ -5,7 +5,7 @@ use cw_common::client_msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 fn main() {
     write_api! {
         instantiate: InstantiateMsg,
-        // execute: ExecuteMsg,
+        execute: ExecuteMsg,
         query: QueryMsg,
     }
 }
