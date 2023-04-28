@@ -66,3 +66,4 @@ pub use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use serde::{Deserialize, Serialize};
 pub mod core_msg;
 use core_msg::*;
+pub use prost::Message as ProstMessage;

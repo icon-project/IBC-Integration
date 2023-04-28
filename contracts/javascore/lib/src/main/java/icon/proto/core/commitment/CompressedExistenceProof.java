@@ -12,7 +12,7 @@ public class CompressedExistenceProof extends ProtoMessage {
 
   private byte[] value = new byte[0];
 
-  private LeafOp leaf;
+  private LeafOp leaf = new LeafOp();
 
   private List<BigInteger> path = new ArrayList<>();
 

@@ -20,7 +20,7 @@ public class Packet extends ProtoMessage {
 
   private byte[] data = new byte[0];
 
-  private Height timeoutHeight = new icon.proto.core.client.Height();
+  private Height timeoutHeight = new Height();
 
   private BigInteger timeoutTimestamp = BigInteger.ZERO;
 
@@ -148,7 +148,7 @@ public class Packet extends ProtoMessage {
         case 7: {
             Proto.DecodeResponse<byte[]> resp = Proto.decodeBytes(data, index);
             index = resp.index;
-            obj.timeoutHeight = icon.proto.core.client.Height.decode(resp.res);
+            obj.timeoutHeight = Height.decode(resp.res);
             break;
         }
         case 8: {

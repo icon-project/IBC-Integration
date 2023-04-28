@@ -10,11 +10,10 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        _msg: InstantiateMsg,
+        msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-        self.init(deps, info)
+        self.init(deps.storage, info, msg)
     }
 
     pub fn execute(
@@ -35,7 +34,7 @@ impl<'a> CwCallService<'a> {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
             ExecuteMsg::SendCallMessage { to, data, rollback } => {
-                self.send_packet(env, deps, info, to, data, rollback)
+                self.send_packet(deps, info, to, data, rollback)
             }
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {
@@ -92,17 +91,27 @@ impl<'a> CwCallService<'a> {
 }
 
 impl<'a> CwCallService<'a> {
-    fn init(&self, deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
+    fn init(
+        &self,
+        store: &mut dyn Storage,
+        info: MessageInfo,
+        msg: InstantiateMsg,
+    ) -> Result<Response, ContractError> {
         let last_sequence_no = u128::default();
         let last_request_id = u128::default();
         let owner = Address::from(info.sender.as_str());
 
-        self.add_owner(deps.storage, owner.clone())?;
-        self.add_admin(deps.storage, info, owner)?;
-        self.init_last_sequence_no(deps.storage, last_sequence_no)?;
-        self.init_last_request_id(deps.storage, last_request_id)?;
+        self.add_owner(store, owner.clone())?;
+        self.add_admin(store, info, owner)?;
+        self.init_last_sequence_no(store, last_sequence_no)?;
+        self.init_last_request_id(store, last_request_id)?;
+        self.set_timeout_height(store, msg.timeout_height)?;
+        self.set_ibc_host(store, msg.ibc_host.clone())?;
 
-        Ok(Response::new())
+        Ok(Response::new()
+            .add_attribute("action", "instantiate")
+            .add_attribute("method", "init")
+            .add_attribute("ibc_host", msg.ibc_host))
     }
 
     fn reply_execute_rollback(&self, deps: Deps, msg: Reply) -> Result<Response, ContractError> {

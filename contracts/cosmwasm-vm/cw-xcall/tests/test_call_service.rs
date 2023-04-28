@@ -1,6 +1,9 @@
 mod account;
 mod setup;
-use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::{
+    testing::{mock_env, MOCK_CONTRACT_ADDR},
+    Addr,
+};
 
 use cw_xcall::{instantiate, msg::InstantiateMsg, state::CwCallService};
 use setup::*;
@@ -13,7 +16,16 @@ fn proper_instantiate() {
     let env = mock_env();
     let store = CwCallService::default();
 
-    let res = instantiate(mock_deps.as_mut(), env, mock_info, InstantiateMsg {}).unwrap();
+    let res = instantiate(
+        mock_deps.as_mut(),
+        env,
+        mock_info,
+        InstantiateMsg {
+            timeout_height: 10,
+            ibc_host: Addr::unchecked("someaddress"),
+        },
+    )
+    .unwrap();
 
     assert_eq!(res.messages.len(), 0);
 
