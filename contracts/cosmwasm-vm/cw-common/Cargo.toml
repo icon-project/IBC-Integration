@@ -16,5 +16,7 @@ serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 cw-storage-plus = "1.0.1"
 hex = { version = "0.4.3", default-features = false}
 common = { path="../../../libraries/rust/common" }
+ibc-proto = { version = "0.26.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
+
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}

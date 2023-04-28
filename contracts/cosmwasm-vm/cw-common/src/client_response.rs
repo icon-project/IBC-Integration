@@ -1,16 +1,4 @@
 use super::*;
-use crate::errors::CwErrors;
-use crate::types::{ClientId, ClientType};
-use cosmwasm_schema::cw_serde;
-
-use ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement;
-use ibc::core::ics04_channel::packet::Packet;
-use ibc::core::ics04_channel::timeout::TimeoutHeight;
-use ibc::signer::Signer;
-use ibc::timestamp::Timestamp;
-use serde::Deserialize;
-use serde::Serialize;
-use std::str::FromStr;
 #[cw_serde]
 pub struct CreateClientResponse {
     client_type: String,
@@ -197,6 +185,7 @@ impl From<PacketResponse> for Packet {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PacketDataResponse {
+    pub message_info: MessageInfo,
     pub packet: PacketResponse,
     pub signer: Signer,
     pub acknowledgement: Option<Acknowledgement>,
@@ -256,4 +245,10 @@ pub struct OpenAckResponse {
 pub struct XcallPacketResponseData {
     pub packet: IbcPacket,
     pub acknowledgement: Vec<u8>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LightClientResponse {
+    pub message_info: MessageInfo,
+    pub ibc_endpoint: IbcEndpoint,
 }

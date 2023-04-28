@@ -72,12 +72,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         // Generate event for calling on channel open init in x-call
         let sub_message = on_chan_open_init_submessage(message, &channel_id_on_a, &connection_id);
-        let data = cw_xcall::msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
+        let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_init = create_channel_submesssage(
             contract_address.to_string(),
             data,
-            &info,
+            info.funds,
             EXECUTE_ON_CHANNEL_OPEN_INIT,
         );
 
@@ -164,7 +164,15 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_a = self.channel_path(&port_id_on_a, &chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
 
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
+
         let create_client_message = LightClientMessage::VerifyChannel {
+            message_info: cw_common::types::MessageInfo {
+                sender: info.sender,
+                funds,
+            },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_a.to_string(),
                 counterparty_prefix: prefix_on_a.clone().into_vec(),
@@ -187,7 +195,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
             EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT,
-        );
+        )
+        .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
         Ok(Response::new()
             .add_attribute("action", "Light client channel open try call")
@@ -251,7 +260,14 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         );
         let chan_end_path_on_b = self.channel_path(port_id_on_b, &message.chan_id_on_b);
         let vector = to_vec(&expected_chan_end_on_b);
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
+            message_info: cw_common::types::MessageInfo {
+                sender: info.sender,
+                funds,
+            },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_b.to_string(),
                 counterparty_prefix: prefix_on_b.clone().into_vec(),
@@ -272,7 +288,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT,
-        );
+        )
+        .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
         chan_end_on_a.set_version(message.version_on_b.clone());
         chan_end_on_a.set_counterparty_channel_id(message.chan_id_on_b.clone());
@@ -355,7 +372,15 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_a = self.channel_path(port_id_on_a, chan_id_on_a);
 
         let vector = to_vec(&expected_chan_end_on_a);
+
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
+            message_info: cw_common::types::MessageInfo {
+                sender: info.sender,
+                funds,
+            },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_a.to_string(),
                 counterparty_prefix: prefix_on_a.clone().into_vec(),
@@ -376,7 +401,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT,
-        );
+        )
+        .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
         Ok(Response::new()
             .add_attribute("action", "light_client_channel_open_confirm_call")
@@ -418,12 +444,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         };
 
         let sub_message = on_chan_close_init_submessage(message, &chan_end_on_a, &connection_id);
-        let data = cw_xcall::msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
+        let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_close_init = create_channel_submesssage(
             contract_address.to_string(),
             data,
-            &info,
+            info.funds,
             EXECUTE_ON_CHANNEL_CLOSE_INIT,
         );
 
@@ -498,7 +524,14 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         );
         let chan_end_path_on_a = self.channel_path(port_id_on_a, chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
+            message_info: cw_common::types::MessageInfo {
+                sender: info.sender,
+                funds,
+            },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_a.to_string(),
                 counterparty_prefix: prefix_on_a.clone().into_vec(),
@@ -519,7 +552,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
             EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT,
-        );
+        )
+        .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
         Ok(Response::new()
             .add_attribute("action", "light_client_channel_close_confirm_call")

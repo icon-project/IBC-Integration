@@ -5,7 +5,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        msg: &MsgTimeoutOnClose,
+        msg: MsgTimeoutOnClose,
     ) -> Result<Response, ContractError> {
         let packet = &msg.packet.clone();
         let chan_end_on_a = self.get_channel_end(
@@ -112,10 +112,19 @@ impl<'a> CwIbcCoreContext<'a> {
             counterparty_chan_end_path: chan_end_path_on_b,
             expected_counterparty_channel_end: vector.unwrap(),
         };
+
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
+
         let data = PacketData {
             packet: msg.packet.clone(),
             signer: msg.signer.clone(),
             acknowledgement: None,
+            message_info: cw_common::types::MessageInfo {
+                sender: info.sender.clone(),
+                funds,
+            },
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
@@ -177,7 +186,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
             VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT,
-        );
+        )
+        .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
         Ok(Response::new()
             .add_attribute("action", "Light client packet timeout call")

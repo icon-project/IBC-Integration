@@ -92,7 +92,19 @@ impl<'a> CwIbcCoreContext<'a> {
             conn_end_on_b.clone(),
         )?;
 
-        let packet_data = PacketData::new(packet.clone(), msg.signer.clone(), None);
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
+
+        let packet_data = PacketData::new(
+            packet.clone(),
+            msg.signer.clone(),
+            None,
+            cw_common::types::MessageInfo {
+                sender: info.sender,
+                funds,
+            },
+        );
         let packet_data = to_vec(&packet_data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
         })?;
@@ -127,7 +139,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn receive_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
+
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -138,6 +150,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             error: e.to_string(),
                         }
                     })?;
+                    let info = packet_data.message_info;
                     let packet = Packet::from(packet_data.packet.clone());
 
                     let chan_end_on_b = self.get_channel_end(
@@ -230,7 +243,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         timeout,
                     );
                     let address = Addr::unchecked(packet_data.signer.to_string());
-                    let cosm_msg = cw_xcall::msg::ExecuteMsg::IbcPacketReceive {
+                    let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketReceive {
                         msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
                     };
                     let create_client_message: CosmosMsg =
@@ -356,13 +369,13 @@ impl<'a> CwIbcCoreContext<'a> {
                             }
                             _ => {}
                         }
-                        let acknowledgement: cw_xcall::ack::Ack = from_binary(&ack.into())
+                        let acknowledgement: cw_common::types::Ack = from_binary(&ack.into())
                             .map_err(|e| ContractError::IbcDecodeError {
                                 error: e.to_string(),
                             })?;
                         let acknowledgement = match acknowledgement {
-                            cw_xcall::ack::Ack::Result(binary) => binary,
-                            cw_xcall::ack::Ack::Error(e) => {
+                            cw_common::types::Ack::Result(binary) => binary,
+                            cw_common::types::Ack::Error(e) => {
                                 return Err(ContractError::IbcPacketError {
                                     error: PacketError::AppModule { description: e },
                                 })

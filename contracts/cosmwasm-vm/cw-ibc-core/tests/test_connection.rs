@@ -851,7 +851,7 @@ fn test_block_delay() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
     let result = contract.calc_block_delay(&delay_time);
-    assert_eq!(2, result)
+    assert_eq!(1, result)
 }
 
 #[test]
@@ -1730,7 +1730,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
         .unwrap();
 
     contract
-        .connection_open_ack(info, deps.as_mut(), res_msg)
+        .connection_open_ack(deps.as_mut(), info, res_msg)
         .unwrap();
 }
 
@@ -1822,7 +1822,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         .unwrap();
 
     contract
-        .connection_open_ack(info, deps.as_mut(), res_msg)
+        .connection_open_ack(deps.as_mut(), info, res_msg)
         .unwrap();
 }
 

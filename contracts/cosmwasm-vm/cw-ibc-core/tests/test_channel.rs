@@ -982,12 +982,12 @@ fn test_validate_open_init_channel() {
 
     let channel_id_expect = ChannelId::new(0);
     let expected = on_chan_open_init_submessage(&msg, &channel_id_expect, &conn_id);
-    let data = cw_xcall::msg::ExecuteMsg::IbcChannelOpen { msg: expected };
+    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
         data,
-        &info,
+        info.funds,
         EXECUTE_ON_CHANNEL_OPEN_INIT,
     );
 
@@ -1050,7 +1050,7 @@ fn test_validate_open_try_channel_fail_missing_connection_end() {
 fn test_validate_open_try_channel() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
     let mut msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());

@@ -22,6 +22,7 @@ use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
 pub use constants::*;
 use context::CwIbcCoreContext;
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Coin;
 use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
     StdResult, Storage,
@@ -38,6 +39,9 @@ use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 use ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
 use ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
 use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
+use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
+use ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
+use ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 pub use ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
@@ -61,17 +65,40 @@ pub use ibc::{
     },
     Height,
 };
+
+use cw_common::RawPacket;
+use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
+use ibc::{core::ics04_channel::packet::Packet, signer::Signer};
+
+use ibc_proto::ibc::core::{
+    channel::v1::{
+        MsgAcknowledgement as RawMessageAcknowledgement,
+        MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
+        MsgChannelOpenAck as RawMsgChannelOpenAck,
+        MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
+        MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
+        MsgRecvPacket as RawMessageRecvPacket, MsgTimeout as RawMessageTimeout,
+        MsgTimeoutOnClose as RawMessageTimeoutOnclose,
+    },
+    connection::v1::{
+        MsgConnectionOpenAck as RawMsgConnectionOpenAck,
+        MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm,
+        MsgConnectionOpenInit as RawMsgConnectionOpenInit,
+        MsgConnectionOpenTry as RawMsgConnectionOpenTry,
+    },
+};
 pub use ics24_host::commitment::*;
+use prost::Message;
 use std::str::FromStr;
 use thiserror::Error;
 
-use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
-use ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
-use ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
-use ibc::core::ics23_commitment::commitment::CommitmentProofBytes;
-
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{InstantiateMsg, QueryMsg};
 use crate::traits::{IbcClient, ValidateChannel};
+use crate::{
+    ics02_client::types::{ClientState, ConsensusState, SignedHeader},
+    traits::ExecuteChannel,
+};
+use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -90,7 +117,7 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: msg::ExecuteMsg,
+    msg: CoreExecuteMsg,
 ) -> Result<Response, ContractError> {
     let mut call_service = CwIbcCoreContext::default();
 
