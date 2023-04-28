@@ -82,8 +82,9 @@ impl<'a> CwIbcCoreContext<'a> {
     }
     pub fn connection_open_ack(
         &self,
-        info: MessageInfo,
+
         deps: DepsMut,
+        info: MessageInfo,
         msg: MsgConnectionOpenAck,
     ) -> Result<Response, ContractError> {
         let host_height = self
@@ -292,9 +293,9 @@ impl<'a> CwIbcCoreContext<'a> {
     }
     pub fn connection_open_try(
         &self,
-        message: MsgConnectionOpenTry,
         deps: DepsMut,
         info: MessageInfo,
+        message: MsgConnectionOpenTry,
     ) -> Result<Response, ContractError> {
         //TODO validate
 
@@ -496,9 +497,9 @@ impl<'a> CwIbcCoreContext<'a> {
     }
     pub fn connection_open_confirm(
         &self,
-        msg: MsgConnectionOpenConfirm,
         deps: DepsMut,
         info: MessageInfo,
+        msg: MsgConnectionOpenConfirm,
     ) -> Result<Response, ContractError> {
         let conn_end_on_b = self.connection_end(deps.storage, msg.conn_id_on_b.clone().into())?;
         let client_id_on_b = conn_end_on_b.client_id();

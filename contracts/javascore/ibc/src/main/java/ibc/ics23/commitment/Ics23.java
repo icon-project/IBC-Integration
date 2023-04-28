@@ -24,7 +24,7 @@ public class Ics23 {
 
     public static void verifyNonMembership(ProofSpec spec, byte[] commitmentRoot, CommitmentProof proof, byte[] key) {
         var decoProof = Compress.decompress(proof);
-        var nonProof = getNonExistProofForKey(decoProof, key);
+        var nonProof = getNonExistProofForKey(spec, decoProof, key);
         if (nonProof == null) {
             throw new UserRevertedException("getNonExistProofForKey not available");
         }
@@ -40,7 +40,7 @@ public class Ics23 {
             List<BatchEntry> proofBatchEntries = proof.getBatch().getEntries();
             for (BatchEntry proofBatchEntry : proofBatchEntries) {
                 ExistenceProof existenceProof = proofBatchEntry.getExist();
-                if (existenceProof != null && Arrays.equals(existenceProof.getKey(), key)) {
+                if (!isExistenceProofEmpty(existenceProof) && Arrays.equals(existenceProof.getKey(), key)) {
                     return existenceProof;
                 }
             }
@@ -48,10 +48,10 @@ public class Ics23 {
         return null;
     }
 
-    private static NonExistenceProof getNonExistProofForKey(CommitmentProof proof, byte[] key) {
+    private static NonExistenceProof getNonExistProofForKey(ProofSpec spec, CommitmentProof proof, byte[] key) {
         NonExistenceProof nonExistenceProof = proof.getNonexist();
         if (!isNonExistenceProofEmpty(nonExistenceProof)) {
-            if (isLeft(nonExistenceProof.getLeft(), key) && isRight(nonExistenceProof.getRight(), key)) {
+            if (isLeft(spec, nonExistenceProof.getLeft(), key) && isRight(spec, nonExistenceProof.getRight(), key)) {
                 return nonExistenceProof;
             }
         } else if (!isBatchProofEmpty(proof.getBatch())) {
@@ -59,8 +59,8 @@ public class Ics23 {
             for (BatchEntry proofBatchEntry : proofBatchEntries) {
                 NonExistenceProof batchNonExistenceProof = proofBatchEntry.getNonexist();
                 if (!isNonExistenceProofEmpty(batchNonExistenceProof)
-                        && isLeft(batchNonExistenceProof.getLeft(), key)
-                        && isRight(batchNonExistenceProof.getRight(), key)) {
+                        && isLeft(spec, batchNonExistenceProof.getLeft(), key)
+                        && isRight(spec, batchNonExistenceProof.getRight(), key)) {
                     return batchNonExistenceProof;
                 }
             }
@@ -68,12 +68,12 @@ public class Ics23 {
         return null;
     }
 
-    private static boolean isLeft(ExistenceProof left, byte[] key) {
-        return isExistenceProofEmpty(left) || Ops.compare(left.getKey(), key) < 0;
+    private static boolean isLeft(ProofSpec spec, ExistenceProof left, byte[] key) {
+        return isExistenceProofEmpty(left) || Ops.compare(keyForComparison(spec, left.getKey()), keyForComparison(spec, key)) < 0;
     }
 
-    private static boolean isRight(ExistenceProof right, byte[] key) {
-        return isExistenceProofEmpty(right) || Ops.compare(right.getKey(), key) > 0;
+    private static boolean isRight(ProofSpec spec, ExistenceProof right, byte[] key) {
+        return isExistenceProofEmpty(right) || Ops.compare(keyForComparison(spec, right.getKey()), keyForComparison(spec, key)) > 0;
     }
 
     public static CommitmentProof combineProofs(List<CommitmentProof> proofs) {

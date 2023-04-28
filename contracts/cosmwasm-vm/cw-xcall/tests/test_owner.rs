@@ -1,9 +1,9 @@
 mod account;
 mod setup;
 use account::*;
-use cw_xcall::{state::CwCallService, types::address::Address};
+use cw_common::types::Address;
+use cw_xcall::state::CwCallService;
 use setup::*;
-
 #[test]
 fn add_owner() {
     let mut mock_deps = deps();

@@ -105,7 +105,16 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn calc_block_delay(&self, delay_period_time: &Duration) -> u64 {
-        let delay = calculate_block_delay(delay_period_time, &self.max_expected_time_per_block());
+        let max_expected_time_per_block = self.max_expected_time_per_block();
+
+        if max_expected_time_per_block.is_zero() {
+            return 0;
+        }
+
+        let delay = delay_period_time
+            .as_secs()
+            .checked_div(max_expected_time_per_block.as_secs())
+            .unwrap();
 
         delay_period_time
             .checked_add(Duration::from_secs(delay))

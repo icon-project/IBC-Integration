@@ -3,34 +3,55 @@ use super::*;
 impl<'a> CwCallService<'a> {
     pub fn send_packet(
         &self,
-        env: Env,
         deps: DepsMut,
         info: MessageInfo,
         to: String,
         data: Vec<u8>,
-        rollback: Vec<u8>,
-        time_out_height: u64,
+        rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),
-            &rollback,
+            rollback.clone(),
         )?;
+        let need_response = !rollback.is_none();
+        let rollback_data = rollback.unwrap();
 
         self.ensure_data_length(data.len())?;
-        self.ensure_rollback_length(&rollback)?;
+        self.ensure_rollback_length(&rollback_data)?;
 
         // TODO : ADD fee logic
 
-        let need_response = !rollback.is_empty();
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
+        let ibc_host = self.get_host(deps.as_ref().storage)?;
+
+        let ibc_config = self
+            .ibc_config()
+            .may_load(deps.as_ref().storage)
+            .unwrap()
+            .unwrap();
+
+        let query_message = cw_common::core_msg::QueryMsg::SequenceSend {
+            port_id: ibc_config.src_endpoint().clone().port_id,
+            channel_id: ibc_config.src_endpoint().clone().channel_id,
+        };
+
+        let query_request = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+            contract_addr: ibc_host.to_string(),
+            msg: to_binary(&query_message).map_err(ContractError::Std)?,
+        });
+
+        let sequence_number_host: u64 = deps
+            .querier
+            .query(&query_request)
+            .map_err(ContractError::Std)?;
 
         if need_response {
             let request = CallRequest::new(
                 Address::from(&from_address),
                 to.clone(),
-                rollback.clone(),
+                rollback_data.clone(),
                 need_response,
             );
 
@@ -41,23 +62,79 @@ impl<'a> CwCallService<'a> {
             Address::from(info.sender.as_str()),
             to,
             sequence_no,
-            rollback.to_vec(),
+            rollback_data.to_vec(),
             data.to_vec(),
         );
 
         let message: CallServiceMessage = call_request.into();
-        let packet = self.create_request_packet(deps, env, time_out_height, message.clone())?;
+        let timeout_height = self.get_timeout_height(deps.as_ref().storage)?;
 
-        let event = event_xcall_message_sent(sequence_no, info.sender.to_string(), 0, &message);
+        let event = event_xcall_message_sent(
+            sequence_number_host,
+            info.sender.to_string(),
+            sequence_no,
+            &message,
+        );
 
-        Ok(Response::new()
-            .add_message(packet)
-            .add_attribute("action", "xcall-service")
-            .add_attribute("method", "send_packet")
-            .add_event(event))
+        #[cfg(feature = "native_ibc")]
+        {
+            let packet = self.create_request_packet(deps, env, timeout_height, message.clone())?;
+
+            let submessage: SubMsg<Empty> =
+                SubMsg::reply_always(CosmosMsg::Ibc(packet), SEND_CALL_MESSAGE_REPLY_ID);
+
+            return Ok(Response::new()
+                .add_submessage(submessage)
+                .add_attribute("action", "xcall-service")
+                .add_attribute("method", "send_packet")
+                .add_event(event));
+        }
+
+        #[cfg(not(feature = "native_ibc"))]
+        {
+            let height =
+                Height::new(0, timeout_height).map_err(|error| ContractError::DecodeFailed {
+                    error: error.to_string(),
+                })?;
+
+            let packet_data = cw_common::RawPacket {
+                sequence: sequence_number_host,
+                source_port: ibc_config.src_endpoint().clone().port_id,
+                source_channel: ibc_config.src_endpoint().clone().channel_id,
+                destination_port: ibc_config.dst_endpoint().clone().port_id,
+                destination_channel: ibc_config.dst_endpoint().clone().channel_id,
+                data: to_vec(&message).map_err(|error| ContractError::DecodeFailed {
+                    error: error.to_string(),
+                })?,
+                timeout_height: Some(height.into()),
+                timeout_timestamp: 0,
+            };
+
+            let message = cw_common::core_msg::ExecuteMsg::SendPacket {
+                packet: packet_data.encode_to_vec(),
+            };
+
+            let submessage = SubMsg {
+                id: SEND_CALL_MESSAGE_REPLY_ID,
+                msg: CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: ibc_host.to_string(),
+                    msg: to_binary(&message).map_err(ContractError::Std)?,
+                    funds: info.funds,
+                }),
+                gas_limit: None,
+                reply_on: cosmwasm_std::ReplyOn::Always,
+            };
+
+            Ok(Response::new()
+                .add_submessage(submessage)
+                .add_attribute("action", "xcall-service")
+                .add_attribute("method", "send_packet")
+                .add_event(event))
+        }
     }
 }
 
+#[cfg(feature = "native_ibc")]
 impl<'a> CwCallService<'a> {
     fn create_request_packet(
         &self,

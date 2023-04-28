@@ -24,7 +24,7 @@ public class ProofTest {
             byte[] res = null;
             Throwable err = null;
             try {
-                res = calculateRoot(testCase.proof);
+                res = calculateRoot(testCase.proof, null);
             } catch (Throwable t) {
                 err = t;
             }

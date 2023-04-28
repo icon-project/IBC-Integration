@@ -152,11 +152,15 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     contract
         .add_route(&mut deps.storage, module_id.clone().into(), &module)
         .unwrap();
-
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.sender,
+        funds: info.funds,
+    };
     let data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer,
         acknowledgement: None,
+        message_info,
     };
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
@@ -166,8 +170,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let message = Reply { id: 0, result };
 
-    let res =
-        contract.timeout_packet_validate_reply_from_light_client(deps.as_mut(), info, message);
+    let res = contract.timeout_packet_validate_reply_from_light_client(deps.as_mut(), message);
     println!("{:?}", res);
 }
 
@@ -178,11 +181,17 @@ fn test_packet_data() {
     let timeout_timestamp = 0;
     let default_raw_msg =
         get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
+    let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = MsgTimeout::try_from(default_raw_msg).unwrap();
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.sender,
+        funds: info.funds,
+    };
     let packet_data = PacketData {
         packet: msg.packet.clone(),
         signer: msg.signer.clone(),
         acknowledgement: None,
+        message_info,
     };
     let bin = to_binary(&packet_data);
     let data = from_binary::<PacketDataResponse>(&bin.unwrap());
@@ -195,7 +204,7 @@ fn test_packet_data() {
 fn test_timeout_packet_validate_to_light_client() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let proof_height = 50;
     let timeout_height = proof_height;
@@ -306,7 +315,7 @@ fn test_timeout_packet_validate_to_light_client() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
-    let res = contract.timeout_packet_validate_to_light_client(deps.as_mut(), info, &msg);
+    let res = contract.timeout_packet_validate_to_light_client(deps.as_mut(), info, msg);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 54)
+    assert_eq!(res.unwrap().messages[0].id, 541)
 }

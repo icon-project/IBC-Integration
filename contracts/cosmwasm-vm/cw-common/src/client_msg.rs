@@ -174,6 +174,7 @@ pub enum ExecuteMsg {
         proof_upgrade_consensus_state: Vec<u8>,
     },
     VerifyChannel {
+        message_info: MessageInfo,
         verify_channel_state: VerifyChannelState,
     },
     Misbehaviour {

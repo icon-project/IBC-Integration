@@ -105,7 +105,15 @@ impl<'a> CwIbcCoreContext<'a> {
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;
+
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
         let data = PacketData {
+            message_info: cw_common::types::MessageInfo {
+                sender: info.sender,
+                funds,
+            },
             packet: msg.packet.clone(),
             signer: msg.signer.clone(),
             acknowledgement: Some(msg.acknowledgement.clone()),
@@ -149,7 +157,6 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn acknowledgement_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -160,6 +167,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             error: e.to_string(),
                         }
                     })?;
+                    let info = packet_data.message_info;
                     let packet = Packet::from(packet_data.packet.clone());
                     let acknowledgement = match packet_data.acknowledgement {
                         Some(ack) => ack,
@@ -219,7 +227,9 @@ impl<'a> CwIbcCoreContext<'a> {
                     );
                     let address = Addr::unchecked(packet_data.signer.to_string());
                     let ack = IbcAcknowledgement::new(acknowledgement.as_bytes());
-                    let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
+                    let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketAck {
+                        msg: cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address),
+                    };
                     let create_client_message: CosmosMsg =
                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                             contract_addr: contract_address.to_string(),

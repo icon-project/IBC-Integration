@@ -72,13 +72,15 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn execute_open_ack_from_light_client_reply(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
+
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let response = from_binary::<LightClientResponse>(&res).unwrap();
+                    let info = response.message_info;
+                    let data = response.ibc_endpoint;
                     let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
                     let channel_id =
                         ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
@@ -103,12 +105,13 @@ impl<'a> CwIbcCoreContext<'a> {
                         &channel_id,
                         &channel_end.connection_hops[0].clone().into(),
                     )?;
-                    let data = cw_xcall::msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
+                    let data =
+                        cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
                     let data = to_binary(&data).unwrap();
                     let on_chan_open_try = create_channel_submesssage(
                         contract_address.to_string(),
                         data,
-                        &info,
+                        info.funds,
                         EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
                     );
 

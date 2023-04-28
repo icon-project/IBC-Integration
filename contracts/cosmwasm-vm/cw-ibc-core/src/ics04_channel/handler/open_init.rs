@@ -1,3 +1,5 @@
+use cosmwasm_std::Coin;
+
 use super::*;
 
 pub fn on_chan_open_init_submessage(
@@ -32,15 +34,16 @@ pub fn on_chan_open_init_submessage(
 pub fn create_channel_submesssage(
     address: String,
     msg: Binary,
-    fund: &MessageInfo,
+    funds: Vec<Coin>,
     id: u64,
 ) -> SubMsg {
     let on_channel: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: address,
         msg,
-        funds: fund.funds.clone(),
+        funds,
     });
-    let sub_msg: SubMsg = SubMsg::reply_on_success(on_channel, id);
+    let sub_msg: SubMsg =
+        SubMsg::reply_on_success(on_channel, id).with_gas_limit(GAS_FOR_SUBMESSAGE_XCALL);
 
     sub_msg
 }

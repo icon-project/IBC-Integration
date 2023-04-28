@@ -16,9 +16,9 @@ pub mod owner;
 pub mod requests;
 pub mod state;
 pub mod types;
-
+use crate::ack::{on_ack_failure, on_ack_sucess};
 use crate::{
-    ack::{make_ack_fail, make_ack_success, Ack},
+    ack::{make_ack_fail, make_ack_success},
     check::{check_order, check_version},
     error::ContractError,
     events::{
@@ -26,10 +26,12 @@ use crate::{
         event_rollback_message, event_xcall_message_sent,
     },
     ibc::{APP_ORDER, IBC_VERSION},
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    state::{CwCallService, IbcConfig, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
+    msg::{InstantiateMsg, QueryMsg},
+    state::{
+        CwCallService, IbcConfig, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID,
+        SEND_CALL_MESSAGE_REPLY_ID,
+    },
     types::{
-        address::Address,
         call_request::CallRequest,
         message::{CallServiceMessage, CallServiceMessageType},
         request::CallServiceMessageRequest,
@@ -44,11 +46,15 @@ use cosmwasm_std::{
     CosmosMsg, Deps, DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse,
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse,
     IbcEndpoint, IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Never,
-    QuerierWrapper, Reply, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, MessageInfo, Never, QuerierWrapper, Reply,
+    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
 };
-
+use cosmwasm_std::{to_vec, QueryRequest};
 use cw2::set_contract_version;
+use cw_common::types::{Ack, Address};
+use cw_common::xcall_msg::ExecuteMsg;
+use cw_common::Height;
+use cw_common::ProstMessage;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use schemars::_serde_json::to_string;

@@ -22,6 +22,7 @@ pub enum StorageKey {
     BlockHeight,
     Capabilities,
     PacketReceipts,
+    Owner,
 }
 
 impl StorageKey {
@@ -46,6 +47,7 @@ impl StorageKey {
             StorageKey::BlockHeight => "block_height",
             StorageKey::Capabilities => "capabilities",
             StorageKey::PacketReceipts => "packet_receipts",
+            StorageKey::Owner => "owner",
         }
     }
 }

@@ -21,8 +21,8 @@ use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
 use cw_ibc_core::ics03_connection::event::create_open_try_event;
 
+use cw_common::IbcClientId;
 use cw_ibc_core::ConnectionEnd;
-use cw_ibc_core::IbcClientId;
 use ibc::core::ics03_connection::connection::Counterparty;
 use ibc::core::ics03_connection::connection::State;
 use ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
@@ -647,7 +647,7 @@ fn connection_open_ack_validate_fail() {
         .unwrap();
 
     contract
-        .connection_open_ack(info, deps.as_mut(), res_msg)
+        .connection_open_ack(deps.as_mut(), info, res_msg)
         .unwrap();
 }
 
@@ -737,7 +737,7 @@ fn connection_open_ack_validate() {
         )
         .unwrap();
 
-    let res = contract.connection_open_ack(info, deps.as_mut(), res_msg);
+    let res = contract.connection_open_ack(deps.as_mut(), info, res_msg);
     assert_eq!(res.is_ok(), true)
 }
 
@@ -851,7 +851,7 @@ fn test_block_delay() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
     let result = contract.calc_block_delay(&delay_time);
-    assert_eq!(2, result)
+    assert_eq!(1, result)
 }
 
 #[test]
@@ -987,7 +987,7 @@ fn connection_open_try_validate() {
         )
         .unwrap();
 
-    let res = contract.connection_open_try(res_msg, deps.as_mut(), info);
+    let res = contract.connection_open_try(deps.as_mut(), info, res_msg);
     assert_eq!(res.is_ok(), true);
 }
 
@@ -1048,7 +1048,7 @@ fn open_try_validate_fails() {
         .unwrap();
 
     contract
-        .connection_open_try(res_msg, deps.as_mut(), info)
+        .connection_open_try(deps.as_mut(), info, res_msg)
         .unwrap();
 }
 #[test]
@@ -1140,7 +1140,7 @@ fn connection_open_confirm_validate() {
         )
         .unwrap();
 
-    let res = contract.connection_open_confirm(res_msg, deps.as_mut(), info);
+    let res = contract.connection_open_confirm(deps.as_mut(), info, res_msg);
     assert_eq!(res.is_ok(), true)
 }
 
@@ -1342,7 +1342,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         .unwrap();
 
     contract
-        .connection_open_confirm(res_msg, deps.as_mut(), info)
+        .connection_open_confirm(deps.as_mut(), info, res_msg)
         .unwrap();
 }
 
@@ -1730,7 +1730,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
         .unwrap();
 
     contract
-        .connection_open_ack(info, deps.as_mut(), res_msg)
+        .connection_open_ack(deps.as_mut(), info, res_msg)
         .unwrap();
 }
 
@@ -1822,7 +1822,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         .unwrap();
 
     contract
-        .connection_open_ack(info, deps.as_mut(), res_msg)
+        .connection_open_ack(deps.as_mut(), info, res_msg)
         .unwrap();
 }
 
