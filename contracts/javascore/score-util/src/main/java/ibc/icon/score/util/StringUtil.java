@@ -16,6 +16,7 @@
 
 package ibc.icon.score.util;
 
+import score.UserRevertedException;
 import scorex.util.ArrayList;
 import scorex.util.StringTokenizer;
 
@@ -152,4 +153,27 @@ public class StringUtil {
         }
         return result.toString().getBytes();
     }
+
+    public static String decodeURL(String str) {
+        byte[] bytes = str.getBytes();
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            byte b = bytes[i];
+            if (b == '+') {
+                result.append(' ');
+            } else if (b == '%' && i + 2 < bytes.length) {
+                int hi = Character.digit((char) bytes[++i], 16);
+                int lo = Character.digit((char) bytes[++i], 16);
+                if (hi >= 0 && lo >= 0) {
+                    result.append((char) ((hi << 4) + lo));
+                } else {
+                    throw new UserRevertedException("Invalid hex encoding: " + str.substring(i - 2, i + 1));
+                }
+            } else {
+                result.append((char) b);
+            }
+        }
+        return result.toString();
+    }
+
 }
