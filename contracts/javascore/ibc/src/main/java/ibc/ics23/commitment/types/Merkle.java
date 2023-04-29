@@ -4,6 +4,7 @@ import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.Ics23;
 import ibc.ics23.commitment.Proof;
 import icon.proto.core.commitment.*;
+import icon.proto.clients.tendermint.MerkleRoot;
 import score.UserRevertedException;
 import scorex.util.ArrayList;
 
@@ -153,7 +154,7 @@ public class Merkle {
         }
     }
 
-    private static boolean isMerkleProofEmpty(MerkleProof proof) {
+    public static boolean isMerkleProofEmpty(MerkleProof proof) {
         if (proof == null) {
             return true;
         }
