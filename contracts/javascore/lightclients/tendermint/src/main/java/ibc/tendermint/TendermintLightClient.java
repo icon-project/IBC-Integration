@@ -1,27 +1,27 @@
 package ibc.tendermint;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Map;
-
-import ibc.ics23.commitment.Ics23;
-import ibc.ics23.commitment.Proof;
-import icon.proto.core.commitment.CommitmentProof;
+import ibc.icon.interfaces.ILightClient;
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.NullChecker;
+import ibc.ics23.commitment.types.Merkle;
+import ibc.ics24.host.IBCCommitment;
+import icon.proto.clients.tendermint.*;
+import icon.proto.core.client.Height;
+import icon.proto.core.commitment.MerklePath;
+import icon.proto.core.commitment.MerkleProof;
 import score.Address;
 import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
 import score.annotation.Optional;
-import ibc.icon.interfaces.ILightClient;
-import ibc.icon.score.util.ByteUtil;
-import ibc.icon.score.util.NullChecker;
-import icon.proto.core.client.Height;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Map;
 
 import static ibc.tendermint.TendermintHelper.*;
 import static score.Context.require;
-import icon.proto.clients.tendermint.*;
-import ibc.ics24.host.IBCCommitment;
 
 public class TendermintLightClient extends Tendermint implements ILightClient {
     public final Address ibcHandler;
@@ -94,7 +94,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
      * @dev createClient creates a new client with the given state
      */
     @External
-    public Map<String, byte[]> createClient(String clientId,  byte[] clientStateBytes, byte[] consensusStateBytes, @Optional byte[] _storagePrefix) {
+    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes, @Optional byte[] _storagePrefix) {
         onlyHandler();
         Context.require(clientStates.get(clientId) == null, "Client already exists");
         ClientState clientState = ClientState.decode(clientStateBytes);
@@ -112,7 +112,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 "clientStateCommitment", IBCCommitment.keccak256(clientStateBytes),
                 "consensusStateCommitment", IBCCommitment.keccak256(consensusStateBytes),
                 "height", newHeight(clientState.getLatestHeight()).encode()
-            );
+        );
     }
 
     /**
@@ -167,9 +167,9 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                     BigInteger.valueOf(Context.getBlockTimestamp()));
 
             return Map.of(
-                "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
-                "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
-                "height", newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode()
+                    "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
+                    "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
+                    "height", newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode()
             );
         }
 
@@ -193,7 +193,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
                 "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
                 "height", newHeight(clientState.getLatestHeight()).encode()
-            );
+        );
     }
 
     @External
@@ -219,10 +219,12 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         ConsensusState consensusState = ConsensusState
                 .decode(mustGetConsensusState(clientId, height.getRevisionHeight()));
 
-        byte[] root = consensusState.getRoot().getHash();
+        var root = consensusState.getRoot();
 
-        CommitmentProof commitmentProof = CommitmentProof.decode(proof);
-        Ics23.verifyMembership(Proof.getTendermintSpec(), root, commitmentProof, path, value);
+        var merkleProof = MerkleProof.decode(proof);
+        //TODO: Fix merkle path decoding
+        var merklePath = MerklePath.decode(path);
+        Merkle.verifyMembership(merkleProof, Merkle.getSDKSpecs(), root, merklePath, value);
     }
 
     @External
@@ -249,8 +251,10 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         byte[] root = consensusState.getRoot().getHash();
 
-        CommitmentProof commitmentProof = CommitmentProof.decode(proof);
-        Ics23.verifyNonMembership(Proof.getTendermintSpec(), root, commitmentProof, path);
+        var merkleProof = MerkleProof.decode(proof);
+        var merklePath = MerklePath.decode(path);
+        Merkle.verifyNonMembership(merkleProof, Merkle.getSDKSpecs(), consensusState.getRoot(), merklePath);
+
     }
 
     // checkValidity checks if the Tendermint header is valid.
@@ -297,15 +301,15 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         Context.require(cs.getLatestHeight().compareTo(height) >= 0,
                 "Latest height must be greater or equal to proof height");
         Context.require(cs.getFrozenHeight().equals(BigInteger.ZERO) ||
-                cs.getFrozenHeight().compareTo(height) >= 0,
+                        cs.getFrozenHeight().compareTo(height) >= 0,
                 "Client is Frozen");
         Context.require(prefix.length > 0, "Prefix cant be empty");
         Context.require(proof.length > 0, "Proof cant be empty");
     }
 
     private void validateDelayPeriod(String clientId, Height height,
-            BigInteger delayPeriodTime,
-            BigInteger delayPeriodBlocks) {
+                                     BigInteger delayPeriodTime,
+                                     BigInteger delayPeriodBlocks) {
         BigInteger currentTime = BigInteger.valueOf(Context.getBlockTimestamp());
         BigInteger validTime = mustGetProcessedTime(clientId,
                 height.getRevisionHeight()).add(delayPeriodTime);
