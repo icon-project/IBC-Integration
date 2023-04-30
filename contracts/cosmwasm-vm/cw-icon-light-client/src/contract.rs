@@ -9,12 +9,13 @@ use cosmwasm_std::{
     from_slice, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
 use cw2::set_contract_version;
-use cw_common::client_response::{CreateClientResponse, PacketDataResponse};
-use cw_common::types::{PacketData, VerifyChannelState, VerifyPacketData};
+use cw_common::client_response::{CreateClientResponse, LightClientResponse, PacketDataResponse};
+use cw_common::types::{PacketData, VerifyChannelState};
 use ibc_proto::google::protobuf::Any;
 
 use crate::constants::{
-    CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT, MEMBERSHIP, NON_MEMBERSHIP,
+    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH,
+    CONSENSUS_STATE_VALID, HEIGHT, MEMBERSHIP, NON_MEMBERSHIP,
 };
 use crate::error::ContractError;
 use crate::light_client::IconClient;
@@ -203,28 +204,72 @@ pub fn execute(
         ExecuteMsg::VerifyOpenConfirm {
             client_id,
             verify_connection_state,
+            expected_response,
         } => {
             let result = validate_connection_state(&client_id, &client, &verify_connection_state)?;
+            let data = to_binary(&expected_response).unwrap();
 
-            Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+            Ok(Response::new()
+                .add_attribute(MEMBERSHIP, result.to_string())
+                .set_data(data))
         }
-        ExecuteMsg::VerifyConnection {
-            client_id,
-            verify_connection_state,
-            verify_client_full_state,
-            verify_client_consensus_state,
+        ExecuteMsg::VerifyConnectionOpenTry(state) => {
+            let connection_valid = validate_connection_state(
+                &state.client_id,
+                &client,
+                &state.verify_connection_state,
+            )?;
+            let client_valid =
+                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
+            let consensus_valid = validate_consensus_state(
+                &state.client_id,
+                &client,
+                &state.verify_client_consensus_state,
+            )?;
+
+            Ok(Response::new()
+                .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
+                .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
+                .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
+                .set_data(to_binary(&state.expected_response).unwrap()))
+        }
+        ExecuteMsg::VerifyConnectionOpenAck(state) => {
+            let connection_valid = validate_connection_state(
+                &state.client_id,
+                &client,
+                &state.verify_connection_state,
+            )?;
+            let client_valid =
+                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
+            let consensus_valid = validate_consensus_state(
+                &state.client_id,
+                &client,
+                &state.verify_client_consensus_state,
+            )?;
+
+            Ok(Response::new()
+                .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
+                .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
+                .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
+                .set_data(to_binary(&state.expected_response).unwrap()))
+        }
+
+        ExecuteMsg::VerifyChannel {
+            verify_channel_state,
+            message_info,
+            endpoint,
         } => {
-            let mut result =
-                validate_connection_state(&client_id, &client, &verify_connection_state)?;
-            result = validate_client_state(&client_id, &client, &verify_client_full_state)?;
-            result = validate_consensus_state(&client_id, &client, &verify_client_consensus_state)?;
-            Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
-        }
-
-        ExecuteMsg::VerifyChannel {verify_channel_state, message_info } => {
             // fix once we receive client id
             let result = validate_channel_state("", &client, &verify_channel_state)?;
-            Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+
+            let data = to_binary(&LightClientResponse {
+                message_info,
+                ibc_endpoint: endpoint,
+            })
+            .unwrap();
+            Ok(Response::new()
+                .add_attribute(MEMBERSHIP, result.to_string())
+                .set_data(data))
         }
         ExecuteMsg::TimeoutOnCLose {
             client_id,
@@ -234,21 +279,25 @@ pub fn execute(
             let is_channel_valid =
                 validate_channel_state(&client_id, &client, &verify_channel_state)?;
             let _sequence_valid =
-                validate_next_seq_recv(&client, &client_id, next_seq_recv_verification_result)?;
-            Ok(Response::new().add_attribute(MEMBERSHIP, is_channel_valid.to_string()))
+                validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
+            let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
+
+            Ok(Response::new()
+                .add_attribute(MEMBERSHIP, is_channel_valid.to_string())
+                .set_data(to_binary(&packet_res).unwrap()))
         }
         ExecuteMsg::Misbehaviour {
-            client_id,
-            misbehaviour,
+            client_id: _,
+            misbehaviour: _,
         } => {
             todo!()
         }
 
         ExecuteMsg::UpgradeClient {
-            upgraded_client_state,
-            upgraded_consensus_state,
-            proof_upgrade_client,
-            proof_upgrade_consensus_state,
+            upgraded_client_state: _,
+            upgraded_consensus_state: _,
+            proof_upgrade_client: _,
+            proof_upgrade_consensus_state: _,
         } => {
             todo!()
         }
@@ -260,8 +309,8 @@ pub fn validate_channel_state(
     client: &IconClient,
     state: &VerifyChannelState,
 ) -> Result<bool, ContractError> {
-    let proofs_decoded =
-        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e.to_string()))?;
+    let proofs_decoded = MerkleProofs::decode(state.proof.as_slice())
+        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -280,8 +329,8 @@ pub fn validate_connection_state(
     client: &IconClient,
     state: &VerifyConnectionState,
 ) -> Result<bool, ContractError> {
-    let proofs_decoded =
-        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e.to_string()))?;
+    let proofs_decoded = MerkleProofs::decode(state.proof.as_slice())
+        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -338,17 +387,17 @@ pub fn validate_consensus_state(
 pub fn validate_next_seq_recv(
     client: &IconClient,
     client_id: &str,
-    state: LightClientPacketMessage,
+    state: &LightClientPacketMessage,
 ) -> Result<bool, ContractError> {
     let result = match state {
         LightClientPacketMessage::VerifyNextSequenceRecv {
             height,
-            prefix,
+            prefix: _,
             proof,
-            root,
+            root: _,
             seq_recv_path,
             sequence,
-            packet_data,
+            packet_data: _,
         } => {
             let proofs_decoded = MerkleProofs::decode(proof.as_slice())
                 .map_err(|e| ContractError::DecodeError(e.to_string()))?;
@@ -359,18 +408,18 @@ pub fn validate_next_seq_recv(
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &packet_data,
+                &sequence.to_be_bytes().to_vec(),
                 &seq_recv_path,
             )?;
             res
         }
         LightClientPacketMessage::VerifyPacketReceiptAbsence {
             height,
-            prefix,
+            prefix: _,
             proof,
-            root,
+            root: _,
             receipt_path,
-            packet_data,
+            packet_data: _,
         } => {
             let proofs_decoded = MerkleProofs::decode(proof.as_slice())
                 .map_err(|e| ContractError::DecodeError(e.to_string()))?;
@@ -392,13 +441,20 @@ pub fn validate_next_seq_recv(
 fn to_height_u64(height: &str) -> Result<u64, ContractError> {
     let height: u64 = height
         .parse()
-        .map_err(|e| ContractError::FailedToParseHeight(height.to_string()))?;
+        .map_err(|_e| ContractError::FailedToParseHeight(height.to_string()))?;
     Ok(height)
 }
 
 pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
     let any = Any::decode(bytes).map_err(|e| ContractError::DecodeError(e.to_string()))?;
     Ok(any)
+}
+
+pub fn to_packet_response(packet_data: &[u8]) -> Result<Binary, ContractError> {
+    let packet_data: PacketData = from_slice(&packet_data).map_err(|e| ContractError::Std(e))?;
+    let data =
+        to_binary(&PacketDataResponse::from(packet_data)).map_err(|e| ContractError::Std(e))?;
+    Ok(data)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

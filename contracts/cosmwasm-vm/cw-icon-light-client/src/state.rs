@@ -198,13 +198,14 @@ impl QueryHandler {
         client_id: &str,
         height: u64,
     ) -> Result<ConsensusState, ContractError> {
-        let data= CONSENSUS_STATES
+        let data = CONSENSUS_STATES
             .load(storage, (client_id.to_string(), height))
             .map_err(|_e| ContractError::ConsensusStateNotFound {
                 height,
                 client_id: client_id.to_string(),
             })?;
-        let state= ConsensusState::decode(data.as_slice()).map_err(|e|ContractError::DecodeError(e.to_string()))?;
+        let state = ConsensusState::decode(data.as_slice())
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
         Ok(state)
     }
 
@@ -225,13 +226,12 @@ impl QueryHandler {
         storage: &dyn Storage,
         client_id: &str,
     ) -> Result<ClientState, ContractError> {
-        
-       let data= CLIENT_STATES
+        let data = CLIENT_STATES
             .load(storage, client_id.to_string())
             .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
-        let state=ClientState::decode(data.as_slice()).map_err(|e|ContractError::DecodeError(e.to_string()))?;
+        let state = ClientState::decode(data.as_slice())
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
         Ok(state)
-
     }
 
     pub fn get_config(storage: &dyn Storage) -> Result<Config, ContractError> {
@@ -366,7 +366,11 @@ mod tests {
         let client_id = "test_client";
         let client_state = ClientState::default();
         CLIENT_STATES
-            .save(&mut storage, client_id.to_string(), &client_state.encode_to_vec())
+            .save(
+                &mut storage,
+                client_id.to_string(),
+                &client_state.encode_to_vec(),
+            )
             .unwrap();
 
         let result = QueryHandler::get_client_state(&storage, client_id).unwrap();
@@ -400,7 +404,11 @@ mod tests {
         let client_id = "test_client";
         let client_state = ClientState::default();
         CLIENT_STATES
-            .save(&mut storage, client_id.to_string(), &client_state.encode_to_vec())
+            .save(
+                &mut storage,
+                client_id.to_string(),
+                &client_state.encode_to_vec(),
+            )
             .unwrap();
 
         let result = QueryHandler::get_client_state_any(&storage, client_id).unwrap();

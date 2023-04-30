@@ -1,5 +1,5 @@
 use cosmwasm_std::StdError;
-use prost::DecodeError;
+use cw_common::errors::CwErrors;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -59,4 +59,25 @@ pub enum ContractError {
     ClientStateFrozen(u64),
     #[error("Failed Parsing Height {0}")]
     FailedToParseHeight(String),
+
+    #[error("Invalid Client Id {0}")]
+    InvalidClientId(String),
+
+    #[error("Failed To Create ClientId")]
+    FailedToCreateClientId(String),
+}
+
+impl From<CwErrors> for ContractError {
+    fn from(value: CwErrors) -> Self {
+        match value {
+            CwErrors::FailedToCreateClientId {
+                client_type:_,
+                counter:_,
+                validation_error,
+            } => ContractError::FailedToCreateClientId(validation_error.to_string()),
+            CwErrors::InvalidClientId(e, err) => ContractError::InvalidClientId(e),
+            CwErrors::DecodeError { error } => ContractError::DecodeError(error),
+            CwErrors::FailedToConvertToPacketDataResponse(e) => ContractError::Std(e),
+        }
+    }
 }

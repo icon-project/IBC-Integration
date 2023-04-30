@@ -1,3 +1,4 @@
+cargo fmt --all
 RUSTFLAGS='-C link-arg=-s' cargo build --release --lib --target wasm32-unknown-unknown
 for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do
     NAME=$(basename "$WASM" .wasm)${SUFFIX}.wasm

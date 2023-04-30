@@ -1,3 +1,5 @@
+use cw_common::client_msg::VerifyConnectionPayload;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -138,7 +140,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Counterparty::new(
                 client_id_on_a.clone(),
                 Some(msg.conn_id_on_a.clone()),
-                prefix_on_a,
+                prefix_on_a.clone(),
             ),
             vec![msg.version.clone()],
             conn_end_on_a.delay_period(),
@@ -173,12 +175,21 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_path_on_b,
             to_vec(&client_cons_state_path_on_a.clone())?,
         );
-        let client_message = crate::ics04_channel::LightClientMessage::VerifyConnection {
+        let payload = VerifyConnectionPayload::<OpenAckResponse> {
             client_id: client_id_on_a.to_string(),
             verify_connection_state,
             verify_client_full_state,
             verify_client_consensus_state,
+            expected_response: OpenAckResponse {
+                conn_id: msg.conn_id_on_a.to_string(),
+                version: serde_json_wasm::to_vec(&msg.version).unwrap(),
+                counterparty_client_id: client_id_on_a.clone().to_string(),
+                counterparty_connection_id: msg.conn_id_on_a.to_string(),
+                counterparty_prefix: prefix_on_a.as_bytes().to_vec(),
+            },
         };
+        let client_message =
+            crate::ics04_channel::LightClientMessage::VerifyConnectionOpenAck(payload);
 
         let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: client_address,
@@ -343,7 +354,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             })?;
 
-        let connection_path = self.connection_path(&message.counterparty.connection_id.unwrap());
+        let connection_path =
+            self.connection_path(&message.counterparty.connection_id.clone().unwrap());
         let verify_connection_state = VerifyConnectionState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
@@ -372,12 +384,28 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_path_on_a,
             client_consensus_state_path_on_b,
         );
-        let client_message = crate::ics04_channel::LightClientMessage::VerifyConnection {
+        let payload = VerifyConnectionPayload::<OpenTryResponse> {
             client_id: client_id_on_b.ibc_client_id().to_string(),
             verify_connection_state,
             verify_client_full_state,
             verify_client_consensus_state,
+            expected_response: OpenTryResponse {
+                conn_id: "".to_string(),
+                client_id: client_id_on_b.ibc_client_id().to_string(),
+                counterparty_client_id: message.counterparty.client_id().clone().to_string(),
+
+                counterparty_connection_id: message
+                    .counterparty
+                    .connection_id()
+                    .map(|c| c.to_string())
+                    .unwrap_or("".to_string()),
+                counterparty_prefix: message.counterparty.prefix().as_bytes().to_vec(),
+                versions: serde_json_wasm::to_vec(&message.versions_on_a.clone()).unwrap(),
+                delay_period: message.delay_period.as_secs(),
+            },
         };
+        let client_message =
+            crate::ics04_channel::LightClientMessage::VerifyConnectionOpenTry(payload);
 
         let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: client_address,
@@ -539,7 +567,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Counterparty::new(
                 client_id_on_b.clone(),
                 Some(msg.conn_id_on_b.clone()),
-                prefix_on_b,
+                prefix_on_b.clone(),
             ),
             conn_end_on_b.versions().to_vec(),
             conn_end_on_b.delay_period(),
@@ -557,6 +585,12 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_message = crate::ics04_channel::LightClientMessage::VerifyOpenConfirm {
             client_id: client_id_on_b.to_string(),
             verify_connection_state,
+            expected_response: OpenConfirmResponse {
+                conn_id: msg.conn_id_on_b.clone().to_string(),
+                counterparty_client_id: client_id_on_b.to_string(),
+                counterparty_connection_id: msg.conn_id_on_b.clone().to_string(),
+                counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
+            },
         };
 
         let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {

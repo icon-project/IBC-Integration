@@ -1,5 +1,10 @@
+use crate::client_response::{
+    OpenAckResponse, OpenConfirmResponse, OpenTryResponse, PacketDataResponse,
+};
+
 use super::*;
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::from_slice;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -175,19 +180,15 @@ pub enum ExecuteMsg {
     },
     VerifyChannel {
         message_info: MessageInfo,
+        endpoint: IbcEndpoint,
         verify_channel_state: VerifyChannelState,
     },
     Misbehaviour {
         client_id: String,
         misbehaviour: Vec<u8>,
     },
-    VerifyConnection {
-        client_id: String,
-        verify_connection_state: VerifyConnectionState,
-        verify_client_full_state: VerifyClientFullState,
-        verify_client_consensus_state: VerifyClientConsensusState,
-    },
     VerifyOpenConfirm {
+        expected_response: OpenConfirmResponse,
         client_id: String,
         verify_connection_state: VerifyConnectionState,
     },
@@ -206,4 +207,50 @@ pub enum ExecuteMsg {
         verify_packet_acknowledge: VerifyPacketAcknowledgement,
         packet_data: Vec<u8>,
     },
+    VerifyConnectionOpenTry(VerifyConnectionPayload<OpenTryResponse>),
+    VerifyConnectionOpenAck(VerifyConnectionPayload<OpenAckResponse>),
+}
+
+#[cw_serde]
+pub struct VerifyConnectionPayload<T> {
+    pub client_id: String,
+    pub verify_connection_state: VerifyConnectionState,
+    pub verify_client_full_state: VerifyClientFullState,
+    pub verify_client_consensus_state: VerifyClientConsensusState,
+    pub expected_response: T,
+}
+
+impl TryFrom<LightClientPacketMessage> for PacketDataResponse {
+    type Error = CwErrors;
+
+    fn try_from(value: LightClientPacketMessage) -> Result<Self, Self::Error> {
+        let res = match value {
+            LightClientPacketMessage::VerifyNextSequenceRecv {
+                height: _,
+                prefix: _,
+                proof: _,
+                root: _,
+                seq_recv_path: _,
+                sequence: _,
+                packet_data,
+            } => {
+                let packet_data: PacketData = from_slice(&packet_data)
+                    .map_err(|e| CwErrors::FailedToConvertToPacketDataResponse(e))?;
+                PacketDataResponse::from(packet_data)
+            }
+            LightClientPacketMessage::VerifyPacketReceiptAbsence {
+                height: _,
+                prefix: _,
+                proof: _,
+                root: _,
+                receipt_path: _,
+                packet_data,
+            } => {
+                let packet_data: PacketData = from_slice(&packet_data)
+                    .map_err(|e| CwErrors::FailedToConvertToPacketDataResponse(e))?;
+                PacketDataResponse::from(packet_data)
+            }
+        };
+        Ok(res)
+    }
 }

@@ -169,6 +169,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let create_client_message = LightClientMessage::VerifyChannel {
+            endpoint: IbcEndpoint {
+                port_id: port_id_on_a.to_string(),
+                channel_id: chan_id_on_a.to_string(),
+            },
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
@@ -227,6 +231,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
         let client_id_on_a = conn_end_on_a.client_id();
+
         let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &message.proof_height_on_b)?;
@@ -267,6 +272,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
+            },
+            endpoint: IbcEndpoint {
+                port_id: message.port_id_on_a.clone().to_string(),
+                channel_id: message.chan_id_on_a.clone().to_string(),
             },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_b.to_string(),
@@ -380,6 +389,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
+            },
+            endpoint: IbcEndpoint {
+                port_id: message.port_id_on_b.clone().to_string(),
+                channel_id: message.chan_id_on_b.clone().to_string(),
             },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_a.to_string(),
@@ -531,6 +544,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
+            },
+            endpoint: IbcEndpoint {
+                port_id: message.port_id_on_b.clone().to_string(),
+                channel_id: message.chan_id_on_b.clone().to_string(),
             },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_a.to_string(),

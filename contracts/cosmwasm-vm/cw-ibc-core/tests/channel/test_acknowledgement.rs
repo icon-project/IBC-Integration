@@ -1,4 +1,4 @@
-use cw_common::client_response::{LightClientResponse, PacketResponse};
+use cw_common::client_response::PacketResponse;
 
 use super::*;
 

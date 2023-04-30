@@ -5,7 +5,7 @@ use ibc::core::ics02_client::height::Height;
 use ibc::core::ics04_channel::packet::Sequence;
 use ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
 use ibc::core::ics24_host::path::{
-    self, AckPath, ChannelEndPath, ClientConsensusStatePath, ClientStatePath, CommitmentPath,
+    AckPath, ChannelEndPath, ClientConsensusStatePath, ClientStatePath, CommitmentPath,
     ConnectionPath, PortPath, ReceiptPath, SeqRecvPath,
 };
 use ibc_proto::ibc::core::channel::v1::Packet;
@@ -208,7 +208,7 @@ mod tests {
     #[test]
     fn test_packet_commitment() {
         let data = load_test_messages();
-        for (i, msg) in data.iter().enumerate() {
+        for (_i, msg) in data.iter().enumerate() {
             let msg_path = hex::decode(&msg.commitment_path).unwrap();
             let expected_key = keccak256(&msg_path);
             let msg_key = hex::decode(&msg.commitment_key).unwrap();
