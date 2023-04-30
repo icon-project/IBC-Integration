@@ -71,8 +71,8 @@ impl From<CwErrors> for ContractError {
     fn from(value: CwErrors) -> Self {
         match value {
             CwErrors::FailedToCreateClientId {
-                client_type:_,
-                counter:_,
+                client_type: _,
+                counter: _,
                 validation_error,
             } => ContractError::FailedToCreateClientId(validation_error.to_string()),
             CwErrors::InvalidClientId(e, err) => ContractError::InvalidClientId(e),
