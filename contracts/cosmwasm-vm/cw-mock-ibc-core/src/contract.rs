@@ -42,8 +42,8 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::SendPacket { message } => {
-            let message: RawPacket = ProstMessage::decode(message.as_slice())
+        ExecuteMsg::SendPacket { packet } => {
+            let message: RawPacket = ProstMessage::decode(packet.as_slice())
                 .map_err(|_error| ContractError::Unauthorized {})?;
 
             Ok(Response::new()
