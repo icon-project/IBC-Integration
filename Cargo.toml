@@ -6,6 +6,7 @@ members = [
     "contracts/cosmwasm-vm/cw-common",
     "libraries/rust/common",
     "contracts/cosmwasm-vm/cw-mock-dapp",
+    "contracts/cosmwasm-vm/cw-mock-ibc-core",
 ]
 
 [workspace.package]
