@@ -43,14 +43,16 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::SendPacket { message } => {
-            let message: RawPacket = ProstMessage::decode(message.as_slice()).unwrap();
+            let message: RawPacket = ProstMessage::decode(message.as_slice())
+                .map_err(|_error| ContractError::Unauthorized {})?;
 
             Ok(Response::new()
                 .add_attribute("action", "send_packet")
-                .add_attribute("source_channel", message.source_channel)
-                .add_attribute("source_port", message.source_port)
-                .add_attribute("destination_channel", message.destination_channel)
-                .add_attribute("destination_port", message.destination_port))
+                .add_attribute("source_channel", message.clone().source_channel)
+                .add_attribute("source_port", message.clone().source_port)
+                .add_attribute("destination_channel", message.clone().destination_channel)
+                .add_attribute("destination_port", message.clone().destination_port)
+                .set_data(message.encode_to_vec()))
         }
         ExecuteMsg::ReceivePacket { message } => {
             let state = STATE.load(deps.as_ref().storage).unwrap();
