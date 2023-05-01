@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcEndpoint, IbcPacket,
+    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcEndpoint, IbcPacket,
     IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply, Response, StdResult,
     SubMsg, Timestamp,
 };
@@ -21,11 +21,11 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
     let state = State {
-        xcall_address: msg.xcall_address,
+        xcall_address: Addr::unchecked(""),
         owner: info.sender,
         sequence: 0,
     };
@@ -114,6 +114,17 @@ pub fn execute(
             Ok(Response::new()
                 .add_submessage(submessage)
                 .add_attribute("method", "receive_packet"))
+        }
+        ExecuteMsg::RegisterXcall { address } => {
+            STATE
+                .update(deps.storage, |mut data| -> Result<_, ContractError> {
+                    data.xcall_address = address.clone();
+
+                    Ok(data)
+                })
+                .unwrap();
+
+            Ok(Response::new().add_attribute("register_xcall", address.to_string()))
         }
     }
 }
