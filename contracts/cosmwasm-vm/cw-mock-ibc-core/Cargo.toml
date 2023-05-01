@@ -1,7 +1,6 @@
 [package]
 name = "cw-mock-ibc-core"
 version = "0.1.0"
-authors = ["shreyasbhat0 <shreyas.ks@hugobyte.com>"]
 edition = "2021"
 
 exclude = [
