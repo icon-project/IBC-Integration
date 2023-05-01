@@ -52,12 +52,8 @@ use cosmwasm_std::{
 use ibc::core::ics04_channel::timeout::TimeoutHeight;
 use ibc::timestamp::Timestamp;
 use ibc::{
-    core::ics04_channel::{
-        msgs::{
-            acknowledgement::Acknowledgement, timeout::MsgTimeout,
-            timeout_on_close::MsgTimeoutOnClose,
-        },
-        packet::Packet,
+    core::ics04_channel::msgs::{
+        acknowledgement::Acknowledgement, timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose,
     },
     signer::Signer,
 };
@@ -65,4 +61,5 @@ pub use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use serde::{Deserialize, Serialize};
 pub mod core_msg;
 use core_msg::*;
+pub use ibc::core::ics04_channel::packet::Packet;
 pub use prost::Message as ProstMessage;

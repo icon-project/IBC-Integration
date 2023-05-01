@@ -37,23 +37,7 @@ impl<'a> CwMockService<'a> {
             .load(deps.storage)
             .map_err(|_e| ContractError::ModuleAddressNotFound)?;
 
-        let roll_back = match rollback.clone() {
-            Some(data) => {
-                let roll_back = RollbackData {
-                    id: sequence,
-                    rollback: data.clone(),
-                };
-                self.roll_back().save(deps.storage, sequence, &data)?;
-                to_vec(&roll_back).unwrap()
-            }
-            None => vec![],
-        };
-
-        let msg = cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
-            to,
-            data,
-            rollback: Some(roll_back),
-        };
+        let msg = cw_common::xcall_msg::ExecuteMsg::SendCallMessage { to, data, rollback };
         let message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: address,
             msg: to_binary(&msg).unwrap(),

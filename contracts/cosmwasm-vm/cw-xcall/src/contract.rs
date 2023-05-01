@@ -85,7 +85,7 @@ impl<'a> CwCallService<'a> {
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
-                msg: "Unkown".to_string(),
+                msg: "Unknown".to_string(),
             }),
         }
     }
