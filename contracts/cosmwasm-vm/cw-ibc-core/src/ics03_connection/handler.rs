@@ -299,7 +299,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         .unwrap();
 
                     Ok(Response::new()
-                        .add_attribute("method", "execute_connection_open_try")
+                        .add_attribute("method", "execute_connection_open_ack")
                         .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }
@@ -593,7 +593,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         Ok(Response::new()
             .add_submessage(sub_message)
-            .add_attribute("method", "connection_open_ack"))
+            .add_attribute("method", "connection_open_confirm"))
     }
 
     pub fn execute_connection_openconfirm(
@@ -670,7 +670,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         .unwrap();
 
                     Ok(Response::new()
-                        .add_attribute("method", "execute_connection_open_ack")
+                        .add_attribute("method", "execute_connection_open_confirm")
                         .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }
