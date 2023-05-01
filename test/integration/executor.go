@@ -250,6 +250,10 @@ func (e *Executor) contractDeployedByOnlyWhenTheChainIs(contractName, owner, cha
 	return nil
 }
 
-func (e *Executor) weQueryForAdminWalletAddressShouldBeAsAdmin(admin string) error {
+func (e *Executor) aUserQueryForAdmin() error {
+	return nil
+}
+
+func (e *Executor) walletAddressShouldBeAsAdmin(admin string) error {
 	return e.walletAddressShouldBeAddedAsAdmin(admin)
 }

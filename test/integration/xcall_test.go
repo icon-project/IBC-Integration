@@ -37,10 +37,11 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^there are no admin wallets added as admin$`, executor.thereAreNoAdminWalletsAddedAsAdmin)
 			ctx.Step(`^xCall returns an error message that there are no admin wallets added to the xCall smart contract$`, executor.xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTheXCallSmartContract)
 			ctx.Step(`^"([^"]*)" contract deployed by "([^"]*)" only when the chain is "([^"]*)"$`, executor.contractDeployedByOnlyWhenTheChainIs)
-			ctx.Step(`^we query for admin "([^"]*)" wallet address should be as admin$`, executor.weQueryForAdminWalletAddressShouldBeAsAdmin)
+			ctx.Step(`^a user query for admin$`, executor.aUserQueryForAdmin)
+			ctx.Step(`^"([^"]*)" wallet address should be as admin$`, executor.walletAddressShouldBeAsAdmin)
 
 		},
-		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/query.feature"}, TestingT: t, StopOnFailure: false},
+		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},
 	}
 
 	if suite.Run() != 0 {
