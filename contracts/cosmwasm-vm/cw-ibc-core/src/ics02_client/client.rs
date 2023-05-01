@@ -194,7 +194,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<Vec<u8>, ContractError> {
-        let client_key = self.client_state_commitment_key(client_id.ibc_client_id());
+        let client_key = commitment::client_state_commitment_key(client_id.ibc_client_id());
 
         let client_state = self
             .ibc_store()
@@ -217,7 +217,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ContractError> {
-        let client_key = self.client_state_commitment_key(client_id);
+        let client_key = commitment::client_state_commitment_key(client_id);
 
         let client_state_data = self.ibc_store().commitments().load(store, client_key)?;
 
@@ -241,7 +241,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
     ) -> Result<Box<dyn IbcConsensusState>, ContractError> {
-        let consensus_state_key = self.consensus_state_commitment_key(
+        let consensus_state_key = commitment::consensus_state_commitment_key(
             client_id,
             height.revision_number(),
             height.revision_height(),
@@ -337,7 +337,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         client_state: Vec<u8>,
     ) -> Result<(), ContractError> {
-        let client_key = self.client_state_commitment_key(client_id);
+        let client_key = commitment::client_state_commitment_key(client_id);
 
         self.ibc_store()
             .commitments()
@@ -353,7 +353,7 @@ impl<'a> CwIbcCoreContext<'a> {
         height: ibc::Height,
         consensus_state: Vec<u8>,
     ) -> Result<(), ContractError> {
-        let consensus_key = self.consensus_state_commitment_key(
+        let consensus_key = commitment::consensus_state_commitment_key(
             client_id,
             height.revision_number(),
             height.revision_height(),

@@ -78,7 +78,7 @@ impl<'a> CwIbcCoreContext<'a> {
             &packet.port_id_on_a.clone().into(),
             &packet.chan_id_on_a.clone().into(),
             packet.seq_on_a,
-            compute_packet_commitment(
+            commitment::compute_packet_commitment(
                 &packet.data,
                 &packet.timeout_height_on_b,
                 &packet.timeout_timestamp_on_b,

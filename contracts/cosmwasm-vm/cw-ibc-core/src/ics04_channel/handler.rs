@@ -7,7 +7,7 @@ use self::{
     },
     open_try::channel_open_try_msg_validate,
 };
-
+use cw_common::commitment;
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;
@@ -161,7 +161,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             message.version_supported_on_a.clone(),
         );
-        let chan_end_path_on_a = self.channel_path(&port_id_on_a, &chan_id_on_a);
+        let chan_end_path_on_a = commitment::channel_path(&port_id_on_a, &chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
 
         let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
@@ -263,7 +263,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_b.clone()],
             message.version_on_b.clone(),
         );
-        let chan_end_path_on_b = self.channel_path(port_id_on_b, &message.chan_id_on_b);
+        let chan_end_path_on_b = commitment::channel_path(port_id_on_b, &message.chan_id_on_b);
         let vector = to_vec(&expected_chan_end_on_b);
         let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
@@ -378,7 +378,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             chan_end_on_b.version.clone(),
         );
-        let chan_end_path_on_a = self.channel_path(port_id_on_a, chan_id_on_a);
+        let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
 
         let vector = to_vec(&expected_chan_end_on_a);
 
@@ -535,7 +535,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             chan_end_on_b.version().clone(),
         );
-        let chan_end_path_on_a = self.channel_path(port_id_on_a, chan_id_on_a);
+        let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
         let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 

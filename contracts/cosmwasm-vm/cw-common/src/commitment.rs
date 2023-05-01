@@ -2,12 +2,19 @@ use std::str::FromStr;
 
 use common::utils::{keccak256, sha256};
 use ibc::core::ics02_client::height::Height;
+use ibc::core::ics04_channel::commitment::AcknowledgementCommitment;
+use ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement;
 use ibc::core::ics04_channel::packet::Sequence;
 use ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
 use ibc::core::ics24_host::path::{
     AckPath, ChannelEndPath, ClientConsensusStatePath, ClientStatePath, CommitmentPath,
     ConnectionPath, PortPath, ReceiptPath, SeqRecvPath,
 };
+use ibc::{
+    core::ics04_channel::{commitment::PacketCommitment, timeout::TimeoutHeight},
+    timestamp::Timestamp,
+};
+
 use ibc_proto::ibc::core::channel::v1::Packet;
 
 pub trait ICommitment {
@@ -94,6 +101,20 @@ pub fn create_packet_commitment(
 
     sha256(&hash_input).to_vec()
 }
+pub fn compute_packet_commitment(
+    packet_data: &[u8],
+    timeout_height: &TimeoutHeight,
+    timeout_timestamp: &Timestamp,
+) -> PacketCommitment {
+    create_packet_commitment(
+        packet_data,
+        timeout_height.commitment_revision_number(),
+        timeout_height.commitment_revision_height(),
+        timeout_timestamp.nanoseconds(),
+    )
+    .into()
+}
+
 
 pub fn client_state_commitment_key(client_id: &ClientId) -> Vec<u8> {
     commitment_path_hash(&client_state_path(client_id))
@@ -152,6 +173,9 @@ pub fn port_path(port_id: &PortId) -> Vec<u8> {
 
 pub fn port_commitment_key(port_id: &PortId) -> Vec<u8> {
     commitment_path_hash(&port_path(port_id))
+}
+pub fn compute_ack_commitment(ack: &Acknowledgement) -> AcknowledgementCommitment {
+    sha256(ack.as_ref()).into()
 }
 
 impl ICommitment for Packet {

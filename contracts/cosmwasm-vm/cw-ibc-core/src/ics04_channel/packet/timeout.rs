@@ -48,7 +48,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(_) => return Ok(Response::new()),
         };
 
-        let expected_commitment_on_a = compute_packet_commitment(
+        let expected_commitment_on_a = commitment::compute_packet_commitment(
             &msg.packet.data,
             &msg.packet.timeout_height_on_b,
             &msg.packet.timeout_timestamp_on_b,
@@ -122,7 +122,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     },
                 });
             }
-            let seq_recv_path_on_b = self.next_seq_recv_commitment_path(
+            let seq_recv_path_on_b = commitment::next_seq_recv_commitment_path(
                 &msg.packet.port_id_on_b.clone(),
                 &msg.packet.chan_id_on_b.clone(),
             );
@@ -137,7 +137,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet_data,
             }
         } else {
-            let receipt_path_on_b = self.packet_receipt_commitment_path(
+            let receipt_path_on_b = commitment::receipt_commitment_path(
                 &msg.packet.port_id_on_b,
                 &msg.packet.chan_id_on_b,
                 msg.packet.seq_on_a,
