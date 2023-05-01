@@ -183,12 +183,15 @@ impl<'a> CwCallService<'a> {
         if !request.rollback().is_empty() {
             let message: CallServiceMessage = responses.0.into();
 
-            let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
+            #[cfg(feature = "native_ibc")]
+            {
+                let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
 
-            return Ok(Response::new()
-                .add_attribute("action", "call_message")
-                .add_attribute("method", "execute_callback")
-                .add_message(packet));
+                return Ok(Response::new()
+                    .add_attribute("action", "call_message")
+                    .add_attribute("method", "execute_callback")
+                    .add_message(packet));
+            }
         }
 
         Ok(Response::new()
@@ -197,6 +200,7 @@ impl<'a> CwCallService<'a> {
             .add_event(responses.1))
     }
 
+    #[cfg(feature = "native_ibc")]
     fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
         let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
 
