@@ -30,11 +30,11 @@ impl AnyTypes for SignedHeader {
 }
 
 pub struct IconClient<'a> {
-    context: &'a dyn IContext<Error = crate::ContractError>,
+    context: &'a mut dyn IContext<Error = crate::ContractError>,
 }
 
 impl<'a> IconClient<'a> {
-    pub fn new(context: &'a dyn IContext<Error = crate::ContractError>) -> Self {
+    pub fn new(context: &'a mut dyn IContext<Error = crate::ContractError>) -> Self {
         Self { context }
     }
     pub fn has_quorum_of(n_validators: u128, votes: u128) -> bool {
@@ -106,7 +106,7 @@ impl ILightClient for IconClient<'_> {
     type Error = crate::ContractError;
 
     fn create_client(
-        &self,
+        &mut self,
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
@@ -135,7 +135,7 @@ impl ILightClient for IconClient<'_> {
     }
 
     fn update_client(
-        &self,
+        &mut self,
         client_id: &str,
         signed_header: SignedHeader,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {

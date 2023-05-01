@@ -75,7 +75,7 @@ impl From<CwErrors> for ContractError {
                 counter: _,
                 validation_error,
             } => ContractError::FailedToCreateClientId(validation_error.to_string()),
-            CwErrors::InvalidClientId(e, err) => ContractError::InvalidClientId(e),
+            CwErrors::InvalidClientId(e, _err) => ContractError::InvalidClientId(e),
             CwErrors::DecodeError { error } => ContractError::DecodeError(error),
             CwErrors::FailedToConvertToPacketDataResponse(e) => ContractError::Std(e),
         }

@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 
 use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
@@ -46,7 +44,7 @@ pub fn instantiate(
         msg.network_type_id,
         info.sender,
     );
-    let context = CwContext::new(RefCell::new(deps), _env);
+    let mut context = CwContext::new(deps, _env);
     context.insert_config(&config)?;
     Ok(Response::default())
 }
@@ -58,8 +56,8 @@ pub fn execute(
     _info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let context = CwContext::new(RefCell::new(deps_mut), _env);
-    let client = IconClient::new(&context);
+    let mut context = CwContext::new(deps_mut, _env);
+    let mut client = IconClient::new(&mut context);
     match msg {
         ExecuteMsg::CreateClient {
             client_id,
@@ -477,8 +475,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 #[cfg(test)]
 mod tests {
 
-    use std::result;
-
     use common::icon::icon::types::v1::BtpHeader;
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
@@ -644,7 +640,7 @@ mod tests {
             client_id: client_id.clone(),
             signed_header: signed_header.encode_to_vec(),
         };
-        let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
+        let _result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
 
         let updated_client_state =
             QueryHandler::get_client_state(deps.as_ref().storage, &client_id).unwrap();

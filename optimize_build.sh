@@ -7,4 +7,7 @@ for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do
     echo "Optimizing $NAME ..."
     wasm-opt -Os "$WASM"   -o "artifacts/$NAME"
   done
-cosmwasm-check artifacts/*.wasm
+cosmwasm-check artifacts/cw_ibc_core.wasm
+cosmwasm-check artifacts/cw_icon_light_client.wasm
+cosmwasm-check artifacts/cw_mock_dapp.wasm
+cosmwasm-check artifacts/cw_xcall.wasm

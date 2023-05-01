@@ -417,9 +417,10 @@ fn send_packet_success_needresponse() {
                     })
                 }
             }
-            WasmQuery::Smart { contract_addr, msg } => {
-                SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap()))
-            }
+            WasmQuery::Smart {
+                contract_addr: _,
+                msg: _,
+            } => SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap())),
             _ => todo!(),
         }
     });
