@@ -16,7 +16,11 @@ impl<'a> CwCallService<'a> {
             rollback.clone(),
         )?;
         let need_response = !rollback.is_none();
-        let rollback_data = rollback.unwrap();
+
+        let rollback_data = match rollback {
+            Some(data) => data,
+            None => vec![],
+        };
 
         self.ensure_data_length(data.len())?;
         self.ensure_rollback_length(&rollback_data)?;
@@ -28,9 +32,8 @@ impl<'a> CwCallService<'a> {
 
         let ibc_config = self
             .ibc_config()
-            .may_load(deps.as_ref().storage)
-            .unwrap()
-            .unwrap();
+            .load(deps.as_ref().storage)
+            .map_err(ContractError::Std)?;
 
         let query_message = cw_common::core_msg::QueryMsg::SequenceSend {
             port_id: ibc_config.src_endpoint().clone().port_id,
@@ -145,9 +148,8 @@ impl<'a> CwCallService<'a> {
     ) -> Result<IbcMsg, ContractError> {
         let ibc_config = self
             .ibc_config()
-            .may_load(deps.as_ref().storage)
-            .unwrap()
-            .unwrap();
+            .load(deps.as_ref().storage)
+            .map_err(ContractError::Std)?;
 
         let timeout_block = IbcTimeoutBlock {
             revision: 0,

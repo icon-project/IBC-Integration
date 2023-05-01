@@ -1,5 +1,5 @@
 [package]
-name = "cw-mock-dapp"
+name = "cw-mock-ibc-core"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,11 +14,21 @@ exclude = [
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
 [features]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-# use native_ibc feature to enable entry points for ibc 
-native_ibc = []
+# use library feature to disable all instantiate/execute/query exports
 library = []
 
 [package.metadata.scripts]
@@ -29,19 +39,16 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-schema = "1.2.1"
-cosmwasm-std = { version = "1.2.1", features = ["iterator", "ibc3"] }
-cosmwasm-storage = "1.2.1"
+cosmwasm-schema = "1.2.2"
+cosmwasm-std = "1.2.2"
+cosmwasm-storage = "1.2.2"
 cw-storage-plus = "1.0.1"
 cw2 = "1.0.1"
-schemars = "0.8.10"
-serde = { version = "1.0.152", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.38" }
-common = { path="../../../libraries/rust/common" }
+schemars = "0.8.12"
+serde = { version = "1.0.154", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.39" }
 cw-common = { path="../cw-common" }
-serde-json-wasm = "0.5.0"
+
 
 [dev-dependencies]
-cosmwasm = "0.7.2"
-cw-multi-test = "0.16.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}

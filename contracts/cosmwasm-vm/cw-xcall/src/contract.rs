@@ -81,10 +81,11 @@ impl<'a> CwCallService<'a> {
         match msg.id {
             EXECUTE_CALL_ID => self.reply_execute_call_message(deps.as_ref(), env, msg),
             EXECUTE_ROLLBACK_ID => self.reply_execute_rollback(deps.as_ref(), msg),
+            SEND_CALL_MESSAGE_REPLY_ID => self.reply_sendcall_message(msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
-                msg: "Unkown".to_string(),
+                msg: "Unknown".to_string(),
             }),
         }
     }
@@ -340,5 +341,16 @@ impl<'a> CwCallService<'a> {
         Ok(Response::new()
             .add_submessage(submsg)
             .add_attribute("method", "ibc_packet_timeout"))
+    }
+    fn reply_sendcall_message(&self, message: Reply) -> Result<Response, ContractError> {
+        match message.result {
+            SubMsgResult::Ok(_) => Ok(Response::new()
+                .add_attribute("action", "reply")
+                .add_attribute("method", "sendcall_message")),
+            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
+                code: message.id,
+                msg: error,
+            }),
+        }
     }
 }
