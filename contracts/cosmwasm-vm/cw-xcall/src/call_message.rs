@@ -16,7 +16,11 @@ impl<'a> CwCallService<'a> {
             rollback.clone(),
         )?;
         let need_response = !rollback.is_none();
-        let rollback_data = rollback.unwrap();
+
+        let rollback_data = match rollback {
+            Some(data) => data,
+            None => vec![],
+        };
 
         self.ensure_data_length(data.len())?;
         self.ensure_rollback_length(&rollback_data)?;
