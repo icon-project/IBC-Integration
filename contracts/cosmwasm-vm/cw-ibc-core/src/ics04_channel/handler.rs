@@ -261,7 +261,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_b = self.channel_path(port_id_on_b, &message.chan_id_on_b);
         let vector = to_vec(&expected_chan_end_on_b);
         let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
         let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
             message_info: cw_common::types::MessageInfo {
@@ -725,11 +724,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
                     let channel_id =
                         ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
-                    let mut channel_end = self.channel_end(
-                        deps.storage,
-                        port_id.ibc_port_id(),
-                        channel_id.ibc_channel_id(),
-                    )?;
+                    let mut channel_end =
+                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 
                     channel_end.set_state(State::Closed); // State change
                     self.store_channel_end(
@@ -914,14 +910,11 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.ibc_channel_id(),
                         channel_end.clone(),
                     )?;
-
-                    let event = create_open_confirm_channel_event(
+                    let event = create_close_confirm_channel_event(
                         port_id.ibc_port_id().as_str(),
                         channel_id.ibc_channel_id().as_str(),
-                        channel_end.counterparty().port_id().as_str(),
-                        channel_end.counterparty().channel_id().unwrap().as_str(),
-                        channel_end.connection_hops()[0].as_str(),
                     );
+
                     Ok(Response::new().add_event(event))
                 }
                 None => Err(ContractError::IbcChannelError {
