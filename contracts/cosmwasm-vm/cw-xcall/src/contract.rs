@@ -162,9 +162,9 @@ impl<'a> CwCallService<'a> {
                 let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseSuccess,
-                    "",
+                    "success",
                 );
-                let event = event_call_executed(req_id, code, "");
+                let event = event_call_executed(req_id, code, message_response.message());
                 (message_response, event)
             }
             cosmwasm_std::SubMsgResult::Err(err) => {
