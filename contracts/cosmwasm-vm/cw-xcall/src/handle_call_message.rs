@@ -67,9 +67,29 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         message: IbcPacket,
+        sender: &Addr,
     ) -> Result<IbcReceiveResponse, ContractError> {
-        // TODO : ADD check for sender logic
+        let ibc_host_address = self.get_host(deps.as_ref().storage).unwrap();
+        if &ibc_host_address != sender {
+            return Err(ContractError::Unauthorized {});
+        }
 
+        let call_service_message: CallServiceMessage = message.data.clone().try_into()?;
+
+        match call_service_message.message_type() {
+            CallServiceMessageType::CallServiceRequest => {
+                self.hanadle_request(deps, call_service_message.payload(), &message)
+            }
+            CallServiceMessageType::CallServiceResponse => {
+                self.handle_response(deps, call_service_message.payload(), &message)
+            }
+        }
+    }
+    pub fn receive_packet_data_ibc(
+        &self,
+        deps: DepsMut,
+        message: IbcPacket,
+    ) -> Result<IbcReceiveResponse, ContractError> {
         let call_service_message: CallServiceMessage = message.data.clone().try_into()?;
 
         match call_service_message.message_type() {

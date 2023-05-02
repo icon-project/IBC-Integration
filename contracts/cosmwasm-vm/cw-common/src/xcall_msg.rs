@@ -1,6 +1,7 @@
 use super::*;
 
 #[cw_serde]
+#[non_exhaustive]
 pub enum ExecuteMsg {
     SetAdmin {
         address: Address,

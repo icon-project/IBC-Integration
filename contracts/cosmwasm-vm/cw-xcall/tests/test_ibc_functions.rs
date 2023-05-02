@@ -23,6 +23,7 @@ use cw_xcall::{
 use setup::*;
 
 #[test]
+#[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = "OrderedChannel")]
 fn fails_on_open_channel_open_init_ordered_channel() {
     let mut deps = deps();
@@ -59,6 +60,7 @@ fn fails_on_open_channel_open_init_ordered_channel() {
 }
 
 #[test]
+#[cfg(not(feature = "native_ibc"))]
 fn success_on_open_channel_open_init_unordered_channel() {
     let mut deps = deps();
 
@@ -94,6 +96,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
 }
 
 #[test]
+#[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"xcall-1\" }")]
 fn fails_on_open_channel_open_try_invalid_version() {
     let mut deps = deps();
@@ -131,6 +134,7 @@ fn fails_on_open_channel_open_try_invalid_version() {
 }
 
 #[test]
+#[cfg(not(feature = "native_ibc"))]
 fn sucess_on_open_channel_open_try_valid_version() {
     use cosmwasm_std::from_binary;
 
@@ -174,7 +178,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
 }
 
 #[test]
-
+#[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ibc_channel_connect() {
     let mut deps = deps();
 
@@ -216,6 +220,7 @@ fn sucess_on_ibc_channel_connect() {
 }
 
 #[test]
+#[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = "OrderedChannel")]
 fn fails_on_ibc_channel_connect_ordered_channel() {
     let mut deps = deps();
@@ -289,9 +294,10 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
 }
 
 #[test]
+#[cfg(not(feature = "native_ibc"))]
 fn sucess_receive_packet_for_call_message_request() {
     let mut mock_deps = deps();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("ibchostaddress", "umlg", 2000);
     let mock_env = mock_env();
 
     let mut contract = CwCallService::default();
@@ -339,6 +345,12 @@ fn sucess_receive_packet_for_call_message_request() {
     let execute_message = ExecuteMsg::IbcPacketReceive {
         msg: packet_message,
     };
+    contract
+        .set_ibc_host(
+            mock_deps.as_mut().storage,
+            Addr::unchecked("ibchostaddress"),
+        )
+        .unwrap();
 
     let result = contract.execute(mock_deps.as_mut(), mock_env, mock_info, execute_message);
 
@@ -350,6 +362,7 @@ fn sucess_receive_packet_for_call_message_request() {
 }
 
 #[test]
+#[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ack_packet() {
     let mut mock_deps = deps();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
@@ -431,4 +444,63 @@ fn test_entry_point() {
         from_binary::<String>(&query(mock_deps.as_ref(), env, query_message).unwrap()).unwrap();
 
     assert_eq!(response, admin_one().to_string())
+}
+
+#[test]
+#[cfg(not(feature = "native_ibc"))]
+#[should_panic(expected = "NotFound")]
+fn fails_receive_packet_for_call_message_request() {
+    let mut mock_deps = deps();
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
+
+    let mut contract = CwCallService::default();
+
+    contract
+        .add_owner(
+            mock_deps.as_mut().storage,
+            Address::from(&mock_info.sender.to_string()),
+        )
+        .unwrap();
+
+    contract
+        .last_request_id()
+        .save(mock_deps.as_mut().storage, &0)
+        .unwrap();
+
+    let data = CallServiceMessageRequest::new(
+        Address::from(mock_info.sender.as_str()),
+        alice().to_string(),
+        1,
+        vec![],
+        vec![1, 2, 3],
+    );
+
+    let message: CallServiceMessage = data.try_into().unwrap();
+
+    let timeout_block = IbcTimeoutBlock {
+        revision: 0,
+        height: 0,
+    };
+    let timeout = IbcTimeout::with_block(timeout_block);
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    let packet = IbcPacket::new(message, src, dst, 0, timeout);
+    let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
+
+    let execute_message = ExecuteMsg::IbcPacketReceive {
+        msg: packet_message,
+    };
+
+    let result = contract
+        .execute(mock_deps.as_mut(), mock_env, mock_info, execute_message)
+        .unwrap();
 }
