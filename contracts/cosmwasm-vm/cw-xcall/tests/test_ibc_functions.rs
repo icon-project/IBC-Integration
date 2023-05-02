@@ -16,7 +16,6 @@ use account::alice;
 
 #[test]
 #[should_panic(expected = "OrderedChannel")]
-#[cfg(not(feature = "native_ibc"))]
 fn fails_on_open_channel_open_init_ordered_channel() {
     let mut deps = deps();
 
@@ -52,7 +51,6 @@ fn fails_on_open_channel_open_init_ordered_channel() {
 }
 
 #[test]
-#[cfg(not(feature = "native_ibc"))]
 fn success_on_open_channel_open_init_unordered_channel() {
     let mut deps = deps();
 
@@ -88,7 +86,6 @@ fn success_on_open_channel_open_init_unordered_channel() {
 }
 
 #[test]
-#[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"xcall-1\" }")]
 fn fails_on_open_channel_open_try_invalid_version() {
     let mut deps = deps();
@@ -126,7 +123,6 @@ fn fails_on_open_channel_open_try_invalid_version() {
 }
 
 #[test]
-#[cfg(not(feature = "native_ibc"))]
 fn sucess_on_open_channel_open_try_valid_version() {
     use cosmwasm_std::from_binary;
 
@@ -170,7 +166,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
 }
 
 #[test]
-#[cfg(not(feature = "native_ibc"))]
+
 fn sucess_on_ibc_channel_connect() {
     let mut deps = deps();
 
@@ -212,7 +208,6 @@ fn sucess_on_ibc_channel_connect() {
 }
 
 #[test]
-#[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = "OrderedChannel")]
 fn fails_on_ibc_channel_connect_ordered_channel() {
     let mut deps = deps();
@@ -286,7 +281,6 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
 }
 
 #[test]
-#[cfg(not(feature = "native_ibc"))]
 fn sucess_receive_packet_for_call_message_request() {
     let mut mock_deps = deps();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
@@ -348,7 +342,6 @@ fn sucess_receive_packet_for_call_message_request() {
 }
 
 #[test]
-#[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ack_packet() {
     let mut mock_deps = deps();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
