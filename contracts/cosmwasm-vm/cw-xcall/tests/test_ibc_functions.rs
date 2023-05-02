@@ -12,7 +12,15 @@ use cw_xcall::{
 };
 use setup::*;
 pub mod account;
+use account::admin_one;
 use account::alice;
+use cosmwasm_std::from_binary;
+use cw_xcall::{
+    execute, instantiate,
+    msg::{InstantiateMsg, QueryMsg},
+    query,
+};
+use setup::*;
 
 #[test]
 #[should_panic(expected = "OrderedChannel")]
@@ -391,4 +399,36 @@ fn sucess_on_ack_packet() {
         .unwrap();
 
     assert_eq!("call_service_request", result.attributes[2].value)
+}
+
+#[test]
+fn test_entry_point() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info("owner", "uconst", 200000);
+    let env = mock_env();
+
+    let msg = cw_common::xcall_msg::ExecuteMsg::UpdateAdmin {
+        address: admin_one(),
+    };
+
+    instantiate(
+        mock_deps.as_mut(),
+        env.clone(),
+        mock_info.clone(),
+        InstantiateMsg {
+            timeout_height: 10,
+            ibc_host: Addr::unchecked("hostaddress"),
+        },
+    )
+    .unwrap();
+
+    execute(mock_deps.as_mut(), env.clone(), mock_info, msg).unwrap();
+
+    let query_message = QueryMsg::GetAdmin {};
+
+    let response =
+        from_binary::<String>(&query(mock_deps.as_ref(), env, query_message).unwrap()).unwrap();
+
+    assert_eq!(response, admin_one().to_string())
 }
