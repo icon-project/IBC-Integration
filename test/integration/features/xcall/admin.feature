@@ -105,3 +105,9 @@ Feature: xCall admin management
     When "Alice" executes update_admin in xcall with "Diana" wallet address
     Then xCall returns an error message that there are no admin wallets added to the xCall smart contract
     And by default "Alice" contract owner address should be as admin
+
+  Scenario: 016 - Query admin after adding admin
+    Given "Bob" is an admin wallet who needs to be added as admin
+    And "Alice" executes set_admin in xcall with "Bob" wallet address
+    When a user query for admin
+    Then "Bob" wallet address should be as admin
