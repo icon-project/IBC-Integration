@@ -32,6 +32,15 @@ type UpdateAdmin struct {
 	} `json:"update_admin"`
 }
 
+type XcallInit struct {
+	TimeoutHeight int    `json:"timeout_height"`
+	IbcHost       string `json:"ibc_host"`
+}
+
+type DappInit struct {
+	Address string `json:"address"`
+}
+
 type GetProtocolFee struct{}
 
 type GetAdmin struct{}

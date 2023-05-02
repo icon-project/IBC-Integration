@@ -99,6 +99,7 @@ func (e *Executor) isTheContractOwner(owner, contractName string) (err error) {
 	})
 
 	// Add init message from config to context
+	contractName = strings.ToLower(contractName)
 	initMsg := e.cfg.InitMessage[contractName]
 	e.ctx = context.WithValue(e.ctx, chains.InitMessage{}, chains.InitMessage{
 		InitMsg: initMsg,
@@ -258,14 +259,21 @@ func (e *Executor) walletAddressShouldBeAsAdmin(admin string) error {
 	return e.walletAddressShouldBeAddedAsAdmin(admin)
 }
 
-func (e *Executor)channelShouldBeOpenedToSendAndReceiveMessages() error {
-	return godog.ErrPending
+func (e *Executor) shouldOpenChannelToSendAndReceiveMessages(keyName string) error {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "ibc_packet_receive", "")
+	return nil
 }
 
 func (e *Executor) contractThrowsAnErrorThatOnlyTheContractCanPerformThisAction(arg1 string) error {
-	return godog.ErrPending
+	if e.error == nil {
+		return fmt.Errorf("Non contract was able to perform send call message when roll back was not null")
+	}
+	return nil
 }
 
-func (e *Executor)nonContractExecutesInXcall(arg1, arg2 string) error {
-	return godog.ErrPending
+func (e *Executor) nonContractExecutesInXcall(keyName, methodaName string) error {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, "")
+	return nil
 }
