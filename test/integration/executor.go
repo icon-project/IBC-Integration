@@ -277,3 +277,16 @@ func (e *Executor) nonContractExecutesInXcall(keyName, methodaName string) error
 	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, "")
 	return nil
 }
+
+func (e *Executor) contractExecutesInDappWithThanLimit(keyName, methodaName, param string) error {
+	contractAddress := e.GetContractAddress("dapp")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, param)
+	return nil
+}
+
+func (e *Executor) xcallContractPanicWithAnErrorMaxDataSizeExceeded() error {
+	if e.error == nil {
+		return fmt.Errorf("xcall did not throw an error for exceeded data size")
+	}
+	return nil
+}

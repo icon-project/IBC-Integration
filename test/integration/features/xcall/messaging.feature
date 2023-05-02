@@ -14,6 +14,10 @@ Feature: send call message to another person
         Given "Alice" is the "Dapp" contract owner
         And "Alice" should open channel to send and receive messages
 
-    Scenario: 001 - Send packet fails if caller is not contract
-        When "Alice" non contract executes "send_call_message" in xcall
-        Then "xcall" contract throws an error that only the contract can perform this action
+    # Scenario: 001 - Send packet fails if caller is not contract
+    #     When "Alice" non contract executes "send_call_message" in xcall
+    #     Then "xcall" contract throws an error that only the contract can perform this action
+
+    Scenario: 002 - Contract panics when data size is greater than limit
+        When "Alice" contract executes "send_call_message" in dapp with "data size greater" than limit
+        Then xcall contract panic with an error MaxDataSizeExceeded

@@ -42,6 +42,8 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" should open channel to send and receive messages$`, executor.shouldOpenChannelToSendAndReceiveMessages)
 			ctx.Step(`^"([^"]*)" contract throws an error that only the contract can perform this action$`, executor.contractThrowsAnErrorThatOnlyTheContractCanPerformThisAction)
 			ctx.Step(`^"([^"]*)" non contract executes "([^"]*)" in xcall$`, executor.nonContractExecutesInXcall)
+			ctx.Step(`^"([^"]*)" contract executes "([^"]*)" in dapp with "([^"]*)" than limit$`, executor.contractExecutesInDappWithThanLimit)
+			ctx.Step(`^xcall contract panic with an error MaxDataSizeExceeded$`, executor.xcallContractPanicWithAnErrorMaxDataSizeExceeded)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature"}, TestingT: t, StopOnFailure: false},
