@@ -257,3 +257,15 @@ func (e *Executor) aUserQueryForAdmin() error {
 func (e *Executor) walletAddressShouldBeAsAdmin(admin string) error {
 	return e.walletAddressShouldBeAddedAsAdmin(admin)
 }
+
+func (e *Executor)channelShouldBeOpenedToSendAndReceiveMessages() error {
+	return godog.ErrPending
+}
+
+func (e *Executor) contractThrowsAnErrorThatOnlyTheContractCanPerformThisAction(arg1 string) error {
+	return godog.ErrPending
+}
+
+func (e *Executor)nonContractExecutesInXcall(arg1, arg2 string) error {
+	return godog.ErrPending
+}

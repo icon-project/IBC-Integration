@@ -39,9 +39,12 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" contract deployed by "([^"]*)" only when the chain is "([^"]*)"$`, executor.contractDeployedByOnlyWhenTheChainIs)
 			ctx.Step(`^a user query for admin$`, executor.aUserQueryForAdmin)
 			ctx.Step(`^"([^"]*)" wallet address should be as admin$`, executor.walletAddressShouldBeAsAdmin)
+			ctx.Step(`^channel should be opened to send and receive messages$`, executor.channelShouldBeOpenedToSendAndReceiveMessages)
+			ctx.Step(`^"([^"]*)" contract throws an error that only the contract can perform this action$`, executor.contractThrowsAnErrorThatOnlyTheContractCanPerformThisAction)
+			ctx.Step(`^"([^"]*)" non contract executes "([^"]*)" in xcall$`, executor.nonContractExecutesInXcall)
 
 		},
-		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},
+		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature"}, TestingT: t, StopOnFailure: false},
 	}
 
 	if suite.Run() != 0 {
