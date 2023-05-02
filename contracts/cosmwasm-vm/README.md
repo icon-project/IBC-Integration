@@ -12,9 +12,9 @@ This Repo contains the smart contracts for ICON-IBC in rust.
 
 | Specification      |  Crates.io                    | Coverage                   |
 |---------------     |-------------------------------|----------------------------|
-| cw-ibc-core        |[![cw1 on crates.io](https://img.shields.io/crates/v/cw1.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
-|cw-icon-light-client|[![cw1 on crates.io](https://img.shields.io/crates/v/cw1.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
-| cw-xcall           |[![cw1 on crates.io](https://img.shields.io/crates/v/cw1.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
+| cw-ibc-core        |[![ibc on crates.io](https://img.shields.io/crates/v/ibc.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
+|cw-icon-light-client|[![ibc on crates.io](https://img.shields.io/crates/v/ibc.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
+| cw-xcall           |[![ibc on crates.io](https://img.shields.io/crates/v/ibc.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
 
 ### Prerequiste
 
