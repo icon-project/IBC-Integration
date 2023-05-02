@@ -180,7 +180,7 @@ mod tests {
         OwnedDeps, Response,
     };
     use cw2::get_contract_version;
-    use test_utils::{get_test_headers, to_attribute_map, get_test_signed_headers};
+    use test_utils::{get_test_headers, get_test_signed_headers, to_attribute_map};
 
     use crate::traits::AnyTypes;
     use crate::{
@@ -209,7 +209,7 @@ mod tests {
         trusting_period: Option<u64>,
     ) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = setup();
-        let client_state = header.to_client_state(trusting_period.unwrap_or(1000000) , 0);
+        let client_state = header.to_client_state(trusting_period.unwrap_or(1000000), 0);
         let consensus_state = header.to_consensus_state();
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::CreateClient {
@@ -289,15 +289,19 @@ mod tests {
 
         let signed_header = &get_test_signed_headers()[1];
         let info = mock_info(SENDER, &[]);
-        let msg = ExecuteMsg::UpdateClient { 
-            client_id: client_id.clone(), 
-            signed_header: signed_header.encode_to_vec()
+        let msg = ExecuteMsg::UpdateClient {
+            client_id: client_id.clone(),
+            signed_header: signed_header.encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone());
-        let stored_client_state = QueryHandler::get_client_state(deps.as_ref().storage, &client_id).unwrap();
+        let stored_client_state =
+            QueryHandler::get_client_state(deps.as_ref().storage, &client_id).unwrap();
         assert_eq!(
             result,
-            Err(ContractError::TrustingPeriodElapsed{saved_height: stored_client_state.latest_height, update_height: signed_header.header.clone().unwrap().main_height})
+            Err(ContractError::TrustingPeriodElapsed {
+                saved_height: stored_client_state.latest_height,
+                update_height: signed_header.header.clone().unwrap().main_height
+            })
         );
     }
 
@@ -309,14 +313,16 @@ mod tests {
 
         let random_signed_header = &get_test_signed_headers()[2];
         let info = mock_info(SENDER, &[]);
-        let msg = ExecuteMsg::UpdateClient { 
-            client_id: client_id.clone(), 
-            signed_header: random_signed_header.encode_to_vec()
+        let msg = ExecuteMsg::UpdateClient {
+            client_id: client_id.clone(),
+            signed_header: random_signed_header.encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone());
         assert_eq!(
             result,
-            Err(ContractError::InvalidHeaderUpdate("network section mismatch".to_string()))
+            Err(ContractError::InvalidHeaderUpdate(
+                "network section mismatch".to_string()
+            ))
         );
     }
 
@@ -327,34 +333,36 @@ mod tests {
         let mut deps = init_client(&client_id, &start_header, None);
 
         let signed_header = &get_test_signed_headers()[1];
-        let block_height =  signed_header.header.clone().unwrap().main_height;
+        let block_height = signed_header.header.clone().unwrap().main_height;
         let info = mock_info(SENDER, &[]);
-        let msg = ExecuteMsg::UpdateClient { 
-            client_id: client_id.clone(), 
-            signed_header: signed_header.encode_to_vec()
+        let msg = ExecuteMsg::UpdateClient {
+            client_id: client_id.clone(),
+            signed_header: signed_header.encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
 
         let updated_client_state =
             QueryHandler::get_client_state(deps.as_ref().storage, &client_id).unwrap();
-        
-        let consensus_state = 
-            QueryHandler::get_consensus_state(deps.as_ref().storage, &client_id, block_height).unwrap();
-        
-        assert_eq!(
-            updated_client_state.latest_height,
-            block_height
-        );
+
+        let consensus_state =
+            QueryHandler::get_consensus_state(deps.as_ref().storage, &client_id, block_height)
+                .unwrap();
+
+        assert_eq!(updated_client_state.latest_height, block_height);
 
         assert_eq!(
             updated_client_state.network_section_hash,
-            signed_header.header.clone().unwrap().get_network_section_hash().to_vec()
+            signed_header
+                .header
+                .clone()
+                .unwrap()
+                .get_network_section_hash()
+                .to_vec()
         );
 
         assert_eq!(
             consensus_state.message_root,
             signed_header.header.clone().unwrap().message_root
         )
-        
     }
 }
