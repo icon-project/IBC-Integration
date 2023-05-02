@@ -267,7 +267,7 @@ func (e *Executor) shouldOpenChannelToSendAndReceiveMessages(keyName string) err
 
 func (e *Executor) contractThrowsAnErrorThatOnlyTheContractCanPerformThisAction(arg1 string) error {
 	if e.error == nil {
-		return fmt.Errorf("Non contract was able to perform send call message when roll back was not null")
+		return fmt.Errorf("non contract was able to perform send call message when roll back was not null")
 	}
 	return nil
 }
@@ -278,7 +278,7 @@ func (e *Executor) nonContractExecutesInXcall(keyName, methodaName string) error
 	return nil
 }
 
-func (e *Executor) contractExecutesInDappWithThanLimit(keyName, methodaName, param string) error {
+func (e *Executor) executesInDappWithThanLimit(keyName, methodaName, param string) error {
 	contractAddress := e.GetContractAddress("dapp")
 	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, param)
 	return nil
@@ -287,6 +287,30 @@ func (e *Executor) contractExecutesInDappWithThanLimit(keyName, methodaName, par
 func (e *Executor) xcallContractPanicWithAnErrorMaxDataSizeExceeded() error {
 	if e.error == nil {
 		return fmt.Errorf("xcall did not throw an error for exceeded data size")
+	}
+	return nil
+}
+
+func (e *Executor) executesInDappWithToLimit(keyName, methodaName, param string) error {
+	return e.executesInDappWithThanLimit(keyName, methodaName, param)
+}
+
+func (e *Executor) executesInWithRequestID(keyName, methodaName, contractName, param string) error {
+	contractAddress := e.GetContractAddress(contractName)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, param)
+	return nil
+}
+
+func (e *Executor) xcallContractPanicWithAnErrorRequestNotFound() error {
+	if e.error == nil {
+		return fmt.Errorf("xcall did not throw an error for incorrect request ID")
+	}
+	return nil
+}
+
+func (e *Executor) xcallShouldExecuteCallMessageSuccessfully() error {
+	if e.error != nil {
+		return fmt.Errorf("execute call was not executed successfully")
 	}
 	return nil
 }
