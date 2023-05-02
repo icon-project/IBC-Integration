@@ -249,3 +249,11 @@ func (e *Executor) contractDeployedByOnlyWhenTheChainIs(contractName, owner, cha
 	fmt.Println("Given chain is not Icon, so deploying BMC contract is not required")
 	return nil
 }
+
+func (e *Executor) aUserQueryForAdmin() error {
+	return nil
+}
+
+func (e *Executor) walletAddressShouldBeAsAdmin(admin string) error {
+	return e.walletAddressShouldBeAddedAsAdmin(admin)
+}
