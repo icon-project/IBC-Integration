@@ -1,10 +1,9 @@
 use super::*;
 use common::icon::icon::lightclient::v1::{
-    ClientState as RawClientState, ConsensusState as RawConsensusState
+    ClientState as RawClientState, ConsensusState as RawConsensusState,
 };
-use cw_common::hex_string::HexString;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
-
+use cw_common::hex_string::HexString;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
@@ -56,16 +55,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let consensus_state =
                     Self::from_raw::<RawConsensusState, ConsensusState>(&consensus_state)?;
 
-                let signer = String::from_utf8(signer.to_bytes().unwrap()).map_err(|error| {
-                    ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    }
-                })?;
-
-                let signer =
-                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
+                let signer = Self::to_signer(&signer)?;
                 let msg = MsgCreateClient {
                     client_state: client_state.into(),
                     consensus_state: consensus_state.into(),
@@ -79,19 +69,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-               
-                let signer = String::from_utf8(signer.to_bytes().unwrap()).map_err(|error| {
-                    ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    }
-                })?;
 
-                let header = Self::from_raw::<RawSignedHeader,SignedHeader>(&header)?;
+                let header = Self::from_raw::<RawSignedHeader, SignedHeader>(&header)?;
 
-                let signer =
-                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
+                let signer = Self::to_signer(&signer)?;
                 let msg = MsgUpdateClient {
                     client_id: IbcClientId::from_str(&client_id).map_err(|error| {
                         ContractError::IbcDecodeError {
@@ -154,16 +135,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 chan_id_on_a,
                 signer,
             } => {
-                let signer = String::from_utf8(signer.to_bytes().unwrap()).map_err(|error| {
-                    ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    }
-                })?;
-
-                let signer =
-                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
+                let signer = Self::to_signer(&signer)?;
                 let message = MsgChannelCloseInit {
                     port_id_on_a: IbcPortId::from_str(&port_id_on_a).map_err(|error| {
                         ContractError::IbcDecodeError {
@@ -358,5 +330,21 @@ impl<'a> CwIbcCoreContext<'a> {
             ContractError::IbcRawConversionError { error: err }
         })?;
         Ok(message)
+    }
+
+    pub fn to_signer(str: &HexString) -> Result<Signer, ContractError> {
+        let bytes = str.to_bytes().map_err(|e| ContractError::IbcDecodeError {
+            error: e.to_string(),
+        })?;
+        let signer_string =
+            String::from_utf8(bytes).map_err(|error| ContractError::IbcDecodeError {
+                error: error.to_string(),
+            })?;
+
+        let signer =
+            Signer::from_str(&signer_string).map_err(|error| ContractError::IbcDecodeError {
+                error: error.to_string(),
+            })?;
+        Ok(signer)
     }
 }
