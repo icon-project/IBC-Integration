@@ -1,8 +1,10 @@
 use super::*;
 use common::icon::icon::lightclient::v1::{
-    ClientState as RawClientState, ConsensusState as RawConsensusState,
+    ClientState as RawClientState, ConsensusState as RawConsensusState
 };
 use cw_common::hex_string::HexString;
+use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
+
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
@@ -77,13 +79,14 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let header =
-                    SignedHeader::try_from(header.to_bytes().unwrap()).map_err(|error| error)?;
+               
                 let signer = String::from_utf8(signer.to_bytes().unwrap()).map_err(|error| {
                     ContractError::IbcDecodeError {
                         error: error.to_string(),
                     }
                 })?;
+
+                let header = Self::from_raw::<RawSignedHeader,SignedHeader>(&header)?;
 
                 let signer =
                     Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
