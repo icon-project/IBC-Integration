@@ -5,7 +5,6 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::utils::{calculate_root, keccak256};
-use ibc_proto::google::protobuf::Any;
 use prost::Message;
 
 const HEADER_TYPE_URL: &str = "/icon.lightclient.v1.SignedHeader";
@@ -31,11 +30,11 @@ impl AnyTypes for SignedHeader {
 }
 
 pub struct IconClient<'a> {
-    context: &'a dyn IContext<Error = crate::ContractError>,
+    context: &'a mut dyn IContext<Error = crate::ContractError>,
 }
 
 impl<'a> IconClient<'a> {
-    pub fn new(context: &'a dyn IContext<Error = crate::ContractError>) -> Self {
+    pub fn new(context: &'a mut dyn IContext<Error = crate::ContractError>) -> Self {
         Self { context }
     }
     pub fn has_quorum_of(n_validators: u128, votes: u128) -> bool {
@@ -105,9 +104,11 @@ impl<'a> IconClient<'a> {
 
 impl ILightClient for IconClient<'_> {
     type Error = crate::ContractError;
+    // convert string to int
+    
 
     fn create_client(
-        &self,
+        &mut self,
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
@@ -136,17 +137,15 @@ impl ILightClient for IconClient<'_> {
     }
 
     fn update_client(
-        &self,
+        &mut self,
         client_id: &str,
-        signed_header_bytes: Any,
+        signed_header: SignedHeader,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {
-        let signed_header = SignedHeader::from_any(signed_header_bytes)
-            .map_err(|e| ContractError::DecodeError(e))?;
         let btp_header = signed_header.header.clone().unwrap();
         let mut state = self.context.get_client_state(client_id)?;
         let config = self.context.get_config()?;
 
-        if (btp_header.main_height - state.latest_height) < state.trusting_period {
+        if (btp_header.main_height - state.latest_height) > state.trusting_period {
             return Err(ContractError::TrustingPeriodElapsed {
                 saved_height: state.latest_height,
                 update_height: btp_header.main_height,

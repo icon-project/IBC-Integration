@@ -1,13 +1,14 @@
 pub mod setup;
 use std::str::{from_utf8, FromStr};
 
+use common::utils::keccak256;
 use cw_common::types::PortId;
+use cw_common::IbcChannelId;
 use cw_ibc_core::{
-    context::CwIbcCoreContext, ics04_channel::ChannelMsg, keccak256, IbcChannelId,
-    MsgChannelOpenInit,
+    context::CwIbcCoreContext, ics04_channel::ChannelMsg, MsgChannelOpenInit,
 };
 use setup::*;
-
+use cw_common::commitment;
 #[test]
 fn test_store_module_by_port() {
     let mut deps = deps();
@@ -40,7 +41,7 @@ fn check_for_port_path() {
     let ctx = CwIbcCoreContext::default();
 
     let port_id = PortId::default();
-    let port_path = ctx.port_path(port_id.ibc_port_id());
+    let port_path = commitment::port_path(port_id.ibc_port_id());
 
     assert_eq!("ports/defaultPort", String::from_utf8(port_path).unwrap())
 }
@@ -50,10 +51,10 @@ fn check_for_port_path_key() {
     let ctx = CwIbcCoreContext::default();
 
     let port_id = PortId::default();
-    let port_path = ctx.port_path(port_id.ibc_port_id());
-    let key = keccak256(port_path.clone());
+    let port_path = commitment::port_path(port_id.ibc_port_id());
+    let key:Vec<u8> = keccak256(&port_path.clone()).into();
 
-    let port_path_key = ctx.port_commitment_key(port_id.ibc_port_id());
+    let port_path_key = commitment::port_commitment_key(port_id.ibc_port_id());
 
     assert_eq!(key, port_path_key)
 }
@@ -108,7 +109,7 @@ fn test_lookup_module_channel_fail() {
 fn test_bind_port() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
-    let path = ctx.port_path(&PortId::default().ibc_port_id());
+    let path = commitment::port_path(&PortId::default().ibc_port_id());
     ctx.store_capability(&mut deps.storage, path.clone(), vec!["".to_string()])
         .unwrap();
     let res = ctx.bind_port(

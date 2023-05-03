@@ -1,6 +1,7 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::MerkleNode;
+use common::icon::icon::types::v1::SignedHeader;
 use common::utils::keccak256;
 use cosmwasm_std::Addr;
 use ibc_proto::google::protobuf::Any;
@@ -58,7 +59,7 @@ pub trait ILightClient {
      * If succeeded, it returns a commitment for the initial state.
      */
     fn create_client(
-        &self,
+        &mut self,
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
@@ -77,9 +78,9 @@ pub trait ILightClient {
      * 5. persist the state(s) on the host
      */
     fn update_client(
-        &self,
+        &mut self,
         client_id: &str,
-        header: Any,
+        header: SignedHeader,
     ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
 
     /**
@@ -117,7 +118,7 @@ pub trait IContext {
     type Error;
 
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error>;
-    fn insert_client_state(&self, client_id: &str, state: ClientState) -> Result<(), Self::Error>;
+    fn insert_client_state(&mut self, client_id: &str, state: ClientState) -> Result<(), Self::Error>;
 
     fn get_consensus_state(
         &self,
@@ -125,15 +126,15 @@ pub trait IContext {
         height: u64,
     ) -> Result<ConsensusState, Self::Error>;
     fn insert_consensus_state(
-        &self,
+        &mut self,
         client_id: &str,
         height: u64,
         state: ConsensusState,
     ) -> Result<(), Self::Error>;
 
     fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error>;
-    fn insert_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<(), Self::Error>;
-    fn insert_blocknumber_at_height(&self, client_id: &str, height: u64)
+    fn insert_timestamp_at_height(&mut self, client_id: &str, height: u64) -> Result<(), Self::Error>;
+    fn insert_blocknumber_at_height(&mut self, client_id: &str, height: u64)
         -> Result<(), Self::Error>;
 
     fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
@@ -141,7 +142,7 @@ pub trait IContext {
     fn to_icon_address(&self, address: &[u8]) -> Vec<u8>;
     fn get_config(&self) -> Result<Config, Self::Error>;
 
-    fn insert_config(&self, config: &Config) -> Result<(), Self::Error>;
+    fn insert_config(&mut self, config: &Config) -> Result<(), Self::Error>;
 
     fn get_current_block_time(&self) -> u64;
     fn get_current_block_height(&self) -> u64;

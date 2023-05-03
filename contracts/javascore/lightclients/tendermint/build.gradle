@@ -8,7 +8,7 @@ dependencies {
     implementation project(':ibc')
 
 
-    testImplementation 'com.google.protobuf:protobuf-javalite:3.13.0'
+    testImplementation 'com.google.protobuf:protobuf-javalite:3.16.3'
     testImplementation 'foundation.icon:javaee-rt:0.9.3'
     testImplementation("org.mockito:mockito-core:$mockitoCoreVersion")
     testImplementation("org.mockito:mockito-inline:$mockitoCoreVersion")
@@ -30,12 +30,35 @@ test {
 
 jacocoTestReport {
     dependsOn test
+    dependsOn ':ibc:compileTestJava'
+    dependsOn ':ibc:test'
+    dependsOn ':ibc:jacocoTestReport'
+    dependsOn ':ibc:processTestResources'
+    dependsOn ':lib:test'
+    dependsOn ':mockapp:compileJava'
+    dependsOn ':mockapp:test'
+    dependsOn ':proto-util:compileJava'
+    dependsOn ':proto-util:compileTestJava'
+    dependsOn ':proto-util:test'
+    dependsOn ':score-util:compileTestJava'
+    dependsOn ':mockclient:compileJava'
+    dependsOn ':mockclient:test'
+    dependsOn ':mock-dapp:compileJava'
+    dependsOn ':mock-dapp:test'
+    dependsOn ':score-util:test'
+
+    doNotTrackState("Disable state tracking")
     reports {
-        xml.required = false
+        xml.required = true
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
+    subprojects.each {
+        sourceSets it.sourceSets.main
+    }
+    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
 }
+
 
 tasks.named('compileJava') {
     dependsOn(':ibc:optimizedJar')

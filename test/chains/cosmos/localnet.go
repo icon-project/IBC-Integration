@@ -25,7 +25,7 @@ func NewCosmosLocalnet(t *testing.T, log *zap.Logger, chainConfig ibc.ChainConfi
 
 func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// Fund user to deploy contract
-	contractOwner, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
+	contractOwner, ownerAddr, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
 
 	// Get Contract Name from context
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
@@ -47,10 +47,13 @@ func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (co
 	contracts.ContractAddress = map[string]string{
 		contractName: address,
 	}
+	contracts.ContractOwner = map[string]string{
+		keyName: ownerAddr,
+	}
 
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
 		ContractAddress: contracts.ContractAddress,
-		ContractOwner:   keyName,
+		ContractOwner:   contracts.ContractOwner,
 	}), err
 }
 
@@ -91,6 +94,6 @@ func (c *CosmosLocalnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.
 
 func (c *CosmosLocalnet) BuildWallets(ctx context.Context, keyName string) error {
 	// Build Wallet and fund user
-	_, err := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
+	_, _, err := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
 	return err
 }

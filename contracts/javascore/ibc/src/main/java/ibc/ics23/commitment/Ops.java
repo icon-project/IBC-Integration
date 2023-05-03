@@ -92,19 +92,21 @@ public class Ops {
     }
 
     public static void checkAgainstSpec(LeafOp leafOp, ProofSpec spec) {
-        if (leafOp.getHash() != spec.getLeafSpec().getHash()) {
+        LeafOp leafSpec = spec.getLeafSpec();
+
+        if (leafOp.getHash() != leafSpec.getHash()) {
             throw new UserRevertedException("checkAgainstSpec for LeafOp - Unexpected HashOp");
         }
-        if (leafOp.getPrehashKey() != spec.getLeafSpec().getPrehashKey()) {
+        if (leafOp.getPrehashKey() != leafSpec.getPrehashKey()) {
             throw new UserRevertedException("CheckAgainstSpec for LeafOp - Unexpected PreHashKey");
         }
-        if (leafOp.getPrehashValue() != spec.getLeafSpec().getPrehashValue()) {
+        if (leafOp.getPrehashValue() != leafSpec.getPrehashValue()) {
             throw new UserRevertedException("CheckAgainstSpec for LeafOp - Unexpected PrehashValue");
         }
-        if (leafOp.getLength() != spec.getLeafSpec().getLength()) {
+        if (leafOp.getLength() != leafSpec.getLength()) {
             throw new UserRevertedException("CheckAgainstSpec for LeafOp - Unexpected lengthOp");
         }
-        boolean hasPrefix = hasPrefix(leafOp.getPrefix(), spec.getLeafSpec().getPrefix());
+        boolean hasPrefix = hasPrefix(leafOp.getPrefix(), leafSpec.getPrefix());
         if (!hasPrefix) {
             throw new UserRevertedException("CheckAgainstSpec for LeafOp - Leaf Prefix doesn't start with spec prefix");
         }
@@ -138,6 +140,11 @@ public class Ops {
         BigInteger maxPrefixLength = spec.getInnerSpec().getMaxPrefixLength();
         if (BigInteger.valueOf(innerOp.getPrefix().length).compareTo(maxPrefixLength.add(maxLeftChildBytes)) > 0) {
             throw new UserRevertedException("InnerOp prefix too long");
+        }
+
+        // ensure soundness, with suffix having to be of correct length
+        if (innerOp.getSuffix().length % spec.getInnerSpec().getChildSize().intValue() != 0) {
+            throw new UserRevertedException("InnerOP suffix malformed");
         }
     }
 

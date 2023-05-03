@@ -26,14 +26,21 @@ test {
     finalizedBy jacocoTestReport
 }
 
+
 jacocoTestReport {
     dependsOn test
+    doNotTrackState("Disable state tracking")
     reports {
-        xml.required = false
+        xml.required = true
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
+    subprojects.each {
+        sourceSets it.sourceSets.main
+    }
+    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
 }
+
 
 tasks.named('compileJava') {
     dependsOn(':score-util:jar')

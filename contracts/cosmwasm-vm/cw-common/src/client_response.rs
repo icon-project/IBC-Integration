@@ -1,15 +1,5 @@
 use super::*;
-use crate::errors::CwErrors;
-use crate::types::{ClientId, ClientType};
-use cosmwasm_schema::cw_serde;
-use ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement;
-use ibc::core::ics04_channel::packet::Packet;
-use ibc::core::ics04_channel::timeout::TimeoutHeight;
-use ibc::signer::Signer;
-use ibc::timestamp::Timestamp;
-use serde::Deserialize;
-use serde::Serialize;
-use std::str::FromStr;
+
 #[cw_serde]
 pub struct CreateClientResponse {
     client_type: String,
@@ -96,7 +86,8 @@ impl UpdateClientResponse {
         Height::from_str(&self.height).unwrap()
     }
     pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id).map_err(CwErrors::InvalidClientId)
+        ClientId::from_str(&self.client_id)
+            .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }
 
@@ -115,13 +106,11 @@ impl UpgradeClientResponse {
         client_id: String,
         height: String,
     ) -> Self {
-        {
-            Self {
-                height,
-                client_id,
-                client_state_commitment,
-                consensus_state_commitment,
-            }
+        Self {
+            height,
+            client_id,
+            client_state_commitment,
+            consensus_state_commitment,
         }
     }
 
@@ -143,7 +132,8 @@ impl UpgradeClientResponse {
     }
 
     pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id).map_err(CwErrors::InvalidClientId)
+        ClientId::from_str(&self.client_id)
+            .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }
 
@@ -164,7 +154,8 @@ impl MisbehaviourResponse {
         &self.client_id
     }
     pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id).map_err(CwErrors::InvalidClientId)
+        ClientId::from_str(&self.client_id)
+            .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }
 
@@ -196,8 +187,36 @@ impl From<PacketResponse> for Packet {
     }
 }
 
+impl From<Packet> for PacketResponse {
+    fn from(packet: Packet) -> Self {
+        let data = hex::encode(packet.data);
+        PacketResponse {
+            seq_on_a: packet.seq_on_a,
+            port_id_on_a: packet.port_id_on_a,
+            chan_id_on_a: packet.chan_id_on_a,
+            port_id_on_b: packet.port_id_on_b,
+            chan_id_on_b: packet.chan_id_on_b,
+            data,
+            timeout_height_on_b: packet.timeout_height_on_b,
+            timeout_timestamp_on_b: packet.timeout_timestamp_on_b,
+        }
+    }
+}
+
+impl From<PacketData> for PacketDataResponse {
+    fn from(value: PacketData) -> Self {
+        PacketDataResponse {
+            packet: PacketResponse::from(value.packet),
+            acknowledgement: value.acknowledgement,
+            signer: value.signer,
+            message_info: value.message_info,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PacketDataResponse {
+    pub message_info: MessageInfo,
     pub packet: PacketResponse,
     pub signer: Signer,
     pub acknowledgement: Option<Acknowledgement>,
@@ -251,4 +270,16 @@ pub struct OpenAckResponse {
     pub counterparty_client_id: String,
     pub counterparty_connection_id: String,
     pub counterparty_prefix: Vec<u8>,
+}
+
+#[cw_serde]
+pub struct XcallPacketResponseData {
+    pub packet: IbcPacket,
+    pub acknowledgement: Vec<u8>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LightClientResponse {
+    pub message_info: MessageInfo,
+    pub ibc_endpoint: IbcEndpoint,
 }

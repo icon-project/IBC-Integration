@@ -1,3 +1,5 @@
+use cw_common::client_response::PacketResponse;
+
 use super::*;
 
 #[test]
@@ -260,11 +262,28 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
 
     let height = 10;
     let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
-    let packet_data = PacketData::new(
-        msg.packet.clone(),
-        msg.signer.clone(),
-        Some(msg.acknowledgement.clone()),
-    );
+    let packet_repsone = PacketResponse {
+        seq_on_a: msg.packet.seq_on_a,
+        port_id_on_a: msg.packet.port_id_on_a.clone(),
+        chan_id_on_a: msg.packet.chan_id_on_a,
+        port_id_on_b: msg.packet.port_id_on_b,
+        chan_id_on_b: msg.packet.chan_id_on_b,
+        data: hex::encode(msg.packet.data),
+        timeout_height_on_b: msg.packet.timeout_height_on_b,
+        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
+    };
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.sender,
+        funds: info.funds,
+    };
+    let packet_data = PacketDataResponse {
+        message_info,
+        packet: packet_repsone,
+        signer: msg.signer.clone(),
+
+        acknowledgement: Some(msg.acknowledgement.clone()),
+    };
+
     let data_bin = to_binary(&packet_data).unwrap();
     let result = SubMsgResponse {
         data: Some(data_bin),
@@ -282,13 +301,10 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
         .add_route(&mut deps.storage, module_id.clone().into(), &module)
         .unwrap();
 
-    let res = contract.acknowledgement_packet_validate_reply_from_light_client(
-        deps.as_mut(),
-        info,
-        reply_message,
-    );
+    let res = contract
+        .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message);
     assert!(res.is_ok());
-    assert_eq!(res.as_ref().unwrap().clone().messages[0].id, 542);
+    assert_eq!(res.as_ref().unwrap().clone().messages[0].id, 534);
 }
 
 #[test]
@@ -300,7 +316,29 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
 
     let height = 10;
     let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
-    let packet_data = PacketData::new(msg.packet.clone(), msg.signer.clone(), None);
+    let packet_repsone = PacketResponse {
+        seq_on_a: msg.packet.seq_on_a,
+        port_id_on_a: msg.packet.port_id_on_a.clone(),
+        chan_id_on_a: msg.packet.chan_id_on_a,
+        port_id_on_b: msg.packet.port_id_on_b,
+        chan_id_on_b: msg.packet.chan_id_on_b,
+        data: hex::encode(msg.packet.data),
+        timeout_height_on_b: msg.packet.timeout_height_on_b,
+        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
+    };
+    let message_info = cw_common::types::MessageInfo {
+        sender: info.sender,
+        funds: info.funds,
+    };
+
+    let packet_data = PacketDataResponse {
+        message_info,
+        packet: packet_repsone,
+        signer: msg.signer.clone(),
+
+        acknowledgement: None,
+    };
+
     let data_bin = to_binary(&packet_data).unwrap();
     let result = SubMsgResponse {
         data: Some(data_bin),
@@ -319,7 +357,7 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
         .unwrap();
 
     contract
-        .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), info, reply_message)
+        .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message)
         .unwrap();
 }
 
@@ -327,7 +365,7 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
 fn test_acknowledgement_packet_validate_ordered() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let info = create_mock_info("channel-creater", "umlg", 20000000);
     let env = mock_env();
 
     let height = 10;
@@ -440,14 +478,14 @@ fn test_acknowledgement_packet_validate_ordered() {
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
     assert!(res.is_ok());
-    assert_eq!(res.as_ref().unwrap().messages[0].id, 541)
+    assert_eq!(res.as_ref().unwrap().messages[0].id, 533)
 }
 
 #[test]
 fn test_acknowledgement_packet_validate_unordered() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+    let info = create_mock_info("channel-creater", "umlg", 20000000);
     let env = mock_env();
 
     let height = 10;
@@ -552,7 +590,7 @@ fn test_acknowledgement_packet_validate_unordered() {
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
     assert!(res.is_ok());
-    assert_eq!(res.as_ref().unwrap().messages[0].id, 541)
+    assert_eq!(res.as_ref().unwrap().messages[0].id, 533)
 }
 
 #[test]

@@ -81,28 +81,6 @@ public class LoadProofTestData {
         return specWithEmptyChild;
     }
 
-    public static ProofSpec getIavlSpec() {
-        LeafOp leafSpec = new LeafOp();
-        leafSpec.setPrefix(new byte[]{0});
-        leafSpec.setPrehashKey(HashOp.NO_HASH);
-        leafSpec.setHash(HashOp.SHA256);
-        leafSpec.setPrehashValue(HashOp.SHA256);
-        leafSpec.setLength(LengthOp.VAR_PROTO);
-
-        InnerSpec innerSpec = new InnerSpec();
-        innerSpec.setChildOrder(List.of(BigInteger.ZERO, BigInteger.ONE));
-        innerSpec.setMinPrefixLength(BigInteger.valueOf(4));
-        innerSpec.setMaxPrefixLength(BigInteger.valueOf(12));
-        innerSpec.setChildSize(BigInteger.valueOf(33));
-        innerSpec.setEmptyChild(new byte[0]);
-        innerSpec.setHash(HashOp.SHA256);
-
-        var iavlSpec = new ProofSpec();
-        iavlSpec.setLeafSpec(leafSpec);
-        iavlSpec.setInnerSpec(innerSpec);
-        return iavlSpec;
-    }
-
     public static class EmptyBranchTestData {
         public InnerOp op;
         public ProofSpec spec;

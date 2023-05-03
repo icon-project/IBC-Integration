@@ -4,7 +4,7 @@ const FaucetAccountKeyName = "faucet"
 
 type ContractKey struct {
 	ContractAddress map[string]string
-	ContractOwner   string
+	ContractOwner   map[string]string
 }
 type LastBlock struct{}
 

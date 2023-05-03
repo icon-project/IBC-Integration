@@ -130,38 +130,36 @@ pub fn create_send_packet_event(
 
 // Creates WriteAcknowledgement event
 pub fn create_write_ack_event(
-    packet: Packet,
-    ack: Vec<u8>,
-    dst_connection_id: &IbcConnectionId,
+    packet: IbcPacket,
+    channel_order: &str,
+    dst_connection_id: &str,
 ) -> Result<Event, ContractError> {
     let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
         error: ChannelError::NonUtf8PacketData,
     })?;
-    let hex_data = hex::encode(packet.data.clone());
-    let ack_data = std::str::from_utf8(&ack).map_err(|_| ContractError::IbcChannelError {
-        error: ChannelError::NonUtf8PacketData,
-    })?;
-    let ack_hex_data = hex::encode(ack.clone());
+    let hex_data = hex::encode(&packet.data);
+
+    let timeout_height = Height::new(
+        packet.timeout.block().unwrap().revision,
+        packet.timeout.block().unwrap().height,
+    )
+    .map_err(|error| ContractError::IbcClientError { error })?;
 
     Ok(Event::new(IbcEventType::WriteAck.as_str())
         .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)
         .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data)
-        .add_attribute(
-            PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
-            packet.timeout_height_on_b.to_event_attribute_value(),
-        )
+        .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height)
         .add_attribute(
             PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
-            packet.timeout_timestamp_on_b.nanoseconds().to_string(),
+            packet.timeout.timestamp().unwrap().nanos().to_string(),
         )
-        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.seq_on_a.to_string())
-        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.port_id_on_a.as_str())
-        .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_a.as_str())
-        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
-        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
-        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id.as_str())
-        .add_attribute(PKT_ACK_ATTRIBUTE_KEY, ack_data)
-        .add_attribute(PKT_ACK_HEX_ATTRIBUTE_KEY, ack_hex_data))
+        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
+        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.src.port_id)
+        .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.src.channel_id)
+        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.dest.port_id)
+        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, packet.dest.channel_id)
+        .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order)
+        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id))
 }
 
 // Creates AcknowledgePacket event
@@ -169,23 +167,17 @@ pub fn create_ack_packet_event(
     // packet: Packet,
     port_id: &str,
     chan_id: &str,
-    seq_on_a :&str,
+    seq_on_a: &str,
     dst_port_id: &str,
     dst_chan_id: &str,
-    timeout_height_on_b:&str,
-    timeout_timestamp_on_b:&str,
+    timeout_height_on_b: &str,
+    timeout_timestamp_on_b: &str,
     channel_order: &str,
     dst_connection_id: &str,
 ) -> Event {
     Event::new(IbcEventType::AckPacket.as_str())
-        .add_attribute(
-            PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
-            timeout_height_on_b,
-        )
-        .add_attribute(
-            PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
-            timeout_timestamp_on_b,
-        )
+        .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height_on_b)
+        .add_attribute(PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY, timeout_timestamp_on_b)
         .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, seq_on_a)
         .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, port_id)
         .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, chan_id)
@@ -226,4 +218,28 @@ pub fn create_close_confirm_channel_event(msg: &MsgChannelCloseConfirm) -> Event
     Event::new(IbcEventType::CloseConfirmChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, msg.port_id_on_b.as_str())
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, msg.chan_id_on_b.as_str())
+}
+
+pub fn create_recieve_packet_event(
+    // packet: Packet,
+    port_id: &str,
+    chan_id: &str,
+    seq_on_a: &str,
+    dst_port_id: &str,
+    dst_chan_id: &str,
+    timeout_height_on_b: &str,
+    timeout_timestamp_on_b: &str,
+    channel_order: &str,
+    dst_connection_id: &str,
+) -> Event {
+    Event::new(IbcEventType::ReceivePacket.as_str())
+        .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height_on_b)
+        .add_attribute(PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY, timeout_timestamp_on_b)
+        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, seq_on_a)
+        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, port_id)
+        .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, chan_id)
+        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, dst_port_id)
+        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, dst_chan_id)
+        .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order)
+        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id)
 }

@@ -7,9 +7,9 @@ import ibc.icon.score.util.ProtoMessage;
 public class NonExistenceProof extends ProtoMessage {
   private byte[] key = new byte[0];
 
-  private ExistenceProof left;
+  private ExistenceProof left = new ExistenceProof();
 
-  private ExistenceProof right;
+  private ExistenceProof right = new ExistenceProof();
 
   public byte[] getKey() {
     return this.key;

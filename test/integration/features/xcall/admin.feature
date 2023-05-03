@@ -21,7 +21,7 @@ Feature: xCall admin management
     And "Eve" is not the contract owner of the xCall smart contract
     When "Eve" executes set_admin in xcall with "Bob" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
-    And no wallet address should be as admin
+    And by default "Alice" contract owner address should be as admin
 
   Scenario: 003 - An admin cannot add another admin to the xCall
     Given "Alice" has already added "Bob" wallet address as admin
@@ -39,12 +39,12 @@ Feature: xCall admin management
   Scenario: 005 - Preventing the addition of null value as an admin wallet to xCall
     When "Alice" executes set_admin in xcall with "Null" wallet address
     Then xCall returns an error message that the null value cannot be added as admin
-    And no wallet address should be as admin
+    And by default "Alice" contract owner address should be as admin
 
   Scenario: 006 - Preventing the addition of junk characters as an admin wallet to xCall
     When "Alice" executes set_admin in xcall with "Junk" wallet address
     Then xCall returns an error message that  wallet address of the new admin is not a valid address
-    And no wallet address should be as admin
+    And by default "Alice" contract owner address should be as admin
 
   Scenario: 007 Contract owner can update an existing admin wallet in xCall
     Given "Alice" has already added "Bob" wallet address as admin
@@ -104,4 +104,10 @@ Feature: xCall admin management
     And "Diana" is an admin wallet who needs to be added as admin
     When "Alice" executes update_admin in xcall with "Diana" wallet address
     Then xCall returns an error message that there are no admin wallets added to the xCall smart contract
-    And no wallet address should be as admin
+    And by default "Alice" contract owner address should be as admin
+
+  Scenario: 016 - Query admin after adding admin
+    Given "Bob" is an admin wallet who needs to be added as admin
+    And "Alice" executes set_admin in xcall with "Bob" wallet address
+    When a user query for admin
+    Then "Bob" wallet address should be as admin

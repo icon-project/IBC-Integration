@@ -7,9 +7,9 @@ import ibc.icon.score.util.ProtoMessage;
 public class CompressedNonExistenceProof extends ProtoMessage {
   private byte[] key = new byte[0];
 
-  private CompressedExistenceProof left;
+  private CompressedExistenceProof left = new CompressedExistenceProof();
 
-  private CompressedExistenceProof right;
+  private CompressedExistenceProof right = new CompressedExistenceProof();
 
   public byte[] getKey() {
     return this.key;

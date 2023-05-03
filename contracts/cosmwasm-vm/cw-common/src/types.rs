@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use super::*;
-
+use cosmwasm_std::{Addr, Coin};
 #[cw_serde]
 pub struct VerifyChannelState {
     pub proof_height: String,
@@ -27,14 +27,21 @@ pub struct VerifyPacketData {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PacketData {
+    pub message_info: MessageInfo,
     pub packet: Packet,
     pub signer: Signer,
     pub acknowledgement: Option<Acknowledgement>,
 }
 
 impl PacketData {
-    pub fn new(packet: Packet, signer: Signer, acknowledgement: Option<Acknowledgement>) -> Self {
+    pub fn new(
+        packet: Packet,
+        signer: Signer,
+        acknowledgement: Option<Acknowledgement>,
+        message_info: MessageInfo,
+    ) -> Self {
         Self {
+            message_info,
             packet,
             signer,
             acknowledgement,
@@ -464,6 +471,75 @@ impl Hex<Vec<u8>> for StringHex {
 
 
 
+
+
+#[cw_serde]
+pub struct Address(String);
+
+impl Display for Address {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl From<&str> for Address {
+    fn from(value: &str) -> Self {
+        Address(value.to_string())
+    }
+}
+
+impl From<&String> for Address {
+    fn from(value: &String) -> Self {
+        Address(value.to_string())
+    }
+}
+
+impl From<&[u8]> for Address {
+    fn from(value: &[u8]) -> Self {
+        let address = String::from_vec(value.to_vec()).unwrap();
+        Address(address)
+    }
+}
+impl Encodable for Address {
+    fn rlp_append(&self, stream: &mut rlp::RlpStream) {
+        stream.begin_list(1).append(&self.0);
+    }
+}
+
+impl Decodable for Address {
+    fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+        Ok(Self(rlp.val_at(0)?))
+    }
+}
+
+impl Address {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+/// IBC ACK. See:
+/// https://github.com/cosmos/cosmos-sdk/blob/f999b1ff05a4db4a338a855713864497bedd4396/proto/ibc/core/channel/v1/channel.proto#L141-L147
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Ack {
+    Result(Binary),
+    Error(String),
+}
+
+#[cw_serde]
+pub struct MessageInfo {
+    pub sender: Addr,
+    pub funds: Vec<Coin>,
+}
+
+
 #[cw_serde]
 pub struct TestHex {
   #[serde(with = "StringHex")]
@@ -485,5 +561,4 @@ mod tests{
         let deserialized= serde_json::from_str::<TestHex>("{\"bytes\":\"deadbeef\"}").unwrap();
         assert_eq!(test,deserialized);
     }
-
 }

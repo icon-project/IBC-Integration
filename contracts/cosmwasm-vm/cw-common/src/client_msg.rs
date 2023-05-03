@@ -1,5 +1,10 @@
+use crate::client_response::{
+    OpenAckResponse, OpenConfirmResponse, OpenTryResponse, PacketDataResponse,
+};
+
 use super::*;
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::from_slice;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -53,14 +58,12 @@ pub enum LightClientPacketMessage {
 
 #[cw_serde]
 pub struct VerifyConnectionState {
-    proof_height: String,
-    counterparty_prefix: Vec<u8>,
-    proof: Vec<u8>,
-    root: Vec<u8>,
-    // commitment key of counterparty conn end
-    counterparty_conn_end_path: Vec<u8>,
-    // commitment bytes of counterparty conn end
-    expected_counterparty_connection_end: Vec<u8>,
+    pub proof_height: String,
+    pub counterparty_prefix: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub counterparty_conn_end_path: Vec<u8>,
+    pub expected_counterparty_connection_end: Vec<u8>,
 }
 impl VerifyConnectionState {
     pub fn new(
@@ -84,14 +87,12 @@ impl VerifyConnectionState {
 
 #[cw_serde]
 pub struct VerifyClientFullState {
-    proof_height: String,
-    counterparty_prefix: Vec<u8>,
-    client_state_proof: Vec<u8>,
-    root: Vec<u8>,
-    // commitment key
-    client_state_path: Vec<u8>,
-    // commitment bytes
-    expected_client_state: Vec<u8>,
+    pub proof_height: String,
+    pub counterparty_prefix: Vec<u8>,
+    pub client_state_proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub client_state_path: Vec<u8>,
+    pub expected_client_state: Vec<u8>,
 }
 impl VerifyClientFullState {
     pub fn new(
@@ -115,14 +116,12 @@ impl VerifyClientFullState {
 
 #[cw_serde]
 pub struct VerifyClientConsensusState {
-    proof_height: String,
-    counterparty_prefix: Vec<u8>,
-    consensus_state_proof: Vec<u8>,
-    root: Vec<u8>,
-    // commitment key
-    conesenus_state_path: Vec<u8>,
-    // commitment byte
-    expected_conesenus_state: Vec<u8>,
+    pub proof_height: String,
+    pub counterparty_prefix: Vec<u8>,
+    pub consensus_state_proof: Vec<u8>,
+    pub root: Vec<u8>,
+    pub conesenus_state_path: Vec<u8>,
+    pub expected_conesenus_state: Vec<u8>,
 }
 
 impl VerifyClientConsensusState {
@@ -180,6 +179,8 @@ pub enum ExecuteMsg {
         proof_upgrade_consensus_state: Vec<u8>,
     },
     VerifyChannel {
+        message_info: MessageInfo,
+        endpoint: IbcEndpoint,
         verify_channel_state: VerifyChannelState,
         // add all props that we need on response
     },
@@ -187,14 +188,8 @@ pub enum ExecuteMsg {
         client_id: String,
         misbehaviour: Vec<u8>,
     },
-    VerifyConnection {
-        client_id: String,
-        verify_connection_state: VerifyConnectionState,
-        verify_client_full_state: VerifyClientFullState,
-        verify_client_consensus_state: VerifyClientConsensusState,
-        // add all props that we need on open try response
-    },
     VerifyOpenConfirm {
+        expected_response: OpenConfirmResponse,
         client_id: String,
         verify_connection_state: VerifyConnectionState,
          // add all props that we need on response
@@ -214,4 +209,50 @@ pub enum ExecuteMsg {
         verify_packet_acknowledge: VerifyPacketAcknowledgement,
         packet_data: Vec<u8>,
     },
+    VerifyConnectionOpenTry(VerifyConnectionPayload<OpenTryResponse>),
+    VerifyConnectionOpenAck(VerifyConnectionPayload<OpenAckResponse>),
+}
+
+#[cw_serde]
+pub struct VerifyConnectionPayload<T> {
+    pub client_id: String,
+    pub verify_connection_state: VerifyConnectionState,
+    pub verify_client_full_state: VerifyClientFullState,
+    pub verify_client_consensus_state: VerifyClientConsensusState,
+    pub expected_response: T,
+}
+
+impl TryFrom<LightClientPacketMessage> for PacketDataResponse {
+    type Error = CwErrors;
+
+    fn try_from(value: LightClientPacketMessage) -> Result<Self, Self::Error> {
+        let res = match value {
+            LightClientPacketMessage::VerifyNextSequenceRecv {
+                height: _,
+                prefix: _,
+                proof: _,
+                root: _,
+                seq_recv_path: _,
+                sequence: _,
+                packet_data,
+            } => {
+                let packet_data: PacketData = from_slice(&packet_data)
+                    .map_err(|e| CwErrors::FailedToConvertToPacketDataResponse(e))?;
+                PacketDataResponse::from(packet_data)
+            }
+            LightClientPacketMessage::VerifyPacketReceiptAbsence {
+                height: _,
+                prefix: _,
+                proof: _,
+                root: _,
+                receipt_path: _,
+                packet_data,
+            } => {
+                let packet_data: PacketData = from_slice(&packet_data)
+                    .map_err(|e| CwErrors::FailedToConvertToPacketDataResponse(e))?;
+                PacketDataResponse::from(packet_data)
+            }
+        };
+        Ok(res)
+    }
 }

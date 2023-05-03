@@ -43,6 +43,14 @@ pub enum ContractError {
 
     #[error("IbcValidationError {error}")]
     IbcValidationError { error: ValidationError },
+
+    #[error("ERR_REPLY_ERROR|{code:?}|{msg:?}")]
+    ReplyError { code: u64, msg: String },
+
+    #[error("InsufficientBalance")]
+    InsufficientBalance {},
+    #[error("IbcDecodeError {error}")]
+    IbcRawConversionError { error: String },
 }
 
 impl From<CwErrors> for ContractError {
@@ -59,10 +67,11 @@ impl From<CwErrors> for ContractError {
                     validation_error,
                 },
             },
-            CwErrors::InvalidClientId(err) => Self::IbcDecodeError {
+            CwErrors::InvalidClientId(client_id, err) => Self::IbcDecodeError {
                 error: err.to_string(),
             },
             CwErrors::DecodeError { error } => Self::IbcDecodeError { error },
+            CwErrors::FailedToConvertToPacketDataResponse(_) => todo!(),
         }
     }
 }

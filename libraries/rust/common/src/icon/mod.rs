@@ -19,6 +19,11 @@ pub mod icon {
                 include!("icon.proto.core.client.rs");
                 // @@protoc_insertion_point(icon.proto.core.client)
             }
+            // @@protoc_insertion_point(attribute:icon.proto.core.commitment)
+            pub mod commitment {
+                include!("icon.proto.core.commitment.rs");
+                // @@protoc_insertion_point(icon.proto.core.commitment)
+            }
             // @@protoc_insertion_point(attribute:icon.proto.core.connection)
             pub mod connection {
                 include!("icon.proto.core.connection.rs");

@@ -152,7 +152,7 @@ public class LightClientTestBase extends TestBase {
                 .setNextValidatorsHash(tmHeader.getSignedHeader().getHeader().getNextValidatorsHash()).build();
 
         client.invoke(ibcHandler, "createClient", clientId, clientState.toByteArray(),
-                consensusState.toByteArray());
+                consensusState.toByteArray(), new byte[0]);
     }
 
     protected void updateClient(int blockOrder, int referenceBlock) throws Exception {

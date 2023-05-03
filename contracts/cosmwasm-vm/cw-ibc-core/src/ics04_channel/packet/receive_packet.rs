@@ -1,6 +1,5 @@
 use cosmwasm_std::IbcReceiveResponse;
 use ibc::core::ics04_channel::{
-    commitment::AcknowledgementCommitment,
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
@@ -76,12 +75,12 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
-        let expected_commitment_on_a = compute_packet_commitment(
+        let expected_commitment_on_a = commitment::compute_packet_commitment(
             &msg.packet.data,
             &msg.packet.timeout_height_on_b,
             &msg.packet.timeout_timestamp_on_b,
         );
-        let commitment_path_on_a = self.packet_commitment_path(
+        let commitment_path_on_a = commitment::packet_commitment_path(
             &msg.packet.port_id_on_a,
             &msg.packet.chan_id_on_a,
             msg.packet.seq_on_a,
@@ -92,7 +91,19 @@ impl<'a> CwIbcCoreContext<'a> {
             conn_end_on_b.clone(),
         )?;
 
-        let packet_data = PacketData::new(packet.clone(), msg.signer.clone(), None);
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
+
+        let packet_data = PacketData::new(
+            packet.clone(),
+            msg.signer.clone(),
+            None,
+            cw_common::types::MessageInfo {
+                sender: info.sender,
+                funds,
+            },
+        );
         let packet_data = to_vec(&packet_data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
         })?;
@@ -127,7 +138,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn receive_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
+
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -138,6 +149,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             error: e.to_string(),
                         }
                     })?;
+                    let info = packet_data.message_info;
                     let packet = Packet::from(packet_data.packet.clone());
 
                     let chan_end_on_b = self.get_channel_end(
@@ -230,7 +242,9 @@ impl<'a> CwIbcCoreContext<'a> {
                         timeout,
                     );
                     let address = Addr::unchecked(packet_data.signer.to_string());
-                    let cosm_msg = cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address);
+                    let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketReceive {
+                        msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
+                    };
                     let create_client_message: CosmosMsg =
                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                             contract_addr: contract_address.to_string(),
@@ -290,18 +304,20 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<IbcReceiveResponse>(&res).unwrap();
-                    let ack = data.acknowledgement;
-                    let port = data.events[0].attributes[0].value.clone();
-                    let chan = data.events[0].attributes[1].value.clone();
-                    let seq = data.events[0].attributes[2].value.clone();
-                    let seq =
-                        seq.trim()
-                            .parse::<u64>()
-                            .map_err(|e| ContractError::IbcDecodeError {
-                                error: e.to_string(),
-                            })?;
-                    let channel_id = ChannelId::from(IbcChannelId::from_str(&chan).unwrap());
+                    let response_data =
+                        from_binary::<IbcReceiveResponse>(&res).map_err(ContractError::Std)?;
+                    let response_data =
+                        from_binary::<XcallPacketResponseData>(&response_data.acknowledgement)
+                            .map_err(ContractError::Std)?;
+                    let ack = response_data.acknowledgement;
+                    let packet = response_data.packet.clone();
+                    let port = response_data.packet.src.port_id;
+                    let chan = response_data.packet.src.channel_id;
+                    let seq = response_data.packet.sequence;
+                    let channel_id = ChannelId::from(
+                        IbcChannelId::from_str(&chan)
+                            .map_err(|error| ContractError::IbcValidationError { error })?,
+                    );
                     let port_id = PortId::from(IbcPortId::from_str(&port).unwrap());
                     let chan_end_on_b =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
@@ -352,13 +368,13 @@ impl<'a> CwIbcCoreContext<'a> {
                             }
                             _ => {}
                         }
-                        let acknowledgement: cw_xcall::ack::Ack =
-                            from_binary(&ack).map_err(|e| ContractError::IbcDecodeError {
+                        let acknowledgement: cw_common::types::Ack = from_binary(&ack.into())
+                            .map_err(|e| ContractError::IbcDecodeError {
                                 error: e.to_string(),
                             })?;
                         let acknowledgement = match acknowledgement {
-                            cw_xcall::ack::Ack::Result(binary) => binary,
-                            cw_xcall::ack::Ack::Error(e) => {
+                            cw_common::types::Ack::Result(binary) => binary,
+                            cw_common::types::Ack::Error(e) => {
                                 return Err(ContractError::IbcPacketError {
                                     error: PacketError::AppModule { description: e },
                                 })
@@ -371,16 +387,34 @@ impl<'a> CwIbcCoreContext<'a> {
                             &port_id,
                             &channel_id,
                             seq.into(),
-                            compute_ack_commitment(&acknowledgement),
+                            commitment::compute_ack_commitment(&acknowledgement),
                         )?;
                     }
+
+                    let event_recieve_packet = create_recieve_packet_event(
+                        &packet.src.port_id,
+                        &packet.src.channel_id,
+                        &packet.sequence.to_string(),
+                        &packet.dest.port_id,
+                        &packet.dest.channel_id,
+                        &packet.timeout.block().unwrap().height.to_string(),
+                        &packet.timeout.timestamp().unwrap().to_string(),
+                        chan_end_on_b.ordering.as_str(),
+                        chan_end_on_b.connection_hops[0].as_str(),
+                    );
+                    let write_ack_event = create_write_ack_event(
+                        packet,
+                        chan_end_on_b.ordering.as_str(),
+                        chan_end_on_b.connection_hops[0].as_str(),
+                    )?;
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
                         .add_attribute("method", "execute_receive_packet")
                         .add_attribute("message", "success: packet receive")
                         .add_attribute("message", "success: packet write acknowledgement")
-                        .add_events(data.events))
+                        .add_event(event_recieve_packet)
+                        .add_event(write_ack_event))
                 }
                 None => Err(ContractError::IbcChannelError {
                     error: ChannelError::Other {
@@ -395,6 +429,4 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 }
 
-pub fn compute_ack_commitment(ack: &Acknowledgement) -> AcknowledgementCommitment {
-    sha256(ack.as_ref()).into()
-}
+

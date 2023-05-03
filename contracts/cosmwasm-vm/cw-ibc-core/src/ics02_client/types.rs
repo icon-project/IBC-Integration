@@ -1,7 +1,13 @@
 use super::*;
+use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
+use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
+use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 
 pub const ICON_CLIENT_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
 pub const ICON_CONSENSUS_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
+pub const ICON_SIGNED_HEADER_TYPE_URL: &str = "/icon.types.v1.SignedHeader";
+pub const ICON_BTP_HEADER_TYPE_URL: &str = "/icon.types.v1.BtpHeader";
+pub const ICON_MERKLE_TYPE_URL: &str = "/icon.types.v1.MerkleNode";
 
 const CLIENT_TYPE: &str = "iconclient";
 
@@ -122,8 +128,18 @@ impl From<ClientState> for Any {
         Any {
             type_url: ICON_CLIENT_STATE_TYPE_URL.to_string(),
             value: Protobuf::<RawClientState>::encode_vec(&client_state)
-                .expect("encoding to `Any` from `TmClientState`"),
+                .expect("encoding to `Any` from `IconConensusState`"),
         }
+    }
+}
+
+impl TryFrom<ClientState> for Vec<u8> {
+    type Error = ClientError;
+
+    fn try_from(value: ClientState) -> Result<Self, Self::Error> {
+        serde_json_wasm::to_vec(&value).map_err(|error| ClientError::Other {
+            description: error.to_string(),
+        })
     }
 }
 
@@ -351,7 +367,7 @@ impl From<ConsensusState> for Any {
         Any {
             type_url: ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
             value: Protobuf::<RawConsensusState>::encode_vec(&consensus_state)
-                .expect("encoding to `Any` from `TmConsensusState`"),
+                .expect("encoding to `Any` from `IconConensusState`"),
         }
     }
 }
@@ -430,4 +446,329 @@ impl TryFrom<ConsensusState> for Vec<u8> {
 #[derive(Debug, Deserialize)]
 struct ConsensusStateResponse {
     pub message_root: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SignedHeader {
+    pub header: BtpHeader,
+    pub signatures: Vec<Vec<u8>>,
+}
+
+impl TryFrom<Any> for SignedHeader {
+    type Error = ContractError;
+
+    fn try_from(raw: Any) -> Result<Self, Self::Error> {
+        use crate::error::ContractError as Error;
+        use bytes::Buf;
+        use core::ops::Deref;
+        use prost::Message;
+
+        fn decode_signed_header<B: Buf>(buf: B) -> Result<SignedHeader, Error> {
+            RawSignedHeader::decode(buf)
+                .map_err(|error| ContractError::IbcDecodeError {
+                    error: error.to_string(),
+                })?
+                .try_into()
+        }
+
+        match raw.type_url.as_str() {
+            ICON_BTP_HEADER_TYPE_URL => decode_signed_header(raw.value.deref()),
+            _ => Err(ContractError::IbcDecodeError {
+                error: "Invalid Type".to_string(),
+            }),
+        }
+    }
+}
+impl Protobuf<Any> for SignedHeader {}
+
+impl From<SignedHeader> for Any {
+    fn from(value: SignedHeader) -> Self {
+        Any {
+            type_url: ICON_SIGNED_HEADER_TYPE_URL.to_string(),
+            value: Protobuf::<RawSignedHeader>::encode_vec(&value)
+                .expect("encoding to `Any` from `BtpHeader`"),
+        }
+    }
+}
+impl From<SignedHeader> for RawSignedHeader {
+    fn from(value: SignedHeader) -> Self {
+        let network_section_to_root = value
+            .header
+            .network_section_to_root
+            .into_iter()
+            .map(|data| common::icon::icon::types::v1::MerkleNode {
+                dir: data.dir,
+                value: data.value,
+            })
+            .collect::<Vec<common::icon::icon::types::v1::MerkleNode>>();
+        let btp_header = RawBtpHeader {
+            main_height: value.header.main_height,
+            round: value.header.round,
+            next_proof_context_hash: value.header.next_proof_context_hash,
+            network_section_to_root,
+            network_id: value.header.network_id,
+            update_number: value.header.update_number,
+            prev_network_section_hash: value.header.prev_network_section_hash,
+            message_count: value.header.message_count,
+            message_root: value.header.message_root,
+            next_validators: value.header.next_validators,
+        };
+        Self {
+            header: Some(btp_header),
+            signatures: value.signatures,
+        }
+    }
+}
+impl Protobuf<RawSignedHeader> for SignedHeader {}
+impl TryFrom<RawSignedHeader> for SignedHeader {
+    type Error = ContractError;
+
+    fn try_from(value: RawSignedHeader) -> Result<Self, Self::Error> {
+        let btp_header: BtpHeader = value.header.unwrap().try_into().map_err(|error| error)?;
+        let signed_header = Self {
+            header: btp_header,
+            signatures: value.signatures,
+        };
+
+        Ok(signed_header)
+    }
+}
+
+impl TryFrom<Vec<u8>> for SignedHeader {
+    type Error = ContractError;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        match serde_json_wasm::from_slice(value.as_slice()) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(ContractError::IbcDecodeError {
+                error: error.to_string(),
+            }),
+        }
+    }
+}
+impl TryFrom<SignedHeader> for Vec<u8> {
+    type Error = ContractError;
+
+    fn try_from(value: SignedHeader) -> Result<Self, Self::Error> {
+        serde_json_wasm::to_vec(&value).map_err(|error| ContractError::IbcDecodeError {
+            error: error.to_string(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BtpHeader {
+    pub main_height: u64,
+    pub round: u32,
+    pub next_proof_context_hash: Vec<u8>,
+    pub network_section_to_root: Vec<MerkleNode>,
+    pub network_id: u64,
+    pub update_number: u64,
+    pub prev_network_section_hash: Vec<u8>,
+    pub message_count: u64,
+    pub message_root: Vec<u8>,
+    pub next_validators: Vec<Vec<u8>>,
+}
+
+impl Protobuf<RawBtpHeader> for BtpHeader {}
+impl TryFrom<RawBtpHeader> for BtpHeader {
+    type Error = ContractError;
+
+    fn try_from(value: RawBtpHeader) -> Result<Self, Self::Error> {
+        let network_section_to_root = value
+            .network_section_to_root
+            .into_iter()
+            .map(|data| MerkleNode {
+                dir: data.dir,
+                value: data.value,
+            })
+            .collect::<Vec<MerkleNode>>();
+        let btp_header = BtpHeader {
+            main_height: value.main_height,
+            round: value.round,
+            next_proof_context_hash: value.next_proof_context_hash,
+            network_section_to_root,
+            network_id: value.network_id,
+            update_number: value.update_number,
+            prev_network_section_hash: value.prev_network_section_hash,
+            message_count: value.message_count,
+            message_root: value.message_root,
+            next_validators: value.next_validators,
+        };
+
+        Ok(btp_header)
+    }
+}
+
+impl From<BtpHeader> for Any {
+    fn from(value: BtpHeader) -> Self {
+        Any {
+            type_url: ICON_BTP_HEADER_TYPE_URL.to_string(),
+            value: Protobuf::<RawBtpHeader>::encode_vec(&value)
+                .expect("encoding to `Any` from `BtpHeader`"),
+        }
+    }
+}
+
+impl From<BtpHeader> for RawBtpHeader {
+    fn from(value: BtpHeader) -> Self {
+        let network_section_to_root = value
+            .network_section_to_root
+            .into_iter()
+            .map(|data| common::icon::icon::types::v1::MerkleNode {
+                dir: data.dir,
+                value: data.value,
+            })
+            .collect::<Vec<common::icon::icon::types::v1::MerkleNode>>();
+        Self {
+            main_height: value.main_height,
+            round: value.round,
+            next_proof_context_hash: value.next_proof_context_hash,
+            network_section_to_root,
+            network_id: value.network_id,
+            update_number: value.update_number,
+            prev_network_section_hash: value.prev_network_section_hash,
+            message_count: value.message_count,
+            message_root: value.message_root,
+            next_validators: value.next_validators,
+        }
+    }
+}
+
+impl Protobuf<Any> for BtpHeader {}
+impl TryFrom<Any> for BtpHeader {
+    type Error = ContractError;
+
+    fn try_from(raw: Any) -> Result<Self, Self::Error> {
+        use crate::error::ContractError as Error;
+        use bytes::Buf;
+        use core::ops::Deref;
+        use prost::Message;
+
+        fn decode_btp_header<B: Buf>(buf: B) -> Result<BtpHeader, Error> {
+            RawBtpHeader::decode(buf)
+                .map_err(|error| ContractError::IbcDecodeError {
+                    error: error.to_string(),
+                })?
+                .try_into()
+        }
+
+        match raw.type_url.as_str() {
+            ICON_BTP_HEADER_TYPE_URL => decode_btp_header(raw.value.deref()),
+            _ => Err(ContractError::IbcDecodeError {
+                error: "Invalid Type".to_string(),
+            }),
+        }
+    }
+}
+
+impl TryFrom<Vec<u8>> for BtpHeader {
+    type Error = ContractError;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        match serde_json_wasm::from_slice(value.as_slice()) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(ContractError::IbcDecodeError {
+                error: error.to_string(),
+            }),
+        }
+    }
+}
+
+impl TryFrom<BtpHeader> for Vec<u8> {
+    type Error = ContractError;
+
+    fn try_from(value: BtpHeader) -> Result<Self, Self::Error> {
+        serde_json_wasm::to_vec(&value).map_err(|error| ContractError::IbcDecodeError {
+            error: error.to_string(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct MerkleNode {
+    pub dir: i32,
+    pub value: Vec<u8>,
+}
+
+impl Protobuf<Any> for MerkleNode {}
+
+impl TryFrom<Any> for MerkleNode {
+    type Error = ContractError;
+
+    fn try_from(raw: Any) -> Result<Self, Self::Error> {
+        use crate::error::ContractError as Error;
+        use bytes::Buf;
+        use core::ops::Deref;
+        use prost::Message;
+
+        fn decode_merkle_node<B: Buf>(buf: B) -> Result<MerkleNode, Error> {
+            RawMerkleNode::decode(buf)
+                .map_err(|error| ContractError::IbcDecodeError {
+                    error: error.to_string(),
+                })?
+                .try_into()
+        }
+
+        match raw.type_url.as_str() {
+            ICON_MERKLE_TYPE_URL => decode_merkle_node(raw.value.deref()),
+            _ => Err(ContractError::IbcDecodeError {
+                error: "Invalid Type".to_string(),
+            }),
+        }
+    }
+}
+
+impl From<MerkleNode> for RawMerkleNode {
+    fn from(value: MerkleNode) -> Self {
+        Self {
+            dir: value.dir,
+            value: value.value,
+        }
+    }
+}
+
+impl From<MerkleNode> for Any {
+    fn from(value: MerkleNode) -> Self {
+        Any {
+            type_url: ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
+            value: Protobuf::<RawMerkleNode>::encode_vec(&value)
+                .expect("encoding to `Any` from `MerkleNode`"),
+        }
+    }
+}
+
+impl Protobuf<RawMerkleNode> for MerkleNode {}
+impl TryFrom<RawMerkleNode> for MerkleNode {
+    type Error = ContractError;
+
+    fn try_from(value: RawMerkleNode) -> Result<Self, Self::Error> {
+        let merkle_node = MerkleNode {
+            dir: value.dir,
+            value: value.value,
+        };
+
+        Ok(merkle_node)
+    }
+}
+impl TryFrom<Vec<u8>> for MerkleNode {
+    type Error = ContractError;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        match serde_json_wasm::from_slice(value.as_slice()) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(ContractError::IbcDecodeError {
+                error: error.to_string(),
+            }),
+        }
+    }
+}
+
+impl TryFrom<MerkleNode> for Vec<u8> {
+    type Error = ContractError;
+
+    fn try_from(value: MerkleNode) -> Result<Self, Self::Error> {
+        serde_json_wasm::to_vec(&value).map_err(|error| ContractError::IbcDecodeError {
+            error: error.to_string(),
+        })
+    }
 }

@@ -2,13 +2,13 @@ package ibc.ics23.commitment;
 
 import icon.proto.core.commitment.*;
 import score.UserRevertedException;
-import scorex.util.ArrayList;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
 import static ibc.ics23.commitment.Compress.isCompressedBatchProofEmpty;
+import static ibc.ics23.commitment.Ops.doHashOrNoop;
 
 public class Proof {
 
@@ -20,14 +20,39 @@ public class Proof {
             throw new UserRevertedException("Provided value doesn't match proof");
         }
         checkAgainstSpec(proof, spec);
-        byte[] root = calculateRoot(proof);
+        byte[] root = calculateRoot(proof, spec);
         boolean rootMatch = Arrays.equals(root, commitmentRoot);
         if (!rootMatch) {
             throw new UserRevertedException("Calculated Root doesn't match provided root");
         }
     }
 
-    public static byte[] calculateRoot(ExistenceProof proof) {
+    public static byte[] calculateRoot(CommitmentProof proof) {
+        if (!isExistenceProofEmpty(proof.getExist())) {
+            return calculateRoot(proof.getExist(), null);
+        }
+        if (!isNonExistenceProofEmpty(proof.getNonexist())) {
+            return calculateRoot(proof.getNonexist());
+        }
+
+        if (!isBatchProofEmpty(proof.getBatch())) {
+            if (isBatchEntryEmpty(proof.getBatch().getEntries().get(0))) {
+                throw new UserRevertedException("Batch proof has empty entry");
+            }
+            if (!isExistenceProofEmpty(proof.getBatch().getEntries().get(0).getExist())) {
+                return calculateRoot(proof.getBatch().getEntries().get(0).getExist(), null);
+            }
+            if (!isNonExistenceProofEmpty(proof.getBatch().getEntries().get(0).getNonexist())) {
+                return calculateRoot(proof.getBatch().getEntries().get(0).getNonexist());
+            }
+        }
+        if (!isCompressedBatchProofEmpty(proof.getCompressed())) {
+            return calculateRoot(Compress.decompress(proof));
+        }
+        throw new UserRevertedException("Empty proof");
+    }
+
+    public static byte[] calculateRoot(ExistenceProof proof, ProofSpec spec) {
         if (isLeafOpEmpty(proof.getLeaf())) {
             throw new UserRevertedException("Existence Proof needs defined LeafOp");
         }
@@ -35,8 +60,23 @@ public class Proof {
         List<InnerOp> proofPath = proof.getPath();
         for (InnerOp innerOp : proofPath) {
             root = Ops.applyOp(innerOp, root);
+            if (spec != null) {
+                if (root.length > spec.getInnerSpec().getChildSize().intValue() && spec.getInnerSpec().getChildSize().intValue() >= 32) {
+                    throw new UserRevertedException("Inner error");
+                }
+            }
         }
         return root;
+    }
+
+    public static byte[] calculateRoot(NonExistenceProof proof) {
+        if (!isExistenceProofEmpty(proof.getLeft())) {
+            return calculateRoot(proof.getLeft(), null);
+        }
+        if (!isExistenceProofEmpty(proof.getRight())) {
+            return calculateRoot(proof.getRight(), null);
+        }
+        throw new UserRevertedException("Nonexistence proof has empty Left and Right Proof");
     }
 
     public static void checkAgainstSpec(ExistenceProof proof, ProofSpec spec) {
@@ -65,6 +105,16 @@ public class Proof {
         }
     }
 
+    // If we should prehash the key before comparison, do so; otherwise, return the key. Prehashing
+    // changes lexical comparison, so we do so before comparison if the spec sets
+    // `PrehashKeyBeforeComparison`.
+    public static byte[] keyForComparison(ProofSpec spec, byte[] key) {
+        if (!spec.getPrehashKeyBeforeComparison()) {
+            return key;
+        }
+        return doHashOrNoop(spec.getLeafSpec().getPrehashKey(), key);
+    }
+
     public static void verify(NonExistenceProof proof, ProofSpec spec, byte[] commitmentRoot, byte[] key) {
         byte[] leftKey = new byte[0];
         byte[] rightKey = new byte[0];
@@ -87,11 +137,11 @@ public class Proof {
             throw new UserRevertedException("Both left and right proofs missing");
         }
 
-        if (rightKey.length > 0 && Ops.compare(key, rightKey) >= 0) {
+        if (rightKey.length > 0 && Ops.compare(keyForComparison(spec, key), keyForComparison(spec, rightKey)) >= 0) {
             throw new UserRevertedException("Key is not left of right proof");
         }
 
-        if (leftKey.length > 0 && Ops.compare(key, leftKey) <= 0) {
+        if (leftKey.length > 0 && Ops.compare(keyForComparison(spec, key), keyForComparison(spec, leftKey)) <= 0) {
             throw new UserRevertedException("Key is not right of left proof");
         }
 
@@ -112,44 +162,6 @@ public class Proof {
         }
     }
 
-    public static byte[] calculateRoot(NonExistenceProof proof) {
-        if (!isExistenceProofEmpty(proof.getLeft())) {
-            return calculateRoot(proof.getLeft());
-        }
-        if (!isExistenceProofEmpty(proof.getRight())) {
-            return calculateRoot(proof.getRight());
-        }
-        throw new UserRevertedException("Nonexistence proof has empty Left and Right Proof");
-    }
-
-    public static byte[] calculateRoot(CommitmentProof proof) {
-        if (!isExistenceProofEmpty(proof.getExist())) {
-            return calculateRoot(proof.getExist());
-        }
-        if (!isNonExistenceProofEmpty(proof.getNonexist())) {
-            return calculateRoot(proof.getNonexist());
-        }
-
-        if (!isBatchProofEmpty(proof.getBatch())) {
-            if (proof.getBatch().getEntries().size() == 0) {
-                throw new UserRevertedException("Batch Proof has no entry");
-            }
-            if (isBatchEntryEmpty(proof.getBatch().getEntries().get(0))) {
-                throw new UserRevertedException("Batch proof has empty entry");
-            }
-            if (!isExistenceProofEmpty(proof.getBatch().getEntries().get(0).getExist())) {
-                return calculateRoot(proof.getBatch().getEntries().get(0).getExist());
-            }
-            if (!isNonExistenceProofEmpty(proof.getBatch().getEntries().get(0).getNonexist())) {
-                return calculateRoot(proof.getBatch().getEntries().get(0).getNonexist());
-            }
-        }
-        if (!isCompressedBatchProofEmpty(proof.getCompressed())) {
-            return calculateRoot(Compress.decompress(proof));
-        }
-        throw new UserRevertedException("Empty proof");
-    }
-
     private static boolean isLeftMost(InnerSpec spec, List<InnerOp> path) {
         BigInteger[] padding = getPadding(spec, 0);
         BigInteger minPrefix = padding[0];
@@ -157,7 +169,7 @@ public class Proof {
         BigInteger suffix = padding[2];
 
         for (InnerOp innerOp : path) {
-            if (!hasPadding(innerOp, minPrefix, maxPrefix, suffix)) {
+            if (!hasPadding(innerOp, minPrefix, maxPrefix, suffix) && !leftBranchesAreEmpty(spec, innerOp)) {
                 return false;
             }
         }
@@ -172,7 +184,7 @@ public class Proof {
         BigInteger suffix = padding[2];
 
         for (InnerOp innerOp : path) {
-            if (!hasPadding(innerOp, minPrefix, maxPrefix, suffix)) {
+            if (!hasPadding(innerOp, minPrefix, maxPrefix, suffix) && !rightBranchesAreEmpty(spec, innerOp)) {
                 return false;
             }
         }
@@ -204,11 +216,11 @@ public class Proof {
             return false;
         }
 
-        if (!isRightMost(spec, sliceInnerOps(left, 0, leftIdx))) {
+        if (!isRightMost(spec, left.subList(0, leftIdx))) {
             return false;
         }
 
-        if (!isLeftMost(spec, sliceInnerOps(right, 0, rightIdx))) {
+        if (!isLeftMost(spec, right.subList(0, rightIdx))) {
             return false;
         }
         return true;
@@ -242,7 +254,7 @@ public class Proof {
 
     private static int getPosition(List<BigInteger> order, int branch) {
         int orderLength = order.size();
-        if (branch >= orderLength) {
+        if (branch < 0 || branch >= orderLength) {
             throw new UserRevertedException("Invalid branch");
         }
 
@@ -251,7 +263,7 @@ public class Proof {
                 return i;
             }
         }
-        return 0;
+        throw new UserRevertedException("Branch " + branch + " not found in order " + order);
     }
 
     private static boolean hasPadding(InnerOp op, BigInteger minPrefix, BigInteger maxPrefix, BigInteger suffix) {
@@ -259,14 +271,6 @@ public class Proof {
         if (opPrefixLength < minPrefix.intValue()) return false;
         if (opPrefixLength > maxPrefix.intValue()) return false;
         return op.getSuffix().length == suffix.intValue();
-    }
-
-    private static List<InnerOp> sliceInnerOps(List<InnerOp> array, int start, int end) {
-        List<InnerOp> slice = new ArrayList<>(end - start);
-        for (int i = start; i < end; i++) {
-            slice.add(array.get(i));
-        }
-        return slice;
     }
 
     public static boolean isLeafOpEmpty(LeafOp leafOp) {
@@ -413,6 +417,51 @@ public class Proof {
         tendermintSpec.setLeafSpec(leafSpec);
         tendermintSpec.setInnerSpec(innerSpec);
         return tendermintSpec;
+    }
+
+    public static ProofSpec getIavlSpec() {
+        LeafOp leafSpec = new LeafOp();
+        leafSpec.setPrefix(new byte[]{0});
+        leafSpec.setPrehashKey(HashOp.NO_HASH);
+        leafSpec.setHash(HashOp.SHA256);
+        leafSpec.setPrehashValue(HashOp.SHA256);
+        leafSpec.setLength(LengthOp.VAR_PROTO);
+
+        InnerSpec innerSpec = new InnerSpec();
+        innerSpec.setChildOrder(List.of(BigInteger.ZERO, BigInteger.ONE));
+        innerSpec.setMinPrefixLength(BigInteger.valueOf(4));
+        innerSpec.setMaxPrefixLength(BigInteger.valueOf(12));
+        innerSpec.setChildSize(BigInteger.valueOf(33));
+        innerSpec.setHash(HashOp.SHA256);
+
+        var iavlSpec = new ProofSpec();
+        iavlSpec.setLeafSpec(leafSpec);
+        iavlSpec.setInnerSpec(innerSpec);
+        return iavlSpec;
+    }
+
+    public static ProofSpec getSmtSpec() {
+        LeafOp leafSpec = new LeafOp();
+        leafSpec.setPrefix(new byte[]{0});
+        leafSpec.setPrehashKey(HashOp.SHA256);
+        leafSpec.setHash(HashOp.SHA256);
+        leafSpec.setPrehashValue(HashOp.SHA256);
+        leafSpec.setLength(LengthOp.NO_PREFIX);
+
+        InnerSpec innerSpec = new InnerSpec();
+        innerSpec.setChildOrder(List.of(BigInteger.ZERO, BigInteger.ONE));
+        innerSpec.setMinPrefixLength(BigInteger.ONE);
+        innerSpec.setMaxPrefixLength(BigInteger.ONE);
+        innerSpec.setChildSize(BigInteger.valueOf(32));
+        innerSpec.setEmptyChild(new byte[32]);
+        innerSpec.setHash(HashOp.SHA256);
+
+        var smtSpec = new ProofSpec();
+        smtSpec.setLeafSpec(leafSpec);
+        smtSpec.setInnerSpec(innerSpec);
+        smtSpec.setMaxDepth(BigInteger.valueOf(256));
+        smtSpec.setPrehashKeyBeforeComparison(true);
+        return smtSpec;
     }
 
 }

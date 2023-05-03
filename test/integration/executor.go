@@ -46,7 +46,7 @@ func (e *Executor) EnsureChainIsRunning() (context.Context, error) {
 	case "icon":
 		e.chain, err = icon.NewIconChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.Chain.NID, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger)
 	case "cosmos":
-		e.chain, err = cosmos.NewCosmosChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger)
+		e.chain, err = cosmos.NewCosmosChain(e.T, e.ctx, e.cfg.Chain.Environment, e.cfg.Chain.ChainConfig, e.cfg.KeystoreFile, e.cfg.KeystorePassword, e.cfg.Chain.URL, e.cfg.Contracts, e.logger, e.cfg.Chain.NID)
 	default:
 		err = fmt.Errorf("unknown chain: %s", e.cfg.Chain.Name)
 	}
@@ -98,7 +98,7 @@ func (e *Executor) isTheContractOwner(owner, contractName string) (err error) {
 		ContractName: contractName,
 	})
 
-	// Add init message to context
+	// Add init message from config to context
 	initMsg := e.cfg.InitMessage[contractName]
 	e.ctx = context.WithValue(e.ctx, chains.InitMessage{}, chains.InitMessage{
 		InitMsg: initMsg,
@@ -159,13 +159,17 @@ func (e *Executor) xCallReturnsAnErrorMessageThatTheAdminAlreadyExists() error {
 	return nil
 }
 
-func (e *Executor) noWalletAddressShouldBeAsAdmin() (err error) {
+func (e *Executor) byDefaultContractOwnerAddressShouldBeAsAdmin(owner string) (err error) {
 	contractAddress := e.GetContractAddress("xcall")
 	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, "get_admin", "")
-	if err == nil {
-		return fmt.Errorf("get_admin did not return an error message which means there is an admin set")
+	if err != nil {
+		return err
 	}
-	return nil
+	ctxVal := e.ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+	if strings.Contains(fmt.Sprint(chains.Response), ctxVal.ContractOwner[owner]) {
+		return nil
+	}
+	return fmt.Errorf("by Default owner of contract address is not set as admin")
 }
 
 func (e *Executor) xCallReturnsAnErrorMessageThatTheNullValueCannotBeAddedAsAdmin() error {
@@ -189,7 +193,12 @@ func (e *Executor) executesUpdate_adminInXcallWithWalletAddress(keyName, admin s
 }
 
 func (e *Executor) xCallShouldUpdateXCallAdminWithAddress(admin string) error {
-	return e.walletAddressShouldBeAddedAsAdmin(admin)
+	if e.error != nil {
+		return e.error
+	} else {
+		return e.walletAddressShouldBeAddedAsAdmin(admin)
+	}
+
 }
 
 func (e *Executor) executesRemove_adminInXcall(keyName string) error {
@@ -199,11 +208,15 @@ func (e *Executor) executesRemove_adminInXcall(keyName string) error {
 }
 
 func (e *Executor) xCallShouldRemoveWalletAddressAsAdmin(admin string) error {
-	err := e.walletAddressShouldNotBeAddedAsAdmin(admin)
-	if err == nil {
-		return fmt.Errorf("admin is not removed ")
+	if e.error != nil {
+		return e.error
+	} else {
+		err := e.walletAddressShouldNotBeAddedAsAdmin(admin)
+		if err == nil {
+			return fmt.Errorf("admin is not removed ")
+		}
+		return nil
 	}
-	return nil
 }
 
 func (e *Executor) xCallReturnsAnErrorMessageThatAdminIsAlreadySet() error {
@@ -235,4 +248,12 @@ func (e *Executor) contractDeployedByOnlyWhenTheChainIs(contractName, owner, cha
 	}
 	fmt.Println("Given chain is not Icon, so deploying BMC contract is not required")
 	return nil
+}
+
+func (e *Executor) aUserQueryForAdmin() error {
+	return nil
+}
+
+func (e *Executor) walletAddressShouldBeAsAdmin(admin string) error {
+	return e.walletAddressShouldBeAddedAsAdmin(admin)
 }

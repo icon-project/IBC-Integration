@@ -5,7 +5,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        msg: &MsgTimeoutOnClose,
+        msg: MsgTimeoutOnClose,
     ) -> Result<Response, ContractError> {
         let packet = &msg.packet.clone();
         let chan_end_on_a = self.get_channel_end(
@@ -42,7 +42,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(_) => return Ok(Response::new()),
         };
 
-        let expected_commitment_on_a = compute_packet_commitment(
+        let expected_commitment_on_a = commitment::compute_packet_commitment(
             &msg.packet.data,
             &msg.packet.timeout_height_on_b,
             &msg.packet.timeout_timestamp_on_b,
@@ -96,7 +96,7 @@ impl<'a> CwIbcCoreContext<'a> {
             expected_conn_hops_on_b,
             chan_end_on_a.version().clone(),
         );
-        let chan_end_path_on_b = self.channel_path(&port_id_on_b, chan_id_on_b);
+        let chan_end_path_on_b = commitment::channel_path(&port_id_on_b, chan_id_on_b);
         let vector = to_vec(&expected_chan_end_on_b);
 
         self.verify_connection_delay_passed(
@@ -112,10 +112,19 @@ impl<'a> CwIbcCoreContext<'a> {
             counterparty_chan_end_path: chan_end_path_on_b,
             expected_counterparty_channel_end: vector.unwrap(),
         };
+
+        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+
+        let funds = self.update_fee(info.funds.clone(), fee)?;
+
         let data = PacketData {
             packet: msg.packet.clone(),
             signer: msg.signer.clone(),
             acknowledgement: None,
+            message_info: cw_common::types::MessageInfo {
+                sender: info.sender.clone(),
+                funds,
+            },
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),
@@ -130,7 +139,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     },
                 });
             }
-            let seq_recv_path_on_b = self.next_seq_recv_commitment_path(
+            let seq_recv_path_on_b = commitment::next_seq_recv_commitment_path(
                 &msg.packet.port_id_on_b.clone(),
                 &msg.packet.chan_id_on_b.clone(),
             );
@@ -145,7 +154,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet_data,
             }
         } else {
-            let receipt_path_on_b = self.packet_receipt_commitment_path(
+            let receipt_path_on_b = commitment::receipt_commitment_path(
                 &msg.packet.port_id_on_b,
                 &msg.packet.chan_id_on_b,
                 msg.packet.seq_on_a,
@@ -177,7 +186,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
             VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT,
-        );
+        )
+        .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
         Ok(Response::new()
             .add_attribute("action", "Light client packet timeout call")

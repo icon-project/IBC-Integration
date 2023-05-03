@@ -1,7 +1,5 @@
-
-
 use super::*;
-
+use cw_common::commitment;
 impl<'a> CwIbcCoreContext<'a> {
     pub fn lookup_module_by_port(
         &self,
@@ -74,8 +72,13 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &mut dyn Storage,
         port_id: &IbcPortId,
         address: String,
-    ) -> Result<(), ContractError> {
-        self.claim_capability(store, self.port_path(port_id), address)
+    ) -> Result<Response, ContractError> {
+        self.claim_capability(store, commitment::port_path(port_id), address.clone())?;
+
+        Ok(Response::new()
+            .add_attribute("method", "bind_port")
+            .add_attribute("port_id", port_id.as_str())
+            .add_attribute("address", address))
     }
 
     pub fn channel_capability_path(
