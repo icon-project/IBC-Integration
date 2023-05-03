@@ -533,7 +533,7 @@ fn fails_receive_packet_for_call_message_request() {
         msg: packet_message,
     };
 
-    let result = contract
+    contract
         .execute(mock_deps.as_mut(), mock_env, mock_info, execute_message)
         .unwrap();
 }
@@ -572,4 +572,84 @@ fn fails_on_open_channel_open_init_unauthorized() {
     contract
         .execute(deps.as_mut(), mock_env, mock_info, execute_msg)
         .unwrap();
+}
+
+#[test]
+fn success_on_setting_timeout_height() {
+    let mut deps = deps();
+
+    let mock_env = mock_env();
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+
+    let mut contract = CwCallService::default();
+
+    let init_message = InstantiateMsg {
+        timeout_height: 10,
+        ibc_host: Addr::unchecked("ibchostaddress"),
+    };
+
+    contract
+        .instantiate(
+            deps.as_mut(),
+            mock_env.clone(),
+            mock_info.clone(),
+            init_message,
+        )
+        .unwrap();
+
+    let exec_message = ExecuteMsg::SetTimeoutHeight { height: 100 };
+
+    contract
+        .execute(deps.as_mut(), mock_env.clone(), mock_info, exec_message)
+        .unwrap();
+
+    let response: u64 = from_binary(
+        &contract
+            .query(deps.as_ref(), mock_env, QueryMsg::GetTimeoutHeight {})
+            .unwrap(),
+    )
+    .unwrap();
+
+    assert_eq!(response, 100)
+}
+
+#[test]
+#[should_panic(expected = "OnlyAdmin")]
+fn fails_on_setting_timeout_height_unauthorized() {
+    let mut deps = deps();
+
+    let mock_env = mock_env();
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+
+    let mut contract = CwCallService::default();
+
+    let init_message = InstantiateMsg {
+        timeout_height: 10,
+        ibc_host: Addr::unchecked("ibchostaddress"),
+    };
+
+    contract
+        .instantiate(
+            deps.as_mut(),
+            mock_env.clone(),
+            mock_info.clone(),
+            init_message,
+        )
+        .unwrap();
+
+    let exec_message = ExecuteMsg::SetTimeoutHeight { height: 100 };
+
+    let mock_info = create_mock_info("bob", "umlg", 2000);
+    contract
+        .execute(deps.as_mut(), mock_env.clone(), mock_info, exec_message)
+        .unwrap();
+
+    let response: u64 = from_binary(
+        &contract
+            .query(deps.as_ref(), mock_env, QueryMsg::GetTimeoutHeight {})
+            .unwrap(),
+    )
+    .unwrap();
+
+    assert_eq!(response, 100)
 }
