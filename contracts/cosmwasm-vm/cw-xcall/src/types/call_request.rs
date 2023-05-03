@@ -2,14 +2,14 @@ use super::*;
 
 #[cw_serde]
 pub struct CallRequest {
-    from: Address,
+    from: String,
     to: String,
     rollback: Vec<u8>,
     enabled: bool,
 }
 
 impl CallRequest {
-    pub fn new(from: Address, to: String, rollback: Vec<u8>, enabled: bool) -> Self {
+    pub fn new(from: String, to: String, rollback: Vec<u8>, enabled: bool) -> Self {
         Self {
             from,
             to,
@@ -18,7 +18,7 @@ impl CallRequest {
         }
     }
 
-    pub fn from(&self) -> &Address {
+    pub fn from(&self) -> &String {
         &self.from
     }
 

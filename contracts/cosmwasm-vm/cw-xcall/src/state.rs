@@ -43,12 +43,12 @@ impl IbcConfig {
 pub struct CwCallService<'a> {
     last_sequence_no: Item<'a, u128>,
     last_request_id: Item<'a, u128>,
-    owner: Item<'a, Address>,
-    admin: Item<'a, Address>,
+    owner: Item<'a, String>,
+    admin: Item<'a, String>,
     message_request: Map<'a, u128, CallServiceMessageRequest>,
     requests: Map<'a, u128, CallRequest>,
     ibc_config: Item<'a, IbcConfig>,
-    fee_handler: Item<'a, Address>,
+    fee_handler: Item<'a, String>,
     fee: Item<'a, u128>,
     ibc_host: Item<'a, Addr>,
     timeout_height: Item<'a, u64>,
@@ -85,11 +85,11 @@ impl<'a> CwCallService<'a> {
         &self.last_request_id
     }
 
-    pub fn owner(&self) -> &Item<'a, Address> {
+    pub fn owner(&self) -> &Item<'a, String> {
         &self.owner
     }
 
-    pub fn admin(&self) -> &Item<'a, Address> {
+    pub fn admin(&self) -> &Item<'a, String> {
         &self.admin
     }
 
@@ -105,7 +105,7 @@ impl<'a> CwCallService<'a> {
         &self.ibc_config
     }
 
-    pub fn fee_handler(&self) -> &Item<'a, Address> {
+    pub fn fee_handler(&self) -> &Item<'a, String> {
         &self.fee_handler
     }
     pub fn fee(&self) -> &Item<'a, u128> {

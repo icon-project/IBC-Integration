@@ -130,7 +130,7 @@ impl<'a> CwCallService<'a> {
     ) -> Result<Response, ContractError> {
         let last_sequence_no = u128::default();
         let last_request_id = u128::default();
-        let owner = Address::from(info.sender.as_str());
+        let owner = info.sender.as_str().to_string();
 
         self.add_owner(store, owner.clone())?;
         self.add_admin(store, info, owner)?;

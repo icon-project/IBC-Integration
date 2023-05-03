@@ -1,7 +1,7 @@
 use super::*;
 
 impl<'a> CwCallService<'a> {
-    pub fn query_admin(&self, store: &dyn Storage) -> Result<Address, ContractError> {
+    pub fn query_admin(&self, store: &dyn Storage) -> Result<String, ContractError> {
         let admin = self
             .admin()
             .load(store)
@@ -14,7 +14,7 @@ impl<'a> CwCallService<'a> {
         &self,
         store: &mut dyn Storage,
         info: MessageInfo,
-        admin: Address,
+        admin: String,
     ) -> Result<Response, ContractError> {
         if admin.is_empty() {
             return Err(ContractError::AdminAddressCannotBeNull {});
@@ -44,7 +44,7 @@ impl<'a> CwCallService<'a> {
         &self,
         store: &mut dyn Storage,
         info: MessageInfo,
-        new_admin: Address,
+        new_admin: String,
     ) -> Result<Response, ContractError> {
         if new_admin.is_empty() {
             return Err(ContractError::AdminAddressCannotBeNull {});
@@ -84,7 +84,7 @@ impl<'a> CwCallService<'a> {
         Ok(Response::new().add_attribute("method", "remove_admin"))
     }
 
-    pub fn validate_address(api: &dyn Api, address: &str) -> Result<Address, ContractError> {
+    pub fn validate_address(api: &dyn Api, address: &str) -> Result<String, ContractError> {
         if !address.chars().all(|x| x.is_alphanumeric()) {
             return Err(ContractError::InvalidAddress {
                 address: address.to_string(),

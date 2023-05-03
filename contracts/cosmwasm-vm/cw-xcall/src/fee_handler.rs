@@ -6,7 +6,7 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        address: Address,
+        address: String,
     ) -> Result<Response, ContractError> {
         self.ensure_admin(deps.storage, info.sender)?;
         self.add_feehandler(deps.storage, &address)?;
@@ -32,7 +32,7 @@ impl<'a> CwCallService<'a> {
             .add_attribute("method", "setprotocol_feehandler"))
     }
 
-    pub fn get_protocol_feehandler(&self, deps: Deps) -> Address {
+    pub fn get_protocol_feehandler(&self, deps: Deps) -> String {
         self.query_feehandler(deps.storage).unwrap()
     }
 }
@@ -41,7 +41,7 @@ impl<'a> CwCallService<'a> {
     fn add_feehandler(
         &self,
         store: &mut dyn Storage,
-        address: &Address,
+        address: &String,
     ) -> Result<(), ContractError> {
         match self.fee_handler().save(store, address) {
             Ok(_) => Ok(()),
@@ -49,7 +49,7 @@ impl<'a> CwCallService<'a> {
         }
     }
 
-    fn query_feehandler(&self, store: &dyn Storage) -> Result<Address, ContractError> {
+    fn query_feehandler(&self, store: &dyn Storage) -> Result<String, ContractError> {
         match self.fee_handler().load(store) {
             Ok(address) => Ok(address),
             Err(error) => Err(ContractError::Std(error)),

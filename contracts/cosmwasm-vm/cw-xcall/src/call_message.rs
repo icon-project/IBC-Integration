@@ -53,7 +53,7 @@ impl<'a> CwCallService<'a> {
 
         if need_response {
             let request = CallRequest::new(
-                Address::from(&from_address),
+                from_address,
                 to.clone(),
                 rollback_data.clone(),
                 need_response,
