@@ -44,6 +44,5 @@ use ibc::{
     },
     events::IbcEventType,
 };
-use cw_common::commitment;
 use ibc_proto::protobuf::Protobuf;
 use std::{str::FromStr, time::Duration};
