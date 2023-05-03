@@ -38,10 +38,10 @@ fn test_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 

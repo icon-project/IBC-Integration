@@ -36,10 +36,10 @@ fn test_execute_call_having_request_id_without_rollback() {
 
     let request_id = 123456;
     let proxy_requests = CallServiceMessageRequest::new(
-        Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
+        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        vec![],
+        false,
         vec![104, 101, 108, 108, 111],
     );
     cw_callservice
@@ -105,10 +105,10 @@ fn test_successful_reply_message() {
 
     let request_id = 123456;
     let proxy_requests = CallServiceMessageRequest::new(
-        Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
+        " 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        vec![],
+        false,
         vec![],
     );
     contract
@@ -140,10 +140,10 @@ fn test_failed_reply_message() {
 
     let request_id = 123456;
     let proxy_requests = CallServiceMessageRequest::new(
-        Address::from(" 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
+        " 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
-        vec![],
+        false,
         vec![],
     );
     contract
