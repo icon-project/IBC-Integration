@@ -1,5 +1,5 @@
 use super::*;
-
+use cw_common::commitment;
 impl<'a> CwIbcCoreContext<'a> {
     pub fn lookup_module_by_port(
         &self,
@@ -73,7 +73,7 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &IbcPortId,
         address: String,
     ) -> Result<Response, ContractError> {
-        self.claim_capability(store, self.port_path(port_id), address.clone())?;
+        self.claim_capability(store, commitment::port_path(port_id), address.clone())?;
 
         Ok(Response::new()
             .add_attribute("method", "bind_port")

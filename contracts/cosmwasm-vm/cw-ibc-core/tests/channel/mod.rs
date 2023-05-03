@@ -7,7 +7,7 @@ use cosmwasm_std::{Binary, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
 use cw_common::types::ClientId;
 use cw_common::IbcChannelId;
 use cw_common::{client_response::PacketDataResponse, types::PacketData};
-use cw_ibc_core::ics24_host::commitment::compute_packet_commitment;
+use cw_common::commitment::compute_packet_commitment;
 use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
 use ibc::core::ics03_connection::version::get_compatible_versions;

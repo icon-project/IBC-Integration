@@ -1,8 +1,7 @@
-use std::cell::RefCell;
-
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::utils::keccak256;
+use cosmwasm_std::Api;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
@@ -14,8 +13,8 @@ use crate::traits::Config;
 use crate::traits::IContext;
 use crate::ContractError;
 type ClientId = String;
-const CLIENT_STATES: Map<String, ClientState> = Map::new("CLIENT_STATES");
-const CONSENSUS_STATES: Map<(ClientId, u64), ConsensusState> = Map::new("CONSENSUS_STATES");
+const CLIENT_STATES: Map<String, Vec<u8>> = Map::new("CLIENT_STATES");
+const CONSENSUS_STATES: Map<(ClientId, u64), Vec<u8>> = Map::new("CONSENSUS_STATES");
 const PROCESSED_TIMES: Map<(ClientId, u64), u64> = Map::new("PROCESSED_TIMES");
 const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS");
 
@@ -24,29 +23,31 @@ const CONFIG: Item<Config> = Item::new("CONFIG");
 const ADDRESS_TYPE_PREFIX: u8 = 0x00;
 
 pub struct CwContext<'a> {
-    pub deps_mut: RefCell<DepsMut<'a>>,
+    pub storage: & 'a mut dyn Storage,
+    pub api: & 'a dyn Api,
 
     pub env: Env,
 }
 
 impl<'a> CwContext<'a> {
-    pub fn new(deps_mut: RefCell<DepsMut<'a>>, env: Env) -> Self {
-        return Self { deps_mut, env };
+    pub fn new(deps_mut: DepsMut<'a>, env: Env) -> Self {
+        return Self { storage:deps_mut.storage,api:deps_mut.api, env };
     }
 }
 
 impl<'a> IContext for CwContext<'a> {
     type Error = ContractError;
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error> {
-        QueryHandler::get_client_state(self.deps_mut.borrow().storage, client_id)
+        QueryHandler::get_client_state(self.storage, client_id)
     }
 
-    fn insert_client_state(&self, client_id: &str, state: ClientState) -> Result<(), Self::Error> {
+    fn insert_client_state(&mut self, client_id: &str, state: ClientState) -> Result<(), Self::Error> {
+        let data = state.encode_to_vec();
         CLIENT_STATES
             .save(
-                self.deps_mut.borrow_mut().storage,
+                self.storage,
                 client_id.to_string(),
-                &state,
+                &data,
             )
             .map_err(|_e| ContractError::FailedToSaveClientState)
     }
@@ -57,30 +58,31 @@ impl<'a> IContext for CwContext<'a> {
         height: u64,
     ) -> Result<ConsensusState, Self::Error> {
         return QueryHandler::get_consensus_state(
-            self.deps_mut.borrow().storage,
+            self.storage,
             client_id,
             height,
         );
     }
 
     fn insert_consensus_state(
-        &self,
+        &mut self,
         client_id: &str,
         height: u64,
         state: ConsensusState,
     ) -> Result<(), Self::Error> {
+        let data = state.encode_to_vec();
         CONSENSUS_STATES
             .save(
-                self.deps_mut.borrow_mut().storage,
+                self.storage,
                 (client_id.to_string(), height),
-                &state,
+                &data,
             )
             .map_err(|_e| ContractError::FailedToSaveClientState)
     }
 
     fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error> {
         return QueryHandler::get_timestamp_at_height(
-            self.deps_mut.borrow().storage,
+            self.storage,
             client_id,
             height,
         );
@@ -94,8 +96,6 @@ impl<'a> IContext for CwContext<'a> {
         rs[..].copy_from_slice(&signature[..64]);
         let v = signature[64];
         let pubkey = self
-            .deps_mut
-            .borrow()
             .api
             .secp256k1_recover_pubkey(msg, &rs, v)
             .unwrap();
@@ -120,20 +120,20 @@ impl<'a> IContext for CwContext<'a> {
     }
 
     fn get_config(&self) -> Result<Config, Self::Error> {
-        return QueryHandler::get_config(self.deps_mut.borrow().storage);
+        return QueryHandler::get_config(self.storage);
     }
 
-    fn insert_config(&self, config: &Config) -> Result<(), Self::Error> {
+    fn insert_config(&mut self, config: &Config) -> Result<(), Self::Error> {
         return CONFIG
-            .save(self.deps_mut.borrow_mut().storage, config)
+            .save(self.storage, config)
             .map_err(|_e| ContractError::FailedToSaveConfig);
     }
 
-    fn insert_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<(), Self::Error> {
+    fn insert_timestamp_at_height(&mut self, client_id: &str, height: u64) -> Result<(), Self::Error> {
         let time = self.env.block.time.nanos();
         PROCESSED_TIMES
             .save(
-                self.deps_mut.borrow_mut().storage,
+                self.storage,
                 (client_id.to_string(), height),
                 &time,
             )
@@ -141,14 +141,14 @@ impl<'a> IContext for CwContext<'a> {
     }
 
     fn insert_blocknumber_at_height(
-        &self,
+        &mut self,
         client_id: &str,
         height: u64,
     ) -> Result<(), Self::Error> {
         let block_height = self.env.block.height;
         PROCESSED_HEIGHTS
             .save(
-                self.deps_mut.borrow_mut().storage,
+                self.storage,
                 (client_id.to_string(), height),
                 &block_height,
             )
@@ -169,7 +169,7 @@ impl<'a> IContext for CwContext<'a> {
         height: u64,
     ) -> Result<u64, Self::Error> {
         QueryHandler::get_processed_time_at_height(
-            self.deps_mut.borrow().storage,
+            self.storage,
             client_id,
             height,
         )
@@ -181,7 +181,7 @@ impl<'a> IContext for CwContext<'a> {
         height: u64,
     ) -> Result<u64, Self::Error> {
         QueryHandler::get_processed_blocknumber_at_height(
-            self.deps_mut.borrow().storage,
+            self.storage,
             client_id,
             height,
         )
@@ -196,12 +196,15 @@ impl QueryHandler {
         client_id: &str,
         height: u64,
     ) -> Result<ConsensusState, ContractError> {
-        CONSENSUS_STATES
+        let data = CONSENSUS_STATES
             .load(storage, (client_id.to_string(), height))
             .map_err(|_e| ContractError::ConsensusStateNotFound {
                 height,
                 client_id: client_id.to_string(),
-            })
+            })?;
+        let state = ConsensusState::decode(data.as_slice())
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        Ok(state)
     }
 
     pub fn get_timestamp_at_height(
@@ -221,9 +224,12 @@ impl QueryHandler {
         storage: &dyn Storage,
         client_id: &str,
     ) -> Result<ClientState, ContractError> {
-        CLIENT_STATES
+        let data = CLIENT_STATES
             .load(storage, client_id.to_string())
-            .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))
+            .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
+        let state = ClientState::decode(data.as_slice())
+            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        Ok(state)
     }
 
     pub fn get_config(storage: &dyn Storage) -> Result<Config, ContractError> {
@@ -308,7 +314,7 @@ mod tests {
             .save(
                 &mut storage,
                 (client_id.to_string(), height),
-                &consensus_state,
+                &consensus_state.encode_to_vec(),
             )
             .unwrap();
 
@@ -358,7 +364,11 @@ mod tests {
         let client_id = "test_client";
         let client_state = ClientState::default();
         CLIENT_STATES
-            .save(&mut storage, client_id.to_string(), &client_state)
+            .save(
+                &mut storage,
+                client_id.to_string(),
+                &client_state.encode_to_vec(),
+            )
             .unwrap();
 
         let result = QueryHandler::get_client_state(&storage, client_id).unwrap();
@@ -392,7 +402,11 @@ mod tests {
         let client_id = "test_client";
         let client_state = ClientState::default();
         CLIENT_STATES
-            .save(&mut storage, client_id.to_string(), &client_state)
+            .save(
+                &mut storage,
+                client_id.to_string(),
+                &client_state.encode_to_vec(),
+            )
             .unwrap();
 
         let result = QueryHandler::get_client_state_any(&storage, client_id).unwrap();
@@ -408,12 +422,12 @@ mod tests {
         // Store client state
         let client_id = "my-client";
         let client_state = ClientState::default();
-        CwContext::new(RefCell::new(deps.as_mut()), mock_env())
+        CwContext::new(deps.as_mut(), mock_env())
             .insert_client_state(&client_id, client_state.clone())
             .unwrap();
 
         // Retrieve client state
-        let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let context = CwContext::new(deps.as_mut(), mock_env());
         let result = context.get_client_state(&client_id).unwrap();
         assert_eq!(client_state, result);
     }
@@ -426,12 +440,12 @@ mod tests {
         let client_id = "my-client";
         let height = 1;
         let consensus_state = ConsensusState::default();
-        CwContext::new(RefCell::new(deps.as_mut()), mock_env())
+        CwContext::new(deps.as_mut(), mock_env())
             .insert_consensus_state(&client_id, height, consensus_state.clone())
             .unwrap();
 
         // Retrieve consensus state
-        let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let context = CwContext::new(deps.as_mut(), mock_env());
         let result = context.get_consensus_state(&client_id, height).unwrap();
         assert_eq!(consensus_state, result);
     }
@@ -444,12 +458,12 @@ mod tests {
         let client_id = "my-client";
         let height = 1;
         let time = 1571797419879305533;
-        CwContext::new(RefCell::new(deps.as_mut()), mock_env())
+        CwContext::new(deps.as_mut(), mock_env())
             .insert_timestamp_at_height(&client_id, height)
             .unwrap();
 
         // Retrieve processed time
-        let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let context = CwContext::new(deps.as_mut(), mock_env());
         let result = context.get_timestamp_at_height(&client_id, height).unwrap();
         assert_eq!(time, result);
     }
@@ -462,7 +476,7 @@ mod tests {
         let msg = keccak256(b"test message");
         let address = "8efcaf2c4ebbf88bf07f3bb44a2869c4c675ad7a";
         let signature = hex!("c8b2b5eeb7b54620a0246b2355e42ce6d3bdf1648cd8eae298ebbbe5c3bacc197d5e8bfddb0f1e33778b7fc558c54d35e47c88daa24fff243aa743088e5503d701");
-        let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let context = CwContext::new(deps.as_mut(), mock_env());
         let result = context.recover_signer(msg.as_slice(), &signature);
         assert_eq!(address, hex::encode(result.unwrap()));
     }
@@ -489,7 +503,7 @@ mod tests {
         );
         let address = "00b040bff300eee91f7665ac8dcf89eb0871015306";
         let signature = signed_header.signatures[0].clone();
-        let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let context = CwContext::new(deps.as_mut(), mock_env());
         let result = context
             .recover_icon_signer(msg.as_slice(), &signature)
             .unwrap();
@@ -510,7 +524,7 @@ mod tests {
             );
             let address = "00b040bff300eee91f7665ac8dcf89eb0871015306";
             let signature = signed_header.signatures[0].clone();
-            let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+            let context = CwContext::new(deps.as_mut(), mock_env());
             let result = context
                 .recover_icon_signer(msg.as_slice(), &signature)
                 .unwrap();
@@ -527,7 +541,7 @@ mod tests {
         CONFIG.save(deps.as_mut().storage, &config).unwrap();
 
         // Retrieve config
-        let context = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let context = CwContext::new(deps.as_mut(), mock_env());
         let result = context.get_config().unwrap();
         assert_eq!(config, result);
     }
@@ -538,11 +552,11 @@ mod tests {
         let env = mock_env();
         let client_id = "client";
         let state = ClientState::default();
-        let ctx = CwContext::new(RefCell::new(deps.as_mut()), env);
+        let mut ctx = CwContext::new(deps.as_mut(), env);
         ctx.insert_client_state(client_id, state.clone()).unwrap();
 
         let loaded = CLIENT_STATES.load(deps.as_ref().storage, client_id.to_string())?;
-        assert_eq!(state, loaded);
+        assert_eq!(state, ClientState::decode(loaded.as_slice()).unwrap());
         Ok(())
     }
 
@@ -553,13 +567,13 @@ mod tests {
         let client_id = "client";
         let height = 100;
         let state = ConsensusState::default();
-        let ctx = CwContext::new(RefCell::new(deps.as_mut()), env);
+        let mut ctx = CwContext::new(deps.as_mut(), env);
         ctx.insert_consensus_state(client_id, height, state.clone())
             .unwrap();
 
         let loaded =
             CONSENSUS_STATES.load(deps.as_ref().storage, (client_id.to_string(), height))?;
-        assert_eq!(state, loaded);
+        assert_eq!(state.encode_to_vec(), loaded);
         Ok(())
     }
 
@@ -568,7 +582,7 @@ mod tests {
         let mut deps = mock_dependencies();
         let client_id = "client";
         let height = 100;
-        let ctx = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let mut ctx = CwContext::new(deps.as_mut(), mock_env());
         ctx.insert_timestamp_at_height(client_id, height).unwrap();
 
         let loaded =
@@ -581,7 +595,7 @@ mod tests {
         let mut deps = mock_dependencies();
         let client_id = "client";
         let height = 100;
-        let ctx = CwContext::new(RefCell::new(deps.as_mut()), mock_env());
+        let mut ctx = CwContext::new(deps.as_mut(), mock_env());
         ctx.insert_blocknumber_at_height(client_id, height).unwrap();
 
         let loaded =

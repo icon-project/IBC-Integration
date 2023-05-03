@@ -87,7 +87,7 @@ use ibc_proto::ibc::core::{
         MsgConnectionOpenTry as RawMsgConnectionOpenTry,
     },
 };
-pub use ics24_host::commitment::*;
+pub use cw_common::commitment::*;
 use prost::Message;
 use std::str::FromStr;
 use thiserror::Error;

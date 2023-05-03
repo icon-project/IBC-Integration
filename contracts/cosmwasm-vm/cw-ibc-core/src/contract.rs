@@ -328,7 +328,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn reply(
         &self,
         deps: DepsMut,
-        env: Env,
+        _env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.id {
