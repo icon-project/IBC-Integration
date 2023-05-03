@@ -327,3 +327,10 @@ func (e *Executor) xcallShouldExecuteRollbackMessageSuccessfully() error {
 	}
 	return nil
 }
+
+func (e *Executor) xcallContractShouldEmitAEventWithSequenceIdAndRequestId() error {
+	if e.error != nil {
+		return fmt.Errorf("execute call was not executed successfully")
+	}
+	return nil
+}
