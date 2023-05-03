@@ -17,9 +17,11 @@ serde_json = "1.0"
 pbjson = { version = "0.5.1", default-features = false }
 ibc-proto = { version = "0.28.0", default-features = false }
 keccak-hash="0.10.0"
-hex ="0.4.3"
 hex-literal="0.3.4"
 cosmwasm-schema = "1.2.1"
+sha2 = { version = "0.10.6", default-features = false }
+hex ={ version = "0.4.3", default-features = false }
+sha3 = { version = "0.10.6", default-features = false }
 
 [dev-dependencies]
 test-utils={path="../test-utils"}

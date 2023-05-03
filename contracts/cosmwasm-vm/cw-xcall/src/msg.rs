@@ -15,4 +15,6 @@ pub enum QueryMsg {
     GetProtocolFee {},
     #[returns(Address)]
     GetProtocolFeeHandler {},
+    #[returns(u64)]
+    GetTimeoutHeight {},
 }

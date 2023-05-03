@@ -101,93 +101,43 @@ impl<'a> CwIbcCoreContext<'a> {
                 unimplemented!()
             }
             CoreExecuteMsg::ConnectionOpenInit { msg } => {
-                let raw_data: RawMsgConnectionOpenInit =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgConnectionOpenInit::try_from(raw_data).unwrap();
+                let message: MsgConnectionOpenInit =
+                    Self::from_raw::<RawMsgConnectionOpenInit, MsgConnectionOpenInit>(&msg)?;
                 self.connection_open_init(deps, message)
             }
             CoreExecuteMsg::ConnectionOpenTry { msg } => {
-                let raw_data: RawMsgConnectionOpenTry =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgConnectionOpenTry::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcConnectionError { error })?;
+                let message: MsgConnectionOpenTry =
+                    Self::from_raw::<RawMsgConnectionOpenTry, MsgConnectionOpenTry>(&msg)?;
                 self.connection_open_try(deps, info, message)
             }
             CoreExecuteMsg::ConnectionOpenAck { msg } => {
-                let raw_data: RawMsgConnectionOpenAck =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgConnectionOpenAck::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcConnectionError { error })?;
+                let message: MsgConnectionOpenAck =
+                    Self::from_raw::<RawMsgConnectionOpenAck, MsgConnectionOpenAck>(&msg)?;
                 self.connection_open_ack(deps, info, message)
             }
             CoreExecuteMsg::ConnectionOpenConfirm { msg } => {
-                let raw_data: RawMsgConnectionOpenConfirm = Message::decode(msg.as_slice())
-                    .map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
-
-                let message = MsgConnectionOpenConfirm::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcConnectionError { error })?;
+                let message: MsgConnectionOpenConfirm =
+                    Self::from_raw::<RawMsgConnectionOpenConfirm, MsgConnectionOpenConfirm>(&msg)?;
                 self.connection_open_confirm(deps, info, message)
             }
             CoreExecuteMsg::ChannelOpenInit { msg } => {
-                let raw_data: RawMsgChannelOpenInit =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgChannelOpenInit::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcChannelError { error })?;
+                let message: MsgChannelOpenInit =
+                    Self::from_raw::<RawMsgChannelOpenInit, MsgChannelOpenInit>(&msg)?;
                 self.validate_channel_open_init(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenTry { msg } => {
-                let raw_data: RawMsgChannelOpenTry =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-                let message = MsgChannelOpenTry::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcChannelError { error })?;
+                let message: MsgChannelOpenTry =
+                    Self::from_raw::<RawMsgChannelOpenTry, MsgChannelOpenTry>(&msg)?;
                 self.validate_channel_open_try(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenAck { msg } => {
-                let raw_data: RawMsgChannelOpenAck =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-                let message = MsgChannelOpenAck::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcChannelError { error })?;
+                let message: MsgChannelOpenAck =
+                    Self::from_raw::<RawMsgChannelOpenAck, MsgChannelOpenAck>(&msg)?;
                 self.validate_channel_open_ack(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenConfirm { msg } => {
-                let raw_data: RawMsgChannelOpenConfirm =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-                let message = MsgChannelOpenConfirm::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcChannelError { error })?;
+                let message: MsgChannelOpenConfirm =
+                    Self::from_raw::<RawMsgChannelOpenConfirm, MsgChannelOpenConfirm>(&msg)?;
                 self.validate_channel_open_confirm(deps, info, &message)
             }
             CoreExecuteMsg::ChannelCloseInit {
@@ -221,15 +171,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_close_init(deps, info, &message)
             }
             CoreExecuteMsg::ChannelCloseConfirm { msg } => {
-                let raw_data: RawMsgChannelCloseConfirm =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgChannelCloseConfirm::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcChannelError { error })?;
+                let message: MsgChannelCloseConfirm =
+                    Self::from_raw::<RawMsgChannelCloseConfirm, MsgChannelCloseConfirm>(&msg)?;
 
                 self.validate_channel_close_confirm(deps, info, &message)
             }
@@ -246,42 +189,18 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.send_packet(deps, data)
             }
             CoreExecuteMsg::ReceivePacket { msg } => {
-                let raw_data: RawMessageRecvPacket =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgRecvPacket::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcPacketError { error })?;
-
+                let message: MsgRecvPacket =
+                    Self::from_raw::<RawMessageRecvPacket, MsgRecvPacket>(&msg)?;
                 self.validate_receive_packet(deps, info, &message)
             }
             CoreExecuteMsg::AcknowledgementPacket { msg } => {
-                let raw_data: RawMessageAcknowledgement =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgAcknowledgement::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcPacketError { error })?;
+                let message: MsgAcknowledgement =
+                    Self::from_raw::<RawMessageAcknowledgement, MsgAcknowledgement>(&msg)?;
                 self.acknowledgement_packet_validate(deps, info, &message)
             }
             CoreExecuteMsg::RequestTimeout {} => todo!(),
             CoreExecuteMsg::Timeout { msg } => {
-                let raw_data: RawMessageTimeout =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgTimeout::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcPacketError { error })?;
-
+                let message: MsgTimeout = Self::from_raw::<RawMessageTimeout, MsgTimeout>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
                     info,
@@ -289,16 +208,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 )
             }
             CoreExecuteMsg::TimeoutOnClose { msg } => {
-                let raw_data: RawMessageTimeoutOnclose =
-                    Message::decode(msg.as_slice()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
-
-                let message = MsgTimeoutOnClose::try_from(raw_data)
-                    .map_err(|error| ContractError::IbcPacketError { error })?;
-
+                let message: MsgTimeoutOnClose =
+                    Self::from_raw::<RawMessageTimeoutOnclose, MsgTimeoutOnClose>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
                     info,
@@ -328,7 +239,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn reply(
         &self,
         deps: DepsMut,
-        env: Env,
+        _env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.id {
@@ -412,5 +323,21 @@ impl<'a> CwIbcCoreContext<'a> {
             .collect::<Vec<Coin>>();
 
         Ok(updated_coins)
+    }
+
+    pub fn from_raw<R: Message + std::default::Default + Clone, T: TryFrom<R>>(
+        bytes: &[u8],
+    ) -> Result<T, ContractError>
+    where
+        <T as TryFrom<R>>::Error: std::fmt::Debug,
+    {
+        let raw = <R as Message>::decode(bytes).map_err(|error| ContractError::IbcDecodeError {
+            error: error.to_string(),
+        })?;
+        let message = T::try_from(raw).map_err(|error| {
+            let err = format!("Failed to convert to ibc type with error {:?}", error);
+            ContractError::IbcRawConversionError { error: err }
+        })?;
+        Ok(message)
     }
 }

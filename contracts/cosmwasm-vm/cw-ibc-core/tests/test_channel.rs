@@ -930,7 +930,7 @@ pub fn test_create_close_confirm_channel_event() {
     let proof_height = 10;
     let raw = get_dummy_raw_msg_chan_close_confirm(proof_height);
     let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
-    let event = create_close_confirm_channel_event(&msg);
+    let event = create_close_confirm_channel_event(&msg.port_id_on_b.as_str(), &msg.chan_id_on_b.as_str());
 
     assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }

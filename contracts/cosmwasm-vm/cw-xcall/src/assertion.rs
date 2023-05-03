@@ -94,6 +94,18 @@ impl<'a> CwCallService<'a> {
 
         Ok(())
     }
+    pub fn ensure_ibc_handler(
+        &self,
+        store: &dyn Storage,
+        address: Addr,
+    ) -> Result<(), ContractError> {
+        let ibc_host = self.get_host(store)?;
+
+        if ibc_host != address {
+            return Err(ContractError::OnlyIbcHandler {});
+        }
+        Ok(())
+    }
 }
 
 fn is_contract(querier: QuerierWrapper, address: Addr) -> bool {
