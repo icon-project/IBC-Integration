@@ -26,14 +26,6 @@ type SetAdmin struct {
 	} `json:"set_admin"`
 }
 
-type SendCallMessage struct {
-	SendCallMessage struct {
-		To       string `json:"to"`
-		Data     []byte `json:"data"`
-		Rollback []byte `json:"rollback"`
-	} `json:"send_call_message"`
-}
-
 type UpdateAdmin struct {
 	UpdateAdmin struct {
 		Address string `json:"address"`

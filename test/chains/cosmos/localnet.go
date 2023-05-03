@@ -77,6 +77,9 @@ func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, k
 		return ctx, err
 	}
 	err = c.CosmosChain.ExecuteContract(ctx, keyName, contractAddress, params)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return ctx, err
 }
 

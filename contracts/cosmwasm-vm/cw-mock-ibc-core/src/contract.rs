@@ -148,7 +148,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg.id {
-        521 => Ok(Response::new().add_attribute("reply", "success")),
+        521 => Ok(Response::new().add_attribute("reply", "success").add_attribute("data", to_binary(&msg.result).unwrap().to_base64())),
         _ => todo!(),
     }
 }

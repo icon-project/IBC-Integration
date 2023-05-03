@@ -10,11 +10,11 @@ func TestAdmin(t *testing.T) {
 	executor := NewExecutor(t)
 	suite := godog.TestSuite{
 		Name: "TestXcall",
-		TestSuiteInitializer: func(sc *godog.TestSuiteContext) {
-			sc.BeforeSuite(func() {
-				executor.EnsureChainIsRunning()
-			})
-		},
+		// TestSuiteInitializer: func(sc *godog.TestSuiteContext) {
+		// 	sc.BeforeSuite(func() {
+		// 		executor.EnsureChainIsRunning()
+		// 	})
+		// },
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
 			ctx.Step(`^"([^"]*)" executes set_admin in xcall with "([^"]*)" wallet address$`, executor.executesSet_adminInXcallWithWalletAddress)
 			ctx.Step(`^"([^"]*)" is the "([^"]*)" contract owner$`, executor.isTheContractOwner)
@@ -51,6 +51,8 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" executes "([^"]*)" in "([^"]*)" with "([^"]*)" sequence number$`, executor.executesInWithSequenceNumber)
 			ctx.Step(`^xcall should execute rollback message successfully$`, executor.xcallShouldExecuteRollbackMessageSuccessfully)
 			ctx.Step(`^xcall contract should emit a event with sequence id and request id$`, executor.xcallContractShouldEmitAEventWithSequenceIdAndRequestId)
+			ctx.Step(`^"([^"]*)" has an "([^"]*)" packet to be executed$`, executor.hasAnPacketToBeExecuted)
+			ctx.Step(`^"([^"]*)" regiters "([^"]*)" in "([^"]*)"$`, executor.regitersIn)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature"}, TestingT: t, StopOnFailure: false},

@@ -260,8 +260,8 @@ func (e *Executor) walletAddressShouldBeAsAdmin(admin string) error {
 }
 
 func (e *Executor) shouldOpenChannelToSendAndReceiveMessages(keyName string) error {
-	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "ibc_packet_receive", "")
+	contractAddress := e.GetContractAddress("ibccore")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "ibc_config", "")
 	return nil
 }
 
@@ -272,15 +272,15 @@ func (e *Executor) contractThrowsAnErrorThatOnlyTheContractCanPerformThisAction(
 	return nil
 }
 
-func (e *Executor) nonContractExecutesInXcall(keyName, methodaName string) error {
+func (e *Executor) nonContractExecutesInXcall(keyName, methodName string) error {
 	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, "")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, "")
 	return nil
 }
 
-func (e *Executor) executesInDappWithThanLimit(keyName, methodaName, param string) error {
+func (e *Executor) executesInDappWithThanLimit(keyName, methodName, param string) error {
 	contractAddress := e.GetContractAddress("dapp")
-	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, param)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, param)
 	return nil
 }
 
@@ -291,13 +291,13 @@ func (e *Executor) xcallContractPanicWithAnErrorMaxDataSizeExceeded() error {
 	return nil
 }
 
-func (e *Executor) executesInDappWithToLimit(keyName, methodaName, param string) error {
-	return e.executesInDappWithThanLimit(keyName, methodaName, param)
+func (e *Executor) executesInDappWithToLimit(keyName, methodName, param string) error {
+	return e.executesInDappWithThanLimit(keyName, methodName, param)
 }
 
-func (e *Executor) executesInWithRequestID(keyName, methodaName, contractName, param string) error {
+func (e *Executor) executesInWithRequestID(keyName, methodName, contractName, param string) error {
 	contractAddress := e.GetContractAddress(contractName)
-	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, param)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, param)
 	return nil
 }
 
@@ -315,9 +315,9 @@ func (e *Executor) xcallShouldExecuteCallMessageSuccessfully() error {
 	return nil
 }
 
-func (e *Executor) executesInWithSequenceNumber(keyName, methodaName, contractName, param string) error {
+func (e *Executor) executesInWithSequenceNumber(keyName, methodName, contractName, param string) error {
 	contractAddress := e.GetContractAddress(contractName)
-	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, param)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, param)
 	return nil
 }
 
@@ -333,4 +333,14 @@ func (e *Executor) xcallContractShouldEmitAEventWithSequenceIdAndRequestId() err
 		return fmt.Errorf("execute call was not executed successfully")
 	}
 	return nil
+}
+
+func (e *Executor) hasAnPacketToBeExecuted(keyName, methodName string) error {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, "")
+	return nil
+}
+
+func (e *Executor) regitersIn(arg1, arg2, arg3 string) error {
+	return godog.ErrPending
 }
