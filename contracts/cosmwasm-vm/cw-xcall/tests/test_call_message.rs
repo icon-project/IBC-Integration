@@ -9,7 +9,7 @@ use cosmwasm_std::{
     IbcMsg, IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
 };
 
-use cw_common::{ProstMessage, hex_string::HexString};
+use cw_common::{hex_string::HexString, ProstMessage};
 use cw_common::{types::Address, Height};
 use cw_xcall::{
     error::ContractError,

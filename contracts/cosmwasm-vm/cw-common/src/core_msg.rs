@@ -17,13 +17,13 @@ pub enum ExecuteMsg {
     },
     CreateClient {
         client_state: HexString,
-        consensus_state:HexString,
+        consensus_state: HexString,
         signer: HexString,
     },
     UpdateClient {
         client_id: String,
         header: HexString,
-        signer:HexString,
+        signer: HexString,
     },
     // Not included in this version of ibc core
     UpgradeClient {},

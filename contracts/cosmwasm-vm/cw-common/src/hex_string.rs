@@ -19,24 +19,19 @@ impl Hex<Vec<u8>> for FromHexString {
     }
 }
 
-
-
 #[cw_serde]
 pub struct HexString(String);
 
 impl HexString {
-    pub fn to_bytes(&self)->Result<Vec<u8>, hex::FromHexError>{
-        let str=self.0.replace("0x", "");
+    pub fn to_bytes(&self) -> Result<Vec<u8>, hex::FromHexError> {
+        let str = self.0.replace("0x", "");
         hex::decode(str)
-
     }
 
-    pub fn from_bytes(bytes:&[u8])->HexString {
+    pub fn from_bytes(bytes: &[u8]) -> HexString {
         HexString(hex::encode(bytes))
     }
 }
-
-
 
 #[cw_serde]
 pub struct TestHex {

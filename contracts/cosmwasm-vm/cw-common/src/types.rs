@@ -451,8 +451,6 @@ impl Display for ChannelId {
     }
 }
 
-
-
 #[cw_serde]
 pub struct Address(String);
 
@@ -518,5 +516,3 @@ pub struct MessageInfo {
     pub sender: Addr,
     pub funds: Vec<Coin>,
 }
-
-

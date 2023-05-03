@@ -17,9 +17,9 @@ use cw_ibc_core::{
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 use prost::Message;
 
-use setup::*;
 use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
+use setup::*;
 
 #[test]
 fn test_for_create_client_execution_message() {
