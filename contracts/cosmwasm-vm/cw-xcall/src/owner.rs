@@ -38,7 +38,7 @@ impl<'a> CwCallService<'a> {
     ) -> Result<Response, ContractError> {
         self.owner()
             .update(store, |mut current_owner| -> Result<_, ContractError> {
-                if info.sender == current_owner.to_string() {
+                if info.sender == current_owner {
                     if current_owner == new_owner {
                         Err(ContractError::OwnerAlreadyExist)
                     } else {

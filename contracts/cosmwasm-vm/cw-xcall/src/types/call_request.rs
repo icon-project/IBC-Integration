@@ -18,11 +18,11 @@ impl CallRequest {
         }
     }
 
-    pub fn from(&self) -> &String {
+    pub fn from(&self) -> &str {
         &self.from
     }
 
-    pub fn to(&self) -> &String {
+    pub fn to(&self) -> &str {
         &self.to
     }
 

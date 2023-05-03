@@ -16,7 +16,7 @@ impl<'a> CwCallService<'a> {
 
             if accrued_fees.amount.u128() > 0 {
                 let message: CosmosMsg<Empty> = CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
-                    to_address: address.to_string(),
+                    to_address: address,
                     amount: vec![accrued_fees],
                 });
 

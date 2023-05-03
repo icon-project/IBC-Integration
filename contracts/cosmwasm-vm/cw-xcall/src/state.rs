@@ -133,9 +133,6 @@ impl<'a> CwCallService<'a> {
             .map_err(ContractError::Std)
     }
     pub fn get_timeout_height(&self, store: &dyn Storage) -> u64 {
-        match self.timeout_height.load(store) {
-            Ok(height) => height,
-            Err(_) => 0,
-        }
+        self.timeout_height.load(store).unwrap_or(0)
     }
 }

@@ -25,7 +25,7 @@ impl<'a> CwCallService<'a> {
             .load(store)
             .map_err(|_| ContractError::Unauthorized {})?;
 
-        if info.sender != owner.to_string() {
+        if info.sender != owner {
             return Err(ContractError::Unauthorized {});
         }
 

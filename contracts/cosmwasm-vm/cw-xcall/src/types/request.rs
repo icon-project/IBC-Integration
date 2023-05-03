@@ -45,7 +45,7 @@ impl CallServiceMessageRequest {
     }
 
     pub fn data(&self) -> Result<&[u8], ContractError> {
-        Ok(&self
+        Ok(self
             .data
             .get()
             .map_err(|error| ContractError::DecodeFailed {

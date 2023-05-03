@@ -52,12 +52,7 @@ impl<'a> CwCallService<'a> {
             .map_err(ContractError::Std)?;
 
         if need_response {
-            let request = CallRequest::new(
-                from_address,
-                to.clone(),
-                rollback_data.clone(),
-                need_response,
-            );
+            let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);
 
             self.set_call_request(deps.storage, sequence_no, request)?;
         }
