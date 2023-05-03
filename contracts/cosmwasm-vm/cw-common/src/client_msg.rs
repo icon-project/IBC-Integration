@@ -192,7 +192,7 @@ pub enum ExecuteMsg {
         expected_response: OpenConfirmResponse,
         client_id: String,
         verify_connection_state: VerifyConnectionState,
-         // add all props that we need on response
+        // add all props that we need on response
     },
     TimeoutOnCLose {
         client_id: String,

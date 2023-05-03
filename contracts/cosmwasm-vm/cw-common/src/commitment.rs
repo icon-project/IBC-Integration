@@ -115,7 +115,6 @@ pub fn compute_packet_commitment(
     .into()
 }
 
-
 pub fn client_state_commitment_key(client_id: &ClientId) -> Vec<u8> {
     commitment_path_hash(&client_state_path(client_id))
 }

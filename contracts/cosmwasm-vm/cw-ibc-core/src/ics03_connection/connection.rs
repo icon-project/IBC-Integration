@@ -140,7 +140,8 @@ impl<'a> CwIbcCoreContext<'a> {
         connection_id: ConnectionId,
         connection_end: ConnectionEnd,
     ) -> Result<(), ContractError> {
-        let connection_commit_key = commitment::connection_commitment_key(connection_id.connection_id());
+        let connection_commit_key =
+            commitment::connection_commitment_key(connection_id.connection_id());
 
         let connection_end_bytes =
             connection_end

@@ -461,17 +461,13 @@ impl Hex<Vec<u8>> for StringHex {
     type Error = hex::FromHexError;
 
     fn create_bytes(value: &Vec<u8>) -> Cow<'_, [u8]> {
-       Cow::Borrowed(&value[..])
+        Cow::Borrowed(&value[..])
     }
 
     fn from_bytes(bytes: &[u8]) -> Result<Vec<u8>, Self::Error> {
         Ok(bytes.to_vec())
     }
 }
-
-
-
-
 
 #[cw_serde]
 pub struct Address(String);
@@ -539,26 +535,24 @@ pub struct MessageInfo {
     pub funds: Vec<Coin>,
 }
 
-
 #[cw_serde]
 pub struct TestHex {
-  #[serde(with = "StringHex")]
-   pub  bytes: Vec<u8>,
+    #[serde(with = "StringHex")]
+    pub bytes: Vec<u8>,
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::TestHex;
 
-
     #[test]
-    fn test_hex_serialize_deserialize(){
-        let test= TestHex{
-            bytes:hex::decode("deadbeef").unwrap()
+    fn test_hex_serialize_deserialize() {
+        let test = TestHex {
+            bytes: hex::decode("deadbeef").unwrap(),
         };
         let serialized = serde_json::to_value(&test).unwrap();
-        assert_eq!("{\"bytes\":\"deadbeef\"}",serialized.to_string());
-        let deserialized= serde_json::from_str::<TestHex>("{\"bytes\":\"deadbeef\"}").unwrap();
-        assert_eq!(test,deserialized);
+        assert_eq!("{\"bytes\":\"deadbeef\"}", serialized.to_string());
+        let deserialized = serde_json::from_str::<TestHex>("{\"bytes\":\"deadbeef\"}").unwrap();
+        assert_eq!(test, deserialized);
     }
 }
