@@ -1,3 +1,5 @@
+use cw_common::client_msg::VerifyConnectionPayload;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
