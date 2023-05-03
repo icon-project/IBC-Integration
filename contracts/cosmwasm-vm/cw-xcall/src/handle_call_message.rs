@@ -17,7 +17,7 @@ impl<'a> CwCallService<'a> {
             .unwrap();
 
         let message = XCallMessage {
-            data: proxy_requests.data().to_vec(),
+            data: proxy_requests.data()?.to_vec(),
         };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: proxy_requests.to().to_string(),
@@ -97,7 +97,7 @@ impl<'a> CwCallService<'a> {
             to.to_string(),
             message_request.sequence_no(),
             message_request.rollback().into(),
-            message_request.data().into(),
+            message_request.data()?.into(),
         );
 
         self.insert_request(deps.storage, request_id, request)?;

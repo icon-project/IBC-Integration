@@ -135,10 +135,10 @@ fn send_packet_success() {
 
         let timeout = IbcTimeout::with_both(timeout_block, mock_env().block.time.plus_seconds(300));
         let data = CallServiceMessageRequest::new(
-            Address::from(mock_info.sender.as_str()),
+            mock_info.sender.as_str().to_string(),
             MOCK_CONTRACT_TO_ADDR.to_string(),
             1,
-            vec![],
+            false,
             vec![1, 2, 3],
         );
 

@@ -13,6 +13,7 @@ pub struct CallServiceMessageRequest {
 }
 
 impl CallServiceMessageRequest {
+    // TODO : Change to Option of Bytes
     pub fn new(from: String, to: String, sequence_no: u128, rollback: bool, data: Vec<u8>) -> Self {
         let data_bytes = match data.is_empty() {
             true => None,
@@ -43,9 +44,13 @@ impl CallServiceMessageRequest {
         self.rollback
     }
 
-    pub fn data(&self) -> &[u8] {
-        //TODO: Handle error
-        &self.data.get().unwrap()
+    pub fn data(&self) -> Result<&[u8], ContractError> {
+        Ok(&self
+            .data
+            .get()
+            .map_err(|error| ContractError::DecodeFailed {
+                error: error.to_string(),
+            })?)
     }
 }
 
