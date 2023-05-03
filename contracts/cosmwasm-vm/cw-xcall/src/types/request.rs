@@ -1,32 +1,34 @@
+use common::rlp::Nullable;
+use serde::{Deserialize, Serialize};
+
 use super::*;
 
-#[cw_serde]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CallServiceMessageRequest {
-    from: Address,
+    from: String,
     to: String,
     sequence_no: u128,
-    rollback: Vec<u8>,
-    data: Vec<u8>,
+    rollback: bool,
+    data: Nullable<Vec<u8>>,
 }
 
 impl CallServiceMessageRequest {
-    pub fn new(
-        from: Address,
-        to: String,
-        sequence_no: u128,
-        rollback: Vec<u8>,
-        data: Vec<u8>,
-    ) -> Self {
+    // TODO : Change to Option of Bytes
+    pub fn new(from: String, to: String, sequence_no: u128, rollback: bool, data: Vec<u8>) -> Self {
+        let data_bytes = match data.is_empty() {
+            true => None,
+            false => Some(data),
+        };
         Self {
             from,
             to,
             sequence_no,
             rollback,
-            data,
+            data: Nullable::new(data_bytes),
         }
     }
 
-    pub fn from(&self) -> &Address {
+    pub fn from(&self) -> &str {
         &self.from
     }
 
@@ -38,12 +40,17 @@ impl CallServiceMessageRequest {
         self.sequence_no
     }
 
-    pub fn rollback(&self) -> &[u8] {
-        &self.rollback
+    pub fn rollback(&self) -> bool {
+        self.rollback
     }
 
-    pub fn data(&self) -> &[u8] {
-        &self.data
+    pub fn data(&self) -> Result<&[u8], ContractError> {
+        Ok(self
+            .data
+            .get()
+            .map_err(|error| ContractError::DecodeFailed {
+                error: error.to_string(),
+            })?)
     }
 }
 

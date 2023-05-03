@@ -51,10 +51,10 @@ fn send_packet_success() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         MOCK_CONTRACT_TO_ADDR.to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 
@@ -122,7 +122,7 @@ fn send_packet_success() {
             mock_env(),
             MOCK_CONTRACT_TO_ADDR.to_string(),
             vec![1, 2, 3],
-            Some(vec![]),
+            None,
         )
         .unwrap();
 
@@ -135,10 +135,10 @@ fn send_packet_success() {
 
         let timeout = IbcTimeout::with_both(timeout_block, mock_env().block.time.plus_seconds(300));
         let data = CallServiceMessageRequest::new(
-            Address::from(mock_info.sender.as_str()),
+            mock_info.sender.as_str().to_string(),
             MOCK_CONTRACT_TO_ADDR.to_string(),
             1,
-            vec![],
+            false,
             vec![1, 2, 3],
         );
 
@@ -201,10 +201,10 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
     };
     let timeout = IbcTimeout::with_both(timeout_block, env.block.time.plus_seconds(300));
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         MOCK_CONTRACT_TO_ADDR.to_string(),
         1,
-        vec![1, 2, 3],
+        true,
         vec![1, 2, 3],
     );
 
