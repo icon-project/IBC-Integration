@@ -24,11 +24,11 @@ Feature: send call message to another person
 
     Scenario: 003 - Contract panics when data size is equal to limit
         When "Alice" executes "send_call_message" in dapp with "data size equals" to limit
-        Then xcall contract panic with an error MaxDataSizeExceeded
+        Then xcall contract should emit a event with sequence id and request id
 
     Scenario: 004 - Contract panics when data size is less than limit
         When "Alice" executes "send_call_message" in dapp with "data size less" than limit
-        Then xcall contract panic with an error MaxDataSizeExceeded
+        Then xcall contract should emit a event with sequence id and request id
 
     Scenario: 005 - Contract panics when rollback size is greater than limit
         When "Alice" executes "send_call_message" in dapp with "rollback size greater" than limit
@@ -36,11 +36,11 @@ Feature: send call message to another person
 
     Scenario: 006 - Contract panics when rollback size is equal to limit
         When "Alice" executes "send_call_message" in dapp with "rollback size equals" to limit
-        Then xcall contract panic with an error MaxRollbackSizeExceeded
+        Then xcall contract should emit a event with sequence id and request id
 
     Scenario: 007 - Contract panics when rollback size is less than limit
         When "Alice" executes "send_call_message" in dapp with "rollback size less" than limit
-        Then xcall contract panic with an error MaxRollbackSizeExceeded
+        Then xcall contract should emit a event with sequence id and request id
 
     Scenario: 008 - Contract panics when wrong request ID is passed for executeCall
         When "Alice" executes "execute_call" in "xcall" with "incorrect" request ID

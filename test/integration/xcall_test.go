@@ -48,6 +48,7 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" executes "([^"]*)" in "([^"]*)" with "([^"]*)" request ID$`, executor.executesInWithRequestID)
 			ctx.Step(`^xcall contract panic with an error RequestNotFound$`, executor.xcallContractPanicWithAnErrorRequestNotFound)
 			ctx.Step(`^xcall should execute call message successfully$`, executor.xcallShouldExecuteCallMessageSuccessfully)
+			ctx.Step(`^xcall contract should emit a event with sequence id and request id$`, executor.xcallContractShouldEmitAEventWithSequenceIdAndRequestId)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature"}, TestingT: t, StopOnFailure: false},
