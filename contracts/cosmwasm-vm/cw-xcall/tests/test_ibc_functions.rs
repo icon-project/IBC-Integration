@@ -6,6 +6,7 @@ use cosmwasm_std::{
 };
 use cw_common::types::{Ack, Address};
 use cw_common::xcall_msg::ExecuteMsg;
+use cw_xcall::types::call_request::CallRequest;
 use cw_xcall::types::response::CallServiceMessageResponse;
 use cw_xcall::{
     state::CwCallService,
@@ -867,4 +868,75 @@ fn test_ack_failure_on_call_response() {
     let ack = cw_xcall::ack::on_ack_failure(packet, "Failed to Execute");
 
     assert!(ack.is_ok())
+}
+
+#[test]
+fn test_handle_response() {
+    let mut mock_deps = deps();
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_env = mock_env();
+
+    let mut contract = CwCallService::default();
+    contract
+        .set_ibc_host(
+            mock_deps.as_mut().storage,
+            Addr::unchecked(alice().as_str()),
+        )
+        .unwrap();
+
+    contract
+        .add_owner(
+            mock_deps.as_mut().storage,
+            Address::from(&mock_info.sender.to_string()),
+        )
+        .unwrap();
+
+    contract
+        .last_request_id()
+        .save(mock_deps.as_mut().storage, &0)
+        .unwrap();
+
+    let data = CallServiceMessageResponse::new(
+        0,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        "Success",
+    );
+
+    let message: CallServiceMessage = data.try_into().unwrap();
+
+    contract
+        .set_call_request(
+            mock_deps.as_mut().storage,
+            0,
+            CallRequest::new("".into(), "".into(), vec![], true),
+        )
+        .unwrap();
+
+    let timeout_block = IbcTimeoutBlock {
+        revision: 0,
+        height: 0,
+    };
+    let timeout = IbcTimeout::with_block(timeout_block);
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+    let packet = IbcPacket::new(message, src, dst, 0, timeout);
+    let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
+
+    let res = contract.execute(
+        mock_deps.as_mut(),
+        mock_env,
+        mock_info,
+        ExecuteMsg::IbcPacketReceive {
+            msg: packet_message,
+        },
+    );
+
+    assert!(res.is_ok())
 }
