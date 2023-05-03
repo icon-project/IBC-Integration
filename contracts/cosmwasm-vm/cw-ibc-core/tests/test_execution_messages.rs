@@ -572,16 +572,7 @@ fn test_for_connection_open_ack() {
             env.clone(),
             info.clone(),
             ExecuteMsg::ConnectionOpenAck {
-                msg: message.encode_to_vec(), // conn_id_on_a: conn_id.clone(),
-                                              // conn_id_on_b: conn_id_on_b.clone(),
-                                              // client_state_of_a_on_b: client_state.into(),
-                                              // proof_conn_end_on_b: to_vec(&conn_end).unwrap(),
-                                              // proof_client_state_of_a_on_b: client_state_bytes.clone(),
-                                              // proof_consensus_state_of_a_on_b: to_vec(&consenus_state).unwrap(),
-                                              // proofs_height_on_b: res_msg.proofs_height_on_b.clone(),
-                                              // consensus_height_of_a_on_b: res_msg.consensus_height_of_a_on_b,
-                                              // version: Version::default(),
-                                              // signer: "raw".parse().unwrap(),
+                msg: message.encode_to_vec(),
             },
         )
         .unwrap();

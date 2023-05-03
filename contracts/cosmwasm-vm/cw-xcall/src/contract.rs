@@ -211,7 +211,7 @@ impl<'a> CwCallService<'a> {
             }
         };
 
-        if !request.rollback().is_empty() {
+        if !request.rollback() {
             let message: CallServiceMessage = responses.0.into();
 
             #[cfg(feature = "native_ibc")]

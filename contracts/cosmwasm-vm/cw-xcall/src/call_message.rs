@@ -63,10 +63,10 @@ impl<'a> CwCallService<'a> {
         }
 
         let call_request = CallServiceMessageRequest::new(
-            Address::from(info.sender.as_str()),
+            info.sender.to_string(),
             to,
             sequence_no,
-            rollback_data.to_vec(),
+            need_response,
             data.to_vec(),
         );
 

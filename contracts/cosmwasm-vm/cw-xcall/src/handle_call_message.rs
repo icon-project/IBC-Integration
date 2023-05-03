@@ -93,7 +93,7 @@ impl<'a> CwCallService<'a> {
         let to = message_request.to();
 
         let request = CallServiceMessageRequest::new(
-            from.clone(),
+            from.clone().to_string(),
             to.to_string(),
             message_request.sequence_no(),
             message_request.rollback().into(),
