@@ -76,6 +76,15 @@ impl<'a> CwCallService<'a> {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_packet_timeout(msg)?)
             }
+            ExecuteMsg::SetTimeoutHeight { height } => {
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
+
+                self.set_timeout_height(deps.storage, height)?;
+
+                Ok(Response::new()
+                    .add_attribute("method", "set_timeout_height")
+                    .add_attribute("timeout_hieght", height.to_string()))
+            }
             #[cfg(feature = "native_ibc")]
             _ => Err(ContractError::DecodeFailed {
                 error: "InvalidMessage Variant".to_string(),
@@ -94,6 +103,7 @@ impl<'a> CwCallService<'a> {
 
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
+            QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
         }
     }
 

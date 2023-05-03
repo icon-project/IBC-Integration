@@ -71,7 +71,7 @@ impl<'a> CwCallService<'a> {
         );
 
         let message: CallServiceMessage = call_request.into();
-        let timeout_height = self.get_timeout_height(deps.as_ref().storage)?;
+        let timeout_height = self.get_timeout_height(deps.as_ref().storage);
 
         let event = event_xcall_message_sent(
             sequence_number_host,
