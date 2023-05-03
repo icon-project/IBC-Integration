@@ -49,6 +49,8 @@ pub enum ContractError {
 
     #[error("InsufficientBalance")]
     InsufficientBalance {},
+    #[error("IbcDecodeError {error}")]
+    IbcRawConversionError { error: String },
 }
 
 impl From<CwErrors> for ContractError {
