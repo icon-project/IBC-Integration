@@ -23,15 +23,19 @@ const CONFIG: Item<Config> = Item::new("CONFIG");
 const ADDRESS_TYPE_PREFIX: u8 = 0x00;
 
 pub struct CwContext<'a> {
-    pub storage: & 'a mut dyn Storage,
-    pub api: & 'a dyn Api,
+    pub storage: &'a mut dyn Storage,
+    pub api: &'a dyn Api,
 
     pub env: Env,
 }
 
 impl<'a> CwContext<'a> {
     pub fn new(deps_mut: DepsMut<'a>, env: Env) -> Self {
-        return Self { storage:deps_mut.storage,api:deps_mut.api, env };
+        return Self {
+            storage: deps_mut.storage,
+            api: deps_mut.api,
+            env,
+        };
     }
 }
 
@@ -41,14 +45,14 @@ impl<'a> IContext for CwContext<'a> {
         QueryHandler::get_client_state(self.storage, client_id)
     }
 
-    fn insert_client_state(&mut self, client_id: &str, state: ClientState) -> Result<(), Self::Error> {
+    fn insert_client_state(
+        &mut self,
+        client_id: &str,
+        state: ClientState,
+    ) -> Result<(), Self::Error> {
         let data = state.encode_to_vec();
         CLIENT_STATES
-            .save(
-                self.storage,
-                client_id.to_string(),
-                &data,
-            )
+            .save(self.storage, client_id.to_string(), &data)
             .map_err(|_e| ContractError::FailedToSaveClientState)
     }
 
@@ -57,11 +61,7 @@ impl<'a> IContext for CwContext<'a> {
         client_id: &str,
         height: u64,
     ) -> Result<ConsensusState, Self::Error> {
-        return QueryHandler::get_consensus_state(
-            self.storage,
-            client_id,
-            height,
-        );
+        return QueryHandler::get_consensus_state(self.storage, client_id, height);
     }
 
     fn insert_consensus_state(
@@ -72,20 +72,12 @@ impl<'a> IContext for CwContext<'a> {
     ) -> Result<(), Self::Error> {
         let data = state.encode_to_vec();
         CONSENSUS_STATES
-            .save(
-                self.storage,
-                (client_id.to_string(), height),
-                &data,
-            )
+            .save(self.storage, (client_id.to_string(), height), &data)
             .map_err(|_e| ContractError::FailedToSaveClientState)
     }
 
     fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error> {
-        return QueryHandler::get_timestamp_at_height(
-            self.storage,
-            client_id,
-            height,
-        );
+        return QueryHandler::get_timestamp_at_height(self.storage, client_id, height);
     }
 
     fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]> {
@@ -95,10 +87,7 @@ impl<'a> IContext for CwContext<'a> {
         let mut rs = [0u8; 64];
         rs[..].copy_from_slice(&signature[..64]);
         let v = signature[64];
-        let pubkey = self
-            .api
-            .secp256k1_recover_pubkey(msg, &rs, v)
-            .unwrap();
+        let pubkey = self.api.secp256k1_recover_pubkey(msg, &rs, v).unwrap();
         let pubkey_hash = keccak256(&pubkey[1..]);
         let address: Option<[u8; 20]> = pubkey_hash.as_slice()[12..]
             .try_into()
@@ -129,14 +118,14 @@ impl<'a> IContext for CwContext<'a> {
             .map_err(|_e| ContractError::FailedToSaveConfig);
     }
 
-    fn insert_timestamp_at_height(&mut self, client_id: &str, height: u64) -> Result<(), Self::Error> {
+    fn insert_timestamp_at_height(
+        &mut self,
+        client_id: &str,
+        height: u64,
+    ) -> Result<(), Self::Error> {
         let time = self.env.block.time.nanos();
         PROCESSED_TIMES
-            .save(
-                self.storage,
-                (client_id.to_string(), height),
-                &time,
-            )
+            .save(self.storage, (client_id.to_string(), height), &time)
             .map_err(|_e| ContractError::FailedToSaveProcessedTime)
     }
 
@@ -147,11 +136,7 @@ impl<'a> IContext for CwContext<'a> {
     ) -> Result<(), Self::Error> {
         let block_height = self.env.block.height;
         PROCESSED_HEIGHTS
-            .save(
-                self.storage,
-                (client_id.to_string(), height),
-                &block_height,
-            )
+            .save(self.storage, (client_id.to_string(), height), &block_height)
             .map_err(|_e| ContractError::FailedToSaveProcessedTime)
     }
 
@@ -168,11 +153,7 @@ impl<'a> IContext for CwContext<'a> {
         client_id: &str,
         height: u64,
     ) -> Result<u64, Self::Error> {
-        QueryHandler::get_processed_time_at_height(
-            self.storage,
-            client_id,
-            height,
-        )
+        QueryHandler::get_processed_time_at_height(self.storage, client_id, height)
     }
 
     fn get_processed_block_at_height(
@@ -180,11 +161,7 @@ impl<'a> IContext for CwContext<'a> {
         client_id: &str,
         height: u64,
     ) -> Result<u64, Self::Error> {
-        QueryHandler::get_processed_blocknumber_at_height(
-            self.storage,
-            client_id,
-            height,
-        )
+        QueryHandler::get_processed_blocknumber_at_height(self.storage, client_id, height)
     }
 }
 

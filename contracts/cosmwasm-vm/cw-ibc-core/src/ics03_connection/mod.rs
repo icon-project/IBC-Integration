@@ -22,6 +22,7 @@ use cw_common::types::{ClientId, ConnectionId};
 
 pub use super::*;
 use cw_common::client_response::OpenConfirmResponse;
+use cw_common::commitment;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics03_connection::error::ConnectionError;
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
@@ -41,6 +42,5 @@ use ibc::{
     },
     events::IbcEventType,
 };
-use cw_common::commitment;
 use ibc_proto::protobuf::Protobuf;
 use std::{str::FromStr, time::Duration};

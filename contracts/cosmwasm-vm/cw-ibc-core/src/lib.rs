@@ -70,6 +70,7 @@ use cw_common::RawPacket;
 use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::{core::ics04_channel::packet::Packet, signer::Signer};
 
+pub use cw_common::commitment::*;
 use ibc_proto::ibc::core::{
     channel::v1::{
         MsgAcknowledgement as RawMessageAcknowledgement,
@@ -87,7 +88,6 @@ use ibc_proto::ibc::core::{
         MsgConnectionOpenTry as RawMsgConnectionOpenTry,
     },
 };
-pub use cw_common::commitment::*;
 use prost::Message;
 use std::str::FromStr;
 use thiserror::Error;
