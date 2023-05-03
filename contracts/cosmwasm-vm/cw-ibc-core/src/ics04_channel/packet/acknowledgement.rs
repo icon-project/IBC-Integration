@@ -59,7 +59,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(_) => return Ok(Response::new()),
         };
         if commitment_on_a
-            != compute_packet_commitment(
+            != commitment::compute_packet_commitment(
                 &packet.data,
                 &packet.timeout_height_on_b,
                 &packet.timeout_timestamp_on_b,
@@ -99,7 +99,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let consensus_state =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
-        let ack_commitment = compute_ack_commitment(&msg.acknowledgement);
+        let ack_commitment = commitment::compute_ack_commitment(&msg.acknowledgement);
         self.verify_connection_delay_passed(
             deps.storage,
             msg.proof_height_on_b,
@@ -118,7 +118,7 @@ impl<'a> CwIbcCoreContext<'a> {
             signer: msg.signer.clone(),
             acknowledgement: Some(msg.acknowledgement.clone()),
         };
-        let ack_path_on_b = self.packet_acknowledgement_commitment_path(
+        let ack_path_on_b = commitment::acknowledgement_commitment_path(
             &packet.port_id_on_b.clone(),
             &packet.chan_id_on_b,
             packet.seq_on_a,

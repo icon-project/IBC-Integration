@@ -7,7 +7,7 @@ use self::{
     },
     open_try::channel_open_try_msg_validate,
 };
-
+use cw_common::commitment;
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;
@@ -161,7 +161,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             message.version_supported_on_a.clone(),
         );
-        let chan_end_path_on_a = self.channel_path(&port_id_on_a, &chan_id_on_a);
+        let chan_end_path_on_a = commitment::channel_path(&port_id_on_a, &chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
 
         let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
@@ -169,6 +169,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let create_client_message = LightClientMessage::VerifyChannel {
+            endpoint: IbcEndpoint {
+                port_id: port_id_on_a.to_string(),
+                channel_id: chan_id_on_a.to_string(),
+            },
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
@@ -227,6 +231,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
         let client_id_on_a = conn_end_on_a.client_id();
+
         let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &message.proof_height_on_b)?;
@@ -258,7 +263,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_b.clone()],
             message.version_on_b.clone(),
         );
-        let chan_end_path_on_b = self.channel_path(port_id_on_b, &message.chan_id_on_b);
+        let chan_end_path_on_b = commitment::channel_path(port_id_on_b, &message.chan_id_on_b);
         let vector = to_vec(&expected_chan_end_on_b);
         let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
         let funds = self.update_fee(info.funds.clone(), fee)?;
@@ -266,6 +271,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
+            },
+            endpoint: IbcEndpoint {
+                port_id: message.port_id_on_a.clone().to_string(),
+                channel_id: message.chan_id_on_a.clone().to_string(),
             },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_b.to_string(),
@@ -368,7 +377,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             chan_end_on_b.version.clone(),
         );
-        let chan_end_path_on_a = self.channel_path(port_id_on_a, chan_id_on_a);
+        let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
 
         let vector = to_vec(&expected_chan_end_on_a);
 
@@ -379,6 +388,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
+            },
+            endpoint: IbcEndpoint {
+                port_id: message.port_id_on_b.clone().to_string(),
+                channel_id: message.chan_id_on_b.clone().to_string(),
             },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_a.to_string(),
@@ -521,7 +534,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             chan_end_on_b.version().clone(),
         );
-        let chan_end_path_on_a = self.channel_path(port_id_on_a, chan_id_on_a);
+        let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
         let vector = to_vec(&expected_chan_end_on_a);
         let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
@@ -530,6 +543,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
                 funds,
+            },
+            endpoint: IbcEndpoint {
+                port_id: message.port_id_on_b.clone().to_string(),
+                channel_id: message.chan_id_on_b.clone().to_string(),
             },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_a.to_string(),

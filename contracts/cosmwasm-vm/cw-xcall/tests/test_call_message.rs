@@ -75,9 +75,10 @@ fn send_packet_success() {
                     })
                 }
             }
-            WasmQuery::Smart { contract_addr, msg } => {
-                SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap()))
-            }
+            WasmQuery::Smart {
+                contract_addr: _,
+                msg: _,
+            } => SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap())),
             _ => todo!(),
         }
     });
@@ -363,7 +364,7 @@ fn send_packet_success_needresponse() {
 
     let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
 
-    let env = mock_env();
+    let _env = mock_env();
 
     let contract = CwCallService::default();
 
@@ -404,9 +405,10 @@ fn send_packet_success_needresponse() {
                     })
                 }
             }
-            WasmQuery::Smart { contract_addr, msg } => {
-                SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap()))
-            }
+            WasmQuery::Smart {
+                contract_addr: _,
+                msg: _,
+            } => SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap())),
             _ => todo!(),
         }
     });

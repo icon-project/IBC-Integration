@@ -1,6 +1,5 @@
 use cosmwasm_std::IbcReceiveResponse;
 use ibc::core::ics04_channel::{
-    commitment::AcknowledgementCommitment,
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
@@ -76,12 +75,12 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
-        let expected_commitment_on_a = compute_packet_commitment(
+        let expected_commitment_on_a = commitment::compute_packet_commitment(
             &msg.packet.data,
             &msg.packet.timeout_height_on_b,
             &msg.packet.timeout_timestamp_on_b,
         );
-        let commitment_path_on_a = self.packet_commitment_path(
+        let commitment_path_on_a = commitment::packet_commitment_path(
             &msg.packet.port_id_on_a,
             &msg.packet.chan_id_on_a,
             msg.packet.seq_on_a,
@@ -387,7 +386,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             &port_id,
                             &channel_id,
                             seq.into(),
-                            compute_ack_commitment(&acknowledgement),
+                            commitment::compute_ack_commitment(&acknowledgement),
                         )?;
                     }
 
@@ -429,6 +428,4 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 }
 
-pub fn compute_ack_commitment(ack: &Acknowledgement) -> AcknowledgementCommitment {
-    sha256(ack.as_ref()).into()
-}
+

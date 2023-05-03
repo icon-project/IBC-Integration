@@ -20,6 +20,7 @@ use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
 use cw_common::types::{ClientId, ClientType};
+use cw_common::commitment;
 use events::{create_client_event, update_client_event, upgrade_client_event};
 use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
 use ibc::core::{
