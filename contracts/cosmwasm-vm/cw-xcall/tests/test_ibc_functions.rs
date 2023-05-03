@@ -982,3 +982,26 @@ fn test_for_call_message_data_from_rlp_bytes() {
 
     assert_eq!(expected_data, cs_message_request)
 }
+
+#[test]
+fn test_call_message_from_raw_message() {
+    let data = vec![
+        239, 0, 173, 236, 147, 115, 111, 109, 101, 99, 111, 110, 116, 114, 97, 99, 116, 97, 100,
+        100, 114, 101, 115, 115, 147, 115, 111, 109, 101, 99, 111, 110, 116, 114, 97, 99, 116, 97,
+        100, 100, 114, 101, 115, 115, 1, 0, 248, 0,
+    ];
+
+    let cs_message = CallServiceMessage::try_from(data).unwrap();
+
+    let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
+
+    let expected_data = CallServiceMessageRequest::new(
+        "somecontractaddress".to_string(),
+        "somecontractaddress".to_string(),
+        1,
+        false,
+        vec![],
+    );
+
+    assert_eq!(expected_data, cs_message_request)
+}
