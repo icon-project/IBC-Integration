@@ -40,4 +40,6 @@ pub enum ContractError {
     AdminAddressCannotBeNull {},
     #[error("InvalidAddress {address}")]
     InvalidAddress { address: String },
+    #[error("OnlyIbcHandler")]
+    OnlyIbcHandler {},
 }

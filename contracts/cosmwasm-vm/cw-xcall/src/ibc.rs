@@ -84,7 +84,7 @@ fn do_ibc_packet_receive(
     let call_service = CwCallService::default();
     let _channel = msg.packet.dest.channel_id.clone();
 
-    call_service.receive_packet_data_ibc(deps, msg.packet)
+    call_service.receive_packet_data(deps, msg.packet)
 }
 
 #[cfg_attr(feature = "native_ibc", entry_point)]

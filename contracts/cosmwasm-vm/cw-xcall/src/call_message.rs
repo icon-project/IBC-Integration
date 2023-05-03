@@ -16,7 +16,7 @@ impl<'a> CwCallService<'a> {
             info.sender.clone(),
             rollback.clone(),
         )?;
-        let need_response = !rollback.is_none();
+        let need_response = rollback.is_some();
 
         let rollback_data = match rollback {
             Some(data) => data,

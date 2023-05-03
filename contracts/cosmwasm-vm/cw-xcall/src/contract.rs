@@ -47,21 +47,36 @@ impl<'a> CwCallService<'a> {
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcChannelOpen { msg } => Ok(self.on_channel_open(msg)?),
+            ExecuteMsg::IbcChannelOpen { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_channel_open(msg)?)
+            }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelConnect { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_channel_connect(deps.storage, msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcChannelClose { msg } => Ok(self.on_channel_close(msg)?),
-            #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcPacketReceive { msg } => {
-                Ok(self.on_packet_receive(deps, msg, &info.sender)?)
+            ExecuteMsg::IbcChannelClose { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_channel_close(msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcPacketAck { msg } => Ok(self.on_packet_ack(msg)?),
+            ExecuteMsg::IbcPacketReceive { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_packet_receive(deps, msg)?)
+            }
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcPacketTimeout { msg } => Ok(self.on_packet_timeout(msg)?),
+            ExecuteMsg::IbcPacketAck { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_packet_ack(msg)?)
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcPacketTimeout { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_packet_timeout(msg)?)
+            }
+            #[cfg(feature = "native_ibc")]
             _ => Err(ContractError::DecodeFailed {
                 error: "InvalidMessage Variant".to_string(),
             }),
@@ -307,9 +322,8 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         msg: IbcPacketReceiveMsg,
-        sender: &Addr,
     ) -> Result<Response, ContractError> {
-        match self.receive_packet_data(deps, msg.packet, sender) {
+        match self.receive_packet_data(deps, msg.packet) {
             Ok(ibc_response) => Ok(Response::new()
                 .add_attributes(ibc_response.attributes.clone())
                 .set_data(ibc_response.acknowledgement)
