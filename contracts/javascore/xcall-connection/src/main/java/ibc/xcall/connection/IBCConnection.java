@@ -47,7 +47,6 @@ public class IBCConnection {
     protected final BranchDB<String, DictDB<BigInteger, BigInteger>> incomingPackets = Context.newBranchDB("incomingPackets", BigInteger.class);
     protected final BranchDB<String, DictDB<BigInteger, BigInteger>> outgoingPackets = Context.newBranchDB("outgoingPackets", BigInteger.class);
 
-
     public IBCConnection(Address _xCall, Address _ibc, String _nid, BigInteger _timeoutHeight) {
         ibc.set(_ibc);
         xCall.set(_xCall);
@@ -178,9 +177,8 @@ public class IBCConnection {
     @External
     public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
             byte[] counterpartyPb, String version) {
-                onlyIBCHandler();
-                Context.require(order == Channel.Order.ORDER_UNORDERED);
-
+        onlyIBCHandler();
+        // TODO verify order
         // TODO verify version
 
         Context.require(portId.equals(PORT));
@@ -192,12 +190,14 @@ public class IBCConnection {
     public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
         byte[] counterpartyPb, String version, String counterpartyVersion) {
         onlyIBCHandler();
-        Context.require(order == Channel.Order.ORDER_UNORDERED);
+
+        // TODO verify order
         // TODO verify version
 
         Context.require(portId.equals(PORT));
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
         Context.require(counterparty.getPortId().equals(PORT));
+
         destinationChannel.set(channelId, counterparty.getChannelId());
     }
 

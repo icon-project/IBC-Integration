@@ -110,7 +110,6 @@ public class CallServiceImpl extends AbstractCallService {
         }
 
         CSMessageRequest msgReq = new CSMessageRequest(caller.toString(), _to, sn, needResponse, _data);
-
         BigInteger seqNum = (BigInteger) Context.call(this.ibcHandler.get(), "getNextSequenceSend", getSourcePort(), getSourceChannel());
 
         Packet pct = new Packet();
@@ -129,7 +128,7 @@ public class CallServiceImpl extends AbstractCallService {
         pct.setTimeoutHeight(hgt);
         pct.setTimeoutTimestamp(BigInteger.ZERO);
 
-        Context.call(this.ibcHandler.get(), "sendPacket", new Object[]{pct.encode()});
+        Context.call(this.ibcHandler.get(), "sendPacket", (Object)pct.encode());
 
         CallMessageSent(caller, _to, sn, seqNum);
         return sn;
@@ -337,6 +336,7 @@ public class CallServiceImpl extends AbstractCallService {
     public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
             byte[] counterpartyPb, String version) {
         onlyIBCHandler();
+        Context.require(sourcePort.get() == null);
         sourcePort.set(portId);
         sourceChannel.set(channelId);
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
@@ -349,6 +349,7 @@ public class CallServiceImpl extends AbstractCallService {
     public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
             byte[] counterpartyPb, String version, String counterpartyVersion) {
         onlyIBCHandler();
+        Context.require(sourcePort.get() == null);
         sourcePort.set(portId);
         sourceChannel.set(channelId);
         Counterparty counterparty = Counterparty.decode(counterpartyPb);

@@ -53,6 +53,26 @@ type Wallet struct {
 	} `json:"crypto"`
 }
 
+func (it *IconTestnet) SetupIBC(ctx context.Context, keyName string) (context.Context, error) {
+	panic("unimplemented")
+}
+func (it *IconTestnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, error) {
+	panic("unimplemented")
+}
+func (it *IconTestnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, error) {
+	panic("unimplemented")
+}
+func (it *IconTestnet) ExecuteCall(ctx context.Context, reqId string) (context.Context, error) {
+	panic("unimplemented")
+}
+
+func (it *IconTestnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
+	panic("unimplemented")
+}
+func (it *IconTestnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error) {
+	panic("unimplemented")
+}
+
 // DeployContract implements chains.Chain
 func (it *IconTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	var result *types.TransactionResult
@@ -193,7 +213,6 @@ func (it *IconTestnet) GetKeyStorePathAndAddress(ctx context.Context, keyName st
 	path := KeyStorePath(keyName)
 	it.checkIfKeyExists(ctx, path, keyName)
 	addr := GetWalletAddress(path)
-
 	// Transfer some funds
 	_, err := exec.Command(it.bin, "rpc", "sendtx", "transfer", "--key_store", it.keystorePath, "--key_password", it.keyPassword, "--to", addr, "--value", "100000000000000000000", "--nid", it.nid,
 		"--uri", it.url, "--step_limit", it.defaultStepLimit).Output()
@@ -229,7 +248,7 @@ func (it *IconTestnet) GetExecuteParam(ctx context.Context, methodName, params, 
 		// TODO: remove admin method is not found
 		return ctx, "remove_admin", "_address='hjsdbjd'"
 	}
-	return ctx, "", ""
+	return ctx, methodName, params
 }
 
 func (c *IconTestnet) SetAdminParams(ctx context.Context, methodaName, keyName, addr string) (context.Context, string, string) {

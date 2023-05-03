@@ -26,3 +26,7 @@ project(':mockapp').name = "mockapp"
 include(':mock-dapp')
 project(':mock-dapp').projectDir = file("modules/mock-dapp")
 project(':mock-dapp').name = "mock-dapp"
+
+include(':mock-dapp-multi-protocol')
+project(':mock-dapp-multi-protocol').projectDir = file("modules/mock-dapp-multi-protocol")
+project(':mock-dapp-multi-protocol').name = "mock-dapp-multi-protocol"
