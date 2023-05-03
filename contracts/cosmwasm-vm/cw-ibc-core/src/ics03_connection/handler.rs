@@ -14,6 +14,27 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let client_id = ClientId::from(message.client_id_on_a.clone());
 
+        let lightclient_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
+
+        let query_message = cw_common::client_msg::QueryMsg::GetClientState {
+            client_id: client_id.as_str().to_string(),
+        };
+
+        let query = QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: lightclient_address,
+            msg: to_binary(&query_message).map_err(ContractError::Std)?,
+        });
+
+        let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
+
+        if response.is_empty() {
+            return Err(ContractError::IbcClientError {
+                error: ClientError::ClientNotFound {
+                    client_id: message.client_id_on_a,
+                },
+            });
+        }
+
         self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
 
         let versions = match message.version {
@@ -166,7 +187,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         let consensus_state_path_on_b =
-        commitment::consensus_state_path(client_id_on_b, &msg.consensus_height_of_a_on_b);
+            commitment::consensus_state_path(client_id_on_b, &msg.consensus_height_of_a_on_b);
         let verify_client_consensus_state = VerifyClientConsensusState::new(
             msg.proofs_height_on_b.to_string(),
             to_vec(&prefix_on_b)?,
@@ -287,7 +308,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         .unwrap();
 
                     Ok(Response::new()
-                        .add_attribute("method", "execute_connection_open_try")
+                        .add_attribute("method", "execute_connection_open_ack")
                         .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }
@@ -332,8 +353,10 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 
-        let client_consensus_state_path_on_b =
-        commitment::consensus_state_path(&message.client_id_on_b, &message.consensus_height_of_b_on_a);
+        let client_consensus_state_path_on_b = commitment::consensus_state_path(
+            &message.client_id_on_b,
+            &message.consensus_height_of_b_on_a,
+        );
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Init,
             message.counterparty.client_id().clone(),
@@ -355,7 +378,7 @@ impl<'a> CwIbcCoreContext<'a> {
             })?;
 
         let connection_path =
-        commitment::connection_path(&message.counterparty.connection_id.clone().unwrap());
+            commitment::connection_path(&message.counterparty.connection_id.clone().unwrap());
         let verify_connection_state = VerifyConnectionState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
@@ -374,8 +397,10 @@ impl<'a> CwIbcCoreContext<'a> {
             client_state_path,
             to_vec(&message.client_state_of_b_on_a).map_err(ContractError::Std)?,
         );
-        let consensus_state_path_on_a =
-        commitment::consensus_state_path(&message.client_id_on_b, &message.consensus_height_of_b_on_a);
+        let consensus_state_path_on_a = commitment::consensus_state_path(
+            &message.client_id_on_b,
+            &message.consensus_height_of_b_on_a,
+        );
         let verify_client_consensus_state = VerifyClientConsensusState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
@@ -604,7 +629,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         Ok(Response::new()
             .add_submessage(sub_message)
-            .add_attribute("method", "connection_open_ack"))
+            .add_attribute("method", "connection_open_confirm"))
     }
 
     pub fn execute_connection_openconfirm(
@@ -681,7 +706,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         .unwrap();
 
                     Ok(Response::new()
-                        .add_attribute("method", "execute_connection_open_ack")
+                        .add_attribute("method", "execute_connection_open_confirm")
                         .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }

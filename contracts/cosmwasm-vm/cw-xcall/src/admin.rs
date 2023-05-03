@@ -56,11 +56,7 @@ impl<'a> CwCallService<'a> {
             });
         }
 
-        let owner = self.owner().load(store)?;
-
-        if info.sender != owner.to_string() {
-            return Err(ContractError::Unauthorized {});
-        }
+        self.ensure_owner(store, &info)?;
 
         self.admin()
             .update(store, |mut current_admin| -> Result<_, ContractError> {
@@ -82,14 +78,10 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         info: MessageInfo,
     ) -> Result<Response, ContractError> {
-        let owner = self.owner().load(store)?;
+        self.ensure_owner(store, &info)?;
 
-        if info.sender == owner.to_string() {
-            self.admin().remove(store);
-            Ok(Response::new().add_attribute("method", "remove_admin"))
-        } else {
-            Err(ContractError::Unauthorized {})
-        }
+        self.admin().remove(store);
+        Ok(Response::new().add_attribute("method", "remove_admin"))
     }
 
     pub fn validate_address(api: &dyn Api, address: &str) -> Result<Address, ContractError> {

@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, IbcChannelConnectMsg, IbcChannelOpenMsg};
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -9,6 +9,7 @@ pub enum ExecuteMsg {
     SendPacket { packet: Vec<u8> },
     ReceivePacket { message: Vec<u8> },
     RegisterXcall { address: Addr },
+    IbcConfig { msg: IbcChannelConnectMsg },
 }
 
 #[cw_serde]
