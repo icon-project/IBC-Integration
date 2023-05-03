@@ -5,6 +5,7 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         to: String,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
@@ -15,7 +16,7 @@ impl<'a> CwCallService<'a> {
             info.sender.clone(),
             rollback.clone(),
         )?;
-        let need_response = !rollback.is_none();
+        let need_response = rollback.is_some();
 
         let rollback_data = match rollback {
             Some(data) => data,
@@ -70,7 +71,7 @@ impl<'a> CwCallService<'a> {
         );
 
         let message: CallServiceMessage = call_request.into();
-        let timeout_height = self.get_timeout_height(deps.as_ref().storage)?;
+        let timeout_height = self.get_timeout_height(deps.as_ref().storage);
 
         let event = event_xcall_message_sent(
             sequence_number_host,
@@ -86,11 +87,11 @@ impl<'a> CwCallService<'a> {
             let submessage: SubMsg<Empty> =
                 SubMsg::reply_always(CosmosMsg::Ibc(packet), SEND_CALL_MESSAGE_REPLY_ID);
 
-            return Ok(Response::new()
+            Ok(Response::new()
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")
                 .add_attribute("method", "send_packet")
-                .add_event(event));
+                .add_event(event))
         }
 
         #[cfg(not(feature = "native_ibc"))]
@@ -132,6 +133,7 @@ impl<'a> CwCallService<'a> {
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")
                 .add_attribute("method", "send_packet")
+                .add_attribute("sequence_no", sequence_no.to_string())
                 .add_event(event))
         }
     }

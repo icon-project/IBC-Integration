@@ -59,7 +59,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let data =
                         cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
                     let data = to_binary(&data).unwrap();
-                    let on_chan_open_try = create_channel_submesssage(
+                    let on_chan_close_confirm = create_channel_submesssage(
                         contract_address.to_string(),
                         data,
                         info.funds,
@@ -68,8 +68,8 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     Ok(Response::new()
                         .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_open_confirm_module_validation")
-                        .add_submessage(on_chan_open_try))
+                        .add_attribute("method", "channel_close_confirm_module_validation")
+                        .add_submessage(on_chan_close_confirm))
                 }
                 None => Err(ContractError::IbcChannelError {
                     error: ChannelError::Other {

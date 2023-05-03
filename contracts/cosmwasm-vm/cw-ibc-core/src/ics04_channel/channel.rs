@@ -1,5 +1,5 @@
 use super::*;
-
+use cw_common::commitment;
 impl<'a> CwIbcCoreContext<'a> {
     // Get the channel from the store
     pub fn get_channel_end(
@@ -266,7 +266,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &IbcChannelId,
         channel_end: ibc::core::ics04_channel::channel::ChannelEnd,
     ) -> Result<(), ContractError> {
-        let channel_commitment_key = self.channel_commitment_key(port_id, channel_id);
+        let channel_commitment_key = commitment::channel_commitment_key(port_id, channel_id);
 
         let channel_end_bytes = to_vec(&channel_end).map_err(ContractError::Std)?;
 
@@ -285,7 +285,7 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
         commitment: ibc::core::ics04_channel::commitment::PacketCommitment,
     ) -> Result<(), ContractError> {
-        let commitment_path = self.packet_commitment_path(
+        let commitment_path = commitment::packet_commitment_path(
             port_id.ibc_port_id(),
             channel_id.ibc_channel_id(),
             sequence,
@@ -305,7 +305,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<(), ContractError> {
-        let commitment_path = self.packet_commitment_path(
+        let commitment_path = commitment::packet_commitment_path(
             port_id.ibc_port_id(),
             channel_id.ibc_channel_id(),
             sequence,
@@ -325,7 +325,7 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
         receipt: ibc::core::ics04_channel::packet::Receipt,
     ) -> Result<(), ContractError> {
-        let commitment_path = self.packet_receipt_commitment_path(
+        let commitment_path = commitment::receipt_commitment_path(
             port_id.ibc_port_id(),
             channel_id.ibc_channel_id(),
             sequence,
@@ -349,7 +349,7 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
         ack_commitment: ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
     ) -> Result<(), ContractError> {
-        let commitment_path = self.packet_acknowledgement_commitment_path(
+        let commitment_path = commitment::acknowledgement_commitment_path(
             port_id.ibc_port_id(),
             channel_id.ibc_channel_id(),
             sequence,
@@ -376,7 +376,7 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &IbcPortId,
         channel_id: &IbcChannelId,
     ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ContractError> {
-        let channel_commitment_key = self.channel_commitment_key(port_id, channel_id);
+        let channel_commitment_key = commitment::channel_commitment_key(port_id, channel_id);
 
         let channel_end_bytes = self
             .ibc_store()
@@ -402,7 +402,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<ibc::core::ics04_channel::commitment::PacketCommitment, ContractError> {
-        let commitment_path = self.packet_commitment_path(
+        let commitment_path = commitment::packet_commitment_path(
             port_id.ibc_port_id(),
             channel_id.ibc_channel_id(),
             sequence,
@@ -429,7 +429,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<ibc::core::ics04_channel::packet::Receipt, ContractError> {
-        let commitment_path = self.packet_receipt_commitment_path(
+        let commitment_path = commitment::receipt_commitment_path(
             port_id.ibc_port_id(),
             channel_id.ibc_channel_id(),
             sequence,
@@ -463,7 +463,7 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
     ) -> Result<ibc::core::ics04_channel::commitment::AcknowledgementCommitment, ContractError>
     {
-        let commitment_path = self.packet_acknowledgement_commitment_path(
+        let commitment_path = commitment::acknowledgement_commitment_path(
             port_id.ibc_port_id(),
             channel_id.ibc_channel_id(),
             sequence,

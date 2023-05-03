@@ -68,9 +68,7 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         message: IbcPacket,
     ) -> Result<IbcReceiveResponse, ContractError> {
-        // TODO : ADD check for sender logic
-
-        let call_service_message: CallServiceMessage = message.data.clone().try_into()?;
+        let call_service_message: CallServiceMessage = from_binary(&message.data)?;
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {

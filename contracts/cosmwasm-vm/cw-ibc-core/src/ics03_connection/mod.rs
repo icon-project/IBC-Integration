@@ -21,7 +21,10 @@ use cw_common::client_response::{OpenAckResponse, OpenTryResponse};
 use cw_common::types::{ClientId, ConnectionId};
 
 pub use super::*;
+use cosmwasm_std::{QueryRequest, WasmQuery};
+use cw_common::client_msg::VerifyConnectionPayload;
 use cw_common::client_response::OpenConfirmResponse;
+use cw_common::commitment;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics03_connection::error::ConnectionError;
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;

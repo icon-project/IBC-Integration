@@ -1,4 +1,5 @@
 use crate::types::ClientType;
+use cosmwasm_std::StdError;
 use ibc::core::ics24_host::error::ValidationError;
 
 #[derive(Debug)]
@@ -8,8 +9,9 @@ pub enum CwErrors {
         counter: u64,
         validation_error: ValidationError,
     },
-    InvalidClientId(ValidationError),
+    InvalidClientId(String, ValidationError),
     DecodeError {
         error: String,
     },
+    FailedToConvertToPacketDataResponse(StdError),
 }

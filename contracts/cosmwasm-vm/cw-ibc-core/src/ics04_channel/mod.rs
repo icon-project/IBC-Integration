@@ -33,7 +33,7 @@ use ibc::core::ics04_channel::packet::Packet;
 use ibc::events::IbcEventType;
 use std::str::FromStr;
 pub use traits::*;
-
+use cw_common::commitment;
 pub mod packet;
 use ibc::core::ics04_channel::commitment::PacketCommitment;
 pub use packet::*;

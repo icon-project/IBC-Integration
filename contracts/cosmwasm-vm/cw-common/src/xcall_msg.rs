@@ -28,6 +28,9 @@ pub enum ExecuteMsg {
         address: Address,
     },
     RemoveAdmin {},
+    SetTimeoutHeight {
+        height: u64,
+    },
 
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelOpen {

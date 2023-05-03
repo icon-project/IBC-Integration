@@ -46,9 +46,12 @@ use cosmwasm_std::{
     CosmosMsg, Deps, DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse,
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse,
     IbcEndpoint, IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, MessageInfo, Never, QuerierWrapper, Reply,
-    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Never, QuerierWrapper, Reply, Response,
+    StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
 };
+#[cfg(feature = "native_ibc")]
+use cosmwasm_std::{IbcTimeout, IbcTimeoutBlock};
+
 use cosmwasm_std::{to_vec, QueryRequest};
 use cw2::set_contract_version;
 use cw_common::types::{Ack, Address};
