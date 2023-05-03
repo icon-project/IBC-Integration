@@ -329,10 +329,7 @@ fn sucess_receive_packet_for_call_message_request() {
     let mut contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -459,7 +456,7 @@ fn test_entry_point() {
     let env = mock_env();
 
     let msg = cw_common::xcall_msg::ExecuteMsg::UpdateAdmin {
-        address: admin_one(),
+        address: admin_one().to_string(),
     };
 
     instantiate(
@@ -494,10 +491,7 @@ fn fails_receive_packet_for_call_message_request() {
     let mut contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -887,10 +881,7 @@ fn test_handle_response() {
         .unwrap();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract

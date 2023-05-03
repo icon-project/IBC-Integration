@@ -26,10 +26,7 @@ fn test_receive_packet_for_call_message_request() {
     let contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -83,10 +80,7 @@ fn test_receive_packet_for_call_message_response() {
     let contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -105,7 +99,12 @@ fn test_receive_packet_for_call_message_response() {
         "",
     );
 
-    let call_request = CallRequest::new(alice(), bob().to_string(), vec![1, 2, 3].into(), true);
+    let call_request = CallRequest::new(
+        alice().to_string(),
+        bob().to_string(),
+        vec![1, 2, 3].into(),
+        true,
+    );
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 1, call_request)
@@ -149,10 +148,7 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
     let contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -173,7 +169,12 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
 
     let message: CallServiceMessage = data.try_into().unwrap();
 
-    let call_request = CallRequest::new(alice(), bob().to_string(), vec![1, 2, 3].into(), true);
+    let call_request = CallRequest::new(
+        alice().to_string(),
+        bob().to_string(),
+        vec![1, 2, 3].into(),
+        true,
+    );
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 2, call_request)
@@ -211,10 +212,7 @@ fn handle_response_emit_rollback_event() {
     let contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -233,7 +231,12 @@ fn handle_response_emit_rollback_event() {
         "",
     );
 
-    let call_request = CallRequest::new(alice(), bob().to_string(), vec![1, 2, 3].into(), false);
+    let call_request = CallRequest::new(
+        alice().to_string(),
+        bob().to_string(),
+        vec![1, 2, 3].into(),
+        false,
+    );
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 1, call_request)
