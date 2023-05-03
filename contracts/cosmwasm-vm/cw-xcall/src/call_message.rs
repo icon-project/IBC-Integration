@@ -1,3 +1,5 @@
+use cw_common::hex_string::HexString;
+
 use super::*;
 
 impl<'a> CwCallService<'a> {
@@ -114,7 +116,7 @@ impl<'a> CwCallService<'a> {
             };
 
             let message = cw_common::core_msg::ExecuteMsg::SendPacket {
-                packet: packet_data.encode_to_vec(),
+                packet: HexString::from_bytes(&packet_data.encode_to_vec()),
             };
 
             let submessage = SubMsg {

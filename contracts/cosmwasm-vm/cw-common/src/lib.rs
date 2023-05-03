@@ -4,6 +4,7 @@ pub mod commitment;
 pub mod errors;
 pub mod types;
 pub mod xcall_msg;
+pub mod hex_string;
 use cosmwasm_std::IbcPacket;
 use types::*;
 
@@ -59,7 +60,7 @@ use ibc::{
     signer::Signer,
 };
 pub use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::serde::{Deserialize, Serialize};
 pub mod core_msg;
 use core_msg::*;
 pub use ibc::core::ics04_channel::packet::Packet;
