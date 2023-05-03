@@ -24,6 +24,7 @@ var rollbackLessLimit = ``
 var incorrecrRequestID = `{"execute_call":{"request_id":"6"}}`
 var correcrRequestID = `{"execute_call":{"request_id":"0"}}`
 var nullRequestID = `{"execute_call":{"request_id":""}}`
+var correcrSequenceID = `{"execute_rollback":{"sequence_no":"0"}}`
 
 func (c *CosmosLocalnet) GetQueryParam(method string) Query {
 	var queryMsg Query
@@ -47,21 +48,34 @@ func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodName, param 
 		packetData := recievePacket
 		return ctx, string(packetData), nil
 	} else if strings.Contains(methodName, "send_call_message") {
-		return ctx, sendCallData(param), nil
+		return ctx, sendCallData(ctx, param), nil
 	} else if strings.Contains(methodName, "execute_call") {
 		return ctx, executeCallData(param), nil
+	} else if strings.Contains(methodName, "execute_rollback") {
+		return ctx, correcrSequenceID, nil
 	}
 	return ctx, "", nil
 }
 
-func sendCallData(param string) string {
+func sendCallData(ctx context.Context, param string) string {
+	var sendCallData SendCallMessage
 	sendCall := ""
 	if param == "data size greater" {
 		sendCall = packetExceedLimit
 	} else if param == "data size eqauls" {
 		sendCall = packetEqualLimit
 	} else if param == "data size less" {
-		sendCall = args
+		json.Unmarshal([]byte(args), &sendCallData)
+		ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+		dappAddr := ctxValue.ContractAddress["dapp"]
+		fmt.Println(args)
+		str := fmt.Sprintf(`{"send_call_message":{"to":"%s","data":[1,2,3],"rollback":[3,4,5]}}`, dappAddr)
+		fmt.Println(str)
+		return str
+		// sendCallData.SendCallMessage.To = dappAddr
+		// sendCall, _ := json.Marshal(sendCallData)
+		// fmt.Println(string(sendCall))
+		// return string(sendCall)
 	} else if param == "rollback size greater" {
 		sendCall = rollbackExceedLimit
 	} else if param == "rollback size eqauls" {

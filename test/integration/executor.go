@@ -314,3 +314,16 @@ func (e *Executor) xcallShouldExecuteCallMessageSuccessfully() error {
 	}
 	return nil
 }
+
+func (e *Executor) executesInWithSequenceNumber(keyName, methodaName, contractName, param string) error {
+	contractAddress := e.GetContractAddress(contractName)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodaName, param)
+	return nil
+}
+
+func (e *Executor) xcallShouldExecuteRollbackMessageSuccessfully() error {
+	if e.error != nil {
+		return fmt.Errorf("execute rollback was not executed successfully")
+	}
+	return nil
+}

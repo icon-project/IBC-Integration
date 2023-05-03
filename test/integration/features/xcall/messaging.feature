@@ -54,3 +54,7 @@ Feature: send call message to another person
         When "Alice" executes "execute_call" in "xcall" with "null" request ID
         Then xcall contract panic with an error RequestNotFound
 
+    Scenario: 011 - Execute rollback excutes when rollback is enabled
+        Given "Alice" executes "send_call_message" in dapp with "data size less" than limit
+        When "Alice" executes "execute_rollback" in "xcall" with "correct" sequence number
+        Then xcall should execute rollback message successfully
