@@ -225,3 +225,31 @@ func (c *CosmosLocalnet) getInitParams(ctx context.Context, contractName string)
 	}
 	return ""
 }
+
+func (c *CosmosLocalnet) getExecuteCallParms(ctx context.Context, contractName string) string {
+	ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+	dappAddress := ctxValue.ContractAddress["dapp"]
+
+	csRequest := CallServiceMessageRequest{
+		From:       "somecontractAddress",
+		To:         dappAddress,
+		SequenceNo: 1,
+		Rollback:   false,
+		Data:       []byte("helloworld"),
+	}
+
+	csRequestEncode, err := csRequest.RlpEncode()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	csmessageEncoded, err := RlpEncode(csRequestEncode, CallServiceRequest)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	messageBody := fmt.Sprintf(`{"sequence":10,"source_port":"","source_channel":"","destination_port":"","destination_channel":"","data":%v,"timeout_height":{"revision_number":0,"revision_height":10},"timeout_timestamp":0}`, csmessageEncoded)
+
+	return messageBody
+}
