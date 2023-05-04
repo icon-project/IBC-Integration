@@ -6,7 +6,10 @@ use cosmwasm_std::{
     SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_common::{Packet, ProstMessage, RawPacket};
+
+use cw_common::ibc_types::IbcPacket as Packet;
+use cw_common::raw_types::RawPacket;
+use cw_common::ProstMessage;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};

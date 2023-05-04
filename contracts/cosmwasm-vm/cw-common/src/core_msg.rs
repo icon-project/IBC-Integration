@@ -1,9 +1,7 @@
-use cosmwasm_schema::QueryResponses;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
 
 use crate::hex_string::HexString;
-
-use super::*;
 
 #[cw_serde]
 pub struct InstantiateMsg {}

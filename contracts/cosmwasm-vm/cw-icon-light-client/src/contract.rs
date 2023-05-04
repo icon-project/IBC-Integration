@@ -1,6 +1,6 @@
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use cw_common::constants::ICON_CLIENT_TYPE;
-use cw_common::Height;
+use cw_common::ibc_types::IbcHeight;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
@@ -88,7 +88,7 @@ pub fn execute(
 
             let client_response = CreateClientResponse::new(
                 ICON_CLIENT_TYPE.to_string(),
-                Height::new(1, update.height).unwrap().to_string(),
+                IbcHeight::new(1, update.height).unwrap().to_string(),
                 state_byte,
                 update.consensus_state_commitment.into(),
             );
@@ -105,7 +105,7 @@ pub fn execute(
             let header_any = SignedHeader::decode(signed_header.as_slice()).unwrap();
             let (state_byte, update) = client.update_client(&client_id, header_any)?;
             let response_data = to_binary(&UpdateClientResponse {
-                height: Height::new(0, update.height).unwrap().to_string(),
+                height: IbcHeight::new(0, update.height).unwrap().to_string(),
                 client_id,
                 client_state_commitment: state_byte.clone(),
                 consensus_state_commitment: update.consensus_state_commitment.to_vec(),
