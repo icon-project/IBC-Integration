@@ -7,7 +7,7 @@ pub struct InstantiateMsg {}
 #[cw_serde]
 pub enum ExecuteMsg {
     SendPacket { packet: Vec<u8> },
-    ReceivePacket { message: Vec<u8> },
+    ReceivePacket { message: String },
     RegisterXcall { address: Addr },
     IbcConfig { msg: IbcChannelConnectMsg },
 }
