@@ -3,13 +3,13 @@ use super::*;
 #[cw_serde]
 pub enum ExecuteMsg {
     SetAdmin {
-        address: Address,
+        address: String,
     },
     SetProtocol {
         value: u128,
     },
     SetProtocolFeeHandler {
-        address: Address,
+        address: String,
     },
     SendCallMessage {
         to: String,
@@ -25,9 +25,12 @@ pub enum ExecuteMsg {
         sequence_no: u128,
     },
     UpdateAdmin {
-        address: Address,
+        address: String,
     },
     RemoveAdmin {},
+    SetTimeoutHeight {
+        height: u64,
+    },
 
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelOpen {

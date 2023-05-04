@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use super::*;
 use cosmwasm_std::{Addr, Coin};
 #[cw_serde]
@@ -6,7 +8,9 @@ pub struct VerifyChannelState {
     pub counterparty_prefix: Vec<u8>,
     pub proof: Vec<u8>,
     pub root: Vec<u8>,
+    // commitment key
     pub counterparty_chan_end_path: Vec<u8>,
+    // commitment bytes
     pub expected_counterparty_channel_end: Vec<u8>,
 }
 
@@ -16,7 +20,9 @@ pub struct VerifyPacketData {
     pub prefix: Vec<u8>,
     pub proof: Vec<u8>,
     pub root: Vec<u8>,
+    // commitment key
     pub commitment_path: Vec<u8>,
+    // commitment bytes
     pub commitment: Vec<u8>,
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -49,7 +55,9 @@ pub struct VerifyPacketAcknowledgement {
     pub prefix: Vec<u8>,
     pub proof: Vec<u8>,
     pub root: Vec<u8>,
+    // commitment key
     pub ack_path: Vec<u8>,
+    // commitment byte
     pub ack: Vec<u8>,
 }
 

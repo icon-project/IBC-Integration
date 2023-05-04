@@ -17,8 +17,8 @@ pub fn event_xcall_message_sent(
 
     event
         .add_attribute("from", from)
-        .add_attribute("sequence_no", sequence_no.to_string())
-        .add_attribute("req_id", req_id.to_string())
+        .add_attribute("ibchost_sequence_no", sequence_no.to_string())
+        .add_attribute("sq_no", req_id.to_string())
         .add_attribute("data", to_binary(data).unwrap().to_string())
 }
 

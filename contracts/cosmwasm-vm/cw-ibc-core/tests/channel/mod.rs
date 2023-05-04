@@ -22,6 +22,7 @@ use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 pub mod test_acknowledgement;
 pub mod test_channel_closeinit;
 pub mod test_close_confirm;
+pub mod test_execution_channel;
 pub mod test_handler;
 pub mod test_open_ack;
 pub mod test_open_confirm;

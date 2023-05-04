@@ -34,24 +34,12 @@ impl<'a> CwCallService<'a> {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
             ExecuteMsg::SendCallMessage { to, data, rollback } => {
-                self.send_packet(deps, info, to, data, rollback)
+                self.send_packet(deps, info, env, to, data, rollback)
             }
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {
                 self.execute_rollback(deps, info, sequence_no)
             }
-            #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcChannelOpen { msg } => Ok(self.on_channel_open(msg)?),
-            #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcChannelConnect { msg } => {
-                Ok(self.on_channel_connect(deps.storage, msg)?)
-            }
-            #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcChannelClose { msg } => Ok(self.on_channel_close(msg)?),
-            #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcPacketReceive { msg } => Ok(self.on_packet_receive(deps, msg)?),
-            #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcPacketAck { msg } => Ok(self.on_packet_ack(msg)?),
             ExecuteMsg::UpdateAdmin { address } => {
                 let validated_address =
                     CwCallService::validate_address(deps.api, address.as_str())?;
@@ -59,7 +47,48 @@ impl<'a> CwCallService<'a> {
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
             #[cfg(not(feature = "native_ibc"))]
-            ExecuteMsg::IbcPacketTimeout { msg } => Ok(self.on_packet_timeout(msg)?),
+            ExecuteMsg::IbcChannelOpen { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_channel_open(msg)?)
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcChannelConnect { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_channel_connect(deps.storage, msg)?)
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcChannelClose { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_channel_close(msg)?)
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcPacketReceive { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_packet_receive(deps, msg)?)
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcPacketAck { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_packet_ack(msg)?)
+            }
+            #[cfg(not(feature = "native_ibc"))]
+            ExecuteMsg::IbcPacketTimeout { msg } => {
+                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                Ok(self.on_packet_timeout(msg)?)
+            }
+            ExecuteMsg::SetTimeoutHeight { height } => {
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
+
+                self.set_timeout_height(deps.storage, height)?;
+
+                Ok(Response::new()
+                    .add_attribute("method", "set_timeout_height")
+                    .add_attribute("timeout_hieght", height.to_string()))
+            }
+            #[cfg(feature = "native_ibc")]
+            _ => Err(ContractError::DecodeFailed {
+                error: "InvalidMessage Variant".to_string(),
+            }),
         }
     }
 
@@ -74,6 +103,7 @@ impl<'a> CwCallService<'a> {
 
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
+            QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
         }
     }
 
@@ -100,7 +130,7 @@ impl<'a> CwCallService<'a> {
     ) -> Result<Response, ContractError> {
         let last_sequence_no = u128::default();
         let last_request_id = u128::default();
-        let owner = Address::from(info.sender.as_str());
+        let owner = info.sender.as_str().to_string();
 
         self.add_owner(store, owner.clone())?;
         self.add_admin(store, info, owner)?;
@@ -146,6 +176,7 @@ impl<'a> CwCallService<'a> {
             .add_event(event))
     }
 
+    #[allow(unused_variables)]
     fn reply_execute_call_message(
         &self,
         deps: Deps,
@@ -162,9 +193,9 @@ impl<'a> CwCallService<'a> {
                 let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseSuccess,
-                    "",
+                    "success",
                 );
-                let event = event_call_executed(req_id, code, "");
+                let event = event_call_executed(req_id, code, message_response.message());
                 (message_response, event)
             }
             cosmwasm_std::SubMsgResult::Err(err) => {
@@ -180,15 +211,18 @@ impl<'a> CwCallService<'a> {
             }
         };
 
-        if !request.rollback().is_empty() {
+        if !request.rollback() {
             let message: CallServiceMessage = responses.0.into();
 
-            let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
+            #[cfg(feature = "native_ibc")]
+            {
+                let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
 
-            return Ok(Response::new()
-                .add_attribute("action", "call_message")
-                .add_attribute("method", "execute_callback")
-                .add_message(packet));
+                return Ok(Response::new()
+                    .add_attribute("action", "call_message")
+                    .add_attribute("method", "execute_callback")
+                    .add_message(packet));
+            }
         }
 
         Ok(Response::new()
@@ -197,6 +231,7 @@ impl<'a> CwCallService<'a> {
             .add_event(responses.1))
     }
 
+    #[cfg(feature = "native_ibc")]
     fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
         let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
 

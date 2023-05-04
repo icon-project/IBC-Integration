@@ -9,10 +9,12 @@ pub struct InstantiateMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(Address)]
+    #[returns(String)]
     GetAdmin {},
     #[returns(u128)]
     GetProtocolFee {},
-    #[returns(Address)]
+    #[returns(String)]
     GetProtocolFeeHandler {},
+    #[returns(u64)]
+    GetTimeoutHeight {},
 }

@@ -1,6 +1,9 @@
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 
+#[cfg(feature = "mock")]
+use crate::mock_client::MockClient;
 use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -470,6 +473,15 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_binary(&QueryHandler::get_latest_height(deps.storage, &client_id).unwrap())
         }
     }
+}
+
+pub fn get_light_client<'a>(
+    context: &'a mut CwContext<'_>,
+) -> impl ILightClient<Error = ContractError> + 'a {
+    #[cfg(feature = "mock")]
+    return MockClient::new(context);
+    #[cfg(not(feature = "mock"))]
+    return IconClient::new(context);
 }
 
 #[cfg(test)]
