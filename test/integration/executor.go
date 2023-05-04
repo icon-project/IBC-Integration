@@ -341,6 +341,8 @@ func (e *Executor) hasAnPacketToBeExecuted(keyName, methodName string) error {
 	return nil
 }
 
-func (e *Executor) regitersIn(arg1, arg2, arg3 string) error {
-	return godog.ErrPending
+func (e *Executor) regitersXcallIn(keyName, contractName string) error {
+	contractAddress := e.GetContractAddress(contractName)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "register_xcall", "")
+	return nil
 }
