@@ -82,6 +82,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     header: header.into(),
                     signer,
                 };
+                println!("Updating Client For {}", &client_id);
                 self.update_client(deps, info, msg)
             }
             CoreExecuteMsg::UpgradeClient {} => {

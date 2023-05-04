@@ -2,14 +2,11 @@ use super::*;
 use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
-
-pub const ICON_CLIENT_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
-pub const ICON_CONSENSUS_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
-pub const ICON_SIGNED_HEADER_TYPE_URL: &str = "/icon.types.v1.SignedHeader";
-pub const ICON_BTP_HEADER_TYPE_URL: &str = "/icon.types.v1.BtpHeader";
-pub const ICON_MERKLE_TYPE_URL: &str = "/icon.types.v1.MerkleNode";
-
-const CLIENT_TYPE: &str = "iconclient";
+use cw_common::constants::ICON_BTP_HEADER_TYPE_URL;
+use cw_common::constants::ICON_CLIENT_STATE_TYPE_URL;
+use cw_common::constants::ICON_CLIENT_TYPE;
+use cw_common::constants::ICON_CONSENSUS_STATE_TYPE_URL;
+use cw_common::constants::ICON_SIGNED_HEADER_TYPE_URL;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientState {
@@ -152,7 +149,7 @@ impl IbcClientState for ClientState {
     }
 
     fn client_type(&self) -> IbcClientType {
-        IbcClientType::new(CLIENT_TYPE.to_string())
+        IbcClientType::new(ICON_CLIENT_TYPE.to_string())
     }
 
     fn latest_height(&self) -> ibc::Height {

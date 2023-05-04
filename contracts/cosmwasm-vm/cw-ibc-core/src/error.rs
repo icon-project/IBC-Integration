@@ -71,7 +71,7 @@ impl From<CwErrors> for ContractError {
                 error: err.to_string(),
             },
             CwErrors::DecodeError { error } => Self::IbcDecodeError { error },
-            CwErrors::FailedToConvertToPacketDataResponse(_) => todo!()
+            CwErrors::FailedToConvertToPacketDataResponse(_) => todo!(),
         }
     }
 }

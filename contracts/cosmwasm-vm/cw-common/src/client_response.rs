@@ -8,6 +8,17 @@ pub struct CreateClientResponse {
     consensus_state_commitment: Vec<u8>,
 }
 
+impl Default for CreateClientResponse {
+    fn default() -> Self {
+        Self {
+            client_type: "iconlightclient".to_string(),
+            height: Default::default(),
+            client_state_commitment: Default::default(),
+            consensus_state_commitment: Default::default(),
+        }
+    }
+}
+
 impl CreateClientResponse {
     pub fn new(
         client_type: String,
@@ -47,10 +58,10 @@ impl CreateClientResponse {
 
 #[cw_serde]
 pub struct UpdateClientResponse {
-    height: String,
-    client_id: String,
-    client_state_commitment: Vec<u8>,
-    consensus_state_commitment: Vec<u8>,
+    pub height: String,
+    pub client_id: String,
+    pub client_state_commitment: Vec<u8>,
+    pub consensus_state_commitment: Vec<u8>,
 }
 
 impl UpdateClientResponse {

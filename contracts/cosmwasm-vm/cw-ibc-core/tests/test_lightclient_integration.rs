@@ -1,15 +1,15 @@
-use cosmwasm_std::{to_binary, Addr, Empty, Uint128, WasmMsg};
-
-use cw_icon_light_client;
-use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
-
 use anyhow::Error as AppError;
 use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
-use cw_common::core_msg as CoreMsg;
-use cw_ibc_core::{execute, instantiate, query};
+use cosmwasm_std::{Addr, Empty, Event};
+use cw_common::{constants::ICON_CLIENT_TYPE, core_msg as CoreMsg, hex_string::HexString};
+use cw_ibc_core::{execute, instantiate, query, reply};
+use cw_icon_light_client;
+use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
+use ibc::events::IbcEventType;
 use prost::Message;
-use test_utils::{load_test_data, get_test_signed_headers};
+use std::collections::HashMap;
+use test_utils::{get_test_signed_headers, to_attribute_map};
 
 pub struct TestContext {
     pub app: App,
@@ -23,7 +23,7 @@ fn mock_app() -> App {
 }
 
 pub fn ibc_core_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(execute, instantiate, query);
+    let contract = ContractWrapper::new(execute, instantiate, query).with_reply(reply);
     Box::new(contract)
 }
 
@@ -77,7 +77,7 @@ pub fn call_register_client_type(ctx: &mut TestContext) -> Result<AppResponse, A
         ctx.sender.clone(),
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::RegisterClient {
-            client_type: "iconclient".to_string(),
+            client_type: ICON_CLIENT_TYPE.to_string(),
             client_address: ctx.lightclient.clone(),
         },
         &[],
@@ -99,14 +99,50 @@ pub fn call_create_client(
         ctx.sender.clone(),
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::CreateClient {
-            client_state: client_state.encode_to_vec(),
-            consensus_state: consensus_state.encode_to_vec(),
-            signer: "signer".as_bytes().to_vec(),
+            client_state: HexString::from_bytes(&client_state.encode_to_vec()),
+            consensus_state: HexString::from_bytes(&consensus_state.encode_to_vec()),
+            signer: HexString::from_bytes("signer".as_bytes()),
         },
         &[],
     );
 
     res
+}
+
+pub fn call_update_client(
+    ctx: &mut TestContext,
+    signed_header: RawSignedHeader,
+    client_id: &str,
+) -> Result<AppResponse, AppError> {
+    let res = ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.ibc_core.clone(),
+        &CoreMsg::ExecuteMsg::UpdateClient {
+            client_id: client_id.to_string(),
+            header: HexString::from_bytes(&signed_header.encode_to_vec()),
+            signer: HexString::from_bytes("signer".as_bytes()),
+        },
+        &[],
+    );
+
+    res
+}
+
+pub fn get_event(res: &AppResponse, event: &str) -> Option<HashMap<String, String>> {
+    let event = res
+        .events
+        .iter()
+        .filter(|e| e.ty == event)
+        .collect::<Vec<&Event>>();
+    if event.len() > 0 {
+        let map = to_attribute_map(&event[0].attributes);
+        return Some(map);
+    }
+    None
+}
+
+pub fn get_event_name(event_type: IbcEventType) -> String {
+    format!("wasm-{}", event_type.as_str())
 }
 
 #[test]
@@ -117,11 +153,23 @@ fn test_register_client() {
 }
 
 #[test]
-fn test_create_client(){
-    let mut ctx= setup_test();
+fn test_create_client() {
+    let mut ctx = setup_test();
     call_register_client_type(&mut ctx).unwrap();
-    let signed_headers:Vec<RawSignedHeader>= get_test_signed_headers();
-   let result= call_create_client(&mut ctx, signed_headers[0].clone());
-   println!("{:?}",&result);
-   assert!(result.is_ok());
+    let signed_headers: Vec<RawSignedHeader> = get_test_signed_headers();
+    let result = call_create_client(&mut ctx, signed_headers[0].clone());
+    println!("{:?}", &result);
+    assert!(result.is_ok());
+}
+#[test]
+fn test_update_client() {
+    let mut ctx = setup_test();
+    call_register_client_type(&mut ctx).unwrap();
+    let signed_headers: Vec<RawSignedHeader> = get_test_signed_headers();
+    let response = call_create_client(&mut ctx, signed_headers[0].clone()).unwrap();
+    let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
+    let client_id = event.get("client_id").unwrap();
+    let result = call_update_client(&mut ctx, signed_headers[1].clone(), client_id);
+    println!("{:?}", &result);
+    assert!(result.is_ok());
 }

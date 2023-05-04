@@ -56,3 +56,4 @@ cw-multi-test = "0.16.4"
 cw-icon-light-client = { path="../cw-icon-light-client",default-features = false }
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}
+hex-literal="*"

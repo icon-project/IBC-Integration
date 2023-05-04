@@ -1,11 +1,13 @@
 pub mod client_msg;
 pub mod client_response;
 pub mod commitment;
+pub mod constants;
 pub mod errors;
 pub mod hex_string;
 pub mod types;
 pub mod xcall_msg;
-use cosmwasm_std::IbcPacket;
+use cosmwasm_std::{from_binary, from_slice, Env, IbcPacket};
+use serde::de::DeserializeOwned;
 use types::*;
 
 pub use ibc::{
@@ -65,3 +67,11 @@ pub mod core_msg;
 use core_msg::*;
 pub use ibc::core::ics04_channel::packet::Packet;
 pub use prost::Message as ProstMessage;
+
+pub fn from_binary_response<T: DeserializeOwned>(res: &[u8]) -> Result<T, StdError> {
+    let start = 0x7b;
+    let start_index = res.iter().position(|&x| x == start).unwrap_or(0);
+    let slice = &res[(start_index)..(res.len())];
+    println!("{}", hex::encode(slice));
+    return from_binary::<T>(&Binary(slice.to_vec()));
+}
