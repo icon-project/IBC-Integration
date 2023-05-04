@@ -1,4 +1,9 @@
 use super::*;
+use common::icon::icon::lightclient::v1::{
+    ClientState as RawClientState, ConsensusState as RawConsensusState,
+};
+use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
+use cw_common::hex_string::HexString;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
@@ -45,21 +50,12 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let client_state = ClientState::try_from(client_state.as_slice())
-                    .map_err(|error| ContractError::IbcClientError { error })?;
 
-                let consensus_state = ConsensusState::try_from(consensus_state)
-                    .map_err(|error| ContractError::IbcClientError { error })?;
+                let client_state = Self::from_raw::<RawClientState, ClientState>(&client_state)?;
+                let consensus_state =
+                    Self::from_raw::<RawConsensusState, ConsensusState>(&consensus_state)?;
 
-                let signer =
-                    String::from_utf8(signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
-
-                let signer =
-                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
+                let signer = Self::to_signer(&signer)?;
                 let msg = MsgCreateClient {
                     client_state: client_state.into(),
                     consensus_state: consensus_state.into(),
@@ -73,16 +69,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let header = SignedHeader::try_from(header).map_err(|error| error)?;
-                let signer =
-                    String::from_utf8(signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
 
-                let signer =
-                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
+                let header = Self::from_raw::<RawSignedHeader, SignedHeader>(&header)?;
+
+                let signer = Self::to_signer(&signer)?;
                 let msg = MsgUpdateClient {
                     client_id: IbcClientId::from_str(&client_id).map_err(|error| {
                         ContractError::IbcDecodeError {
@@ -145,15 +135,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 chan_id_on_a,
                 signer,
             } => {
-                let signer =
-                    String::from_utf8(signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
-
-                let signer =
-                    Signer::from_str(&signer).map_err(|error| ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    })?;
+                let signer = Self::to_signer(&signer)?;
                 let message = MsgChannelCloseInit {
                     port_id_on_a: IbcPortId::from_str(&port_id_on_a).map_err(|error| {
                         ContractError::IbcDecodeError {
@@ -177,11 +159,13 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             CoreExecuteMsg::SendPacket { packet } => {
-                let packet: RawPacket = Message::decode(packet.as_slice()).map_err(|error| {
-                    ContractError::IbcDecodeError {
-                        error: error.to_string(),
-                    }
-                })?;
+                let packet_bytes = packet.to_bytes().unwrap();
+                let packet: RawPacket =
+                    Message::decode(packet_bytes.as_slice()).map_err(|error| {
+                        ContractError::IbcDecodeError {
+                            error: error.to_string(),
+                        }
+                    })?;
 
                 let data: Packet = Packet::try_from(packet)
                     .map_err(|error| ContractError::IbcPacketError { error })?;
@@ -326,18 +310,41 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn from_raw<R: Message + std::default::Default + Clone, T: TryFrom<R>>(
-        bytes: &[u8],
+        hex_str: &HexString,
     ) -> Result<T, ContractError>
     where
         <T as TryFrom<R>>::Error: std::fmt::Debug,
     {
-        let raw = <R as Message>::decode(bytes).map_err(|error| ContractError::IbcDecodeError {
-            error: error.to_string(),
+        let bytes = hex_str
+            .to_bytes()
+            .map_err(|e| ContractError::IbcDecodeError {
+                error: e.to_string(),
+            })?;
+        let raw = <R as Message>::decode(bytes.as_slice()).map_err(|error| {
+            ContractError::IbcDecodeError {
+                error: error.to_string(),
+            }
         })?;
         let message = T::try_from(raw).map_err(|error| {
             let err = format!("Failed to convert to ibc type with error {:?}", error);
             ContractError::IbcRawConversionError { error: err }
         })?;
         Ok(message)
+    }
+
+    pub fn to_signer(str: &HexString) -> Result<Signer, ContractError> {
+        let bytes = str.to_bytes().map_err(|e| ContractError::IbcDecodeError {
+            error: e.to_string(),
+        })?;
+        let signer_string =
+            String::from_utf8(bytes).map_err(|error| ContractError::IbcDecodeError {
+                error: error.to_string(),
+            })?;
+
+        let signer =
+            Signer::from_str(&signer_string).map_err(|error| ContractError::IbcDecodeError {
+                error: error.to_string(),
+            })?;
+        Ok(signer)
     }
 }

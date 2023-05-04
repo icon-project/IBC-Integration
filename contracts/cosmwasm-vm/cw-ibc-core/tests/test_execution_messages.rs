@@ -14,7 +14,9 @@ use cw_common::client_response::OpenAckResponse;
 use cw_common::client_response::OpenConfirmResponse;
 use cw_common::client_response::OpenTryResponse;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
+
 use cw_common::core_msg::ExecuteMsg;
+use cw_common::hex_string::HexString;
 use cw_common::types::ClientId;
 use cw_common::types::ConnectionId;
 use cw_common::IbcClientId;
@@ -29,13 +31,14 @@ use cw_ibc_core::{
     msg::InstantiateMsg,
 };
 
+use common::icon::icon::lightclient::v1::ClientState as RawClientState;
+use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
-
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::protobuf::Protobuf;
+use prost::Message;
 use setup::*;
 
-#[test]
 fn test_for_create_client_execution_message() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
@@ -43,7 +46,7 @@ fn test_for_create_client_execution_message() {
     let mut contract = CwIbcCoreContext::default();
     let env = mock_env();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+    let client_state: RawClientState = RawClientState {
         trusting_period: 2,
         frozen_height: 0,
         max_clock_drift: 5,
@@ -54,7 +57,7 @@ fn test_for_create_client_execution_message() {
     .try_into()
     .unwrap();
 
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+    let consenus_state: RawConsensusState = RawConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
     }
     .try_into()
@@ -80,9 +83,9 @@ fn test_for_create_client_execution_message() {
     assert_eq!(response.attributes[0].value, "register_client");
 
     let create_client_message = CoreExecuteMsg::CreateClient {
-        client_state: client_state.clone().try_into().unwrap(),
-        consensus_state: consenus_state.clone().try_into().unwrap(),
-        signer: "raw_message".as_bytes().into(),
+        client_state: HexString::from_bytes(&client_state.clone().encode_to_vec()),
+        consensus_state: HexString::from_bytes(&consenus_state.clone().encode_to_vec()),
+        signer: HexString::from_bytes("raw_message".as_bytes()),
     };
 
     let response = contract
@@ -95,7 +98,7 @@ fn test_for_create_client_execution_message() {
         "iconclient".to_string(),
         "10-15".to_string(),
         to_vec(&client_state).unwrap(),
-        consenus_state.try_into().unwrap(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -210,7 +213,7 @@ fn test_for_update_client_execution_messages() {
         next_validators: vec![hex::decode("00b040bff300eee91f7665ac8dcf89eb0871015306").unwrap()],
     };
 
-    let signed_header: SignedHeader = RawSignedHeader {
+    let signed_header: RawSignedHeader = RawSignedHeader {
         header: Some(btp_header),
         signatures: vec![hex::decode("6c8b2bc2c3d31e34bd4ed9db6eff7d5dc647b13c58ae77d54e0b05141cb7a7995102587f1fa33fd56815463c6b78e100217c29ddca20fcace80510e3dab03a1600").unwrap()],
     }
@@ -219,8 +222,8 @@ fn test_for_update_client_execution_messages() {
 
     let message = CoreExecuteMsg::UpdateClient {
         client_id: "iconclient-0".to_string(),
-        header: signed_header.try_into().unwrap(),
-        signer: "signeraddress".to_string().as_bytes().into(),
+        header: HexString::from_bytes(&signed_header.encode_to_vec()),
+        signer: HexString::from_bytes("signeraddress".to_string().as_bytes()),
     };
 
     let response = contract
@@ -309,7 +312,7 @@ fn test_for_connection_open_try() {
         .unwrap();
 
     let exec_message = CoreExecuteMsg::ConnectionOpenInit {
-        msg: message.encode_to_vec(),
+        msg: HexString::from_bytes(&message.encode_to_vec()),
     };
 
     deps.querier.update_wasm(|r| match r {
@@ -373,7 +376,7 @@ fn test_for_connection_open_try() {
             env.clone(),
             info.clone(),
             CoreExecuteMsg::ConnectionOpenTry {
-                msg: message.encode_to_vec(),
+                msg: HexString::from_bytes(&message.encode_to_vec()),
             },
         )
         .unwrap();
@@ -451,7 +454,7 @@ fn fails_on_invalid_raw_bytes_connection_open_init() {
     let env = mock_env();
     let mut contract = CwIbcCoreContext::default();
     let exec_message = CoreExecuteMsg::ConnectionOpenInit {
-        msg: "invalid_message".as_bytes().to_vec(),
+        msg: HexString::from_bytes("invalid_message".as_bytes()),
     };
     contract
         .execute(deps.as_mut(), env.clone(), info.clone(), exec_message)
@@ -466,7 +469,7 @@ fn fails_on_invalid_raw_bytes_connection_open_try() {
     let env = mock_env();
     let mut contract = CwIbcCoreContext::default();
     let exec_message = CoreExecuteMsg::ChannelOpenTry {
-        msg: "invalid_message".as_bytes().to_vec(),
+        msg: HexString::from_bytes("invalid_message".as_bytes()),
     };
     contract
         .execute(deps.as_mut(), env.clone(), info.clone(), exec_message)
@@ -572,7 +575,7 @@ fn test_for_connection_open_ack() {
             env.clone(),
             info.clone(),
             ExecuteMsg::ConnectionOpenAck {
-                msg: message.encode_to_vec(),
+                msg: HexString::from_bytes(&message.encode_to_vec()),
             },
         )
         .unwrap();
@@ -711,7 +714,7 @@ fn test_for_connection_open_confirm() {
             env.clone(),
             info.clone(),
             ExecuteMsg::ConnectionOpenConfirm {
-                msg: message.encode_to_vec(),
+                msg: HexString::from_bytes(&message.encode_to_vec()),
             },
         )
         .unwrap();
@@ -815,7 +818,7 @@ fn test_for_connection_open_try_fails() {
             env.clone(),
             info.clone(),
             ExecuteMsg::ConnectionOpenTry {
-                msg: message.encode_to_vec(),
+                msg: HexString::from_bytes(&message.encode_to_vec()),
             },
         )
         .unwrap();
@@ -951,7 +954,7 @@ fn test_connection_open_confirm_fails() {
             env.clone(),
             info.clone(),
             ExecuteMsg::ConnectionOpenConfirm {
-                msg: message.encode_to_vec(),
+                msg: HexString::from_bytes(&message.encode_to_vec()),
             },
         )
         .unwrap();
@@ -1039,7 +1042,7 @@ fn test_connection_open_try_fails_invalid_id() {
             env.clone(),
             info.clone(),
             ExecuteMsg::ConnectionOpenInit {
-                msg: message.encode_to_vec(),
+                msg: HexString::from_bytes(&message.encode_to_vec()),
             },
         )
         .unwrap();
@@ -1091,7 +1094,7 @@ fn test_connection_open_try_fails_invalid_id() {
             env.clone(),
             info.clone(),
             ExecuteMsg::ConnectionOpenTry {
-                msg: message.encode_to_vec(),
+                msg: HexString::from_bytes(&message.encode_to_vec()),
             },
         )
         .unwrap();

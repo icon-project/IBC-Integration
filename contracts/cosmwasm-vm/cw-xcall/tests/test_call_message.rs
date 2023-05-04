@@ -9,7 +9,7 @@ use cosmwasm_std::{
     IbcMsg, IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
 };
 
-use cw_common::ProstMessage;
+use cw_common::{hex_string::HexString, ProstMessage};
 use cw_common::{types::Address, Height};
 use cw_xcall::{
     error::ContractError,
@@ -105,7 +105,7 @@ fn send_packet_success() {
     };
 
     let message = cw_common::core_msg::ExecuteMsg::SendPacket {
-        packet: packet_data.encode_to_vec(),
+        packet: HexString::from_bytes(&packet_data.encode_to_vec()),
     };
 
     contract

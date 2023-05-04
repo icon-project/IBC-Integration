@@ -182,6 +182,7 @@ pub enum ExecuteMsg {
         message_info: MessageInfo,
         endpoint: IbcEndpoint,
         verify_channel_state: VerifyChannelState,
+        // add all props that we need on response
     },
     Misbehaviour {
         client_id: String,
@@ -191,6 +192,7 @@ pub enum ExecuteMsg {
         expected_response: OpenConfirmResponse,
         client_id: String,
         verify_connection_state: VerifyConnectionState,
+        // add all props that we need on response
     },
     TimeoutOnCLose {
         client_id: String,

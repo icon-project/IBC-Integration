@@ -214,8 +214,7 @@ pub fn create_close_init_channel_event(port_id: &str, channel_id: &str) -> Event
 }
 
 // Creates CloseConfirmChannel event
-pub fn create_close_confirm_channel_event(port_id_on_b: &str,
-    chan_id_on_b: &str) -> Event {
+pub fn create_close_confirm_channel_event(port_id_on_b: &str, chan_id_on_b: &str) -> Event {
     Event::new(IbcEventType::CloseConfirmChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_b)
