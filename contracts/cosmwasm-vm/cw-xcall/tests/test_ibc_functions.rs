@@ -6,6 +6,7 @@ use cosmwasm_std::{
 };
 use cw_common::types::{Ack, Address};
 use cw_common::xcall_msg::ExecuteMsg;
+use cw_common::{Height, ProstMessage, RawPacket};
 use cw_xcall::types::call_request::CallRequest;
 use cw_xcall::types::response::CallServiceMessageResponse;
 use cw_xcall::{
@@ -16,6 +17,7 @@ use setup::*;
 pub mod account;
 use account::admin_one;
 use account::alice;
+use common::rlp::{Decodable, Encodable};
 use cosmwasm_std::from_binary;
 use cw_xcall::{
     execute, instantiate,
@@ -327,10 +329,7 @@ fn sucess_receive_packet_for_call_message_request() {
     let mut contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -339,10 +338,10 @@ fn sucess_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 
@@ -422,10 +421,10 @@ fn sucess_on_ack_packet() {
     };
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
     contract
@@ -457,7 +456,7 @@ fn test_entry_point() {
     let env = mock_env();
 
     let msg = cw_common::xcall_msg::ExecuteMsg::UpdateAdmin {
-        address: admin_one(),
+        address: admin_one().to_string(),
     };
 
     instantiate(
@@ -492,10 +491,7 @@ fn fails_receive_packet_for_call_message_request() {
     let mut contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -504,10 +500,10 @@ fn fails_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 
@@ -661,10 +657,10 @@ fn test_ack_success_on_call_request() {
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 
@@ -700,10 +696,10 @@ fn test_ack_on_fails() {
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 
@@ -768,10 +764,10 @@ fn test_ack_failure_on_call_request() {
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 
@@ -807,10 +803,10 @@ fn fails_on_ack_failure_for_call_request() {
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 
@@ -885,10 +881,7 @@ fn test_handle_response() {
         .unwrap();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -939,4 +932,76 @@ fn test_handle_response() {
     );
 
     assert!(res.is_ok())
+}
+
+#[test]
+fn test_for_call_service_request_from_rlp_bytes() {
+    let hex_decode_rlp_data = hex::decode("ec93736f6d65636f6e74726163746164647265737393736f6d65636f6e7472616374616464726573730100f800").unwrap();
+
+    let cs_message_request = CallServiceMessageRequest::try_from(&hex_decode_rlp_data).unwrap();
+
+    let expected_data = CallServiceMessageRequest::new(
+        "somecontractaddress".to_string(),
+        "somecontractaddress".to_string(),
+        1,
+        false,
+        vec![],
+    );
+
+    assert_eq!(expected_data, cs_message_request)
+}
+
+#[test]
+fn test_for_call_service_response_from_rlp_bytes() {
+    let hex_decode_rlp_data = hex::decode("c801008568656c6c6f").unwrap();
+    let cs_response_message = CallServiceMessageResponse::try_from(&hex_decode_rlp_data).unwrap();
+
+    let expected_data = CallServiceMessageResponse::new(
+        1,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        "hello",
+    );
+
+    assert_eq!(expected_data, cs_response_message)
+}
+#[test]
+fn test_for_call_message_data_from_rlp_bytes() {
+    let hex_decode = hex::decode("ef00adec93736f6d65636f6e74726163746164647265737393736f6d65636f6e7472616374616464726573730100f800").unwrap();
+
+    let cs_message = CallServiceMessage::try_from(hex_decode).unwrap();
+
+    let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
+
+    let expected_data = CallServiceMessageRequest::new(
+        "somecontractaddress".to_string(),
+        "somecontractaddress".to_string(),
+        1,
+        false,
+        vec![],
+    );
+
+    assert_eq!(expected_data, cs_message_request)
+}
+
+#[test]
+fn test_call_message_from_raw_message() {
+    let data = vec![
+        239, 0, 173, 236, 147, 115, 111, 109, 101, 99, 111, 110, 116, 114, 97, 99, 116, 97, 100,
+        100, 114, 101, 115, 115, 147, 115, 111, 109, 101, 99, 111, 110, 116, 114, 97, 99, 116, 97,
+        100, 100, 114, 101, 115, 115, 1, 0, 248, 0,
+    ];
+
+    let cs_message = CallServiceMessage::try_from(data).unwrap();
+
+    let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
+
+    let expected_data = CallServiceMessageRequest::new(
+        "somecontractaddress".to_string(),
+        "somecontractaddress".to_string(),
+        1,
+        false,
+        vec![],
+    );
+
+    assert_eq!(expected_data, cs_message_request)
 }

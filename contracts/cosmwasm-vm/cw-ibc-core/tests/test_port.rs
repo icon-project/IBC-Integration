@@ -2,13 +2,11 @@ pub mod setup;
 use std::str::{from_utf8, FromStr};
 
 use common::utils::keccak256;
+use cw_common::commitment;
 use cw_common::types::PortId;
 use cw_common::IbcChannelId;
-use cw_ibc_core::{
-    context::CwIbcCoreContext, ics04_channel::ChannelMsg, MsgChannelOpenInit,
-};
+use cw_ibc_core::{context::CwIbcCoreContext, ics04_channel::ChannelMsg, MsgChannelOpenInit};
 use setup::*;
-use cw_common::commitment;
 #[test]
 fn test_store_module_by_port() {
     let mut deps = deps();
@@ -52,7 +50,7 @@ fn check_for_port_path_key() {
 
     let port_id = PortId::default();
     let port_path = commitment::port_path(port_id.ibc_port_id());
-    let key:Vec<u8> = keccak256(&port_path.clone()).into();
+    let key: Vec<u8> = keccak256(&port_path.clone()).into();
 
     let port_path_key = commitment::port_commitment_key(port_id.ibc_port_id());
 

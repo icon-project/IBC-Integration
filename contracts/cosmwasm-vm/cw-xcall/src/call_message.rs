@@ -1,3 +1,5 @@
+use cw_common::hex_string::HexString;
+
 use super::*;
 
 impl<'a> CwCallService<'a> {
@@ -52,21 +54,16 @@ impl<'a> CwCallService<'a> {
             .map_err(ContractError::Std)?;
 
         if need_response {
-            let request = CallRequest::new(
-                Address::from(&from_address),
-                to.clone(),
-                rollback_data.clone(),
-                need_response,
-            );
+            let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);
 
             self.set_call_request(deps.storage, sequence_no, request)?;
         }
 
         let call_request = CallServiceMessageRequest::new(
-            Address::from(info.sender.as_str()),
+            info.sender.to_string(),
             to,
             sequence_no,
-            rollback_data.to_vec(),
+            need_response,
             data.to_vec(),
         );
 
@@ -115,7 +112,7 @@ impl<'a> CwCallService<'a> {
             };
 
             let message = cw_common::core_msg::ExecuteMsg::SendPacket {
-                packet: packet_data.encode_to_vec(),
+                packet: HexString::from_bytes(&packet_data.encode_to_vec()),
             };
 
             let submessage = SubMsg {

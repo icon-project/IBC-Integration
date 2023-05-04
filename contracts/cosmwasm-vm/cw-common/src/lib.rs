@@ -2,6 +2,7 @@ pub mod client_msg;
 pub mod client_response;
 pub mod commitment;
 pub mod errors;
+pub mod hex_string;
 pub mod types;
 pub mod xcall_msg;
 use cosmwasm_std::IbcPacket;
@@ -44,6 +45,7 @@ use crate::types::{ClientId, ClientType};
 use common::rlp::Encodable;
 use common::rlp::{self, Decodable};
 use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::serde::{Deserialize, Serialize};
 use cosmwasm_std::Binary;
 use cosmwasm_std::IbcEndpoint;
 use cosmwasm_std::{
@@ -59,7 +61,6 @@ use ibc::{
     signer::Signer,
 };
 pub use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
-use serde::{Deserialize, Serialize};
 pub mod core_msg;
 use core_msg::*;
 pub use ibc::core::ics04_channel::packet::Packet;

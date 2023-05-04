@@ -5,6 +5,7 @@ use cosmwasm_std::{Empty, IbcReceiveResponse};
 use cw_common::{
     client_response::{LightClientResponse, PacketResponse, XcallPacketResponseData},
     core_msg::ExecuteMsg as CoreExecuteMsg,
+    hex_string::HexString,
 };
 use cw_ibc_core::{
     ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
@@ -66,7 +67,7 @@ fn test_for_channel_open_init_execution_message() {
         env.clone(),
         info,
         CoreExecuteMsg::ChannelOpenInit {
-            msg: message_raw.encode_to_vec(),
+            msg: HexString::from_bytes(&message_raw.encode_to_vec()),
         },
     );
 
@@ -181,7 +182,7 @@ fn test_for_channel_open_try_execution_message() {
         env.clone(),
         info.clone(),
         CoreExecuteMsg::ChannelOpenTry {
-            msg: raw.encode_to_vec(),
+            msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
 
@@ -343,7 +344,7 @@ fn test_for_channel_open_ack_execution() {
         env.clone(),
         info.clone(),
         CoreExecuteMsg::ChannelOpenAck {
-            msg: raw.encode_to_vec(),
+            msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
 
@@ -506,7 +507,7 @@ fn test_for_channel_open_confirm() {
         env.clone(),
         info.clone(),
         CoreExecuteMsg::ChannelOpenConfirm {
-            msg: raw.encode_to_vec(),
+            msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
 
@@ -649,7 +650,7 @@ fn test_for_channel_close_init() {
         CoreExecuteMsg::ChannelCloseInit {
             port_id_on_a: msg.port_id_on_a.to_string(),
             chan_id_on_a: msg.chan_id_on_a.to_string(),
-            signer: "alice".as_bytes().to_vec(),
+            signer: HexString::from_bytes("alice".as_bytes()),
         },
     );
 
@@ -783,7 +784,7 @@ fn test_for_channel_close_confirm() {
         env.clone(),
         info.clone(),
         CoreExecuteMsg::ChannelCloseConfirm {
-            msg: raw.encode_to_vec(),
+            msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
 
@@ -947,7 +948,7 @@ fn test_for_packet_send() {
         env.clone(),
         info.clone(),
         CoreExecuteMsg::SendPacket {
-            packet: raw.encode_to_vec(),
+            packet: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
 
@@ -1069,7 +1070,7 @@ fn test_for_recieve_packet() {
         env.clone(),
         info.clone(),
         CoreExecuteMsg::ReceivePacket {
-            msg: raw.encode_to_vec(),
+            msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
 
@@ -1290,7 +1291,7 @@ fn test_for_ack_execute() {
         env.clone(),
         info.clone(),
         CoreExecuteMsg::AcknowledgementPacket {
-            msg: raw.encode_to_vec(),
+            msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
 
@@ -1390,7 +1391,7 @@ fn test_for_ack_execute() {
 }
 
 #[test]
-fn test_for_timeout_execution(){
+fn test_for_timeout_execution() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
@@ -1400,7 +1401,4 @@ fn test_for_timeout_execution(){
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
-
-    
-
 }

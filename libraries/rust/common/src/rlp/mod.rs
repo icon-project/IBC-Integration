@@ -35,6 +35,7 @@
 
 mod error;
 mod impls;
+mod nullable;
 mod rlpin;
 mod stream;
 mod traits;
@@ -53,7 +54,7 @@ pub use self::{
 pub const NULL_RLP: [u8; 2] = [0xf8, 0x00];
 /// The RLP encoded empty list.
 pub const EMPTY_LIST_RLP: [u8; 1] = [0xC0; 1];
-
+pub use nullable::Nullable;
 /// Shortcut function to decode trusted rlp
 ///
 /// ```
