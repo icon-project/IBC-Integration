@@ -248,3 +248,19 @@ impl Decodable for String {
         })
     }
 }
+
+impl Encodable for i8 {
+    fn rlp_append(&self, s: &mut RlpStream) {
+        Encodable::rlp_append(&(*self as u8), s);
+    }
+}
+
+impl Decodable for i8 {
+    fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+        rlp.decoder()
+            .decode_value(|bytes| match bytes.len() as u32 {
+                len if len == u8::BITS / 8 => Ok(bytes[0] as i8),
+                _ => Err(DecoderError::RlpInvalidLength),
+            })
+    }
+}

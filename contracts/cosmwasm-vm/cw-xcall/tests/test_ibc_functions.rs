@@ -367,7 +367,7 @@ fn sucess_receive_packet_for_call_message_request() {
             Addr::unchecked(alice().as_str()),
         )
         .unwrap();
-    let message = to_binary(&message).unwrap();
+
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
