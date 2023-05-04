@@ -64,12 +64,17 @@ impl Encodable for CallServiceResponseType {
 
 impl Decodable for CallServiceResponseType {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
-        let data = rlp.data()?;
-        let rlp = rlp::Rlp::new(data);
-        match rlp.as_val::<u8>()? {
+        let value = rlp.as_val::<u128>()?;
+
+        let response_code = match rlp.as_val::<Vec<u8>>()?.len() as u32 {
+            len if len == u8::BITS / 8 => value as i8,
+            _ => value as i8,
+        };
+
+        match response_code {
             0 => Ok(Self::CallServiceResponseSuccess),
-            1 => Ok(Self::CallServiceResponseFailure),
-            2 => Ok(Self::CallServiceIbcError),
+            -1 => Ok(Self::CallServiceResponseFailure),
+            -2 => Ok(Self::CallServiceIbcError),
             _ => Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
         }
     }
