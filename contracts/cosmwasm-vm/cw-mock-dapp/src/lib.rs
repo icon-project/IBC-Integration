@@ -47,5 +47,8 @@ pub fn execute(
         ExecuteMsg::HandleCallMessage { from, data } => {
             call_service.handle_call_message(deps, info, from, data)
         }
+        ExecuteMsg::XCallMessage { data } => Ok(Response::new()
+            .add_attribute("action", "success execute call")
+            .set_data(data)),
     }
 }

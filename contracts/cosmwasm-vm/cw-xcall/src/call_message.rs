@@ -7,6 +7,7 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         to: String,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
@@ -17,7 +18,7 @@ impl<'a> CwCallService<'a> {
             info.sender.clone(),
             rollback.clone(),
         )?;
-        let need_response = !rollback.is_none();
+        let need_response = rollback.is_some();
 
         let rollback_data = match rollback {
             Some(data) => data,
@@ -53,26 +54,21 @@ impl<'a> CwCallService<'a> {
             .map_err(ContractError::Std)?;
 
         if need_response {
-            let request = CallRequest::new(
-                Address::from(&from_address),
-                to.clone(),
-                rollback_data.clone(),
-                need_response,
-            );
+            let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);
 
             self.set_call_request(deps.storage, sequence_no, request)?;
         }
 
         let call_request = CallServiceMessageRequest::new(
-            Address::from(info.sender.as_str()),
+            info.sender.to_string(),
             to,
             sequence_no,
-            rollback_data.to_vec(),
+            need_response,
             data.to_vec(),
         );
 
         let message: CallServiceMessage = call_request.into();
-        let timeout_height = self.get_timeout_height(deps.as_ref().storage)?;
+        let timeout_height = self.get_timeout_height(deps.as_ref().storage);
 
         let event = event_xcall_message_sent(
             sequence_number_host,
@@ -88,11 +84,11 @@ impl<'a> CwCallService<'a> {
             let submessage: SubMsg<Empty> =
                 SubMsg::reply_always(CosmosMsg::Ibc(packet), SEND_CALL_MESSAGE_REPLY_ID);
 
-            return Ok(Response::new()
+            Ok(Response::new()
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")
                 .add_attribute("method", "send_packet")
-                .add_event(event));
+                .add_event(event))
         }
 
         #[cfg(not(feature = "native_ibc"))]
@@ -134,6 +130,7 @@ impl<'a> CwCallService<'a> {
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")
                 .add_attribute("method", "send_packet")
+                .add_attribute("sequence_no", sequence_no.to_string())
                 .add_event(event))
         }
     }

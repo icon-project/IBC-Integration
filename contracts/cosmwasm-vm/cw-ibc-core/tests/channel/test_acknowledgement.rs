@@ -304,7 +304,7 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
     let res = contract
         .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message);
     assert!(res.is_ok());
-    assert_eq!(res.as_ref().unwrap().clone().messages[0].id, 534);
+    assert_eq!(res.as_ref().unwrap().clone().messages[0].id, 532);
 }
 
 #[test]
@@ -478,7 +478,7 @@ fn test_acknowledgement_packet_validate_ordered() {
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
     assert!(res.is_ok());
-    assert_eq!(res.as_ref().unwrap().messages[0].id, 533)
+    assert_eq!(res.as_ref().unwrap().messages[0].id, 531)
 }
 
 #[test]
@@ -590,7 +590,7 @@ fn test_acknowledgement_packet_validate_unordered() {
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
     assert!(res.is_ok());
-    assert_eq!(res.as_ref().unwrap().messages[0].id, 533)
+    assert_eq!(res.as_ref().unwrap().messages[0].id, 531)
 }
 
 #[test]

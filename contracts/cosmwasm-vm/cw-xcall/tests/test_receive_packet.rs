@@ -4,7 +4,7 @@ mod setup;
 use account::*;
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env},
-    Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
+    to_binary, Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 use cw_common::types::Address;
 use cw_xcall::{
@@ -26,10 +26,7 @@ fn test_receive_packet_for_call_message_request() {
     let contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -38,10 +35,10 @@ fn test_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        Address::from(mock_info.sender.as_str()),
+        mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
-        vec![],
+        false,
         vec![1, 2, 3],
     );
 
@@ -61,6 +58,7 @@ fn test_receive_packet_for_call_message_request() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
+    let message = to_binary(&message).unwrap();
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
@@ -82,10 +80,7 @@ fn test_receive_packet_for_call_message_response() {
     let contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -104,14 +99,19 @@ fn test_receive_packet_for_call_message_response() {
         "",
     );
 
-    let call_request = CallRequest::new(alice(), bob().to_string(), vec![1, 2, 3].into(), true);
+    let call_request = CallRequest::new(
+        alice().to_string(),
+        bob().to_string(),
+        vec![1, 2, 3].into(),
+        true,
+    );
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 1, call_request)
         .unwrap();
 
     let message: CallServiceMessage = data.try_into().unwrap();
-
+    let message = to_binary(&message).unwrap();
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
         height: 0,
@@ -148,10 +148,7 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
     let contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -172,7 +169,12 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
 
     let message: CallServiceMessage = data.try_into().unwrap();
 
-    let call_request = CallRequest::new(alice(), bob().to_string(), vec![1, 2, 3].into(), true);
+    let call_request = CallRequest::new(
+        alice().to_string(),
+        bob().to_string(),
+        vec![1, 2, 3].into(),
+        true,
+    );
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 2, call_request)
@@ -192,6 +194,7 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
+    let message = to_binary(&message).unwrap();
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
@@ -209,10 +212,7 @@ fn handle_response_emit_rollback_event() {
     let contract = CwCallService::default();
 
     contract
-        .add_owner(
-            mock_deps.as_mut().storage,
-            Address::from(&mock_info.sender.to_string()),
-        )
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
     contract
@@ -231,7 +231,12 @@ fn handle_response_emit_rollback_event() {
         "",
     );
 
-    let call_request = CallRequest::new(alice(), bob().to_string(), vec![1, 2, 3].into(), false);
+    let call_request = CallRequest::new(
+        alice().to_string(),
+        bob().to_string(),
+        vec![1, 2, 3].into(),
+        false,
+    );
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 1, call_request)
@@ -253,6 +258,7 @@ fn handle_response_emit_rollback_event() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
+    let message = to_binary(&message).unwrap();
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
