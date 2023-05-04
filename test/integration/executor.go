@@ -336,7 +336,7 @@ func (e *Executor) xcallContractShouldEmitAEventWithSequenceIdAndRequestId() err
 }
 
 func (e *Executor) hasAnPacketToBeExecuted(keyName, methodName string) error {
-	contractAddress := e.GetContractAddress("xcall")
+	contractAddress := e.GetContractAddress("ibccore")
 	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, "")
 	return nil
 }

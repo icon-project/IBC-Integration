@@ -47,7 +47,7 @@ func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodName, param 
 		packetData := ibcConfigSetup
 		return ctx, string(packetData), nil
 	} else if strings.Contains(methodName, "ibc_packet_receive") {
-		packetData := packetReceiveData
+		packetData := c.getExecuteCallParam(ctx)
 		return ctx, string(packetData), nil
 	} else if strings.Contains(methodName, "send_call_message") {
 		return ctx, sendCallData(ctx, param), nil
@@ -230,12 +230,12 @@ func (c *CosmosLocalnet) getInitParams(ctx context.Context, contractName string)
 	return ""
 }
 
-func (c *CosmosLocalnet) getExecuteCallParms(ctx context.Context, contractName string) string {
+func (c *CosmosLocalnet) getExecuteCallParam(ctx context.Context) string {
 	ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
 	dappAddress := ctxValue.ContractAddress["dapp"]
 
 	csRequest := CallServiceMessageRequest{
-		From:       "somecontractAddress",
+		From:       "archway1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqgj33g6",
 		To:         dappAddress,
 		SequenceNo: 1,
 		Rollback:   false,
@@ -253,7 +253,10 @@ func (c *CosmosLocalnet) getExecuteCallParms(ctx context.Context, contractName s
 		fmt.Println(err)
 	}
 
-	messageBody := fmt.Sprintf(`{"sequence":10,"source_port":"","source_channel":"","destination_port":"","destination_channel":"","data":%v,"timeout_height":{"revision_number":0,"revision_height":10},"timeout_timestamp":0}`, csmessageEncoded)
+	messageBody := fmt.Sprintf(`{"sequence":10,"source_port":"our-port","source_channel":"channel-1","destination_port":"their-port","destination_channel":"channel-3","data":%v,"timeout_height":{"revision_number":0,"revision_height":10},"timeout_timestamp":0}`, csmessageEncoded)
+	msgBodyinByte, _ := json.Marshal(messageBody)
+	receivePacketParam := fmt.Sprintf(`{"receive_packet":{"message":%v}}`, msgBodyinByte)
+	fmt.Println(receivePacketParam)
 
-	return messageBody
+	return receivePacketParam
 }
