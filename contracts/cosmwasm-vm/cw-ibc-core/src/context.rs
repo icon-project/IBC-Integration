@@ -1,4 +1,19 @@
 use super::*;
+/// The `CwIbcCoreContext` struct represents the core context of a Rust-based Cosmos SDK contract for
+/// inter-blockchain communication.
+/// 
+/// Properties:
+/// 
+/// * `block_height`: A storage item representing the current block height.
+/// * `cw_ibc_store`: `cw_ibc_store` is an instance of the `CwIbcStore` struct, which is used to manage
+/// the storage of the contract. It likely contains methods for reading and writing data to the
+/// contract's storage.
+/// * `cw_ibc_router`: `cw_ibc_router` is a field of type `CwIbcRouter<'a>` in the `CwIbcCoreContext`
+/// struct. It is an instance of the `CwIbcRouter` struct, which is used for routing IBC packets between
+/// different chains. The
+/// * `owner`: `owner` is a field of type `Item<'a, Addr>` in the `CwIbcCoreContext` struct. It
+/// represents the address of the owner of the contract. The `Item` type is a wrapper around a value
+/// stored in the contract's storage, with a key that
 pub struct CwIbcCoreContext<'a> {
     block_height: Item<'a, u64>,
     cw_ibc_store: CwIbcStore<'a>,
