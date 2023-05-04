@@ -122,8 +122,8 @@ type TxResul struct {
 type CallServiceMessageType int64
 
 const (
-	CallServiceRequest  CallServiceMessageType = 1
-	CallServiceResponse CallServiceMessageType = 2
+	CallServiceRequest  CallServiceMessageType = 0
+	CallServiceResponse CallServiceMessageType = 1
 )
 
 type CSMessageResponseType int64
@@ -139,13 +139,17 @@ type CallServiceMessage struct {
 	Payload     []byte
 }
 
-func RlpEncode(request []byte, callType CallServiceMessageType) ([]byte, error) {
+func RlpEncodeRequest(request CallServiceMessageRequest, callType CallServiceMessageType) ([]byte, error) {
 
 	data := CallServiceMessage{
-		MessageType: callType,
-		Payload:     request,
+
+		MessageType: CallServiceRequest,
+
+		Payload: codec.RLP.MustMarshalToBytes(request),
 	}
+
 	return codec.RLP.MarshalToBytes(data)
+
 }
 
 func RlpDecode(raw_data []byte) (CallServiceMessage, error) {
