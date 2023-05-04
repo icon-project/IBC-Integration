@@ -2,6 +2,14 @@ use cosmwasm_std::Coin;
 
 use super::*;
 
+/// The function creates an IBC channel open message for channel initialization.
+/// 
+/// Arguments:
+/// 
+/// * `msg`: A reference to a `MsgChannelOpenInit` struct, which contains the information needed to
+/// initialize a new IBC channel.
+/// * `channel_id`: The unique identifier of the channel being opened.
+/// * `connection_id`: The ID of the connection associated with the channel being opened.
 pub fn on_chan_open_init_submessage(
     msg: &MsgChannelOpenInit,
     channel_id: &ChannelId,
@@ -31,6 +39,24 @@ pub fn on_chan_open_init_submessage(
     }
 }
 
+/// This function creates a submessage to execute a WasmMsg on a given contract address with specified
+/// funds and returns a reply on success.
+/// 
+/// Arguments:
+/// 
+/// * `address`: The address of the smart contract to which the submessage will be sent.
+/// * `msg`: The `msg` parameter is of type `Binary` and represents the message payload that will be
+/// sent to the smart contract at the given `address`. This message payload is expected to be in binary
+/// format.
+/// * `funds`: The `funds` parameter is a vector of `Coin` structs, which represent the amount of tokens
+/// to be sent along with the message. These tokens will be transferred to the contract address
+/// specified in the `address` parameter.
+/// * `id`: The `id` parameter is an unsigned 64-bit integer used to identify the submessage. It is
+/// typically used to match the response of the submessage with the original message that triggered it.
+/// 
+/// Returns:
+/// 
+/// a `SubMsg` object.
 pub fn create_channel_submesssage(
     address: String,
     msg: Binary,
@@ -48,6 +74,22 @@ pub fn create_channel_submesssage(
     sub_msg
 }
 
+/// This function validates the channel open initialization message.
+/// 
+/// Arguments:
+/// 
+/// * `message`: A reference to a `MsgChannelOpenInit` struct, which contains information about the
+/// initial channel opening message.
+/// * `conn_end_on_a`: `conn_end_on_a` is a variable of type `ConnectionEnd` which represents one end of
+/// a connection in the Inter-Blockchain Communication (IBC) protocol. It contains information about the
+/// connection, such as its state, version, and counterparty. In the function
+/// `channel_open_init_msg_validate
+/// 
+/// Returns:
+/// 
+/// a `Result` type with either an `Ok(())` value indicating that the validation was successful, or an
+/// `Err` value with a `ContractError` type indicating that the validation failed with a specific error
+/// message.
 pub fn channel_open_init_msg_validate(
     message: &MsgChannelOpenInit,
     conn_end_on_a: ConnectionEnd,

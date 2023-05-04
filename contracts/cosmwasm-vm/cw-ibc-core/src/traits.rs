@@ -2,6 +2,11 @@ use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
 
 use super::*;
 
+/// The `IbcClient` trait defines a set of functions that can be implemented by a module to interact
+/// with an IBC client. These functions include creating, updating, and upgrading a client, registering
+/// a client with a light client, generating a client identifier, submitting misbehaviour evidence, and
+/// handling replies to these messages. By implementing these functions, a module can customize how it
+/// interacts with IBC clients and handles client-related messages.
 pub trait IbcClient {
     fn create_client(
         &self,
@@ -63,6 +68,13 @@ pub trait IbcClient {
     ) -> Result<Response, ContractError>;
 }
 
+/// The `ValidateChannel` trait defines a set of functions that can be implemented by a module to
+/// validate channel-related messages. These functions take in the necessary dependencies, message
+/// information, and the specific message being validated, and return a response or an error. The
+/// specific functions defined in this trait correspond to different stages of the channel opening and
+/// closing process, such as `validate_channel_open_init` for validating a `MsgChannelOpenInit` message.
+/// By implementing these functions, a module can customize how it validates channel-related messages
+/// and interactions with other modules on different chains.
 pub trait ValidateChannel {
     // channel_open_init is called by a module to initiate a channel opening handshake with a module on another chain.
     fn validate_channel_open_init(
@@ -117,6 +129,13 @@ pub trait ValidateChannel {
     ) -> Result<Response, ContractError>;
 }
 
+/// The `ExecuteChannel` trait defines a set of functions that can be implemented by a module to handle
+/// the execution of channel-related messages. These functions take in the necessary dependencies and
+/// message information, and return a response or an error. The specific functions defined in this trait
+/// correspond to different stages of the channel opening and closing process, such as
+/// `execute_channel_open_init` for handling the execution of a `MsgChannelOpenInit` message. By
+/// implementing these functions, a module can customize how it handles channel-related messages and
+/// interactions with other modules on different chains.
 pub trait ExecuteChannel {
     fn execute_channel_open_init(
         &self,

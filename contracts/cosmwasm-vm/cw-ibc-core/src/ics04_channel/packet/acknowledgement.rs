@@ -4,6 +4,22 @@ use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
+    /// This function validates an acknowledgement packet.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` object, which provides access to the contract's dependencies
+    /// such as storage, API, and querier.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// being processed, such as the sender and the amount of funds sent with the message.
+    /// * `msg`: The `msg` parameter is a reference to a `MsgAcknowledgement` struct, which contains
+    /// information about the acknowledgement packet being validated.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// message and `ContractError` is an enum representing the possible errors that can occur during
+    /// the execution of the function.
     pub fn acknowledgement_packet_validate(
         &self,
         deps: DepsMut,
@@ -154,6 +170,23 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
+    /// This function validates a reply from a light client for an acknowledgement packet in an IBC
+    /// channel.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+    /// contract. These dependencies include the storage, API, and other modules that the contract may
+    /// depend on.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to a light client. It is used to validate the acknowledgement packet received from the
+    /// light client.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing the possible errors that can
+    /// occur during contract execution.
     pub fn acknowledgement_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
@@ -258,6 +291,20 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
+    /// This function processes an acknowledgement packet from xcall and produce event for acknowledgement
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+    /// contract. These dependencies include the storage, API, and other modules that the contract may
+    /// use.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to extract the acknowledgement packet message and perform
+    /// necessary actions based on the result.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result` with either a `Response` or a `ContractError`.
     pub fn acknowledgement_packet_execute(
         &self,
         deps: DepsMut,

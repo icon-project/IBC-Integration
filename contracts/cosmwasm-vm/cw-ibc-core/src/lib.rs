@@ -131,6 +131,22 @@ pub fn query(deps: Deps, env: Env, msg: msg::QueryMsg) -> StdResult<Binary> {
     call_service.query(deps, env, msg)
 }
 
+/// This function handles a reply message in a contract this is the entry point for reply.
+/// 
+/// Arguments:
+/// 
+/// * `deps`: `deps` is a mutable reference to the dependencies of the contract. It allows the contract
+/// to access the necessary modules and traits to interact with the blockchain and other contracts.
+/// * `env`: `env` is an object that contains information about the current execution environment of the
+/// contract, such as the block height, time, and chain ID. It is provided by the Cosmos SDK and is
+/// passed as an argument to most contract functions.
+/// * `msg`: The `msg` parameter in the `reply` function is of type `Reply`. It represents the message
+/// that is being replied to by the contract. The `Reply` struct contains information about the original
+/// message, such as the sender, recipient, and the actual message content.
+/// 
+/// Returns:
+/// 
+/// The function `reply` returns a `Result<Response, ContractError>`.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     let call_service = CwIbcCoreContext::default();
