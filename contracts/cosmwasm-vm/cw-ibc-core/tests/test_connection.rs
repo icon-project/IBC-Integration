@@ -6,10 +6,13 @@ use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::to_binary;
 use cosmwasm_std::to_vec;
 use cosmwasm_std::Addr;
+use cosmwasm_std::ContractResult;
 use cosmwasm_std::Event;
 use cosmwasm_std::Reply;
 use cosmwasm_std::SubMsgResponse;
 use cosmwasm_std::SubMsgResult;
+use cosmwasm_std::SystemResult;
+use cosmwasm_std::WasmQuery;
 use cw_common::client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse};
 use cw_common::types::{ClientId, ConnectionId};
 use cw_ibc_core::constants::*;
@@ -374,7 +377,7 @@ fn connection_open_init() {
     let mut deps = deps();
 
     let message = RawMsgConnectionOpenInit {
-        client_id: "client_id_on_a".to_string(),
+        client_id: "iconclient-0".to_string(),
         counterparty: Some(get_dummy_raw_counterparty(None)),
         version: None,
         delay_period: 0,
@@ -398,6 +401,20 @@ fn connection_open_init() {
     }
     .try_into()
     .unwrap();
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            ClientId::from_str("iconclient-0").unwrap(),
+            "lightclientaddress".to_string(),
+        )
+        .unwrap();
+
+    deps.querier.update_wasm(|r| match r {
+        WasmQuery::Smart { contract_addr, msg } => {
+            SystemResult::Ok(ContractResult::Ok(to_binary(&vec![0, 1, 2, 3]).unwrap()))
+        }
+        _ => todo!(),
+    });
 
     let cl = to_vec(&client_state);
     contract
@@ -415,6 +432,7 @@ fn connection_open_init() {
         .unwrap();
 
     let res = contract.connection_open_init(deps.as_mut(), res_msg);
+
     assert_eq!(res.is_ok(), true);
 }
 

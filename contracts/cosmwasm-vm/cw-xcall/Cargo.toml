@@ -41,6 +41,8 @@ common = { path="../../../libraries/rust/common" }
 cw-common = { path="../cw-common" }
 
 
+
 [dev-dependencies]
 cosmwasm = "0.7.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
+hex = "0.4.3"

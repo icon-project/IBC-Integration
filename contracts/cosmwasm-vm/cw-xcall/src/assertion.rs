@@ -80,18 +80,26 @@ impl<'a> CwCallService<'a> {
     ) -> Result<(), ContractError> {
         let owner = self.owner().load(store)?;
 
-        ensure_eq!(
-            info.sender,
-            owner.to_string(),
-            ContractError::Unauthorized {}
-        );
+        ensure_eq!(info.sender, owner, ContractError::Unauthorized {});
 
         Ok(())
     }
     pub fn ensure_admin(&self, store: &dyn Storage, address: Addr) -> Result<(), ContractError> {
         let admin = self.query_admin(store)?;
-        ensure_eq!(admin.to_string(), address, ContractError::OnlyAdmin);
+        ensure_eq!(admin, address, ContractError::OnlyAdmin);
 
+        Ok(())
+    }
+    pub fn ensure_ibc_handler(
+        &self,
+        store: &dyn Storage,
+        address: Addr,
+    ) -> Result<(), ContractError> {
+        let ibc_host = self.get_host(store)?;
+
+        if ibc_host != address {
+            return Err(ContractError::OnlyIbcHandler {});
+        }
         Ok(())
     }
 }

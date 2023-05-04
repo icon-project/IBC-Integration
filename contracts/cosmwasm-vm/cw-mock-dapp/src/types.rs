@@ -35,6 +35,9 @@ pub enum ExecuteMsg {
         from: String,
         data: Vec<u8>,
     },
+    XCallMessage {
+        data: Vec<u8>,
+    },
 }
 
 #[cw_serde]

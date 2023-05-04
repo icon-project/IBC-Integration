@@ -1,7 +1,7 @@
 use super::*;
 
 impl<'a> CwCallService<'a> {
-    pub fn query_owner(&self, store: &dyn Storage) -> Result<Address, StdError> {
+    pub fn query_owner(&self, store: &dyn Storage) -> Result<String, StdError> {
         let owner = self.owner().load(store)?;
 
         Ok(owner)
@@ -10,7 +10,7 @@ impl<'a> CwCallService<'a> {
     pub fn add_owner(
         &self,
         store: &mut dyn Storage,
-        owner: Address,
+        owner: String,
     ) -> Result<Response, ContractError> {
         match self.owner().may_load(store)? {
             Some(address) => {
@@ -34,11 +34,11 @@ impl<'a> CwCallService<'a> {
         &self,
         store: &mut dyn Storage,
         info: MessageInfo,
-        new_owner: Address,
+        new_owner: String,
     ) -> Result<Response, ContractError> {
         self.owner()
             .update(store, |mut current_owner| -> Result<_, ContractError> {
-                if info.sender == current_owner.to_string() {
+                if info.sender == current_owner {
                     if current_owner == new_owner {
                         Err(ContractError::OwnerAlreadyExist)
                     } else {
