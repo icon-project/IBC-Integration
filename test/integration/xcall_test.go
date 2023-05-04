@@ -53,6 +53,7 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^xcall contract should emit a event with sequence id and request id$`, executor.xcallContractShouldEmitAEventWithSequenceIdAndRequestId)
 			ctx.Step(`^"([^"]*)" has an "([^"]*)" packet to be executed$`, executor.hasAnPacketToBeExecuted)
 			ctx.Step(`^"([^"]*)" regiters xcall in "([^"]*)"$`, executor.regitersXcallIn)
+			ctx.Step(`^xcall contract panic with an error MaxRollbackSizeExceeded$`, executor.xcallContractPanicWithAnErrorMaxRollbackSizeExceeded)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature"}, TestingT: t, StopOnFailure: false},

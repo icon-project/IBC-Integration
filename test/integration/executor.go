@@ -346,3 +346,10 @@ func (e *Executor) regitersXcallIn(keyName, contractName string) error {
 	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "register_xcall", "")
 	return nil
 }
+
+func (e *Executor) xcallContractPanicWithAnErrorMaxRollbackSizeExceeded() error {
+	if e.error == nil {
+		return fmt.Errorf("xcall did not throw an error for exceeded data size")
+	}
+	return nil
+}
