@@ -9,6 +9,7 @@ ignore:
   - "**/*_test.*"
   - "**/mocks/*"
   - "**/mock/*"
+  - "libraries/rust/common/src/icon/*"
 
 coverage:
   precision: 2
