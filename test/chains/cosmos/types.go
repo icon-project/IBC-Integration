@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/icon-project/icon-bridge/common/codec"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -116,4 +117,65 @@ type TxResul struct {
 			Index bool   `json:"index"`
 		} `json:"attributes"`
 	} `json:"events"`
+}
+
+type CallServiceMessageType int64
+
+const (
+	CallServiceRequest  CallServiceMessageType = 1
+	CallServiceResponse CallServiceMessageType = 2
+)
+
+type CSMessageResponseType int64
+
+const (
+	SUCCESS   CSMessageResponseType = 0
+	FAILURE   CSMessageResponseType = -1
+	IBC_ERROR CSMessageResponseType = -2
+)
+
+type CallServiceMessage struct {
+	MessageType CallServiceMessageType
+	Payload     []byte
+}
+
+func RlpEncode(request []byte, callType CallServiceMessageType) ([]byte, error) {
+
+	data := CallServiceMessage{
+		MessageType: callType,
+		Payload:     request,
+	}
+	return codec.RLP.MarshalToBytes(data)
+}
+
+func RlpDecode(raw_data []byte) (CallServiceMessage, error) {
+
+	var callservicemessage = CallServiceMessage{}
+
+	codec.RLP.UnmarshalFromBytes(raw_data, &callservicemessage)
+
+	return CallServiceMessage{}, nil
+}
+
+type CallServiceMessageRequest struct {
+	From       string `json:"from"`
+	To         string `json:"to"`
+	SequenceNo uint64 `json:"sequence_no"`
+	Rollback   bool   `json:"rollback"`
+	Data       []byte `json:"data"`
+}
+
+func (cr *CallServiceMessageRequest) RlpEncode() ([]byte, error) {
+
+	return codec.RLP.MarshalToBytes(cr)
+}
+
+type CallServiceMessageResponse struct {
+	SequenceNo uint64
+	Code       CSMessageResponseType
+	Msg        string
+}
+
+func (csr *CallServiceMessageResponse) RlpEncode() ([]byte, error) {
+	return codec.RLP.MarshalToBytes(csr)
 }
