@@ -427,5 +427,3 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 }
-
-
