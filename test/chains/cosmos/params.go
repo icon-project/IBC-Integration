@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/types"
+	types1 "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
@@ -253,9 +254,26 @@ func (c *CosmosLocalnet) getExecuteCallParam(ctx context.Context) string {
 		fmt.Println(err)
 	}
 
-	messageBody := fmt.Sprintf(`{"sequence":10,"source_port":"our-port","source_channel":"channel-1","destination_port":"their-port","destination_channel":"channel-3","data":%v,"timeout_height":{"revision_number":0,"revision_height":10},"timeout_timestamp":0}`, csmessageEncoded)
-	msgBodyinByte, _ := json.Marshal(messageBody)
-	receivePacketParam := fmt.Sprintf(`{"receive_packet":{"message":%v}}`, msgBodyinByte)
+	packet := Packet{
+		Sequence:           10,
+		SourcePort:         "our-port",
+		SourceChannel:      "Channle-1",
+		DestinationPort:    "their-port",
+		DestinationChannel: "channle-3",
+		Data:               csmessageEncoded,
+		TimeoutHeight: types1.Height{
+			RevisionNumber: 0,
+			RevisionHeight: 10,
+		},
+		TimeoutTimestamp: 0,
+	}
+
+	data, err := packet.Marshal()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	receivePacketParam := fmt.Sprintf(`{"receive_packet":{"message":%v}}`, data)
 	fmt.Println(receivePacketParam)
 
 	return receivePacketParam
