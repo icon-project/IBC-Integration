@@ -52,3 +52,7 @@ serde-json-wasm = {version="0.5.0", default-features = false}
 
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
+cw-multi-test = "0.16.4"
+cw-icon-light-client = { path="../cw-icon-light-client",default-features = false }
+anyhow="*"
+test-utils={path="../../../libraries/rust/test-utils"}

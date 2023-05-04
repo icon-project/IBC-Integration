@@ -105,7 +105,6 @@ impl<'a> IconClient<'a> {
 impl ILightClient for IconClient<'_> {
     type Error = crate::ContractError;
     // convert string to int
-    
 
     fn create_client(
         &mut self,

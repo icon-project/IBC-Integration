@@ -17,6 +17,7 @@ use cosmwasm_std::{
     WasmMsg,
 };
 pub use cw_common::client_msg::ExecuteMsg as LightClientMessage;
+use cw_common::commitment;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
 use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 pub use ibc::core::ics04_channel::channel::Counterparty;
@@ -33,7 +34,6 @@ use ibc::core::ics04_channel::packet::Packet;
 use ibc::events::IbcEventType;
 use std::str::FromStr;
 pub use traits::*;
-use cw_common::commitment;
 pub mod packet;
 use ibc::core::ics04_channel::commitment::PacketCommitment;
 pub use packet::*;
