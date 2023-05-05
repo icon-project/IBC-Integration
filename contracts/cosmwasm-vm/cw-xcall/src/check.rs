@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn check_order(order: &IbcOrder) -> Result<(), ContractError> {
+pub fn check_order(order: &CwOrder) -> Result<(), ContractError> {
     if order != &APP_ORDER {
         Err(ContractError::OrderedChannel {})
     } else {

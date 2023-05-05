@@ -66,8 +66,8 @@ impl<'a> CwCallService<'a> {
     pub fn receive_packet_data(
         &self,
         deps: DepsMut,
-        message: IbcPacket,
-    ) -> Result<IbcReceiveResponse, ContractError> {
+        message: CwPacket,
+    ) -> Result<CwReceiveResponse, ContractError> {
         let call_service_message: CallServiceMessage = from_binary(&message.data)?;
 
         match call_service_message.message_type() {
@@ -84,8 +84,8 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         data: &[u8],
-        packet: &IbcPacket,
-    ) -> Result<IbcReceiveResponse, ContractError> {
+        packet: &CwPacket,
+    ) -> Result<CwReceiveResponse, ContractError> {
         let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
 
@@ -115,7 +115,7 @@ impl<'a> CwCallService<'a> {
             })
             .map_err(ContractError::Std)?;
 
-        Ok(IbcReceiveResponse::new()
+        Ok(CwReceiveResponse::new()
             .add_attribute("action", "call_service")
             .add_attribute("method", "handle_response")
             .set_ack(acknowledgement_data)
@@ -126,8 +126,8 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         data: &[u8],
-        packet: &IbcPacket,
-    ) -> Result<IbcReceiveResponse, ContractError> {
+        packet: &CwPacket,
+    ) -> Result<CwReceiveResponse, ContractError> {
         let message: CallServiceMessageResponse = data.try_into()?;
         let response_sequence_no = message.sequence_no();
 
@@ -144,7 +144,7 @@ impl<'a> CwCallService<'a> {
                     .to_vec(),
                 })
                 .map_err(ContractError::Std)?;
-            return Ok(IbcReceiveResponse::new()
+            return Ok(CwReceiveResponse::new()
                 .add_attribute("action", "call_service")
                 .add_attribute("method", "handle_response")
                 .set_ack(acknowledgement_data)
@@ -169,7 +169,7 @@ impl<'a> CwCallService<'a> {
                     ),
                 };
                 self.cleanup_request(deps.storage, response_sequence_no);
-                Ok(IbcReceiveResponse::new()
+                Ok(CwReceiveResponse::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
                     .set_ack(acknowledgement_data_on_success(packet)?)
@@ -183,7 +183,7 @@ impl<'a> CwCallService<'a> {
 
                 let event = event_rollback_message(response_sequence_no);
 
-                Ok(IbcReceiveResponse::new()
+                Ok(CwReceiveResponse::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
                     .set_ack(acknowledgement_data_on_success(packet)?)

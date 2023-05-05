@@ -209,31 +209,31 @@ impl<'a> CwIbcCoreContext<'a> {
                         Err(error) => return Err(error),
                     };
 
-                    let src = IbcEndpoint {
+                    let src = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_b.to_string(),
                         channel_id: packet_data.packet.chan_id_on_b.to_string(),
                     };
-                    let dest = IbcEndpoint {
+                    let dest = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_a.to_string(),
                         channel_id: packet_data.packet.chan_id_on_a.to_string(),
                     };
                     let data = Binary::from(packet.data);
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
                         ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
-                            IbcTimeoutBlock {
+                            CwTimeoutBlock {
                                 revision: 1,
                                 height: 1,
                             }
                         }
                         ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
-                            IbcTimeoutBlock {
+                            CwTimeoutBlock {
                                 revision: x.revision_number(),
                                 height: x.revision_height(),
                             }
                         }
                     };
-                    let timeout = IbcTimeout::with_block(timeoutblock);
-                    let ibc_packet = IbcPacket::new(
+                    let timeout = CwTimeout::with_block(timeoutblock);
+                    let ibc_packet = CwPacket::new(
                         data,
                         src,
                         dest,

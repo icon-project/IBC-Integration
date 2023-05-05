@@ -1,4 +1,4 @@
-use cosmwasm_std::{IbcAcknowledgement, IbcPacketAckMsg};
+use cw_common::cw_types::{CwAcknowledgement, CwPacketAckMsg};
 use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 
 use super::*;
@@ -192,23 +192,23 @@ impl<'a> CwIbcCoreContext<'a> {
                         Err(error) => return Err(error),
                     };
 
-                    let src = IbcEndpoint {
+                    let src = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_a.to_string(),
                         channel_id: packet_data.packet.chan_id_on_a.to_string(),
                     };
-                    let dest = IbcEndpoint {
+                    let dest = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_b.to_string(),
                         channel_id: packet_data.packet.chan_id_on_b.to_string(),
                     };
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
                         ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
-                            IbcTimeoutBlock {
+                            CwTimeoutBlock {
                                 revision: 1,
                                 height: 1,
                             }
                         }
                         ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
-                            IbcTimeoutBlock {
+                            CwTimeoutBlock {
                                 revision: x.revision_number(),
                                 height: x.revision_height(),
                             }
@@ -216,9 +216,9 @@ impl<'a> CwIbcCoreContext<'a> {
                     };
                     let timestamp = packet_data.packet.timeout_timestamp_on_b.nanoseconds();
                     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
-                    let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
+                    let timeout = CwTimeout::with_both(timeoutblock, ibctimestamp);
 
-                    let ibc_packet = IbcPacket::new(
+                    let ibc_packet = CwPacket::new(
                         packet.data,
                         src,
                         dest,
@@ -226,7 +226,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         timeout,
                     );
                     let address = Addr::unchecked(packet_data.signer.to_string());
-                    let ack = IbcAcknowledgement::new(acknowledgement.as_bytes());
+                    let ack = CwAcknowledgement::new(acknowledgement.as_bytes());
                     let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketAck {
                         msg: cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address),
                     };
@@ -266,7 +266,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let reply = from_binary::<IbcPacketAckMsg>(&res).unwrap();
+                    let reply = from_binary::<CwPacketAckMsg>(&res).unwrap();
                     let packet = reply.original_packet;
                     let channel_id =
                         ChannelId::from(IbcChannelId::from_str(&packet.src.channel_id).unwrap());

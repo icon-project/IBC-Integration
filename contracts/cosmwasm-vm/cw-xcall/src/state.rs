@@ -10,12 +10,12 @@ pub const SEND_CALL_MESSAGE_REPLY_ID: u64 = 2;
 #[cw_serde]
 pub struct IbcConfig {
     sequence: u128,
-    src: IbcEndpoint,
-    dst: IbcEndpoint,
+    src: CwEndpoint,
+    dst: CwEndpoint,
 }
 
 impl IbcConfig {
-    pub fn new(src: IbcEndpoint, dst: IbcEndpoint) -> Self {
+    pub fn new(src: CwEndpoint, dst: CwEndpoint) -> Self {
         Self {
             src,
             dst,
@@ -23,11 +23,11 @@ impl IbcConfig {
         }
     }
 
-    pub fn src_endpoint(&self) -> &IbcEndpoint {
+    pub fn src_endpoint(&self) -> &CwEndpoint {
         &self.src
     }
 
-    pub fn dst_endpoint(&self) -> &IbcEndpoint {
+    pub fn dst_endpoint(&self) -> &CwEndpoint {
         &self.dst
     }
 
