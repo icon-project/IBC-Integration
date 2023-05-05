@@ -1,5 +1,5 @@
 use super::*;
-/// The `CwIbcCoreContext` struct represents the core context of a Rust-based Cosmos SDK contract for
+/// The `CwIbcCoreContext` struct represents the core context of a Cosmos SDK contract for
 /// inter-blockchain communication.
 /// 
 /// Properties:

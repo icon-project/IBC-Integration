@@ -1,6 +1,6 @@
 use super::*;
 
-/// This Rust function creates a client event with specified attributes.
+/// creates a client event with specified attributes.
 /// 
 /// Arguments:
 /// 
@@ -56,7 +56,7 @@ pub fn update_client_event(
         .add_attribute(CONSENSUS_HEIGHTS_ATTRIBUTE_KEY, consensus_heights.join(","))
 }
 
-/// This function creates an event for upgrading a client in Rust.
+/// This function creates an event for upgrading a client.
 /// 
 /// Arguments:
 /// 
@@ -80,7 +80,7 @@ pub fn upgrade_client_event(
         .add_attribute(CONSENSUS_HEIGHT_ATTRIBUTE_KEY, consensus_height)
 }
 
-/// This function creates a new event for client misbehavior in Rust programming language.
+/// This function creates a new event for client misbehavior.
 /// 
 /// Arguments:
 /// 
@@ -103,7 +103,7 @@ pub fn client_misbehaviour_event(client_id: &str, client_type: &str) -> Event {
         .add_attribute(CLIENT_TYPE_ATTRIBUTE_KEY, client_type)
 }
 
-/// The function generates an event with a specific attribute for a given client ID in Rust.
+/// The function generates an event with a specific attribute for a given client ID.
 /// 
 /// Arguments:
 /// 

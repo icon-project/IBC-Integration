@@ -1,11 +1,5 @@
 use super::*;
 
-/// This is an implementation of several methods for the `CwIbcCoreContext` struct. These methods are
-/// used for storing and retrieving capabilities, setting and getting the expected time per block,
-/// claiming and authenticating capabilities, looking up modules, and calculating block delay. The
-/// methods take in various parameters such as the storage, name, address, and duration, and return
-/// results or errors wrapped in a `Result` enum. The methods are used to manage and interact with the
-/// IBC (Inter-Blockchain Communication) capabilities of the contract.
 impl<'a> CwIbcCoreContext<'a> {
    /// This function stores a capability in a storage using a given name and address.
    /// 

@@ -1,6 +1,6 @@
 use super::*;
 
-/// This Rust function creates an event with attributes related to an open initialization connection.
+/// This function creates an event with attributes related to an open initialization connection.
 /// 
 /// Arguments:
 /// 
@@ -29,7 +29,7 @@ pub fn create_open_init_event(
         .add_attribute(COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY, counterparty_client_id)
 }
 
-/// This function creates an event for an open try connection in Rust.
+/// This function creates an event for an open try connection.
 /// 
 /// Arguments:
 /// 
@@ -63,7 +63,7 @@ pub fn create_open_try_event(
         )
 }
 
-/// This function creates an event for acknowledging the opening of a connection in Rust.
+/// This function creates an event for acknowledging the opening of a connection.
 /// 
 /// Arguments:
 /// 
@@ -99,8 +99,7 @@ pub fn create_open_ack_event(
         )
 }
 
-/// This function creates an event for confirming the opening of a connection between two clients in
-/// Rust.
+/// This function creates an event for confirming the opening of a connection between two clients.
 /// 
 /// Arguments:
 /// 

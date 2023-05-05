@@ -133,8 +133,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_compatible_versions(&self) -> Vec<Version> {
         vec![Version::default()]
     }
-   /// This method handles the processing of a connection open acknowledgement message in a Rust-based
-   /// IBC contract.
+   /// This method handles the processing of a connection open acknowledgement message in a IBC contract.
    /// 
    /// Arguments:
    /// 
@@ -388,7 +387,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }),
         }
     }
-   /// This method handles the opening of a connection attempt between two IBC clients.
+   /// This method handles the opening of a connection open try between two IBC clients.
    /// 
    /// Arguments:
    /// 

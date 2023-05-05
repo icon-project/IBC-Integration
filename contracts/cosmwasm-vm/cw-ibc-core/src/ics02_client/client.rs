@@ -225,7 +225,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
-    /// This method stores a client into a registry using the Rust programming language.
+    /// This method stores a client into a registry
     ///
     /// Arguments:
     ///
@@ -290,7 +290,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
-    /// The method checks if a client of a certain type is already registered in the store and returns
+    /// The method checks if a client is already registered in the store and returns
     /// an error if it already exists.
     ///
     /// Arguments:

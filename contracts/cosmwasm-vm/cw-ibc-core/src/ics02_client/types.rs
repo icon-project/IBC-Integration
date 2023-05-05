@@ -11,7 +11,7 @@ pub const ICON_MERKLE_TYPE_URL: &str = "/icon.types.v1.MerkleNode";
 
 const CLIENT_TYPE: &str = "iconclient";
 
-/// This is a Rust struct representing the state of a client, with various fields such as trusting
+/// This struct representing the state of a client, with various fields such as trusting
 /// period, frozen height, and validators.
 /// 
 /// Properties:

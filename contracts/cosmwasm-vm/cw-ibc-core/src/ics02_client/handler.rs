@@ -221,7 +221,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     }
 
     /// This function generates a unique client identifier based on the client type and a client
-    /// sequence number stored in a storage object.
+    /// sequence number stored in a storage.
     /// 
     /// Arguments:
     /// 
@@ -443,8 +443,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         }
     }
 
-   /// This function handles the submission of misbehaviour by a client in a Rust-based blockchain
-   /// application.
+   /// This function handles the submission of misbehaviour by a client.
    /// 
    /// Arguments:
    /// 
@@ -501,7 +500,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             .add_attribute("method", "misbehaviour"))
     }
 
-   /// This function handles the execution of a misbehaviour reply in a Rust-based smart contract.
+   /// This function handles the execution of a misbehaviour reply.
    /// 
    /// Arguments:
    /// 
