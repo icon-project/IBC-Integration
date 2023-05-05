@@ -7,7 +7,7 @@ use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
-use cw_common::raw_types::RawMsgCreateClient;
+use cw_common::raw_types::client::RawMsgCreateClient;
 use cw_common::types::{ClientId, ClientType};
 use cw_ibc_core::{
     context::CwIbcCoreContext,

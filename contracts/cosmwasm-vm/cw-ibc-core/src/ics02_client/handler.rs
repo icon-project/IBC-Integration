@@ -1,3 +1,5 @@
+use crate::{EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR, EXECUTE_UPDATE_CLIENT, EXECUTE_CREATE_CLIENT};
+
 use super::{events::client_misbehaviour_event, *};
 use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response};
 
@@ -6,7 +8,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: MsgCreateClient,
+        message: IbcMsgCreateClient,
     ) -> Result<Response, ContractError> {
         let client_state = self.decode_client_state(message.client_state.clone())?;
         let client_counter = self.client_counter(deps.as_ref().storage)?;
@@ -41,7 +43,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: MsgUpdateClient,
+        message: IbcMsgUpdateClient,
     ) -> Result<Response, ContractError> {
         let client_id = ClientId::from(message.client_id.clone());
 
@@ -72,7 +74,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: MsgUpgradeClient,
+        message: IbcMsgUpgradeClient,
     ) -> Result<Response, ContractError> {
         let old_client_state = self.client_state(deps.as_ref().storage, &message.client_id)?;
 

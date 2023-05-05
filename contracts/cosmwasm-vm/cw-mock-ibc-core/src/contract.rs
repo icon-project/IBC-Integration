@@ -8,7 +8,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 
 use cw_common::ibc_types::IbcPacket as Packet;
-use cw_common::raw_types::RawPacket;
+use cw_common::raw_types::channel::RawPacket;
 use cw_common::ProstMessage;
 
 use crate::error::ContractError;

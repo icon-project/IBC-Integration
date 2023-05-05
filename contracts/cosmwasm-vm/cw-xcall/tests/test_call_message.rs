@@ -90,7 +90,7 @@ fn send_packet_success() {
         })
         .unwrap();
 
-    let packet_data = cw_common::raw_types::RawPacket {
+    let packet_data = cw_common::raw_types::channel::RawPacket {
         sequence: 10,
         source_port: ibc_config.src_endpoint().clone().port_id,
         source_channel: ibc_config.src_endpoint().clone().channel_id,

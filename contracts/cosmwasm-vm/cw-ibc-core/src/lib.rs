@@ -65,29 +65,10 @@ pub use ibc::{
     },
     Height,
 };
-
-use cw_common::raw_types::RawPacket;
 use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::{core::ics04_channel::packet::Packet, signer::Signer};
 
 pub use cw_common::commitment::*;
-use ibc_proto::ibc::core::{
-    channel::v1::{
-        MsgAcknowledgement as RawMessageAcknowledgement,
-        MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
-        MsgChannelOpenAck as RawMsgChannelOpenAck,
-        MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
-        MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
-        MsgRecvPacket as RawMessageRecvPacket, MsgTimeout as RawMessageTimeout,
-        MsgTimeoutOnClose as RawMessageTimeoutOnclose,
-    },
-    connection::v1::{
-        MsgConnectionOpenAck as RawMsgConnectionOpenAck,
-        MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm,
-        MsgConnectionOpenInit as RawMsgConnectionOpenInit,
-        MsgConnectionOpenTry as RawMsgConnectionOpenTry,
-    },
-};
 use prost::Message;
 use std::str::FromStr;
 use thiserror::Error;

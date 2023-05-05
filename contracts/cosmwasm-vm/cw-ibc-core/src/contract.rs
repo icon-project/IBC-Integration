@@ -4,6 +4,9 @@ use common::icon::icon::lightclient::v1::{
 };
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use cw_common::hex_string::HexString;
+use cw_common::raw_types::channel::*;
+use cw_common::raw_types::connection::*;
+
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";

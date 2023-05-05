@@ -5,7 +5,7 @@ use cosmwasm_std::{
     IbcEndpoint, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 use cw_common::ibc_types::IbcHeight;
-use cw_common::raw_types::RawPacket;
+use cw_common::raw_types::channel::RawPacket;
 use cw_common::types::{Ack, Address};
 use cw_common::xcall_msg::ExecuteMsg;
 use cw_common::ProstMessage;
