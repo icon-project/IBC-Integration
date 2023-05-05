@@ -4,9 +4,8 @@ mod setup;
 use account::*;
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env},
-    to_binary, Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
+    Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
-use cw_common::types::Address;
 use cw_xcall::{
     ibc::ibc_packet_receive,
     state::CwCallService,
@@ -70,7 +69,6 @@ fn test_receive_packet_for_call_message_request() {
     assert_eq!(result.events[0].ty, "call_message".to_string())
 }
 
-#[ignore]
 #[test]
 fn test_receive_packet_for_call_message_response() {
     let mut mock_deps = mock_dependencies();
@@ -111,7 +109,7 @@ fn test_receive_packet_for_call_message_response() {
         .unwrap();
 
     let message: CallServiceMessage = data.try_into().unwrap();
-    let message = to_binary(&message).unwrap();
+
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
         height: 0,
@@ -139,7 +137,6 @@ fn test_receive_packet_for_call_message_response() {
     assert_eq!(result.events[0].ty, "response_message".to_string())
 }
 
-#[ignore]
 #[test]
 fn receive_packet_for_call_message_response_invalid_sequence_id() {
     let mut mock_deps = mock_dependencies();
@@ -205,7 +202,6 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
     assert_eq!(result.attributes[1].value, "InvalidSequenceId 1")
 }
 
-#[ignore]
 #[test]
 fn handle_response_emit_rollback_event() {
     let mut mock_deps = mock_dependencies();
