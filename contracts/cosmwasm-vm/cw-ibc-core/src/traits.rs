@@ -12,7 +12,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: MsgCreateClient,
+        message: IbcMsgCreateClient,
     ) -> Result<Response, ContractError>;
 
     fn execute_create_client_reply(
@@ -24,7 +24,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: MsgUpdateClient,
+        message: IbcMsgUpdateClient,
     ) -> Result<Response, ContractError>;
     fn execute_update_client_reply(
         &self,

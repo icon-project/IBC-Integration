@@ -4,9 +4,8 @@ mod setup;
 use account::*;
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env},
-    to_binary, Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
+    Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
-use cw_common::types::Address;
 use cw_xcall::{
     ibc::ibc_packet_receive,
     state::CwCallService,
@@ -58,7 +57,6 @@ fn test_receive_packet_for_call_message_request() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
-    let message = to_binary(&message).unwrap();
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
@@ -111,7 +109,7 @@ fn test_receive_packet_for_call_message_response() {
         .unwrap();
 
     let message: CallServiceMessage = data.try_into().unwrap();
-    let message = to_binary(&message).unwrap();
+
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
         height: 0,
@@ -163,7 +161,7 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
 
     let data = CallServiceMessageResponse::new(
         1,
-        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceIbcError,
         "",
     );
 
@@ -194,7 +192,7 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
-    let message = to_binary(&message).unwrap();
+
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
@@ -258,7 +256,7 @@ fn handle_response_emit_rollback_event() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
-    let message = to_binary(&message).unwrap();
+
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));

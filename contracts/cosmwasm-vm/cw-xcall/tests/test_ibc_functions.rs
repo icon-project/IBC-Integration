@@ -4,9 +4,11 @@ use cosmwasm_std::{
     IbcChannelConnectMsg::OpenAck, IbcChannelOpenMsg::OpenInit, IbcChannelOpenMsg::OpenTry,
     IbcEndpoint, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
+use cw_common::ibc_types::IbcHeight;
+use cw_common::raw_types::channel::RawPacket;
 use cw_common::types::{Ack, Address};
 use cw_common::xcall_msg::ExecuteMsg;
-use cw_common::{Height, ProstMessage, RawPacket};
+use cw_common::ProstMessage;
 use cw_xcall::types::call_request::CallRequest;
 use cw_xcall::types::response::CallServiceMessageResponse;
 use cw_xcall::{
@@ -367,7 +369,7 @@ fn sucess_receive_packet_for_call_message_request() {
             Addr::unchecked(alice().as_str()),
         )
         .unwrap();
-    let message = to_binary(&message).unwrap();
+
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
@@ -953,12 +955,12 @@ fn test_for_call_service_request_from_rlp_bytes() {
 
 #[test]
 fn test_for_call_service_response_from_rlp_bytes() {
-    let hex_decode_rlp_data = hex::decode("c801008568656c6c6f").unwrap();
+    let hex_decode_rlp_data = hex::decode("c90181fe8568656c6c6f").unwrap();
     let cs_response_message = CallServiceMessageResponse::try_from(&hex_decode_rlp_data).unwrap();
 
     let expected_data = CallServiceMessageResponse::new(
         1,
-        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceIbcError,
         "hello",
     );
 

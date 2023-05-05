@@ -30,10 +30,10 @@ use cosmwasm_std::{
 #[allow(unused_imports)]
 use cw2::set_contract_version;
 use cw_common::client_msg::LightClientPacketMessage;
-use cw_common::types::{ChannelId, ClientId, ClientType, ConnectionId, PortId};
-use cw_common::{
-    IbcChannelId, IbcClientId, IbcConnectionId, IbcPortId, MsgCreateClient, MsgUpdateClient,
+use cw_common::ibc_types::{
+    IbcChannelId, IbcClientId, IbcConnectionId, IbcMsgCreateClient, IbcMsgUpdateClient, IbcPortId,
 };
+use cw_common::types::{ChannelId, ClientId, ClientType, ConnectionId, PortId};
 use cw_storage_plus::{Item, Map};
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 use ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
@@ -65,29 +65,10 @@ pub use ibc::{
     },
     Height,
 };
-
-use cw_common::RawPacket;
 use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::{core::ics04_channel::packet::Packet, signer::Signer};
 
 pub use cw_common::commitment::*;
-use ibc_proto::ibc::core::{
-    channel::v1::{
-        MsgAcknowledgement as RawMessageAcknowledgement,
-        MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
-        MsgChannelOpenAck as RawMsgChannelOpenAck,
-        MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
-        MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
-        MsgRecvPacket as RawMessageRecvPacket, MsgTimeout as RawMessageTimeout,
-        MsgTimeoutOnClose as RawMessageTimeoutOnclose,
-    },
-    connection::v1::{
-        MsgConnectionOpenAck as RawMsgConnectionOpenAck,
-        MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm,
-        MsgConnectionOpenInit as RawMsgConnectionOpenInit,
-        MsgConnectionOpenTry as RawMsgConnectionOpenTry,
-    },
-};
 use prost::Message;
 use std::str::FromStr;
 use thiserror::Error;

@@ -39,9 +39,24 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" contract deployed by "([^"]*)" only when the chain is "([^"]*)"$`, executor.contractDeployedByOnlyWhenTheChainIs)
 			ctx.Step(`^a user query for admin$`, executor.aUserQueryForAdmin)
 			ctx.Step(`^"([^"]*)" wallet address should be as admin$`, executor.walletAddressShouldBeAsAdmin)
+			ctx.Step(`^"([^"]*)" should open channel to send and receive messages$`, executor.shouldOpenChannelToSendAndReceiveMessages)
+			ctx.Step(`^"([^"]*)" contract throws an error that only the contract can perform this action$`, executor.contractThrowsAnErrorThatOnlyTheContractCanPerformThisAction)
+			ctx.Step(`^"([^"]*)" non contract executes "([^"]*)" in xcall$`, executor.nonContractExecutesInXcall)
+			ctx.Step(`^"([^"]*)" executes "([^"]*)" in dapp with "([^"]*)" than limit$`, executor.executesInDappWithThanLimit)
+			ctx.Step(`^xcall contract panic with an error MaxDataSizeExceeded$`, executor.xcallContractPanicWithAnErrorMaxDataSizeExceeded)
+			ctx.Step(`^"([^"]*)" executes "([^"]*)" in dapp with "([^"]*)" to limit$`, executor.executesInDappWithToLimit)
+			ctx.Step(`^"([^"]*)" executes "([^"]*)" in "([^"]*)" with "([^"]*)" request ID$`, executor.executesInWithRequestID)
+			ctx.Step(`^xcall contract panic with an error RequestNotFound$`, executor.xcallContractPanicWithAnErrorRequestNotFound)
+			ctx.Step(`^xcall should execute call message successfully$`, executor.xcallShouldExecuteCallMessageSuccessfully)
+			ctx.Step(`^"([^"]*)" executes "([^"]*)" in "([^"]*)" with "([^"]*)" sequence number$`, executor.executesInWithSequenceNumber)
+			ctx.Step(`^xcall should execute rollback message successfully$`, executor.xcallShouldExecuteRollbackMessageSuccessfully)
+			ctx.Step(`^xcall contract should emit a event with sequence id and request id$`, executor.xcallContractShouldEmitAEventWithSequenceIdAndRequestId)
+			ctx.Step(`^"([^"]*)" has an "([^"]*)" packet to be executed$`, executor.hasAnPacketToBeExecuted)
+			ctx.Step(`^"([^"]*)" regiters xcall in "([^"]*)"$`, executor.regitersXcallIn)
+			ctx.Step(`^xcall contract panic with an error MaxRollbackSizeExceeded$`, executor.xcallContractPanicWithAnErrorMaxRollbackSizeExceeded)
 
 		},
-		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},
+		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature", "features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},
 	}
 
 	if suite.Run() != 0 {

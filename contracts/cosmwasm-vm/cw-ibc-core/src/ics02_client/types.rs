@@ -2,14 +2,11 @@ use super::*;
 use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
-
-pub const ICON_CLIENT_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
-pub const ICON_CONSENSUS_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
-pub const ICON_SIGNED_HEADER_TYPE_URL: &str = "/icon.types.v1.SignedHeader";
-pub const ICON_BTP_HEADER_TYPE_URL: &str = "/icon.types.v1.BtpHeader";
-pub const ICON_MERKLE_TYPE_URL: &str = "/icon.types.v1.MerkleNode";
-
-const CLIENT_TYPE: &str = "iconclient";
+use cw_common::constants::ICON_BTP_HEADER_TYPE_URL;
+use cw_common::constants::ICON_CLIENT_STATE_TYPE_URL;
+use cw_common::constants::ICON_CLIENT_TYPE;
+use cw_common::constants::ICON_CONSENSUS_STATE_TYPE_URL;
+use cw_common::constants::ICON_SIGNED_HEADER_TYPE_URL;
 
 /// This struct representing the state of a client, with various fields such as trusting
 /// period, frozen height, and validators.
@@ -176,16 +173,16 @@ impl IbcClientState for ClientState {
     }
 
     fn client_type(&self) -> IbcClientType {
-        IbcClientType::new(CLIENT_TYPE.to_string())
+        IbcClientType::new(ICON_CLIENT_TYPE.to_string())
     }
 
     fn latest_height(&self) -> ibc::Height {
-        Height::new(0, self.latest_height).unwrap()
+        IbcHeight::new(0, self.latest_height).unwrap()
     }
 
     fn frozen_height(&self) -> Option<ibc::Height> {
         self.frozen_height
-            .map(|height| Height::new(0, height).unwrap())
+            .map(|height| IbcHeight::new(0, height).unwrap())
     }
 
     fn expired(&self, elapsed: std::time::Duration) -> bool {
@@ -421,11 +418,11 @@ impl ibc::core::ics02_client::consensus_state::ConsensusState for ConsensusState
         self.message_root()
     }
 
-    fn timestamp(&self) -> ibc::timestamp::Timestamp {
+    fn timestamp(&self) -> IbcTimestamp {
         // TODO: Update the timestamp logic
 
         let block_time = Duration::from_secs(3);
-        Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap()
+        IbcTimestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap()
     }
 
     fn into_box(self) -> Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>

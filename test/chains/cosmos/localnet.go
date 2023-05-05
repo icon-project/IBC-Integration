@@ -3,6 +3,7 @@ package cosmos
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +13,11 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"go.uber.org/zap"
 )
+
+var contracts = chains.ContractKey{
+	ContractAddress: make(map[string]string),
+	ContractOwner:   make(map[string]string),
+}
 
 func NewCosmosLocalnet(t *testing.T, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keyPassword string, contracts map[string]string) (chains.Chain, error) {
 	chain := cosmos.NewCosmosChain(t.Name(), chainConfig, numValidators, numFullNodes, log)
@@ -29,7 +35,7 @@ func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (co
 
 	// Get Contract Name from context
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
-	contractName := ctxValue.ContractName
+	contractName := strings.ToLower(ctxValue.ContractName)
 	codeId, err := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath[contractName])
 	if err != nil {
 		return ctx, err
@@ -38,23 +44,18 @@ func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (co
 	// Get Init Message from context
 	ctxVal := ctx.Value(chains.InitMessage{}).(chains.InitMessage)
 	initMessage := ctxVal.InitMsg
+	if initMessage == "runtime" {
+		initMessage = c.getInitParams(ctx, contractName)
+	}
 	address, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, codeId, initMessage, true)
 	if err != nil {
 		return nil, err
 	}
 
-	var contracts chains.ContractKey
-	contracts.ContractAddress = map[string]string{
-		contractName: address,
-	}
-	contracts.ContractOwner = map[string]string{
-		keyName: ownerAddr,
-	}
+	contracts.ContractAddress[contractName] = address
+	contracts.ContractOwner[keyName] = ownerAddr
 
-	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
-		ContractAddress: contracts.ContractAddress,
-		ContractOwner:   contracts.ContractOwner,
-	}), err
+	return context.WithValue(ctx, chains.Mykey("Contract Names"), contracts), err
 }
 
 func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {

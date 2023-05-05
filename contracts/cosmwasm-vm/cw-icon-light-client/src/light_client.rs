@@ -5,27 +5,26 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::utils::{calculate_root, keccak256};
+use cw_common::constants::{
+    ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL, ICON_SIGNED_HEADER_TYPE_URL,
+};
 use prost::Message;
-
-const HEADER_TYPE_URL: &str = "/icon.lightclient.v1.SignedHeader";
-const CLIENT_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ClientState";
-const CONSENSUS_STATE_TYPE_URL: &str = "/icon.lightclient.v1.ConsensusState";
 
 impl AnyTypes for ClientState {
     fn get_type_url() -> String {
-        CLIENT_STATE_TYPE_URL.to_string()
+        ICON_CLIENT_STATE_TYPE_URL.to_string()
     }
 }
 
 impl AnyTypes for ConsensusState {
     fn get_type_url() -> String {
-        CONSENSUS_STATE_TYPE_URL.to_string()
+        ICON_CONSENSUS_STATE_TYPE_URL.to_string()
     }
 }
 
 impl AnyTypes for SignedHeader {
     fn get_type_url() -> String {
-        HEADER_TYPE_URL.to_string()
+        ICON_SIGNED_HEADER_TYPE_URL.to_string()
     }
 }
 

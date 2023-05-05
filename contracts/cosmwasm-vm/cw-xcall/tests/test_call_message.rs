@@ -9,8 +9,9 @@ use cosmwasm_std::{
     IbcMsg, IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
 };
 
+use cw_common::ibc_types::IbcHeight;
+use cw_common::types::Address;
 use cw_common::{hex_string::HexString, ProstMessage};
-use cw_common::{types::Address, Height};
 use cw_xcall::{
     error::ContractError,
     state::{CwCallService, IbcConfig},
@@ -83,13 +84,13 @@ fn send_packet_success() {
         }
     });
 
-    let height = Height::new(0, 10)
+    let height = IbcHeight::new(0, 10)
         .map_err(|error| ContractError::DecodeFailed {
             error: error.to_string(),
         })
         .unwrap();
 
-    let packet_data = cw_common::RawPacket {
+    let packet_data = cw_common::raw_types::channel::RawPacket {
         sequence: 10,
         source_port: ibc_config.src_endpoint().clone().port_id,
         source_channel: ibc_config.src_endpoint().clone().channel_id,

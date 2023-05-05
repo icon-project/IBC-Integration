@@ -477,7 +477,7 @@ impl<'a> CwIbcCoreContext<'a> {
         //TODO Update timestamp logic
         let duration = self.ibc_store().expected_time_per_block().load(store)?;
         let block_time = Duration::from_secs(duration);
-        Ok(Timestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap())
+        Ok(IbcTimestamp::from_nanoseconds(block_time.as_nanos() as u64).unwrap())
     }
 
     pub fn host_consensus_state(
@@ -500,7 +500,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
     ) -> Result<ibc::timestamp::Timestamp, ContractError> {
-        Ok(Timestamp::none())
+        Ok(IbcTimestamp::none())
     }
 
     pub fn client_update_height(

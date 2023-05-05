@@ -4,6 +4,9 @@ use common::icon::icon::lightclient::v1::{
 };
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use cw_common::hex_string::HexString;
+use cw_common::raw_types::channel::*;
+use cw_common::raw_types::connection::*;
+
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
@@ -100,7 +103,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     Self::from_raw::<RawConsensusState, ConsensusState>(&consensus_state)?;
 
                 let signer = Self::to_signer(&signer)?;
-                let msg = MsgCreateClient {
+                let msg = IbcMsgCreateClient {
                     client_state: client_state.into(),
                     consensus_state: consensus_state.into(),
                     signer,
@@ -117,7 +120,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let header = Self::from_raw::<RawSignedHeader, SignedHeader>(&header)?;
 
                 let signer = Self::to_signer(&signer)?;
-                let msg = MsgUpdateClient {
+                let msg = IbcMsgUpdateClient {
                     client_id: IbcClientId::from_str(&client_id).map_err(|error| {
                         ContractError::IbcDecodeError {
                             error: error.to_string(),
@@ -126,6 +129,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     header: header.into(),
                     signer,
                 };
+                println!("Updating Client For {}", &client_id);
                 self.update_client(deps, info, msg)
             }
             CoreExecuteMsg::UpgradeClient {} => {

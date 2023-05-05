@@ -54,9 +54,9 @@ use cosmwasm_std::{IbcTimeout, IbcTimeoutBlock};
 
 use cosmwasm_std::{to_vec, QueryRequest};
 use cw2::set_contract_version;
+use cw_common::ibc_types::IbcHeight as Height;
 use cw_common::types::Ack;
 use cw_common::xcall_msg::ExecuteMsg;
-use cw_common::Height;
 use cw_common::ProstMessage;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;

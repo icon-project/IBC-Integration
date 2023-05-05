@@ -6,8 +6,9 @@ use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, Sub
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
+use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
+use cw_common::raw_types::client::RawMsgCreateClient;
 use cw_common::types::{ClientId, ClientType};
-use cw_common::{MsgCreateClient, MsgUpdateClient};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::{
@@ -153,7 +154,7 @@ fn test_create_client_event() {
 #[test]
 fn check_for_update_client_event() {
     let raw_message = get_dummy_raw_msg_update_client_message();
-    let message: MsgUpdateClient = MsgUpdateClient::try_from(raw_message.clone()).unwrap();
+    let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message.clone()).unwrap();
     let height = Height::new(15, 10).unwrap();
     let client_type = ClientType::new("new_client_type".to_string());
     let result = update_client_event(
@@ -169,7 +170,7 @@ fn check_for_update_client_event() {
 #[test]
 fn check_for_raw_message_to_update_client_message() {
     let raw_message = get_dummy_raw_msg_update_client_message();
-    let message: MsgUpdateClient = MsgUpdateClient::try_from(raw_message.clone()).unwrap();
+    let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message.clone()).unwrap();
     assert_eq!(raw_message, message.into())
 }
 
@@ -298,13 +299,14 @@ fn check_for_raw_message_create_client_deserialize() {
     let mock_header = MockHeader::new(height);
     let mock_client_state = MockClientState::new(mock_header);
     let mock_consenus_state = MockConsensusState::new(mock_header);
-    let actual_message = MsgCreateClient {
+    let actual_message = IbcMsgCreateClient {
         client_state: mock_client_state.into(),
         consensus_state: mock_consenus_state.into(),
         signer: get_dummy_account_id(),
     };
 
-    let create_client_message: MsgCreateClient = MsgCreateClient::try_from(raw_message).unwrap();
+    let create_client_message: IbcMsgCreateClient =
+        IbcMsgCreateClient::try_from(raw_message).unwrap();
 
     assert_eq!(create_client_message, actual_message)
 }
@@ -315,14 +317,13 @@ fn check_for_create_client_message_into_raw_message() {
     let mock_header = MockHeader::new(height);
     let mock_client_state = MockClientState::new(mock_header);
     let mock_consenus_state = MockConsensusState::new(mock_header);
-    let actual_message = MsgCreateClient {
+    let actual_message = IbcMsgCreateClient {
         client_state: mock_client_state.into(),
         consensus_state: mock_consenus_state.into(),
         signer: get_dummy_account_id(),
     };
 
-    let raw_message: ibc_proto::ibc::core::client::v1::MsgCreateClient =
-        ibc_proto::ibc::core::client::v1::MsgCreateClient::try_from(actual_message).unwrap();
+    let raw_message: RawMsgCreateClient = RawMsgCreateClient::try_from(actual_message).unwrap();
 
     assert_eq!(raw_message, get_dummy_raw_msg_create_client())
 }
@@ -377,7 +378,7 @@ fn check_for_create_client_message() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let create_client_message =
-        MsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
+        IbcMsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
 
     let response = contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -423,7 +424,7 @@ fn check_for_create_client_message_response() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = MsgCreateClient::new(
+    let create_client_message = IbcMsgCreateClient::new(
         client_state.clone().into(),
         consenus_state.clone().into(),
         signer,
@@ -503,7 +504,7 @@ fn check_for_client_state_from_storage() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = MsgCreateClient::new(
+    let create_client_message = IbcMsgCreateClient::new(
         client_state.clone().into(),
         consenus_state.clone().into(),
         signer,
@@ -580,7 +581,7 @@ fn check_for_consensus_state_from_storage() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = MsgCreateClient::new(
+    let create_client_message = IbcMsgCreateClient::new(
         client_state.clone().into(),
         consenus_state.clone().into(),
         signer,
@@ -663,7 +664,7 @@ fn fail_on_create_client_message_error_response() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = MsgCreateClient::new(
+    let create_client_message = IbcMsgCreateClient::new(
         client_state.clone().into(),
         consenus_state.clone().into(),
         signer,
@@ -719,7 +720,7 @@ fn fails_on_create_client_message_without_proper_initialisation() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let create_client_message =
-        MsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
+        IbcMsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
 
     contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -761,7 +762,7 @@ fn check_for_update_client_message() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = MsgCreateClient::new(
+    let create_client_message = IbcMsgCreateClient::new(
         client_state.clone().into(),
         consenus_state.clone().into(),
         signer.clone(),
@@ -810,7 +811,7 @@ fn check_for_update_client_message() {
     .try_into()
     .unwrap();
 
-    let update_client_message = MsgUpdateClient {
+    let update_client_message = IbcMsgUpdateClient {
         client_id: client_id.ibc_client_id().clone(),
         header: client_state.clone().into(),
         signer,
@@ -879,7 +880,7 @@ fn fails_on_updating_non_existing_client() {
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let signer = Signer::from_str("new_signer").unwrap();
-    let update_client_message = MsgUpdateClient {
+    let update_client_message = IbcMsgUpdateClient {
         client_id: client_id.ibc_client_id().clone(),
         header: client_state.clone().into(),
         signer,
@@ -1595,7 +1596,7 @@ fn success_on_getting_client_state() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = MsgCreateClient::new(
+    let create_client_message = IbcMsgCreateClient::new(
         client_state.clone().into(),
         consenus_state.clone().into(),
         signer,

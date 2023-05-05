@@ -18,6 +18,7 @@ use open_confirm::*;
 pub mod close_confirm;
 pub use close_confirm::*;
 
+
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     /// This function validates a channel open initialization message and generates an event for calling
     /// on channel open init in x-call.
