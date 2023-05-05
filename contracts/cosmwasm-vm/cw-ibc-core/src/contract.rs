@@ -7,7 +7,6 @@ use cw_common::hex_string::HexString;
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
 
-
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

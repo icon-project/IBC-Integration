@@ -200,37 +200,28 @@ impl<'a> CwIbcCoreContext<'a> {
                         Err(error) => return Err(error),
                     };
 
-                    let src = IbcEndpoint {
+                    let src = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_a.to_string(),
                         channel_id: packet_data.packet.chan_id_on_a.to_string(),
                     };
-                    let dest = IbcEndpoint {
+                    let dest = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_b.to_string(),
                         channel_id: packet_data.packet.chan_id_on_b.to_string(),
                     };
                     let data = Binary::from(data.data);
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
-                            IbcTimeoutBlock {
-                                revision: 1,
-                                height: 1,
-                            }
-                        }
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
-                            IbcTimeoutBlock {
-                                revision: x.revision_number(),
-                                height: x.revision_height(),
-                            }
-                        }
+                        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
+                            revision: 1,
+                            height: 1,
+                        },
+                        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
+                            revision: x.revision_number(),
+                            height: x.revision_height(),
+                        },
                     };
-                    let timeout = IbcTimeout::with_block(timeoutblock);
-                    let ibc_packet = IbcPacket::new(
-                        data,
-                        src,
-                        dest,
-                        packet_data.packet.seq_on_a.into(),
-                        timeout,
-                    );
+                    let timeout = CwTimeout::with_block(timeoutblock);
+                    let ibc_packet =
+                        CwPacket::new(data, src, dest, packet_data.packet.seq_on_a.into(), timeout);
                     let address = Addr::unchecked(packet_data.signer.to_string());
                     let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketTimeout {
                         msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
@@ -271,7 +262,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<IbcPacket>(&res).unwrap();
+                    let data = from_binary::<CwPacket>(&res).unwrap();
                     let channel_id =
                         ChannelId::from(IbcChannelId::from_str(&data.src.channel_id).unwrap());
                     let port_id = PortId::from(IbcPortId::from_str(&data.src.port_id).unwrap());

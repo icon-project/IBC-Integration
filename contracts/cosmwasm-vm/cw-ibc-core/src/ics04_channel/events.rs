@@ -130,7 +130,7 @@ pub fn create_send_packet_event(
 
 // Creates WriteAcknowledgement event
 pub fn create_write_ack_event(
-    packet: IbcPacket,
+    packet: CwPacket,
     channel_order: &str,
     dst_connection_id: &str,
 ) -> Result<Event, ContractError> {

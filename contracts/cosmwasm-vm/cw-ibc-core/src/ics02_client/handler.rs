@@ -1,4 +1,4 @@
-use crate::{EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR, EXECUTE_UPDATE_CLIENT, EXECUTE_CREATE_CLIENT};
+use crate::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR};
 
 use super::{events::client_misbehaviour_event, *};
 use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response};

@@ -38,6 +38,6 @@ pub mod packet;
 use ibc::core::ics04_channel::commitment::PacketCommitment;
 pub use packet::*;
 
-use cosmwasm_std::{IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
+use cw_common::cw_types::{CwEndPoint, CwPacket, CwTimeout, CwTimeoutBlock};
 use cw_common::{client_response::*, types::*};
 use ibc::timestamp::Expiry;
