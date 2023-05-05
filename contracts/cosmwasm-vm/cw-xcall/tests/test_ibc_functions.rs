@@ -4,9 +4,11 @@ use cosmwasm_std::{
     IbcChannelConnectMsg::OpenAck, IbcChannelOpenMsg::OpenInit, IbcChannelOpenMsg::OpenTry,
     IbcEndpoint, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
+use cw_common::ibc_types::IbcHeight;
+use cw_common::raw_types::channel::RawPacket;
 use cw_common::types::{Ack, Address};
 use cw_common::xcall_msg::ExecuteMsg;
-use cw_common::{Height, ProstMessage, RawPacket};
+use cw_common::ProstMessage;
 use cw_xcall::types::call_request::CallRequest;
 use cw_xcall::types::response::CallServiceMessageResponse;
 use cw_xcall::{

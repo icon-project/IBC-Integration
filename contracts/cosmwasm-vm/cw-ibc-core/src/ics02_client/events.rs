@@ -9,8 +9,8 @@ pub fn create_client_event(client_id: &str, client_type: &str, consensus_height:
 
 pub fn update_client_event(
     client_type: IbcClientType,
-    consensus_height: Height,
-    consensus_heights: Vec<Height>,
+    consensus_height: IbcHeight,
+    consensus_heights: Vec<IbcHeight>,
     client_id: &IbcClientId,
 ) -> Event {
     let consensus_heights: Vec<String> = consensus_heights
@@ -27,7 +27,7 @@ pub fn update_client_event(
 
 pub fn upgrade_client_event(
     client_type: IbcClientType,
-    consensus_height: Height,
+    consensus_height: IbcHeight,
     client_id: IbcClientId,
 ) -> Event {
     Event::new(IbcEventType::UpgradeClient.as_str())

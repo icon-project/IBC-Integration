@@ -1,4 +1,6 @@
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use cw_common::constants::ICON_CLIENT_TYPE;
+use cw_common::ibc_types::IbcHeight;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
@@ -10,7 +12,9 @@ use cosmwasm_std::{
     from_slice, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
 use cw2::set_contract_version;
-use cw_common::client_response::{CreateClientResponse, LightClientResponse, PacketDataResponse};
+use cw_common::client_response::{
+    CreateClientResponse, LightClientResponse, PacketDataResponse, UpdateClientResponse,
+};
 use cw_common::types::{PacketData, VerifyChannelState};
 use ibc_proto::google::protobuf::Any;
 
@@ -83,13 +87,14 @@ pub fn execute(
                 .add_attribute(HEIGHT, update.height.to_string());
 
             let client_response = CreateClientResponse::new(
-                "icon-light-client".to_string(),
-                update.height.to_string(),
+                ICON_CLIENT_TYPE.to_string(),
+                IbcHeight::new(1, update.height).unwrap().to_string(),
                 state_byte,
                 update.consensus_state_commitment.into(),
             );
 
             response.data = to_binary(&client_response).ok();
+            println!("{:?}", response.data);
 
             Ok(response)
         }
@@ -99,13 +104,21 @@ pub fn execute(
         } => {
             let header_any = SignedHeader::decode(signed_header.as_slice()).unwrap();
             let (state_byte, update) = client.update_client(&client_id, header_any)?;
+            let response_data = to_binary(&UpdateClientResponse {
+                height: IbcHeight::new(0, update.height).unwrap().to_string(),
+                client_id,
+                client_state_commitment: state_byte.clone(),
+                consensus_state_commitment: update.consensus_state_commitment.to_vec(),
+            })
+            .unwrap();
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte))
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
                     hex::encode(update.consensus_state_commitment),
                 )
-                .add_attribute(HEIGHT, update.height.to_string()))
+                .add_attribute(HEIGHT, update.height.to_string())
+                .set_data(response_data))
         }
         ExecuteMsg::VerifyMembership {
             client_id,

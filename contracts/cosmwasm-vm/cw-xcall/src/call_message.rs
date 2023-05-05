@@ -98,7 +98,7 @@ impl<'a> CwCallService<'a> {
                     error: error.to_string(),
                 })?;
 
-            let packet_data = cw_common::RawPacket {
+            let packet_data = cw_common::raw_types::channel::RawPacket {
                 sequence: sequence_number_host,
                 source_port: ibc_config.src_endpoint().clone().port_id,
                 source_channel: ibc_config.src_endpoint().clone().channel_id,

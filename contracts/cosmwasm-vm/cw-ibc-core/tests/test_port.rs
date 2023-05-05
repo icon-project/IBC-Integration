@@ -3,8 +3,8 @@ use std::str::{from_utf8, FromStr};
 
 use common::utils::keccak256;
 use cw_common::commitment;
+use cw_common::ibc_types::IbcChannelId;
 use cw_common::types::PortId;
-use cw_common::IbcChannelId;
 use cw_ibc_core::{context::CwIbcCoreContext, ics04_channel::ChannelMsg, MsgChannelOpenInit};
 use setup::*;
 #[test]
