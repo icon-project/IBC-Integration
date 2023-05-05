@@ -4,19 +4,24 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'contracts/javascore/**'
   pull_request:
     branches:
       - main
+    paths:
+      - 'contracts/javascore/**'
+
 jobs:
   Coverage-Codecov:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-            submodules: true
-    - name: Javascore contracts coverage
-      run: cd contracts/javascore && ./gradlew test
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Javascore contracts coverage
+        run: cd contracts/javascore && ./gradlew test
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
