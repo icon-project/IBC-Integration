@@ -1,4 +1,22 @@
-use super::*;
+use crate::ibc_types::{
+    IbcChannelId, IbcClientId, IbcClientType, IbcConnectionId, IbcModuleId, IbcPortId,
+};
+use crate::{
+    errors::CwErrors,
+    ibc_types::IbcHeight,
+    types::{ClientId, ClientType, MessageInfo, PacketData},
+};
+use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::serde::{Deserialize, Serialize};
+use cosmwasm_std::{IbcEndpoint, IbcPacket};
+pub use ibc::core::ics04_channel::packet::Packet;
+use ibc::core::ics04_channel::timeout::TimeoutHeight;
+use ibc::timestamp::Timestamp;
+use ibc::{
+    core::ics04_channel::{msgs::acknowledgement::Acknowledgement, packet::Sequence},
+    signer::Signer,
+};
+use std::str::FromStr;
 
 #[cw_serde]
 pub struct CreateClientResponse {
@@ -6,6 +24,17 @@ pub struct CreateClientResponse {
     height: String,
     client_state_commitment: Vec<u8>,
     consensus_state_commitment: Vec<u8>,
+}
+
+impl Default for CreateClientResponse {
+    fn default() -> Self {
+        Self {
+            client_type: "iconlightclient".to_string(),
+            height: Default::default(),
+            client_state_commitment: Default::default(),
+            consensus_state_commitment: Default::default(),
+        }
+    }
 }
 
 impl CreateClientResponse {
@@ -37,8 +66,8 @@ impl CreateClientResponse {
     pub fn get_client_type(&self) -> &str {
         &self.client_type
     }
-    pub fn height(&self) -> Height {
-        Height::from_str(&self.height).unwrap()
+    pub fn height(&self) -> IbcHeight {
+        IbcHeight::from_str(&self.height).unwrap()
     }
     pub fn client_type(&self) -> ClientType {
         ClientType::new(self.client_type.to_owned())
@@ -47,10 +76,10 @@ impl CreateClientResponse {
 
 #[cw_serde]
 pub struct UpdateClientResponse {
-    height: String,
-    client_id: String,
-    client_state_commitment: Vec<u8>,
-    consensus_state_commitment: Vec<u8>,
+    pub height: String,
+    pub client_id: String,
+    pub client_state_commitment: Vec<u8>,
+    pub consensus_state_commitment: Vec<u8>,
 }
 
 impl UpdateClientResponse {
@@ -82,8 +111,8 @@ impl UpdateClientResponse {
     pub fn get_client_id(&self) -> &str {
         &self.client_id
     }
-    pub fn height(&self) -> Height {
-        Height::from_str(&self.height).unwrap()
+    pub fn height(&self) -> IbcHeight {
+        IbcHeight::from_str(&self.height).unwrap()
     }
     pub fn client_id(&self) -> Result<ClientId, CwErrors> {
         ClientId::from_str(&self.client_id)
@@ -127,8 +156,8 @@ impl UpgradeClientResponse {
     pub fn get_client_id(&self) -> &str {
         &self.client_id
     }
-    pub fn height(&self) -> Height {
-        Height::from_str(&self.height).unwrap()
+    pub fn height(&self) -> IbcHeight {
+        IbcHeight::from_str(&self.height).unwrap()
     }
 
     pub fn client_id(&self) -> Result<ClientId, CwErrors> {

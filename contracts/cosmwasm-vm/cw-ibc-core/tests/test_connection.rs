@@ -24,7 +24,7 @@ use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
 use cw_ibc_core::ics03_connection::event::create_open_try_event;
 
-use cw_common::IbcClientId;
+use cw_common::ibc_types::IbcClientId;
 use cw_ibc_core::ConnectionEnd;
 use ibc::core::ics03_connection::connection::Counterparty;
 use ibc::core::ics03_connection::connection::State;

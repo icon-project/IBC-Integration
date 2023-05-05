@@ -18,6 +18,7 @@ use open_confirm::*;
 pub mod close_confirm;
 pub use close_confirm::*;
 
+
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     fn validate_channel_open_init(
         &self,

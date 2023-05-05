@@ -1,10 +1,12 @@
-use crate::client_response::{
-    OpenAckResponse, OpenConfirmResponse, OpenTryResponse, PacketDataResponse,
+use crate::{
+    client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse, PacketDataResponse},
+    errors::CwErrors,
+    types::{
+        MessageInfo, PacketData, VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData,
+    },
 };
-
-use super::*;
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::from_slice;
+use cosmwasm_std::{from_slice, IbcEndpoint};
 
 #[cw_serde]
 pub struct InstantiateMsg {
