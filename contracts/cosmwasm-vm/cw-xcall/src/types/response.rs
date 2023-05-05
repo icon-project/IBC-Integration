@@ -53,24 +53,21 @@ impl CallServiceMessageResponse {
 
 impl Encodable for CallServiceResponseType {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
-        stream.begin_list(1);
         match self {
-            CallServiceResponseType::CallServiceIbcError => stream.append::<u128>(&2),
-            CallServiceResponseType::CallServiceResponseFailure => stream.append::<u128>(&1),
-            CallServiceResponseType::CallServiceResponseSuccess => stream.append::<u128>(&0),
+            CallServiceResponseType::CallServiceIbcError => stream.append::<i8>(&-2),
+            CallServiceResponseType::CallServiceResponseFailure => stream.append::<i8>(&-1),
+            CallServiceResponseType::CallServiceResponseSuccess => stream.append::<i8>(&0),
         };
     }
 }
 
 impl Decodable for CallServiceResponseType {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
-        let data = rlp.data()?;
-        let rlp = rlp::Rlp::new(data);
-        match rlp.as_val::<u8>()? {
-            0 => Ok(Self::CallServiceResponseSuccess),
-            1 => Ok(Self::CallServiceResponseFailure),
-            2 => Ok(Self::CallServiceIbcError),
-            _ => Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
+        match rlp.as_val::<i8>()? {
+            0 => return Ok(Self::CallServiceResponseSuccess),
+            -1 => return Ok(Self::CallServiceResponseFailure),
+            -2 => return Ok(Self::CallServiceIbcError),
+            _ => return Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
         }
     }
 }

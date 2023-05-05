@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/icon-project/icon-bridge/common/codec"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -30,6 +31,15 @@ type UpdateAdmin struct {
 	UpdateAdmin struct {
 		Address string `json:"address"`
 	} `json:"update_admin"`
+}
+
+type XcallInit struct {
+	TimeoutHeight int    `json:"timeout_height"`
+	IbcHost       string `json:"ibc_host"`
+}
+
+type DappInit struct {
+	Address string `json:"address"`
 }
 
 type GetProtocolFee struct{}
@@ -107,4 +117,69 @@ type TxResul struct {
 			Index bool   `json:"index"`
 		} `json:"attributes"`
 	} `json:"events"`
+}
+
+type CallServiceMessageType int64
+
+const (
+	CallServiceRequest  CallServiceMessageType = 0
+	CallServiceResponse CallServiceMessageType = 1
+)
+
+type CSMessageResponseType int64
+
+const (
+	SUCCESS   CSMessageResponseType = 0
+	FAILURE   CSMessageResponseType = -1
+	IBC_ERROR CSMessageResponseType = -2
+)
+
+type CallServiceMessage struct {
+	MessageType CallServiceMessageType
+	Payload     []byte
+}
+
+func RlpEncodeRequest(request CallServiceMessageRequest, callType CallServiceMessageType) ([]byte, error) {
+
+	data := CallServiceMessage{
+
+		MessageType: CallServiceRequest,
+
+		Payload: codec.RLP.MustMarshalToBytes(request),
+	}
+
+	return codec.RLP.MarshalToBytes(data)
+
+}
+
+func RlpDecode(raw_data []byte) (CallServiceMessage, error) {
+
+	var callservicemessage = CallServiceMessage{}
+
+	codec.RLP.UnmarshalFromBytes(raw_data, &callservicemessage)
+
+	return CallServiceMessage{}, nil
+}
+
+type CallServiceMessageRequest struct {
+	From       string `json:"from"`
+	To         string `json:"to"`
+	SequenceNo uint64 `json:"sequence_no"`
+	Rollback   bool   `json:"rollback"`
+	Data       []byte `json:"data"`
+}
+
+func (cr *CallServiceMessageRequest) RlpEncode() ([]byte, error) {
+
+	return codec.RLP.MarshalToBytes(cr)
+}
+
+type CallServiceMessageResponse struct {
+	SequenceNo uint64
+	Code       CSMessageResponseType
+	Msg        string
+}
+
+func (csr *CallServiceMessageResponse) RlpEncode() ([]byte, error) {
+	return codec.RLP.MarshalToBytes(csr)
 }

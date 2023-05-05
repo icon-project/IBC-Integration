@@ -48,7 +48,7 @@ schemars = "0.8.12"
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.39" }
 cw-common = { path="../cw-common" }
-
+hex= "*"
 
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}

@@ -99,6 +99,7 @@ func (e *Executor) isTheContractOwner(owner, contractName string) (err error) {
 	})
 
 	// Add init message from config to context
+	contractName = strings.ToLower(contractName)
 	initMsg := e.cfg.InitMessage[contractName]
 	e.ctx = context.WithValue(e.ctx, chains.InitMessage{}, chains.InitMessage{
 		InitMsg: initMsg,
@@ -256,4 +257,99 @@ func (e *Executor) aUserQueryForAdmin() error {
 
 func (e *Executor) walletAddressShouldBeAsAdmin(admin string) error {
 	return e.walletAddressShouldBeAddedAsAdmin(admin)
+}
+
+func (e *Executor) shouldOpenChannelToSendAndReceiveMessages(keyName string) error {
+	contractAddress := e.GetContractAddress("ibccore")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "ibc_config", "")
+	return nil
+}
+
+func (e *Executor) contractThrowsAnErrorThatOnlyTheContractCanPerformThisAction(arg1 string) error {
+	if e.error == nil {
+		return fmt.Errorf("non contract was able to perform send call message when roll back was not null")
+	}
+	return nil
+}
+
+func (e *Executor) nonContractExecutesInXcall(keyName, methodName string) error {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, "")
+	return nil
+}
+
+func (e *Executor) executesInDappWithThanLimit(keyName, methodName, param string) error {
+	contractAddress := e.GetContractAddress("dapp")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, param)
+	return nil
+}
+
+func (e *Executor) xcallContractPanicWithAnErrorMaxDataSizeExceeded() error {
+	if e.error == nil {
+		return fmt.Errorf("xcall did not throw an error for exceeded data size")
+	}
+	return nil
+}
+
+func (e *Executor) executesInDappWithToLimit(keyName, methodName, param string) error {
+	return e.executesInDappWithThanLimit(keyName, methodName, param)
+}
+
+func (e *Executor) executesInWithRequestID(keyName, methodName, contractName, param string) error {
+	contractAddress := e.GetContractAddress(contractName)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, param)
+	return nil
+}
+
+func (e *Executor) xcallContractPanicWithAnErrorRequestNotFound() error {
+	if e.error == nil {
+		return fmt.Errorf("xcall did not throw an error for incorrect request ID")
+	}
+	return nil
+}
+
+func (e *Executor) xcallShouldExecuteCallMessageSuccessfully() error {
+	if e.error != nil {
+		return fmt.Errorf("execute call was not executed successfully")
+	}
+	return nil
+}
+
+func (e *Executor) executesInWithSequenceNumber(keyName, methodName, contractName, param string) error {
+	contractAddress := e.GetContractAddress(contractName)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, param)
+	return nil
+}
+
+func (e *Executor) xcallShouldExecuteRollbackMessageSuccessfully() error {
+	if e.error != nil {
+		return fmt.Errorf("execute rollback was not executed successfully")
+	}
+	return nil
+}
+
+func (e *Executor) xcallContractShouldEmitAEventWithSequenceIdAndRequestId() error {
+	if e.error != nil {
+		return fmt.Errorf("execute call was not executed successfully")
+	}
+	return nil
+}
+
+func (e *Executor) hasAnPacketToBeExecuted(keyName, methodName string) error {
+	contractAddress := e.GetContractAddress("ibccore")
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, methodName, "")
+	return nil
+}
+
+func (e *Executor) regitersXcallIn(keyName, contractName string) error {
+	contractAddress := e.GetContractAddress(contractName)
+	e.ctx, e.error = e.chain.ExecuteContract(e.ctx, contractAddress, keyName, "register_xcall", "")
+	return nil
+}
+
+func (e *Executor) xcallContractPanicWithAnErrorMaxRollbackSizeExceeded() error {
+	if e.error == nil {
+		return fmt.Errorf("xcall did not throw an error for exceeded data size")
+	}
+	return nil
 }
