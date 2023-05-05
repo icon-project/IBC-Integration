@@ -56,7 +56,7 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^xcall contract panic with an error MaxRollbackSizeExceeded$`, executor.xcallContractPanicWithAnErrorMaxRollbackSizeExceeded)
 
 		},
-		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature"}, TestingT: t, StopOnFailure: false},
+		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature", "features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},
 	}
 
 	if suite.Run() != 0 {
