@@ -1,5 +1,18 @@
 use super::*;
 
+/// The function validates a channel close confirmation message.
+/// 
+/// Arguments:
+/// 
+/// * `message`: A message of type `MsgChannelCloseConfirm` which contains information about the channel
+/// close confirmation being validated.
+/// * `chan_end_on_b`: `chan_end_on_b` is a reference to a `ChannelEnd` object representing the state of
+/// the channel on the counterparty chain.
+/// 
+/// Returns:
+/// 
+/// a `Result` type with the `Ok` variant containing an empty tuple `()` and the `Err` variant
+/// containing a `ContractError` type.
 pub fn channel_close_confirm_validate(
     message: &MsgChannelCloseConfirm,
     chan_end_on_b: &ChannelEnd,
@@ -24,6 +37,22 @@ pub fn channel_close_confirm_validate(
 }
 
 impl<'a> CwIbcCoreContext<'a> {
+    /// This function executes a close confirmation after the validation from the light client and call the 
+    /// xcall.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+    /// contract. It is used to interact with the storage, API, and other modules.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to a light client. It is used to extract the data returned by the sub-message and
+    /// perform further actions based on it.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing the possible errors that can
+    /// occur during contract execution.
     pub fn execute_close_confirm_from_light_client_reply(
         &self,
         deps: DepsMut,
@@ -84,6 +113,18 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 }
 
+/// This function creates an IBC channel close confirmation sub message for calling xcall.
+/// 
+/// Arguments:
+/// 
+/// * `channel_end`: A reference to a `ChannelEnd` struct, which contains information about the channel,
+/// such as its state, ordering, and connection hops.
+/// * `port_id`: The identifier of the port associated with the channel being closed.
+/// * `channel_id`: The unique identifier of the channel within the given port.
+/// 
+/// Returns:
+/// 
+/// a `Result` with an `IbcChannelCloseMsg` as the Ok variant and a `ContractError` as the Err variant.
 pub fn on_chan_close_confirm_submessage(
     channel_end: &ChannelEnd,
     port_id: &PortId,

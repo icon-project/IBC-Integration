@@ -7,6 +7,23 @@ use ibc::core::ics04_channel::{
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
+    /// This function validates a received packet in an IBC channel and creates a submessage to call a
+    /// light client for further validation.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` object, which provides access to the contract's dependencies
+    /// such as storage, API, and querier.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// being processed, such as the sender and the amount of funds sent with the message.
+    /// * `msg`: `msg` is a reference to a `MsgRecvPacket` struct, which contains information about a
+    /// received packet in an IBC channel. It includes the packet data, the sender and receiver channel
+    /// IDs, the timeout height and timestamp, and proof information for verifying the packet
+    /// commitment.
+    /// 
+    /// Returns:
+    /// 
+    /// A `Result<Response, ContractError>` is being returned.
     pub fn validate_receive_packet(
         &self,
         deps: DepsMut,
@@ -135,6 +152,22 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
+    /// This function receives and validates a packet from a light client in an IBC channel.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+    /// contract. These dependencies include the storage, API, and other modules that the contract may
+    /// depend on.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to validate the response received from the other module
+    /// after sending a packet.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing the possible errors that can
+    /// occur during contract execution.
     pub fn receive_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
@@ -272,6 +305,21 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
+    /// This function validates if a write acknowledgement exists for a given packet and returns an
+    /// error if it already exists.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `store`: `store` is a mutable reference to a trait object of type `dyn Storage`. It is used to
+    /// interact with the storage of the smart contract. The `dyn` keyword indicates that `Storage` is a
+    /// trait, and `store` can hold any object that implements this trait.
+    /// * `packet`: The `packet` parameter is a reference to a `Packet` struct. It contains information
+    /// about an IBC packet, such as the source and destination channels, ports, and sequence numbers.
+    /// 
+    /// Returns:
+    /// 
+    /// If the condition in the `if` statement is true, then an `Err` variant of `ContractError` is
+    /// returned with a `PacketError::AcknowledgementExists` error. Otherwise, `Ok(())` is returned.
     pub fn validate_write_acknowledgement(
         &self,
         store: &mut dyn Storage,
@@ -295,6 +343,21 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(())
     }
 
+    /// This function handles the receiving and processing of an IBC packet and update the sequence accordingly.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module on the IBC channel. It is used to handle the response received from
+    /// the other module after sending a packet.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing the possible errors that can
+    /// occur during contract execution.
     pub fn execute_receive_packet(
         &self,
         deps: DepsMut,

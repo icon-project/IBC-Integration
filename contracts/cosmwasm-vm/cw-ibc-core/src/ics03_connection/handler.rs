@@ -3,6 +3,22 @@ use cw_common::client_msg::VerifyConnectionPayload;
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
+   /// This method initializes a new connection between two clients in an IBC protocol implementation.
+   /// 
+   /// Arguments:
+   /// 
+   /// * `deps`: `deps` is a `DepsMut` struct, which provides access to the contract's dependencies such
+   /// as storage, querier, and API. It is used to interact with the blockchain and other contracts.
+   /// * `message`: The `message` parameter is of type `MsgConnectionOpenInit` and contains the
+   /// information needed to initialize a new connection. It includes the client ID of the initiating
+   /// party (`client_id_on_a`), the counterparty information (`counterparty`), the version of the
+   /// connection protocol to be used (`
+   /// 
+   /// Returns:
+   /// 
+   /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+   /// contract execution and `ContractError` is an enum representing the possible errors that can occur
+   /// during contract execution.
     pub fn connection_open_init(
         &self,
         deps: DepsMut,
@@ -90,6 +106,20 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("connection_id", connection_identifier.as_str()));
     }
 
+    /// This method generates a unique connection identifier by incrementing a counter and returning a
+    /// new ConnectionId.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `store`: `store` is a mutable reference to a trait object of type `dyn Storage`. This is
+    /// likely a storage implementation that allows the contract to persist data on the blockchain. The
+    /// `generate_connection_identifier` function uses this storage to retrieve and update a counter
+    /// value, which is used to generate a unique `
+    /// 
+    /// Returns:
+    /// 
+    /// This function returns a `Result` containing a `ConnectionId` if the function executes
+    /// successfully, or a `ContractError` if an error occurs.
     pub fn generate_connection_idenfier(
         &self,
         store: &mut dyn Storage,
@@ -103,6 +133,25 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_compatible_versions(&self) -> Vec<Version> {
         vec![Version::default()]
     }
+   /// This method handles the processing of a connection open acknowledgement message in a IBC contract.
+   /// 
+   /// Arguments:
+   /// 
+   /// * `deps`: `deps` is a `DepsMut` struct, which provides mutable access to the contract's
+   /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
+   /// other contracts.
+   /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+   /// sender, such as their address and the amount of funds they sent with the message.
+   /// * `msg`: The `msg` parameter is of type `MsgConnectionOpenAck` and contains the information
+   /// needed to acknowledge the opening of a connection between two chains in the IBC protocol. It
+   /// includes the connection ID on chain A, the consensus height of chain A on chain B, the client
+   /// state of chain A
+   /// 
+   /// Returns:
+   /// 
+   /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+   /// message and `ContractError` is an enum representing possible errors that can occur during the
+   /// execution of the function.
     pub fn connection_open_ack(
         &self,
 
@@ -225,6 +274,21 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("method", "connection_open_ack"))
     }
 
+   /// This method executes the opening acknowledgement of an IBC connection and updates the
+   /// connection state accordingly.
+   /// 
+   /// Arguments:
+   /// 
+   /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+   /// contract. These dependencies include the storage, querier, and API interfaces.
+   /// * `message`: `message` is a `Reply` struct that contains the result of a submessage sent by the
+   /// contract. It is used to extract the data returned by the submessage and process it accordingly.
+   /// 
+   /// Returns:
+   /// 
+   /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to be
+   /// returned by the contract and `ContractError` is an enum representing the possible errors that can
+   /// occur during the execution of the function.
     pub fn execute_connection_open_ack(
         &self,
         deps: DepsMut,
@@ -323,6 +387,25 @@ impl<'a> CwIbcCoreContext<'a> {
             }),
         }
     }
+   /// This method handles the opening of a connection open try between two IBC clients.
+   /// 
+   /// Arguments:
+   /// 
+   /// * `deps`: `deps` is a `DepsMut` struct, which provides mutable access to the contract's
+   /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
+   /// other contracts.
+   /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+   /// sender, such as their address and the amount of funds they sent with the message.
+   /// * `message`: `message` is a `MsgConnectionOpenTry` struct which contains the information needed
+   /// to try opening a connection between two chains in the IBC protocol. It includes the client ID of
+   /// the counterparty chain, the connection ID of the counterparty chain, the prefix of the
+   /// counterparty chain, the
+   /// 
+   /// Returns:
+   /// 
+   /// This function returns a `Result<Response, ContractError>` where `Response` is a struct
+   /// representing the response to a contract execution and `ContractError` is an enum representing the
+   /// possible errors that can occur during contract execution.
     pub fn connection_open_try(
         &self,
         deps: DepsMut,
@@ -445,6 +528,13 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("method", "connection_open_try"))
     }
 
+    /// The below code is implementing a function `execute_connection_open_try` that handles the result
+    /// of a submessage sent to open a connection in an IBC (Inter-Blockchain Communication) protocol.
+    /// It extracts the relevant information from the submessage result, such as the counterparty client
+    /// ID, connection ID, and commitment prefix, and uses them to create a new connection end. It then
+    /// stores the connection end in the contract's storage and returns a response with relevant
+    /// attributes and events. If there is an error in the submessage result, it returns an error with a
+    /// description of the error.
     pub fn execute_connection_open_try(
         &self,
         deps: DepsMut,
@@ -548,6 +638,20 @@ impl<'a> CwIbcCoreContext<'a> {
             }),
         }
     }
+    /// This function handles the confirmation of an open connection between two parties in an IBC
+    /// protocol implementation.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` struct, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// sender, such as the sender's address and the amount of funds sent with the message.
+    /// * `msg`: `msg` is a `MsgConnectionOpenConfirm` struct which contains the following fields:
+    /// 
+    /// Returns:
+    /// 
+    /// A `Result<Response, ContractError>` is being returned.
     pub fn connection_open_confirm(
         &self,
         deps: DepsMut,
@@ -632,6 +736,24 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("method", "connection_open_confirm"))
     }
 
+   /// This method executes the opening confirmation of an IBC connection and returns a response or an
+   /// error.
+   /// 
+   /// Arguments:
+   /// 
+   /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+   /// contract. These dependencies include the storage, querier, and API interfaces. The `DepsMut`
+   /// object is used to interact with these dependencies and perform operations such as reading and
+   /// writing data
+   /// * `message`: `message` is a `Reply` struct that contains the result of a submessage sent by the
+   /// contract. Specifically, it contains the result of a `connection openconfirm` submessage, which
+   /// confirms the opening of a connection between two IBC-enabled blockchains. The function extracts
+   /// relevant information from the
+   /// 
+   /// Returns:
+   /// 
+   /// This function returns a `Result<Response, ContractError>` where `Response` and `ContractError`
+   /// are defined in the `cosmwasm_std` and `ibc` crates respectively.
     pub fn execute_connection_openconfirm(
         &self,
         deps: DepsMut,

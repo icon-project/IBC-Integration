@@ -13,6 +13,28 @@ const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 impl<'a> CwIbcCoreContext<'a> {
+   /// The `instantiate` function initializes the contract and sets default values for channel, client,
+   /// and connection counters, as well as setting the contract owner.
+   /// 
+   /// Arguments:
+   /// 
+   /// * `deps`: A mutable reference to the dependencies of the contract, which includes access to the
+   /// storage, API, and other contracts.
+   /// * `_env`: _env is an object that represents the current blockchain environment, including
+   /// information such as the block height, time, and chain ID. It is passed as a parameter to the
+   /// instantiate function in the CosmWasm smart contract framework.
+   /// * `info`: MessageInfo is a struct that contains information about the message being executed,
+   /// such as the sender address, the amount of tokens sent with the message, and the message ID. It is
+   /// passed as a parameter to the instantiate function in order to set the owner of the contract.
+   /// * `_msg`: The `_msg` parameter is of type `InstantiateMsg` and represents the message sent by the
+   /// user to instantiate the contract. It contains any custom data or parameters required for the
+   /// contract initialization.
+   /// 
+   /// Returns:
+   /// 
+   /// A `Result<Response, ContractError>` is being returned. The `Response` contains an attribute
+   /// "method" with the value "instantiate". If there are no errors, the `Result` will be `Ok`,
+   /// otherwise it will be `Err(ContractError::Std)`.
     pub fn instantiate(
         &self,
         deps: DepsMut,
@@ -31,6 +53,28 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(Response::new().add_attribute("method", "instantiate"))
     }
 
+    /// This function handles the execution of various IBC-related messages in a contract.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` object, which provides access to the contract's dependencies
+    /// such as storage, querier, and API interfaces. It is used to interact with the blockchain and
+    /// other contracts.
+    /// * `env`: `env` is a struct that contains information about the current execution environment,
+    /// such as the block height and time, the chain ID, and the sender address. It is passed as an
+    /// argument to the `execute` function in a CosmWasm smart contract.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// being executed, such as the sender address, the amount of funds sent with the message, and the
+    /// gas limit. It is passed as an argument to the `execute` function in the Cosmos SDK.
+    /// * `msg`: The `msg` parameter in the `execute` function is of type `CoreExecuteMsg` and
+    /// represents the message that the contract should execute. The function matches the type of the
+    /// message and calls the appropriate function to handle it.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing possible errors that can occur
+    /// during contract execution.
     pub fn execute(
         &mut self,
         deps: DepsMut,
@@ -224,6 +268,22 @@ impl<'a> CwIbcCoreContext<'a> {
         todo!()
     }
 
+    /// This function handles different types of replies based on their ID and executes the
+    /// corresponding function.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a mutable reference to the dependencies of the contract, which includes
+    /// access to the storage, API, and other modules. It is of type `DepsMut`.
+    /// * `_env`: _env is an object of type `Env` which represents the environment in which the contract
+    /// is executing. It contains information such as the current block height, the current time, and
+    /// the address of the contract.
+    /// * `message`: The `message` parameter is of type `Reply` and contains information about the reply
+    /// being processed, including the ID of the reply and any associated data.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` and `ContractError` are defined types.
     pub fn reply(
         &self,
         deps: DepsMut,
@@ -283,12 +343,31 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
+    /// This function calculates the fee for a given expected gas amount and gas price.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `expected_gas`: `expected_gas` is an input parameter of type `u64` which represents the
+    /// expected amount of gas required to execute a transaction on the blockchain. Gas is a unit of
+    /// measurement for the computational effort required to execute a transaction or contract on the
+    /// Ethereum network. The higher the gas limit, the more
+    /// 
+    /// Returns:
+    /// 
+    /// The function `calculate_fee` returns a `u128` value, which represents the calculated fee based
+    /// on the expected gas and the gas price.
     pub fn calculate_fee(&self, expected_gas: u64) -> u128 {
         let fee = expected_gas as u128 * self.gas_price();
 
         fee.checked_div(GAS_DENOMINATOR as u128).unwrap()
     }
 
+    /// This function calculates the gas price in Rust programming language.
+    /// 
+    /// Returns:
+    /// 
+    /// an unsigned 128-bit integer, which represents the gas price calculated based on the default gas
+    /// numerator and gas adjustment numerator values.
     pub fn gas_price(&self) -> u128 {
         let price = GAS_NUMERATOR_DEFAULT * GAS_ADJUSTMENT_NUMERATOR_DEFAULT;
 
@@ -296,6 +375,20 @@ impl<'a> CwIbcCoreContext<'a> {
 
         price as u128
     }
+    /// The function updates the balance of each coin in a vector by subtracting a fee and returns the
+    /// updated vector.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `coins`: A vector of `Coin` structs representing the current balance of the user. Each `Coin`
+    /// struct contains an amount and a denomination.
+    /// * `fee`: The `fee` parameter is an unsigned 128-bit integer representing the amount of fee to be
+    /// deducted from each coin's balance.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result` type with a vector of `Coin` objects as the successful result or a `ContractError` if
+    /// there is an insufficient balance.
     pub fn update_fee(&self, coins: Vec<Coin>, fee: u128) -> Result<Vec<Coin>, ContractError> {
         if coins.is_empty() {
             return Err(ContractError::InsufficientBalance {});
@@ -313,6 +406,19 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(updated_coins)
     }
 
+    /// This function converts a hexadecimal string to a Rust type that implements the Message trait and
+    /// can be converted to another type using the TryFrom trait.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `hex_str`: A hexadecimal string that represents the serialized bytes of a protobuf message.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result` with a generic type `T` which is the converted message from the raw bytes provided in
+    /// the `HexString`. If the conversion is successful, it returns an `Ok` variant with the converted
+    /// message. If there is an error during the conversion, it returns an `Err` variant with a
+    /// `ContractError` that describes the error encountered.
     pub fn from_raw<R: Message + std::default::Default + Clone, T: TryFrom<R>>(
         hex_str: &HexString,
     ) -> Result<T, ContractError>
@@ -336,6 +442,16 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(message)
     }
 
+    /// The function converts a hexadecimal string to a Signer object and returns an error if the
+    /// conversion fails.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `str`: A hexadecimal string representing a signer address.
+    /// 
+    /// Returns:
+    /// 
+    /// This function returns a `Result` containing either a `Signer` or a `ContractError`.
     pub fn to_signer(str: &HexString) -> Result<Signer, ContractError> {
         let bytes = str.to_bytes().map_err(|e| ContractError::IbcDecodeError {
             error: e.to_string(),

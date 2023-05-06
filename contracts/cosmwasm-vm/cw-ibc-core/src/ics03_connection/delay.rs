@@ -1,6 +1,13 @@
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
+   /// This method is verifying that the connection delay period has passed for a given connection on
+   /// the host chain. It takes in the current state of the connection, including the latest time and
+   /// height that the counterparty client was updated on the host chain, and the connection delay time
+   /// and height periods. It then calculates the earliest valid time and height for the connection and
+   /// checks if the current host time and height have surpassed those values. If they have not, it
+   /// returns an error indicating that not enough time or blocks have elapsed. If they have, it returns
+   /// Ok(()) indicating that the connection delay period has passed.
     pub fn verify_connection_delay_passed(
         &self,
         store: &dyn Storage,

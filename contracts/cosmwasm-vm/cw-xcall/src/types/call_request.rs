@@ -1,6 +1,7 @@
 use super::*;
 
 #[cw_serde]
+
 pub struct CallRequest {
     from: String,
     to: String,

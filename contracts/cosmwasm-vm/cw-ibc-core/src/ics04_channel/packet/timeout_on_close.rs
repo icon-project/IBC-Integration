@@ -1,6 +1,25 @@
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
+    /// This function validates a timeout on close packet and sends a submessage to a light client
+    /// for further verification.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` struct, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
+    /// other contracts.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// being processed, such as the sender's address and the amount of funds sent with the message.
+    /// * `msg`: `msg` is a `MsgTimeoutOnClose` struct which contains information about a timeout on a
+    /// packet that was sent on a channel that is being closed. It includes the packet itself, the
+    /// signer of the message, and proof information related to the packet and the channel.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// message and `ContractError` is an enum representing the possible errors that can occur during
+    /// contract execution.
     pub fn timeout_on_close_packet_validate_to_light_client(
         &self,
         deps: DepsMut,
