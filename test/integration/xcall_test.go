@@ -34,8 +34,6 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" executes remove_admin in xcall$`, executor.executesRemove_adminInXcall)
 			ctx.Step(`^xCall should remove "([^"]*)" wallet address as admin$`, executor.xCallShouldRemoveWalletAddressAsAdmin)
 			ctx.Step(`^xCall returns an error message that admin is already set$`, executor.xCallReturnsAnErrorMessageThatAdminIsAlreadySet)
-			ctx.Step(`^there are no admin wallets added as admin$`, executor.thereAreNoAdminWalletsAddedAsAdmin)
-			ctx.Step(`^xCall returns an error message that there are no admin wallets added to the xCall smart contract$`, executor.xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTheXCallSmartContract)
 			ctx.Step(`^"([^"]*)" contract deployed by "([^"]*)" only when the chain is "([^"]*)"$`, executor.contractDeployedByOnlyWhenTheChainIs)
 			ctx.Step(`^a user query for admin$`, executor.aUserQueryForAdmin)
 			ctx.Step(`^"([^"]*)" wallet address should be as admin$`, executor.walletAddressShouldBeAsAdmin)
@@ -56,6 +54,7 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^xcall contract panic with an error MaxRollbackSizeExceeded$`, executor.xcallContractPanicWithAnErrorMaxRollbackSizeExceeded)
 			ctx.Step(`^there are no call requests with rollback enabled$`, executor.thereAreNoCallRequestsWithRollbackEnabled)
 			ctx.Step(`^xcall contract panic with an error sequence number not found$`, executor.xcallContractPanicWithAnErrorSequenceNumberNotFound)
+			ctx.Step(`^xCall throws an error that there are no admin wallets$`, executor.xCallThrowsAnErrorThatThereAreNoAdminWallets)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature", "features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},
