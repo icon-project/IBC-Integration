@@ -170,7 +170,7 @@ public class StringUtil {
                     throw new UserRevertedException("Invalid hex encoding: " + str.substring(i - 2, i + 1));
                 }
             } else {
-                result.append((char) b);
+                result.append(bytesToHex(new byte[]{b}));
             }
         }
         return result.toString();
