@@ -35,8 +35,7 @@ use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
-use ibc_proto::protobuf::Protobuf;
-use prost::Message;
+
 use setup::*;
 
 fn test_for_create_client_execution_message() {
@@ -567,7 +566,7 @@ fn test_for_connection_open_ack() {
         )
         .unwrap();
     let conn_id = ConnectionId::new(0);
-    let conn_id_on_b = ConnectionId::new(1);
+    let _conn_id_on_b = ConnectionId::new(1);
 
     let response = contract
         .execute(
