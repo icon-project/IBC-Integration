@@ -57,3 +57,18 @@ Feature: send call message to another person
         Given "Alice" has an "ibc_packet_receive" packet to be executed
         When "Alice" executes "execute_call" in "xcall" with "null" request ID
         Then xcall contract panic with an error RequestNotFound
+
+    Scenario: 011 - Execute rollback excutes when rollback is enabled
+        Given "Alice" executes "send_call_message" in dapp with "data size less" than limit
+        When "Alice" executes "execute_rollback" in "xcall" with "correct" sequence number
+        Then xcall should execute rollback message successfully
+    
+    Scenario: 012 - Execute rollback fails when incorrect sequence number is given
+        Given "Alice" executes "send_call_message" in dapp with "data size less" than limit
+        When "Alice" executes "execute_rollback" in "xcall" with "incorrect" sequence number
+        Then xcall should execute rollback message successfully
+
+    Scenario: 013 - Execute rollback fails when there is no call request
+        Given there are no call requests with rollback enabled
+        When "Alice" executes "execute_rollback" in "xcall" with "correct" sequence number
+        Then xcall contract panic with an error sequence number not found

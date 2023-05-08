@@ -353,3 +353,15 @@ func (e *Executor) xcallContractPanicWithAnErrorMaxRollbackSizeExceeded() error 
 	}
 	return nil
 }
+
+func (e *Executor) thereAreNoCallRequestsWithRollbackEnabled() error {
+	// no call requests to be made
+	return nil
+}
+
+func (e *Executor) xcallContractPanicWithAnErrorSequenceNumberNotFound() error {
+	if e.error == nil {
+		return fmt.Errorf("xcall did not throw an error for no sequence number")
+	}
+	return nil
+}
