@@ -129,7 +129,7 @@ public class Merkle {
             throw new UserRevertedException("index out of range. " + i + " (index) >= " + mp.getKeyPath().size() + " (len)");
         }
         String key = StringUtil.decodeURL(mp.getKeyPath().get(i));
-        return key.getBytes();
+        return StringUtil.hexToBytes(key);
     }
 
     private static void validateVerificationArgs(MerkleProof proof, List<ProofSpec> specs, MerkleRoot root) {
