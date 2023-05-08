@@ -68,7 +68,7 @@ Feature: send call message to another person
         When "Alice" executes "execute_rollback" in "xcall" with "incorrect" sequence number
         Then xcall should execute rollback message successfully
 
-    Scenario: 012 - Execute rollback fails when there is no call request
+    Scenario: 013 - Execute rollback fails when there is no call request
         Given there are no call requests with rollback enabled
         When "Alice" executes "execute_rollback" in "xcall" with "correct" sequence number
         Then xcall contract panic with an error sequence number not found
