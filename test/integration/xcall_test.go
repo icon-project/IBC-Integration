@@ -54,6 +54,8 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" has an "([^"]*)" packet to be executed$`, executor.hasAnPacketToBeExecuted)
 			ctx.Step(`^"([^"]*)" regiters xcall in "([^"]*)"$`, executor.regitersXcallIn)
 			ctx.Step(`^xcall contract panic with an error MaxRollbackSizeExceeded$`, executor.xcallContractPanicWithAnErrorMaxRollbackSizeExceeded)
+			ctx.Step(`^there are no call requests with rollback enabled$`, executor.thereAreNoCallRequestsWithRollbackEnabled)
+			ctx.Step(`^xcall contract panic with an error sequence number not found$`, executor.xcallContractPanicWithAnErrorSequenceNumberNotFound)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature", "features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},
