@@ -29,7 +29,7 @@ public class Merkle {
             return mpath;
         }
         List<String> keyPath = new ArrayList<>();
-        keyPath.add(new String(prefix.getKeyPrefix()));
+        keyPath.add(StringUtil.bytesToHex(prefix.getKeyPrefix()));
         keyPath.addAll(path.getKeyPath());
         mpath.setKeyPath(keyPath);
         return mpath;

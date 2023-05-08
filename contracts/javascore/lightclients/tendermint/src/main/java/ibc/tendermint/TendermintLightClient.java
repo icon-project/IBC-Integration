@@ -3,11 +3,13 @@ package ibc.tendermint;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.NullChecker;
+import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.types.Merkle;
 import ibc.ics24.host.IBCCommitment;
 import icon.proto.clients.tendermint.*;
 import icon.proto.core.client.Height;
 import icon.proto.core.commitment.MerklePath;
+import icon.proto.core.commitment.MerklePrefix;
 import icon.proto.core.commitment.MerkleProof;
 import score.Address;
 import score.BranchDB;
@@ -15,11 +17,14 @@ import score.Context;
 import score.DictDB;
 import score.annotation.External;
 import score.annotation.Optional;
+import scorex.util.ArrayList;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import static ibc.ics23.commitment.types.Merkle.applyPrefix;
 import static ibc.tendermint.TendermintHelper.*;
 import static score.Context.require;
 
@@ -222,8 +227,15 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         var root = consensusState.getRoot();
 
         var merkleProof = MerkleProof.decode(proof);
-        //TODO: Fix merkle path decoding
-        var merklePath = MerklePath.decode(path);
+
+        var merklePath = new MerklePath();
+        List<String> pathList = new ArrayList<>();
+        pathList.add(StringUtil.bytesToHex(path));
+        merklePath.setKeyPath(pathList);
+
+        var merklePrefix = new MerklePrefix();
+        merklePrefix.setKeyPrefix(prefix);
+        merklePath = applyPrefix(merklePrefix, merklePath);
         Merkle.verifyMembership(merkleProof, Merkle.getSDKSpecs(), root, merklePath, value);
     }
 
@@ -249,12 +261,18 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         ConsensusState consensusState = ConsensusState
                 .decode(mustGetConsensusState(clientId, height.getRevisionHeight()));
 
-        byte[] root = consensusState.getRoot().getHash();
-
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = MerklePath.decode(path);
-        Merkle.verifyNonMembership(merkleProof, Merkle.getSDKSpecs(), consensusState.getRoot(), merklePath);
 
+        var merklePath = new MerklePath();
+        List<String> pathList = new ArrayList<>();
+        pathList.add(StringUtil.bytesToHex(path));
+        merklePath.setKeyPath(pathList);
+
+        var merklePrefix = new MerklePrefix();
+        merklePrefix.setKeyPrefix(prefix);
+        merklePath = applyPrefix(merklePrefix, merklePath);
+
+        Merkle.verifyNonMembership(merkleProof, Merkle.getSDKSpecs(), consensusState.getRoot(), merklePath);
     }
 
     // checkValidity checks if the Tendermint header is valid.
