@@ -388,10 +388,10 @@ impl<'a> CwCallService<'a> {
     /// struct that contains data and attributes that will be returned to the caller, and
     /// `ContractError` is an enum that represents any errors that may occur during the execution of the
     /// function.
-    fn on_channel_open(&self, msg: IbcChannelOpenMsg) -> Result<Response, ContractError> {
+    fn on_channel_open(&self, msg: CwChannelOpenMsg) -> Result<Response, ContractError> {
         let ibc_endpoint = match msg.clone() {
-            IbcChannelOpenMsg::OpenInit { channel } => channel.endpoint,
-            IbcChannelOpenMsg::OpenTry {
+            CwChannelOpenMsg::OpenInit { channel } => channel.endpoint,
+            CwChannelOpenMsg::OpenTry {
                 channel,
                 counterparty_version: _,
             } => channel.endpoint,
@@ -428,14 +428,14 @@ impl<'a> CwCallService<'a> {
     fn on_channel_connect(
         &self,
         store: &mut dyn Storage,
-        msg: IbcChannelConnectMsg,
+        msg: CwChannelConnectMsg,
     ) -> Result<Response, ContractError> {
         let ibc_endpoint = match msg.clone() {
-            IbcChannelConnectMsg::OpenAck {
+            CwChannelConnectMsg::OpenAck {
                 channel,
                 counterparty_version: _,
             } => channel.endpoint,
-            IbcChannelConnectMsg::OpenConfirm { channel } => channel.endpoint,
+            CwChannelConnectMsg::OpenConfirm { channel } => channel.endpoint,
         };
         let channel = msg.channel();
 
@@ -481,10 +481,10 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// A `Result` containing a `Response` or a `ContractError`.
-    fn on_channel_close(&self, msg: IbcChannelCloseMsg) -> Result<Response, ContractError> {
+    fn on_channel_close(&self, msg: CwChannelCloseMsg) -> Result<Response, ContractError> {
         let ibc_endpoint = match msg.clone() {
-            IbcChannelCloseMsg::CloseInit { channel } => channel.endpoint,
-            IbcChannelCloseMsg::CloseConfirm { channel } => channel.endpoint,
+            CwChannelCloseMsg::CloseInit { channel } => channel.endpoint,
+            CwChannelCloseMsg::CloseConfirm { channel } => channel.endpoint,
         };
         let channel = msg.channel().endpoint.channel_id.clone();
 
@@ -510,7 +510,7 @@ impl<'a> CwCallService<'a> {
     fn on_packet_receive(
         &self,
         deps: DepsMut,
-        msg: IbcPacketReceiveMsg,
+        msg: CwPacketReceiveMsg,
     ) -> Result<Response, ContractError> {
         match self.receive_packet_data(deps, msg.packet) {
             Ok(ibc_response) => Ok(Response::new()
@@ -538,7 +538,7 @@ impl<'a> CwCallService<'a> {
     /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to be
     /// returned to the caller and `ContractError` is an enum representing the possible errors that can
     /// occur during the execution of the function.
-    fn on_packet_ack(&self, ack: IbcPacketAckMsg) -> Result<Response, ContractError> {
+    fn on_packet_ack(&self, ack: CwPacketAckMsg) -> Result<Response, ContractError> {
         let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
         let message: CallServiceMessage = from_binary(&ack.original_packet.data)?;
         let message_type = match message.message_type() {
@@ -579,7 +579,7 @@ impl<'a> CwCallService<'a> {
     /// attribute. The submessage is a reply on error with a `CosmosMsg::Custom` object that contains an
     /// `Empty` message. The attribute is a key-value pair
 
-    fn on_packet_timeout(&self, _msg: IbcPacketTimeoutMsg) -> Result<Response, ContractError> {
+    fn on_packet_timeout(&self, _msg: CwPacketTimeoutMsg) -> Result<Response, ContractError> {
         let submsg = SubMsg::reply_on_error(CosmosMsg::Custom(Empty {}), ACK_FAILURE_ID);
         Ok(Response::new()
             .add_submessage(submsg)

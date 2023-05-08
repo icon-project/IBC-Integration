@@ -410,7 +410,7 @@ fn connection_open_init() {
         .unwrap();
 
     deps.querier.update_wasm(|r| match r {
-        WasmQuery::Smart { contract_addr, msg } => {
+        WasmQuery::Smart { contract_addr:_, msg:_ } => {
             SystemResult::Ok(ContractResult::Ok(to_binary(&vec![0, 1, 2, 3]).unwrap()))
         }
         _ => todo!(),

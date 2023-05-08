@@ -10,7 +10,6 @@ use cosmwasm_std::{
 };
 
 use cw_common::ibc_types::IbcHeight;
-use cw_common::types::Address;
 use cw_common::{hex_string::HexString, ProstMessage};
 use cw_xcall::{
     error::ContractError,
@@ -238,7 +237,7 @@ fn send_packet_failure_due_data_len() {
 
     let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
 
-    let env = mock_env();
+    let _env = mock_env();
 
     let contract = CwCallService::default();
 
@@ -302,7 +301,7 @@ fn send_packet_failure_due_rollback_len() {
 
     let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
 
-    let env = mock_env();
+    let _env = mock_env();
 
     let contract = CwCallService::default();
 

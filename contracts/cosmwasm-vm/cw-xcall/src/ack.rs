@@ -42,7 +42,7 @@ pub fn make_ack_fail(err: String) -> Binary {
 /// Returns:
 /// 
 /// a `Result` with either an `IbcBasicResponse` or a `ContractError`.
-pub fn on_ack_sucess(packet: IbcPacket) -> Result<IbcBasicResponse, ContractError> {
+pub fn on_ack_sucess(packet: CwPacket) -> Result<CwBasicResponse, ContractError> {
     let message: CallServiceMessage = from_binary(&packet.data)?;
 
     let message_type = match message.message_type() {
@@ -56,7 +56,7 @@ pub fn on_ack_sucess(packet: IbcPacket) -> Result<IbcBasicResponse, ContractErro
         attr("message_type", message_type),
     ];
 
-    Ok(IbcBasicResponse::new().add_attributes(attributes))
+    Ok(CwBasicResponse::new().add_attributes(attributes))
 }
 
 /// The function `on_ack_failure` handles errors in acknowledging an IBC packet and returns a response
@@ -73,14 +73,14 @@ pub fn on_ack_sucess(packet: IbcPacket) -> Result<IbcBasicResponse, ContractErro
 /// Returns:
 /// 
 /// a `Result` with an `IbcBasicResponse` on success or a `ContractError` on failure.
-pub fn on_ack_failure(packet: IbcPacket, error: &str) -> Result<IbcBasicResponse, ContractError> {
+pub fn on_ack_failure(packet: CwPacket, error: &str) -> Result<CwBasicResponse, ContractError> {
     let message: CallServiceMessage = from_binary(&packet.data)?;
     let message_type = match message.message_type() {
         CallServiceMessageType::CallServiceRequest => "call_service_request",
         CallServiceMessageType::CallServiceResponse => "call_service_response",
     };
 
-    Ok(IbcBasicResponse::new()
+    Ok(CwBasicResponse::new()
         .add_attribute("action", "acknowledge")
         .add_attribute("message_type", message_type)
         .add_attribute("success", "false")
@@ -102,7 +102,7 @@ pub fn on_ack_failure(packet: IbcPacket, error: &str) -> Result<IbcBasicResponse
 /// result of encoding a `cw_common::client_response::XcallPacketResponseData` object that contains a
 /// clone of the `packet` argument and a successful acknowledgement message represented as a vector of
 /// bytes.
-pub fn acknowledgement_data_on_success(packet: &IbcPacket) -> Result<Binary, ContractError> {
+pub fn acknowledgement_data_on_success(packet: &CwPacket) -> Result<Binary, ContractError> {
     to_binary(&cw_common::client_response::XcallPacketResponseData {
         packet: packet.clone(),
         acknowledgement: make_ack_success().to_vec(),

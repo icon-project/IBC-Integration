@@ -4,6 +4,6 @@
 pub mod host;
 
 use crate::context::CwIbcCoreContext;
-use cosmwasm_std::{MessageInfo, Storage};
 use crate::ContractError;
+use cosmwasm_std::{MessageInfo, Storage};
 use std::time::Duration;

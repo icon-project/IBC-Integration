@@ -43,14 +43,17 @@ use common::types::message::CrossContractMessage::XCallMessage;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse,
-    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse,
-    IbcEndpoint, IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Never, QuerierWrapper, Reply, Response,
-    StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, MessageInfo, Never, QuerierWrapper, Reply,
+    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
 };
 #[cfg(feature = "native_ibc")]
-use cosmwasm_std::{IbcTimeout, IbcTimeoutBlock};
+use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
+
+use cw_common::cw_types::{
+    Cw3ChannelOpenResponse, CwBasicResponse, CwChannelCloseMsg, CwChannelConnectMsg,
+    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwEndpoint, CwMsg, CwOrder, CwPacket,
+    CwPacketAckMsg, CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
+};
 
 use cosmwasm_std::{to_vec, QueryRequest};
 use cw2::set_contract_version;

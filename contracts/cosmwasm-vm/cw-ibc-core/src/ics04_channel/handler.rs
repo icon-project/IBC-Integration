@@ -18,7 +18,6 @@ use open_confirm::*;
 pub mod close_confirm;
 pub use close_confirm::*;
 
-
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     /// This function validates a channel open initialization message and generates an event for calling
     /// on channel open init in x-call.
@@ -203,7 +202,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let create_client_message = LightClientMessage::VerifyChannel {
-            endpoint: IbcEndpoint {
+            endpoint: CwEndPoint {
                 port_id: port_id_on_a.to_string(),
                 channel_id: chan_id_on_a.to_string(),
             },
@@ -321,7 +320,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 sender: info.sender,
                 funds,
             },
-            endpoint: IbcEndpoint {
+            endpoint: CwEndPoint {
                 port_id: message.port_id_on_a.clone().to_string(),
                 channel_id: message.chan_id_on_a.clone().to_string(),
             },
@@ -454,7 +453,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 sender: info.sender,
                 funds,
             },
-            endpoint: IbcEndpoint {
+            endpoint: CwEndPoint {
                 port_id: message.port_id_on_b.clone().to_string(),
                 channel_id: message.chan_id_on_b.clone().to_string(),
             },
@@ -644,7 +643,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 sender: info.sender,
                 funds,
             },
-            endpoint: IbcEndpoint {
+            endpoint: CwEndPoint {
                 port_id: message.port_id_on_b.clone().to_string(),
                 channel_id: message.chan_id_on_b.clone().to_string(),
             },

@@ -1,3 +1,4 @@
+use crate::cw_types::{CwEndPoint, CwPacket};
 use crate::ibc_types::{
     IbcChannelId, IbcClientId, IbcClientType, IbcConnectionId, IbcModuleId, IbcPortId,
 };
@@ -8,7 +9,6 @@ use crate::{
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_schema::serde::{Deserialize, Serialize};
-use cosmwasm_std::{IbcEndpoint, IbcPacket};
 pub use ibc::core::ics04_channel::packet::Packet;
 use ibc::core::ics04_channel::timeout::TimeoutHeight;
 use ibc::timestamp::Timestamp;
@@ -303,12 +303,12 @@ pub struct OpenAckResponse {
 
 #[cw_serde]
 pub struct XcallPacketResponseData {
-    pub packet: IbcPacket,
+    pub packet: CwPacket,
     pub acknowledgement: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LightClientResponse {
     pub message_info: MessageInfo,
-    pub ibc_endpoint: IbcEndpoint,
+    pub ibc_endpoint: CwEndPoint,
 }

@@ -36,7 +36,7 @@ fn test_store_module_by_port_fail() {
 
 #[test]
 fn check_for_port_path() {
-    let ctx = CwIbcCoreContext::default();
+    let _ctx = CwIbcCoreContext::default();
 
     let port_id = PortId::default();
     let port_path = commitment::port_path(port_id.ibc_port_id());
@@ -46,7 +46,7 @@ fn check_for_port_path() {
 
 #[test]
 fn check_for_port_path_key() {
-    let ctx = CwIbcCoreContext::default();
+    let _ctx = CwIbcCoreContext::default();
 
     let port_id = PortId::default();
     let port_path = commitment::port_path(port_id.ibc_port_id());

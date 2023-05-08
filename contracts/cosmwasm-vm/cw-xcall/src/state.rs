@@ -26,14 +26,14 @@ pub const SEND_CALL_MESSAGE_REPLY_ID: u64 = 2;
 #[cw_serde]
 pub struct IbcConfig {
     sequence: u128,
-    src: IbcEndpoint,
-    dst: IbcEndpoint,
+    src: CwEndPoint,
+    dst: CwEndPoint,
 }
 
 /// This is an implementation block for the `IbcConfig` struct, defining several methods that can be
 /// called on instances of the struct.
 impl IbcConfig {
-    pub fn new(src: IbcEndpoint, dst: IbcEndpoint) -> Self {
+    pub fn new(src: CwEndPoint, dst: CwEndPoint) -> Self {
         Self {
             src,
             dst,
@@ -41,11 +41,11 @@ impl IbcConfig {
         }
     }
 
-    pub fn src_endpoint(&self) -> &IbcEndpoint {
+    pub fn src_endpoint(&self) -> &CwEndPoint {
         &self.src
     }
 
-    pub fn dst_endpoint(&self) -> &IbcEndpoint {
+    pub fn dst_endpoint(&self) -> &CwEndPoint {
         &self.dst
     }
 
