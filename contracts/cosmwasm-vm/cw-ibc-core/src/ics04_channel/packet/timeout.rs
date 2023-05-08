@@ -1,6 +1,24 @@
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
+    /// This function validates a timeout packet and sends a submessage to a light client for further
+    /// verification.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a `DepsMut` struct, which is a mutable reference to the dependencies of the
+    /// contract. These dependencies include the storage, API, and other modules that the contract may
+    /// use.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// being processed, such as the sender and the amount of funds sent with the message.
+    /// * `msg`: `msg` is a struct of type `MsgTimeout` which contains information about a timeout
+    /// packet. It has the following fields:
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// message and `ContractError` is an enum representing the possible errors that can occur during
+    /// the execution of the function.
     pub fn timeout_packet_validate_to_light_client(
         &self,
         deps: DepsMut,
@@ -171,6 +189,21 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
+   /// This function validates a reply from a light client for a timeout packet in channel.
+   /// 
+   /// Arguments:
+   /// 
+   /// * `deps`: `deps` is a mutable reference to the dependencies of the contract, which includes
+   /// access to the storage and other modules.
+   /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message execution.
+   /// It is used to extract the data returned by the sub-message and perform further actions based on
+   /// it.
+   /// 
+   /// Returns:
+   /// 
+   /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+   /// contract execution and `ContractError` is an enum representing the possible errors that can occur
+   /// during contract execution.
     pub fn timeout_packet_validate_reply_from_light_client(
         &self,
         deps: DepsMut,
@@ -200,37 +233,28 @@ impl<'a> CwIbcCoreContext<'a> {
                         Err(error) => return Err(error),
                     };
 
-                    let src = IbcEndpoint {
+                    let src = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_a.to_string(),
                         channel_id: packet_data.packet.chan_id_on_a.to_string(),
                     };
-                    let dest = IbcEndpoint {
+                    let dest = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_b.to_string(),
                         channel_id: packet_data.packet.chan_id_on_b.to_string(),
                     };
                     let data = Binary::from(data.data);
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
-                            IbcTimeoutBlock {
-                                revision: 1,
-                                height: 1,
-                            }
-                        }
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
-                            IbcTimeoutBlock {
-                                revision: x.revision_number(),
-                                height: x.revision_height(),
-                            }
-                        }
+                        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
+                            revision: 1,
+                            height: 1,
+                        },
+                        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
+                            revision: x.revision_number(),
+                            height: x.revision_height(),
+                        },
                     };
-                    let timeout = IbcTimeout::with_block(timeoutblock);
-                    let ibc_packet = IbcPacket::new(
-                        data,
-                        src,
-                        dest,
-                        packet_data.packet.seq_on_a.into(),
-                        timeout,
-                    );
+                    let timeout = CwTimeout::with_block(timeoutblock);
+                    let ibc_packet =
+                        CwPacket::new(data, src, dest, packet_data.packet.seq_on_a.into(), timeout);
                     let address = Addr::unchecked(packet_data.signer.to_string());
                     let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketTimeout {
                         msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
@@ -263,6 +287,21 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
 
+    /// This function handles the execution of a timeout packet after successfull validation of 
+    /// light client and xcall.
+    /// 
+    /// Arguments:
+    /// 
+    /// * `deps`: `deps` is a mutable reference to the dependencies of the contract, which includes
+    /// access to the storage and other modules.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to process the result of an IBC packet timeout.
+    /// 
+    /// Returns:
+    /// 
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing the possible errors that can
+    /// occur during contract execution.
     pub fn execute_timeout_packet(
         &self,
         deps: DepsMut,
@@ -271,7 +310,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<IbcPacket>(&res).unwrap();
+                    let data = from_binary::<CwPacket>(&res).unwrap();
                     let channel_id =
                         ChannelId::from(IbcChannelId::from_str(&data.src.channel_id).unwrap());
                     let port_id = PortId::from(IbcPortId::from_str(&data.src.port_id).unwrap());

@@ -1,5 +1,19 @@
 use super::*;
 
+/// This function validates that a channel can be closed based on its current state and the existence of
+/// an open IBC connection.
+/// 
+/// Arguments:
+/// 
+/// * `chan_end_on_a`: A reference to a `ChannelEnd` struct representing the channel end on chain A.
+/// * `message`: The `message` parameter is of type `MsgChannelCloseInit` and represents the message
+/// that initiates the closing of a channel.
+/// 
+/// Returns:
+/// 
+/// a `Result` type with the `Ok` variant containing an empty tuple `()` if the validation passes, and
+/// the `Err` variant containing a `ContractError` with a specific error message if the validation
+/// fails.
 pub fn channel_close_init_validate(
     chan_end_on_a: &ChannelEnd,
     message: &MsgChannelCloseInit,
@@ -27,6 +41,15 @@ pub fn channel_close_init_validate(
     Ok(())
 }
 
+/// The function creates an IBC channel close message with the given channel information for calling xcall.
+/// 
+/// Arguments:
+/// 
+/// * `msg`: `msg` is a reference to a `MsgChannelCloseInit` struct, which contains information about
+/// the initial channel close message.
+/// * `channel_end`: `channel_end` is a reference to a `ChannelEnd` struct, which represents the local
+/// state of a channel. It contains information such as the channel's state, ordering, and version.
+/// * `connection_id`: The ID of the connection associated with the channel being closed.
 pub fn on_chan_close_init_submessage(
     msg: &MsgChannelCloseInit,
     channel_end: &ChannelEnd,

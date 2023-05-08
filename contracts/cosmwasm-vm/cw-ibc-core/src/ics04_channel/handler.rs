@@ -18,8 +18,24 @@ use open_confirm::*;
 pub mod close_confirm;
 pub use close_confirm::*;
 
-
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
+    /// This function validates a channel open initialization message and generates an event for calling
+    /// on channel open init in x-call.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which provides access to the contract's dependencies
+    /// such as storage, API, and querier. It is used to interact with the blockchain and other
+    /// contracts.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// sender, such as the sender's address, the amount of funds sent with the message, and the gas
+    /// limit for executing the message.
+    /// * `message`: The `message` parameter is a reference to a `MsgChannelOpenInit` struct, which
+    /// contains the details of the channel opening initialization message being validated.
+    ///
+    /// Returns:
+    ///
+    /// A `Result` containing either a `cosmwasm_std::Response` or a `ContractError`.
     fn validate_channel_open_init(
         &self,
         deps: DepsMut,
@@ -88,6 +104,22 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             .add_submessage(on_chan_open_init))
     }
 
+    /// This function validates and creates a new channel end for a channel open try message, and sends
+    /// a submessage to a light client to verify the channel state.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` struct, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// sender and the funds sent with the message. It is passed as an argument to the function
+    /// `validate_channel_open_try` in the code snippet provided.
+    /// * `message`: The `message` parameter is a reference to a `MsgChannelOpenTry` struct, which
+    /// contains the information needed to try opening a new channel between two IBC-connected chains.
+    ///
+    /// Returns:
+    ///
+    /// A `Result<Response, ContractError>` is being returned.
     fn validate_channel_open_try(
         &self,
         deps: DepsMut,
@@ -170,7 +202,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let create_client_message = LightClientMessage::VerifyChannel {
-            endpoint: IbcEndpoint {
+            endpoint: CwEndPoint {
                 port_id: port_id_on_a.to_string(),
                 channel_id: chan_id_on_a.to_string(),
             },
@@ -208,6 +240,21 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
+    /// This function validates a channel open acknowledgement message and creates a sub-message to
+    /// execute on a light client.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which provides access to the contract's storage and
+    /// other dependencies that can be mutated.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// being processed, such as the sender and the amount of funds sent with the message.
+    /// * `message`: The `message` parameter is a reference to a `MsgChannelOpenAck` struct, which
+    /// contains information about a channel open acknowledgement message.
+    ///
+    /// Returns:
+    ///
+    /// a `Result` object with either a `Response` or a `ContractError`.
     fn validate_channel_open_ack(
         &self,
         deps: DepsMut,
@@ -273,7 +320,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 sender: info.sender,
                 funds,
             },
-            endpoint: IbcEndpoint {
+            endpoint: CwEndPoint {
                 port_id: message.port_id_on_a.clone().to_string(),
                 channel_id: message.chan_id_on_a.clone().to_string(),
             },
@@ -314,6 +361,22 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
+    /// This function validates a channel open confirmation message and creates a submessage to execute
+    /// on a light client.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+    /// contract. These dependencies include the storage, API, and other modules that the contract may
+    /// use.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// being processed, such as the sender's address and the amount of funds sent with the message.
+    /// * `message`: The `message` parameter is a reference to a `MsgChannelOpenConfirm` struct, which
+    /// contains information about a channel open confirmation message.
+    ///
+    /// Returns:
+    ///
+    /// a `Result` object with either a `Response` or a `ContractError`.
     fn validate_channel_open_confirm(
         &self,
         deps: DepsMut,
@@ -390,7 +453,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 sender: info.sender,
                 funds,
             },
-            endpoint: IbcEndpoint {
+            endpoint: CwEndPoint {
                 port_id: message.port_id_on_b.clone().to_string(),
                 channel_id: message.chan_id_on_b.clone().to_string(),
             },
@@ -422,6 +485,24 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
+    /// This function validates a channel close initiation message and creates a submessage to execute
+    /// on channel close initiation on xcall.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// sender, including the sender's address, the amount of funds sent with the message, and the gas
+    /// limit and price.
+    /// * `message`: The `message` parameter is a reference to a `MsgChannelCloseInit` struct, which
+    /// contains information about the channel close initiation message being validated.
+    ///
+    /// Returns:
+    ///
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// message and `ContractError` is an enum representing the possible errors that can occur during
+    /// contract execution.
     fn validate_channel_close_init(
         &self,
         deps: DepsMut,
@@ -472,6 +553,23 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             .add_submessage(on_chan_close_init))
     }
 
+    /// This function validates a channel close confirmation message and creates a submessage to execute
+    /// on a light client.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+    /// contract. These dependencies include the storage, API, and other modules that the contract may
+    /// use.
+    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
+    /// being processed, such as the sender and the amount of funds sent with the message.
+    /// * `message`: The `message` parameter is a reference to a `MsgChannelCloseConfirm` struct, which
+    /// contains information about a channel close confirmation message being sent on a specific channel
+    /// and port.
+    ///
+    /// Returns:
+    ///
+    /// A `Result<Response, ContractError>` is being returned.
     fn validate_channel_close_confirm(
         &self,
         deps: DepsMut,
@@ -545,7 +643,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 sender: info.sender,
                 funds,
             },
-            endpoint: IbcEndpoint {
+            endpoint: CwEndPoint {
                 port_id: message.port_id_on_b.clone().to_string(),
                 channel_id: message.chan_id_on_b.clone().to_string(),
             },
@@ -579,6 +677,22 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 }
 
 impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
+    /// This function executes the channel open initialization process for an IBC channel and change the state to INIT.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
+    /// other modules.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to extract the data returned by the sub-message and
+    /// update the state of a channel.
+    ///
+    /// Returns:
+    ///
+    /// This function returns a `Result<Response, ContractError>` where `Response` is a struct
+    /// representing the response to a contract execution and `ContractError` is an enum representing
+    /// the possible errors that can occur during contract execution.
     fn execute_channel_open_init(
         &self,
         deps: DepsMut,
@@ -647,6 +761,21 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         }
     }
 
+    /// This function executes a channel open try operation in chain b and change the state ti INIT.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
+    /// dependencies such as storage, querier, and API.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to extract the data returned by the sub-message and
+    /// update the state of the channel accordingly.
+    ///
+    /// Returns:
+    ///
+    /// This function returns a `Result<Response, ContractError>` where `Response` is a struct
+    /// representing the response to a contract execution and `ContractError` is an enum representing
+    /// the possible errors that can occur during contract execution.
     fn execute_channel_open_try(
         &self,
         deps: DepsMut,
@@ -730,6 +859,22 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         }
     }
 
+    /// This function handles the closing of an IBC channel and updates its state in storage.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
+    /// other modules.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to extract the data returned by the sub-message and
+    /// update the state of a channel accordingly.
+    ///
+    /// Returns:
+    ///
+    /// This function returns a `Result<Response, ContractError>` where `Response` is a struct
+    /// representing the response to a contract execution and `ContractError` is an enum representing
+    /// the possible errors that can occur during contract execution.
     fn execute_channel_close_init(
         &self,
         deps: DepsMut,
@@ -778,6 +923,22 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         }
     }
 
+    /// This function handles the execution of a channel open acknowledgement message in an IBC protocol.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
+    /// other contracts.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to handle the response of the `channel open ack`
+    /// sub-message sent to the IBC module.
+    ///
+    /// Returns:
+    ///
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing the possible errors that can
+    /// occur during contract execution.
     fn execute_channel_open_ack(
         &self,
         deps: DepsMut,
@@ -837,6 +998,22 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         }
     }
 
+    /// This function executes the confirmation of a channel opening and updates the
+    /// channel state accordingly.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
+    /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
+    /// other modules.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to confirm the opening of an IBC channel.
+    ///
+    /// Returns:
+    ///
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing the possible errors that can
+    /// occur during contract execution.
     fn execute_channel_open_confirm(
         &self,
         deps: DepsMut,
@@ -893,6 +1070,22 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
             }),
         }
     }
+    /// This function handles the confirmation of closing an IBC channel and updates the channel state
+    /// accordingly.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
+    /// contract. These dependencies include the storage, API, and other modules that the contract may
+    /// use.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
+    /// contract to another module. It is used to confirm the closure of an IBC channel.
+    ///
+    /// Returns:
+    ///
+    /// This function returns a `Result<Response, ContractError>` where `Response` is a struct
+    /// representing the response to a contract execution and `ContractError` is an enum representing
+    /// the possible errors that can occur during contract execution.
     fn execute_channel_close_confirm(
         &self,
         deps: DepsMut,

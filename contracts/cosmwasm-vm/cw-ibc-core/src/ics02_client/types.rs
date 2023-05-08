@@ -8,6 +8,30 @@ use cw_common::constants::ICON_CLIENT_TYPE;
 use cw_common::constants::ICON_CONSENSUS_STATE_TYPE_URL;
 use cw_common::constants::ICON_SIGNED_HEADER_TYPE_URL;
 
+/// This struct representing the state of a client, with various fields such as trusting
+/// period, frozen height, and validators.
+/// 
+/// Properties:
+/// 
+/// * `trusting_period`: The duration of time for which the client trusts the validity of a received
+/// consensus state.
+/// * `frozen_height`: `frozen_height` is an optional field in the `ClientState` struct that represents
+/// the height at which the client state was frozen. If the value is `None`, it means that the client
+/// state is not frozen and can be updated. If the value is `Some(height)`, it means
+/// * `max_clock_drift`: `max_clock_drift` is a property of the `ClientState` struct that represents the
+/// maximum allowed clock drift in nanoseconds between the client and the blockchain network. It is used
+/// to ensure that the client's clock is synchronized with the network's clock to prevent attacks such
+/// as replay attacks.
+/// * `latest_height`: The latest height is the most recent block height that the client has verified
+/// and considers as valid. This is an important property for a blockchain client as it helps to ensure
+/// that the client is up-to-date with the latest state of the blockchain.
+/// * `network_section_hash`: The `network_section_hash` property is a vector of bytes that represents
+/// the hash of the network section that the client is associated with. The network section is a group
+/// of validators that are responsible for maintaining the consensus of the blockchain network. The
+/// client uses this hash to verify that it is connected to the
+/// * `validators`: `validators` is a vector of byte arrays representing the public keys of the
+/// validators that the client is configured to trust. These validators are expected to sign and
+/// validate blocks on the network.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClientState {
     trusting_period: u64,

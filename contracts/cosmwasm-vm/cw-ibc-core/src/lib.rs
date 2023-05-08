@@ -38,6 +38,7 @@ use cw_storage_plus::{Item, Map};
 use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 use ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
 use ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
+use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
@@ -49,6 +50,7 @@ pub use ibc::core::ics04_channel::msgs::{
 };
 use ibc::core::ics05_port::error::PortError;
 use ibc::core::ics24_host::error::ValidationError;
+use ibc::{core::ics04_channel::packet::Packet, signer::Signer};
 pub use ibc::{
     core::{
         ics02_client::{
@@ -65,8 +67,6 @@ pub use ibc::{
     },
     Height,
 };
-use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
-use ibc::{core::ics04_channel::packet::Packet, signer::Signer};
 
 pub use cw_common::commitment::*;
 use prost::Message;
@@ -112,6 +112,22 @@ pub fn query(deps: Deps, env: Env, msg: msg::QueryMsg) -> StdResult<Binary> {
     call_service.query(deps, env, msg)
 }
 
+/// This function handles a reply message in a contract this is the entry point for reply.
+/// 
+/// Arguments:
+/// 
+/// * `deps`: `deps` is a mutable reference to the dependencies of the contract. It allows the contract
+/// to access the necessary modules and traits to interact with the blockchain and other contracts.
+/// * `env`: `env` is an object that contains information about the current execution environment of the
+/// contract, such as the block height, time, and chain ID. It is provided by the Cosmos SDK and is
+/// passed as an argument to most contract functions.
+/// * `msg`: The `msg` parameter in the `reply` function is of type `Reply`. It represents the message
+/// that is being replied to by the contract. The `Reply` struct contains information about the original
+/// message, such as the sender, recipient, and the actual message content.
+/// 
+/// Returns:
+/// 
+/// The function `reply` returns a `Result<Response, ContractError>`.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     let call_service = CwIbcCoreContext::default();
