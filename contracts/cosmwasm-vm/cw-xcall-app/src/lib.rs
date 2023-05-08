@@ -1,15 +1,14 @@
 pub mod ack;
 pub mod admin;
 pub mod assertion;
-pub mod handle_outgoing;
-pub mod check;
+pub mod call_message;
 pub mod contract;
 pub mod error;
 pub mod events;
 pub mod fee;
 pub mod fee_handler;
-pub mod handle_incoming;
-pub mod ibc;
+pub mod handle_call_message;
+pub mod helpers;
 pub mod msg;
 pub mod owner;
 pub mod requests;
@@ -18,24 +17,25 @@ pub mod types;
 use crate::ack::{on_ack_failure, on_ack_sucess};
 use crate::{
     ack::{make_ack_fail, make_ack_success},
-    check::{check_order, check_version},
     error::ContractError,
     events::{
-       event_message_forwarded
-        
+        event_call_executed, event_call_message, event_response_message, event_rollback_executed,
+        event_rollback_message, event_xcall_message_sent,
     },
-    ibc::{APP_ORDER, IBC_VERSION},
     msg::{InstantiateMsg, QueryMsg},
     state::{
-        CwIbcConnection, IbcConfig, ACK_FAILURE_ID
+        CwCallService, IbcConfig, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID,
+        SEND_CALL_MESSAGE_REPLY_ID,
     },
     types::{
-      //  call_request::CallRequest,
-       
-       // response::{to_int, CallServiceMessageResponse, CallServiceResponseType},
+        call_request::CallRequest,
+        message::{CallServiceMessage, CallServiceMessageType},
+        request::CallServiceMessageRequest,
+        response::{to_int, CallServiceMessageResponse, CallServiceResponseType},
         storage_keys::StorageKey,
     },
 };
+use common::types::message::CrossContractMessage::XCallMessage;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
@@ -55,7 +55,7 @@ use cosmwasm_std::{to_vec, QueryRequest};
 use cw2::set_contract_version;
 use cw_common::ibc_types::IbcHeight as Height;
 use cw_common::types::Ack;
-use cw_common::xcall_connection_msg::ExecuteMsg;
+use cw_common::xcall_app_msg::ExecuteMsg;
 use cw_common::ProstMessage;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
@@ -63,7 +63,7 @@ use schemars::_serde_json::to_string;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-/// This function instantiates a contract using the CwIbcConnection.
+/// This function instantiates a contract using the CwCallService.
 ///
 /// Arguments:
 ///
@@ -93,7 +93,7 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let call_service = CwIbcConnection::default();
+    let call_service = CwCallService::default();
 
     call_service.instantiate(deps, env, info, msg)
 }
@@ -127,7 +127,7 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let mut call_service = CwIbcConnection::default();
+    let mut call_service = CwCallService::default();
 
     call_service.execute(deps, env, info, msg)
 }
@@ -150,7 +150,7 @@ pub fn execute(
 /// represents a binary data and `StdError` is a standard error type used in CosmWasm.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    let call_service = CwIbcConnection::default();
+    let call_service = CwCallService::default();
 
     call_service.query(deps, env, msg)
 }
@@ -175,7 +175,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 /// `Response` or an error of type `ContractError`.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
-    let call_service = CwIbcConnection::default();
+    let call_service = CwCallService::default();
 
     call_service.reply(deps, env, msg)
 }
