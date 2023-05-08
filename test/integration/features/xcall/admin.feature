@@ -9,11 +9,12 @@ Feature: xCall admin management
 
   Background:
     Given "BMC" contract deployed by "Alice" only when the chain is "icon"
-    And "Alice" is the "xcall" contract owner
+    Given "Alice" is the "ibcCore" contract owner
+    Given "Alice" is the "xcall" contract owner
 
   Scenario: 001 - Contract owner Adding an admin wallet to the xCall
     Given "Bob" is an admin wallet who needs to be added as admin
-    When "Alice" executes set_admin in xcall with "Bob" wallet address
+    When "Alice" executes update_admin in xcall with "Bob" wallet address
     Then "Bob" wallet address should be added as admin
 
   Scenario: 002 - Non Owner Adding an admin wallet to the xCall
@@ -32,7 +33,7 @@ Feature: xCall admin management
 
   Scenario: 004 - Preventing the addition of an existing admin wallet to xCall
     Given "Alice" has already added "Bob" wallet address as admin
-    When "Alice" executes set_admin in xcall with "Bob" wallet address
+    When "Alice" executes update_admin in xcall with "Bob" wallet address
     Then xCall returns an error message that the admin already exists
     And "Bob" wallet address should still be as admin
 
@@ -108,6 +109,15 @@ Feature: xCall admin management
 
   Scenario: 016 - Query admin after adding admin
     Given "Bob" is an admin wallet who needs to be added as admin
-    And "Alice" executes set_admin in xcall with "Bob" wallet address
+    And "Alice" executes update_admin in xcall with "Bob" wallet address
     When a user query for admin
     Then "Bob" wallet address should be as admin
+
+  Scenario: 017 - Query admin after removing admin
+    Given "Alice" executes remove_admin in xcall
+    When a user query for admin
+    Then xCall throws an error that there are no admin wallets
+
+  Scenario: 018 - Query admin before updating admin
+    When a user query for admin
+    Then by default "Alice" contract owner address should be as admin

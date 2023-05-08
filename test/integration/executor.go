@@ -142,7 +142,7 @@ func (e *Executor) xCallReturnsAnErrorMessageThatOnlyTheContractOwnerCanPerformT
 }
 
 func (e *Executor) hasAlreadyAddedWalletAddressAsAdmin(keyName, admin string) (err error) {
-	return e.executesSet_adminInXcallWithWalletAddress(keyName, admin)
+	return e.executesUpdate_adminInXcallWithWalletAddress(keyName, admin)
 }
 
 func (e *Executor) walletAddressShouldStillBeAsAdmin(admin string) error {
@@ -362,6 +362,15 @@ func (e *Executor) thereAreNoCallRequestsWithRollbackEnabled() error {
 func (e *Executor) xcallContractPanicWithAnErrorSequenceNumberNotFound() error {
 	if e.error == nil {
 		return fmt.Errorf("xcall did not throw an error for no sequence number")
+	}
+	return nil
+}
+
+func (e *Executor) xCallThrowsAnErrorThatThereAreNoAdminWallets() (err error) {
+	contractAddress := e.GetContractAddress("xcall")
+	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, GET_ADMIN, "")
+	if err == nil {
+		return fmt.Errorf("xcall did not throw an error for no admin")
 	}
 	return nil
 }

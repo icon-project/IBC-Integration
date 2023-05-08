@@ -16,7 +16,7 @@ func TestAdmin(t *testing.T) {
 			})
 		},
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
-			ctx.Step(`^"([^"]*)" executes set_admin in xcall with "([^"]*)" wallet address$`, executor.executesSet_adminInXcallWithWalletAddress)
+			ctx.Step(`^"([^"]*)" executes update_admin in xcall with "([^"]*)" wallet address$`, executor.executesUpdate_adminInXcallWithWalletAddress)
 			ctx.Step(`^"([^"]*)" is the "([^"]*)" contract owner$`, executor.isTheContractOwner)
 			ctx.Step(`^"([^"]*)" wallet address should be added as admin$`, executor.walletAddressShouldBeAddedAsAdmin)
 			ctx.Step(`^"([^"]*)" wallet address should not be added as admin$`, executor.walletAddressShouldNotBeAddedAsAdmin)
@@ -56,6 +56,7 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^xcall contract panic with an error MaxRollbackSizeExceeded$`, executor.xcallContractPanicWithAnErrorMaxRollbackSizeExceeded)
 			ctx.Step(`^there are no call requests with rollback enabled$`, executor.thereAreNoCallRequestsWithRollbackEnabled)
 			ctx.Step(`^xcall contract panic with an error sequence number not found$`, executor.xcallContractPanicWithAnErrorSequenceNumberNotFound)
+			ctx.Step(`^xCall throws an error that there are no admin wallets$`, executor.xCallThrowsAnErrorThatThereAreNoAdminWallets)
 
 		},
 		Options: &godog.Options{Format: "pretty", Paths: []string{"features/xcall/messaging.feature", "features/xcall/admin.feature"}, TestingT: t, StopOnFailure: false},
