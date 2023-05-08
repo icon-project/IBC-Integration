@@ -160,9 +160,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 /// This function handles a reply message in a Rust smart contract.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `deps`: `deps` is a mutable reference to the dependencies of the contract. It allows the contract
 /// to access the necessary modules and traits to interact with the blockchain and its state.
 /// * `env`: `env` is an object that contains information about the current blockchain environment, such
@@ -171,9 +171,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 /// * `msg`: The `msg` parameter in the `reply` function is of type `Reply`. It represents the reply
 /// message sent by an external contract in response to a previous message sent by the current contract.
 /// The `Reply` struct contains the following fields:
-/// 
+///
 /// Returns:
-/// 
+///
 /// a `Result<Response, ContractError>` where `Response` and `ContractError` are types defined in the
 /// contract's codebase. The `Result` type indicates that the function can either return a successful
 /// `Response` or an error of type `ContractError`.

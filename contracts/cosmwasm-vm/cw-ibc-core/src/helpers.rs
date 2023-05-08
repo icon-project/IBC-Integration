@@ -10,9 +10,9 @@ pub struct CwTemplateContract(pub Addr);
 
 impl CwTemplateContract {
     /// The function returns a clone of the address stored in a struct.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// The `addr` function returns a clone of the `Addr` object stored in the first field of `self`.
     pub fn addr(&self) -> Addr {
         self.0.clone()
@@ -20,15 +20,15 @@ impl CwTemplateContract {
 
     /// This function takes a message, converts it to binary, and returns a CosmosMsg to execute the
     /// message on a contract.
-    /// 
+    ///
     /// Arguments:
-    /// 
+    ///
     /// * `msg`: The `msg` parameter is a generic type that implements the `Into` trait for the
     /// `cw_common::core_msg::ExecuteMsg` type. It represents the message that will be sent to the
     /// contract when the `call` function is executed. The `Into` trait allows for the message to
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// a `StdResult` which can either be `Ok` with a `CosmosMsg` or `Err` with an error message.
     pub fn call<T: Into<cw_common::core_msg::ExecuteMsg>>(&self, msg: T) -> StdResult<CosmosMsg> {
         let msg = to_binary(&msg.into())?;
