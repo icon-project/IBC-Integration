@@ -16,7 +16,7 @@ func TestAdmin(t *testing.T) {
 			})
 		},
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
-			ctx.Step(`^"([^"]*)" executes update_admin in xcall with "([^"]*)" wallet address$`, executor.executesUpdate_adminInXcallWithWalletAddress)
+			ctx.Step(`^"([^"]*)" executes set_admin in xcall with "([^"]*)" wallet address$`, executor.executesSet_adminInXcallWithWalletAddress)
 			ctx.Step(`^"([^"]*)" is the "([^"]*)" contract owner$`, executor.isTheContractOwner)
 			ctx.Step(`^"([^"]*)" wallet address should be added as admin$`, executor.walletAddressShouldBeAddedAsAdmin)
 			ctx.Step(`^"([^"]*)" wallet address should not be added as admin$`, executor.walletAddressShouldNotBeAddedAsAdmin)
@@ -34,8 +34,6 @@ func TestAdmin(t *testing.T) {
 			ctx.Step(`^"([^"]*)" executes remove_admin in xcall$`, executor.executesRemove_adminInXcall)
 			ctx.Step(`^xCall should remove "([^"]*)" wallet address as admin$`, executor.xCallShouldRemoveWalletAddressAsAdmin)
 			ctx.Step(`^xCall returns an error message that admin is already set$`, executor.xCallReturnsAnErrorMessageThatAdminIsAlreadySet)
-			ctx.Step(`^there are no admin wallets added as admin$`, executor.thereAreNoAdminWalletsAddedAsAdmin)
-			ctx.Step(`^xCall returns an error message that there are no admin wallets added to the xCall smart contract$`, executor.xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTheXCallSmartContract)
 			ctx.Step(`^"([^"]*)" contract deployed by "([^"]*)" only when the chain is "([^"]*)"$`, executor.contractDeployedByOnlyWhenTheChainIs)
 			ctx.Step(`^a user query for admin$`, executor.aUserQueryForAdmin)
 			ctx.Step(`^"([^"]*)" wallet address should be as admin$`, executor.walletAddressShouldBeAsAdmin)

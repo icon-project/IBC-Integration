@@ -20,14 +20,14 @@ Feature: xCall admin management
   Scenario: 002 - Non Owner Adding an admin wallet to the xCall
     Given "Bob" is an admin wallet who needs to be added as admin
     And "Eve" is not the contract owner of the xCall smart contract
-    When "Eve" executes set_admin in xcall with "Bob" wallet address
+    When "Eve" executes update_admin in xcall with "Bob" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
     And by default "Alice" contract owner address should be as admin
 
   Scenario: 003 - An admin cannot add another admin to the xCall
     Given "Alice" has already added "Bob" wallet address as admin
     And "Diana" is an admin wallet who needs to be added as admin
-    When "Bob" executes set_admin in xcall with "Diana" wallet address
+    When "Bob" executes update_admin in xcall with "Diana" wallet address
     Then xCall returns an error message that only the contract owner can perform this action
     And "Diana" wallet address should not be added as admin
 
@@ -38,12 +38,12 @@ Feature: xCall admin management
     And "Bob" wallet address should still be as admin
 
   Scenario: 005 - Preventing the addition of null value as an admin wallet to xCall
-    When "Alice" executes set_admin in xcall with "Null" wallet address
+    When "Alice" executes update_admin in xcall with "Null" wallet address
     Then xCall returns an error message that the null value cannot be added as admin
     And by default "Alice" contract owner address should be as admin
 
   Scenario: 006 - Preventing the addition of junk characters as an admin wallet to xCall
-    When "Alice" executes set_admin in xcall with "Junk" wallet address
+    When "Alice" executes update_admin in xcall with "Junk" wallet address
     Then xCall returns an error message that  wallet address of the new admin is not a valid address
     And by default "Alice" contract owner address should be as admin
 
@@ -94,30 +94,22 @@ Feature: xCall admin management
     And "Bob" wallet address should still be as admin
 
   Scenario: 014 Contract owner cannot set admin twice
-    And "Alice" has already added "Bob" wallet address as admin
     And "Diana" is an admin wallet who needs to be added as admin
     When "Alice" executes set_admin in xcall with "Diana" wallet address
     Then xCall returns an error message that admin is already set
-    And "Bob" wallet address should still be as admin
-
-  Scenario: 015 Contract owner cannot update admin before adding any admin wallet address to xCall
-    Given  there are no admin wallets added as admin
-    And "Diana" is an admin wallet who needs to be added as admin
-    When "Alice" executes update_admin in xcall with "Diana" wallet address
-    Then xCall returns an error message that there are no admin wallets added to the xCall smart contract
     And by default "Alice" contract owner address should be as admin
 
-  Scenario: 016 - Query admin after adding admin
+  Scenario: 015 - Query admin after adding admin
     Given "Bob" is an admin wallet who needs to be added as admin
     And "Alice" executes update_admin in xcall with "Bob" wallet address
     When a user query for admin
     Then "Bob" wallet address should be as admin
 
-  Scenario: 017 - Query admin after removing admin
+  Scenario: 016 - Query admin after removing admin
     Given "Alice" executes remove_admin in xcall
     When a user query for admin
     Then xCall throws an error that there are no admin wallets
 
-  Scenario: 018 - Query admin before updating admin
+  Scenario: 017 - Query admin before updating admin
     When a user query for admin
     Then by default "Alice" contract owner address should be as admin

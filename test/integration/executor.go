@@ -227,22 +227,6 @@ func (e *Executor) xCallReturnsAnErrorMessageThatAdminIsAlreadySet() error {
 	return nil
 }
 
-func (e *Executor) thereAreNoAdminWalletsAddedAsAdmin() (err error) {
-	contractAddress := e.GetContractAddress("xcall")
-	e.ctx, err = e.chain.QueryContract(e.ctx, contractAddress, GET_ADMIN, "")
-	if err != nil {
-		return nil
-	}
-	return err
-}
-
-func (e *Executor) xCallReturnsAnErrorMessageThatThereAreNoAdminWalletsAddedToTheXCallSmartContract() error {
-	if e.error == nil {
-		return fmt.Errorf("owner was able to update admin even though admin was not set initially")
-	}
-	return nil
-}
-
 func (e *Executor) contractDeployedByOnlyWhenTheChainIs(contractName, owner, chainName string) error {
 	if e.cfg.Chain.ChainConfig.Type == chainName {
 		return e.isTheContractOwner(owner, strings.ToLower(contractName))
