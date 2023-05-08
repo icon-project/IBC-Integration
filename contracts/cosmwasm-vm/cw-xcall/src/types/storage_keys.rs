@@ -1,7 +1,6 @@
 use super::*;
 
 #[cw_serde]
-
 pub enum StorageKey {
     SequenceNo,
     RequestNo,

@@ -1,5 +1,6 @@
 use super::*;
 
+/// These are constants defined in the `CwCallService` struct that are used throughout the codebase.
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
 pub const EXECUTE_CALL_ID: u64 = 0;
@@ -7,6 +8,21 @@ pub const EXECUTE_ROLLBACK_ID: u64 = 1;
 pub const ACK_FAILURE_ID: u64 = 3;
 pub const SEND_CALL_MESSAGE_REPLY_ID: u64 = 2;
 
+/// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
+/// and destination endpoint, and a sequence number.
+///
+/// Properties:
+///
+/// * `sequence`: The `sequence` property is an unsigned 128-bit integer that represents the sequence
+/// number of the IBC transaction. It is used to ensure that transactions are processed in the correct
+/// order and to prevent replay attacks.
+/// * `src`: `src` is a property of the `IbcConfig` struct that represents the source endpoint of an
+/// Inter-Blockchain Communication (IBC) transaction. An IBC endpoint is a unique identifier for a
+/// blockchain network that can send or receive IBC packets. It typically includes information such as
+/// the chain ID
+/// * `dst`: `dst` is a property of the `IbcConfig` struct and represents the destination endpoint of an
+/// Inter-Blockchain Communication (IBC) transaction. It is of type `IbcEndpoint`, which likely contains
+/// information such as the chain ID, address, and port of the destination chain.
 #[cw_serde]
 pub struct IbcConfig {
     sequence: u128,
@@ -14,6 +30,8 @@ pub struct IbcConfig {
     dst: CwEndPoint,
 }
 
+/// This is an implementation block for the `IbcConfig` struct, defining several methods that can be
+/// called on instances of the struct.
 impl IbcConfig {
     pub fn new(src: CwEndPoint, dst: CwEndPoint) -> Self {
         Self {
@@ -40,6 +58,41 @@ impl IbcConfig {
     }
 }
 
+/// This is a Rust struct representing a Call Service with various fields such as last sequence number,
+/// owner, admin, message request, requests, IBC configuration, fee handler, fee, IBC host, and timeout
+/// height.
+///
+/// Properties:
+///
+/// * `last_sequence_no`: A field of type `Item` that stores the last sequence number used in a call
+/// service message.
+/// * `last_request_id`: This is a field of type `Item<'a, u128>` which stores the last request ID used
+/// by the `CwCallService` struct. The `Item` type is a wrapper around a value that can be stored in a
+/// persistent storage, and the `'a` lifetime parameter indicates that
+/// * `owner`: The `owner` property is a `String` type field that holds the address of the owner of the
+/// `CwCallService` struct.
+/// * `admin`: `admin` is a field of type `Item<'a, String>` in the `CwCallService` struct. It is a
+/// reference to a string that represents the address of the admin of the call service. The `Item` type
+/// is a wrapper around a reference to a value of a
+/// * `message_request`: A map that stores CallServiceMessageRequest structs with a u128 key.
+/// * `requests`: `requests` is a `Map` that stores `CallRequest` objects with a `u128` key. This map is
+/// used to keep track of all the call requests made by the users of the `CwCallService` struct. The
+/// `u128` key is used to uniquely identify
+/// * `ibc_config`: This property is of type `Item<'a, IbcConfig>` and represents the IBC configuration
+/// for the call service. It is likely used to define the parameters and settings for inter-blockchain
+/// communication.
+/// * `fee_handler`: The `fee_handler` property is an `Item` that holds a `String` value. It likely
+/// represents the address or identifier of the entity responsible for handling fees associated with the
+/// `CwCallService` struct.
+/// * `fee`: `fee` is a field of type `Item<'a, u128>` in the `CwCallService` struct. It is a reference
+/// to an item of type `u128` that represents the fee for the call service. The `Item` type is a wrapper
+/// around a reference to
+/// * `ibc_host`: `ibc_host` is a field of type `Item<'a, Addr>` in a struct called `CwCallService`. It
+/// is likely used to store the address of the IBC host that the `CwCallService` interacts with. The
+/// `Addr` type likely represents a network
+/// * `timeout_height`: The `timeout_height` property is an `Item` that stores the timeout height for
+/// the Call Service. This is the block height at which the Call Service will stop processing requests
+/// if they have not been completed.
 pub struct CwCallService<'a> {
     last_sequence_no: Item<'a, u128>,
     last_request_id: Item<'a, u128>,
