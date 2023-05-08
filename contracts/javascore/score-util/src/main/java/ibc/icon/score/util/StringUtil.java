@@ -155,7 +155,7 @@ public class StringUtil {
     }
 
     public static String decodeURL(String str) {
-        byte[] bytes = str.getBytes();
+        byte[] bytes = hexToBytes(str);
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < bytes.length; i++) {
             byte b = bytes[i];
