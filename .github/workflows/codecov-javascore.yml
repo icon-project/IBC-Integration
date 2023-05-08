@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'contracts/javascore/**'
   pull_request:
     branches:
       - main

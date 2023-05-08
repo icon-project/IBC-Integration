@@ -9,8 +9,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "contracts/cosmwasm-vm/**"
 
 defaults:
   run:
