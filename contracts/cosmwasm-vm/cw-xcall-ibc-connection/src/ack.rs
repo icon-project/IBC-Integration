@@ -43,10 +43,7 @@ pub fn make_ack_fail(err: String) -> Binary {
 ///
 /// a `Result` with either an `IbcBasicResponse` or a `ContractError`.
 pub fn on_ack_sucess(packet: CwPacket) -> Result<CwBasicResponse, ContractError> {
-    let attributes = vec![
-        attr("action", "acknowledge"),
-        attr("success", "true"),
-    ];
+    let attributes = vec![attr("action", "acknowledge"), attr("success", "true")];
 
     Ok(CwBasicResponse::new().add_attributes(attributes))
 }
@@ -66,7 +63,7 @@ pub fn on_ack_sucess(packet: CwPacket) -> Result<CwBasicResponse, ContractError>
 ///
 /// a `Result` with an `IbcBasicResponse` on success or a `ContractError` on failure.
 pub fn on_ack_failure(packet: CwPacket, error: &str) -> Result<CwBasicResponse, ContractError> {
-   Ok(CwBasicResponse::new()
+    Ok(CwBasicResponse::new()
         .add_attribute("action", "acknowledge")
         .add_attribute("success", "false")
         .add_attribute("error", error))

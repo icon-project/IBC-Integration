@@ -240,9 +240,6 @@ impl<'a> CwIbcConnection<'a> {
         }
     }
 
-    
-   
-
     /// This function removes a message request with a given ID from a storage.
     ///
     /// Arguments:

@@ -3,6 +3,7 @@ use super::*;
 use crate::{
     error::ContractError,
     state::{CwIbcConnection, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
+    types::LOG_PREFIX,
 };
 
 impl<'a> CwIbcConnection<'a> {
@@ -81,10 +82,6 @@ impl<'a> CwIbcConnection<'a> {
         Ok(())
     }
 
-   
-
-   
-
     /// This function checks if the sender of a message is the owner of a contract.
     ///
     /// Arguments:
@@ -159,6 +156,7 @@ impl<'a> CwIbcConnection<'a> {
         let ibc_host = self.get_ibc_host(store)?;
 
         if ibc_host != address {
+            println!("{} Invalid IBC Handler ", LOG_PREFIX);
             return Err(ContractError::OnlyIbcHandler {});
         }
         Ok(())
@@ -172,6 +170,7 @@ impl<'a> CwIbcConnection<'a> {
         let ibc_host = self.get_xcall_host(store)?;
 
         if ibc_host != address {
+            println!("{} Invalid Xcall Handler ", LOG_PREFIX);
             return Err(ContractError::OnlyIbcHandler {});
         }
         Ok(())

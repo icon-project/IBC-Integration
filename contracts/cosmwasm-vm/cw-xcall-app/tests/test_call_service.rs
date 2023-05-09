@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 
 use cw_xcall_app::{instantiate, msg::InstantiateMsg, state::CwCallService};
-use setup::*;
+use setup::test::*;
 
 #[test]
 
@@ -22,7 +22,7 @@ fn proper_instantiate() {
         mock_info,
         InstantiateMsg {
             timeout_height: 10,
-            ibc_host: Addr::unchecked("someaddress"),
+            connection_host: Addr::unchecked("someaddress"),
         },
     )
     .unwrap();

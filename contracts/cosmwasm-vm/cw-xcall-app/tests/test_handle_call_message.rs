@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use cw_common::types::Address;
 use cw_xcall_app::{
-    state::{CwCallService, IbcConfig, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
+    state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
 mod account;
@@ -13,7 +13,7 @@ mod setup;
 use crate::account::alice;
 
 use schemars::_serde_json::to_string;
-use setup::*;
+use setup::test::*;
 
 #[test]
 #[should_panic(expected = "InvalidRequestId")]
@@ -46,22 +46,7 @@ fn test_execute_call_having_request_id_without_rollback() {
         .insert_request(deps.as_mut().storage, request_id, proxy_requests)
         .unwrap();
 
-    let src = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let dst = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
-
-    let ibc_config = IbcConfig::new(src, dst);
-
-    cw_callservice
-        .ibc_config()
-        .save(deps.as_mut().storage, &ibc_config)
-        .unwrap();
+   
 
     let res = cw_callservice
         .execute_call(deps.as_mut(), info.clone(), request_id)

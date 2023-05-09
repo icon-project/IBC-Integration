@@ -1,7 +1,6 @@
 pub mod ack;
 pub mod admin;
 pub mod assertion;
-pub mod handle_outgoing;
 pub mod check;
 pub mod contract;
 pub mod error;
@@ -9,6 +8,7 @@ pub mod events;
 pub mod fee;
 pub mod fee_handler;
 pub mod handle_incoming;
+pub mod handle_outgoing;
 pub mod ibc;
 pub mod msg;
 pub mod owner;
@@ -20,21 +20,11 @@ use crate::{
     ack::{make_ack_fail, make_ack_success},
     check::{check_order, check_version},
     error::ContractError,
-    events::{
-       event_message_forwarded
-        
-    },
+    events::event_message_forwarded,
     ibc::{APP_ORDER, IBC_VERSION},
     msg::{InstantiateMsg, QueryMsg},
-    state::{
-        CwIbcConnection, IbcConfig, ACK_FAILURE_ID
-    },
-    types::{
-      //  call_request::CallRequest,
-       
-       // response::{to_int, CallServiceMessageResponse, CallServiceResponseType},
-        storage_keys::StorageKey,
-    },
+    state::{CwIbcConnection, IbcConfig, ACK_FAILURE_ID},
+    types::storage_keys::StorageKey,
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{

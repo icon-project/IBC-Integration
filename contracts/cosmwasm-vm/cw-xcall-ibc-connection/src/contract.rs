@@ -1,3 +1,7 @@
+use cosmwasm_std::from_slice;
+
+use crate::types::LOG_PREFIX;
+
 use super::*;
 
 // version info for migration info
@@ -75,21 +79,33 @@ impl<'a> CwIbcConnection<'a> {
             ExecuteMsg::SetAdmin { address } => {
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
-                self.add_admin(deps.storage, info, validated_address)
+                self.add_admin(deps.storage, info, validated_address.to_string())
             }
             ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
-            ExecuteMsg::MessageFromXCall {  data } => {
+            ExecuteMsg::MessageFromXCall { data } => {
+                println!("{} Received Payload From XCall App", LOG_PREFIX);
                 self.forward_to_host(deps, info, env, data)
+            }
+            ExecuteMsg::SetXCallHost { address } => {
+                let validated_address =
+                    CwIbcConnection::validate_address(deps.api, address.as_str())?;
+                self.set_xcall_host(deps.storage, validated_address)?;
+                Ok(Response::new())
             }
             ExecuteMsg::UpdateAdmin { address } => {
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
-                self.update_admin(deps.storage, info, validated_address)
+                self.update_admin(deps.storage, info, validated_address.to_string())
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
+            ExecuteMsg::SetIbcConfig { ibc_config } => {
+                let config = from_slice(&ibc_config).unwrap();
+                self.save_config(deps.storage, &config)?;
+                Ok(Response::new())
+            }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
@@ -194,7 +210,7 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
-            XCALL_FORWARD_REPLY_ID=>self.reply_forward_xcall(deps, msg),
+            XCALL_FORWARD_REPLY_ID => self.reply_forward_xcall(deps, msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
@@ -246,14 +262,12 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("ibc_host", msg.ibc_host))
     }
 
-   
     fn reply_forward_xcall(&self, deps: DepsMut, msg: Reply) -> Result<Response, ContractError> {
+        println!("{} Reply From Forward Call", LOG_PREFIX);
         Ok(Response::new()
             .add_attribute("action", "call_message")
             .add_attribute("method", "reply_forward_xcall"))
     }
-
-   
 
     #[cfg(feature = "native_ibc")]
     fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {

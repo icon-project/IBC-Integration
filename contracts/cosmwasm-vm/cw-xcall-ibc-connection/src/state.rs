@@ -7,7 +7,6 @@ pub const ACK_FAILURE_ID: u64 = 3;
 
 pub const XCALL_FORWARD_REPLY_ID: u64 = 4;
 
-
 /// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
 /// and destination endpoint, and a sequence number.
 ///

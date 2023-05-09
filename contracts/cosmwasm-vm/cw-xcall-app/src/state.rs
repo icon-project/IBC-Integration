@@ -8,56 +8,6 @@ pub const EXECUTE_ROLLBACK_ID: u64 = 1;
 pub const ACK_FAILURE_ID: u64 = 3;
 pub const SEND_CALL_MESSAGE_REPLY_ID: u64 = 2;
 
-/// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
-/// and destination endpoint, and a sequence number.
-///
-/// Properties:
-///
-/// * `sequence`: The `sequence` property is an unsigned 128-bit integer that represents the sequence
-/// number of the IBC transaction. It is used to ensure that transactions are processed in the correct
-/// order and to prevent replay attacks.
-/// * `src`: `src` is a property of the `IbcConfig` struct that represents the source endpoint of an
-/// Inter-Blockchain Communication (IBC) transaction. An IBC endpoint is a unique identifier for a
-/// blockchain network that can send or receive IBC packets. It typically includes information such as
-/// the chain ID
-/// * `dst`: `dst` is a property of the `IbcConfig` struct and represents the destination endpoint of an
-/// Inter-Blockchain Communication (IBC) transaction. It is of type `IbcEndpoint`, which likely contains
-/// information such as the chain ID, address, and port of the destination chain.
-#[cw_serde]
-pub struct IbcConfig {
-    sequence: u128,
-    src: CwEndPoint,
-    dst: CwEndPoint,
-}
-
-/// This is an implementation block for the `IbcConfig` struct, defining several methods that can be
-/// called on instances of the struct.
-impl IbcConfig {
-    pub fn new(src: CwEndPoint, dst: CwEndPoint) -> Self {
-        Self {
-            src,
-            dst,
-            sequence: u128::default(),
-        }
-    }
-
-    pub fn src_endpoint(&self) -> &CwEndPoint {
-        &self.src
-    }
-
-    pub fn dst_endpoint(&self) -> &CwEndPoint {
-        &self.dst
-    }
-
-    pub fn sequence(&self) -> u128 {
-        self.sequence
-    }
-
-    pub fn next_sequence(&self) -> Option<u128> {
-        self.sequence.checked_add(1)
-    }
-}
-
 /// This is a Rust struct representing a Call Service with various fields such as last sequence number,
 /// owner, admin, message request, requests, IBC configuration, fee handler, fee, IBC host, and timeout
 /// height.

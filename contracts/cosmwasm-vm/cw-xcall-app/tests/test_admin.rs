@@ -4,7 +4,7 @@ use account::*;
 use cosmwasm_std::testing::mock_env;
 use cw_common::types::Address;
 use cw_xcall_app::state::CwCallService;
-use setup::*;
+use setup::test::*;
 
 #[test]
 #[should_panic(expected = "Unauthorized")]

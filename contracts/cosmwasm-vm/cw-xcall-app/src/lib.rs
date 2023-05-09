@@ -24,7 +24,7 @@ use crate::{
     },
     msg::{InstantiateMsg, QueryMsg},
     state::{
-        CwCallService, IbcConfig, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID,
+        CwCallService, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID,
         SEND_CALL_MESSAGE_REPLY_ID,
     },
     types::{

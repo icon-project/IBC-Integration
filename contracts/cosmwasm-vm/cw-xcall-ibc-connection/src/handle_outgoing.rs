@@ -1,11 +1,10 @@
 use cw_common::hex_string::HexString;
 
-use crate::state::XCALL_FORWARD_REPLY_ID;
+use crate::{state::XCALL_FORWARD_REPLY_ID, types::LOG_PREFIX};
 
 use super::*;
 
 impl<'a> CwIbcConnection<'a> {
-   
     pub fn forward_to_host(
         &self,
         deps: DepsMut,
@@ -17,17 +16,24 @@ impl<'a> CwIbcConnection<'a> {
         self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
 
         self.ensure_data_length(message.len())?;
+        println!("{} Packet Validated", LOG_PREFIX);
 
         // TODO : ADD fee logic
 
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
         let ibc_host = self.get_ibc_host(deps.as_ref().storage)?;
 
-        let ibc_config = self
-            .ibc_config()
-            .load(deps.as_ref().storage)
-            .map_err(ContractError::Std)?;
+        println!(
+            "{} Forwarding to {} with sequence {}",
+            LOG_PREFIX, &ibc_host, sequence_no
+        );
 
+        let ibc_config = self.ibc_config().load(deps.as_ref().storage).map_err(|e| {
+            println!("{} Failed Loading IbcConfig {:?}", LOG_PREFIX, e);
+            ContractError::Std(e)
+        })?;
+
+        println!("{} Loaded IbcConfig", LOG_PREFIX);
         let query_message = cw_common::core_msg::QueryMsg::SequenceSend {
             port_id: ibc_config.src_endpoint().clone().port_id,
             channel_id: ibc_config.src_endpoint().clone().channel_id,
@@ -37,11 +43,17 @@ impl<'a> CwIbcConnection<'a> {
             contract_addr: ibc_host.to_string(),
             msg: to_binary(&query_message).map_err(ContractError::Std)?,
         });
+        println!("{} Created Query Request", LOG_PREFIX);
 
         let sequence_number_host: u64 = deps
             .querier
             .query(&query_request)
             .map_err(ContractError::Std)?;
+
+        println!(
+            "{} Received host sequence no {}",
+            LOG_PREFIX, sequence_number_host
+        );
 
         let timeout_height = self.get_timeout_height(deps.as_ref().storage);
 
@@ -51,6 +63,7 @@ impl<'a> CwIbcConnection<'a> {
             sequence_no,
             &message,
         );
+        println!("{} Message Forward Event {:?}", LOG_PREFIX, &event);
 
         #[cfg(feature = "native_ibc")]
         {
@@ -85,6 +98,8 @@ impl<'a> CwIbcConnection<'a> {
                 timeout_timestamp: 0,
             };
 
+            println!("{} Raw Packet Created {:?}", LOG_PREFIX, &packet_data);
+
             let message = cw_common::core_msg::ExecuteMsg::SendPacket {
                 packet: HexString::from_bytes(&packet_data.encode_to_vec()),
             };
@@ -99,7 +114,7 @@ impl<'a> CwIbcConnection<'a> {
                 gas_limit: None,
                 reply_on: cosmwasm_std::ReplyOn::Always,
             };
-
+            println!("{} Packet Forwarded To IBCHost {} ", LOG_PREFIX, ibc_host);
             Ok(Response::new()
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")

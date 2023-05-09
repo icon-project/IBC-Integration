@@ -7,37 +7,38 @@ use cosmwasm_std::{
 use cw_common::ibc_types::IbcHeight;
 use cw_common::raw_types::channel::RawPacket;
 use cw_common::types::{Ack, Address};
-use cw_common::xcall_app_msg::ExecuteMsg;
 use cw_common::ProstMessage;
-use cw_xcall_app::types::call_request::CallRequest;
+
+use cw_xcall_app::ack::on_ack_failure;
 use cw_xcall_app::types::response::CallServiceMessageResponse;
-use cw_xcall_app::{
-    state::CwCallService,
-    types::{message::CallServiceMessage, request::CallServiceMessageRequest},
-};
+use cw_xcall_ibc_connection::ack::on_ack_sucess;
+use cw_xcall_ibc_connection::{instantiate, execute, query};
+use cw_xcall_ibc_connection::msg::{InstantiateMsg, QueryMsg};
 use setup::*;
 pub mod account;
 use account::admin_one;
 use account::alice;
 use common::rlp::{Decodable, Encodable};
 use cosmwasm_std::from_binary;
-use cw_xcall_app::{
-    execute, instantiate,
-    msg::{InstantiateMsg, QueryMsg},
-    query,
-};
+use cw_common::xcall_connection_msg::ExecuteMsg;
+    
+    use cw_xcall_ibc_connection::state::CwIbcConnection;
+    use cw_xcall_app::types::request::CallServiceMessageRequest;
+    use cw_xcall_app::types::{ message::CallServiceMessage};
 use setup::*;
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = "OrderedChannel")]
 fn fails_on_open_channel_open_init_ordered_channel() {
+    
+
     let mut deps = deps();
 
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
@@ -60,7 +61,7 @@ fn fails_on_open_channel_open_init_ordered_channel() {
         },
     };
     contract
-        .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
+        .set_xcall_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
 
     contract
@@ -71,12 +72,15 @@ fn fails_on_open_channel_open_init_ordered_channel() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn success_on_open_channel_open_init_unordered_channel() {
+    use cw_common::xcall_connection_msg::ExecuteMsg;
+    use cw_xcall_ibc_connection::state::CwIbcConnection;
+
     let mut deps = deps();
 
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
@@ -111,12 +115,15 @@ fn success_on_open_channel_open_init_unordered_channel() {
 #[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"xcall-1\" }")]
 fn fails_on_open_channel_open_try_invalid_version() {
+    use cw_common::xcall_connection_msg::ExecuteMsg;
+    use cw_xcall_ibc_connection::state::CwIbcConnection;
+
     let mut deps = deps();
 
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
@@ -158,7 +165,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
@@ -203,7 +210,7 @@ fn sucess_on_ibc_channel_connect() {
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
         channel_id: "channel-1".to_string(),
@@ -249,7 +256,7 @@ fn fails_on_ibc_channel_connect_ordered_channel() {
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
         channel_id: "channel-1".to_string(),
@@ -289,7 +296,7 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
         channel_id: "channel-1".to_string(),
@@ -324,11 +331,13 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_receive_packet_for_call_message_request() {
+   
+
     let mut mock_deps = deps();
     let mock_info = create_mock_info("ibchostaddress", "umlg", 2000);
     let mock_env = mock_env();
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     contract
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
@@ -399,7 +408,7 @@ fn sucess_on_ack_packet() {
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
     let mock_env = mock_env();
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
     let ack = IbcAcknowledgement::new(
         to_binary(&Ack::Result(
             Binary::from_base64("aGVsbG8gd29ybGQ=").unwrap(),
@@ -457,7 +466,7 @@ fn test_entry_point() {
     let mock_info = create_mock_info("owner", "uconst", 200000);
     let env = mock_env();
 
-    let msg = cw_common::xcall_app_msg::ExecuteMsg::UpdateAdmin {
+    let msg = cw_common::xcall_connection_msg::ExecuteMsg::UpdateAdmin {
         address: admin_one().to_string(),
     };
 
@@ -490,7 +499,7 @@ fn fails_receive_packet_for_call_message_request() {
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
     let mock_env = mock_env();
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     contract
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
@@ -547,7 +556,7 @@ fn fails_on_open_channel_open_init_unauthorized() {
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
@@ -581,7 +590,7 @@ fn success_on_setting_timeout_height() {
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     let init_message = InstantiateMsg {
         timeout_height: 10,
@@ -621,7 +630,7 @@ fn fails_on_setting_timeout_height_unauthorized() {
     let mock_env = mock_env();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
 
     let init_message = InstantiateMsg {
         timeout_height: 10,
@@ -687,7 +696,7 @@ fn test_ack_success_on_call_request() {
 
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let ack = cw_xcall_app::ack::on_ack_sucess(packet);
+    let ack = on_ack_sucess(packet);
 
     assert!(ack.is_ok())
 }
@@ -724,12 +733,12 @@ fn test_ack_on_fails() {
 
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    cw_xcall_app::ack::on_ack_sucess(packet).unwrap();
+    on_ack_sucess(packet).unwrap();
 }
 
 #[test]
 fn test_ack_success_on_call_response() {
-    let data = CallServiceMessageResponse::new(
+    let data = cw_xcall_app::types::response::CallServiceMessageResponse::new(
         0,
         cw_xcall_app::types::response::CallServiceResponseType::CallServiceResponseSuccess,
         "Success",
@@ -756,7 +765,7 @@ fn test_ack_success_on_call_response() {
 
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let ack = cw_xcall_app::ack::on_ack_sucess(packet);
+    let ack = on_ack_sucess(packet);
 
     assert!(ack.is_ok())
 }
@@ -794,7 +803,7 @@ fn test_ack_failure_on_call_request() {
 
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let ack = cw_xcall_app::ack::on_ack_failure(packet, "Failed to Execute");
+    let ack = on_ack_failure(packet, "Failed to Execute");
 
     assert!(ack.is_ok())
 }
@@ -831,7 +840,7 @@ fn fails_on_ack_failure_for_call_request() {
 
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    cw_xcall_app::ack::on_ack_failure(packet, "Failed to Execute").unwrap();
+    on_ack_failure(packet, "Failed to Execute").unwrap();
 }
 
 #[test]
@@ -863,7 +872,7 @@ fn test_ack_failure_on_call_response() {
 
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let ack = cw_xcall_app::ack::on_ack_failure(packet, "Failed to Execute");
+    let ack = on_ack_failure(packet, "Failed to Execute");
 
     assert!(ack.is_ok())
 }
@@ -874,7 +883,7 @@ fn test_handle_response() {
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
     let mock_env = mock_env();
 
-    let mut contract = CwCallService::default();
+    let mut contract = CwIbcConnection::default();
     contract
         .set_ibc_host(
             mock_deps.as_mut().storage,
@@ -899,13 +908,13 @@ fn test_handle_response() {
 
     let message: CallServiceMessage = data.try_into().unwrap();
 
-    contract
-        .set_call_request(
-            mock_deps.as_mut().storage,
-            0,
-            CallRequest::new("".into(), "".into(), vec![], true),
-        )
-        .unwrap();
+    // contract
+    //     .set_call_request(
+    //         mock_deps.as_mut().storage,
+    //         0,
+    //         CallRequest::new("".into(), "".into(), vec![], true),
+    //     )
+    //     .unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,

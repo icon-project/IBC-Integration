@@ -4,6 +4,8 @@ pub mod request;
 pub mod response;
 pub mod storage_keys;
 
+pub const LOG_PREFIX: &str = "[xcall_app]:";
+
 use crate::error::ContractError;
 pub use common::rlp;
 use common::rlp::{Decodable, Encodable};

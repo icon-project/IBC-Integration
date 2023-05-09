@@ -7,13 +7,15 @@ use std::{
     path::PathBuf,
 };
 
+use cw_multi_test::AppResponse;
+use ibc::events::IbcEventType;
 use ibc_proto::ibc::core::channel::v1::Packet;
 use serde::Deserialize;
 
 use common::icon::icon::types::v1::BtpHeader;
 use common::icon::icon::types::v1::MerkleNode;
 use common::icon::icon::types::v1::SignedHeader;
-use cosmwasm_std::Attribute;
+use cosmwasm_std::{Attribute, Event};
 
 pub mod constants;
 
@@ -221,4 +223,21 @@ pub fn to_attribute_map(attrs: &Vec<Attribute>) -> HashMap<String, String> {
         map.insert(attr.key.clone(), attr.value.clone());
     }
     return map;
+}
+
+pub fn get_event(res: &AppResponse, event: &str) -> Option<HashMap<String, String>> {
+    let event = res
+        .events
+        .iter()
+        .filter(|e| e.ty == event)
+        .collect::<Vec<&Event>>();
+    if event.len() > 0 {
+        let map = to_attribute_map(&event[0].attributes);
+        return Some(map);
+    }
+    None
+}
+
+pub fn get_event_name(event_type: IbcEventType) -> String {
+    format!("wasm-{}", event_type.as_str())
 }

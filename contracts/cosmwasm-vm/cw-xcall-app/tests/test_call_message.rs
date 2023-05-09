@@ -11,12 +11,16 @@ use cosmwasm_std::{
 
 use cw_common::ibc_types::IbcHeight;
 use cw_common::{hex_string::HexString, ProstMessage};
+use cw_multi_test::AppResponse;
 use cw_xcall_app::{
     error::ContractError,
-    state::{CwCallService, IbcConfig},
+    state::CwCallService,
     types::{message::CallServiceMessage, request::CallServiceMessageRequest},
 };
-use setup::*;
+use cw_xcall_ibc_connection::state::{CwIbcConnection, IbcConfig};
+use setup::test::*;
+use test_utils::{get_test_signed_headers, to_attribute_map,get_event,get_event_name};
+
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 
@@ -25,142 +29,14 @@ fn send_packet_success() {
     let mut mock_deps = deps();
 
     let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
-
-    let contract = CwCallService::default();
-
-    contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
-
-    let src = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let dst = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
-
-    let ibc_config = IbcConfig::new(src, dst);
-
-    contract
-        .ibc_config()
-        .save(mock_deps.as_mut().storage, &ibc_config)
-        .unwrap();
-
-    let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        MOCK_CONTRACT_TO_ADDR.to_string(),
-        1,
-        false,
-        vec![1, 2, 3],
-    );
-
-    let message: CallServiceMessage = data.try_into().unwrap();
-
-    mock_deps.querier.update_wasm(|r| {
-        let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
-        let mut storage1 = HashMap::<Binary, Binary>::default();
-        storage1.insert(b"the key".into(), b"the value".into());
-        match r {
-            WasmQuery::ContractInfo { contract_addr } => {
-                if *contract_addr == constract1 {
-                    let response = ContractInfoResponse::default();
-                    SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
-                } else {
-                    SystemResult::Err(SystemError::NoSuchContract {
-                        addr: contract_addr.clone(),
-                    })
-                }
-            }
-            WasmQuery::Smart {
-                contract_addr: _,
-                msg: _,
-            } => SystemResult::Ok(ContractResult::Ok(to_binary(&10).unwrap())),
-            _ => todo!(),
-        }
-    });
-
-    let height = IbcHeight::new(0, 10)
-        .map_err(|error| ContractError::DecodeFailed {
-            error: error.to_string(),
-        })
-        .unwrap();
-
-    let packet_data = cw_common::raw_types::channel::RawPacket {
-        sequence: 10,
-        source_port: ibc_config.src_endpoint().clone().port_id,
-        source_channel: ibc_config.src_endpoint().clone().channel_id,
-        destination_port: ibc_config.dst_endpoint().clone().port_id,
-        destination_channel: ibc_config.dst_endpoint().clone().channel_id,
-        data: to_vec(&message)
-            .map_err(|error| ContractError::DecodeFailed {
-                error: error.to_string(),
-            })
-            .unwrap(),
-        timeout_height: Some(height.into()),
-        timeout_timestamp: 0,
-    };
-
-    let message = cw_common::core_msg::ExecuteMsg::SendPacket {
-        packet: HexString::from_bytes(&packet_data.encode_to_vec()),
-    };
-
-    contract
-        .set_ibc_host(mock_deps.as_mut().storage, Addr::unchecked("hostaddress"))
-        .unwrap();
-    contract
-        .set_timeout_height(mock_deps.as_mut().storage, 10)
-        .unwrap();
-
-    let result = contract
-        .send_packet(
-            mock_deps.as_mut(),
-            mock_info.clone(),
-            mock_env(),
-            MOCK_CONTRACT_TO_ADDR.to_string(),
-            vec![1, 2, 3],
-            None,
-        )
-        .unwrap();
-
-    #[cfg(feature = "native_ibc")]
-    {
-        let timeout_block = IbcTimeoutBlock {
-            revision: 0,
-            height: 10,
-        };
-
-        let timeout = IbcTimeout::with_both(timeout_block, mock_env().block.time.plus_seconds(300));
-        let data = CallServiceMessageRequest::new(
-            mock_info.sender.as_str().to_string(),
-            MOCK_CONTRACT_TO_ADDR.to_string(),
-            1,
-            false,
-            vec![1, 2, 3],
-        );
-
-        let message: CallServiceMessage = data.try_into().unwrap();
-
-        let expected_packet = IbcMsg::SendPacket {
-            channel_id: "channel-3".to_string(),
-            data: to_binary(&message).unwrap(),
-            timeout,
-        };
-        assert_eq!(result.messages[0].msg, CosmosMsg::Ibc(expected_packet))
-    }
-
-    #[cfg(not(feature = "native_ibc"))]
-    {
-        let response_data = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: "hostaddress".to_string(),
-            msg: to_binary(&message).unwrap(),
-            funds: mock_info.funds,
-        });
-        assert_eq!(result.messages[0].msg, response_data)
-    }
+    let mut ctx = setup_contracts(mock_deps);
+    call_set_xcall_host(&mut ctx).unwrap();
+    call_set_ibc_config(&mut ctx).unwrap();
+    let result = call_send_call_message(&mut ctx, MOCK_CONTRACT_TO_ADDR, vec![1, 2, 3],None);
+    assert_eq!(true,result.is_ok());
+    let result = result.unwrap();
+    let event=get_event(&result,"wasm-xcall_app_send_call_message_reply").unwrap();
+    assert_eq!("success",event.get("status").unwrap());
 }
 
 #[test]
@@ -179,22 +55,7 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let src = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let dst = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
-
-    let ibc_config = IbcConfig::new(src, dst);
-
-    contract
-        .ibc_config()
-        .save(mock_deps.as_mut().storage, &ibc_config)
-        .unwrap();
+   
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
         height: 3,
@@ -230,6 +91,7 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
     assert_eq!(result.messages[0].msg, CosmosMsg::Ibc(expected_packet))
 }
 
+
 #[test]
 #[should_panic(expected = "MaxDataSizeExceeded")]
 fn send_packet_failure_due_data_len() {
@@ -246,22 +108,7 @@ fn send_packet_failure_due_data_len() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let src = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let dst = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
-
-    let ibc_config = IbcConfig::new(src, dst);
-
-    contract
-        .ibc_config()
-        .save(mock_deps.as_mut().storage, &ibc_config)
-        .unwrap();
+  
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
@@ -310,22 +157,7 @@ fn send_packet_failure_due_rollback_len() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let src = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let dst = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
-
-    let ibc_config = IbcConfig::new(src, dst);
-
-    contract
-        .ibc_config()
-        .save(mock_deps.as_mut().storage, &ibc_config)
-        .unwrap();
+   
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
@@ -373,22 +205,6 @@ fn send_packet_success_needresponse() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-    let src = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let dst = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
-
-    let ibc_config = IbcConfig::new(src, dst);
-
-    contract
-        .ibc_config()
-        .save(mock_deps.as_mut().storage, &ibc_config)
-        .unwrap();
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
@@ -414,7 +230,7 @@ fn send_packet_success_needresponse() {
     });
 
     contract
-        .set_ibc_host(mock_deps.as_mut().storage, Addr::unchecked("hostaddress"))
+        .set_connection_host(mock_deps.as_mut().storage, Addr::unchecked("hostaddress"))
         .unwrap();
     contract
         .set_timeout_height(mock_deps.as_mut().storage, 10)

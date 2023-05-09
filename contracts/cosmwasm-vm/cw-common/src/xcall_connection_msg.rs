@@ -15,8 +15,14 @@ pub enum ExecuteMsg {
     SetProtocolFeeHandler {
         address: String,
     },
+    SetXCallHost {
+        address: String,
+    },
     MessageFromXCall {
         data: Vec<u8>,
+    },
+    SetIbcConfig {
+        ibc_config: Vec<u8>,
     },
     UpdateAdmin {
         address: String,

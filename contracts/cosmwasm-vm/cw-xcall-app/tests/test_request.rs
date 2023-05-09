@@ -2,7 +2,7 @@ mod account;
 mod setup;
 
 use cw_xcall_app::state::CwCallService;
-use setup::*;
+use setup::test::*;
 
 #[test]
 fn update_sequence() {

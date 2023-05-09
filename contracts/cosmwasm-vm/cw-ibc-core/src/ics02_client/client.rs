@@ -327,22 +327,22 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
-   /// This method retrieves a client from storage and returns an error if the client is not found.
-   /// 
-   /// Arguments:
-   /// 
-   /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is likely an
-   /// interface for interacting with some kind of storage system, such as a database or key-value
-   /// store. The specific implementation of this trait is not known at compile time and is determined
-   /// at runtime.
-   /// * `client_id`: The `client_id` parameter is of type `ClientId` and represents the identifier of
-   /// the client that needs to be retrieved. It is used to query the storage for the client
-   /// implementation associated with this identifier.
-   /// 
-   /// Returns:
-   /// 
-   /// a `Result` object that contains either a `String` representing the client or a `ContractError` if
-   /// there was an error retrieving the client from the storage or if the client was not found.
+    /// This method retrieves a client from storage and returns an error if the client is not found.
+    ///
+    /// Arguments:
+    ///
+    /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is likely an
+    /// interface for interacting with some kind of storage system, such as a database or key-value
+    /// store. The specific implementation of this trait is not known at compile time and is determined
+    /// at runtime.
+    /// * `client_id`: The `client_id` parameter is of type `ClientId` and represents the identifier of
+    /// the client that needs to be retrieved. It is used to query the storage for the client
+    /// implementation associated with this identifier.
+    ///
+    /// Returns:
+    ///
+    /// a `Result` object that contains either a `String` representing the client or a `ContractError` if
+    /// there was an error retrieving the client from the storage or if the client was not found.
     pub fn get_client(
         &self,
         store: &dyn Storage,
@@ -361,18 +361,18 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     /// This method retrieves the client state from storage using the client ID.
-    /// 
+    ///
     /// Arguments:
-    /// 
+    ///
     /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is an abstract
     /// type that represents a key-value store where data can be stored and retrieved. The specific
     /// implementation of the `Storage` trait is not specified in this function, allowing for
     /// flexibility in choosing the type of storage
     /// * `client_id`: The `client_id` parameter is of type `ClientId` and represents the identifier of
     /// an IBC client. It is used to retrieve the client state from the storage.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// a `Result` containing either a `Vec<u8>` representing the client state or a `ContractError` if
     /// there was an error loading the client state from the storage.
     pub fn get_client_state(

@@ -1,5 +1,6 @@
-use super::*;
+use crate::types::LOG_PREFIX;
 
+use super::*;
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-xcall";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -82,6 +83,7 @@ impl<'a> CwCallService<'a> {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
             ExecuteMsg::SendCallMessage { to, data, rollback } => {
+                println!("{} Received Send Call Message", LOG_PREFIX);
                 self.send_packet(deps, info, env, to, data, rollback)
             }
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
@@ -94,7 +96,7 @@ impl<'a> CwCallService<'a> {
                 self.update_admin(deps.storage, info, validated_address)
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
-           
+
             ExecuteMsg::SetTimeoutHeight { height } => {
                 self.ensure_admin(deps.as_ref().storage, info.sender)?;
 
@@ -344,13 +346,7 @@ impl<'a> CwCallService<'a> {
             SubMsgResult::Err(err) => Ok(Response::new().set_data(make_ack_fail(err))),
         }
     }
-  
-    
-   
-   
 
-   
-   
     /// This function sends a reply message and returns a response or an error.
     ///
     /// Arguments:
@@ -366,14 +362,23 @@ impl<'a> CwCallService<'a> {
     /// variant containing a `Response` object with two attributes ("action" and "method"), or an `Err`
     /// variant containing a `ContractError` object with a code and a message.
     fn reply_sendcall_message(&self, message: Reply) -> Result<Response, ContractError> {
+        println!("{} Received Callback From SendCallMessage", LOG_PREFIX);
+        
         match message.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()
-                .add_attribute("action", "reply")
-                .add_attribute("method", "sendcall_message")),
-            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
-                code: message.id,
-                msg: error,
-            }),
+            SubMsgResult::Ok(_) => {
+                println!("{} Call Success", LOG_PREFIX);
+                Ok(Response::new()
+                    .add_attribute("action", "reply")
+                    .add_attribute("method", "sendcall_message")
+                    .add_event(Event::new("xcall_app_send_call_message_reply").add_attribute("status", "success")))
+            }
+            SubMsgResult::Err(error) => {
+                println!("{} Call Failed with error {}", LOG_PREFIX, &error);
+                Err(ContractError::ReplyError {
+                    code: message.id,
+                    msg: error,
+                })
+            }
         }
     }
 }

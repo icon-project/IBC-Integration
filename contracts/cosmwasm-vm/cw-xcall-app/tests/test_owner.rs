@@ -3,7 +3,7 @@ mod setup;
 use account::*;
 use cw_common::types::Address;
 use cw_xcall_app::state::CwCallService;
-use setup::*;
+use setup::test::*;
 #[test]
 fn add_owner() {
     let mut mock_deps = deps();

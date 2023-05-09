@@ -1,10 +1,8 @@
-use crate::{ state::XCALL_FORWARD_REPLY_ID};
+use crate::state::XCALL_FORWARD_REPLY_ID;
 
 use super::*;
 
 impl<'a> CwIbcConnection<'a> {
-   
-
     /// This function receives packet data, decodes it, and then handles either a request or a response
     /// based on the message type.
     ///
@@ -45,7 +43,7 @@ impl<'a> CwIbcConnection<'a> {
             funds: vec![],
         });
 
-        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message,XCALL_FORWARD_REPLY_ID);
+        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, XCALL_FORWARD_REPLY_ID);
 
         Ok(CwReceiveResponse::new()
             .add_attribute("action", "receive_packet_data")

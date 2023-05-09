@@ -6,14 +6,9 @@ use cosmwasm_std::{
     testing::{mock_dependencies, mock_env},
     Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
-use cw_xcall_app::{
-    ibc::ibc_packet_receive,
-    state::CwCallService,
-    types::{
-        call_request::CallRequest, message::CallServiceMessage, request::CallServiceMessageRequest,
-        response::CallServiceMessageResponse,
-    },
-};
+
+use cw_xcall_app::{state::CwCallService, types::{request::CallServiceMessageRequest, message::CallServiceMessage, response::CallServiceMessageResponse, call_request::CallRequest}};
+use cw_xcall_ibc_connection::ibc::ibc_packet_receive;
 use setup::*;
 
 #[test]

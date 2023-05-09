@@ -22,7 +22,6 @@ pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
         .add_attribute("msg", msg.to_string())
 }
 
-
 pub fn event_message_forwarded(
     sequence_no: u64,
     from: String,

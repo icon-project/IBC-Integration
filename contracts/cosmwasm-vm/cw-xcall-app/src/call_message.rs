@@ -1,5 +1,7 @@
 use cw_common::hex_string::HexString;
 
+use crate::types::LOG_PREFIX;
+
 use super::*;
 
 impl<'a> CwCallService<'a> {
@@ -56,6 +58,7 @@ impl<'a> CwCallService<'a> {
 
         self.ensure_data_length(data.len())?;
         self.ensure_rollback_length(&rollback_data)?;
+        println!("{} Packet Validated", LOG_PREFIX);
 
         // TODO : ADD fee logic
 
@@ -78,36 +81,33 @@ impl<'a> CwCallService<'a> {
 
         let message: CallServiceMessage = call_request.into();
 
-        let event = event_xcall_message_sent(
-            info.sender.to_string(),
-            sequence_no,
-            &message,
+        let event = event_xcall_message_sent(info.sender.to_string(), sequence_no, &message);
+
+        let message = cw_common::xcall_connection_msg::ExecuteMsg::MessageFromXCall {
+            data: to_vec(&message).unwrap(),
+        };
+
+        let submessage = SubMsg {
+            id: SEND_CALL_MESSAGE_REPLY_ID,
+            msg: CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: connection_host.to_string(),
+                msg: to_binary(&message).map_err(ContractError::Std)?,
+                funds: info.funds,
+            }),
+            gas_limit: None,
+            reply_on: cosmwasm_std::ReplyOn::Always,
+        };
+        println!(
+            "{} sent message to connection :{}",
+            LOG_PREFIX, connection_host
         );
 
-    
-
-            let message = cw_common::xcall_connection_msg::ExecuteMsg::MessageFromXCall{ 
-                data: to_vec(&message).unwrap(),
-            };
-
-            let submessage = SubMsg {
-                id: SEND_CALL_MESSAGE_REPLY_ID,
-                msg: CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: connection_host.to_string(),
-                    msg: to_binary(&message).map_err(ContractError::Std)?,
-                    funds: info.funds,
-                }),
-                gas_limit: None,
-                reply_on: cosmwasm_std::ReplyOn::Always,
-            };
-
-            Ok(Response::new()
-                .add_submessage(submessage)
-                .add_attribute("action", "xcall-service")
-                .add_attribute("method", "send_packet")
-                .add_attribute("sequence_no", sequence_no.to_string())
-                .add_event(event))
-        
+        Ok(Response::new()
+            .add_submessage(submessage)
+            .add_attribute("action", "xcall-service")
+            .add_attribute("method", "send_packet")
+            .add_attribute("sequence_no", sequence_no.to_string())
+            .add_event(event))
     }
 }
 

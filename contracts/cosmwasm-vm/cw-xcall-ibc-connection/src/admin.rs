@@ -147,7 +147,7 @@ impl<'a> CwIbcConnection<'a> {
         Ok(Response::new().add_attribute("method", "remove_admin"))
     }
 
-    pub fn validate_address(api: &dyn Api, address: &str) -> Result<String, ContractError> {
+    pub fn validate_address(api: &dyn Api, address: &str) -> Result<Addr, ContractError> {
         if !address.chars().all(|x| x.is_alphanumeric()) {
             return Err(ContractError::InvalidAddress {
                 address: address.to_string(),
@@ -156,6 +156,6 @@ impl<'a> CwIbcConnection<'a> {
 
         let validated_address = api.addr_validate(address).map_err(ContractError::Std)?;
 
-        Ok(validated_address.as_str().into())
+        Ok(validated_address)
     }
 }

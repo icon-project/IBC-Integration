@@ -113,4 +113,3 @@ impl From<CallServiceMessage> for Binary {
         Binary(rlp::encode(&value).to_vec())
     }
 }
-`

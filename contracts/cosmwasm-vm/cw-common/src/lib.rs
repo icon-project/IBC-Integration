@@ -9,9 +9,9 @@ pub mod hex_string;
 pub mod ibc_types;
 pub mod raw_types;
 pub mod types;
+pub mod xcall_app_msg;
 pub mod xcall_connection_msg;
 pub mod xcall_msg;
-pub mod xcall_app_msg;
 use cosmwasm_std::{from_binary, from_slice, Binary, StdError};
 use serde::de::DeserializeOwned;
 
