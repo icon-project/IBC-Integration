@@ -4,8 +4,8 @@ on:
   pull_request:
     branches:
       - "**"
-    paths:
-      - "contracts/cosmwasm-vm/**"
+    # paths:
+    #   - "contracts/cosmwasm-vm/**"
   push:
     branches:
       - main
@@ -35,4 +35,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
+          flags: rust
           fail_ci_if_error: true

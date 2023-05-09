@@ -11,6 +11,16 @@ ignore:
   - "**/mock/*"
   - "libraries/rust/common/src/icon/*"
 
+flag_management:
+  default_rules: # the rules that will be followed for any flag added, generally
+    carryforward: true
+    statuses:
+      - type: project
+        target: auto
+        threshold: 1%
+      - type: patch
+        target: 80%
+
 coverage:
   precision: 2
   range: "50...100"
