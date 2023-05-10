@@ -86,6 +86,7 @@ impl<'a> CwIbcConnection<'a> {
                 self.forward_to_host(deps, info, env, data)
             }
             ExecuteMsg::SetXCallHost { address } => {
+                self.ensure_owner(deps.as_ref().storage, &info)?;
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.set_xcall_host(deps.storage, validated_address)?;
@@ -258,7 +259,7 @@ impl<'a> CwIbcConnection<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        println!("{} Reply From Forward Call", LOG_PREFIX);
+        println!("{} Reply From Forward XCall", LOG_PREFIX);
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()
                 .add_attribute("action", "call_message")

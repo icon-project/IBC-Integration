@@ -1,3 +1,5 @@
+
+
 use crate::ack::acknowledgement_data_on_success;
 
 use super::*;
@@ -120,17 +122,17 @@ impl<'a> CwCallService<'a> {
     pub fn receive_packet_data(
         &self,
         deps: DepsMut,
-        message: CwPacket,
-    ) -> Result<CwReceiveResponse, ContractError> {
+        message: Vec<u8>,
+    ) -> Result<Response, ContractError> {
         let call_service_message: CallServiceMessage =
-            CallServiceMessage::try_from(message.data.0.clone())?;
+            CallServiceMessage::try_from(message.clone())?;
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
-                self.hanadle_request(deps, call_service_message.payload(), &message)
+                self.hanadle_request(deps, call_service_message.payload())
             }
             CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, call_service_message.payload(), &message)
+                self.handle_response(deps, call_service_message.payload())
             }
         }
     }
@@ -156,8 +158,7 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         data: &[u8],
-        packet: &CwPacket,
-    ) -> Result<CwReceiveResponse, ContractError> {
+    ) -> Result<Response, ContractError> {
         let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
 
@@ -181,17 +182,17 @@ impl<'a> CwCallService<'a> {
             request_id,
         );
         let acknowledgement_data =
-            to_binary(&cw_common::client_response::XcallPacketResponseData {
-                packet: packet.clone(),
+            to_binary(&cw_common::client_response::XcallPacketAck {
                 acknowledgement: make_ack_success().to_vec(),
             })
             .map_err(ContractError::Std)?;
 
-        Ok(CwReceiveResponse::new()
+        Ok(Response::new()
             .add_attribute("action", "call_service")
             .add_attribute("method", "handle_response")
-            .set_ack(acknowledgement_data)
+            .set_data(acknowledgement_data)
             .add_event(event))
+            
     }
 
     /// This function handles the response received from a call to an external service.
@@ -215,8 +216,7 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         data: &[u8],
-        packet: &CwPacket,
-    ) -> Result<CwReceiveResponse, ContractError> {
+    ) -> Result<Response, ContractError> {
         let message: CallServiceMessageResponse = data.try_into()?;
         let response_sequence_no = message.sequence_no();
 
@@ -224,8 +224,7 @@ impl<'a> CwCallService<'a> {
 
         if call_request.is_null() {
             let acknowledgement_data =
-                to_binary(&cw_common::client_response::XcallPacketResponseData {
-                    packet: packet.clone(),
+                to_binary(&cw_common::client_response::XcallPacketAck {
                     acknowledgement: make_ack_fail(format!(
                         "handle_resposne: no request for {}",
                         response_sequence_no
@@ -233,14 +232,13 @@ impl<'a> CwCallService<'a> {
                     .to_vec(),
                 })
                 .map_err(ContractError::Std)?;
-            return Ok(CwReceiveResponse::new()
+            return Ok(Response::new()
                 .add_attribute("action", "call_service")
                 .add_attribute("method", "handle_response")
-                .set_ack(acknowledgement_data)
                 .add_attribute(
                     "message",
                     format!("handle_resposne: no request for {}", response_sequence_no),
-                ));
+                ).set_data(acknowledgement_data));
         }
 
         match message.response_code() {
@@ -258,10 +256,10 @@ impl<'a> CwCallService<'a> {
                     ),
                 };
                 self.cleanup_request(deps.storage, response_sequence_no);
-                Ok(CwReceiveResponse::new()
+                Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
-                    .set_ack(acknowledgement_data_on_success(packet)?)
+                    .set_data(acknowledgement_data_on_success()?)
                     .add_event(event))
             }
             _ => {
@@ -272,10 +270,10 @@ impl<'a> CwCallService<'a> {
 
                 let event = event_rollback_message(response_sequence_no);
 
-                Ok(CwReceiveResponse::new()
+                Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
-                    .set_ack(acknowledgement_data_on_success(packet)?)
+                    .set_data(acknowledgement_data_on_success()?)
                     .add_event(event))
             }
         }

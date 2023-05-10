@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, Binary,
 };
 
 #[cw_serde]
@@ -19,6 +19,9 @@ pub enum ExecuteMsg {
         to: String,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
+    },
+    ReceiveCallMessage {
+        data: Vec<u8>,
     },
 
     ExecuteCall {
