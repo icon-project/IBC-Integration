@@ -4,7 +4,7 @@ use super::*;
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
 pub const ACK_FAILURE_ID: u64 = 3;
-
+pub const HOST_FORWARD_REPLY_ID: u64=2;
 pub const XCALL_FORWARD_REPLY_ID: u64 = 4;
 
 /// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
@@ -93,11 +93,9 @@ impl IbcConfig {
 /// the Call Service. This is the block height at which the Call Service will stop processing requests
 /// if they have not been completed.
 pub struct CwIbcConnection<'a> {
-    // last_sequence_no: Item<'a, u128>,
-    // last_request_id: Item<'a, u128>,
+
     owner: Item<'a, String>,
     admin: Item<'a, String>,
-    // message_request: Map<'a, u128, Vec<u8>>,
     ibc_config: Item<'a, IbcConfig>,
     fee_handler: Item<'a, String>,
     fee: Item<'a, u128>,
@@ -115,11 +113,8 @@ impl<'a> Default for CwIbcConnection<'a> {
 impl<'a> CwIbcConnection<'a> {
     pub fn new() -> Self {
         Self {
-            // last_sequence_no: Item::new(StorageKey::SequenceNo.as_str()),
-            // last_request_id: Item::new(StorageKey::RequestNo.as_str()),
             owner: Item::new(StorageKey::Owner.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
-            //   message_request: Map::new(StorageKey::MessageRequest.as_str()),
             ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
             fee: Item::new(StorageKey::Fee.as_str()),
@@ -129,14 +124,6 @@ impl<'a> CwIbcConnection<'a> {
         }
     }
 
-    // pub fn last_sequence_no(&self) -> &Item<'a, u128> {
-    //     &self.last_sequence_no
-    // }
-
-    // pub fn last_request_id(&self) -> &Item<'a, u128> {
-    //     &self.last_request_id
-    // }
-
     pub fn owner(&self) -> &Item<'a, String> {
         &self.owner
     }
@@ -144,10 +131,6 @@ impl<'a> CwIbcConnection<'a> {
     pub fn admin(&self) -> &Item<'a, String> {
         &self.admin
     }
-
-    // pub fn message_request(&self) -> &Map<'a, u128, Vec<u8>> {
-    //     &self.message_request
-    // }
 
     pub fn ibc_config(&self) -> &Item<'a, IbcConfig> {
         &self.ibc_config

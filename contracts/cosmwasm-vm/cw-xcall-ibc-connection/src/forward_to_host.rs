@@ -1,6 +1,6 @@
 use cw_common::hex_string::HexString;
 
-use crate::{state::XCALL_FORWARD_REPLY_ID, types::LOG_PREFIX};
+use crate::{state::{XCALL_FORWARD_REPLY_ID, HOST_FORWARD_REPLY_ID}, types::LOG_PREFIX};
 
 use super::*;
 
@@ -98,7 +98,7 @@ impl<'a> CwIbcConnection<'a> {
             };
 
             let submessage = SubMsg {
-                id: XCALL_FORWARD_REPLY_ID,
+                id: HOST_FORWARD_REPLY_ID,
                 msg: CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: ibc_host.to_string(),
                     msg: to_binary(&message).map_err(ContractError::Std)?,

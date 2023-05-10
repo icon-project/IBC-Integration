@@ -48,46 +48,10 @@ pub fn on_ack_sucess(packet: CwPacket) -> Result<CwBasicResponse, ContractError>
     Ok(CwBasicResponse::new().add_attributes(attributes))
 }
 
-/// The function `on_ack_failure` handles errors in acknowledging an IBC packet and returns a response
-/// with relevant attributes.
-///
-/// Arguments:
-///
-/// * `packet`: The `packet` parameter is of type `IbcPacket` and represents the packet that failed to
-/// be acknowledged. It contains the data that was sent in the packet and other relevant information
-/// such as the source and destination channels and ports.
-/// * `error`: The `error` parameter is a string that represents the error message to be included in the
-/// response when an acknowledgement failure occurs.
-///
-/// Returns:
-///
-/// a `Result` with an `IbcBasicResponse` on success or a `ContractError` on failure.
+
 pub fn on_ack_failure(packet: CwPacket, error: &str) -> Result<CwBasicResponse, ContractError> {
     Ok(CwBasicResponse::new()
         .add_attribute("action", "acknowledge")
         .add_attribute("success", "false")
         .add_attribute("error", error))
-}
-
-/// This function returns a binary representation of a successful acknowledgement response for a given
-/// IBC packet.
-///
-/// Arguments:
-///
-/// * `packet`: The `packet` parameter is of type `IbcPacket`, which is a struct that represents an
-/// Inter-Blockchain Communication (IBC) packet. It contains information about the packet's source,
-/// destination, data, and other metadata.
-///
-/// Returns:
-///
-/// a `Result` object that contains a `Binary` value or a `ContractError`. The `Binary` value is the
-/// result of encoding a `cw_common::client_response::XcallPacketResponseData` object that contains a
-/// clone of the `packet` argument and a successful acknowledgement message represented as a vector of
-/// bytes.
-pub fn acknowledgement_data_on_success(packet: &CwPacket) -> Result<Binary, ContractError> {
-    to_binary(&cw_common::client_response::XcallPacketResponseData {
-        packet: packet.clone(),
-        acknowledgement: make_ack_success().to_vec(),
-    })
-    .map_err(ContractError::Std)
 }

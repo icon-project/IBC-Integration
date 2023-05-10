@@ -211,6 +211,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             XCALL_FORWARD_REPLY_ID => self.reply_forward_xcall(deps, msg),
+            HOST_FORWARD_REPLY_ID=>self.reply_forward_host(deps,msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
@@ -245,14 +246,11 @@ impl<'a> CwIbcConnection<'a> {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        let last_sequence_no = u128::default();
-        let last_request_id = u128::default();
+
         let owner = info.sender.as_str().to_string();
 
         self.add_owner(store, owner.clone())?;
         self.add_admin(store, info, owner)?;
-        //  self.init_last_sequence_no(store, last_sequence_no)?;
-        // self.init_last_request_id(store, last_request_id)?;
         self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
 
@@ -262,11 +260,31 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("ibc_host", msg.ibc_host))
     }
 
-    fn reply_forward_xcall(&self, deps: DepsMut, msg: Reply) -> Result<Response, ContractError> {
+    fn reply_forward_xcall(&self, deps: DepsMut, message: Reply) -> Result<Response, ContractError> {
         println!("{} Reply From Forward Call", LOG_PREFIX);
-        Ok(Response::new()
+        match message.result {
+            SubMsgResult::Ok(_) => Ok(Response::new()
             .add_attribute("action", "call_message")
-            .add_attribute("method", "reply_forward_xcall"))
+            .add_attribute("method", "reply_forward_xcall")),
+            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
+                code: message.id,
+                msg: error,
+            }),
+        }
+    }
+
+    fn reply_forward_host(&self, deps: DepsMut, message: Reply) -> Result<Response, ContractError> {
+        println!("{} Reply From Forward Host", LOG_PREFIX);
+        match message.result {
+            SubMsgResult::Ok(_) => Ok(Response::new()
+            .add_attribute("action", "call_message")
+            .add_attribute("method", "reply_forward_host")),
+            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
+                code: message.id,
+                msg: error,
+            }),
+        }
+        
     }
 
     #[cfg(feature = "native_ibc")]
@@ -493,30 +511,5 @@ impl<'a> CwIbcConnection<'a> {
         Ok(Response::new()
             .add_submessage(submsg)
             .add_attribute("method", "ibc_packet_timeout"))
-    }
-    /// This function sends a reply message and returns a response or an error.
-    ///
-    /// Arguments:
-    ///
-    /// * `message`: The `message` parameter is of type `Reply`, which is a struct that contains
-    /// information about the result of a sub-message that was sent by the contract. It has two fields:
-    /// `id`, which is a unique identifier for the sub-message, and `result`, which is an enum that
-    /// represents
-    ///
-    /// Returns:
-    ///
-    /// The function `reply_sendcall_message` returns a `Result` object, which can either be an `Ok`
-    /// variant containing a `Response` object with two attributes ("action" and "method"), or an `Err`
-    /// variant containing a `ContractError` object with a code and a message.
-    fn reply_sendcall_message(&self, message: Reply) -> Result<Response, ContractError> {
-        match message.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()
-                .add_attribute("action", "reply")
-                .add_attribute("method", "sendcall_message")),
-            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
-                code: message.id,
-                msg: error,
-            }),
-        }
     }
 }

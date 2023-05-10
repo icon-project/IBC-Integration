@@ -7,36 +7,6 @@ use crate::{
 };
 
 impl<'a> CwIbcConnection<'a> {
-    /// This function checks if the caller is a contract and if the rollback option is null, and returns
-    /// an error if the rollback is not possible.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is an object that contains dependencies required by the contract to interact
-    /// with the blockchain. It is of type `Deps`, which is a struct that contains various modules such
-    /// as `storage`, `querier`, `api`, etc.
-    /// * `address`: The address of the caller that needs to be checked if it is a contract or not.
-    /// * `rollback`: `rollback` is an optional `Vec<u8>` parameter that represents the rollback data. If
-    /// it is `Some`, it means that a rollback is possible and the caller must be a contract. If it is
-    /// `None`, it means that a rollback is not possible and the caller can be any type
-    ///
-    /// Returns:
-    ///
-    /// a `Result` type with the `Ok` variant containing an empty tuple `()` and the `Err` variant
-    /// containing a `ContractError` if the condition in the `ensure!` macro is not met.
-    pub fn ensure_caller_is_contract_and_rollback_is_null(
-        &self,
-        deps: Deps,
-        address: Addr,
-        rollback: Option<Vec<u8>>,
-    ) -> Result<(), ContractError> {
-        ensure!(
-            (is_contract(deps.querier, address) || rollback.is_none()),
-            ContractError::RollbackNotPossible
-        );
-
-        Ok(())
-    }
 
     /// This function ensures that the length of the data is not greater than the maximum allowed size and
     /// returns an error if it is.
@@ -175,26 +145,4 @@ impl<'a> CwIbcConnection<'a> {
         }
         Ok(())
     }
-}
-
-/// The function checks if a given address is a valid smart contract by querying its information using a
-/// QuerierWrapper.
-///
-/// Arguments:
-///
-/// * `querier`: The `querier` parameter is an instance of the `QuerierWrapper` struct, which is used to
-/// query information from the blockchain. It provides methods to query account balances, contract
-/// state, and other information related to the blockchain.
-/// * `address`: The `address` parameter is a variable of type `Addr` which represents the address of a
-/// smart contract on the blockchain.
-///
-/// Returns:
-///
-/// The function `is_contract` returns a boolean value indicating whether the given address is a valid
-/// smart contract on the blockchain or not. It does this by querying the blockchain through the
-/// `querier` object to get information about the contract at the given `address`. If the query is
-/// successful, it returns `true`, indicating that the address is a valid contract. If the query fails,
-/// it returns `
-fn is_contract(querier: QuerierWrapper, address: Addr) -> bool {
-    querier.query_wasm_contract_info(address).is_ok()
 }
