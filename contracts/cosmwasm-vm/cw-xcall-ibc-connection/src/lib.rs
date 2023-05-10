@@ -5,8 +5,6 @@ pub mod check;
 pub mod contract;
 pub mod error;
 pub mod events;
-pub mod fee;
-pub mod fee_handler;
 pub mod forward_to_xcall;
 pub mod forward_to_host;
 pub mod ibc;

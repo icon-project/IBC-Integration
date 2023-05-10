@@ -27,10 +27,6 @@ pub struct InstantiateMsg {
 pub enum QueryMsg {
     #[returns(String)]
     GetAdmin {},
-    #[returns(u128)]
-    GetProtocolFee {},
-    #[returns(String)]
-    GetProtocolFeeHandler {},
     #[returns(u64)]
     GetTimeoutHeight {},
 }

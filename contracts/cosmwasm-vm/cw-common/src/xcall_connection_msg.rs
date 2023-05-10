@@ -9,12 +9,12 @@ pub enum ExecuteMsg {
     SetAdmin {
         address: String,
     },
-    SetProtocol {
-        value: u128,
-    },
-    SetProtocolFeeHandler {
-        address: String,
-    },
+    // SetProtocol {
+    //     value: u128,
+    // },
+    // SetProtocolFeeHandler {
+    //     address: String,
+    // },
     SetXCallHost {
         address: String,
     },

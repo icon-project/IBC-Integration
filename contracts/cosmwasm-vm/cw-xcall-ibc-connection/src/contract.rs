@@ -81,10 +81,10 @@ impl<'a> CwIbcConnection<'a> {
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
-            ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
-            ExecuteMsg::SetProtocolFeeHandler { address } => {
-                self.set_protocol_feehandler(deps, env, info, address)
-            }
+         //   ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
+            // ExecuteMsg::SetProtocolFeeHandler { address } => {
+            //     self.set_protocol_feehandler(deps, env, info, address)
+            // }
             ExecuteMsg::MessageFromXCall { data } => {
                 println!("{} Received Payload From XCall App", LOG_PREFIX);
                 self.forward_to_host(deps, info, env, data)
@@ -181,9 +181,6 @@ impl<'a> CwIbcConnection<'a> {
                     kind: error.to_string(),
                 }),
             },
-
-            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
-            QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
             QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
         }
     }

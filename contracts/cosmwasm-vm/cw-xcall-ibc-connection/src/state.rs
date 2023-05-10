@@ -97,8 +97,6 @@ pub struct CwIbcConnection<'a> {
     owner: Item<'a, String>,
     admin: Item<'a, String>,
     ibc_config: Item<'a, IbcConfig>,
-    fee_handler: Item<'a, String>,
-    fee: Item<'a, u128>,
     ibc_host: Item<'a, Addr>,
     xcall_host: Item<'a, Addr>,
     timeout_height: Item<'a, u64>,
@@ -116,8 +114,6 @@ impl<'a> CwIbcConnection<'a> {
             owner: Item::new(StorageKey::Owner.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
             ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
-            fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
-            fee: Item::new(StorageKey::Fee.as_str()),
             ibc_host: Item::new(StorageKey::IbcHost.as_str()),
             timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
             xcall_host: Item::new(StorageKey::XCallHost.as_str()),
@@ -134,13 +130,6 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn ibc_config(&self) -> &Item<'a, IbcConfig> {
         &self.ibc_config
-    }
-
-    pub fn fee_handler(&self) -> &Item<'a, String> {
-        &self.fee_handler
-    }
-    pub fn fee(&self) -> &Item<'a, u128> {
-        &self.fee
     }
     pub fn set_ibc_host(
         &self,
