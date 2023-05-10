@@ -46,8 +46,6 @@ fn test_execute_call_having_request_id_without_rollback() {
         .insert_request(deps.as_mut().storage, request_id, proxy_requests)
         .unwrap();
 
-   
-
     let res = cw_callservice
         .execute_call(deps.as_mut(), info.clone(), request_id)
         .unwrap();

@@ -1,4 +1,7 @@
-use crate::state::XCALL_FORWARD_REPLY_ID;
+use crate::{
+    events::{event_call_message, event_packet_received},
+    state::XCALL_FORWARD_REPLY_ID,
+};
 
 use super::*;
 
@@ -33,6 +36,7 @@ impl<'a> CwIbcConnection<'a> {
         deps: DepsMut,
         message: CwPacket,
     ) -> Result<CwReceiveResponse, ContractError> {
+        let event = event_packet_received(&message);
         let data = message.data;
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self
@@ -49,6 +53,7 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("action", "receive_packet_data")
             .add_attribute("method", "forward_to_xcall")
             .set_ack(make_ack_success().to_vec())
+            .add_event(event)
             .add_submessage(sub_msg))
     }
 

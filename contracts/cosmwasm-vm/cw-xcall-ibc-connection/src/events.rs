@@ -87,6 +87,15 @@ pub fn event_call_message(from: String, to: String, sequence_no: u128, request_i
         .add_attribute("request_id", request_id.to_string())
 }
 
+pub fn event_packet_received(packet: &CwPacket) -> Event {
+    Event::new("packet_received")
+        .add_attribute("sequence", packet.sequence.to_string())
+        .add_attribute("destination_channel", &packet.dest.channel_id)
+        .add_attribute("destination_port", &packet.dest.port_id)
+        .add_attribute("src_channel", &packet.src.channel_id)
+        .add_attribute("src_port", &packet.src.port_id)
+}
+
 /// The function creates an event with a "rollback_message" type and a sequence number attribute.
 ///
 /// Arguments:

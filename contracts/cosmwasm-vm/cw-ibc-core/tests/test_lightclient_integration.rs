@@ -9,7 +9,7 @@ use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
 use ibc::events::IbcEventType;
 use prost::Message;
 use std::collections::HashMap;
-use test_utils::{get_test_signed_headers, to_attribute_map,get_event,get_event_name};
+use test_utils::{get_event, get_event_name, get_test_signed_headers, to_attribute_map};
 
 pub struct TestContext {
     pub app: App,
@@ -127,8 +127,6 @@ pub fn call_update_client(
 
     res
 }
-
-
 
 #[test]
 fn test_register_client() {

@@ -19,8 +19,7 @@ use cw_xcall_app::{
 };
 use cw_xcall_ibc_connection::state::{CwIbcConnection, IbcConfig};
 use setup::test::*;
-use test_utils::{get_test_signed_headers, to_attribute_map,get_event,get_event_name};
-
+use test_utils::{get_event, get_event_name, get_test_signed_headers, to_attribute_map};
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 
@@ -32,11 +31,11 @@ fn send_packet_success() {
     let mut ctx = setup_contracts(mock_deps);
     call_set_xcall_host(&mut ctx).unwrap();
     call_set_ibc_config(&mut ctx).unwrap();
-    let result = call_send_call_message(&mut ctx, MOCK_CONTRACT_TO_ADDR, vec![1, 2, 3],None);
-    assert_eq!(true,result.is_ok());
+    let result = call_send_call_message(&mut ctx, MOCK_CONTRACT_TO_ADDR, vec![1, 2, 3], None);
+    assert_eq!(true, result.is_ok());
     let result = result.unwrap();
-    let event=get_event(&result,"wasm-xcall_app_send_call_message_reply").unwrap();
-    assert_eq!("success",event.get("status").unwrap());
+    let event = get_event(&result, "wasm-xcall_app_send_call_message_reply").unwrap();
+    assert_eq!("success", event.get("status").unwrap());
 }
 
 #[test]
@@ -55,7 +54,6 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-   
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
         height: 3,
@@ -91,7 +89,6 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
     assert_eq!(result.messages[0].msg, CosmosMsg::Ibc(expected_packet))
 }
 
-
 #[test]
 #[should_panic(expected = "MaxDataSizeExceeded")]
 fn send_packet_failure_due_data_len() {
@@ -107,8 +104,6 @@ fn send_packet_failure_due_data_len() {
         .last_sequence_no()
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
-
-  
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
@@ -157,8 +152,6 @@ fn send_packet_failure_due_rollback_len() {
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
-   
-
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
         let mut storage1 = HashMap::<Binary, Binary>::default();
@@ -204,7 +197,6 @@ fn send_packet_success_needresponse() {
         .last_sequence_no()
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
-
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);

@@ -207,7 +207,7 @@ pub mod test {
         ctx: &mut TestContext,
         to: &str,
         data: Vec<u8>,
-        rollback:Option<Vec<u8>>
+        rollback: Option<Vec<u8>>,
     ) -> Result<AppResponse, AppError> {
         let res = ctx.app.execute_contract(
             ctx.sender.clone(),

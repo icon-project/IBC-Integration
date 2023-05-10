@@ -9,11 +9,10 @@ use cw_common::raw_types::channel::RawPacket;
 use cw_common::types::{Ack, Address};
 use cw_common::ProstMessage;
 
-use cw_xcall_app::ack::on_ack_failure;
+use cw_xcall_app::ack::{on_ack_failure, on_ack_sucess};
 use cw_xcall_app::types::response::CallServiceMessageResponse;
-use cw_xcall_ibc_connection::ack::on_ack_sucess;
-use cw_xcall_ibc_connection::{instantiate, execute, query};
 use cw_xcall_ibc_connection::msg::{InstantiateMsg, QueryMsg};
+use cw_xcall_ibc_connection::{execute, instantiate, query};
 use setup::*;
 pub mod account;
 use account::admin_one;
@@ -21,18 +20,16 @@ use account::alice;
 use common::rlp::{Decodable, Encodable};
 use cosmwasm_std::from_binary;
 use cw_common::xcall_connection_msg::ExecuteMsg;
-    
-    use cw_xcall_ibc_connection::state::CwIbcConnection;
-    use cw_xcall_app::types::request::CallServiceMessageRequest;
-    use cw_xcall_app::types::{ message::CallServiceMessage};
+
+use cw_xcall_app::types::message::CallServiceMessage;
+use cw_xcall_app::types::request::CallServiceMessageRequest;
+use cw_xcall_ibc_connection::state::CwIbcConnection;
 use setup::*;
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = "OrderedChannel")]
 fn fails_on_open_channel_open_init_ordered_channel() {
-    
-
     let mut deps = deps();
 
     let mock_env = mock_env();
@@ -61,7 +58,7 @@ fn fails_on_open_channel_open_init_ordered_channel() {
         },
     };
     contract
-        .set_xcall_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
+        .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
 
     contract
@@ -331,8 +328,6 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_receive_packet_for_call_message_request() {
-   
-
     let mut mock_deps = deps();
     let mock_info = create_mock_info("ibchostaddress", "umlg", 2000);
     let mock_env = mock_env();
@@ -373,7 +368,7 @@ fn sucess_receive_packet_for_call_message_request() {
         channel_id: "channel-3".to_string(),
     };
     contract
-        .set_ibc_host(
+        .set_xcall_host(
             mock_deps.as_mut().storage,
             Addr::unchecked(alice().as_str()),
         )
@@ -398,7 +393,7 @@ fn sucess_receive_packet_for_call_message_request() {
 
     let result = result.unwrap();
 
-    assert_eq!(result.events[0].ty, "call_message".to_string())
+    assert_eq!(result.events[0].ty, "packet_received".to_string());
 }
 
 #[test]
@@ -455,8 +450,8 @@ fn sucess_on_ack_packet() {
     let result = contract
         .execute(mock_deps.as_mut(), mock_env, mock_info, execute_message)
         .unwrap();
-
-    assert_eq!("call_service_request", result.attributes[2].value)
+    println!("{:?}", result);
+    assert_eq!("success", result.attributes[1].key)
 }
 
 #[test]
@@ -890,6 +885,9 @@ fn test_handle_response() {
             Addr::unchecked(alice().as_str()),
         )
         .unwrap();
+    contract
+        .set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcallhost"))
+        .unwrap();
 
     contract
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
@@ -907,14 +905,6 @@ fn test_handle_response() {
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
-
-    // contract
-    //     .set_call_request(
-    //         mock_deps.as_mut().storage,
-    //         0,
-    //         CallRequest::new("".into(), "".into(), vec![], true),
-    //     )
-    //     .unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,

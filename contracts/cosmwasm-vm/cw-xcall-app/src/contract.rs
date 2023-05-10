@@ -363,14 +363,17 @@ impl<'a> CwCallService<'a> {
     /// variant containing a `ContractError` object with a code and a message.
     fn reply_sendcall_message(&self, message: Reply) -> Result<Response, ContractError> {
         println!("{} Received Callback From SendCallMessage", LOG_PREFIX);
-        
+
         match message.result {
             SubMsgResult::Ok(_) => {
                 println!("{} Call Success", LOG_PREFIX);
                 Ok(Response::new()
                     .add_attribute("action", "reply")
                     .add_attribute("method", "sendcall_message")
-                    .add_event(Event::new("xcall_app_send_call_message_reply").add_attribute("status", "success")))
+                    .add_event(
+                        Event::new("xcall_app_send_call_message_reply")
+                            .add_attribute("status", "success"),
+                    ))
             }
             SubMsgResult::Err(error) => {
                 println!("{} Call Failed with error {}", LOG_PREFIX, &error);

@@ -30,14 +30,12 @@ impl<'a> CwCallService<'a> {
         address: Addr,
         rollback: Option<Vec<u8>>,
     ) -> Result<(), ContractError> {
-        if rollback.is_some(){
+        if rollback.is_some() {
             ensure!(
                 is_contract(deps.querier, address),
                 ContractError::RollbackNotPossible
             );
-
         }
-       
 
         Ok(())
     }

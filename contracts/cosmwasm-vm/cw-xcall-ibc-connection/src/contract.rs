@@ -252,7 +252,7 @@ impl<'a> CwIbcConnection<'a> {
         self.add_owner(store, owner.clone())?;
         self.add_admin(store, info, owner)?;
         self.init_last_sequence_no(store, last_sequence_no)?;
-        self.init_last_request_id(store, last_request_id)?;
+        // self.init_last_request_id(store, last_request_id)?;
         self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
 
