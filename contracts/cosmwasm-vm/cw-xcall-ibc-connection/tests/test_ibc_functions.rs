@@ -338,11 +338,6 @@ fn sucess_receive_packet_for_call_message_request() {
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
-    contract
-        .last_request_id()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
-
     let data = CallServiceMessageRequest::new(
         mock_info.sender.as_str().to_string(),
         alice().to_string(),
@@ -498,11 +493,6 @@ fn fails_receive_packet_for_call_message_request() {
 
     contract
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
-        .unwrap();
-
-    contract
-        .last_request_id()
-        .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
@@ -891,11 +881,6 @@ fn test_handle_response() {
 
     contract
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
-        .unwrap();
-
-    contract
-        .last_request_id()
-        .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
     let data = CallServiceMessageResponse::new(

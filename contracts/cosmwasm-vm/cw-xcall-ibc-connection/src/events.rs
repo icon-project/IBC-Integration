@@ -22,18 +22,12 @@ pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
         .add_attribute("msg", msg.to_string())
 }
 
-pub fn event_message_forwarded(
-    sequence_no: u64,
-    from: String,
-    req_id: u128,
-    data: &Vec<u8>,
-) -> Event {
+pub fn event_message_forwarded(sequence_no: u64, from: String, data: &Vec<u8>) -> Event {
     let event = Event::new("xcall_message_sent");
 
     event
         .add_attribute("from", from)
         .add_attribute("ibchost_sequence_no", sequence_no.to_string())
-        .add_attribute("sq_no", req_id.to_string())
         .add_attribute("data", to_binary(data).unwrap().to_string())
 }
 

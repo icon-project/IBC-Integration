@@ -30,11 +30,6 @@ fn test_receive_packet_for_call_message_request() {
         .unwrap();
 
     contract
-        .last_request_id()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
-
-    contract
         .set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcallhost"))
         .unwrap();
 
@@ -86,15 +81,6 @@ fn test_receive_packet_for_call_message_response() {
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
-    contract
-        .last_request_id()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
-
-    contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
     contract
         .set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcallhost"))
         .unwrap();
@@ -155,15 +141,6 @@ fn handle_response_emit_rollback_event() {
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
-    contract
-        .last_request_id()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
-
-    contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
     contract
         .set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcallhost"))
         .unwrap();

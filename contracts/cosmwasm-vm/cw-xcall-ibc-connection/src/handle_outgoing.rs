@@ -20,13 +20,10 @@ impl<'a> CwIbcConnection<'a> {
 
         // TODO : ADD fee logic
 
-        let sequence_no = self.increment_last_sequence_no(deps.storage)?;
+        //  let sequence_no = self.increment_last_sequence_no(deps.storage)?;
         let ibc_host = self.get_ibc_host(deps.as_ref().storage)?;
 
-        println!(
-            "{} Forwarding to {} with sequence {}",
-            LOG_PREFIX, &ibc_host, sequence_no
-        );
+        println!("{} Forwarding to {}", LOG_PREFIX, &ibc_host);
 
         let ibc_config = self.ibc_config().load(deps.as_ref().storage).map_err(|e| {
             println!("{} Failed Loading IbcConfig {:?}", LOG_PREFIX, e);
@@ -57,12 +54,8 @@ impl<'a> CwIbcConnection<'a> {
 
         let timeout_height = self.get_timeout_height(deps.as_ref().storage);
 
-        let event = event_message_forwarded(
-            sequence_number_host,
-            info.sender.to_string(),
-            sequence_no,
-            &message,
-        );
+        let event =
+            event_message_forwarded(sequence_number_host, info.sender.to_string(), &message);
         println!("{} Message Forward Event {:?}", LOG_PREFIX, &event);
 
         #[cfg(feature = "native_ibc")]
@@ -119,7 +112,6 @@ impl<'a> CwIbcConnection<'a> {
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")
                 .add_attribute("method", "forward_packet")
-                .add_attribute("sequence_no", sequence_no.to_string())
                 .add_event(event))
         }
     }

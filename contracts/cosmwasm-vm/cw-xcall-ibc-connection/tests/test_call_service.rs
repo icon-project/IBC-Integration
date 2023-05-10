@@ -29,27 +29,7 @@ fn proper_instantiate() {
 
     assert_eq!(res.messages.len(), 0);
 
-    let last_request_id = store
-        .query_last_request_id(mock_deps.as_ref().storage)
-        .unwrap();
-
-    assert_eq!(0, last_request_id);
-
     let owner = store.query_owner(mock_deps.as_ref().storage).unwrap();
 
     assert_eq!(MOCK_CONTRACT_ADDR, owner.to_string())
-}
-
-#[test]
-#[should_panic(expected = "NotFound")]
-fn improper_instantiate() {
-    let mock_deps = deps();
-
-    let store = CwIbcConnection::default();
-
-    let last_request_id = store
-        .query_last_request_id(mock_deps.as_ref().storage)
-        .unwrap();
-
-    assert_eq!(0, last_request_id);
 }
