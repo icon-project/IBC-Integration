@@ -7,7 +7,6 @@ use crate::{
 };
 
 impl<'a> CwIbcConnection<'a> {
-
     /// This function ensures that the length of the data is not greater than the maximum allowed size and
     /// returns an error if it is.
     ///

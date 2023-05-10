@@ -1,6 +1,9 @@
 use cw_common::hex_string::HexString;
 
-use crate::{state::{XCALL_FORWARD_REPLY_ID, HOST_FORWARD_REPLY_ID}, types::LOG_PREFIX};
+use crate::{
+    state::{HOST_FORWARD_REPLY_ID, XCALL_FORWARD_REPLY_ID},
+    types::LOG_PREFIX,
+};
 
 use super::*;
 

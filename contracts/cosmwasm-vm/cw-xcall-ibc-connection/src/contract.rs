@@ -81,10 +81,6 @@ impl<'a> CwIbcConnection<'a> {
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
-         //   ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
-            // ExecuteMsg::SetProtocolFeeHandler { address } => {
-            //     self.set_protocol_feehandler(deps, env, info, address)
-            // }
             ExecuteMsg::MessageFromXCall { data } => {
                 println!("{} Received Payload From XCall App", LOG_PREFIX);
                 self.forward_to_host(deps, info, env, data)
@@ -102,6 +98,7 @@ impl<'a> CwIbcConnection<'a> {
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
             ExecuteMsg::SetIbcConfig { ibc_config } => {
+                self.ensure_owner(deps.as_ref().storage, &info)?;
                 let config = from_slice(&ibc_config).unwrap();
                 self.save_config(deps.storage, &config)?;
                 Ok(Response::new())
@@ -208,7 +205,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             XCALL_FORWARD_REPLY_ID => self.reply_forward_xcall(deps, msg),
-            HOST_FORWARD_REPLY_ID=>self.reply_forward_host(deps,msg),
+            HOST_FORWARD_REPLY_ID => self.reply_forward_host(deps, msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
@@ -243,7 +240,6 @@ impl<'a> CwIbcConnection<'a> {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-
         let owner = info.sender.as_str().to_string();
 
         self.add_owner(store, owner.clone())?;
@@ -257,12 +253,16 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("ibc_host", msg.ibc_host))
     }
 
-    fn reply_forward_xcall(&self, deps: DepsMut, message: Reply) -> Result<Response, ContractError> {
+    fn reply_forward_xcall(
+        &self,
+        deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
         println!("{} Reply From Forward Call", LOG_PREFIX);
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "reply_forward_xcall")),
+                .add_attribute("action", "call_message")
+                .add_attribute("method", "reply_forward_xcall")),
             SubMsgResult::Err(error) => Err(ContractError::ReplyError {
                 code: message.id,
                 msg: error,
@@ -274,14 +274,13 @@ impl<'a> CwIbcConnection<'a> {
         println!("{} Reply From Forward Host", LOG_PREFIX);
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "reply_forward_host")),
+                .add_attribute("action", "call_message")
+                .add_attribute("method", "reply_forward_host")),
             SubMsgResult::Err(error) => Err(ContractError::ReplyError {
                 code: message.id,
                 msg: error,
             }),
         }
-        
     }
 
     #[cfg(feature = "native_ibc")]

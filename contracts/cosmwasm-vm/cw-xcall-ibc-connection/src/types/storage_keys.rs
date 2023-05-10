@@ -1,11 +1,11 @@
-use super::*;
+use cosmwasm_schema::cw_serde;
+
+
 
 #[cw_serde]
 pub enum StorageKey {
-   
     Owner,
     Admin,
-   
     IbcConfig,
     IbcHost,
     TimeoutHeight,

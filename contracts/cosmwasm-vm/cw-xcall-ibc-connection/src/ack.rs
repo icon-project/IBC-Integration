@@ -1,4 +1,8 @@
-use super::*;
+use cosmwasm_std::{Binary, to_binary, attr};
+use cw_common::types::Ack;
+use cw_common::cw_types::{CwPacket,CwBasicResponse};
+use crate::error::ContractError;
+
 
 /// This Rust function returns a binary representation of a successful Ack result.
 ///
@@ -42,14 +46,13 @@ pub fn make_ack_fail(err: String) -> Binary {
 /// Returns:
 ///
 /// a `Result` with either an `IbcBasicResponse` or a `ContractError`.
-pub fn on_ack_sucess(packet: CwPacket) -> Result<CwBasicResponse, ContractError> {
+pub fn on_ack_sucess(_packet: CwPacket) -> Result<CwBasicResponse, ContractError> {
     let attributes = vec![attr("action", "acknowledge"), attr("success", "true")];
 
     Ok(CwBasicResponse::new().add_attributes(attributes))
 }
 
-
-pub fn on_ack_failure(packet: CwPacket, error: &str) -> Result<CwBasicResponse, ContractError> {
+pub fn on_ack_failure(_packet: CwPacket, error: &str) -> Result<CwBasicResponse, ContractError> {
     Ok(CwBasicResponse::new()
         .add_attribute("action", "acknowledge")
         .add_attribute("success", "false")

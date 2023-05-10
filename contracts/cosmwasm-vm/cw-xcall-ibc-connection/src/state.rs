@@ -4,7 +4,7 @@ use super::*;
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
 pub const ACK_FAILURE_ID: u64 = 3;
-pub const HOST_FORWARD_REPLY_ID: u64=2;
+pub const HOST_FORWARD_REPLY_ID: u64 = 2;
 pub const XCALL_FORWARD_REPLY_ID: u64 = 4;
 
 /// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
@@ -93,7 +93,6 @@ impl IbcConfig {
 /// the Call Service. This is the block height at which the Call Service will stop processing requests
 /// if they have not been completed.
 pub struct CwIbcConnection<'a> {
-
     owner: Item<'a, String>,
     admin: Item<'a, String>,
     ibc_config: Item<'a, IbcConfig>,

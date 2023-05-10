@@ -1,4 +1,3 @@
-use cw_common::hex_string::HexString;
 
 use crate::types::LOG_PREFIX;
 
