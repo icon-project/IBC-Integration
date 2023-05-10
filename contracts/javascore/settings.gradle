@@ -6,6 +6,7 @@ include(
         'test-lib',
         'ibc',
         'xcall',
+        'xcall-connection',
         'xcall-multi-protocol',
         // 'lightclients:archway',
 )
