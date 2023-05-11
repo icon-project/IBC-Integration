@@ -6,6 +6,7 @@ on:
       - "**"
     paths:
       - "contracts/cosmwasm-vm/**"
+      - ".github/workflows/cosmwasm-contracts-code-coverage.yml"
   push:
     branches:
       - main
@@ -35,4 +36,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
+          flags: rust
           fail_ci_if_error: true
