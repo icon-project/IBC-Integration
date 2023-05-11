@@ -4,8 +4,9 @@ on:
   pull_request:
     branches:
       - "**"
-    # paths:
-    #   - "contracts/cosmwasm-vm/**"
+    paths:
+      - "contracts/cosmwasm-vm/**"
+      - ".github/workflows/cosmwasm-contracts-code-coverage.yml"
   push:
     branches:
       - main
