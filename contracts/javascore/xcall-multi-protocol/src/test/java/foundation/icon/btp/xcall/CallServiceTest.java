@@ -28,7 +28,6 @@ import foundation.icon.btp.xcall.CSMessageRequest;
 import foundation.icon.btp.xcall.CallServiceImpl;
 import foundation.icon.btp.xcall.CallServiceReceiver;
 import foundation.icon.btp.xcall.Connection;
-import foundation.icon.btp.xcall.ConnectionPair;
 import foundation.icon.btp.xcall.NetworkAddress;
 import foundation.icon.ee.types.Address;
 import ibc.icon.test.MockContract;
@@ -49,14 +48,18 @@ public class CallServiceTest extends TestBase {
     protected String baseEthConnection = "0xb";
     protected MockContract<CallServiceReceiver> dapp;
     protected MockContract<Connection> baseConnection;
-    protected ConnectionPair[] baseConnectionPath;
+
+    String[] baseSource;
+    String[] baseDestination;
+
 
     @BeforeEach
     public void setup() throws Exception {
         dapp = new MockContract<>(CallServiceReceiverScoreInterface.class, CallServiceReceiver.class, sm, owner);
         iconDappAddress = new NetworkAddress(nid, dapp.getAddress().toString());
         baseConnection = new MockContract<>(ConnectionScoreInterface.class, Connection.class, sm, owner);
-        baseConnectionPath = new ConnectionPair[] {createPair(baseConnection.getAddress().toString(), baseEthConnection)};
+        baseSource = new String[] {baseConnection.getAddress().toString()};
+        baseDestination = new String[] {baseEthConnection};
         when(baseConnection.mock.getFee(anyString(), anyBoolean())).thenReturn(BigInteger.ZERO);
         xcall = sm.deploy(owner, CallServiceImpl.class, nid);
         xcallSpy = (CallServiceImpl) spy(xcall.getInstance());
@@ -69,7 +72,7 @@ public class CallServiceTest extends TestBase {
         byte[] data = "test".getBytes();
 
         // Act
-        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseConnectionPath, data);
+        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseSource, baseDestination, data);
 
         // Assert
         CSMessageRequest request = new CSMessageRequest(iconDappAddress.toString(), ethDapp.account.toString(), new String[]{baseEthConnection}, BigInteger.ONE, false, data);
@@ -87,17 +90,14 @@ public class CallServiceTest extends TestBase {
         when(connection1.mock.getFee(anyString(), anyBoolean())).thenReturn(BigInteger.ZERO);
         when(connection2.mock.getFee(anyString(), anyBoolean())).thenReturn(BigInteger.ZERO);
 
-        String[] ethConnections = {"0x1eth", "0x2eth"};
-        ConnectionPair[] connections = new ConnectionPair[] {
-            createPair(connection1.getAddress().toString(), ethConnections[0]),
-            createPair(connection2.getAddress().toString(), ethConnections[1])
-        };
+        String[] destinations = {"0x1eth", "0x2eth"};
+        String[] sources = {connection1.getAddress().toString(), connection2.getAddress().toString()};
 
         // Act
-        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), connections, data);
+        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), sources, destinations, data);
 
         // Assert
-        CSMessageRequest request = new CSMessageRequest(iconDappAddress.toString(), ethDapp.account.toString(), ethConnections, BigInteger.ONE, false, data);
+        CSMessageRequest request = new CSMessageRequest(iconDappAddress.toString(), ethDapp.account.toString(), destinations, BigInteger.ONE, false, data);
         CSMessage msg = new CSMessage(CSMessage.REQUEST, request.toBytes());
         verify(connection1.mock).sendMessage(eq(ethNid), eq("xcall"), eq(BigInteger.ZERO), aryEq(msg.toBytes()));
         verify(connection2.mock).sendMessage(eq(ethNid), eq("xcall"), eq(BigInteger.ZERO), aryEq(msg.toBytes()));
@@ -225,7 +225,7 @@ public class CallServiceTest extends TestBase {
         // Arrange
         byte[] data = "test".getBytes();
         byte[] rollback = "rollback".getBytes();
-        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseConnectionPath, data, rollback);
+        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseSource, baseDestination, data, rollback);
         String errorMessage = "errorMessage";
 
         // Act
@@ -248,13 +248,10 @@ public class CallServiceTest extends TestBase {
         when(connection1.mock.getFee(anyString(), anyBoolean())).thenReturn(BigInteger.ZERO);
         when(connection2.mock.getFee(anyString(), anyBoolean())).thenReturn(BigInteger.ZERO);
 
-        String[] ethConnections = {"0x1eth", "0x2eth"};
-        ConnectionPair[] connections = new ConnectionPair[] {
-            createPair(connection1.getAddress().toString(), ethConnections[0]),
-            createPair(connection2.getAddress().toString(), ethConnections[1])
-        };
+        String[] destinations = {"0x1eth", "0x2eth"};
+        String[] sources = {connection1.getAddress().toString(), connection2.getAddress().toString()};
 
-        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), connections, data, rollback);
+        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), sources, destinations, data, rollback);
         String errorMessage = "errorMessage";
 
         // Act
@@ -274,7 +271,7 @@ public class CallServiceTest extends TestBase {
         // Arrange
         byte[] data = "test".getBytes();
         byte[] rollback = "rollback".getBytes();
-        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseConnectionPath, data, rollback);
+        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseSource, baseDestination, data, rollback);
 
         // Act
         CSMessageResponse msgRes = new CSMessageResponse(BigInteger.ONE, CSMessageResponse.SUCCESS,  "");
@@ -294,7 +291,7 @@ public class CallServiceTest extends TestBase {
         byte[] rollback = "rollback".getBytes();
         NetworkAddress xcallAddr = new NetworkAddress(nid, xcall.getAddress());
 
-        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseConnectionPath, data, rollback);
+        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseSource, baseDestination, data, rollback);
 
         String errorMessage = "errorMessage";
         CSMessageResponse msgRes = new CSMessageResponse(BigInteger.ONE, CSMessageResponse.FAILURE,  errorMessage);
@@ -316,7 +313,7 @@ public class CallServiceTest extends TestBase {
         byte[] rollback = "rollback".getBytes();
         NetworkAddress xcallAddr = new NetworkAddress(nid, xcall.getAddress());
 
-        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseConnectionPath, data, rollback);
+        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), baseSource, baseDestination, data, rollback);
 
         String errorMessage = "errorMessage";
         CSMessageResponse msgRes = new CSMessageResponse(BigInteger.ONE, CSMessageResponse.FAILURE,  errorMessage);
@@ -344,14 +341,10 @@ public class CallServiceTest extends TestBase {
         when(connection1.mock.getFee(anyString(), anyBoolean())).thenReturn(BigInteger.ZERO);
         when(connection2.mock.getFee(anyString(), anyBoolean())).thenReturn(BigInteger.ZERO);
 
-        String[] ethConnections = {"0x1eth", "0x2eth"};
-        ConnectionPair[] connections = new ConnectionPair[] {
-            createPair(connection1.getAddress().toString(), ethConnections[0]),
-            createPair(connection2.getAddress().toString(), ethConnections[1])
-        };
+        String[] destinations = {"0x1eth", "0x2eth"};
         String[] sources = {connection1.getAddress().toString(), connection2.getAddress().toString()};
 
-        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), connections, data, rollback);
+        xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), sources, destinations, data, rollback);
         String errorMessage = "errorMessage";
         CSMessageResponse msgRes = new CSMessageResponse(BigInteger.ONE, CSMessageResponse.FAILURE,  errorMessage);
         CSMessage msg = new CSMessage(CSMessage.RESPONSE, msgRes.toBytes());
@@ -365,12 +358,5 @@ public class CallServiceTest extends TestBase {
         // Assert
         verify(xcallSpy).RollbackExecuted(BigInteger.ONE, CSMessageResponse.SUCCESS, "");
         verify(dapp.mock).handleCallMessage(xcallAddr.toString(), rollback, sources);
-    }
-
-    private static ConnectionPair createPair(String src, String dst) {
-        ConnectionPair pair = new ConnectionPair();
-        pair.src = src;
-        pair.dst = dst;
-        return pair;
     }
 }
