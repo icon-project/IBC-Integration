@@ -1,9 +1,9 @@
 use super::*;
 /// The `CwIbcCoreContext` struct represents the core context of a Cosmos SDK contract for
 /// inter-blockchain communication.
-/// 
+///
 /// Properties:
-/// 
+///
 /// * `block_height`: A storage item representing the current block height.
 /// * `cw_ibc_store`: `cw_ibc_store` is an instance of the `CwIbcStore` struct, which is used to manage
 /// the storage of the contract. It likely contains methods for reading and writing data to the

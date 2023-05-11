@@ -1,9 +1,9 @@
 use super::*;
 
 /// The `CwIbcStore` struct stores various data related to the Inter-Blockchain Communication (IBC).
-/// 
+///
 /// Properties:
-/// 
+///
 /// * `client_registry`: A mapping between client types and their corresponding client identifiers
 /// (IDs).
 /// * `client_types`: A mapping between a client ID and its corresponding client type.
