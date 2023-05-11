@@ -1,5 +1,3 @@
-
-
 use crate::ack::acknowledgement_data_on_success;
 
 use super::*;
@@ -154,11 +152,7 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// an `IbcReceiveResponse` object wrapped in a `Result` with a possible `ContractError`.
-    pub fn hanadle_request(
-        &self,
-        deps: DepsMut,
-        data: &[u8],
-    ) -> Result<Response, ContractError> {
+    pub fn hanadle_request(&self, deps: DepsMut, data: &[u8]) -> Result<Response, ContractError> {
         let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
 
@@ -181,18 +175,16 @@ impl<'a> CwCallService<'a> {
             message_request.sequence_no(),
             request_id,
         );
-        let acknowledgement_data =
-            to_binary(&cw_common::client_response::XcallPacketAck {
-                acknowledgement: make_ack_success().to_vec(),
-            })
-            .map_err(ContractError::Std)?;
+        let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
+            acknowledgement: make_ack_success().to_vec(),
+        })
+        .map_err(ContractError::Std)?;
 
         Ok(Response::new()
             .add_attribute("action", "call_service")
             .add_attribute("method", "handle_response")
             .set_data(acknowledgement_data)
             .add_event(event))
-            
     }
 
     /// This function handles the response received from a call to an external service.
@@ -212,33 +204,29 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// a `Result` containing an `IbcReceiveResponse` on success or a `ContractError` on failure.
-    pub fn handle_response(
-        &self,
-        deps: DepsMut,
-        data: &[u8],
-    ) -> Result<Response, ContractError> {
+    pub fn handle_response(&self, deps: DepsMut, data: &[u8]) -> Result<Response, ContractError> {
         let message: CallServiceMessageResponse = data.try_into()?;
         let response_sequence_no = message.sequence_no();
 
         let mut call_request = self.query_request(deps.storage, response_sequence_no)?;
 
         if call_request.is_null() {
-            let acknowledgement_data =
-                to_binary(&cw_common::client_response::XcallPacketAck {
-                    acknowledgement: make_ack_fail(format!(
-                        "handle_resposne: no request for {}",
-                        response_sequence_no
-                    ))
-                    .to_vec(),
-                })
-                .map_err(ContractError::Std)?;
+            let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
+                acknowledgement: make_ack_fail(format!(
+                    "handle_resposne: no request for {}",
+                    response_sequence_no
+                ))
+                .to_vec(),
+            })
+            .map_err(ContractError::Std)?;
             return Ok(Response::new()
                 .add_attribute("action", "call_service")
                 .add_attribute("method", "handle_response")
                 .add_attribute(
                     "message",
                     format!("handle_resposne: no request for {}", response_sequence_no),
-                ).set_data(acknowledgement_data));
+                )
+                .set_data(acknowledgement_data));
         }
 
         match message.response_code() {

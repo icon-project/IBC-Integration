@@ -1,4 +1,6 @@
-use super::*;
+use cosmwasm_std::{Addr, Api, MessageInfo, Response, Storage};
+
+use crate::{error::ContractError, state::CwIbcConnection};
 
 impl<'a> CwIbcConnection<'a> {
     /// This function queries the admin of a smart contract from the storage.

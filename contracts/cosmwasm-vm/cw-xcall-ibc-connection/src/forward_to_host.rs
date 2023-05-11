@@ -1,21 +1,23 @@
+use cosmwasm_std::{DepsMut, MessageInfo, Env, Response, QueryRequest, to_binary, to_vec, CosmosMsg, WasmMsg, SubMsg};
 use cw_common::hex_string::HexString;
 
 use crate::{
-    state::{HOST_FORWARD_REPLY_ID, XCALL_FORWARD_REPLY_ID},
-    types::LOG_PREFIX,
+    state::{HOST_FORWARD_REPLY_ID, CwIbcConnection},
+    types::LOG_PREFIX, error::ContractError, events::event_message_forwarded,
 };
+use cw_common::ibc_types::IbcHeight as Height;
+use cw_common::ProstMessage;
 
-use super::*;
 
 impl<'a> CwIbcConnection<'a> {
     pub fn forward_to_host(
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        env: Env,
+        _env: Env,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        let from_address = info.sender.to_string();
+
         self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
 
         self.ensure_data_length(message.len())?;

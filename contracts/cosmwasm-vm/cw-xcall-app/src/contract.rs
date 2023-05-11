@@ -2,7 +2,7 @@ use crate::types::LOG_PREFIX;
 
 use super::*;
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw-xcall";
+const CONTRACT_NAME: &str = "crates.io:cw-xcall-app";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 impl<'a> CwCallService<'a> {
@@ -86,9 +86,7 @@ impl<'a> CwCallService<'a> {
                 println!("{} Received Send Call Message", LOG_PREFIX);
                 self.send_packet(deps, info, env, to, data, rollback)
             }
-            ExecuteMsg::ReceiveCallMessage { data }=>{
-                self.receive_packet_data(deps, data)
-            }
+            ExecuteMsg::ReceiveCallMessage { data } => self.receive_packet_data(deps, data),
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {
                 self.execute_rollback(deps, info, sequence_no)

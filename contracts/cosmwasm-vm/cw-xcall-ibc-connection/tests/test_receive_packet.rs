@@ -90,17 +90,6 @@ fn test_receive_packet_for_call_message_response() {
         "",
     );
 
-    let call_request = CallRequest::new(
-        alice().to_string(),
-        bob().to_string(),
-        vec![1, 2, 3].into(),
-        true,
-    );
-
-    // contract
-    //     .set_call_request(mock_deps.as_mut().storage, 1, call_request)
-    //     .unwrap();
-
     let message: CallServiceMessage = data.try_into().unwrap();
 
     let timeout_block = IbcTimeoutBlock {
@@ -149,13 +138,6 @@ fn handle_response_emit_rollback_event() {
         1,
         cw_xcall_app::types::response::CallServiceResponseType::CallServiceResponseFailure,
         "",
-    );
-
-    let call_request = CallRequest::new(
-        alice().to_string(),
-        bob().to_string(),
-        vec![1, 2, 3].into(),
-        false,
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();

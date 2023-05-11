@@ -313,8 +313,7 @@ pub struct LightClientResponse {
     pub ibc_endpoint: CwEndPoint,
 }
 
-
 #[cw_serde]
-pub struct XcallPacketAck{
+pub struct XcallPacketAck {
     pub acknowledgement: Vec<u8>,
 }

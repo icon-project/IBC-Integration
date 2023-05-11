@@ -108,7 +108,6 @@ pub mod test {
         println!("Calling Build Function");
         let connection_storage = CwIbcConnection::default();
 
-
         let ibc_config = mock_ibc_config();
 
         connection_storage

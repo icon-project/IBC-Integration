@@ -5,7 +5,7 @@ use crate::types::LOG_PREFIX;
 use super::*;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw-xcall";
+const CONTRACT_NAME: &str = "crates.io:cw-xcall-ibc-connection";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 impl<'a> CwIbcConnection<'a> {

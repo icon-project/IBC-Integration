@@ -1,8 +1,7 @@
-use cosmwasm_std::{Binary, to_binary, attr};
-use cw_common::types::Ack;
-use cw_common::cw_types::{CwPacket,CwBasicResponse};
 use crate::error::ContractError;
-
+use cosmwasm_std::{attr, to_binary, Binary};
+use cw_common::cw_types::{CwBasicResponse, CwPacket};
+use cw_common::types::Ack;
 
 /// This Rust function returns a binary representation of a successful Ack result.
 ///

@@ -1,4 +1,9 @@
-use super::*;
+use crate::{
+    error::ContractError,
+    ibc::{APP_ORDER, IBC_VERSION},
+};
+
+use cw_common::cw_types::CwOrder;
 
 pub fn check_order(order: &CwOrder) -> Result<(), ContractError> {
     if order != &APP_ORDER {
