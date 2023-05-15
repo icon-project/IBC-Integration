@@ -1,3 +1,5 @@
+use cw_common::types::Route;
+
 use crate::types::LOG_PREFIX;
 
 use super::*;
@@ -78,7 +80,7 @@ impl<'a> CwCallService<'a> {
                     CwCallService::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address)
             }
-            ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
+            ExecuteMsg::SetProtocolFee { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
@@ -89,6 +91,7 @@ impl<'a> CwCallService<'a> {
                 rollback,
             } => {
                 println!("{} Received Send Call Message", LOG_PREFIX);
+                self.validate_send_call(&routes, &deps.querier, &info)?;
                 self.send_packet(deps, info, env, to, data, routes, rollback)
             }
             ExecuteMsg::ReceiveCallMessage { data } => self.receive_packet_data(deps, data),
@@ -186,6 +189,16 @@ impl<'a> CwCallService<'a> {
                 msg: "Unknown".to_string(),
             }),
         }
+    }
+
+    pub fn validate_send_call(&self,routes:&Vec<Route>,querier:&QuerierWrapper,info:&MessageInfo)->Result<(),ContractError>{
+        let fees= routes.iter().map(|r|{
+            self.query_protocol_fee(querier, &r.source.address)
+         }).collect::<Result<Vec<u128>,ContractError>>()?;
+         
+         let total_required_fee:u128 =fees.iter().sum();
+         self.ensure_enough_funds(total_required_fee,&info)?;
+         Ok(())
     }
 }
 

@@ -11,7 +11,7 @@ pub enum ExecuteMsg {
     SetAdmin {
         address: String,
     },
-    SetProtocol {
+    SetProtocolFee {
         value: u128,
     },
     SetProtocolFeeHandler {

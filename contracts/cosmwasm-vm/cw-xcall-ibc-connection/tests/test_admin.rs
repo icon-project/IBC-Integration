@@ -2,7 +2,7 @@ mod account;
 mod setup;
 use account::*;
 use cosmwasm_std::testing::mock_env;
-use cw_common::types::Address;
+use cw_common::{types::Address, xcall_connection_msg::QueryMsg};
 use cw_xcall_ibc_connection::state::CwIbcConnection;
 use setup::*;
 
@@ -279,7 +279,7 @@ fn query_admin() {
     let result = contract.query(
         mock_deps.as_ref(),
         mock_env,
-        cw_xcall_ibc_connection::msg::QueryMsg::GetAdmin {},
+        QueryMsg::GetAdmin {},
     );
 
     assert!(result.is_err())

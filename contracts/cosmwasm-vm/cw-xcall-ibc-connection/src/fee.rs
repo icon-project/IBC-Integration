@@ -35,8 +35,8 @@ impl<'a> CwIbcConnection<'a> {
         Ok(Response::new().add_attribute("method", "set_protocolfee"))
     }
 
-    pub fn get_protocol_fee(&self, deps: Deps) -> u128 {
-        self.query_fee(deps.storage).unwrap()
+    pub fn get_protocol_fee(&self, deps: Deps) -> Result<u128, ContractError> {
+        return self.query_fee(deps.storage);
     }
 }
 
@@ -57,7 +57,7 @@ impl<'a> CwIbcConnection<'a> {
     /// The `add_fee` function returns a `Result` type with either an `Ok(())` value indicating that the
     /// fee was successfully added to the storage, or an `Err` value with a `ContractError::Std` variant
     /// indicating that an error occurred while trying to save the fee value to the storage.
-    fn add_fee(&self, store: &mut dyn Storage, value: u128) -> Result<(), ContractError> {
+    pub fn add_fee(&self, store: &mut dyn Storage, value: u128) -> Result<(), ContractError> {
         match self.fee().save(store, &value) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),

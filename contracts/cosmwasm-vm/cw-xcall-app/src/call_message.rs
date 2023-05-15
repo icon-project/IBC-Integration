@@ -51,12 +51,7 @@ impl<'a> CwCallService<'a> {
             info.sender.clone(),
             rollback.clone(),
         )?;
-        let fees= routes.iter().map(|r|{
-           self.query_protocol_fee(deps.querier, &r.source.address)
-        }).collect::<Result<Vec<u128>,ContractError>>()?;
-        
-        let total_required_fee:u128 =fees.iter().sum();
-        self.ensure_enough_funds(total_required_fee,&info)?;
+      
        
         
         let need_response = rollback.is_some();
@@ -128,7 +123,7 @@ impl<'a> CwCallService<'a> {
             .add_event(event))
     }
 
-    pub fn query_protocol_fee(&self,querier: QuerierWrapper, connection:&str)->Result<u128,ContractError>{
+    pub fn query_protocol_fee(&self,querier: &QuerierWrapper, connection:&str)->Result<u128,ContractError>{
 
         let query_message = cw_common::xcall_connection_msg::QueryMsg::GetProtocolFee { 
         };

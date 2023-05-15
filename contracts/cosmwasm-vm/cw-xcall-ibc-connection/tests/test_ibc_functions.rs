@@ -11,7 +11,7 @@ use cw_common::ProstMessage;
 
 use cw_xcall_app::ack::{on_ack_failure, on_ack_sucess};
 use cw_xcall_app::types::response::CallServiceMessageResponse;
-use cw_xcall_ibc_connection::msg::{InstantiateMsg, QueryMsg};
+use cw_xcall_ibc_connection::msg::{InstantiateMsg};
 use cw_xcall_ibc_connection::{execute, instantiate, query};
 use setup::*;
 pub mod account;
@@ -19,7 +19,7 @@ use account::admin_one;
 use account::alice;
 use common::rlp::{Decodable, Encodable};
 use cosmwasm_std::from_binary;
-use cw_common::xcall_connection_msg::ExecuteMsg;
+use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 
 use cw_xcall_app::types::message::CallServiceMessage;
 use cw_xcall_app::types::request::CallServiceMessageRequest;
@@ -467,6 +467,7 @@ fn test_entry_point() {
         InstantiateMsg {
             timeout_height: 10,
             ibc_host: Addr::unchecked("hostaddress"),
+            protocol_fee:0,
         },
     )
     .unwrap();
@@ -580,6 +581,7 @@ fn success_on_setting_timeout_height() {
     let init_message = InstantiateMsg {
         timeout_height: 10,
         ibc_host: Addr::unchecked("ibchostaddress"),
+        protocol_fee:0,
     };
 
     contract
@@ -620,6 +622,7 @@ fn fails_on_setting_timeout_height_unauthorized() {
     let init_message = InstantiateMsg {
         timeout_height: 10,
         ibc_host: Addr::unchecked("ibchostaddress"),
+        protocol_fee:0,
     };
 
     contract
