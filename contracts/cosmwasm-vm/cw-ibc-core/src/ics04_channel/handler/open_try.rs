@@ -1,16 +1,16 @@
 use super::*;
 
 /// This function validates if a channel open try message is valid based on the connection end on B.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `message`: A message of type `MsgChannelOpenTry` which contains information about the channel
 /// being opened and its associated parameters.
 /// * `conn_end_on_b`: `conn_end_on_b` is a reference to a `ConnectionEnd` object representing the
 /// connection end on the counterparty chain.
-/// 
+///
 /// Returns:
-/// 
+///
 /// a `Result` type with either an `Ok(())` value indicating that the validation was successful, or an
 /// `Err(ContractError)` value indicating that the validation failed with a specific `ContractError`
 /// type.
@@ -47,9 +47,9 @@ pub fn channel_open_try_msg_validate(
 
 /// This function creates an IBC channel open try message based on the provided channel end, port ID,
 /// channel ID, and connection ID.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `msg`: A reference to a ChannelEnd struct, which contains information about the channel.
 /// * `port_id`: The identifier of the port associated with the channel being opened.
 /// * `channel_id`: The channel identifier, which is a unique identifier for the channel within the
@@ -88,17 +88,17 @@ pub fn on_chan_open_try_submessage(
 
 impl<'a> CwIbcCoreContext<'a> {
     /// This function executes an on-channel open try submessage for a given light client response.
-    /// 
+    ///
     /// Arguments:
-    /// 
+    ///
     /// * `deps`: `deps` is a mutable reference to the dependencies of the contract, which includes
     /// access to the storage, API, and other modules. It is of type `DepsMut`.
     /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
     /// contract. It is used to extract the data returned by the sub-message and use it to perform
     /// further actions.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
     /// contract execution and `ContractError` is an enum representing the possible errors that can
     /// occur during contract execution.

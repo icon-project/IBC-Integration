@@ -3,18 +3,18 @@ use super::*;
 impl<'a> CwIbcCoreContext<'a> {
     /// This function sends a packet and performs various checks to ensure the validity of the packet
     /// and its associated data.
-    /// 
+    ///
     /// Arguments:
-    /// 
+    ///
     /// * `deps`: `deps` is a `DepsMut` struct, which is a mutable reference to the dependencies of the
     /// contract. These dependencies include the storage, API, and other modules that the contract may
     /// need to interact with.
     /// * `packet`: The `packet` parameter is of type `Packet` and represents the packet to be sent over
     /// the IBC channel. It contains information such as the source and destination port and channel
     /// IDs, packet sequence number, packet data, and timeout height and timestamp.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
     /// message and `ContractError` is an enum representing the possible errors that can occur during
     /// the execution of the function.

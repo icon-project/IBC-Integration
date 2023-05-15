@@ -56,9 +56,9 @@ pub fn event_xcall_message_sent(
 
 /// The function creates an event object for a rollback execution with sequence number, code, and
 /// message attributes.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `sequence_no`: The sequence number of the rollback request that was executed.
 /// * `code`: The `code` parameter is an integer value that represents the status code of the rollback
 /// execution. It could be used to indicate whether the rollback was successful or not, or to provide
@@ -66,9 +66,9 @@ pub fn event_xcall_message_sent(
 /// * `msg`: The `msg` parameter is a string that represents a message or description of the event that
 /// occurred during the rollback execution. It is used to provide additional information about the event
 /// to the user or other parts of the system.
-/// 
+///
 /// Returns:
-/// 
+///
 /// A new `Event` object with attributes "request_id", "code", and "msg" added to it.
 pub fn event_rollback_executed(sequence_no: u128, code: i8, msg: &str) -> Event {
     Event::new("rollback_executed")
@@ -78,9 +78,9 @@ pub fn event_rollback_executed(sequence_no: u128, code: i8, msg: &str) -> Event 
 }
 
 /// The function creates a new event with attributes for a call message in Rust.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `from`: The `from` parameter is a `String` representing the sender of a message in an event.
 /// * `to`: The "to" parameter in the function `event_call_message` represents the recipient of a call
 /// message. It is a string type parameter that takes the value of the recipient's address or
@@ -91,9 +91,9 @@ pub fn event_rollback_executed(sequence_no: u128, code: i8, msg: &str) -> Event 
 /// * `request_id`: The `request_id` parameter is a unique identifier for a specific request being made
 /// in the `call_message` event. It is of type `u128`, which means it can hold a very large integer
 /// value. This identifier can be used to track the progress of the request and match it with the
-/// 
+///
 /// Returns:
-/// 
+///
 /// A function is being returned that creates an instance of the `Event` struct with the attributes
 /// "call_message", "from", "to", "sequence_no", and "request_id".
 pub fn event_call_message(from: String, to: String, sequence_no: u128, request_id: u128) -> Event {
@@ -105,15 +105,15 @@ pub fn event_call_message(from: String, to: String, sequence_no: u128, request_i
 }
 
 /// The function creates an event with a "rollback_message" type and a sequence number attribute.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `sequence_no`: The `sequence_no` parameter is an unsigned 128-bit integer that represents the
 /// sequence number of a rollback message event. It is used to uniquely identify the event and keep
 /// track of the order in which events occur.
-/// 
+///
 /// Returns:
-/// 
+///
 /// A new `Event` object with the name "rollback_message" and an attribute "sequence_no" with the value
 /// of `sequence_no` converted to a string.
 pub fn event_rollback_message(sequence_no: u128) -> Event {
@@ -121,9 +121,9 @@ pub fn event_rollback_message(sequence_no: u128) -> Event {
 }
 
 /// This Rust function creates an event with attributes for a response message.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `sequence_no`: The sequence number is a unique identifier for a particular event or message. It is
 /// used to keep track of the order in which events or messages are sent and received.
 /// * `response_code`: The `response_code` parameter is an integer value representing the response code
@@ -131,9 +131,9 @@ pub fn event_rollback_message(sequence_no: u128) -> Event {
 /// is typically used to indicate the status or outcome of an operation or request.
 /// * `message`: The `message` parameter is a string that represents the message to be included in the
 /// response event. It can be any text that provides additional information about the response.
-/// 
+///
 /// Returns:
-/// 
+///
 /// A new `Event` object with the attributes `sequence_no`, `response_code`, and `message` added to it.
 pub fn event_response_message(sequence_no: u128, response_code: i8, message: &str) -> Event {
     Event::new("response_message")

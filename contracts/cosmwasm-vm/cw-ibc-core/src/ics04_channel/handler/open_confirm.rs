@@ -2,16 +2,16 @@ use super::*;
 
 /// This function validates the channel open confirmation message and returns an error if the channel
 /// state or connection hops are invalid.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `message`: A reference to a `MsgChannelOpenConfirm` struct, which contains information about the
 /// channel open confirmation message being validated.
 /// * `chan_end_on_b`: `chan_end_on_b` is a reference to a `ChannelEnd` object representing the state of
 /// the channel on the counterparty chain.
-/// 
+///
 /// Returns:
-/// 
+///
 /// a `Result` type with the `Ok` variant containing an empty tuple `()` and the `Err` variant
 /// containing a `ContractError` type.
 pub fn channel_open_confirm_validate(
@@ -39,22 +39,22 @@ pub fn channel_open_confirm_validate(
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-   /// This function executes a confirmation message from a light client and generates an event for
-   /// calling on channel open try in x-call.
-   /// 
-   /// Arguments:
-   /// 
-   /// * `deps`: `deps` is a mutable reference to the dependencies of the contract, which includes
-   /// access to the storage, API, and other modules. It is of type `DepsMut`.
-   /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message execution.
-   /// It is used in the `execute_open_confirm_from_light_client_reply` function to extract the data
-   /// returned by the sub-message and use it to generate a new sub-message to be executed.
-   /// 
-   /// Returns:
-   /// 
-   /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-   /// contract execution and `ContractError` is an enum representing the possible errors that can occur
-   /// during contract execution.
+    /// This function executes a confirmation message from a light client and generates an event for
+    /// calling on channel open try in x-call.
+    ///
+    /// Arguments:
+    ///
+    /// * `deps`: `deps` is a mutable reference to the dependencies of the contract, which includes
+    /// access to the storage, API, and other modules. It is of type `DepsMut`.
+    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message execution.
+    /// It is used in the `execute_open_confirm_from_light_client_reply` function to extract the data
+    /// returned by the sub-message and use it to generate a new sub-message to be executed.
+    ///
+    /// Returns:
+    ///
+    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
+    /// contract execution and `ContractError` is an enum representing the possible errors that can occur
+    /// during contract execution.
     pub fn execute_open_confirm_from_light_client_reply(
         &self,
         deps: DepsMut,
@@ -115,16 +115,16 @@ impl<'a> CwIbcCoreContext<'a> {
 }
 
 /// This function creates an IBC channel connect message for an open confirmation submessage for calling in xcall.
-/// 
+///
 /// Arguments:
-/// 
+///
 /// * `channel_end`: A reference to a `ChannelEnd` struct, which contains information about the channel,
 /// such as its state, ordering, and connection hops.
 /// * `port_id`: The identifier of the port associated with the channel being opened.
 /// * `channel_id`: The unique identifier of the channel within the given port.
-/// 
+///
 /// Returns:
-/// 
+///
 /// a `Result` with a `cosmwasm_std::IbcChannelConnectMsg` as the success type and a `ContractError` as
 /// the error type. The success type is the result of creating an `IbcChannelConnectMsg` with the
 /// `OpenConfirm` variant, which contains an `IbcChannel` struct with information about the channel

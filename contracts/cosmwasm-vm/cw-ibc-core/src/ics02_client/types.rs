@@ -10,9 +10,9 @@ use cw_common::constants::ICON_SIGNED_HEADER_TYPE_URL;
 
 /// This struct representing the state of a client, with various fields such as trusting
 /// period, frozen height, and validators.
-/// 
+///
 /// Properties:
-/// 
+///
 /// * `trusting_period`: The duration of time for which the client trusts the validity of a received
 /// consensus state.
 /// * `frozen_height`: `frozen_height` is an optional field in the `ClientState` struct that represents

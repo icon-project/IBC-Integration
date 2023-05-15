@@ -197,7 +197,6 @@ public class IBCConnection {
         Context.require(portId.equals(PORT));
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
         Context.require(counterparty.getPortId().equals(PORT));
-
         destinationChannel.set(channelId, counterparty.getChannelId());
     }
 

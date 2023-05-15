@@ -1,3 +1,7 @@
+use cw_common::types::{ChannelId, ConnectionId, PortId};
+use ibc_proto::ibc::core::channel::v1::Channel as RawChannel;
+use prost::Message;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -327,22 +331,22 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(error) => Err(ContractError::Std(error)),
         }
     }
-   /// This method retrieves a client from storage and returns an error if the client is not found.
-   /// 
-   /// Arguments:
-   /// 
-   /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is likely an
-   /// interface for interacting with some kind of storage system, such as a database or key-value
-   /// store. The specific implementation of this trait is not known at compile time and is determined
-   /// at runtime.
-   /// * `client_id`: The `client_id` parameter is of type `ClientId` and represents the identifier of
-   /// the client that needs to be retrieved. It is used to query the storage for the client
-   /// implementation associated with this identifier.
-   /// 
-   /// Returns:
-   /// 
-   /// a `Result` object that contains either a `String` representing the client or a `ContractError` if
-   /// there was an error retrieving the client from the storage or if the client was not found.
+    /// This method retrieves a client from storage and returns an error if the client is not found.
+    ///
+    /// Arguments:
+    ///
+    /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is likely an
+    /// interface for interacting with some kind of storage system, such as a database or key-value
+    /// store. The specific implementation of this trait is not known at compile time and is determined
+    /// at runtime.
+    /// * `client_id`: The `client_id` parameter is of type `ClientId` and represents the identifier of
+    /// the client that needs to be retrieved. It is used to query the storage for the client
+    /// implementation associated with this identifier.
+    ///
+    /// Returns:
+    ///
+    /// a `Result` object that contains either a `String` representing the client or a `ContractError` if
+    /// there was an error retrieving the client from the storage or if the client was not found.
     pub fn get_client(
         &self,
         store: &dyn Storage,
@@ -361,18 +365,18 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     /// This method retrieves the client state from storage using the client ID.
-    /// 
+    ///
     /// Arguments:
-    /// 
+    ///
     /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is an abstract
     /// type that represents a key-value store where data can be stored and retrieved. The specific
     /// implementation of the `Storage` trait is not specified in this function, allowing for
     /// flexibility in choosing the type of storage
     /// * `client_id`: The `client_id` parameter is of type `ClientId` and represents the identifier of
     /// an IBC client. It is used to retrieve the client state from the storage.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// a `Result` containing either a `Vec<u8>` representing the client state or a `ContractError` if
     /// there was an error loading the client state from the storage.
     pub fn get_client_state(
@@ -391,6 +395,65 @@ impl<'a> CwIbcCoreContext<'a> {
             })?;
 
         Ok(client_state)
+    }
+
+    /// This method retrieves the commitment from storage using the commitment key (PacketCommitment,AckCommitment,Connection,Channel,Client).
+    ///
+    /// Arguments:
+    ///
+    /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is an abstract
+    /// type that represents a key-value store where data can be stored and retrieved. The specific
+    /// implementation of the `Storage` trait is not specified in this function, allowing for
+    /// flexibility in choosing the type of storage
+    /// * `key`: The `key` parameter is of type `Vec<u8>` and represents commitment key of
+    /// an IBC client. It is used to retrieve the client state from the storage.
+    ///
+    /// Returns:
+    ///
+    /// a `Result` containing either a `Vec<u8>` representing the client state or a `ContractError` if
+    /// there was an error loading the client state from the storage.
+    pub fn get_commitment(
+        &self,
+        store: &dyn Storage,
+        key: Vec<u8>,
+    ) -> Result<Vec<u8>, ContractError> {
+        let commitment = self
+            .ibc_store()
+            .commitments()
+            .load(store, key)
+            .map_err(|_| ContractError::InvalidCommitmentKey)?;
+        Ok(commitment)
+    }
+
+    /// This method retrieves the connection from storage using the connection id.
+    ///
+    /// Arguments:
+    ///
+    /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is an abstract
+    /// type that represents a key-value store where data can be stored and retrieved. The specific
+    /// implementation of the `Storage` trait is not specified in this function, allowing for
+    /// flexibility in choosing the type of storage
+    /// * `connection_id`: The `connection_id` parameter is of type `String` and represents connection key of
+    /// an IBC client. It is used to retrieve the client state from the storage.
+    ///
+    /// Returns:
+    ///
+    /// a `Result` containing either a `Vec<u8>` representing the client state or a `ContractError` if
+    /// there was an error loading the client state from the storage.
+    pub fn get_connection(
+        &self,
+        store: &dyn Storage,
+        connection_id: ConnectionId,
+    ) -> Result<Vec<u8>, ContractError> {
+        let _connection_id = connection_id.clone();
+        let connection = self
+            .ibc_store()
+            .connections()
+            .load(store, connection_id)
+            .map_err(|_| ContractError::InvalidConnectiontId {
+                connection_id: _connection_id.as_str().to_string(),
+            })?;
+        Ok(connection)
     }
 }
 

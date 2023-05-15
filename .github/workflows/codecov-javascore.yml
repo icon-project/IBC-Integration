@@ -9,7 +9,9 @@ on:
       - main
     paths:
       - 'contracts/javascore/**'
-
+      - '.github/workflows/codecov-javascore.yml'
+env:
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 jobs:
   Coverage-Codecov:
     runs-on: ubuntu-latest
@@ -23,3 +25,5 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
+        with:
+          flags: java

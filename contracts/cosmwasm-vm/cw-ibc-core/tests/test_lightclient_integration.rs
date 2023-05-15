@@ -9,7 +9,7 @@ use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
 use ibc::events::IbcEventType;
 use prost::Message;
 use std::collections::HashMap;
-use test_utils::{get_test_signed_headers, to_attribute_map};
+use test_utils::{get_event, get_event_name, get_test_signed_headers, to_attribute_map};
 
 pub struct TestContext {
     pub app: App,
@@ -126,23 +126,6 @@ pub fn call_update_client(
     );
 
     res
-}
-
-pub fn get_event(res: &AppResponse, event: &str) -> Option<HashMap<String, String>> {
-    let event = res
-        .events
-        .iter()
-        .filter(|e| e.ty == event)
-        .collect::<Vec<&Event>>();
-    if event.len() > 0 {
-        let map = to_attribute_map(&event[0].attributes);
-        return Some(map);
-    }
-    None
-}
-
-pub fn get_event_name(event_type: IbcEventType) -> String {
-    format!("wasm-{}", event_type.as_str())
 }
 
 #[test]
