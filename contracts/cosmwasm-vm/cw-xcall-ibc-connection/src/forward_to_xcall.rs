@@ -1,10 +1,7 @@
 use cosmwasm_std::DepsMut;
 
-use crate::{
-    events::{ event_packet_received},
-    state::XCALL_FORWARD_REPLY_ID,
-};
 use super::*;
+use crate::{events::event_packet_received, state::XCALL_FORWARD_REPLY_ID};
 
 impl<'a> CwIbcConnection<'a> {
     /// This function receives packet data, decodes it, and then handles either a request or a response

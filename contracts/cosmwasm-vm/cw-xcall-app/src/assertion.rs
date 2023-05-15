@@ -235,6 +235,13 @@ impl<'a> CwCallService<'a> {
         }
         Ok(())
     }
+
+    pub fn ensure_enough_funds(&self,required_fee:u128,info:&MessageInfo)-> Result<(), ContractError> {
+        let total_funds:u128=info.funds.iter().map(|c|c.amount.into()).collect::<Vec<u128>>().iter().sum();
+        ensure!(total_funds>=required_fee,ContractError::InsuffcientFunds);
+        Ok(())
+
+    }
 }
 
 /// The function checks if a given address is a valid smart contract by querying its information using a

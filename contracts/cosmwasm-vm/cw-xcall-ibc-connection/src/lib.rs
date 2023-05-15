@@ -10,6 +10,8 @@ pub mod forward_to_xcall;
 pub mod ibc;
 pub mod msg;
 pub mod owner;
+pub mod fee_handler;
+pub mod fee;
 pub mod state;
 pub mod types;
 use crate::ack::{on_ack_failure, on_ack_sucess};
@@ -19,7 +21,7 @@ use crate::{
     error::ContractError,
     events::event_message_forwarded,
     ibc::{APP_ORDER, IBC_VERSION},
-    msg::{InstantiateMsg, QueryMsg},
+    msg::{InstantiateMsg},
     state::{CwIbcConnection, IbcConfig, ACK_FAILURE_ID},
     types::storage_keys::StorageKey,
 };
@@ -32,15 +34,15 @@ use cosmwasm_std::{
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
 
+use cw2::set_contract_version;
 use cw_common::cw_types::{
     Cw3ChannelOpenResponse, CwBasicResponse, CwChannelCloseMsg, CwChannelConnectMsg,
     CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwEndpoint, CwMsg, CwOrder, CwPacket,
     CwPacketAckMsg, CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
-use cw2::set_contract_version;
 use cw_common::types::Ack;
-use cw_common::xcall_connection_msg::ExecuteMsg;
-use cw_storage_plus::{Item};
+use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
+use cw_storage_plus::Item;
 use thiserror::Error;
 
 /// This function instantiates a contract using the CwIbcConnection.

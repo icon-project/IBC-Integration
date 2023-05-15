@@ -180,6 +180,8 @@ impl<'a> CwIbcConnection<'a> {
                 }),
             },
             QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
+            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
+            QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
         }
     }
     /// This function handles different types of reply messages and calls corresponding functions based on

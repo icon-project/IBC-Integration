@@ -82,9 +82,14 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
-            ExecuteMsg::SendCallMessage { to, data, rollback } => {
+            ExecuteMsg::SendCallMessage {
+                to,
+                routes,
+                data,
+                rollback,
+            } => {
                 println!("{} Received Send Call Message", LOG_PREFIX);
-                self.send_packet(deps, info, env, to, data, rollback)
+                self.send_packet(deps, info, env, to, data, routes, rollback)
             }
             ExecuteMsg::ReceiveCallMessage { data } => self.receive_packet_data(deps, data),
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),

@@ -99,6 +99,8 @@ pub struct CwIbcConnection<'a> {
     ibc_host: Item<'a, Addr>,
     xcall_host: Item<'a, Addr>,
     timeout_height: Item<'a, u64>,
+    fee_handler: Item<'a, String>,
+    fee: Item<'a, u128>,
 }
 
 impl<'a> Default for CwIbcConnection<'a> {
@@ -116,6 +118,8 @@ impl<'a> CwIbcConnection<'a> {
             ibc_host: Item::new(StorageKey::IbcHost.as_str()),
             timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
             xcall_host: Item::new(StorageKey::XCallHost.as_str()),
+            fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
+            fee: Item::new(StorageKey::Fee.as_str()),
         }
     }
 
@@ -166,5 +170,11 @@ impl<'a> CwIbcConnection<'a> {
     }
     pub fn get_timeout_height(&self, store: &dyn Storage) -> u64 {
         self.timeout_height.load(store).unwrap_or(0)
+    }
+    pub fn fee_handler(&self) -> &Item<'a, String> {
+        &self.fee_handler
+    }
+    pub fn fee(&self) -> &Item<'a, u128> {
+        &self.fee
     }
 }

@@ -42,4 +42,6 @@ pub enum ContractError {
     InvalidAddress { address: String },
     #[error("OnlyIbcHandler")]
     OnlyIbcHandler {},
+    #[error("InsuffcientFunds")]
+    InsuffcientFunds,
 }
