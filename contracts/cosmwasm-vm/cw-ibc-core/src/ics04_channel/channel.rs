@@ -744,7 +744,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// a `Result` containing either a `ChannelEnd` object or a `ContractError`.
     pub fn channel_end(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         port_id: &IbcPortId,
         channel_id: &IbcChannelId,
     ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ContractError> {
@@ -789,7 +789,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// a `Result` that contains either a `PacketCommitment` or a `ContractError`.
     pub fn get_packet_commitment(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
@@ -837,7 +837,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// receipt is not found.
     pub fn get_packet_receipt(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
@@ -886,7 +886,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// a Result containing an AcknowledgementCommitment or a ContractError.
     pub fn get_packet_acknowledgement(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
