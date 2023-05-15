@@ -945,8 +945,6 @@ fn test_for_call_service_request_from_rlp_bytes() {
         vec![],
     );
 
-   
-
     assert_eq!(expected_data, cs_message_request)
 }
 
@@ -979,7 +977,6 @@ fn test_for_call_message_data_from_rlp_bytes() {
         false,
         vec![],
     );
-   
 
     assert_eq!(expected_data, cs_message_request)
 }
