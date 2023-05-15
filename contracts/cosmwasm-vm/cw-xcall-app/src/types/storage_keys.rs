@@ -14,6 +14,8 @@ pub enum StorageKey {
     ConnectionHost,
     Connections,
     TimeoutHeight,
+    PendingRequests,
+    PendingResponses,
 }
 
 impl StorageKey {
@@ -31,6 +33,8 @@ impl StorageKey {
             StorageKey::ConnectionHost => "connection_host",
             StorageKey::Connections => "connections",
             StorageKey::TimeoutHeight => "timeout_height",
+            StorageKey::PendingRequests => "pending_requests",
+            StorageKey::PendingResponses => "pending_responses",
         }
     }
 }

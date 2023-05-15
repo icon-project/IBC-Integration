@@ -44,4 +44,6 @@ pub enum ContractError {
     OnlyIbcHandler {},
     #[error("InsuffcientFunds")]
     InsuffcientFunds,
+    #[error("ProtocolsMismatch")]
+    ProtocolsMismatch,
 }

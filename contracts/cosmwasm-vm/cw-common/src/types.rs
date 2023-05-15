@@ -533,37 +533,37 @@ pub struct MessageInfo {
     pub funds: Vec<Coin>,
 }
 
-#[cw_serde]
-pub struct PPNA {
-    pub protocol_id: String,
-    pub network_id: String,
-    pub address: String,
-    pub url: String,
-}
+// #[cw_serde]
+// pub struct PPNA {
+//     pub protocol_id: String,
+//     pub network_id: String,
+//     pub address: String,
+//     pub url: String,
+// }
 
-#[cw_serde]
-pub struct Route {
-    pub source: PPNA,
-    pub destination: PPNA,
-}
+// #[cw_serde]
+// pub struct Route {
+//     pub source: PPNA,
+//     pub destination: PPNA,
+// }
 
-impl TryFrom<&str> for PPNA {
-    type Error = StdError;
+// impl TryFrom<&str> for PPNA {
+//     type Error = StdError;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let parts = value.split("/").collect::<Vec<&str>>();
-        if parts.len() < 3 {
-            return Err(StdError::ParseErr {
-                target_type: "PPNA".to_string(),
-                msg: "Expected length 3".to_string(),
-            });
-        }
-        let ppna = PPNA {
-            protocol_id: parts[0].to_string(),
-            network_id: parts[1].to_string(),
-            address: parts[2].to_string(),
-            url: value.to_string(),
-        };
-        Ok(ppna)
-    }
-}
+//     fn try_from(value: &str) -> Result<Self, Self::Error> {
+//         let parts = value.split("/").collect::<Vec<&str>>();
+//         if parts.len() < 3 {
+//             return Err(StdError::ParseErr {
+//                 target_type: "PPNA".to_string(),
+//                 msg: "Expected length 3".to_string(),
+//             });
+//         }
+//         let ppna = PPNA {
+//             protocol_id: parts[0].to_string(),
+//             network_id: parts[1].to_string(),
+//             address: parts[2].to_string(),
+//             url: value.to_string(),
+//         };
+//         Ok(ppna)
+//     }
+// }

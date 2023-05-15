@@ -15,7 +15,6 @@ use super::*;
 pub struct InstantiateMsg {
     pub timeout_height: u64,
     pub connection_host: Addr,
-    
 }
 
 /// The `#[cw_serde]` attribute is used to automatically generate serialization and deserialization code

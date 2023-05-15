@@ -5,16 +5,24 @@ use super::*;
 pub struct CallRequest {
     from: String,
     to: String,
+    protocols: Vec<String>,
     rollback: Vec<u8>,
     enabled: bool,
 }
 
 impl CallRequest {
-    pub fn new(from: String, to: String, rollback: Vec<u8>, enabled: bool) -> Self {
+    pub fn new(
+        from: String,
+        to: String,
+        protocols: Vec<String>,
+        rollback: Vec<u8>,
+        enabled: bool,
+    ) -> Self {
         Self {
             from,
             to,
             rollback,
+            protocols,
             enabled,
         }
     }
@@ -33,6 +41,10 @@ impl CallRequest {
 
     pub fn enabled(&self) -> bool {
         self.enabled
+    }
+
+    pub fn protocols(&self) -> &Vec<String> {
+        &self.protocols
     }
 
     pub fn is_null(&self) -> bool {

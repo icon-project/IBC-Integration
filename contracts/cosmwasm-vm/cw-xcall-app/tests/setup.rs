@@ -148,7 +148,7 @@ pub mod test {
                 &cw_xcall_ibc_connection::msg::InstantiateMsg {
                     timeout_height: 1000,
                     ibc_host: ibc_host_contract_addr.clone(),
-                    protocol_fee:0,
+                    protocol_fee: 0,
                 },
                 &[],
                 "IBCConnection",
@@ -197,27 +197,26 @@ pub mod test {
 
     use anyhow::Error as AppError;
     use cosmwasm_std::to_vec;
-    use cw_common::types::{Route, PPNA};
     use cw_xcall_ibc_connection::state::{CwIbcConnection, IbcConfig};
 
     pub fn call_send_call_message(
         ctx: &mut TestContext,
         to: &str,
-        routes:Vec<Route>,
+        sources: Vec<String>,
+        destinations: Vec<String>,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<AppResponse, AppError> {
         let res = ctx.app.execute_contract(
             ctx.sender.clone(),
             ctx.xcall_app.clone(),
-        
             &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
                 to: to.to_string(),
                 data,
                 rollback,
-                routes
+                sources,
+                destinations,
             },
-            
             &[],
         );
         res
@@ -243,15 +242,6 @@ pub mod test {
             &[],
         );
         res
-    }
-
-    pub fn get_routes(ctx:&TestContext)->Route{
-        let source=format!("{}/{}/{}","ibc","nid",ctx.connection_host);
-        let destination =format!("{}/{}/{}","ibc","nid","destination");
-        return Route{
-            source: PPNA::try_from(source.as_str()).unwrap(),
-            destination:PPNA::try_from(destination.as_str()).unwrap(),
-        }
     }
 }
 

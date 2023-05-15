@@ -5,13 +5,13 @@ pub mod check;
 pub mod contract;
 pub mod error;
 pub mod events;
+pub mod fee;
+pub mod fee_handler;
 pub mod forward_to_host;
 pub mod forward_to_xcall;
 pub mod ibc;
 pub mod msg;
 pub mod owner;
-pub mod fee_handler;
-pub mod fee;
 pub mod state;
 pub mod types;
 use crate::ack::{on_ack_failure, on_ack_sucess};
@@ -21,7 +21,7 @@ use crate::{
     error::ContractError,
     events::event_message_forwarded,
     ibc::{APP_ORDER, IBC_VERSION},
-    msg::{InstantiateMsg},
+    msg::InstantiateMsg,
     state::{CwIbcConnection, IbcConfig, ACK_FAILURE_ID},
     types::storage_keys::StorageKey,
 };

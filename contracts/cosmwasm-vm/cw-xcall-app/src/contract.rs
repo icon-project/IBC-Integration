@@ -1,5 +1,3 @@
-use cw_common::types::Route;
-
 use crate::types::LOG_PREFIX;
 
 use super::*;
@@ -86,15 +84,16 @@ impl<'a> CwCallService<'a> {
             }
             ExecuteMsg::SendCallMessage {
                 to,
-                routes,
+                sources,
+                destinations,
                 data,
                 rollback,
             } => {
                 println!("{} Received Send Call Message", LOG_PREFIX);
-                self.validate_send_call(&routes, &deps.querier, &info)?;
-                self.send_packet(deps, info, env, to, data, routes, rollback)
+                self.validate_send_call(&sources, &destinations, &deps.querier, &info)?;
+                self.send_packet(deps, info, env, to, sources, destinations, data, rollback)
             }
-            ExecuteMsg::ReceiveCallMessage { data } => self.receive_packet_data(deps, data),
+            ExecuteMsg::ReceiveCallMessage { data } => self.receive_packet_data(deps, info, data),
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {
                 self.execute_rollback(deps, info, sequence_no)
@@ -191,14 +190,24 @@ impl<'a> CwCallService<'a> {
         }
     }
 
-    pub fn validate_send_call(&self,routes:&Vec<Route>,querier:&QuerierWrapper,info:&MessageInfo)->Result<(),ContractError>{
-        let fees= routes.iter().map(|r|{
-            self.query_protocol_fee(querier, &r.source.address)
-         }).collect::<Result<Vec<u128>,ContractError>>()?;
-         
-         let total_required_fee:u128 =fees.iter().sum();
-         self.ensure_enough_funds(total_required_fee,&info)?;
-         Ok(())
+    pub fn validate_send_call(
+        &self,
+        sources: &Vec<String>,
+        destinations: &Vec<String>,
+        querier: &QuerierWrapper,
+        info: &MessageInfo,
+    ) -> Result<(), ContractError> {
+        if sources.len() != destinations.len() {
+            return Err(ContractError::ProtocolsMismatch);
+        }
+        let fees = sources
+            .iter()
+            .map(|r| self.query_protocol_fee(querier, &r))
+            .collect::<Result<Vec<u128>, ContractError>>()?;
+
+        let total_required_fee: u128 = fees.iter().sum();
+        self.ensure_enough_funds(total_required_fee, &info)?;
+        Ok(())
     }
 }
 

@@ -4,8 +4,6 @@ use cosmwasm_std::{
     IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
 };
 
-use crate::types::Route;
-
 #[cw_serde]
 pub enum ExecuteMsg {
     SetAdmin {
@@ -20,7 +18,8 @@ pub enum ExecuteMsg {
     SendCallMessage {
         to: String,
         data: Vec<u8>,
-        routes: Vec<Route>,
+        sources: Vec<String>,
+        destinations: Vec<String>,
         rollback: Option<Vec<u8>>,
     },
     ReceiveCallMessage {

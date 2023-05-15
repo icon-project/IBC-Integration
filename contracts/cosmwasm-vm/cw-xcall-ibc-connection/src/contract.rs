@@ -249,8 +249,7 @@ impl<'a> CwIbcConnection<'a> {
         self.add_admin(store, info, owner)?;
         self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
-        self.add_fee(store,msg.protocol_fee)?;
-        
+        self.add_fee(store, msg.protocol_fee)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")

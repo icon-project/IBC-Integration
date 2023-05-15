@@ -276,11 +276,7 @@ fn query_admin() {
 
     let contract = CwIbcConnection::default();
 
-    let result = contract.query(
-        mock_deps.as_ref(),
-        mock_env,
-        QueryMsg::GetAdmin {},
-    );
+    let result = contract.query(mock_deps.as_ref(), mock_env, QueryMsg::GetAdmin {});
 
     assert!(result.is_err())
 }

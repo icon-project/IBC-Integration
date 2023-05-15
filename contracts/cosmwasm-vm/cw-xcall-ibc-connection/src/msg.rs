@@ -15,5 +15,5 @@ use super::*;
 pub struct InstantiateMsg {
     pub timeout_height: u64,
     pub ibc_host: Addr,
-    pub protocol_fee:u128,
+    pub protocol_fee: u128,
 }
