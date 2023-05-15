@@ -18,6 +18,12 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("InvalidCommitmentKey")]
+    InvalidCommitmentKey,
+
+    #[error("InvalidConnectiontId {connection_id}")]
+    InvalidConnectiontId { connection_id: String },
+
     #[error("InvalidClientId {client_id}")]
     InvalidClientId { client_id: String },
 
