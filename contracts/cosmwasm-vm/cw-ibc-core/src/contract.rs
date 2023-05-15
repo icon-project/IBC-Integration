@@ -3,9 +3,15 @@ use common::icon::icon::lightclient::v1::{
     ClientState as RawClientState, ConsensusState as RawConsensusState,
 };
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
+use cosmwasm_std::to_binary;
+use cw_common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use cw_common::hex_string::HexString;
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
+use ibc::core::ics04_channel::packet::Receipt;
+use ibc_proto::google::protobuf::Any;
+use ibc_proto::ibc::core::client::v1::Height as RawHeight;
+use prost::Message;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
@@ -264,7 +270,263 @@ impl<'a> CwIbcCoreContext<'a> {
         }
     }
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-        todo!()
+        match msg {
+            QueryMsg::GetCommitment { key } => {
+                let res = self
+                    .get_commitment(deps.storage, key.to_bytes().unwrap())
+                    .map_err(|_| ContractError::InvalidCommitmentKey)
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetClientRegistry { _type } => {
+                let res = self
+                    .get_client_from_registry(deps.storage, ClientType::new(_type.clone()))
+                    .map_err(|_| ContractError::InvalidClientType { client_type: _type })
+                    .unwrap();
+                let addr = Addr::unchecked(res);
+                to_binary(&addr)
+            }
+            QueryMsg::GetClientType { client_id } => {
+                let res = self
+                    .get_client_type(deps.storage, ClientId::from_str(&client_id).unwrap())
+                    .map_err(|_| ContractError::InvalidClientId { client_id })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetClientImplementation { client_id } => {
+                let res = self
+                    .get_client_implementations(
+                        deps.storage,
+                        ClientId::from_str(&client_id).unwrap(),
+                    )
+                    .map_err(|_| ContractError::InvalidClientId { client_id })
+                    .unwrap();
+                let addr = Addr::unchecked(res);
+                to_binary(&addr)
+            }
+            QueryMsg::GetConsensusState { client_id, height } => {
+                let raw_height: RawHeight = RawHeight::decode(height.to_bytes().unwrap().as_ref())
+                    .map_err(|_| ClientError::InvalidHeight)
+                    .unwrap();
+                let height =
+                    Height::new(raw_height.revision_number, raw_height.revision_height).unwrap();
+
+                let res = self
+                    .consensus_state(
+                        deps.storage,
+                        &IbcClientId::from_str(&client_id).unwrap(),
+                        &height,
+                    )
+                    .map_err(|_| ContractError::InvalidClientId { client_id })
+                    .unwrap();
+
+                let any = Any {
+                    type_url: ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
+                    value: res.encode_vec().unwrap(),
+                };
+                to_binary(&any.encode_to_vec())
+            }
+            QueryMsg::GetClientState { client_id } => {
+                let res = self
+                    .get_client_state(deps.storage, ClientId::from_str(&client_id).unwrap())
+                    .map_err(|_| ContractError::InvalidClientId { client_id })
+                    .unwrap();
+                let any = Any {
+                    type_url: ICON_CLIENT_STATE_TYPE_URL.to_string(),
+                    value: res,
+                };
+                to_binary(&any.encode_to_vec())
+            }
+            QueryMsg::GetConnection { connection_id } => {
+                let _connection_id = ConnectionId::from_str(&connection_id).unwrap();
+                let res = self
+                    .get_connection(deps.storage, _connection_id)
+                    .map_err(|_| ContractError::InvalidConnectiontId { connection_id })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetChannel {
+                port_id,
+                channel_id,
+            } => {
+                let _port_id = PortId::from_str(&port_id).unwrap();
+                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let res = self
+                    .get_channel_end(deps.storage, _port_id.clone(), _channel_id.clone())
+                    .map_err(|_| ContractError::IbcChannelError {
+                        error: ChannelError::ChannelNotFound {
+                            port_id: _port_id.ibc_port_id().clone(),
+                            channel_id: _channel_id.ibc_channel_id().clone(),
+                        },
+                    })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetNextSequenceSend {
+                port_id,
+                channel_id,
+            } => {
+                let _port_id = PortId::from_str(&port_id).unwrap();
+                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let res = self
+                    .get_next_sequence_send(deps.storage, _port_id.clone(), _channel_id.clone())
+                    .map_err(|_| ContractError::IbcChannelError {
+                        error: ChannelError::ChannelNotFound {
+                            port_id: _port_id.ibc_port_id().clone(),
+                            channel_id: _channel_id.ibc_channel_id().clone(),
+                        },
+                    })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetNextSequenceReceive {
+                port_id,
+                channel_id,
+            } => {
+                let _port_id = PortId::from_str(&port_id).unwrap();
+                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let res = self
+                    .get_next_sequence_recv(deps.storage, _port_id.clone(), _channel_id.clone())
+                    .map_err(|_| ContractError::IbcChannelError {
+                        error: ChannelError::ChannelNotFound {
+                            port_id: _port_id.ibc_port_id().clone(),
+                            channel_id: _channel_id.ibc_channel_id().clone(),
+                        },
+                    })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetNextSequenceAcknowledgement {
+                port_id,
+                channel_id,
+            } => {
+                let _port_id = PortId::from_str(&port_id).unwrap();
+                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let res = self
+                    .get_next_sequence_ack(deps.storage, _port_id.clone(), _channel_id.clone())
+                    .map_err(|_| ContractError::IbcChannelError {
+                        error: ChannelError::ChannelNotFound {
+                            port_id: _port_id.ibc_port_id().clone(),
+                            channel_id: _channel_id.ibc_channel_id().clone(),
+                        },
+                    })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetCapability { name } => {
+                let res = self
+                    .get_capability(deps.storage, name.to_bytes().unwrap())
+                    .map_err(|_| ContractError::IbcDecodeError {
+                        error: "CapabilityNotFound".into(),
+                    })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetExpectedTimePerBlock => {
+                let res = self
+                    .get_expected_time_per_block(deps.storage)
+                    .map_err(|_| ContractError::IbcDecodeError {
+                        error: "NotFound".to_string(),
+                    })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetNextClientSequence => {
+                let res = self
+                    .client_counter(deps.storage)
+                    .map_err(|_| ContractError::InvalidNextClientSequence {})
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetNextConnectionSequence => {
+                let res = self.connection_counter(deps.storage).unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetNextChannelSequence => {
+                let res = self.channel_counter(deps.storage).unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetPacketReceipt {
+                port_id,
+                channel_id,
+                sequence,
+            } => {
+                let _port_id = PortId::from_str(&port_id).unwrap();
+                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _sequence = Sequence::from(sequence);
+                let res = self
+                    .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence.clone())
+                    .map_err(|_| ContractError::IbcPacketError {
+                        error: PacketError::PacketReceiptNotFound {
+                            sequence: _sequence,
+                        },
+                    })
+                    .unwrap();
+                to_binary(&true)
+            }
+            QueryMsg::GetPacketCommitment {
+                port_id,
+                channel_id,
+                sequence,
+            } => {
+                let _port_id = PortId::from_str(&port_id).unwrap();
+                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _sequence = Sequence::from(sequence);
+                let res = self
+                    .get_packet_commitment(deps.storage, &_port_id, &_channel_id, _sequence.clone())
+                    .map_err(|_| ContractError::IbcPacketError {
+                        error: PacketError::PacketReceiptNotFound {
+                            sequence: _sequence,
+                        },
+                    })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::GetPacketAcknowledgementCommitment {
+                port_id,
+                channel_id,
+                sequence,
+            } => {
+                let _port_id = PortId::from_str(&port_id).unwrap();
+                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _sequence = Sequence::from(sequence);
+                let res = self
+                    .get_packet_acknowledgement(
+                        deps.storage,
+                        &_port_id,
+                        &_channel_id,
+                        _sequence.clone(),
+                    )
+                    .map_err(|_| ContractError::IbcPacketError {
+                        error: PacketError::PacketReceiptNotFound {
+                            sequence: _sequence,
+                        },
+                    })
+                    .unwrap();
+                to_binary(&res)
+            }
+            QueryMsg::HasPacketReceipt {
+                port_id,
+                channel_id,
+                sequence,
+            } => {
+                let _port_id = PortId::from_str(&port_id).unwrap();
+                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _sequence = Sequence::from(sequence);
+                let res = self
+                    .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence.clone())
+                    .map_err(|_| ContractError::IbcPacketError {
+                        error: PacketError::PacketReceiptNotFound {
+                            sequence: _sequence,
+                        },
+                    })
+                    .unwrap();
+                match res {
+                    Receipt::Ok => to_binary(&true),
+                    _ => to_binary(&false),
+                }
+            }
+        }
     }
 
     /// This function handles different types of replies based on their ID and executes the
@@ -465,5 +727,111 @@ impl<'a> CwIbcCoreContext<'a> {
                 error: error.to_string(),
             })?;
         Ok(signer)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::{context::CwIbcCoreContext, ics03_connection::ConsensusState};
+    use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
+    use ibc::core::ics02_client::height::Height;
+    use ibc_proto::google::protobuf::Any;
+    use ibc_proto::ibc::core::client::v1::Height as RawHeight;
+    use prost::Message;
+
+    use super::{instantiate, query, InstantiateMsg, QueryMsg};
+
+    use cosmwasm_std::{
+        from_binary,
+        testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
+        to_vec, Addr, OwnedDeps,
+    };
+    use cw_common::{constants::ICON_CONSENSUS_STATE_TYPE_URL, ibc_types::CommitmentRoot};
+    use cw_common::{hex_string::HexString, ibc_types::IbcClientId, types::ClientType};
+
+    const SENDER: &str = "sender";
+
+    fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {};
+        let info = mock_info(SENDER, &[]);
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        deps
+    }
+
+    #[test]
+    fn test_query_next_client_sequence() {
+        let contract = CwIbcCoreContext::default();
+        let mut deps = setup();
+        let msg = QueryMsg::GetNextClientSequence;
+        let result = query(deps.as_ref(), mock_env(), msg.clone()).unwrap();
+        let result_parsed: u64 = from_binary(&result).unwrap();
+        assert_eq!(0, result_parsed);
+
+        contract
+            .increase_client_counter(deps.as_mut().storage)
+            .unwrap();
+        let result = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let result_parsed: u64 = from_binary(&result).unwrap();
+        assert_eq!(1, result_parsed);
+    }
+
+    #[test]
+    fn test_query_get_client_registry() {
+        let client_type_str = "test_client_type".to_string();
+        let client = "test_client".to_string();
+        let client_type = ClientType::new(client_type_str.clone());
+        let contract = CwIbcCoreContext::default();
+        let mut deps = setup();
+
+        contract
+            .store_client_into_registry(deps.as_mut().storage, client_type, client.clone())
+            .unwrap();
+
+        let msg = QueryMsg::GetClientRegistry {
+            _type: client_type_str.clone(),
+        };
+        let result = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let result_parsed: Addr = from_binary(&result).unwrap();
+        assert_eq!(client, result_parsed.as_str());
+    }
+
+    #[test]
+    fn test_query_get_consensus_state() {
+        let contract = CwIbcCoreContext::default();
+        let client_id = "test_client".to_string();
+        let mut deps = setup();
+        let commitment_root =
+            "0x7702db70e830e07b4ff46313456fc86d677c7eeca0c011d7e7dcdd48d5aacfe2".to_string();
+        let raw_consensus_state = RawConsensusState {
+            message_root: commitment_root.encode_to_vec(),
+        };
+        let consensus_state = ConsensusState::try_from(raw_consensus_state).unwrap();
+        let height = Height::new(123, 456).unwrap();
+        let raw_height: RawHeight = RawHeight::from(height);
+        contract
+            .store_consensus_state(
+                deps.as_mut().storage,
+                &IbcClientId::from_str(&client_id).unwrap(),
+                height,
+                to_vec(&consensus_state).unwrap(),
+            )
+            .unwrap();
+
+        let msg = QueryMsg::GetConsensusState {
+            client_id,
+            height: HexString::from_bytes(&raw_height.encode_to_vec()),
+        };
+        let result = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let result_parsed: Vec<u8> = from_binary(&result).unwrap();
+
+        let result_decoded = Any::decode(result_parsed.as_ref()).unwrap();
+        assert_eq!(
+            ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
+            result_decoded.type_url
+        );
     }
 }

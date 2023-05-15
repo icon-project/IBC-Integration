@@ -1,13 +1,17 @@
-use cosmwasm_std::{DepsMut, MessageInfo, Env, Response, QueryRequest, to_binary, to_vec, CosmosMsg, WasmMsg, SubMsg};
+use cosmwasm_std::{
+    to_binary, to_vec, CosmosMsg, DepsMut, Env, MessageInfo, QueryRequest, Response, SubMsg,
+    WasmMsg,
+};
 use cw_common::hex_string::HexString;
 
 use crate::{
-    state::{HOST_FORWARD_REPLY_ID, CwIbcConnection},
-    types::LOG_PREFIX, error::ContractError, events::event_message_forwarded,
+    error::ContractError,
+    events::event_message_forwarded,
+    state::{CwIbcConnection, HOST_FORWARD_REPLY_ID},
+    types::LOG_PREFIX,
 };
 use cw_common::ibc_types::IbcHeight as Height;
 use cw_common::ProstMessage;
-
 
 impl<'a> CwIbcConnection<'a> {
     pub fn forward_to_host(
@@ -17,7 +21,6 @@ impl<'a> CwIbcConnection<'a> {
         _env: Env,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
-
         self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
 
         self.ensure_data_length(message.len())?;

@@ -50,7 +50,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// returned.
     pub fn get_capability(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         name: Vec<u8>,
     ) -> Result<Vec<String>, ContractError> {
         self.ibc_store()
