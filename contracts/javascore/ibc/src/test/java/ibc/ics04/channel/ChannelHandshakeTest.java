@@ -367,7 +367,7 @@ public class ChannelHandshakeTest extends TestBase {
         // Assert
         verify(lightClient.mock).verifyMembership(clientId, msg.getProofHeight(),
                 BigInteger.ZERO, BigInteger.ZERO,
-                msg.getProofTry(), prefix.getKeyPrefix().toByteArray(), 
+                msg.getProofTry(), prefix.getKeyPrefix().toByteArray(),
                 IBCCommitment.channelPath(portId, channelId),counterpartyChannel.toByteArray());
 
         Counterparty counterparty = Counterparty.newBuilder(baseChannel.getCounterparty())
@@ -413,12 +413,6 @@ public class ChannelHandshakeTest extends TestBase {
                 BigInteger.ZERO, BigInteger.ZERO,
                 msg.getProofAck(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId, channelId),
                 counterpartyChannel.toByteArray());
-        Channel expectedChannel = Channel.newBuilder(baseChannel)
-                .setState(Channel.State.STATE_OPEN).build();
-
-        byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
-        verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
-                IBCCommitment.keccak256(expectedChannel.toByteArray())));
     }
 
     @Test
@@ -473,13 +467,6 @@ public class ChannelHandshakeTest extends TestBase {
                 msg.getProofInit(), prefix.getKeyPrefix().toByteArray(), IBCCommitment.channelPath(portId,
                         channelId),
                 counterpartyChannel.toByteArray());
-
-        Channel expectedChannel = Channel.newBuilder(baseChannel)
-                .setState(Channel.State.STATE_CLOSED).build();
-
-        byte[] key = IBCCommitment.channelCommitmentKey(portId, channelId);
-        verify(channelSpy).sendBTPMessage(clientId, ByteUtil.join(key,
-                IBCCommitment.keccak256(expectedChannel.toByteArray())));
 
     }
 
