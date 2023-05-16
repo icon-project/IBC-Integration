@@ -9,29 +9,6 @@ use ibc::core::ics04_channel::packet::Sequence;
 use ibc::core::ContextError;
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 
-// #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-// pub struct ClientState {
-//     trusting_period: u64,
-//     frozen_height: Option<u64>,
-//     max_clock_drift: u64,
-//     latest_height: u64,
-//     network_section_hash: Vec<u8>,
-//     validators: Vec<Vec<u8>>,
-// }
-
-// impl TryFrom<&[u8]> for ClientState {
-//     type Error = ClientError;
-
-//     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-//         match serde_json_wasm::from_slice(value) {
-//             Ok(result) => Ok(result),
-//             Err(error) => Err(ClientError::Other {
-//                 description: error.to_string(),
-//             }),
-//         }
-//     }
-// }
-
 impl ClientState {
     pub fn new(
         trusting_period: u64,
@@ -57,38 +34,6 @@ impl ClientState {
         })
     }
 }
-
-// impl Protobuf<RawClientState> for ClientState {}
-// impl TryFrom<RawClientState> for ClientState {
-//     type Error = ClientError;
-
-//     fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
-//         let client_state = Self::new(
-//             raw.trusting_period,
-//             raw.frozen_height,
-//             raw.max_clock_drift,
-//             raw.latest_height,
-//             raw.network_section_hash,
-//             raw.validators,
-//         )?;
-
-//         Ok(client_state)
-//     }
-// }
-
-// impl From<ClientState> for RawClientState {
-//     fn from(value: ClientState) -> Self {
-//         let frozen_height = value.frozen_height.unwrap_or(0);
-//         Self {
-//             trusting_period: value.trusting_period,
-//             frozen_height,
-//             max_clock_drift: value.max_clock_drift,
-//             latest_height: value.latest_height,
-//             network_section_hash: value.network_section_hash,
-//             validators: value.validators,
-//         }
-//     }
-// }
 
 impl Protobuf<Any> for ClientState {}
 

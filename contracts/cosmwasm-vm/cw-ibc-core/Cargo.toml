@@ -2,7 +2,6 @@
 name = "cw-ibc-core"
 version = "0.1.0"
 edition = "2021"
-authors = {workspace = true}
 
 
 exclude = [
@@ -57,3 +56,14 @@ cw-icon-light-client = { path="../cw-icon-light-client",default-features = false
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 hex-literal="*"
+
+[profile.release]
+# Do not perform backtrace for panic on release builds.
+panic = 'abort'
+# Perform optimizations on all codegen units.
+codegen-units = 1
+# Optimize for size.
+opt-level = 'z' # or 'z' to optimize "aggressively" for size
+# Enable link time optimization.
+lto = true
+strip = true
