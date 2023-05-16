@@ -148,6 +148,7 @@ pub mod test {
                 &cw_xcall_ibc_connection::msg::InstantiateMsg {
                     timeout_height: 1000,
                     ibc_host: ibc_host_contract_addr.clone(),
+                    protocol_fee: 0,
                 },
                 &[],
                 "IBCConnection",
@@ -201,6 +202,8 @@ pub mod test {
     pub fn call_send_call_message(
         ctx: &mut TestContext,
         to: &str,
+        sources: Vec<String>,
+        destinations: Vec<String>,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<AppResponse, AppError> {
@@ -211,6 +214,8 @@ pub mod test {
                 to: to.to_string(),
                 data,
                 rollback,
+                sources,
+                destinations,
             },
             &[],
         );

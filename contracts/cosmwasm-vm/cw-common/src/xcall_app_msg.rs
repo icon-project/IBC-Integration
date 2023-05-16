@@ -9,7 +9,7 @@ pub enum ExecuteMsg {
     SetAdmin {
         address: String,
     },
-    SetProtocol {
+    SetProtocolFee {
         value: u128,
     },
     SetProtocolFeeHandler {
@@ -18,6 +18,8 @@ pub enum ExecuteMsg {
     SendCallMessage {
         to: String,
         data: Vec<u8>,
+        sources: Vec<String>,
+        destinations: Vec<String>,
         rollback: Option<Vec<u8>>,
     },
     ReceiveCallMessage {

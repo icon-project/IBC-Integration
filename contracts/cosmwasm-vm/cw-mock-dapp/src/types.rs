@@ -38,6 +38,12 @@ pub enum ExecuteMsg {
     XCallMessage {
         data: Vec<u8>,
     },
+    SuccessCall {},
+    FailureCall {},
+    TestCall {
+        success_addr: String,
+        fail_addr: String,
+    },
 }
 
 #[cw_serde]

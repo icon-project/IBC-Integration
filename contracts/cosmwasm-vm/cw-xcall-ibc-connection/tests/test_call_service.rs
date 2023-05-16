@@ -23,6 +23,7 @@ fn proper_instantiate() {
         InstantiateMsg {
             timeout_height: 10,
             ibc_host: Addr::unchecked("someaddress"),
+            protocol_fee: 0,
         },
     )
     .unwrap();

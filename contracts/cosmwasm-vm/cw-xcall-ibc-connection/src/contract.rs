@@ -180,6 +180,8 @@ impl<'a> CwIbcConnection<'a> {
                 }),
             },
             QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
+            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps).unwrap()),
+            QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
         }
     }
     /// This function handles different types of reply messages and calls corresponding functions based on
@@ -247,6 +249,7 @@ impl<'a> CwIbcConnection<'a> {
         self.add_admin(store, info, owner)?;
         self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
+        self.add_fee(store, msg.protocol_fee)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")

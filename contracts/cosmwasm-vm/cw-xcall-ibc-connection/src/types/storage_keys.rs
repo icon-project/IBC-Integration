@@ -8,6 +8,9 @@ pub enum StorageKey {
     IbcHost,
     TimeoutHeight,
     XCallHost,
+    FeeHandler,
+    Balance,
+    Fee,
 }
 
 impl StorageKey {
@@ -19,6 +22,9 @@ impl StorageKey {
             StorageKey::IbcHost => "ibc_host",
             StorageKey::TimeoutHeight => "timeout_height",
             StorageKey::XCallHost => "xcall_host",
+            StorageKey::FeeHandler => "feehandler",
+            StorageKey::Balance => "balance",
+            StorageKey::Fee => "fee",
         }
     }
 }

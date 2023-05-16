@@ -5,6 +5,8 @@ pub mod check;
 pub mod contract;
 pub mod error;
 pub mod events;
+pub mod fee;
+pub mod fee_handler;
 pub mod forward_to_host;
 pub mod forward_to_xcall;
 pub mod ibc;
@@ -19,7 +21,7 @@ use crate::{
     error::ContractError,
     events::event_message_forwarded,
     ibc::{APP_ORDER, IBC_VERSION},
-    msg::{InstantiateMsg, QueryMsg},
+    msg::InstantiateMsg,
     state::{CwIbcConnection, IbcConfig, ACK_FAILURE_ID},
     types::storage_keys::StorageKey,
 };
@@ -39,7 +41,7 @@ use cw_common::cw_types::{
     CwPacketAckMsg, CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
 use cw_common::types::Ack;
-use cw_common::xcall_connection_msg::ExecuteMsg;
+use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 use cw_storage_plus::Item;
 use thiserror::Error;
 

@@ -38,15 +38,19 @@ impl<'a> CwCallService<'a> {
         info: MessageInfo,
         env: Env,
         to: String,
+        sources: Vec<String>,
+        destinations: Vec<String>,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
+
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),
             rollback.clone(),
         )?;
+
         let need_response = rollback.is_some();
 
         let rollback_data = match rollback {
@@ -64,7 +68,13 @@ impl<'a> CwCallService<'a> {
         let connection_host = self.get_connection_host(deps.as_ref().storage)?;
 
         if need_response {
-            let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);
+            let request = CallRequest::new(
+                from_address,
+                to.clone(),
+                destinations.clone(),
+                rollback_data,
+                need_response,
+            );
 
             self.set_call_request(deps.storage, sequence_no, request)?;
         }
@@ -73,6 +83,7 @@ impl<'a> CwCallService<'a> {
             info.sender.to_string(),
             to,
             sequence_no,
+            destinations.clone(),
             need_response,
             data.to_vec(),
         );
@@ -85,27 +96,49 @@ impl<'a> CwCallService<'a> {
             data: to_vec(&message).unwrap(),
         };
 
-        let submessage = SubMsg {
-            id: SEND_CALL_MESSAGE_REPLY_ID,
-            msg: CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: connection_host.to_string(),
-                msg: to_binary(&message).map_err(ContractError::Std)?,
-                funds: info.funds,
-            }),
-            gas_limit: None,
-            reply_on: cosmwasm_std::ReplyOn::Always,
-        };
-        println!(
-            "{} sent message to connection :{}",
-            LOG_PREFIX, connection_host
-        );
+        let submessages = sources
+            .iter()
+            .map(|r| {
+                let cosm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: r.to_string(),
+                    msg: to_binary(&message).map_err(ContractError::Std)?,
+                    funds: info.funds.clone(),
+                });
+                let submessage = SubMsg {
+                    id: SEND_CALL_MESSAGE_REPLY_ID,
+                    msg: cosm_msg,
+                    gas_limit: None,
+                    reply_on: cosmwasm_std::ReplyOn::Always,
+                };
+                println!(
+                    "{} sent message to connection :{}",
+                    LOG_PREFIX, connection_host
+                );
+                Ok(submessage)
+            })
+            .collect::<Result<Vec<SubMsg>, ContractError>>()?;
 
         Ok(Response::new()
-            .add_submessage(submessage)
+            .add_submessages(submessages)
             .add_attribute("action", "xcall-service")
             .add_attribute("method", "send_packet")
             .add_attribute("sequence_no", sequence_no.to_string())
             .add_event(event))
+    }
+
+    pub fn query_protocol_fee(
+        &self,
+        querier: &QuerierWrapper,
+        connection: &str,
+    ) -> Result<u128, ContractError> {
+        let query_message = cw_common::xcall_connection_msg::QueryMsg::GetProtocolFee {};
+
+        let query_request = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+            contract_addr: connection.to_string(),
+            msg: to_binary(&query_message).map_err(ContractError::Std)?,
+        });
+        let fee: u128 = querier.query(&query_request).map_err(ContractError::Std)?;
+        Ok(fee)
     }
 }
 

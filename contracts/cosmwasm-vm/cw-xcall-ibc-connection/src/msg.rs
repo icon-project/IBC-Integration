@@ -15,18 +15,5 @@ use super::*;
 pub struct InstantiateMsg {
     pub timeout_height: u64,
     pub ibc_host: Addr,
-}
-
-/// The `#[cw_serde]` attribute is used to automatically generate serialization and deserialization code
-/// for the struct or enum it is applied to.
-#[cw_serde]
-#[derive(QueryResponses)]
-/// This is a Rust enum representing different types of queries that can be made to the contract. Each
-/// variant of the enum corresponds to a specific query and has a return type specified using the
-/// `#[returns]` attribute.
-pub enum QueryMsg {
-    #[returns(String)]
-    GetAdmin {},
-    #[returns(u64)]
-    GetTimeoutHeight {},
+    pub protocol_fee: u128,
 }
