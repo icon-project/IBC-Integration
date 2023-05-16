@@ -1,9 +1,6 @@
+use common::client_state::IClientState;
 use common::icon::icon::lightclient::v1::ClientState;
-use cw_common::{
-    consensus_state::ConsensusState,
-    types::{ChannelId, ConnectionId, PortId},
-};
-use ibc_proto::ibc::core::channel::v1::Channel as RawChannel;
+use cw_common::{consensus_state::ConsensusState, types::ConnectionId};
 use prost::Message;
 
 use super::*;
@@ -469,7 +466,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &dyn Storage,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
-    ) -> Result<Box<dyn ibc::core::ics02_client::client_state::ClientState>, ContractError> {
+    ) -> Result<Box<dyn IClientState>, ContractError> {
         let client_key = commitment::client_state_commitment_key(client_id);
 
         let client_state_data = self.ibc_store().commitments().load(store, client_key)?;
@@ -483,7 +480,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn decode_client_state(
         &self,
         client_state: ibc_proto::google::protobuf::Any,
-    ) -> Result<Box<dyn IbcClientState>, ContractError> {
+    ) -> Result<Box<dyn IClientState>, ContractError> {
         let client_state: ClientState = ClientState::try_from(client_state).unwrap();
 
         Ok(Box::new(client_state))

@@ -46,6 +46,7 @@ use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
+use prost::Message;
 use setup::*;
 
 #[test]
@@ -417,13 +418,9 @@ fn connection_open_init() {
         _ => todo!(),
     });
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &res_msg.client_id_on_a.clone(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &res_msg.client_id_on_a.clone(), cl)
         .unwrap();
     contract
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
@@ -648,7 +645,7 @@ fn connection_open_ack_validate_fail() {
         )
         .unwrap();
 
-    let client_state_bytes = to_vec(&client_state).unwrap();
+    let client_state_bytes = client_state.encode_to_vec();
 
     contract
         .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)
@@ -739,7 +736,7 @@ fn connection_open_ack_validate() {
         )
         .unwrap();
 
-    let client_state_bytes = to_vec(&client_state).unwrap();
+    let client_state_bytes = client_state.encode_to_vec();
 
     contract
         .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)
@@ -985,14 +982,10 @@ fn connection_open_try_validate() {
         )
         .unwrap();
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &res_msg.client_id_on_b.clone(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &res_msg.client_id_on_b.clone(), cl)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
@@ -1045,13 +1038,13 @@ fn open_try_validate_fails() {
     .try_into()
     .unwrap();
 
-    let client_state_bytes = to_vec(&client_state);
+    let client_state_bytes = client_state.encode_to_vec();
 
     contract
         .store_client_state(
             &mut deps.storage,
             &res_msg.client_id_on_b.clone(),
-            client_state_bytes.unwrap(),
+            client_state_bytes,
         )
         .unwrap();
 
@@ -1138,14 +1131,10 @@ fn connection_open_confirm_validate() {
         )
         .unwrap();
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &conn_end.client_id().clone().into(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &conn_end.client_id().clone().into(), cl)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
@@ -1343,10 +1332,10 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         )
         .unwrap();
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id.clone(), cl.unwrap())
+        .store_client_state(&mut deps.storage, &client_id.clone(), cl)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
@@ -1429,7 +1418,7 @@ fn connection_open_init_fails_of_clientstate() {
     .try_into()
     .unwrap();
 
-    let client_state_bytes = to_vec(&client_state).unwrap();
+    let client_state_bytes = client_state.encode_to_vec();
     contract
         .store_client_state(
             &mut deps.storage,
@@ -1477,7 +1466,7 @@ fn connection_open_init_validate_invalid_client_id() {
     .try_into()
     .unwrap();
 
-    let client_state_bytes = to_vec(&client_state).unwrap();
+    let client_state_bytes = client_state.encode_to_vec();
     contract
         .store_client_state(
             &mut deps.storage,
@@ -1664,13 +1653,9 @@ fn connection_open_init_fails() {
     .try_into()
     .unwrap();
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &res_msg.client_id_on_a.clone(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &res_msg.client_id_on_a.clone(), cl)
         .unwrap();
     contract
         .connection_open_init(deps.as_mut(), res_msg)
@@ -1742,7 +1727,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
         )
         .unwrap();
 
-    let client_state_bytes = to_vec(&client_state).unwrap();
+    let client_state_bytes = client_state.encode_to_vec();
 
     contract
         .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)
@@ -1823,7 +1808,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         )
         .unwrap();
 
-    let client_state_bytes = to_vec(&client_state).unwrap();
+    let client_state_bytes = client_state.encode_to_vec();
 
     contract
         .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)

@@ -1,5 +1,6 @@
 cargo fmt --all
-RUSTFLAGS='-C link-arg=-s' cargo build --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
+cargo clean
+RUSTFLAGS='-C link-arg=-s' cargo build  --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
 for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do
     NAME=$(basename "$WASM" .wasm)${SUFFIX}.wasm
     echo "Creating intermediate hash for $NAME ..."

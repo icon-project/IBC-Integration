@@ -68,190 +68,42 @@ impl From<ClientState> for Any {
     }
 }
 
-impl TryFrom<ClientState> for Vec<u8> {
-    type Error = ClientError;
-
-    fn try_from(value: ClientState) -> Result<Self, Self::Error> {
-        serde_json_wasm::to_vec(&value).map_err(|error| ClientError::Other {
-            description: error.to_string(),
-        })
-    }
-}
-
 use ibc::core::ics02_client::client_state::ClientState as IbcClientState;
 use ibc::core::ics02_client::client_type::ClientType as IbcClientType;
 use ibc::core::ics24_host::identifier::ClientId as IbcClientId;
 use ibc::Height as IbcHeight;
 use prost::Message;
 
-//TODO : Implement Methods
-#[allow(dead_code)]
-#[allow(unused_variables)]
-impl IbcClientState for ClientState {
-    fn chain_id(&self) -> ibc::core::ics24_host::identifier::ChainId {
-        todo!()
-    }
+pub trait IClientState {
+    fn latest_height(&self) -> ibc::Height;
+    fn frozen_height(&self) -> Option<ibc::Height>;
+    fn expired(&self, elapsed: std::time::Duration) -> bool;
+    fn is_frozen(&self) -> bool;
+    fn client_type(&self) -> IbcClientType;
+}
 
-    fn client_type(&self) -> IbcClientType {
-        IbcClientType::new(ICON_CLIENT_TYPE.to_string())
-    }
-
+impl IClientState for ClientState {
     fn latest_height(&self) -> ibc::Height {
         IbcHeight::new(0, self.latest_height).unwrap()
     }
 
     fn frozen_height(&self) -> Option<ibc::Height> {
+        if self.frozen_height == 0 {
+            return None;
+        }
         Some(IbcHeight::new(0, self.frozen_height).unwrap())
     }
 
     fn expired(&self, elapsed: std::time::Duration) -> bool {
-        //TODO: Implement logic
-
         let trusting_period = Duration::from_secs(self.trusting_period);
         elapsed.as_secs() > trusting_period.as_secs()
     }
 
-    fn zero_custom_fields(&mut self) {
-        todo!()
+    fn is_frozen(&self) -> bool {
+        return self.frozen_height > 0;
     }
 
-    fn initialise(
-        &self,
-        consensus_state: Any,
-    ) -> Result<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>, ClientError>
-    {
-        todo!()
-    }
-
-    fn check_header_and_update_state(
-        &self,
-        ctx: &dyn ibc::core::ValidationContext,
-        client_id: IbcClientId,
-        header: Any,
-    ) -> Result<ibc::core::ics02_client::client_state::UpdatedState, ClientError> {
-        todo!()
-    }
-
-    fn check_misbehaviour_and_update_state(
-        &self,
-        ctx: &dyn ibc::core::ValidationContext,
-        client_id: IbcClientId,
-        misbehaviour: Any,
-    ) -> Result<Box<dyn IbcClientState>, ContextError> {
-        todo!()
-    }
-
-    fn verify_upgrade_client(
-        &self,
-        upgraded_client_state: Any,
-        upgraded_consensus_state: Any,
-        proof_upgrade_client: ibc_proto::ibc::core::commitment::v1::MerkleProof,
-        proof_upgrade_consensus_state: ibc_proto::ibc::core::commitment::v1::MerkleProof,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-    ) -> Result<(), ClientError> {
-        todo!()
-    }
-
-    fn update_state_with_upgrade_client(
-        &self,
-        upgraded_client_state: Any,
-        upgraded_consensus_state: Any,
-    ) -> Result<ibc::core::ics02_client::client_state::UpdatedState, ClientError> {
-        todo!()
-    }
-
-    fn verify_client_consensus_state(
-        &self,
-        proof_height: ibc::Height,
-        counterparty_prefix: &ibc::core::ics23_commitment::commitment::CommitmentPrefix,
-        proof: &ibc::core::ics23_commitment::commitment::CommitmentProofBytes,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-        client_cons_state_path: &ibc::core::ics24_host::path::ClientConsensusStatePath,
-        expected_consensus_state: &dyn ibc::core::ics02_client::consensus_state::ConsensusState,
-    ) -> Result<(), ClientError> {
-        todo!()
-    }
-
-    fn verify_connection_state(
-        &self,
-        proof_height: ibc::Height,
-        counterparty_prefix: &ibc::core::ics23_commitment::commitment::CommitmentPrefix,
-        proof: &ibc::core::ics23_commitment::commitment::CommitmentProofBytes,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-        counterparty_conn_path: &ibc::core::ics24_host::path::ConnectionPath,
-        expected_counterparty_connection_end: &ConnectionEnd,
-    ) -> Result<(), ClientError> {
-        todo!()
-    }
-
-    fn verify_channel_state(
-        &self,
-        proof_height: ibc::Height,
-        counterparty_prefix: &ibc::core::ics23_commitment::commitment::CommitmentPrefix,
-        proof: &ibc::core::ics23_commitment::commitment::CommitmentProofBytes,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-        counterparty_chan_end_path: &ibc::core::ics24_host::path::ChannelEndPath,
-        expected_counterparty_channel_end: &ChannelEnd,
-    ) -> Result<(), ClientError> {
-        todo!()
-    }
-
-    fn verify_client_full_state(
-        &self,
-        proof_height: ibc::Height,
-        counterparty_prefix: &ibc::core::ics23_commitment::commitment::CommitmentPrefix,
-        proof: &ibc::core::ics23_commitment::commitment::CommitmentProofBytes,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-        client_state_path: &ibc::core::ics24_host::path::ClientStatePath,
-        expected_client_state: Any,
-    ) -> Result<(), ClientError> {
-        todo!()
-    }
-
-    fn verify_packet_data(
-        &self,
-        height: ibc::Height,
-        prefix: &ibc::core::ics23_commitment::commitment::CommitmentPrefix,
-        proof: &ibc::core::ics23_commitment::commitment::CommitmentProofBytes,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-        commitment_path: &ibc::core::ics24_host::path::CommitmentPath,
-        commitment: ibc::core::ics04_channel::commitment::PacketCommitment,
-    ) -> Result<(), ClientError> {
-        todo!()
-    }
-
-    fn verify_packet_acknowledgement(
-        &self,
-        height: ibc::Height,
-        prefix: &ibc::core::ics23_commitment::commitment::CommitmentPrefix,
-        proof: &ibc::core::ics23_commitment::commitment::CommitmentProofBytes,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-        ack_path: &ibc::core::ics24_host::path::AckPath,
-        ack: ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
-    ) -> Result<(), ClientError> {
-        todo!()
-    }
-
-    fn verify_next_sequence_recv(
-        &self,
-        height: ibc::Height,
-        prefix: &ibc::core::ics23_commitment::commitment::CommitmentPrefix,
-        proof: &ibc::core::ics23_commitment::commitment::CommitmentProofBytes,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-        seq_recv_path: &ibc::core::ics24_host::path::SeqRecvPath,
-        sequence: Sequence,
-    ) -> Result<(), ClientError> {
-        todo!()
-    }
-
-    fn verify_packet_receipt_absence(
-        &self,
-        height: ibc::Height,
-        prefix: &ibc::core::ics23_commitment::commitment::CommitmentPrefix,
-        proof: &ibc::core::ics23_commitment::commitment::CommitmentProofBytes,
-        root: &ibc::core::ics23_commitment::commitment::CommitmentRoot,
-        receipt_path: &ibc::core::ics24_host::path::ReceiptPath,
-    ) -> Result<(), ClientError> {
-        todo!()
+    fn client_type(&self) -> IbcClientType {
+        IbcClientType::new(ICON_CLIENT_TYPE.to_string())
     }
 }

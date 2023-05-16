@@ -94,7 +94,7 @@ fn test_for_create_client_execution_message() {
     let mock_reponse_data = CreateClientResponse::new(
         "iconclient".to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         consenus_state.encode_to_vec(),
     );
 
@@ -163,7 +163,7 @@ fn test_for_update_client_execution_messages() {
     let mock_reponse_data = CreateClientResponse::new(
         "iconclient".to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         consenus_state.clone().try_into().unwrap(),
     );
 
@@ -232,7 +232,7 @@ fn test_for_update_client_execution_messages() {
     let mock_reponse_data = UpdateClientResponse::new(
         "10-15".to_string(),
         "iconclient-0".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );
 
@@ -290,7 +290,7 @@ fn test_for_connection_open_try() {
         )
         .unwrap();
 
-    let client_state = to_vec(&client_state).unwrap();
+    let client_state = client_state.encode_to_vec();
     contract
         .store_client_state(
             &mut deps.storage,
@@ -543,7 +543,7 @@ fn test_for_connection_open_ack() {
         )
         .unwrap();
 
-    let client_state_bytes = to_vec(&client_state).unwrap();
+    let client_state_bytes = client_state.encode_to_vec();
 
     contract
         .store_client_state(
@@ -680,14 +680,10 @@ fn test_for_connection_open_confirm() {
         )
         .unwrap();
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &conn_end.client_id().clone().into(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &conn_end.client_id().clone().into(), cl)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
@@ -788,14 +784,10 @@ fn test_for_connection_open_try_fails() {
         )
         .unwrap();
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &res_msg.client_id_on_b.clone(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &res_msg.client_id_on_b.clone(), cl)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
@@ -920,14 +912,10 @@ fn test_connection_open_confirm_fails() {
         )
         .unwrap();
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &conn_end.client_id().clone().into(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &conn_end.client_id().clone().into(), cl)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();
@@ -1011,13 +999,9 @@ fn test_connection_open_try_fails_invalid_id() {
         counterparty_prefix.clone(),
     );
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &res_msg.client_id_on_a.clone(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &res_msg.client_id_on_a.clone(), cl)
         .unwrap();
     contract
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
@@ -1056,14 +1040,10 @@ fn test_connection_open_try_fails_invalid_id() {
     .try_into()
     .unwrap();
 
-    let cl = to_vec(&client_state);
+    let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &res_msg.client_id_on_b.clone(),
-            cl.unwrap(),
-        )
+        .store_client_state(&mut deps.storage, &res_msg.client_id_on_b.clone(), cl)
         .unwrap();
 
     let consenus_state = to_vec(&consenus_state).unwrap();

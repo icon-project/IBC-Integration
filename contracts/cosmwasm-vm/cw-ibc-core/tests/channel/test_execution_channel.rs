@@ -150,9 +150,9 @@ fn test_for_channel_open_try_execution_message() {
     }
     .try_into()
     .unwrap();
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
     contract
@@ -311,9 +311,9 @@ fn test_for_channel_open_ack_execution() {
     }
     .try_into()
     .unwrap();
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
     contract
@@ -475,9 +475,9 @@ fn test_for_channel_open_confirm() {
     }
     .try_into()
     .unwrap();
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
     contract
@@ -752,9 +752,9 @@ fn test_for_channel_close_confirm() {
     }
     .try_into()
     .unwrap();
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
     contract
@@ -918,9 +918,9 @@ fn test_for_packet_send() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -1022,9 +1022,9 @@ fn test_for_recieve_packet() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -1253,9 +1253,9 @@ fn test_for_ack_execute() {
     }
     .try_into()
     .unwrap();
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],

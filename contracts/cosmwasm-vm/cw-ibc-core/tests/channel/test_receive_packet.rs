@@ -109,9 +109,9 @@ fn test_receive_packet() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],

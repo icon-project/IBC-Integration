@@ -2,6 +2,7 @@ pub mod setup;
 
 use std::str::FromStr;
 
+use common::client_state::IClientState;
 use common::icon::icon::lightclient::v1::ClientState;
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
@@ -440,7 +441,7 @@ fn check_for_create_client_message_response() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );
 
@@ -517,7 +518,7 @@ fn check_for_client_state_from_storage() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         consenus_state.try_into().unwrap(),
     );
 
@@ -594,7 +595,7 @@ fn check_for_consensus_state_from_storage() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         consenus_state.clone().try_into().unwrap(),
     );
 
@@ -778,7 +779,7 @@ fn check_for_update_client_message() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-25".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );
 
@@ -829,7 +830,7 @@ fn check_for_update_client_message() {
     let mock_reponse_data = UpdateClientResponse::new(
         "10-15".to_string(),
         client_id.ibc_client_id().as_str().to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );
 
@@ -951,7 +952,7 @@ fn check_for_upgrade_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );
 
@@ -1054,7 +1055,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );
 
@@ -1157,7 +1158,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );
 
@@ -1257,7 +1258,7 @@ fn check_for_execute_upgrade_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );
 
@@ -1312,7 +1313,7 @@ fn check_for_execute_upgrade_client() {
         .unwrap();
 
     let upgrade_client_response = UpgradeClientResponse::new(
-        to_vec(&upgrade_client_state).unwrap(),
+        upgrade_client_state.encode_to_vec(),
         to_vec(&upgrade_consenus_state).unwrap(),
         client_id.ibc_client_id().to_string(),
         "0-100".to_string(),
@@ -1379,7 +1380,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
         .unwrap();
 
     let upgrade_client_response = UpgradeClientResponse::new(
-        to_vec(&upgrade_client_state).unwrap(),
+        upgrade_client_state.encode_to_vec(),
         to_vec(&upgrade_consenus_state).unwrap(),
         "hello".to_string(),
         "0-100".to_string(),
@@ -1609,7 +1610,7 @@ fn success_on_getting_client_state() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
         consenus_state.try_into().unwrap(),
     );
 
@@ -1636,8 +1637,7 @@ fn success_on_getting_client_state() {
         .unwrap();
 
     let client_state: ClientState = <ClientState as Message>::decode(state.as_slice()).unwrap();
-    let client_state: Box<dyn ibc::core::ics02_client::client_state::ClientState> =
-        Box::new(client_state);
+    let client_state: Box<dyn IClientState> = Box::new(client_state);
 
     assert_eq!(None, client_state.frozen_height())
 }
@@ -1689,7 +1689,7 @@ fn sucess_on_misbehaviour_validate() {
         .store_client_state(
             deps.as_mut().storage,
             client_id.ibc_client_id(),
-            to_vec(&client_state).unwrap(),
+            client_state.encode_to_vec(),
         )
         .unwrap();
     let height = Height::new(10, 15).unwrap();
@@ -1749,7 +1749,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .store_client_state(
             deps.as_mut().storage,
             client_id.ibc_client_id(),
-            to_vec(&client_state).unwrap(),
+            client_state.encode_to_vec(),
         )
         .unwrap();
     let height = Height::new(10, 15).unwrap();
@@ -1829,7 +1829,7 @@ fn success_on_execute_misbehaviour() {
 
     let response_message_data = MisbehaviourResponse::new(
         client_id.ibc_client_id().to_string(),
-        to_vec(&client_state).unwrap(),
+        client_state.encode_to_vec(),
     );
 
     let event = Event::new("empty");

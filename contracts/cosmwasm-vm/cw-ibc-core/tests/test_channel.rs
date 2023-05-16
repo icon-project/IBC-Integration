@@ -48,6 +48,7 @@ use ibc_proto::ibc::core::{
 };
 pub mod channel;
 pub mod setup;
+use prost::Message;
 use setup::*;
 
 #[test]
@@ -1102,9 +1103,9 @@ fn test_validate_open_try_channel() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
 
