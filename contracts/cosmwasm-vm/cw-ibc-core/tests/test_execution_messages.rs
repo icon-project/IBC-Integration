@@ -15,21 +15,19 @@ use cw_common::client_response::OpenConfirmResponse;
 use cw_common::client_response::OpenTryResponse;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 
+use cw_common::client_state::ClientState;
+use cw_common::consensus_state::ConsensusState;
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcClientId;
 use cw_common::types::ClientId;
 use cw_common::types::ConnectionId;
 use cw_common::ProstMessage;
-use cw_ibc_core::ics02_client::types::SignedHeader;
+
 use cw_ibc_core::ConnectionEnd;
 use cw_ibc_core::Height;
 
-use cw_ibc_core::{
-    context::CwIbcCoreContext,
-    ics02_client::types::{ClientState, ConsensusState},
-    msg::InstantiateMsg,
-};
+use cw_ibc_core::{context::CwIbcCoreContext, msg::InstantiateMsg};
 
 use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;

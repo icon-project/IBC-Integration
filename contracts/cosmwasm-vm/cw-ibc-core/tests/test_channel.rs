@@ -5,9 +5,10 @@ use cosmwasm_std::{
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
 };
 
+use cw_common::client_state::ClientState;
+use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::{IbcClientId, IbcConnectionId, IbcPortId};
 use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};
-use cw_ibc_core::ics02_client::types::{ClientState, ConsensusState};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };

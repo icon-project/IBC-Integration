@@ -1,6 +1,8 @@
 pub mod client_msg;
 pub mod client_response;
+pub mod client_state;
 pub mod commitment;
+pub mod consensus_state;
 pub mod constants;
 pub mod core_msg;
 pub mod cw_types;
@@ -13,7 +15,7 @@ pub mod xcall_app_msg;
 pub mod xcall_connection_msg;
 pub mod xcall_msg;
 pub mod xcall_payloads;
-use cosmwasm_std::{from_binary, from_slice, Binary, StdError};
+use cosmwasm_std::{from_binary, Binary, StdError};
 use serde::de::DeserializeOwned;
 
 pub use prost::Message as ProstMessage;

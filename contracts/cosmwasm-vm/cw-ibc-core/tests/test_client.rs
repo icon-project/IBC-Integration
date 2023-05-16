@@ -6,17 +6,16 @@ use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, Sub
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
+use cw_common::client_state::ClientState;
+use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
 use cw_common::raw_types::client::RawMsgCreateClient;
 use cw_common::types::{ClientId, ClientType};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
-    ics02_client::{
-        events::{
-            client_misbehaviour_event, create_client_event, generated_client_id_event,
-            update_client_event, upgrade_client_event,
-        },
-        types::{ClientState, ConsensusState},
+    ics02_client::events::{
+        client_misbehaviour_event, create_client_event, generated_client_id_event,
+        update_client_event, upgrade_client_event,
     },
     traits::IbcClient,
     MsgUpgradeClient,

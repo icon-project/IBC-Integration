@@ -2,7 +2,6 @@ use super::*;
 use common::icon::icon::lightclient::v1::{
     ClientState as RawClientState, ConsensusState as RawConsensusState,
 };
-use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use cosmwasm_std::to_binary;
 use cw_common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use cw_common::hex_string::HexString;
@@ -121,8 +120,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-
-                let header = Self::from_raw::<RawSignedHeader, SignedHeader>(&header)?;
+                let header_bytes = header.to_bytes().unwrap();
+                let header = RawSignedHeader::decode(header_bytes.as_slice()).unwrap();
 
                 let signer = Self::to_signer(&signer)?;
                 let msg = IbcMsgUpdateClient {
@@ -734,7 +733,7 @@ impl<'a> CwIbcCoreContext<'a> {
 mod tests {
     use std::str::FromStr;
 
-    use crate::{context::CwIbcCoreContext, ics03_connection::ConsensusState};
+    use crate::context::CwIbcCoreContext;
     use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
     use ibc::core::ics02_client::height::Height;
     use ibc_proto::google::protobuf::Any;
@@ -748,7 +747,10 @@ mod tests {
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         to_vec, Addr, OwnedDeps,
     };
-    use cw_common::{constants::ICON_CONSENSUS_STATE_TYPE_URL, ibc_types::CommitmentRoot};
+    use cw_common::{
+        consensus_state::ConsensusState, constants::ICON_CONSENSUS_STATE_TYPE_URL,
+        ibc_types::CommitmentRoot,
+    };
     use cw_common::{hex_string::HexString, ibc_types::IbcClientId, types::ClientType};
 
     const SENDER: &str = "sender";

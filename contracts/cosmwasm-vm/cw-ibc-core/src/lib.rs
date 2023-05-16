@@ -74,11 +74,11 @@ use std::str::FromStr;
 use thiserror::Error;
 
 use crate::msg::{InstantiateMsg, QueryMsg};
+use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
-use crate::{
-    ics02_client::types::{ClientState, ConsensusState, SignedHeader},
-    traits::ExecuteChannel,
-};
+use common::signed_header::RawSignedHeader;
+use cw_common::client_state::ClientState;
+use cw_common::consensus_state::ConsensusState;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]

@@ -1,4 +1,8 @@
-use cw_common::types::{ChannelId, ConnectionId, PortId};
+use cw_common::{
+    client_state::ClientState,
+    consensus_state::ConsensusState,
+    types::{ChannelId, ConnectionId, PortId},
+};
 use ibc_proto::ibc::core::channel::v1::Channel as RawChannel;
 use prost::Message;
 
