@@ -5,7 +5,7 @@ use cosmwasm_std::{
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
 };
 
-use cw_common::client_state::ClientState;
+use common::icon::icon::lightclient::v1::ClientState;
 use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::{IbcClientId, IbcConnectionId, IbcPortId};
 use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};

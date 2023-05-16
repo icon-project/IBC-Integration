@@ -3,7 +3,6 @@
 pub mod client;
 pub mod events;
 pub mod handler;
-pub mod types;
 
 use crate::{
     context::CwIbcCoreContext, traits::IbcClient, ContractError, IbcClientId, IbcClientType,
@@ -25,4 +24,3 @@ use events::{create_client_event, update_client_event, upgrade_client_event};
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use types::*;

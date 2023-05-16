@@ -2,11 +2,11 @@ pub mod setup;
 
 use std::str::FromStr;
 
+use common::icon::icon::lightclient::v1::ClientState;
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
-use cw_common::client_state::ClientState;
 use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
 use cw_common::raw_types::client::RawMsgCreateClient;
@@ -28,6 +28,7 @@ use ibc::{
     signer::Signer,
     Height,
 };
+use prost::Message;
 use setup::*;
 
 #[test]
@@ -1634,7 +1635,7 @@ fn success_on_getting_client_state() {
         .get_client_state(deps.as_mut().storage, client_id)
         .unwrap();
 
-    let client_state: ClientState = state.as_slice().try_into().unwrap();
+    let client_state: ClientState = <ClientState as Message>::decode(state.as_slice()).unwrap();
     let client_state: Box<dyn ibc::core::ics02_client::client_state::ClientState> =
         Box::new(client_state);
 
@@ -1881,7 +1882,7 @@ fn fails_on_raw_from_consensus_state() {
 fn fails_on_deserialising_invalid_bytes_to_client_state() {
     let data = get_dummy_raw_msg_create_client();
 
-    TryInto::<ClientState>::try_into(data.client_state.unwrap().value.as_slice()).unwrap();
+    <ClientState>::decode(data.client_state.unwrap().value.as_slice()).unwrap();
 }
 
 #[test]

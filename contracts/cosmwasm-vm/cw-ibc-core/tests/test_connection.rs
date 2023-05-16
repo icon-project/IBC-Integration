@@ -2,6 +2,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 pub mod setup;
+use common::icon::icon::lightclient::v1::ClientState;
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::to_binary;
 use cosmwasm_std::to_vec;
@@ -14,7 +15,6 @@ use cosmwasm_std::SubMsgResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 use cw_common::client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse};
-use cw_common::client_state::ClientState;
 use cw_common::consensus_state::ConsensusState;
 use cw_common::types::{ClientId, ConnectionId};
 use cw_ibc_core::constants::*;

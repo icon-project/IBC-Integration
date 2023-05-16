@@ -1,5 +1,5 @@
+use common::icon::icon::lightclient::v1::ClientState;
 use cw_common::{
-    client_state::ClientState,
     consensus_state::ConsensusState,
     types::{ChannelId, ConnectionId, PortId},
 };
@@ -474,7 +474,8 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let client_state_data = self.ibc_store().commitments().load(store, client_key)?;
 
-        let client_state: ClientState = client_state_data.as_slice().try_into().unwrap();
+        let client_state: ClientState =
+            <ClientState as Message>::decode(client_state_data.as_slice()).unwrap();
 
         Ok(Box::new(client_state))
     }

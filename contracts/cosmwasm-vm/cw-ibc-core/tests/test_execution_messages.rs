@@ -15,7 +15,7 @@ use cw_common::client_response::OpenConfirmResponse;
 use cw_common::client_response::OpenTryResponse;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 
-use cw_common::client_state::ClientState;
+use common::icon::icon::lightclient::v1::ClientState;
 use cw_common::consensus_state::ConsensusState;
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;

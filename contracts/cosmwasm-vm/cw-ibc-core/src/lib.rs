@@ -76,8 +76,8 @@ use thiserror::Error;
 use crate::msg::{InstantiateMsg, QueryMsg};
 use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
+use common::icon::icon::lightclient::v1::ClientState;
 use common::signed_header::RawSignedHeader;
-use cw_common::client_state::ClientState;
 use cw_common::consensus_state::ConsensusState;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 

@@ -1,6 +1,5 @@
 pub mod client_msg;
 pub mod client_response;
-pub mod client_state;
 pub mod commitment;
 pub mod consensus_state;
 pub mod constants;
