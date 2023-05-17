@@ -2,6 +2,7 @@ pub mod setup;
 
 use std::str::FromStr;
 
+use common::utils::keccak256;
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
@@ -30,6 +31,7 @@ use ibc::{
     Height,
 };
 use setup::*;
+use prost::Message;
 
 #[test]
 fn get_client_next_sequence() {
@@ -440,6 +442,8 @@ fn check_for_create_client_message_response() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
         to_vec(&consenus_state).unwrap(),
     );
@@ -517,8 +521,10 @@ fn check_for_client_state_from_storage() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
-        consenus_state.try_into().unwrap(),
+        to_vec(&consenus_state).unwrap(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -594,8 +600,10 @@ fn check_for_consensus_state_from_storage() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
-        consenus_state.clone().try_into().unwrap(),
+        to_vec(&consenus_state).unwrap(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -778,6 +786,8 @@ fn check_for_update_client_message() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-25".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
         to_vec(&consenus_state).unwrap(),
     );
@@ -829,6 +839,8 @@ fn check_for_update_client_message() {
     let mock_reponse_data = UpdateClientResponse::new(
         "10-15".to_string(),
         client_id.ibc_client_id().as_str().to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
         to_vec(&consenus_state).unwrap(),
     );
@@ -951,6 +963,8 @@ fn check_for_upgrade_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
         to_vec(&consenus_state).unwrap(),
     );
@@ -1054,6 +1068,8 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
         to_vec(&consenus_state).unwrap(),
     );
@@ -1157,6 +1173,8 @@ fn fails_on_upgrade_client_frozen_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
         to_vec(&consenus_state).unwrap(),
     );
@@ -1257,6 +1275,8 @@ fn check_for_execute_upgrade_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
         to_vec(&consenus_state).unwrap(),
     );
@@ -1609,8 +1629,11 @@ fn success_on_getting_client_state() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
+        keccak256(&to_vec(&client_state).unwrap()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         to_vec(&client_state).unwrap(),
-        consenus_state.try_into().unwrap(),
+        to_vec(&consenus_state).unwrap(),
+
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
