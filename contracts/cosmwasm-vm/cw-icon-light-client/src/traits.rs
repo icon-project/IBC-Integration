@@ -13,6 +13,9 @@ use serde::Serialize;
 pub struct ConsensusStateUpdate {
     // commitment for updated consensusState
     pub consensus_state_commitment: [u8; 32],
+    pub client_state_commitment: [u8; 32],
+    pub consensus_state_bytes: Vec<u8>,
+    pub client_state_bytes: Vec<u8>,
     // updated height
     pub height: u64,
 }
@@ -63,7 +66,7 @@ pub trait ILightClient {
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
-    ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
+    ) -> Result<ConsensusStateUpdate, Self::Error>;
 
     /**
      * @dev updateClient updates the client corresponding to `clientId`.
@@ -81,7 +84,7 @@ pub trait ILightClient {
         &mut self,
         client_id: &str,
         header: SignedHeader,
-    ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
+    ) -> Result<ConsensusStateUpdate, Self::Error>;
 
     /**
      * @dev verifyMembership is a generic proof verification method which verifies a proof of the existence of a value at a given CommitmentPath at the specified height.

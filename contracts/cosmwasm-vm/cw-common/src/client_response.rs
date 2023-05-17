@@ -24,6 +24,8 @@ pub struct CreateClientResponse {
     height: String,
     client_state_commitment: Vec<u8>,
     consensus_state_commitment: Vec<u8>,
+    consensus_state_bytes:Vec<u8>,
+    client_state_bytes:Vec<u8>
 }
 
 impl Default for CreateClientResponse {
@@ -33,6 +35,8 @@ impl Default for CreateClientResponse {
             height: Default::default(),
             client_state_commitment: Default::default(),
             consensus_state_commitment: Default::default(),
+            consensus_state_bytes: Default::default(),
+            client_state_bytes:Default::default(),
         }
     }
 }
@@ -43,12 +47,16 @@ impl CreateClientResponse {
         height: String,
         client_state_commitment: Vec<u8>,
         consensus_state_commitment: Vec<u8>,
+        client_state_bytes: Vec<u8>,
+        consensus_state_bytes: Vec<u8>,
     ) -> Self {
         Self {
             client_type,
             height,
             client_state_commitment,
             consensus_state_commitment,
+            client_state_bytes,
+            consensus_state_bytes,
         }
     }
 
@@ -57,6 +65,13 @@ impl CreateClientResponse {
     }
     pub fn consensus_state_commitment(&self) -> &[u8] {
         &self.consensus_state_commitment
+    }
+
+    pub fn client_state_bytes(&self) -> &[u8] {
+        &self.client_state_bytes
+    }
+    pub fn consensus_state_bytes(&self) -> &[u8] {
+        &self.consensus_state_bytes
     }
 
     pub fn get_height(&self) -> &str {
@@ -80,6 +95,8 @@ pub struct UpdateClientResponse {
     pub client_id: String,
     pub client_state_commitment: Vec<u8>,
     pub consensus_state_commitment: Vec<u8>,
+    pub client_state_bytes: Vec<u8>,
+    pub consensus_state_bytes: Vec<u8>,
 }
 
 impl UpdateClientResponse {
@@ -88,12 +105,16 @@ impl UpdateClientResponse {
         client_id: String,
         client_state_commitment: Vec<u8>,
         consensus_state_commitment: Vec<u8>,
+        client_state_bytes: Vec<u8>,
+        consensus_state_bytes: Vec<u8>,
     ) -> Self {
         Self {
             height,
             client_id,
             client_state_commitment,
             consensus_state_commitment,
+            client_state_bytes,
+            consensus_state_bytes,
         }
     }
 
@@ -103,6 +124,14 @@ impl UpdateClientResponse {
     pub fn consensus_state_commitment(&self) -> &[u8] {
         &self.consensus_state_commitment
     }
+
+    pub fn client_state_bytes(&self) -> &[u8] {
+        &self.client_state_bytes
+    }
+    pub fn consensus_state_bytes(&self) -> &[u8] {
+        &self.consensus_state_bytes
+    }
+
 
     pub fn get_height(&self) -> &str {
         &self.height
