@@ -48,6 +48,10 @@ deployJar {
             uri = 'http://localhost:9082/api/v3'
             nid = 0x3
         }
+        uat {
+            uri = project.findProperty('uatUri') ? "$uatUri" : ''
+            nid = Integer.decode(property('networkId'))
+        }
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''

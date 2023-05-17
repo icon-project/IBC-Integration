@@ -6,6 +6,7 @@ on:
       - '**'
     paths:
       - 'contracts/javascore/**'
+
   push:
     branches:
       - main
