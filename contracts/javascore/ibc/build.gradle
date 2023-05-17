@@ -55,7 +55,6 @@ optimizedJar {
     }
 }
 
-def networkId = property('networkId')
 
 deployJar {
     endpoints {
