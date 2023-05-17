@@ -64,6 +64,8 @@ pub enum ContractError {
     InsufficientBalance {},
     #[error("IbcDecodeError {error}")]
     IbcRawConversionError { error: String },
+    #[error("FailedConversion")]
+    FailedConversion,
 }
 
 /// This code defines an implementation of the `From` trait for the `ContractError` enum, which allows
@@ -91,7 +93,11 @@ impl From<CwErrors> for ContractError {
                 error: err.to_string(),
             },
             CwErrors::DecodeError { error } => Self::IbcDecodeError { error },
-            CwErrors::FailedToConvertToPacketDataResponse(_) => todo!(),
+            CwErrors::FailedToConvertToPacketDataResponse(_) => Self::FailedConversion,
         }
     }
+}
+
+pub fn decode_error(decode_type: &str) -> String {
+    return String::from("failed to decode ".to_owned() + decode_type);
 }

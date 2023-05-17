@@ -179,8 +179,8 @@ impl QueryHandler {
                 height,
                 client_id: client_id.to_string(),
             })?;
-        let state = ConsensusState::decode(data.as_slice())
-            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        let state =
+            ConsensusState::decode(data.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
         Ok(state)
     }
 
@@ -204,8 +204,8 @@ impl QueryHandler {
         let data = CLIENT_STATES
             .load(storage, client_id.to_string())
             .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
-        let state = ClientState::decode(data.as_slice())
-            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        let state =
+            ClientState::decode(data.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
         Ok(state)
     }
 

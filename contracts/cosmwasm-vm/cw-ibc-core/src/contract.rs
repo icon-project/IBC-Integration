@@ -267,6 +267,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("time", block_time.to_string()))
             }
         }
+        // Ok(Response::new())
     }
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {

@@ -72,9 +72,9 @@ pub fn execute(
             consensus_state,
         } => {
             let client_state = ClientState::decode(client_state.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let consensus_state = ConsensusState::decode(consensus_state.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let (state_byte, update) =
                 client.create_client(&client_id, client_state, consensus_state)?;
 
@@ -88,13 +88,12 @@ pub fn execute(
 
             let client_response = CreateClientResponse::new(
                 ICON_CLIENT_TYPE.to_string(),
-                IbcHeight::new(1, update.height).unwrap().to_string(),
+                to_ibc_height(update.height).map(|h| h.to_string())?,
                 state_byte,
                 update.consensus_state_commitment.into(),
             );
 
             response.data = to_binary(&client_response).ok();
-            println!("{:?}", response.data);
 
             Ok(response)
         }
@@ -102,15 +101,16 @@ pub fn execute(
             client_id,
             signed_header,
         } => {
-            let header_any = SignedHeader::decode(signed_header.as_slice()).unwrap();
+            let header_any = SignedHeader::decode(signed_header.as_slice())
+                .map_err(ContractError::DecodeError)?;
             let (state_byte, update) = client.update_client(&client_id, header_any)?;
             let response_data = to_binary(&UpdateClientResponse {
-                height: IbcHeight::new(0, update.height).unwrap().to_string(),
+                height: to_ibc_height(update.height).map(|h| h.to_string())?,
                 client_id,
                 client_state_commitment: state_byte.clone(),
                 consensus_state_commitment: update.consensus_state_commitment.to_vec(),
             })
-            .unwrap();
+            .map_err(ContractError::Std)?;
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte))
                 .add_attribute(
@@ -130,7 +130,7 @@ pub fn execute(
             delay_block_period,
         } => {
             let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let result = client.verify_membership(
                 &client_id,
                 height,
@@ -152,7 +152,7 @@ pub fn execute(
             delay_block_period,
         } => {
             let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let result = client.verify_non_membership(
                 &client_id,
                 height,
@@ -169,7 +169,7 @@ pub fn execute(
             packet_data,
         } => {
             let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let height = to_height_u64(&verify_packet_data.height)?;
             let result = client.verify_membership(
                 &client_id,
@@ -195,7 +195,7 @@ pub fn execute(
             packet_data,
         } => {
             let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let height = to_height_u64(&verify_packet_acknowledge.height)?;
             let result = client.verify_membership(
                 &client_id,
@@ -221,7 +221,7 @@ pub fn execute(
             expected_response,
         } => {
             let result = validate_connection_state(&client_id, &client, &verify_connection_state)?;
-            let data = to_binary(&expected_response).unwrap();
+            let data = to_binary(&expected_response).map_err(ContractError::Std)?;
 
             Ok(Response::new()
                 .add_attribute(MEMBERSHIP, result.to_string())
@@ -245,7 +245,7 @@ pub fn execute(
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
                 .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
                 .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
-                .set_data(to_binary(&state.expected_response).unwrap()))
+                .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
         }
         ExecuteMsg::VerifyConnectionOpenAck(state) => {
             let connection_valid = validate_connection_state(
@@ -265,7 +265,7 @@ pub fn execute(
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
                 .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
                 .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
-                .set_data(to_binary(&state.expected_response).unwrap()))
+                .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
         }
 
         ExecuteMsg::VerifyChannel {
@@ -280,7 +280,7 @@ pub fn execute(
                 message_info,
                 ibc_endpoint: endpoint,
             })
-            .unwrap();
+            .map_err(ContractError::Std)?;
             Ok(Response::new()
                 .add_attribute(MEMBERSHIP, result.to_string())
                 .set_data(data))
@@ -298,7 +298,7 @@ pub fn execute(
 
             Ok(Response::new()
                 .add_attribute(MEMBERSHIP, is_channel_valid.to_string())
-                .set_data(to_binary(&packet_res).unwrap()))
+                .set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
         }
         ExecuteMsg::Misbehaviour {
             client_id: _,
@@ -323,8 +323,8 @@ pub fn validate_channel_state(
     client: &IconClient,
     state: &VerifyChannelState,
 ) -> Result<bool, ContractError> {
-    let proofs_decoded = MerkleProofs::decode(state.proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+    let proofs_decoded =
+        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -343,8 +343,8 @@ pub fn validate_connection_state(
     client: &IconClient,
     state: &VerifyConnectionState,
 ) -> Result<bool, ContractError> {
-    let proofs_decoded = MerkleProofs::decode(state.proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+    let proofs_decoded =
+        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -364,7 +364,7 @@ pub fn validate_client_state(
     state: &VerifyClientFullState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        .map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -384,7 +384,7 @@ pub fn validate_consensus_state(
     state: &VerifyClientConsensusState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.consensus_state_proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        .map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -414,7 +414,7 @@ pub fn validate_next_seq_recv(
             packet_data: _,
         } => {
             let proofs_decoded = MerkleProofs::decode(proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let height = to_height_u64(&height)?;
             let res = client.verify_membership(
                 client_id,
@@ -436,7 +436,7 @@ pub fn validate_next_seq_recv(
             packet_data: _,
         } => {
             let proofs_decoded = MerkleProofs::decode(proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let height = to_height_u64(&height)?;
             let res = client.verify_non_membership(
                 client_id,
@@ -459,8 +459,12 @@ fn to_height_u64(height: &str) -> Result<u64, ContractError> {
     Ok(height)
 }
 
+fn to_ibc_height(height: u64) -> Result<IbcHeight, ContractError> {
+    IbcHeight::new(0, height).map_err(|_e| ContractError::InvalidHeight)
+}
+
 pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
-    let any = Any::decode(bytes).map_err(|e| ContractError::DecodeError(e.to_string()))?;
+    let any = Any::decode(bytes).map_err(|e| ContractError::DecodeError(e))?;
     Ok(any)
 }
 

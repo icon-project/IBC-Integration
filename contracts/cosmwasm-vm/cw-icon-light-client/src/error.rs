@@ -1,5 +1,8 @@
+use std::fmt::Display;
+
 use cosmwasm_std::StdError;
 use cw_common::errors::CwErrors;
+use prost::DecodeError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -12,7 +15,7 @@ pub enum ContractError {
     // Add any other custom errors you like here.
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
     #[error("{0}")]
-    DecodeError(String),
+    DecodeError(#[from] DecodeError),
     #[error("Timestamp not found for {client_id:?} at height {height:?}")]
     TimestampNotFound { height: u64, client_id: String },
     #[error("Client state not found for client_id:{0}")]
@@ -65,6 +68,11 @@ pub enum ContractError {
 
     #[error("Failed To Create ClientId")]
     FailedToCreateClientId(String),
+    #[error("FailedConvertingToBinary")]
+    FailedConvertingToBinary,
+
+    #[error("InvalidHeight")]
+    InvalidHeight,
 }
 
 impl From<CwErrors> for ContractError {
@@ -76,7 +84,7 @@ impl From<CwErrors> for ContractError {
                 validation_error,
             } => ContractError::FailedToCreateClientId(validation_error.to_string()),
             CwErrors::InvalidClientId(e, _err) => ContractError::InvalidClientId(e),
-            CwErrors::DecodeError { error } => ContractError::DecodeError(error),
+            CwErrors::DecodeError { error } => ContractError::DecodeError(DecodeError::new(error)),
             CwErrors::FailedToConvertToPacketDataResponse(e) => ContractError::Std(e),
         }
     }

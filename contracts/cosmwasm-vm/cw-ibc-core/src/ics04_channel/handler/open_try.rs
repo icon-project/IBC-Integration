@@ -112,12 +112,17 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(res) => {
                     let response =
                         from_binary::<cw_common::client_response::LightClientResponse>(&res)
-                            .unwrap();
+                            .map_err(ContractError::Std)?;
                     let info = response.message_info;
                     let data = response.ibc_endpoint;
-                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
-                    let channel_id =
-                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let port_id = PortId::from(
+                        IbcPortId::from_str(&data.port_id)
+                            .map_err(|e| ContractError::IbcValidationError { error: e })?,
+                    );
+                    let channel_id = ChannelId::from(
+                        IbcChannelId::from_str(&data.channel_id)
+                            .map_err(|e| ContractError::IbcValidationError { error: e })?,
+                    );
                     let channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
@@ -141,7 +146,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     );
                     let data =
                         cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
-                    let data = to_binary(&data).unwrap();
+                    let data = to_binary(&data).map_err(ContractError::Std)?;
                     let on_chan_open_try = create_channel_submesssage(
                         contract_address.to_string(),
                         data,
