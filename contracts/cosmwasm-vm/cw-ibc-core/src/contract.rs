@@ -11,6 +11,7 @@ use cw_common::raw_types::connection::*;
 use ibc::core::ics04_channel::packet::Receipt;
 use ibc_proto::google::protobuf::Any;
 use ibc_proto::ibc::core::client::v1::Height as RawHeight;
+use ibc_proto::protobuf::Protobuf;
 use prost::Message;
 
 // version info for migration info
@@ -276,7 +277,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     .get_commitment(deps.storage, key.to_bytes().unwrap())
                     .map_err(|_| ContractError::InvalidCommitmentKey)
                     .unwrap();
-                to_binary(&res)
+                to_binary(&hex::encode(res))
             }
             QueryMsg::GetClientRegistry { _type } => {
                 let res = self
@@ -324,7 +325,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     type_url: ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
                     value: res.encode_vec().unwrap(),
                 };
-                to_binary(&any.encode_to_vec())
+                to_binary(&hex::encode(any.encode_to_vec()))
             }
             QueryMsg::GetClientState { client_id } => {
                 let res = self
@@ -335,7 +336,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     type_url: ICON_CLIENT_STATE_TYPE_URL.to_string(),
                     value: res,
                 };
-                to_binary(&any.encode_to_vec())
+                to_binary(&hex::encode(any.encode_to_vec()))
             }
             QueryMsg::GetConnection { connection_id } => {
                 let _connection_id = ConnectionId::from_str(&connection_id).unwrap();
@@ -343,7 +344,9 @@ impl<'a> CwIbcCoreContext<'a> {
                     .get_connection(deps.storage, _connection_id)
                     .map_err(|_| ContractError::InvalidConnectiontId { connection_id })
                     .unwrap();
-                to_binary(&res)
+                let connection_end=ConnectionEnd::decode_vec(res.as_slice()).map_err(|e|ContractError::IbcDecodeError { error:"Failed To Decode".to_string() }).unwrap();
+                let raw_connection_end:RawConnectionEnd=connection_end.into();
+                to_binary(&hex::encode(raw_connection_end.encode_to_vec()))
             }
             QueryMsg::GetChannel {
                 port_id,
@@ -360,7 +363,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         },
                     })
                     .unwrap();
-                to_binary(&res)
+                let raw:RawChannel =res.into();
+                to_binary(&hex::encode(raw.encode_to_vec()))
             }
             QueryMsg::GetNextSequenceSend {
                 port_id,
@@ -480,7 +484,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         },
                     })
                     .unwrap();
-                to_binary(&res)
+                to_binary(&hex::encode(res.into_vec()))
             }
             QueryMsg::GetPacketAcknowledgementCommitment {
                 port_id,
@@ -503,7 +507,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         },
                     })
                     .unwrap();
-                to_binary(&res)
+                to_binary(&hex::encode(res.into_vec()))
             }
             QueryMsg::HasPacketReceipt {
                 port_id,
@@ -826,9 +830,10 @@ mod tests {
             height: HexString::from_bytes(&raw_height.encode_to_vec()),
         };
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let result_parsed: Vec<u8> = from_binary(&result).unwrap();
+        let result_parsed: String= from_binary(&result).unwrap();
+        let result_bytes=hex::decode(result_parsed).unwrap();
 
-        let result_decoded = Any::decode(result_parsed.as_ref()).unwrap();
+        let result_decoded = Any::decode(result_bytes.as_ref()).unwrap();
         assert_eq!(
             ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
             result_decoded.type_url
