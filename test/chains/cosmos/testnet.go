@@ -28,6 +28,29 @@ func NewCosmosTestnet(bin, keystorePath, keyPassword, defaultStepLimit, url stri
 
 const amount string = "1000uconst"
 
+func (c *CosmosTestnet) SetupIBC(ctx context.Context, keyName string) (context.Context, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosTestnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosTestnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosTestnet) ExecuteCall(ctx context.Context, reqId string) (context.Context, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosTestnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
+	panic("unimplemented")
+}
+func (c *CosmosTestnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error) {
+	panic("unimplemented")
+}
+
 func (c *CosmosTestnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// Get Contract Name from context
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)

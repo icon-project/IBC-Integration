@@ -29,6 +29,29 @@ func NewCosmosLocalnet(t *testing.T, log *zap.Logger, chainConfig ibc.ChainConfi
 	}, nil
 }
 
+func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Context, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId string) (context.Context, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
+	panic("unimplemented")
+}
+func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error) {
+	panic("unimplemented")
+}
+
 func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// Fund user to deploy contract
 	contractOwner, ownerAddr, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)

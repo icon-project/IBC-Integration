@@ -37,6 +37,8 @@ jacocoTestReport {
     dependsOn ':lib:test'
     dependsOn ':mockapp:compileJava'
     dependsOn ':mockapp:test'
+    dependsOn ':mock-dapp-multi-protocol:compileJava'
+    dependsOn ':mock-dapp-multi-protocol:test'
     dependsOn ':proto-util:compileJava'
     dependsOn ':proto-util:compileTestJava'
     dependsOn ':proto-util:test'
