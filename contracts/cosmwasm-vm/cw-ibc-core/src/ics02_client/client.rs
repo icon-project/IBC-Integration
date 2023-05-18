@@ -485,7 +485,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
     pub fn decode_client_state(
         &self,
-        client_state: ibc_proto::google::protobuf::Any,
+        client_state: Any,
     ) -> Result<Box<dyn IClientState>, ContractError> {
         let client_state: ClientState =
             ClientState::try_from(client_state).map_err(|e| ContractError::IbcDecodeError {
@@ -569,7 +569,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
     pub fn validate_self_client(
         &self,
-        client_state_of_host_on_counterparty: ibc_proto::google::protobuf::Any,
+        client_state_of_host_on_counterparty: Any,
     ) -> Result<(), ContractError> {
         Ok(())
     }

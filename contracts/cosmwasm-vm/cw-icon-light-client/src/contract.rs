@@ -15,8 +15,8 @@ use cw2::set_contract_version;
 use cw_common::client_response::{
     CreateClientResponse, LightClientResponse, PacketDataResponse, UpdateClientResponse,
 };
+use cw_common::raw_types::Any;
 use cw_common::types::{PacketData, VerifyChannelState};
-use ibc_proto::google::protobuf::Any;
 
 use crate::constants::{
     CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH,

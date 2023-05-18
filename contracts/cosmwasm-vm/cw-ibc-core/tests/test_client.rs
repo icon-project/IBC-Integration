@@ -10,7 +10,7 @@ use cw_common::client_response::{
 };
 use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
-use cw_common::raw_types::client::RawMsgCreateClient;
+use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpgradeClient};
 use cw_common::types::{ClientId, ClientType};
 use cw_ibc_core::{
     context::CwIbcCoreContext,
@@ -197,8 +197,7 @@ fn check_for_raw_message_to_updgrade_client() {
         signer,
     };
 
-    let raw_message: ibc_proto::ibc::core::client::v1::MsgUpgradeClient =
-        ibc_proto::ibc::core::client::v1::MsgUpgradeClient::try_from(msg.clone()).unwrap();
+    let raw_message: RawMsgUpgradeClient = RawMsgUpgradeClient::try_from(msg.clone()).unwrap();
 
     let upgrade_message_from_raw_message = MsgUpgradeClient::try_from(raw_message).unwrap();
 
@@ -236,12 +235,13 @@ fn test_upgrade_client_event() {
 
 #[test]
 fn create_misbehaviour_event_test() {
+    use cw_common::raw_types::client::RawMsgSubmitMisbehaviour;
     let raw_message = get_dummy_raw_msg_client_mishbehaviour();
     let misbehaviour: MsgSubmitMisbehaviour =
         MsgSubmitMisbehaviour::try_from(raw_message.clone()).unwrap();
 
-    let raw_message_from_mb: ibc_proto::ibc::core::client::v1::MsgSubmitMisbehaviour =
-        ibc_proto::ibc::core::client::v1::MsgSubmitMisbehaviour::try_from(misbehaviour).unwrap();
+    let raw_message_from_mb: RawMsgSubmitMisbehaviour =
+        RawMsgSubmitMisbehaviour::try_from(misbehaviour).unwrap();
 
     assert_eq!(raw_message, raw_message_from_mb);
 

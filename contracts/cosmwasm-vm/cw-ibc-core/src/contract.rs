@@ -5,11 +5,11 @@ use common::icon::icon::lightclient::v1::{
 use cosmwasm_std::to_binary;
 use cw_common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use cw_common::hex_string::HexString;
-use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
+use cw_common::raw_types::{channel::*, Any};
+use cw_common::raw_types::{Protobuf, RawHeight};
 use ibc::core::ics04_channel::packet::Receipt;
-use ibc_proto::google::protobuf::Any;
-use ibc_proto::ibc::core::client::v1::Height as RawHeight;
+
 use prost::Message;
 
 // version info for migration info
@@ -602,6 +602,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 msg: "InvalidReplyID".to_string(),
             }),
         }
+        //  Ok(Response::new())
     }
 
     /// This function calculates the fee for a given expected gas amount and gas price.
@@ -737,8 +738,7 @@ mod tests {
     use crate::context::CwIbcCoreContext;
     use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
     use ibc::core::ics02_client::height::Height;
-    use ibc_proto::google::protobuf::Any;
-    use ibc_proto::ibc::core::client::v1::Height as RawHeight;
+
     use prost::Message;
 
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
@@ -749,8 +749,9 @@ mod tests {
         to_vec, Addr, OwnedDeps,
     };
     use cw_common::{
-        consensus_state::ConsensusState, constants::ICON_CONSENSUS_STATE_TYPE_URL,
-        ibc_types::CommitmentRoot,
+        consensus_state::ConsensusState,
+        constants::ICON_CONSENSUS_STATE_TYPE_URL,
+        raw_types::{Any, RawHeight},
     };
     use cw_common::{hex_string::HexString, ibc_types::IbcClientId, types::ClientType};
 

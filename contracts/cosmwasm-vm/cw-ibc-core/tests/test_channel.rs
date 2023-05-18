@@ -8,6 +8,11 @@ use cosmwasm_std::{
 use common::icon::icon::lightclient::v1::ClientState;
 use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::{IbcClientId, IbcConnectionId, IbcPortId};
+use cw_common::raw_types::channel::{
+    RawMsgChannelCloseConfirm, RawMsgChannelCloseInit, RawMsgChannelOpenAck,
+    RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawPacket,
+};
+use cw_common::raw_types::RawHeight;
 use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
@@ -37,15 +42,15 @@ use ibc::{
     events::IbcEventType,
     signer::Signer,
 };
-use ibc_proto::ibc::core::{
-    channel::v1::{
-        MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
-        MsgChannelCloseInit as RawMsgChannelCloseInit, MsgChannelOpenAck as RawMsgChannelOpenAck,
-        MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
-        MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
-    },
-    client::v1::Height,
-};
+// use ibc_proto::ibc::core::{
+//     channel::v1::{
+//         MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
+//         MsgChannelCloseInit as RawMsgChannelCloseInit, MsgChannelOpenAck as RawMsgChannelOpenAck,
+//         MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
+//         MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
+//     },
+//     client::v1::Height,
+// };
 pub mod channel;
 pub mod setup;
 use prost::Message;
@@ -353,7 +358,7 @@ fn channel_open_confirm_from_raw_missing_proof_height_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
-        proof_height: Some(Height {
+        proof_height: Some(RawHeight {
             revision_number: 0,
             revision_height: 0,
         }),
@@ -460,7 +465,7 @@ fn channel_open_try_from_raw_missing_proof_height_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_try(proof_height);
     let default_raw_try_msg = RawMsgChannelOpenTry {
-        proof_height: Some(Height {
+        proof_height: Some(RawHeight {
             revision_number: 0,
             revision_height: 0,
         }),
@@ -543,7 +548,7 @@ fn channel_open_ack_from_raw_missing_proof_height_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
     let default_raw_ack_msg = RawMsgChannelOpenAck {
-        proof_height: Some(Height {
+        proof_height: Some(RawHeight {
             revision_number: 0,
             revision_height: 0,
         }),
@@ -679,7 +684,7 @@ fn channel_close_confirm_from_raw_missing_height_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_close_confirm(proof_height);
     let default_raw_ack_msg = RawMsgChannelCloseConfirm {
-        proof_height: Some(Height {
+        proof_height: Some(RawHeight {
             revision_number: 0,
             revision_height: 0,
         }),

@@ -3,6 +3,7 @@ use cosmwasm_std::IbcReceiveResponse;
 use cw_common::client_response::PacketResponse;
 use cw_common::client_response::XcallPacketResponseData;
 
+use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
 use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
@@ -10,8 +11,6 @@ use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use ibc::core::ics04_channel::msgs::PacketMsg;
 use ibc::core::ics04_channel::packet::Receipt;
 use ibc::timestamp::Timestamp;
-use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
-use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 
 use super::*;
 

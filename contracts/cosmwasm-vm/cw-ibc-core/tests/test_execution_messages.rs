@@ -20,6 +20,8 @@ use cw_common::consensus_state::ConsensusState;
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcClientId;
+use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
+use cw_common::raw_types::RawVersion;
 use cw_common::types::ClientId;
 use cw_common::types::ConnectionId;
 use cw_common::ProstMessage;
@@ -32,7 +34,6 @@ use cw_ibc_core::{context::CwIbcCoreContext, msg::InstantiateMsg};
 use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
-use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 
 use setup::*;
 
@@ -381,7 +382,7 @@ fn test_for_connection_open_try() {
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();
-    let versions = ibc_proto::ibc::core::connection::v1::Version {
+    let versions = RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
     };
@@ -416,7 +417,7 @@ fn test_for_connection_open_try() {
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();
-    let versions = ibc_proto::ibc::core::connection::v1::Version {
+    let versions = RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
     };
@@ -579,7 +580,7 @@ fn test_for_connection_open_ack() {
 
     assert_eq!(response.attributes[0].value, "connection_open_ack");
 
-    let versions = ibc_proto::ibc::core::connection::v1::Version {
+    let versions = RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
     };
@@ -815,7 +816,7 @@ fn test_for_connection_open_try_fails() {
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();
-    let versions = ibc_proto::ibc::core::connection::v1::Version {
+    let versions = RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
     };
@@ -1079,7 +1080,7 @@ fn test_connection_open_try_fails_invalid_id() {
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();
-    let versions = ibc_proto::ibc::core::connection::v1::Version {
+    let versions = RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
     };

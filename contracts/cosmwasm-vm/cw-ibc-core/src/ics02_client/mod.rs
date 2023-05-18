@@ -19,8 +19,8 @@ use cw_common::client_response::{
 };
 use cw_common::commitment;
 use cw_common::ibc_types::*;
+use cw_common::raw_types::{Any, Protobuf};
 use cw_common::types::{ClientId, ClientType};
 use events::{create_client_event, update_client_event, upgrade_client_event};
-use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;

@@ -275,8 +275,8 @@ mod tests {
         testing::{mock_dependencies, mock_env, mock_info, MockStorage},
         StdResult,
     };
+    use cw_common::raw_types::Any;
     use hex_literal::hex;
-    use ibc_proto::google::protobuf::Any;
     use prost::Message;
     use test_utils::constants::{TESTNET_NETWORK_TYPE_ID, TESTNET_SRC_NETWORK_ID};
     use test_utils::get_test_signed_headers;
