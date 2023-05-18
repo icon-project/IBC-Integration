@@ -24,8 +24,8 @@ pub struct CreateClientResponse {
     height: String,
     client_state_commitment: Vec<u8>,
     consensus_state_commitment: Vec<u8>,
-    consensus_state_bytes:Vec<u8>,
-    client_state_bytes:Vec<u8>
+    consensus_state_bytes: Vec<u8>,
+    client_state_bytes: Vec<u8>,
 }
 
 impl Default for CreateClientResponse {
@@ -36,7 +36,7 @@ impl Default for CreateClientResponse {
             client_state_commitment: Default::default(),
             consensus_state_commitment: Default::default(),
             consensus_state_bytes: Default::default(),
-            client_state_bytes:Default::default(),
+            client_state_bytes: Default::default(),
         }
     }
 }
@@ -131,7 +131,6 @@ impl UpdateClientResponse {
     pub fn consensus_state_bytes(&self) -> &[u8] {
         &self.consensus_state_bytes
     }
-
 
     pub fn get_height(&self) -> &str {
         &self.height

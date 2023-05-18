@@ -229,7 +229,7 @@ fn connection_open_init_from_raw_valid_parameter() {
 
 #[test]
 fn connection_invalid_client_id_parameter() {
-    let default_raw_init_msg = RawMsgConnectionOpenInit {
+    let default_raw_init_msg: RawMsgConnectionOpenInit = RawMsgConnectionOpenInit {
         client_id: "client".to_string(),
         counterparty: Some(get_dummy_raw_counterparty(None)),
         version: None,
@@ -237,7 +237,7 @@ fn connection_invalid_client_id_parameter() {
         signer: get_dummy_bech32_account(),
     };
     let res_msg = IbcMsgConnectionOpenInit::try_from(default_raw_init_msg.clone());
-    assert_eq!(res_msg.is_err(), false)
+    assert_eq!(res_msg.is_err(), true)
 }
 
 #[test]
@@ -251,8 +251,9 @@ fn connection_open_init_invalid_destination_connection_id() {
         }),
         ..default_raw_init_msg()
     };
+
     let res_msg = IbcMsgConnectionOpenInit::try_from(default_raw_init_msg.clone());
-    assert_eq!(res_msg.is_err(), false)
+    assert_eq!(res_msg.is_err(), true)
 }
 
 #[test]
@@ -362,7 +363,7 @@ fn connection_open_confirm_with_valid_parameter() {
 fn connection_open_confirm_invalid_connection_id_non_alpha() {
     let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
     let confirm_msg = RawMsgConnectionOpenConfirm {
-        connection_id: "con007".to_string(),
+        connection_id: "con0000007".to_string(),
         ..default_raw_confirm_msg.clone()
     };
     let res_msg = IbcMsgConnectionOpenConfirm::try_from(confirm_msg.clone());
@@ -380,7 +381,7 @@ fn connection_open_confirm_invalid_proof_height_zero() {
         ..default_raw_confirm_msg
     };
     let res_msg = IbcMsgConnectionOpenConfirm::try_from(confirm_msg.clone());
-    assert_eq!(res_msg.is_err(), false)
+    assert_eq!(res_msg.is_err(), true)
 }
 
 #[test]

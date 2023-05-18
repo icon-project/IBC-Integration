@@ -79,7 +79,10 @@ pub fn execute(
                 client.create_client(&client_id, client_state.clone(), consensus_state.clone())?;
 
             let mut response = Response::new()
-                .add_attribute(CLIENT_STATE_HASH, hex::encode(update.client_state_commitment.clone()))
+                .add_attribute(
+                    CLIENT_STATE_HASH,
+                    hex::encode(update.client_state_commitment.clone()),
+                )
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
                     hex::encode(update.consensus_state_commitment),
@@ -111,11 +114,14 @@ pub fn execute(
                 client_state_commitment: update.client_state_commitment.to_vec(),
                 consensus_state_commitment: update.consensus_state_commitment.to_vec(),
                 client_state_bytes: update.client_state_bytes,
-                consensus_state_bytes:update.consensus_state_bytes
+                consensus_state_bytes: update.consensus_state_bytes,
             })
             .map_err(ContractError::Std)?;
             Ok(Response::new()
-                .add_attribute(CLIENT_STATE_HASH, hex::encode(update.client_state_commitment))
+                .add_attribute(
+                    CLIENT_STATE_HASH,
+                    hex::encode(update.client_state_commitment),
+                )
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
                     hex::encode(update.consensus_state_commitment),

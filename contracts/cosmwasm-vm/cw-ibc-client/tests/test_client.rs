@@ -13,15 +13,11 @@ use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpgradeClient};
 use cw_common::types::{ClientId, ClientType};
-use cw_ibc_core::{
-    context::CwIbcCoreContext,
-    ics02_client::events::{
-        client_misbehaviour_event, create_client_event, generated_client_id_event,
-        update_client_event, upgrade_client_event,
-    },
-    traits::IbcClient,
-    MsgUpgradeClient,
+use cw_ibc_client::ics02_client::events::{
+    client_misbehaviour_event, create_client_event, generated_client_id_event, update_client_event,
+    upgrade_client_event,
 };
+use cw_ibc_client::{context::CwIbcClientContext, traits::IbcClient, MsgUpgradeClient};
 use ibc::{
     core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
     mock::{
@@ -37,7 +33,7 @@ use setup::*;
 fn get_client_next_sequence() {
     let mut mock = deps();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(mock.as_mut().storage, 0)
@@ -52,7 +48,7 @@ fn get_client_next_sequence() {
 fn increment_next_client_sequence() {
     let mut mock = deps();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(mock.as_mut().storage, 0)
@@ -70,7 +66,7 @@ fn increment_next_client_sequence() {
 #[test]
 fn store_client_implement_success() {
     let mut mock = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     let client_type = ClientType::new("new_client_type".to_string());
 
@@ -97,7 +93,7 @@ fn store_client_implement_success() {
 #[should_panic(expected = "InvalidClientId { client_id: \"new_client_type-1\" }")]
 fn store_client_implement_failure() {
     let mock = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 1).unwrap();
@@ -110,7 +106,7 @@ fn store_client_implement_failure() {
 #[test]
 fn store_client_into_registry() {
     let mut mock = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
     let light_client_address = "light-client".to_string();
     contract
@@ -131,7 +127,7 @@ fn store_client_into_registry() {
 #[should_panic(expected = "InvalidClientType { client_type: \"new_client_type\" }")]
 fn fails_on_querying_client_from_registry() {
     let mock = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
     contract
         .get_client_from_registry(mock.as_ref().storage, client_type)
@@ -260,7 +256,7 @@ fn create_misbehaviour_event_test() {
 #[test]
 fn store_client_type_sucess() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_type = ClientType::new("icon_client".to_string());
 
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
@@ -284,7 +280,7 @@ fn store_client_type_sucess() {
 fn fail_to_query_client_type() {
     let deps = deps();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_type = ClientType::new("icon_client".to_string());
 
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
@@ -347,7 +343,7 @@ fn check_for_genereted_client_id_event() {
 #[test]
 fn check_for_create_client_message() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     contract
@@ -394,7 +390,7 @@ fn check_for_create_client_message() {
 #[test]
 fn check_for_create_client_message_response() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     contract
@@ -476,7 +472,7 @@ fn check_for_create_client_message_response() {
 #[test]
 fn check_for_client_state_from_storage() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     contract
@@ -555,7 +551,7 @@ fn check_for_client_state_from_storage() {
 #[test]
 fn check_for_consensus_state_from_storage() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     contract
@@ -640,7 +636,7 @@ fn check_for_consensus_state_from_storage() {
 #[should_panic(expected = "IbcClientError { error: Other { description: \"invalid_response\" } }")]
 fn fail_on_create_client_message_error_response() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     contract
@@ -699,7 +695,7 @@ fn fail_on_create_client_message_error_response() {
 #[should_panic(expected = "InvalidNextClientSequence")]
 fn fails_on_create_client_message_without_proper_initialisation() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -738,7 +734,7 @@ fn fails_on_create_client_message_without_proper_initialisation() {
 #[test]
 fn check_for_update_client_message() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     contract
@@ -876,7 +872,7 @@ fn check_for_update_client_message() {
 #[should_panic(expected = "InvalidClientId { client_id: \"iconclient-0\" }")]
 fn fails_on_updating_non_existing_client() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -907,7 +903,7 @@ fn fails_on_updating_non_existing_client() {
 #[should_panic(expected = "IbcClientError { error: Other { description: \"response_error\" } }")]
 fn fails_on_error_ressponse() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     let reply_message = Reply {
         id: 22,
@@ -925,7 +921,7 @@ fn check_for_upgrade_client() {
     let info = create_mock_info("alice", "umlg", 2000);
     let env = mock_env();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(deps.as_mut().storage, 0)
@@ -1030,7 +1026,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let info = create_mock_info("alice", "umlg", 2000);
     let env = mock_env();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(deps.as_mut().storage, 0)
@@ -1135,7 +1131,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let info = create_mock_info("alice", "umlg", 2000);
     let env = mock_env();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(deps.as_mut().storage, 0)
@@ -1237,7 +1233,7 @@ fn check_for_execute_upgrade_client() {
     let info = create_mock_info("alice", "umlg", 2000);
     let env = mock_env();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(deps.as_mut().storage, 0)
@@ -1368,7 +1364,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
 
     let env = mock_env();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(deps.as_mut().storage, 0)
@@ -1429,7 +1425,7 @@ fn fails_on_unknown_response_on_execute_upgrade_client() {
 
     let env = mock_env();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(deps.as_mut().storage, 0)
@@ -1460,7 +1456,7 @@ fn fails_on_null_response_data_on_execute_upgrade_client() {
 
     let env = mock_env();
 
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     contract
         .init_client_counter(deps.as_mut().storage, 0)
@@ -1493,7 +1489,7 @@ fn fails_on_null_response_data_on_execute_upgrade_client() {
 )]
 fn fails_on_storing_already_registered_client_into_registry() {
     let mut mock_deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
     let light_client_address = "light-client".to_string();
     contract
@@ -1522,7 +1518,7 @@ fn fails_on_storing_already_registered_client_into_registry() {
 #[test]
 fn sucess_on_getting_client() {
     let mut mock_deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
@@ -1547,7 +1543,7 @@ fn sucess_on_getting_client() {
 #[should_panic(expected = "InvalidClientId { client_id: \"new_client_type-0\" }")]
 fn fails_on_getting_client_invalid_client() {
     let mock_deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
@@ -1562,7 +1558,7 @@ fn fails_on_getting_client_invalid_client() {
 )]
 fn fails_on_getting_client_empty_client() {
     let mut mock_deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
@@ -1584,7 +1580,7 @@ fn fails_on_getting_client_empty_client() {
 #[test]
 fn success_on_getting_client_state() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
     contract
@@ -1667,7 +1663,7 @@ fn success_on_getting_client_state() {
 #[should_panic(expected = "IbcDecodeError { error: \"NotFound ClientId(iconclient-0)\" }")]
 fn fails_on_getting_client_state() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
@@ -1679,7 +1675,7 @@ fn fails_on_getting_client_state() {
 #[test]
 fn sucess_on_misbehaviour_validate() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
     contract
         .init_client_counter(deps.as_mut().storage, 10)
@@ -1739,7 +1735,7 @@ fn sucess_on_misbehaviour_validate() {
 )]
 fn fails_on_frozen_client_on_misbehaviour_validate() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
     contract
         .init_client_counter(deps.as_mut().storage, 10)
@@ -1799,7 +1795,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
 )]
 fn fails_on_empty_response_misbehaviour() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let event = Event::new("empty");
 
     let reply_message = Reply {
@@ -1819,7 +1815,7 @@ fn fails_on_empty_response_misbehaviour() {
 #[should_panic(expected = "IbcClientError { error: Other { description: \"UnkownError\" } }")]
 fn fails_on_error_response_misbehaviour() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
 
     let reply_message = Reply {
         id: 23,
@@ -1834,7 +1830,7 @@ fn fails_on_error_response_misbehaviour() {
 #[test]
 fn success_on_execute_misbehaviour() {
     let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+    let contract = CwIbcClientContext::default();
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 10,
