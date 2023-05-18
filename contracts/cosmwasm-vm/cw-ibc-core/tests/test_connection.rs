@@ -3,6 +3,7 @@ use std::time::Duration;
 
 pub mod setup;
 use common::icon::icon::lightclient::v1::ClientState;
+use common::icon::icon::lightclient::v1::ConsensusState;
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::to_binary;
 use cosmwasm_std::to_vec;
@@ -15,7 +16,6 @@ use cosmwasm_std::SubMsgResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 use cw_common::client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse};
-use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::IbcMsgConnectionOpenConfirm;
 use cw_common::ibc_types::IbcMsgConnectionOpenInit;
 use cw_common::raw_types::channel::RawCounterparty;
@@ -662,7 +662,7 @@ fn connection_open_ack_validate_fail() {
         .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)
         .unwrap();
 
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -753,7 +753,7 @@ fn connection_open_ack_validate() {
         .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)
         .unwrap();
 
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -999,7 +999,7 @@ fn connection_open_try_validate() {
         .store_client_state(&mut deps.storage, &res_msg.client_id_on_b.clone(), cl)
         .unwrap();
 
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -1059,7 +1059,7 @@ fn open_try_validate_fails() {
         )
         .unwrap();
 
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -1148,7 +1148,7 @@ fn connection_open_confirm_validate() {
         .store_client_state(&mut deps.storage, &conn_end.client_id().clone().into(), cl)
         .unwrap();
 
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -1349,7 +1349,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         .store_client_state(&mut deps.storage, &client_id.clone(), cl)
         .unwrap();
 
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -1825,7 +1825,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         .store_client_state(&mut deps.storage, &client_id.clone(), client_state_bytes)
         .unwrap();
 
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
 
     contract
         .store_consensus_state(

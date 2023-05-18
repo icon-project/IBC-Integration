@@ -5,8 +5,8 @@ use cosmwasm_std::{
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
 };
 
-use common::icon::icon::lightclient::v1::ClientState;
-use cw_common::consensus_state::ConsensusState;
+use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+
 use cw_common::ibc_types::{IbcClientId, IbcConnectionId, IbcPortId};
 use cw_common::raw_types::channel::{
     RawMsgChannelCloseConfirm, RawMsgChannelCloseInit, RawMsgChannelOpenAck,
@@ -1127,7 +1127,7 @@ fn test_validate_open_try_channel() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

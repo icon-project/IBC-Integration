@@ -108,8 +108,10 @@ fn test() {
     assert_ne!(mock, mock_env_builder)
 }
 
-pub fn get_dummy_raw_counterparty_for_channel(channel_id: String) -> RawCounterparty {
-    RawCounterparty {
+pub fn get_dummy_raw_counterparty_for_channel(
+    channel_id: String,
+) -> cw_common::raw_types::channel::RawCounterparty {
+    cw_common::raw_types::channel::RawCounterparty {
         port_id: PortId::default().to_string(),
         channel_id,
     }

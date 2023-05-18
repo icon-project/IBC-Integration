@@ -96,7 +96,6 @@ impl<'a> CwIbcStore<'a> {
     pub fn next_client_sequence(&self) -> &Item<'a, u64> {
         &self.next_client_sequence
     }
-
     pub fn commitments(&self) -> &Map<'a, Vec<u8>, Vec<u8>> {
         &self.commitments
     }

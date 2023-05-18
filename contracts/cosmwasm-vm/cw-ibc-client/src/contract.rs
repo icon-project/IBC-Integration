@@ -99,10 +99,14 @@ impl<'a> CwIbcClientContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
+                let client_state_bytes = client_state.to_bytes().unwrap();
+                let consensus_state_bytes = consensus_state.to_bytes().unwrap();
 
-                let client_state = Self::from_raw::<RawClientState, ClientState>(&client_state)?;
+                let client_state =
+                    <ClientState as Message>::decode(client_state_bytes.as_slice()).unwrap();
                 let consensus_state =
-                    Self::from_raw::<RawConsensusState, ConsensusState>(&consensus_state)?;
+                    <RawConsensusState as Message>::decode(consensus_state_bytes.as_slice())
+                        .unwrap();
 
                 let signer = Self::to_signer(&signer)?;
                 let msg = IbcMsgCreateClient {
@@ -189,7 +193,7 @@ impl<'a> CwIbcClientContext<'a> {
 
                 let any = Any {
                     type_url: ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
-                    value: res.encode_vec().unwrap(),
+                    value: res.as_bytes(),
                 };
                 to_binary(&any.encode_to_vec())
             }
@@ -400,7 +404,6 @@ mod tests {
         to_vec, Addr, OwnedDeps,
     };
     use cw_common::{
-        consensus_state::ConsensusState,
         constants::ICON_CONSENSUS_STATE_TYPE_URL,
         raw_types::{Any, RawHeight},
     };
@@ -462,10 +465,10 @@ mod tests {
         let mut deps = setup();
         let commitment_root =
             "0x7702db70e830e07b4ff46313456fc86d677c7eeca0c011d7e7dcdd48d5aacfe2".to_string();
-        let raw_consensus_state = RawConsensusState {
+        let consensus_state = RawConsensusState {
             message_root: commitment_root.encode_to_vec(),
         };
-        let consensus_state = ConsensusState::try_from(raw_consensus_state).unwrap();
+
         let height = Height::new(123, 456).unwrap();
         let raw_height: RawHeight = RawHeight::from(height);
         contract
@@ -473,7 +476,7 @@ mod tests {
                 deps.as_mut().storage,
                 &IbcClientId::from_str(&client_id).unwrap(),
                 height,
-                to_vec(&consensus_state).unwrap(),
+                consensus_state.encode_to_vec(),
             )
             .unwrap();
 

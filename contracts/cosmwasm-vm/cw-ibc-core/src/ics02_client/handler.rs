@@ -132,11 +132,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         //Check Client Frozen
         if old_client_state.is_frozen() {
-            return Err(ContractError::IbcClientError {
-                error: ClientError::ClientFrozen {
-                    client_id: message.client_id,
-                },
-            });
+            return Err(ClientError::ClientFrozen {
+                client_id: message.client_id,
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         }
 
         let old_consensus_state = self.consensus_state(
@@ -152,16 +151,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 time1: old_consensus_state.timestamp(),
                 time2: now,
             })
-            .map_err(|error| ContractError::IbcClientError { error })?;
-
+            .map_err(|error| Into::<ContractError>::into(error))?;
         // Check if the latest consensus state is within the trust period.
         if old_client_state.expired(duration) {
-            return Err(ContractError::IbcClientError {
-                error: ClientError::HeaderNotWithinTrustPeriod {
-                    latest_time: old_consensus_state.timestamp(),
-                    update_time: now,
-                },
-            });
+            return Err(ClientError::HeaderNotWithinTrustPeriod {
+                latest_time: old_consensus_state.timestamp(),
+                update_time: now,
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         };
 
         // Validate the upgraded client state and consensus state and verify proofs against the root
@@ -311,16 +308,16 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .add_attribute("client_id", client_id.ibc_client_id().to_string()))
                 }
 
-                None => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "UNKNOWN ERROR".to_string(),
-                    },
-                }),
+                None => Err(ClientError::Other {
+                    description: "UNKNOWN ERROR".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
 
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
-                error: ClientError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ClientError::Other { description: error })
+                    .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
     /// The above code is implementing the `execute_update_client_reply` function for a Rust-based smart
@@ -373,15 +370,15 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .add_attribute("methods", "execute_update_client_reply")
                         .add_attribute("height", height))
                 }
-                None => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "UNKNOWN ERROR".to_string(),
-                    },
-                }),
+                None => Err(ClientError::Other {
+                    description: "UNKNOWN ERROR".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
-                error: ClientError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ClientError::Other { description: error })
+                    .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
     /// This function executes an upgrade client reply and stores the client and consensus state
@@ -438,15 +435,15 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .add_attribute("method", "execute_upgrade_client_reply")
                         .add_attribute("client_id", client_id.ibc_client_id().as_str()))
                 }
-                None => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "Invalid Response Data".to_string(),
-                    },
-                }),
+                None => Err(ClientError::Other {
+                    description: "Invalid Response Data".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
-                error: ClientError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ClientError::Other { description: error })
+                    .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
 
@@ -481,11 +478,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref().storage, client_id.ibc_client_id())?;
 
         if client_state.is_frozen() {
-            return Err(ContractError::IbcClientError {
-                error: ClientError::ClientFrozen {
-                    client_id: client_id.ibc_client_id().clone(),
-                },
-            });
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.ibc_client_id().clone(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         }
         let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
@@ -558,15 +554,15 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .add_attribute("method", "execute_misbheaviour_reply")
                         .add_attribute("client_id", client_id.ibc_client_id().as_str()))
                 }
-                None => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "Invalid Response Data".to_string(),
-                    },
-                }),
+                None => Err(ClientError::Other {
+                    description: "Invalid Response Data".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
-                error: ClientError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ClientError::Other { description: error })
+                    .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
 }

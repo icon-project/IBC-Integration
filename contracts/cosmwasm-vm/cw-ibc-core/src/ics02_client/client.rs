@@ -1,6 +1,7 @@
-use common::client_state::IClientState;
 use common::icon::icon::lightclient::v1::ClientState;
-use cw_common::{consensus_state::ConsensusState, types::ConnectionId};
+use common::icon::icon::lightclient::v1::ConsensusState;
+use common::{client_state::IClientState, consensus_state::IConsensusState};
+use cw_common::types::ConnectionId;
 use prost::Message;
 
 use crate::error::decode_error;
@@ -324,11 +325,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, client_type)
         {
             Ok(result) => match result {
-                Some(_) => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "Client Implementation Already Exist".to_string(),
-                    },
-                }),
+                Some(_) => Err(ClientError::Other {
+                    description: "Client Implementation Already Exist".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
+
                 None => Ok(()),
             },
             Err(error) => Err(ContractError::Std(error)),
@@ -358,11 +359,10 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_client_implementations(store, client_id.clone())?;
 
         if client.is_empty() {
-            return Err(ContractError::IbcClientError {
-                error: ClientError::ClientNotFound {
-                    client_id: client_id.ibc_client_id().clone(),
-                },
-            });
+            return Err(ClientError::ClientNotFound {
+                client_id: client_id.ibc_client_id().clone(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         }
         Ok(client)
     }
@@ -500,7 +500,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
-    ) -> Result<Box<dyn IbcConsensusState>, ContractError> {
+    ) -> Result<Box<dyn IConsensusState>, ContractError> {
         let consensus_state_key = commitment::consensus_state_commitment_key(
             client_id,
             height.revision_number(),
@@ -512,9 +512,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .commitments()
             .load(store, consensus_state_key)?;
 
-        let consensus_state: ConsensusState = ConsensusState::try_from(consensus_state_data)
-            .map_err(|e| ContractError::IbcDecodeError {
-                error: decode_error("ConsensusState"),
+        let consensus_state: ConsensusState =
+            <ConsensusState as Message>::decode(consensus_state_data.as_slice()).map_err(|e| {
+                ContractError::IbcDecodeError {
+                    error: decode_error("ConsensusState"),
+                }
             })?;
 
         Ok(Box::new(consensus_state))
@@ -543,8 +545,7 @@ impl<'a> CwIbcCoreContext<'a> {
     // }
 
     pub fn host_height(&self) -> Result<ibc::Height, ContractError> {
-        let height =
-            ibc::Height::new(10, 10).map_err(|e| ContractError::IbcClientError { error: e })?;
+        let height = ibc::Height::new(10, 10).map_err(|e| Into::<ContractError>::into(e))?;
         Ok(height)
     }
 
@@ -587,8 +588,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
     ) -> Result<ibc::Height, ContractError> {
-        let height =
-            ibc::Height::new(10, 10).map_err(|e| ContractError::IbcClientError { error: e })?;
+        let height = ibc::Height::new(10, 10).map_err(|e| Into::<ContractError>::into(e))?;
         Ok(height)
     }
 

@@ -1,6 +1,7 @@
 use common::client_state::IClientState;
-use common::icon::icon::lightclient::v1::ClientState;
-use cw_common::{consensus_state::ConsensusState, types::ConnectionId};
+use common::consensus_state::IConsensusState;
+use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use cw_common::types::ConnectionId;
 use prost::Message;
 
 use crate::{context::CwIbcClientContext, error::decode_error};
@@ -485,7 +486,7 @@ impl<'a> CwIbcClientContext<'a> {
         store: &dyn Storage,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
-    ) -> Result<Box<dyn IbcConsensusState>, ContractError> {
+    ) -> Result<Box<dyn IConsensusState>, ContractError> {
         let consensus_state_key = commitment::consensus_state_commitment_key(
             client_id,
             height.revision_number(),
@@ -497,9 +498,11 @@ impl<'a> CwIbcClientContext<'a> {
             .commitments()
             .load(store, consensus_state_key)?;
 
-        let consensus_state: ConsensusState = ConsensusState::try_from(consensus_state_data)
-            .map_err(|e| ContractError::IbcDecodeError {
-                error: decode_error("ConsensusState"),
+        let consensus_state: ConsensusState =
+            <ConsensusState as Message>::decode(consensus_state_data.as_slice()).map_err(|e| {
+                ContractError::IbcDecodeError {
+                    error: decode_error("ConsensusState"),
+                }
             })?;
 
         Ok(Box::new(consensus_state))

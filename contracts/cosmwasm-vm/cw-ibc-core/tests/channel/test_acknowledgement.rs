@@ -445,7 +445,7 @@ fn test_acknowledgement_packet_validate_ordered() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -565,7 +565,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -664,7 +664,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

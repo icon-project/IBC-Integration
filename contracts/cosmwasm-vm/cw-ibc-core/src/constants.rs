@@ -26,3 +26,12 @@ pub const VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT: u64 = 521;
 pub const VALIDATE_ON_PACKET_RECEIVE_ON_MODULE: u64 = 522;
 pub const VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT: u64 = 531;
 pub const VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE: u64 = 532;
+
+// Errors
+
+pub const PACKET_ERROR: &str = "Packet Error";
+pub const CHANNEL_ERROR: &str = "Channel Error";
+pub const CONNECTION_ERROR: &str = "Connection Error";
+pub const VALIDATION_ERROR: &str = "Validation Error";
+pub const CLIENT_ERROR: &str = "Client Error";
+pub const PORT_ERROR: &str = "Port Error";

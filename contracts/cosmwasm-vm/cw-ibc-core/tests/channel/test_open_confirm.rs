@@ -87,7 +87,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -189,7 +189,7 @@ fn test_validate_open_confirm_channel() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

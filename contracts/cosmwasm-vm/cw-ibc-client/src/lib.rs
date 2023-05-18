@@ -76,7 +76,6 @@ use crate::msg::{InstantiateMsg, QueryMsg};
 use crate::traits::IbcClient;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::signed_header::RawSignedHeader;
-use cw_common::consensus_state::ConsensusState;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]

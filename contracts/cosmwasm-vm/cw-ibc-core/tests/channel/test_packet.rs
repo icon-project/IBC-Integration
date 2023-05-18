@@ -88,7 +88,7 @@ fn test_packet_send() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -202,7 +202,7 @@ fn test_packet_send_fail_misiing_sequense() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

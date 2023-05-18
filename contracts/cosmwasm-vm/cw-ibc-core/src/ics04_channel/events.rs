@@ -192,9 +192,9 @@ pub fn create_send_packet_event(
     channel_order: &Order,
     dst_connection_id: &IbcConnectionId,
 ) -> Result<Event, ContractError> {
-    let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
-        error: ChannelError::NonUtf8PacketData,
-    })?;
+    let data = std::str::from_utf8(&packet.data)
+        .map_err(|_| ChannelError::NonUtf8PacketData)
+        .map_err(|e| Into::<ContractError>::into(e))?;
     let hex_data = hex::encode(&packet.data);
 
     Ok(Event::new(IbcEventType::SendPacket.as_str())
@@ -237,16 +237,18 @@ pub fn create_write_ack_event(
     channel_order: &str,
     dst_connection_id: &str,
 ) -> Result<Event, ContractError> {
-    let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
-        error: ChannelError::NonUtf8PacketData,
-    })?;
+    let data = std::str::from_utf8(&packet.data)
+        .map_err(|e| ChannelError::NonUtf8PacketData)
+        .map_err(|e| Into::<ContractError>::into(e))?;
     let hex_data = hex::encode(&packet.data);
 
     let timeout_height = Height::new(
         packet.timeout.block().unwrap().revision,
         packet.timeout.block().unwrap().height,
     )
-    .map_err(|error| ContractError::IbcClientError { error })?;
+    .map_err(|error| ContractError::IbcClientError {
+        error: CLIENT_ERROR.to_owned(),
+    })?;
 
     Ok(Event::new(IbcEventType::WriteAck.as_str())
         .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)

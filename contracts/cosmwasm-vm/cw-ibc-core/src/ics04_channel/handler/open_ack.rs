@@ -21,21 +21,19 @@ pub fn channel_open_ack_validate(
     chan_end_on_a: &ChannelEnd,
 ) -> Result<(), ContractError> {
     if !chan_end_on_a.state_matches(&State::Init) {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::InvalidChannelState {
-                channel_id: message.chan_id_on_a.clone(),
-                state: chan_end_on_a.state,
-            },
-        });
+        return Err(ChannelError::InvalidChannelState {
+            channel_id: message.chan_id_on_a.clone(),
+            state: chan_end_on_a.state,
+        })
+        .map_err(|e| Into::<ContractError>::into(e));
     }
 
     if chan_end_on_a.connection_hops().len() != 1 {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::InvalidConnectionHopsLength {
-                expected: 1,
-                actual: chan_end_on_a.connection_hops().len(),
-            },
-        });
+        return Err(ChannelError::InvalidConnectionHopsLength {
+            expected: 1,
+            actual: chan_end_on_a.connection_hops().len(),
+        })
+        .map_err(|e| Into::<ContractError>::into(e));
     }
 
     Ok(())
@@ -77,11 +75,10 @@ pub fn on_chan_open_ack_submessage(
         Order::Unordered => cosmwasm_std::IbcOrder::Unordered,
         Order::Ordered => cosmwasm_std::IbcOrder::Ordered,
         Order::None => {
-            return Err(ContractError::IbcChannelError {
-                error: ChannelError::UnknownOrderType {
-                    type_id: "None".to_string(),
-                },
+            return Err(ChannelError::UnknownOrderType {
+                type_id: "None".to_string(),
             })
+            .map_err(|e| Into::<ContractError>::into(e))
         }
     };
     let ibc_channel = cosmwasm_std::IbcChannel::new(
@@ -166,15 +163,17 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "channel_open_init_module_validation")
                         .add_submessage(on_chan_open_try))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::VerifyChannelFailed(ClientError::Other { description: error }),
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::VerifyChannelFailed(ClientError::Other {
+                    description: error,
+                }))
+                .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
 }

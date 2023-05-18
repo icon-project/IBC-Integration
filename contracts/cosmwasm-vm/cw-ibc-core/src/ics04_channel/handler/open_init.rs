@@ -97,17 +97,15 @@ pub fn channel_open_init_msg_validate(
     let conn_version = match conn_end_on_a.versions() {
         [version] => version,
         _ => {
-            return Err(ContractError::IbcChannelError {
-                error: ChannelError::InvalidVersionLengthConnection,
-            })
+            return Err(ChannelError::InvalidVersionLengthConnection)
+                .map_err(|e| Into::<ContractError>::into(e));
         }
     };
     let channel_feature = message.ordering.to_string();
     // channel version should be valid
     if !conn_version.is_supported_feature(channel_feature) {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::ChannelFeatureNotSupportedByConnection,
-        });
+        return Err(ChannelError::ChannelFeatureNotSupportedByConnection)
+            .map_err(|e| Into::<ContractError>::into(e));
     };
 
     Ok(())
