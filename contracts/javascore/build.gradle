@@ -34,7 +34,7 @@ subprojects {
     }
 
     ext {
-        deploymentENV = findProperty("deploymentENV") ?: 'lisbon'
+        deploymentENV = findProperty("deploymentENV") ?: 'local'
         ibcCore = findProperty("${deploymentENV}.contracts.ibc-core") as String
         tendermint = findProperty("${deploymentENV}.contracts.tendermint") as String
         mockClient = findProperty("${deploymentENV}.contracts.mock-client") as String
