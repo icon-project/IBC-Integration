@@ -1,5 +1,6 @@
 package foundation.icon.btp.xcall;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -116,6 +117,21 @@ public class CallServiceTest extends TestBase {
 
         // Assert
         verify(xcallSpy).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE);
+    }
+
+    @Test
+    public void handleResponse_singleProtocol_invalidSender() {
+        // Arrange
+        byte[] data = "test".getBytes();
+        Account otherConnection = sm.createAccount();
+        CSMessageRequest request = new CSMessageRequest(ethDapp.toString(), dapp.getAddress().toString(), new String[]{baseConnection.getAddress().toString()}, BigInteger.ONE, false, data);
+        CSMessage msg = new CSMessage(CSMessage.REQUEST, request.toBytes());
+
+        // Act
+        assertThrows(Exception.class, ()->xcall.invoke(otherConnection, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes()));
+
+        // Assert
+        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE);
     }
 
     @Test

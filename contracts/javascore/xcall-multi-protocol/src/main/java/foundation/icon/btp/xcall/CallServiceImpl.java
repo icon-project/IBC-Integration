@@ -254,10 +254,10 @@ public class CallServiceImpl implements CallService, FeeManage {
         String[] protocols = msgReq.getProtocols();
         String from = msgReq.getFrom();
         Context.require(NetworkAddress.valueOf(from).net().equals(netFrom));
+        String source = Context.getCaller().toString();
 
         if (protocols.length > 1) {
             byte[] hash = Context.hash("sha-256", data);
-            String source = Context.getCaller().toString();
             DictDB<String,Boolean> pendingRequests = pendingReqs.at(hash);
             pendingRequests.set(source, true);
             for (String protocol : protocols) {
@@ -269,8 +269,9 @@ public class CallServiceImpl implements CallService, FeeManage {
             for (String protocol : protocols) {
                 pendingRequests.set(protocol, null);
             }
+        } else {
+            Context.require(source.equals(protocols[0]));
         }
-
         String to = msgReq.getTo();
         BigInteger reqId = getNextReqId();
         proxyReqs.set(reqId, msgReq);
@@ -283,6 +284,8 @@ public class CallServiceImpl implements CallService, FeeManage {
         CSMessageResponse msgRes = CSMessageResponse.fromBytes(data);
         BigInteger resSn = msgRes.getSn();
         CallRequest req = requests.get(resSn);
+        String source = Context.getCaller().toString();
+
         if (req == null) {
             Context.println("handleResponse: no request for " + resSn);
             return; // just ignore
@@ -290,7 +293,6 @@ public class CallServiceImpl implements CallService, FeeManage {
 
         String[] protocols = req.getProtocols();
         if (protocols.length > 1) {
-            String source = Context.getCaller().toString();
             DictDB<String,Boolean> pendingResponse = pendingResponses.at(resSn);
             pendingResponse.set(source, true);
             for (String protocol : protocols) {
@@ -302,6 +304,8 @@ public class CallServiceImpl implements CallService, FeeManage {
             for (String protocol : protocols) {
                 pendingResponse.set(protocol, null);
             }
+        } else {
+            Context.require(source.equals(protocols[0]));
         }
 
         String errMsg = msgRes.getMsg();
