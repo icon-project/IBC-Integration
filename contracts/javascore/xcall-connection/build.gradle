@@ -58,7 +58,7 @@ deployJar {
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-        arg('_xCall', "$xCall")
+        arg('_xCall', "$xCallMultiProtocol")
         arg('_ibc', "$ibcCore")
         arg('_nid', '0x1.ICON')
         arg('_timeoutHeight', '0x3e8')
