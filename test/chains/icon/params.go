@@ -19,14 +19,14 @@ func (c *IconLocalnet) GetExecuteParam(ctx context.Context, methodName, params s
 		// TODO: remove admin method is not found
 		return ctx, "remove_admin", "_address='hjsdbjd'"
 	}
-	return ctx, "", ""
+	return ctx, methodName, params
 }
 
 func (c *IconLocalnet) GetQueryParam(methodName string) string {
 	if strings.Contains(methodName, "get_admin") {
 		return "admin"
 	}
-	return ""
+	return methodName
 }
 
 func (c *IconLocalnet) SetAdminParams(ctx context.Context, methodaName, keyName string) (context.Context, string, string) {
@@ -88,13 +88,13 @@ func (c *IconLocalnet) CheckForKeyStore(ctx context.Context, keyName string) str
 	jsonFile := keyName + ".json"
 	path := path.Join(c.HomeDir(), jsonFile)
 	_, _, err := c.getFullNode().Exec(ctx, []string{"cat", path}, nil)
-	if err != nil {
-		wallet, _ := c.BuildWallet(ctx, keyName, "")
-		fmt.Printf("Address of %s is: %s\n", keyName, wallet.FormattedAddress())
-		c.keystorePath = path
-		return wallet.FormattedAddress()
-	} else {
+	if err == nil {
 		c.keystorePath = path
 		return ""
 	}
+
+	wallet, _ := c.BuildWallet(ctx, keyName, "")
+	fmt.Printf("Address of %s is: %s\n", keyName, wallet.FormattedAddress())
+	c.keystorePath = path
+	return wallet.FormattedAddress()
 }

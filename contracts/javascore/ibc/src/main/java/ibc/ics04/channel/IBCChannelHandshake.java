@@ -178,7 +178,6 @@ public class IBCChannelHandshake extends IBCConnection {
         channel.setState(Channel.State.STATE_OPEN);
 
         byte[] encodedChannel = channel.encode();
-        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
         channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
 
         return encodedChannel;
@@ -244,7 +243,6 @@ public class IBCChannelHandshake extends IBCConnection {
         channel.setState(Channel.State.STATE_CLOSED);
 
         byte[] encodedChannel = channel.encode();
-        updateChannelCommitment(connection.getClientId(), msg.getPortId(), msg.getChannelId(), encodedChannel);
         channels.at(msg.getPortId()).set(msg.getChannelId(), encodedChannel);
 
         return encodedChannel;

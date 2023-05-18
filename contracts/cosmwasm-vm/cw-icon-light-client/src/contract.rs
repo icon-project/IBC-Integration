@@ -75,11 +75,11 @@ pub fn execute(
                 .map_err(|e| ContractError::DecodeError(e))?;
             let consensus_state = ConsensusState::decode(consensus_state.as_slice())
                 .map_err(|e| ContractError::DecodeError(e))?;
-            let (state_byte, update) =
-                client.create_client(&client_id, client_state, consensus_state)?;
+            let update =
+                client.create_client(&client_id, client_state.clone(), consensus_state.clone())?;
 
             let mut response = Response::new()
-                .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte.clone()))
+                .add_attribute(CLIENT_STATE_HASH, hex::encode(update.client_state_commitment.clone()))
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
                     hex::encode(update.consensus_state_commitment),
@@ -88,9 +88,11 @@ pub fn execute(
 
             let client_response = CreateClientResponse::new(
                 ICON_CLIENT_TYPE.to_string(),
-                to_ibc_height(update.height).map(|h| h.to_string())?,
-                state_byte,
+                IbcHeight::new(1, update.height).unwrap().to_string(),
+                update.client_state_commitment.to_vec(),
                 update.consensus_state_commitment.into(),
+                update.client_state_bytes,
+                update.consensus_state_bytes,
             );
 
             response.data = to_binary(&client_response).ok();
@@ -101,18 +103,19 @@ pub fn execute(
             client_id,
             signed_header,
         } => {
-            let header_any = SignedHeader::decode(signed_header.as_slice())
-                .map_err(ContractError::DecodeError)?;
-            let (state_byte, update) = client.update_client(&client_id, header_any)?;
+            let header_any = SignedHeader::decode(signed_header.as_slice()).unwrap();
+            let update = client.update_client(&client_id, header_any)?;
             let response_data = to_binary(&UpdateClientResponse {
                 height: to_ibc_height(update.height).map(|h| h.to_string())?,
                 client_id,
-                client_state_commitment: state_byte.clone(),
+                client_state_commitment: update.client_state_commitment.to_vec(),
                 consensus_state_commitment: update.consensus_state_commitment.to_vec(),
+                client_state_bytes: update.client_state_bytes,
+                consensus_state_bytes:update.consensus_state_bytes
             })
             .map_err(ContractError::Std)?;
             Ok(Response::new()
-                .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte))
+                .add_attribute(CLIENT_STATE_HASH, hex::encode(update.client_state_commitment))
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
                     hex::encode(update.consensus_state_commitment),

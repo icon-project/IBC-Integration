@@ -6,6 +6,7 @@ use std::time::Duration;
 use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
+use common::utils::keccak256;
 use cosmwasm_std::ContractResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
@@ -95,6 +96,8 @@ fn test_for_create_client_execution_message() {
     let mock_reponse_data = CreateClientResponse::new(
         "iconclient".to_string(),
         "10-15".to_string(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
         client_state.encode_to_vec(),
         consenus_state.encode_to_vec(),
     );
@@ -164,8 +167,10 @@ fn test_for_update_client_execution_messages() {
     let mock_reponse_data = CreateClientResponse::new(
         "iconclient".to_string(),
         "10-15".to_string(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         client_state.encode_to_vec(),
-        consenus_state.clone().try_into().unwrap(),
+        to_vec(&consenus_state).unwrap(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -233,6 +238,8 @@ fn test_for_update_client_execution_messages() {
     let mock_reponse_data = UpdateClientResponse::new(
         "10-15".to_string(),
         "iconclient-0".to_string(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
         client_state.encode_to_vec(),
         to_vec(&consenus_state).unwrap(),
     );

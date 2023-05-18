@@ -408,16 +408,8 @@ public class ConnectionTest extends TestBase {
                 msg.getProofAck(), prefix.getKeyPrefix().toByteArray(), connectionPath,
                 counterpartyConnection.toByteArray());
 
-        ConnectionEnd expectedConnection = ConnectionEnd.newBuilder(baseConnection)
-                .setState(ConnectionEnd.State.STATE_OPEN).build();
-
-        byte[] connectionKey = IBCCommitment.connectionCommitmentKey(msg.getConnectionId());
-        verify(connectionSpy)
-                .sendBTPMessage(
-                        clientId,
-                        ByteUtil.join(connectionKey, IBCCommitment.keccak256(expectedConnection.toByteArray())));
-        verify(connectionSpy, times(2)).sendBTPMessage(clientId, clientStateCommitment);
-        verify(connectionSpy, times(2)).sendBTPMessage(clientId, consensusStateCommitment);
+        verify(connectionSpy, times(1)).sendBTPMessage(clientId, clientStateCommitment);
+        verify(connectionSpy, times(1)).sendBTPMessage(clientId, consensusStateCommitment);
         assertEquals(BigInteger.ONE, connection.call("getNextConnectionSequence"));
 
     }

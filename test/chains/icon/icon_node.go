@@ -15,7 +15,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	dockerclient "github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 	iconclient "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon"
@@ -65,11 +64,7 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 	imageRef := in.Image.Ref()
 	containerConfig := &types.ContainerCreateConfig{
 		Config: &container.Config{
-			Image: imageRef,
-			ExposedPorts: nat.PortSet{
-				"8080/tcp": {},
-				"9080/tcp": {},
-			},
+			Image:    imageRef,
 			Hostname: in.HostName(),
 
 			Labels: map[string]string{dockerutil.CleanupLabel: in.TestName},
@@ -79,14 +74,6 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 			PublishAllPorts: true,
 			AutoRemove:      false,
 			DNS:             []string{},
-			PortBindings: nat.PortMap{
-				"9080/tcp": {
-					nat.PortBinding{
-						HostIP:   "172.17.0.1",
-						HostPort: "9080",
-					},
-				},
-			},
 		},
 		NetworkingConfig: &network.NetworkingConfig{
 			EndpointsConfig: map[string]*network.EndpointSettings{
@@ -130,7 +117,7 @@ func (in *IconNode) StartContainer(ctx context.Context) error {
 	in.HostRPCPort = dockerutil.GetHostPort(c, rpcPort)
 	in.logger().Info("Icon chain node started", zap.String("container", in.Name()), zap.String("rpc_port", in.HostRPCPort))
 
-	uri := "http://" + in.HostRPCPort + "/api/v3"
+	uri := "http://" + in.HostRPCPort + "/api/v3/"
 	var l iconlog.Logger
 	in.Client = *iconclient.NewClient(uri, l)
 	return nil
@@ -182,8 +169,10 @@ func (in *IconNode) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, e
 
 	time.Sleep(2 * time.Second)
 	blockHeight := icontypes.BlockHeightParam{Height: icontypes.NewHexInt(int64(height))}
-	res, _ := in.Client.GetBlockByHeight(&blockHeight)
-
+	res, err := in.Client.GetBlockByHeight(&blockHeight)
+	if err != nil {
+		return make([]blockdb.Tx, 0, 0), nil
+	}
 	txs := make([]blockdb.Tx, 0, len(res.NormalTransactions)+2)
 	var newTx blockdb.Tx
 	for _, tx := range res.NormalTransactions {
@@ -225,6 +214,7 @@ func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath,
 
 	// Get Score Address
 	trResult, err := in.TransactionResult(ctx, hash)
+
 	if err != nil {
 		return "", err
 	}
@@ -235,7 +225,7 @@ func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath,
 // Get Transaction result when hash is provided after executing a transaction
 func (in *IconNode) TransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
 	var result icontypes.TransactionResult
-	uri := "http://" + in.HostRPCPort + "/api/v3"
+	uri := fmt.Sprintf("http://%s:9080/api/v3", in.Name()) //"http://" + in.HostRPCPort + "/api/v3"
 	out, _, _ := in.ExecBin(ctx, "rpc", "txresult", hash, "--uri", uri)
 	json.Unmarshal(out, &result)
 	return result, nil
@@ -263,13 +253,21 @@ func (in *IconNode) TxCommand(ctx context.Context, initMessage, filePath, keysto
 	password := fileName[0]
 
 	command = append([]string{"rpc", "sendtx", "deploy", filePath}, command...)
-	return in.NodeCommand(append(command,
+	command = append(command,
 		"--key_store", keystorePath,
 		"--key_password", password,
 		"--step_limit", "5000000000",
 		"--content_type", "application/java",
-		"--param", initMessage,
-	)...)
+	)
+	if initMessage != "" && initMessage != "{}" {
+		if strings.HasPrefix(initMessage, "{") {
+			command = append(command, "--params", initMessage)
+		} else {
+			command = append(command, "--param", initMessage)
+		}
+	}
+
+	return in.NodeCommand(command...)
 }
 
 // NodeCommand is a helper to retrieve a full command for a chain node binary.
@@ -280,8 +278,8 @@ func (in *IconNode) TxCommand(ctx context.Context, initMessage, filePath, keysto
 func (in *IconNode) NodeCommand(command ...string) []string {
 	command = in.BinCommand(command...)
 	return append(command,
-		"--uri", fmt.Sprintf("http://%s/api/v3", in.HostRPCPort),
-		"--nid", "0xc5addf",
+		"--uri", fmt.Sprintf("http://%s:9080/api/v3", in.Name()), //fmt.Sprintf("http://%s/api/v3", in.HostRPCPort),
+		"--nid", "0x3",
 	)
 }
 
@@ -305,7 +303,7 @@ func (tn *IconNode) WriteFile(ctx context.Context, content []byte, relPath strin
 }
 
 func (in *IconNode) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
-	uri := "http://" + in.HostRPCPort + "/api/v3"
+	uri := fmt.Sprintf("http://%s:9080/api/v3", in.Name())
 	if params != "" {
 		out, _, _ := in.ExecBin(ctx, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--param", params, "--uri", uri)
 		return string(out), nil
@@ -357,12 +355,26 @@ func (in *IconNode) ExecCallTxCommand(ctx context.Context, scoreAddress, methodN
 	fileName := strings.Split(key, ".")
 	password := fileName[0]
 	command := []string{"rpc", "sendtx", "call"}
-	return in.NodeCommand(append(command,
+
+	command = append(command,
 		"--to", scoreAddress,
 		"--method", methodName,
 		"--key_store", keystorePath,
 		"--key_password", password,
 		"--step_limit", "5000000000",
-		"--param", params,
-	)...)
+	)
+
+	if params != "" && params != "{}" {
+		if strings.HasPrefix(params, "{") {
+			command = append(command, "--params", params)
+		} else {
+			command = append(command, "--param", params)
+		}
+	}
+
+	if methodName == "registerPRep" {
+		command = append(command, "--value", "2000000000000000000000")
+	}
+
+	return in.NodeCommand(command...)
 }

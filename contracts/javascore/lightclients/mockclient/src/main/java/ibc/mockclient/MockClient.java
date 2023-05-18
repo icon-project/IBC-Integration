@@ -3,6 +3,7 @@ package ibc.mockclient;
 import java.math.BigInteger;
 import java.util.Map;
 
+import score.Address;
 import score.Context;
 import score.annotation.External;
 import score.annotation.Optional;
@@ -13,7 +14,7 @@ import ibc.ics24.host.IBCCommitment;
 
 public class MockClient implements ILightClient {
 
-    public MockClient() {
+    public MockClient(@Optional Address ibcHandler) {
     }
 
     @External(readonly = true)

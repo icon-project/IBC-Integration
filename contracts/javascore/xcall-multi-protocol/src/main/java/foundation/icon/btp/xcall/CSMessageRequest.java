@@ -68,7 +68,7 @@ public class CSMessageRequest {
     }
 
     public static void writeObject(ObjectWriter w, CSMessageRequest m) {
-        w.beginList(5);
+        w.beginList(6);
         w.write(m.from);
         w.write(m.to);
         w.beginList(m.protocols.length);

@@ -109,7 +109,7 @@ impl ILightClient for IconClient<'_> {
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
-    ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {
+    ) -> Result<ConsensusStateUpdate, Self::Error> {
         let exists = self.context.get_client_state(client_id).is_ok();
         if exists {
             return Err(ContractError::ClientStateAlreadyExists(
@@ -124,20 +124,22 @@ impl ILightClient for IconClient<'_> {
             consensus_state.clone(),
         )?;
 
-        Ok((
-            client_state.get_keccak_hash().into(),
+        Ok(
             ConsensusStateUpdate {
                 consensus_state_commitment: consensus_state.get_keccak_hash(),
+                client_state_commitment:client_state.get_keccak_hash(),
+                client_state_bytes:client_state.encode_to_vec(),
+                consensus_state_bytes:consensus_state.encode_to_vec(),
                 height: client_state.latest_height,
             },
-        ))
+        )
     }
 
     fn update_client(
         &mut self,
         client_id: &str,
         signed_header: SignedHeader,
-    ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error> {
+    ) -> Result<ConsensusStateUpdate, Self::Error> {
         let btp_header = signed_header.header.clone().unwrap();
         let mut state = self.context.get_client_state(client_id)?;
         let config = self.context.get_config()?;
@@ -179,15 +181,17 @@ impl ILightClient for IconClient<'_> {
             .insert_timestamp_at_height(client_id, btp_header.main_height)?;
         self.context
             .insert_blocknumber_at_height(client_id, btp_header.main_height)?;
-        let commitment = keccak256(&consensus_state.to_any().encode_to_vec());
+        let commitment = keccak256(&consensus_state.encode_to_vec());
 
-        Ok((
-            keccak256(&state.to_any().encode_to_vec()).to_vec(),
+        Ok(
             ConsensusStateUpdate {
                 consensus_state_commitment: commitment,
+                client_state_commitment:keccak256(&state.encode_to_vec()),
+                client_state_bytes:state.encode_to_vec(),
+                consensus_state_bytes:consensus_state.encode_to_vec(),
                 height: btp_header.main_height,
             },
-        ))
+        )
     }
 
     fn verify_membership(
