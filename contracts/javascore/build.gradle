@@ -33,6 +33,18 @@ subprojects {
         }
     }
 
+    ext {
+        deploymentENV = findProperty("deploymentENV") ?: 'lisbon'
+        ibcCore = findProperty("${deploymentENV}.contracts.ibc-core") as String
+        tendermint = findProperty("${deploymentENV}.contracts.tendermint") as String
+        mockClient = findProperty("${deploymentENV}.contracts.mock-client") as String
+        mockApp = findProperty("${deploymentENV}.contracts.mock-app") as String
+        mockDApp = findProperty("${deploymentENV}.contracts.mock-dapp") as String
+        xCall = findProperty("${deploymentENV}.contracts.xcall") as String
+        xCallMultiProtocol = findProperty("${deploymentENV}.contracts.xcall-multi-protocol") as String
+        xCallConnection = findProperty("${deploymentENV}.contracts.xcall-connection") as String
+    }
+
     dependencies {
         compileOnly("foundation.icon:javaee-api:$javaeeVersion")
         implementation("foundation.icon:javaee-scorex:$scorexVersion")

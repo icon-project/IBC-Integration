@@ -66,8 +66,9 @@ deployJar {
             nid = 0x3
         }
         uat {
-            uri = project.findProperty('uatUri') ? "$uatUri" : ''
-            nid = Integer.decode(property('networkId'))
+            uri = project.findProperty('uat.host') as String
+            nid = property('uat.nid') as Integer
+            to = "$mockClient"?:null
         }
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''

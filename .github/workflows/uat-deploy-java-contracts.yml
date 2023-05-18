@@ -1,9 +1,9 @@
-name: Deploy Contracts After PR Merge
+name: Deploy Contracts After PR Merge to main branch
 
 on:
-  pull_request:
-    types:
-      - closed
+  push:
+    branches:
+      - "main"
 
 jobs:
   deploy-contracts-uat:
@@ -14,5 +14,4 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Deploy all contracts on UAT environment
-        if: github.event.pull_request.merged == true
-        run: cd contracts/javascore && ./gradlew clean build && ./gradlew optimizedJar && ./gradlew deployToUat
+        run: cd contracts/javascore && ./gradlew clean build && ./gradlew optimizedJar && ./gradlew deployToUat -PdeploymentENV=uat
