@@ -9,6 +9,10 @@ pub mod connection {
         MsgConnectionOpenInit as RawMsgConnectionOpenInit,
         MsgConnectionOpenTry as RawMsgConnectionOpenTry,
     };
+    pub use ibc_proto::ibc::core::connection::v1::{
+        ConnectionEnd as RawConnectionEnd, Counterparty as RawCounterparty,
+        IdentifiedConnection as RawIdentifiedConnection,
+    };
 }
 
 pub mod channel {
@@ -21,4 +25,13 @@ pub mod channel {
         MsgRecvPacket as RawMessageRecvPacket, MsgTimeout as RawMessageTimeout,
         MsgTimeoutOnClose as RawMessageTimeoutOnclose, Packet as RawPacket,
     };
+    pub use ibc_proto::ibc::core::channel::v1::{
+        Channel as RawChannel, Counterparty as RawCounterparty,
+        IdentifiedChannel as RawIdentifiedChannel,
+    };
+    
 }
+
+
+
+
