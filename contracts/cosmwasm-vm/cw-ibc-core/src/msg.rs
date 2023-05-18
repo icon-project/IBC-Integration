@@ -8,7 +8,7 @@ pub struct InstantiateMsg {}
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(Vec<u8>)]
+    #[returns(String)]
     GetCommitment { key: HexString },
     #[returns(Addr)]
     GetClientRegistry { _type: String },
@@ -16,9 +16,9 @@ pub enum QueryMsg {
     GetClientType { client_id: String },
     #[returns(Addr)]
     GetClientImplementation { client_id: String },
-    #[returns(Vec<u8>)]
+    #[returns(String)]
     GetConnection { connection_id: String },
-    #[returns(Vec<u8>)]
+    #[returns(String)]
     GetChannel { port_id: String, channel_id: String },
     #[returns(u64)]
     GetNextSequenceSend { port_id: String, channel_id: String },
@@ -36,9 +36,9 @@ pub enum QueryMsg {
     GetNextConnectionSequence,
     #[returns(u64)]
     GetNextChannelSequence,
-    #[returns(Vec<u8>)]
+    #[returns(String)]
     GetClientState { client_id: String },
-    #[returns(Vec<u8>)]
+    #[returns(String)]
     GetConsensusState {
         client_id: String,
         height: HexString,
@@ -49,13 +49,13 @@ pub enum QueryMsg {
         channel_id: String,
         sequence: u64,
     },
-    #[returns(Vec<u8>)]
+    #[returns(String)]
     GetPacketCommitment {
         port_id: String,
         channel_id: String,
         sequence: u64,
     },
-    #[returns(Vec<u8>)]
+    #[returns(String)]
     GetPacketAcknowledgementCommitment {
         port_id: String,
         channel_id: String,

@@ -14,6 +14,10 @@ pub mod connection {
         MsgConnectionOpenInit as RawMsgConnectionOpenInit,
         MsgConnectionOpenTry as RawMsgConnectionOpenTry,
     };
+    pub use ibc_proto::ibc::core::connection::v1::{
+        ConnectionEnd as RawConnectionEnd, Counterparty as RawCounterparty,
+        IdentifiedConnection as RawIdentifiedConnection,
+    };
 }
 
 pub mod channel {
@@ -36,6 +40,9 @@ pub mod channel {
         channel::v1::Counterparty as RawCounterparty,
         commitment::v1::MerklePrefix as RawMerklePrefix,
     };
+    pub use ibc_proto::ibc::core::channel::v1::{
+        IdentifiedChannel as RawIdentifiedChannel,
+    };
 }
 
 pub use ibc_proto::google::protobuf::Any;
@@ -44,3 +51,8 @@ pub use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 pub use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
 pub use ibc_proto::ics23::CommitmentProof as RawCommitmentProof;
 pub use ibc_proto::protobuf::Protobuf;
+
+
+
+
+
