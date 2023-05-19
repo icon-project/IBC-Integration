@@ -10,7 +10,6 @@ members = [
     "contracts/cosmwasm-vm/cw-xcall-ibc-connection",
      "contracts/cosmwasm-vm/cw-xcall-app",
      "contracts/cosmwasm-vm/cw-integration",
-    "contracts/cosmwasm-vm/cw-ibc-client",
 ]
 
 [workspace.package]
