@@ -24,7 +24,9 @@ pub struct CreateClientResponse {
     height: String,
     client_state_commitment: Vec<u8>,
     consensus_state_commitment: Vec<u8>,
+    // any bytes
     consensus_state_bytes:Vec<u8>,
+    // any bytes
     client_state_bytes:Vec<u8>
 }
 
@@ -95,7 +97,9 @@ pub struct UpdateClientResponse {
     pub client_id: String,
     pub client_state_commitment: Vec<u8>,
     pub consensus_state_commitment: Vec<u8>,
+    // any bytes
     pub client_state_bytes: Vec<u8>,
+    // any bytes
     pub consensus_state_bytes: Vec<u8>,
 }
 

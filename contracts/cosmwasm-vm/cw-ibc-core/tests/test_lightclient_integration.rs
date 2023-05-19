@@ -1,5 +1,5 @@
 use anyhow::Error as AppError;
-use common::icon::icon::lightclient::v1::ClientState as RawClientState;
+use common::{icon::icon::lightclient::v1::ClientState as RawClientState, traits::AnyTypes};
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use cosmwasm_std::{Addr, Empty, Event};
 use cw_common::{constants::ICON_CLIENT_TYPE, core_msg as CoreMsg, hex_string::HexString};
@@ -99,8 +99,8 @@ pub fn call_create_client(
         ctx.sender.clone(),
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::CreateClient {
-            client_state: HexString::from_bytes(&client_state.encode_to_vec()),
-            consensus_state: HexString::from_bytes(&consensus_state.encode_to_vec()),
+            client_state: HexString::from_bytes(&client_state.to_any().encode_to_vec()),
+            consensus_state: HexString::from_bytes(&consensus_state.to_any().encode_to_vec()),
             signer: HexString::from_bytes("signer".as_bytes()),
         },
         &[],
@@ -119,7 +119,7 @@ pub fn call_update_client(
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::UpdateClient {
             client_id: client_id.to_string(),
-            header: HexString::from_bytes(&signed_header.encode_to_vec()),
+            header: HexString::from_bytes(&signed_header.to_any().encode_to_vec()),
             signer: HexString::from_bytes("signer".as_bytes()),
         },
         &[],

@@ -1,5 +1,6 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
+use common::traits::AnyTypes;
 use common::utils::keccak256;
 use cosmwasm_std::Api;
 use cosmwasm_std::DepsMut;
@@ -8,7 +9,6 @@ use cosmwasm_std::Storage;
 use cw_storage_plus::{Item, Map};
 use prost::Message;
 
-use crate::traits::AnyTypes;
 use crate::traits::Config;
 use crate::traits::IContext;
 use crate::ContractError;

@@ -15,7 +15,7 @@ pbjson-types = { version = "0.5.1", default-features = false }
 serde = { version = "1.0.156", default-features = false,features = ["derive"] }
 serde_json = "1.0"
 pbjson = { version = "0.5.1", default-features = false }
-ibc-proto = { version = "0.28.0", default-features = false }
+ibc-proto = { version = "0.26.0", default-features = false }
 keccak-hash="0.10.0"
 hex-literal="0.3.4"
 cosmwasm-schema = "1.2.1"

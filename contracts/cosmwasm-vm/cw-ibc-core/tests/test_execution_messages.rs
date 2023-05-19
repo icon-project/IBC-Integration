@@ -36,7 +36,7 @@ use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
-
+use common::traits::AnyTypes;
 use setup::*;
 
 fn test_for_create_client_execution_message() {
@@ -226,7 +226,7 @@ fn test_for_update_client_execution_messages() {
 
     let message = CoreExecuteMsg::UpdateClient {
         client_id: "iconclient-0".to_string(),
-        header: HexString::from_bytes(&signed_header.encode_to_vec()),
+        header: HexString::from_bytes(&signed_header.to_any().encode_to_vec()),
         signer: HexString::from_bytes("signeraddress".to_string().as_bytes()),
     };
 

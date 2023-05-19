@@ -1,7 +1,8 @@
 use crate::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR};
 
 use super::{events::client_misbehaviour_event, *};
-use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response};
+use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response, constants::ICON_CLIENT_TYPE};
+use prost::Message;
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     /// This method creates a new client and sends a message to a light client contract.
@@ -29,10 +30,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         info: MessageInfo,
         message: IbcMsgCreateClient,
     ) -> Result<Response, ContractError> {
-        let client_state = self.decode_client_state(message.client_state.clone())?;
+    
         let client_counter = self.client_counter(deps.as_ref().storage)?;
 
-        let client_type = ClientType::from(client_state.client_type());
+        let client_type = ClientType::new(ICON_CLIENT_TYPE.to_owned());
 
         let client_id = ClientId::new(client_type.clone(), client_counter)?;
 
@@ -41,8 +42,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let create_client_message = LightClientMessage::CreateClient {
             client_id: client_id.ibc_client_id().to_string(),
-            client_state: message.client_state.value,
-            consensus_state: message.consensus_state.value,
+            client_state: message.client_state.encode_to_vec(),
+            consensus_state: message.consensus_state.encode_to_vec(),
         };
 
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -87,7 +88,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let exec_message = LightClientMessage::UpdateClient {
             client_id: client_id.as_str().to_string().clone(),
-            signed_header: message.header.value,
+            signed_header: message.header.encode_to_vec(),
         };
 
         let client_update_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {

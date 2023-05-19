@@ -1,4 +1,5 @@
 use cw_common::errors::CwErrors;
+use hex::FromHexError;
 use ibc::core::ics03_connection::error::ConnectionError;
 
 use super::*;
@@ -64,6 +65,18 @@ pub enum ContractError {
     InsufficientBalance {},
     #[error("IbcDecodeError {error}")]
     IbcRawConversionError { error: String },
+}
+
+impl From<FromHexError> for ContractError {
+    fn from(value: FromHexError) -> Self {
+        ContractError::IbcDecodeError { error: "Hex String Decode Failed".to_owned() }
+    }
+}
+
+impl From<prost::DecodeError> for ContractError {
+    fn from(value: prost::DecodeError) -> Self {
+        ContractError::IbcDecodeError { error: "Decode Failed".to_owned() }
+    }
 }
 
 /// This code defines an implementation of the `From` trait for the `ContractError` enum, which allows
