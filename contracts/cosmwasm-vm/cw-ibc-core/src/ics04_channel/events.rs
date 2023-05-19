@@ -246,9 +246,7 @@ pub fn create_write_ack_event(
         packet.timeout.block().unwrap().revision,
         packet.timeout.block().unwrap().height,
     )
-    .map_err(|error| ContractError::IbcClientError {
-        error: CLIENT_ERROR.to_owned(),
-    })?;
+    .map_err(|error| ContractError::IbcClientError { error })?;
 
     Ok(Event::new(IbcEventType::WriteAck.as_str())
         .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)

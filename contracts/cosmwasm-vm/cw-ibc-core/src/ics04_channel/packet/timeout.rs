@@ -1,3 +1,5 @@
+use prost::DecodeError;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -123,7 +125,7 @@ impl<'a> CwIbcCoreContext<'a> {
             },
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
-            error: e.to_string(),
+            error: DecodeError::new(e.to_string()),
         })?;
 
         let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
@@ -209,7 +211,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(res) => {
                     let packet_data = from_binary::<PacketDataResponse>(&res).map_err(|e| {
                         ContractError::IbcDecodeError {
-                            error: e.to_string(),
+                            error: DecodeError::new(e.to_string()),
                         }
                     })?;
                     let info = packet_data.message_info;

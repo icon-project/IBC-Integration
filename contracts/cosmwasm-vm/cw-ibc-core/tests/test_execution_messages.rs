@@ -33,8 +33,8 @@ use cw_ibc_core::{context::CwIbcCoreContext, msg::InstantiateMsg};
 
 use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
+use common::traits::AnyTypes;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
-
 use setup::*;
 
 fn test_for_create_client_execution_message() {
@@ -224,7 +224,7 @@ fn test_for_update_client_execution_messages() {
 
     let message = CoreExecuteMsg::UpdateClient {
         client_id: "iconclient-0".to_string(),
-        header: HexString::from_bytes(&signed_header.encode_to_vec()),
+        header: HexString::from_bytes(&signed_header.to_any().encode_to_vec()),
         signer: HexString::from_bytes("signeraddress".to_string().as_bytes()),
     };
 
@@ -297,7 +297,7 @@ fn test_for_connection_open_try() {
         )
         .unwrap();
 
-    let client_state = client_state.encode_to_vec();
+    let client_state = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
             &mut deps.storage,
@@ -359,7 +359,7 @@ fn test_for_connection_open_try() {
         )
         .unwrap();
 
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -560,7 +560,7 @@ fn test_for_connection_open_ack() {
         )
         .unwrap();
 
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -687,13 +687,13 @@ fn test_for_connection_open_confirm() {
         )
         .unwrap();
 
-    let cl = client_state.encode_to_vec();
+    let cl = client_state.to_any().encode_to_vec();
 
     contract
         .store_client_state(&mut deps.storage, &conn_end.client_id().clone().into(), cl)
         .unwrap();
 
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -791,13 +791,13 @@ fn test_for_connection_open_try_fails() {
         )
         .unwrap();
 
-    let cl = client_state.encode_to_vec();
+    let cl = client_state.to_any().encode_to_vec();
 
     contract
         .store_client_state(&mut deps.storage, &res_msg.client_id_on_b.clone(), cl)
         .unwrap();
 
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -925,7 +925,7 @@ fn test_connection_open_confirm_fails() {
         .store_client_state(&mut deps.storage, &conn_end.client_id().clone().into(), cl)
         .unwrap();
 
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
@@ -1006,7 +1006,7 @@ fn test_connection_open_try_fails_invalid_id() {
         counterparty_prefix.clone(),
     );
 
-    let cl = client_state.encode_to_vec();
+    let cl = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &res_msg.client_id_on_a.clone(), cl)
         .unwrap();
@@ -1053,7 +1053,7 @@ fn test_connection_open_try_fails_invalid_id() {
         .store_client_state(&mut deps.storage, &res_msg.client_id_on_b.clone(), cl)
         .unwrap();
 
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(

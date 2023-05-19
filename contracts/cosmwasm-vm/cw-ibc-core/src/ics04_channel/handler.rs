@@ -127,7 +127,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         if message.connection_hops_on_b.len() != 1 {
             return Err(ContractError::IbcChannelError {
-                error: CHANNEL_ERROR.to_owned(),
+                error: ChannelError::InvalidConnectionHopsLength {
+                    expected: 1,
+                    actual: message.connection_hops_on_b.len(),
+                },
             });
         }
         let connection_id = ConnectionId::from(message.connection_hops_on_b[0].clone());
@@ -171,11 +174,15 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 .counterparty()
                 .connection_id()
                 .ok_or(ContractError::IbcChannelError {
-                    error: CHANNEL_ERROR.to_owned(),
+                    error: ChannelError::UndefinedConnectionCounterparty {
+                        connection_id: message.connection_hops_on_b[0].clone(),
+                    },
                 })?;
         if client_state_of_a_on_b.is_frozen() {
             return Err(ContractError::IbcChannelError {
-                error: CHANNEL_ERROR.to_owned(),
+                error: ChannelError::FrozenClient {
+                    client_id: client_id_on_b.clone(),
+                },
             });
         }
 
@@ -265,7 +272,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         )?;
         if !conn_end_on_a.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcChannelError {
-                error: CHANNEL_ERROR.to_owned(),
+                error: ChannelError::ConnectionNotOpen {
+                    connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                },
             });
         }
         let client_id_on_a = conn_end_on_a.client_id();
@@ -280,11 +289,15 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 .counterparty()
                 .connection_id()
                 .ok_or(ContractError::IbcChannelError {
-                    error: CHANNEL_ERROR.to_owned(),
+                    error: ChannelError::UndefinedConnectionCounterparty {
+                        connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                    },
                 })?;
         if client_state_of_b_on_a.is_frozen() {
             return Err(ContractError::IbcChannelError {
-                error: CHANNEL_ERROR.to_owned(),
+                error: ChannelError::FrozenClient {
+                    client_id: client_id_on_a.clone(),
+                },
             });
         }
         let expected_chan_end_on_b = ChannelEnd::new(
@@ -382,7 +395,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         if !conn_end_on_b.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcChannelError {
-                error: CHANNEL_ERROR.to_owned(),
+                error: ChannelError::ConnectionNotOpen {
+                    connection_id: chan_end_on_b.connection_hops()[0].clone(),
+                },
             });
         }
 
@@ -397,18 +412,22 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 .counterparty()
                 .channel_id()
                 .ok_or(ContractError::IbcChannelError {
-                    error: CHANNEL_ERROR.to_owned(),
+                    error: ChannelError::InvalidCounterpartyChannelId,
                 })?;
         let conn_id_on_a =
             conn_end_on_b
                 .counterparty()
                 .connection_id()
                 .ok_or(ContractError::IbcChannelError {
-                    error: CHANNEL_ERROR.to_owned(),
+                    error: ChannelError::UndefinedConnectionCounterparty {
+                        connection_id: chan_end_on_b.connection_hops()[0].clone(),
+                    },
                 })?;
         if client_state_of_a_on_b.is_frozen() {
             return Err(ContractError::IbcChannelError {
-                error: CHANNEL_ERROR.to_owned(),
+                error: ChannelError::FrozenClient {
+                    client_id: client_id_on_b.clone(),
+                },
             });
         }
         let expected_chan_end_on_a = ChannelEnd::new(
@@ -499,7 +518,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         if !conn_end_on_a.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcChannelError {
-                error: CHANNEL_ERROR.to_owned(),
+                error: ChannelError::ConnectionNotOpen {
+                    connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                },
             });
         }
 
@@ -566,7 +587,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         )?;
         if !conn_end_on_b.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcChannelError {
-                error: CHANNEL_ERROR.to_owned(),
+                error: ChannelError::ConnectionNotOpen {
+                    connection_id: chan_end_on_b.connection_hops()[0].clone(),
+                },
             });
         }
 
@@ -576,23 +599,28 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             self.consensus_state(deps.storage, client_id_on_b, &message.proof_height_on_a)?;
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
         let port_id_on_a = &chan_end_on_b.counterparty().port_id;
-        let chan_id_on_a = chan_end_on_b
-            .counterparty()
-            .channel_id()
-            .ok_or(ChannelError::InvalidCounterpartyChannelId)
-            .map_err(|e| Into::<ContractError>::into(e))?;
-        let conn_id_on_a = conn_end_on_b
-            .counterparty()
-            .connection_id()
-            .ok_or(ChannelError::UndefinedConnectionCounterparty {
-                connection_id: chan_end_on_b.connection_hops()[0].clone(),
-            })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+        let chan_id_on_a =
+            chan_end_on_b
+                .counterparty()
+                .channel_id()
+                .ok_or(ContractError::IbcChannelError {
+                    error: ChannelError::InvalidCounterpartyChannelId,
+                })?;
+        let conn_id_on_a =
+            conn_end_on_b
+                .counterparty()
+                .connection_id()
+                .ok_or(ContractError::IbcChannelError {
+                    error: ChannelError::UndefinedConnectionCounterparty {
+                        connection_id: chan_end_on_b.connection_hops()[0].clone(),
+                    },
+                })?;
         if client_state_of_a_on_b.is_frozen() {
-            return Err(ChannelError::FrozenClient {
-                client_id: client_id_on_b.clone(),
-            })
-            .map_err(|e| e.into());
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::FrozenClient {
+                    client_id: client_id_on_b.clone(),
+                },
+            });
         }
         let expected_chan_end_on_a = ChannelEnd::new(
             State::Closed,

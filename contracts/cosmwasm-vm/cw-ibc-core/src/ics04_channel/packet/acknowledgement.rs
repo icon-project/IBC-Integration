@@ -1,5 +1,6 @@
 use cw_common::cw_types::{CwAcknowledgement, CwPacketAckMsg};
 use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
+use prost::DecodeError;
 
 use super::*;
 
@@ -191,7 +192,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(res) => {
                     let packet_data = from_binary::<PacketDataResponse>(&res).map_err(|e| {
                         ContractError::IbcDecodeError {
-                            error: e.to_string(),
+                            error: DecodeError::new(e.to_string()),
                         }
                     })?;
                     let info = packet_data.message_info;

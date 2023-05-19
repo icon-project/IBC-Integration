@@ -3,13 +3,13 @@ pub mod setup;
 use std::str::FromStr;
 
 use common::client_state::IClientState;
-use common::icon::icon::lightclient::v1::ClientState;
+use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use common::traits::AnyTypes;
 use common::utils::keccak256;
 use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
-use cw_common::consensus_state::ConsensusState;
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpgradeClient};
 use cw_common::types::{ClientId, ClientType};
@@ -439,9 +439,9 @@ fn check_for_create_client_message_response() {
         client_type.as_str().to_string(),
         "10-15".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
         client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -505,8 +505,8 @@ fn check_for_client_state_from_storage() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let create_client_message = IbcMsgCreateClient::new(
-        client_state.clone().into(),
-        consenus_state.clone().into(),
+        client_state.to_any().clone().into(),
+        consenus_state.to_any().clone().into(),
         signer,
     );
 
@@ -518,9 +518,9 @@ fn check_for_client_state_from_storage() {
         client_type.as_str().to_string(),
         "10-15".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
-        client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -597,9 +597,9 @@ fn check_for_consensus_state_from_storage() {
         client_type.as_str().to_string(),
         "10-15".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
-        client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -783,9 +783,9 @@ fn check_for_update_client_message() {
         client_type.as_str().to_string(),
         "0-25".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
         client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -836,9 +836,9 @@ fn check_for_update_client_message() {
         "10-15".to_string(),
         client_id.ibc_client_id().as_str().to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
-        client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -960,9 +960,9 @@ fn check_for_upgrade_client() {
         client_type.as_str().to_string(),
         "0-100".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
-        client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1065,9 +1065,9 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         client_type.as_str().to_string(),
         "0-100".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
-        client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1170,9 +1170,9 @@ fn fails_on_upgrade_client_frozen_client() {
         client_type.as_str().to_string(),
         "0-100".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
-        client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1272,9 +1272,9 @@ fn check_for_execute_upgrade_client() {
         client_type.as_str().to_string(),
         "0-100".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
-        client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1329,7 +1329,7 @@ fn check_for_execute_upgrade_client() {
 
     let upgrade_client_response = UpgradeClientResponse::new(
         upgrade_client_state.encode_to_vec(),
-        to_vec(&upgrade_consenus_state).unwrap(),
+        upgrade_consenus_state.encode_to_vec(),
         client_id.ibc_client_id().to_string(),
         "0-100".to_string(),
     );
@@ -1396,7 +1396,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
 
     let upgrade_client_response = UpgradeClientResponse::new(
         upgrade_client_state.encode_to_vec(),
-        to_vec(&upgrade_consenus_state).unwrap(),
+        upgrade_consenus_state.encode_to_vec(),
         "hello".to_string(),
         "0-100".to_string(),
     );
@@ -1626,9 +1626,9 @@ fn success_on_getting_client_state() {
         client_type.as_str().to_string(),
         "10-15".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
         client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1706,7 +1706,7 @@ fn sucess_on_misbehaviour_validate() {
         .store_client_state(
             deps.as_mut().storage,
             client_id.ibc_client_id(),
-            client_state.encode_to_vec(),
+            client_state.to_any().encode_to_vec(),
         )
         .unwrap();
     let height = Height::new(10, 15).unwrap();
@@ -1766,7 +1766,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .store_client_state(
             deps.as_mut().storage,
             client_id.ibc_client_id(),
-            client_state.encode_to_vec(),
+            client_state.to_any().encode_to_vec(),
         )
         .unwrap();
     let height = Height::new(10, 15).unwrap();
@@ -1846,7 +1846,7 @@ fn success_on_execute_misbehaviour() {
 
     let response_message_data = MisbehaviourResponse::new(
         client_id.ibc_client_id().to_string(),
-        client_state.encode_to_vec(),
+        client_state.to_any().encode_to_vec(),
     );
 
     let event = Event::new("empty");

@@ -72,7 +72,9 @@ fn improper_storage_initialisation() {
 }
 
 #[test]
-#[should_panic(expected = "IbcDecodeError { error: \"Module Id Not Found\" }")]
+#[should_panic(
+    expected = "IbcDecodeError { error: DecodeError { description: \"Module Id Not Found\", stack: [] } }"
+)]
 fn improper_router_initalisation() {
     let deps = deps();
     let contract = CwIbcCoreContext::default();

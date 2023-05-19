@@ -1,5 +1,6 @@
 use super::*;
 use cw_common::commitment;
+use prost::DecodeError;
 impl<'a> CwIbcCoreContext<'a> {
     /// This function retrieves the channel_end of a specified channel from storage and returns it as a result.
     ///
@@ -751,13 +752,13 @@ impl<'a> CwIbcCoreContext<'a> {
             .commitments()
             .load(store, channel_commitment_key)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "ChannelNotFound".to_string(),
+                error: DecodeError::new("ChannelNotFound".to_string()),
             })?;
 
         let channel_end: ChannelEnd =
             serde_json_wasm::from_slice(&channel_end_bytes).map_err(|error| {
                 ContractError::IbcDecodeError {
-                    error: error.to_string(),
+                    error: DecodeError::new(error.to_string()),
                 }
             })?;
         Ok(channel_end)
@@ -800,11 +801,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .commitments()
             .load(store, commitment_path)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "PacketCommitmentNotFound".to_string(),
+                error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;
         let commitment: PacketCommitment = serde_json_wasm::from_slice(&commitment_end_bytes)
             .map_err(|error| ContractError::IbcDecodeError {
-                error: error.to_string(),
+                error: DecodeError::new(error.to_string()),
             })?;
 
         Ok(commitment)
@@ -848,18 +849,19 @@ impl<'a> CwIbcCoreContext<'a> {
             .commitments()
             .load(store, commitment_path)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "PacketCommitmentNotFound".to_string(),
+                error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;
         let commitment: bool =
             serde_json_wasm::from_slice(&commitment_end_bytes).map_err(|error| {
                 ContractError::IbcDecodeError {
-                    error: error.to_string(),
+                    error: DecodeError::new(error.to_string()),
                 }
             })?;
         match commitment {
             true => Ok(ibc::core::ics04_channel::packet::Receipt::Ok),
-            false => Err(PacketError::PacketReceiptNotFound { sequence })
-                .map_err(|e| Into::<ContractError>::into(e))?,
+            false => Err(ContractError::IbcPacketError {
+                error: PacketError::PacketReceiptNotFound { sequence },
+            }),
         }
     }
 
@@ -897,7 +899,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .commitments()
             .load(store, commitment_path)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "PacketCommitmentNotFound".to_string(),
+                error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;
         let commitment = ibc::core::ics04_channel::commitment::AcknowledgementCommitment::from(
             commitment_end_bytes,

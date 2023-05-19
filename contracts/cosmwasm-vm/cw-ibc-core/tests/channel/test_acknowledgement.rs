@@ -435,7 +435,7 @@ fn test_acknowledgement_packet_validate_ordered() {
     }
     .try_into()
     .unwrap();
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -445,7 +445,7 @@ fn test_acknowledgement_packet_validate_ordered() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -555,7 +555,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     }
     .try_into()
     .unwrap();
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -565,7 +565,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -654,7 +654,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     }
     .try_into()
     .unwrap();
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -664,7 +664,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

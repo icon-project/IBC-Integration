@@ -1,4 +1,5 @@
 use cw_common::client_msg::VerifyConnectionPayload;
+use prost::DecodeError;
 
 use super::*;
 
@@ -297,14 +298,14 @@ impl<'a> CwIbcCoreContext<'a> {
                     let connection_id =
                         IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
                     let version: Version =
                         serde_json_wasm::from_slice(&response.version).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -318,7 +319,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -537,7 +538,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -566,14 +567,14 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let version: Version = serde_json_wasm::from_slice(&response.versions)
                         .map_err(|error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
+                            error: DecodeError::new(error.to_string()),
                         })?;
 
                     let delay_period = Duration::from_secs(response.delay_period);
 
                     let client_id = ClientId::from_str(&response.client_id).map_err(|error| {
                         ContractError::IbcDecodeError {
-                            error: error.to_string(),
+                            error: DecodeError::new(error.to_string()),
                         }
                     })?;
 
@@ -590,7 +591,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let counterparty_client_id =
                         ClientId::from_str(&response.client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
                     let counterparty_conn_id = ConnectionId::from_str(&response.conn_id).unwrap();
@@ -751,7 +752,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let connection_id =
                         IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -765,7 +766,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 

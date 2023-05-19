@@ -150,7 +150,7 @@ fn test_for_channel_open_try_execution_message() {
     }
     .try_into()
     .unwrap();
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -168,7 +168,7 @@ fn test_for_channel_open_try_execution_message() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -311,7 +311,7 @@ fn test_for_channel_open_ack_execution() {
     }
     .try_into()
     .unwrap();
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -329,7 +329,7 @@ fn test_for_channel_open_ack_execution() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -475,7 +475,7 @@ fn test_for_channel_open_confirm() {
     }
     .try_into()
     .unwrap();
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -493,7 +493,7 @@ fn test_for_channel_open_confirm() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -752,7 +752,7 @@ fn test_for_channel_close_confirm() {
     }
     .try_into()
     .unwrap();
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -770,7 +770,7 @@ fn test_for_channel_close_confirm() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -918,7 +918,7 @@ fn test_for_packet_send() {
     .try_into()
     .unwrap();
 
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -933,7 +933,7 @@ fn test_for_packet_send() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -1022,7 +1022,7 @@ fn test_for_recieve_packet() {
     .try_into()
     .unwrap();
 
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -1033,7 +1033,7 @@ fn test_for_recieve_packet() {
     .unwrap();
 
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -1253,7 +1253,7 @@ fn test_for_ack_execute() {
     }
     .try_into()
     .unwrap();
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -1263,7 +1263,7 @@ fn test_for_ack_execute() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

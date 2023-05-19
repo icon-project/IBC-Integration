@@ -1,4 +1,5 @@
 use cw_common::errors::CwErrors;
+use hex::FromHexError;
 use ibc::core::ics03_connection::error::ConnectionError;
 
 use super::*;
@@ -71,6 +72,22 @@ pub enum ContractError {
     UnsupportedMessage,
 }
 
+impl From<FromHexError> for ContractError {
+    fn from(value: FromHexError) -> Self {
+        ContractError::IbcDecodeError {
+            error: "Hex String Decode Failed".to_owned(),
+        }
+    }
+}
+
+impl From<prost::DecodeError> for ContractError {
+    fn from(value: prost::DecodeError) -> Self {
+        ContractError::IbcDecodeError {
+            error: "Decode Failed".to_owned(),
+        }
+    }
+}
+
 /// This code defines an implementation of the `From` trait for the `ContractError` enum, which allows
 /// instances of the `CwErrors` enum to be converted into instances of the `ContractError` enum. The
 /// implementation matches on the different variants of the `CwErrors` enum and constructs an
@@ -98,6 +115,12 @@ impl From<CwErrors> for ContractError {
             CwErrors::DecodeError { error } => Self::IbcDecodeError { error },
             CwErrors::FailedToConvertToPacketDataResponse(_) => Self::FailedConversion,
         }
+    }
+}
+
+impl From<ClientError> for ContractError {
+    fn from(value: ClientError) -> Self {
+        ContractError::IbcClientError { error: value }
     }
 }
 

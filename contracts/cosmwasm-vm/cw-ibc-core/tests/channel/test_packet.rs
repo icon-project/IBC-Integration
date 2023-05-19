@@ -73,7 +73,7 @@ fn test_packet_send() {
     .try_into()
     .unwrap();
 
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -88,7 +88,7 @@ fn test_packet_send() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -187,7 +187,7 @@ fn test_packet_send_fail_misiing_sequense() {
     .try_into()
     .unwrap();
 
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -202,7 +202,7 @@ fn test_packet_send_fail_misiing_sequense() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

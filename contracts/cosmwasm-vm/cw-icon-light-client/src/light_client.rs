@@ -1,31 +1,13 @@
-use crate::traits::AnyTypes;
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
 use common::constants::ICON_SIGNED_HEADER_TYPE_URL;
+use common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
+use common::traits::AnyTypes;
 use common::utils::{calculate_root, keccak256};
-use cw_common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use prost::Message;
-
-impl AnyTypes for ClientState {
-    fn get_type_url() -> String {
-        ICON_CLIENT_STATE_TYPE_URL.to_string()
-    }
-}
-
-impl AnyTypes for ConsensusState {
-    fn get_type_url() -> String {
-        ICON_CONSENSUS_STATE_TYPE_URL.to_string()
-    }
-}
-
-impl AnyTypes for SignedHeader {
-    fn get_type_url() -> String {
-        ICON_SIGNED_HEADER_TYPE_URL.to_string()
-    }
-}
 
 pub struct IconClient<'a> {
     context: &'a mut dyn IContext<Error = crate::ContractError>,

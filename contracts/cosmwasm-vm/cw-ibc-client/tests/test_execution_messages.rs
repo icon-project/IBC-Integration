@@ -6,6 +6,7 @@ use std::time::Duration;
 use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
+use common::traits::AnyTypes;
 use common::utils::keccak256;
 use cosmwasm_std::ContractResult;
 use cosmwasm_std::SystemResult;
@@ -17,7 +18,6 @@ use cw_common::client_response::OpenTryResponse;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 
 use common::icon::icon::lightclient::v1::ClientState;
-use cw_common::consensus_state::ConsensusState;
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcClientId;
@@ -35,6 +35,7 @@ use cw_ibc_client::msg::InstantiateMsg;
 
 use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
+use common::icon::icon::lightclient::v1::ConsensusState;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 
 use setup::*;
@@ -83,8 +84,8 @@ fn test_for_create_client_execution_message() {
     assert_eq!(response.attributes[0].value, "register_client");
 
     let create_client_message = CoreExecuteMsg::CreateClient {
-        client_state: HexString::from_bytes(&client_state.clone().encode_to_vec()),
-        consensus_state: HexString::from_bytes(&consenus_state.clone().encode_to_vec()),
+        client_state: HexString::from_bytes(&client_state.clone().to_any().encode_to_vec()),
+        consensus_state: HexString::from_bytes(&consenus_state.clone().to_any().encode_to_vec()),
         signer: HexString::from_bytes("raw_message".as_bytes()),
     };
 
@@ -169,9 +170,9 @@ fn test_for_update_client_execution_messages() {
         "iconclient".to_string(),
         "10-15".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
         client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -226,7 +227,7 @@ fn test_for_update_client_execution_messages() {
 
     let message = CoreExecuteMsg::UpdateClient {
         client_id: "iconclient-0".to_string(),
-        header: HexString::from_bytes(&signed_header.encode_to_vec()),
+        header: HexString::from_bytes(&signed_header.to_any().encode_to_vec()),
         signer: HexString::from_bytes("signeraddress".to_string().as_bytes()),
     };
 
@@ -240,9 +241,9 @@ fn test_for_update_client_execution_messages() {
         "10-15".to_string(),
         "iconclient-0".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&to_vec(&consenus_state).unwrap()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
         client_state.encode_to_vec(),
-        to_vec(&consenus_state).unwrap(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();

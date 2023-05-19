@@ -68,7 +68,7 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
     .try_into()
     .unwrap();
 
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -87,7 +87,7 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -170,7 +170,7 @@ fn test_validate_close_confirm_channel() {
     .try_into()
     .unwrap();
 
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -189,7 +189,7 @@ fn test_validate_close_confirm_channel() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

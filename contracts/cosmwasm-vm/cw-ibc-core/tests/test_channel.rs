@@ -1,5 +1,6 @@
 use std::{str::FromStr, time::Duration};
 
+use common::traits::AnyTypes;
 use cosmwasm_std::{
     to_binary, to_vec, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
@@ -1108,7 +1109,7 @@ fn test_validate_open_try_channel() {
     .try_into()
     .unwrap();
 
-    let client = client_state.encode_to_vec();
+    let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
@@ -1127,7 +1128,7 @@ fn test_validate_open_try_channel() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.encode_to_vec();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

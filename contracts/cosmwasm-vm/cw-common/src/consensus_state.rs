@@ -6,7 +6,7 @@ use ibc::core::{ics02_client::error::ClientError, ics23_commitment::commitment::
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use serde::{Deserialize, Serialize};
 
-use crate::constants::ICON_CONSENSUS_STATE_TYPE_URL;
+//use crate::constants::ICON_CONSENSUS_STATE_TYPE_URL;
 
 // #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 // pub struct ConsensusState {

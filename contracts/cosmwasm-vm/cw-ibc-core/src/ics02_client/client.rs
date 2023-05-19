@@ -1,7 +1,9 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
+use common::traits::AnyTypes;
 use common::{client_state::IClientState, consensus_state::IConsensusState};
 use cw_common::types::ConnectionId;
+use prost::DecodeError;
 use prost::Message;
 
 use crate::error::decode_error;
@@ -394,7 +396,9 @@ impl<'a> CwIbcCoreContext<'a> {
             .commitments()
             .load(store, client_key)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "NotFound ClientId(".to_owned() + client_id.ibc_client_id().as_str() + ")",
+                error: DecodeError::new(
+                    "NotFound ClientId(".to_owned() + client_id.ibc_client_id().as_str() + ")",
+                ),
             })?;
 
         Ok(client_state)
@@ -469,30 +473,25 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: &ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn IClientState>, ContractError> {
-        let client_key = commitment::client_state_commitment_key(client_id);
+        let client_state_any = self.client_state_any(store, client_id)?;
 
-        let client_state_data = self.ibc_store().commitments().load(store, client_key)?;
-
-        let client_state: ClientState =
-            <ClientState as Message>::decode(client_state_data.as_slice()).map_err(|e| {
-                ContractError::IbcDecodeError {
-                    error: decode_error("ClientState"),
-                }
-            })?;
+        let client_state =
+            ClientState::from_any(client_state_any).map_err(|e| Into::<ContractError>::into(e))?;
 
         Ok(Box::new(client_state))
     }
 
-    pub fn decode_client_state(
+    pub fn client_state_any(
         &self,
-        client_state: Any,
-    ) -> Result<Box<dyn IClientState>, ContractError> {
-        let client_state: ClientState =
-            ClientState::try_from(client_state).map_err(|e| ContractError::IbcDecodeError {
-                error: decode_error("AnyClientState"),
-            })?;
+        store: &dyn Storage,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+    ) -> Result<Any, ContractError> {
+        let client_key = commitment::client_state_commitment_key(client_id);
 
-        Ok(Box::new(client_state))
+        let client_state_any_data = self.ibc_store().commitments().load(store, client_key)?;
+        let client_state_any = Any::decode(client_state_any_data.as_slice())
+            .map_err(|e| Into::<ContractError>::into(e))?;
+        Ok(client_state_any)
     }
 
     pub fn consensus_state(
@@ -501,6 +500,20 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &ibc::core::ics24_host::identifier::ClientId,
         height: &ibc::Height,
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
+        let consensus_state_any = self.consensus_state_any(store, client_id, height)?;
+
+        let consensus_state: ConsensusState = ConsensusState::from_any(consensus_state_any)
+            .map_err(|e| Into::<ContractError>::into(e))?;
+
+        Ok(Box::new(consensus_state))
+    }
+
+    pub fn consensus_state_any(
+        &self,
+        store: &dyn Storage,
+        client_id: &ibc::core::ics24_host::identifier::ClientId,
+        height: &ibc::Height,
+    ) -> Result<Any, ContractError> {
         let consensus_state_key = commitment::consensus_state_commitment_key(
             client_id,
             height.revision_number(),
@@ -511,15 +524,9 @@ impl<'a> CwIbcCoreContext<'a> {
             .ibc_store()
             .commitments()
             .load(store, consensus_state_key)?;
-
-        let consensus_state: ConsensusState =
-            <ConsensusState as Message>::decode(consensus_state_data.as_slice()).map_err(|e| {
-                ContractError::IbcDecodeError {
-                    error: decode_error("ConsensusState"),
-                }
-            })?;
-
-        Ok(Box::new(consensus_state))
+        let consensus_state_any = Any::decode(consensus_state_data.as_slice())
+            .map_err(|e| Into::<ContractError>::into(e))?;
+        Ok(consensus_state_any)
     }
 
     // fn next_consensus_state(

@@ -3,6 +3,7 @@ use ibc::core::ics04_channel::{
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
+use prost::DecodeError;
 
 use super::*;
 
@@ -116,7 +117,7 @@ impl<'a> CwIbcCoreContext<'a> {
             },
         );
         let packet_data = to_vec(&packet_data).map_err(|e| ContractError::IbcDecodeError {
-            error: e.to_string(),
+            error: DecodeError::new(e.to_string()),
         })?;
         let light_client_message = LightClientMessage::VerifyPacketData {
             client_id: client_id_on_b.to_string(),
@@ -172,7 +173,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(res) => {
                     let packet_data = from_binary::<PacketDataResponse>(&res).map_err(|e| {
                         ContractError::IbcDecodeError {
-                            error: e.to_string(),
+                            error: DecodeError::new(e.to_string()),
                         }
                     })?;
                     let info = packet_data.message_info;
@@ -412,7 +413,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                         let acknowledgement: cw_common::types::Ack = from_binary(&ack.into())
                             .map_err(|e| ContractError::IbcDecodeError {
-                                error: e.to_string(),
+                                error: DecodeError::new(e.to_string()),
                             })?;
                         let acknowledgement = match acknowledgement {
                             cw_common::types::Ack::Result(binary) => binary,

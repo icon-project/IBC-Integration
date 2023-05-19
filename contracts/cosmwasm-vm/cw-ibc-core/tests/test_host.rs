@@ -21,7 +21,9 @@ fn test_set_capability() {
 }
 
 #[test]
-#[should_panic(expected = "IbcDecodeError { error: \"CapabilityNotFound\" }")]
+#[should_panic(
+    expected = "IbcDecodeError { error: DecodeError { description: \"CapabilityNotFound\", stack: [] } }"
+)]
 fn test_get_capability_fail() {
     let mut deps = deps();
     let name = to_vec(&u128::default()).unwrap();
@@ -57,7 +59,9 @@ fn test_claim_capability() {
 }
 
 #[test]
-#[should_panic(expected = "IbcDecodeError { error: \"CapabilityNotFound\" }")]
+#[should_panic(
+    expected = "IbcDecodeError { error: DecodeError { description: \"CapabilityNotFound\", stack: [] } }"
+)]
 fn test_claim_capability_fails() {
     let mut deps = deps();
     let name: Vec<u8> = vec![2];
@@ -82,7 +86,9 @@ fn test_authenticate_capability_returns_true() {
 }
 
 #[test]
-#[should_panic(expected = "IbcDecodeError { error: \"CapabilityNotFound\" }")]
+#[should_panic(
+    expected = "IbcDecodeError { error: DecodeError { description: \"CapabilityNotFound\", stack: [] } }"
+)]
 fn test_authenticate_capability_fails() {
     let mut deps = deps();
     let name: Vec<u8> = vec![2];
@@ -145,7 +151,9 @@ fn test_get_expected_time_per_block() {
 }
 
 #[test]
-#[should_panic(expected = "IbcDecodeError { error: \"NotFound\" }")]
+#[should_panic(
+    expected = "IbcDecodeError { error: DecodeError { description: \"NotFound\", stack: [] } }"
+)]
 fn test_get_expected_time_per_block_fails() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();

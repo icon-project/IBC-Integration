@@ -1,14 +1,15 @@
 use super::*;
+use common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use common::icon::icon::lightclient::v1::{
     ClientState as RawClientState, ConsensusState as RawConsensusState,
 };
 use cosmwasm_std::to_binary;
-use cw_common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use cw_common::hex_string::HexString;
 use cw_common::raw_types::{channel::*, Any};
 use cw_common::raw_types::{Protobuf, RawHeight};
 
-use prost::Message;
+use hex::FromHexError;
+use prost::{DecodeError, Message};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
@@ -99,19 +100,21 @@ impl<'a> CwIbcClientContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let client_state_bytes = client_state.to_bytes().unwrap();
-                let consensus_state_bytes = consensus_state.to_bytes().unwrap();
-
-                let client_state =
-                    <ClientState as Message>::decode(client_state_bytes.as_slice()).unwrap();
-                let consensus_state =
-                    <RawConsensusState as Message>::decode(consensus_state_bytes.as_slice())
-                        .unwrap();
+                let client_state_bytes = client_state
+                    .to_bytes()
+                    .map_err(|e| Into::<FromHexError>::into(e))?;
+                let client_state = Any::decode(client_state_bytes.as_slice())
+                    .map_err(|e| Into::<DecodeError>::into(e))?;
+                let consensus_state_bytes = consensus_state
+                    .to_bytes()
+                    .map_err(|e| Into::<FromHexError>::into(e))?;
+                let consensus_state = Any::decode(consensus_state_bytes.as_slice())
+                    .map_err(|e| Into::<DecodeError>::into(e))?;
 
                 let signer = Self::to_signer(&signer)?;
                 let msg = IbcMsgCreateClient {
-                    client_state: client_state.into(),
-                    consensus_state: consensus_state.into(),
+                    client_state: client_state,
+                    consensus_state: consensus_state,
                     signer,
                 };
                 self.create_client(deps, info, msg)
@@ -122,8 +125,11 @@ impl<'a> CwIbcClientContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let header_bytes = header.to_bytes().unwrap();
-                let header = RawSignedHeader::decode(header_bytes.as_slice()).unwrap();
+                let header_bytes = header
+                    .to_bytes()
+                    .map_err(|e| Into::<FromHexError>::into(e))?;
+                let header = Any::decode(header_bytes.as_slice())
+                    .map_err(|e| Into::<DecodeError>::into(e))?;
 
                 let signer = Self::to_signer(&signer)?;
                 let msg = IbcMsgUpdateClient {
@@ -132,7 +138,7 @@ impl<'a> CwIbcClientContext<'a> {
                             error: error.to_string(),
                         }
                     })?,
-                    header: header.into(),
+                    header,
                     signer,
                 };
                 println!("Updating Client For {}", &client_id);
@@ -391,7 +397,10 @@ mod tests {
     use std::str::FromStr;
 
     use crate::context::CwIbcClientContext;
-    use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
+    use common::{
+        constants::ICON_CONSENSUS_STATE_TYPE_URL,
+        icon::icon::lightclient::v1::ConsensusState as RawConsensusState,
+    };
     use ibc::core::ics02_client::height::Height;
 
     use prost::Message;
@@ -403,10 +412,7 @@ mod tests {
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         to_vec, Addr, OwnedDeps,
     };
-    use cw_common::{
-        constants::ICON_CONSENSUS_STATE_TYPE_URL,
-        raw_types::{Any, RawHeight},
-    };
+    use cw_common::raw_types::{Any, RawHeight};
     use cw_common::{hex_string::HexString, ibc_types::IbcClientId, types::ClientType};
 
     const SENDER: &str = "sender";

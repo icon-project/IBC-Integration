@@ -1,3 +1,5 @@
+use prost::DecodeError;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -59,7 +61,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let connection_end =
             ConnectionEnd::decode(&*data).map_err(|error| ContractError::IbcDecodeError {
-                error: error.to_string(),
+                error: DecodeError::new(error.to_string()),
             })?;
 
         Ok(connection_end)
