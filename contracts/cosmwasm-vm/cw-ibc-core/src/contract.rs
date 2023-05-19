@@ -8,11 +8,12 @@ use cw_common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE
 use cw_common::hex_string::HexString;
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
+use hex::FromHexError;
 use ibc::core::ics04_channel::packet::Receipt;
 use ibc_proto::google::protobuf::Any;
 use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 use ibc_proto::protobuf::Protobuf;
-use prost::Message;
+use prost::{Message, DecodeError};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-ibc-core";
@@ -103,15 +104,16 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-
-                let client_state = Self::from_raw::<RawClientState, ClientState>(&client_state)?;
+                 let client_state_bytes=client_state.to_bytes().map_err(|e|Into::<FromHexError>::into(e))?;
+                let client_state = Any::decode(client_state_bytes.as_slice()).map_err(|e|Into::<DecodeError>::into(e))?;
+                let consensus_state_bytes=consensus_state.to_bytes().map_err(|e|Into::<FromHexError>::into(e))?;
                 let consensus_state =
-                    Self::from_raw::<RawConsensusState, ConsensusState>(&consensus_state)?;
+                Any::decode(consensus_state_bytes.as_slice()).map_err(|e|Into::<DecodeError>::into(e))?;
 
                 let signer = Self::to_signer(&signer)?;
                 let msg = IbcMsgCreateClient {
-                    client_state: client_state.into(),
-                    consensus_state: consensus_state.into(),
+                    client_state: client_state,
+                    consensus_state: consensus_state,
                     signer,
                 };
                 self.create_client(deps, info, msg)
@@ -122,8 +124,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-
-                let header = Self::from_raw::<RawSignedHeader, SignedHeader>(&header)?;
+                let header_bytes=header.to_bytes().map_err(|e|Into::<FromHexError>::into(e))?;
+                let header = Any::decode(header_bytes.as_slice()).map_err(|e|Into::<DecodeError>::into(e))?;
 
                 let signer = Self::to_signer(&signer)?;
                 let msg = IbcMsgUpdateClient {
@@ -132,7 +134,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             error: error.to_string(),
                         }
                     })?,
-                    header: header.into(),
+                    header,
                     signer,
                 };
                 println!("Updating Client For {}", &client_id);

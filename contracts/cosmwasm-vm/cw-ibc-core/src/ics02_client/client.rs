@@ -475,15 +475,7 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(Box::new(client_state))
     }
 
-    pub fn decode_client_state(
-        &self,
-        client_state: ibc_proto::google::protobuf::Any,
-    ) -> Result<Box<dyn IbcClientState>, ContractError> {
-        let client_state: ClientState = ClientState::try_from(client_state).unwrap();
-
-        Ok(Box::new(client_state))
-    }
-
+    
     pub fn consensus_state(
         &self,
         store: &dyn Storage,

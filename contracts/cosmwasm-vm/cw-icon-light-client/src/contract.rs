@@ -1,4 +1,5 @@
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use common::traits::AnyTypes;
 use cw_common::constants::ICON_CLIENT_TYPE;
 use cw_common::ibc_types::IbcHeight;
 
@@ -71,10 +72,12 @@ pub fn execute(
             client_state,
             consensus_state,
         } => {
-            let client_state = ClientState::decode(client_state.as_slice())
+            let client_state_any = Any::decode(client_state.as_slice())
                 .map_err(|e| ContractError::DecodeError(e.to_string()))?;
-            let consensus_state = ConsensusState::decode(consensus_state.as_slice())
+            let consensus_state_any = Any::decode(consensus_state.as_slice())
                 .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+            let client_state=ClientState::from_any(client_state_any.clone()).map_err(|e| ContractError::DecodeError(e.to_string()))?;
+            let consensus_state=ConsensusState::from_any(consensus_state_any.clone()).map_err(|e| ContractError::DecodeError(e.to_string()))?;
             let update =
                 client.create_client(&client_id, client_state.clone(), consensus_state.clone())?;
 
@@ -91,8 +94,8 @@ pub fn execute(
                 IbcHeight::new(1, update.height).unwrap().to_string(),
                 update.client_state_commitment.to_vec(),
                 update.consensus_state_commitment.into(),
-                update.client_state_bytes,
-                update.consensus_state_bytes,
+                client_state_any.encode_to_vec(),
+                consensus_state_any.encode_to_vec(),
             );
 
             response.data = to_binary(&client_response).ok();
@@ -104,15 +107,16 @@ pub fn execute(
             client_id,
             signed_header,
         } => {
-            let header_any = SignedHeader::decode(signed_header.as_slice()).unwrap();
-            let update = client.update_client(&client_id, header_any)?;
+            let header_any = Any::decode(signed_header.as_slice()).unwrap();
+            let header= SignedHeader::from_any(header_any).map_err(|e| ContractError::DecodeError(e.to_string()))?;
+            let update = client.update_client(&client_id, header)?;
             let response_data = to_binary(&UpdateClientResponse {
                 height: IbcHeight::new(0, update.height).unwrap().to_string(),
                 client_id,
                 client_state_commitment: update.client_state_commitment.to_vec(),
                 consensus_state_commitment: update.consensus_state_commitment.to_vec(),
-                client_state_bytes: update.client_state_bytes,
-                consensus_state_bytes:update.consensus_state_bytes
+                client_state_bytes: ClientState::any_from_value(&update.client_state_bytes).encode_to_vec(),
+                consensus_state_bytes:ConsensusState::any_from_value(&update.consensus_state_bytes).encode_to_vec(),
             })
             .unwrap();
             Ok(Response::new()
@@ -504,15 +508,16 @@ pub fn get_light_client<'a>(
 #[cfg(test)]
 mod tests {
 
-    use common::icon::icon::types::v1::BtpHeader;
+    use common::icon::icon::types::v1::{BtpHeader, SignedHeader};
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         OwnedDeps, Response,
     };
     use cw2::get_contract_version;
+    use ibc_proto::google::protobuf::Any;
     use test_utils::{get_test_headers, get_test_signed_headers, to_attribute_map};
 
-    use crate::traits::AnyTypes;
+    use common::traits::AnyTypes;
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
         state::QueryHandler,
@@ -544,8 +549,8 @@ mod tests {
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::CreateClient {
             client_id: client_id.to_string(),
-            client_state: client_state.encode_to_vec(),
-            consensus_state: consensus_state.encode_to_vec(),
+            client_state: client_state.to_any().encode_to_vec(),
+            consensus_state: consensus_state.to_any().encode_to_vec(),
         };
 
         execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
@@ -582,10 +587,12 @@ mod tests {
         let start_header = &get_test_headers()[0];
         let client_state = start_header.to_client_state(1000000, 0);
         let consensus_state = start_header.to_consensus_state();
+        let client_state_any:Any=client_state.to_any();
+        let consensus_state_any:Any=consensus_state.to_any();
         let msg = ExecuteMsg::CreateClient {
             client_id: client_id.clone(),
-            client_state: client_state.encode_to_vec(),
-            consensus_state: consensus_state.encode_to_vec(),
+            client_state: client_state_any.encode_to_vec(),
+            consensus_state: consensus_state_any.encode_to_vec(),
         };
 
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
@@ -621,7 +628,7 @@ mod tests {
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
-            signed_header: signed_header.encode_to_vec(),
+            signed_header: signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone());
         let stored_client_state =
@@ -645,7 +652,7 @@ mod tests {
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
-            signed_header: random_signed_header.encode_to_vec(),
+            signed_header: random_signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone());
         assert_eq!(
@@ -662,12 +669,13 @@ mod tests {
         let client_id = "test_client".to_string();
         let mut deps = init_client(&client_id, &start_header, None);
 
-        let signed_header = &get_test_signed_headers()[1];
+        let signed_header:&SignedHeader = &get_test_signed_headers()[1].clone();
+        let header_any:Any=signed_header.to_any();
         let block_height = signed_header.header.clone().unwrap().main_height;
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
-            signed_header: signed_header.encode_to_vec(),
+            signed_header: header_any.encode_to_vec(),
         };
         let _result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
 

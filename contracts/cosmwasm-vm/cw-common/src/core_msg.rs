@@ -14,12 +14,15 @@ pub enum ExecuteMsg {
         client_address: Addr,
     },
     CreateClient {
+        // client_state any
         client_state: HexString,
+        // consensus state any
         consensus_state: HexString,
         signer: HexString,
     },
     UpdateClient {
         client_id: String,
+        // signed header any
         header: HexString,
         signer: HexString,
     },

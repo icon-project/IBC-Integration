@@ -1,4 +1,4 @@
-use crate::traits::AnyTypes;
+use common::traits::AnyTypes;
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
 use common::icon::icon::lightclient::v1::ClientState;
@@ -10,23 +10,7 @@ use cw_common::constants::{
 };
 use prost::Message;
 
-impl AnyTypes for ClientState {
-    fn get_type_url() -> String {
-        ICON_CLIENT_STATE_TYPE_URL.to_string()
-    }
-}
 
-impl AnyTypes for ConsensusState {
-    fn get_type_url() -> String {
-        ICON_CONSENSUS_STATE_TYPE_URL.to_string()
-    }
-}
-
-impl AnyTypes for SignedHeader {
-    fn get_type_url() -> String {
-        ICON_SIGNED_HEADER_TYPE_URL.to_string()
-    }
-}
 
 pub struct IconClient<'a> {
     context: &'a mut dyn IContext<Error = crate::ContractError>,
