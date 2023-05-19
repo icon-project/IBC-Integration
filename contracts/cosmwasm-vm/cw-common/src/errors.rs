@@ -1,6 +1,6 @@
 use crate::types::ClientType;
+use common::ibc::core::ics24_host::error::ValidationError;
 use cosmwasm_std::StdError;
-use ibc::core::ics24_host::error::ValidationError;
 
 #[derive(Debug)]
 pub enum CwErrors {

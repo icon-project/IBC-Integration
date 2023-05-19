@@ -7,6 +7,18 @@ use cosmwasm_std::{
     Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
 };
 
+use common::ibc::{
+    core::{
+        ics03_connection::version::{get_compatible_versions, Version},
+        ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+    },
+    // mock::{
+    //     client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
+    //     misbehaviour::Misbehaviour,
+    // },
+    signer::Signer,
+    Height,
+};
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
 use cw_common::{
@@ -17,18 +29,6 @@ use cw_common::{
         RawCommitmentProof, RawHeight, RawMerkleProof,
     },
     types::{ClientId, ClientType},
-};
-use ibc::{
-    core::{
-        ics03_connection::version::{get_compatible_versions, Version},
-        ics24_host::identifier::{ChannelId, ConnectionId, PortId},
-    },
-    mock::{
-        client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
-        misbehaviour::Misbehaviour,
-    },
-    signer::Signer,
-    Height,
 };
 
 pub struct MockEnvBuilder {
@@ -227,16 +227,16 @@ pub fn get_dummy_raw_msg_update_client_message() -> RawMsgUpdateClient {
     }
 }
 
-pub fn get_dummy_raw_msg_upgrade_client(height: Height) -> RawMsgUpgradeClient {
-    RawMsgUpgradeClient {
-        client_id: "new_client_type".parse().unwrap(),
-        client_state: Some(MockClientState::new(MockHeader::new(height)).into()),
-        consensus_state: Some(MockConsensusState::new(MockHeader::new(height)).into()),
-        proof_upgrade_client: get_dummy_proof(),
-        proof_upgrade_consensus_state: get_dummy_proof(),
-        signer: get_dummy_bech32_account(),
-    }
-}
+// pub fn get_dummy_raw_msg_upgrade_client(height: Height) -> RawMsgUpgradeClient {
+//     RawMsgUpgradeClient {
+//         client_id: "new_client_type".parse().unwrap(),
+//         client_state: Some(MockClientState::new(MockHeader::new(height)).into()),
+//         consensus_state: Some(MockConsensusState::new(MockHeader::new(height)).into()),
+//         proof_upgrade_client: get_dummy_proof(),
+//         proof_upgrade_consensus_state: get_dummy_proof(),
+//         signer: get_dummy_bech32_account(),
+//     }
+// }
 
 /// Returns a dummy `RawMerkleProof`, for testing only!
 pub fn get_dummy_merkle_proof() -> RawMerkleProof {
@@ -245,24 +245,24 @@ pub fn get_dummy_merkle_proof() -> RawMerkleProof {
     RawMerkleProof { proofs: mproofs }
 }
 
-pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMsgSubmitMisbehaviour {
-    let height = Height::new(10, 15).unwrap();
-    let mock_header = MockHeader::new(height);
+// pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMsgSubmitMisbehaviour {
+//     let height = Height::new(10, 15).unwrap();
+//     let mock_header = MockHeader::new(height);
 
-    let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type.clone(), 1).unwrap();
+//     let client_type = ClientType::new("new_client_type".to_string());
+//     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
 
-    let mis_b = Misbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
-        header1: mock_header,
-        header2: mock_header,
-    };
-    RawMsgSubmitMisbehaviour {
-        client_id: client_id.ibc_client_id().to_string(),
-        misbehaviour: Some(mis_b.into()),
-        signer: get_dummy_bech32_account(),
-    }
-}
+//     let mis_b = Misbehaviour {
+//         client_id: client_id.ibc_client_id().clone(),
+//         header1: mock_header,
+//         header2: mock_header,
+//     };
+//     RawMsgSubmitMisbehaviour {
+//         client_id: client_id.ibc_client_id().to_string(),
+//         misbehaviour: Some(mis_b.into()),
+//         signer: get_dummy_bech32_account(),
+//     }
+// }
 
 pub fn get_dummy_raw_msg_chan_close_init() -> RawMsgChannelCloseInit {
     RawMsgChannelCloseInit {
@@ -285,17 +285,17 @@ pub fn get_dummy_raw_msg_chan_close_confirm(proof_height: u64) -> RawMsgChannelC
     }
 }
 
-pub fn get_dummy_raw_msg_create_client() -> RawMsgCreateClient {
-    let height = Height::new(10, 15).unwrap();
-    let mock_header = MockHeader::new(height);
-    let mock_client_state = MockClientState::new(mock_header);
-    let mock_consenus_state = MockConsensusState::new(mock_header);
-    RawMsgCreateClient {
-        client_state: Some(mock_client_state.into()),
-        consensus_state: Some(mock_consenus_state.into()),
-        signer: get_dummy_account_id().as_ref().to_string(),
-    }
-}
+// pub fn get_dummy_raw_msg_create_client() -> RawMsgCreateClient {
+//     let height = Height::new(10, 15).unwrap();
+//     let mock_header = MockHeader::new(height);
+//     let mock_client_state = MockClientState::new(mock_header);
+//     let mock_consenus_state = MockConsensusState::new(mock_header);
+//     RawMsgCreateClient {
+//         client_state: Some(mock_client_state.into()),
+//         consensus_state: Some(mock_consenus_state.into()),
+//         signer: get_dummy_account_id().as_ref().to_string(),
+//     }
+// }
 
 pub fn get_dummy_raw_msg_conn_open_init() -> RawMsgConnectionOpenInit {
     RawMsgConnectionOpenInit {
@@ -307,62 +307,62 @@ pub fn get_dummy_raw_msg_conn_open_init() -> RawMsgConnectionOpenInit {
     }
 }
 
-pub fn get_dummy_raw_msg_conn_open_try(
-    proof_height: u64,
-    consensus_height: u64,
-) -> RawMsgConnectionOpenTry {
-    let client_state_height = Height::new(0, consensus_height).unwrap();
+// pub fn get_dummy_raw_msg_conn_open_try(
+//     proof_height: u64,
+//     consensus_height: u64,
+// ) -> RawMsgConnectionOpenTry {
+//     let client_state_height = Height::new(0, consensus_height).unwrap();
 
-    #[allow(deprecated)]
-    RawMsgConnectionOpenTry {
-        client_id: ClientId::default().as_str().to_string(),
-        previous_connection_id: ConnectionId::default().to_string(),
-        client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
-        counterparty: Some(get_dummy_raw_counterparty(Some(0))),
-        delay_period: 0,
-        counterparty_versions: get_compatible_versions()
-            .iter()
-            .map(|v| v.clone().into())
-            .collect(),
-        proof_init: get_dummy_proof(),
-        proof_height: Some(RawHeight {
-            revision_number: 0,
-            revision_height: proof_height,
-        }),
-        proof_consensus: get_dummy_proof(),
-        consensus_height: Some(RawHeight {
-            revision_number: 0,
-            revision_height: consensus_height,
-        }),
-        proof_client: get_dummy_proof(),
-        signer: get_dummy_bech32_account(),
-    }
-}
+//     #[allow(deprecated)]
+//     RawMsgConnectionOpenTry {
+//         client_id: ClientId::default().as_str().to_string(),
+//         previous_connection_id: ConnectionId::default().to_string(),
+//         client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
+//         counterparty: Some(get_dummy_raw_counterparty(Some(0))),
+//         delay_period: 0,
+//         counterparty_versions: get_compatible_versions()
+//             .iter()
+//             .map(|v| v.clone().into())
+//             .collect(),
+//         proof_init: get_dummy_proof(),
+//         proof_height: Some(RawHeight {
+//             revision_number: 0,
+//             revision_height: proof_height,
+//         }),
+//         proof_consensus: get_dummy_proof(),
+//         consensus_height: Some(RawHeight {
+//             revision_number: 0,
+//             revision_height: consensus_height,
+//         }),
+//         proof_client: get_dummy_proof(),
+//         signer: get_dummy_bech32_account(),
+//     }
+// }
 
-pub fn get_dummy_raw_msg_conn_open_ack(
-    proof_height: u64,
-    consensus_height: u64,
-) -> RawMsgConnectionOpenAck {
-    let client_state_height = Height::new(0, consensus_height).unwrap();
-    RawMsgConnectionOpenAck {
-        connection_id: ConnectionId::new(0).to_string(),
-        counterparty_connection_id: ConnectionId::new(1).to_string(),
-        proof_try: get_dummy_proof(),
-        proof_height: Some(RawHeight {
-            revision_number: 0,
-            revision_height: proof_height,
-        }),
-        proof_consensus: get_dummy_proof(),
-        consensus_height: Some(RawHeight {
-            revision_number: 0,
-            revision_height: consensus_height,
-        }),
-        client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
-        proof_client: get_dummy_proof(),
-        version: Some(Version::default().into()),
-        signer: get_dummy_bech32_account(),
-    }
-}
+// pub fn get_dummy_raw_msg_conn_open_ack(
+//     proof_height: u64,
+//     consensus_height: u64,
+// ) -> RawMsgConnectionOpenAck {
+//     let client_state_height = Height::new(0, consensus_height).unwrap();
+//     RawMsgConnectionOpenAck {
+//         connection_id: ConnectionId::new(0).to_string(),
+//         counterparty_connection_id: ConnectionId::new(1).to_string(),
+//         proof_try: get_dummy_proof(),
+//         proof_height: Some(RawHeight {
+//             revision_number: 0,
+//             revision_height: proof_height,
+//         }),
+//         proof_consensus: get_dummy_proof(),
+//         consensus_height: Some(RawHeight {
+//             revision_number: 0,
+//             revision_height: consensus_height,
+//         }),
+//         client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
+//         proof_client: get_dummy_proof(),
+//         version: Some(Version::default().into()),
+//         signer: get_dummy_bech32_account(),
+//     }
+// }
 
 pub fn get_dummy_raw_msg_conn_open_confirm() -> RawMsgConnectionOpenConfirm {
     RawMsgConnectionOpenConfirm {

@@ -31,7 +31,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let earliest_valid_time = (last_client_update_time + conn_delay_time_period)
             .map_err(|e| ConnectionError::TimestampOverflow(e))
             .map_err(|e| Into::<ContractError>::into(e))?;
-        if current_host_time < earliest_valid_time {
+        if current_host_time.nanoseconds() < earliest_valid_time.nanoseconds() {
             return Err(ConnectionError::NotEnoughTimeElapsed {
                 current_host_time,
                 earliest_valid_time,

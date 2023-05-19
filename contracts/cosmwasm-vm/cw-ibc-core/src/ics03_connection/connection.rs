@@ -311,20 +311,20 @@ impl<'a> CwIbcCoreContext<'a> {
         CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() //TODO
     }
 
-    fn host_current_height(&self) -> Result<ibc::Height, ContractError> {
+    fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {
         todo!()
     }
 
-    fn host_oldest_height(&self) -> Result<ibc::Height, ContractError> {
+    fn host_oldest_height(&self) -> Result<common::ibc::Height, ContractError> {
         todo!()
     }
 
     fn client_consensus_state(
         &self,
-        client_id: &ibc::core::ics24_host::identifier::ClientId,
-        height: &ibc::Height,
+        client_id: &common::ibc::core::ics24_host::identifier::ClientId,
+        height: &common::ibc::Height,
     ) -> Result<
-        Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
+        Option<Box<dyn common::ibc::core::ics02_client::consensus_state::ConsensusState>>,
         ContractError,
     > {
         todo!()

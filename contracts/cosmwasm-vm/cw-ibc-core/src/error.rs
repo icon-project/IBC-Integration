@@ -1,6 +1,6 @@
+use common::ibc::core::ics03_connection::error::ConnectionError;
 use cw_common::errors::CwErrors;
 use hex::FromHexError;
-use ibc::core::ics03_connection::error::ConnectionError;
 use prost::DecodeError;
 
 use super::*;
@@ -92,7 +92,7 @@ impl From<prost::DecodeError> for ContractError {
 /// appropriate variant of the `ContractError` enum based on the error information contained in the
 /// `CwErrors` variant. For example, if the `CwErrors` variant is `FailedToCreateClientId`, the
 /// implementation constructs an `IbcClientError` variant of the `ContractError` enum with a
-/// `ClientIdentifierConstructor` error from the `ibc::core::ics02_client::error::ClientError` enum.
+/// `ClientIdentifierConstructor` error from the `common::ibc::core::ics02_client::error::ClientError` enum.
 impl From<CwErrors> for ContractError {
     fn from(value: CwErrors) -> Self {
         match value {

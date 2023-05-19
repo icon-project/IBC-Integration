@@ -1,12 +1,12 @@
 use std::time::Duration;
 
 use crate::constants::ICON_CLIENT_TYPE;
+use crate::ibc::core::context::ContextError;
+use crate::ibc::core::ics02_client::error::ClientError;
+use crate::ibc::core::ics03_connection::connection::ConnectionEnd;
+use crate::ibc::core::ics04_channel::channel::ChannelEnd;
+use crate::ibc::core::ics04_channel::packet::Sequence;
 use crate::{constants::ICON_CLIENT_STATE_TYPE_URL, icon::icon::lightclient::v1::ClientState};
-use ibc::core::ics02_client::error::ClientError;
-use ibc::core::ics03_connection::connection::ConnectionEnd;
-use ibc::core::ics04_channel::channel::ChannelEnd;
-use ibc::core::ics04_channel::packet::Sequence;
-use ibc::core::ContextError;
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 
 impl ClientState {
@@ -41,9 +41,9 @@ impl TryFrom<Any> for ClientState {
     type Error = ClientError;
 
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
+        use crate::ibc::core::ics02_client::error::ClientError as Error;
         use bytes::Buf;
         use core::ops::Deref;
-        use ibc::core::ics02_client::error::ClientError as Error;
         use prost::Message;
 
         fn decode_client_state<B: Buf>(buf: B) -> Result<ClientState, Error> {
@@ -68,26 +68,26 @@ impl From<ClientState> for Any {
     }
 }
 
-use ibc::core::ics02_client::client_state::ClientState as IbcClientState;
-use ibc::core::ics02_client::client_type::ClientType as IbcClientType;
-use ibc::core::ics24_host::identifier::ClientId as IbcClientId;
-use ibc::Height as IbcHeight;
+use crate::ibc::core::ics02_client::client_state::ClientState as IbcClientState;
+use crate::ibc::core::ics02_client::client_type::ClientType as IbcClientType;
+use crate::ibc::core::ics24_host::identifier::ClientId as IbcClientId;
+use crate::ibc::Height as IbcHeight;
 use prost::Message;
 
 pub trait IClientState {
-    fn latest_height(&self) -> ibc::Height;
-    fn frozen_height(&self) -> Option<ibc::Height>;
+    fn latest_height(&self) -> crate::ibc::Height;
+    fn frozen_height(&self) -> Option<crate::ibc::Height>;
     fn expired(&self, elapsed: std::time::Duration) -> bool;
     fn is_frozen(&self) -> bool;
     fn client_type(&self) -> IbcClientType;
 }
 
 impl IClientState for ClientState {
-    fn latest_height(&self) -> ibc::Height {
+    fn latest_height(&self) -> crate::ibc::Height {
         IbcHeight::new(0, self.latest_height).unwrap()
     }
 
-    fn frozen_height(&self) -> Option<ibc::Height> {
+    fn frozen_height(&self) -> Option<crate::ibc::Height> {
         if self.frozen_height == 0 {
             return None;
         }

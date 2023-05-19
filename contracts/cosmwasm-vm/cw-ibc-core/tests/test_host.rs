@@ -6,7 +6,7 @@ use cw_common::types::{ClientId, ClientType, ConnectionId, PortId};
 use cw_ibc_core::context::CwIbcCoreContext;
 pub mod setup;
 
-use ibc::core::ics24_host::validate::validate_identifier;
+use common::ibc::core::ics24_host::validate::validate_identifier;
 
 use setup::*;
 

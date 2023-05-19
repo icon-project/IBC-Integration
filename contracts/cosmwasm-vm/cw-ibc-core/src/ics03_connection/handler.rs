@@ -58,7 +58,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 if self.get_compatible_versions().contains(&version) {
                     vec![version]
                 } else {
-                    return Err((ConnectionError::EmptyVersions))
+                    return Err(ConnectionError::EmptyVersions)
                         .map_err(|e| Into::<ContractError>::into(e));
                 }
             }

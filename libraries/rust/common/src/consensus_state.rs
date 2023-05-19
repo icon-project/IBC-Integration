@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-use dyn_clone::DynClone;
-use ibc::{
+use crate::ibc::{
     core::{ics02_client::error::ClientError, ics23_commitment::commitment::CommitmentRoot},
     timestamp::Timestamp,
 };
+use dyn_clone::DynClone;
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use prost::Message;
 
@@ -35,8 +35,8 @@ impl TryFrom<Any> for ConsensusState {
     type Error = ClientError;
 
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
+        use crate::ibc::core::ics02_client::error::ClientError as Error;
         use bytes::Buf;
-        use ibc::core::ics02_client::error::ClientError as Error;
         use prost::Message;
         use std::ops::Deref;
 

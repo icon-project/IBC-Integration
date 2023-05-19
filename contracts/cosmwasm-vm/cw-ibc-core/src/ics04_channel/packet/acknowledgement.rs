@@ -1,5 +1,5 @@
+use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use cw_common::cw_types::{CwAcknowledgement, CwPacketAckMsg};
-use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use prost::DecodeError;
 
 use super::*;
@@ -62,7 +62,7 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
             &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a,
+            msg.packet.sequence,
         ) {
             Ok(commitment_on_a) => commitment_on_a,
 
@@ -80,7 +80,7 @@ impl<'a> CwIbcCoreContext<'a> {
             )
         {
             return Err(PacketError::IncorrectPacketCommitment {
-                sequence: packet.seq_on_a,
+                sequence: packet.sequence,
             })
             .map_err(|e| Into::<ContractError>::into(e))?;
         }
@@ -91,9 +91,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet.port_id_on_a.clone().into(),
                 packet.chan_id_on_a.clone().into(),
             )?;
-            if packet.seq_on_a != next_seq_ack {
+            if packet.sequence != next_seq_ack {
                 return Err(PacketError::InvalidPacketSequence {
-                    given_sequence: packet.seq_on_a,
+                    given_sequence: packet.sequence,
                     next_sequence: next_seq_ack,
                 })
                 .map_err(|e| Into::<ContractError>::into(e))?;
@@ -132,7 +132,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let ack_path_on_b = commitment::acknowledgement_commitment_path(
             &packet.port_id_on_b.clone(),
             &packet.chan_id_on_b,
-            packet.seq_on_a,
+            packet.sequence,
         );
         let verify_packet_acknowledge = VerifyPacketAcknowledgement {
             height: msg.proof_height_on_b.to_string(),
@@ -201,7 +201,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Some(ack) => ack,
                         None => {
                             return Err(PacketError::PacketAcknowledgementNotFound {
-                                sequence: packet.seq_on_a,
+                                sequence: packet.sequence,
                             })
                             .map_err(|e| Into::<ContractError>::into(e))?;
                         }
@@ -228,14 +228,18 @@ impl<'a> CwIbcCoreContext<'a> {
                         channel_id: packet_data.packet.chan_id_on_b.to_string(),
                     };
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
-                            revision: 1,
-                            height: 1,
-                        },
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
-                            revision: x.revision_number(),
-                            height: x.revision_height(),
-                        },
+                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
+                            CwTimeoutBlock {
+                                revision: 1,
+                                height: 1,
+                            }
+                        }
+                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
+                            CwTimeoutBlock {
+                                revision: x.revision_number(),
+                                height: x.revision_height(),
+                            }
+                        }
                     };
                     let timestamp = packet_data.packet.timeout_timestamp_on_b.nanoseconds();
                     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);

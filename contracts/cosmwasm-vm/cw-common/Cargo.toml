@@ -18,7 +18,7 @@ hex-buffer-serde = "0.4.0"
 schemars = "0.8.12"
 hex = { version = "0.4.3", default-features = false}
 common = { path="../../../libraries/rust/common" }
-ibc = { version = "0.32.0", default-features = false}
+#ibc = { version = "0.32.0", default-features = false}
 ibc-proto = { version = "0.26.0", default-features = false}
 prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
 serde-json-wasm = {version="0.5.0", default-features = false}

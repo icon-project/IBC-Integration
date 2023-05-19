@@ -12,7 +12,7 @@ fn test_store_module_by_port() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
     let module_id =
-        ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let port_id = PortId::default();
     ctx.store_module_by_port(&mut deps.storage, port_id.clone(), module_id.clone())
         .unwrap();
@@ -27,7 +27,7 @@ fn test_store_module_by_port_fail() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
     let module_id =
-        ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let port_id = PortId::default();
 
     let result = ctx.lookup_module_by_port(&mut deps.storage, port_id);
@@ -77,7 +77,7 @@ fn test_lookup_module_channel() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
     let module_id =
-        ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let msg = MsgChannelOpenInit::try_from(get_dummy_raw_msg_chan_open_init(None)).unwrap();
     ctx.store_module_by_port(
         &mut deps.storage,

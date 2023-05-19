@@ -91,7 +91,7 @@ pub fn execute(
                 packet_data.data,
                 src_endpoint,
                 dst_endpoint,
-                packet_data.seq_on_a.into(),
+                packet_data.sequence.into(),
                 timeout,
             );
 

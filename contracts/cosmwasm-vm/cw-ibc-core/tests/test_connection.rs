@@ -35,28 +35,28 @@ use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
 use cw_ibc_core::ics03_connection::event::create_open_init_event;
 use cw_ibc_core::ics03_connection::event::create_open_try_event;
 
+use common::ibc::core::ics03_connection::connection::Counterparty;
+use common::ibc::core::ics03_connection::connection::State;
+use common::ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
+use common::ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
+use common::ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
+use common::ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
+use common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
+use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
+use common::ibc::core::ics03_connection::version::get_compatible_versions;
+use common::ibc::core::ics03_connection::version::Version;
+use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;
+use common::ibc::events::IbcEventType;
 use cw_common::ibc_types::IbcClientId;
 use cw_ibc_core::ConnectionEnd;
-use ibc::core::ics03_connection::connection::Counterparty;
-use ibc::core::ics03_connection::connection::State;
-use ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
-use ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
-use ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
-use ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
-use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
-use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
-use ibc::core::ics03_connection::version::get_compatible_versions;
-use ibc::core::ics03_connection::version::Version;
-use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
-use ibc::events::IbcEventType;
-// use ibc_proto::ibc::core::client::v1::Height;
-// use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterparty;
-// use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
-// use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
-// use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm;
-// use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit;
-// use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
-// use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
+// use ibc_proto::common::ibc::core::client::v1::Height;
+// use ibc_proto::common::ibc::core::connection::v1::Counterparty as RawCounterparty;
+// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
+// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
+// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenConfirm;
+// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit;
+// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
+// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
 use prost::Message;
 use setup::*;
 
@@ -79,7 +79,7 @@ fn test_set_connection() {
 #[test]
 fn test_get_connection() {
     let mut deps = deps();
-    let ss = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
     let counter_party = Counterparty::new(IbcClientId::default(), None, ss.unwrap());
@@ -103,20 +103,20 @@ fn test_get_connection() {
 }
 
 #[test]
-fn test_connection_sequence() {
+fn test_connection_seq_on_a() {
     let mut store = deps();
     let contract = CwIbcCoreContext::new();
     contract
-        .connection_next_sequence_init(store.as_mut().storage, u64::default())
+        .connection_next_seq_on_a_init(store.as_mut().storage, u64::default())
         .unwrap();
     let result = contract.connection_counter(store.as_ref().storage).unwrap();
 
     assert_eq!(0, result);
 
-    let increment_sequence = contract
+    let increment_seq_on_a = contract
         .increase_connection_counter(store.as_mut().storage)
         .unwrap();
-    assert_eq!(1, increment_sequence);
+    assert_eq!(1, increment_seq_on_a);
 }
 
 #[test]
@@ -163,7 +163,7 @@ fn test_set_connection_fail() {
 
 #[test]
 #[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
-fn test_connection_sequence_fail() {
+fn test_connection_seq_on_a_fail() {
     let store = deps();
     let contract = CwIbcCoreContext::new();
     contract.connection_counter(store.as_ref().storage).unwrap();
@@ -398,7 +398,7 @@ fn connection_open_init() {
     };
 
     let res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
             message.clone(),
         )
         .unwrap();
@@ -438,7 +438,7 @@ fn connection_open_init() {
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
         .unwrap();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u64::default())
+        .connection_next_seq_on_a_init(&mut deps.storage, u64::default())
         .unwrap();
 
     let res = contract.connection_open_init(deps.as_mut(), res_msg);
@@ -459,7 +459,7 @@ fn test_validate_open_init_connection_fail() {
         signer: get_dummy_bech32_account(),
     };
     let res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
             message.clone(),
         )
         .unwrap();
@@ -621,15 +621,16 @@ fn connection_open_ack_validate_fail() {
     let info = create_mock_info("alice", "umlg", 2000);
     let contract = CwIbcCoreContext::default();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
 
-    let res_msg = ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck::try_from(
-        message.clone(),
-    )
-    .unwrap();
+    let res_msg =
+        common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck::try_from(
+            message.clone(),
+        )
+        .unwrap();
 
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
@@ -686,15 +687,16 @@ fn connection_open_ack_validate() {
 
     let contract = CwIbcCoreContext::default();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
 
-    let res_msg = ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck::try_from(
-        message.clone(),
-    )
-    .unwrap();
+    let res_msg =
+        common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck::try_from(
+            message.clone(),
+        )
+        .unwrap();
 
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
@@ -722,22 +724,23 @@ fn connection_open_ack_validate() {
         )
         .unwrap();
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         None,
         counterparty_prefix.clone(),
     );
 
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::Init,
+        common::ibc::core::ics03_connection::connection::State::Init,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     contract
@@ -777,22 +780,23 @@ fn connection_open_ack_executes() {
     let mut msg = MsgConnectionOpenAck::try_from(raw.clone()).unwrap();
     let _store = contract.init_connection_counter(deps.as_mut().storage, u64::default());
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let client_id = ClientId::from_str("iconclient-1").unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         None,
         counterparty_prefix.clone(),
     );
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::Init,
+        common::ibc::core::ics03_connection::connection::State::Init,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     let versions = RawVersion {
@@ -811,7 +815,7 @@ fn connection_open_ack_executes() {
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
         .unwrap();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let mock_response_data = OpenAckResponse {
@@ -840,7 +844,7 @@ fn connection_open_ack_executes() {
 fn connection_validate_delay() {
     let mut deps = deps();
     let env = mock_env();
-    let packet_proof_height = ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
+    let packet_proof_height = common::ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
     contract
@@ -859,7 +863,7 @@ fn connection_validate_delay() {
 fn connection_validate_delay_fails() {
     let deps = deps();
     let _env = mock_env();
-    let packet_proof_height = ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
+    let packet_proof_height = common::ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
     contract
@@ -891,22 +895,23 @@ fn connection_open_try_execute() {
         .init_connection_counter(deps.as_mut().storage, u64::default())
         .unwrap();
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let client_id = ClientId::from_str("iconclient-1").unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         None,
         counterparty_prefix.clone(),
     );
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::Open,
+        common::ibc::core::ics03_connection::connection::State::Open,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     let versions = RawVersion {
@@ -923,7 +928,7 @@ fn connection_open_try_execute() {
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
         .unwrap();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let mock_response_data = OpenTryResponse::new(
@@ -958,13 +963,13 @@ fn connection_open_try_validate() {
     let info = create_mock_info("alice", "umlg", 2000);
     let contract = CwIbcCoreContext::default();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_try(10, 10);
 
     let mut res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
             message.clone(),
         )
         .unwrap();
@@ -1023,13 +1028,13 @@ fn open_try_validate_fails() {
 
     let contract = CwIbcCoreContext::default();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_try(10, 10);
 
     let mut res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
             message.clone(),
         )
         .unwrap();
@@ -1082,13 +1087,13 @@ fn connection_open_confirm_validate() {
     let _env = mock_env();
     let contract = CwIbcCoreContext::default();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
 
     let res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
             message.clone(),
         )
         .unwrap();
@@ -1108,22 +1113,23 @@ fn connection_open_confirm_validate() {
     .try_into()
     .unwrap();
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         res_msg.conn_id_on_b.clone().into(),
         counterparty_prefix.clone(),
     );
 
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::TryOpen,
+        common::ibc::core::ics03_connection::connection::State::TryOpen,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     contract
@@ -1170,27 +1176,28 @@ fn connection_open_confirm_execute() {
     let contract = CwIbcCoreContext::default();
     let raw = get_dummy_raw_msg_conn_open_confirm();
     let mut msg =
-        ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
             raw.clone(),
         )
         .unwrap();
     let _store = contract.init_connection_counter(deps.as_mut().storage, u64::default());
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         None,
         counterparty_prefix.clone(),
     );
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::TryOpen,
+        common::ibc::core::ics03_connection::connection::State::TryOpen,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     let conn_id = ConnectionId::new(1);
@@ -1200,7 +1207,7 @@ fn connection_open_confirm_execute() {
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
         .unwrap();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
     let mock_response_data = OpenConfirmResponse {
         conn_id: conn_id.connection_id().as_str().to_owned(),
@@ -1231,18 +1238,19 @@ fn connection_open_confirm_execute_fails() {
     let contract = CwIbcCoreContext::default();
     let raw = get_dummy_raw_msg_conn_open_confirm();
     let mut msg =
-        ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
             raw.clone(),
         )
         .unwrap();
     let _store = contract.init_connection_counter(deps.as_mut().storage, u64::default());
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         None,
         counterparty_prefix.clone(),
@@ -1252,7 +1260,7 @@ fn connection_open_confirm_execute_fails() {
     let contract = CwIbcCoreContext::new();
 
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
     let mock_response_data = OpenConfirmResponse {
         conn_id: conn_id.connection_id().as_str().to_owned(),
@@ -1284,12 +1292,12 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
     let _env = mock_env();
     let contract = CwIbcCoreContext::default();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
     let res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
             message.clone(),
         )
         .unwrap();
@@ -1310,21 +1318,22 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
     }
     .try_into()
     .unwrap();
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         res_msg.conn_id_on_b.clone().into(),
         counterparty_prefix.clone(),
     );
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::Init,
+        common::ibc::core::ics03_connection::connection::State::Init,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     contract
@@ -1380,7 +1389,7 @@ fn connection_check_open_init_validate_fails() {
     };
 
     let res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
             message.clone(),
         )
         .unwrap();
@@ -1391,7 +1400,7 @@ fn connection_check_open_init_validate_fails() {
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
         .unwrap();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u64::default())
+        .connection_next_seq_on_a_init(&mut deps.storage, u64::default())
         .unwrap();
 
     contract
@@ -1412,7 +1421,7 @@ fn connection_open_init_fails_of_clientstate() {
     };
 
     let res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
             message.clone(),
         )
         .unwrap();
@@ -1440,7 +1449,7 @@ fn connection_open_init_fails_of_clientstate() {
         .unwrap();
 
     contract
-        .connection_next_sequence_init(&mut deps.storage, u64::default())
+        .connection_next_seq_on_a_init(&mut deps.storage, u64::default())
         .unwrap();
 
     let res = contract.connection_open_init(deps.as_mut(), res_msg);
@@ -1459,9 +1468,9 @@ fn connection_open_init_validate_invalid_client_id() {
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
-    let sequence: u64 = 24;
+    let seq_on_a: u64 = 24;
     let res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
             message.clone(),
         )
         .unwrap();
@@ -1490,7 +1499,7 @@ fn connection_open_init_validate_invalid_client_id() {
         .client_state(&mut deps.storage, client_id.ibc_client_id())
         .unwrap();
     contract
-        .connection_next_sequence_init(&mut deps.storage, sequence)
+        .connection_next_seq_on_a_init(&mut deps.storage, seq_on_a)
         .unwrap();
     contract
         .connection_open_init(deps.as_mut(), res_msg)
@@ -1523,9 +1532,10 @@ fn test_update_connection_commitment() {
 #[test]
 fn test_check_connection() {
     let mut deps = deps();
-    let commitment_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
+    let commitment_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".to_string().as_bytes().to_vec(),
+        );
     let counter_party = Counterparty::new(IbcClientId::default(), None, commitment_prefix.unwrap());
     let conn_end = ConnectionEnd::new(
         State::Open,
@@ -1549,7 +1559,7 @@ fn test_check_connection() {
 
 #[test]
 #[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
-fn test_connection_sequence_fails_without_initialising() {
+fn test_connection_seq_on_a_fails_without_initialising() {
     let mut store = deps();
     let contract = CwIbcCoreContext::new();
     contract.connection_counter(store.as_ref().storage).unwrap();
@@ -1648,7 +1658,7 @@ fn connection_open_init_fails() {
     };
 
     let res_msg =
-        ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
+        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
             message.clone(),
         )
         .unwrap();
@@ -1682,15 +1692,16 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
 
     let contract = CwIbcCoreContext::default();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
 
-    let res_msg = ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck::try_from(
-        message.clone(),
-    )
-    .unwrap();
+    let res_msg =
+        common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck::try_from(
+            message.clone(),
+        )
+        .unwrap();
 
     let client_id = IbcClientId::default();
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -1713,22 +1724,23 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
         )
         .unwrap();
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         None,
         counterparty_prefix.clone(),
     );
 
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::Init,
+        common::ibc::core::ics03_connection::connection::State::Init,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     contract
@@ -1758,15 +1770,16 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
 
     let contract = CwIbcCoreContext::default();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
 
-    let res_msg = ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck::try_from(
-        message.clone(),
-    )
-    .unwrap();
+    let res_msg =
+        common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck::try_from(
+            message.clone(),
+        )
+        .unwrap();
 
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
@@ -1794,22 +1807,23 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         )
         .unwrap();
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         None,
         counterparty_prefix.clone(),
     );
 
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::Open,
+        common::ibc::core::ics03_connection::connection::State::Open,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     contract
@@ -1852,22 +1866,23 @@ fn connection_open_try_executes_fails_of_connection_error() {
         .init_connection_counter(deps.as_mut().storage, u64::default())
         .unwrap();
 
-    let counterparty_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".as_bytes().to_vec(),
-    )
-    .unwrap();
+    let counterparty_prefix =
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+            "hello".as_bytes().to_vec(),
+        )
+        .unwrap();
     let client_id = ClientId::from_str("iconclient-1").unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = ibc::core::ics03_connection::connection::Counterparty::new(
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.ibc_client_id().clone(),
         None,
         counterparty_prefix.clone(),
     );
     let conn_end = ConnectionEnd::new(
-        ibc::core::ics03_connection::connection::State::Open,
+        common::ibc::core::ics03_connection::connection::State::Open,
         IbcClientId::default().clone(),
         counter_party.clone(),
-        vec![ibc::core::ics03_connection::version::Version::default()],
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
     let conn_id = ConnectionId::new(1);
@@ -1880,7 +1895,7 @@ fn connection_open_try_executes_fails_of_connection_error() {
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
         .unwrap();
     contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let result: SubMsgResult = SubMsgResult::Err("error".to_string());

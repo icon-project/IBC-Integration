@@ -17,11 +17,11 @@ fn test_acknowledgement_packet_execute() {
         channel_id: msg.packet.chan_id_on_b.to_string(),
     };
     let timeoutblock = match msg.packet.timeout_height_on_b {
-        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
+        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
             revision: 1,
             height: 1,
         },
-        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
+        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
             revision: x.revision_number(),
             height: x.revision_height(),
         },
@@ -33,7 +33,7 @@ fn test_acknowledgement_packet_execute() {
         msg.packet.data,
         src,
         dest,
-        msg.packet.seq_on_a.into(),
+        msg.packet.sequence.into(),
         timeout,
     );
     let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
@@ -64,14 +64,15 @@ fn test_acknowledgement_packet_execute() {
             chan_end_on_a_ordered,
         )
         .unwrap();
-    let commitment =
-        ibc::core::ics04_channel::commitment::PacketCommitment::from("asdfd".as_bytes().to_vec());
+    let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
+        "asdfd".as_bytes().to_vec(),
+    );
     contract
         .store_packet_commitment(
             &mut deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
             &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a.clone(),
+            msg.packet.sequence.clone(),
             commitment,
         )
         .unwrap();
@@ -99,11 +100,11 @@ fn test_acknowledgement_packet_execute_ordered() {
         channel_id: msg.packet.chan_id_on_b.to_string(),
     };
     let timeoutblock = match msg.packet.timeout_height_on_b {
-        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
+        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
             revision: 1,
             height: 1,
         },
-        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
+        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
             revision: x.revision_number(),
             height: x.revision_height(),
         },
@@ -115,7 +116,7 @@ fn test_acknowledgement_packet_execute_ordered() {
         msg.packet.data,
         src,
         dest,
-        msg.packet.seq_on_a.into(),
+        msg.packet.sequence.into(),
         timeout,
     );
     let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
@@ -146,19 +147,20 @@ fn test_acknowledgement_packet_execute_ordered() {
             chan_end_on_a_ordered,
         )
         .unwrap();
-    let commitment =
-        ibc::core::ics04_channel::commitment::PacketCommitment::from("asdfd".as_bytes().to_vec());
+    let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
+        "asdfd".as_bytes().to_vec(),
+    );
     contract
         .store_packet_commitment(
             &mut deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
             &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a.clone(),
+            msg.packet.sequence.clone(),
             commitment,
         )
         .unwrap();
     contract
-        .store_next_sequence_ack(
+        .store_next_seq_on_a_ack(
             &mut deps.storage,
             msg.packet.port_id_on_b.clone().into(),
             msg.packet.chan_id_on_b.clone().into(),
@@ -190,11 +192,11 @@ fn test_acknowledgement_packet_execute_fail() {
         channel_id: msg.packet.chan_id_on_b.to_string(),
     };
     let timeoutblock = match msg.packet.timeout_height_on_b {
-        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
+        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
             revision: 1,
             height: 1,
         },
-        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
+        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
             revision: x.revision_number(),
             height: x.revision_height(),
         },
@@ -206,7 +208,7 @@ fn test_acknowledgement_packet_execute_fail() {
         msg.packet.data,
         src,
         dest,
-        msg.packet.seq_on_a.into(),
+        msg.packet.sequence.into(),
         timeout,
     );
     let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
@@ -237,14 +239,15 @@ fn test_acknowledgement_packet_execute_fail() {
             chan_end_on_a_ordered,
         )
         .unwrap();
-    let commitment =
-        ibc::core::ics04_channel::commitment::PacketCommitment::from("asdfd".as_bytes().to_vec());
+    let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
+        "asdfd".as_bytes().to_vec(),
+    );
     contract
         .store_packet_commitment(
             &mut deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
             &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a.clone(),
+            msg.packet.sequence.clone(),
             commitment,
         )
         .unwrap();
@@ -263,7 +266,7 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
     let height = 10;
     let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
     let packet_repsone = PacketResponse {
-        seq_on_a: msg.packet.seq_on_a,
+        seq_on_a: msg.packet.sequence,
         port_id_on_a: msg.packet.port_id_on_a.clone(),
         chan_id_on_a: msg.packet.chan_id_on_a,
         port_id_on_b: msg.packet.port_id_on_b,
@@ -291,7 +294,7 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
     };
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let reply_message = Reply { id: 0, result };
-    let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = PortId::from(msg.packet.port_id_on_a.clone());
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
@@ -317,7 +320,7 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
     let height = 10;
     let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
     let packet_repsone = PacketResponse {
-        seq_on_a: msg.packet.seq_on_a,
+        seq_on_a: msg.packet.sequence,
         port_id_on_a: msg.packet.port_id_on_a.clone(),
         chan_id_on_a: msg.packet.chan_id_on_a,
         port_id_on_b: msg.packet.port_id_on_b,
@@ -346,7 +349,7 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
     };
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let reply_message = Reply { id: 0, result };
-    let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = PortId::from(msg.packet.port_id_on_a.clone());
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
@@ -390,7 +393,7 @@ fn test_acknowledgement_packet_validate_ordered() {
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
     let conn_end_on_a = ConnectionEnd::new(
@@ -421,7 +424,7 @@ fn test_acknowledgement_packet_validate_ordered() {
             &mut deps.storage,
             &packet.port_id_on_a.clone().into(),
             &packet.chan_id_on_a.clone().into(),
-            packet.seq_on_a.clone(),
+            packet.sequence.clone(),
             packet_commitment,
         )
         .unwrap();
@@ -463,7 +466,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         )
         .unwrap();
     contract
-        .store_next_sequence_ack(
+        .store_next_seq_on_a_ack(
             &mut deps.storage,
             packet.port_id_on_b.clone().into(),
             packet.chan_id_on_b.clone().into(),
@@ -510,7 +513,7 @@ fn test_acknowledgement_packet_validate_unordered() {
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
     let conn_end_on_a = ConnectionEnd::new(
@@ -541,7 +544,7 @@ fn test_acknowledgement_packet_validate_unordered() {
             &mut deps.storage,
             &packet.port_id_on_a.clone().into(),
             &packet.chan_id_on_a.clone().into(),
-            packet.seq_on_a.clone(),
+            packet.sequence.clone(),
             packet_commitment,
         )
         .unwrap();
@@ -622,7 +625,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
     let conn_end_on_a = ConnectionEnd::new(

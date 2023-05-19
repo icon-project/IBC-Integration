@@ -3,8 +3,8 @@
 pub mod port;
 use super::*;
 use crate::{context::CwIbcCoreContext, ContractError};
+use common::ibc::core::ics04_channel::msgs::{ChannelMsg, PacketMsg};
+use common::ibc::core::{ics05_port::error::PortError, ics26_routing::context::ModuleId};
 use cosmwasm_std::Storage;
 use cw_common::ibc_types::IbcPortId;
 use cw_common::types::PortId;
-use ibc::core::ics04_channel::msgs::{ChannelMsg, PacketMsg};
-use ibc::core::{ics05_port::error::PortError, ics26_routing::context::ModuleId};

@@ -7,15 +7,15 @@ use crate::{
     ibc_types::IbcHeight,
     types::{ClientId, ClientType, MessageInfo, PacketData},
 };
-use cosmwasm_schema::cw_serde;
-use cosmwasm_schema::serde::{Deserialize, Serialize};
-pub use ibc::core::ics04_channel::packet::Packet;
-use ibc::core::ics04_channel::timeout::TimeoutHeight;
-use ibc::timestamp::Timestamp;
-use ibc::{
+pub use common::ibc::core::ics04_channel::packet::Packet;
+use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
+use common::ibc::timestamp::Timestamp;
+use common::ibc::{
     core::ics04_channel::{msgs::acknowledgement::Acknowledgement, packet::Sequence},
     signer::Signer,
 };
+use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[cw_serde]
@@ -236,7 +236,7 @@ impl From<PacketResponse> for Packet {
     fn from(packet: PacketResponse) -> Self {
         let data = hex::decode(packet.data).unwrap();
         Packet {
-            seq_on_a: packet.seq_on_a,
+            sequence: packet.seq_on_a,
             port_id_on_a: packet.port_id_on_a,
             chan_id_on_a: packet.chan_id_on_a,
             port_id_on_b: packet.port_id_on_b,
@@ -252,7 +252,7 @@ impl From<Packet> for PacketResponse {
     fn from(packet: Packet) -> Self {
         let data = hex::encode(packet.data);
         PacketResponse {
-            seq_on_a: packet.seq_on_a,
+            seq_on_a: packet.sequence,
             port_id_on_a: packet.port_id_on_a,
             chan_id_on_a: packet.chan_id_on_a,
             port_id_on_b: packet.port_id_on_b,

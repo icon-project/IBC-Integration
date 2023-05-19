@@ -11,6 +11,7 @@ pub mod btp_header;
 pub mod client_state;
 pub mod consensus_state;
 pub mod constants;
+pub mod ibc;
 pub mod icon;
 pub mod rlp;
 pub mod signed_header;

@@ -40,7 +40,7 @@ impl StorageKey {
             StorageKey::NextSequenceAcknowledgement => "next_sequence_ack",
             StorageKey::NextClientSequence => "next_client_sequence",
             StorageKey::NextConnectionSequence => "next_connection_sequence",
-            StorageKey::NextChannelSequence => "next_channel_sequence",
+            StorageKey::NextChannelSequence => "next_channel_Sequence",
             StorageKey::Connections => "connections",
             StorageKey::ClientConnection => "client_connections",
             StorageKey::Channels => "channels",

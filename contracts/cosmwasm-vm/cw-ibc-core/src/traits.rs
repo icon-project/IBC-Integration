@@ -1,4 +1,4 @@
-use ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
+use common::ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
 
 use super::*;
 

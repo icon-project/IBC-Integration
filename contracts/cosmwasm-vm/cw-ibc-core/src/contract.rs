@@ -1,5 +1,6 @@
 use super::*;
 use common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
+use common::ibc::core::ics04_channel::packet::Receipt;
 use common::icon::icon::lightclient::v1::{
     ClientState as RawClientState, ConsensusState as RawConsensusState,
 };
@@ -15,7 +16,6 @@ use cw_common::raw_types::Any;
 use cw_common::raw_types::Protobuf;
 use cw_common::raw_types::RawHeight;
 use hex::FromHexError;
-use ibc::core::ics04_channel::packet::Receipt;
 use prost::{DecodeError, Message};
 
 // version info for migration info
@@ -673,11 +673,11 @@ mod tests {
     use std::str::FromStr;
 
     use crate::context::CwIbcCoreContext;
+    use common::ibc::core::ics02_client::height::Height;
     use common::{
         constants::ICON_CONSENSUS_STATE_TYPE_URL,
         icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
     };
-    use ibc::core::ics02_client::height::Height;
 
     use prost::Message;
 

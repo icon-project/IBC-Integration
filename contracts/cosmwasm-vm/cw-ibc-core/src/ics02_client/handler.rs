@@ -225,7 +225,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     }
 
     /// This function generates a unique client identifier based on the client type and a client
-    /// sequence number stored in a storage.
+    /// seq_on_a number stored in a storage.
     ///
     /// Arguments:
     ///
@@ -245,8 +245,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         store: &mut dyn Storage,
         client_type: ClientType,
     ) -> Result<ClientId, ContractError> {
-        let client_sequence = self.client_counter(store)?;
-        let client_identifier = ClientId::new(client_type, client_sequence)?;
+        let client_seq_on_a = self.client_counter(store)?;
+        let client_identifier = ClientId::new(client_type, client_seq_on_a)?;
         self.increase_client_counter(store)?;
         Ok(client_identifier)
     }

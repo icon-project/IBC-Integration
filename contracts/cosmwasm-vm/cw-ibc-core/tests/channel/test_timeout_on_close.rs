@@ -2,8 +2,8 @@ use super::*;
 
 #[test]
 fn test_timeout_on_close_packet_validate_to_light_client() {
-    use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
-    use ibc::core::ics03_connection::connection::State as ConnectionState;
+    use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
+    use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
@@ -35,7 +35,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
 
@@ -68,7 +68,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
             &mut deps.storage,
             &packet.port_id_on_a.clone().into(),
             &packet.chan_id_on_a.clone().into(),
-            packet.seq_on_a.clone(),
+            packet.sequence.clone(),
             packet_commitment,
         )
         .unwrap();
