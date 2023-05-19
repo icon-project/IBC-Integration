@@ -3,7 +3,6 @@ pub mod context;
 pub mod contract;
 mod error;
 pub mod gas_estimates;
-pub mod helpers;
 pub mod ics02_client;
 pub mod ics03_connection;
 pub mod ics04_channel;
@@ -74,11 +73,11 @@ use std::str::FromStr;
 use thiserror::Error;
 
 use crate::msg::{InstantiateMsg, QueryMsg};
+use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
-use crate::{
-    ics02_client::types::{ClientState, ConsensusState, SignedHeader},
-    traits::ExecuteChannel,
-};
+use common::icon::icon::lightclient::v1::ClientState;
+use common::signed_header::RawSignedHeader;
+
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]

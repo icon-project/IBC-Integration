@@ -17,7 +17,7 @@ use ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 use ibc::timestamp::Timestamp;
 use ibc::timestamp::ZERO_DURATION;
 
-use ibc_proto::ibc::core::client::v1::Height as RawHeight;
+use cw_common::raw_types::RawHeight;
 
 pub mod test_acknowledgement;
 pub mod test_channel_closeinit;

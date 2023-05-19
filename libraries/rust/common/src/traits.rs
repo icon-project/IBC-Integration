@@ -24,8 +24,11 @@ pub trait AnyTypes: Message + Default {
         };
     }
 
-    fn any_from_value(value:&[u8])->Any{
-        return Any { type_url: Self::get_type_url(), value:value.to_vec()}
+    fn any_from_value(value: &[u8]) -> Any {
+        return Any {
+            type_url: Self::get_type_url(),
+            value: value.to_vec(),
+        };
     }
 
     fn get_keccak_hash(&self) -> [u8; 32] {

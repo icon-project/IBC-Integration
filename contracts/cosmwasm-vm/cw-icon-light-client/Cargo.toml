@@ -2,7 +2,6 @@
 name = "cw-icon-light-client"
 version = "0.1.0"
 edition = "2021"
-authors = {workspace = true}
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -39,7 +38,7 @@ cw2 = "1.0.1"
 schemars = "0.8.12"
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.39" }
-ibc-proto = { version = "0.26.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
+#ibc-proto = { version = "0.26.0", default-features = false}
 sha2 = { version = "0.10.6", default-features = false }
 hex ={ version = "0.4.3", default-features = false }
 sha3 = { version = "0.10.6", default-features = false }
@@ -56,3 +55,13 @@ cw-multi-test = "0.16.2"
 hex-literal="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
+
+[profile.release]
+# Do not perform backtrace for panic on release builds.
+panic = 'abort'
+# Perform optimizations on all codegen units.
+codegen-units = 1
+# Optimize for size.
+opt-level = 'z' # or 'z' to optimize "aggressively" for size
+# Enable link time optimization.
+lto = true

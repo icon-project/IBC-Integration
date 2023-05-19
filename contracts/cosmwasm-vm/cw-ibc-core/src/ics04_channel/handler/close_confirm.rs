@@ -18,19 +18,17 @@ pub fn channel_close_confirm_validate(
     chan_end_on_b: &ChannelEnd,
 ) -> Result<(), ContractError> {
     if chan_end_on_b.state_matches(&State::Closed) {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::ChannelClosed {
-                channel_id: message.chan_id_on_b.clone(),
-            },
-        });
+        return Err(ChannelError::ChannelClosed {
+            channel_id: message.chan_id_on_b.clone(),
+        })
+        .map_err(|e| Into::<ContractError>::into(e));
     }
     if chan_end_on_b.connection_hops().len() != 1 {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::InvalidConnectionHopsLength {
-                expected: 1,
-                actual: chan_end_on_b.connection_hops().len(),
-            },
-        });
+        return Err(ChannelError::InvalidConnectionHopsLength {
+            expected: 1,
+            actual: chan_end_on_b.connection_hops().len(),
+        })
+        .map_err(|e| Into::<ContractError>::into(e));
     }
 
     Ok(())
@@ -100,15 +98,17 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "channel_close_confirm_module_validation")
                         .add_submessage(on_chan_close_confirm))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::VerifyChannelFailed(ClientError::Other { description: error }),
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::VerifyChannelFailed(ClientError::Other {
+                    description: error,
+                }))
+                .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
 }
@@ -144,11 +144,10 @@ pub fn on_chan_close_confirm_submessage(
         Order::Unordered => cosmwasm_std::IbcOrder::Unordered,
         Order::Ordered => cosmwasm_std::IbcOrder::Ordered,
         Order::None => {
-            return Err(ContractError::IbcChannelError {
-                error: ChannelError::UnknownOrderType {
-                    type_id: "None".to_string(),
-                },
+            return Err(ChannelError::UnknownOrderType {
+                type_id: "None".to_string(),
             })
+            .map_err(|e| Into::<ContractError>::into(e))
         }
     };
     let ibc_channel = cosmwasm_std::IbcChannel::new(

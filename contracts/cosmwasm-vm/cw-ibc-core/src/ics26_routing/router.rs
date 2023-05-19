@@ -1,3 +1,5 @@
+use prost::DecodeError;
+
 use super::*;
 
 /// Storage for modules based on the module id
@@ -36,7 +38,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Ok(result) => match result {
                 Some(address) => Ok(address),
                 None => Err(ContractError::IbcDecodeError {
-                    error: "Module Id Not Found".to_string(),
+                    error: DecodeError::new("Module Id Not Found".to_string()),
                 }),
             },
             Err(error) => Err(ContractError::Std(error)),

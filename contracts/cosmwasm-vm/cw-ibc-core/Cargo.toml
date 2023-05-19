@@ -2,7 +2,6 @@
 name = "cw-ibc-core"
 version = "0.1.0"
 edition = "2021"
-authors = {workspace = true}
 
 
 exclude = [
@@ -31,15 +30,14 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 
 [dependencies]
 cosmwasm-schema = "1.2.2"
-cosmwasm-std = "1.2.2"
-cosmwasm-storage = "1.2.2"
+cosmwasm-std = {version="1.2.2",default-features = false}
 cw-storage-plus = "1.0.1"
 cw2 = "1.0.1"
 schemars = "0.8.12"
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.39" }
-ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde"]}
-ibc-proto = { version = "0.26.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
+ibc = { version = "0.32.0", default-features = false}
+#ibc-proto = { version = "0.26.0", default-features = false}
 sha2 = { version = "0.10.6", default-features = false }
 hex ={ version = "0.4.3", default-features = false }
 sha3 = { version = "0.10.6", default-features = false }
@@ -57,3 +55,14 @@ cw-icon-light-client = { path="../cw-icon-light-client",default-features = false
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 hex-literal="*"
+
+[profile.release]
+# Do not perform backtrace for panic on release builds.
+panic = 'abort'
+# Perform optimizations on all codegen units.
+codegen-units = 1
+# Optimize for size.
+opt-level = 'z' # or 'z' to optimize "aggressively" for size
+# Enable link time optimization.
+lto = true
+strip = true

@@ -56,9 +56,9 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
 
@@ -75,7 +75,7 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

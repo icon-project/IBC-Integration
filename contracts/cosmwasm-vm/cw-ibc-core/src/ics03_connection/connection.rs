@@ -1,3 +1,5 @@
+use prost::DecodeError;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -25,11 +27,10 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let data = conn_end
             .encode_vec()
-            .map_err(|error| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: error.to_string(),
-                },
-            })?;
+            .map_err(|error| ConnectionError::Other {
+                description: error.to_string(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
         match self.ibc_store().connections().save(store, conn_id, &data) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
@@ -60,7 +61,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let connection_end =
             ConnectionEnd::decode(&*data).map_err(|error| ContractError::IbcDecodeError {
-                error: error.to_string(),
+                error: DecodeError::new(error.to_string()),
             })?;
 
         Ok(connection_end)
@@ -252,11 +253,10 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, client_id)
         {
             Ok(result) => match result {
-                Some(id) => Err(ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: format!("Connection Already Exists {}", id.as_str()),
-                    },
-                }),
+                Some(id) => Err(ConnectionError::Other {
+                    description: format!("Connection Already Exists {}", id.as_str()),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
                 None => Ok(()),
             },
             Err(error) => Err(ContractError::Std(error)),
@@ -288,14 +288,12 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_commit_key =
             commitment::connection_commitment_key(connection_id.connection_id());
 
-        let connection_end_bytes =
-            connection_end
-                .encode_vec()
-                .map_err(|error| ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: error.to_string(),
-                    },
-                })?;
+        let connection_end_bytes = connection_end
+            .encode_vec()
+            .map_err(|error| ConnectionError::Other {
+                description: error.to_string(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
 
         self.ibc_store()
             .commitments()

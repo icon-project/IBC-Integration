@@ -179,8 +179,8 @@ impl QueryHandler {
                 height,
                 client_id: client_id.to_string(),
             })?;
-        let state = ConsensusState::decode(data.as_slice())
-            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        let state =
+            ConsensusState::decode(data.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
         Ok(state)
     }
 
@@ -204,8 +204,8 @@ impl QueryHandler {
         let data = CLIENT_STATES
             .load(storage, client_id.to_string())
             .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
-        let state = ClientState::decode(data.as_slice())
-            .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        let state =
+            ClientState::decode(data.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
         Ok(state)
     }
 
@@ -275,8 +275,8 @@ mod tests {
         testing::{mock_dependencies, mock_env, mock_info, MockStorage},
         StdResult,
     };
+    use cw_common::raw_types::Any;
     use hex_literal::hex;
-    use ibc_proto::google::protobuf::Any;
     use prost::Message;
     use test_utils::constants::{TESTNET_NETWORK_TYPE_ID, TESTNET_SRC_NETWORK_ID};
     use test_utils::get_test_signed_headers;

@@ -1,16 +1,13 @@
-use common::traits::AnyTypes;
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
+use common::constants::ICON_SIGNED_HEADER_TYPE_URL;
+use common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
+use common::traits::AnyTypes;
 use common::utils::{calculate_root, keccak256};
-use cw_common::constants::{
-    ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL, ICON_SIGNED_HEADER_TYPE_URL,
-};
 use prost::Message;
-
-
 
 pub struct IconClient<'a> {
     context: &'a mut dyn IContext<Error = crate::ContractError>,
@@ -109,15 +106,13 @@ impl ILightClient for IconClient<'_> {
             consensus_state.clone(),
         )?;
 
-        Ok(
-            ConsensusStateUpdate {
-                consensus_state_commitment: consensus_state.get_keccak_hash(),
-                client_state_commitment:client_state.get_keccak_hash(),
-                client_state_bytes:client_state.encode_to_vec(),
-                consensus_state_bytes:consensus_state.encode_to_vec(),
-                height: client_state.latest_height,
-            },
-        )
+        Ok(ConsensusStateUpdate {
+            consensus_state_commitment: consensus_state.get_keccak_hash(),
+            client_state_commitment: client_state.get_keccak_hash(),
+            client_state_bytes: client_state.encode_to_vec(),
+            consensus_state_bytes: consensus_state.encode_to_vec(),
+            height: client_state.latest_height,
+        })
     }
 
     fn update_client(
@@ -168,15 +163,13 @@ impl ILightClient for IconClient<'_> {
             .insert_blocknumber_at_height(client_id, btp_header.main_height)?;
         let commitment = keccak256(&consensus_state.encode_to_vec());
 
-        Ok(
-            ConsensusStateUpdate {
-                consensus_state_commitment: commitment,
-                client_state_commitment:keccak256(&state.encode_to_vec()),
-                client_state_bytes:state.encode_to_vec(),
-                consensus_state_bytes:consensus_state.encode_to_vec(),
-                height: btp_header.main_height,
-            },
-        )
+        Ok(ConsensusStateUpdate {
+            consensus_state_commitment: commitment,
+            client_state_commitment: keccak256(&state.encode_to_vec()),
+            client_state_bytes: state.encode_to_vec(),
+            consensus_state_bytes: consensus_state.encode_to_vec(),
+            height: btp_header.main_height,
+        })
     }
 
     fn verify_membership(

@@ -280,9 +280,9 @@ fn test_timeout_packet_validate_to_light_client() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
 
@@ -299,7 +299,7 @@ fn test_timeout_packet_validate_to_light_client() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

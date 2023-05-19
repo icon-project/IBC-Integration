@@ -1,4 +1,5 @@
 use cw_common::client_msg::VerifyConnectionPayload;
+use prost::DecodeError;
 
 use super::*;
 
@@ -44,11 +45,10 @@ impl<'a> CwIbcCoreContext<'a> {
         let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
 
         if response.is_empty() {
-            return Err(ContractError::IbcClientError {
-                error: ClientError::ClientNotFound {
-                    client_id: message.client_id_on_a,
-                },
-            });
+            return Err(ClientError::ClientNotFound {
+                client_id: message.client_id_on_a,
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         }
 
         self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
@@ -58,9 +58,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 if self.get_compatible_versions().contains(&version) {
                     vec![version]
                 } else {
-                    return Err(ContractError::IbcConnectionError {
-                        error: (ConnectionError::EmptyVersions),
-                    });
+                    return Err((ConnectionError::EmptyVersions))
+                        .map_err(|e| Into::<ContractError>::into(e));
                 }
             }
             None => self.get_compatible_versions(),
@@ -161,18 +160,16 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let host_height = self
             .host_height()
-            .map_err(|_| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: "failed to get host height".to_string(),
-                },
-            })?;
+            .map_err(|_| ConnectionError::Other {
+                description: "failed to get host height".to_string(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
         if msg.consensus_height_of_a_on_b > host_height {
-            return Err(ContractError::IbcConnectionError {
-                error: ConnectionError::InvalidConsensusHeight {
-                    target_height: msg.consensus_height_of_a_on_b,
-                    current_height: host_height,
-                },
-            });
+            return Err(ConnectionError::InvalidConsensusHeight {
+                target_height: msg.consensus_height_of_a_on_b,
+                current_height: host_height,
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         }
 
         self.validate_self_client(msg.client_state_of_a_on_b.clone())?;
@@ -183,22 +180,20 @@ impl<'a> CwIbcCoreContext<'a> {
         if !(conn_end_on_a.state_matches(&State::Init)
             && conn_end_on_a.versions().contains(&msg.version))
         {
-            return Err(ContractError::IbcConnectionError {
-                error: ConnectionError::ConnectionMismatch {
-                    connection_id: msg.conn_id_on_a,
-                },
-            });
+            return Err(ConnectionError::ConnectionMismatch {
+                connection_id: msg.conn_id_on_a,
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         }
 
         let client_cons_state_path_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proofs_height_on_b)?;
         let consensus_state_of_b_on_a = self
             .consensus_state(deps.storage, client_id_on_a, &msg.proofs_height_on_b)
-            .map_err(|_| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: "failed to fetch consensus state".to_string(),
-                },
-            })?;
+            .map_err(|_| ConnectionError::Other {
+                description: "failed to fetch consensus state".to_string(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
         let prefix_on_a = self.commitment_prefix();
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
         let client_address =
@@ -243,7 +238,7 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&msg.proof_consensus_state_of_a_on_b)?,
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             consensus_state_path_on_b,
-            to_vec(&client_cons_state_path_on_a.clone())?,
+            client_cons_state_path_on_a.clone().as_bytes(),
         );
         let payload = VerifyConnectionPayload::<OpenAckResponse> {
             client_id: client_id_on_a.to_string(),
@@ -303,14 +298,14 @@ impl<'a> CwIbcCoreContext<'a> {
                     let connection_id =
                         IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
                     let version: Version =
                         serde_json_wasm::from_slice(&response.version).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -318,14 +313,13 @@ impl<'a> CwIbcCoreContext<'a> {
                         self.connection_end(deps.storage, connection_id.clone().into())?;
 
                     if !conn_end.state_matches(&State::Init) {
-                        return Err(ContractError::IbcConnectionError {
-                            error: ConnectionError::ConnectionMismatch { connection_id },
-                        });
+                        return Err(ConnectionError::ConnectionMismatch { connection_id })
+                            .map_err(|e| Into::<ContractError>::into(e));
                     }
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -340,14 +334,12 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     };
 
-                    let counterparty_prefix = CommitmentPrefix::try_from(
-                        response.counterparty_prefix,
-                    )
-                    .map_err(|error| ContractError::IbcConnectionError {
-                        error: ConnectionError::Other {
-                            description: error.to_string(),
-                        },
-                    })?;
+                    let counterparty_prefix =
+                        CommitmentPrefix::try_from(response.counterparty_prefix)
+                            .map_err(|error| ConnectionError::Other {
+                                description: error.to_string(),
+                            })
+                            .map_err(|e| Into::<ContractError>::into(e))?;
 
                     let counterparty = Counterparty::new(
                         counter_party_client_id.ibc_client_id().clone(),
@@ -376,15 +368,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }
-                None => Err(ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: "UNKNOWN ERROR".to_string(),
-                    },
-                }),
+                None => Err(ConnectionError::Other {
+                    description: "UNKNOWN ERROR".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcConnectionError {
-                error: ConnectionError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ConnectionError::Other { description: error })
+                    .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
     /// This method handles the opening of a connection open try between two IBC clients.
@@ -417,18 +409,16 @@ impl<'a> CwIbcCoreContext<'a> {
         self.validate_self_client(message.client_state_of_b_on_a.clone())?;
         let host_height = self
             .host_height()
-            .map_err(|_| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: "failed to get host height".to_string(),
-                },
-            })?;
+            .map_err(|_| ConnectionError::Other {
+                description: "failed to get host height".to_string(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
         if message.consensus_height_of_b_on_a > host_height {
-            return Err(ContractError::IbcConnectionError {
-                error: ConnectionError::InvalidConsensusHeight {
-                    target_height: message.consensus_height_of_b_on_a,
-                    current_height: host_height,
-                },
-            });
+            return Err(ConnectionError::InvalidConsensusHeight {
+                target_height: message.consensus_height_of_b_on_a,
+                current_height: host_height,
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         }
         let prefix_on_a = message.counterparty.prefix().clone();
         let prefix_on_b = self.commitment_prefix();
@@ -454,11 +444,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 &message.client_id_on_b,
                 &message.proofs_height_on_a,
             )
-            .map_err(|_| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: "failed to fetch consensus state".to_string(),
-                },
-            })?;
+            .map_err(|_| ConnectionError::Other {
+                description: "failed to fetch consensus state".to_string(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
 
         let connection_path =
             commitment::connection_path(&message.counterparty.connection_id.clone().unwrap());
@@ -549,7 +538,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -563,14 +552,12 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     };
 
-                    let counterparty_prefix = CommitmentPrefix::try_from(
-                        response.counterparty_prefix,
-                    )
-                    .map_err(|error| ContractError::IbcConnectionError {
-                        error: ConnectionError::Other {
-                            description: error.to_string(),
-                        },
-                    })?;
+                    let counterparty_prefix =
+                        CommitmentPrefix::try_from(response.counterparty_prefix)
+                            .map_err(|error| ConnectionError::Other {
+                                description: error.to_string(),
+                            })
+                            .map_err(|e| Into::<ContractError>::into(e))?;
 
                     let counterparty = Counterparty::new(
                         counter_party_client_id.ibc_client_id().clone(),
@@ -580,14 +567,14 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let version: Version = serde_json_wasm::from_slice(&response.versions)
                         .map_err(|error| ContractError::IbcDecodeError {
-                            error: error.to_string(),
+                            error: DecodeError::new(error.to_string()),
                         })?;
 
                     let delay_period = Duration::from_secs(response.delay_period);
 
                     let client_id = ClientId::from_str(&response.client_id).map_err(|error| {
                         ContractError::IbcDecodeError {
-                            error: error.to_string(),
+                            error: DecodeError::new(error.to_string()),
                         }
                     })?;
 
@@ -604,7 +591,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let counterparty_client_id =
                         ClientId::from_str(&response.client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
                     let counterparty_conn_id = ConnectionId::from_str(&response.conn_id).unwrap();
@@ -627,15 +614,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("connection_id", connection_id.connection_id().as_str())
                         .add_event(event))
                 }
-                None => Err(ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: "UNKNOWN ERROR".to_string(),
-                    },
-                }),
+                None => Err(ConnectionError::Other {
+                    description: "UNKNOWN ERROR".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcConnectionError {
-                error: ConnectionError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ConnectionError::Other { description: error })
+                    .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
     /// This function handles the confirmation of an open connection between two parties in an IBC
@@ -662,28 +649,25 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_id_on_b = conn_end_on_b.client_id();
         let client_id_on_a = conn_end_on_b.counterparty().client_id();
         if !conn_end_on_b.state_matches(&State::TryOpen) {
-            return Err(ContractError::IbcConnectionError {
-                error: ConnectionError::ConnectionMismatch {
-                    connection_id: msg.conn_id_on_b,
-                },
-            });
+            return Err(ConnectionError::ConnectionMismatch {
+                connection_id: msg.conn_id_on_b,
+            })
+            .map_err(|e| Into::<ContractError>::into(e));
         }
-        let _client_state_of_a_on_b =
-            self.client_state(deps.storage, client_id_on_b)
-                .map_err(|_| ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: "failed to fetch client state".to_string(),
-                    },
-                })?;
+        let _client_state_of_a_on_b = self
+            .client_state(deps.storage, client_id_on_b)
+            .map_err(|_| ConnectionError::Other {
+                description: "failed to fetch client state".to_string(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
         let _client_cons_state_path_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
         let consensus_state_of_a_on_b = self
             .consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)
-            .map_err(|_| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: "failed to fetch consensus state".to_string(),
-                },
-            })?;
+            .map_err(|_| ConnectionError::Other {
+                description: "failed to fetch consensus state".to_string(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
         let prefix_on_b = self.commitment_prefix();
 
@@ -768,7 +752,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let connection_id =
                         IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -776,14 +760,13 @@ impl<'a> CwIbcCoreContext<'a> {
                         self.connection_end(deps.storage, connection_id.clone().into())?;
 
                     if !conn_end.state_matches(&State::TryOpen) {
-                        return Err(ContractError::IbcConnectionError {
-                            error: ConnectionError::ConnectionMismatch { connection_id },
-                        });
+                        return Err(ConnectionError::ConnectionMismatch { connection_id })
+                            .map_err(|e| Into::<ContractError>::into(e));
                     }
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
-                                error: error.to_string(),
+                                error: DecodeError::new(error.to_string()),
                             }
                         })?;
 
@@ -798,14 +781,12 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     };
 
-                    let counterparty_prefix = CommitmentPrefix::try_from(
-                        response.counterparty_prefix,
-                    )
-                    .map_err(|error| ContractError::IbcConnectionError {
-                        error: ConnectionError::Other {
-                            description: error.to_string(),
-                        },
-                    })?;
+                    let counterparty_prefix =
+                        CommitmentPrefix::try_from(response.counterparty_prefix)
+                            .map_err(|error| ConnectionError::Other {
+                                description: error.to_string(),
+                            })
+                            .map_err(|e| Into::<ContractError>::into(e))?;
 
                     let counterparty = Counterparty::new(
                         counter_party_client_id.ibc_client_id().clone(),
@@ -832,15 +813,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }
-                None => Err(ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: "UNKNOWN ERROR".to_string(),
-                    },
-                }),
+                None => Err(ConnectionError::Other {
+                    description: "UNKNOWN ERROR".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcConnectionError {
-                error: ConnectionError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ConnectionError::Other { description: error })
+                    .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
 }

@@ -44,12 +44,11 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     ) -> Result<cosmwasm_std::Response, ContractError> {
         // connection hops should be 1
         if message.connection_hops_on_a.len() != 1 {
-            return Err(ContractError::IbcChannelError {
-                error: ChannelError::InvalidConnectionHopsLength {
-                    expected: 1,
-                    actual: message.connection_hops_on_a.len(),
-                },
-            });
+            return Err(ChannelError::InvalidConnectionHopsLength {
+                expected: 1,
+                actual: message.connection_hops_on_a.len(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?;
         }
         let connection_id = ConnectionId::from(message.connection_hops_on_a[0].clone());
         // An IBC connection running on the local (host) chain should exist.
@@ -709,9 +708,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 
                     if channel_end.state != State::Uninitialized {
-                        return Err(ContractError::IbcChannelError {
-                            error: ChannelError::UnknownState { state: 5 },
-                        });
+                        return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
                     }
                     channel_end.state = State::Init;
                     self.store_channel_end(
@@ -749,15 +746,14 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let channel_id_event = create_channel_id_generated_event(channel_id);
                     Ok(Response::new().add_event(channel_id_event))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| e.into()),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
+            }
         }
     }
 
@@ -792,9 +788,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 
                     if channel_end.state != State::Uninitialized {
-                        return Err(ContractError::IbcChannelError {
-                            error: ChannelError::UnknownState { state: 5 },
-                        });
+                        return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
                     }
                     channel_end.state = State::TryOpen;
                     self.store_channel_end(
@@ -847,15 +841,14 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         .add_event(channel_id_event)
                         .add_event(main_event))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| e.into()),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
+            }
         }
     }
 
@@ -911,15 +904,14 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     );
                     Ok(Response::new().add_event(event))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| e.into()),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
+            }
         }
     }
 
@@ -954,12 +946,11 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let mut channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if !channel_end.state_matches(&State::Init) {
-                        return Err(ContractError::IbcChannelError {
-                            error: ChannelError::InvalidChannelState {
-                                channel_id: channel_id.ibc_channel_id().clone(),
-                                state: channel_end.state,
-                            },
-                        });
+                        return Err(ChannelError::InvalidChannelState {
+                            channel_id: channel_id.ibc_channel_id().clone(),
+                            state: channel_end.state,
+                        })
+                        .map_err(|e| e.into());
                     }
                     channel_end.set_state(State::Open); // State Change
                     self.store_channel_end(
@@ -986,15 +977,14 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         .add_event(event)
                         .add_attribute("method", "execute_channel_open_ack"))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| e.into()),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
+            }
         }
     }
 
@@ -1029,12 +1019,11 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let mut channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if !channel_end.state_matches(&State::TryOpen) {
-                        return Err(ContractError::IbcChannelError {
-                            error: ChannelError::InvalidChannelState {
-                                channel_id: channel_id.ibc_channel_id().clone(),
-                                state: channel_end.state,
-                            },
-                        });
+                        return Err(ChannelError::InvalidChannelState {
+                            channel_id: channel_id.ibc_channel_id().clone(),
+                            state: channel_end.state,
+                        })
+                        .map_err(|e| e.into());
                     }
                     channel_end.set_state(State::Open); // State Change
                     self.store_channel_end(
@@ -1059,15 +1048,14 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     );
                     Ok(Response::new().add_event(event))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| e.into()),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
+            }
         }
     }
     /// This function handles the confirmation of closing an IBC channel and updates the channel state
@@ -1101,12 +1089,11 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     let mut channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if channel_end.state_matches(&State::Closed) {
-                        return Err(ContractError::IbcChannelError {
-                            error: ChannelError::InvalidChannelState {
-                                channel_id: channel_id.ibc_channel_id().clone(),
-                                state: channel_end.state,
-                            },
-                        });
+                        return Err(ChannelError::InvalidChannelState {
+                            channel_id: channel_id.ibc_channel_id().clone(),
+                            state: channel_end.state,
+                        })
+                        .map_err(|e| e.into());
                     }
                     channel_end.set_state(State::Closed); // State Change
                     self.store_channel_end(
@@ -1128,15 +1115,14 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
 
                     Ok(Response::new().add_event(event))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| e.into()),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
+            }
         }
     }
 }

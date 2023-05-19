@@ -22,6 +22,20 @@ cosmwasm-schema = "1.2.1"
 sha2 = { version = "0.10.6", default-features = false }
 hex ={ version = "0.4.3", default-features = false }
 sha3 = { version = "0.10.6", default-features = false }
+serde-json-wasm = {version="0.5.0", default-features = false}
+ibc = { version = "0.32.0", default-features = false}
+dyn-clone = "1.0.11"
 
 [dev-dependencies]
 test-utils={path="../test-utils"}
+
+[profile.release]
+# Do not perform backtrace for panic on release builds.
+panic = 'abort'
+# Perform optimizations on all codegen units.
+codegen-units = 1
+# Optimize for size.
+opt-level = 'z' # or 'z' to optimize "aggressively" for size
+# Enable link time optimization.
+lto = true
+strip = true

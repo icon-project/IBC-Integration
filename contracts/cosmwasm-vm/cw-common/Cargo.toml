@@ -10,8 +10,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cosmwasm-schema = "1.2.1"
-cosmwasm-std = { version = "1.2.1", features = ["iterator", "ibc3"] }
-ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde", "borsh"]}
+cosmwasm-std = {version="1.2.2",default-features = false}
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 cw-storage-plus = "1.0.1"
 serde_json = "*"
@@ -19,10 +18,23 @@ hex-buffer-serde = "0.4.0"
 schemars = "0.8.12"
 hex = { version = "0.4.3", default-features = false}
 common = { path="../../../libraries/rust/common" }
-ibc-proto = { version = "0.26.0", default-features = false, features = ["parity-scale-codec", "borsh"] }
+ibc = { version = "0.32.0", default-features = false}
+ibc-proto = { version = "0.26.0", default-features = false}
 prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
-
+serde-json-wasm = {version="0.5.0", default-features = false}
+bytes = { version = "1.4.0", default-features = false }
 [dev-dependencies]
 getrandom = {version = "0.2.9", default-features = false, features = ["custom"]}
 test-utils={path="../../../libraries/rust/test-utils"}
+
+[profile.release]
+# Do not perform backtrace for panic on release builds.
+panic = 'abort'
+# Perform optimizations on all codegen units.
+codegen-units = 1
+# Optimize for size.
+opt-level = 'z' # or 'z' to optimize "aggressively" for size
+# Enable link time optimization.
+lto = true
+strip = true
 

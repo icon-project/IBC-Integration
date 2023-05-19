@@ -7,7 +7,17 @@ use cosmwasm_std::{
     Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
 };
 
-use cw_common::types::{ClientId, ClientType};
+use cw_common::raw_types::channel::*;
+use cw_common::raw_types::connection::*;
+use cw_common::{
+    raw_types::{
+        client::{
+            RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
+        },
+        RawCommitmentProof, RawHeight, RawMerkleProof,
+    },
+    types::{ClientId, ClientType},
+};
 use ibc::{
     core::{
         ics03_connection::version::{get_compatible_versions, Version},
@@ -20,32 +30,6 @@ use ibc::{
     signer::Signer,
     Height,
 };
-use ibc_proto::ibc::core::channel::v1::Channel as RawChannel;
-use ibc_proto::ibc::core::channel::v1::MsgAcknowledgement as RawMsgAcknowledgement;
-use ibc_proto::ibc::core::channel::v1::MsgTimeout as RawMsgTimeout;
-use ibc_proto::ibc::core::channel::v1::MsgTimeoutOnClose as RawMsgTimeoutOnClose;
-pub use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
-use ibc_proto::ibc::core::channel::v1::{
-    MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
-    MsgChannelCloseInit as RawMsgChannelCloseInit, MsgChannelOpenAck as RawMsgChannelOpenAck,
-    MsgChannelOpenConfirm as RawMsgChannelOpenConfirm, MsgChannelOpenInit as RawMsgChannelOpenInit,
-    MsgChannelOpenTry as RawMsgChannelOpenTry,
-};
-use ibc_proto::ibc::core::client::v1::Height as RawHeight;
-use ibc_proto::ibc::core::client::v1::{
-    MsgCreateClient as RawMessageCreateClient, MsgSubmitMisbehaviour as RawMessageMisbehaviour,
-    MsgUpdateClient as RawMessageUpdateCelint, MsgUpgradeClient as RawMessageUpgradeClient,
-};
-use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
-use ibc_proto::ibc::core::connection::v1::Counterparty as RawCounterpartyConnection;
-use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
-use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
-use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
-use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
-use ibc_proto::ibc::core::{
-    channel::v1::Counterparty as RawCounterparty, commitment::v1::MerklePrefix,
-};
-use ibc_proto::ics23::CommitmentProof;
 
 pub struct MockEnvBuilder {
     env: Env,
@@ -124,8 +108,10 @@ fn test() {
     assert_ne!(mock, mock_env_builder)
 }
 
-pub fn get_dummy_raw_counterparty_for_channel(channel_id: String) -> RawCounterparty {
-    RawCounterparty {
+pub fn get_dummy_raw_counterparty_for_channel(
+    channel_id: String,
+) -> cw_common::raw_types::channel::RawCounterparty {
+    cw_common::raw_types::channel::RawCounterparty {
         port_id: PortId::default().to_string(),
         channel_id,
     }
@@ -138,7 +124,7 @@ pub fn get_dummy_raw_counterparty(conn_id: Option<u64>) -> RawCounterpartyConnec
     RawCounterpartyConnection {
         client_id: ClientId::default().as_str().to_string(),
         connection_id,
-        prefix: Some(MerklePrefix {
+        prefix: Some(RawMerklePrefix {
             key_prefix: b"ibc".to_vec(),
         }),
     }
@@ -230,19 +216,19 @@ pub fn get_dummy_raw_msg_chan_open_try(proof_height: u64) -> RawMsgChannelOpenTr
     }
 }
 
-pub fn get_dummy_raw_msg_update_client_message() -> RawMessageUpdateCelint {
+pub fn get_dummy_raw_msg_update_client_message() -> RawMsgUpdateClient {
     let height = Height::new(10, 15).unwrap();
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
-    RawMessageUpdateCelint {
+    RawMsgUpdateClient {
         client_id: client_id.ibc_client_id().to_string(),
         header: Some(MockHeader::new(height).into()),
         signer: "0CDA3F47EF3C4906693B170EF650EB968C5F4B2C".to_string(),
     }
 }
 
-pub fn get_dummy_raw_msg_upgrade_client(height: Height) -> RawMessageUpgradeClient {
-    RawMessageUpgradeClient {
+pub fn get_dummy_raw_msg_upgrade_client(height: Height) -> RawMsgUpgradeClient {
+    RawMsgUpgradeClient {
         client_id: "new_client_type".parse().unwrap(),
         client_state: Some(MockClientState::new(MockHeader::new(height)).into()),
         consensus_state: Some(MockConsensusState::new(MockHeader::new(height)).into()),
@@ -254,12 +240,12 @@ pub fn get_dummy_raw_msg_upgrade_client(height: Height) -> RawMessageUpgradeClie
 
 /// Returns a dummy `RawMerkleProof`, for testing only!
 pub fn get_dummy_merkle_proof() -> RawMerkleProof {
-    let parsed = CommitmentProof { proof: None };
-    let mproofs: Vec<CommitmentProof> = vec![parsed];
+    let parsed = RawCommitmentProof { proof: None };
+    let mproofs: Vec<RawCommitmentProof> = vec![parsed];
     RawMerkleProof { proofs: mproofs }
 }
 
-pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMessageMisbehaviour {
+pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMsgSubmitMisbehaviour {
     let height = Height::new(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
 
@@ -271,7 +257,7 @@ pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMessageMisbehaviour {
         header1: mock_header,
         header2: mock_header,
     };
-    RawMessageMisbehaviour {
+    RawMsgSubmitMisbehaviour {
         client_id: client_id.ibc_client_id().to_string(),
         misbehaviour: Some(mis_b.into()),
         signer: get_dummy_bech32_account(),
@@ -291,7 +277,7 @@ pub fn get_dummy_raw_msg_chan_close_confirm(proof_height: u64) -> RawMsgChannelC
         port_id: PortId::default().to_string(),
         channel_id: ChannelId::default().to_string(),
         proof_init: get_dummy_proof(),
-        proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
+        proof_height: Some(RawHeight {
             revision_number: 0,
             revision_height: proof_height,
         }),
@@ -299,12 +285,12 @@ pub fn get_dummy_raw_msg_chan_close_confirm(proof_height: u64) -> RawMsgChannelC
     }
 }
 
-pub fn get_dummy_raw_msg_create_client() -> RawMessageCreateClient {
+pub fn get_dummy_raw_msg_create_client() -> RawMsgCreateClient {
     let height = Height::new(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
     let mock_client_state = MockClientState::new(mock_header);
     let mock_consenus_state = MockConsensusState::new(mock_header);
-    RawMessageCreateClient {
+    RawMsgCreateClient {
         client_state: Some(mock_client_state.into()),
         consensus_state: Some(mock_consenus_state.into()),
         signer: get_dummy_account_id().as_ref().to_string(),

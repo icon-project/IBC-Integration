@@ -28,7 +28,7 @@ pub use ibc::{
                 upgrade_client::MsgUpgradeClient as IbcMsgUpgradeClient,
             },
         },
-        ics03_connection::connection::ConnectionEnd,
+        ics03_connection::connection::ConnectionEnd as IbcConnectionEnd,
         ics04_channel::{
             channel::ChannelEnd,
             error::{ChannelError, PacketError},

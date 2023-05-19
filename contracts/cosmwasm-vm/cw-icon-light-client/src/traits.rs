@@ -4,7 +4,7 @@ use common::icon::icon::types::v1::MerkleNode;
 use common::icon::icon::types::v1::SignedHeader;
 use common::utils::keccak256;
 use cosmwasm_std::Addr;
-use ibc_proto::google::protobuf::Any;
+use cw_common::raw_types::Any;
 use prost::{DecodeError, Message};
 use serde::Deserialize;
 use serde::Serialize;
@@ -171,4 +171,3 @@ pub trait IContext {
         height: u64,
     ) -> Result<u64, Self::Error>;
 }
-

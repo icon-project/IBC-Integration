@@ -1,8 +1,9 @@
 use anyhow::Error as AppError;
-use common::{icon::icon::lightclient::v1::ClientState as RawClientState, traits::AnyTypes};
+use common::constants::ICON_CLIENT_TYPE;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
+use common::{icon::icon::lightclient::v1::ClientState as RawClientState, traits::AnyTypes};
 use cosmwasm_std::{Addr, Empty, Event};
-use cw_common::{constants::ICON_CLIENT_TYPE, core_msg as CoreMsg, hex_string::HexString};
+use cw_common::{core_msg as CoreMsg, hex_string::HexString};
 use cw_ibc_core::{execute, instantiate, query, reply};
 use cw_icon_light_client;
 use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};

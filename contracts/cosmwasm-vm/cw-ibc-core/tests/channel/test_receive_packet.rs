@@ -3,6 +3,7 @@ use cosmwasm_std::IbcReceiveResponse;
 use cw_common::client_response::PacketResponse;
 use cw_common::client_response::XcallPacketResponseData;
 
+use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
 use ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use ibc::core::ics03_connection::connection::State as ConnectionState;
@@ -10,8 +11,6 @@ use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use ibc::core::ics04_channel::msgs::PacketMsg;
 use ibc::core::ics04_channel::packet::Receipt;
 use ibc::timestamp::Timestamp;
-use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
-use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 
 use super::*;
 
@@ -109,9 +108,9 @@ fn test_receive_packet() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -120,7 +119,7 @@ fn test_receive_packet() {
     .unwrap();
 
     let height = msg.proof_height_on_a;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
