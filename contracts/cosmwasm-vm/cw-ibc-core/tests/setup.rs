@@ -1,6 +1,3 @@
-
-
-
 use std::str::FromStr;
 
 pub fn mock_height(
@@ -14,10 +11,12 @@ pub fn to_mock_height(height: Height) -> common::ibc::Height {
     return common::ibc::Height::new(height.revision_number(), height.revision_height()).unwrap();
 }
 
-pub fn to_mock_client_id(client_id:&ClientId)->common::ibc::core::ics24_host::identifier::ClientId{
-    return common::ibc::core::ics24_host::identifier::ClientId::from_str(&client_id.to_string()).unwrap()
+pub fn to_mock_client_id(
+    client_id: &ClientId,
+) -> common::ibc::core::ics24_host::identifier::ClientId {
+    return common::ibc::core::ics24_host::identifier::ClientId::from_str(&client_id.to_string())
+        .unwrap();
 }
-
 
 use cosmwasm_std::{
     coins,
@@ -38,17 +37,15 @@ use common::ibc::{
 };
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
-use cw_common::{
-    raw_types::{
-        client::{
-            RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
-        },
-        RawCommitmentProof, RawHeight, RawMerkleProof,
+use cw_common::raw_types::{
+    client::{
+        RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
     },
+    RawCommitmentProof, RawHeight, RawMerkleProof,
 };
 
-use common::ibc::core::ics24_host::identifier::ClientId;
 use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
 
 pub struct MockEnvBuilder {
     env: Env,
@@ -107,8 +104,6 @@ pub use common::ibc::mock::client_state::MockClientState;
 pub use common::ibc::mock::consensus_state::MockConsensusState;
 use common::ibc::mock::header::MockHeader;
 pub use common::ibc::mock::misbehaviour::Misbehaviour;
-
-
 
 #[test]
 fn test() {

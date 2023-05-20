@@ -22,6 +22,4 @@ mod serializers;
 /// Re-export of ICS 002 Height domain type
 pub type Height = crate::ibc::core::ics02_client::height::Height;
 
-
-
 pub mod mock;

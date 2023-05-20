@@ -12,8 +12,6 @@ use common::ibc::core::ics04_channel::{
 use cosmwasm_std::{to_binary, Addr, Event, IbcOrder, Reply, SubMsgResponse, SubMsgResult};
 use cw_common::ibc_types::IbcClientId;
 
-use common::ibc::core::ics02_client::client_type::ClientType;
-use common::ibc::core::ics24_host::identifier::ClientId;
 use common::ibc::core::ics24_host::identifier::PortId;
 use cw_ibc_core::ics04_channel::open_init::create_channel_submesssage;
 use cw_ibc_core::ics04_channel::EXECUTE_ON_CHANNEL_CLOSE_INIT;

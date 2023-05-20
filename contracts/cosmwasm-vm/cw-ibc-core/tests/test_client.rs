@@ -4,15 +4,12 @@ use std::str::FromStr;
 
 use common::client_state::IClientState;
 use common::ibc::{
-    core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
-  
-    signer::Signer,
-    Height,
+    core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour, signer::Signer, Height,
 };
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use common::utils::keccak256;
-use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
+use cosmwasm_std::{testing::mock_env, to_binary, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
@@ -20,6 +17,9 @@ use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpgradeClient};
 use cw_common::raw_types::Any;
 
+use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
+use common::ibc::mock::header::MockHeader;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::events::{
@@ -29,13 +29,9 @@ use cw_ibc_core::{
     traits::IbcClient,
     MsgUpgradeClient,
 };
-use common::ibc::core::ics02_client::client_type::ClientType;
-use common::ibc::core::ics24_host::identifier::ClientId;
-use common::ibc::mock::header::MockHeader;
 use prost::Message;
 use setup::*;
 
-  
 #[test]
 fn get_client_next_seq_on_a() {
     let mut mock = deps();
@@ -162,12 +158,7 @@ fn check_for_update_client_event() {
     let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message.clone()).unwrap();
     let height = Height::new(15, 10).unwrap();
     let client_type = ClientType::new("new_client_type".to_string());
-    let result = update_client_event(
-        client_type,
-        height,
-        vec![height],
-        &message.client_id,
-    );
+    let result = update_client_event(client_type, height, vec![height], &message.client_id);
 
     assert_eq!("update_client", result.ty);
 }
@@ -214,7 +205,7 @@ fn test_upgrade_client_event() {
     let signer = get_dummy_account_id();
 
     let height = Height::new(1, 1).unwrap();
-    let mock_height=to_mock_height(height);
+    let mock_height = to_mock_height(height);
 
     let client_state = MockClientState::new(MockHeader::new(mock_height));
     let consensus_state = MockConsensusState::new(MockHeader::new(mock_height));
@@ -252,10 +243,7 @@ fn create_misbehaviour_event_test() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
 
-    let event = client_misbehaviour_event(
-        client_id.as_str(),
-        client_type.as_str(),
-    );
+    let event = client_misbehaviour_event(client_id.as_str(), client_type.as_str());
 
     assert_eq!("client_misbehaviour", event.ty)
 }
@@ -329,8 +317,8 @@ fn check_for_create_client_message_into_raw_message() {
     };
 
     let raw_message: RawMsgCreateClient = RawMsgCreateClient::try_from(actual_message).unwrap();
-    println!("{:?}",raw_message);
-    println!("{:?}",get_dummy_raw_msg_create_client());
+    println!("{:?}", raw_message);
+    println!("{:?}", get_dummy_raw_msg_create_client());
 
     assert_eq!(raw_message, get_dummy_raw_msg_create_client())
 }
@@ -343,10 +331,7 @@ fn check_for_genereted_client_id_event() {
 
     assert_eq!("client_id_created", event.ty);
 
-    assert_eq!(
-        event.attributes[0].value,
-        client_id.as_str()
-    )
+    assert_eq!(event.attributes[0].value, client_id.as_str())
 }
 
 #[test]
@@ -838,10 +823,7 @@ fn check_for_update_client_message() {
         .update_client(deps.as_mut(), info, update_client_message)
         .unwrap();
 
-    assert_eq!(
-        client_id.as_str(),
-        result.attributes[1].value
-    );
+    assert_eq!(client_id.as_str(), result.attributes[1].value);
 
     let mock_reponse_data = UpdateClientResponse::new(
         "10-15".to_string(),
@@ -1857,10 +1839,8 @@ fn success_on_execute_misbehaviour() {
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
-    let response_message_data = MisbehaviourResponse::new(
-        client_id.to_string(),
-        client_state.encode_to_vec(),
-    );
+    let response_message_data =
+        MisbehaviourResponse::new(client_id.to_string(), client_state.encode_to_vec());
 
     let event = Event::new("empty");
 
@@ -1877,10 +1857,7 @@ fn success_on_execute_misbehaviour() {
         .unwrap();
 
     assert_eq!("client_misbehaviour", result.events[0].ty);
-    assert_eq!(
-        client_id.as_str(),
-        result.events[0].attributes[0].value
-    );
+    assert_eq!(client_id.as_str(), result.events[0].attributes[0].value);
 }
 
 #[test]

@@ -1,9 +1,6 @@
 use super::*;
-use common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use common::ibc::core::ics04_channel::packet::Receipt;
-use common::icon::icon::lightclient::v1::{
-    ClientState as RawClientState, ConsensusState as RawConsensusState,
-};
+
 use cosmwasm_std::to_binary;
 use cw_common::hex_string::HexString;
 use cw_common::raw_types::channel::{
@@ -88,7 +85,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn execute(
         &mut self,
         deps: DepsMut,
-        env: Env,
+        _env: Env,
         info: MessageInfo,
         msg: CoreExecuteMsg,
     ) -> Result<Response, ContractError> {
@@ -420,7 +417,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let _port_id = PortId::from_str(&port_id).unwrap();
                 let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
                 let _sequence = Sequence::from(sequence);
-                let res = self
+                let _res = self
                     .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence.clone())
                     .unwrap();
                 to_binary(&true)
@@ -469,7 +466,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     .unwrap();
                 match res {
                     Receipt::Ok => to_binary(&true),
-                    _ => to_binary(&false),
                 }
             }
         }
@@ -687,7 +683,7 @@ mod tests {
     use cosmwasm_std::{
         from_binary,
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
-        to_vec, Addr, OwnedDeps,
+        Addr, OwnedDeps,
     };
     use cw_common::raw_types::{Any, RawHeight};
     use cw_common::{hex_string::HexString, ibc_types::IbcClientId};

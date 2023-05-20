@@ -41,7 +41,6 @@ use common::ibc::{
     events::IbcEventType,
 };
 use cosmwasm_std::{QueryRequest, WasmQuery};
-use cw_common::client_msg::VerifyConnectionPayload;
 use cw_common::client_response::OpenConfirmResponse;
 use cw_common::commitment;
 use cw_common::raw_types::Protobuf;

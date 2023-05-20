@@ -6,8 +6,6 @@ use common::{client_state::IClientState, consensus_state::IConsensusState};
 use prost::DecodeError;
 use prost::Message;
 
-use crate::error::decode_error;
-
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {

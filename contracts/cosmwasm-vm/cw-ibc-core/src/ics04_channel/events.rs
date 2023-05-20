@@ -235,7 +235,7 @@ pub fn create_write_ack_event(
     dst_connection_id: &str,
 ) -> Result<Event, ContractError> {
     let data = std::str::from_utf8(&packet.data)
-        .map_err(|e| ChannelError::NonUtf8PacketData)
+        .map_err(|_e| ChannelError::NonUtf8PacketData)
         .map_err(|e| Into::<ContractError>::into(e))?;
     let hex_data = hex::encode(&packet.data);
 

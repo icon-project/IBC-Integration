@@ -8,9 +8,9 @@ use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 use common::ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use common::ibc::core::ics04_channel::msgs::PacketMsg;
 use common::ibc::core::ics04_channel::packet::Receipt;
+use common::ibc::timestamp::Timestamp;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
-use common::ibc::timestamp::Timestamp;
 
 use super::*;
 
@@ -451,7 +451,9 @@ fn execute_receive_packet_ordered() {
     assert_eq!(seq.unwrap(), 2.into())
 }
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })")]
+#[should_panic(
+    expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })"
+)]
 fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();

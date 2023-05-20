@@ -1,9 +1,9 @@
+use super::*;
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
 use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics04_channel::{msgs::recv_packet::MsgRecvPacket, packet::Receipt};
 use common::ibc::core::ics24_host::identifier::ClientId;
 use common::ibc::core::ics24_host::identifier::PortId;
-use super::*;
-use common::ibc::core::ics04_channel::{msgs::recv_packet::MsgRecvPacket, packet::Receipt};
 use cosmwasm_std::{Empty, IbcReceiveResponse};
 use cw_common::{
     client_response::{LightClientResponse, PacketResponse, XcallPacketResponseData},
@@ -1396,7 +1396,7 @@ fn test_for_ack_execute() {
 fn test_for_timeout_execution() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
-    let mut contract = CwIbcCoreContext::default();
+    let contract = CwIbcCoreContext::default();
     let env = mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})

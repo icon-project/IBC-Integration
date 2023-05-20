@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use cosmwasm_std::StdError;
 use cw_common::errors::CwErrors;
 use prost::DecodeError;

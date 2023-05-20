@@ -1,5 +1,5 @@
 use cosmwasm_std::Addr;
-use cw_multi_test::{App, AppBuilder, Executor};
+use cw_multi_test::{App, Executor};
 use setup::init_mock_dapp_contract;
 
 mod setup;

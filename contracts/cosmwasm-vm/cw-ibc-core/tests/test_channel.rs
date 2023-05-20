@@ -2,13 +2,14 @@ use std::{str::FromStr, time::Duration};
 
 use common::traits::AnyTypes;
 use cosmwasm_std::{
-    to_binary, to_vec, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
+    to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
 };
 
-use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::ibc::core::ics02_client::client_type::ClientType;
+use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 
+use common::ibc::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 use common::ibc::{
     core::ics04_channel::{
         channel::{Counterparty, Order, State},
@@ -24,7 +25,6 @@ use cw_common::raw_types::channel::{
     RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawPacket,
 };
 use cw_common::raw_types::RawHeight;
-use common::ibc::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
@@ -45,15 +45,7 @@ use cw_ibc_core::{
     ChannelEnd, ConnectionEnd, Sequence,
 };
 use cw_ibc_core::{traits::*, IbcClientType};
-// use ibc_proto::common::ibc::core::{
-//     channel::v1::{
-//         MsgChannelCloseConfirm as RawMsgChannelCloseConfirm,
-//         MsgChannelCloseInit as RawMsgChannelCloseInit, MsgChannelOpenAck as RawMsgChannelOpenAck,
-//         MsgChannelOpenConfirm as RawMsgChannelOpenConfirm,
-//         MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
-//     },
-//     client::v1::Height,
-// };
+
 pub mod channel;
 pub mod setup;
 use prost::Message;

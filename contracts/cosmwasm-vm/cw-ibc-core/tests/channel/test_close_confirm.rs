@@ -1,7 +1,6 @@
-use cosmwasm_std::IbcChannel;
 use common::ibc::core::ics02_client::client_type::ClientType;
-use common::ibc::core::ics24_host::identifier::ClientId;
 use common::ibc::core::ics24_host::identifier::PortId;
+use cosmwasm_std::IbcChannel;
 use cw_common::client_response::LightClientResponse;
 use cw_ibc_core::ics04_channel::{
     channel_close_confirm_validate, on_chan_close_confirm_submessage,

@@ -3,6 +3,8 @@ pub mod setup;
 use std::str::FromStr;
 use std::time::Duration;
 
+use common::ibc::core::ics24_host::identifier::ClientId;
+use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
@@ -15,15 +17,11 @@ use cw_common::client_response::OpenAckResponse;
 use cw_common::client_response::OpenConfirmResponse;
 use cw_common::client_response::OpenTryResponse;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
-
-use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcClientId;
 use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::RawVersion;
-use common::ibc::core::ics02_client::client_type::ClientType;
-use common::ibc::core::ics24_host::identifier::ClientId;
 use cw_common::ProstMessage;
 
 use cw_ibc_core::ConnectionEnd;
@@ -31,13 +29,14 @@ use cw_ibc_core::Height;
 
 use cw_ibc_core::{context::CwIbcCoreContext, msg::InstantiateMsg};
 
+use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
 use common::traits::AnyTypes;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
-use common::ibc::core::ics24_host::identifier::ConnectionId;
 use setup::*;
 
+#[test]
 fn test_for_create_client_execution_message() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
@@ -82,8 +81,8 @@ fn test_for_create_client_execution_message() {
     assert_eq!(response.attributes[0].value, "register_client");
 
     let create_client_message = CoreExecuteMsg::CreateClient {
-        client_state: HexString::from_bytes(&client_state.clone().encode_to_vec()),
-        consensus_state: HexString::from_bytes(&consenus_state.clone().encode_to_vec()),
+        client_state: HexString::from_bytes(&client_state.clone().to_any().encode_to_vec()),
+        consensus_state: HexString::from_bytes(&consenus_state.clone().to_any().encode_to_vec()),
         signer: HexString::from_bytes("raw_message".as_bytes()),
     };
 
@@ -1009,7 +1008,7 @@ fn test_connection_open_try_fails_invalid_id() {
         )
         .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
+    let _counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.clone(),
         None,
         counterparty_prefix.clone(),
@@ -1027,9 +1026,10 @@ fn test_connection_open_try_fails_invalid_id() {
         .unwrap();
 
     deps.querier.update_wasm(|r| match r {
-        WasmQuery::Smart { contract_addr, msg } => {
-            SystemResult::Ok(ContractResult::Ok(to_binary(&vec![0, 2, 3]).unwrap()))
-        }
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg: _,
+        } => SystemResult::Ok(ContractResult::Ok(to_binary(&vec![0, 2, 3]).unwrap())),
         _ => todo!(),
     });
 

@@ -28,7 +28,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self.ibc_store().capabilities().save(store, name, &address) {
             Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::IbcDecodeError {
+            Err(_error) => Err(ContractError::IbcDecodeError {
                 error: DecodeError::new("FailedToStore Capability".to_owned()),
             }),
         }

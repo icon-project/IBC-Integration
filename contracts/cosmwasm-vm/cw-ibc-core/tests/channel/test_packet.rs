@@ -122,7 +122,9 @@ fn test_packet_send_fail_channel_not_found() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })")]
+#[should_panic(
+    expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })"
+)]
 fn test_packet_send_fail_misiing_sequense() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();

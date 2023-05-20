@@ -1,7 +1,5 @@
 use crate::cw_types::{CwEndPoint, CwPacket};
-use crate::ibc_types::{
-    IbcChannelId, IbcClientId, IbcClientType, IbcConnectionId, IbcModuleId, IbcPortId,
-};
+use crate::ibc_types::{IbcChannelId, IbcClientId, IbcClientType, IbcPortId};
 use crate::{
     errors::CwErrors,
     ibc_types::IbcHeight,
@@ -234,15 +232,15 @@ pub struct PacketResponse {
 
 impl From<PacketResponse> for Packet {
     fn from(packet: PacketResponse) -> Self {
-        println!("{:?}",packet);
-      // let data = hex::decode(packet.data).unwrap();
+        println!("{:?}", packet);
+        // let data = hex::decode(packet.data).unwrap();
         Packet {
             sequence: packet.seq_on_a,
             port_id_on_a: packet.port_id_on_a,
             chan_id_on_a: packet.chan_id_on_a,
             port_id_on_b: packet.port_id_on_b,
             chan_id_on_b: packet.chan_id_on_b,
-            data:packet.data,
+            data: packet.data,
             timeout_height_on_b: packet.timeout_height_on_b,
             timeout_timestamp_on_b: packet.timeout_timestamp_on_b,
         }
@@ -251,14 +249,14 @@ impl From<PacketResponse> for Packet {
 
 impl From<Packet> for PacketResponse {
     fn from(packet: Packet) -> Self {
-      // let data = hex::encode(packet.data);
+        // let data = hex::encode(packet.data);
         PacketResponse {
             seq_on_a: packet.sequence,
             port_id_on_a: packet.port_id_on_a,
             chan_id_on_a: packet.chan_id_on_a,
             port_id_on_b: packet.port_id_on_b,
             chan_id_on_b: packet.chan_id_on_b,
-            data:packet.data,
+            data: packet.data,
             timeout_height_on_b: packet.timeout_height_on_b,
             timeout_timestamp_on_b: packet.timeout_timestamp_on_b,
         }

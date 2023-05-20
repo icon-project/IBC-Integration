@@ -1,7 +1,6 @@
-use cw_common::client_response::LightClientResponse;
 use common::ibc::core::ics02_client::client_type::ClientType;
-use common::ibc::core::ics24_host::identifier::ClientId;
 use common::ibc::core::ics24_host::identifier::PortId;
+use cw_common::client_response::LightClientResponse;
 
 use super::*;
 

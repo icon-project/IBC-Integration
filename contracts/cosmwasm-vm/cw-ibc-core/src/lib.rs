@@ -68,15 +68,12 @@ use cw_common::ibc_types::{
 use cw_storage_plus::{Item, Map};
 
 pub use cw_common::commitment::*;
-use prost::Message;
 use std::str::FromStr;
 use thiserror::Error;
 
 use crate::msg::{InstantiateMsg, QueryMsg};
 use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
-use common::icon::icon::lightclient::v1::ClientState;
-use common::signed_header::RawSignedHeader;
 
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 

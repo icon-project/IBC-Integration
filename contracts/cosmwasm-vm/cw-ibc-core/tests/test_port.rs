@@ -1,14 +1,11 @@
 pub mod setup;
-use std::str::{from_utf8, FromStr};
-
+use common::ibc::core::ics24_host::identifier::PortId;
 use common::utils::keccak256;
 use cw_common::commitment;
 use cw_common::ibc_types::IbcChannelId;
-use common::ibc::core::ics24_host::identifier::{ ConnectionId, PortId};
-use common::ibc::core::ics02_client::client_type::ClientType;
-use common::ibc::core::ics24_host::identifier::ClientId;
 use cw_ibc_core::{context::CwIbcCoreContext, ics04_channel::ChannelMsg, MsgChannelOpenInit};
 use setup::*;
+use std::str::{from_utf8, FromStr};
 #[test]
 fn test_store_module_by_port() {
     let mut deps = deps();
@@ -60,9 +57,7 @@ fn check_for_port_path_key() {
 }
 
 #[test]
-#[should_panic(
-    expected = "InvalidLength { id: \"s\", length: 1, min: 2, max: 128 }"
-)]
+#[should_panic(expected = "InvalidLength { id: \"s\", length: 1, min: 2, max: 128 }")]
 fn fails_on_invalid_length_for_port_id() {
     PortId::from_str("s").unwrap();
 }
@@ -126,8 +121,7 @@ fn test_bind_port() {
 #[test]
 fn channel_capability_path() {
     let ctx = CwIbcCoreContext::default();
-    let res =
-        ctx.channel_capability_path(&PortId::default(), &IbcChannelId::default());
+    let res = ctx.channel_capability_path(&PortId::default(), &IbcChannelId::default());
     let result = from_utf8(&res);
     assert!(result.is_ok());
     assert_eq!("ports/defaultPort/channels/channel-0", result.unwrap())

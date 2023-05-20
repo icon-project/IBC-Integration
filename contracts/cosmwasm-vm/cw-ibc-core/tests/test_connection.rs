@@ -2,6 +2,8 @@ use std::str::FromStr;
 use std::time::Duration;
 
 pub mod setup;
+
+use common::ibc::core::ics24_host::identifier::ClientId;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::traits::AnyTypes;
@@ -19,7 +21,6 @@ use cosmwasm_std::WasmQuery;
 use cw_common::client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse};
 use cw_common::ibc_types::IbcMsgConnectionOpenConfirm;
 use cw_common::ibc_types::IbcMsgConnectionOpenInit;
-use cw_common::raw_types::channel::RawCounterparty;
 use cw_common::raw_types::connection::RawCounterpartyConnection;
 use cw_common::raw_types::connection::RawMsgConnectionOpenAck;
 use cw_common::raw_types::connection::RawMsgConnectionOpenConfirm;
@@ -27,8 +28,6 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::connection::RawMsgConnectionOpenTry;
 use cw_common::raw_types::RawHeight;
 use cw_common::raw_types::RawVersion;
-use common::ibc::core::ics02_client::client_type::ClientType;
-use common::ibc::core::ics24_host::identifier::ClientId;
 use cw_ibc_core::constants::*;
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
@@ -58,9 +57,9 @@ use cw_ibc_core::ConnectionEnd;
 // use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit;
 // use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 // use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
+use common::ibc::core::ics24_host::identifier::ConnectionId;
 use prost::Message;
 use setup::*;
-use common::ibc::core::ics24_host::identifier::ConnectionId;
 
 #[test]
 fn test_set_connection() {
@@ -172,7 +171,9 @@ fn test_connection_seq_on_a_fail() {
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"common::ibc::core::ics24_host::identifier::ConnectionId\" })")]
+#[should_panic(
+    expected = "Std(NotFound { kind: \"common::ibc::core::ics24_host::identifier::ConnectionId\" })"
+)]
 fn test_client_connection_fail() {
     let deps = deps();
     let client_id = ClientId::default();
@@ -1443,11 +1444,7 @@ fn connection_open_init_fails_of_clientstate() {
 
     let client_state_bytes = client_state.encode_to_vec();
     contract
-        .store_client_state(
-            &mut deps.storage,
-            &client_id,
-            client_state_bytes,
-        )
+        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
         .unwrap();
 
     contract
