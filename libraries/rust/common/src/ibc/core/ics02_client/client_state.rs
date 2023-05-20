@@ -4,7 +4,7 @@ use core::time::Duration;
 use dyn_clone::DynClone;
 use ibc_proto::google::protobuf::Any;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
-use ibc_proto::protobuf::Protobuf as ErasedProtobuf;
+
 
 use crate::ibc::core::ics02_client::client_type::ClientType;
 use crate::ibc::core::ics02_client::error::ClientError;

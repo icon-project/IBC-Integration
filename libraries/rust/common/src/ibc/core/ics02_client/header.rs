@@ -1,7 +1,6 @@
 use crate::ibc::prelude::*;
 
 use crate::ibc::core::ics02_client::error::ClientError;
-use crate::ibc::dynamic_typing::AsAny;
 use crate::ibc::timestamp::Timestamp;
 use crate::ibc::Height;
 use dyn_clone::DynClone;

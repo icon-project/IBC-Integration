@@ -108,7 +108,6 @@ impl TryFrom<Any> for BtpHeader {
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
         use bytes::Buf;
         use core::ops::Deref;
-        use prost::Message;
 
         fn decode_btp_header<B: Buf>(buf: B) -> Result<BtpHeader, DecodeError> {
             <BtpHeader as Message>::decode(buf)

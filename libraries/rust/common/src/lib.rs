@@ -97,7 +97,7 @@ impl KeyDeserialize for ClientType {
         Ok(client_type)
     }
 }
-use prost::alloc::borrow::{Borrow, Cow};
+use prost::alloc::borrow::{Borrow};
 
 impl<'a> PrimaryKey<'a> for ModuleId {
     type Prefix = ();

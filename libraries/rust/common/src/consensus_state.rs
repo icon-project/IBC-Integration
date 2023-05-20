@@ -12,11 +12,6 @@ use crate::{
     constants::ICON_CONSENSUS_STATE_TYPE_URL, icon::icon::lightclient::v1::ConsensusState,
 };
 
-// #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
-// pub struct ConsensusState {
-//     message_root: CommitmentRoot,
-// }
-
 impl ConsensusState {
     pub fn new(message_root: Vec<u8>) -> Result<Self, ClientError> {
         Ok(Self { message_root })
@@ -37,7 +32,6 @@ impl TryFrom<Any> for ConsensusState {
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
         use crate::ibc::core::ics02_client::error::ClientError as Error;
         use bytes::Buf;
-        use prost::Message;
         use std::ops::Deref;
 
         fn decode_consensus_state<B: Buf>(buf: B) -> Result<ConsensusState, Error> {
@@ -94,33 +88,4 @@ impl IConsensusState for ConsensusState {
 }
 dyn_clone::clone_trait_object!(IConsensusState);
 
-// impl TryFrom<Vec<u8>> for ConsensusState {
-//     type Error = ClientError;
 
-//     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-//         let result: ConsensusStateResponse =
-//             serde_json_wasm::from_slice(&value).map_err(|error| ClientError::Other {
-//                 description: error.to_string(),
-//             })?;
-
-//         let commit = CommitmentRoot::from(hex::decode(result.message_root).map_err(|error| {
-//             ClientError::Other {
-//                 description: error.to_string(),
-//             }
-//         })?);
-
-//         Ok(Self {
-//             message_root: commit,
-//         })
-//     }
-// }
-
-// impl TryFrom<ConsensusState> for Vec<u8> {
-//     type Error = ClientError;
-
-//     fn try_from(value: ConsensusState) -> Result<Self, Self::Error> {
-//         serde_json_wasm::to_vec(&value).map_err(|error| ClientError::Other {
-//             description: error.to_string(),
-//         })
-//     }
-// }

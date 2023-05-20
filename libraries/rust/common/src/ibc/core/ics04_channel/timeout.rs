@@ -1,7 +1,6 @@
 use core::fmt::{Display, Error as FmtError, Formatter};
 
 use ibc_proto::ibc::core::client::v1::Height as RawHeight;
-use serde::Serialize;
 
 use crate::ibc::core::ics02_client::{error::ClientError, height::Height};
 use crate::ibc::prelude::*;
