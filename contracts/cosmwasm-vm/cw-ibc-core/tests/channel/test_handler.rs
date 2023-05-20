@@ -1,4 +1,7 @@
 use cw_common::client_response::LightClientResponse;
+use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
+use common::ibc::core::ics24_host::identifier::PortId;
 
 use super::*;
 
@@ -18,7 +21,7 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -39,7 +42,7 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_b = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
@@ -101,7 +104,7 @@ fn test_execute_open_try_from_light_client() {
     let counter_party = Counterparty::new(msg.port_id_on_a.clone(), Some(msg.chan_id_on_a.clone()));
     let channel_id_on_b = ChannelId::new(0);
     let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_b = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_b = vec![conn_id.clone()];
     let channel_end = ChannelEnd::new(
         State::Uninitialized,
         msg.ordering,
@@ -117,7 +120,7 @@ fn test_execute_open_try_from_light_client() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -188,7 +191,7 @@ fn test_execute_open_try_from_light_client_fail_missing_channel_end() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();

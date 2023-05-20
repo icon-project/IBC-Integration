@@ -41,10 +41,10 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),

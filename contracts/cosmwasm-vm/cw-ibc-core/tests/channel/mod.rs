@@ -6,16 +6,17 @@ use common::ibc::core::ics03_connection::version::get_compatible_versions;
 use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use common::ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
 use common::ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
-use cosmwasm_std::from_binary;
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::IbcAcknowledgement;
 use cosmwasm_std::{Binary, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
 use cw_common::commitment::compute_packet_commitment;
 use cw_common::ibc_types::IbcChannelId;
-use cw_common::types::ClientId;
+use common::ibc::core::ics24_host::identifier::{ ConnectionId, PortId};
+use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
 use cw_common::{client_response::PacketDataResponse, types::PacketData};
-use ibc::timestamp::Timestamp;
-use ibc::timestamp::ZERO_DURATION;
+use common::ibc::timestamp::Timestamp;
+use common::ibc::timestamp::ZERO_DURATION;
 
 use cw_common::raw_types::RawHeight;
 

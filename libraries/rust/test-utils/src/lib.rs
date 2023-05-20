@@ -8,7 +8,7 @@ use std::{
 };
 
 use cw_multi_test::AppResponse;
-use ibc::events::IbcEventType;
+use common::ibc::events::IbcEventType;
 use ibc_proto::ibc::core::channel::v1::Packet;
 use serde::Deserialize;
 

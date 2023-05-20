@@ -92,6 +92,7 @@ pub struct Packet {
     pub chan_id_on_a: ChannelId,
     pub port_id_on_b: PortId,
     pub chan_id_on_b: ChannelId,
+    //hexstring
     pub data: Vec<u8>,
     pub timeout_height_on_b: TimeoutHeight,
     pub timeout_timestamp_on_b: Timestamp,

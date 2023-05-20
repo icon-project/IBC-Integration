@@ -5,9 +5,7 @@ use std::str::FromStr;
 use common::client_state::IClientState;
 use common::ibc::{
     core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
-    // mock::{
-    //     client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
-    // },
+  
     signer::Signer,
     Height,
 };
@@ -21,7 +19,7 @@ use cw_common::client_response::{
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpgradeClient};
 use cw_common::raw_types::Any;
-use cw_common::types::{ClientId, ClientType};
+
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::events::{
@@ -31,9 +29,13 @@ use cw_ibc_core::{
     traits::IbcClient,
     MsgUpgradeClient,
 };
+use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
+use common::ibc::mock::header::MockHeader;
 use prost::Message;
 use setup::*;
 
+  
 #[test]
 fn get_client_next_seq_on_a() {
     let mut mock = deps();
@@ -146,8 +148,8 @@ fn test_create_client_event() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
     let result = create_client_event(
-        client_id.ibc_client_id().as_str(),
-        client_type.client_type().as_str(),
+        client_id.as_str(),
+        client_type.as_str(),
         &height.to_string(),
     );
 
@@ -161,7 +163,7 @@ fn check_for_update_client_event() {
     let height = Height::new(15, 10).unwrap();
     let client_type = ClientType::new("new_client_type".to_string());
     let result = update_client_event(
-        client_type.client_type(),
+        client_type,
         height,
         vec![height],
         &message.client_id,
@@ -178,40 +180,12 @@ fn check_for_raw_message_to_update_client_message() {
 }
 
 #[test]
-// fn check_for_raw_message_to_updgrade_client() {
-//     let client_type = ClientType::new("new_client_type".to_string());
-//     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
-//     let signer = get_dummy_account_id();
-
-//     let height = Height::new(1, 1).unwrap();
-
-//     let client_state = MockClientState::new(MockHeader::new(height));
-//     let consensus_state = MockConsensusState::new(MockHeader::new(height));
-
-//     let proof = get_dummy_merkle_proof();
-
-//     let msg = MsgUpgradeClient {
-//         client_id: client_id.ibc_client_id().clone(),
-//         client_state: client_state.into(),
-//         consensus_state: consensus_state.into(),
-//         proof_upgrade_client: proof.clone(),
-//         proof_upgrade_consensus_state: proof,
-//         signer,
-//     };
-
-//     let raw_message: RawMsgUpgradeClient = RawMsgUpgradeClient::try_from(msg.clone()).unwrap();
-
-//     let upgrade_message_from_raw_message = MsgUpgradeClient::try_from(raw_message).unwrap();
-
-//     assert_eq!(upgrade_message_from_raw_message, msg);
-// }
-#[test]
-fn test_upgrade_client_event() {
+fn check_for_raw_message_to_updgrade_client() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
     let signer = get_dummy_account_id();
 
-    let height = Height::new(1, 1).unwrap();
+    let height = mock_height(1, 1).unwrap();
 
     let client_state = MockClientState::new(MockHeader::new(height));
     let consensus_state = MockConsensusState::new(MockHeader::new(height));
@@ -219,7 +193,7 @@ fn test_upgrade_client_event() {
     let proof = get_dummy_merkle_proof();
 
     let msg = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         client_state: client_state.into(),
         consensus_state: consensus_state.into(),
         proof_upgrade_client: proof.clone(),
@@ -227,7 +201,36 @@ fn test_upgrade_client_event() {
         signer,
     };
 
-    let event = upgrade_client_event(client_type.client_type(), height, msg.client_id);
+    let raw_message: RawMsgUpgradeClient = RawMsgUpgradeClient::try_from(msg.clone()).unwrap();
+
+    let upgrade_message_from_raw_message = MsgUpgradeClient::try_from(raw_message).unwrap();
+
+    assert_eq!(upgrade_message_from_raw_message, msg);
+}
+#[test]
+fn test_upgrade_client_event() {
+    let client_type = ClientType::new("new_client_type".to_string());
+    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
+    let signer = get_dummy_account_id();
+
+    let height = Height::new(1, 1).unwrap();
+    let mock_height=to_mock_height(height);
+
+    let client_state = MockClientState::new(MockHeader::new(mock_height));
+    let consensus_state = MockConsensusState::new(MockHeader::new(mock_height));
+
+    let proof = get_dummy_merkle_proof();
+
+    let msg = MsgUpgradeClient {
+        client_id: client_id.clone(),
+        client_state: client_state.into(),
+        consensus_state: consensus_state.into(),
+        proof_upgrade_client: proof.clone(),
+        proof_upgrade_consensus_state: proof,
+        signer,
+    };
+
+    let event = upgrade_client_event(client_type, height, msg.client_id);
 
     assert_eq!("upgrade_client", event.ty);
 
@@ -250,8 +253,8 @@ fn create_misbehaviour_event_test() {
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
 
     let event = client_misbehaviour_event(
-        client_id.ibc_client_id().as_str(),
-        client_type.client_type().as_str(),
+        client_id.as_str(),
+        client_type.as_str(),
     );
 
     assert_eq!("client_misbehaviour", event.ty)
@@ -276,7 +279,7 @@ fn store_client_type_sucess() {
         .get_client_type(deps.as_ref().storage, client_id)
         .unwrap();
 
-    assert_eq!(client_type.client_type(), result)
+    assert_eq!(client_type, result)
 }
 
 #[test]
@@ -297,7 +300,7 @@ fn fail_to_query_client_type() {
 #[test]
 fn check_for_raw_message_create_client_deserialize() {
     let raw_message = get_dummy_raw_msg_create_client();
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
     let mock_client_state = MockClientState::new(mock_header);
     let mock_consenus_state = MockConsensusState::new(mock_header);
@@ -315,7 +318,7 @@ fn check_for_raw_message_create_client_deserialize() {
 
 #[test]
 fn check_for_create_client_message_into_raw_message() {
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
     let mock_client_state = MockClientState::new(mock_header);
     let mock_consenus_state = MockConsensusState::new(mock_header);
@@ -326,6 +329,8 @@ fn check_for_create_client_message_into_raw_message() {
     };
 
     let raw_message: RawMsgCreateClient = RawMsgCreateClient::try_from(actual_message).unwrap();
+    println!("{:?}",raw_message);
+    println!("{:?}",get_dummy_raw_msg_create_client());
 
     assert_eq!(raw_message, get_dummy_raw_msg_create_client())
 }
@@ -334,13 +339,13 @@ fn check_for_create_client_message_into_raw_message() {
 fn check_for_genereted_client_id_event() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
-    let event = generated_client_id_event(client_id.ibc_client_id().clone());
+    let event = generated_client_id_event(client_id.clone());
 
     assert_eq!("client_id_created", event.ty);
 
     assert_eq!(
         event.attributes[0].value,
-        client_id.ibc_client_id().as_str()
+        client_id.as_str()
     )
 }
 
@@ -698,7 +703,7 @@ fn fail_on_create_client_message_error_response() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidNextClientseq_on_a")]
+#[should_panic(expected = "InvalidNextClientSequence")]
 fn fails_on_create_client_message_without_proper_initialisation() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
@@ -824,7 +829,7 @@ fn check_for_update_client_message() {
     .unwrap();
 
     let update_client_message = IbcMsgUpdateClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         header: client_state.clone().into(),
         signer,
     };
@@ -834,13 +839,13 @@ fn check_for_update_client_message() {
         .unwrap();
 
     assert_eq!(
-        client_id.ibc_client_id().as_str(),
+        client_id.as_str(),
         result.attributes[1].value
     );
 
     let mock_reponse_data = UpdateClientResponse::new(
         "10-15".to_string(),
-        client_id.ibc_client_id().as_str().to_string(),
+        client_id.as_str().to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
         keccak256(&consenus_state.encode_to_vec()).to_vec(),
         client_state.encode_to_vec(),
@@ -895,7 +900,7 @@ fn fails_on_updating_non_existing_client() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let signer = Signer::from_str("new_signer").unwrap();
     let update_client_message = IbcMsgUpdateClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         header: client_state.clone().into(),
         signer,
     };
@@ -1009,7 +1014,7 @@ fn check_for_upgrade_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1114,7 +1119,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1219,7 +1224,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1321,7 +1326,7 @@ fn check_for_execute_upgrade_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         client_state: upgrade_client_state.clone().into(),
         consensus_state: upgrade_consenus_state.clone().into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1336,7 +1341,7 @@ fn check_for_execute_upgrade_client() {
     let upgrade_client_response = UpgradeClientResponse::new(
         upgrade_client_state.encode_to_vec(),
         upgrade_consenus_state.encode_to_vec(),
-        client_id.ibc_client_id().to_string(),
+        client_id.to_string(),
         "0-100".to_string(),
     );
 
@@ -1713,21 +1718,21 @@ fn sucess_on_misbehaviour_validate() {
     contract
         .store_client_state(
             deps.as_mut().storage,
-            client_id.ibc_client_id(),
+            &client_id,
             client_state.to_any().encode_to_vec(),
         )
         .unwrap();
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
 
-    let misbehaviour = ibc::mock::misbehaviour::Misbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+    let misbehaviour = common::ibc::mock::misbehaviour::Misbehaviour {
+        client_id: to_mock_client_id(&client_id),
         header1: mock_header,
         header2: mock_header,
     };
 
     let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id(),
     };
@@ -1773,21 +1778,21 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
     contract
         .store_client_state(
             deps.as_mut().storage,
-            client_id.ibc_client_id(),
+            &client_id,
             client_state.to_any().encode_to_vec(),
         )
         .unwrap();
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
 
-    let misbehaviour = ibc::mock::misbehaviour::Misbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+    let misbehaviour = common::ibc::mock::misbehaviour::Misbehaviour {
+        client_id: to_mock_client_id(&client_id),
         header1: mock_header,
         header2: mock_header,
     };
 
     let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id(),
     };
@@ -1853,7 +1858,7 @@ fn success_on_execute_misbehaviour() {
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
     let response_message_data = MisbehaviourResponse::new(
-        client_id.ibc_client_id().to_string(),
+        client_id.to_string(),
         client_state.encode_to_vec(),
     );
 
@@ -1873,7 +1878,7 @@ fn success_on_execute_misbehaviour() {
 
     assert_eq!("client_misbehaviour", result.events[0].ty);
     assert_eq!(
-        client_id.ibc_client_id().as_str(),
+        client_id.as_str(),
         result.events[0].attributes[0].value
     );
 }

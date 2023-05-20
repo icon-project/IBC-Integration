@@ -22,8 +22,8 @@ use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcClientId;
 use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::RawVersion;
-use cw_common::types::ClientId;
-use cw_common::types::ConnectionId;
+use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
 use cw_common::ProstMessage;
 
 use cw_ibc_core::ConnectionEnd;
@@ -35,6 +35,7 @@ use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
 use common::traits::AnyTypes;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
+use common::ibc::core::ics24_host::identifier::ConnectionId;
 use setup::*;
 
 fn test_for_create_client_execution_message() {
@@ -312,7 +313,7 @@ fn test_for_connection_open_try() {
         )
         .unwrap();
     contract
-        .connection_next_seq_on_a_init(&mut deps.storage, u64::default())
+        .connection_next_sequence_init(&mut deps.storage, u64::default())
         .unwrap();
 
     let exec_message = CoreExecuteMsg::ConnectionOpenInit {
@@ -400,8 +401,8 @@ fn test_for_connection_open_try() {
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
     let mock_response_data = OpenTryResponse::new(
         conn_id.as_str().to_owned(),
-        client_id.ibc_client_id().to_string(),
-        counterparty_client_id.ibc_client_id().to_string(),
+        client_id.to_string(),
+        counterparty_client_id.to_string(),
         "".to_string(),
         counterparty_prefix.as_bytes().to_vec(),
         to_vec(&versions).unwrap(),
@@ -430,8 +431,8 @@ fn test_for_connection_open_try() {
     };
     let mock_response_data = OpenTryResponse::new(
         conn_id.as_str().to_owned(),
-        client_id.ibc_client_id().to_string(),
-        counterparty_client_id.ibc_client_id().to_string(),
+        client_id.to_string(),
+        counterparty_client_id.to_string(),
         "".to_string(),
         counterparty_prefix.as_bytes().to_vec(),
         to_vec(&versions).unwrap(),
@@ -533,7 +534,7 @@ fn test_for_connection_open_ack() {
         .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        counterparty_client_id.ibc_client_id().clone(),
+        counterparty_client_id.clone(),
         None,
         counterparty_prefix.clone(),
     );
@@ -628,7 +629,7 @@ fn test_for_connection_open_confirm() {
     assert_eq!(response.attributes[0].value, "instantiate");
 
     contract
-        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
@@ -661,7 +662,7 @@ fn test_for_connection_open_confirm() {
         .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        counterparty_client_id.ibc_client_id().clone(),
+        counterparty_client_id.clone(),
         res_msg.conn_id_on_b.clone().into(),
         counterparty_prefix.clone(),
     );
@@ -709,7 +710,7 @@ fn test_for_connection_open_confirm() {
         .unwrap();
 
     contract
-        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let response = contract
@@ -834,8 +835,8 @@ fn test_for_connection_open_try_fails() {
     };
     let mock_response_data = OpenTryResponse::new(
         conn_id.as_str().to_owned(),
-        client_id.ibc_client_id().to_string(),
-        counterparty_client_id.ibc_client_id().to_string(),
+        client_id.to_string(),
+        counterparty_client_id.to_string(),
         "".to_string(),
         counterparty_prefix.as_bytes().to_vec(),
         to_vec(&versions).unwrap(),
@@ -867,7 +868,7 @@ fn test_connection_open_confirm_fails() {
     assert_eq!(response.attributes[0].value, "instantiate");
 
     contract
-        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
@@ -900,7 +901,7 @@ fn test_connection_open_confirm_fails() {
         .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        counterparty_client_id.ibc_client_id().clone(),
+        counterparty_client_id.clone(),
         res_msg.conn_id_on_b.clone().into(),
         counterparty_prefix.clone(),
     );
@@ -944,7 +945,7 @@ fn test_connection_open_confirm_fails() {
         .unwrap();
 
     contract
-        .connection_next_seq_on_a_init(&mut deps.storage, u128::default().try_into().unwrap())
+        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
         .unwrap();
 
     contract
@@ -1009,7 +1010,7 @@ fn test_connection_open_try_fails_invalid_id() {
         .unwrap();
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        counterparty_client_id.ibc_client_id().clone(),
+        counterparty_client_id.clone(),
         None,
         counterparty_prefix.clone(),
     );
@@ -1022,7 +1023,7 @@ fn test_connection_open_try_fails_invalid_id() {
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
         .unwrap();
     contract
-        .connection_next_seq_on_a_init(&mut deps.storage, u64::default())
+        .connection_next_sequence_init(&mut deps.storage, u64::default())
         .unwrap();
 
     deps.querier.update_wasm(|r| match r {
@@ -1101,8 +1102,8 @@ fn test_connection_open_try_fails_invalid_id() {
     };
     let mock_response_data = OpenTryResponse::new(
         conn_id.as_str().to_owned(),
-        client_id.ibc_client_id().to_string(),
-        counterparty_client_id.ibc_client_id().to_string(),
+        client_id.to_string(),
+        counterparty_client_id.to_string(),
         "".to_string(),
         counterparty_prefix.as_bytes().to_vec(),
         to_vec(&versions).unwrap(),

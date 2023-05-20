@@ -19,10 +19,10 @@ fn test_packet_send() {
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -54,7 +54,7 @@ fn test_packet_send() {
         )
         .unwrap();
     contract
-        .store_next_seq_on_a_send(
+        .store_next_sequence_send(
             &mut deps.storage,
             packet.port_id_on_a.clone().into(),
             packet.chan_id_on_a.clone().into(),
@@ -122,7 +122,7 @@ fn test_packet_send_fail_channel_not_found() {
 }
 
 #[test]
-#[should_panic(expected = "common::ibc::core::ics04_channel::packet::seq_on_a")]
+#[should_panic(expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })")]
 fn test_packet_send_fail_misiing_sequense() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
@@ -141,10 +141,10 @@ fn test_packet_send_fail_misiing_sequense() {
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),

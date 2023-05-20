@@ -7,6 +7,7 @@ use cosmwasm_std::{
 };
 
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use common::ibc::core::ics02_client::client_type::ClientType;
 
 use common::ibc::{
     core::ics04_channel::{
@@ -23,7 +24,8 @@ use cw_common::raw_types::channel::{
     RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawPacket,
 };
 use cw_common::raw_types::RawHeight;
-use cw_common::types::{ChannelId, ClientType, ConnectionId, PortId};
+use common::ibc::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
+
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };
@@ -416,8 +418,8 @@ fn channel_open_confirm_from_raw_valid_channel_id_parameter() {
     let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
 
     let expected = MsgChannelOpenConfirm {
-        port_id_on_b: PortId::default().ibc_port_id().clone(),
-        chan_id_on_b: ChannelId::new(34).ibc_channel_id().clone(),
+        port_id_on_b: PortId::default().clone(),
+        chan_id_on_b: ChannelId::new(34).clone(),
         proof_chan_end_on_a:
             common::ibc::core::ics23_commitment::commitment::CommitmentProofBytes::try_from(
                 get_dummy_proof(),
@@ -625,8 +627,8 @@ fn channel_close_innit_from_raw_valid_channel_id_parameter() {
     let res_msg = MsgChannelCloseInit::try_from(default_raw_confirm_msg.clone());
 
     let expected = MsgChannelCloseInit {
-        port_id_on_a: PortId::default().ibc_port_id().clone(),
-        chan_id_on_a: ChannelId::new(34).ibc_channel_id().clone(),
+        port_id_on_a: PortId::default().clone(),
+        chan_id_on_a: ChannelId::new(34).clone(),
         signer: Signer::from_str("cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng").unwrap(),
     };
     assert_eq!(res_msg.unwrap(), expected);
@@ -720,8 +722,8 @@ fn channel_close_confirm_from_raw() {
     let res_msg = MsgChannelCloseConfirm::try_from(default_raw_confirm_msg.clone());
 
     let expected = MsgChannelCloseConfirm {
-        port_id_on_b: PortId::default().ibc_port_id().clone(),
-        chan_id_on_b: ChannelId::new(34).ibc_channel_id().clone(),
+        port_id_on_b: PortId::default().clone(),
+        chan_id_on_b: ChannelId::new(34).clone(),
         proof_chan_end_on_a:
             common::ibc::core::ics23_commitment::commitment::CommitmentProofBytes::try_from(
                 get_dummy_proof(),
@@ -744,7 +746,7 @@ fn create_open_ack_channel_event_test() {
         &message.chan_id_on_a.as_str(),
         IbcPortId::default().as_str(),
         &message.chan_id_on_b.as_str(),
-        ConnectionId::default().connection_id().as_str(),
+        ConnectionId::default().as_str(),
     );
 
     assert_eq!(IbcEventType::OpenAckChannel.as_str(), event.ty);
@@ -961,7 +963,7 @@ fn test_validate_open_init_channel() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -982,7 +984,7 @@ fn test_validate_open_init_channel() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_a = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_a = vec![conn_id.clone()];
     msg.version_proposal = Version::from_str("xcall-1").unwrap();
     let contract = CwIbcCoreContext::new();
     contract
@@ -1031,7 +1033,7 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_a = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_a = vec![conn_id.clone()];
     msg.version_proposal = Version::from_str("xcall-1").unwrap();
     let contract = CwIbcCoreContext::new();
     contract
@@ -1072,7 +1074,7 @@ fn test_validate_open_try_channel() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -1094,7 +1096,7 @@ fn test_validate_open_try_channel() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_b = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
@@ -1171,7 +1173,7 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_b = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
@@ -1206,7 +1208,7 @@ fn test_execute_open_try_channel() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_b = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())

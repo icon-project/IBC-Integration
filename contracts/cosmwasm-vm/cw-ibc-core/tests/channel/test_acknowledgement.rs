@@ -160,7 +160,7 @@ fn test_acknowledgement_packet_execute_ordered() {
         )
         .unwrap();
     contract
-        .store_next_seq_on_a_ack(
+        .store_next_sequence_ack(
             &mut deps.storage,
             msg.packet.port_id_on_b.clone().into(),
             msg.packet.chan_id_on_b.clone().into(),
@@ -271,7 +271,7 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
         chan_id_on_a: msg.packet.chan_id_on_a,
         port_id_on_b: msg.packet.port_id_on_b,
         chan_id_on_b: msg.packet.chan_id_on_b,
-        data: hex::encode(msg.packet.data),
+        data: msg.packet.data,
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
@@ -325,7 +325,7 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
         chan_id_on_a: msg.packet.chan_id_on_a,
         port_id_on_b: msg.packet.port_id_on_b,
         chan_id_on_b: msg.packet.chan_id_on_b,
-        data: hex::encode(msg.packet.data),
+        data: msg.packet.data,
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
@@ -398,10 +398,10 @@ fn test_acknowledgement_packet_validate_ordered() {
     );
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -466,7 +466,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         )
         .unwrap();
     contract
-        .store_next_seq_on_a_ack(
+        .store_next_sequence_ack(
             &mut deps.storage,
             packet.port_id_on_b.clone().into(),
             packet.chan_id_on_b.clone().into(),
@@ -518,10 +518,10 @@ fn test_acknowledgement_packet_validate_unordered() {
     );
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -630,10 +630,10 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     );
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),

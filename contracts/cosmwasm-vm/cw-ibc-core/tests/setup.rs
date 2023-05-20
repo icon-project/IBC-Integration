@@ -1,3 +1,24 @@
+
+
+
+use std::str::FromStr;
+
+pub fn mock_height(
+    number: u64,
+    height: u64,
+) -> Result<common::ibc::Height, common::ibc::core::ics02_client::error::ClientError> {
+    common::ibc::Height::new(number, height)
+}
+
+pub fn to_mock_height(height: Height) -> common::ibc::Height {
+    return common::ibc::Height::new(height.revision_number(), height.revision_height()).unwrap();
+}
+
+pub fn to_mock_client_id(client_id:&ClientId)->common::ibc::core::ics24_host::identifier::ClientId{
+    return common::ibc::core::ics24_host::identifier::ClientId::from_str(&client_id.to_string()).unwrap()
+}
+
+
 use cosmwasm_std::{
     coins,
     testing::{
@@ -24,12 +45,10 @@ use cw_common::{
         },
         RawCommitmentProof, RawHeight, RawMerkleProof,
     },
-    types::{ClientId, ClientType},
 };
-use ibc_rs::mock::{
-    client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
-    misbehaviour::Misbehaviour,
-};
+
+use common::ibc::core::ics24_host::identifier::ClientId;
+use common::ibc::core::ics02_client::client_type::ClientType;
 
 pub struct MockEnvBuilder {
     env: Env,
@@ -84,16 +103,12 @@ pub fn deps() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     mock_dependencies()
 }
 
-pub fn mock_height(
-    number: u64,
-    height: u64,
-) -> Result<ibc_rs::Height, ibc_rs::core::ics02_client::error::ClientError> {
-    ibc_rs::Height::new(number, height)
-}
+pub use common::ibc::mock::client_state::MockClientState;
+pub use common::ibc::mock::consensus_state::MockConsensusState;
+use common::ibc::mock::header::MockHeader;
+pub use common::ibc::mock::misbehaviour::Misbehaviour;
 
-pub fn to_mock_height(height: Height) -> ibc_rs::Height {
-    return ibc_rs::Height::new(height.revision_number(), height.revision_height()).unwrap();
-}
+
 
 #[test]
 fn test() {
@@ -233,7 +248,7 @@ pub fn get_dummy_raw_msg_update_client_message() -> RawMsgUpdateClient {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
     RawMsgUpdateClient {
-        client_id: client_id.ibc_client_id().to_string(),
+        client_id: client_id.to_string(),
         header: Some(MockHeader::new(height).into()),
         signer: "0CDA3F47EF3C4906693B170EF650EB968C5F4B2C".to_string(),
     }
@@ -267,12 +282,12 @@ pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMsgSubmitMisbehaviour {
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
 
     let mis_b = Misbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: to_mock_client_id(&client_id),
         header1: mock_header,
         header2: mock_header,
     };
     RawMsgSubmitMisbehaviour {
-        client_id: client_id.ibc_client_id().to_string(),
+        client_id: client_id.to_string(),
         misbehaviour: Some(mis_b.into()),
         signer: get_dummy_bech32_account(),
     }
@@ -300,7 +315,7 @@ pub fn get_dummy_raw_msg_chan_close_confirm(proof_height: u64) -> RawMsgChannelC
 }
 
 pub fn get_dummy_raw_msg_create_client() -> RawMsgCreateClient {
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
     let mock_client_state = MockClientState::new(mock_header);
     let mock_consenus_state = MockConsensusState::new(mock_header);
@@ -325,7 +340,7 @@ pub fn get_dummy_raw_msg_conn_open_try(
     proof_height: u64,
     consensus_height: u64,
 ) -> RawMsgConnectionOpenTry {
-    let client_state_height = Height::new(0, consensus_height).unwrap();
+    let client_state_height = mock_height(0, consensus_height).unwrap();
 
     #[allow(deprecated)]
     RawMsgConnectionOpenTry {
@@ -357,7 +372,7 @@ pub fn get_dummy_raw_msg_conn_open_ack(
     proof_height: u64,
     consensus_height: u64,
 ) -> RawMsgConnectionOpenAck {
-    let client_state_height = Height::new(0, consensus_height).unwrap();
+    let client_state_height = mock_height(0, consensus_height).unwrap();
     RawMsgConnectionOpenAck {
         connection_id: ConnectionId::new(0).to_string(),
         counterparty_connection_id: ConnectionId::new(1).to_string(),

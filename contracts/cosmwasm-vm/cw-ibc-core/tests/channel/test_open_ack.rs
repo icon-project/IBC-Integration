@@ -43,10 +43,10 @@ fn test_validate_open_ack_channel_fail_missing_counterparty() {
         state: State::Init,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
+            port_id: port_id.clone(),
             channel_id: Some(msg.chan_id_on_b.clone()),
         },
-        connection_hops: vec![conn_id.connection_id().clone()],
+        connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     contract
@@ -113,7 +113,7 @@ fn test_validate_open_ack_channel() {
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = PortId::from(msg.port_id_on_a.clone());
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -144,10 +144,10 @@ fn test_validate_open_ack_channel() {
         state: State::Init,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
+            port_id: port_id.clone(),
             channel_id: Some(msg.chan_id_on_b.clone()),
         },
-        connection_hops: vec![conn_id.connection_id().clone()],
+        connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     contract
@@ -251,7 +251,7 @@ fn test_execute_open_ack_from_light_client() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -321,10 +321,10 @@ fn test_execute_open_ack_channel() {
         state: State::Init,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
-            channel_id: Some(channel_id.ibc_channel_id().clone()),
+            port_id: port_id.clone(),
+            channel_id: Some(channel_id.clone()),
         },
-        connection_hops: vec![connection_id.connection_id().clone()],
+        connection_hops: vec![connection_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     contract
@@ -339,8 +339,8 @@ fn test_execute_open_ack_channel() {
         .store_channel(deps.as_mut().storage, &port_id, &channel_id, channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.ibc_port_id().clone().to_string(),
-        channel_id: channel_id.ibc_channel_id().clone().to_string(),
+        port_id: port_id.clone().to_string(),
+        channel_id: channel_id.clone().to_string(),
     };
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
@@ -371,10 +371,10 @@ fn test_execute_open_ack_channel_fail_invalid_state() {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
-            channel_id: Some(channel_id.ibc_channel_id().clone()),
+            port_id: port_id.clone(),
+            channel_id: Some(channel_id.clone()),
         },
-        connection_hops: vec![connection_id.connection_id().clone()],
+        connection_hops: vec![connection_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     contract
@@ -389,8 +389,8 @@ fn test_execute_open_ack_channel_fail_invalid_state() {
         .store_channel(deps.as_mut().storage, &port_id, &channel_id, channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.ibc_port_id().clone().to_string(),
-        channel_id: channel_id.ibc_channel_id().clone().to_string(),
+        port_id: port_id.clone().to_string(),
+        channel_id: channel_id.clone().to_string(),
     };
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
@@ -417,10 +417,10 @@ fn test_channel_open_ack_validate() {
         state: State::Init,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
+            port_id: port_id.clone(),
             channel_id: Some(msg.chan_id_on_b.clone()),
         },
-        connection_hops: vec![conn_id.connection_id().clone()],
+        connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     let res = channel_open_ack_validate(&msg, &channel_end);
@@ -439,10 +439,10 @@ fn test_channel_open_ack_validate_fail() {
         state: State::TryOpen,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
+            port_id: port_id.clone(),
             channel_id: Some(msg.chan_id_on_b.clone()),
         },
-        connection_hops: vec![conn_id.connection_id().clone()],
+        connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     channel_open_ack_validate(&msg, &channel_end).unwrap();
@@ -458,14 +458,14 @@ pub fn test_on_chan_open_ack_submessage() {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
+            port_id: port_id.clone(),
             channel_id: Some(msg.chan_id_on_b.clone()),
         },
-        connection_hops: vec![conn_id.connection_id().clone()],
+        connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     let endpoint = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.ibc_port_id().to_string(),
+        port_id: port_id.to_string(),
         channel_id: msg.chan_id_on_b.to_string(),
     };
     let counter_party = cosmwasm_std::IbcEndpoint {
@@ -484,7 +484,7 @@ pub fn test_on_chan_open_ack_submessage() {
             counter_party,
             cosmwasm_std::IbcOrder::Unordered,
             "xcall".to_string(),
-            conn_id.connection_id().to_string(),
+            conn_id.to_string(),
         ),
         counterparty_version: channel_end.version().to_string(),
     };

@@ -6,7 +6,7 @@
 /// ## Example
 ///
 /// ```rust
-/// use ibc::downcast;
+/// use crate::common::downcast;
 ///
 /// enum Foo {
 ///     Bar(u32),

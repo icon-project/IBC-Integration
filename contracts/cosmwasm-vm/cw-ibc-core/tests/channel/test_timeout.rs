@@ -1,3 +1,5 @@
+use cw_common::from_binary_response;
+
 use super::*;
 
 #[test]
@@ -195,8 +197,8 @@ fn test_packet_data() {
         acknowledgement: None,
         message_info,
     };
-    let bin = to_binary(&packet_data);
-    let data = from_binary::<PacketDataResponse>(&bin.unwrap());
+    let bin = to_binary(&packet_data).unwrap();
+    let data = from_binary_response::<PacketData>(&bin);
     let packet_date = Packet::from(data.unwrap().packet);
 
     assert_eq!(packet_date, msg.packet);
@@ -239,10 +241,10 @@ fn test_timeout_packet_validate_to_light_client() {
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),

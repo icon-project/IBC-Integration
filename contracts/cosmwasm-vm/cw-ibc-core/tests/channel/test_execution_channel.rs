@@ -1,5 +1,7 @@
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
-
+use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
+use common::ibc::core::ics24_host::identifier::PortId;
 use super::*;
 use common::ibc::core::ics04_channel::{msgs::recv_packet::MsgRecvPacket, packet::Receipt};
 use cosmwasm_std::{Empty, IbcReceiveResponse};
@@ -37,7 +39,7 @@ fn test_for_channel_open_init_execution_message() {
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -57,7 +59,7 @@ fn test_for_channel_open_init_execution_message() {
         Duration::default(),
     );
     let conn_id = ConnectionId::from(msg.connection_hops_on_a[0].clone());
-    msg.connection_hops_on_a = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_a = vec![conn_id.clone()];
     msg.version_proposal = Version::from_str("xcall-1").unwrap();
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
@@ -115,7 +117,7 @@ fn test_for_channel_open_try_execution_message() {
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -136,7 +138,7 @@ fn test_for_channel_open_try_execution_message() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(0);
-    msg.connection_hops_on_b = vec![conn_id.connection_id().clone()];
+    msg.connection_hops_on_b = vec![conn_id.clone()];
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
         .unwrap();
@@ -258,7 +260,7 @@ fn test_for_channel_open_ack_execution() {
         .store_module_by_port(&mut deps.storage, port_id.clone(), module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -287,10 +289,10 @@ fn test_for_channel_open_ack_execution() {
         state: State::Init,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
+            port_id: port_id.clone(),
             channel_id: Some(msg.chan_id_on_b.clone()),
         },
-        connection_hops: vec![conn_id.connection_id().clone()],
+        connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     contract
@@ -438,7 +440,7 @@ fn test_for_channel_open_confirm() {
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -451,10 +453,10 @@ fn test_for_channel_open_confirm() {
         state: State::TryOpen,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
+            port_id: port_id.clone(),
             channel_id: Some(msg.chan_id_on_b.clone()),
         },
-        connection_hops: vec![conn_id.connection_id().clone()],
+        connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     contract
@@ -584,7 +586,7 @@ fn test_for_channel_close_init() {
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -617,10 +619,10 @@ fn test_for_channel_close_init() {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
-            channel_id: Some(channel_id.ibc_channel_id().clone()),
+            port_id: port_id.clone(),
+            channel_id: Some(channel_id.clone()),
         },
-        connection_hops: vec![connection_id.connection_id().clone()],
+        connection_hops: vec![connection_id.clone()],
         version: Version::new("xcall".to_string()),
     };
 
@@ -697,7 +699,7 @@ fn test_for_channel_close_confirm() {
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = PortId::from(msg.port_id_on_b.clone());
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::types::ModuleId::from(module_id.clone());
+    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
     contract
         .add_route(&mut deps.storage, cx_module_id.clone(), &module)
         .unwrap();
@@ -728,10 +730,10 @@ fn test_for_channel_close_confirm() {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.ibc_port_id().clone(),
+            port_id: port_id.clone(),
             channel_id: Some(msg.chan_id_on_b.clone()),
         },
-        connection_hops: vec![conn_id.connection_id().clone()],
+        connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     contract
@@ -865,10 +867,10 @@ fn test_for_packet_send() {
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -899,7 +901,7 @@ fn test_for_packet_send() {
         )
         .unwrap();
     contract
-        .store_next_seq_on_a_send(
+        .store_next_sequence_send(
             &mut deps.storage,
             packet.port_id_on_a.clone().into(),
             packet.chan_id_on_a.clone().into(),
@@ -1087,7 +1089,7 @@ fn test_for_recieve_packet() {
         chan_id_on_a: msg.packet.chan_id_on_a.clone(),
         port_id_on_b: msg.packet.port_id_on_b.clone(),
         chan_id_on_b: msg.packet.chan_id_on_b,
-        data: hex::encode(msg.packet.data),
+        data: msg.packet.data,
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
@@ -1213,10 +1215,10 @@ fn test_for_ack_execute() {
     );
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -1304,7 +1306,7 @@ fn test_for_ack_execute() {
         chan_id_on_a: msg.packet.chan_id_on_a.clone(),
         port_id_on_b: msg.packet.port_id_on_b.clone(),
         chan_id_on_b: msg.packet.chan_id_on_b.clone(),
-        data: hex::encode(msg.packet.data.clone()),
+        data: msg.packet.data.clone(),
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };

@@ -10,7 +10,7 @@ use common::ibc::core::ics04_channel::msgs::PacketMsg;
 use common::ibc::core::ics04_channel::packet::Receipt;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
-use ibc::timestamp::Timestamp;
+use common::ibc::timestamp::Timestamp;
 
 use super::*;
 
@@ -179,7 +179,7 @@ fn test_receive_packet_validate_reply_from_light_client() {
         chan_id_on_a: msg.packet.chan_id_on_a.clone(),
         port_id_on_b: msg.packet.port_id_on_b,
         chan_id_on_b: msg.packet.chan_id_on_b,
-        data: hex::encode(msg.packet.data),
+        data: msg.packet.data,
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
@@ -257,7 +257,7 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
         chan_id_on_a: msg.packet.chan_id_on_a.clone(),
         port_id_on_b: msg.packet.port_id_on_b,
         chan_id_on_b: msg.packet.chan_id_on_b,
-        data: hex::encode(msg.packet.data),
+        data: msg.packet.data,
         timeout_height_on_b: msg.packet.timeout_height_on_b,
         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
     };
@@ -427,7 +427,7 @@ fn execute_receive_packet_ordered() {
         )
         .unwrap();
     contract
-        .store_next_seq_on_a_recv(
+        .store_next_sequence_recv(
             &mut deps.storage,
             IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
             IbcChannelId::from_str(&packet.src.channel_id)
@@ -438,7 +438,7 @@ fn execute_receive_packet_ordered() {
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
-    let seq = contract.get_next_seq_on_a_recv(
+    let seq = contract.get_next_sequence_recv(
         &deps.storage,
         IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
         IbcChannelId::from_str(&packet.src.channel_id)
@@ -451,7 +451,7 @@ fn execute_receive_packet_ordered() {
     assert_eq!(seq.unwrap(), 2.into())
 }
 #[test]
-#[should_panic(expected = "common::ibc::core::ics04_channel::packet::seq_on_a")]
+#[should_panic(expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })")]
 fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();

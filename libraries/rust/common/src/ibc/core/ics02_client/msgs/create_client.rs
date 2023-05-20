@@ -13,7 +13,7 @@ use crate::ibc::tx_msg::Msg;
 pub const TYPE_URL: &str = "/ibc.core.client.v1.MsgCreateClient";
 
 /// A type of message that triggers the creation of a new on-chain (IBC) client.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgCreateClient {
     pub client_state: Any,
     pub consensus_state: Any,

@@ -7,7 +7,7 @@ use cw_common::{core_msg as CoreMsg, hex_string::HexString};
 use cw_ibc_core::{execute, instantiate, query, reply};
 use cw_icon_light_client;
 use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
-use ibc::events::IbcEventType;
+use common::ibc::events::IbcEventType;
 use prost::Message;
 use std::collections::HashMap;
 use test_utils::{get_event, get_event_name, get_test_signed_headers, to_attribute_map};
