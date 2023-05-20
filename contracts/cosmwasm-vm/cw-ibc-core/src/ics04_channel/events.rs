@@ -166,10 +166,7 @@ pub fn create_open_confirm_channel_event(
 /// `CHANNEL_ID_ATTRIBUTE_KEY` and the value of the `ibc_channel_id` of the `channel_id` parameter
 /// converted to a string.
 pub fn create_channel_id_generated_event(channel_id: ChannelId) -> Event {
-    Event::new("channel_id_created").add_attribute(
-        CHANNEL_ID_ATTRIBUTE_KEY,
-        channel_id.ibc_channel_id().as_str(),
-    )
+    Event::new("channel_id_created").add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str())
 }
 
 /// This function creates an event for sending a packet in an IBC channel.

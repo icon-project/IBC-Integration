@@ -74,7 +74,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = cw_common::types::ModuleId::from(module_id);
+                    let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
@@ -133,8 +133,8 @@ pub fn on_chan_close_confirm_submessage(
     let counter_party_port_id = channel_end.counterparty().port_id.clone();
     let counter_party_channel = channel_end.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.ibc_port_id().to_string(),
-        channel_id: channel_id.ibc_channel_id().to_string(),
+        port_id: port_id.to_string(),
+        channel_id: channel_id.to_string(),
     };
     let counter_party = cosmwasm_std::IbcEndpoint {
         port_id: counter_party_port_id.to_string(),

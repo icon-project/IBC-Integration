@@ -1,8 +1,8 @@
+use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::traits::AnyTypes;
 use common::{client_state::IClientState, consensus_state::IConsensusState};
-use cw_common::types::ConnectionId;
 use prost::DecodeError;
 use prost::Message;
 
@@ -120,7 +120,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, client_id.clone())
         {
             Ok(result) => match result {
-                Some(client_type) => Ok(client_type.client_type()),
+                Some(client_type) => Ok(client_type),
                 None => Err(ContractError::InvalidClientId {
                     client_id: client_id.as_str().to_string(),
                 }),
@@ -147,7 +147,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_client_from_registry(
         &self,
         store: &dyn Storage,
-        client_type: ClientType,
+        client_type: IbcClientType,
     ) -> Result<String, ContractError> {
         match self
             .ibc_store()
@@ -223,7 +223,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &mut dyn Storage,
         client_id: ClientId,
-        client_type: ClientType,
+        client_type: IbcClientType,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -256,7 +256,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_client_into_registry(
         &self,
         store: &mut dyn Storage,
-        client_type: ClientType,
+        client_type: IbcClientType,
         client: String,
     ) -> Result<(), ContractError> {
         match self
@@ -319,7 +319,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn check_client_registered(
         &self,
         store: &dyn Storage,
-        client_type: ClientType,
+        client_type: IbcClientType,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -362,7 +362,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         if client.is_empty() {
             return Err(ClientError::ClientNotFound {
-                client_id: client_id.ibc_client_id().clone(),
+                client_id: client_id.clone(),
             })
             .map_err(|e| Into::<ContractError>::into(e));
         }
@@ -389,16 +389,14 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<Vec<u8>, ContractError> {
-        let client_key = commitment::client_state_commitment_key(client_id.ibc_client_id());
+        let client_key = commitment::client_state_commitment_key(&client_id);
 
         let client_state = self
             .ibc_store()
             .commitments()
             .load(store, client_key)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: DecodeError::new(
-                    "NotFound ClientId(".to_owned() + client_id.ibc_client_id().as_str() + ")",
-                ),
+                error: DecodeError::new("NotFound ClientId(".to_owned() + client_id.as_str() + ")"),
             })?;
 
         Ok(client_state)

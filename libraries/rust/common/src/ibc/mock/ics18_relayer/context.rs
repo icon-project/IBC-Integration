@@ -45,7 +45,6 @@ mod tests {
     use crate::ibc::Height;
 
     use test_log::test;
-    use tracing::debug;
 
     /// Builds a `ClientMsg::UpdateClient` for a client with id `client_id` running on the `dest`
     /// context, assuming that the latest header on the source context is `src_header`.
@@ -188,8 +187,6 @@ mod tests {
             );
 
             let client_msg_a = client_msg_a_res.unwrap();
-
-            debug!("client_msg_a = {:?}", client_msg_a);
 
             // - send the message to A
             let dispatch_res_a = ctx_a.deliver(MsgEnvelope::Client(client_msg_a));

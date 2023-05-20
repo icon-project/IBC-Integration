@@ -45,13 +45,13 @@ pub trait IbcClient {
     fn register_client(
         &self,
         deps: DepsMut,
-        client_type: ClientType,
+        client_type: IbcClientType,
         light_client: Addr,
     ) -> Result<Response, ContractError>;
     fn generate_client_identifier(
         &self,
         store: &mut dyn Storage,
-        client_type: ClientType,
+        client_type: IbcClientType,
     ) -> Result<ClientId, ContractError>;
 
     fn misbehaviour(

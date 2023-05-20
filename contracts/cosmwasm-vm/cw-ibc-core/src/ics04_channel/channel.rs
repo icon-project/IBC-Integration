@@ -30,8 +30,8 @@ impl<'a> CwIbcCoreContext<'a> {
         {
             Some(request) => Ok(request),
             None => Err(ChannelError::ChannelNotFound {
-                port_id: port_id.ibc_port_id().clone(),
-                channel_id: channel_id.ibc_channel_id().clone(),
+                port_id: port_id.clone(),
+                channel_id: channel_id.clone(),
             })
             .map_err(|e| Into::<ContractError>::into(e))?,
         }
@@ -233,8 +233,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
                     None => Err(PacketError::MissingNextSendSeq {
-                        port_id: port_id.ibc_port_id().clone(),
-                        channel_id: channel_id.ibc_channel_id().clone(),
+                        port_id: port_id.clone(),
+                        channel_id: channel_id.clone(),
                     })
                     .map_err(|e| Into::<ContractError>::into(e))?,
                 }
@@ -345,8 +345,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
                     None => Err(PacketError::MissingNextRecvSeq {
-                        port_id: port_id.ibc_port_id().clone(),
-                        channel_id: channel_id.ibc_channel_id().clone(),
+                        port_id: port_id.clone(),
+                        channel_id: channel_id.clone(),
                     })
                     .map_err(|e| Into::<ContractError>::into(e))?,
                 }
@@ -462,8 +462,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
                     None => Err(PacketError::MissingNextAckSeq {
-                        port_id: port_id.ibc_port_id().clone(),
-                        channel_id: channel_id.ibc_channel_id().clone(),
+                        port_id: port_id.clone(),
+                        channel_id: channel_id.clone(),
                     })
                     .map_err(|e| Into::<ContractError>::into(e))?,
                 }
@@ -562,11 +562,7 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
         commitment: common::ibc::core::ics04_channel::commitment::PacketCommitment,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::packet_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path = commitment::packet_commitment_path(&port_id, &channel_id, sequence);
         let commitment_bytes = to_vec(&commitment).map_err(ContractError::Std)?;
         self.ibc_store()
             .commitments()
@@ -603,11 +599,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::packet_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path = commitment::packet_commitment_path(&port_id, &channel_id, sequence);
         self.ibc_store()
             .commitments()
             .remove(store, commitment_path);
@@ -644,11 +636,7 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
         receipt: common::ibc::core::ics04_channel::packet::Receipt,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::receipt_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path = commitment::receipt_commitment_path(&port_id, &channel_id, sequence);
         let ok = match receipt {
             common::ibc::core::ics04_channel::packet::Receipt::Ok => true,
         };
@@ -691,11 +679,8 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
         ack_commitment: common::ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::acknowledgement_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path =
+            commitment::acknowledgement_commitment_path(&port_id, &channel_id, sequence);
         let commitment_bytes = ack_commitment.into_vec();
 
         self.ibc_store()
@@ -791,11 +776,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<common::ibc::core::ics04_channel::commitment::PacketCommitment, ContractError> {
-        let commitment_path = commitment::packet_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path = commitment::packet_commitment_path(&port_id, &channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
             .commitments()
@@ -839,11 +820,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<common::ibc::core::ics04_channel::packet::Receipt, ContractError> {
-        let commitment_path = commitment::receipt_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path = commitment::receipt_commitment_path(&port_id, &channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
             .commitments()
@@ -891,11 +868,8 @@ impl<'a> CwIbcCoreContext<'a> {
         common::ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
         ContractError,
     > {
-        let commitment_path = commitment::acknowledgement_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path =
+            commitment::acknowledgement_commitment_path(&port_id, &channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
             .commitments()

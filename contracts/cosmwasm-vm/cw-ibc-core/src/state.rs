@@ -58,17 +58,17 @@ use super::*;
 /// the PortId, ChannelId, and seq_on_a. It maps a tuple of `(String, String, u64)` to a `u64` value,
 /// where the first two elements of the tuple represent the PortId and
 pub struct CwIbcStore<'a> {
-    client_registry: Map<'a, ClientType, String>,
-    client_types: Map<'a, ClientId, ClientType>,
-    client_implementations: Map<'a, ClientId, String>,
+    client_registry: Map<'a, IbcClientType, String>,
+    client_types: Map<'a, IbcClientId, IbcClientType>,
+    client_implementations: Map<'a, IbcClientId, String>,
     next_sequence_send: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_recv: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_ack: Map<'a, (PortId, ChannelId), Sequence>,
     next_client_sequence: Item<'a, u64>,
     next_connection_sequence: Item<'a, u64>,
     next_channel_sequence: Item<'a, u64>,
-    client_connections: Map<'a, ClientId, ConnectionId>,
-    connections: Map<'a, ConnectionId, Vec<u8>>,
+    client_connections: Map<'a, IbcClientId, IbcConnectionId>,
+    connections: Map<'a, IbcConnectionId, Vec<u8>>,
     channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
     port_to_module: Map<'a, PortId, IbcModuleId>,
     /// Stores address based on the capability names
@@ -109,10 +109,10 @@ impl<'a> CwIbcStore<'a> {
             packet_receipts: Map::new(StorageKey::PacketReceipts.as_str()),
         }
     }
-    pub fn client_registry(&self) -> &Map<'a, ClientType, String> {
+    pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
         &self.client_registry
     }
-    pub fn client_types(&self) -> &Map<'a, ClientId, ClientType> {
+    pub fn client_types(&self) -> &Map<'a, ClientId, IbcClientType> {
         &self.client_types
     }
     pub fn client_implementations(&self) -> &Map<'a, ClientId, String> {

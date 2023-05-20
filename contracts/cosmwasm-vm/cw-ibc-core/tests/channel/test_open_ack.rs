@@ -336,12 +336,7 @@ fn test_execute_open_ack_channel() {
         )
         .unwrap();
     contract
-        .store_channel(
-            deps.as_mut().storage,
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            channel_end,
-        )
+        .store_channel(deps.as_mut().storage, &port_id, &channel_id, channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.ibc_port_id().clone().to_string(),
@@ -391,12 +386,7 @@ fn test_execute_open_ack_channel_fail_invalid_state() {
         )
         .unwrap();
     contract
-        .store_channel(
-            deps.as_mut().storage,
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            channel_end,
-        )
+        .store_channel(deps.as_mut().storage, &port_id, &channel_id, channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.ibc_port_id().clone().to_string(),

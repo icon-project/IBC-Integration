@@ -5,7 +5,7 @@ use crate::ibc_types::{
 use crate::{
     errors::CwErrors,
     ibc_types::IbcHeight,
-    types::{ClientId, ClientType, MessageInfo, PacketData},
+    types::{MessageInfo, PacketData},
 };
 pub use common::ibc::core::ics04_channel::packet::Packet;
 use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
@@ -86,8 +86,8 @@ impl CreateClientResponse {
     pub fn height(&self) -> IbcHeight {
         IbcHeight::from_str(&self.height).unwrap()
     }
-    pub fn client_type(&self) -> ClientType {
-        ClientType::new(self.client_type.to_owned())
+    pub fn client_type(&self) -> IbcClientType {
+        IbcClientType::new(self.client_type.to_owned())
     }
 }
 
@@ -146,8 +146,8 @@ impl UpdateClientResponse {
     pub fn height(&self) -> IbcHeight {
         IbcHeight::from_str(&self.height).unwrap()
     }
-    pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id)
+    pub fn client_id(&self) -> Result<IbcClientId, CwErrors> {
+        IbcClientId::from_str(&self.client_id)
             .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }
@@ -192,8 +192,8 @@ impl UpgradeClientResponse {
         IbcHeight::from_str(&self.height).unwrap()
     }
 
-    pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id)
+    pub fn client_id(&self) -> Result<IbcClientId, CwErrors> {
+        IbcClientId::from_str(&self.client_id)
             .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }
@@ -214,8 +214,8 @@ impl MisbehaviourResponse {
     pub fn get_client_id(&self) -> &str {
         &self.client_id
     }
-    pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id)
+    pub fn client_id(&self) -> Result<IbcClientId, CwErrors> {
+        IbcClientId::from_str(&self.client_id)
             .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }

@@ -98,7 +98,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 client_address,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let client_type = ClientType::new(client_type);
+                let client_type = IbcClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
             CoreExecuteMsg::CreateClient {
@@ -282,7 +282,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetClientRegistry { _type } => {
                 let res = self
-                    .get_client_from_registry(deps.storage, ClientType::new(_type.clone()))
+                    .get_client_from_registry(deps.storage, IbcClientType::new(_type.clone()))
                     .map_err(|_| ContractError::InvalidClientType { client_type: _type })
                     .unwrap();
                 let addr = Addr::unchecked(res);
@@ -679,6 +679,7 @@ mod tests {
         icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
     };
 
+    use cw_common::ibc_types::IbcClientType;
     use prost::Message;
 
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
@@ -689,7 +690,7 @@ mod tests {
         to_vec, Addr, OwnedDeps,
     };
     use cw_common::raw_types::{Any, RawHeight};
-    use cw_common::{hex_string::HexString, ibc_types::IbcClientId, types::ClientType};
+    use cw_common::{hex_string::HexString, ibc_types::IbcClientId};
 
     const SENDER: &str = "sender";
 
@@ -723,7 +724,7 @@ mod tests {
     fn test_query_get_client_registry() {
         let client_type_str = "test_client_type".to_string();
         let client = "test_client".to_string();
-        let client_type = ClientType::new(client_type_str.clone());
+        let client_type = IbcClientType::new(client_type_str.clone());
         let contract = CwIbcCoreContext::default();
         let mut deps = setup();
 

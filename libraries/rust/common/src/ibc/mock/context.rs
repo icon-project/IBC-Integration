@@ -331,8 +331,6 @@ impl MockContext {
         .into_iter()
         .collect();
 
-        debug!("consensus states: {:?}", consensus_states);
-
         let client_record = MockClientRecord {
             client_type,
             client_state,

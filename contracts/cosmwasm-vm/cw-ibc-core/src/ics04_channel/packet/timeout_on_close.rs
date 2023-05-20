@@ -183,7 +183,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet_data,
             }
         };
-        let client_type = ClientType::from(client_state_of_b_on_a.client_type());
+        let client_type = IbcClientType::from(client_state_of_b_on_a.client_type());
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
 

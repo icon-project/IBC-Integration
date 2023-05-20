@@ -1,12 +1,12 @@
 use crate::ibc::prelude::*;
 
+use crate::ibc::core::ics02_client::error::ClientError;
+use crate::ibc::dynamic_typing::AsAny;
+use crate::ibc::timestamp::Timestamp;
+use crate::ibc::Height;
 use dyn_clone::DynClone;
 use ibc_proto::google::protobuf::Any;
 use ibc_proto::protobuf::Protobuf as ErasedProtobuf;
-
-use crate::ibc::core::ics02_client::error::ClientError;
-use crate::ibc::timestamp::Timestamp;
-use crate::ibc::Height;
 
 /// Abstract of consensus state update information
 ///
@@ -34,5 +34,10 @@ pub trait Header:
 
 // Implements `Clone` for `Box<dyn Header>`
 dyn_clone::clone_trait_object!(Header);
+// erased_serde::serialize_trait_object!(Header);
+
+// pub fn downcast_header<H: Header>(h: &dyn Header) -> Option<&H> {
+//     h.as_any().downcast_ref::<H>()
+// }
 
 // Implements `serde::Serialize` for all types that have Header as supertrait

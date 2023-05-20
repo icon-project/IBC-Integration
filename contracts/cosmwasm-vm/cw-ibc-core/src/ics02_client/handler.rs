@@ -33,7 +33,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let client_counter = self.client_counter(deps.as_ref().storage)?;
 
-        let client_type = ClientType::new(ICON_CLIENT_TYPE.to_owned());
+        let client_type = IbcClientType::new(ICON_CLIENT_TYPE.to_owned());
 
         let client_id = ClientId::new(client_type.clone(), client_counter)?;
 
@@ -41,7 +41,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
 
         let create_client_message = LightClientMessage::CreateClient {
-            client_id: client_id.ibc_client_id().to_string(),
+            client_id: client_id.to_string(),
             client_state: message.client_state.encode_to_vec(),
             consensus_state: message.consensus_state.encode_to_vec(),
         };
@@ -186,7 +186,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         Ok(Response::new()
             .add_submessage(sub_message)
             .add_attribute("method", "upgrade_client")
-            .add_attribute("client_id", client_id.ibc_client_id().as_str()))
+            .add_attribute("client_id", client_id.as_str()))
     }
 
     /// This method registers a light client with a given client type and stores it in the registry.
@@ -210,7 +210,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn register_client(
         &self,
         deps: DepsMut,
-        client_type: ClientType,
+        client_type: IbcClientType,
         light_client: Addr,
     ) -> Result<Response, ContractError> {
         let light_client_address = light_client.to_string();
@@ -243,7 +243,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn generate_client_identifier(
         &self,
         store: &mut dyn Storage,
-        client_type: ClientType,
+        client_type: IbcClientType,
     ) -> Result<ClientId, ContractError> {
         let client_seq_on_a = self.client_counter(store)?;
         let client_identifier = ClientId::new(client_type, client_seq_on_a)?;
@@ -286,27 +286,27 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         callback_data.client_state_bytes().to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         callback_data.height(),
                         callback_data.consensus_state_bytes().to_vec(),
                     )?;
 
                     let event = create_client_event(
-                        client_id.ibc_client_id().as_str(),
-                        client_type.client_type().as_str(),
+                        client_id.as_str(),
+                        client_type.as_str(),
                         &callback_data.height().to_string(),
                     );
 
                     Ok(Response::new()
                         .add_event(event)
                         .add_attribute("method", "execute_create_client_reply")
-                        .add_attribute("client_id", client_id.ibc_client_id().to_string()))
+                        .add_attribute("client_id", client_id.to_string()))
                 }
 
                 None => Err(ClientError::Other {
@@ -346,25 +346,20 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         update_client_response.client_state_bytes().to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         height,
                         update_client_response.consensus_state_bytes().to_vec(),
                     )?;
 
-                    let client_type = ClientType::from(client_id.clone());
+                    let client_type = IbcClientType::from(client_id.clone());
 
-                    let event = update_client_event(
-                        client_type.client_type(),
-                        height,
-                        vec![height],
-                        client_id.ibc_client_id(),
-                    );
+                    let event = update_client_event(client_type, height, vec![height], &client_id);
 
                     Ok(Response::new()
                         .add_event(event)
@@ -412,29 +407,26 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         response.client_state_commitment().to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         response.height(),
                         response.consensus_state_commitment().to_vec(),
                     )?;
 
-                    let client_type = ClientType::from(client_id.clone());
+                    let client_type = IbcClientType::from(client_id.clone());
 
-                    let event = upgrade_client_event(
-                        client_type.client_type(),
-                        response.height(),
-                        client_id.ibc_client_id().clone(),
-                    );
+                    let event =
+                        upgrade_client_event(client_type, response.height(), client_id.clone());
 
                     Ok(Response::new()
                         .add_event(event)
                         .add_attribute("method", "execute_upgrade_client_reply")
-                        .add_attribute("client_id", client_id.ibc_client_id().as_str()))
+                        .add_attribute("client_id", client_id.as_str()))
                 }
                 None => Err(ClientError::Other {
                     description: "Invalid Response Data".to_string(),
@@ -476,18 +468,18 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let client_id = ClientId::from(message.client_id);
 
-        let client_state = self.client_state(deps.as_ref().storage, client_id.ibc_client_id())?;
+        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
-                client_id: client_id.ibc_client_id().clone(),
+                client_id: client_id.clone(),
             })
             .map_err(|e| Into::<ContractError>::into(e));
         }
         let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
         let clinet_message = LightClientMessage::Misbehaviour {
-            client_id: client_id.ibc_client_id().to_string(),
+            client_id: client_id.to_string(),
             misbehaviour: to_vec(&message.misbehaviour)?,
         };
 
@@ -533,27 +525,25 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .client_id()
                         .map_err(ContractError::from)?;
 
-                    let client_type = ClientType::try_from(client_id.clone()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: DecodeError::new(error.to_string()),
-                        }
-                    })?;
+                    let client_type =
+                        IbcClientType::try_from(client_id.clone()).map_err(|error| {
+                            ContractError::IbcDecodeError {
+                                error: DecodeError::new(error.to_string()),
+                            }
+                        })?;
 
-                    let event = client_misbehaviour_event(
-                        client_id.ibc_client_id().as_str(),
-                        client_type.client_type().as_str(),
-                    );
+                    let event = client_misbehaviour_event(client_id.as_str(), client_type.as_str());
 
                     self.store_client_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         misbehaviour_response.client_state_commitment,
                     )?;
 
                     Ok(Response::new()
                         .add_event(event)
                         .add_attribute("method", "execute_misbheaviour_reply")
-                        .add_attribute("client_id", client_id.ibc_client_id().as_str()))
+                        .add_attribute("client_id", client_id.as_str()))
                 }
                 None => Err(ClientError::Other {
                     description: "Invalid Response Data".to_string(),

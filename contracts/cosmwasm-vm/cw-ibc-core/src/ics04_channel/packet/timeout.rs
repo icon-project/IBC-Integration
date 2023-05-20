@@ -166,7 +166,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet_data,
             }
         };
-        let client_type = ClientType::from(client_state_of_b_on_a.client_type());
+        let client_type = IbcClientType::from(client_state_of_b_on_a.client_type());
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -222,9 +222,10 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let contract_address = match self
-                        .get_route(deps.storage, cw_common::types::ModuleId::from(module_id))
-                    {
+                    let contract_address = match self.get_route(
+                        deps.storage,
+                        cw_common::ibc_types::IbcModuleId::from(module_id),
+                    ) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
@@ -353,10 +354,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("channel_order", chan_end_on_a.ordering().as_str());
                     let mut events = vec![event];
                     if let Order::Ordered = chan_end_on_a.ordering {
-                        let close_init = create_close_init_channel_event(
-                            port_id.ibc_port_id().as_str(),
-                            channel_id.ibc_channel_id().as_str(),
-                        );
+                        let close_init =
+                            create_close_init_channel_event(port_id.as_str(), channel_id.as_str());
                         events.push(close_init);
                     }
 

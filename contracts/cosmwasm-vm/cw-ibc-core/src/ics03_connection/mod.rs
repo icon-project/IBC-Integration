@@ -9,6 +9,7 @@ use crate::ics03_connection::event::create_open_confirm_event;
 use crate::ics03_connection::event::create_open_init_event;
 use crate::ics03_connection::event::create_open_try_event;
 use crate::ContractError;
+use common::ibc::core::ics24_host::identifier::{ClientId, ConnectionId};
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
 use cosmwasm_std::Response;
@@ -18,7 +19,6 @@ use cw_common::client_msg::{
     VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState,
 };
 use cw_common::client_response::{OpenAckResponse, OpenTryResponse};
-use cw_common::types::{ClientId, ConnectionId};
 
 pub use super::*;
 use common::ibc::core::ics03_connection::connection::ConnectionEnd;

@@ -33,6 +33,7 @@ pub use common::ibc::core::ics04_channel::msgs::{
 };
 use common::ibc::core::ics05_port::error::PortError;
 use common::ibc::core::ics24_host::error::ValidationError;
+use common::ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
 use common::ibc::{core::ics04_channel::packet::Packet, signer::Signer};
 pub use common::ibc::{
     core::{
@@ -64,7 +65,6 @@ use cw_common::client_msg::LightClientPacketMessage;
 use cw_common::ibc_types::{
     IbcChannelId, IbcClientId, IbcConnectionId, IbcMsgCreateClient, IbcMsgUpdateClient, IbcPortId,
 };
-use cw_common::types::{ChannelId, ClientId, ClientType, ConnectionId, PortId};
 use cw_storage_plus::{Item, Map};
 
 pub use cw_common::commitment::*;

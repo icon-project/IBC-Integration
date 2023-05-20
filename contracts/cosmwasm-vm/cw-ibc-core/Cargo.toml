@@ -55,6 +55,7 @@ cw-icon-light-client = { path="../cw-icon-light-client",default-features = false
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 hex-literal="*"
+#ibc-rs = { package="ibc", version = "0.32.0", default-features = false}
 
 [profile.release]
 # Do not perform backtrace for panic on release builds.
