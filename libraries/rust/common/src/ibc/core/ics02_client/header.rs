@@ -31,12 +31,4 @@ pub trait Header:
     }
 }
 
-// Implements `Clone` for `Box<dyn Header>`
 dyn_clone::clone_trait_object!(Header);
-// erased_serde::serialize_trait_object!(Header);
-
-// pub fn downcast_header<H: Header>(h: &dyn Header) -> Option<&H> {
-//     h.as_any().downcast_ref::<H>()
-// }
-
-// Implements `serde::Serialize` for all types that have Header as supertrait

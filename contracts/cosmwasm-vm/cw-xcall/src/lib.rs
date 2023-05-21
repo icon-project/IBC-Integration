@@ -51,8 +51,8 @@ use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
 
 use cw_common::cw_types::{
     Cw3ChannelOpenResponse, CwBasicResponse, CwChannelCloseMsg, CwChannelConnectMsg,
-    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwEndpoint, CwMsg, CwOrder, CwPacket,
-    CwPacketAckMsg, CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
+    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwOrder, CwPacket, CwPacketAckMsg,
+    CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
 
 use cosmwasm_std::{to_vec, QueryRequest};

@@ -1,6 +1,9 @@
 use cosmwasm_std::from_slice;
 
-use crate::types::LOG_PREFIX;
+use crate::{
+    state::{HOST_FORWARD_REPLY_ID, XCALL_FORWARD_REPLY_ID},
+    types::LOG_PREFIX,
+};
 
 use super::*;
 
@@ -274,7 +277,11 @@ impl<'a> CwIbcConnection<'a> {
         }
     }
 
-    fn reply_forward_host(&self, deps: DepsMut, message: Reply) -> Result<Response, ContractError> {
+    fn reply_forward_host(
+        &self,
+        _deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
         println!("{} Reply From Forward Host", LOG_PREFIX);
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()

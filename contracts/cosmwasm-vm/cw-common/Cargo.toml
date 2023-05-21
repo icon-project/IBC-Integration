@@ -23,6 +23,7 @@ ibc-proto = { version = "0.26.0", default-features = false}
 prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
 serde-json-wasm = {version="0.5.0", default-features = false}
 bytes = { version = "1.4.0", default-features = false }
+
 [dev-dependencies]
 getrandom = {version = "0.2.9", default-features = false, features = ["custom"]}
 test-utils={path="../../../libraries/rust/test-utils"}

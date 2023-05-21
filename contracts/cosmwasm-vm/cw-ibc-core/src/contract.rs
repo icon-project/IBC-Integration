@@ -214,7 +214,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             CoreExecuteMsg::SendPacket { packet } => {
-                let packet_bytes = packet.to_bytes().unwrap();
+                let packet_bytes = packet
+                    .to_bytes()
+                    .map_err(|e| Into::<ContractError>::into(e))?;
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
                     .map_err(|error| ContractError::IbcDecodeError { error: error })?;
 
@@ -271,8 +273,12 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::GetCommitment { key } => {
+                let key_bytes = key
+                    .to_bytes()
+                    .map_err(|e| Into::<ContractError>::into(e))
+                    .unwrap();
                 let res = self
-                    .get_commitment(deps.storage, key.to_bytes().unwrap())
+                    .get_commitment(deps.storage, key_bytes)
                     .map_err(|_| ContractError::InvalidCommitmentKey)
                     .unwrap();
                 to_binary(&hex::encode(res))

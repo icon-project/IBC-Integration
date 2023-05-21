@@ -1,7 +1,4 @@
-use crate::ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement;
-use crate::ibc::core::ics04_channel::timeout::TimeoutHeight;
 use crate::ibc::prelude::*;
-use crate::ibc::timestamp::Timestamp;
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct PacketCommitment(Vec<u8>);

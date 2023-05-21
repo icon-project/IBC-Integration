@@ -14,7 +14,6 @@ pub mod owner;
 pub mod requests;
 pub mod state;
 pub mod types;
-use crate::ack::{on_ack_failure, on_ack_sucess};
 use crate::{
     ack::{make_ack_fail, make_ack_success},
     error::ContractError,
@@ -39,21 +38,14 @@ use common::types::message::CrossContractMessage::XCallMessage;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, MessageInfo, Never, QuerierWrapper, Reply,
-    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, MessageInfo, QuerierWrapper, Reply, Response,
+    StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
 
-use cw_common::cw_types::{
-    Cw3ChannelOpenResponse, CwBasicResponse, CwChannelCloseMsg, CwChannelConnectMsg,
-    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwEndpoint, CwMsg, CwOrder, CwPacket,
-    CwPacketAckMsg, CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
-};
-
 use cosmwasm_std::{to_vec, QueryRequest};
 use cw2::set_contract_version;
-use cw_common::ibc_types::IbcHeight as Height;
 use cw_common::types::Ack;
 use cw_common::xcall_app_msg::ExecuteMsg;
 use cw_storage_plus::{Item, Map};

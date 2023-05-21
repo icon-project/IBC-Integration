@@ -87,8 +87,7 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.storage,
             connection_identifier.clone(),
             connection_end.clone(),
-        )
-        .unwrap();
+        )?;
 
         let event = create_open_init_event(
             connection_identifier.as_str(),
@@ -97,8 +96,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
         self.increase_connection_counter(deps.storage)?;
         self.store_connection_to_client(deps.storage, client_id, connection_identifier.clone())?;
-        self.store_connection(deps.storage, connection_identifier.clone(), connection_end)
-            .unwrap();
+        self.store_connection(deps.storage, connection_identifier.clone(), connection_end)?;
         return Ok(Response::new()
             .add_event(event)
             .add_attribute("method", "connection_open_init")

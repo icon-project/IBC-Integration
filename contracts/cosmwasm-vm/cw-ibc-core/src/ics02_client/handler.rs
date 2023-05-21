@@ -48,7 +48,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: light_client_address,
-            msg: to_binary(&create_client_message).unwrap(),
+            msg: to_binary(&create_client_message).map_err(ContractError::Std)?,
             funds: info.funds,
         });
 
@@ -93,7 +93,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let client_update_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: client_address,
-            msg: to_binary(&exec_message).unwrap(),
+            msg: to_binary(&exec_message).map_err(ContractError::Std)?,
             funds: info.funds,
         });
         let sub_msg: SubMsg = SubMsg::reply_always(client_update_message, EXECUTE_UPDATE_CLIENT);
@@ -167,8 +167,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let wasm_exec_message = LightClientMessage::UpgradeClient {
             upgraded_client_state: message.client_state.value,
             upgraded_consensus_state: message.consensus_state.value,
-            proof_upgrade_client: to_vec(&message.proof_upgrade_client).unwrap(),
-            proof_upgrade_consensus_state: to_vec(&message.proof_upgrade_consensus_state).unwrap(),
+            proof_upgrade_client: to_vec(&message.proof_upgrade_client)
+                .map_err(ContractError::Std)?,
+            proof_upgrade_consensus_state: to_vec(&message.proof_upgrade_consensus_state)
+                .map_err(ContractError::Std)?,
         };
 
         let client_id = ClientId::from(message.client_id);
@@ -177,7 +179,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let wasm_msg: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: client_address,
-            msg: to_binary(&wasm_exec_message).unwrap(),
+            msg: to_binary(&wasm_exec_message).map_err(ContractError::Std)?,
             funds: info.funds,
         });
 
@@ -267,7 +269,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     println!("{:?}", &data);
-                    let callback_data: CreateClientResponse = from_binary_response(&data).unwrap();
+                    let callback_data: CreateClientResponse =
+                        from_binary_response(&data).map_err(ContractError::Std)?;
 
                     let client_type = callback_data.client_type();
                     let client_id =
