@@ -87,5 +87,3 @@ impl IConsensusState for ConsensusState {
     }
 }
 dyn_clone::clone_trait_object!(IConsensusState);
-
-

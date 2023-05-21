@@ -125,7 +125,7 @@ mod tests {
     use crate::icon::icon::types::v1::SignedHeader;
     use test_utils::{
         constants::{TESTNET_NETWORK_TYPE_ID, TESTNET_SRC_NETWORK_ID},
-        get_test_headers, get_test_signed_headers, load_test_headers, TestHeader,
+        get_test_headers, load_test_headers,
     };
 
     use super::*;

@@ -8,11 +8,9 @@ use super::{
 
 use crate::ibc::core::ics04_channel::msgs::{ChannelMsg, PacketMsg};
 use crate::ibc::core::ics05_port::error::PortError::UnknownPort;
-use crate::ibc::core::ics24_host::identifier::{ PortId};
+use crate::ibc::core::ics24_host::identifier::PortId;
 
 use crate::ibc::core::ics26_routing::context::{Module, ModuleId};
-
-
 
 use displaydoc::Display;
 

@@ -5,7 +5,6 @@ use dyn_clone::DynClone;
 use ibc_proto::google::protobuf::Any;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 
-
 use crate::ibc::core::ics02_client::client_type::ClientType;
 use crate::ibc::core::ics02_client::error::ClientError;
 use crate::ibc::core::ics03_connection::connection::ConnectionEnd;

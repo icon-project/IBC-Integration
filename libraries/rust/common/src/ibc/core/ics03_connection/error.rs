@@ -79,6 +79,8 @@ pub enum ConnectionError {
     },
     /// some error
     TimestampOverflow(TimestampOverflowError),
+    /// Connection already exists `{0}`
+    ConnectionExists(String),
 }
 
 #[cfg(feature = "std")]

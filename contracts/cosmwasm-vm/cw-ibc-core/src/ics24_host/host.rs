@@ -233,14 +233,8 @@ impl<'a> CwIbcCoreContext<'a> {
             return 0;
         }
 
-        let delay = delay_period_time
-            .as_secs()
-            .checked_div(max_expected_time_per_block.as_secs())
-            .unwrap();
+        let delay = delay_period_time.as_secs() / max_expected_time_per_block.as_secs();
 
-        delay_period_time
-            .checked_add(Duration::from_secs(delay))
-            .unwrap()
-            .as_secs()
+        delay_period_time.as_secs() + delay
     }
 }

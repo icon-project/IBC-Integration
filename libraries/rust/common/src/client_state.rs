@@ -3,10 +3,10 @@ use std::time::Duration;
 use crate::constants::ICON_CLIENT_TYPE;
 use crate::ibc::core::ics02_client::error::ClientError;
 
-use crate::{constants::ICON_CLIENT_STATE_TYPE_URL, icon::icon::lightclient::v1::ClientState};
-use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use crate::ibc::core::ics02_client::client_type::ClientType as IbcClientType;
 use crate::ibc::Height as IbcHeight;
+use crate::{constants::ICON_CLIENT_STATE_TYPE_URL, icon::icon::lightclient::v1::ClientState};
+use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use prost::Message;
 
 impl ClientState {
@@ -44,7 +44,6 @@ impl TryFrom<Any> for ClientState {
         use crate::ibc::core::ics02_client::error::ClientError as Error;
         use bytes::Buf;
         use core::ops::Deref;
-        
 
         fn decode_client_state<B: Buf>(buf: B) -> Result<ClientState, Error> {
             <ClientState as Message>::decode(buf).map_err(ClientError::Decode)
@@ -67,9 +66,6 @@ impl From<ClientState> for Any {
         }
     }
 }
-
-
-
 
 pub trait IClientState {
     fn latest_height(&self) -> crate::ibc::Height;

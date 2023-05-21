@@ -205,7 +205,7 @@ impl<'a> CwIbcConnection<'a> {
     /// `ContractError` is an error type that can be returned if there is an error in processing the
     /// message.
 
-    pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
+    pub fn reply(&self, deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             XCALL_FORWARD_REPLY_ID => self.reply_forward_xcall(deps, msg),
             HOST_FORWARD_REPLY_ID => self.reply_forward_host(deps, msg),
@@ -259,7 +259,7 @@ impl<'a> CwIbcConnection<'a> {
 
     fn reply_forward_xcall(
         &self,
-        deps: DepsMut,
+        _deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
         println!("{} Reply From Forward XCall", LOG_PREFIX);

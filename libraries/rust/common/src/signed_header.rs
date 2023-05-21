@@ -1,5 +1,5 @@
 pub use crate::icon::icon::types::v1::SignedHeader as RawSignedHeader;
-use ibc_proto::{google::protobuf::Any};
+use ibc_proto::google::protobuf::Any;
 use prost::DecodeError;
 
 use crate::constants::ICON_SIGNED_HEADER_TYPE_URL;

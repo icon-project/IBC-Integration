@@ -16,7 +16,6 @@ serde = { version = "1.0.156", default-features = false,features = ["derive"] }
 serde_json = "1.0"
 pbjson = { version = "0.5.1", default-features = false }
 ibc-proto = { version = "0.26.0", default-features = false }
-keccak-hash="0.10.0"
 hex-literal="0.3.4"
 cosmwasm-schema = "1.2.1"
 sha2 = { version = "0.10.6", default-features = false }
@@ -25,7 +24,6 @@ sha3 = { version = "0.10.6", default-features = false }
 serde-json-wasm = {version="0.5.0", default-features = false}
 cw-storage-plus = "1.0.1"
 cosmwasm-std = {version="1.2.2",default-features = false}
-#ibc = { version = "0.32.0", default-features = false}
 dyn-clone = "1.0.11"
 displaydoc="*"
 derive_more = { version = "0.99.17", default-features = false, features = ["from", "into", "display"] }
