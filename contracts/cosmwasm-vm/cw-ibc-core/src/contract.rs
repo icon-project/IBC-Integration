@@ -233,7 +233,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("method", "set_expected_time_per_block")
                     .add_attribute("time", block_time.to_string()))
             }
-            _ => return Err(ContractError::InvalidCommand),
         }
         // Ok(Response::new())
     }

@@ -86,11 +86,6 @@ pub enum ExecuteMsg {
         //ibc_proto::ibc::core::channel::v1::Packet
         packet: HexString,
     },
-    SendPacketCommon {
-        //raw message bytes:
-        //ibc_proto::ibc::core::channel::v1::Packet
-        packet: HexString,
-    },
     ReceivePacket {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgRecvPacket

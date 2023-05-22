@@ -101,7 +101,7 @@ impl<'a> CwIbcConnection<'a> {
 
             println!("{} Raw Packet Created {:?}", LOG_PREFIX, &packet_data);
 
-            let message = cw_common::core_msg::ExecuteMsg::SendPacketCommon {
+            let message = cw_common::core_msg::ExecuteMsg::SendPacket {
                 packet: HexString::from_bytes(&packet_data.encode_to_vec()),
             };
 
