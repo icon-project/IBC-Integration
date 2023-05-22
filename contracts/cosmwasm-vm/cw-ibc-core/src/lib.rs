@@ -3,7 +3,6 @@ pub mod context;
 pub mod contract;
 mod error;
 pub mod gas_estimates;
-pub mod helpers;
 pub mod ics02_client;
 pub mod ics03_connection;
 pub mod ics04_channel;
@@ -19,39 +18,24 @@ use gas_estimates::*;
 
 use crate::state::CwIbcStore;
 use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
-pub use constants::*;
-use context::CwIbcCoreContext;
-use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Coin;
-use cosmwasm_std::{
-    entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
-    StdResult, Storage,
-};
-#[allow(unused_imports)]
-use cw2::set_contract_version;
-use cw_common::client_msg::LightClientPacketMessage;
-use cw_common::ibc_types::{
-    IbcChannelId, IbcClientId, IbcConnectionId, IbcMsgCreateClient, IbcMsgUpdateClient, IbcPortId,
-};
-use cw_common::types::{ChannelId, ClientId, ClientType, ConnectionId, PortId};
-use cw_storage_plus::{Item, Map};
-use ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
-use ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
-use ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
-use ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
-use ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
-use ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
-use ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
-use ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
-pub use ibc::core::ics04_channel::msgs::{
+use common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
+use common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
+use common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
+use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
+use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
+use common::ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
+use common::ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
+use common::ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
+pub use common::ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
     chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
 };
-use ibc::core::ics05_port::error::PortError;
-use ibc::core::ics24_host::error::ValidationError;
-use ibc::{core::ics04_channel::packet::Packet, signer::Signer};
-pub use ibc::{
+use common::ibc::core::ics05_port::error::PortError;
+use common::ibc::core::ics24_host::error::ValidationError;
+use common::ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
+use common::ibc::{core::ics04_channel::packet::Packet, signer::Signer};
+pub use common::ibc::{
     core::{
         ics02_client::{
             client_type::ClientType as IbcClientType, error::ClientError,
@@ -67,18 +51,30 @@ pub use ibc::{
     },
     Height,
 };
+pub use constants::*;
+use context::CwIbcCoreContext;
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Coin;
+use cosmwasm_std::{
+    entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
+    StdResult, Storage,
+};
+#[allow(unused_imports)]
+use cw2::set_contract_version;
+use cw_common::client_msg::LightClientPacketMessage;
+use cw_common::ibc_types::{
+    IbcChannelId, IbcClientId, IbcConnectionId, IbcMsgCreateClient, IbcMsgUpdateClient, IbcPortId,
+};
+use cw_storage_plus::{Item, Map};
 
 pub use cw_common::commitment::*;
-use prost::Message;
 use std::str::FromStr;
 use thiserror::Error;
 
 use crate::msg::{InstantiateMsg, QueryMsg};
+use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
-use crate::{
-    ics02_client::types::{ClientState, ConsensusState, SignedHeader},
-    traits::ExecuteChannel,
-};
+
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]

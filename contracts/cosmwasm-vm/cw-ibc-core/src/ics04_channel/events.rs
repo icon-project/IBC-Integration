@@ -1,4 +1,4 @@
-use ibc::core::ics04_channel::Version;
+use common::ibc::core::ics04_channel::Version;
 
 use super::*;
 
@@ -9,7 +9,7 @@ pub const COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY: &str = "counterparty_port_id";
 pub const VERSION_ATTRIBUTE_KEY: &str = "version";
 
 // Packet constants
-pub const PKT_SEQ_ATTRIBUTE_KEY: &str = "packet_sequence";
+pub const PKT_SEQ_ATTRIBUTE_KEY: &str = "packet_seq_on_a";
 pub const PKT_DATA_ATTRIBUTE_KEY: &str = "packet_data";
 pub const PKT_DATA_HEX_ATTRIBUTE_KEY: &str = "packet_data_hex";
 pub const PKT_SRC_PORT_ATTRIBUTE_KEY: &str = "packet_src_port";
@@ -166,10 +166,7 @@ pub fn create_open_confirm_channel_event(
 /// `CHANNEL_ID_ATTRIBUTE_KEY` and the value of the `ibc_channel_id` of the `channel_id` parameter
 /// converted to a string.
 pub fn create_channel_id_generated_event(channel_id: ChannelId) -> Event {
-    Event::new("channel_id_created").add_attribute(
-        CHANNEL_ID_ATTRIBUTE_KEY,
-        channel_id.ibc_channel_id().as_str(),
-    )
+    Event::new("channel_id_created").add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str())
 }
 
 /// This function creates an event for sending a packet in an IBC channel.
@@ -192,9 +189,9 @@ pub fn create_send_packet_event(
     channel_order: &Order,
     dst_connection_id: &IbcConnectionId,
 ) -> Result<Event, ContractError> {
-    let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
-        error: ChannelError::NonUtf8PacketData,
-    })?;
+    let data = std::str::from_utf8(&packet.data)
+        .map_err(|_| ChannelError::NonUtf8PacketData)
+        .map_err(|e| Into::<ContractError>::into(e))?;
     let hex_data = hex::encode(&packet.data);
 
     Ok(Event::new(IbcEventType::SendPacket.as_str())
@@ -208,7 +205,7 @@ pub fn create_send_packet_event(
             PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
             packet.timeout_timestamp_on_b.nanoseconds().to_string(),
         )
-        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.seq_on_a.to_string())
+        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
         .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.port_id_on_a.as_str())
         .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_a.as_str())
         .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
@@ -237,9 +234,9 @@ pub fn create_write_ack_event(
     channel_order: &str,
     dst_connection_id: &str,
 ) -> Result<Event, ContractError> {
-    let data = std::str::from_utf8(&packet.data).map_err(|_| ContractError::IbcChannelError {
-        error: ChannelError::NonUtf8PacketData,
-    })?;
+    let data = std::str::from_utf8(&packet.data)
+        .map_err(|_e| ChannelError::NonUtf8PacketData)
+        .map_err(|e| Into::<ContractError>::into(e))?;
     let hex_data = hex::encode(&packet.data);
 
     let timeout_height = Height::new(
@@ -271,7 +268,7 @@ pub fn create_write_ack_event(
 ///
 /// * `port_id`: The identifier of the source port of the packet.
 /// * `chan_id`: The channel identifier of the source channel.
-/// * `seq_on_a`: The sequence number of the packet on the sending chain (chain A).
+/// * `seq_on_a`: The seq_on_a number of the packet on the sending chain (chain A).
 /// * `dst_port_id`: The identifier of the destination port for the packet.
 /// * `dst_chan_id`: The `dst_chan_id` parameter is a string representing the identifier of the
 /// destination channel for the acknowledgement packet.
@@ -333,7 +330,7 @@ pub fn create_packet_timeout_event(packet: Packet, channel_order: &Order) -> Eve
             PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
             packet.timeout_timestamp_on_b.nanoseconds().to_string(),
         )
-        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.seq_on_a.to_string())
+        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
         .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.port_id_on_a.as_str())
         .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_a.as_str())
         .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
@@ -392,7 +389,7 @@ pub fn create_close_confirm_channel_event(port_id_on_b: &str, chan_id_on_b: &str
 ///
 /// * `port_id`: The identifier of the source port of the packet.
 /// * `chan_id`: The identifier of the source channel where the packet was sent from.
-/// * `seq_on_a`: The sequence number of the packet on the sending chain.
+/// * `seq_on_a`: The seq_on_a number of the packet on the sending chain.
 /// * `dst_port_id`: The identifier of the destination port for the packet.
 /// * `dst_chan_id`: The `dst_chan_id` parameter is the identifier of the channel on the destination
 /// chain where the packet is being sent to.

@@ -2,10 +2,7 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::MerkleNode;
 use common::icon::icon::types::v1::SignedHeader;
-use common::utils::keccak256;
 use cosmwasm_std::Addr;
-use ibc_proto::google::protobuf::Any;
-use prost::{DecodeError, Message};
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -13,6 +10,9 @@ use serde::Serialize;
 pub struct ConsensusStateUpdate {
     // commitment for updated consensusState
     pub consensus_state_commitment: [u8; 32],
+    pub client_state_commitment: [u8; 32],
+    pub consensus_state_bytes: Vec<u8>,
+    pub client_state_bytes: Vec<u8>,
     // updated height
     pub height: u64,
 }
@@ -63,7 +63,7 @@ pub trait ILightClient {
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
-    ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
+    ) -> Result<ConsensusStateUpdate, Self::Error>;
 
     /**
      * @dev updateClient updates the client corresponding to `clientId`.
@@ -81,7 +81,7 @@ pub trait ILightClient {
         &mut self,
         client_id: &str,
         header: SignedHeader,
-    ) -> Result<(Vec<u8>, ConsensusStateUpdate), Self::Error>;
+    ) -> Result<ConsensusStateUpdate, Self::Error>;
 
     /**
      * @dev verifyMembership is a generic proof verification method which verifies a proof of the existence of a value at a given CommitmentPath at the specified height.
@@ -167,35 +167,4 @@ pub trait IContext {
         client_id: &str,
         height: u64,
     ) -> Result<u64, Self::Error>;
-}
-
-pub trait AnyTypes: Message + Default {
-    fn get_type_url() -> String;
-
-    fn get_type_url_hash() -> [u8; 32] {
-        keccak256(Self::get_type_url().as_bytes())
-    }
-
-    fn from_any(any: Any) -> Result<Self, DecodeError> {
-        if Self::get_type_url_hash() != keccak256(any.type_url.as_bytes()) {
-            return Err(DecodeError::new("Invalid typ"));
-        }
-        Self::decode(any.value.as_slice())
-    }
-
-    fn to_any(&self) -> Any {
-        return Any {
-            type_url: Self::get_type_url(),
-            value: self.encode_to_vec(),
-        };
-    }
-
-    fn get_keccak_hash(&self) -> [u8; 32] {
-        let bytes = self.encode_to_vec();
-        return keccak256(&bytes);
-    }
-    fn get_keccak_hash_string(&self) -> String {
-        let hash = self.get_keccak_hash();
-        return hex::encode(hash);
-    }
 }

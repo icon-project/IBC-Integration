@@ -1,5 +1,6 @@
+use common::constants::ICON_CLIENT_TYPE;
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
-use cw_common::constants::ICON_CLIENT_TYPE;
+use common::traits::AnyTypes;
 use cw_common::ibc_types::IbcHeight;
 
 #[cfg(feature = "mock")]
@@ -15,8 +16,8 @@ use cw2::set_contract_version;
 use cw_common::client_response::{
     CreateClientResponse, LightClientResponse, PacketDataResponse, UpdateClientResponse,
 };
+use cw_common::raw_types::Any;
 use cw_common::types::{PacketData, VerifyChannelState};
-use ibc_proto::google::protobuf::Any;
 
 use crate::constants::{
     CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH,
@@ -71,15 +72,22 @@ pub fn execute(
             client_state,
             consensus_state,
         } => {
-            let client_state = ClientState::decode(client_state.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
-            let consensus_state = ConsensusState::decode(consensus_state.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
-            let (state_byte, update) =
-                client.create_client(&client_id, client_state, consensus_state)?;
+            let client_state_any =
+                Any::decode(client_state.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
+            let consensus_state_any = Any::decode(consensus_state.as_slice())
+                .map_err(|e| ContractError::DecodeError(e))?;
+            let client_state = ClientState::from_any(client_state_any.clone())
+                .map_err(|e| ContractError::DecodeError(e))?;
+            let consensus_state = ConsensusState::from_any(consensus_state_any.clone())
+                .map_err(|e| ContractError::DecodeError(e))?;
+            let update =
+                client.create_client(&client_id, client_state.clone(), consensus_state.clone())?;
 
             let mut response = Response::new()
-                .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte.clone()))
+                .add_attribute(
+                    CLIENT_STATE_HASH,
+                    hex::encode(update.client_state_commitment.clone()),
+                )
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
                     hex::encode(update.consensus_state_commitment),
@@ -89,12 +97,13 @@ pub fn execute(
             let client_response = CreateClientResponse::new(
                 ICON_CLIENT_TYPE.to_string(),
                 IbcHeight::new(1, update.height).unwrap().to_string(),
-                state_byte,
+                update.client_state_commitment.to_vec(),
                 update.consensus_state_commitment.into(),
+                client_state_any.encode_to_vec(),
+                consensus_state_any.encode_to_vec(),
             );
 
             response.data = to_binary(&client_response).ok();
-            println!("{:?}", response.data);
 
             Ok(response)
         }
@@ -102,17 +111,28 @@ pub fn execute(
             client_id,
             signed_header,
         } => {
-            let header_any = SignedHeader::decode(signed_header.as_slice()).unwrap();
-            let (state_byte, update) = client.update_client(&client_id, header_any)?;
+            let header_any = Any::decode(signed_header.as_slice()).unwrap();
+            let header =
+                SignedHeader::from_any(header_any).map_err(|e| ContractError::DecodeError(e))?;
+            let update = client.update_client(&client_id, header)?;
             let response_data = to_binary(&UpdateClientResponse {
-                height: IbcHeight::new(0, update.height).unwrap().to_string(),
+                height: to_ibc_height(update.height).map(|h| h.to_string())?,
                 client_id,
-                client_state_commitment: state_byte.clone(),
+                client_state_commitment: update.client_state_commitment.to_vec(),
                 consensus_state_commitment: update.consensus_state_commitment.to_vec(),
+                client_state_bytes: ClientState::any_from_value(&update.client_state_bytes)
+                    .encode_to_vec(),
+                consensus_state_bytes: ConsensusState::any_from_value(
+                    &update.consensus_state_bytes,
+                )
+                .encode_to_vec(),
             })
-            .unwrap();
+            .map_err(ContractError::Std)?;
             Ok(Response::new()
-                .add_attribute(CLIENT_STATE_HASH, hex::encode(state_byte))
+                .add_attribute(
+                    CLIENT_STATE_HASH,
+                    hex::encode(update.client_state_commitment),
+                )
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
                     hex::encode(update.consensus_state_commitment),
@@ -130,7 +150,7 @@ pub fn execute(
             delay_block_period,
         } => {
             let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let result = client.verify_membership(
                 &client_id,
                 height,
@@ -152,7 +172,7 @@ pub fn execute(
             delay_block_period,
         } => {
             let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let result = client.verify_non_membership(
                 &client_id,
                 height,
@@ -169,7 +189,7 @@ pub fn execute(
             packet_data,
         } => {
             let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let height = to_height_u64(&verify_packet_data.height)?;
             let result = client.verify_membership(
                 &client_id,
@@ -195,7 +215,7 @@ pub fn execute(
             packet_data,
         } => {
             let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let height = to_height_u64(&verify_packet_acknowledge.height)?;
             let result = client.verify_membership(
                 &client_id,
@@ -221,7 +241,7 @@ pub fn execute(
             expected_response,
         } => {
             let result = validate_connection_state(&client_id, &client, &verify_connection_state)?;
-            let data = to_binary(&expected_response).unwrap();
+            let data = to_binary(&expected_response).map_err(ContractError::Std)?;
 
             Ok(Response::new()
                 .add_attribute(MEMBERSHIP, result.to_string())
@@ -245,7 +265,7 @@ pub fn execute(
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
                 .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
                 .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
-                .set_data(to_binary(&state.expected_response).unwrap()))
+                .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
         }
         ExecuteMsg::VerifyConnectionOpenAck(state) => {
             let connection_valid = validate_connection_state(
@@ -265,7 +285,7 @@ pub fn execute(
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
                 .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
                 .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
-                .set_data(to_binary(&state.expected_response).unwrap()))
+                .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
         }
 
         ExecuteMsg::VerifyChannel {
@@ -280,7 +300,7 @@ pub fn execute(
                 message_info,
                 ibc_endpoint: endpoint,
             })
-            .unwrap();
+            .map_err(ContractError::Std)?;
             Ok(Response::new()
                 .add_attribute(MEMBERSHIP, result.to_string())
                 .set_data(data))
@@ -298,7 +318,7 @@ pub fn execute(
 
             Ok(Response::new()
                 .add_attribute(MEMBERSHIP, is_channel_valid.to_string())
-                .set_data(to_binary(&packet_res).unwrap()))
+                .set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
         }
         ExecuteMsg::Misbehaviour {
             client_id: _,
@@ -323,8 +343,8 @@ pub fn validate_channel_state(
     client: &IconClient,
     state: &VerifyChannelState,
 ) -> Result<bool, ContractError> {
-    let proofs_decoded = MerkleProofs::decode(state.proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+    let proofs_decoded =
+        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -343,8 +363,8 @@ pub fn validate_connection_state(
     client: &IconClient,
     state: &VerifyConnectionState,
 ) -> Result<bool, ContractError> {
-    let proofs_decoded = MerkleProofs::decode(state.proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+    let proofs_decoded =
+        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -364,7 +384,7 @@ pub fn validate_client_state(
     state: &VerifyClientFullState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        .map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -384,7 +404,7 @@ pub fn validate_consensus_state(
     state: &VerifyClientConsensusState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.consensus_state_proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+        .map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -414,7 +434,7 @@ pub fn validate_next_seq_recv(
             packet_data: _,
         } => {
             let proofs_decoded = MerkleProofs::decode(proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let height = to_height_u64(&height)?;
             let res = client.verify_membership(
                 client_id,
@@ -436,7 +456,7 @@ pub fn validate_next_seq_recv(
             packet_data: _,
         } => {
             let proofs_decoded = MerkleProofs::decode(proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e.to_string()))?;
+                .map_err(|e| ContractError::DecodeError(e))?;
             let height = to_height_u64(&height)?;
             let res = client.verify_non_membership(
                 client_id,
@@ -459,8 +479,12 @@ fn to_height_u64(height: &str) -> Result<u64, ContractError> {
     Ok(height)
 }
 
+fn to_ibc_height(height: u64) -> Result<IbcHeight, ContractError> {
+    IbcHeight::new(0, height).map_err(|_e| ContractError::InvalidHeight)
+}
+
 pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
-    let any = Any::decode(bytes).map_err(|e| ContractError::DecodeError(e.to_string()))?;
+    let any = Any::decode(bytes).map_err(|e| ContractError::DecodeError(e))?;
     Ok(any)
 }
 
@@ -500,20 +524,21 @@ pub fn get_light_client<'a>(
 #[cfg(test)]
 mod tests {
 
-    use common::icon::icon::types::v1::BtpHeader;
+    use common::icon::icon::types::v1::{BtpHeader, SignedHeader};
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         OwnedDeps, Response,
     };
     use cw2::get_contract_version;
+    use cw_common::raw_types::Any;
     use test_utils::{get_test_headers, get_test_signed_headers, to_attribute_map};
 
-    use crate::traits::AnyTypes;
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
         state::QueryHandler,
         ContractError,
     };
+    use common::traits::AnyTypes;
     use cw_common::client_msg::ExecuteMsg;
     use prost::Message;
 
@@ -540,8 +565,8 @@ mod tests {
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::CreateClient {
             client_id: client_id.to_string(),
-            client_state: client_state.encode_to_vec(),
-            consensus_state: consensus_state.encode_to_vec(),
+            client_state: client_state.to_any().encode_to_vec(),
+            consensus_state: consensus_state.to_any().encode_to_vec(),
         };
 
         execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
@@ -578,10 +603,12 @@ mod tests {
         let start_header = &get_test_headers()[0];
         let client_state = start_header.to_client_state(1000000, 0);
         let consensus_state = start_header.to_consensus_state();
+        let client_state_any: Any = client_state.to_any();
+        let consensus_state_any: Any = consensus_state.to_any();
         let msg = ExecuteMsg::CreateClient {
             client_id: client_id.clone(),
-            client_state: client_state.encode_to_vec(),
-            consensus_state: consensus_state.encode_to_vec(),
+            client_state: client_state_any.encode_to_vec(),
+            consensus_state: consensus_state_any.encode_to_vec(),
         };
 
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
@@ -617,7 +644,7 @@ mod tests {
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
-            signed_header: signed_header.encode_to_vec(),
+            signed_header: signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone());
         let stored_client_state =
@@ -641,7 +668,7 @@ mod tests {
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
-            signed_header: random_signed_header.encode_to_vec(),
+            signed_header: random_signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone());
         assert_eq!(
@@ -658,12 +685,13 @@ mod tests {
         let client_id = "test_client".to_string();
         let mut deps = init_client(&client_id, &start_header, None);
 
-        let signed_header = &get_test_signed_headers()[1];
+        let signed_header: &SignedHeader = &get_test_signed_headers()[1].clone();
+        let header_any: Any = signed_header.to_any();
         let block_height = signed_header.header.clone().unwrap().main_height;
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
-            signed_header: signed_header.encode_to_vec(),
+            signed_header: header_any.encode_to_vec(),
         };
         let _result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
 

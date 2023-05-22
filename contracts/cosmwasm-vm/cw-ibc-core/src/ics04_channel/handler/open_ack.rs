@@ -21,21 +21,19 @@ pub fn channel_open_ack_validate(
     chan_end_on_a: &ChannelEnd,
 ) -> Result<(), ContractError> {
     if !chan_end_on_a.state_matches(&State::Init) {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::InvalidChannelState {
-                channel_id: message.chan_id_on_a.clone(),
-                state: chan_end_on_a.state,
-            },
-        });
+        return Err(ChannelError::InvalidChannelState {
+            channel_id: message.chan_id_on_a.clone(),
+            state: chan_end_on_a.state,
+        })
+        .map_err(|e| Into::<ContractError>::into(e));
     }
 
     if chan_end_on_a.connection_hops().len() != 1 {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::InvalidConnectionHopsLength {
-                expected: 1,
-                actual: chan_end_on_a.connection_hops().len(),
-            },
-        });
+        return Err(ChannelError::InvalidConnectionHopsLength {
+            expected: 1,
+            actual: chan_end_on_a.connection_hops().len(),
+        })
+        .map_err(|e| Into::<ContractError>::into(e));
     }
 
     Ok(())
@@ -62,7 +60,7 @@ pub fn on_chan_open_ack_submessage(
     connection_id: &ConnectionId,
 ) -> Result<cosmwasm_std::IbcChannelConnectMsg, ContractError> {
     let port_id = port_id.clone();
-    let channel_id = channel_id.ibc_channel_id();
+    let channel_id = channel_id;
     let counter_party_port_id = channel_end.counterparty().port_id.clone();
     let counter_party_channel = channel_end.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {
@@ -77,11 +75,10 @@ pub fn on_chan_open_ack_submessage(
         Order::Unordered => cosmwasm_std::IbcOrder::Unordered,
         Order::Ordered => cosmwasm_std::IbcOrder::Ordered,
         Order::None => {
-            return Err(ContractError::IbcChannelError {
-                error: ChannelError::UnknownOrderType {
-                    type_id: "None".to_string(),
-                },
+            return Err(ChannelError::UnknownOrderType {
+                type_id: "None".to_string(),
             })
+            .map_err(|e| Into::<ContractError>::into(e))
         }
     };
     let ibc_channel = cosmwasm_std::IbcChannel::new(
@@ -89,7 +86,7 @@ pub fn on_chan_open_ack_submessage(
         counter_party,
         ibc_order,
         channel_end.version.to_string(),
-        connection_id.connection_id().to_string(),
+        connection_id.to_string(),
     );
     let data = cosmwasm_std::IbcChannelConnectMsg::OpenAck {
         channel: ibc_channel,
@@ -138,7 +135,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = cw_common::types::ModuleId::from(module_id);
+                    let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
@@ -166,15 +163,17 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "channel_open_init_module_validation")
                         .add_submessage(on_chan_open_try))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::VerifyChannelFailed(ClientError::Other { description: error }),
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::VerifyChannelFailed(ClientError::Other {
+                    description: error,
+                }))
+                .map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
 }

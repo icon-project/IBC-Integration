@@ -1,3 +1,5 @@
+use prost::DecodeError;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -26,8 +28,8 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self.ibc_store().capabilities().save(store, name, &address) {
             Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::IbcDecodeError {
-                error: format!("FailedToStore {}", error),
+            Err(_error) => Err(ContractError::IbcDecodeError {
+                error: DecodeError::new("FailedToStore Capability".to_owned()),
             }),
         }
     }
@@ -57,7 +59,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .capabilities()
             .load(store, name)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "CapabilityNotFound".into(),
+                error: DecodeError::new("CapabilityNotFound".to_owned()),
             })
     }
     /// This function sets the expected time per block in a storage using the given value.
@@ -104,7 +106,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match self.ibc_store().expected_time_per_block().may_load(store)? {
             Some(time) => Ok(time),
             None => Err(ContractError::IbcDecodeError {
-                error: "NotFound".to_string(),
+                error: DecodeError::new("NotFound".to_owned()),
             }),
         }
     }
@@ -146,7 +148,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(value)
                     }
                     None => Err(ContractError::IbcDecodeError {
-                        error: "KeyNotFound".into(),
+                        error: DecodeError::new("KeyNotFound".to_owned()),
                     }),
                 }
             },
@@ -231,14 +233,8 @@ impl<'a> CwIbcCoreContext<'a> {
             return 0;
         }
 
-        let delay = delay_period_time
-            .as_secs()
-            .checked_div(max_expected_time_per_block.as_secs())
-            .unwrap();
+        let delay = delay_period_time.as_secs() / max_expected_time_per_block.as_secs();
 
-        delay_period_time
-            .checked_add(Duration::from_secs(delay))
-            .unwrap()
-            .as_secs()
+        delay_period_time.as_secs() + delay
     }
 }

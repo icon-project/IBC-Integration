@@ -19,27 +19,24 @@ pub fn channel_open_try_msg_validate(
     conn_end_on_b: &ConnectionEnd,
 ) -> Result<(), ContractError> {
     if !conn_end_on_b.state_matches(&ConnectionState::Open) {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::ConnectionNotOpen {
-                connection_id: message.connection_hops_on_b[0].clone(),
-            },
-        });
+        return Err(ChannelError::ConnectionNotOpen {
+            connection_id: message.connection_hops_on_b[0].clone(),
+        })
+        .map_err(|e| Into::<ContractError>::into(e));
     };
 
     let conn_version = match conn_end_on_b.versions() {
         [version] => version,
         _ => {
-            return Err(ContractError::IbcChannelError {
-                error: ChannelError::InvalidVersionLengthConnection,
-            })
+            return Err(ChannelError::InvalidVersionLengthConnection)
+                .map_err(|e| Into::<ContractError>::into(e))
         }
     };
 
     let channel_feature = message.ordering.to_string();
     if !conn_version.is_supported_feature(channel_feature) {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::ChannelFeatureNotSupportedByConnection,
-        });
+        return Err(ChannelError::ChannelFeatureNotSupportedByConnection)
+            .map_err(|e| Into::<ContractError>::into(e));
     }
 
     Ok(())
@@ -62,7 +59,7 @@ pub fn on_chan_open_try_submessage(
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
     let port_id = port_id.clone();
-    let channel_id = channel_id.ibc_channel_id();
+    let channel_id = channel_id;
     let counter_party_port_id = msg.counterparty().port_id.clone();
     let counter_party_channel = msg.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {
@@ -78,7 +75,7 @@ pub fn on_chan_open_try_submessage(
         counter_party,
         cosmwasm_std::IbcOrder::Unordered,
         msg.version.to_string(),
-        connection_id.connection_id().to_string(),
+        connection_id.to_string(),
     );
     cosmwasm_std::IbcChannelOpenMsg::OpenTry {
         channel: ibc_channel,
@@ -112,12 +109,17 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(res) => {
                     let response =
                         from_binary::<cw_common::client_response::LightClientResponse>(&res)
-                            .unwrap();
+                            .map_err(ContractError::Std)?;
                     let info = response.message_info;
                     let data = response.ibc_endpoint;
-                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
-                    let channel_id =
-                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let port_id = PortId::from(
+                        IbcPortId::from_str(&data.port_id)
+                            .map_err(|e| Into::<ContractError>::into(e))?,
+                    );
+                    let channel_id = ChannelId::from(
+                        IbcChannelId::from_str(&data.channel_id)
+                            .map_err(|e| Into::<ContractError>::into(e))?,
+                    );
                     let channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
@@ -126,7 +128,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = cw_common::types::ModuleId::from(module_id);
+                    let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
@@ -141,7 +143,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     );
                     let data =
                         cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
-                    let data = to_binary(&data).unwrap();
+                    let data = to_binary(&data).map_err(ContractError::Std)?;
                     let on_chan_open_try = create_channel_submesssage(
                         contract_address.to_string(),
                         data,
@@ -154,15 +156,14 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "channel_open_init_module_validation")
                         .add_submessage(on_chan_open_try))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(|e| Into::<ContractError>::into(e)),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcChannelError {
-                error: ChannelError::NoCommonVersion,
-            }),
+            cosmwasm_std::SubMsgResult::Err(_) => {
+                Err(ChannelError::NoCommonVersion).map_err(|e| Into::<ContractError>::into(e))
+            }
         }
     }
 }

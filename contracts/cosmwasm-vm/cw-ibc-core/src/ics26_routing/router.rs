@@ -1,7 +1,9 @@
+use prost::DecodeError;
+
 use super::*;
 
 /// Storage for modules based on the module id
-pub struct CwIbcRouter<'a>(Map<'a, ModuleId, Addr>);
+pub struct CwIbcRouter<'a>(Map<'a, IbcModuleId, Addr>);
 
 impl<'a> Default for CwIbcRouter<'a> {
     fn default() -> Self {
@@ -19,7 +21,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn add_route(
         &self,
         store: &mut dyn Storage,
-        module_id: ModuleId,
+        module_id: IbcModuleId,
         module: &Addr,
     ) -> Result<(), ContractError> {
         match self.ibc_router().0.save(store, module_id, module) {
@@ -30,20 +32,20 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_route(
         &self,
         store: &dyn Storage,
-        module_id: ModuleId,
+        module_id: IbcModuleId,
     ) -> Result<Addr, ContractError> {
         match self.ibc_router().0.may_load(store, module_id) {
             Ok(result) => match result {
                 Some(address) => Ok(address),
                 None => Err(ContractError::IbcDecodeError {
-                    error: "Module Id Not Found".to_string(),
+                    error: DecodeError::new("Module Id Not Found".to_string()),
                 }),
             },
             Err(error) => Err(ContractError::Std(error)),
         }
     }
 
-    pub fn has_route(&self, store: &dyn Storage, module_id: ModuleId) -> bool {
+    pub fn has_route(&self, store: &dyn Storage, module_id: IbcModuleId) -> bool {
         self.ibc_router()
             .0
             .may_load(store, module_id)

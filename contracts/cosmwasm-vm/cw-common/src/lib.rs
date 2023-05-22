@@ -13,7 +13,7 @@ pub mod xcall_app_msg;
 pub mod xcall_connection_msg;
 pub mod xcall_msg;
 pub mod xcall_payloads;
-use cosmwasm_std::{from_binary, from_slice, Binary, StdError};
+use cosmwasm_std::{from_binary, Binary, StdError};
 use serde::de::DeserializeOwned;
 
 pub use prost::Message as ProstMessage;

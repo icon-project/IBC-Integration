@@ -197,8 +197,7 @@ impl<'a> CwCallService<'a> {
         map: &Map<(Vec<u8>, String), bool>,
         hash: Vec<u8>,
     ) -> Result<Vec<(String, bool)>, ContractError> {
-        let requests: StdResult<Vec<(String, bool)>> = self
-            .pending_requests
+        let requests: StdResult<Vec<(String, bool)>> = map
             .prefix(hash)
             .range(store, None, None, cosmwasm_std::Order::Ascending)
             .collect();

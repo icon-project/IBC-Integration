@@ -1,3 +1,5 @@
+use cw_common::from_binary_response;
+
 use super::*;
 
 #[test]
@@ -56,14 +58,15 @@ fn test_execute_timeout_packet() {
             chan_end_on_a_ordered,
         )
         .unwrap();
-    let commitment =
-        ibc::core::ics04_channel::commitment::PacketCommitment::from("asdfd".as_bytes().to_vec());
+    let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
+        "asdfd".as_bytes().to_vec(),
+    );
     contract
         .store_packet_commitment(
             &mut deps.storage,
             &packet.port_id_on_a.clone().into(),
             &packet.chan_id_on_a.clone().into(),
-            packet.seq_on_a.clone(),
+            packet.sequence.clone(),
             commitment,
         )
         .unwrap();
@@ -114,14 +117,15 @@ fn test_execute_timeout_packet_fails() {
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let message = Reply { id: 0, result };
 
-    let commitment =
-        ibc::core::ics04_channel::commitment::PacketCommitment::from("asdfd".as_bytes().to_vec());
+    let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
+        "asdfd".as_bytes().to_vec(),
+    );
     contract
         .store_packet_commitment(
             &mut deps.storage,
             &packet.port_id_on_a.clone().into(),
             &packet.chan_id_on_a.clone().into(),
-            packet.seq_on_a.clone(),
+            packet.sequence.clone(),
             commitment,
         )
         .unwrap();
@@ -143,7 +147,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
 
-    let module_id = ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = PortId::from(msg.packet.port_id_on_a.clone());
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
@@ -193,8 +197,8 @@ fn test_packet_data() {
         acknowledgement: None,
         message_info,
     };
-    let bin = to_binary(&packet_data);
-    let data = from_binary::<PacketDataResponse>(&bin.unwrap());
+    let bin = to_binary(&packet_data).unwrap();
+    let data = from_binary_response::<PacketData>(&bin);
     let packet_date = Packet::from(data.unwrap().packet);
 
     assert_eq!(packet_date, msg.packet);
@@ -231,16 +235,16 @@ fn test_timeout_packet_validate_to_light_client() {
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -264,7 +268,7 @@ fn test_timeout_packet_validate_to_light_client() {
             &mut deps.storage,
             &packet.port_id_on_a.clone().into(),
             &packet.chan_id_on_a.clone().into(),
-            packet.seq_on_a.clone(),
+            packet.sequence.clone(),
             packet_commitment,
         )
         .unwrap();
@@ -280,9 +284,9 @@ fn test_timeout_packet_validate_to_light_client() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
 
@@ -299,7 +303,7 @@ fn test_timeout_packet_validate_to_light_client() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

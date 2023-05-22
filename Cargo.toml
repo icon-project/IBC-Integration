@@ -17,7 +17,7 @@ authors = ["Icon Foundation<foo@icon.foundation>"]
 repository = "https://github.com/icon-project/ibc-integration.git"
 
 [profile.release]
-opt-level = 3
+opt-level = 'z'
 debug = false
 rpath = false
 lto = true

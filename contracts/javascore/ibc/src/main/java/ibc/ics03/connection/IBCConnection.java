@@ -186,7 +186,6 @@ public class IBCConnection extends IBCClient {
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
         byte[] encodedConnection = connection.encode();
-        updateConnectionCommitment(connection.getClientId(), msg.getConnectionId(), encodedConnection);
         connections.set(msg.getConnectionId(), encodedConnection);
 
         return encodedConnection;

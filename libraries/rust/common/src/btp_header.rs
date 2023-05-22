@@ -1,3 +1,8 @@
+use ibc_proto::google::protobuf::Any;
+use ibc_proto::protobuf::Protobuf;
+use prost::{DecodeError, Message};
+
+use crate::constants::ICON_BTP_HEADER_TYPE_URL;
 use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 
 use crate::rlp::RlpStream;
@@ -87,22 +92,49 @@ impl BtpHeader {
     }
 }
 
+impl From<BtpHeader> for Any {
+    fn from(value: BtpHeader) -> Self {
+        Any {
+            type_url: ICON_BTP_HEADER_TYPE_URL.to_string(),
+            value: <BtpHeader as Message>::encode_to_vec(&value),
+        }
+    }
+}
+
+impl Protobuf<Any> for BtpHeader {}
+impl TryFrom<Any> for BtpHeader {
+    type Error = DecodeError;
+
+    fn try_from(raw: Any) -> Result<Self, Self::Error> {
+        use bytes::Buf;
+        use core::ops::Deref;
+
+        fn decode_btp_header<B: Buf>(buf: B) -> Result<BtpHeader, DecodeError> {
+            <BtpHeader as Message>::decode(buf)
+        }
+
+        match raw.type_url.as_str() {
+            ICON_BTP_HEADER_TYPE_URL => decode_btp_header(raw.value.deref()),
+            _ => Err(DecodeError::new("invalid url")),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::icon::icon::types::v1::SignedHeader;
     use test_utils::{
         constants::{TESTNET_NETWORK_TYPE_ID, TESTNET_SRC_NETWORK_ID},
-        get_test_headers, get_test_signed_headers, load_test_headers, TestHeader,
+        get_test_headers, load_test_headers,
     };
 
     use super::*;
     use hex_literal::hex;
-    use prost::Message;
 
     #[test]
     fn relay_bytes_to_btp_header() {
         let relay_bytes=hex!("08a0031a20d090304264eeee3c3562152f2dc355601b0b423a948824fd0a012c11c3fc2fb4280130023a2019581108325dcd15dd20fb8054ecd3eb90a010e3cba8d87d77d23f1887f14d3640014a20a483ab0eb8ab40f0a96f3acd3f8cc36941d73986b8705f4810b7be3961bdfde7");
-        let header = BtpHeader::decode(relay_bytes.as_slice());
+        let header = <BtpHeader as Message>::decode(relay_bytes.as_slice());
         assert!(header.is_ok());
     }
 

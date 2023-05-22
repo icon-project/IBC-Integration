@@ -1,5 +1,7 @@
+use common::ibc::core::ics03_connection::error::ConnectionError;
 use cw_common::errors::CwErrors;
-use ibc::core::ics03_connection::error::ConnectionError;
+use hex::FromHexError;
+use prost::DecodeError;
 
 use super::*;
 
@@ -37,7 +39,7 @@ pub enum ContractError {
     IbcContextError { error: String },
 
     #[error("IbcDecodeError {error}")]
-    IbcDecodeError { error: String },
+    IbcDecodeError { error: DecodeError },
 
     #[error("IbcPortError {error}")]
     IbcPortError { error: PortError },
@@ -64,6 +66,24 @@ pub enum ContractError {
     InsufficientBalance {},
     #[error("IbcDecodeError {error}")]
     IbcRawConversionError { error: String },
+    #[error("FailedConversion")]
+    FailedConversion,
+}
+
+impl From<FromHexError> for ContractError {
+    fn from(value: FromHexError) -> Self {
+        ContractError::IbcDecodeError {
+            error: DecodeError::new(value.to_string()), //  "Hex String Decode Failed".to_owned(),
+        }
+    }
+}
+
+impl From<prost::DecodeError> for ContractError {
+    fn from(value: prost::DecodeError) -> Self {
+        ContractError::IbcDecodeError {
+            error: value, // "Decode Failed".to_owned(),
+        }
+    }
 }
 
 /// This code defines an implementation of the `From` trait for the `ContractError` enum, which allows
@@ -72,26 +92,58 @@ pub enum ContractError {
 /// appropriate variant of the `ContractError` enum based on the error information contained in the
 /// `CwErrors` variant. For example, if the `CwErrors` variant is `FailedToCreateClientId`, the
 /// implementation constructs an `IbcClientError` variant of the `ContractError` enum with a
-/// `ClientIdentifierConstructor` error from the `ibc::core::ics02_client::error::ClientError` enum.
+/// `ClientIdentifierConstructor` error from the `common::ibc::core::ics02_client::error::ClientError` enum.
 impl From<CwErrors> for ContractError {
     fn from(value: CwErrors) -> Self {
         match value {
             CwErrors::FailedToCreateClientId {
-                client_type,
-                counter,
+                client_type: _,
+                counter: _,
                 validation_error,
-            } => Self::IbcClientError {
-                error: ClientError::ClientIdentifierConstructor {
-                    client_type: client_type.client_type(),
-                    counter,
-                    validation_error,
-                },
+            } => Self::IbcValidationError {
+                error: validation_error,
             },
-            CwErrors::InvalidClientId(client_id, err) => Self::IbcDecodeError {
-                error: err.to_string(),
+            CwErrors::InvalidClientId(_client_id, err) => Self::IbcValidationError { error: err },
+            CwErrors::DecodeError { error } => Self::IbcDecodeError {
+                error: DecodeError::new(error),
             },
-            CwErrors::DecodeError { error } => Self::IbcDecodeError { error },
-            CwErrors::FailedToConvertToPacketDataResponse(_) => todo!(),
+            CwErrors::FailedToConvertToPacketDataResponse(_) => Self::FailedConversion,
         }
+    }
+}
+
+impl From<ChannelError> for ContractError {
+    fn from(value: ChannelError) -> Self {
+        ContractError::IbcChannelError { error: value }
+    }
+}
+
+impl From<PacketError> for ContractError {
+    fn from(value: PacketError) -> Self {
+        ContractError::IbcPacketError { error: value }
+    }
+}
+
+impl From<ConnectionError> for ContractError {
+    fn from(value: ConnectionError) -> Self {
+        ContractError::IbcConnectionError { error: value }
+    }
+}
+
+impl From<PortError> for ContractError {
+    fn from(value: PortError) -> Self {
+        ContractError::IbcPortError { error: value }
+    }
+}
+
+impl From<ValidationError> for ContractError {
+    fn from(value: ValidationError) -> Self {
+        ContractError::IbcValidationError { error: value }
+    }
+}
+
+impl From<ClientError> for ContractError {
+    fn from(value: ClientError) -> Self {
+        ContractError::IbcClientError { error: value }
     }
 }

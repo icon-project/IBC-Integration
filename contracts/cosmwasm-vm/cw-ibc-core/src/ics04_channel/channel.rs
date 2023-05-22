@@ -1,5 +1,6 @@
 use super::*;
 use cw_common::commitment;
+use prost::DecodeError;
 impl<'a> CwIbcCoreContext<'a> {
     /// This function retrieves the channel_end of a specified channel from storage and returns it as a result.
     ///
@@ -28,12 +29,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, (port_id.clone(), channel_id.clone()))?
         {
             Some(request) => Ok(request),
-            None => Err(ContractError::IbcChannelError {
-                error: ChannelError::ChannelNotFound {
-                    port_id: port_id.ibc_port_id().clone(),
-                    channel_id: channel_id.ibc_channel_id().clone(),
-                },
-            }),
+            None => Err(ChannelError::ChannelNotFound {
+                port_id: port_id.clone(),
+                channel_id: channel_id.clone(),
+            })
+            .map_err(|e| Into::<ContractError>::into(e))?,
         }
     }
 
@@ -148,8 +148,8 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// Returns:
     ///
-    /// This function returns a `Result` containing either a `Sequence` or a `ContractError`. The
-    /// `Sequence` represents the next sequence number for sending messages on a specific channel, while
+    /// This function returns a `Result` containing either a `sequence` or a `ContractError`. The
+    /// `sequence` represents the next sequence number for sending messages on a specific channel, while
     /// the `ContractError` represents any error that may occur while loading the sequence number from
     /// storage.
     pub fn get_next_sequence_send(
@@ -180,7 +180,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// * `channel_id`: The `channel_id` parameter is an identifier for a specific channel within a
     /// given port. It is used to uniquely identify a channel and is typically a string or integer
     /// value.
-    /// * `sequence`: The `sequence` parameter is a value of type `Sequence` that represents the next
+    /// * `sequence`: The `sequence` parameter is a value of type `sequence` that represents the next
     /// sequence number to be used for sending messages on a particular channel. It is being saved in
     /// the storage of the contract using the `store_next_sequence_send` function.
     ///
@@ -219,7 +219,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// Returns:
     ///
-    /// This function returns a `Result` containing a `Sequence` or a `ContractError`.
+    /// This function returns a `Result` containing a `sequence` or a `ContractError`.
     pub fn increase_next_sequence_send(
         &self,
         store: &mut dyn Storage,
@@ -232,12 +232,11 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(ContractError::IbcPacketError {
-                        error: PacketError::MissingNextSendSeq {
-                            port_id: port_id.ibc_port_id().clone(),
-                            channel_id: channel_id.ibc_channel_id().clone(),
-                        },
-                    }),
+                    None => Err(PacketError::MissingNextSendSeq {
+                        port_id: port_id.clone(),
+                        channel_id: channel_id.clone(),
+                    })
+                    .map_err(|e| Into::<ContractError>::into(e))?,
                 }
             },
         )?;
@@ -260,8 +259,8 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// Returns:
     ///
-    /// This function returns a `Result` containing either a `Sequence` or a `ContractError`. The
-    /// `Sequence` represents the next expected sequence number for a receive operation on a given
+    /// This function returns a `Result` containing either a `sequence` or a `ContractError`. The
+    /// `sequence` represents the next expected sequence number for a receive operation on a given
     /// channel, while the `ContractError` represents an error that occurred while attempting to load
     /// the sequence number from storage.
     pub fn get_next_sequence_recv(
@@ -332,7 +331,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// Returns:
     ///
-    /// This function returns a `Result` containing a `Sequence` or a `ContractError`.
+    /// This function returns a `Result` containing a `sequence` or a `ContractError`.
     pub fn increase_next_sequence_recv(
         &self,
         store: &mut dyn Storage,
@@ -345,12 +344,11 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(ContractError::IbcPacketError {
-                        error: PacketError::MissingNextRecvSeq {
-                            port_id: port_id.ibc_port_id().clone(),
-                            channel_id: channel_id.ibc_channel_id().clone(),
-                        },
-                    }),
+                    None => Err(PacketError::MissingNextRecvSeq {
+                        port_id: port_id.clone(),
+                        channel_id: channel_id.clone(),
+                    })
+                    .map_err(|e| Into::<ContractError>::into(e))?,
                 }
             },
         )?;
@@ -376,8 +374,8 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// Returns:
     ///
-    /// This function returns a `Result` containing either a `Sequence` or a `ContractError`. The
-    /// `Sequence` represents the next sequence acknowledgement expected by the IBC module for a given
+    /// This function returns a `Result` containing either a `sequence` or a `ContractError`. The
+    /// `sequence` represents the next sequence acknowledgement expected by the IBC module for a given
     /// `port_id` and `channel_id`. If there is an error while loading the sequence from the storage, a
     /// `ContractError` is returned.
     pub fn get_next_sequence_ack(
@@ -450,7 +448,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// Returns:
     ///
-    /// This function returns a `Result` containing a `Sequence` or a `ContractError`.
+    /// This function returns a `Result` containing a `sequence` or a `ContractError`.
     pub fn increase_next_sequence_ack(
         &self,
         store: &mut dyn Storage,
@@ -463,12 +461,11 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(ContractError::IbcPacketError {
-                        error: PacketError::MissingNextAckSeq {
-                            port_id: port_id.ibc_port_id().clone(),
-                            channel_id: channel_id.ibc_channel_id().clone(),
-                        },
-                    }),
+                    None => Err(PacketError::MissingNextAckSeq {
+                        port_id: port_id.clone(),
+                        channel_id: channel_id.clone(),
+                    })
+                    .map_err(|e| Into::<ContractError>::into(e))?,
                 }
             },
         )?;
@@ -510,7 +507,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// * `port_id`: The identifier of the IBC port associated with the channel being stored.
     /// * `channel_id`: The unique identifier of the IBC channel being stored.
     /// * `channel_end`: The `channel_end` parameter is an instance of the `ChannelEnd` struct from the
-    /// `ibc::core::ics04_channel::channel` module. It represents the end of a channel and contains
+    /// `common::ibc::core::ics04_channel::channel` module. It represents the end of a channel and contains
     /// information such as the channel state, the counterparty channel identifier, the connection hops,
     /// and the
     ///
@@ -523,7 +520,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &mut dyn Storage,
         port_id: &IbcPortId,
         channel_id: &IbcChannelId,
-        channel_end: ibc::core::ics04_channel::channel::ChannelEnd,
+        channel_end: common::ibc::core::ics04_channel::channel::ChannelEnd,
     ) -> Result<(), ContractError> {
         let channel_commitment_key = commitment::channel_commitment_key(port_id, channel_id);
 
@@ -549,7 +546,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// * `sequence`: The sequence parameter is a unique identifier for a packet within a channel. It is
     /// used to ensure that packets are processed in the correct order and to prevent replay attacks.
     /// * `commitment`: The `commitment` parameter is of type
-    /// `ibc::core::ics04_channel::commitment::PacketCommitment`, which represents the commitment to a
+    /// `common::ibc::core::ics04_channel::commitment::PacketCommitment`, which represents the commitment to a
     /// packet sent over a channel in the IBC protocol. It contains information such as the hash of the
     /// packet data, the sequence number of the
     ///
@@ -563,13 +560,9 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
-        commitment: ibc::core::ics04_channel::commitment::PacketCommitment,
+        commitment: common::ibc::core::ics04_channel::commitment::PacketCommitment,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::packet_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path = commitment::packet_commitment_path(&port_id, &channel_id, sequence);
         let commitment_bytes = to_vec(&commitment).map_err(ContractError::Std)?;
         self.ibc_store()
             .commitments()
@@ -606,11 +599,7 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::packet_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path = commitment::packet_commitment_path(&port_id, &channel_id, sequence);
         self.ibc_store()
             .commitments()
             .remove(store, commitment_path);
@@ -629,9 +618,9 @@ impl<'a> CwIbcCoreContext<'a> {
     /// * `channel_id`: The `channel_id` parameter is a unique identifier for an IBC channel. It is of
     /// type `ChannelId`, which is a struct that contains the `port_id` and `channel_ordering` fields.
     /// The `port_id` field identifies the IBC port associated with the channel, while
-    /// * `sequence`: Sequence is a unique identifier for a packet within a channel. It is used to
+    /// * `sequence`: sequence is a unique identifier for a packet within a channel. It is used to
     /// ensure that packets are processed in the correct order and to prevent replay attacks.
-    /// * `receipt`: The `receipt` parameter is of type `ibc::core::ics04_channel::packet::Receipt`,
+    /// * `receipt`: The `receipt` parameter is of type `common::ibc::core::ics04_channel::packet::Receipt`,
     /// which represents the acknowledgement of a packet being received and processed by the
     /// counterparty chain in the IBC protocol. It can have two possible values: `Ok` or `Err`. If the
     ///
@@ -645,15 +634,11 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
-        receipt: ibc::core::ics04_channel::packet::Receipt,
+        receipt: common::ibc::core::ics04_channel::packet::Receipt,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::receipt_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path = commitment::receipt_commitment_path(&port_id, &channel_id, sequence);
         let ok = match receipt {
-            ibc::core::ics04_channel::packet::Receipt::Ok => true,
+            common::ibc::core::ics04_channel::packet::Receipt::Ok => true,
         };
         let commitment_bytes = to_vec(&ok).map_err(ContractError::Std)?;
         self.ibc_store()
@@ -692,13 +677,10 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
-        ack_commitment: ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
+        ack_commitment: common::ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::acknowledgement_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+        let commitment_path =
+            commitment::acknowledgement_commitment_path(&port_id, &channel_id, sequence);
         let commitment_bytes = ack_commitment.into_vec();
 
         self.ibc_store()
@@ -712,7 +694,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// Arguments:
     ///
-    /// * `ack_path`: `ack_path` is a parameter of type `ibc::core::ics24_host::path::AckPath` which
+    /// * `ack_path`: `ack_path` is a parameter of type `common::ibc::core::ics24_host::path::AckPath` which
     /// represents the path to the acknowledgement packet. It is used in the
     /// `delete_packet_acknowledgement` function to delete the acknowledgement packet associated with
     /// the given path.
@@ -723,7 +705,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// value.
     pub fn delete_packet_acknowledgement(
         &mut self,
-        ack_path: &ibc::core::ics24_host::path::AckPath,
+        ack_path: &common::ibc::core::ics24_host::path::AckPath,
     ) -> Result<(), ContractError> {
         todo!()
     }
@@ -747,7 +729,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         port_id: &IbcPortId,
         channel_id: &IbcChannelId,
-    ) -> Result<ibc::core::ics04_channel::channel::ChannelEnd, ContractError> {
+    ) -> Result<common::ibc::core::ics04_channel::channel::ChannelEnd, ContractError> {
         let channel_commitment_key = commitment::channel_commitment_key(port_id, channel_id);
 
         let channel_end_bytes = self
@@ -755,13 +737,13 @@ impl<'a> CwIbcCoreContext<'a> {
             .commitments()
             .load(store, channel_commitment_key)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "ChannelNotFound".to_string(),
+                error: DecodeError::new("ChannelNotFound".to_string()),
             })?;
 
         let channel_end: ChannelEnd =
             serde_json_wasm::from_slice(&channel_end_bytes).map_err(|error| {
                 ContractError::IbcDecodeError {
-                    error: error.to_string(),
+                    error: DecodeError::new(error.to_string()),
                 }
             })?;
         Ok(channel_end)
@@ -793,22 +775,18 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
-    ) -> Result<ibc::core::ics04_channel::commitment::PacketCommitment, ContractError> {
-        let commitment_path = commitment::packet_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+    ) -> Result<common::ibc::core::ics04_channel::commitment::PacketCommitment, ContractError> {
+        let commitment_path = commitment::packet_commitment_path(&port_id, &channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
             .commitments()
             .load(store, commitment_path)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "PacketCommitmentNotFound".to_string(),
+                error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;
         let commitment: PacketCommitment = serde_json_wasm::from_slice(&commitment_end_bytes)
             .map_err(|error| ContractError::IbcDecodeError {
-                error: error.to_string(),
+                error: DecodeError::new(error.to_string()),
             })?;
 
         Ok(commitment)
@@ -832,7 +810,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// Returns:
     ///
     /// This function returns a `Result` containing either an
-    /// `ibc::core::ics04_channel::packet::Receipt::Ok` if the packet receipt is found, or a
+    /// `common::ibc::core::ics04_channel::packet::Receipt::Ok` if the packet receipt is found, or a
     /// `ContractError::IbcPacketError` with a `PacketError::PacketReceiptNotFound` if the packet
     /// receipt is not found.
     pub fn get_packet_receipt(
@@ -841,29 +819,25 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
-    ) -> Result<ibc::core::ics04_channel::packet::Receipt, ContractError> {
-        let commitment_path = commitment::receipt_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+    ) -> Result<common::ibc::core::ics04_channel::packet::Receipt, ContractError> {
+        let commitment_path = commitment::receipt_commitment_path(&port_id, &channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
             .commitments()
             .load(store, commitment_path)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "PacketCommitmentNotFound".to_string(),
+                error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;
         let commitment: bool =
             serde_json_wasm::from_slice(&commitment_end_bytes).map_err(|error| {
                 ContractError::IbcDecodeError {
-                    error: error.to_string(),
+                    error: DecodeError::new(error.to_string()),
                 }
             })?;
         match commitment {
-            true => Ok(ibc::core::ics04_channel::packet::Receipt::Ok),
+            true => Ok(common::ibc::core::ics04_channel::packet::Receipt::Ok),
             false => Err(ContractError::IbcPacketError {
-                error: PacketError::PacketReceiptNotFound { sequence },
+                error: PacketError::PacketReceiptNotFound { sequence: sequence },
             }),
         }
     }
@@ -890,23 +864,23 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &PortId,
         channel_id: &ChannelId,
         sequence: Sequence,
-    ) -> Result<ibc::core::ics04_channel::commitment::AcknowledgementCommitment, ContractError>
-    {
-        let commitment_path = commitment::acknowledgement_commitment_path(
-            port_id.ibc_port_id(),
-            channel_id.ibc_channel_id(),
-            sequence,
-        );
+    ) -> Result<
+        common::ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
+        ContractError,
+    > {
+        let commitment_path =
+            commitment::acknowledgement_commitment_path(&port_id, &channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
             .commitments()
             .load(store, commitment_path)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "PacketCommitmentNotFound".to_string(),
+                error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;
-        let commitment = ibc::core::ics04_channel::commitment::AcknowledgementCommitment::from(
-            commitment_end_bytes,
-        );
+        let commitment =
+            common::ibc::core::ics04_channel::commitment::AcknowledgementCommitment::from(
+                commitment_end_bytes,
+            );
 
         Ok(commitment)
     }
