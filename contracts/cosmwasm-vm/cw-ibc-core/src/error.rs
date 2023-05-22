@@ -68,6 +68,8 @@ pub enum ContractError {
     IbcRawConversionError { error: String },
     #[error("FailedConversion")]
     FailedConversion,
+    #[error("InvalidCommand")]
+    InvalidCommand,
 }
 
 impl From<FromHexError> for ContractError {

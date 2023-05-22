@@ -140,7 +140,7 @@ impl<'a> CwCallService<'a> {
                 timeout_timestamp: 0,
             };
 
-            let message = cw_common::core_msg::ExecuteMsg::SendPacket {
+            let message = cw_common::core_msg::ExecuteMsg::SendPacketCommon {
                 packet: HexString::from_bytes(&packet_data.encode_to_vec()),
             };
 

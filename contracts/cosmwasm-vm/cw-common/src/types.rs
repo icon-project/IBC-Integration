@@ -2,6 +2,7 @@ use std::fmt::{Display, Error as FmtError, Formatter};
 use std::str::FromStr;
 
 use crate::errors::CwErrors;
+use crate::hex_string::HexString;
 use crate::ibc_types::{
     IbcChannelId, IbcClientId, IbcClientType, IbcConnectionId, IbcModuleId, IbcPortId,
 };
@@ -10,6 +11,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_schema::serde::{Deserialize, Serialize};
 use cosmwasm_std::{Addr, Binary, Coin, StdError};
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
+use hex::FromHexError;
 use ibc::core::ics04_channel::packet::Packet;
 use ibc::{
     core::ics04_channel::msgs::{
@@ -17,6 +19,32 @@ use ibc::{
     },
     signer::Signer,
 };
+use ibc_proto::google::protobuf::Any;
+use prost::DecodeError;
+
+#[cw_serde]
+pub struct RelayAny {
+    type_url: String,
+    value: HexString,
+}
+
+impl RelayAny {
+    pub fn try_inner<T: prost::Message + std::default::Default>(&self) -> Result<T, DecodeError> {
+        let bytes = self
+            .value
+            .to_bytes()
+            .map_err(|e| DecodeError::new("error decoding"))?;
+        return T::decode(bytes.as_slice());
+    }
+
+    pub fn to_any(&self) -> Result<Any, FromHexError> {
+        let bytes = self.value.to_bytes()?;
+        return Ok(Any {
+            type_url: self.type_url.to_owned(),
+            value: bytes,
+        });
+    }
+}
 
 #[cw_serde]
 pub struct VerifyChannelState {

@@ -1,7 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
 
-use crate::hex_string::HexString;
+use crate::{hex_string::HexString, types::RelayAny};
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -15,15 +15,15 @@ pub enum ExecuteMsg {
     },
     CreateClient {
         // client_state any
-        client_state: HexString,
+        client_state: RelayAny,
         // consensus state any
-        consensus_state: HexString,
+        consensus_state: RelayAny,
         signer: HexString,
     },
     UpdateClient {
         client_id: String,
         // signed header any
-        header: HexString,
+        header: RelayAny,
         signer: HexString,
     },
     // Not included in this version of ibc core
@@ -35,44 +35,44 @@ pub enum ExecuteMsg {
     ConnectionOpenInit {
         //raw message bytes:
         //ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit,
-        msg: HexString,
+        msg: RelayAny,
     },
     ConnectionOpenTry {
         //raw message bytes:
         //ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry
-        msg: HexString,
+        msg: RelayAny,
     },
     ConnectionOpenAck {
         //raw message bytes:
         //ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck
-        msg: HexString,
+        msg: RelayAny,
     },
     ConnectionOpenConfirm {
         //raw message bytes:
         //ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm
-        msg: HexString,
+        msg: RelayAny,
     },
 
     // Channel Messages
     ChannelOpenInit {
         // raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgChannelOpenInit
-        msg: HexString,
+        msg: RelayAny,
     },
     ChannelOpenTry {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgChannelOpenTry
-        msg: HexString,
+        msg: RelayAny,
     },
     ChannelOpenAck {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgChannelOpenAck
-        msg: HexString,
+        msg: RelayAny,
     },
     ChannelOpenConfirm {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgChannelOpenConfirm
-        msg: HexString,
+        msg: RelayAny,
     },
     ChannelCloseInit {
         port_id_on_a: String,
@@ -82,11 +82,16 @@ pub enum ExecuteMsg {
     ChannelCloseConfirm {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgChannelCloseConfirm
-        msg: HexString,
+        msg: RelayAny,
     },
 
     // Packet Messages
     SendPacket {
+        //raw message bytes:
+        //ibc_proto::ibc::core::channel::v1::Packet
+        packet: RelayAny,
+    },
+    SendPacketCommon {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::Packet
         packet: HexString,
@@ -94,23 +99,23 @@ pub enum ExecuteMsg {
     ReceivePacket {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgRecvPacket
-        msg: HexString,
+        msg: RelayAny,
     },
     AcknowledgementPacket {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgAcknowledgement
-        msg: HexString,
+        msg: RelayAny,
     },
     RequestTimeout {},
     Timeout {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgTimeout
-        msg: HexString,
+        msg: RelayAny,
     },
     TimeoutOnClose {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgTimeoutOnClose
-        msg: HexString,
+        msg: RelayAny,
     },
 
     // Storage Messages

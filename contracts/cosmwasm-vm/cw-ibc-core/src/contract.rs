@@ -14,6 +14,7 @@ use cw_common::raw_types::connection::*;
 use cw_common::raw_types::Any;
 use cw_common::raw_types::Protobuf;
 use cw_common::raw_types::RawHeight;
+use cw_common::types::RelayAny;
 use hex::FromHexError;
 use ibc::core::ics04_channel::packet::Receipt;
 use prost::{DecodeError, Message};
@@ -88,7 +89,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn execute(
         &mut self,
         deps: DepsMut,
-        env: Env,
+        _env: Env,
         info: MessageInfo,
         msg: CoreExecuteMsg,
     ) -> Result<Response, ContractError> {
@@ -107,16 +108,18 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let client_state_bytes = client_state
-                    .to_bytes()
+                // let client_state_bytes = client_state
+                //     .to_bytes()
+                //     .map_err(|e| Into::<FromHexError>::into(e))?;
+                let client_state = client_state
+                    .to_any()
                     .map_err(|e| Into::<FromHexError>::into(e))?;
-                let client_state = Any::decode(client_state_bytes.as_slice())
-                    .map_err(|e| Into::<DecodeError>::into(e))?;
-                let consensus_state_bytes = consensus_state
-                    .to_bytes()
+                // let consensus_state_bytes = consensus_state
+                //     .to_bytes()
+                //     .map_err(|e| Into::<FromHexError>::into(e))?;
+                let consensus_state = consensus_state
+                    .to_any()
                     .map_err(|e| Into::<FromHexError>::into(e))?;
-                let consensus_state = Any::decode(consensus_state_bytes.as_slice())
-                    .map_err(|e| Into::<DecodeError>::into(e))?;
 
                 let signer = Self::to_signer(&signer)?;
                 let msg = IbcMsgCreateClient {
@@ -132,11 +135,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 signer,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let header_bytes = header
-                    .to_bytes()
-                    .map_err(|e| Into::<FromHexError>::into(e))?;
-                let header = Any::decode(header_bytes.as_slice())
-                    .map_err(|e| Into::<DecodeError>::into(e))?;
+                // let header_bytes = header
+                //     .to_bytes()
+                //     .map_err(|e| Into::<FromHexError>::into(e))?;
+                let header = header.to_any().map_err(|e| Into::<FromHexError>::into(e))?;
 
                 let signer = Self::to_signer(&signer)?;
                 let msg = IbcMsgUpdateClient {
@@ -155,6 +157,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 unimplemented!()
             }
             CoreExecuteMsg::ConnectionOpenInit { msg } => {
+                // let message=msg.try_inner::<RawMsgConnectionOpenInit>()?;
                 let message: MsgConnectionOpenInit =
                     Self::from_raw::<RawMsgConnectionOpenInit, MsgConnectionOpenInit>(&msg)?;
                 self.connection_open_init(deps, message)
@@ -217,9 +220,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             CoreExecuteMsg::SendPacket { packet } => {
-                let packet_bytes = packet.to_bytes().unwrap();
-                let packet: RawPacket = Message::decode(packet_bytes.as_slice())
-                    .map_err(|error| ContractError::IbcDecodeError { error: error })?;
+                let packet = packet.try_inner::<RawPacket>()?;
+                // let packet: RawPacket = Message::decode(packet_bytes.as_slice())
+                //     .map_err(|error| ContractError::IbcDecodeError { error: error })?;
 
                 let data: Packet = Packet::try_from(packet)
                     .map_err(|error| ContractError::IbcPacketError { error: error })?;
@@ -268,6 +271,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("method", "set_expected_time_per_block")
                     .add_attribute("time", block_time.to_string()))
             }
+            _ => return Err(ContractError::InvalidCommand),
         }
         // Ok(Response::new())
     }
@@ -628,14 +632,14 @@ impl<'a> CwIbcCoreContext<'a> {
     /// message. If there is an error during the conversion, it returns an `Err` variant with a
     /// `ContractError` that describes the error encountered.
     pub fn from_raw<R: Message + std::default::Default + Clone, T: TryFrom<R>>(
-        hex_str: &HexString,
+        hex_str: &RelayAny,
     ) -> Result<T, ContractError>
     where
         <T as TryFrom<R>>::Error: std::fmt::Debug,
     {
-        let bytes = hex_str.to_bytes()?;
-        let raw = <R as Message>::decode(bytes.as_slice())
-            .map_err(|error| ContractError::IbcDecodeError { error: error })?;
+        let raw = hex_str.try_inner::<R>()?;
+        // let raw = <R as Message>::decode(bytes.as_slice())
+        //     .map_err(|error| ContractError::IbcDecodeError { error: error })?;
         let message = T::try_from(raw).map_err(|error| {
             let err = format!("Failed to convert to ibc type with error {:?}", error);
             ContractError::IbcRawConversionError { error: err }
