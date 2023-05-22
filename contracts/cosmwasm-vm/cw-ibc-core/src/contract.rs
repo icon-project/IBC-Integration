@@ -1,8 +1,6 @@
 use super::*;
-use common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
-use common::icon::icon::lightclient::v1::{
-    ClientState as RawClientState, ConsensusState as RawConsensusState,
-};
+use common::ibc::core::ics04_channel::packet::Receipt;
+
 use cosmwasm_std::to_binary;
 use cw_common::hex_string::HexString;
 use cw_common::raw_types::channel::{
@@ -15,7 +13,6 @@ use cw_common::raw_types::Any;
 use cw_common::raw_types::Protobuf;
 use cw_common::raw_types::RawHeight;
 use hex::FromHexError;
-use ibc::core::ics04_channel::packet::Receipt;
 use prost::{DecodeError, Message};
 
 // version info for migration info
@@ -88,7 +85,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn execute(
         &mut self,
         deps: DepsMut,
-        env: Env,
+        _env: Env,
         info: MessageInfo,
         msg: CoreExecuteMsg,
     ) -> Result<Response, ContractError> {
@@ -98,7 +95,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 client_address,
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let client_type = ClientType::new(client_type);
+                let client_type = IbcClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
             CoreExecuteMsg::CreateClient {
@@ -217,7 +214,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             CoreExecuteMsg::SendPacket { packet } => {
-                let packet_bytes = packet.to_bytes().unwrap();
+                let packet_bytes = packet
+                    .to_bytes()
+                    .map_err(|e| Into::<ContractError>::into(e))?;
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
                     .map_err(|error| ContractError::IbcDecodeError { error: error })?;
 
@@ -274,15 +273,19 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::GetCommitment { key } => {
+                let key_bytes = key
+                    .to_bytes()
+                    .map_err(|e| Into::<ContractError>::into(e))
+                    .unwrap();
                 let res = self
-                    .get_commitment(deps.storage, key.to_bytes().unwrap())
+                    .get_commitment(deps.storage, key_bytes)
                     .map_err(|_| ContractError::InvalidCommitmentKey)
                     .unwrap();
                 to_binary(&hex::encode(res))
             }
             QueryMsg::GetClientRegistry { _type } => {
                 let res = self
-                    .get_client_from_registry(deps.storage, ClientType::new(_type.clone()))
+                    .get_client_from_registry(deps.storage, IbcClientType::new(_type.clone()))
                     .map_err(|_| ContractError::InvalidClientType { client_type: _type })
                     .unwrap();
                 let addr = Addr::unchecked(res);
@@ -420,7 +423,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let _port_id = PortId::from_str(&port_id).unwrap();
                 let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
                 let _sequence = Sequence::from(sequence);
-                let res = self
+                let _res = self
                     .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence.clone())
                     .unwrap();
                 to_binary(&true)
@@ -469,7 +472,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     .unwrap();
                 match res {
                     Receipt::Ok => to_binary(&true),
-                    _ => to_binary(&false),
                 }
             }
         }
@@ -673,12 +675,13 @@ mod tests {
     use std::str::FromStr;
 
     use crate::context::CwIbcCoreContext;
+    use common::ibc::core::ics02_client::height::Height;
     use common::{
         constants::ICON_CONSENSUS_STATE_TYPE_URL,
         icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
     };
-    use ibc::core::ics02_client::height::Height;
 
+    use cw_common::ibc_types::IbcClientType;
     use prost::Message;
 
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
@@ -686,10 +689,10 @@ mod tests {
     use cosmwasm_std::{
         from_binary,
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
-        to_vec, Addr, OwnedDeps,
+        Addr, OwnedDeps,
     };
     use cw_common::raw_types::{Any, RawHeight};
-    use cw_common::{hex_string::HexString, ibc_types::IbcClientId, types::ClientType};
+    use cw_common::{hex_string::HexString, ibc_types::IbcClientId};
 
     const SENDER: &str = "sender";
 
@@ -723,7 +726,7 @@ mod tests {
     fn test_query_get_client_registry() {
         let client_type_str = "test_client_type".to_string();
         let client = "test_client".to_string();
-        let client_type = ClientType::new(client_type_str.clone());
+        let client_type = IbcClientType::new(client_type_str.clone());
         let contract = CwIbcCoreContext::default();
         let mut deps = setup();
 

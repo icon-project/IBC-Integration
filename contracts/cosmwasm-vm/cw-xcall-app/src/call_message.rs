@@ -36,7 +36,7 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        env: Env,
+        _env: Env,
         to: String,
         sources: Vec<String>,
         destinations: Vec<String>,

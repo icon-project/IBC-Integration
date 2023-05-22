@@ -100,7 +100,7 @@ pub fn execute(
 }
 
 #[entry_point]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let call_service = CwMockService::default();
     match msg {
         QueryMsg::GetSequence {} => to_binary(&call_service.get_sequence(deps.storage).unwrap()),

@@ -63,9 +63,10 @@ impl<'a> CwIbcCoreContext<'a> {
                     let response = from_binary::<LightClientResponse>(&res).unwrap();
                     let info = response.message_info;
                     let data = response.ibc_endpoint;
-                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
-                    let channel_id =
-                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let port_id = IbcPortId::from_str(&data.port_id)
+                        .map_err(|e| Into::<ContractError>::into(e))?;
+                    let channel_id = IbcChannelId::from_str(&data.channel_id)
+                        .map_err(|e| Into::<ContractError>::into(e))?;
                     let channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
@@ -74,7 +75,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = cw_common::types::ModuleId::from(module_id);
+                    let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
@@ -85,7 +86,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         on_chan_close_confirm_submessage(&channel_end, &port_id, &channel_id)?;
                     let data =
                         cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
-                    let data = to_binary(&data).unwrap();
+                    let data = to_binary(&data).map_err(|e| Into::<ContractError>::into(e))?;
                     let on_chan_close_confirm = create_channel_submesssage(
                         contract_address.to_string(),
                         data,
@@ -133,8 +134,8 @@ pub fn on_chan_close_confirm_submessage(
     let counter_party_port_id = channel_end.counterparty().port_id.clone();
     let counter_party_channel = channel_end.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.ibc_port_id().to_string(),
-        channel_id: channel_id.ibc_channel_id().to_string(),
+        port_id: port_id.to_string(),
+        channel_id: channel_id.to_string(),
     };
     let counter_party = cosmwasm_std::IbcEndpoint {
         port_id: counter_party_port_id.to_string(),

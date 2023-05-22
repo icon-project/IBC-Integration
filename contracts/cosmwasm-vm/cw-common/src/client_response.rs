@@ -1,21 +1,19 @@
 use crate::cw_types::{CwEndPoint, CwPacket};
-use crate::ibc_types::{
-    IbcChannelId, IbcClientId, IbcClientType, IbcConnectionId, IbcModuleId, IbcPortId,
-};
+use crate::ibc_types::{IbcChannelId, IbcClientId, IbcClientType, IbcPortId};
 use crate::{
     errors::CwErrors,
     ibc_types::IbcHeight,
-    types::{ClientId, ClientType, MessageInfo, PacketData},
+    types::{MessageInfo, PacketData},
 };
-use cosmwasm_schema::cw_serde;
-use cosmwasm_schema::serde::{Deserialize, Serialize};
-pub use ibc::core::ics04_channel::packet::Packet;
-use ibc::core::ics04_channel::timeout::TimeoutHeight;
-use ibc::timestamp::Timestamp;
-use ibc::{
+pub use common::ibc::core::ics04_channel::packet::Packet;
+use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
+use common::ibc::timestamp::Timestamp;
+use common::ibc::{
     core::ics04_channel::{msgs::acknowledgement::Acknowledgement, packet::Sequence},
     signer::Signer,
 };
+use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[cw_serde]
@@ -86,8 +84,8 @@ impl CreateClientResponse {
     pub fn height(&self) -> IbcHeight {
         IbcHeight::from_str(&self.height).unwrap()
     }
-    pub fn client_type(&self) -> ClientType {
-        ClientType::new(self.client_type.to_owned())
+    pub fn client_type(&self) -> IbcClientType {
+        IbcClientType::new(self.client_type.to_owned())
     }
 }
 
@@ -146,8 +144,8 @@ impl UpdateClientResponse {
     pub fn height(&self) -> IbcHeight {
         IbcHeight::from_str(&self.height).unwrap()
     }
-    pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id)
+    pub fn client_id(&self) -> Result<IbcClientId, CwErrors> {
+        IbcClientId::from_str(&self.client_id)
             .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }
@@ -192,8 +190,8 @@ impl UpgradeClientResponse {
         IbcHeight::from_str(&self.height).unwrap()
     }
 
-    pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id)
+    pub fn client_id(&self) -> Result<IbcClientId, CwErrors> {
+        IbcClientId::from_str(&self.client_id)
             .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }
@@ -214,8 +212,8 @@ impl MisbehaviourResponse {
     pub fn get_client_id(&self) -> &str {
         &self.client_id
     }
-    pub fn client_id(&self) -> Result<ClientId, CwErrors> {
-        ClientId::from_str(&self.client_id)
+    pub fn client_id(&self) -> Result<IbcClientId, CwErrors> {
+        IbcClientId::from_str(&self.client_id)
             .map_err(|e| CwErrors::InvalidClientId(self.client_id.to_string(), e))
     }
 }
@@ -227,21 +225,22 @@ pub struct PacketResponse {
     pub chan_id_on_a: IbcChannelId,
     pub port_id_on_b: IbcPortId,
     pub chan_id_on_b: IbcChannelId,
-    pub data: String,
+    pub data: Vec<u8>,
     pub timeout_height_on_b: TimeoutHeight,
     pub timeout_timestamp_on_b: Timestamp,
 }
 
 impl From<PacketResponse> for Packet {
     fn from(packet: PacketResponse) -> Self {
-        let data = hex::decode(packet.data).unwrap();
+        println!("{:?}", packet);
+        // let data = hex::decode(packet.data).unwrap();
         Packet {
-            seq_on_a: packet.seq_on_a,
+            sequence: packet.seq_on_a,
             port_id_on_a: packet.port_id_on_a,
             chan_id_on_a: packet.chan_id_on_a,
             port_id_on_b: packet.port_id_on_b,
             chan_id_on_b: packet.chan_id_on_b,
-            data,
+            data: packet.data,
             timeout_height_on_b: packet.timeout_height_on_b,
             timeout_timestamp_on_b: packet.timeout_timestamp_on_b,
         }
@@ -250,14 +249,14 @@ impl From<PacketResponse> for Packet {
 
 impl From<Packet> for PacketResponse {
     fn from(packet: Packet) -> Self {
-        let data = hex::encode(packet.data);
+        // let data = hex::encode(packet.data);
         PacketResponse {
-            seq_on_a: packet.seq_on_a,
+            seq_on_a: packet.sequence,
             port_id_on_a: packet.port_id_on_a,
             chan_id_on_a: packet.chan_id_on_a,
             port_id_on_b: packet.port_id_on_b,
             chan_id_on_b: packet.chan_id_on_b,
-            data,
+            data: packet.data,
             timeout_height_on_b: packet.timeout_height_on_b,
             timeout_timestamp_on_b: packet.timeout_timestamp_on_b,
         }

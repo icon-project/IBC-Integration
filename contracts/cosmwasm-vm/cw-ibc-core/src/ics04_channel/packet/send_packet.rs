@@ -72,9 +72,9 @@ impl<'a> CwIbcCoreContext<'a> {
             packet.port_id_on_a.clone().into(),
             packet.chan_id_on_a.clone().into(),
         )?;
-        if packet.seq_on_a != next_seq_send_on_a {
+        if packet.sequence != next_seq_send_on_a {
             return Err(PacketError::InvalidPacketSequence {
-                given_sequence: packet.seq_on_a,
+                given_sequence: packet.sequence,
                 next_sequence: next_seq_send_on_a,
             })
             .map_err(|e| Into::<ContractError>::into(e));
@@ -88,7 +88,7 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.storage,
             &packet.port_id_on_a.clone().into(),
             &packet.chan_id_on_a.clone().into(),
-            packet.seq_on_a,
+            packet.sequence,
             commitment::compute_packet_commitment(
                 &packet.data,
                 &packet.timeout_height_on_b,

@@ -1,7 +1,6 @@
 mod account;
 mod setup;
 use account::*;
-use cw_common::types::Address;
 use cw_xcall::state::CwCallService;
 use setup::*;
 #[test]

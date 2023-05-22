@@ -1,6 +1,6 @@
+use common::ibc::core::ics03_connection::error::ConnectionError;
 use cw_common::errors::CwErrors;
 use hex::FromHexError;
-use ibc::core::ics03_connection::error::ConnectionError;
 use prost::DecodeError;
 
 use super::*;
@@ -92,18 +92,18 @@ impl From<prost::DecodeError> for ContractError {
 /// appropriate variant of the `ContractError` enum based on the error information contained in the
 /// `CwErrors` variant. For example, if the `CwErrors` variant is `FailedToCreateClientId`, the
 /// implementation constructs an `IbcClientError` variant of the `ContractError` enum with a
-/// `ClientIdentifierConstructor` error from the `ibc::core::ics02_client::error::ClientError` enum.
+/// `ClientIdentifierConstructor` error from the `common::ibc::core::ics02_client::error::ClientError` enum.
 impl From<CwErrors> for ContractError {
     fn from(value: CwErrors) -> Self {
         match value {
             CwErrors::FailedToCreateClientId {
-                client_type,
-                counter,
+                client_type: _,
+                counter: _,
                 validation_error,
             } => Self::IbcValidationError {
                 error: validation_error,
             },
-            CwErrors::InvalidClientId(client_id, err) => Self::IbcValidationError { error: err },
+            CwErrors::InvalidClientId(_client_id, err) => Self::IbcValidationError { error: err },
             CwErrors::DecodeError { error } => Self::IbcDecodeError {
                 error: DecodeError::new(error),
             },
@@ -114,52 +114,36 @@ impl From<CwErrors> for ContractError {
 
 impl From<ChannelError> for ContractError {
     fn from(value: ChannelError) -> Self {
-        ContractError::IbcChannelError {
-            error: value, //CHANNEL_ERROR.to_owned(),
-        }
+        ContractError::IbcChannelError { error: value }
     }
 }
 
 impl From<PacketError> for ContractError {
     fn from(value: PacketError) -> Self {
-        ContractError::IbcPacketError {
-            error: value, //PACKET_ERROR.to_owned(),
-        }
+        ContractError::IbcPacketError { error: value }
     }
 }
 
 impl From<ConnectionError> for ContractError {
     fn from(value: ConnectionError) -> Self {
-        ContractError::IbcConnectionError {
-            error: value, // CONNECTION_ERROR.to_owned(),
-        }
+        ContractError::IbcConnectionError { error: value }
     }
 }
 
 impl From<PortError> for ContractError {
     fn from(value: PortError) -> Self {
-        ContractError::IbcPortError {
-            error: value, // PORT_ERROR.to_owned(),
-        }
+        ContractError::IbcPortError { error: value }
     }
 }
 
 impl From<ValidationError> for ContractError {
     fn from(value: ValidationError) -> Self {
-        ContractError::IbcValidationError {
-            error: value, //PORT_ERROR.to_owned(),
-        }
+        ContractError::IbcValidationError { error: value }
     }
 }
 
 impl From<ClientError> for ContractError {
     fn from(value: ClientError) -> Self {
-        ContractError::IbcClientError {
-            error: value, // PORT_ERROR.to_owned(),
-        }
+        ContractError::IbcClientError { error: value }
     }
-}
-
-pub fn decode_error(decode_type: &str) -> String {
-    return String::from("failed to decode ".to_owned() + decode_type);
 }

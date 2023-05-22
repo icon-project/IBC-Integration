@@ -1,4 +1,6 @@
 use super::*;
+use cw_common::cw_types::CwBasicResponse;
+use cw_common::cw_types::CwPacket;
 
 /// This Rust function returns a binary representation of a successful Ack result.
 ///

@@ -1,6 +1,6 @@
 pub mod setup;
 use cosmwasm_std::{testing::mock_env, Addr};
-use cw_common::types::ModuleId;
+use cw_common::ibc_types::IbcModuleId;
 use cw_ibc_core::context::CwIbcCoreContext;
 use setup::*;
 
@@ -38,7 +38,7 @@ fn proper_router_initialisation() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
 
-    let module_id = ModuleId::new("newModule".to_string());
+    let module_id = IbcModuleId::new("newModule".to_string().into()).unwrap();
 
     let module_address = Addr::unchecked("moduleaddress");
 
@@ -79,7 +79,7 @@ fn improper_router_initalisation() {
     let deps = deps();
     let contract = CwIbcCoreContext::default();
 
-    let module_id = ModuleId::new("newModule".to_string());
+    let module_id = IbcModuleId::new("newModule".to_string().into()).unwrap();
     contract
         .get_route(deps.as_ref().storage, module_id)
         .unwrap();
@@ -89,7 +89,7 @@ fn improper_router_initalisation() {
 fn check_for_route() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let module_id = ModuleId::new("newModule".to_string());
+    let module_id = IbcModuleId::new("newModule".to_string().into()).unwrap();
 
     let module_address = Addr::unchecked("moduleaddress");
 
@@ -106,8 +106,8 @@ fn check_for_route() {
 fn check_for_invalid_route() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let module_id = ModuleId::new("newModule".to_string());
-    let module_id_new = ModuleId::new("newModule1".to_string());
+    let module_id = IbcModuleId::new("newModule".to_string().into()).unwrap();
+    let module_id_new = IbcModuleId::new("newModule1".to_string().into()).unwrap();
 
     let module_address = Addr::unchecked("moduleaddress");
 

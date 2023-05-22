@@ -55,7 +55,7 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
             &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a,
+            msg.packet.sequence,
         ) {
             Ok(commitment_on_a) => commitment_on_a,
 
@@ -73,7 +73,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
         if commitment_on_a != expected_commitment_on_a {
             return Err(PacketError::IncorrectPacketCommitment {
-                sequence: msg.packet.seq_on_a,
+                sequence: msg.packet.sequence,
             })
             .map_err(|e| Into::<ContractError>::into(e));
         }
@@ -129,9 +129,9 @@ impl<'a> CwIbcCoreContext<'a> {
         })?;
 
         let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
-            if msg.packet.seq_on_a < msg.next_seq_recv_on_b {
+            if msg.packet.sequence < msg.next_seq_recv_on_b {
                 return Err(PacketError::InvalidPacketSequence {
-                    given_sequence: msg.packet.seq_on_a,
+                    given_sequence: msg.packet.sequence,
                     next_sequence: msg.next_seq_recv_on_b,
                 })
                 .map_err(|e| Into::<ContractError>::into(e));
@@ -147,14 +147,14 @@ impl<'a> CwIbcCoreContext<'a> {
                 proof: msg.proof_unreceived_on_b.clone().into(),
                 root: consensus_state_of_b_on_a.root().clone().into_vec(),
                 seq_recv_path: seq_recv_path_on_b,
-                sequence: msg.packet.seq_on_a.into(),
+                sequence: msg.packet.sequence.into(),
                 packet_data,
             }
         } else {
             let receipt_path_on_b = commitment::receipt_commitment_path(
                 &msg.packet.port_id_on_b,
                 &msg.packet.chan_id_on_b,
-                msg.packet.seq_on_a,
+                msg.packet.sequence,
             );
 
             LightClientPacketMessage::VerifyPacketReceiptAbsence {
@@ -166,7 +166,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet_data,
             }
         };
-        let client_type = ClientType::from(client_state_of_b_on_a.client_type());
+        let client_type = IbcClientType::from(client_state_of_b_on_a.client_type());
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -222,9 +222,10 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let contract_address = match self
-                        .get_route(deps.storage, cw_common::types::ModuleId::from(module_id))
-                    {
+                    let contract_address = match self.get_route(
+                        deps.storage,
+                        cw_common::ibc_types::IbcModuleId::from(module_id),
+                    ) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
@@ -239,14 +240,18 @@ impl<'a> CwIbcCoreContext<'a> {
                     };
                     let data = Binary::from(data.data);
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
-                            revision: 1,
-                            height: 1,
-                        },
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
-                            revision: x.revision_number(),
-                            height: x.revision_height(),
-                        },
+                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
+                            CwTimeoutBlock {
+                                revision: 1,
+                                height: 1,
+                            }
+                        }
+                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
+                            CwTimeoutBlock {
+                                revision: x.revision_number(),
+                                height: x.revision_height(),
+                            }
+                        }
                     };
                     let timeout = CwTimeout::with_block(timeoutblock);
                     let ibc_packet =
@@ -349,10 +354,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("channel_order", chan_end_on_a.ordering().as_str());
                     let mut events = vec![event];
                     if let Order::Ordered = chan_end_on_a.ordering {
-                        let close_init = create_close_init_channel_event(
-                            port_id.ibc_port_id().as_str(),
-                            channel_id.ibc_channel_id().as_str(),
-                        );
+                        let close_init =
+                            create_close_init_channel_event(port_id.as_str(), channel_id.as_str());
                         events.push(close_init);
                     }
 

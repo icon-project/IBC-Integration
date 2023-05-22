@@ -66,7 +66,7 @@ pub fn on_chan_close_init_submessage(
         counter_party,
         cosmwasm_std::IbcOrder::Unordered,
         channel_end.version().to_string(),
-        connection_id.connection_id().to_string(),
+        connection_id.to_string(),
     );
 
     cosmwasm_std::IbcChannelCloseMsg::CloseInit {

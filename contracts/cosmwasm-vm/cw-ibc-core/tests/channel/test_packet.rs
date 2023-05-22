@@ -13,16 +13,16 @@ fn test_packet_send() {
         Version::new("ics20-1".to_string()),
     );
 
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -34,7 +34,7 @@ fn test_packet_send() {
         get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
             .try_into()
             .unwrap();
-    packet.seq_on_a = 1.into();
+    packet.sequence = 1.into();
     packet.data = vec![0];
 
     contract
@@ -116,13 +116,15 @@ fn test_packet_send_fail_channel_not_found() {
         get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
             .try_into()
             .unwrap();
-    packet.seq_on_a = 1.into();
+    packet.sequence = 1.into();
     packet.data = vec![0];
     contract.send_packet(deps.as_mut(), packet).unwrap();
 }
 
 #[test]
-#[should_panic(expected = "ibc::core::ics04_channel::packet::Sequence")]
+#[should_panic(
+    expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })"
+)]
 fn test_packet_send_fail_misiing_sequense() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
@@ -135,16 +137,16 @@ fn test_packet_send_fail_misiing_sequense() {
         Version::new("ics20-1".to_string()),
     );
 
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default().clone(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default().clone(),
+            Some(ConnectionId::default().clone()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -156,7 +158,7 @@ fn test_packet_send_fail_misiing_sequense() {
         get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
             .try_into()
             .unwrap();
-    packet.seq_on_a = 1.into();
+    packet.sequence = 1.into();
     packet.data = vec![0];
 
     contract

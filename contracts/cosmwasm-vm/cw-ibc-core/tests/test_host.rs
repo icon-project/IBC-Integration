@@ -1,12 +1,14 @@
 use std::str::FromStr;
 use std::time::Duration;
 
+use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
+use common::ibc::core::ics24_host::identifier::{ConnectionId, PortId};
 use cosmwasm_std::to_vec;
-use cw_common::types::{ClientId, ClientType, ConnectionId, PortId};
 use cw_ibc_core::context::CwIbcCoreContext;
 pub mod setup;
 
-use ibc::core::ics24_host::validate::validate_identifier;
+use common::ibc::core::ics24_host::validate::validate_identifier;
 
 use setup::*;
 
