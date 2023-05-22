@@ -1,4 +1,4 @@
-use common::rlp::{Nullable, Rlp};
+use common::rlp::Nullable;
 use serde::{Deserialize, Serialize};
 
 use super::*;

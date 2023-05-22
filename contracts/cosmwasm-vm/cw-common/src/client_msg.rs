@@ -1,3 +1,4 @@
+use crate::cw_types::CwEndpoint;
 use crate::{
     client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse, PacketDataResponse},
     errors::CwErrors,
@@ -6,7 +7,7 @@ use crate::{
     },
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{from_slice, IbcEndpoint};
+use cosmwasm_std::from_slice;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -34,6 +35,11 @@ pub enum QueryMsg {
     GetConsensusState { client_id: String, height: u64 },
     #[returns(Vec<u8>)]
     GetClientState { client_id: String },
+}
+
+#[cw_serde]
+pub struct Response {
+    value: u64,
 }
 
 #[cw_serde]
@@ -182,7 +188,7 @@ pub enum ExecuteMsg {
     },
     VerifyChannel {
         message_info: MessageInfo,
-        endpoint: IbcEndpoint,
+        endpoint: CwEndpoint,
         verify_channel_state: VerifyChannelState,
         // add all props that we need on response
     },

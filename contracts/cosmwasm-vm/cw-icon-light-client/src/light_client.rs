@@ -1,12 +1,11 @@
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
-use common::constants::ICON_SIGNED_HEADER_TYPE_URL;
-use common::constants::{ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL};
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::traits::AnyTypes;
 use common::utils::{calculate_root, keccak256};
+
 use prost::Message;
 
 pub struct IconClient<'a> {

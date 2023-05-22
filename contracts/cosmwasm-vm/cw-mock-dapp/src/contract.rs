@@ -1,4 +1,3 @@
-use cosmwasm_std::to_vec;
 use std::str::from_utf8;
 
 use super::*;
@@ -31,7 +30,7 @@ impl<'a> CwMockService<'a> {
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
-        let sequence = self.increment_sequence(deps.storage)?;
+        let _sequence = self.increment_sequence(deps.storage)?;
         let address = self
             .xcall_address()
             .load(deps.storage)

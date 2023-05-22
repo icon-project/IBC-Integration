@@ -51,7 +51,7 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.storage,
             &msg.packet.port_id_on_a.clone().into(),
             &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a,
+            msg.packet.sequence,
         ) {
             Ok(commitment_on_a) => commitment_on_a,
 
@@ -69,7 +69,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
         if commitment_on_a != expected_commitment_on_a {
             return Err(PacketError::IncorrectPacketCommitment {
-                sequence: msg.packet.seq_on_a,
+                sequence: msg.packet.sequence,
             })
             .map_err(|e| Into::<ContractError>::into(e));
         }
@@ -147,9 +147,9 @@ impl<'a> CwIbcCoreContext<'a> {
         })?;
 
         let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
-            if msg.packet.seq_on_a < msg.next_seq_recv_on_b {
+            if msg.packet.sequence < msg.next_seq_recv_on_b {
                 return Err(PacketError::InvalidPacketSequence {
-                    given_sequence: msg.packet.seq_on_a,
+                    given_sequence: msg.packet.sequence,
                     next_sequence: msg.next_seq_recv_on_b,
                 })
                 .map_err(|e| Into::<ContractError>::into(e));
@@ -165,14 +165,14 @@ impl<'a> CwIbcCoreContext<'a> {
                 proof: msg.proof_unreceived_on_b.clone().into(),
                 root: consensus_state_of_b_on_a.root().clone().into_vec(),
                 seq_recv_path: seq_recv_path_on_b,
-                sequence: msg.packet.seq_on_a.into(),
+                sequence: msg.packet.sequence.into(),
                 packet_data,
             }
         } else {
             let receipt_path_on_b = commitment::receipt_commitment_path(
                 &msg.packet.port_id_on_b,
                 &msg.packet.chan_id_on_b,
-                msg.packet.seq_on_a,
+                msg.packet.sequence,
             );
             LightClientPacketMessage::VerifyPacketReceiptAbsence {
                 height: msg.proof_height_on_b.to_string(),
@@ -183,7 +183,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet_data,
             }
         };
-        let client_type = ClientType::from(client_state_of_b_on_a.client_type());
+        let client_type = IbcClientType::from(client_state_of_b_on_a.client_type());
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
 

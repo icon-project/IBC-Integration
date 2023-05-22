@@ -59,7 +59,7 @@ pub fn on_chan_open_try_submessage(
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
     let port_id = port_id.clone();
-    let channel_id = channel_id.ibc_channel_id();
+    let channel_id = channel_id;
     let counter_party_port_id = msg.counterparty().port_id.clone();
     let counter_party_channel = msg.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {
@@ -75,7 +75,7 @@ pub fn on_chan_open_try_submessage(
         counter_party,
         cosmwasm_std::IbcOrder::Unordered,
         msg.version.to_string(),
-        connection_id.connection_id().to_string(),
+        connection_id.to_string(),
     );
     cosmwasm_std::IbcChannelOpenMsg::OpenTry {
         channel: ibc_channel,
@@ -128,7 +128,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = cw_common::types::ModuleId::from(module_id);
+                    let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 use crate::icon::icon::types::v1::MerkleNode;
-pub mod commitment;
 
 pub fn keccak256(input: &[u8]) -> [u8; 32] {
     use sha3::{Digest, Keccak256};
@@ -27,7 +26,7 @@ pub fn calculate_root(leaf: [u8; 32], pathes: &[MerkleNode]) -> [u8; 32] {
         } else {
             [temp.to_vec(), path.value.clone()].concat()
         };
-        let mut out = keccak256(&input);
+        let out = keccak256(&input);
         temp = out.try_into().unwrap();
     }
 

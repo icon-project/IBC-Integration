@@ -11,26 +11,26 @@ use super::*;
 /// representing the implementation of the client. In the context of the Cosmos SDK and the IBC
 /// protocol, a client is a module that is responsible for verifying the validity of the state of a
 /// remote blockchain. The implementation of a
-/// * `next_sequence_send`: `next_sequence_send` is a mapping between a tuple of `(PortId, ChannelId)`
-/// and a `Sequence` number. It stores the next sequence number that should be used when sending a
+/// * `next_sequence_send`: `next_seq_on_a_send` is a mapping between a tuple of `(PortId, ChannelId)`
+/// and a `seq_on_a` number. It stores the next seq_on_a number that should be used when sending a
 /// packet on the given channel. This is used to ensure that packets are sent in order and to prevent
 /// replay
-/// * `next_sequence_recv`: `next_sequence_recv` is a mapping between a tuple of `(PortId, ChannelId)`
-/// and a `Sequence` value. It stores the next expected sequence number for a packet to be received on a
+/// * `next_seq_on_a_recv`: `next_seq_on_a_recv` is a mapping between a tuple of `(PortId, ChannelId)`
+/// and a `seq_on_a` value. It stores the next expected seq_on_a number for a packet to be received on a
 /// particular channel. This is used to ensure that packets are received in the correct order and to
 /// detect
-/// * `next_sequence_ack`: `next_sequence_ack` is a mapping between a tuple of `(PortId, ChannelId)` and
-/// a `Sequence` value. It stores the next expected sequence number for an acknowledgement message to be
+/// * `next_seq_on_a_ack`: `next_seq_on_a_ack` is a mapping between a tuple of `(PortId, ChannelId)` and
+/// a `seq_on_a` value. It stores the next expected seq_on_a number for an acknowledgement message to be
 /// received on a particular channel. This is used to ensure that acknowledgement messages are received
 /// in the correct order and
-/// * `next_client_sequence`: `next_client_sequence` is an `Item` that stores the next available
-/// sequence number for creating a new client. It is likely used to ensure that each new client created
-/// has a unique sequence number.
-/// * `next_connection_sequence`: `next_connection_sequence` is an `Item` that stores the next available
-/// sequence number for creating a new connection. It is used to ensure that each new connection has a
+/// * `next_client_seq_on_a`: `next_client_seq_on_a` is an `Item` that stores the next available
+/// seq_on_a number for creating a new client. It is likely used to ensure that each new client created
+/// has a unique seq_on_a number.
+/// * `next_connection_seq_on_a`: `next_connection_seq_on_a` is an `Item` that stores the next available
+/// seq_on_a number for creating a new connection. It is used to ensure that each new connection has a
 /// unique identifier.
-/// * `next_channel_sequence`: `next_channel_sequence` is an `Item` that stores the next available
-/// sequence number for a channel. It is used to ensure that each channel has a unique sequence number
+/// * `next_channel_seq_on_a`: `next_channel_seq_on_a` is an `Item` that stores the next available
+/// seq_on_a number for a channel. It is used to ensure that each channel has a unique seq_on_a number
 /// when it is created.
 /// * `client_connections`: A mapping between a client ID and its associated connection ID. This is used
 /// to keep track of the connection associated with each client.
@@ -55,20 +55,21 @@ use super::*;
 /// * `expected_time_per_block`: The expected time duration of a block in the blockchain network. This
 /// is used to calculate the timeout for certain operations in the IBC protocol.
 /// * `packet_receipts`: The `packet_receipts` property is a map that stores packet receipts based on
-/// the PortId, ChannelId, and Sequence. It maps a tuple of `(String, String, u64)` to a `u64` value,
+/// the PortId, ChannelId, and seq_on_a. It maps a tuple of `(String, String, u64)` to a `u64` value,
 /// where the first two elements of the tuple represent the PortId and
+/// const
 pub struct CwIbcStore<'a> {
-    client_registry: Map<'a, ClientType, String>,
-    client_types: Map<'a, ClientId, ClientType>,
-    client_implementations: Map<'a, ClientId, String>,
+    client_registry: Map<'a, IbcClientType, String>,
+    client_types: Map<'a, IbcClientId, IbcClientType>,
+    client_implementations: Map<'a, IbcClientId, String>,
     next_sequence_send: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_recv: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_ack: Map<'a, (PortId, ChannelId), Sequence>,
     next_client_sequence: Item<'a, u64>,
     next_connection_sequence: Item<'a, u64>,
     next_channel_sequence: Item<'a, u64>,
-    client_connections: Map<'a, ClientId, ConnectionId>,
-    connections: Map<'a, ConnectionId, Vec<u8>>,
+    client_connections: Map<'a, IbcClientId, IbcConnectionId>,
+    connections: Map<'a, IbcConnectionId, Vec<u8>>,
     channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
     port_to_module: Map<'a, PortId, IbcModuleId>,
     /// Stores address based on the capability names
@@ -77,7 +78,7 @@ pub struct CwIbcStore<'a> {
     commitments: Map<'a, Vec<u8>, Vec<u8>>,
     /// Stores block duration
     expected_time_per_block: Item<'a, u64>,
-    /// Stores packet receipts based on PortId,ChannelId and Sequence
+    /// Stores packet receipts based on PortId,ChannelId and sequence
     packet_receipts: Map<'a, (String, String, u64), u64>,
 }
 
@@ -109,10 +110,10 @@ impl<'a> CwIbcStore<'a> {
             packet_receipts: Map::new(StorageKey::PacketReceipts.as_str()),
         }
     }
-    pub fn client_registry(&self) -> &Map<'a, ClientType, String> {
+    pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
         &self.client_registry
     }
-    pub fn client_types(&self) -> &Map<'a, ClientId, ClientType> {
+    pub fn client_types(&self) -> &Map<'a, ClientId, IbcClientType> {
         &self.client_types
     }
     pub fn client_implementations(&self) -> &Map<'a, ClientId, String> {

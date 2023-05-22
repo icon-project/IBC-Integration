@@ -19,17 +19,16 @@ use crate::{
     ack::{make_ack_fail, make_ack_success},
     check::{check_order, check_version},
     error::ContractError,
-    events::event_message_forwarded,
-    ibc::{APP_ORDER, IBC_VERSION},
+    ibc::IBC_VERSION,
     msg::InstantiateMsg,
     state::{CwIbcConnection, IbcConfig, ACK_FAILURE_ID},
     types::storage_keys::StorageKey,
 };
-use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, MessageInfo, Never, QuerierWrapper, Reply,
-    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
+    attr, entry_point, from_binary, to_binary, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty,
+    Env, Event, MessageInfo, Never, QuerierWrapper, Reply, Response, StdError, StdResult, Storage,
+    SubMsg, SubMsgResult, WasmMsg,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};

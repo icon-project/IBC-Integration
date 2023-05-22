@@ -1,8 +1,8 @@
-use cosmwasm_std::IbcReceiveResponse;
-use ibc::core::ics04_channel::{
+use common::ibc::core::ics04_channel::{
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
+use cosmwasm_std::IbcReceiveResponse;
 use prost::DecodeError;
 
 use super::*;
@@ -95,7 +95,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let commitment_path_on_a = commitment::packet_commitment_path(
             &msg.packet.port_id_on_a,
             &msg.packet.chan_id_on_a,
-            msg.packet.seq_on_a,
+            msg.packet.sequence,
         );
         self.verify_connection_delay_passed(
             deps.storage,
@@ -191,15 +191,15 @@ impl<'a> CwIbcCoreContext<'a> {
                             packet.port_id_on_b.clone().into(),
                             packet.chan_id_on_b.clone().into(),
                         )?;
-                        if packet.seq_on_a > next_seq_recv {
+                        if packet.sequence > next_seq_recv {
                             return Err(PacketError::InvalidPacketSequence {
-                                given_sequence: packet.seq_on_a,
+                                given_sequence: packet.sequence,
                                 next_sequence: next_seq_recv,
                             })
                             .map_err(|e| Into::<ContractError>::into(e))?;
                         }
 
-                        if packet.seq_on_a == next_seq_recv {
+                        if packet.sequence == next_seq_recv {
                             // Case where the recvPacket is successful and an
                             // acknowledgement will be written (not a no-op)
                             self.validate_write_acknowledgement(deps.storage, &packet)?;
@@ -209,7 +209,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             deps.storage,
                             &packet.port_id_on_a.clone().into(),
                             &packet.chan_id_on_a.clone().into(),
-                            packet.seq_on_a,
+                            packet.sequence,
                         );
                         match packet_rec {
                             Ok(_receipt) => {}
@@ -227,9 +227,10 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let contract_address = match self
-                        .get_route(deps.storage, cw_common::types::ModuleId::from(module_id))
-                    {
+                    let contract_address = match self.get_route(
+                        deps.storage,
+                        cw_common::ibc_types::IbcModuleId::from(module_id),
+                    ) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
@@ -244,14 +245,18 @@ impl<'a> CwIbcCoreContext<'a> {
                     };
                     let data = Binary::from(packet.data);
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
-                            revision: 1,
-                            height: 1,
-                        },
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
-                            revision: x.revision_number(),
-                            height: x.revision_height(),
-                        },
+                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
+                            CwTimeoutBlock {
+                                revision: 1,
+                                height: 1,
+                            }
+                        }
+                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
+                            CwTimeoutBlock {
+                                revision: x.revision_number(),
+                                height: x.revision_height(),
+                            }
+                        }
                     };
                     let timeout = CwTimeout::with_block(timeoutblock);
                     let ibc_packet =
@@ -296,7 +301,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// interact with the storage of the smart contract. The `dyn` keyword indicates that `Storage` is a
     /// trait, and `store` can hold any object that implements this trait.
     /// * `packet`: The `packet` parameter is a reference to a `Packet` struct. It contains information
-    /// about an IBC packet, such as the source and destination channels, ports, and sequence numbers.
+    /// about an IBC packet, such as the source and destination channels, ports, and seq_on_a numbers.
     ///
     /// Returns:
     ///
@@ -312,19 +317,19 @@ impl<'a> CwIbcCoreContext<'a> {
                 store,
                 &packet.port_id_on_b.clone().into(),
                 &packet.chan_id_on_b.clone().into(),
-                packet.seq_on_a,
+                packet.sequence,
             )
             .is_ok()
         {
             return Err(PacketError::AcknowledgementExists {
-                sequence: packet.seq_on_a,
+                sequence: packet.sequence,
             })
             .map_err(|e| Into::<ContractError>::into(e))?;
         }
         Ok(())
     }
 
-    /// This function handles the receiving and processing of an IBC packet and update the sequence accordingly.
+    /// This function handles the receiving and processing of an IBC packet and update the seq_on_a accordingly.
     ///
     /// Arguments:
     ///
@@ -378,7 +383,7 @@ impl<'a> CwIbcCoreContext<'a> {
                                 channel_id.clone(),
                             )?;
 
-                            // the sequence number has already been incremented, so
+                            // the seq_on_a number has already been incremented, so
                             // another relayer already relayed the packet
                             seq < Into::<u64>::into(next_seq_recv)
                         }

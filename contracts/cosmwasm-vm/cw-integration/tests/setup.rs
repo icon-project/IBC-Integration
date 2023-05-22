@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Empty, Event};
+use cosmwasm_std::{Addr, Empty};
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 
 pub fn mock_dapp_contract() -> Box<dyn Contract<Empty>> {

@@ -29,7 +29,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(port_id) => Ok(port_id),
                 None => Err(ContractError::IbcPortError {
                     error: PortError::UnknownPort {
-                        port_id: port_id.ibc_port_id().clone(),
+                        port_id: port_id.clone(),
                     },
                 }),
             },

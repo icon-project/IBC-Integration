@@ -65,7 +65,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             Ok(addr) => addr,
             Err(error) => return Err(error),
         };
-        let module_id = cw_common::types::ModuleId::from(module_id);
+        let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
         let contract_address = match self.get_route(deps.storage, module_id) {
             Ok(addr) => addr,
             Err(error) => return Err(error),
@@ -218,7 +218,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 expected_counterparty_channel_end: vector.unwrap(),
             },
         };
-        let client_type = ClientType::from(client_state_of_a_on_b.client_type());
+        let client_type = IbcClientType::from(client_state_of_a_on_b.client_type());
 
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
@@ -332,7 +332,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 expected_counterparty_channel_end: vector.unwrap(),
             },
         };
-        let client_type = ClientType::from(client_state_of_b_on_a.client_type());
+        let client_type = IbcClientType::from(client_state_of_b_on_a.client_type());
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -465,7 +465,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 expected_counterparty_channel_end: vector.unwrap(),
             },
         };
-        let client_type = ClientType::from(client_state_of_a_on_b.client_type());
+        let client_type = IbcClientType::from(client_state_of_a_on_b.client_type());
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -530,7 +530,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             Ok(addr) => addr,
             Err(error) => return Err(error),
         };
-        let module_id = cw_common::types::ModuleId::from(module_id);
+        let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
         let contract_address = match self.get_route(deps.storage, module_id) {
             Ok(addr) => addr,
             Err(error) => return Err(error),
@@ -655,7 +655,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 expected_counterparty_channel_end: vector.unwrap(),
             },
         };
-        let client_type = ClientType::from(client_state_of_a_on_b.client_type());
+        let client_type = IbcClientType::from(client_state_of_a_on_b.client_type());
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -737,12 +737,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         1.into(),
                     )?;
 
-                    self.store_channel(
-                        deps.storage,
-                        port_id.ibc_port_id(),
-                        channel_id.ibc_channel_id(),
-                        channel_end,
-                    )?;
+                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
                     let channel_id_event = create_channel_id_generated_event(channel_id);
                     Ok(Response::new().add_event(channel_id_event))
                 }
@@ -818,8 +813,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     )?;
                     let channel_id_event = create_channel_id_generated_event(channel_id.clone());
                     let main_event = create_open_try_channel_event(
-                        channel_id.ibc_channel_id().as_str(),
-                        port_id.ibc_port_id().as_str(),
+                        channel_id.as_str(),
+                        port_id.as_str(),
                         channel_end.counterparty().port_id().as_str(),
                         channel_end
                             .counterparty()
@@ -831,12 +826,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_end.version().as_str(),
                     );
 
-                    self.store_channel(
-                        deps.storage,
-                        port_id.ibc_port_id(),
-                        channel_id.ibc_channel_id(),
-                        channel_end,
-                    )?;
+                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
                     Ok(Response::new()
                         .add_event(channel_id_event)
                         .add_event(main_event))
@@ -891,17 +881,10 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_end.clone(),
                     )?;
 
-                    self.store_channel(
-                        deps.storage,
-                        port_id.ibc_port_id(),
-                        channel_id.ibc_channel_id(),
-                        channel_end,
-                    )?;
+                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
 
-                    let event = create_close_init_channel_event(
-                        port_id.ibc_port_id().as_str(),
-                        channel_id.ibc_channel_id().as_str(),
-                    );
+                    let event =
+                        create_close_init_channel_event(port_id.as_str(), channel_id.as_str());
                     Ok(Response::new().add_event(event))
                 }
                 None => Err(ChannelError::Other {
@@ -947,7 +930,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if !channel_end.state_matches(&State::Init) {
                         return Err(ChannelError::InvalidChannelState {
-                            channel_id: channel_id.ibc_channel_id().clone(),
+                            channel_id: channel_id.clone(),
                             state: channel_end.state,
                         })
                         .map_err(|e| e.into());
@@ -959,16 +942,11 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(
-                        deps.storage,
-                        port_id.ibc_port_id(),
-                        channel_id.ibc_channel_id(),
-                        channel_end.clone(),
-                    )?;
+                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
 
                     let event = create_open_ack_channel_event(
-                        port_id.ibc_port_id().as_str(),
-                        channel_id.ibc_channel_id().as_str(),
+                        port_id.as_str(),
+                        channel_id.as_str(),
                         channel_end.counterparty().port_id().as_str(),
                         channel_end.counterparty().channel_id().unwrap().as_str(),
                         channel_end.connection_hops()[0].as_str(),
@@ -1020,7 +998,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if !channel_end.state_matches(&State::TryOpen) {
                         return Err(ChannelError::InvalidChannelState {
-                            channel_id: channel_id.ibc_channel_id().clone(),
+                            channel_id: channel_id.clone(),
                             state: channel_end.state,
                         })
                         .map_err(|e| e.into());
@@ -1032,16 +1010,11 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(
-                        deps.storage,
-                        port_id.ibc_port_id(),
-                        channel_id.ibc_channel_id(),
-                        channel_end.clone(),
-                    )?;
+                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
 
                     let event = create_open_confirm_channel_event(
-                        port_id.ibc_port_id().as_str(),
-                        channel_id.ibc_channel_id().as_str(),
+                        port_id.as_str(),
+                        channel_id.as_str(),
                         channel_end.counterparty().port_id().as_str(),
                         channel_end.counterparty().channel_id().unwrap().as_str(),
                         channel_end.connection_hops()[0].as_str(),
@@ -1090,7 +1063,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if channel_end.state_matches(&State::Closed) {
                         return Err(ChannelError::InvalidChannelState {
-                            channel_id: channel_id.ibc_channel_id().clone(),
+                            channel_id: channel_id.clone(),
                             state: channel_end.state,
                         })
                         .map_err(|e| e.into());
@@ -1102,16 +1075,9 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(
-                        deps.storage,
-                        port_id.ibc_port_id(),
-                        channel_id.ibc_channel_id(),
-                        channel_end.clone(),
-                    )?;
-                    let event = create_close_confirm_channel_event(
-                        port_id.ibc_port_id().as_str(),
-                        channel_id.ibc_channel_id().as_str(),
-                    );
+                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
+                    let event =
+                        create_close_confirm_channel_event(port_id.as_str(), channel_id.as_str());
 
                     Ok(Response::new().add_event(event))
                 }

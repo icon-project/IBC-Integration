@@ -58,7 +58,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 if self.get_compatible_versions().contains(&version) {
                     vec![version]
                 } else {
-                    return Err((ConnectionError::EmptyVersions))
+                    return Err(ConnectionError::EmptyVersions)
                         .map_err(|e| Into::<ContractError>::into(e));
                 }
             }
@@ -87,18 +87,16 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.storage,
             connection_identifier.clone(),
             connection_end.clone(),
-        )
-        .unwrap();
+        )?;
 
         let event = create_open_init_event(
-            connection_identifier.connection_id().as_str(),
+            connection_identifier.as_str(),
             client_id.as_str(),
             message.counterparty.client_id().as_str(),
         );
         self.increase_connection_counter(deps.storage)?;
         self.store_connection_to_client(deps.storage, client_id, connection_identifier.clone())?;
-        self.store_connection(deps.storage, connection_identifier.clone(), connection_end)
-            .unwrap();
+        self.store_connection(deps.storage, connection_identifier.clone(), connection_end)?;
         return Ok(Response::new()
             .add_event(event)
             .add_attribute("method", "connection_open_init")
@@ -342,7 +340,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             .map_err(|e| Into::<ContractError>::into(e))?;
 
                     let counterparty = Counterparty::new(
-                        counter_party_client_id.ibc_client_id().clone(),
+                        counter_party_client_id.clone(),
                         counterparty_conn_id.clone(),
                         counterparty_prefix,
                     );
@@ -482,13 +480,13 @@ impl<'a> CwIbcCoreContext<'a> {
             client_consensus_state_path_on_b,
         );
         let payload = VerifyConnectionPayload::<OpenTryResponse> {
-            client_id: client_id_on_b.ibc_client_id().to_string(),
+            client_id: client_id_on_b.to_string(),
             verify_connection_state,
             verify_client_full_state,
             verify_client_consensus_state,
             expected_response: OpenTryResponse {
                 conn_id: "".to_string(),
-                client_id: client_id_on_b.ibc_client_id().to_string(),
+                client_id: client_id_on_b.to_string(),
                 counterparty_client_id: message.counterparty.client_id().clone().to_string(),
 
                 counterparty_connection_id: message
@@ -548,7 +546,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         false => {
                             let connection_id =
                                 ConnectionId::from_str(&response.counterparty_connection_id)?;
-                            Some(connection_id.connection_id().clone())
+                            Some(connection_id.clone())
                         }
                     };
 
@@ -560,7 +558,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             .map_err(|e| Into::<ContractError>::into(e))?;
 
                     let counterparty = Counterparty::new(
-                        counter_party_client_id.ibc_client_id().clone(),
+                        counter_party_client_id.clone(),
                         counterparty_conn_id,
                         counterparty_prefix,
                     );
@@ -582,7 +580,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let conn_end = ConnectionEnd::new(
                         State::TryOpen,
-                        client_id.ibc_client_id().clone(),
+                        client_id.clone(),
                         counterparty,
                         vec![version],
                         delay_period,
@@ -611,7 +609,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     Ok(Response::new()
                         .add_attribute("method", "execute_connection_open_try")
-                        .add_attribute("connection_id", connection_id.connection_id().as_str())
+                        .add_attribute("connection_id", connection_id.as_str())
                         .add_event(event))
                 }
                 None => Err(ConnectionError::Other {
@@ -789,7 +787,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             .map_err(|e| Into::<ContractError>::into(e))?;
 
                     let counterparty = Counterparty::new(
-                        counter_party_client_id.ibc_client_id().clone(),
+                        counter_party_client_id.clone(),
                         counterparty_conn_id.clone(),
                         counterparty_prefix,
                     );
