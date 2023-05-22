@@ -29,13 +29,13 @@ pub enum QueryMsg {
     #[returns(Vec<String>)]
     GetCapability { name: HexString },
     #[returns(u64)]
-    GetExpectedTimePerBlock,
+    GetExpectedTimePerBlock{},
     #[returns(u64)]
-    GetNextClientSequence,
+    GetNextClientSequence{},
     #[returns(u64)]
-    GetNextConnectionSequence,
+    GetNextConnectionSequence{},
     #[returns(u64)]
-    GetNextChannelSequence,
+    GetNextChannelSequence{},
     #[returns(String)]
     GetClientState { client_id: String },
     #[returns(String)]

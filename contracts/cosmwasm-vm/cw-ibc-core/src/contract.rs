@@ -397,22 +397,22 @@ impl<'a> CwIbcCoreContext<'a> {
                     .unwrap();
                 to_binary(&res)
             }
-            QueryMsg::GetExpectedTimePerBlock => {
+            QueryMsg::GetExpectedTimePerBlock{} => {
                 let res = self.get_expected_time_per_block(deps.storage).unwrap();
                 to_binary(&res)
             }
-            QueryMsg::GetNextClientSequence => {
+            QueryMsg::GetNextClientSequence{} => {
                 let res = self
                     .client_counter(deps.storage)
                     .map_err(|_| ContractError::InvalidNextClientSequence {})
                     .unwrap();
                 to_binary(&res)
             }
-            QueryMsg::GetNextConnectionSequence => {
+            QueryMsg::GetNextConnectionSequence{} => {
                 let res = self.connection_counter(deps.storage).unwrap();
                 to_binary(&res)
             }
-            QueryMsg::GetNextChannelSequence => {
+            QueryMsg::GetNextChannelSequence{} => {
                 let res = self.channel_counter(deps.storage).unwrap();
                 to_binary(&res)
             }
@@ -710,7 +710,7 @@ mod tests {
     fn test_query_next_client_sequence() {
         let contract = CwIbcCoreContext::default();
         let mut deps = setup();
-        let msg = QueryMsg::GetNextClientSequence;
+        let msg = QueryMsg::GetNextClientSequence{};
         let result = query(deps.as_ref(), mock_env(), msg.clone()).unwrap();
         let result_parsed: u64 = from_binary(&result).unwrap();
         assert_eq!(0, result_parsed);
