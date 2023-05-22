@@ -45,3 +45,4 @@ serde-json-wasm = "0.5.0"
 cosmwasm = "0.7.2"
 cw-multi-test = "0.16.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
+

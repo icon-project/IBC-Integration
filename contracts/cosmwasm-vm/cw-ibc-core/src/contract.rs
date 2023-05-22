@@ -2,17 +2,17 @@ use super::*;
 use common::ibc::core::ics04_channel::packet::Receipt;
 
 use cosmwasm_std::to_binary;
+
 use cw_common::hex_string::HexString;
 use cw_common::raw_types::channel::{
     RawChannel, RawMessageAcknowledgement, RawMessageRecvPacket, RawMessageTimeout,
     RawMessageTimeoutOnclose, RawMsgChannelCloseConfirm, RawMsgChannelOpenAck,
     RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawPacket,
 };
+use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::raw_types::connection::*;
-use cw_common::raw_types::Any;
 use cw_common::raw_types::Protobuf;
 use cw_common::raw_types::RawHeight;
-use hex::FromHexError;
 use prost::{DecodeError, Message};
 
 // version info for migration info
@@ -98,52 +98,17 @@ impl<'a> CwIbcCoreContext<'a> {
                 let client_type = IbcClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
-            CoreExecuteMsg::CreateClient {
-                client_state,
-                consensus_state,
-                signer,
-            } => {
+            CoreExecuteMsg::CreateClient { msg } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let client_state_bytes = client_state
-                    .to_bytes()
-                    .map_err(|e| Into::<FromHexError>::into(e))?;
-                let client_state = Any::decode(client_state_bytes.as_slice())
-                    .map_err(|e| Into::<DecodeError>::into(e))?;
-                let consensus_state_bytes = consensus_state
-                    .to_bytes()
-                    .map_err(|e| Into::<FromHexError>::into(e))?;
-                let consensus_state = Any::decode(consensus_state_bytes.as_slice())
-                    .map_err(|e| Into::<DecodeError>::into(e))?;
-
-                let signer = Self::to_signer(&signer)?;
-                let msg = IbcMsgCreateClient {
-                    client_state: client_state,
-                    consensus_state: consensus_state,
-                    signer,
-                };
-                self.create_client(deps, info, msg)
+                let message: IbcMsgCreateClient =
+                    Self::from_raw::<RawMsgCreateClient, IbcMsgCreateClient>(&msg)?;
+                self.create_client(deps, info, message)
             }
-            CoreExecuteMsg::UpdateClient {
-                client_id,
-                header,
-                signer,
-            } => {
+            CoreExecuteMsg::UpdateClient { msg } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let header_bytes = header
-                    .to_bytes()
-                    .map_err(|e| Into::<FromHexError>::into(e))?;
-                let header = Any::decode(header_bytes.as_slice())
-                    .map_err(|e| Into::<DecodeError>::into(e))?;
-
-                let signer = Self::to_signer(&signer)?;
-                let msg = IbcMsgUpdateClient {
-                    client_id: IbcClientId::from_str(&client_id)
-                        .map_err(|error| ContractError::IbcValidationError { error: error })?,
-                    header,
-                    signer,
-                };
-                println!("Updating Client For {}", &client_id);
-                self.update_client(deps, info, msg)
+                let message: IbcMsgUpdateClient =
+                    Self::from_raw::<RawMsgUpdateClient, IbcMsgUpdateClient>(&msg)?;
+                self.update_client(deps, info, message)
             }
             CoreExecuteMsg::UpgradeClient {} => {
                 unimplemented!()
@@ -152,6 +117,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 unimplemented!()
             }
             CoreExecuteMsg::ConnectionOpenInit { msg } => {
+                // let message=msg.try_inner::<RawMsgConnectionOpenInit>()?;
                 let message: MsgConnectionOpenInit =
                     Self::from_raw::<RawMsgConnectionOpenInit, MsgConnectionOpenInit>(&msg)?;
                 self.connection_open_init(deps, message)
@@ -396,22 +362,22 @@ impl<'a> CwIbcCoreContext<'a> {
                     .unwrap();
                 to_binary(&res)
             }
-            QueryMsg::GetExpectedTimePerBlock => {
+            QueryMsg::GetExpectedTimePerBlock {} => {
                 let res = self.get_expected_time_per_block(deps.storage).unwrap();
                 to_binary(&res)
             }
-            QueryMsg::GetNextClientSequence => {
+            QueryMsg::GetNextClientSequence {} => {
                 let res = self
                     .client_counter(deps.storage)
                     .map_err(|_| ContractError::InvalidNextClientSequence {})
                     .unwrap();
                 to_binary(&res)
             }
-            QueryMsg::GetNextConnectionSequence => {
+            QueryMsg::GetNextConnectionSequence {} => {
                 let res = self.connection_counter(deps.storage).unwrap();
                 to_binary(&res)
             }
-            QueryMsg::GetNextChannelSequence => {
+            QueryMsg::GetNextChannelSequence {} => {
                 let res = self.channel_counter(deps.storage).unwrap();
                 to_binary(&res)
             }
@@ -681,6 +647,7 @@ mod tests {
         icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
     };
 
+    use cw_common::hex_string::HexString;
     use cw_common::ibc_types::IbcClientType;
     use prost::Message;
 
@@ -691,9 +658,8 @@ mod tests {
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         Addr, OwnedDeps,
     };
+    use cw_common::ibc_types::IbcClientId;
     use cw_common::raw_types::{Any, RawHeight};
-    use cw_common::{hex_string::HexString, ibc_types::IbcClientId};
-
     const SENDER: &str = "sender";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
@@ -709,7 +675,7 @@ mod tests {
     fn test_query_next_client_sequence() {
         let contract = CwIbcCoreContext::default();
         let mut deps = setup();
-        let msg = QueryMsg::GetNextClientSequence;
+        let msg = QueryMsg::GetNextClientSequence {};
         let result = query(deps.as_ref(), mock_env(), msg.clone()).unwrap();
         let result_parsed: u64 = from_binary(&result).unwrap();
         assert_eq!(0, result_parsed);

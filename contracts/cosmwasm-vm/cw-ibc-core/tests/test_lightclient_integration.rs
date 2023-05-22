@@ -4,6 +4,7 @@ use common::ibc::events::IbcEventType;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use common::{icon::icon::lightclient::v1::ClientState as RawClientState, traits::AnyTypes};
 use cosmwasm_std::{Addr, Empty};
+use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::{core_msg as CoreMsg, hex_string::HexString};
 use cw_ibc_core::{execute, instantiate, query, reply};
 use cw_icon_light_client;
@@ -95,13 +96,16 @@ pub fn call_create_client(
         .unwrap()
         .to_client_state(1000000, 5);
     let consensus_state = signed_header.header.unwrap().to_consensus_state();
+    let msg_raw = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consensus_state.to_any()),
+        signer: "signer".to_owned(),
+    };
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::CreateClient {
-            client_state: HexString::from_bytes(&client_state.to_any().encode_to_vec()),
-            consensus_state: HexString::from_bytes(&consensus_state.to_any().encode_to_vec()),
-            signer: HexString::from_bytes("signer".as_bytes()),
+            msg: HexString::from_bytes(&msg_raw.encode_to_vec()),
         },
         &[],
     );
@@ -114,13 +118,16 @@ pub fn call_update_client(
     signed_header: RawSignedHeader,
     client_id: &str,
 ) -> Result<AppResponse, AppError> {
+    let msg_raw = RawMsgUpdateClient {
+        client_id: client_id.to_string(),
+        header: Some(signed_header.to_any()),
+        signer: "signer".to_owned(),
+    };
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::UpdateClient {
-            client_id: client_id.to_string(),
-            header: HexString::from_bytes(&signed_header.to_any().encode_to_vec()),
-            signer: HexString::from_bytes("signer".as_bytes()),
+            msg: HexString::from_bytes(&msg_raw.encode_to_vec()),
         },
         &[],
     );

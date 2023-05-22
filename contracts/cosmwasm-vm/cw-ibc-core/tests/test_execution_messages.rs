@@ -20,6 +20,7 @@ use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcClientId;
+use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::RawVersion;
 use cw_common::ProstMessage;
@@ -79,11 +80,14 @@ fn test_for_create_client_execution_message() {
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "register_client");
+    let msg_raw = RawMsgCreateClient {
+        client_state: Some(client_state.clone().to_any()),
+        consensus_state: Some(consenus_state.clone().to_any()),
+        signer: "raw_message".to_owned(),
+    };
 
     let create_client_message = CoreExecuteMsg::CreateClient {
-        client_state: HexString::from_bytes(&client_state.clone().to_any().encode_to_vec()),
-        consensus_state: HexString::from_bytes(&consenus_state.clone().to_any().encode_to_vec()),
-        signer: HexString::from_bytes("raw_message".as_bytes()),
+        msg: HexString::from_bytes(&msg_raw.encode_to_vec()),
     };
 
     let response = contract
@@ -222,10 +226,14 @@ fn test_for_update_client_execution_messages() {
     .try_into()
     .unwrap();
 
-    let message = CoreExecuteMsg::UpdateClient {
+    let msg_hex = RawMsgUpdateClient {
         client_id: "iconclient-0".to_string(),
-        header: HexString::from_bytes(&signed_header.to_any().encode_to_vec()),
-        signer: HexString::from_bytes("signeraddress".to_string().as_bytes()),
+        header: Some(signed_header.to_any()),
+        signer: "signeraddress".to_string(),
+    };
+
+    let message = CoreExecuteMsg::UpdateClient {
+        msg: HexString::from_bytes(&msg_hex.encode_to_vec()),
     };
 
     let response = contract

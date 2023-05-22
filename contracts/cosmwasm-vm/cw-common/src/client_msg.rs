@@ -38,6 +38,11 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
+pub struct Response {
+    value: u64,
+}
+
+#[cw_serde]
 pub enum LightClientPacketMessage {
     VerifyPacketReceiptAbsence {
         height: String,

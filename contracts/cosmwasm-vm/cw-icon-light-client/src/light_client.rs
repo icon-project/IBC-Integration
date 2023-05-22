@@ -5,6 +5,7 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::traits::AnyTypes;
 use common::utils::{calculate_root, keccak256};
+
 use prost::Message;
 
 pub struct IconClient<'a> {

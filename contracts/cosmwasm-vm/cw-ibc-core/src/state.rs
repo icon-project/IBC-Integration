@@ -57,6 +57,7 @@ use super::*;
 /// * `packet_receipts`: The `packet_receipts` property is a map that stores packet receipts based on
 /// the PortId, ChannelId, and seq_on_a. It maps a tuple of `(String, String, u64)` to a `u64` value,
 /// where the first two elements of the tuple represent the PortId and
+/// const
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, IbcClientType, String>,
     client_types: Map<'a, IbcClientId, IbcClientType>,

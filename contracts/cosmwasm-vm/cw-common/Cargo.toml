@@ -10,7 +10,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cosmwasm-schema = "1.2.1"
-cosmwasm-std = {version="1.2.2",default-features = false}
+cosmwasm-std = {version="1.2.2",default-features = false, features=["ibc3"]}
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 cw-storage-plus = "1.0.1"
 serde_json = "*"
