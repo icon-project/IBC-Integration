@@ -14,7 +14,7 @@ on:
 
 jobs:
   build:
-    name: build
+    name: Go build
     runs-on: ubuntu-latest
     steps:
       # Clone
