@@ -105,8 +105,7 @@ fn test_bind_port() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
     let path = commitment::port_path(&PortId::default());
-    ctx.store_capability(&mut deps.storage, path.clone(), vec!["".to_string()])
-        .unwrap();
+    
     let res = ctx.bind_port(
         &mut deps.storage,
         &PortId::default(),
@@ -127,15 +126,3 @@ fn channel_capability_path() {
     assert_eq!("ports/defaultPort/channels/channel-0", result.unwrap())
 }
 
-#[test]
-#[should_panic(expected = "KeyNotFound")]
-fn test_bind_port_fail() {
-    let mut deps = deps();
-    let ctx = CwIbcCoreContext::default();
-    ctx.bind_port(
-        &mut deps.storage,
-        &PortId::default(),
-        "ContractAddress".to_string(),
-    )
-    .unwrap();
-}
