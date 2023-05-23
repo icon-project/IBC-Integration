@@ -201,6 +201,7 @@ pub fn get_test_signed_headers() -> Vec<SignedHeader> {
 
 pub fn get_project_root() -> io::Result<PathBuf> {
     let path = env::current_dir()?;
+    println!("Current dir {:?}",path);
     let mut path_ancestors = path.as_path().ancestors();
 
     while let Some(p) = path_ancestors.next() {
