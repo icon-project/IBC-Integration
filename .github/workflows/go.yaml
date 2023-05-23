@@ -17,6 +17,10 @@ jobs:
     name: build
     runs-on: ubuntu-latest
     steps:
+      # Clone
+      - name: Checkout
+        uses: actions/checkout@v3
+
       # Install and setup go
       - name: Set up Go 1.19
         uses: actions/setup-go@v2
