@@ -1,6 +1,7 @@
 syntax = "proto3";
 package icon.proto.core.connection;
 
+import "core/23-commitment/commitment.proto";
 
 option go_package = "libraries/go/common/icon;icon";
 
@@ -54,15 +55,10 @@ message Counterparty {
     // given connection.
     string connection_id = 2;
     // commitment merkle prefix of the counterparty chain.
-    MerklePrefix prefix = 3;
+    icon.proto.core.commitment.MerklePrefix prefix = 3;
 }
 
-// MerklePrefix is merkle path prefixed to the key.
-// The constructed key from the Path and the key will be append(Path.KeyPath,
-// append(Path.KeyPrefix, key...))
-message MerklePrefix {
-  bytes key_prefix = 1;
-}
+
 
 
 // Version defines the versioning scheme used to negotiate the IBC verison in

@@ -1,3 +1,4 @@
+mkdir -p artifacts
 cargo fmt --all
 cargo clean
 RUSTFLAGS='-C link-arg=-s' cargo build  --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
