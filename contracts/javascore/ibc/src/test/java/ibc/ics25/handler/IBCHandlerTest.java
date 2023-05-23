@@ -9,6 +9,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.function.Executable;
 import com.iconloop.score.test.Account;
 
 import ibc.icon.structs.messages.*;
+import score.Address;
 import test.proto.core.channel.ChannelOuterClass.Packet;
 
 public class IBCHandlerTest extends IBCHandlerTestBase {
@@ -235,6 +237,26 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         assertOnlyCallableBy(owner, "bindPort", portId);
         assertOnlyCallableBy(owner, "registerClient", clientType, lightClient.getAddress());
         assertOnlyCallableBy(owner, "setExpectedTimePerBlock", BigInteger.TWO);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void bindPort() {
+        // Arrange
+        handler.invoke(owner, "bindPort", portId, module.getAddress());
+
+        // Act & Assert
+        String expectedErrorMessage = "Capability already claimed";
+        Executable alreadyClaimed = () -> handler.invoke(owner, "bindPort", portId, sm.createAccount().getAddress());
+        AssertionError e = assertThrows(AssertionError.class, alreadyClaimed);
+        assertTrue(e.getMessage().contains(expectedErrorMessage));
+
+        // Assert
+        List<byte[]> ports = (List<byte[]>)handler.call("getBindPorts");
+        Address portModule = (Address)handler.call("getCapability", ports.get(0));
+
+        assertEquals(1, ports.size());
+        assertEquals(module.getAddress(), portModule);
     }
 
     private void assertOnlyCallableBy(Account authorizedCaller, String method, Object... params) {
