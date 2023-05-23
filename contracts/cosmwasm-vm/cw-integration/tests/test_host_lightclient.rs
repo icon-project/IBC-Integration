@@ -11,13 +11,20 @@ use cw_ibc_core::{execute, instantiate, query, reply};
 use cw_icon_light_client;
 use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
 use prost::Message;
-use setup::{setup_context, setup_host_lightclient, TestContext};
+use setup::{init_ibc_core_contract, init_light_client, setup_context, TestContext};
 use test_utils::{get_event, get_event_name, get_test_signed_headers};
 
 fn setup_test() -> TestContext {
     let mut context = setup_context();
-    context = setup_host_lightclient(context);
+    context = setup_contracts(context);
     context
+}
+
+pub fn setup_contracts(mut ctx: TestContext) -> TestContext {
+    ctx = init_light_client(ctx);
+    ctx = init_ibc_core_contract(ctx);
+
+    ctx
 }
 
 pub fn call_register_client_type(ctx: &mut TestContext) -> Result<AppResponse, AppError> {

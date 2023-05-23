@@ -46,9 +46,5 @@ cw-common = { path="../cw-common" }
 cosmwasm = "0.7.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
 hex = "0.4.3"
-cw-multi-test = "0.16.4"
-cw-xcall-ibc-connection = { path="../cw-xcall-ibc-connection" }
-cw-mock-ibc-core = { path="../cw-mock-ibc-core" }
-cw-integration= { path="../cw-integration"}
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}

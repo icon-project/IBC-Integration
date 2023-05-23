@@ -2,19 +2,24 @@ use cosmwasm_std::Addr;
 use cw_multi_test::{App, Executor};
 use setup::init_mock_dapp_contract;
 
+use crate::setup::setup_context;
+
 mod setup;
 #[test]
 fn test_cross_contract_rollback() {
-    let mut app = App::default();
-    let caller = init_mock_dapp_contract(&mut app);
-    let success = init_mock_dapp_contract(&mut app);
-    let fail = init_mock_dapp_contract(&mut app);
+    let mut app = setup_context();
+    app=init_mock_dapp_contract(app);
+    let caller =app.get_dapp();
+    app=init_mock_dapp_contract(app);
+    let success = app.get_dapp();
+    app=init_mock_dapp_contract(app);
+    let fail = app.get_dapp();
     let sender = Addr::unchecked("sender");
-    let count_before: u64 = app
+    let count_before: u64 = app.app
         .wrap()
         .query_wasm_smart(&success, &cw_mock_dapp::msg::QueryMsg::GetSequence {})
         .unwrap();
-    let result = app.execute_contract(
+    let result = app.app.execute_contract(
         sender,
         caller,
         &cw_mock_dapp::ExecuteMsg::TestCall {
@@ -26,7 +31,7 @@ fn test_cross_contract_rollback() {
 
     println!("{:?}", result);
 
-    let count_after: u64 = app
+    let count_after: u64 = app.app
         .wrap()
         .query_wasm_smart(&success, &cw_mock_dapp::msg::QueryMsg::GetSequence {})
         .unwrap();
