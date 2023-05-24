@@ -17,7 +17,7 @@ use cw_storage_plus::{Item, Map};
 pub use errors::*;
 pub use helper::*;
 use msg::QueryMsg;
-use state::CwMockService;
+use state::{CwMockService, Connection};
 use thiserror::Error;
 use types::InstantiateMsg;
 pub use types::*;
@@ -46,8 +46,8 @@ pub fn execute(
         ExecuteMsg::SendCallMessage { to, data, rollback } => {
             call_service.send_call_message(deps, info, to, data, rollback)
         }
-        ExecuteMsg::HandleCallMessage { from, data } => {
-            call_service.handle_call_message(deps, info, from, data)
+        ExecuteMsg::HandleCallMessage { from, data ,protocols} => {
+            call_service.handle_call_message(deps, info, from, data,protocols)
         }
         ExecuteMsg::XCallMessage { data } => Ok(Response::new()
             .add_attribute("action", "success execute call")
@@ -95,6 +95,10 @@ pub fn execute(
             ];
 
             Ok(Response::new().add_submessages(submessages))
+        },
+        ExecuteMsg::AddConnection { src_endpoint, dest_endpoint, network_id }=>{
+            call_service.add_connection(deps.storage, network_id, Connection{src_endpoint,dest_endpoint})?;
+            Ok(Response::new().add_attribute("action","add_connection"))
         }
     }
 }
