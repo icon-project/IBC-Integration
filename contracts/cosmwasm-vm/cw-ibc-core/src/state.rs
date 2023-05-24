@@ -73,7 +73,7 @@ pub struct CwIbcStore<'a> {
     channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
     port_to_module: Map<'a, PortId, IbcModuleId>,
     /// Stores address based on the capability names
-    capabilities: Map<'a, Vec<u8>, Vec<String>>,
+    capabilities: Map<'a, Vec<u8>, String>,
     /// store commitments based on keys (PacketCommitment,AckCommitment,Connection,Channel,Client)
     commitments: Map<'a, Vec<u8>, Vec<u8>>,
     /// Stores block duration
@@ -151,7 +151,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn port_to_module(&self) -> &Map<'a, PortId, IbcModuleId> {
         &self.port_to_module
     }
-    pub fn capabilities(&self) -> &Map<'a, Vec<u8>, Vec<String>> {
+    pub fn capabilities(&self) -> &Map<'a, Vec<u8>, String> {
         &self.capabilities
     }
     pub fn commitments(&self) -> &Map<'a, Vec<u8>, Vec<u8>> {
