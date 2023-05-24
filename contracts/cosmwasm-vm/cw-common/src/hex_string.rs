@@ -34,6 +34,10 @@ impl HexString {
     pub fn from_bytes(bytes: &[u8]) -> HexString {
         HexString(hex::encode(bytes))
     }
+
+    pub fn from_str(str:&str)->Self {
+        HexString(str.to_owned())
+    }
 }
 
 #[cw_serde]
