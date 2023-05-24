@@ -89,6 +89,72 @@ pub fn call_update_client(
     res
 }
 
+pub fn call_connection_open_init(
+    ctx: &mut TestContext,
+    msg: HexString,
+    client_id: &str,
+) -> Result<AppResponse, AppError> {
+    
+    let res = ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core().clone(),
+        &CoreMsg::ExecuteMsg::ConnectionOpenInit { msg},
+        &[],
+    );
+
+    res
+}
+
+pub fn call_connection_open_try(
+    ctx: &mut TestContext,
+    msg: HexString,
+    client_id: &str,
+) -> Result<AppResponse, AppError> {
+    
+    let res = ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core().clone(),
+        &CoreMsg::ExecuteMsg::ConnectionOpenTry { msg},
+        &[],
+    );
+
+    res
+}
+
+
+
+pub fn call_connection_open_ack(
+    ctx: &mut TestContext,
+    msg: HexString,
+    client_id: &str,
+) -> Result<AppResponse, AppError> {
+    
+    let res = ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core().clone(),
+        &CoreMsg::ExecuteMsg::ConnectionOpenAck { msg},
+        &[],
+    );
+
+    res
+}
+
+pub fn call_connection_open_confirm(
+    ctx: &mut TestContext,
+    msg: HexString,
+    client_id: &str,
+) -> Result<AppResponse, AppError> {
+    
+    let res = ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core().clone(),
+        &CoreMsg::ExecuteMsg::ConnectionOpenConfirm { msg},
+        &[],
+    );
+
+    res
+}
+
 #[test]
 fn test_register_client() {
     let mut ctx = setup_test();
