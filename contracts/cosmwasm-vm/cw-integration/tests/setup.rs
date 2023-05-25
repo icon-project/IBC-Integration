@@ -42,8 +42,8 @@ impl TestContext {
         return self.contracts.get(&TestApps::XcallIbcConnection).unwrap().clone();
     }
 
-    pub fn set_light_client(&mut self,addr:Addr) -> Addr {
-        return self.contracts.insert(TestApps::LightClient,addr).unwrap().clone();
+    pub fn set_light_client(&mut self,addr:Addr) -> Option<Addr> {
+        return self.contracts.insert(TestApps::LightClient,addr);
     }
     pub fn set_dapp(&mut self,addr:Addr) -> Option<Addr> {
         return self.contracts.insert(TestApps::Dapp,addr);

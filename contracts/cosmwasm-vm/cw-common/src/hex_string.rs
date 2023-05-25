@@ -40,6 +40,12 @@ impl HexString {
     }
 }
 
+impl From<&str> for HexString{
+    fn from(value: &str) -> Self {
+        HexString(value.to_owned())
+    }
+}
+
 #[cw_serde]
 pub struct TestHex {
     #[serde(with = "FromHexString")]

@@ -448,14 +448,14 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|e| Into::<ContractError>::into(e))?;
 
         let connection_path =
-            commitment::connection_path(&message.counterparty.connection_id.clone().unwrap());
+            commitment::connection_commitment_key(&message.counterparty.connection_id.clone().unwrap());
         let verify_connection_state = VerifyConnectionState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
             message.proof_conn_end_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
-            to_vec(&expected_conn_end_on_a).map_err(ContractError::Std)?,
+            expected_conn_end_on_a.encode_vec().map_err()?,
         );
 
         let client_state_path = commitment::client_state_path(&message.client_id_on_b);

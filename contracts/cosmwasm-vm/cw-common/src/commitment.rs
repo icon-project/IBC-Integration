@@ -32,6 +32,7 @@ pub fn commitment_path_hash(path_bytes: &[u8]) -> Vec<u8> {
 pub fn client_state_path(client_id: &ClientId) -> Vec<u8> {
     ClientStatePath::new(client_id).to_string().into_bytes()
 }
+
 pub fn consensus_state_path(client_id: &ClientId, height: &Height) -> Vec<u8> {
     ClientConsensusStatePath::new(client_id, height)
         .to_string()

@@ -20,6 +20,15 @@ use cosmwasm_std::{Attribute, Event};
 pub mod constants;
 
 #[derive(Debug, Deserialize, Default)]
+pub struct RawPayload {
+    pub step:String,
+    pub update:Option<String>,
+    pub message:String,
+}
+
+
+
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct TestHeader {
     pub main_height: u64,
@@ -167,6 +176,10 @@ pub fn load_test_headers() -> Vec<TestHeaderData> {
 
 pub fn load_test_messages() -> Vec<TestMessageData> {
     return load_test_data::<TestMessageData>("test_data/test_messages.json");
+}
+
+pub fn load_raw_messages() -> Vec<RawPayload> {
+    return load_test_data::<RawPayload>("test_data/raw_payloads.json");
 }
 
 pub fn load_test_data<T: for<'a> Deserialize<'a>>(path: &str) -> Vec<T> {
