@@ -99,14 +99,10 @@ impl<'a> IContext for CwContext<'a> {
     fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>> {
         return self
             .recover_signer(msg, signature)
-            .map(|addr| return self.to_icon_address(addr.as_slice()));
+            .map(|addr| addr.to_vec());
     }
 
-    fn to_icon_address(&self, address: &[u8]) -> Vec<u8> {
-        let mut raw = [ADDRESS_TYPE_PREFIX; 21];
-        raw[1..21].copy_from_slice(&address[..]);
-        raw.to_vec()
-    }
+   
 
     fn get_config(&self) -> Result<Config, Self::Error> {
         return QueryHandler::get_config(self.storage);
@@ -478,7 +474,7 @@ mod tests {
             TESTNET_SRC_NETWORK_ID,
             TESTNET_NETWORK_TYPE_ID.into(),
         );
-        let address = "00b040bff300eee91f7665ac8dcf89eb0871015306";
+        let address = "b040bff300eee91f7665ac8dcf89eb0871015306";
         let signature = signed_header.signatures[0].clone();
         let context = CwContext::new(deps.as_mut(), mock_env());
         let result = context
@@ -499,7 +495,7 @@ mod tests {
                 TESTNET_SRC_NETWORK_ID,
                 TESTNET_NETWORK_TYPE_ID.into(),
             );
-            let address = "00b040bff300eee91f7665ac8dcf89eb0871015306";
+            let address = "b040bff300eee91f7665ac8dcf89eb0871015306";
             let signature = signed_header.signatures[0].clone();
             let context = CwContext::new(deps.as_mut(), mock_env());
             let result = context
