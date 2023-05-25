@@ -292,4 +292,13 @@ mod tests {
             hex::encode(result)
         );
     }
+    #[test]
+    fn test_keccak256() {
+        let bytes = b"Hello World";
+        let result: Vec<u8> = keccak256(bytes).into();
+        assert_eq!(
+            "592fa743889fc7f92ac2a37bb1f5ba1daf2a5c84741ca0e0061d243a2e6707ba",
+            hex::encode(result)
+        );
+    }
 }

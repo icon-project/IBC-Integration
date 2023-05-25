@@ -372,8 +372,8 @@ pub fn validate_connection_state(
         0,
         0,
         &proofs_decoded.proofs,
-        &state.expected_counterparty_connection_end,
         &state.counterparty_conn_end_path,
+        &state.expected_counterparty_connection_end,
     )?;
     Ok(result)
 }
@@ -392,8 +392,8 @@ pub fn validate_client_state(
         0,
         0,
         &proofs_decoded.proofs,
-        &state.expected_client_state,
         &state.client_state_path,
+        &state.expected_client_state,
     )?;
     Ok(result)
 }
@@ -412,8 +412,8 @@ pub fn validate_consensus_state(
         0,
         0,
         &proofs_decoded.proofs,
-        &state.expected_conesenus_state,
         &state.conesenus_state_path,
+        &state.expected_conesenus_state,
     )?;
     Ok(result)
 }
@@ -442,8 +442,8 @@ pub fn validate_next_seq_recv(
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &sequence.to_be_bytes().to_vec(),
                 &seq_recv_path,
+                &sequence.to_be_bytes().to_vec(),
             )?;
             res
         }

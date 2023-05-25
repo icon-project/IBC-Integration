@@ -1,5 +1,6 @@
 use cw_common::client_msg::VerifyConnectionPayload;
 use prost::DecodeError;
+use prost::Message;
 
 use super::*;
 
@@ -431,7 +432,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Init,
             message.counterparty.client_id().clone(),
-            Counterparty::new(message.client_id_on_b.clone(), None, prefix_on_b),
+            Counterparty::new(message.client_id_on_b.clone(), message.counterparty.connection_id.clone(), prefix_on_b),
             message.versions_on_a.clone(),
             message.delay_period,
         );
@@ -455,7 +456,7 @@ impl<'a> CwIbcCoreContext<'a> {
             message.proof_conn_end_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
-            expected_conn_end_on_a.encode_vec().map_err()?,
+            expected_conn_end_on_a.encode_vec().map_err(|e|ContractError::FailedConversion)?,
         );
 
         let client_state_path = commitment::client_state_path(&message.client_id_on_b);

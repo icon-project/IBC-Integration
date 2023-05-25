@@ -257,7 +257,7 @@ pub fn init_xcall_ibc_connection_contract(mut ctx: TestContext) -> TestContext {
             Some(ctx.sender.clone().to_string()),
         )
         .unwrap();
-    ctx.set_xcall_app(ibc_connection_contract_addr);
+    ctx.set_xcall_ibc_connection(ibc_connection_contract_addr);
     ctx
 }
 
