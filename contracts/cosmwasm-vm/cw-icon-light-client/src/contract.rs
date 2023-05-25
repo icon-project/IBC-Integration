@@ -473,10 +473,11 @@ pub fn validate_next_seq_recv(
 }
 
 fn to_height_u64(height: &str) -> Result<u64, ContractError> {
-    let height: u64 = height
-        .parse()
-        .map_err(|_e| ContractError::FailedToParseHeight(height.to_string()))?;
-    Ok(height)
+  let heights=height.split("-").collect::<Vec<&str>>();
+  if heights.len() != 2 {
+    return Err(ContractError::InvalidHeight)
+  }
+    heights[1].parse::<u64>().map_err(|_e| ContractError::InvalidHeight)
 }
 
 fn to_ibc_height(height: u64) -> Result<IbcHeight, ContractError> {
