@@ -1,7 +1,24 @@
+#!/bin/bash
+set -e
+
+BINARYEN_VERS=110
+BINARYEN_DWN="https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERS}/binaryen-version_${BINARYEN_VERS}-x86_64-linux.tar.gz"
+
 mkdir -p artifacts
 cargo fmt --all
 cargo clippy --fix
 cargo clean
+
+# Install toolchains
+# cargo add target wasm32-unknown-unknown
+rustup target add wasm32-unknown-unknown
+cargo install cosmwasm-check
+if ! which wasm-opt; then
+    curl -OL $BINARYEN_DWN
+    tar xf binaryen-version_${BINARYEN_VERS}-x86_64-linux.tar.gz
+    export PATH=$PATH:$PWD/binaryen-version_${BINARYEN_VERS}/bin
+fi
+
 RUSTFLAGS='-C link-arg=-s' cargo build  --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
 for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do
     NAME=$(basename "$WASM" .wasm)${SUFFIX}.wasm
@@ -16,3 +33,4 @@ cosmwasm-check artifacts/cw_mock_dapp.wasm
 cosmwasm-check artifacts/cw_xcall.wasm
 cosmwasm-check artifacts/cw_xcall_ibc_connection.wasm
 cosmwasm-check artifacts/cw_xcall_app.wasm
+

@@ -1,0 +1,65 @@
+name: Cosmwasm Contracts Test Deployment
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - contracts/cosmwasm-vm/**
+      - .github/workflows/deploy-cosmwasm-contracts.yml
+jobs:
+  Build:
+    name: Build & Deploy Cosmasm Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Initialize and update submodules
+        run: |
+          git submodule init
+          git submodule update
+      - name: Start local Archway Blockchain
+        run: |
+          docker pull archwaynetwork/archwayd:v0.4.0
+          cd contracts/cosmwasm-vm/archway
+          sed -i 's/latest/v0.4.0/' docker-compose.yaml
+          docker-compose -f docker-compose.yaml up -d
+          # git clean submodule directory
+          git checkout .
+          git clean -fdx
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+          profile: minimal
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: Compile WASM
+        run: bash ./optimize_build.sh
+      - name: Check WASM Size
+        run: |
+          max_size=800 
+          echo "Check if size of wasm file exceeds $max_size kilobytes..."
+          for file in artifacts/*.wasm
+          do 
+          size=$(du -k "$file" | awk '{print $1}')
+          if [[ $size -gt $max_size ]]; then
+          echo "Error: $file : $size has exceeded maximum contract size limit of 800KB."
+          exit 1
+          fi
+          echo "$file : $size"
+          done
+          echo "The size of all contracts is well within the 800 KB limit."
+      - name: Deploy WASM
+        run: >
+          rm -rf artifacts/cw_common.wasm
+
+          cp -r {artifacts,scripts/deploy_cosmwasm.sh} contracts/cosmwasm-vm/archway/contracts
+
+          docker exec archway_node_1 ls /contracts/artifacts/
+
+          docker exec archway_node_1 sh /contracts/deploy_cosmwasm.sh

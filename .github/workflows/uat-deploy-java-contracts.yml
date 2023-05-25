@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-       - name: Retrieve the secret and decode it to a file
+      - name: Retrieve the secret and decode it to a file
         working-directory: contracts/javascore
         env:
           UAT_KEYSTORE_B64: ${{ secrets.UAT_KEYSTORE_B64 }}
