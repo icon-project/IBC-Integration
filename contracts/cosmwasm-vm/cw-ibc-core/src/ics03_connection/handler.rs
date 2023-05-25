@@ -452,7 +452,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_connection_state = VerifyConnectionState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
-            to_vec(&message.proof_conn_end_on_a).map_err(ContractError::Std)?,
+            message.proof_conn_end_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
             to_vec(&expected_conn_end_on_a).map_err(ContractError::Std)?,
@@ -462,7 +462,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_client_full_state = VerifyClientFullState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
-            to_vec(&message.proof_client_state_of_b_on_a).map_err(ContractError::Std)?,
+            message.proof_client_state_of_b_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             client_state_path,
             to_vec(&message.client_state_of_b_on_a).map_err(ContractError::Std)?,
@@ -474,7 +474,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_client_consensus_state = VerifyClientConsensusState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
-            to_vec(&message.proof_consensus_state_of_b_on_a).map_err(ContractError::Std)?,
+            message.proof_consensus_state_of_b_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             consensus_state_path_on_a,
             client_consensus_state_path_on_b,
