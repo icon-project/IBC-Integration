@@ -69,7 +69,7 @@ jobs:
         uses: tj-actions/verify-changed-files@v8
         id: verify-schema
         with:
-          files: contracts/*/schema/.*\.json
+          files: contracts/cosmwasm-vm/*/schema/.*\.json
 
       - name: Display changed schemas
         if: steps.verify-schema.outputs.files_changed == 'true'
