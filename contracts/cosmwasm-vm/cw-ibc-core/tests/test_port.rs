@@ -105,7 +105,7 @@ fn test_bind_port() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
     let path = commitment::port_path(&PortId::default());
-    
+
     let res = ctx.bind_port(
         &mut deps.storage,
         &PortId::default(),
@@ -125,4 +125,3 @@ fn channel_capability_path() {
     assert!(result.is_ok());
     assert_eq!("ports/defaultPort/channels/channel-0", result.unwrap())
 }
-

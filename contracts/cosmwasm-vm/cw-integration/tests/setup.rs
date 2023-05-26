@@ -6,16 +6,15 @@ use cosmwasm_std::{
     Addr, Empty, IbcEndpoint, MessageInfo, OwnedDeps,
 };
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
-use cw_xcall_ibc_connection::state::{IbcConfig};
+use cw_xcall_ibc_connection::state::IbcConfig;
 
-#[derive(Debug,PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum TestApps {
     LightClient,
     Dapp,
     IbcCore,
     XcallApp,
     XcallIbcConnection,
-
 }
 
 pub struct TestContext {
@@ -39,27 +38,29 @@ impl TestContext {
         return self.contracts.get(&TestApps::XcallApp).unwrap().clone();
     }
     pub fn get_xcall_ibc_connection(&self) -> Addr {
-        return self.contracts.get(&TestApps::XcallIbcConnection).unwrap().clone();
+        return self
+            .contracts
+            .get(&TestApps::XcallIbcConnection)
+            .unwrap()
+            .clone();
     }
 
-    pub fn set_light_client(&mut self,addr:Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::LightClient,addr);
+    pub fn set_light_client(&mut self, addr: Addr) -> Option<Addr> {
+        return self.contracts.insert(TestApps::LightClient, addr);
     }
-    pub fn set_dapp(&mut self,addr:Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::Dapp,addr);
+    pub fn set_dapp(&mut self, addr: Addr) -> Option<Addr> {
+        return self.contracts.insert(TestApps::Dapp, addr);
     }
-    pub fn set_ibc_core(&mut self,addr:Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::IbcCore,addr);
-    }
-
-    pub fn set_xcall_app(&mut self,addr:Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::XcallApp,addr);
-    }
-    pub fn set_xcall_ibc_connection(&mut self,addr:Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::XcallIbcConnection,addr);
+    pub fn set_ibc_core(&mut self, addr: Addr) -> Option<Addr> {
+        return self.contracts.insert(TestApps::IbcCore, addr);
     }
 
-    
+    pub fn set_xcall_app(&mut self, addr: Addr) -> Option<Addr> {
+        return self.contracts.insert(TestApps::XcallApp, addr);
+    }
+    pub fn set_xcall_ibc_connection(&mut self, addr: Addr) -> Option<Addr> {
+        return self.contracts.insert(TestApps::XcallIbcConnection, addr);
+    }
 }
 
 pub fn create_mock_info(creator: &str, denom: &str, amount: u128) -> MessageInfo {
@@ -95,9 +96,10 @@ pub fn mock_dapp_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-pub fn init_mock_dapp_contract(mut ctx:TestContext) -> TestContext {
+pub fn init_mock_dapp_contract(mut ctx: TestContext) -> TestContext {
     let code_id = ctx.app.store_code(mock_dapp_contract());
-    let contract_addr = ctx.app
+    let contract_addr = ctx
+        .app
         .instantiate_contract(
             code_id,
             ctx.sender.clone(),
@@ -165,7 +167,7 @@ pub fn init_ibc_core_contract(mut ctx: TestContext) -> TestContext {
             Some(ctx.sender.clone().to_string()),
         )
         .unwrap();
-   
+
     ctx.set_ibc_core(ibc_core_addr);
 
     ctx
@@ -184,7 +186,7 @@ pub fn init_mock_ibc_core_contract(mut ctx: TestContext) -> TestContext {
             Some(ctx.sender.clone().to_string()),
         )
         .unwrap();
-   
+
     ctx.set_ibc_core(ibc_core_addr);
     ctx
 }
@@ -235,7 +237,7 @@ pub fn init_xcall_app_contract(mut ctx: TestContext) -> TestContext {
             Some(ctx.sender.clone().to_string()),
         )
         .unwrap();
-   
+
     ctx.set_xcall_app(xcall_app_contract_addr);
     ctx
 }
@@ -260,8 +262,6 @@ pub fn init_xcall_ibc_connection_contract(mut ctx: TestContext) -> TestContext {
     ctx.set_xcall_ibc_connection(ibc_connection_contract_addr);
     ctx
 }
-
-
 
 pub fn setup_context() -> TestContext {
     let mut router = App::default();

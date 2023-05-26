@@ -473,11 +473,13 @@ pub fn validate_next_seq_recv(
 }
 
 fn to_height_u64(height: &str) -> Result<u64, ContractError> {
-  let heights=height.split("-").collect::<Vec<&str>>();
-  if heights.len() != 2 {
-    return Err(ContractError::InvalidHeight)
-  }
-    heights[1].parse::<u64>().map_err(|_e| ContractError::InvalidHeight)
+    let heights = height.split("-").collect::<Vec<&str>>();
+    if heights.len() != 2 {
+        return Err(ContractError::InvalidHeight);
+    }
+    heights[1]
+        .parse::<u64>()
+        .map_err(|_e| ContractError::InvalidHeight)
 }
 
 fn to_ibc_height(height: u64) -> Result<IbcHeight, ContractError> {
@@ -536,6 +538,7 @@ mod tests {
 
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
+        contract::{to_height_u64, validate_next_seq_recv},
         state::QueryHandler,
         ContractError,
     };
@@ -719,5 +722,12 @@ mod tests {
             consensus_state.message_root,
             signed_header.header.clone().unwrap().message_root
         )
+    }
+    #[test]
+    fn test_to_height_u64() {
+        // write test for to_height_u64
+        let height = "1-1";
+        let height_u64 = to_height_u64(height).unwrap();
+        assert_eq!(height_u64, 1);
     }
 }

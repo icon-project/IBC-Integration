@@ -102,8 +102,6 @@ impl<'a> IContext for CwContext<'a> {
             .map(|addr| addr.to_vec());
     }
 
-   
-
     fn get_config(&self) -> Result<Config, Self::Error> {
         return QueryHandler::get_config(self.storage);
     }

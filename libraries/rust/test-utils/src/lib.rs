@@ -21,12 +21,10 @@ pub mod constants;
 
 #[derive(Debug, Deserialize, Default)]
 pub struct RawPayload {
-    pub step:String,
-    pub update:Option<String>,
-    pub message:String,
+    pub step: String,
+    pub update: Option<String>,
+    pub message: String,
 }
-
-
 
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
