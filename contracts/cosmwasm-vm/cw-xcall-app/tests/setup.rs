@@ -19,6 +19,12 @@ pub struct MockEnvBuilder {
     env: Env,
 }
 
+impl Default for MockEnvBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MockEnvBuilder {
     pub fn new() -> MockEnvBuilder {
         MockEnvBuilder {

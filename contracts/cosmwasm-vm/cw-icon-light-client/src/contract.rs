@@ -661,7 +661,7 @@ mod tests {
         let random_signed_header = &get_test_signed_headers()[2];
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::UpdateClient {
-            client_id: client_id,
+            client_id,
             signed_header: random_signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info, msg);

@@ -184,7 +184,7 @@ fn check_for_raw_message_to_updgrade_client() {
     let proof = get_dummy_merkle_proof();
 
     let msg = MsgUpgradeClient {
-        client_id: client_id,
+        client_id,
         client_state: client_state.into(),
         consensus_state: consensus_state.into(),
         proof_upgrade_client: proof.clone(),
@@ -213,7 +213,7 @@ fn test_upgrade_client_event() {
     let proof = get_dummy_merkle_proof();
 
     let msg = MsgUpgradeClient {
-        client_id: client_id,
+        client_id,
         client_state: client_state.into(),
         consensus_state: consensus_state.into(),
         proof_upgrade_client: proof.clone(),
@@ -879,7 +879,7 @@ fn fails_on_updating_non_existing_client() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let signer = Signer::from_str("new_signer").unwrap();
     let update_client_message = IbcMsgUpdateClient {
-        client_id: client_id,
+        client_id,
         header: client_state.into(),
         signer,
     };
@@ -993,7 +993,7 @@ fn check_for_upgrade_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id,
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1098,7 +1098,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id,
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1203,7 +1203,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id,
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1711,7 +1711,7 @@ fn sucess_on_misbehaviour_validate() {
     };
 
     let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id: client_id,
+        client_id,
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id(),
     };
@@ -1771,7 +1771,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
     };
 
     let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id: client_id,
+        client_id,
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id(),
     };
