@@ -245,7 +245,7 @@ impl TryFrom<LightClientPacketMessage> for PacketDataResponse {
                 packet_data,
             } => {
                 let packet_data: PacketData = from_slice(&packet_data)
-                    .map_err(|e| CwErrors::FailedToConvertToPacketDataResponse(e))?;
+                    .map_err(CwErrors::FailedToConvertToPacketDataResponse)?;
                 PacketDataResponse::from(packet_data)
             }
             LightClientPacketMessage::VerifyPacketReceiptAbsence {
@@ -257,7 +257,7 @@ impl TryFrom<LightClientPacketMessage> for PacketDataResponse {
                 packet_data,
             } => {
                 let packet_data: PacketData = from_slice(&packet_data)
-                    .map_err(|e| CwErrors::FailedToConvertToPacketDataResponse(e))?;
+                    .map_err(CwErrors::FailedToConvertToPacketDataResponse)?;
                 PacketDataResponse::from(packet_data)
             }
         };

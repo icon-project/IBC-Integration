@@ -31,11 +31,11 @@ pub struct CwContext<'a> {
 
 impl<'a> CwContext<'a> {
     pub fn new(deps_mut: DepsMut<'a>, env: Env) -> Self {
-        return Self {
+        Self {
             storage: deps_mut.storage,
             api: deps_mut.api,
             env,
-        };
+        }
     }
 }
 
@@ -61,7 +61,7 @@ impl<'a> IContext for CwContext<'a> {
         client_id: &str,
         height: u64,
     ) -> Result<ConsensusState, Self::Error> {
-        return QueryHandler::get_consensus_state(self.storage, client_id, height);
+        QueryHandler::get_consensus_state(self.storage, client_id, height)
     }
 
     fn insert_consensus_state(
@@ -77,7 +77,7 @@ impl<'a> IContext for CwContext<'a> {
     }
 
     fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error> {
-        return QueryHandler::get_timestamp_at_height(self.storage, client_id, height);
+        QueryHandler::get_timestamp_at_height(self.storage, client_id, height)
     }
 
     fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]> {
@@ -89,29 +89,23 @@ impl<'a> IContext for CwContext<'a> {
         let v = signature[64];
         let pubkey = self.api.secp256k1_recover_pubkey(msg, &rs, v).unwrap();
         let pubkey_hash = keccak256(&pubkey[1..]);
-        let address: Option<[u8; 20]> = pubkey_hash.as_slice()[12..]
-            .try_into()
-            .ok()
-            .map(|arr: [u8; 20]| arr.into());
+        let address: Option<[u8; 20]> = pubkey_hash.as_slice()[12..].try_into().ok();
         address
     }
 
     fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>> {
-        return self
-            .recover_signer(msg, signature)
-            .map(|addr| addr.to_vec());
+        self.recover_signer(msg, signature)
+            .map(|addr| addr.to_vec())
     }
 
-   
-
     fn get_config(&self) -> Result<Config, Self::Error> {
-        return QueryHandler::get_config(self.storage);
+        QueryHandler::get_config(self.storage)
     }
 
     fn insert_config(&mut self, config: &Config) -> Result<(), Self::Error> {
-        return CONFIG
+        CONFIG
             .save(self.storage, config)
-            .map_err(|_e| ContractError::FailedToSaveConfig);
+            .map_err(|_e| ContractError::FailedToSaveConfig)
     }
 
     fn insert_timestamp_at_height(
@@ -175,8 +169,7 @@ impl QueryHandler {
                 height,
                 client_id: client_id.to_string(),
             })?;
-        let state =
-            ConsensusState::decode(data.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
+        let state = ConsensusState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
         Ok(state)
     }
 
@@ -200,15 +193,14 @@ impl QueryHandler {
         let data = CLIENT_STATES
             .load(storage, client_id.to_string())
             .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
-        let state =
-            ClientState::decode(data.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
+        let state = ClientState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
         Ok(state)
     }
 
     pub fn get_config(storage: &dyn Storage) -> Result<Config, ContractError> {
-        return CONFIG
+        CONFIG
             .load(storage)
-            .map_err(|_e| ContractError::ConfigNotFound);
+            .map_err(|_e| ContractError::ConfigNotFound)
     }
 
     pub fn get_client_state_any(
@@ -245,7 +237,7 @@ impl QueryHandler {
             .load(storage, (client_id.to_string(), height))
             .map_err(|_e| ContractError::ProcessedTimeNotFound {
                 client_id: client_id.to_string(),
-                height: height,
+                height,
             })
     }
     pub fn get_processed_blocknumber_at_height(
@@ -257,7 +249,7 @@ impl QueryHandler {
             .load(storage, (client_id.to_string(), height))
             .map_err(|_e| ContractError::ProcessedHeightNotFound {
                 client_id: client_id.to_string(),
-                height: height,
+                height,
             })
     }
 }
@@ -396,12 +388,12 @@ mod tests {
         let client_id = "my-client";
         let client_state = ClientState::default();
         CwContext::new(deps.as_mut(), mock_env())
-            .insert_client_state(&client_id, client_state.clone())
+            .insert_client_state(client_id, client_state.clone())
             .unwrap();
 
         // Retrieve client state
         let context = CwContext::new(deps.as_mut(), mock_env());
-        let result = context.get_client_state(&client_id).unwrap();
+        let result = context.get_client_state(client_id).unwrap();
         assert_eq!(client_state, result);
     }
 
@@ -414,12 +406,12 @@ mod tests {
         let height = 1;
         let consensus_state = ConsensusState::default();
         CwContext::new(deps.as_mut(), mock_env())
-            .insert_consensus_state(&client_id, height, consensus_state.clone())
+            .insert_consensus_state(client_id, height, consensus_state.clone())
             .unwrap();
 
         // Retrieve consensus state
         let context = CwContext::new(deps.as_mut(), mock_env());
-        let result = context.get_consensus_state(&client_id, height).unwrap();
+        let result = context.get_consensus_state(client_id, height).unwrap();
         assert_eq!(consensus_state, result);
     }
 
@@ -432,12 +424,12 @@ mod tests {
         let height = 1;
         let time = 1571797419879305533;
         CwContext::new(deps.as_mut(), mock_env())
-            .insert_timestamp_at_height(&client_id, height)
+            .insert_timestamp_at_height(client_id, height)
             .unwrap();
 
         // Retrieve processed time
         let context = CwContext::new(deps.as_mut(), mock_env());
-        let result = context.get_timestamp_at_height(&client_id, height).unwrap();
+        let result = context.get_timestamp_at_height(client_id, height).unwrap();
         assert_eq!(time, result);
     }
 
@@ -487,7 +479,7 @@ mod tests {
     fn test_cwcontext_signed_relay_data() {
         let mut deps = mock_dependencies();
 
-        let signed_headers: Vec<SignedHeader> = get_test_signed_headers().clone();
+        let signed_headers: Vec<SignedHeader> = get_test_signed_headers();
         for signed_header in signed_headers.into_iter() {
             let btp_header = signed_header.header.clone().unwrap();
 

@@ -125,7 +125,7 @@ impl<'a> CwIbcConnection<'a> {
         let ibc_host = self.get_ibc_host(store)?;
 
         if ibc_host != address {
-            println!("{} Invalid IBC Handler ", LOG_PREFIX);
+            println!("{LOG_PREFIX} Invalid IBC Handler ");
             return Err(ContractError::OnlyIbcHandler {});
         }
         Ok(())
@@ -139,7 +139,7 @@ impl<'a> CwIbcConnection<'a> {
         let ibc_host = self.get_xcall_host(store)?;
 
         if ibc_host != address {
-            println!("{} Invalid Xcall Handler ", LOG_PREFIX);
+            println!("{LOG_PREFIX} Invalid Xcall Handler ");
             return Err(ContractError::OnlyIbcHandler {});
         }
         Ok(())

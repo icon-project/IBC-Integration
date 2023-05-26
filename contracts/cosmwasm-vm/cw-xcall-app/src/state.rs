@@ -142,7 +142,7 @@ impl<'a> CwCallService<'a> {
         store: &dyn Storage,
         hash: Vec<u8>,
     ) -> Result<Vec<(String, bool)>, ContractError> {
-        return self.get_by_prefix(store, &self.pending_requests, hash);
+        self.get_by_prefix(store, &self.pending_requests, hash)
     }
 
     pub fn remove_pending_request_by_hash(
@@ -150,7 +150,7 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         hash: Vec<u8>,
     ) -> Result<(), ContractError> {
-        return self.remove_by_prefix(store, &self.pending_requests, hash);
+        self.remove_by_prefix(store, &self.pending_requests, hash)
     }
 
     pub fn save_pending_requests(
@@ -161,7 +161,7 @@ impl<'a> CwCallService<'a> {
     ) -> Result<(), ContractError> {
         self.pending_requests
             .save(store, (hash, caller), &true)
-            .map_err(|e| ContractError::Std(e))
+            .map_err(ContractError::Std)
     }
 
     pub fn get_pending_responses_by_hash(
@@ -169,7 +169,7 @@ impl<'a> CwCallService<'a> {
         store: &dyn Storage,
         hash: Vec<u8>,
     ) -> Result<Vec<(String, bool)>, ContractError> {
-        return self.get_by_prefix(store, &self.pending_responses, hash);
+        self.get_by_prefix(store, &self.pending_responses, hash)
     }
 
     pub fn remove_pending_responses_by_hash(
@@ -177,7 +177,7 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         hash: Vec<u8>,
     ) -> Result<(), ContractError> {
-        return self.remove_by_prefix(store, &self.pending_responses, hash);
+        self.remove_by_prefix(store, &self.pending_responses, hash)
     }
 
     pub fn save_pending_responses(
@@ -188,7 +188,7 @@ impl<'a> CwCallService<'a> {
     ) -> Result<(), ContractError> {
         self.pending_responses
             .save(store, (hash, caller), &true)
-            .map_err(|e| ContractError::Std(e))
+            .map_err(ContractError::Std)
     }
 
     fn get_by_prefix(
@@ -201,7 +201,7 @@ impl<'a> CwCallService<'a> {
             .prefix(hash)
             .range(store, None, None, cosmwasm_std::Order::Ascending)
             .collect();
-        return requests.map_err(|e| ContractError::Std(e));
+        requests.map_err(ContractError::Std)
     }
 
     fn remove_by_prefix(
@@ -214,7 +214,7 @@ impl<'a> CwCallService<'a> {
             .prefix(hash.clone())
             .keys(store, None, None, cosmwasm_std::Order::Ascending)
             .collect();
-        let keys = keys.map_err(|e| ContractError::Std(e))?;
+        let keys = keys.map_err(ContractError::Std)?;
         for key in keys {
             self.pending_requests.remove(store, (hash.clone(), key))
         }

@@ -40,7 +40,7 @@ impl<'a> IconClient<'a> {
                 .recover_icon_signer(decision.as_slice(), signature);
             if let Some(val) = signer {
                 if validators_map.contains_key(&val) {
-                    votes = votes + 1;
+                    votes += 1;
                 }
             }
 
@@ -98,10 +98,10 @@ impl ILightClient for IconClient<'_> {
             ));
         }
         self.context
-            .insert_client_state(&client_id, client_state.clone())?;
+            .insert_client_state(client_id, client_state.clone())?;
         self.context.insert_consensus_state(
-            &client_id,
-            client_state.latest_height.into(),
+            client_id,
+            client_state.latest_height,
             consensus_state.clone(),
         )?;
 
@@ -145,7 +145,7 @@ impl ILightClient for IconClient<'_> {
         let _valid = self.check_block_proof(client_id, &btp_header, &signed_header.signatures)?;
 
         state.validators = btp_header.next_validators.clone();
-        state.latest_height = btp_header.main_height.into();
+        state.latest_height = btp_header.main_height;
         state.network_section_hash = btp_header.get_network_section_hash().to_vec();
         let consensus_state = ConsensusState {
             message_root: btp_header.message_root,
@@ -186,9 +186,8 @@ impl ILightClient for IconClient<'_> {
             return Err(ContractError::ClientStateFrozen(state.frozen_height));
         }
 
-        let _ =
-            self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
-        let consensus_state = self.context.get_consensus_state(&client_id, height)?;
+        self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
+        let consensus_state = self.context.get_consensus_state(client_id, height)?;
         let leaf = keccak256(&[path, value].concat());
         let message_root = calculate_root(leaf, proof);
         if consensus_state.message_root != message_root {
@@ -207,7 +206,7 @@ impl ILightClient for IconClient<'_> {
         proof: &Vec<MerkleNode>,
         path: &[u8],
     ) -> Result<bool, Self::Error> {
-        return self.verify_membership(
+        self.verify_membership(
             client_id,
             height,
             delay_time_period,
@@ -215,6 +214,6 @@ impl ILightClient for IconClient<'_> {
             proof,
             &[],
             path,
-        );
+        )
     }
 }

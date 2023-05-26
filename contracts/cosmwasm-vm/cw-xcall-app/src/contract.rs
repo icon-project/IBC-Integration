@@ -89,7 +89,7 @@ impl<'a> CwCallService<'a> {
                 data,
                 rollback,
             } => {
-                println!("{} Received Send Call Message", LOG_PREFIX);
+                println!("{LOG_PREFIX} Received Send Call Message");
                 self.validate_send_call(&sources, &destinations, &deps.querier, &info)?;
                 self.send_packet(deps, info, env, to, sources, destinations, data, rollback)
             }
@@ -202,11 +202,11 @@ impl<'a> CwCallService<'a> {
         }
         let fees = sources
             .iter()
-            .map(|r| self.query_protocol_fee(querier, &r))
+            .map(|r| self.query_protocol_fee(querier, r))
             .collect::<Result<Vec<u128>, ContractError>>()?;
 
         let total_required_fee: u128 = fees.iter().sum();
-        self.ensure_enough_funds(total_required_fee, &info)?;
+        self.ensure_enough_funds(total_required_fee, info)?;
         Ok(())
     }
 }
@@ -390,11 +390,11 @@ impl<'a> CwCallService<'a> {
     /// variant containing a `Response` object with two attributes ("action" and "method"), or an `Err`
     /// variant containing a `ContractError` object with a code and a message.
     fn reply_sendcall_message(&self, message: Reply) -> Result<Response, ContractError> {
-        println!("{} Received Callback From SendCallMessage", LOG_PREFIX);
+        println!("{LOG_PREFIX} Received Callback From SendCallMessage");
 
         match message.result {
             SubMsgResult::Ok(_) => {
-                println!("{} Call Success", LOG_PREFIX);
+                println!("{LOG_PREFIX} Call Success");
                 Ok(Response::new()
                     .add_attribute("action", "reply")
                     .add_attribute("method", "sendcall_message")

@@ -32,5 +32,5 @@ fn proper_instantiate() {
 
     let owner = store.query_owner(mock_deps.as_ref().storage).unwrap();
 
-    assert_eq!(MOCK_CONTRACT_ADDR, owner.to_string())
+    assert_eq!(MOCK_CONTRACT_ADDR, owner)
 }

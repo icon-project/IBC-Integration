@@ -24,7 +24,7 @@ pub fn channel_close_init_validate(
             channel_id: message.chan_id_on_a.clone(),
             state: chan_end_on_a.state,
         })
-        .map_err(|e| Into::<ContractError>::into(e));
+        .map_err(Into::<ContractError>::into);
     }
 
     // An OPEN IBC connection running on the local (host) chain should exist.
@@ -33,7 +33,7 @@ pub fn channel_close_init_validate(
             expected: 1,
             actual: chan_end_on_a.connection_hops().len(),
         })
-        .map_err(|e| Into::<ContractError>::into(e));
+        .map_err(Into::<ContractError>::into);
     }
 
     Ok(())

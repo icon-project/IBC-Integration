@@ -112,7 +112,7 @@ fn check_for_invalid_route() {
     let module_address = Addr::unchecked("moduleaddress");
 
     contract
-        .add_route(deps.as_mut().storage, module_id.clone(), &module_address)
+        .add_route(deps.as_mut().storage, module_id, &module_address)
         .unwrap();
 
     let result = contract.has_route(deps.as_mut().storage, module_id_new);

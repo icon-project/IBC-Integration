@@ -36,9 +36,7 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<CwReceiveResponse, ContractError> {
         let event = event_packet_received(&message);
         let data = message.data;
-        let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::ReceiveCallMessage {
-            data: data.0.clone(),
-        };
+        let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::ReceiveCallMessage { data: data.0 };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self
                 .get_xcall_host(deps.as_ref().storage)

@@ -98,14 +98,14 @@ pub fn channel_open_init_msg_validate(
         [version] => version,
         _ => {
             return Err(ChannelError::InvalidVersionLengthConnection)
-                .map_err(|e| Into::<ContractError>::into(e));
+                .map_err(Into::<ContractError>::into);
         }
     };
     let channel_feature = message.ordering.to_string();
     // channel version should be valid
     if !conn_version.is_supported_feature(channel_feature) {
         return Err(ChannelError::ChannelFeatureNotSupportedByConnection)
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
     };
 
     Ok(())

@@ -7,12 +7,9 @@ use cosmwasm_std::{
     Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 
-use cw_xcall_app::{
-    state::CwCallService,
-    types::{
-        call_request::CallRequest, message::CallServiceMessage, request::CallServiceMessageRequest,
-        response::CallServiceMessageResponse,
-    },
+use cw_xcall_app::types::{
+    message::CallServiceMessage, request::CallServiceMessageRequest,
+    response::CallServiceMessageResponse,
 };
 use cw_xcall_ibc_connection::{ibc::ibc_packet_receive, state::CwIbcConnection};
 use setup::*;

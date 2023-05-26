@@ -128,7 +128,7 @@ impl<'a> fmt::Display for Rlp<'a> {
                 write!(f, "{}", self.at(len - 1).unwrap())?;
                 write!(f, "]")
             }
-            Err(err) => write!(f, "{:?}", err),
+            Err(err) => write!(f, "{err:?}"),
         }
     }
 }
