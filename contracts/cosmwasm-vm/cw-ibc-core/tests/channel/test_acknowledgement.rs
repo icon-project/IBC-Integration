@@ -59,8 +59,8 @@ fn test_acknowledgement_packet_execute() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            msg.packet.port_id_on_a.clone().into(),
-            msg.packet.chan_id_on_a.clone().into(),
+            msg.packet.port_id_on_a.clone(),
+            msg.packet.chan_id_on_a.clone(),
             chan_end_on_a_ordered,
         )
         .unwrap();
@@ -70,9 +70,9 @@ fn test_acknowledgement_packet_execute() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &msg.packet.port_id_on_a.clone().into(),
-            &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.sequence.clone(),
+            &msg.packet.port_id_on_a,
+            &msg.packet.chan_id_on_a,
+            msg.packet.sequence,
             commitment,
         )
         .unwrap();
@@ -142,8 +142,8 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            msg.packet.port_id_on_a.clone().into(),
-            msg.packet.chan_id_on_a.clone().into(),
+            msg.packet.port_id_on_a.clone(),
+            msg.packet.chan_id_on_a.clone(),
             chan_end_on_a_ordered,
         )
         .unwrap();
@@ -153,17 +153,17 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &msg.packet.port_id_on_a.clone().into(),
-            &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.sequence.clone(),
+            &msg.packet.port_id_on_a,
+            &msg.packet.chan_id_on_a,
+            msg.packet.sequence,
             commitment,
         )
         .unwrap();
     contract
         .store_next_sequence_ack(
             &mut deps.storage,
-            msg.packet.port_id_on_b.clone().into(),
-            msg.packet.chan_id_on_b.clone().into(),
+            msg.packet.port_id_on_b.clone(),
+            msg.packet.chan_id_on_b,
             1.into(),
         )
         .unwrap();
@@ -234,8 +234,8 @@ fn test_acknowledgement_packet_execute_fail() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            msg.packet.port_id_on_a.clone().into(),
-            msg.packet.chan_id_on_a.clone().into(),
+            msg.packet.port_id_on_a.clone(),
+            msg.packet.chan_id_on_a.clone(),
             chan_end_on_a_ordered,
         )
         .unwrap();
@@ -245,9 +245,9 @@ fn test_acknowledgement_packet_execute_fail() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &msg.packet.port_id_on_a.clone().into(),
-            &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.sequence.clone(),
+            &msg.packet.port_id_on_a,
+            &msg.packet.chan_id_on_a,
+            msg.packet.sequence,
             commitment,
         )
         .unwrap();
@@ -295,13 +295,13 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let reply_message = Reply { id: 0, result };
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = PortId::from(msg.packet.port_id_on_a.clone());
+    let port_id = msg.packet.port_id_on_a;
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
     contract
-        .add_route(&mut deps.storage, module_id.clone().into(), &module)
+        .add_route(&mut deps.storage, module_id, &module)
         .unwrap();
 
     let res = contract
@@ -350,13 +350,13 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let reply_message = Reply { id: 0, result };
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = PortId::from(msg.packet.port_id_on_a.clone());
+    let port_id = msg.packet.port_id_on_a;
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
     contract
-        .add_route(&mut deps.storage, module_id.clone().into(), &module)
+        .add_route(&mut deps.storage, module_id, &module)
         .unwrap();
 
     contract
@@ -388,8 +388,8 @@ fn test_acknowledgement_packet_validate_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
@@ -398,10 +398,10 @@ fn test_acknowledgement_packet_validate_ordered() {
     );
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().clone(),
+        ClientId::default(),
         ConnectionCounterparty::new(
-            ClientId::default().clone(),
-            Some(ConnectionId::default().clone()),
+            ClientId::default(),
+            Some(ConnectionId::default()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -410,7 +410,7 @@ fn test_acknowledgement_packet_validate_ordered() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone().into(),
+            chan_end_on_a_ordered.connection_hops()[0].clone(),
             conn_end_on_a,
         )
         .unwrap();
@@ -422,9 +422,9 @@ fn test_acknowledgement_packet_validate_ordered() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a.clone().into(),
-            &packet.chan_id_on_a.clone().into(),
-            packet.sequence.clone(),
+            &packet.port_id_on_a,
+            &packet.chan_id_on_a,
+            packet.sequence,
             packet_commitment,
         )
         .unwrap();
@@ -461,15 +461,15 @@ fn test_acknowledgement_packet_validate_ordered() {
     contract
         .store_client_implementations(
             &mut deps.storage,
-            IbcClientId::default().into(),
+            IbcClientId::default(),
             light_client.to_string(),
         )
         .unwrap();
     contract
         .store_next_sequence_ack(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
+            packet.port_id_on_b.clone(),
+            packet.chan_id_on_b,
             1.into(),
         )
         .unwrap();
@@ -508,8 +508,8 @@ fn test_acknowledgement_packet_validate_unordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
@@ -518,10 +518,10 @@ fn test_acknowledgement_packet_validate_unordered() {
     );
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().clone(),
+        ClientId::default(),
         ConnectionCounterparty::new(
-            ClientId::default().clone(),
-            Some(ConnectionId::default().clone()),
+            ClientId::default(),
+            Some(ConnectionId::default()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -530,7 +530,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone().into(),
+            chan_end_on_a_ordered.connection_hops()[0].clone(),
             conn_end_on_a,
         )
         .unwrap();
@@ -542,9 +542,9 @@ fn test_acknowledgement_packet_validate_unordered() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a.clone().into(),
-            &packet.chan_id_on_a.clone().into(),
-            packet.sequence.clone(),
+            &packet.port_id_on_a,
+            &packet.chan_id_on_a,
+            packet.sequence,
             packet_commitment,
         )
         .unwrap();
@@ -581,7 +581,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     contract
         .store_client_implementations(
             &mut deps.storage,
-            IbcClientId::default().into(),
+            IbcClientId::default(),
             light_client.to_string(),
         )
         .unwrap();
@@ -620,8 +620,8 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a,
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
@@ -630,10 +630,10 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     );
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().clone(),
+        ClientId::default(),
         ConnectionCounterparty::new(
-            ClientId::default().clone(),
-            Some(ConnectionId::default().clone()),
+            ClientId::default(),
+            Some(ConnectionId::default()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -642,7 +642,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone().into(),
+            chan_end_on_a_ordered.connection_hops()[0].clone(),
             conn_end_on_a,
         )
         .unwrap();
@@ -680,7 +680,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     contract
         .store_client_implementations(
             &mut deps.storage,
-            IbcClientId::default().into(),
+            IbcClientId::default(),
             light_client.to_string(),
         )
         .unwrap();

@@ -18,25 +18,25 @@ pub trait AnyTypes: Message + Default {
     }
 
     fn to_any(&self) -> Any {
-        return Any {
+        Any {
             type_url: Self::get_type_url(),
             value: self.encode_to_vec(),
-        };
+        }
     }
 
     fn any_from_value(value: &[u8]) -> Any {
-        return Any {
+        Any {
             type_url: Self::get_type_url(),
             value: value.to_vec(),
-        };
+        }
     }
 
     fn get_keccak_hash(&self) -> [u8; 32] {
         let bytes = self.encode_to_vec();
-        return keccak256(&bytes);
+        keccak256(&bytes)
     }
     fn get_keccak_hash_string(&self) -> String {
         let hash = self.get_keccak_hash();
-        return hex::encode(hash);
+        hex::encode(hash)
     }
 }

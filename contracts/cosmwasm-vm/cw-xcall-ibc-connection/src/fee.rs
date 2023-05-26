@@ -36,7 +36,7 @@ impl<'a> CwIbcConnection<'a> {
     }
 
     pub fn get_protocol_fee(&self, deps: Deps) -> Result<u128, ContractError> {
-        return self.query_fee(deps.storage);
+        self.query_fee(deps.storage)
     }
 }
 

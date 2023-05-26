@@ -71,7 +71,7 @@ pub fn execute(
             let fail_wasm = CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: fail_addr,
                 msg: to_binary(&fail).map_err(ContractError::Std)?,
-                funds: info.funds.clone(),
+                funds: info.funds,
             });
             let submessages = vec![
                 SubMsg {

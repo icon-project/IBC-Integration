@@ -227,8 +227,7 @@ impl<'a> CwCallService<'a> {
                 to_binary(&cw_common::client_response::XcallPacketResponseData {
                     packet: packet.clone(),
                     acknowledgement: make_ack_fail(format!(
-                        "handle_resposne: no request for {}",
-                        response_sequence_no
+                        "handle_resposne: no request for {response_sequence_no}"
                     ))
                     .to_vec(),
                 })
@@ -239,7 +238,7 @@ impl<'a> CwCallService<'a> {
                 .set_ack(acknowledgement_data)
                 .add_attribute(
                     "message",
-                    format!("handle_resposne: no request for {}", response_sequence_no),
+                    format!("handle_resposne: no request for {response_sequence_no}"),
                 ));
         }
 

@@ -5,7 +5,6 @@ use crate::ibc::prelude::*;
 use ibc_proto::google::protobuf::Any;
 use ibc_proto::ibc::core::client::v1::MsgCreateClient as RawMsgCreateClient;
 use ibc_proto::protobuf::Protobuf;
-use prost::Message;
 
 use crate::ibc::core::ics02_client::error::ClientError;
 use crate::ibc::signer::Signer;

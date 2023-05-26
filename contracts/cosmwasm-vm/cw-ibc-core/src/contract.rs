@@ -94,7 +94,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 client_type,
                 client_address,
             } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender)?;
                 let client_type = IbcClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
@@ -165,9 +165,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 let signer = Self::to_signer(&signer)?;
                 let message = MsgChannelCloseInit {
                     port_id_on_a: IbcPortId::from_str(&port_id_on_a)
-                        .map_err(|error| ContractError::IbcValidationError { error: error })?,
+                        .map_err(|error| ContractError::IbcValidationError { error })?,
                     chan_id_on_a: IbcChannelId::from_str(&chan_id_on_a)
-                        .map_err(|error| ContractError::IbcValidationError { error: error })?,
+                        .map_err(|error| ContractError::IbcValidationError { error })?,
                     signer,
                 };
 
@@ -180,14 +180,12 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             CoreExecuteMsg::SendPacket { packet } => {
-                let packet_bytes = packet
-                    .to_bytes()
-                    .map_err(|e| Into::<ContractError>::into(e))?;
+                let packet_bytes = packet.to_bytes().map_err(Into::<ContractError>::into)?;
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
-                    .map_err(|error| ContractError::IbcDecodeError { error: error })?;
+                    .map_err(|error| ContractError::IbcDecodeError { error })?;
 
                 let data: Packet = Packet::try_from(packet)
-                    .map_err(|error| ContractError::IbcPacketError { error: error })?;
+                    .map_err(|error| ContractError::IbcPacketError { error })?;
 
                 self.send_packet(deps, data)
             }
@@ -239,10 +237,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::GetCommitment { key } => {
-                let key_bytes = key
-                    .to_bytes()
-                    .map_err(|e| Into::<ContractError>::into(e))
-                    .unwrap();
+                let key_bytes = key.to_bytes().map_err(Into::<ContractError>::into).unwrap();
                 let res = self
                     .get_commitment(deps.storage, key_bytes)
                     .map_err(|_| ContractError::InvalidCommitmentKey)
@@ -289,7 +284,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         &height,
                     )
                     .map_err(|e| {
-                        println!("{:?}", e);
+                        println!("{e:?}");
                         ContractError::InvalidClientId { client_id }
                     })
                     .unwrap();
@@ -316,9 +311,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 channel_id,
             } => {
                 let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let res = self
-                    .get_channel_end(deps.storage, _port_id.clone(), _channel_id.clone())
+                    .get_channel_end(deps.storage, _port_id, _channel_id)
                     .unwrap();
                 let raw: RawChannel = res.into();
                 to_binary(&hex::encode(raw.encode_to_vec()))
@@ -328,9 +323,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 channel_id,
             } => {
                 let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let res = self
-                    .get_next_sequence_send(deps.storage, _port_id.clone(), _channel_id.clone())
+                    .get_next_sequence_send(deps.storage, _port_id, _channel_id)
                     .unwrap();
                 to_binary(&res)
             }
@@ -339,9 +334,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 channel_id,
             } => {
                 let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let res = self
-                    .get_next_sequence_recv(deps.storage, _port_id.clone(), _channel_id.clone())
+                    .get_next_sequence_recv(deps.storage, _port_id, _channel_id)
                     .unwrap();
                 to_binary(&res)
             }
@@ -350,9 +345,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 channel_id,
             } => {
                 let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let res = self
-                    .get_next_sequence_ack(deps.storage, _port_id.clone(), _channel_id.clone())
+                    .get_next_sequence_ack(deps.storage, _port_id, _channel_id)
                     .unwrap();
                 to_binary(&res)
             }
@@ -387,10 +382,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 sequence,
             } => {
                 let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let _sequence = Sequence::from(sequence);
                 let _res = self
-                    .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence.clone())
+                    .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence)
                     .unwrap();
                 to_binary(&true)
             }
@@ -400,10 +395,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 sequence,
             } => {
                 let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let _sequence = Sequence::from(sequence);
                 let res = self
-                    .get_packet_commitment(deps.storage, &_port_id, &_channel_id, _sequence.clone())
+                    .get_packet_commitment(deps.storage, &_port_id, &_channel_id, _sequence)
                     .unwrap();
                 to_binary(&hex::encode(res.into_vec()))
             }
@@ -413,15 +408,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 sequence,
             } => {
                 let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let _sequence = Sequence::from(sequence);
                 let res = self
-                    .get_packet_acknowledgement(
-                        deps.storage,
-                        &_port_id,
-                        &_channel_id,
-                        _sequence.clone(),
-                    )
+                    .get_packet_acknowledgement(deps.storage, &_port_id, &_channel_id, _sequence)
                     .unwrap();
                 to_binary(&hex::encode(res.into_vec()))
             }
@@ -431,10 +421,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 sequence,
             } => {
                 let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = ChannelId::from(IbcChannelId::from_str(&channel_id).unwrap());
+                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let _sequence = Sequence::from(sequence);
                 let res = self
-                    .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence.clone())
+                    .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence)
                     .unwrap();
                 match res {
                     Receipt::Ok => to_binary(&true),
@@ -603,9 +593,9 @@ impl<'a> CwIbcCoreContext<'a> {
     {
         let bytes = hex_str.to_bytes()?;
         let raw = <R as Message>::decode(bytes.as_slice())
-            .map_err(|error| ContractError::IbcDecodeError { error: error })?;
+            .map_err(|error| ContractError::IbcDecodeError { error })?;
         let message = T::try_from(raw).map_err(|error| {
-            let err = format!("Failed to convert to ibc type with error {:?}", error);
+            let err = format!("Failed to convert to ibc type with error {error:?}");
             ContractError::IbcRawConversionError { error: err }
         })?;
         Ok(message)
@@ -701,7 +691,7 @@ mod tests {
             .unwrap();
 
         let msg = QueryMsg::GetClientRegistry {
-            _type: client_type_str.clone(),
+            _type: client_type_str,
         };
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
         let result_parsed: Addr = from_binary(&result).unwrap();
@@ -739,7 +729,7 @@ mod tests {
         let result_bytes = hex::decode(result_parsed).unwrap();
 
         let result_decoded = Any::decode(result_bytes.as_ref()).unwrap();
-        println!("{:?}", result_decoded);
+        println!("{result_decoded:?}");
         assert_eq!(
             ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
             result_decoded.type_url

@@ -191,7 +191,7 @@ pub fn create_send_packet_event(
 ) -> Result<Event, ContractError> {
     let data = std::str::from_utf8(&packet.data)
         .map_err(|_| ChannelError::NonUtf8PacketData)
-        .map_err(|e| Into::<ContractError>::into(e))?;
+        .map_err(Into::<ContractError>::into)?;
     let hex_data = hex::encode(&packet.data);
 
     Ok(Event::new(IbcEventType::SendPacket.as_str())
@@ -236,7 +236,7 @@ pub fn create_write_ack_event(
 ) -> Result<Event, ContractError> {
     let data = std::str::from_utf8(&packet.data)
         .map_err(|_e| ChannelError::NonUtf8PacketData)
-        .map_err(|e| Into::<ContractError>::into(e))?;
+        .map_err(Into::<ContractError>::into)?;
     let hex_data = hex::encode(&packet.data);
 
     let timeout_height = Height::new(

@@ -1,6 +1,5 @@
 pub use super::*;
 
-use common::ibc::core::ics02_client::client_type::ClientType;
 use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 use common::ibc::core::ics03_connection::version::get_compatible_versions;

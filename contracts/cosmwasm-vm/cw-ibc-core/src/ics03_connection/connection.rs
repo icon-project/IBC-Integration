@@ -30,7 +30,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|error| ConnectionError::Other {
                 description: error.to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
         match self.ibc_store().connections().save(store, conn_id, &data) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
@@ -254,7 +254,7 @@ impl<'a> CwIbcCoreContext<'a> {
         {
             Ok(result) => match result {
                 Some(id) => Err(ConnectionError::ConnectionExists(id.to_string()))
-                    .map_err(|e| Into::<ContractError>::into(e)),
+                    .map_err(Into::<ContractError>::into),
                 None => Ok(()),
             },
             Err(error) => Err(ContractError::Std(error)),
@@ -290,7 +290,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|error| ConnectionError::Other {
                 description: error.to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
 
         self.ibc_store()
             .commitments()
