@@ -12,20 +12,23 @@ import (
 
 func TestMain(m *testing.M) {
 	var config string
-	pwd, err := os.Getwd()
-	flag.StringVar(&config, "config", fmt.Sprintf("%s/config.yaml", pwd), "path to config file")
+	cwd, err := os.Getwd()
+ defaultConfigPath := fmt.Sprintf("%s/config.yaml", pwd)
+	flag.StringVar(&config, "config", defaultConfigPath, "path to config file")
 	flag.Parse()
 
 	if config == "" && err != nil {
-		log.Fatal("Config not provided")
+  if _, err := os.Stat(defaultConfigPath) {
+    config := defaultConfigPath
+  } else {
+    log.Fatal("Config not provided")
+  }
 	}
 
 	viper.SetConfigFile(config)
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("Error reading config file: %s\n", err)
-		os.Exit(1)
+		log.Fatalf("Error reading config file: %s\n", err)
 	}
-
 	os.Exit(m.Run())
 }
