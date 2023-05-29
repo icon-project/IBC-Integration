@@ -251,7 +251,7 @@ pub fn execute(
             println!("checking all the valid state ");
             let client_valid =
                 validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            println!("clientstate {:?}", client_valid);
+            println!(" is valid clientstate  {:?}", client_valid);
             // let consensus_valid = validate_consensus_state(
             //     &state.client_id,
             //     &client,
@@ -264,6 +264,7 @@ pub fn execute(
                 &client,
                 &state.verify_connection_state,
             )?;
+            println!("is  valid connection state {:?}", connection_valid);
 
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
@@ -370,6 +371,7 @@ pub fn validate_connection_state(
     let proofs_decoded =
         MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
     let height = to_height_u64(&state.proof_height)?;
+
     let result = client.verify_membership(
         client_id,
         height,

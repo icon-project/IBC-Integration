@@ -1,3 +1,4 @@
+use common::utils::keccak256;
 use prost::DecodeError;
 
 use super::*;
@@ -292,9 +293,11 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(|e| Into::<ContractError>::into(e))?;
 
+        let commitment_bytes = keccak256(&connection_end_bytes).to_vec();
+
         self.ibc_store()
             .commitments()
-            .save(store, connection_commit_key, &connection_end_bytes)?;
+            .save(store, connection_commit_key, &commitment_bytes)?;
 
         Ok(())
     }

@@ -192,7 +192,7 @@ impl ILightClient for IconClient<'_> {
         let consensus_state: ConsensusState =
             self.context.get_consensus_state(&client_id, height)?;
         println!("lightClient path {:?}", HexString::from_bytes(path));
-        println!("lightClient value{:?}", HexString::from_bytes(value));
+        println!("lightClient value {:?}", HexString::from_bytes(value));
         let leaf = keccak256(&[path, value].concat());
         println!("leaf is :{:?}", HexString::from_bytes(&leaf));
 
