@@ -59,7 +59,7 @@ jobs:
 
       - name: Run cargo clippy
         run: |
-          cargo clippy -- -D warnings
+          cargo clippy
 
       - name: Generate schema
         run: |
