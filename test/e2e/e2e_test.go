@@ -13,7 +13,7 @@ import (
 func TestMain(m *testing.M) {
 	var config string
 	pwd, err := os.Getwd()
-	flag.StringVar(&config, "config", fmt.Sprintf("%s/config_.yaml", pwd), "path to config file")
+	flag.StringVar(&config, "config", fmt.Sprintf("%s/config.yaml", pwd), "path to config file")
 	flag.Parse()
 
 	if config == "" && err != nil {
