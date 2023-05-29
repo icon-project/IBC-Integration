@@ -1,5 +1,5 @@
 use common::utils::keccak256;
-use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString, from_binary_response};
+use cw_common::{client_msg::VerifyConnectionPayload, from_binary_response, hex_string::HexString};
 use prost::DecodeError;
 
 use super::*;
@@ -435,11 +435,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Init,
             message.counterparty.client_id().clone(),
-            Counterparty::new(
-                message.client_id_on_b.clone(),
-                message.counterparty.connection_id.clone(),
-                prefix_on_b,
-            ),
+            Counterparty::new(message.client_id_on_b.clone(), None, prefix_on_b),
             message.versions_on_a.clone(),
             message.delay_period,
         );
@@ -512,6 +508,7 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_path_on_a,
             client_consensus_state_path_on_b,
         );
+
         let payload = VerifyConnectionPayload::<OpenTryResponse> {
             client_id: client_id_on_b.to_string(),
             verify_connection_state,
@@ -561,11 +558,16 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
+        println!("open try repluy ");
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
+                    println!("Res is ok ");
+
                     let response: OpenTryResponse =
                         from_binary_response(&data).map_err(ContractError::Std)?;
+
+                    println!("Response parsed");
 
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
@@ -573,6 +575,8 @@ impl<'a> CwIbcCoreContext<'a> {
                                 error: DecodeError::new(error.to_string()),
                             }
                         })?;
+
+                    println!("counter_party_client_id id {:?}", counter_party_client_id);
 
                     let counterparty_conn_id = match response.counterparty_connection_id.is_empty()
                     {
@@ -584,6 +588,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     };
 
+                    println!("counterparty conn id  {:?}", counterparty_conn_id);
+
                     let counterparty_prefix =
                         CommitmentPrefix::try_from(response.counterparty_prefix)
                             .map_err(|error| ConnectionError::Other {
@@ -591,16 +597,24 @@ impl<'a> CwIbcCoreContext<'a> {
                             })
                             .map_err(|e| Into::<ContractError>::into(e))?;
 
+                    println!("counterparty_prefix {:?}", counterparty_prefix);
+
                     let counterparty = Counterparty::new(
                         counter_party_client_id.clone(),
                         counterparty_conn_id,
                         counterparty_prefix,
                     );
 
-                    let version: Version = serde_json_wasm::from_slice(&response.versions)
+                    println!(
+                        "respnose version {:?}",
+                        HexString::from_bytes(&response.versions)
+                    );
+                    let version: Vec<Version> = serde_json_wasm::from_slice(&response.versions)
                         .map_err(|error| ContractError::IbcDecodeError {
                             error: DecodeError::new(error.to_string()),
                         })?;
+
+                    println!("version decode{:?}", version);
 
                     let delay_period = Duration::from_secs(response.delay_period);
 
@@ -610,23 +624,36 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     })?;
 
+                    println!("client id is{:?}", client_id);
+
                     let connection_id = self.generate_connection_idenfier(deps.storage)?;
+
+                    println!("connection id is{:?}", connection_id);
 
                     let conn_end = ConnectionEnd::new(
                         State::TryOpen,
                         client_id.clone(),
                         counterparty,
-                        vec![version],
+                        version,
                         delay_period,
                     );
 
+                    println!("conn end{:?}", conn_end);
+
                     let counterparty_client_id =
-                        ClientId::from_str(&response.client_id).map_err(|error| {
+                        ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
                                 error: DecodeError::new(error.to_string()),
                             }
                         })?;
-                    let counterparty_conn_id = ConnectionId::from_str(&response.conn_id).unwrap();
+                    println!("counterparty client id {:?}", counterparty_client_id);
+                    println!(
+                        "Response connection id  {:?}",
+                        &response.counterparty_connection_id
+                    );
+
+                    let counterparty_conn_id =
+                        ConnectionId::from_str(&response.counterparty_connection_id).unwrap();
                     let event = create_open_try_event(
                         connection_id.clone(),
                         client_id.clone(),
@@ -638,8 +665,15 @@ impl<'a> CwIbcCoreContext<'a> {
                         client_id,
                         connection_id.clone(),
                     )?;
-                    self.store_connection(deps.storage, connection_id.clone(), conn_end)
+                    self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
                         .unwrap();
+
+                    self.update_connection_commitment(
+                        deps.storage,
+                        connection_id.clone(),
+                        conn_end,
+                    )
+                    .unwrap();
 
                     Ok(Response::new()
                         .add_attribute("method", "execute_connection_open_try")

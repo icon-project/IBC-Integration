@@ -20,7 +20,7 @@ impl Default for InstantiateMsg {
     fn default() -> Self {
         Self {
             src_network_id: "0x3.icon".to_string(),
-            network_id: 1,
+            network_id: 2,
             network_type_id: 1,
         }
     }
@@ -91,7 +91,7 @@ impl VerifyConnectionState {
             root,
             counterparty_conn_end_path,
             expected_counterparty_connection_end,
-            expected_counterparty_connection_end_hash
+            expected_counterparty_connection_end_hash,
         }
     }
 }
@@ -114,7 +114,7 @@ impl VerifyClientFullState {
         root: Vec<u8>,
         client_state_path: Vec<u8>,
         expected_client_state: Vec<u8>,
-        expected_client_state_hash:Vec<u8>,
+        expected_client_state_hash: Vec<u8>,
     ) -> Self {
         Self {
             proof_height,
@@ -123,7 +123,7 @@ impl VerifyClientFullState {
             root,
             client_state_path,
             expected_client_state,
-            expected_client_state_hash
+            expected_client_state_hash,
         }
     }
 }
