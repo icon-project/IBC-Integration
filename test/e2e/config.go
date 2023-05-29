@@ -30,21 +30,14 @@ func GetConfig() (*Config, error) {
 	var config = new(Config)
 
 	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
 	basePath := filepath.Dir(fmt.Sprintf("%s/..%s..%s", cwd, string(os.PathSeparator), string(os.PathSeparator)))
 
 	if err := os.Setenv("BASE_PATH", basePath); err != nil {
-		log.Fatalf("Error setting BASE_PATH: %s\n", err)
+		log.Fatalf("Error setting BASE_PATH", err)
 	}
 
 	for _, v := range viper.AllKeys() {
 		viper.Set(v, os.ExpandEnv(viper.GetString(v)))
 	}
-
-	fmt.Println(viper.Get("icon.contracts"))
-	fmt.Println(viper.Get("counterparty.contracts"))
-
 	return config, viper.Unmarshal(config)
 }
