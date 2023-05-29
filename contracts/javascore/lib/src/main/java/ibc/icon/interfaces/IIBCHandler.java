@@ -3,11 +3,13 @@ package ibc.icon.interfaces;
 import java.math.BigInteger;
 
 import foundation.icon.score.client.ScoreClient;
+import foundation.icon.score.client.ScoreInterface;
 import score.Address;
 import score.annotation.External;
 
 @ScoreClient
-public interface IIBCHandler {
+@ScoreInterface
+public interface IIBCHandler extends IIBCClient, IIBCConnection, IIBCChannelHandshake, IIBCPacket, IIBCHost {
     @External(readonly = true)
     String name();
 

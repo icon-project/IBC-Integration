@@ -1,7 +1,9 @@
 use crate::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR};
 
 use super::{events::client_misbehaviour_event, *};
+use common::constants::ICON_CLIENT_TYPE;
 use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response};
+use prost::{DecodeError, Message};
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     /// This method creates a new client and sends a message to a light client contract.
@@ -29,10 +31,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         info: MessageInfo,
         message: IbcMsgCreateClient,
     ) -> Result<Response, ContractError> {
-        let client_state = self.decode_client_state(message.client_state.clone())?;
         let client_counter = self.client_counter(deps.as_ref().storage)?;
 
-        let client_type = ClientType::from(client_state.client_type());
+        let client_type = IbcClientType::new(ICON_CLIENT_TYPE.to_owned());
 
         let client_id = ClientId::new(client_type.clone(), client_counter)?;
 
@@ -40,14 +41,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
 
         let create_client_message = LightClientMessage::CreateClient {
-            client_id: client_id.ibc_client_id().to_string(),
-            client_state: message.client_state.value,
-            consensus_state: message.consensus_state.value,
+            client_id: client_id.to_string(),
+            client_state: message.client_state.encode_to_vec(),
+            consensus_state: message.consensus_state.encode_to_vec(),
         };
 
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: light_client_address,
-            msg: to_binary(&create_client_message).unwrap(),
+            msg: to_binary(&create_client_message).map_err(ContractError::Std)?,
             funds: info.funds,
         });
 
@@ -81,18 +82,18 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         info: MessageInfo,
         message: IbcMsgUpdateClient,
     ) -> Result<Response, ContractError> {
-        let client_id = ClientId::from(message.client_id.clone());
+        let client_id = message.client_id.clone();
 
         let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
         let exec_message = LightClientMessage::UpdateClient {
-            client_id: client_id.as_str().to_string().clone(),
-            signed_header: message.header.value,
+            client_id: client_id.as_str().to_string(),
+            signed_header: message.header.encode_to_vec(),
         };
 
         let client_update_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: client_address,
-            msg: to_binary(&exec_message).unwrap(),
+            msg: to_binary(&exec_message).map_err(ContractError::Std)?,
             funds: info.funds,
         });
         let sub_msg: SubMsg = SubMsg::reply_always(client_update_message, EXECUTE_UPDATE_CLIENT);
@@ -132,11 +133,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         //Check Client Frozen
         if old_client_state.is_frozen() {
-            return Err(ContractError::IbcClientError {
-                error: ClientError::ClientFrozen {
-                    client_id: message.client_id,
-                },
-            });
+            return Err(ClientError::ClientFrozen {
+                client_id: message.client_id,
+            })
+            .map_err(Into::<ContractError>::into);
         }
 
         let old_consensus_state = self.consensus_state(
@@ -152,16 +152,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 time1: old_consensus_state.timestamp(),
                 time2: now,
             })
-            .map_err(|error| ContractError::IbcClientError { error })?;
-
+            .map_err(Into::<ContractError>::into)?;
         // Check if the latest consensus state is within the trust period.
         if old_client_state.expired(duration) {
-            return Err(ContractError::IbcClientError {
-                error: ClientError::HeaderNotWithinTrustPeriod {
-                    latest_time: old_consensus_state.timestamp(),
-                    update_time: now,
-                },
-            });
+            return Err(ClientError::HeaderNotWithinTrustPeriod {
+                latest_time: old_consensus_state.timestamp(),
+                update_time: now,
+            })
+            .map_err(Into::<ContractError>::into);
         };
 
         // Validate the upgraded client state and consensus state and verify proofs against the root
@@ -169,17 +167,19 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let wasm_exec_message = LightClientMessage::UpgradeClient {
             upgraded_client_state: message.client_state.value,
             upgraded_consensus_state: message.consensus_state.value,
-            proof_upgrade_client: to_vec(&message.proof_upgrade_client).unwrap(),
-            proof_upgrade_consensus_state: to_vec(&message.proof_upgrade_consensus_state).unwrap(),
+            proof_upgrade_client: to_vec(&message.proof_upgrade_client)
+                .map_err(ContractError::Std)?,
+            proof_upgrade_consensus_state: to_vec(&message.proof_upgrade_consensus_state)
+                .map_err(ContractError::Std)?,
         };
 
-        let client_id = ClientId::from(message.client_id);
+        let client_id = message.client_id;
 
         let client_address = self.get_client(deps.storage, client_id.clone())?;
 
         let wasm_msg: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: client_address,
-            msg: to_binary(&wasm_exec_message).unwrap(),
+            msg: to_binary(&wasm_exec_message).map_err(ContractError::Std)?,
             funds: info.funds,
         });
 
@@ -188,7 +188,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         Ok(Response::new()
             .add_submessage(sub_message)
             .add_attribute("method", "upgrade_client")
-            .add_attribute("client_id", client_id.ibc_client_id().as_str()))
+            .add_attribute("client_id", client_id.as_str()))
     }
 
     /// This method registers a light client with a given client type and stores it in the registry.
@@ -212,7 +212,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn register_client(
         &self,
         deps: DepsMut,
-        client_type: ClientType,
+        client_type: IbcClientType,
         light_client: Addr,
     ) -> Result<Response, ContractError> {
         let light_client_address = light_client.to_string();
@@ -227,7 +227,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     }
 
     /// This function generates a unique client identifier based on the client type and a client
-    /// sequence number stored in a storage.
+    /// seq_on_a number stored in a storage.
     ///
     /// Arguments:
     ///
@@ -245,10 +245,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn generate_client_identifier(
         &self,
         store: &mut dyn Storage,
-        client_type: ClientType,
+        client_type: IbcClientType,
     ) -> Result<ClientId, ContractError> {
-        let client_sequence = self.client_counter(store)?;
-        let client_identifier = ClientId::new(client_type, client_sequence)?;
+        let client_seq_on_a = self.client_counter(store)?;
+        let client_identifier = ClientId::new(client_type, client_seq_on_a)?;
         self.increase_client_counter(store)?;
         Ok(client_identifier)
     }
@@ -269,7 +269,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     println!("{:?}", &data);
-                    let callback_data: CreateClientResponse = from_binary_response(&data).unwrap();
+                    let callback_data: CreateClientResponse =
+                        from_binary_response(&data).map_err(ContractError::Std)?;
 
                     let client_type = callback_data.client_type();
                     let client_id =
@@ -288,39 +289,38 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
-                        callback_data.client_state_commitment().to_vec(),
+                        &client_id,
+                        callback_data.client_state_bytes().to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         callback_data.height(),
-                        callback_data.consensus_state_commitment().to_vec(),
+                        callback_data.consensus_state_bytes().to_vec(),
                     )?;
 
                     let event = create_client_event(
-                        client_id.ibc_client_id().as_str(),
-                        client_type.client_type().as_str(),
+                        client_id.as_str(),
+                        client_type.as_str(),
                         &callback_data.height().to_string(),
                     );
 
                     Ok(Response::new()
                         .add_event(event)
                         .add_attribute("method", "execute_create_client_reply")
-                        .add_attribute("client_id", client_id.ibc_client_id().to_string()))
+                        .add_attribute("client_id", client_id.to_string()))
                 }
 
-                None => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "UNKNOWN ERROR".to_string(),
-                    },
-                }),
+                None => Err(ClientError::Other {
+                    description: "UNKNOWN ERROR".to_string(),
+                })
+                .map_err(Into::<ContractError>::into),
             },
 
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
-                error: ClientError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
+            }
         }
     }
     /// The above code is implementing the `execute_update_client_reply` function for a Rust-based smart
@@ -348,40 +348,34 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
-                        update_client_response.client_state_commitment().to_vec(),
+                        &client_id,
+                        update_client_response.client_state_bytes().to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         height,
-                        update_client_response.consensus_state_commitment().to_vec(),
+                        update_client_response.consensus_state_bytes().to_vec(),
                     )?;
 
-                    let client_type = ClientType::from(client_id.clone());
+                    let client_type = IbcClientType::from(client_id.clone());
 
-                    let event = update_client_event(
-                        client_type.client_type(),
-                        height,
-                        vec![height],
-                        client_id.ibc_client_id(),
-                    );
+                    let event = update_client_event(client_type, height, vec![height], &client_id);
 
                     Ok(Response::new()
                         .add_event(event)
                         .add_attribute("methods", "execute_update_client_reply")
                         .add_attribute("height", height))
                 }
-                None => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "UNKNOWN ERROR".to_string(),
-                    },
-                }),
+                None => Err(ClientError::Other {
+                    description: "UNKNOWN ERROR".to_string(),
+                })
+                .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
-                error: ClientError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
+            }
         }
     }
     /// This function executes an upgrade client reply and stores the client and consensus state
@@ -414,39 +408,35 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         response.client_state_commitment().to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         response.height(),
                         response.consensus_state_commitment().to_vec(),
                     )?;
 
-                    let client_type = ClientType::from(client_id.clone());
+                    let client_type = IbcClientType::from(client_id.clone());
 
-                    let event = upgrade_client_event(
-                        client_type.client_type(),
-                        response.height(),
-                        client_id.ibc_client_id().clone(),
-                    );
+                    let event =
+                        upgrade_client_event(client_type, response.height(), client_id.clone());
 
                     Ok(Response::new()
                         .add_event(event)
                         .add_attribute("method", "execute_upgrade_client_reply")
-                        .add_attribute("client_id", client_id.ibc_client_id().as_str()))
+                        .add_attribute("client_id", client_id.as_str()))
                 }
-                None => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "Invalid Response Data".to_string(),
-                    },
-                }),
+                None => Err(ClientError::Other {
+                    description: "Invalid Response Data".to_string(),
+                })
+                .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
-                error: ClientError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
+            }
         }
     }
 
@@ -476,21 +466,20 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         info: MessageInfo,
         message: MsgSubmitMisbehaviour,
     ) -> Result<Response, ContractError> {
-        let client_id = ClientId::from(message.client_id);
+        let client_id = message.client_id;
 
-        let client_state = self.client_state(deps.as_ref().storage, client_id.ibc_client_id())?;
+        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ContractError::IbcClientError {
-                error: ClientError::ClientFrozen {
-                    client_id: client_id.ibc_client_id().clone(),
-                },
-            });
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
         }
         let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
         let clinet_message = LightClientMessage::Misbehaviour {
-            client_id: client_id.ibc_client_id().to_string(),
+            client_id: client_id.to_string(),
             misbehaviour: to_vec(&message.misbehaviour)?,
         };
 
@@ -536,49 +525,44 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .client_id()
                         .map_err(ContractError::from)?;
 
-                    let client_type = ClientType::try_from(client_id.clone()).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: error.to_string(),
-                        }
-                    })?;
+                    let client_type =
+                        IbcClientType::try_from(client_id.clone()).map_err(|error| {
+                            ContractError::IbcDecodeError {
+                                error: DecodeError::new(error.to_string()),
+                            }
+                        })?;
 
-                    let event = client_misbehaviour_event(
-                        client_id.ibc_client_id().as_str(),
-                        client_type.client_type().as_str(),
-                    );
+                    let event = client_misbehaviour_event(client_id.as_str(), client_type.as_str());
 
                     self.store_client_state(
                         deps.storage,
-                        client_id.ibc_client_id(),
+                        &client_id,
                         misbehaviour_response.client_state_commitment,
                     )?;
 
                     Ok(Response::new()
                         .add_event(event)
                         .add_attribute("method", "execute_misbheaviour_reply")
-                        .add_attribute("client_id", client_id.ibc_client_id().as_str()))
+                        .add_attribute("client_id", client_id.as_str()))
                 }
-                None => Err(ContractError::IbcClientError {
-                    error: ClientError::Other {
-                        description: "Invalid Response Data".to_string(),
-                    },
-                }),
+                None => Err(ClientError::Other {
+                    description: "Invalid Response Data".to_string(),
+                })
+                .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcClientError {
-                error: ClientError::Other { description: error },
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{from_binary, from_slice, to_binary};
+    use cosmwasm_std::{from_binary, to_binary};
     use cw_common::client_response::CreateClientResponse;
-    use hex_literal::hex;
     #[test]
     fn test_binary_conversion() {
-        let bytes=hex!("0ace027b22636c69656e745f74797065223a2269636f6e6c69676874636c69656e74222c22686569676874223a223237222c22636c69656e745f73746174655f636f6d6d69746d656e74223a5b39322c34372c3135322c33382c35382c3136352c3130382c34382c3132312c3139392c37392c3230322c3130342c37352c3233372c3134312c3136352c3131342c3230312c3137332c3136372c3130382c3134322c3232302c3232372c3138332c3234352c37322c3136332c3131352c3130342c3137345d2c22636f6e73656e7375735f73746174655f636f6d6d69746d656e74223a5b3230322c3231302c36342c37382c3232312c3134392c3139332c3139362c3133352c33392c3234382c37352c3135302c35302c36342c39382c34342c3233382c34392c3234342c3132322c35362c37362c37322c37352c34382c34302c35322c332c39332c38302c3230315d7d");
         let res: CreateClientResponse = CreateClientResponse::default();
         let bytes = to_binary(&res).unwrap();
         println!("{}", hex::encode(bytes.0.clone()));

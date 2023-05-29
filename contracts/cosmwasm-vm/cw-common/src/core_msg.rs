@@ -14,14 +14,12 @@ pub enum ExecuteMsg {
         client_address: Addr,
     },
     CreateClient {
-        client_state: HexString,
-        consensus_state: HexString,
-        signer: HexString,
+        //ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit,
+        msg: HexString,
     },
     UpdateClient {
-        client_id: String,
-        header: HexString,
-        signer: HexString,
+        //ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit,
+        msg: HexString,
     },
     // Not included in this version of ibc core
     UpgradeClient {},

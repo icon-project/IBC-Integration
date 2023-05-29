@@ -21,15 +21,9 @@ public class IBCHost extends IBCStore {
      *
      */
     public void claimCapability(byte[] name, Address addr) {
-        ArrayDB<Address> capability = capabilities.at(name);
-        int capabilitiesCount = capability.size();
-        if (capabilitiesCount == 0) {
-            portIds.add(name);
-        }
-        for (int i = 0; i < capabilitiesCount; i++) {
-            Context.require(!capability.get(i).equals(addr), TAG + "Capability already claimed");
-        }
-        capability.add(addr);
+        Context.require(capabilities.get(name) == null,  TAG + "Capability already claimed");
+        portIds.add(name);
+        capabilities.set(name, addr);
     }
 
     /**
@@ -42,14 +36,7 @@ public class IBCHost extends IBCStore {
      */
     public boolean authenticateCapability(byte[] name) {
         Address caller = Context.getCaller();
-        ArrayDB<Address> capability = capabilities.at(name);
-        int capabilitiesCount = capability.size();
-        for (int i = 0; i < capabilitiesCount; i++) {
-            if (capability.get(i).equals(caller)) {
-                return Boolean.TRUE;
-            }
-        }
-        return Boolean.FALSE;
+        return caller.equals(capabilities.get(name));
     }
 
     /**
@@ -58,10 +45,10 @@ public class IBCHost extends IBCStore {
      * @param name Name of the capability
      * @return ArrayDB of addresses having the capability
      */
-    public ArrayDB<Address> lookupModules(byte[] name) {
-        ArrayDB<Address> modules = capabilities.at(name);
-        Context.require(modules.size() > 0, "Module not found");
-        return modules;
+    public Address lookupModules(byte[] name) {
+        Address module = capabilities.get(name);
+        Context.require(module != null,  "Module not found");
+        return module;
     }
 
     /**

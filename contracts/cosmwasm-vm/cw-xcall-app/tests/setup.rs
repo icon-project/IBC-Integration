@@ -4,8 +4,8 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    Addr, Api, BlockInfo, ContractInfo, Empty, Env, IbcEndpoint, MessageInfo, OwnedDeps, StdResult,
-    Storage, Timestamp, TransactionInfo,
+    Addr, Api, BlockInfo, ContractInfo, Empty, Env, IbcEndpoint, MessageInfo, OwnedDeps, Storage,
+    Timestamp, TransactionInfo,
 };
 use cw_multi_test::{App, AppBuilder, AppResponse, Contract, ContractWrapper, Executor, Router};
 pub struct TestContext {
@@ -17,6 +17,12 @@ pub struct TestContext {
 }
 pub struct MockEnvBuilder {
     env: Env,
+}
+
+impl Default for MockEnvBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockEnvBuilder {
@@ -137,7 +143,7 @@ pub mod test {
                 &cw_mock_ibc_core::msg::InstantiateMsg {},
                 &[],
                 "IBCHost",
-                Some(sender.clone().to_string()),
+                Some(sender.to_string()),
             )
             .unwrap();
 
@@ -148,10 +154,11 @@ pub mod test {
                 &cw_xcall_ibc_connection::msg::InstantiateMsg {
                     timeout_height: 1000,
                     ibc_host: ibc_host_contract_addr.clone(),
+                    protocol_fee: 0,
                 },
                 &[],
                 "IBCConnection",
-                Some(sender.clone().to_string()),
+                Some(sender.to_string()),
             )
             .unwrap();
 
@@ -165,7 +172,7 @@ pub mod test {
                 },
                 &[],
                 "XCallApp",
-                Some(sender.clone().to_string()),
+                Some(sender.to_string()),
             )
             .unwrap();
         router.init_modules(init_fn);
@@ -190,8 +197,7 @@ pub mod test {
             channel_id: "channel-3".to_string(),
         };
 
-        let ibc_config = IbcConfig::new(src, dst);
-        ibc_config
+        IbcConfig::new(src, dst)
     }
 
     use anyhow::Error as AppError;
@@ -201,42 +207,44 @@ pub mod test {
     pub fn call_send_call_message(
         ctx: &mut TestContext,
         to: &str,
+        sources: Vec<String>,
+        destinations: Vec<String>,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<AppResponse, AppError> {
-        let res = ctx.app.execute_contract(
+        ctx.app.execute_contract(
             ctx.sender.clone(),
             ctx.xcall_app.clone(),
             &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
                 to: to.to_string(),
                 data,
                 rollback,
+                sources,
+                destinations,
             },
             &[],
-        );
-        res
+        )
     }
 
     pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-        let res = ctx.app.execute_contract(
+        ctx.app.execute_contract(
             ctx.sender.clone(),
             ctx.connection_host.clone(),
             &cw_common::xcall_connection_msg::ExecuteMsg::SetXCallHost {
                 address: ctx.xcall_app.to_string(),
             },
             &[],
-        );
-        res
+        )
     }
     pub fn call_set_ibc_config(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
         let config = to_vec(&mock_ibc_config()).unwrap();
-        let res = ctx.app.execute_contract(
+
+        ctx.app.execute_contract(
             ctx.sender.clone(),
             ctx.connection_host.clone(),
             &cw_common::xcall_connection_msg::ExecuteMsg::SetIbcConfig { ibc_config: config },
             &[],
-        );
-        res
+        )
     }
 }
 

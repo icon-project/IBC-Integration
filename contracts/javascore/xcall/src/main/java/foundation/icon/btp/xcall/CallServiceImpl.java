@@ -110,7 +110,6 @@ public class CallServiceImpl extends AbstractCallService {
         }
 
         CSMessageRequest msgReq = new CSMessageRequest(caller.toString(), _to, sn, needResponse, _data);
-
         BigInteger seqNum = (BigInteger) Context.call(this.ibcHandler.get(), "getNextSequenceSend", getSourcePort(), getSourceChannel());
 
         Packet pct = new Packet();

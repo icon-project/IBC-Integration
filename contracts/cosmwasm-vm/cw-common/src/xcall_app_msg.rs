@@ -1,15 +1,11 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{
-    Binary, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-};
 
 #[cw_serde]
 pub enum ExecuteMsg {
     SetAdmin {
         address: String,
     },
-    SetProtocol {
+    SetProtocolFee {
         value: u128,
     },
     SetProtocolFeeHandler {
@@ -18,6 +14,8 @@ pub enum ExecuteMsg {
     SendCallMessage {
         to: String,
         data: Vec<u8>,
+        sources: Vec<String>,
+        destinations: Vec<String>,
         rollback: Option<Vec<u8>>,
     },
     ReceiveCallMessage {

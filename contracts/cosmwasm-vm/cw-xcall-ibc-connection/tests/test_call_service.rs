@@ -23,6 +23,7 @@ fn proper_instantiate() {
         InstantiateMsg {
             timeout_height: 10,
             ibc_host: Addr::unchecked("someaddress"),
+            protocol_fee: 0,
         },
     )
     .unwrap();
@@ -31,5 +32,5 @@ fn proper_instantiate() {
 
     let owner = store.query_owner(mock_deps.as_ref().storage).unwrap();
 
-    assert_eq!(MOCK_CONTRACT_ADDR, owner.to_string())
+    assert_eq!(MOCK_CONTRACT_ADDR, owner)
 }

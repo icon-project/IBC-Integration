@@ -1,18 +1,17 @@
 pub mod setup;
-use std::str::{from_utf8, FromStr};
-
+use common::ibc::core::ics24_host::identifier::PortId;
 use common::utils::keccak256;
 use cw_common::commitment;
 use cw_common::ibc_types::IbcChannelId;
-use cw_common::types::PortId;
 use cw_ibc_core::{context::CwIbcCoreContext, ics04_channel::ChannelMsg, MsgChannelOpenInit};
 use setup::*;
+use std::str::{from_utf8, FromStr};
 #[test]
 fn test_store_module_by_port() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
     let module_id =
-        ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let port_id = PortId::default();
     ctx.store_module_by_port(&mut deps.storage, port_id.clone(), module_id.clone())
         .unwrap();
@@ -27,7 +26,7 @@ fn test_store_module_by_port_fail() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
     let module_id =
-        ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let port_id = PortId::default();
 
     let result = ctx.lookup_module_by_port(&mut deps.storage, port_id);
@@ -39,7 +38,7 @@ fn check_for_port_path() {
     let _ctx = CwIbcCoreContext::default();
 
     let port_id = PortId::default();
-    let port_path = commitment::port_path(port_id.ibc_port_id());
+    let port_path = commitment::port_path(&port_id);
 
     assert_eq!("ports/defaultPort", String::from_utf8(port_path).unwrap())
 }
@@ -49,18 +48,16 @@ fn check_for_port_path_key() {
     let _ctx = CwIbcCoreContext::default();
 
     let port_id = PortId::default();
-    let port_path = commitment::port_path(port_id.ibc_port_id());
-    let key: Vec<u8> = keccak256(&port_path.clone()).into();
+    let port_path = commitment::port_path(&port_id);
+    let key: Vec<u8> = keccak256(&port_path).into();
 
-    let port_path_key = commitment::port_commitment_key(port_id.ibc_port_id());
+    let port_path_key = commitment::port_commitment_key(&port_id);
 
     assert_eq!(key, port_path_key)
 }
 
 #[test]
-#[should_panic(
-    expected = "DecodeError { error: \"identifier `s` has invalid length `1` must be between `2`-`128` characters\" }"
-)]
+#[should_panic(expected = "InvalidLength { id: \"s\", length: 1, min: 2, max: 128 }")]
 fn fails_on_invalid_length_for_port_id() {
     PortId::from_str("s").unwrap();
 }
@@ -77,14 +74,10 @@ fn test_lookup_module_channel() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
     let module_id =
-        ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let msg = MsgChannelOpenInit::try_from(get_dummy_raw_msg_chan_open_init(None)).unwrap();
-    ctx.store_module_by_port(
-        &mut deps.storage,
-        msg.port_id_on_a.clone().into(),
-        module_id.clone(),
-    )
-    .unwrap();
+    ctx.store_module_by_port(&mut deps.storage, msg.port_id_on_a.clone(), module_id)
+        .unwrap();
     let channel_msg = ChannelMsg::OpenInit(msg);
     let res = ctx.lookup_module_channel(&mut deps.storage, &channel_msg);
 
@@ -107,12 +100,11 @@ fn test_lookup_module_channel_fail() {
 fn test_bind_port() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
-    let path = commitment::port_path(&PortId::default().ibc_port_id());
-    ctx.store_capability(&mut deps.storage, path.clone(), vec!["".to_string()])
-        .unwrap();
+    let path = commitment::port_path(&PortId::default());
+
     let res = ctx.bind_port(
         &mut deps.storage,
-        &PortId::default().ibc_port_id(),
+        &PortId::default(),
         "ContractAddress".to_string(),
     );
     assert!(res.is_ok());
@@ -124,22 +116,8 @@ fn test_bind_port() {
 #[test]
 fn channel_capability_path() {
     let ctx = CwIbcCoreContext::default();
-    let res =
-        ctx.channel_capability_path(&PortId::default().ibc_port_id(), &IbcChannelId::default());
+    let res = ctx.channel_capability_path(&PortId::default(), &IbcChannelId::default());
     let result = from_utf8(&res);
     assert!(result.is_ok());
     assert_eq!("ports/defaultPort/channels/channel-0", result.unwrap())
-}
-
-#[test]
-#[should_panic(expected = "KeyNotFound")]
-fn test_bind_port_fail() {
-    let mut deps = deps();
-    let ctx = CwIbcCoreContext::default();
-    ctx.bind_port(
-        &mut deps.storage,
-        &PortId::default().ibc_port_id(),
-        "ContractAddress".to_string(),
-    )
-    .unwrap();
 }

@@ -1,6 +1,9 @@
 use cosmwasm_std::from_slice;
 
-use crate::types::LOG_PREFIX;
+use crate::{
+    state::{HOST_FORWARD_REPLY_ID, XCALL_FORWARD_REPLY_ID},
+    types::LOG_PREFIX,
+};
 
 use super::*;
 
@@ -82,7 +85,7 @@ impl<'a> CwIbcConnection<'a> {
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
             ExecuteMsg::MessageFromXCall { data } => {
-                println!("{} Received Payload From XCall App", LOG_PREFIX);
+                println!("{LOG_PREFIX} Received Payload From XCall App");
                 self.forward_to_host(deps, info, env, data)
             }
             ExecuteMsg::SetXCallHost { address } => {
@@ -180,6 +183,8 @@ impl<'a> CwIbcConnection<'a> {
                 }),
             },
             QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
+            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps).unwrap()),
+            QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
         }
     }
     /// This function handles different types of reply messages and calls corresponding functions based on
@@ -203,7 +208,7 @@ impl<'a> CwIbcConnection<'a> {
     /// `ContractError` is an error type that can be returned if there is an error in processing the
     /// message.
 
-    pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
+    pub fn reply(&self, deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             XCALL_FORWARD_REPLY_ID => self.reply_forward_xcall(deps, msg),
             HOST_FORWARD_REPLY_ID => self.reply_forward_host(deps, msg),
@@ -247,6 +252,7 @@ impl<'a> CwIbcConnection<'a> {
         self.add_admin(store, info, owner)?;
         self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
+        self.add_fee(store, msg.protocol_fee)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -256,10 +262,10 @@ impl<'a> CwIbcConnection<'a> {
 
     fn reply_forward_xcall(
         &self,
-        deps: DepsMut,
+        _deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        println!("{} Reply From Forward XCall", LOG_PREFIX);
+        println!("{LOG_PREFIX} Reply From Forward XCall");
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()
                 .add_attribute("action", "call_message")
@@ -271,8 +277,12 @@ impl<'a> CwIbcConnection<'a> {
         }
     }
 
-    fn reply_forward_host(&self, deps: DepsMut, message: Reply) -> Result<Response, ContractError> {
-        println!("{} Reply From Forward Host", LOG_PREFIX);
+    fn reply_forward_host(
+        &self,
+        _deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        println!("{LOG_PREFIX} Reply From Forward Host");
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()
                 .add_attribute("action", "call_message")

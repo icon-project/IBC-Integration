@@ -1,3 +1,5 @@
+use prost::DecodeError;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -22,12 +24,12 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &mut dyn Storage,
         name: Vec<u8>,
-        address: Vec<String>,
+        address: String,
     ) -> Result<(), ContractError> {
         match self.ibc_store().capabilities().save(store, name, &address) {
             Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::IbcDecodeError {
-                error: format!("FailedToStore {}", error),
+            Err(_error) => Err(ContractError::IbcDecodeError {
+                error: DecodeError::new("FailedToStore Capability".to_owned()),
             }),
         }
     }
@@ -50,14 +52,14 @@ impl<'a> CwIbcCoreContext<'a> {
     /// returned.
     pub fn get_capability(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         name: Vec<u8>,
-    ) -> Result<Vec<String>, ContractError> {
+    ) -> Result<String, ContractError> {
         self.ibc_store()
             .capabilities()
             .load(store, name)
             .map_err(|_| ContractError::IbcDecodeError {
-                error: "CapabilityNotFound".into(),
+                error: DecodeError::new("CapabilityNotFound".to_owned()),
             })
     }
     /// This function sets the expected time per block in a storage using the given value.
@@ -104,7 +106,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match self.ibc_store().expected_time_per_block().may_load(store)? {
             Some(time) => Ok(time),
             None => Err(ContractError::IbcDecodeError {
-                error: "NotFound".to_string(),
+                error: DecodeError::new("NotFound".to_owned()),
             }),
         }
     }
@@ -131,28 +133,18 @@ impl<'a> CwIbcCoreContext<'a> {
         name: Vec<u8>,
         address: String,
     ) -> Result<(), ContractError> {
-        self.ibc_store().capabilities().update(
-            store,
-            name,
-            |update| -> Result<_, ContractError> {
-                match update {
-                    Some(mut value) => {
-                        if value.contains(&address) {
-                            return Err(ContractError::IbcContextError {
-                                error: "Capability already claimed".to_string(),
-                            });
-                        }
-                        value.push(address);
-                        Ok(value)
-                    }
-                    None => Err(ContractError::IbcDecodeError {
-                        error: "KeyNotFound".into(),
-                    }),
-                }
-            },
-        )?;
+        let cap = self
+            .ibc_store()
+            .capabilities()
+            .load(store, name.clone())
+            .ok();
+        if let Some(_c) = cap {
+            return Err(ContractError::IbcContextError {
+                error: "Capability already claimed".to_string(),
+            });
+        }
 
-        Ok(())
+        self.store_capability(store, name, address)
     }
 
     /// The function checks if the caller has a specific capability stored in the provided storage.
@@ -180,7 +172,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> bool {
         let caller = info.sender.to_string();
         let capability = self.get_capability(store, name).unwrap();
-        if capability.contains(&caller) {
+        if capability == caller {
             return true;
         }
         false
@@ -205,11 +197,11 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &mut dyn Storage,
         name: Vec<u8>,
-    ) -> Result<Vec<String>, ContractError> {
-        let capabilities = self.get_capability(store, name)?;
-        if capabilities.len() == 0 {
-            return Err(ContractError::Unauthorized {});
-        }
+    ) -> Result<String, ContractError> {
+        let capabilities = self
+            .get_capability(store, name)
+            .map_err(|_e| ContractError::Unauthorized {})?;
+
         Ok(capabilities)
     }
 
@@ -231,14 +223,8 @@ impl<'a> CwIbcCoreContext<'a> {
             return 0;
         }
 
-        let delay = delay_period_time
-            .as_secs()
-            .checked_div(max_expected_time_per_block.as_secs())
-            .unwrap();
+        let delay = delay_period_time.as_secs() / max_expected_time_per_block.as_secs();
 
-        delay_period_time
-            .checked_add(Duration::from_secs(delay))
-            .unwrap()
-            .as_secs()
+        delay_period_time.as_secs() + delay
     }
 }

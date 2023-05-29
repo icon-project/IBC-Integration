@@ -1,9 +1,9 @@
 use cosmwasm_std::{
     from_binary,
     testing::{mock_dependencies, mock_env, mock_info},
-    Coin, CosmosMsg, IbcEndpoint, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
+    Coin, CosmosMsg, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
-use cw_common::types::Address;
+
 use cw_xcall_app::{
     state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
@@ -39,6 +39,7 @@ fn test_execute_call_having_request_id_without_rollback() {
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
+        vec![],
         false,
         vec![104, 101, 108, 108, 111],
     );
@@ -47,7 +48,7 @@ fn test_execute_call_having_request_id_without_rollback() {
         .unwrap();
 
     let res = cw_callservice
-        .execute_call(deps.as_mut(), info.clone(), request_id)
+        .execute_call(deps.as_mut(), info, request_id)
         .unwrap();
 
     match &res.messages[0].msg {
@@ -91,6 +92,7 @@ fn test_successful_reply_message() {
         " 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
+        vec![],
         false,
         vec![],
     );
@@ -126,6 +128,7 @@ fn test_failed_reply_message() {
         " 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         123,
+        vec![],
         false,
         vec![],
     );
@@ -164,6 +167,7 @@ fn check_for_rollback_in_response() {
     let request = CallRequest::new(
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        vec![],
         vec![1, 2, 3],
         true,
     );
@@ -211,6 +215,7 @@ fn check_for_rollback_response_failure() {
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
         vec![],
+        vec![],
         false,
     );
 
@@ -241,6 +246,7 @@ fn execute_rollback_success() {
     let request = CallRequest::new(
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        vec![],
         vec![1, 2, 3],
         true,
     );
@@ -264,7 +270,7 @@ fn execute_rollback_success() {
             msg,
             funds: _,
         }) => {
-            let data = String::from_utf8(msg.0.clone()).unwrap();
+            let data = String::from_utf8(msg.0).unwrap();
             assert_eq!("{\"x_call_message\":{\"data\":[1,2,3]}}", data)
         }
         _ => todo!(),
@@ -285,6 +291,7 @@ fn execute_rollback_failure() {
     let request = CallRequest::new(
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
         "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        vec![],
         vec![],
         false,
     );

@@ -123,7 +123,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     /**
      * @dev checkHeaderAndUpdateState validates the header
      */
-    @External(readonly = true)
+    @External
     public Map<String, byte[]> updateClient(String clientId, byte[] clientMessageBytes) {
         onlyHandler();
         TmHeader tmHeader = TmHeader.decode(clientMessageBytes);

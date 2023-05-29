@@ -2,37 +2,38 @@ pub mod setup;
 
 use std::str::FromStr;
 
-use cosmwasm_std::{testing::mock_env, to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
+use common::client_state::IClientState;
+use common::ibc::{
+    core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour, signer::Signer, Height,
+};
+use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use common::traits::AnyTypes;
+use common::utils::keccak256;
+use cosmwasm_std::{testing::mock_env, to_binary, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
-use cw_common::raw_types::client::RawMsgCreateClient;
-use cw_common::types::{ClientId, ClientType};
+use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpgradeClient};
+use cw_common::raw_types::Any;
+
+use common::ibc::core::ics02_client::client_type::ClientType;
+use common::ibc::core::ics24_host::identifier::ClientId;
+use common::ibc::mock::header::MockHeader;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
-    ics02_client::{
-        events::{
-            client_misbehaviour_event, create_client_event, generated_client_id_event,
-            update_client_event, upgrade_client_event,
-        },
-        types::{ClientState, ConsensusState},
+    ics02_client::events::{
+        client_misbehaviour_event, create_client_event, generated_client_id_event,
+        update_client_event, upgrade_client_event,
     },
     traits::IbcClient,
     MsgUpgradeClient,
 };
-use ibc::{
-    core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour,
-    mock::{
-        client_state::MockClientState, consensus_state::MockConsensusState, header::MockHeader,
-    },
-    signer::Signer,
-    Height,
-};
+use prost::Message;
 use setup::*;
 
 #[test]
-fn get_client_next_sequence() {
+fn get_client_next_seq_on_a() {
     let mut mock = deps();
 
     let contract = CwIbcCoreContext::default();
@@ -47,7 +48,7 @@ fn get_client_next_sequence() {
 }
 
 #[test]
-fn increment_next_client_sequence() {
+fn increment_next_client_seq_on_a() {
     let mut mock = deps();
 
     let contract = CwIbcCoreContext::default();
@@ -143,8 +144,8 @@ fn test_create_client_event() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 1).unwrap();
     let result = create_client_event(
-        client_id.ibc_client_id().as_str(),
-        client_type.client_type().as_str(),
+        client_id.as_str(),
+        client_type.as_str(),
         &height.to_string(),
     );
 
@@ -154,15 +155,10 @@ fn test_create_client_event() {
 #[test]
 fn check_for_update_client_event() {
     let raw_message = get_dummy_raw_msg_update_client_message();
-    let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message.clone()).unwrap();
+    let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message).unwrap();
     let height = Height::new(15, 10).unwrap();
     let client_type = ClientType::new("new_client_type".to_string());
-    let result = update_client_event(
-        client_type.client_type(),
-        height,
-        vec![height],
-        &message.client_id,
-    );
+    let result = update_client_event(client_type, height, vec![height], &message.client_id);
 
     assert_eq!("update_client", result.ty);
 }
@@ -177,10 +173,10 @@ fn check_for_raw_message_to_update_client_message() {
 #[test]
 fn check_for_raw_message_to_updgrade_client() {
     let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
+    let client_id = ClientId::new(client_type, 10).unwrap();
     let signer = get_dummy_account_id();
 
-    let height = Height::new(1, 1).unwrap();
+    let height = mock_height(1, 1).unwrap();
 
     let client_state = MockClientState::new(MockHeader::new(height));
     let consensus_state = MockConsensusState::new(MockHeader::new(height));
@@ -188,7 +184,7 @@ fn check_for_raw_message_to_updgrade_client() {
     let proof = get_dummy_merkle_proof();
 
     let msg = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id,
         client_state: client_state.into(),
         consensus_state: consensus_state.into(),
         proof_upgrade_client: proof.clone(),
@@ -196,14 +192,12 @@ fn check_for_raw_message_to_updgrade_client() {
         signer,
     };
 
-    let raw_message: ibc_proto::ibc::core::client::v1::MsgUpgradeClient =
-        ibc_proto::ibc::core::client::v1::MsgUpgradeClient::try_from(msg.clone()).unwrap();
+    let raw_message: RawMsgUpgradeClient = RawMsgUpgradeClient::try_from(msg.clone()).unwrap();
 
     let upgrade_message_from_raw_message = MsgUpgradeClient::try_from(raw_message).unwrap();
 
     assert_eq!(upgrade_message_from_raw_message, msg);
 }
-
 #[test]
 fn test_upgrade_client_event() {
     let client_type = ClientType::new("new_client_type".to_string());
@@ -211,14 +205,15 @@ fn test_upgrade_client_event() {
     let signer = get_dummy_account_id();
 
     let height = Height::new(1, 1).unwrap();
+    let mock_height = to_mock_height(height);
 
-    let client_state = MockClientState::new(MockHeader::new(height));
-    let consensus_state = MockConsensusState::new(MockHeader::new(height));
+    let client_state = MockClientState::new(MockHeader::new(mock_height));
+    let consensus_state = MockConsensusState::new(MockHeader::new(mock_height));
 
     let proof = get_dummy_merkle_proof();
 
     let msg = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id,
         client_state: client_state.into(),
         consensus_state: consensus_state.into(),
         proof_upgrade_client: proof.clone(),
@@ -226,7 +221,7 @@ fn test_upgrade_client_event() {
         signer,
     };
 
-    let event = upgrade_client_event(client_type.client_type(), height, msg.client_id);
+    let event = upgrade_client_event(client_type, height, msg.client_id);
 
     assert_eq!("upgrade_client", event.ty);
 
@@ -235,22 +230,20 @@ fn test_upgrade_client_event() {
 
 #[test]
 fn create_misbehaviour_event_test() {
+    use cw_common::raw_types::client::RawMsgSubmitMisbehaviour;
     let raw_message = get_dummy_raw_msg_client_mishbehaviour();
     let misbehaviour: MsgSubmitMisbehaviour =
         MsgSubmitMisbehaviour::try_from(raw_message.clone()).unwrap();
 
-    let raw_message_from_mb: ibc_proto::ibc::core::client::v1::MsgSubmitMisbehaviour =
-        ibc_proto::ibc::core::client::v1::MsgSubmitMisbehaviour::try_from(misbehaviour).unwrap();
+    let raw_message_from_mb: RawMsgSubmitMisbehaviour =
+        RawMsgSubmitMisbehaviour::try_from(misbehaviour).unwrap();
 
     assert_eq!(raw_message, raw_message_from_mb);
 
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
 
-    let event = client_misbehaviour_event(
-        client_id.ibc_client_id().as_str(),
-        client_type.client_type().as_str(),
-    );
+    let event = client_misbehaviour_event(client_id.as_str(), client_type.as_str());
 
     assert_eq!("client_misbehaviour", event.ty)
 }
@@ -274,7 +267,7 @@ fn store_client_type_sucess() {
         .get_client_type(deps.as_ref().storage, client_id)
         .unwrap();
 
-    assert_eq!(client_type.client_type(), result)
+    assert_eq!(client_type, result)
 }
 
 #[test]
@@ -285,7 +278,7 @@ fn fail_to_query_client_type() {
     let contract = CwIbcCoreContext::default();
     let client_type = ClientType::new("icon_client".to_string());
 
-    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
+    let client_id = ClientId::new(client_type, 10).unwrap();
 
     contract
         .get_client_type(deps.as_ref().storage, client_id)
@@ -295,7 +288,7 @@ fn fail_to_query_client_type() {
 #[test]
 fn check_for_raw_message_create_client_deserialize() {
     let raw_message = get_dummy_raw_msg_create_client();
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
     let mock_client_state = MockClientState::new(mock_header);
     let mock_consenus_state = MockConsensusState::new(mock_header);
@@ -313,7 +306,7 @@ fn check_for_raw_message_create_client_deserialize() {
 
 #[test]
 fn check_for_create_client_message_into_raw_message() {
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
     let mock_client_state = MockClientState::new(mock_header);
     let mock_consenus_state = MockConsensusState::new(mock_header);
@@ -324,6 +317,8 @@ fn check_for_create_client_message_into_raw_message() {
     };
 
     let raw_message: RawMsgCreateClient = RawMsgCreateClient::try_from(actual_message).unwrap();
+    println!("{raw_message:?}");
+    println!("{:?}", get_dummy_raw_msg_create_client());
 
     assert_eq!(raw_message, get_dummy_raw_msg_create_client())
 }
@@ -331,15 +326,12 @@ fn check_for_create_client_message_into_raw_message() {
 #[test]
 fn check_for_genereted_client_id_event() {
     let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
-    let event = generated_client_id_event(client_id.ibc_client_id().clone());
+    let client_id = ClientId::new(client_type, 10).unwrap();
+    let event = generated_client_id_event(client_id.clone());
 
     assert_eq!("client_id_created", event.ty);
 
-    assert_eq!(
-        event.attributes[0].value,
-        client_id.ibc_client_id().as_str()
-    )
+    assert_eq!(event.attributes[0].value, client_id.as_str())
 }
 
 #[test]
@@ -440,8 +432,10 @@ fn check_for_create_client_message_response() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.encode_to_vec(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -517,8 +511,10 @@ fn check_for_client_state_from_storage() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
-        consenus_state.try_into().unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -537,7 +533,8 @@ fn check_for_client_state_from_storage() {
         .execute_create_client_reply(deps.as_mut(), reply_message)
         .unwrap();
 
-    let client_id = ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
+    let client_id =
+        common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
 
     let client_state = contract
         .client_state(deps.as_ref().storage, &client_id)
@@ -594,8 +591,10 @@ fn check_for_consensus_state_from_storage() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
-        consenus_state.clone().try_into().unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -614,7 +613,8 @@ fn check_for_consensus_state_from_storage() {
         .execute_create_client_reply(deps.as_mut(), reply_message)
         .unwrap();
 
-    let client_id = ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
+    let client_id =
+        common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
 
     let height = Height::new(10, 15).unwrap();
 
@@ -659,16 +659,13 @@ fn fail_on_create_client_message_error_response() {
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
     contract
-        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .register_client(deps.as_mut(), client_type, light_client)
         .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = IbcMsgCreateClient::new(
-        client_state.clone().into(),
-        consenus_state.clone().into(),
-        signer,
-    );
+    let create_client_message =
+        IbcMsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
 
     let response = contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -778,8 +775,10 @@ fn check_for_update_client_message() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-25".to_string(),
-        to_vec(&client_state).unwrap(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.encode_to_vec(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -812,7 +811,7 @@ fn check_for_update_client_message() {
     .unwrap();
 
     let update_client_message = IbcMsgUpdateClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         header: client_state.clone().into(),
         signer,
     };
@@ -821,16 +820,15 @@ fn check_for_update_client_message() {
         .update_client(deps.as_mut(), info, update_client_message)
         .unwrap();
 
-    assert_eq!(
-        client_id.ibc_client_id().as_str(),
-        result.attributes[1].value
-    );
+    assert_eq!(client_id.as_str(), result.attributes[1].value);
 
     let mock_reponse_data = UpdateClientResponse::new(
         "10-15".to_string(),
-        client_id.ibc_client_id().as_str().to_string(),
-        to_vec(&client_state).unwrap(),
-        to_vec(&consenus_state).unwrap(),
+        client_id.as_str().to_string(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.encode_to_vec(),
+        consenus_state.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -881,8 +879,8 @@ fn fails_on_updating_non_existing_client() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let signer = Signer::from_str("new_signer").unwrap();
     let update_client_message = IbcMsgUpdateClient {
-        client_id: client_id.ibc_client_id().clone(),
-        header: client_state.clone().into(),
+        client_id,
+        header: client_state.into(),
         signer,
     };
 
@@ -951,8 +949,10 @@ fn check_for_upgrade_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
-        to_vec(&client_state).unwrap(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -993,7 +993,7 @@ fn check_for_upgrade_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1054,8 +1054,10 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
-        to_vec(&client_state).unwrap(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1096,7 +1098,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1157,8 +1159,10 @@ fn fails_on_upgrade_client_frozen_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
-        to_vec(&client_state).unwrap(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1199,7 +1203,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1257,8 +1261,10 @@ fn check_for_execute_upgrade_client() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
-        to_vec(&client_state).unwrap(),
-        to_vec(&consenus_state).unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1299,7 +1305,7 @@ fn check_for_execute_upgrade_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id: client_id.clone(),
         client_state: upgrade_client_state.clone().into(),
         consensus_state: upgrade_consenus_state.clone().into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1312,9 +1318,9 @@ fn check_for_execute_upgrade_client() {
         .unwrap();
 
     let upgrade_client_response = UpgradeClientResponse::new(
-        to_vec(&upgrade_client_state).unwrap(),
-        to_vec(&upgrade_consenus_state).unwrap(),
-        client_id.ibc_client_id().to_string(),
+        upgrade_client_state.encode_to_vec(),
+        upgrade_consenus_state.encode_to_vec(),
+        client_id.to_string(),
         "0-100".to_string(),
     );
 
@@ -1341,7 +1347,7 @@ fn check_for_execute_upgrade_client() {
 
 #[test]
 #[should_panic(
-    expected = "IbcDecodeError { error: \"identifier `hello` has invalid length `5` must be between `9`-`64` characters\" }"
+    expected = "IbcValidationError { error: InvalidLength { id: \"hello\", length: 5, min: 9, max: 64 } }"
 )]
 fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     let mut deps = deps();
@@ -1379,8 +1385,8 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
         .unwrap();
 
     let upgrade_client_response = UpgradeClientResponse::new(
-        to_vec(&upgrade_client_state).unwrap(),
-        to_vec(&upgrade_consenus_state).unwrap(),
+        upgrade_client_state.encode_to_vec(),
+        upgrade_consenus_state.encode_to_vec(),
         "hello".to_string(),
         "0-100".to_string(),
     );
@@ -1552,7 +1558,7 @@ fn fails_on_getting_client_empty_client() {
         .store_client_implementations(
             mock_deps.as_mut().storage,
             client_id.clone(),
-            client_address.clone(),
+            client_address,
         )
         .unwrap();
 
@@ -1609,8 +1615,10 @@ fn success_on_getting_client_state() {
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "10-15".to_string(),
-        to_vec(&client_state).unwrap(),
-        consenus_state.try_into().unwrap(),
+        keccak256(&client_state.encode_to_vec()).to_vec(),
+        keccak256(&consenus_state.encode_to_vec()).to_vec(),
+        client_state.to_any().encode_to_vec(),
+        consenus_state.to_any().encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -1634,16 +1642,17 @@ fn success_on_getting_client_state() {
     let state = contract
         .get_client_state(deps.as_mut().storage, client_id)
         .unwrap();
-
-    let client_state: ClientState = state.as_slice().try_into().unwrap();
-    let client_state: Box<dyn ibc::core::ics02_client::client_state::ClientState> =
-        Box::new(client_state);
+    let client_state_any = Any::decode(state.as_slice()).unwrap();
+    let client_state: ClientState = ClientState::from_any(client_state_any).unwrap();
+    let client_state: Box<dyn IClientState> = Box::new(client_state);
 
     assert_eq!(None, client_state.frozen_height())
 }
 
 #[test]
-#[should_panic(expected = "IbcDecodeError { error: \"NotFound ClientId(iconclient-0)\" }")]
+#[should_panic(
+    expected = "IbcDecodeError { error: DecodeError { description: \"NotFound ClientId(iconclient-0)\", stack: [] } }"
+)]
 fn fails_on_getting_client_state() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
@@ -1688,21 +1697,21 @@ fn sucess_on_misbehaviour_validate() {
     contract
         .store_client_state(
             deps.as_mut().storage,
-            client_id.ibc_client_id(),
-            to_vec(&client_state).unwrap(),
+            &client_id,
+            client_state.to_any().encode_to_vec(),
         )
         .unwrap();
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
 
-    let misbehaviour = ibc::mock::misbehaviour::Misbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+    let misbehaviour = common::ibc::mock::misbehaviour::Misbehaviour {
+        client_id: to_mock_client_id(&client_id),
         header1: mock_header,
         header2: mock_header,
     };
 
     let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id,
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id(),
     };
@@ -1748,21 +1757,21 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
     contract
         .store_client_state(
             deps.as_mut().storage,
-            client_id.ibc_client_id(),
-            to_vec(&client_state).unwrap(),
+            &client_id,
+            client_state.to_any().encode_to_vec(),
         )
         .unwrap();
-    let height = Height::new(10, 15).unwrap();
+    let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
 
-    let misbehaviour = ibc::mock::misbehaviour::Misbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+    let misbehaviour = common::ibc::mock::misbehaviour::Misbehaviour {
+        client_id: to_mock_client_id(&client_id),
         header1: mock_header,
         header2: mock_header,
     };
 
     let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id: client_id.ibc_client_id().clone(),
+        client_id,
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id(),
     };
@@ -1827,10 +1836,8 @@ fn success_on_execute_misbehaviour() {
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
-    let response_message_data = MisbehaviourResponse::new(
-        client_id.ibc_client_id().to_string(),
-        to_vec(&client_state).unwrap(),
-    );
+    let response_message_data =
+        MisbehaviourResponse::new(client_id.to_string(), client_state.encode_to_vec());
 
     let event = Event::new("empty");
 
@@ -1847,10 +1854,7 @@ fn success_on_execute_misbehaviour() {
         .unwrap();
 
     assert_eq!("client_misbehaviour", result.events[0].ty);
-    assert_eq!(
-        client_id.ibc_client_id().as_str(),
-        result.events[0].attributes[0].value
-    );
+    assert_eq!(client_id.as_str(), result.events[0].attributes[0].value);
 }
 
 #[test]
@@ -1874,36 +1878,15 @@ fn success_on_raw_from_consensus_state() {
 fn fails_on_raw_from_consensus_state() {
     let raw = get_dummy_raw_msg_create_client();
 
-    TryInto::<ConsensusState>::try_into(raw.consensus_state.unwrap().clone()).unwrap();
-}
-
-#[test]
-#[should_panic(expected = "Other { description: \"Invalid type\" }")]
-fn fails_on_deserialising_invalid_bytes_to_client_state() {
-    let data = get_dummy_raw_msg_create_client();
-
-    TryInto::<ClientState>::try_into(data.client_state.unwrap().value.as_slice()).unwrap();
+    TryInto::<ConsensusState>::try_into(raw.consensus_state.unwrap()).unwrap();
 }
 
 #[test]
 #[should_panic(
-    expected = "Other { description: \"ClientState max-clock-drift must be greater than zero\" }"
+    expected = "DecodeError { description: \"invalid wire type: LengthDelimited (expected Varint)"
 )]
-fn fails_on_max_drift_less_than_zero() {
-    let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
+fn fails_on_deserialising_invalid_bytes_to_client_state() {
+    let data = get_dummy_raw_msg_create_client();
 
-    contract
-        .init_client_counter(deps.as_mut().storage, 0)
-        .unwrap();
-
-    TryInto::<ClientState>::try_into(common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 0,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-    })
-    .unwrap();
+    <ClientState>::decode(data.client_state.unwrap().value.as_slice()).unwrap();
 }

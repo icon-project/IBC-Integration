@@ -4,27 +4,24 @@ use cosmwasm_std::{
     IbcChannelConnectMsg::OpenAck, IbcChannelOpenMsg::OpenInit, IbcChannelOpenMsg::OpenTry,
     IbcEndpoint, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
-use cw_common::ibc_types::IbcHeight;
-use cw_common::raw_types::channel::RawPacket;
-use cw_common::types::{Ack, Address};
-use cw_common::ProstMessage;
+
+use cw_common::types::Ack;
 
 use cw_xcall_app::ack::{on_ack_failure, on_ack_sucess};
 use cw_xcall_app::types::response::CallServiceMessageResponse;
-use cw_xcall_ibc_connection::msg::{InstantiateMsg, QueryMsg};
+use cw_xcall_ibc_connection::msg::InstantiateMsg;
 use cw_xcall_ibc_connection::{execute, instantiate, query};
 use setup::*;
 pub mod account;
 use account::admin_one;
 use account::alice;
-use common::rlp::{Decodable, Encodable};
+
 use cosmwasm_std::from_binary;
-use cw_common::xcall_connection_msg::ExecuteMsg;
+use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 
 use cw_xcall_app::types::message::CallServiceMessage;
 use cw_xcall_app::types::request::CallServiceMessageRequest;
 use cw_xcall_ibc_connection::state::CwIbcConnection;
-use setup::*;
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
@@ -266,7 +263,7 @@ fn fails_on_ibc_channel_connect_ordered_channel() {
     let execute_message = ExecuteMsg::IbcChannelConnect {
         msg: OpenAck {
             channel: IbcChannel::new(
-                src.clone(),
+                src,
                 dst,
                 cosmwasm_std::IbcOrder::Ordered,
                 "xcall-1",
@@ -310,7 +307,7 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
     let execute_message = ExecuteMsg::IbcChannelConnect {
         msg: OpenAck {
             channel: IbcChannel::new(
-                src.clone(),
+                src,
                 dst,
                 cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
@@ -342,6 +339,7 @@ fn sucess_receive_packet_for_call_message_request() {
         mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
+        vec![],
         false,
         vec![1, 2, 3],
     );
@@ -425,6 +423,7 @@ fn sucess_on_ack_packet() {
         mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
+        vec![],
         false,
         vec![1, 2, 3],
     );
@@ -445,7 +444,7 @@ fn sucess_on_ack_packet() {
     let result = contract
         .execute(mock_deps.as_mut(), mock_env, mock_info, execute_message)
         .unwrap();
-    println!("{:?}", result);
+    println!("{result:?}");
     assert_eq!("success", result.attributes[1].key)
 }
 
@@ -467,6 +466,7 @@ fn test_entry_point() {
         InstantiateMsg {
             timeout_height: 10,
             ibc_host: Addr::unchecked("hostaddress"),
+            protocol_fee: 0,
         },
     )
     .unwrap();
@@ -499,6 +499,7 @@ fn fails_receive_packet_for_call_message_request() {
         mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
+        vec![],
         false,
         vec![1, 2, 3],
     );
@@ -580,6 +581,7 @@ fn success_on_setting_timeout_height() {
     let init_message = InstantiateMsg {
         timeout_height: 10,
         ibc_host: Addr::unchecked("ibchostaddress"),
+        protocol_fee: 0,
     };
 
     contract
@@ -620,15 +622,11 @@ fn fails_on_setting_timeout_height_unauthorized() {
     let init_message = InstantiateMsg {
         timeout_height: 10,
         ibc_host: Addr::unchecked("ibchostaddress"),
+        protocol_fee: 0,
     };
 
     contract
-        .instantiate(
-            deps.as_mut(),
-            mock_env.clone(),
-            mock_info.clone(),
-            init_message,
-        )
+        .instantiate(deps.as_mut(), mock_env.clone(), mock_info, init_message)
         .unwrap();
 
     let exec_message = ExecuteMsg::SetTimeoutHeight { height: 100 };
@@ -656,6 +654,7 @@ fn test_ack_success_on_call_request() {
         mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
+        vec![],
         false,
         vec![1, 2, 3],
     );
@@ -695,6 +694,7 @@ fn test_ack_on_fails() {
         mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
+        vec![],
         false,
         vec![1, 2, 3],
     );
@@ -763,6 +763,7 @@ fn test_ack_failure_on_call_request() {
         mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
+        vec![],
         false,
         vec![1, 2, 3],
     );
@@ -802,6 +803,7 @@ fn fails_on_ack_failure_for_call_request() {
         mock_info.sender.as_str().to_string(),
         alice().to_string(),
         1,
+        vec![],
         false,
         vec![1, 2, 3],
     );
@@ -922,7 +924,7 @@ fn test_handle_response() {
 
 #[test]
 fn test_for_call_service_request_from_rlp_bytes() {
-    let hex_decode_rlp_data = hex::decode("ec93736f6d65636f6e74726163746164647265737393736f6d65636f6e7472616374616464726573730100f800").unwrap();
+    let hex_decode_rlp_data = hex::decode("ed93736f6d65636f6e74726163746164647265737393736f6d65636f6e747261637461646472657373c00100f800").unwrap();
 
     let cs_message_request = CallServiceMessageRequest::try_from(&hex_decode_rlp_data).unwrap();
 
@@ -930,6 +932,7 @@ fn test_for_call_service_request_from_rlp_bytes() {
         "somecontractaddress".to_string(),
         "somecontractaddress".to_string(),
         1,
+        vec![],
         false,
         vec![],
     );
@@ -952,7 +955,7 @@ fn test_for_call_service_response_from_rlp_bytes() {
 }
 #[test]
 fn test_for_call_message_data_from_rlp_bytes() {
-    let hex_decode = hex::decode("ef00adec93736f6d65636f6e74726163746164647265737393736f6d65636f6e7472616374616464726573730100f800").unwrap();
+    let hex_decode = hex::decode("f1c100aeed93736f6d65636f6e74726163746164647265737393736f6d65636f6e747261637461646472657373c00100f800").unwrap();
 
     let cs_message = CallServiceMessage::try_from(hex_decode).unwrap();
 
@@ -962,6 +965,7 @@ fn test_for_call_message_data_from_rlp_bytes() {
         "somecontractaddress".to_string(),
         "somecontractaddress".to_string(),
         1,
+        vec![],
         false,
         vec![],
     );
@@ -971,11 +975,7 @@ fn test_for_call_message_data_from_rlp_bytes() {
 
 #[test]
 fn test_call_message_from_raw_message() {
-    let data = vec![
-        239, 0, 173, 236, 147, 115, 111, 109, 101, 99, 111, 110, 116, 114, 97, 99, 116, 97, 100,
-        100, 114, 101, 115, 115, 147, 115, 111, 109, 101, 99, 111, 110, 116, 114, 97, 99, 116, 97,
-        100, 100, 114, 101, 115, 115, 1, 0, 248, 0,
-    ];
+    let data=hex::decode("f1c100aeed93736f6d65636f6e74726163746164647265737393736f6d65636f6e747261637461646472657373c00100f800").unwrap();
 
     let cs_message = CallServiceMessage::try_from(data).unwrap();
 
@@ -985,6 +985,7 @@ fn test_call_message_from_raw_message() {
         "somecontractaddress".to_string(),
         "somecontractaddress".to_string(),
         1,
+        vec![],
         false,
         vec![],
     );

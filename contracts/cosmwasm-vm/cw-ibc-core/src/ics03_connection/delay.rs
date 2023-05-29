@@ -28,29 +28,24 @@ impl<'a> CwIbcCoreContext<'a> {
         let conn_delay_time_period = connection_end.delay_period();
         let conn_delay_height_period = self.calc_block_delay(&conn_delay_time_period);
 
-        let earliest_valid_time =
-            (last_client_update_time + conn_delay_time_period).map_err(|e| {
-                ContractError::IbcConnectionError {
-                    error: ConnectionError::TimestampOverflow(e),
-                }
-            })?;
-        if current_host_time < earliest_valid_time {
-            return Err(ContractError::IbcConnectionError {
-                error: ConnectionError::NotEnoughTimeElapsed {
-                    current_host_time,
-                    earliest_valid_time,
-                },
-            })?;
+        let earliest_valid_time = (last_client_update_time + conn_delay_time_period)
+            .map_err(ConnectionError::TimestampOverflow)
+            .map_err(Into::<ContractError>::into)?;
+        if current_host_time.nanoseconds() < earliest_valid_time.nanoseconds() {
+            return Err(ConnectionError::NotEnoughTimeElapsed {
+                current_host_time,
+                earliest_valid_time,
+            })
+            .map_err(Into::<ContractError>::into)?;
         }
 
         let earliest_valid_height = last_client_update_height.add(conn_delay_height_period);
         if current_host_height < earliest_valid_height {
-            return Err(ContractError::IbcConnectionError {
-                error: ConnectionError::NotEnoughBlocksElapsed {
-                    current_host_height,
-                    earliest_valid_height,
-                },
-            })?;
+            return Err(ConnectionError::NotEnoughBlocksElapsed {
+                current_host_height,
+                earliest_valid_height,
+            })
+            .map_err(Into::<ContractError>::into)?;
         }
 
         Ok(())

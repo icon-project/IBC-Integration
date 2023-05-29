@@ -9,6 +9,8 @@ members = [
     "contracts/cosmwasm-vm/cw-mock-ibc-core",
     "contracts/cosmwasm-vm/cw-xcall-ibc-connection",
      "contracts/cosmwasm-vm/cw-xcall-app",
+     "contracts/cosmwasm-vm/cw-integration",
+     "contracts/cosmwasm-vm/cw-mock-dapp-multi",
 ]
 
 [workspace.package]
@@ -16,7 +18,7 @@ authors = ["Icon Foundation<foo@icon.foundation>"]
 repository = "https://github.com/icon-project/ibc-integration.git"
 
 [profile.release]
-opt-level = 3
+opt-level = 'z'
 debug = false
 rpath = false
 lto = true

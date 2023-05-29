@@ -16,7 +16,7 @@ pub fn on_chan_open_init_submessage(
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
     let port_id = msg.port_id_on_a.clone();
-    let channel_id = channel_id.ibc_channel_id();
+    let channel_id = channel_id;
     let counter_party_port_id = msg.port_id_on_b.clone();
     let counter_party_channel = IbcChannelId::default();
     let endpoint = cosmwasm_std::IbcEndpoint {
@@ -32,7 +32,7 @@ pub fn on_chan_open_init_submessage(
         counter_party,
         cosmwasm_std::IbcOrder::Unordered,
         msg.version_proposal.to_string(),
-        connection_id.connection_id().to_string(),
+        connection_id.to_string(),
     );
     cosmwasm_std::IbcChannelOpenMsg::OpenInit {
         channel: ibc_channel,
@@ -97,17 +97,15 @@ pub fn channel_open_init_msg_validate(
     let conn_version = match conn_end_on_a.versions() {
         [version] => version,
         _ => {
-            return Err(ContractError::IbcChannelError {
-                error: ChannelError::InvalidVersionLengthConnection,
-            })
+            return Err(ChannelError::InvalidVersionLengthConnection)
+                .map_err(Into::<ContractError>::into);
         }
     };
     let channel_feature = message.ordering.to_string();
     // channel version should be valid
     if !conn_version.is_supported_feature(channel_feature) {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::ChannelFeatureNotSupportedByConnection,
-        });
+        return Err(ChannelError::ChannelFeatureNotSupportedByConnection)
+            .map_err(Into::<ContractError>::into);
     };
 
     Ok(())

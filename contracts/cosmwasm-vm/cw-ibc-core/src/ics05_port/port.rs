@@ -28,9 +28,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Ok(result) => match result {
                 Some(port_id) => Ok(port_id),
                 None => Err(ContractError::IbcPortError {
-                    error: PortError::UnknownPort {
-                        port_id: port_id.ibc_port_id().clone(),
-                    },
+                    error: PortError::UnknownPort { port_id },
                 }),
             },
             Err(error) => Err(ContractError::Std(error)),
@@ -91,7 +89,7 @@ impl<'a> CwIbcCoreContext<'a> {
             ChannelMsg::CloseInit(msg) => &msg.port_id_on_a,
             ChannelMsg::CloseConfirm(msg) => &msg.port_id_on_b,
         };
-        let module_id = self.lookup_module_by_port(store, port_id.clone().into())?;
+        let module_id = self.lookup_module_by_port(store, port_id.clone())?;
         Ok(module_id)
     }
 
@@ -120,7 +118,7 @@ impl<'a> CwIbcCoreContext<'a> {
             PacketMsg::Timeout(msg) => &msg.packet.port_id_on_a,
             PacketMsg::TimeoutOnClose(msg) => &msg.packet.port_id_on_a,
         };
-        let module_id = self.lookup_module_by_port(store, port_id.clone().into())?;
+        let module_id = self.lookup_module_by_port(store, port_id.clone())?;
         Ok(module_id)
     }
 
@@ -176,11 +174,7 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &IbcPortId,
         channel_id: &IbcChannelId,
     ) -> Vec<u8> {
-        let path = format!(
-            "ports/{}/channels/{}",
-            port_id.to_string(),
-            channel_id.to_string()
-        );
+        let path = format!("ports/{port_id}/channels/{channel_id}");
         path.as_bytes().to_vec()
     }
 }

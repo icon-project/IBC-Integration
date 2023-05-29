@@ -12,7 +12,8 @@ pub mod types;
 pub mod xcall_app_msg;
 pub mod xcall_connection_msg;
 pub mod xcall_msg;
-use cosmwasm_std::{from_binary, from_slice, Binary, StdError};
+pub mod xcall_payloads;
+use cosmwasm_std::{from_binary, Binary, StdError};
 use serde::de::DeserializeOwned;
 
 pub use prost::Message as ProstMessage;
@@ -22,5 +23,5 @@ pub fn from_binary_response<T: DeserializeOwned>(res: &[u8]) -> Result<T, StdErr
     let start_index = res.iter().position(|&x| x == start).unwrap_or(0);
     let slice = &res[(start_index)..(res.len())];
     println!("{}", hex::encode(slice));
-    return from_binary::<T>(&Binary(slice.to_vec()));
+    from_binary::<T>(&Binary(slice.to_vec()))
 }

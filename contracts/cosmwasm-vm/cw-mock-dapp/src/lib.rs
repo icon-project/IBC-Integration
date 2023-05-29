@@ -1,13 +1,14 @@
 pub mod contract;
 pub mod errors;
 pub mod helper;
+pub mod msg;
 pub mod state;
 pub mod types;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    entry_point, to_binary, CosmosMsg, DepsMut, Empty, Env, MessageInfo, Response, StdError,
-    Storage, WasmMsg,
+    entry_point, to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response,
+    StdError, StdResult, Storage, SubMsg, WasmMsg,
 };
 
 pub use contract::*;
@@ -15,6 +16,7 @@ use cw2::set_contract_version;
 use cw_storage_plus::{Item, Map};
 pub use errors::*;
 pub use helper::*;
+use msg::QueryMsg;
 use state::CwMockService;
 use thiserror::Error;
 use types::InstantiateMsg;
@@ -50,5 +52,57 @@ pub fn execute(
         ExecuteMsg::XCallMessage { data } => Ok(Response::new()
             .add_attribute("action", "success execute call")
             .set_data(data)),
+        ExecuteMsg::SuccessCall {} => {
+            let resukt = call_service.increment_sequence(deps.storage)?;
+            Ok(Response::new().add_attribute("sequence", resukt.to_string()))
+        }
+        ExecuteMsg::FailureCall {} => Err(ContractError::ModuleAddressNotFound),
+        ExecuteMsg::TestCall {
+            success_addr,
+            fail_addr,
+        } => {
+            let success = ExecuteMsg::SuccessCall {};
+            let fail = ExecuteMsg::FailureCall {};
+            let success_wasm = CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: success_addr,
+                msg: to_binary(&success).map_err(ContractError::Std)?,
+                funds: info.funds.clone(),
+            });
+            let fail_wasm = CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: fail_addr,
+                msg: to_binary(&fail).map_err(ContractError::Std)?,
+                funds: info.funds,
+            });
+            let submessages = vec![
+                SubMsg {
+                    msg: success_wasm.clone(),
+                    gas_limit: None,
+                    id: 2,
+                    reply_on: cosmwasm_std::ReplyOn::Never,
+                },
+                SubMsg {
+                    msg: fail_wasm,
+                    gas_limit: None,
+                    id: 6,
+                    reply_on: cosmwasm_std::ReplyOn::Never,
+                },
+                SubMsg {
+                    msg: success_wasm,
+                    gas_limit: None,
+                    id: 2,
+                    reply_on: cosmwasm_std::ReplyOn::Never,
+                },
+            ];
+
+            Ok(Response::new().add_submessages(submessages))
+        }
+    }
+}
+
+#[entry_point]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    let call_service = CwMockService::default();
+    match msg {
+        QueryMsg::GetSequence {} => to_binary(&call_service.get_sequence(deps.storage).unwrap()),
     }
 }

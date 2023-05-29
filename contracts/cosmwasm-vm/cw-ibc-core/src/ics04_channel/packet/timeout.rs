@@ -1,3 +1,5 @@
+use prost::DecodeError;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -27,35 +29,33 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let chan_end_on_a = self.get_channel_end(
             deps.storage,
-            msg.packet.port_id_on_a.clone().into(),
-            msg.packet.chan_id_on_a.clone().into(),
+            msg.packet.port_id_on_a.clone(),
+            msg.packet.chan_id_on_a.clone(),
         )?;
         if !chan_end_on_a.state_matches(&State::Open) {
-            return Err(ContractError::IbcPacketError {
-                error: PacketError::ChannelClosed {
-                    channel_id: msg.packet.chan_id_on_a.clone(),
-                },
-            });
+            return Err(PacketError::ChannelClosed {
+                channel_id: msg.packet.chan_id_on_a,
+            })
+            .map_err(Into::<ContractError>::into);
         }
         let counterparty = Counterparty::new(
             msg.packet.port_id_on_b.clone(),
             Some(msg.packet.chan_id_on_b.clone()),
         );
         if !chan_end_on_a.counterparty_matches(&counterparty) {
-            return Err(ContractError::IbcPacketError {
-                error: PacketError::InvalidPacketCounterparty {
-                    port_id: msg.packet.port_id_on_b.clone(),
-                    channel_id: msg.packet.chan_id_on_b.clone(),
-                },
-            });
+            return Err(PacketError::InvalidPacketCounterparty {
+                port_id: msg.packet.port_id_on_b.clone(),
+                channel_id: msg.packet.chan_id_on_b,
+            })
+            .map_err(Into::<ContractError>::into);
         }
         let conn_id_on_a = chan_end_on_a.connection_hops()[0].clone();
-        let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a.into())?;
+        let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
         let commitment_on_a = match self.get_packet_commitment(
             deps.storage,
-            &msg.packet.port_id_on_a.clone().into(),
-            &msg.packet.chan_id_on_a.clone().into(),
-            msg.packet.seq_on_a,
+            &msg.packet.port_id_on_a,
+            &msg.packet.chan_id_on_a,
+            msg.packet.sequence,
         ) {
             Ok(commitment_on_a) => commitment_on_a,
 
@@ -72,11 +72,10 @@ impl<'a> CwIbcCoreContext<'a> {
             &msg.packet.timeout_timestamp_on_b,
         );
         if commitment_on_a != expected_commitment_on_a {
-            return Err(ContractError::IbcPacketError {
-                error: PacketError::IncorrectPacketCommitment {
-                    sequence: msg.packet.seq_on_a,
-                },
-            });
+            return Err(PacketError::IncorrectPacketCommitment {
+                sequence: msg.packet.sequence,
+            })
+            .map_err(Into::<ContractError>::into);
         }
         let client_id_on_a = conn_end_on_a.client_id();
         let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
@@ -86,12 +85,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .timeout_height_on_b
             .has_expired(msg.proof_height_on_b)
         {
-            return Err(ContractError::IbcPacketError {
-                error: PacketError::PacketTimeoutHeightNotReached {
-                    timeout_height: msg.packet.timeout_height_on_b,
-                    chain_height: msg.proof_height_on_b,
-                },
-            });
+            return Err(PacketError::PacketTimeoutHeightNotReached {
+                timeout_height: msg.packet.timeout_height_on_b,
+                chain_height: msg.proof_height_on_b,
+            })
+            .map_err(Into::<ContractError>::into);
         }
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
@@ -101,12 +99,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .timeout_timestamp_on_b
             .check_expiry(&timestamp_of_b)
         {
-            return Err(ContractError::IbcPacketError {
-                error: PacketError::PacketTimeoutTimestampNotReached {
-                    timeout_timestamp: msg.packet.timeout_timestamp_on_b,
-                    chain_timestamp: timestamp_of_b,
-                },
-            });
+            return Err(PacketError::PacketTimeoutTimestampNotReached {
+                timeout_timestamp: msg.packet.timeout_timestamp_on_b,
+                chain_timestamp: timestamp_of_b,
+            })
+            .map_err(Into::<ContractError>::into);
         }
 
         self.verify_connection_delay_passed(
@@ -128,17 +125,16 @@ impl<'a> CwIbcCoreContext<'a> {
             },
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
-            error: e.to_string(),
+            error: DecodeError::new(e.to_string()),
         })?;
 
         let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
-            if msg.packet.seq_on_a < msg.next_seq_recv_on_b {
-                return Err(ContractError::IbcPacketError {
-                    error: PacketError::InvalidPacketSequence {
-                        given_sequence: msg.packet.seq_on_a,
-                        next_sequence: msg.next_seq_recv_on_b,
-                    },
-                });
+            if msg.packet.sequence < msg.next_seq_recv_on_b {
+                return Err(PacketError::InvalidPacketSequence {
+                    given_sequence: msg.packet.sequence,
+                    next_sequence: msg.next_seq_recv_on_b,
+                })
+                .map_err(Into::<ContractError>::into);
             }
             let seq_recv_path_on_b = commitment::next_seq_recv_commitment_path(
                 &msg.packet.port_id_on_b.clone(),
@@ -149,28 +145,28 @@ impl<'a> CwIbcCoreContext<'a> {
                 height: msg.proof_height_on_b.to_string(),
                 prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
                 proof: msg.proof_unreceived_on_b.clone().into(),
-                root: consensus_state_of_b_on_a.root().clone().into_vec(),
+                root: consensus_state_of_b_on_a.root().into_vec(),
                 seq_recv_path: seq_recv_path_on_b,
-                sequence: msg.packet.seq_on_a.into(),
+                sequence: msg.packet.sequence.into(),
                 packet_data,
             }
         } else {
             let receipt_path_on_b = commitment::receipt_commitment_path(
                 &msg.packet.port_id_on_b,
                 &msg.packet.chan_id_on_b,
-                msg.packet.seq_on_a,
+                msg.packet.sequence,
             );
 
             LightClientPacketMessage::VerifyPacketReceiptAbsence {
                 height: msg.proof_height_on_b.to_string(),
                 prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
                 proof: msg.proof_unreceived_on_b.clone().into(),
-                root: consensus_state_of_b_on_a.root().clone().into_vec(),
+                root: consensus_state_of_b_on_a.root().into_vec(),
                 receipt_path: receipt_path_on_b,
                 packet_data,
             }
         };
-        let client_type = ClientType::from(client_state_of_b_on_a.client_type());
+        let client_type = client_state_of_b_on_a.client_type();
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -215,20 +211,18 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(res) => {
                     let packet_data = from_binary::<PacketDataResponse>(&res).map_err(|e| {
                         ContractError::IbcDecodeError {
-                            error: e.to_string(),
+                            error: DecodeError::new(e.to_string()),
                         }
                     })?;
                     let info = packet_data.message_info;
                     let data = Packet::from(packet_data.packet.clone());
-                    let port_id = PortId::from(packet_data.packet.port_id_on_a.clone());
+                    let port_id = packet_data.packet.port_id_on_a.clone();
                     // Getting the module address for on packet timeout call
                     let module_id = match self.lookup_module_by_port(deps.storage, port_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let contract_address = match self
-                        .get_route(deps.storage, cw_common::types::ModuleId::from(module_id))
-                    {
+                    let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
@@ -243,14 +237,18 @@ impl<'a> CwIbcCoreContext<'a> {
                     };
                     let data = Binary::from(data.data);
                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
-                            revision: 1,
-                            height: 1,
-                        },
-                        ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
-                            revision: x.revision_number(),
-                            height: x.revision_height(),
-                        },
+                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
+                            CwTimeoutBlock {
+                                revision: 1,
+                                height: 1,
+                            }
+                        }
+                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
+                            CwTimeoutBlock {
+                                revision: x.revision_number(),
+                                height: x.revision_height(),
+                            }
+                        }
                     };
                     let timeout = CwTimeout::with_block(timeoutblock);
                     let ibc_packet =
@@ -275,15 +273,14 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "packet_timeout_module_validation")
                         .add_submessage(sub_msg))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPacketError {
-                error: PacketError::InvalidProof,
-            }),
+            cosmwasm_std::SubMsgResult::Err(_) => {
+                Err(PacketError::InvalidProof).map_err(Into::<ContractError>::into)
+            }
         }
     }
 
@@ -311,9 +308,8 @@ impl<'a> CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
                     let data = from_binary::<CwPacket>(&res).unwrap();
-                    let channel_id =
-                        ChannelId::from(IbcChannelId::from_str(&data.src.channel_id).unwrap());
-                    let port_id = PortId::from(IbcPortId::from_str(&data.src.port_id).unwrap());
+                    let channel_id = IbcChannelId::from_str(&data.src.channel_id).unwrap();
+                    let port_id = IbcPortId::from_str(&data.src.port_id).unwrap();
                     let chan_end_on_a =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if self
@@ -354,10 +350,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("channel_order", chan_end_on_a.ordering().as_str());
                     let mut events = vec![event];
                     if let Order::Ordered = chan_end_on_a.ordering {
-                        let close_init = create_close_init_channel_event(
-                            port_id.ibc_port_id().as_str(),
-                            channel_id.ibc_channel_id().as_str(),
-                        );
+                        let close_init =
+                            create_close_init_channel_event(port_id.as_str(), channel_id.as_str());
                         events.push(close_init);
                     }
 
@@ -366,15 +360,14 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "execute_timeout_packet")
                         .add_events(events))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => Err(ContractError::IbcPacketError {
-                error: PacketError::InvalidProof,
-            }),
+            cosmwasm_std::SubMsgResult::Err(_) => {
+                Err(PacketError::InvalidProof).map_err(Into::<ContractError>::into)
+            }
         }
     }
 }

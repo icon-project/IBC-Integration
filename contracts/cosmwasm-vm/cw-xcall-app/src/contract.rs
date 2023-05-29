@@ -78,15 +78,22 @@ impl<'a> CwCallService<'a> {
                     CwCallService::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address)
             }
-            ExecuteMsg::SetProtocol { value } => self.set_protocol_fee(deps, info, value),
+            ExecuteMsg::SetProtocolFee { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
-            ExecuteMsg::SendCallMessage { to, data, rollback } => {
-                println!("{} Received Send Call Message", LOG_PREFIX);
-                self.send_packet(deps, info, env, to, data, rollback)
+            ExecuteMsg::SendCallMessage {
+                to,
+                sources,
+                destinations,
+                data,
+                rollback,
+            } => {
+                println!("{LOG_PREFIX} Received Send Call Message");
+                self.validate_send_call(&sources, &destinations, &deps.querier, &info)?;
+                self.send_packet(deps, info, env, to, sources, destinations, data, rollback)
             }
-            ExecuteMsg::ReceiveCallMessage { data } => self.receive_packet_data(deps, data),
+            ExecuteMsg::ReceiveCallMessage { data } => self.receive_packet_data(deps, info, data),
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {
                 self.execute_rollback(deps, info, sequence_no)
@@ -181,6 +188,26 @@ impl<'a> CwCallService<'a> {
                 msg: "Unknown".to_string(),
             }),
         }
+    }
+
+    pub fn validate_send_call(
+        &self,
+        sources: &Vec<String>,
+        destinations: &Vec<String>,
+        querier: &QuerierWrapper,
+        info: &MessageInfo,
+    ) -> Result<(), ContractError> {
+        if sources.len() != destinations.len() {
+            return Err(ContractError::ProtocolsMismatch);
+        }
+        let fees = sources
+            .iter()
+            .map(|r| self.query_protocol_fee(querier, r))
+            .collect::<Result<Vec<u128>, ContractError>>()?;
+
+        let total_required_fee: u128 = fees.iter().sum();
+        self.ensure_enough_funds(total_required_fee, info)?;
+        Ok(())
     }
 }
 
@@ -363,11 +390,11 @@ impl<'a> CwCallService<'a> {
     /// variant containing a `Response` object with two attributes ("action" and "method"), or an `Err`
     /// variant containing a `ContractError` object with a code and a message.
     fn reply_sendcall_message(&self, message: Reply) -> Result<Response, ContractError> {
-        println!("{} Received Callback From SendCallMessage", LOG_PREFIX);
+        println!("{LOG_PREFIX} Received Callback From SendCallMessage");
 
         match message.result {
             SubMsgResult::Ok(_) => {
-                println!("{} Call Success", LOG_PREFIX);
+                println!("{LOG_PREFIX} Call Success");
                 Ok(Response::new()
                     .add_attribute("action", "reply")
                     .add_attribute("method", "sendcall_message")

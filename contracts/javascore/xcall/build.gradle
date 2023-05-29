@@ -48,11 +48,16 @@ deployJar {
             uri = 'http://localhost:9082/api/v3'
             nid = 0x3
         }
+        uat {
+            uri = project.findProperty('uat.host') as String
+            nid = property('uat.nid') as Integer
+            to ="$xCall"?:null
+        }
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-        arg('_ibc', 'hxb6b5791be0b5ef67063b3c10b840fb81514db2fd')
+        arg('_ibc', "$ibcCore")
         arg('_timeoutHeight', '0x3e8')
     }
 }

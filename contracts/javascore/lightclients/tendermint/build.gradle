@@ -37,6 +37,8 @@ jacocoTestReport {
     dependsOn ':lib:test'
     dependsOn ':mockapp:compileJava'
     dependsOn ':mockapp:test'
+    dependsOn ':mock-dapp-multi-protocol:compileJava'
+    dependsOn ':mock-dapp-multi-protocol:test'
     dependsOn ':proto-util:compileJava'
     dependsOn ':proto-util:compileTestJava'
     dependsOn ':proto-util:test'
@@ -88,10 +90,16 @@ deployJar {
             uri = 'http://localhost:9082/api/v3'
             nid = 0x3
         }
+        uat {
+            uri = project.findProperty('uat.host') as String
+            nid = property('uat.nid') as Integer
+            to = "$tendermint"?:null
+        }
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
+
     parameters {
-        arg('ibcHandler', 'hxb6b5791be0b5ef67063b3c10b840fb81514db2fd')
+        arg('ibcHandler', "$ibcCore")
     }
 }

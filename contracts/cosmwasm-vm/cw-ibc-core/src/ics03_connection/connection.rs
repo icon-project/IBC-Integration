@@ -1,3 +1,5 @@
+use prost::DecodeError;
+
 use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -25,11 +27,10 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let data = conn_end
             .encode_vec()
-            .map_err(|error| ContractError::IbcConnectionError {
-                error: ConnectionError::Other {
-                    description: error.to_string(),
-                },
-            })?;
+            .map_err(|error| ConnectionError::Other {
+                description: error.to_string(),
+            })
+            .map_err(Into::<ContractError>::into)?;
         match self.ibc_store().connections().save(store, conn_id, &data) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
@@ -60,7 +61,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let connection_end =
             ConnectionEnd::decode(&*data).map_err(|error| ContractError::IbcDecodeError {
-                error: error.to_string(),
+                error: DecodeError::new(error.to_string()),
             })?;
 
         Ok(connection_end)
@@ -252,11 +253,8 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, client_id)
         {
             Ok(result) => match result {
-                Some(id) => Err(ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: format!("Connection Already Exists {}", id.as_str()),
-                    },
-                }),
+                Some(id) => Err(ConnectionError::ConnectionExists(id.to_string()))
+                    .map_err(Into::<ContractError>::into),
                 None => Ok(()),
             },
             Err(error) => Err(ContractError::Std(error)),
@@ -285,17 +283,14 @@ impl<'a> CwIbcCoreContext<'a> {
         connection_id: ConnectionId,
         connection_end: ConnectionEnd,
     ) -> Result<(), ContractError> {
-        let connection_commit_key =
-            commitment::connection_commitment_key(connection_id.connection_id());
+        let connection_commit_key = commitment::connection_commitment_key(&connection_id);
 
-        let connection_end_bytes =
-            connection_end
-                .encode_vec()
-                .map_err(|error| ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: error.to_string(),
-                    },
-                })?;
+        let connection_end_bytes = connection_end
+            .encode_vec()
+            .map_err(|error| ConnectionError::Other {
+                description: error.to_string(),
+            })
+            .map_err(Into::<ContractError>::into)?;
 
         self.ibc_store()
             .commitments()
@@ -313,20 +308,20 @@ impl<'a> CwIbcCoreContext<'a> {
         CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() //TODO
     }
 
-    fn host_current_height(&self) -> Result<ibc::Height, ContractError> {
+    fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {
         todo!()
     }
 
-    fn host_oldest_height(&self) -> Result<ibc::Height, ContractError> {
+    fn host_oldest_height(&self) -> Result<common::ibc::Height, ContractError> {
         todo!()
     }
 
     fn client_consensus_state(
         &self,
-        client_id: &ibc::core::ics24_host::identifier::ClientId,
-        height: &ibc::Height,
+        client_id: &common::ibc::core::ics24_host::identifier::ClientId,
+        height: &common::ibc::Height,
     ) -> Result<
-        Option<Box<dyn ibc::core::ics02_client::consensus_state::ConsensusState>>,
+        Option<Box<dyn common::ibc::core::ics02_client::consensus_state::ConsensusState>>,
         ContractError,
     > {
         todo!()

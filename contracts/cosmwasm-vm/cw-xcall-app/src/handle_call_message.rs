@@ -1,3 +1,5 @@
+use common::utils::keccak256;
+
 use crate::ack::acknowledgement_data_on_success;
 
 use super::*;
@@ -120,17 +122,17 @@ impl<'a> CwCallService<'a> {
     pub fn receive_packet_data(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        let call_service_message: CallServiceMessage =
-            CallServiceMessage::try_from(message.clone())?;
+        let call_service_message: CallServiceMessage = CallServiceMessage::try_from(message)?;
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
-                self.hanadle_request(deps, call_service_message.payload())
+                self.hanadle_request(deps, info, call_service_message.payload())
             }
             CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, call_service_message.payload())
+                self.handle_response(deps, info, call_service_message.payload())
             }
         }
     }
@@ -152,7 +154,12 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// an `IbcReceiveResponse` object wrapped in a `Result` with a possible `ContractError`.
-    pub fn hanadle_request(&self, deps: DepsMut, data: &[u8]) -> Result<Response, ContractError> {
+    pub fn hanadle_request(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        data: &[u8],
+    ) -> Result<Response, ContractError> {
         let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
 
@@ -163,9 +170,24 @@ impl<'a> CwCallService<'a> {
             from.to_string(),
             to.to_string(),
             message_request.sequence_no(),
+            message_request.protocols().clone(),
             message_request.rollback(),
             message_request.data()?.into(),
         );
+
+        if request.protocols().len() > 1 {
+            let key = keccak256(data).to_vec();
+            let caller = info.sender;
+            self.save_pending_requests(deps.storage, key.clone(), caller.to_string())?;
+            let registered =
+                self.get_pending_requests_by_hash(deps.as_ref().storage, key.clone())?;
+
+            if registered.len() != request.protocols().len() {
+                return Ok(Response::new());
+            }
+
+            self.remove_pending_request_by_hash(deps.storage, key)?;
+        }
 
         self.insert_request(deps.storage, request_id, request)?;
 
@@ -204,7 +226,12 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// a `Result` containing an `IbcReceiveResponse` on success or a `ContractError` on failure.
-    pub fn handle_response(&self, deps: DepsMut, data: &[u8]) -> Result<Response, ContractError> {
+    pub fn handle_response(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        data: &[u8],
+    ) -> Result<Response, ContractError> {
         let message: CallServiceMessageResponse = data.try_into()?;
         let response_sequence_no = message.sequence_no();
 
@@ -213,8 +240,7 @@ impl<'a> CwCallService<'a> {
         if call_request.is_null() {
             let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
                 acknowledgement: make_ack_fail(format!(
-                    "handle_resposne: no request for {}",
-                    response_sequence_no
+                    "handle_resposne: no request for {response_sequence_no}"
                 ))
                 .to_vec(),
             })
@@ -224,9 +250,23 @@ impl<'a> CwCallService<'a> {
                 .add_attribute("method", "handle_response")
                 .add_attribute(
                     "message",
-                    format!("handle_resposne: no request for {}", response_sequence_no),
+                    format!("handle_resposne: no request for {response_sequence_no}"),
                 )
                 .set_data(acknowledgement_data));
+        }
+
+        if call_request.protocols().len() > 1 {
+            let key = keccak256(data).to_vec();
+            let caller = info.sender;
+            self.save_pending_responses(deps.storage, key.clone(), caller.to_string())?;
+            let registered =
+                self.get_pending_responses_by_hash(deps.as_ref().storage, key.clone())?;
+
+            if registered.len() != call_request.protocols().len() {
+                return Ok(Response::new());
+            }
+
+            self.remove_pending_responses_by_hash(deps.storage, key)?;
         }
 
         match message.response_code() {

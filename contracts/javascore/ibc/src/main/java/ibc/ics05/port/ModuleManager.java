@@ -22,8 +22,8 @@ public abstract class ModuleManager {
      * lookupModuleByPort will return the IBCModule along with the capability associated with a given portID
      */
     public IIBCModuleScoreInterface lookupModuleByPort(String portId) {
-        ArrayDB<Address> modules = lookupModules(portCapabilityPath(portId));
-        return new IIBCModuleScoreInterface(modules.get(0));
+        Address module = lookupModules(portCapabilityPath(portId));
+        return new IIBCModuleScoreInterface(module);
 
     }
 
@@ -32,8 +32,8 @@ public abstract class ModuleManager {
      * defined by its portID and channelID
      */
     public IIBCModuleScoreInterface lookupModuleByChannel(String portId, String channelId) {
-        ArrayDB<Address> modules = lookupModules(channelCapabilityPath(portId, channelId));
-        return new IIBCModuleScoreInterface(modules.get(0));
+        Address module = lookupModules(channelCapabilityPath(portId, channelId));
+        return new IIBCModuleScoreInterface(module);
     }
 
     /**
@@ -66,6 +66,6 @@ public abstract class ModuleManager {
      * lookupModule will return the IBCModule address bound to a given name. Currently, the function returns only one
      * module.
      */
-    public abstract ArrayDB<Address> lookupModules(byte[] name);
+    public abstract Address lookupModules(byte[] name);
 
 }

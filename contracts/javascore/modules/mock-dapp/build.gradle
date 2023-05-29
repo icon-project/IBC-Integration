@@ -35,10 +35,15 @@ deployJar {
             uri = 'http://localhost:9082/api/v3'
             nid = 0x3
         }
+        uat {
+            uri = project.findProperty('uat.host') as String
+            nid = property('uat.nid') as Integer
+            to = "$mockDApp"?:null
+        }
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-        arg('_callService', 'hxb6b5791be0b5ef67063b3c10b840fb81514db2fd')
+        arg('_callService', "$xCall")
     }
 }

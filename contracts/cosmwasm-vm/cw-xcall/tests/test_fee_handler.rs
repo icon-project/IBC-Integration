@@ -6,7 +6,7 @@ use cosmwasm_std::{
 use cw_xcall::state::CwCallService;
 pub mod account;
 use account::*;
-use cw_common::types::Address;
+
 #[test]
 fn set_protocol_fee_handler() {
     let mut deps = mock_dependencies();
@@ -21,7 +21,7 @@ fn set_protocol_fee_handler() {
         .unwrap();
 
     contract
-        .add_admin(deps.as_mut().storage, info.clone(), admin_one().to_string())
+        .add_admin(deps.as_mut().storage, info, admin_one().to_string())
         .unwrap();
 
     contract
@@ -67,7 +67,7 @@ fn test_invalid_input() {
         .unwrap();
 
     cw_callservice
-        .set_protocol_feehandler(deps.as_mut(), env, info, address.clone())
+        .set_protocol_feehandler(deps.as_mut(), env, info, address)
         .unwrap();
 }
 
@@ -84,21 +84,18 @@ fn get_protocol_fee_handler() {
         .unwrap();
 
     contract
-        .add_admin(deps.as_mut().storage, info.clone(), admin_one().to_string())
+        .add_admin(deps.as_mut().storage, info, admin_one().to_string())
         .unwrap();
     contract
         .fee_handler()
         .save(&mut deps.storage, &address)
         .unwrap();
-    let info = mock_info(
-        &admin_one().to_string().to_string(),
-        &[Coin::new(1000, "ucosm")],
-    );
+    let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "ucosm")]);
     contract
         .set_protocol_feehandler(deps.as_mut(), env, info, address)
         .unwrap();
     let result = contract.get_protocol_feehandler(deps.as_ref());
-    assert_eq!("xyz", result.to_string());
+    assert_eq!("xyz", result);
 }
 
 #[test]
@@ -113,7 +110,7 @@ fn set_protocol_fee() {
         .unwrap();
 
     contract
-        .add_admin(deps.as_mut().storage, info.clone(), admin_one().to_string())
+        .add_admin(deps.as_mut().storage, info, admin_one().to_string())
         .unwrap();
 
     let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "uconst")]);
@@ -133,7 +130,7 @@ fn get_protocol_fee() {
         .unwrap();
 
     contract
-        .add_admin(deps.as_mut().storage, info.clone(), admin_one().to_string())
+        .add_admin(deps.as_mut().storage, info, admin_one().to_string())
         .unwrap();
     let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "ucosm")]);
     contract

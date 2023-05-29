@@ -192,3 +192,6 @@ lcov.info
 .vscode
 
 **/.DS_Store
+
+
+vendor/**

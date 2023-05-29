@@ -5,6 +5,8 @@ pub mod check;
 pub mod contract;
 pub mod error;
 pub mod events;
+pub mod fee;
+pub mod fee_handler;
 pub mod forward_to_host;
 pub mod forward_to_xcall;
 pub mod ibc;
@@ -17,30 +19,29 @@ use crate::{
     ack::{make_ack_fail, make_ack_success},
     check::{check_order, check_version},
     error::ContractError,
-    events::event_message_forwarded,
-    ibc::{APP_ORDER, IBC_VERSION},
-    msg::{InstantiateMsg, QueryMsg},
+    ibc::IBC_VERSION,
+    msg::InstantiateMsg,
     state::{CwIbcConnection, IbcConfig, ACK_FAILURE_ID},
     types::storage_keys::StorageKey,
 };
-use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, MessageInfo, Never, QuerierWrapper, Reply,
-    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
+    attr, entry_point, from_binary, to_binary, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty,
+    Env, Event, MessageInfo, Never, QuerierWrapper, Reply, Response, StdError, StdResult, Storage,
+    SubMsg, SubMsgResult, WasmMsg,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
 
+use cw2::set_contract_version;
 use cw_common::cw_types::{
     Cw3ChannelOpenResponse, CwBasicResponse, CwChannelCloseMsg, CwChannelConnectMsg,
-    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwEndpoint, CwMsg, CwOrder, CwPacket,
-    CwPacketAckMsg, CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
+    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwOrder, CwPacket, CwPacketAckMsg,
+    CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
-use cw2::set_contract_version;
 use cw_common::types::Ack;
-use cw_common::xcall_connection_msg::ExecuteMsg;
-use cw_storage_plus::{Item};
+use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
+use cw_storage_plus::Item;
 use thiserror::Error;
 
 /// This function instantiates a contract using the CwIbcConnection.

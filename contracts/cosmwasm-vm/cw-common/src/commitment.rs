@@ -1,19 +1,19 @@
 use std::str::FromStr;
 
-use common::utils::{keccak256, sha256};
-use ibc::core::ics02_client::height::Height;
-use ibc::core::ics04_channel::commitment::AcknowledgementCommitment;
-use ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement;
-use ibc::core::ics04_channel::packet::Sequence;
-use ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
-use ibc::core::ics24_host::path::{
+use common::ibc::core::ics02_client::height::Height;
+use common::ibc::core::ics04_channel::commitment::AcknowledgementCommitment;
+use common::ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement;
+use common::ibc::core::ics04_channel::packet::Sequence;
+use common::ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
+use common::ibc::core::ics24_host::path::{
     AckPath, ChannelEndPath, ClientConsensusStatePath, ClientStatePath, CommitmentPath,
     ConnectionPath, PortPath, ReceiptPath, SeqRecvPath,
 };
-use ibc::{
+use common::ibc::{
     core::ics04_channel::{commitment::PacketCommitment, timeout::TimeoutHeight},
     timestamp::Timestamp,
 };
+use common::utils::{keccak256, sha256};
 
 use ibc_proto::ibc::core::channel::v1::Packet;
 
@@ -22,11 +22,11 @@ pub trait ICommitment {
     fn commitment(&self) -> Vec<u8>;
 
     fn commitment_key(&self) -> Vec<u8> {
-        return commitment_path_hash(&self.commitment_path()).into();
+        commitment_path_hash(&self.commitment_path())
     }
 }
 pub fn commitment_path_hash(path_bytes: &[u8]) -> Vec<u8> {
-    return keccak256(path_bytes).into();
+    keccak256(path_bytes).into()
 }
 
 pub fn client_state_path(client_id: &ClientId) -> Vec<u8> {
@@ -77,7 +77,7 @@ pub fn packet_commitment_path(
     channel_id: &ChannelId,
     sequence: Sequence,
 ) -> Vec<u8> {
-    CommitmentPath::new(&port_id, &channel_id, sequence)
+    CommitmentPath::new(port_id, channel_id, sequence)
         .to_string()
         .into_bytes()
 }
@@ -182,7 +182,7 @@ impl ICommitment for Packet {
         let port_id = PortId::from_str(&self.source_port).unwrap();
         let channel_id = ChannelId::from_str(&self.source_channel).unwrap();
         let sequence = Sequence::from_str(&self.sequence.to_string()).unwrap();
-        return packet_commitment_path(&port_id, &channel_id, sequence);
+        packet_commitment_path(&port_id, &channel_id, sequence)
     }
 
     fn commitment(&self) -> Vec<u8> {
@@ -190,19 +190,19 @@ impl ICommitment for Packet {
         let revision_number = self
             .timeout_height
             .clone()
-            .and_then(|h| Some(h.revision_number))
+            .map(|h| h.revision_number)
             .unwrap_or(0);
         let revision_height = self
             .timeout_height
             .clone()
-            .and_then(|h| Some(h.revision_height))
+            .map(|h| h.revision_height)
             .unwrap_or(0);
-        return create_packet_commitment(
+        create_packet_commitment(
             &packet_data,
             revision_number,
             revision_height,
             self.timeout_timestamp,
-        );
+        )
     }
 }
 
@@ -235,7 +235,7 @@ mod tests {
             let msg_path = hex::decode(&msg.commitment_path).unwrap();
             let expected_key = keccak256(&msg_path);
             let msg_key = hex::decode(&msg.commitment_key).unwrap();
-            assert_eq!(hex::encode(&expected_key), hex::encode(&msg_key));
+            assert_eq!(hex::encode(expected_key), hex::encode(&msg_key));
 
             let packet =
                 Packet::decode(hex::decode(&msg.packet_encoded).unwrap().as_slice()).unwrap();

@@ -19,20 +19,18 @@ pub fn channel_open_confirm_validate(
     chan_end_on_b: &ChannelEnd,
 ) -> Result<(), ContractError> {
     if !chan_end_on_b.state_matches(&State::TryOpen) {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::InvalidChannelState {
-                channel_id: message.chan_id_on_b.clone(),
-                state: chan_end_on_b.state,
-            },
-        });
+        return Err(ChannelError::InvalidChannelState {
+            channel_id: message.chan_id_on_b.clone(),
+            state: chan_end_on_b.state,
+        })
+        .map_err(Into::<ContractError>::into);
     }
     if chan_end_on_b.connection_hops().len() != 1 {
-        return Err(ContractError::IbcChannelError {
-            error: ChannelError::InvalidConnectionHopsLength {
-                expected: 1,
-                actual: chan_end_on_b.connection_hops().len(),
-            },
-        });
+        return Err(ChannelError::InvalidConnectionHopsLength {
+            expected: 1,
+            actual: chan_end_on_b.connection_hops().len(),
+        })
+        .map_err(Into::<ContractError>::into);
     }
 
     Ok(())
@@ -66,9 +64,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     let response = from_binary::<LightClientResponse>(&res).unwrap();
                     let info = response.message_info;
                     let data = response.ibc_endpoint;
-                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
-                    let channel_id =
-                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
@@ -77,7 +74,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
-                    let module_id = cw_common::types::ModuleId::from(module_id);
+                    let module_id = module_id;
                     let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
@@ -101,15 +98,17 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("method", "channel_open_confirm_module_validation")
                         .add_submessage(on_chan_open_try))
                 }
-                None => Err(ContractError::IbcChannelError {
-                    error: ChannelError::Other {
-                        description: "Data from module is Missing".to_string(),
-                    },
-                }),
+                None => Err(ChannelError::Other {
+                    description: "Data from module is Missing".to_string(),
+                })
+                .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(error) => Err(ContractError::IbcChannelError {
-                error: ChannelError::VerifyChannelFailed(ClientError::Other { description: error }),
-            }),
+            cosmwasm_std::SubMsgResult::Err(error) => {
+                Err(ChannelError::VerifyChannelFailed(ClientError::Other {
+                    description: error,
+                }))
+                .map_err(Into::<ContractError>::into)
+            }
         }
     }
 }
@@ -137,8 +136,8 @@ pub fn on_chan_open_confirm_submessage(
     let counter_party_port_id = channel_end.counterparty().port_id.clone();
     let counter_party_channel = channel_end.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.ibc_port_id().to_string(),
-        channel_id: channel_id.ibc_channel_id().to_string(),
+        port_id: port_id.to_string(),
+        channel_id: channel_id.to_string(),
     };
     let counter_party = cosmwasm_std::IbcEndpoint {
         port_id: counter_party_port_id.to_string(),
@@ -148,11 +147,10 @@ pub fn on_chan_open_confirm_submessage(
         Order::Unordered => cosmwasm_std::IbcOrder::Unordered,
         Order::Ordered => cosmwasm_std::IbcOrder::Ordered,
         Order::None => {
-            return Err(ContractError::IbcChannelError {
-                error: ChannelError::UnknownOrderType {
-                    type_id: "None".to_string(),
-                },
+            return Err(ChannelError::UnknownOrderType {
+                type_id: "None".to_string(),
             })
+            .map_err(Into::<ContractError>::into)
         }
     };
     let ibc_channel = cosmwasm_std::IbcChannel::new(

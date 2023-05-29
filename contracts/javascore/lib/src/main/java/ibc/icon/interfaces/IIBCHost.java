@@ -39,7 +39,7 @@ public interface IIBCHost {
     boolean getPacketReceipt(String portId, String channelId, BigInteger sequence);
 
     @External(readonly = true)
-    String[] getCapability(byte[] name);
+    Address getCapability(byte[] name);
 
     @External(readonly = true)
     BigInteger getExpectedTimePerBlock();

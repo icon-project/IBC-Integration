@@ -91,12 +91,12 @@ pub fn execute(
                 packet_data.data,
                 src_endpoint,
                 dst_endpoint,
-                packet_data.seq_on_a.into(),
+                packet_data.sequence.into(),
                 timeout,
             );
 
             let message = cw_common::xcall_msg::ExecuteMsg::IbcPacketReceive {
-                msg: IbcPacketReceiveMsg::new(ibc_packet.clone(), info.sender.clone()),
+                msg: IbcPacketReceiveMsg::new(ibc_packet, info.sender.clone()),
             };
 
             let submessage: SubMsg<Empty> = SubMsg::reply_on_success(

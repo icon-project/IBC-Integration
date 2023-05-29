@@ -48,6 +48,7 @@ schemars = "0.8.12"
 serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.39" }
 cw-common = { path="../cw-common" }
+common = { path="../../../libraries/rust/common", default-features = false }
 hex= "*"
 
 [dev-dependencies]

@@ -1,8 +1,8 @@
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{
-    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+use crate::cw_types::{
+    CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg, CwPacketReceiveMsg,
+    CwPacketTimeoutMsg,
 };
+use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]
 pub enum ExecuteMsg {
@@ -28,27 +28,43 @@ pub enum ExecuteMsg {
 
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelOpen {
-        msg: IbcChannelOpenMsg,
+        msg: CwChannelOpenMsg,
     },
 
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelConnect {
-        msg: IbcChannelConnectMsg,
+        msg: CwChannelConnectMsg,
     },
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelClose {
-        msg: IbcChannelCloseMsg,
+        msg: CwChannelCloseMsg,
     },
     #[cfg(not(feature = "native_ibc"))]
     IbcPacketReceive {
-        msg: IbcPacketReceiveMsg,
+        msg: CwPacketReceiveMsg,
     },
     #[cfg(not(feature = "native_ibc"))]
     IbcPacketAck {
-        msg: IbcPacketAckMsg,
+        msg: CwPacketAckMsg,
     },
     #[cfg(not(feature = "native_ibc"))]
     IbcPacketTimeout {
-        msg: IbcPacketTimeoutMsg,
+        msg: CwPacketTimeoutMsg,
     },
+}
+
+#[cw_serde]
+#[derive(QueryResponses)]
+/// This is a Rust enum representing different types of queries that can be made to the contract. Each
+/// variant of the enum corresponds to a specific query and has a return type specified using the
+/// `#[returns]` attribute.
+pub enum QueryMsg {
+    #[returns(String)]
+    GetAdmin {},
+    #[returns(u64)]
+    GetTimeoutHeight {},
+    #[returns(u128)]
+    GetProtocolFee {},
+    #[returns(String)]
+    GetProtocolFeeHandler {},
 }

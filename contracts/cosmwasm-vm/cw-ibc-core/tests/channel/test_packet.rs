@@ -13,16 +13,16 @@ fn test_packet_send() {
         Version::new("ics20-1".to_string()),
     );
 
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default(),
+            Some(ConnectionId::default()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -34,30 +34,26 @@ fn test_packet_send() {
         get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
             .try_into()
             .unwrap();
-    packet.seq_on_a = 1.into();
+    packet.sequence = 1.into();
     packet.data = vec![0];
 
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             chan_end_on_a.clone(),
         )
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(
-            &mut deps.storage,
-            conn_id_on_a.clone().into(),
-            conn_end_on_a.clone(),
-        )
+        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
         .unwrap();
     contract
         .store_next_sequence_send(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             1.into(),
         )
         .unwrap();
@@ -73,9 +69,9 @@ fn test_packet_send() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -88,7 +84,7 @@ fn test_packet_send() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -101,7 +97,7 @@ fn test_packet_send() {
     let res = contract.send_packet(deps.as_mut(), packet);
     assert!(res.is_ok());
     let res = res.unwrap();
-    assert_eq!(res.clone().attributes[0].value, "send_packet");
+    assert_eq!(res.attributes[0].value, "send_packet");
     assert_eq!(res.events[0].ty, IbcEventType::SendPacket.as_str())
 }
 
@@ -116,13 +112,15 @@ fn test_packet_send_fail_channel_not_found() {
         get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
             .try_into()
             .unwrap();
-    packet.seq_on_a = 1.into();
+    packet.sequence = 1.into();
     packet.data = vec![0];
     contract.send_packet(deps.as_mut(), packet).unwrap();
 }
 
 #[test]
-#[should_panic(expected = "ibc::core::ics04_channel::packet::Sequence")]
+#[should_panic(
+    expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })"
+)]
 fn test_packet_send_fail_misiing_sequense() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
@@ -135,16 +133,16 @@ fn test_packet_send_fail_misiing_sequense() {
         Version::new("ics20-1".to_string()),
     );
 
-    let conn_prefix = ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().ibc_client_id().clone(),
+        ClientId::default(),
         ConnectionCounterparty::new(
-            ClientId::default().ibc_client_id().clone(),
-            Some(ConnectionId::default().connection_id().clone()),
+            ClientId::default(),
+            Some(ConnectionId::default()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -156,24 +154,20 @@ fn test_packet_send_fail_misiing_sequense() {
         get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
             .try_into()
             .unwrap();
-    packet.seq_on_a = 1.into();
+    packet.sequence = 1.into();
     packet.data = vec![0];
 
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             chan_end_on_a.clone(),
         )
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(
-            &mut deps.storage,
-            conn_id_on_a.clone().into(),
-            conn_end_on_a.clone(),
-        )
+        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
         .unwrap();
 
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -187,9 +181,9 @@ fn test_packet_send_fail_misiing_sequense() {
     .try_into()
     .unwrap();
 
-    let client = to_vec(&client_state);
+    let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client.unwrap())
+        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -202,7 +196,7 @@ fn test_packet_send_fail_misiing_sequense() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = to_vec(&consenus_state).unwrap();
+    let consenus_state = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,

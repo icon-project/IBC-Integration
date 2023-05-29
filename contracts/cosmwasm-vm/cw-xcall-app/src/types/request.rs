@@ -8,13 +8,21 @@ pub struct CallServiceMessageRequest {
     from: String,
     to: String,
     sequence_no: u128,
+    protocols: Vec<String>,
     rollback: bool,
     data: Nullable<Vec<u8>>,
 }
 
 impl CallServiceMessageRequest {
     // TODO : Change to Option of Bytes
-    pub fn new(from: String, to: String, sequence_no: u128, rollback: bool, data: Vec<u8>) -> Self {
+    pub fn new(
+        from: String,
+        to: String,
+        sequence_no: u128,
+        protocols: Vec<String>,
+        rollback: bool,
+        data: Vec<u8>,
+    ) -> Self {
         let data_bytes = match data.is_empty() {
             true => None,
             false => Some(data),
@@ -24,6 +32,7 @@ impl CallServiceMessageRequest {
             to,
             sequence_no,
             rollback,
+            protocols,
             data: Nullable::new(data_bytes),
         }
     }
@@ -52,28 +61,39 @@ impl CallServiceMessageRequest {
                 error: error.to_string(),
             })?)
     }
+
+    pub fn protocols(&self) -> &Vec<String> {
+        &self.protocols
+    }
 }
 
 impl Encodable for CallServiceMessageRequest {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
-        stream
-            .begin_list(5)
-            .append(&self.from)
-            .append(&self.to)
-            .append(&self.sequence_no)
-            .append(&self.rollback)
-            .append(&self.data);
+        stream.begin_list(6);
+        stream.append(&self.from);
+        stream.append(&self.to);
+        stream.begin_list(self.protocols.len());
+        for protocol in self.protocols.iter() {
+            stream.append(protocol);
+        }
+
+        stream.append(&self.sequence_no);
+        stream.append(&self.rollback);
+        stream.append(&self.data);
     }
 }
 
 impl Decodable for CallServiceMessageRequest {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+        let rlp_protocols = rlp.at(2)?;
+        let list: Vec<String> = rlp_protocols.as_list()?;
         Ok(Self {
             from: rlp.val_at(0)?,
             to: rlp.val_at(1)?,
-            sequence_no: rlp.val_at(2)?,
-            rollback: rlp.val_at(3)?,
-            data: rlp.val_at(4)?,
+            protocols: list,
+            sequence_no: rlp.val_at(3)?,
+            rollback: rlp.val_at(4)?,
+            data: rlp.val_at(5)?,
         })
     }
 }
