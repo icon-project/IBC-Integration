@@ -10,3 +10,10 @@ COPY ./godWallet.json /home/relayer/keys/godwallet.json
 ## Contracts
 Currently the relay is slightly behind on the newest changes to ICON
 used optimized jars from the gochain-btp repo. Dapp can be used from this repo
+
+
+## Config Setup
+
+config value supports expanding environment variables, e.g. ${HOME}, ${USER}, ${PWD}, ${BASE_PATH}
+
+`BASE_PATH` environment value is also available, it is the path to the root of the project. 
