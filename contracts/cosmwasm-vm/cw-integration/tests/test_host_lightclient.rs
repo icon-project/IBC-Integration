@@ -12,7 +12,9 @@ use cw_icon_light_client;
 use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
 use prost::Message;
 use setup::{init_ibc_core_contract, init_light_client, setup_context, TestContext};
-use test_utils::{get_event, get_event_name, get_test_signed_headers, load_raw_messages, RawPayload};
+use test_utils::{
+    get_event, get_event_name, get_test_signed_headers, load_raw_messages, RawPayload,
+};
 
 fn setup_test() -> TestContext {
     let mut context = setup_context();
@@ -40,35 +42,22 @@ pub fn call_register_client_type(ctx: &mut TestContext) -> Result<AppResponse, A
     res
 }
 
-pub fn call_create_client(
-    ctx: &mut TestContext,
-    msg:HexString,
-) -> Result<AppResponse, AppError> {
-   
-   
+pub fn call_create_client(ctx: &mut TestContext, msg: HexString) -> Result<AppResponse, AppError> {
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core().clone(),
-        &CoreMsg::ExecuteMsg::CreateClient {
-            msg
-        },
+        &CoreMsg::ExecuteMsg::CreateClient { msg },
         &[],
     );
 
     res
 }
 
-pub fn call_update_client(
-    ctx: &mut TestContext,
-    msg:HexString,
-) -> Result<AppResponse, AppError> {
-   
+pub fn call_update_client(ctx: &mut TestContext, msg: HexString) -> Result<AppResponse, AppError> {
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core().clone(),
-        &CoreMsg::ExecuteMsg::UpdateClient {
-            msg
-        },
+        &CoreMsg::ExecuteMsg::UpdateClient { msg },
         &[],
     );
 
@@ -79,11 +68,10 @@ pub fn call_connection_open_init(
     ctx: &mut TestContext,
     msg: HexString,
 ) -> Result<AppResponse, AppError> {
-    
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core().clone(),
-        &CoreMsg::ExecuteMsg::ConnectionOpenInit { msg},
+        &CoreMsg::ExecuteMsg::ConnectionOpenInit { msg },
         &[],
     );
 
@@ -94,29 +82,25 @@ pub fn call_connection_open_try(
     ctx: &mut TestContext,
     msg: HexString,
 ) -> Result<AppResponse, AppError> {
-    
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core().clone(),
-        &CoreMsg::ExecuteMsg::ConnectionOpenTry { msg},
+        &CoreMsg::ExecuteMsg::ConnectionOpenTry { msg },
         &[],
     );
 
     res
 }
 
-
-
 pub fn call_connection_open_ack(
     ctx: &mut TestContext,
     msg: HexString,
     client_id: &str,
 ) -> Result<AppResponse, AppError> {
-    
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core().clone(),
-        &CoreMsg::ExecuteMsg::ConnectionOpenAck { msg},
+        &CoreMsg::ExecuteMsg::ConnectionOpenAck { msg },
         &[],
     );
 
@@ -128,11 +112,10 @@ pub fn call_connection_open_confirm(
     msg: HexString,
     client_id: &str,
 ) -> Result<AppResponse, AppError> {
-    
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core().clone(),
-        &CoreMsg::ExecuteMsg::ConnectionOpenConfirm { msg},
+        &CoreMsg::ExecuteMsg::ConnectionOpenConfirm { msg },
         &[],
     );
 
@@ -151,7 +134,10 @@ fn test_create_client() {
     let mut ctx = setup_test();
     call_register_client_type(&mut ctx).unwrap();
     let signed_headers: Vec<RawPayload> = load_raw_messages();
-    let result = call_create_client(&mut ctx, HexString::from_str(signed_headers[0].message.as_str()));
+    let result = call_create_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[0].message.as_str()),
+    );
     println!("{:?}", &result);
     assert!(result.is_ok());
 }
@@ -160,10 +146,17 @@ fn test_update_client() {
     let mut ctx = setup_test();
     call_register_client_type(&mut ctx).unwrap();
     let signed_headers: Vec<RawPayload> = load_raw_messages();
-    let response = call_create_client(&mut ctx, HexString::from_str(signed_headers[0].message.as_str())).unwrap();
+    let response = call_create_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[0].message.as_str()),
+    )
+    .unwrap();
     let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
     let client_id = event.get("client_id").unwrap();
-    let result = call_update_client(&mut ctx, HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()));
+    let result = call_update_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()),
+    );
     println!("{:?}", &result);
     assert!(result.is_ok());
 }
@@ -173,13 +166,24 @@ fn test_connection_open_init() {
     let mut ctx = setup_test();
     call_register_client_type(&mut ctx).unwrap();
     let signed_headers: Vec<RawPayload> = load_raw_messages();
-    let response = call_create_client(&mut ctx, HexString::from_str(signed_headers[0].message.as_str())).unwrap();
+    let response = call_create_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[0].message.as_str()),
+    )
+    .unwrap();
     let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
     let client_id = event.get("client_id").unwrap();
-    let result = call_update_client(&mut ctx, HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()));
+    let result = call_update_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()),
+    );
     println!("{:?}", &result);
     assert!(result.is_ok());
-    
 
-
+    let result = call_connection_open_try(
+        &mut ctx,
+        HexString::from_str(signed_headers[1].message.clone().as_str()),
+    );
+    println!("this is nepalllllll{:?}", &result);
+    assert!(result.is_ok());
 }

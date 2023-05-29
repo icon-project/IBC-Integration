@@ -1,4 +1,5 @@
-use cw_common::client_msg::VerifyConnectionPayload;
+use common::utils::keccak256;
+use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString};
 use prost::DecodeError;
 
 use super::*;
@@ -65,7 +66,7 @@ impl<'a> CwIbcCoreContext<'a> {
             None => self.get_compatible_versions(),
         };
 
-        let connection_end = ConnectionEnd::new(
+        let connection_end: ConnectionEnd = ConnectionEnd::new(
             State::Init,
             message.client_id_on_a,
             message.counterparty.clone(),
@@ -197,7 +198,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_address =
             self.get_client(deps.as_ref().storage, client_id_on_a.clone().into())?;
 
-        let expected_conn_end_on_b = ConnectionEnd::new(
+        let expected_conn_end_on_b: ConnectionEnd = ConnectionEnd::new(
             State::TryOpen,
             client_id_on_b.clone(),
             Counterparty::new(
@@ -424,6 +425,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 
+        // no idea what is this  is this suppose to be like this ?????
         let client_consensus_state_path_on_b = commitment::consensus_state_path(
             &message.client_id_on_b,
             &message.consensus_height_of_b_on_a,
@@ -447,26 +449,49 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(|e| Into::<ContractError>::into(e))?;
 
-        let connection_path =
-            commitment::connection_commitment_key(&message.counterparty.connection_id.clone().unwrap());
+        let connection_path = commitment::connection_commitment_key(
+            &message.counterparty.connection_id.clone().unwrap(),
+        );
+        println!("connkey: {:?}", HexString::from_bytes(&connection_path));
+        println!(
+            "root: {:?} ",
+            HexString::from_bytes(&consensus_state_of_a_on_b.root().as_bytes().to_vec())
+        );
+
+        println!(
+            "expected counterpart connection_end:{:?}",
+            HexString::from_bytes(&expected_conn_end_on_a.encode_vec().unwrap())
+        );
+
         let verify_connection_state = VerifyConnectionState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
             message.proof_conn_end_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
-            expected_conn_end_on_a.encode_vec().map_err()?,
+            keccak256(&expected_conn_end_on_a.encode_vec().unwrap()).to_vec(),
         );
 
-        let client_state_path = commitment::client_state_path(&message.client_id_on_b);
+        // this is verifying tendermint client state and shouldn't have icon-client as an argument
+        println!(
+            "payload client state path {:?}",
+            &message.counterparty.client_id()
+        );
+        let client_state_path =
+            commitment::client_state_commitment_key(&message.counterparty.client_id());
+        println!(
+            "the clientstate value is  {:?}",
+            message.client_state_of_b_on_a.value.clone()
+        );
         let verify_client_full_state = VerifyClientFullState::new(
             message.proofs_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
             message.proof_client_state_of_b_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             client_state_path,
-            to_vec(&message.client_state_of_b_on_a).map_err(ContractError::Std)?,
+            keccak256(&message.client_state_of_b_on_a.value.clone()).to_vec(),
         );
+
         let consensus_state_path_on_a = commitment::consensus_state_path(
             &message.client_id_on_b,
             &message.consensus_height_of_b_on_a,
@@ -499,6 +524,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 delay_period: message.delay_period.as_secs(),
             },
         };
+
         let client_message =
             crate::ics04_channel::LightClientMessage::VerifyConnectionOpenTry(payload);
 

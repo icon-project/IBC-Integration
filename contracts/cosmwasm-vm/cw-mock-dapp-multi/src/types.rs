@@ -21,7 +21,7 @@ impl StorageKey {
             StorageKey::Request => "message_request",
             StorageKey::SequenceNo => "sequenceno",
             StorageKey::RollBack => "rollback",
-            StorageKey::Connections=>"connections",
+            StorageKey::Connections => "connections",
         }
     }
 }
@@ -36,7 +36,7 @@ pub enum ExecuteMsg {
     HandleCallMessage {
         from: String,
         data: Vec<u8>,
-        protocols:Vec<String>
+        protocols: Vec<String>,
     },
     XCallMessage {
         data: Vec<u8>,
@@ -48,10 +48,10 @@ pub enum ExecuteMsg {
         fail_addr: String,
     },
     AddConnection {
-        src_endpoint:String,
-        dest_endpoint:String,
-        network_id:String,
-    }
+        src_endpoint: String,
+        dest_endpoint: String,
+        network_id: String,
+    },
 }
 
 #[cw_serde]

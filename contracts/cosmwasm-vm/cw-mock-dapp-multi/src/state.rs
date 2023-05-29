@@ -4,8 +4,8 @@ use super::*;
 
 #[cw_serde]
 pub struct Connection {
-    pub src_endpoint:String,
-    pub dest_endpoint:String,
+    pub src_endpoint: String,
+    pub dest_endpoint: String,
 }
 
 pub struct CwMockService<'a> {
@@ -29,7 +29,7 @@ impl<'a> CwMockService<'a> {
             ibc_data: Map::new(StorageKey::Request.as_str()),
             xcall_address: Item::new(StorageKey::Address.as_str()),
             rollback: Map::new(StorageKey::RollBack.as_str()),
-            connections: Map::new(StorageKey::Connections.as_str())
+            connections: Map::new(StorageKey::Connections.as_str()),
         }
     }
 
@@ -49,16 +49,33 @@ impl<'a> CwMockService<'a> {
         &self.rollback
     }
 
-    pub fn connections(&self)->&Map<'a, String, Vec<Connection>>{
+    pub fn connections(&self) -> &Map<'a, String, Vec<Connection>> {
         &self.connections
     }
 
-    pub fn add_connection(&self,store:&mut dyn Storage, network_id:String,conn:Connection)->Result<(),ContractError>{
-        let mut connections=self.connections.load(store, network_id.clone()).unwrap_or(Vec::<Connection>::new());
+    pub fn add_connection(
+        &self,
+        store: &mut dyn Storage,
+        network_id: String,
+        conn: Connection,
+    ) -> Result<(), ContractError> {
+        let mut connections = self
+            .connections
+            .load(store, network_id.clone())
+            .unwrap_or(Vec::<Connection>::new());
         connections.push(conn);
-        self.connections.save(store, network_id, &connections).map_err(|e|ContractError::Std(e))
+        self.connections
+            .save(store, network_id, &connections)
+            .map_err(|e| ContractError::Std(e))
     }
-    pub fn get_connections(&self,store: &dyn Storage,network_id:String)->Result<Vec<Connection>,ContractError>{
-        return self.connections.load(store, network_id.clone()).map_err(|_e|ContractError::ConnectionNotFound { network_id })
+    pub fn get_connections(
+        &self,
+        store: &dyn Storage,
+        network_id: String,
+    ) -> Result<Vec<Connection>, ContractError> {
+        return self
+            .connections
+            .load(store, network_id.clone())
+            .map_err(|_e| ContractError::ConnectionNotFound { network_id });
     }
 }

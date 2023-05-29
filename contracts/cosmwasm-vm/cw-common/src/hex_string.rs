@@ -35,12 +35,12 @@ impl HexString {
         HexString(hex::encode(bytes))
     }
 
-    pub fn from_str(str:&str)->Self {
+    pub fn from_str(str: &str) -> Self {
         HexString(str.to_owned())
     }
 }
 
-impl From<&str> for HexString{
+impl From<&str> for HexString {
     fn from(value: &str) -> Self {
         HexString(value.to_owned())
     }

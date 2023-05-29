@@ -8,14 +8,15 @@ mod setup;
 #[test]
 fn test_cross_contract_rollback() {
     let mut app = setup_context();
-    app=init_mock_dapp_contract(app);
-    let caller =app.get_dapp();
-    app=init_mock_dapp_contract(app);
+    app = init_mock_dapp_contract(app);
+    let caller = app.get_dapp();
+    app = init_mock_dapp_contract(app);
     let success = app.get_dapp();
-    app=init_mock_dapp_contract(app);
+    app = init_mock_dapp_contract(app);
     let fail = app.get_dapp();
     let sender = Addr::unchecked("sender");
-    let count_before: u64 = app.app
+    let count_before: u64 = app
+        .app
         .wrap()
         .query_wasm_smart(&success, &cw_mock_dapp::msg::QueryMsg::GetSequence {})
         .unwrap();
@@ -31,7 +32,8 @@ fn test_cross_contract_rollback() {
 
     println!("{:?}", result);
 
-    let count_after: u64 = app.app
+    let count_after: u64 = app
+        .app
         .wrap()
         .query_wasm_smart(&success, &cw_mock_dapp::msg::QueryMsg::GetSequence {})
         .unwrap();

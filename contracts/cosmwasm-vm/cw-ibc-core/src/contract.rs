@@ -94,18 +94,18 @@ impl<'a> CwIbcCoreContext<'a> {
                 client_type,
                 client_address,
             } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
+                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let client_type = IbcClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
             CoreExecuteMsg::CreateClient { msg } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
+                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let message: IbcMsgCreateClient =
                     Self::from_raw::<RawMsgCreateClient, IbcMsgCreateClient>(&msg)?;
                 self.create_client(deps, info, message)
             }
             CoreExecuteMsg::UpdateClient { msg } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
+                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let message: IbcMsgUpdateClient =
                     Self::from_raw::<RawMsgUpdateClient, IbcMsgUpdateClient>(&msg)?;
                 self.update_client(deps, info, message)
