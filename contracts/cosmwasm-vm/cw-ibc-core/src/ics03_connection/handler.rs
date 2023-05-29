@@ -1,5 +1,6 @@
 use common::utils::keccak256;
 use cw_common::{client_msg::VerifyConnectionPayload, from_binary_response, hex_string::HexString};
+use debug_print::debug_println;
 use prost::DecodeError;
 
 use super::*;
@@ -157,12 +158,14 @@ impl<'a> CwIbcCoreContext<'a> {
         info: MessageInfo,
         msg: MsgConnectionOpenAck,
     ) -> Result<Response, ContractError> {
+        debug_println!("Connection Open Ack");
         let host_height = self
             .host_height()
             .map_err(|_| ConnectionError::Other {
                 description: "failed to get host height".to_string(),
             })
             .map_err(|e| Into::<ContractError>::into(e))?;
+        debug_println!("Connection Open Ack {:?}",host_height);
         if msg.consensus_height_of_a_on_b > host_height {
             return Err(ConnectionError::InvalidConsensusHeight {
                 target_height: msg.consensus_height_of_a_on_b,
@@ -170,8 +173,10 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(|e| Into::<ContractError>::into(e));
         }
+        debug_println!("Consensus Height Valid");
 
         self.validate_self_client(msg.client_state_of_a_on_b.clone())?;
+        debug_println!("Self Client Valid");
         let conn_end_on_a = self.connection_end(deps.storage, msg.conn_id_on_a.clone().into())?;
         let client_id_on_a = conn_end_on_a.client_id();
         let client_id_on_b = conn_end_on_a.counterparty().client_id();
@@ -185,8 +190,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|e| Into::<ContractError>::into(e));
         }
 
+        debug_println!("State Matched");
+
         let client_cons_state_path_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proofs_height_on_b)?;
+           
         let consensus_state_of_b_on_a = self
             .consensus_state(deps.storage, client_id_on_a, &msg.proofs_height_on_b)
             .map_err(|_| ConnectionError::Other {
@@ -209,22 +217,23 @@ impl<'a> CwIbcCoreContext<'a> {
             vec![msg.version.clone()],
             conn_end_on_a.delay_period(),
         );
-        let connection_path = commitment::connection_path(&msg.conn_id_on_b);
+        debug_println!("Expected conn end {:?}",expected_conn_end_on_b);
+        let connection_path = commitment::connection_commitment_key(&msg.conn_id_on_b);
         let verify_connection_state = VerifyConnectionState::new(
             msg.proofs_height_on_b.to_string(),
             to_vec(&prefix_on_b)?,
-            to_vec(&msg.proof_conn_end_on_b)?,
+            msg.proof_conn_end_on_b.into(),
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             connection_path,
-            to_vec(&expected_conn_end_on_b)?,
-            keccak256(&to_vec(&expected_conn_end_on_b)?).to_vec(),
+            expected_conn_end_on_b.encode_vec().unwrap(),
+            keccak256(&expected_conn_end_on_b.encode_vec().unwrap()).to_vec(),
         );
 
-        let client_state_path = commitment::client_state_path(client_id_on_a);
+        let client_state_path = commitment::client_state_commitment_key(client_id_on_a);
         let verify_client_full_state = VerifyClientFullState::new(
             msg.proofs_height_on_b.to_string(),
             to_vec(&prefix_on_b)?,
-            to_vec(&msg.proof_client_state_of_a_on_b)?,
+            msg.proof_client_state_of_a_on_b.into(),
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             client_state_path,
             msg.client_state_of_a_on_b.value.clone(),
@@ -236,7 +245,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_client_consensus_state = VerifyClientConsensusState::new(
             msg.proofs_height_on_b.to_string(),
             to_vec(&prefix_on_b)?,
-            to_vec(&msg.proof_consensus_state_of_a_on_b)?,
+            msg.proof_consensus_state_of_a_on_b.into(),
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             consensus_state_path_on_b,
             client_cons_state_path_on_a.clone().as_bytes(),
@@ -262,6 +271,7 @@ impl<'a> CwIbcCoreContext<'a> {
             msg: to_binary(&client_message)?,
             funds: info.funds,
         });
+        debug_println!("Validating On Light Client");
 
         let sub_message = SubMsg::reply_always(wasm_execute_message, EXECUTE_CONNECTION_OPENACK);
 
@@ -290,11 +300,13 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
+        debug_println!("Open Ack Reply");
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let response: OpenAckResponse =
                         from_binary(&data).map_err(ContractError::Std)?;
+                        debug_println!("Response Decoded {:?}",response);
 
                     let connection_id =
                         IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
@@ -317,6 +329,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         return Err(ConnectionError::ConnectionMismatch { connection_id })
                             .map_err(|e| Into::<ContractError>::into(e));
                     }
+                    debug_println!("Conn end state matches");
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
@@ -361,8 +374,11 @@ impl<'a> CwIbcCoreContext<'a> {
                         counterparty.client_id().clone().into(),
                     );
 
-                    self.store_connection(deps.storage, connection_id.clone().into(), conn_end)
+                    self.store_connection(deps.storage, connection_id.clone().into(), conn_end.clone())
                         .unwrap();
+                    debug_println!("Connection Stored");
+
+                    self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end).unwrap();
 
                     Ok(Response::new()
                         .add_attribute("method", "execute_connection_open_ack")
@@ -711,35 +727,42 @@ impl<'a> CwIbcCoreContext<'a> {
         info: MessageInfo,
         msg: MsgConnectionOpenConfirm,
     ) -> Result<Response, ContractError> {
+        debug_println!("Connection Open Confirm");
         let conn_end_on_b = self.connection_end(deps.storage, msg.conn_id_on_b.clone().into())?;
+        debug_println!("Our Connection {:?}",conn_end_on_b);
         let client_id_on_b = conn_end_on_b.client_id();
         let client_id_on_a = conn_end_on_b.counterparty().client_id();
+        debug_println!("");
         if !conn_end_on_b.state_matches(&State::TryOpen) {
             return Err(ConnectionError::ConnectionMismatch {
                 connection_id: msg.conn_id_on_b,
             })
             .map_err(|e| Into::<ContractError>::into(e));
         }
+        debug_println!("Connection State Matched");
         let _client_state_of_a_on_b = self
             .client_state(deps.storage, client_id_on_b)
             .map_err(|_| ConnectionError::Other {
                 description: "failed to fetch client state".to_string(),
             })
             .map_err(|e| Into::<ContractError>::into(e))?;
+        debug_println!("Client State Decoded");
         let _client_cons_state_path_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
+            debug_println!("Consensus State Path Decoded");
         let consensus_state_of_a_on_b = self
             .consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)
             .map_err(|_| ConnectionError::Other {
                 description: "failed to fetch consensus state".to_string(),
             })
             .map_err(|e| Into::<ContractError>::into(e))?;
+        debug_println!("Consensus State Decoded");
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
         let prefix_on_b = self.commitment_prefix();
 
         let client_address =
             self.get_client(deps.as_ref().storage, client_id_on_b.clone().into())?;
-
+           
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Open,
             client_id_on_a.clone(),
@@ -756,12 +779,13 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_connection_state = VerifyConnectionState::new(
             msg.proof_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
-            to_vec(&msg.proof_conn_end_on_a).map_err(ContractError::Std)?,
+            msg.proof_conn_end_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
             expected_conn_end_on_a.encode_vec().unwrap(),
             keccak256(&expected_conn_end_on_a.encode_vec().unwrap()).to_vec(),
         );
+        debug_println!("Verify Connection State {:?}",verify_connection_state);
         let client_message = crate::ics04_channel::LightClientMessage::VerifyOpenConfirm {
             client_id: client_id_on_b.to_string(),
             verify_connection_state,
@@ -778,10 +802,10 @@ impl<'a> CwIbcCoreContext<'a> {
             msg: to_binary(&client_message).unwrap(),
             funds: info.funds,
         });
-
+       
         let sub_message =
             SubMsg::reply_always(wasm_execute_message, EXECUTE_CONNECTION_OPENCONFIRM);
-
+            debug_println!("Verify to light client");
         Ok(Response::new()
             .add_submessage(sub_message)
             .add_attribute("method", "connection_open_confirm"))
@@ -810,11 +834,13 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
+        debug_println!("OpenConfirm Reply Received");
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let response: OpenConfirmResponse =
                         from_binary(&data).map_err(ContractError::Std)?;
+                        debug_println!("OpenConfirm Response Decoded {:?}",response);
 
                     let connection_id =
                         IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
@@ -822,21 +848,23 @@ impl<'a> CwIbcCoreContext<'a> {
                                 error: DecodeError::new(error.to_string()),
                             }
                         })?;
-
+                        debug_println!("Parsed Connection Id {:?}",connection_id);
                     let mut conn_end =
                         self.connection_end(deps.storage, connection_id.clone().into())?;
+                        debug_println!("Stored Connection End {:?}",conn_end);
 
                     if !conn_end.state_matches(&State::TryOpen) {
                         return Err(ConnectionError::ConnectionMismatch { connection_id })
                             .map_err(|e| Into::<ContractError>::into(e));
                     }
+                    debug_println!("Stored Connection State Matched");
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
                             ContractError::IbcDecodeError {
                                 error: DecodeError::new(error.to_string()),
                             }
                         })?;
-
+                        debug_println!("CounterParty ClientId {:?}",counter_party_client_id);
                     let counterparty_conn_id = match response.counterparty_connection_id.is_empty()
                     {
                         true => None,
@@ -847,7 +875,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             Some(connection_id)
                         }
                     };
-
+                    debug_println!("CounterParty ConnId {:?}",counterparty_conn_id);
                     let counterparty_prefix =
                         CommitmentPrefix::try_from(response.counterparty_prefix)
                             .map_err(|error| ConnectionError::Other {
@@ -860,10 +888,11 @@ impl<'a> CwIbcCoreContext<'a> {
                         counterparty_conn_id.clone(),
                         counterparty_prefix,
                     );
-
+                    debug_println!("CounterParty  {:?}",counterparty);
                     conn_end.set_state(State::Open);
 
                     let counter_conn_id = ConnectionId::from(counterparty_conn_id.unwrap());
+                    debug_println!("CounterParty ConnId {:?}",counter_conn_id);
 
                     let event = create_open_confirm_event(
                         connection_id.clone().into(),
@@ -872,9 +901,14 @@ impl<'a> CwIbcCoreContext<'a> {
                         counterparty.client_id().clone().into(),
                     );
 
-                    self.store_connection(deps.storage, connection_id.clone().into(), conn_end)
+                    self.store_connection(deps.storage, connection_id.clone().into(), conn_end.clone())
                         .unwrap();
+                    debug_println!("Connection Stored");
 
+                    self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end).unwrap();
+
+                    debug_println!("Commitment Stored Stored");
+                   
                     Ok(Response::new()
                         .add_attribute("method", "execute_connection_open_confirm")
                         .add_attribute("connection_id", connection_id.as_str())
