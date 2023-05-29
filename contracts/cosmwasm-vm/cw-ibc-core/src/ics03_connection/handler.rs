@@ -1,5 +1,5 @@
 use common::utils::keccak256;
-use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString, from_binary_response};
+use cw_common::{client_msg::VerifyConnectionPayload, from_binary_response, hex_string::HexString};
 use prost::DecodeError;
 
 use super::*;
