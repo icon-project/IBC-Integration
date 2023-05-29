@@ -72,6 +72,7 @@ pub struct VerifyConnectionState {
     pub root: Vec<u8>,
     pub counterparty_conn_end_path: Vec<u8>,
     pub expected_counterparty_connection_end: Vec<u8>,
+    pub expected_counterparty_connection_end_hash: Vec<u8>,
 }
 impl VerifyConnectionState {
     pub fn new(
@@ -81,6 +82,7 @@ impl VerifyConnectionState {
         root: Vec<u8>,
         counterparty_conn_end_path: Vec<u8>,
         expected_counterparty_connection_end: Vec<u8>,
+        expected_counterparty_connection_end_hash: Vec<u8>,
     ) -> Self {
         Self {
             proof_height,
@@ -89,6 +91,7 @@ impl VerifyConnectionState {
             root,
             counterparty_conn_end_path,
             expected_counterparty_connection_end,
+            expected_counterparty_connection_end_hash
         }
     }
 }
@@ -101,6 +104,7 @@ pub struct VerifyClientFullState {
     pub root: Vec<u8>,
     pub client_state_path: Vec<u8>,
     pub expected_client_state: Vec<u8>,
+    pub expected_client_state_hash: Vec<u8>,
 }
 impl VerifyClientFullState {
     pub fn new(
@@ -110,6 +114,7 @@ impl VerifyClientFullState {
         root: Vec<u8>,
         client_state_path: Vec<u8>,
         expected_client_state: Vec<u8>,
+        expected_client_state_hash:Vec<u8>,
     ) -> Self {
         Self {
             proof_height,
@@ -118,6 +123,7 @@ impl VerifyClientFullState {
             root,
             client_state_path,
             expected_client_state,
+            expected_client_state_hash
         }
     }
 }

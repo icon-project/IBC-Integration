@@ -377,7 +377,7 @@ pub fn validate_connection_state(
         0,
         &proofs_decoded.proofs,
         &state.counterparty_conn_end_path,
-        &state.expected_counterparty_connection_end,
+        &state.expected_counterparty_connection_end_hash,
     )?;
     Ok(result)
 }
@@ -398,7 +398,7 @@ pub fn validate_client_state(
         0,
         &proofs_decoded.proofs,
         &state.client_state_path,
-        &state.expected_client_state,
+        &state.expected_client_state_hash,
     )?;
     Ok(result)
 }

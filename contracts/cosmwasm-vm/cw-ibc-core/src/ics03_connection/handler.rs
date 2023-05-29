@@ -1,5 +1,5 @@
 use common::utils::keccak256;
-use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString};
+use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString, from_binary_response};
 use prost::DecodeError;
 
 use super::*;
@@ -217,6 +217,7 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             connection_path,
             to_vec(&expected_conn_end_on_b)?,
+            keccak256(&to_vec(&expected_conn_end_on_b)?).to_vec(),
         );
 
         let client_state_path = commitment::client_state_path(client_id_on_a);
@@ -226,7 +227,8 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&msg.proof_client_state_of_a_on_b)?,
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             client_state_path,
-            to_vec(&msg.client_state_of_a_on_b.clone())?,
+            msg.client_state_of_a_on_b.value.clone(),
+            keccak256(&msg.client_state_of_a_on_b.value.clone()).to_vec(),
         );
 
         let consensus_state_path_on_b =
@@ -473,6 +475,7 @@ impl<'a> CwIbcCoreContext<'a> {
             message.proof_conn_end_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
+            expected_conn_end_on_a.encode_vec().unwrap().to_vec(),
             keccak256(&expected_conn_end_on_a.encode_vec().unwrap()).to_vec(),
         );
 
@@ -493,6 +496,7 @@ impl<'a> CwIbcCoreContext<'a> {
             message.proof_client_state_of_b_on_a.into(),
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             client_state_path,
+            message.client_state_of_b_on_a.value.clone().to_vec(),
             keccak256(&message.client_state_of_b_on_a.value.clone()).to_vec(),
         );
 
@@ -561,7 +565,7 @@ impl<'a> CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let response: OpenTryResponse =
-                        from_binary(&data).map_err(ContractError::Std)?;
+                        from_binary_response(&data).map_err(ContractError::Std)?;
 
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
@@ -721,7 +725,8 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&msg.proof_conn_end_on_a).map_err(ContractError::Std)?,
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
-            to_vec(&expected_conn_end_on_a).map_err(ContractError::Std)?,
+            expected_conn_end_on_a.encode_vec().unwrap(),
+            keccak256(&expected_conn_end_on_a.encode_vec().unwrap()).to_vec(),
         );
         let client_message = crate::ics04_channel::LightClientMessage::VerifyOpenConfirm {
             client_id: client_id_on_b.to_string(),
