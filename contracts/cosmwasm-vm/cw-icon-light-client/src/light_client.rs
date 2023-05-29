@@ -6,6 +6,7 @@ use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::traits::AnyTypes;
 use common::utils::{calculate_root, keccak256};
 
+use cw_common::hex_string::HexString;
 use prost::Message;
 
 pub struct IconClient<'a> {
@@ -186,11 +187,24 @@ impl ILightClient for IconClient<'_> {
             return Err(ContractError::ClientStateFrozen(state.frozen_height));
         }
 
-        let _ =
-            self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
-        let consensus_state = self.context.get_consensus_state(&client_id, height)?;
+        // let _ =
+        //     self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
+        let consensus_state: ConsensusState =
+            self.context.get_consensus_state(&client_id, height)?;
+        println!("lightClient path {:?}", HexString::from_bytes(path));
+        println!("lightClient value{:?}", HexString::from_bytes(value));
         let leaf = keccak256(&[path, value].concat());
+        println!("leaf is :{:?}", HexString::from_bytes(&leaf));
+
         let message_root = calculate_root(leaf, proof);
+        println!(
+            "actual message root {:?} ",
+            hex::encode(consensus_state.message_root.clone())
+        );
+        println!(
+            "calculated Message Root : {:?}",
+            HexString::from_bytes(&message_root)
+        );
         if consensus_state.message_root != message_root {
             return Err(ContractError::InvalidMessageRoot(hex::encode(message_root)));
         }

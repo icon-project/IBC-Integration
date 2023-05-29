@@ -24,6 +24,9 @@ pub fn calculate_root(leaf: [u8; 32], pathes: &[MerkleNode]) -> [u8; 32] {
         let input = if path.dir == 0 {
             [path.value.clone(), temp.to_vec()].concat()
         } else {
+            if path.value.len() == 0 {
+                continue;
+            }
             [temp.to_vec(), path.value.clone()].concat()
         };
         let out = keccak256(&input);

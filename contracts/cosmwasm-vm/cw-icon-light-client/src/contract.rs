@@ -248,23 +248,27 @@ pub fn execute(
                 .set_data(data))
         }
         ExecuteMsg::VerifyConnectionOpenTry(state) => {
+            println!("checking all the valid state ");
+            let client_valid =
+                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
+            println!("clientstate {:?}", client_valid);
+            // let consensus_valid = validate_consensus_state(
+            //     &state.client_id,
+            //     &client,
+            //     &state.verify_client_consensus_state,
+            // )?;
+            // println!("conseunsus_valid {:?}", consensus_valid);
+
             let connection_valid = validate_connection_state(
                 &state.client_id,
                 &client,
                 &state.verify_connection_state,
             )?;
-            let client_valid =
-                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            let consensus_valid = validate_consensus_state(
-                &state.client_id,
-                &client,
-                &state.verify_client_consensus_state,
-            )?;
 
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
                 .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
-                .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
+                // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
                 .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
         }
         ExecuteMsg::VerifyConnectionOpenAck(state) => {
@@ -352,8 +356,8 @@ pub fn validate_channel_state(
         0,
         0,
         &proofs_decoded.proofs,
-        &state.expected_counterparty_channel_end,
         &state.counterparty_chan_end_path,
+        &state.expected_counterparty_channel_end,
     )?;
     Ok(result)
 }
@@ -385,6 +389,7 @@ pub fn validate_client_state(
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
         .map_err(|e| ContractError::DecodeError(e))?;
+    println!("starting validating client state");
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,

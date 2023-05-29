@@ -179,4 +179,11 @@ fn test_connection_open_init() {
     );
     println!("{:?}", &result);
     assert!(result.is_ok());
+
+    let result = call_connection_open_try(
+        &mut ctx,
+        HexString::from_str(signed_headers[1].message.clone().as_str()),
+    );
+    println!("this is nepalllllll{:?}", &result);
+    assert!(result.is_ok());
 }
