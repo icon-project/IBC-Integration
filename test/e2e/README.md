@@ -14,6 +14,7 @@ used optimized jars from the gochain-btp repo. Dapp can be used from this repo
 
 ## Config Setup
 
-config value supports expanding environment variables, e.g. ${HOME}, ${USER}, ${PWD}, ${BASE_PATH}
+Config supports expanding with any available runtime OS environment variables,
+e.g. ${HOME}, ${USER}, ${PWD}, ${BASE_PATH}
 
-`BASE_PATH` environment value is also available, it is the path to the root of the project. 
+`BASE_PATH` environment variable is also available, it is the path to the root of the project. 
