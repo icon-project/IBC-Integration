@@ -30,14 +30,16 @@ func GetConfig() (*Config, error) {
 	var config = new(Config)
 
 	cwd, err := os.Getwd()
-	basePath := filepath.Dir(fmt.Sprintf("%s/..%s..%s", cwd, string(os.PathSeparator), string(os.PathSeparator)))
-
+	if err != nil {
+		return nil, err
+	}
+	basePath := filepath.Dir(fmt.Sprintf("%s/..%c..%c", cwd, os.PathSeparator, os.PathSeparator))
 	if err := os.Setenv("BASE_PATH", basePath); err != nil {
 		log.Fatalf("Error setting BASE_PATH", err)
 	}
-
 	for _, v := range viper.AllKeys() {
 		viper.Set(v, os.ExpandEnv(viper.GetString(v)))
 	}
+	viper.Get("icon")
 	return config, viper.Unmarshal(config)
 }
