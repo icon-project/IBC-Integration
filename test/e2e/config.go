@@ -43,3 +43,10 @@ func GetConfig() (*Config, error) {
 	viper.Get("icon")
 	return config, viper.Unmarshal(config)
 }
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}

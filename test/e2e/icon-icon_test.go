@@ -18,6 +18,13 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
+const (
+	relayerImageEnv    = "RELAYER_IMAGE"
+	relayerImage       = "strangeloveventures/relayer"
+	relayerImageTagEnv = "RELAYER_IMAGE_TAG"
+	relayerImageTag    = "latest"
+)
+
 func TestICONToICON(t *testing.T) {
 	fmt.Println("test start")
 	cfg, err := GetConfig()
@@ -35,7 +42,7 @@ func TestICONToICON(t *testing.T) {
 	if err != nil {
 		return
 	}
-	optionDocker := relayer.CustomDockerImage(cfg.Counterparty.ChainConfig.Images.Repository, cfg.Counterparty.ChainConfig.Images.Version, "100:1000")
+	optionDocker := relayer.CustomDockerImage(getEnvOrDefault(relayerImageEnv, relayerImage), getEnvOrDefault(relayerImageTagEnv, relayerImageTag), "100:1000")
 
 	r := interchaintest.NewICONRelayerFactory(zaptest.NewLogger(t), optionDocker, relayer.ImagePull(false)).Build(
 		t, client, network)
