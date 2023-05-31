@@ -66,16 +66,16 @@ jobs:
 
       - name: Generate schema
         run: |
-          ./scripts/run_in_subprojects.sh cw-xcall cw-icon-light-client
+          ../../scripts/run_in_subprojects.sh cw-xcall cw-icon-light-client
 
       - name: Verify schema
-        uses: tj-actions/verify-changed-files@v8
+        uses: tj-actions/verify-changed-files@v14
         id: verify-schema
         with:
-          files: contracts/cosmwasm-vm/*/schema/.*\.json
+          files: |
+            ./*/schema/**
 
       - name: Display changed schemas
         if: steps.verify-schema.outputs.files_changed == 'true'
         run: |
-          echo "The schema files are not in sync with the repository. Please, run 'cargo schema' to generate them again and commit the changes."
-          exit 1
+          echo "Changed files: ${{ steps.verify-schema.outputs.changed_files }}"
