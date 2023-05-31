@@ -73,7 +73,7 @@ jobs:
         id: verify-schema
         with:
           files: |
-            ./*/schema/**
+            contracts/cosmwasm-vm/*/schema/**
 
       - name: Display changed schemas
         if: steps.verify-schema.outputs.files_changed == 'true'
