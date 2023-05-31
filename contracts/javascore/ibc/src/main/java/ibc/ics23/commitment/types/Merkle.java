@@ -3,8 +3,8 @@ package ibc.ics23.commitment.types;
 import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.Ics23;
 import ibc.ics23.commitment.Proof;
-import icon.proto.core.commitment.*;
 import icon.proto.clients.tendermint.MerkleRoot;
+import icon.proto.core.commitment.*;
 import score.UserRevertedException;
 import scorex.util.ArrayList;
 
@@ -23,23 +23,22 @@ public class Merkle {
         return specs;
     }
 
-    public static MerklePath applyPrefix(MerklePrefix prefix, MerklePath path) {
+    public static MerklePath applyPrefix(String path) {
         var mpath = new MerklePath();
-        if (isMerklePrefixEmpty(prefix)) {
-            return mpath;
-        }
         List<String> keyPath = new ArrayList<>();
-        keyPath.add(StringUtil.bytesToHex(prefix.getKeyPrefix()));
-        keyPath.addAll(path.getKeyPath());
+        keyPath.add(StringUtil.bytesToHex("wasm".getBytes()));
+        keyPath.add(path);
         mpath.setKeyPath(keyPath);
         return mpath;
     }
 
     /**
-     * verifyMembership verifies the membership of a merkle proof against the given root, path, and value. Note that the
-     * path is expected as String[]{<store key of module}, <key corresponding to requested value>}.
+     * verifyMembership verifies the membership of a merkle proof against the given
+     * root, path, and value. Note that the path is expected as String[]{<store key of module}, <key corresponding to
+     * requested value>}.
      */
-    public static void verifyMembership(MerkleProof proof, List<ProofSpec> specs, MerkleRoot root, MerklePath path, byte[] value) {
+    public static void verifyMembership(MerkleProof proof, List<ProofSpec> specs, MerkleRoot root, MerklePath path,
+                                        byte[] value) {
         validateVerificationArgs(proof, specs, root);
 
         // VerifyMembership specific argument validation
