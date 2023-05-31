@@ -182,6 +182,10 @@ impl ILightClient for IconClient<'_> {
         path: &[u8],
         value: &[u8],
     ) -> Result<bool, Self::Error> {
+        println!("lightClient path  {:?}", HexString::from_bytes(&path));
+        println!("lightClient value  {:?}", HexString::from_bytes(&value));
+        let path =keccak256(path).to_vec();
+        let value=keccak256(value).to_vec();
         let state = self.context.get_client_state(client_id)?;
         if state.frozen_height != 0 && height > state.frozen_height {
             return Err(ContractError::ClientStateFrozen(state.frozen_height));
@@ -191,8 +195,8 @@ impl ILightClient for IconClient<'_> {
         //     self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
         let consensus_state: ConsensusState =
             self.context.get_consensus_state(&client_id, height)?;
-        println!("lightClient path {:?}", HexString::from_bytes(path));
-        println!("lightClient value {:?}", HexString::from_bytes(value));
+        println!("lightClient path hash {:?}", HexString::from_bytes(&path));
+        println!("lightClient value hash {:?}", HexString::from_bytes(&value));
         let leaf = keccak256(&[path, value].concat());
         println!("leaf is :{:?}", HexString::from_bytes(&leaf));
 

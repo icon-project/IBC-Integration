@@ -110,7 +110,6 @@ pub fn call_connection_open_ack(
 pub fn call_connection_open_confirm(
     ctx: &mut TestContext,
     msg: HexString,
-    client_id: &str,
 ) -> Result<AppResponse, AppError> {
     let res = ctx.app.execute_contract(
         ctx.sender.clone(),
@@ -185,6 +184,21 @@ fn test_connection_open_init() {
     let result = call_connection_open_try(
         &mut ctx,
         HexString::from_str(signed_headers[1].message.clone().as_str()),
+    );
+
+
+    let result = call_update_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[2].update.clone().unwrap().as_str()),
+    );
+    println!("{:?}", &result);
+    assert!(result.is_ok());
+
+    println!("not reached here");
+
+    let result = call_connection_open_confirm(
+        &mut ctx,
+        HexString::from_str(signed_headers[2].message.clone().as_str()),
     );
     println!("this is nepalllllll{:?}", &result);
     assert!(result.is_ok());

@@ -308,7 +308,7 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
     pub fn commitment_prefix(&self) -> CommitmentPrefix {
-        CommitmentPrefix::try_from(b"ibc".to_vec()).unwrap_or_default() //TODO
+        CommitmentPrefix::try_from(b"commitments".to_vec()).unwrap_or_default() //TODO
     }
 
     fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {

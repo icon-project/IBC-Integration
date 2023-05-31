@@ -7,7 +7,7 @@ use self::{
     },
     open_try::channel_open_try_msg_validate,
 };
-use cw_common::commitment;
+use cw_common::{commitment, from_binary_response};
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;
@@ -700,7 +700,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
                     let channel_id =
                         ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
@@ -775,7 +775,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
                     let channel_id =
                         ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
