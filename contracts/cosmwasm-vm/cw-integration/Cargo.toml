@@ -9,11 +9,11 @@ edition = "2021"
 cosmwasm-schema = "1.2.2"
 cosmwasm-std = "1.2.2"
 cosmwasm-storage = "1.2.2"
-cw-storage-plus = "1.0.1"
+cw-storage-plus = {workspace=true}
 cw-common={path="../cw-common"}
 common = { path="../../../libraries/rust/common", default-features = false }
 ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde"]}
-prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
+prost = { workspace=true}
 
 [dev-dependencies]
 hex = "0.4.3"

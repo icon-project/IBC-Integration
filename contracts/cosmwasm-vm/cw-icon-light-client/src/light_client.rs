@@ -187,6 +187,7 @@ impl ILightClient for IconClient<'_> {
         let path = keccak256(path).to_vec();
         let value = keccak256(value).to_vec();
         let state = self.context.get_client_state(client_id)?;
+
         if state.frozen_height != 0 && height > state.frozen_height {
             return Err(ContractError::ClientStateFrozen(state.frozen_height));
         }
