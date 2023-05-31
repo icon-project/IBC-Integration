@@ -68,11 +68,9 @@ impl TryFrom<Vec<u8>> for CommitmentProofBytes {
     type Error = CommitmentError;
 
     fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
-        if bytes.is_empty() {
-            Err(Self::Error::EmptyMerkleProof)
-        } else {
+       
             Ok(Self { bytes })
-        }
+        
     }
 }
 
