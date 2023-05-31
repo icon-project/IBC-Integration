@@ -358,7 +358,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetCapability { name } => {
                 let res = self
-                    .get_capability(deps.storage, name.to_bytes().unwrap())
+                    .get_capability(deps.storage, name.as_bytes().to_vec())
                     .unwrap();
                 to_binary(&res)
             }

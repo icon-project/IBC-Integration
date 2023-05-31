@@ -226,7 +226,6 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             connection_path,
             expected_conn_end_on_b.encode_vec().unwrap(),
-           
         );
 
         let client_state_path = commitment::client_state_path(client_id_on_a);
@@ -237,7 +236,6 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             client_state_path,
             msg.client_state_of_a_on_b.value.clone(),
-           
         );
 
         let consensus_state_path_on_b =
@@ -476,9 +474,8 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(|e| Into::<ContractError>::into(e))?;
 
-        let connection_path = commitment::connection_path(
-            &message.counterparty.connection_id.clone().unwrap(),
-        );
+        let connection_path =
+            commitment::connection_path(&message.counterparty.connection_id.clone().unwrap());
         println!("connkey: {:?}", HexString::from_bytes(&connection_path));
         println!(
             "root: {:?} ",
@@ -497,7 +494,6 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
             expected_conn_end_on_a.encode_vec().unwrap().to_vec(),
-            
         );
 
         // this is verifying tendermint client state and shouldn't have icon-client as an argument
@@ -505,8 +501,7 @@ impl<'a> CwIbcCoreContext<'a> {
             "payload client state path {:?}",
             &message.counterparty.client_id()
         );
-        let client_state_path =
-            commitment::client_state_path(&message.counterparty.client_id());
+        let client_state_path = commitment::client_state_path(&message.counterparty.client_id());
         println!(
             "the clientstate value is  {:?}",
             message.client_state_of_b_on_a.value.clone()
@@ -518,7 +513,6 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             client_state_path,
             message.client_state_of_b_on_a.value.clone().to_vec(),
-           
         );
 
         let consensus_state_path_on_a = commitment::consensus_state_path(
@@ -792,7 +786,6 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
             expected_conn_end_on_a.encode_vec().unwrap(),
-           
         );
         debug_println!("Verify Connection State {:?}", verify_connection_state);
         let client_message = crate::ics04_channel::LightClientMessage::VerifyOpenConfirm {

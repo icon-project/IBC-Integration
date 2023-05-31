@@ -186,7 +186,6 @@ fn test_connection_open_init() {
         HexString::from_str(signed_headers[1].message.clone().as_str()),
     );
 
-
     let result = call_update_client(
         &mut ctx,
         HexString::from_str(signed_headers[2].update.clone().unwrap().as_str()),

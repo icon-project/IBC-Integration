@@ -148,7 +148,7 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &IbcPortId,
         address: String,
     ) -> Result<Response, ContractError> {
-        self.claim_capability(store, commitment::port_path(port_id), address.clone())?;
+        self.claim_capability(store, port_id.as_str().as_bytes().to_vec(), address.clone())?;
 
         Ok(Response::new()
             .add_attribute("method", "bind_port")

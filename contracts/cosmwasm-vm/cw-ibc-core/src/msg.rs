@@ -27,7 +27,7 @@ pub enum QueryMsg {
     #[returns(u64)]
     GetNextSequenceAcknowledgement { port_id: String, channel_id: String },
     #[returns(Vec<String>)]
-    GetCapability { name: HexString },
+    GetCapability { name: String },
     #[returns(u64)]
     GetExpectedTimePerBlock {},
     #[returns(u64)]
