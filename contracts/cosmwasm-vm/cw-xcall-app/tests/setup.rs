@@ -4,12 +4,18 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    Addr, Api, BlockInfo, ContractInfo, Empty, Env, IbcEndpoint, MessageInfo, OwnedDeps, StdResult,
-    Storage, Timestamp, TransactionInfo,
+    Addr, Api, BlockInfo, ContractInfo, Empty, Env, IbcEndpoint, MessageInfo, OwnedDeps, Storage,
+    Timestamp, TransactionInfo,
 };
 
 pub struct MockEnvBuilder {
     env: Env,
+}
+
+impl Default for MockEnvBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockEnvBuilder {

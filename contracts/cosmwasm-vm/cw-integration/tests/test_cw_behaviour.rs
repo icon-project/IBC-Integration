@@ -30,7 +30,7 @@ fn test_cross_contract_rollback() {
         &[],
     );
 
-    println!("{:?}", result);
+    println!("{result:?}");
 
     let count_after: u64 = app
         .app

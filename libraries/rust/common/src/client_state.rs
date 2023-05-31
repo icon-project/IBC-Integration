@@ -93,7 +93,7 @@ impl IClientState for ClientState {
     }
 
     fn is_frozen(&self) -> bool {
-        return self.frozen_height > 0;
+        self.frozen_height > 0
     }
 
     fn client_type(&self) -> IbcClientType {

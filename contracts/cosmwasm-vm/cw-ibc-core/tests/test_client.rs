@@ -155,7 +155,7 @@ fn test_create_client_event() {
 #[test]
 fn check_for_update_client_event() {
     let raw_message = get_dummy_raw_msg_update_client_message();
-    let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message.clone()).unwrap();
+    let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message).unwrap();
     let height = Height::new(15, 10).unwrap();
     let client_type = ClientType::new("new_client_type".to_string());
     let result = update_client_event(client_type, height, vec![height], &message.client_id);
@@ -173,7 +173,7 @@ fn check_for_raw_message_to_update_client_message() {
 #[test]
 fn check_for_raw_message_to_updgrade_client() {
     let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
+    let client_id = ClientId::new(client_type, 10).unwrap();
     let signer = get_dummy_account_id();
 
     let height = mock_height(1, 1).unwrap();
@@ -184,7 +184,7 @@ fn check_for_raw_message_to_updgrade_client() {
     let proof = get_dummy_merkle_proof();
 
     let msg = MsgUpgradeClient {
-        client_id: client_id.clone(),
+        client_id,
         client_state: client_state.into(),
         consensus_state: consensus_state.into(),
         proof_upgrade_client: proof.clone(),
@@ -213,7 +213,7 @@ fn test_upgrade_client_event() {
     let proof = get_dummy_merkle_proof();
 
     let msg = MsgUpgradeClient {
-        client_id: client_id.clone(),
+        client_id,
         client_state: client_state.into(),
         consensus_state: consensus_state.into(),
         proof_upgrade_client: proof.clone(),
@@ -278,7 +278,7 @@ fn fail_to_query_client_type() {
     let contract = CwIbcCoreContext::default();
     let client_type = ClientType::new("icon_client".to_string());
 
-    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
+    let client_id = ClientId::new(client_type, 10).unwrap();
 
     contract
         .get_client_type(deps.as_ref().storage, client_id)
@@ -317,7 +317,7 @@ fn check_for_create_client_message_into_raw_message() {
     };
 
     let raw_message: RawMsgCreateClient = RawMsgCreateClient::try_from(actual_message).unwrap();
-    println!("{:?}", raw_message);
+    println!("{raw_message:?}");
     println!("{:?}", get_dummy_raw_msg_create_client());
 
     assert_eq!(raw_message, get_dummy_raw_msg_create_client())
@@ -326,7 +326,7 @@ fn check_for_create_client_message_into_raw_message() {
 #[test]
 fn check_for_genereted_client_id_event() {
     let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type.clone(), 10).unwrap();
+    let client_id = ClientId::new(client_type, 10).unwrap();
     let event = generated_client_id_event(client_id.clone());
 
     assert_eq!("client_id_created", event.ty);
@@ -659,16 +659,13 @@ fn fail_on_create_client_message_error_response() {
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
     contract
-        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .register_client(deps.as_mut(), client_type, light_client)
         .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = IbcMsgCreateClient::new(
-        client_state.clone().into(),
-        consenus_state.clone().into(),
-        signer,
-    );
+    let create_client_message =
+        IbcMsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
 
     let response = contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -882,8 +879,8 @@ fn fails_on_updating_non_existing_client() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let signer = Signer::from_str("new_signer").unwrap();
     let update_client_message = IbcMsgUpdateClient {
-        client_id: client_id.clone(),
-        header: client_state.clone().into(),
+        client_id,
+        header: client_state.into(),
         signer,
     };
 
@@ -996,7 +993,7 @@ fn check_for_upgrade_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.clone(),
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1101,7 +1098,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.clone(),
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1206,7 +1203,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let signer = Signer::from_str("new_signer").unwrap();
 
     let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.clone(),
+        client_id,
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
         proof_upgrade_client: get_dummy_merkle_proof(),
@@ -1561,7 +1558,7 @@ fn fails_on_getting_client_empty_client() {
         .store_client_implementations(
             mock_deps.as_mut().storage,
             client_id.clone(),
-            client_address.clone(),
+            client_address,
         )
         .unwrap();
 
@@ -1714,7 +1711,7 @@ fn sucess_on_misbehaviour_validate() {
     };
 
     let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id: client_id.clone(),
+        client_id,
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id(),
     };
@@ -1774,7 +1771,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
     };
 
     let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id: client_id.clone(),
+        client_id,
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id(),
     };
@@ -1881,7 +1878,7 @@ fn success_on_raw_from_consensus_state() {
 fn fails_on_raw_from_consensus_state() {
     let raw = get_dummy_raw_msg_create_client();
 
-    TryInto::<ConsensusState>::try_into(raw.consensus_state.unwrap().clone()).unwrap();
+    TryInto::<ConsensusState>::try_into(raw.consensus_state.unwrap()).unwrap();
 }
 
 #[test]

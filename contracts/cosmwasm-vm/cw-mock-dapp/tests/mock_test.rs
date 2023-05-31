@@ -15,7 +15,7 @@ fn test_initialization() {
     };
 
     let res = ctx.instantiate(deps.as_mut(), env, info, msg);
-    println!("{:?}", res)
+    println!("{res:?}")
 }
 
 #[test]

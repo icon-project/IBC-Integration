@@ -328,7 +328,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 Some(_) => Err(ClientError::Other {
                     description: "Client Implementation Already Exist".to_string(),
                 })
-                .map_err(|e| Into::<ContractError>::into(e)),
+                .map_err(Into::<ContractError>::into),
 
                 None => Ok(()),
             },
@@ -359,10 +359,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_client_implementations(store, client_id.clone())?;
 
         if client.is_empty() {
-            return Err(ClientError::ClientNotFound {
-                client_id: client_id.clone(),
-            })
-            .map_err(|e| Into::<ContractError>::into(e));
+            return Err(ClientError::ClientNotFound { client_id })
+                .map_err(Into::<ContractError>::into);
         }
         Ok(client)
     }
@@ -472,7 +470,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state_any = self.client_state_any(store, client_id)?;
 
         let client_state =
-            ClientState::from_any(client_state_any).map_err(|e| Into::<ContractError>::into(e))?;
+            ClientState::from_any(client_state_any).map_err(Into::<ContractError>::into)?;
 
         Ok(Box::new(client_state))
     }
@@ -485,8 +483,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_key = commitment::client_state_commitment_key(client_id);
 
         let client_state_any_data = self.ibc_store().commitments().load(store, client_key)?;
-        let client_state_any = Any::decode(client_state_any_data.as_slice())
-            .map_err(|e| Into::<ContractError>::into(e))?;
+        let client_state_any =
+            Any::decode(client_state_any_data.as_slice()).map_err(Into::<ContractError>::into)?;
         Ok(client_state_any)
     }
 
@@ -498,8 +496,8 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
         let consensus_state_any = self.consensus_state_any(store, client_id, height)?;
 
-        let consensus_state: ConsensusState = ConsensusState::from_any(consensus_state_any)
-            .map_err(|e| Into::<ContractError>::into(e))?;
+        let consensus_state: ConsensusState =
+            ConsensusState::from_any(consensus_state_any).map_err(Into::<ContractError>::into)?;
 
         Ok(Box::new(consensus_state))
     }
@@ -520,8 +518,8 @@ impl<'a> CwIbcCoreContext<'a> {
             .ibc_store()
             .commitments()
             .load(store, consensus_state_key)?;
-        let consensus_state_any = Any::decode(consensus_state_data.as_slice())
-            .map_err(|e| Into::<ContractError>::into(e))?;
+        let consensus_state_any =
+            Any::decode(consensus_state_data.as_slice()).map_err(Into::<ContractError>::into)?;
         Ok(consensus_state_any)
     }
 
@@ -548,8 +546,7 @@ impl<'a> CwIbcCoreContext<'a> {
     // }
 
     pub fn host_height(&self) -> Result<common::ibc::Height, ContractError> {
-        let height =
-            common::ibc::Height::new(10, 10).map_err(|e| Into::<ContractError>::into(e))?;
+        let height = common::ibc::Height::new(10, 10).map_err(Into::<ContractError>::into)?;
         Ok(height)
     }
 
@@ -560,8 +557,8 @@ impl<'a> CwIbcCoreContext<'a> {
         //TODO Update timestamp logic
         let duration = self.ibc_store().expected_time_per_block().load(store)?;
         let block_time = Duration::from_secs(duration);
-        Ok(IbcTimestamp::from_nanoseconds(block_time.as_nanos() as u64)
-            .map_err(|_e| ContractError::FailedConversion)?)
+        IbcTimestamp::from_nanoseconds(block_time.as_nanos() as u64)
+            .map_err(|_e| ContractError::FailedConversion)
     }
 
     // pub fn host_consensus_state(
@@ -592,8 +589,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: &common::ibc::Height,
     ) -> Result<common::ibc::Height, ContractError> {
-        let height =
-            common::ibc::Height::new(10, 10).map_err(|e| Into::<ContractError>::into(e))?;
+        let height = common::ibc::Height::new(10, 10).map_err(Into::<ContractError>::into)?;
         Ok(height)
     }
 

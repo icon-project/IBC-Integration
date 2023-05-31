@@ -4,11 +4,10 @@ use cosmwasm_std::{
     IbcChannelConnectMsg::OpenAck, IbcChannelOpenMsg::OpenInit, IbcChannelOpenMsg::OpenTry,
     IbcEndpoint, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
-use cw_common::ibc_types::IbcHeight;
-use cw_common::raw_types::channel::RawPacket;
-use cw_common::types::{Ack, Address};
+
+use cw_common::types::Ack;
 use cw_common::xcall_msg::ExecuteMsg;
-use cw_common::ProstMessage;
+
 use cw_xcall::types::call_request::CallRequest;
 use cw_xcall::types::response::CallServiceMessageResponse;
 use cw_xcall::{
@@ -19,14 +18,13 @@ use setup::*;
 pub mod account;
 use account::admin_one;
 use account::alice;
-use common::rlp::{Decodable, Encodable};
+
 use cosmwasm_std::from_binary;
 use cw_xcall::{
     execute, instantiate,
     msg::{InstantiateMsg, QueryMsg},
     query,
 };
-use setup::*;
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
@@ -262,7 +260,7 @@ fn fails_on_ibc_channel_connect_ordered_channel() {
     let execute_message = ExecuteMsg::IbcChannelConnect {
         msg: OpenAck {
             channel: IbcChannel::new(
-                src.clone(),
+                src,
                 dst,
                 cosmwasm_std::IbcOrder::Ordered,
                 "xcall-1",
@@ -306,7 +304,7 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
     let execute_message = ExecuteMsg::IbcChannelConnect {
         msg: OpenAck {
             channel: IbcChannel::new(
-                src.clone(),
+                src,
                 dst,
                 cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
@@ -629,12 +627,7 @@ fn fails_on_setting_timeout_height_unauthorized() {
     };
 
     contract
-        .instantiate(
-            deps.as_mut(),
-            mock_env.clone(),
-            mock_info.clone(),
-            init_message,
-        )
+        .instantiate(deps.as_mut(), mock_env.clone(), mock_info, init_message)
         .unwrap();
 
     let exec_message = ExecuteMsg::SetTimeoutHeight { height: 100 };

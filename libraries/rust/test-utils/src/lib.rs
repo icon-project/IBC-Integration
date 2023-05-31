@@ -1,8 +1,7 @@
 use std::{
     collections::HashMap,
     env,
-    ffi::OsString,
-    fs::{self, read_dir, File},
+    fs::{read_dir, File},
     io::{self, ErrorKind, Read},
     path::PathBuf,
 };
@@ -143,10 +142,10 @@ impl TryFrom<TestSignedHeader> for SignedHeader {
             .iter()
             .map(|s| hex::decode(s.replace("0x", "")).unwrap())
             .collect();
-        return Ok(SignedHeader {
+        Ok(SignedHeader {
             header: Some(btp_header),
             signatures,
-        });
+        })
     }
 }
 
@@ -169,11 +168,11 @@ impl TryFrom<TestPacket> for Packet {
 }
 
 pub fn load_test_headers() -> Vec<TestHeaderData> {
-    return load_test_data::<TestHeaderData>("test_data/test_headers.json");
+    load_test_data::<TestHeaderData>("test_data/test_headers.json")
 }
 
 pub fn load_test_messages() -> Vec<TestMessageData> {
-    return load_test_data::<TestMessageData>("test_data/test_messages.json");
+    load_test_data::<TestMessageData>("test_data/test_messages.json")
 }
 
 pub fn load_raw_messages() -> Vec<RawPayload> {
@@ -191,33 +190,33 @@ pub fn load_test_data<T: for<'a> Deserialize<'a>>(path: &str) -> Vec<T> {
 }
 
 pub fn get_test_headers() -> Vec<BtpHeader> {
-    return load_test_headers()
+    load_test_headers()
         .into_iter()
         .map(|th| {
             let btp: BtpHeader = th.signed_header.btp_header.try_into().unwrap();
             btp
         })
-        .collect::<Vec<BtpHeader>>();
+        .collect::<Vec<BtpHeader>>()
 }
 
 pub fn get_test_signed_headers() -> Vec<SignedHeader> {
-    return load_test_headers()
+    load_test_headers()
         .into_iter()
         .map(|th| {
             let btp: SignedHeader = th.signed_header.try_into().unwrap();
             btp
         })
-        .collect::<Vec<SignedHeader>>();
+        .collect::<Vec<SignedHeader>>()
 }
 
 pub fn get_project_root() -> io::Result<PathBuf> {
     let path = env::current_dir()?;
-    let mut path_ancestors = path.as_path().ancestors();
+    let path_ancestors = path.as_path().ancestors();
 
-    while let Some(p) = path_ancestors.next() {
+    for p in path_ancestors {
         let has_cargo = read_dir(p)?
             .into_iter()
-            .any(|p| p.unwrap().file_name() == OsString::from("Cargo.lock"));
+            .any(|p| p.unwrap().file_name() == *"Cargo.lock");
         if has_cargo {
             return Ok(PathBuf::from(p));
         }
@@ -233,7 +232,7 @@ pub fn to_attribute_map(attrs: &Vec<Attribute>) -> HashMap<String, String> {
     for attr in attrs {
         map.insert(attr.key.clone(), attr.value.clone());
     }
-    return map;
+    map
 }
 
 pub fn get_event(res: &AppResponse, event: &str) -> Option<HashMap<String, String>> {
@@ -242,7 +241,7 @@ pub fn get_event(res: &AppResponse, event: &str) -> Option<HashMap<String, Strin
         .iter()
         .filter(|e| e.ty == event)
         .collect::<Vec<&Event>>();
-    if event.len() > 0 {
+    if !event.is_empty() {
         let map = to_attribute_map(&event[0].attributes);
         return Some(map);
     }

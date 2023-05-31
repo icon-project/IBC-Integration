@@ -85,7 +85,7 @@ impl<'a> CwIbcConnection<'a> {
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
             ExecuteMsg::MessageFromXCall { data } => {
-                println!("{} Received Payload From XCall App", LOG_PREFIX);
+                println!("{LOG_PREFIX} Received Payload From XCall App");
                 self.forward_to_host(deps, info, env, data)
             }
             ExecuteMsg::SetXCallHost { address } => {
@@ -265,7 +265,7 @@ impl<'a> CwIbcConnection<'a> {
         _deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        println!("{} Reply From Forward XCall", LOG_PREFIX);
+        println!("{LOG_PREFIX} Reply From Forward XCall");
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()
                 .add_attribute("action", "call_message")
@@ -282,7 +282,7 @@ impl<'a> CwIbcConnection<'a> {
         _deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        println!("{} Reply From Forward Host", LOG_PREFIX);
+        println!("{LOG_PREFIX} Reply From Forward Host");
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()
                 .add_attribute("action", "call_message")

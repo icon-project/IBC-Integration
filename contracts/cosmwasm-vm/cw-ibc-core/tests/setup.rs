@@ -8,14 +8,13 @@ pub fn mock_height(
 }
 
 pub fn to_mock_height(height: Height) -> common::ibc::Height {
-    return common::ibc::Height::new(height.revision_number(), height.revision_height()).unwrap();
+    common::ibc::Height::new(height.revision_number(), height.revision_height()).unwrap()
 }
 
 pub fn to_mock_client_id(
     client_id: &ClientId,
 ) -> common::ibc::core::ics24_host::identifier::ClientId {
-    return common::ibc::core::ics24_host::identifier::ClientId::from_str(&client_id.to_string())
-        .unwrap();
+    common::ibc::core::ics24_host::identifier::ClientId::from_str(&client_id.to_string()).unwrap()
 }
 
 use cosmwasm_std::{
@@ -241,7 +240,7 @@ pub fn get_dummy_raw_msg_chan_open_try(proof_height: u64) -> RawMsgChannelOpenTr
 pub fn get_dummy_raw_msg_update_client_message() -> RawMsgUpdateClient {
     let height = mock_height(10, 15).unwrap();
     let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type.clone(), 1).unwrap();
+    let client_id = ClientId::new(client_type, 1).unwrap();
     RawMsgUpdateClient {
         client_id: client_id.to_string(),
         header: Some(MockHeader::new(height).into()),
@@ -274,7 +273,7 @@ pub fn get_dummy_raw_msg_client_mishbehaviour() -> RawMsgSubmitMisbehaviour {
     let mock_header = MockHeader::new(height);
 
     let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type.clone(), 1).unwrap();
+    let client_id = ClientId::new(client_type, 1).unwrap();
 
     let mis_b = Misbehaviour {
         client_id: to_mock_client_id(&client_id),

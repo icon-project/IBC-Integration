@@ -24,7 +24,7 @@ impl<'a> CwIbcConnection<'a> {
         self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
 
         self.ensure_data_length(message.len())?;
-        println!("{} Packet Validated", LOG_PREFIX);
+        println!("{LOG_PREFIX} Packet Validated");
 
         // TODO : ADD fee logic
 
@@ -34,11 +34,11 @@ impl<'a> CwIbcConnection<'a> {
         println!("{} Forwarding to {}", LOG_PREFIX, &ibc_host);
 
         let ibc_config = self.ibc_config().load(deps.as_ref().storage).map_err(|e| {
-            println!("{} Failed Loading IbcConfig {:?}", LOG_PREFIX, e);
+            println!("{LOG_PREFIX} Failed Loading IbcConfig {e:?}");
             ContractError::Std(e)
         })?;
 
-        println!("{} Loaded IbcConfig", LOG_PREFIX);
+        println!("{LOG_PREFIX} Loaded IbcConfig");
         let query_message = cw_common::core_msg::QueryMsg::SequenceSend {
             port_id: ibc_config.src_endpoint().clone().port_id,
             channel_id: ibc_config.src_endpoint().clone().channel_id,
@@ -48,17 +48,14 @@ impl<'a> CwIbcConnection<'a> {
             contract_addr: ibc_host.to_string(),
             msg: to_binary(&query_message).map_err(ContractError::Std)?,
         });
-        println!("{} Created Query Request", LOG_PREFIX);
+        println!("{LOG_PREFIX} Created Query Request");
 
         let sequence_number_host: u64 = deps
             .querier
             .query(&query_request)
             .map_err(ContractError::Std)?;
 
-        println!(
-            "{} Received host sequence no {}",
-            LOG_PREFIX, sequence_number_host
-        );
+        println!("{LOG_PREFIX} Received host sequence no {sequence_number_host}");
 
         let timeout_height = self.get_timeout_height(deps.as_ref().storage);
 
@@ -115,7 +112,7 @@ impl<'a> CwIbcConnection<'a> {
                 gas_limit: None,
                 reply_on: cosmwasm_std::ReplyOn::Always,
             };
-            println!("{} Packet Forwarded To IBCHost {} ", LOG_PREFIX, ibc_host);
+            println!("{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
             Ok(Response::new()
                 .add_submessage(submessage)
                 .add_attribute("action", "xcall-service")

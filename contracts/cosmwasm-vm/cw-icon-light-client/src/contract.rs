@@ -44,7 +44,7 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let _ = set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|_e| ContractError::FailedToInitContract)?;
     let config = Config::new(
         msg.src_network_id,
@@ -73,20 +73,19 @@ pub fn execute(
             consensus_state,
         } => {
             let client_state_any =
-                Any::decode(client_state.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
-            let consensus_state_any = Any::decode(consensus_state.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
+                Any::decode(client_state.as_slice()).map_err(ContractError::DecodeError)?;
+            let consensus_state_any =
+                Any::decode(consensus_state.as_slice()).map_err(ContractError::DecodeError)?;
             let client_state = ClientState::from_any(client_state_any.clone())
-                .map_err(|e| ContractError::DecodeError(e))?;
+                .map_err(ContractError::DecodeError)?;
             let consensus_state = ConsensusState::from_any(consensus_state_any.clone())
-                .map_err(|e| ContractError::DecodeError(e))?;
-            let update =
-                client.create_client(&client_id, client_state.clone(), consensus_state.clone())?;
+                .map_err(ContractError::DecodeError)?;
+            let update = client.create_client(&client_id, client_state, consensus_state)?;
 
             let mut response = Response::new()
                 .add_attribute(
                     CLIENT_STATE_HASH,
-                    hex::encode(update.client_state_commitment.clone()),
+                    hex::encode(update.client_state_commitment),
                 )
                 .add_attribute(
                     CONSENSUS_STATE_HASH,
@@ -112,8 +111,7 @@ pub fn execute(
             signed_header,
         } => {
             let header_any = Any::decode(signed_header.as_slice()).unwrap();
-            let header =
-                SignedHeader::from_any(header_any).map_err(|e| ContractError::DecodeError(e))?;
+            let header = SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
             let update = client.update_client(&client_id, header)?;
             let response_data = to_binary(&UpdateClientResponse {
                 height: to_ibc_height(update.height).map(|h| h.to_string())?,
@@ -149,8 +147,8 @@ pub fn execute(
             delay_time_period,
             delay_block_period,
         } => {
-            let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
+            let proofs_decoded =
+                MerkleProofs::decode(proofs.as_slice()).map_err(ContractError::DecodeError)?;
             let result = client.verify_membership(
                 &client_id,
                 height,
@@ -171,8 +169,8 @@ pub fn execute(
             delay_time_period,
             delay_block_period,
         } => {
-            let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
+            let proofs_decoded =
+                MerkleProofs::decode(proofs.as_slice()).map_err(ContractError::DecodeError)?;
             let result = client.verify_non_membership(
                 &client_id,
                 height,
@@ -189,7 +187,7 @@ pub fn execute(
             packet_data,
         } => {
             let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
+                .map_err(ContractError::DecodeError)?;
             let height = to_height_u64(&verify_packet_data.height)?;
             let result = client.verify_membership(
                 &client_id,
@@ -200,10 +198,9 @@ pub fn execute(
                 &verify_packet_data.commitment,
                 &verify_packet_data.commitment_path,
             )?;
-            let packet_data: PacketData =
-                from_slice(&packet_data).map_err(|e| ContractError::Std(e))?;
-            let data = to_binary(&PacketDataResponse::from(packet_data))
-                .map_err(|e| ContractError::Std(e))?;
+            let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
+            let data =
+                to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
 
             Ok(Response::new()
                 .add_attribute(MEMBERSHIP, result.to_string())
@@ -215,7 +212,7 @@ pub fn execute(
             packet_data,
         } => {
             let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
+                .map_err(ContractError::DecodeError)?;
             let height = to_height_u64(&verify_packet_acknowledge.height)?;
             let result = client.verify_membership(
                 &client_id,
@@ -226,10 +223,9 @@ pub fn execute(
                 &verify_packet_acknowledge.ack,
                 &verify_packet_acknowledge.ack_path,
             )?;
-            let packet_data: PacketData =
-                from_slice(&packet_data).map_err(|e| ContractError::Std(e))?;
-            let data = to_binary(&PacketDataResponse::from(packet_data))
-                .map_err(|e| ContractError::Std(e))?;
+            let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
+            let data =
+                to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
 
             Ok(Response::new()
                 .add_attribute(MEMBERSHIP, result.to_string())
@@ -349,7 +345,7 @@ pub fn validate_channel_state(
     state: &VerifyChannelState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded =
-        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
+        MerkleProofs::decode(state.proof.as_slice()).map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -369,7 +365,7 @@ pub fn validate_connection_state(
     state: &VerifyConnectionState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded =
-        MerkleProofs::decode(state.proof.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
+        MerkleProofs::decode(state.proof.as_slice()).map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
 
     let result = client.verify_membership(
@@ -411,7 +407,7 @@ pub fn validate_consensus_state(
     state: &VerifyClientConsensusState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.consensus_state_proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e))?;
+        .map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -440,9 +436,9 @@ pub fn validate_next_seq_recv(
             sequence,
             packet_data: _,
         } => {
-            let proofs_decoded = MerkleProofs::decode(proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
-            let height = to_height_u64(&height)?;
+            let proofs_decoded =
+                MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
+            let height = to_height_u64(height)?;
             let res = client.verify_membership(
                 client_id,
                 height,
@@ -462,18 +458,18 @@ pub fn validate_next_seq_recv(
             receipt_path,
             packet_data: _,
         } => {
-            let proofs_decoded = MerkleProofs::decode(proof.as_slice())
-                .map_err(|e| ContractError::DecodeError(e))?;
-            let height = to_height_u64(&height)?;
-            let res = client.verify_non_membership(
+            let proofs_decoded =
+                MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
+            let height = to_height_u64(height)?;
+
+            client.verify_non_membership(
                 client_id,
                 height,
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &receipt_path,
-            )?;
-            res
+                receipt_path,
+            )?
         }
     };
     Ok(result)
@@ -494,14 +490,13 @@ fn to_ibc_height(height: u64) -> Result<IbcHeight, ContractError> {
 }
 
 pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
-    let any = Any::decode(bytes).map_err(|e| ContractError::DecodeError(e))?;
+    let any = Any::decode(bytes).map_err(ContractError::DecodeError)?;
     Ok(any)
 }
 
 pub fn to_packet_response(packet_data: &[u8]) -> Result<Binary, ContractError> {
-    let packet_data: PacketData = from_slice(&packet_data).map_err(|e| ContractError::Std(e))?;
-    let data =
-        to_binary(&PacketDataResponse::from(packet_data)).map_err(|e| ContractError::Std(e))?;
+    let packet_data: PacketData = from_slice(packet_data).map_err(ContractError::Std)?;
+    let data = to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
     Ok(data)
 }
 
@@ -580,7 +575,7 @@ mod tests {
             consensus_state: consensus_state.to_any().encode_to_vec(),
         };
 
-        execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         deps
     }
 
@@ -591,8 +586,7 @@ mod tests {
         let info = mock_info(SENDER, &[]);
         let msg = InstantiateMsg::default();
 
-        let res: Response =
-            instantiate(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap();
+        let res: Response = instantiate(deps.as_mut(), env, info.clone(), msg).unwrap();
 
         assert_eq!(0, res.messages.len());
 
@@ -641,7 +635,7 @@ mod tests {
         let result = execute(deps.as_mut(), mock_env(), info, msg);
         assert_eq!(
             result,
-            Err(ContractError::ClientStateAlreadyExists(client_id.clone()))
+            Err(ContractError::ClientStateAlreadyExists(client_id))
         );
     }
 
@@ -649,7 +643,7 @@ mod tests {
     fn test_execute_update_client_with_invalid_trusting_period() {
         let start_header = &get_test_headers()[0];
         let client_id = "test_client".to_string();
-        let mut deps = init_client(&client_id, &start_header, Some(100));
+        let mut deps = init_client(&client_id, start_header, Some(100));
 
         let signed_header = &get_test_signed_headers()[1];
         let info = mock_info(SENDER, &[]);
@@ -657,7 +651,7 @@ mod tests {
             client_id: client_id.clone(),
             signed_header: signed_header.to_any().encode_to_vec(),
         };
-        let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone());
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
         let stored_client_state =
             QueryHandler::get_client_state(deps.as_ref().storage, &client_id).unwrap();
         assert_eq!(
@@ -673,15 +667,15 @@ mod tests {
     fn test_execute_update_client_with_non_consecutive_header() {
         let start_header = &get_test_headers()[0];
         let client_id = "test_client".to_string();
-        let mut deps = init_client(&client_id, &start_header, None);
+        let mut deps = init_client(&client_id, start_header, None);
 
         let random_signed_header = &get_test_signed_headers()[2];
         let info = mock_info(SENDER, &[]);
         let msg = ExecuteMsg::UpdateClient {
-            client_id: client_id.clone(),
+            client_id,
             signed_header: random_signed_header.to_any().encode_to_vec(),
         };
-        let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone());
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
         assert_eq!(
             result,
             Err(ContractError::InvalidHeaderUpdate(
@@ -694,7 +688,7 @@ mod tests {
     fn test_execute_update_client() {
         let start_header = &get_test_headers()[0];
         let client_id = "test_client".to_string();
-        let mut deps = init_client(&client_id, &start_header, None);
+        let mut deps = init_client(&client_id, start_header, None);
 
         let signed_header: &SignedHeader = &get_test_signed_headers()[1].clone();
         let header_any: Any = signed_header.to_any();
@@ -704,7 +698,7 @@ mod tests {
             client_id: client_id.clone(),
             signed_header: header_any.encode_to_vec(),
         };
-        let _result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
+        let _result = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let updated_client_state =
             QueryHandler::get_client_state(deps.as_ref().storage, &client_id).unwrap();

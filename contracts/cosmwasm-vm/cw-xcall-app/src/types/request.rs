@@ -63,7 +63,7 @@ impl CallServiceMessageRequest {
     }
 
     pub fn protocols(&self) -> &Vec<String> {
-        return &self.protocols;
+        &self.protocols
     }
 }
 

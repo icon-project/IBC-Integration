@@ -71,7 +71,7 @@ impl<'a> CwMockService<'a> {
         data: Vec<u8>,
         protocols: Vec<String>,
     ) -> Result<Response, ContractError> {
-        if info.sender.to_string() == from {
+        if info.sender == from {
             let recieved_rollback =
                 serde_json_wasm::from_slice::<RollbackData>(&data).map_err(|e| {
                     ContractError::DecodeError {

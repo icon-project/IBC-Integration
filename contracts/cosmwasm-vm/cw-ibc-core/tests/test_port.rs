@@ -49,7 +49,7 @@ fn check_for_port_path_key() {
 
     let port_id = PortId::default();
     let port_path = commitment::port_path(&port_id);
-    let key: Vec<u8> = keccak256(&port_path.clone()).into();
+    let key: Vec<u8> = keccak256(&port_path).into();
 
     let port_path_key = commitment::port_commitment_key(&port_id);
 
@@ -76,12 +76,8 @@ fn test_lookup_module_channel() {
     let module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let msg = MsgChannelOpenInit::try_from(get_dummy_raw_msg_chan_open_init(None)).unwrap();
-    ctx.store_module_by_port(
-        &mut deps.storage,
-        msg.port_id_on_a.clone().into(),
-        module_id.clone(),
-    )
-    .unwrap();
+    ctx.store_module_by_port(&mut deps.storage, msg.port_id_on_a.clone(), module_id)
+        .unwrap();
     let channel_msg = ChannelMsg::OpenInit(msg);
     let res = ctx.lookup_module_channel(&mut deps.storage, &channel_msg);
 

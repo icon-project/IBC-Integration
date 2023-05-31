@@ -36,8 +36,8 @@ use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
 use cw2::set_contract_version;
 use cw_common::cw_types::{
     Cw3ChannelOpenResponse, CwBasicResponse, CwChannelCloseMsg, CwChannelConnectMsg,
-    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwEndpoint, CwMsg, CwOrder, CwPacket,
-    CwPacketAckMsg, CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
+    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwOrder, CwPacket, CwPacketAckMsg,
+    CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
 use cw_common::types::Ack;
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};

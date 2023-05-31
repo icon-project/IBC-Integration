@@ -3,7 +3,7 @@ use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info},
     Coin, CosmosMsg, IbcEndpoint, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
-use cw_common::types::Address;
+
 use cw_xcall::{
     state::{CwCallService, IbcConfig, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
@@ -64,7 +64,7 @@ fn test_execute_call_having_request_id_without_rollback() {
         .unwrap();
 
     let res = cw_callservice
-        .execute_call(deps.as_mut(), info.clone(), request_id)
+        .execute_call(deps.as_mut(), info, request_id)
         .unwrap();
 
     match &res.messages[0].msg {
@@ -281,7 +281,7 @@ fn execute_rollback_success() {
             msg,
             funds: _,
         }) => {
-            let data = String::from_utf8(msg.0.clone()).unwrap();
+            let data = String::from_utf8(msg.0).unwrap();
             assert_eq!("{\"x_call_message\":{\"data\":[1,2,3]}}", data)
         }
         _ => todo!(),

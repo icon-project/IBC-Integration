@@ -64,10 +64,10 @@ impl Encodable for CallServiceResponseType {
 impl Decodable for CallServiceResponseType {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
         match rlp.as_val::<i8>()? {
-            0 => return Ok(Self::CallServiceResponseSuccess),
-            -1 => return Ok(Self::CallServiceResponseFailure),
-            -2 => return Ok(Self::CallServiceIbcError),
-            _ => return Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
+            0 => Ok(Self::CallServiceResponseSuccess),
+            -1 => Ok(Self::CallServiceResponseFailure),
+            -2 => Ok(Self::CallServiceIbcError),
+            _ => Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
         }
     }
 }

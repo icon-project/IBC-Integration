@@ -106,9 +106,7 @@ impl<'a> PrimaryKey<'a> for ModuleId {
     type SuperSuffix = ();
 
     fn key(&self) -> Vec<Key> {
-        vec![Key::Ref(
-            <ModuleId as Borrow<str>>::borrow(&self).as_bytes(),
-        )]
+        vec![Key::Ref(<ModuleId as Borrow<str>>::borrow(self).as_bytes())]
     }
 }
 

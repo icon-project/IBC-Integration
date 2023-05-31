@@ -54,9 +54,9 @@ fn test_claim_capability() {
     let address_to_claim = "address-2".to_string();
     let contract = CwIbcCoreContext::new();
     contract
-        .store_capability(&mut deps.storage, name.clone(), address.clone())
+        .store_capability(&mut deps.storage, name.clone(), address)
         .unwrap();
-    let result = contract.claim_capability(&mut deps.storage, name.clone(), address_to_claim);
+    let result = contract.claim_capability(&mut deps.storage, name, address_to_claim);
     // only one address to one port
     assert_eq!(result.is_err(), true);
 }
@@ -69,9 +69,7 @@ fn test_claim_capability_fails() {
     let mut deps = deps();
     let name: Vec<u8> = vec![2];
     let contract = CwIbcCoreContext::new();
-    contract
-        .get_capability(&mut deps.storage, name.clone())
-        .unwrap();
+    contract.get_capability(&mut deps.storage, name).unwrap();
 }
 
 #[test]
@@ -82,7 +80,7 @@ fn test_authenticate_capability_returns_true() {
     let address = "capability".to_string();
     let contract = CwIbcCoreContext::new();
     contract
-        .store_capability(&mut deps.storage, name.clone(), address.clone())
+        .store_capability(&mut deps.storage, name.clone(), address)
         .unwrap();
     let result = contract.authenticate_capability(&mut deps.storage, info, name);
     assert_eq!(result, true)
@@ -108,7 +106,7 @@ fn test_authenticate_capability_returns_false() {
     let address = "capability".to_string();
     let contract = CwIbcCoreContext::new();
     contract
-        .store_capability(&mut deps.storage, name.clone(), address.clone())
+        .store_capability(&mut deps.storage, name.clone(), address)
         .unwrap();
     let result = contract.authenticate_capability(&mut deps.storage, info, name);
     assert_eq!(result, false)
@@ -121,7 +119,7 @@ fn test_lookup_modules() {
     let address = "address".to_string();
     let contract = CwIbcCoreContext::new();
     contract
-        .store_capability(&mut deps.storage, name.clone(), address.clone())
+        .store_capability(&mut deps.storage, name.clone(), address)
         .unwrap();
 
     let result = contract.lookup_modules(&mut deps.storage, name);
@@ -243,6 +241,6 @@ fn test_already_claimed_capability() {
         .get_capability(&mut deps.storage, name.clone())
         .unwrap();
     contract
-        .claim_capability(&mut deps.storage, name.clone(), address.clone())
+        .claim_capability(&mut deps.storage, name, address)
         .unwrap();
 }

@@ -125,8 +125,7 @@ impl<'a> CwCallService<'a> {
         info: MessageInfo,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        let call_service_message: CallServiceMessage =
-            CallServiceMessage::try_from(message.clone())?;
+        let call_service_message: CallServiceMessage = CallServiceMessage::try_from(message)?;
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
@@ -179,7 +178,7 @@ impl<'a> CwCallService<'a> {
         if request.protocols().len() > 1 {
             let key = keccak256(data).to_vec();
             let caller = info.sender;
-            let _ = self.save_pending_requests(deps.storage, key.clone(), caller.to_string())?;
+            self.save_pending_requests(deps.storage, key.clone(), caller.to_string())?;
             let registered =
                 self.get_pending_requests_by_hash(deps.as_ref().storage, key.clone())?;
 
@@ -187,7 +186,7 @@ impl<'a> CwCallService<'a> {
                 return Ok(Response::new());
             }
 
-            self.remove_pending_request_by_hash(deps.storage, key.clone())?;
+            self.remove_pending_request_by_hash(deps.storage, key)?;
         }
 
         self.insert_request(deps.storage, request_id, request)?;
@@ -241,8 +240,7 @@ impl<'a> CwCallService<'a> {
         if call_request.is_null() {
             let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
                 acknowledgement: make_ack_fail(format!(
-                    "handle_resposne: no request for {}",
-                    response_sequence_no
+                    "handle_resposne: no request for {response_sequence_no}"
                 ))
                 .to_vec(),
             })
@@ -252,7 +250,7 @@ impl<'a> CwCallService<'a> {
                 .add_attribute("method", "handle_response")
                 .add_attribute(
                     "message",
-                    format!("handle_resposne: no request for {}", response_sequence_no),
+                    format!("handle_resposne: no request for {response_sequence_no}"),
                 )
                 .set_data(acknowledgement_data));
         }
@@ -260,7 +258,7 @@ impl<'a> CwCallService<'a> {
         if call_request.protocols().len() > 1 {
             let key = keccak256(data).to_vec();
             let caller = info.sender;
-            let _ = self.save_pending_responses(deps.storage, key.clone(), caller.to_string())?;
+            self.save_pending_responses(deps.storage, key.clone(), caller.to_string())?;
             let registered =
                 self.get_pending_responses_by_hash(deps.as_ref().storage, key.clone())?;
 
@@ -268,7 +266,7 @@ impl<'a> CwCallService<'a> {
                 return Ok(Response::new());
             }
 
-            self.remove_pending_responses_by_hash(deps.storage, key.clone())?;
+            self.remove_pending_responses_by_hash(deps.storage, key)?;
         }
 
         match message.response_code() {
