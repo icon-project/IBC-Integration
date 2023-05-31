@@ -43,6 +43,9 @@ jobs:
   lints:
     name: Lints
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts/cosmwasm-vm
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -63,7 +66,7 @@ jobs:
 
       - name: Generate schema
         run: |
-          cargo schema --locked
+          ./scripts/run_in_subprojects.sh cw-xcall cw-icon-light-client
 
       - name: Verify schema
         uses: tj-actions/verify-changed-files@v8
