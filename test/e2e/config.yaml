@@ -36,7 +36,7 @@ counterparty:
     bech32_prefix: hx
     bin: "$GOPATH/bin/goloop"
     image:
-      repository: iconloop/icon2-node
+      repository: goloop/gochain-icon
       version: latest
       uid_gid: ''
   contracts:
