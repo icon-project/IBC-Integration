@@ -11,7 +11,7 @@ icon:
     name: goloop1
     chain_id: icon1
     bech32_prefix: hx
-    bin: "goloop"
+    bin: "$GOPATH/bin/goloop"
     image:
       repository: goloop/gochain-icon
       version: latest
@@ -34,9 +34,9 @@ counterparty:
     name: goloop2
     chain_id: icon2
     bech32_prefix: hx
-    bin: "goloop"
+    bin: "$GOPATH/bin/goloop"
     image:
-      repository: debendraoli/relayer
+      repository: goloop/gochain-icon
       version: latest
       uid_gid: ''
   contracts:

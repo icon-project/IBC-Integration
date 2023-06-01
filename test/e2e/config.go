@@ -2,11 +2,12 @@ package e2e
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/icon-bridge/common/log"
 	"github.com/spf13/viper"
-	"os"
-	"path/filepath"
 )
 
 type Config struct {
@@ -33,18 +34,20 @@ func GetConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	basePath := filepath.Dir(fmt.Sprintf("%s/..%s..%s", cwd, string(os.PathSeparator), string(os.PathSeparator)))
-
+	basePath := filepath.Dir(fmt.Sprintf("%s/..%c..%c", cwd, os.PathSeparator, os.PathSeparator))
 	if err := os.Setenv("BASE_PATH", basePath); err != nil {
-		log.Fatalf("Error setting BASE_PATH: %s\n", err)
+		log.Fatalf("Error setting BASE_PATH", err)
 	}
-
 	for _, v := range viper.AllKeys() {
 		viper.Set(v, os.ExpandEnv(viper.GetString(v)))
 	}
-
-	fmt.Println(viper.Get("icon.contracts"))
-	fmt.Println(viper.Get("counterparty.contracts"))
-
+	viper.Get("icon")
 	return config, viper.Unmarshal(config)
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
