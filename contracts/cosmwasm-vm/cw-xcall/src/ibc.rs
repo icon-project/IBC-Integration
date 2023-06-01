@@ -2,7 +2,7 @@ use super::*;
 
 /// These are constants used in the IBC (Inter-Blockchain Communication) protocol implementation in the
 /// Rust programming language.
-pub const IBC_VERSION: &str = "xcall-1";
+pub const IBC_VERSION: &str = "ics20-1";
 pub const APP_ORDER: CwOrder = CwOrder::Unordered;
 
 /// This function handles the opening of an IBC channel and performs some checks before returning a

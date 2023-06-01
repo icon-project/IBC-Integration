@@ -104,31 +104,47 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
+        debug_println!("reply execute try from light client ");
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let response =
-                        from_binary::<cw_common::client_response::LightClientResponse>(&res)
-                            .map_err(ContractError::Std)?;
+                    debug_println!("after response decoded");
+
+                    let response = from_binary_response::<
+                        cw_common::client_response::LightClientResponse,
+                    >(&res)
+                    .map_err(ContractError::Std)?;
+                    debug_println!("after response decoded");
+
                     let info = response.message_info;
                     let data = response.ibc_endpoint;
-                    let port_id =
-                        IbcPortId::from_str(&data.port_id).map_err(Into::<ContractError>::into)?;
-                    let channel_id = IbcChannelId::from_str(&data.channel_id)
-                        .map_err(Into::<ContractError>::into)?;
+                    let port_id = PortId::from(
+                        IbcPortId::from_str(&data.port_id)
+                            .map_err(|e| Into::<ContractError>::into(e))?,
+                    );
+                    debug_println!("after getting porrt {:?}", port_id);
+
+                    let channel_id = ChannelId::from(
+                        IbcChannelId::from_str(&data.channel_id)
+                            .map_err(|e| Into::<ContractError>::into(e))?,
+                    );
+                    debug_println!("after getting channel id {:?}", channel_id);
+
                     let channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
-                    let module_id = match self.lookup_module_by_port(deps.storage, port_id.clone())
-                    {
-                        Ok(addr) => addr,
-                        Err(error) => return Err(error),
-                    };
-                    let module_id = module_id;
-                    let contract_address = match self.get_route(deps.storage, module_id) {
-                        Ok(addr) => addr,
-                        Err(error) => return Err(error),
-                    };
+                    let contract_address =
+                        match self.lookup_module_by_port(deps.storage, port_id.clone()) {
+                            Ok(addr) => addr,
+                            Err(error) => return Err(error),
+                        };
+                    debug_println!("contract addres is  {:?}", contract_address);
+
+                    // let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
+                    // let contract_address = match self.get_route(deps.storage, module_id) {
+                    //     Ok(addr) => addr,
+                    //     Err(error) => return Err(error),
+                    // };
 
                     // Generate event for calling on channel open try in x-call
                     let sub_message = on_chan_open_try_submessage(
@@ -137,9 +153,13 @@ impl<'a> CwIbcCoreContext<'a> {
                         &channel_id,
                         &channel_end.connection_hops[0].clone(),
                     );
+
                     let data =
                         cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
+
                     let data = to_binary(&data).map_err(ContractError::Std)?;
+                    debug_println!("after converting data to binary ");
+
                     let on_chan_open_try = create_channel_submesssage(
                         contract_address.to_string(),
                         data,

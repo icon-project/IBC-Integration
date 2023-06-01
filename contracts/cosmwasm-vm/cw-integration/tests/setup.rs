@@ -126,6 +126,12 @@ pub fn ibc_core_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
+pub fn xcall_mock_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(cw_xcall::execute, cw_xcall::instantiate, cw_xcall::query)
+        .with_reply(cw_xcall::reply);
+    Box::new(contract)
+}
+
 pub fn lightclient_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         cw_icon_light_client::contract::execute,
@@ -169,6 +175,28 @@ pub fn init_ibc_core_contract(mut ctx: TestContext) -> TestContext {
         .unwrap();
 
     ctx.set_ibc_core(ibc_core_addr);
+
+    ctx
+}
+
+pub fn init_xcall_mock_contract(mut ctx: TestContext, ibc_host: Addr) -> TestContext {
+    let code_id = ctx.app.store_code(xcall_mock_contract());
+    let addr = ctx
+        .app
+        .instantiate_contract(
+            code_id,
+            ctx.sender.clone(),
+            &cw_xcall::msg::InstantiateMsg {
+                timeout_height: 5000000,
+                ibc_host,
+            },
+            &[],
+            "Xcall",
+            Some(ctx.sender.clone().to_string()),
+        )
+        .unwrap();
+
+    ctx.set_xcall_app(addr);
 
     ctx
 }

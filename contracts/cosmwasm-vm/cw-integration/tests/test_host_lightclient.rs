@@ -4,14 +4,16 @@ use common::constants::ICON_CLIENT_TYPE;
 use common::ibc::events::IbcEventType;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use common::{icon::icon::lightclient::v1::ClientState as RawClientState, traits::AnyTypes};
-use cosmwasm_std::{Addr, Empty};
+use cosmwasm_std::{from_binary, to_binary, Addr, Binary, Empty, Querier, QueryRequest};
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::{core_msg as CoreMsg, hex_string::HexString};
 use cw_ibc_core::{execute, instantiate, query, reply};
 use cw_icon_light_client;
 use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
 use prost::Message;
-use setup::{init_ibc_core_contract, init_light_client, setup_context, TestContext};
+use setup::{
+    init_ibc_core_contract, init_light_client, init_xcall_mock_contract, setup_context, TestContext,
+};
 use test_utils::{
     get_event, get_event_name, get_test_signed_headers, load_raw_messages, RawPayload,
 };
@@ -25,7 +27,8 @@ fn setup_test() -> TestContext {
 pub fn setup_contracts(mut ctx: TestContext) -> TestContext {
     ctx = init_light_client(ctx);
     ctx = init_ibc_core_contract(ctx);
-
+    let ibc_addr = ctx.get_ibc_core().clone();
+    ctx = init_xcall_mock_contract(ctx, ibc_addr);
     ctx
 }
 
@@ -121,6 +124,34 @@ pub fn call_connection_open_confirm(
     res
 }
 
+pub fn call_channel_open_try(
+    ctx: &mut TestContext,
+    msg: HexString,
+) -> Result<AppResponse, AppError> {
+    let res = ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core().clone(),
+        &CoreMsg::ExecuteMsg::ChannelOpenTry { msg },
+        &[],
+    );
+
+    res
+}
+
+pub fn call_channel_open_confirm(
+    ctx: &mut TestContext,
+    msg: HexString,
+) -> Result<AppResponse, AppError> {
+    let res = ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core().clone(),
+        &CoreMsg::ExecuteMsg::ChannelOpenConfirm { msg },
+        &[],
+    );
+
+    res
+}
+
 #[test]
 fn test_register_client() {
     let mut ctx = setup_test();
@@ -160,10 +191,46 @@ fn test_update_client() {
     assert!(result.is_ok());
 }
 
+pub fn build_query(contract: String, msg: Binary) -> QueryRequest<Empty> {
+    QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+        contract_addr: contract,
+        msg,
+    })
+}
+
+pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) -> String {
+    let query = cw_ibc_core::msg::QueryMsg::GetCapability { name: port_id };
+    let query = build_query(contract_address.to_string(), to_binary(&query).unwrap());
+
+    let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
+    println!("balances {:?}", balance);
+    let res: String = from_binary(&balance).unwrap();
+    res
+}
+
+fn call_bind_port(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    let res = ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core().clone(),
+        &CoreMsg::ExecuteMsg::BindPort {
+            port_id: "mock".to_string(),
+            address: ctx.get_xcall_app().clone().to_string(),
+        },
+        &[],
+    );
+
+    res
+}
+
 #[test]
 fn test_connection_open_init() {
     let mut ctx = setup_test();
+    call_bind_port(&mut ctx).unwrap();
     call_register_client_type(&mut ctx).unwrap();
+    let res = query_get_capability(&ctx.app, "mock".to_string(), ctx.get_ibc_core().clone());
+
+    println!("mock app address {:?}", res);
+
     let signed_headers: Vec<RawPayload> = load_raw_messages();
     let response = call_create_client(
         &mut ctx,
@@ -179,8 +246,6 @@ fn test_connection_open_init() {
     println!("{:?}", &result);
     assert!(result.is_ok());
 
-    println!("not reached here");
-
     let result = call_connection_open_try(
         &mut ctx,
         HexString::from_str(signed_headers[1].message.clone().as_str()),
@@ -193,12 +258,26 @@ fn test_connection_open_init() {
     println!("{:?}", &result);
     assert!(result.is_ok());
 
-    println!("not reached here");
-
     let result = call_connection_open_confirm(
         &mut ctx,
         HexString::from_str(signed_headers[2].message.clone().as_str()),
     );
+
+    println!("this is nepalllllll{:?}", &result);
+    assert!(result.is_ok());
+
+    let result = call_update_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[3].update.clone().unwrap().as_str()),
+    );
+    println!("{:?}", &result);
+    assert!(result.is_ok());
+
+    let result = call_channel_open_try(
+        &mut ctx,
+        HexString::from_str(signed_headers[3].message.clone().as_str()),
+    );
+
     println!("this is nepalllllll{:?}", &result);
     assert!(result.is_ok());
 }

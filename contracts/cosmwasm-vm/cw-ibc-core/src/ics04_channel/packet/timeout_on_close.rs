@@ -127,6 +127,7 @@ impl<'a> CwIbcCoreContext<'a> {
             root: consensus_state_of_b_on_a.clone().root().into_vec(),
             counterparty_chan_end_path: chan_end_path_on_b,
             expected_counterparty_channel_end: vector.unwrap(),
+            client_id: conn_end_on_a.client_id().to_string(),
         };
 
         let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
