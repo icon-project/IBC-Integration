@@ -39,17 +39,17 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-schema = "1.2.2"
-cosmwasm-std = "1.2.2"
-cosmwasm-storage = "1.2.2"
+cosmwasm-schema = {workspace=true}
+cosmwasm-std = {workspace=true}
+cosmwasm-storage = {workspace=true}
 cw-storage-plus = {workspace=true}
-cw2 = "1.0.1"
-schemars = "0.8.12"
-serde = { version = "1.0.154", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.39" }
+cw2 = {workspace=true}
+schemars = {workspace=true}
+serde = { workspace=true}
+thiserror = { workspace=true}
 cw-common = { path="../cw-common" }
 common = { path="../../../libraries/rust/common", default-features = false }
-hex= "*"
+hex={workspace=true}
 
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
