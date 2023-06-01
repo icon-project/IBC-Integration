@@ -150,6 +150,12 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         self.claim_capability(store, port_id.as_str().as_bytes().to_vec(), address.clone())?;
 
+        self.store_module_by_port(
+            store,
+            port_id.clone(),
+            ModuleId::from_str(&address).unwrap(),
+        )
+        .unwrap();
         Ok(Response::new()
             .add_attribute("method", "bind_port")
             .add_attribute("port_id", port_id.as_str())

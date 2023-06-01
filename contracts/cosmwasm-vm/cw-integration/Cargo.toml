@@ -24,6 +24,7 @@ cw-mock-dapp = { path="../cw-mock-dapp" }
 cw-icon-light-client = { path="../cw-icon-light-client" }
 cw-ibc-core={path="../cw-ibc-core"}
 cw-xcall-app={path="../cw-xcall-app"}
+cw-xcall={path="../cw-xcall"}
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 

@@ -299,7 +299,11 @@ pub fn execute(
             endpoint,
         } => {
             // fix once we receive client id
-            let result = validate_channel_state("", &client, &verify_channel_state)?;
+            let result = validate_channel_state(
+                &verify_channel_state.client_id,
+                &client,
+                &verify_channel_state,
+            )?;
 
             let data = to_binary(&LightClientResponse {
                 message_info,
