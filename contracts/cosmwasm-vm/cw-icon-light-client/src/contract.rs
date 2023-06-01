@@ -104,7 +104,7 @@ pub fn execute(
             );
 
             response.data = to_binary(&client_response).ok();
-            debug_println!("[CreateClient]: create client called with id {}",client_id);
+            debug_println!("[CreateClient]: create client called with id {}", client_id);
 
             Ok(response)
         }
@@ -249,7 +249,7 @@ pub fn execute(
             println!("checking all the valid state ");
             let client_valid =
                 validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            println!(" is valid clientstate  {:?}", client_valid);
+            println!(" is valid clientstate  {client_valid:?}");
             // let consensus_valid = validate_consensus_state(
             //     &state.client_id,
             //     &client,
@@ -262,7 +262,7 @@ pub fn execute(
                 &client,
                 &state.verify_connection_state,
             )?;
-            println!("is  valid connection state {:?}", connection_valid);
+            println!("is  valid connection state {connection_valid:?}");
 
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
@@ -392,7 +392,7 @@ pub fn validate_client_state(
     state: &VerifyClientFullState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
-        .map_err(|e| ContractError::DecodeError(e))?;
+        .map_err(ContractError::DecodeError)?;
     println!("starting validating client state");
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
@@ -451,8 +451,8 @@ pub fn validate_next_seq_recv(
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &seq_recv_path,
-                &sequence.to_be_bytes().to_vec(),
+                seq_recv_path,
+                sequence.to_be_bytes().as_ref(),
             )?;
             res
         }
@@ -482,7 +482,7 @@ pub fn validate_next_seq_recv(
 }
 
 fn to_height_u64(height: &str) -> Result<u64, ContractError> {
-    let heights = height.split("-").collect::<Vec<&str>>();
+    let heights = height.split('-').collect::<Vec<&str>>();
     if heights.len() != 2 {
         return Err(ContractError::InvalidHeight);
     }
@@ -546,7 +546,7 @@ mod tests {
 
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
-        contract::{to_height_u64, validate_next_seq_recv},
+        contract::to_height_u64,
         state::QueryHandler,
         ContractError,
     };

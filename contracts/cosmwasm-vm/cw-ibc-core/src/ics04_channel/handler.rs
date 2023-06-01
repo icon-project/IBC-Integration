@@ -96,7 +96,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_init = create_channel_submesssage(
-            contract_address.to_string(),
+            contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_INIT,
@@ -139,7 +139,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
         debug_println!("Reached in channel open try");
-        let connection_id = ConnectionId::from(message.connection_hops_on_b[0].clone());
+        let connection_id = message.connection_hops_on_b[0].clone();
         let conn_end_on_b = self.connection_end(deps.storage, connection_id)?;
 
         channel_open_try_msg_validate(message, &conn_end_on_b)?;
@@ -713,9 +713,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
                     let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
-                    let channel_id =
-                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 
@@ -789,9 +788,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
                     let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = PortId::from(IbcPortId::from_str(&data.port_id).unwrap());
-                    let channel_id =
-                        ChannelId::from(IbcChannelId::from_str(&data.channel_id).unwrap());
+                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 

@@ -66,16 +66,15 @@ impl<'a> CwMockService<'a> {
         connections.push(conn);
         self.connections
             .save(store, network_id, &connections)
-            .map_err(|e| ContractError::Std(e))
+            .map_err(ContractError::Std)
     }
     pub fn get_connections(
         &self,
         store: &dyn Storage,
         network_id: String,
     ) -> Result<Vec<Connection>, ContractError> {
-        return self
-            .connections
+        self.connections
             .load(store, network_id.clone())
-            .map_err(|_e| ContractError::ConnectionNotFound { network_id });
+            .map_err(|_e| ContractError::ConnectionNotFound { network_id })
     }
 }

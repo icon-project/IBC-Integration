@@ -2,21 +2,17 @@ mod setup;
 use anyhow::Error as AppError;
 use common::constants::ICON_CLIENT_TYPE;
 use common::ibc::events::IbcEventType;
-use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
-use common::{icon::icon::lightclient::v1::ClientState as RawClientState, traits::AnyTypes};
+
 use cosmwasm_std::{from_binary, to_binary, Addr, Binary, Empty, Querier, QueryRequest};
-use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
+
 use cw_common::{core_msg as CoreMsg, hex_string::HexString};
-use cw_ibc_core::{execute, instantiate, query, reply};
-use cw_icon_light_client;
-use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
-use prost::Message;
+
+use cw_multi_test::{App, AppResponse, Executor};
+
 use setup::{
     init_ibc_core_contract, init_light_client, init_xcall_mock_contract, setup_context, TestContext,
 };
-use test_utils::{
-    get_event, get_event_name, get_test_signed_headers, load_raw_messages, RawPayload,
-};
+use test_utils::{get_event, get_event_name, load_raw_messages, RawPayload};
 
 fn setup_test() -> TestContext {
     let mut context = setup_context();
@@ -27,129 +23,112 @@ fn setup_test() -> TestContext {
 pub fn setup_contracts(mut ctx: TestContext) -> TestContext {
     ctx = init_light_client(ctx);
     ctx = init_ibc_core_contract(ctx);
-    let ibc_addr = ctx.get_ibc_core().clone();
+    let ibc_addr = ctx.get_ibc_core();
     ctx = init_xcall_mock_contract(ctx, ibc_addr);
     ctx
 }
 
 pub fn call_register_client_type(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::RegisterClient {
             client_type: ICON_CLIENT_TYPE.to_string(),
-            client_address: ctx.get_light_client().clone(),
+            client_address: ctx.get_light_client(),
         },
         &[],
-    );
-    res
+    )
 }
 
 pub fn call_create_client(ctx: &mut TestContext, msg: HexString) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::CreateClient { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 pub fn call_update_client(ctx: &mut TestContext, msg: HexString) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::UpdateClient { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 pub fn call_connection_open_init(
     ctx: &mut TestContext,
     msg: HexString,
 ) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::ConnectionOpenInit { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 pub fn call_connection_open_try(
     ctx: &mut TestContext,
     msg: HexString,
 ) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::ConnectionOpenTry { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 pub fn call_connection_open_ack(
     ctx: &mut TestContext,
     msg: HexString,
-    client_id: &str,
+    _client_id: &str,
 ) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::ConnectionOpenAck { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 pub fn call_connection_open_confirm(
     ctx: &mut TestContext,
     msg: HexString,
 ) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::ConnectionOpenConfirm { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 pub fn call_channel_open_try(
     ctx: &mut TestContext,
     msg: HexString,
 ) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::ChannelOpenTry { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 pub fn call_channel_open_confirm(
     ctx: &mut TestContext,
     msg: HexString,
 ) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::ChannelOpenConfirm { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 #[test]
@@ -182,7 +161,7 @@ fn test_update_client() {
     )
     .unwrap();
     let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
-    let client_id = event.get("client_id").unwrap();
+    let _client_id = event.get("client_id").unwrap();
     let result = call_update_client(
         &mut ctx,
         HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()),
@@ -203,23 +182,21 @@ pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) 
     let query = build_query(contract_address.to_string(), to_binary(&query).unwrap());
 
     let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
-    println!("balances {:?}", balance);
+    println!("balances {balance:?}");
     let res: String = from_binary(&balance).unwrap();
     res
 }
 
 fn call_bind_port(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::BindPort {
             port_id: "mock".to_string(),
-            address: ctx.get_xcall_app().clone().to_string(),
+            address: ctx.get_xcall_app().to_string(),
         },
         &[],
-    );
-
-    res
+    )
 }
 
 #[test]
@@ -227,9 +204,9 @@ fn test_connection_open_init() {
     let mut ctx = setup_test();
     call_bind_port(&mut ctx).unwrap();
     call_register_client_type(&mut ctx).unwrap();
-    let res = query_get_capability(&ctx.app, "mock".to_string(), ctx.get_ibc_core().clone());
+    let res = query_get_capability(&ctx.app, "mock".to_string(), ctx.get_ibc_core());
 
-    println!("mock app address {:?}", res);
+    println!("mock app address {res:?}");
 
     let signed_headers: Vec<RawPayload> = load_raw_messages();
     let response = call_create_client(
@@ -238,7 +215,7 @@ fn test_connection_open_init() {
     )
     .unwrap();
     let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
-    let client_id = event.get("client_id").unwrap();
+    let _client_id = event.get("client_id").unwrap();
     let result = call_update_client(
         &mut ctx,
         HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()),
@@ -246,7 +223,7 @@ fn test_connection_open_init() {
     println!("{:?}", &result);
     assert!(result.is_ok());
 
-    let result = call_connection_open_try(
+    let _result = call_connection_open_try(
         &mut ctx,
         HexString::from_str(signed_headers[1].message.clone().as_str()),
     );

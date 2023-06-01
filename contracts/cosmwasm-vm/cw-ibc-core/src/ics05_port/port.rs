@@ -1,5 +1,5 @@
 use super::*;
-use cw_common::commitment;
+
 /// This is an implementation of several helper functions for working with IBC (Inter-Blockchain
 /// Communication) modules in a Cosmos SDK-based blockchain application.
 impl<'a> CwIbcCoreContext<'a> {

@@ -176,7 +176,7 @@ pub fn load_test_messages() -> Vec<TestMessageData> {
 }
 
 pub fn load_raw_messages() -> Vec<RawPayload> {
-    return load_test_data::<RawPayload>("test_data/raw_payloads.json");
+    load_test_data::<RawPayload>("test_data/raw_payloads.json")
 }
 
 pub fn load_test_data<T: for<'a> Deserialize<'a>>(path: &str) -> Vec<T> {

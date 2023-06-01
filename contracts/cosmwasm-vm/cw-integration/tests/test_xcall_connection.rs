@@ -1,16 +1,16 @@
 mod setup;
 use anyhow::Error as AppError;
-use cosmwasm_std::{testing::MOCK_CONTRACT_ADDR, to_vec};
+use cosmwasm_std::to_vec;
 use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
-use cw_xcall_ibc_connection::state::{CwIbcConnection, IbcConfig};
+
 use setup::{
     init_mock_ibc_core_contract, init_xcall_app_contract, init_xcall_ibc_connection_contract,
     mock_ibc_config, TestContext,
 };
 use test_utils::get_event;
 
-use crate::setup::{create_mock_info, deps, setup_context};
+use crate::setup::setup_context;
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 
 fn setup_contracts(mut ctx: TestContext) -> TestContext {
@@ -34,9 +34,9 @@ pub fn call_send_call_message(
     data: Vec<u8>,
     rollback: Option<Vec<u8>>,
 ) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_xcall_app().clone(),
+        ctx.get_xcall_app(),
         &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
             to: to.to_string(),
             data,
@@ -45,30 +45,28 @@ pub fn call_send_call_message(
             destinations,
         },
         &[],
-    );
-    res
+    )
 }
 
 pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_xcall_ibc_connection().clone(),
+        ctx.get_xcall_ibc_connection(),
         &cw_common::xcall_connection_msg::ExecuteMsg::SetXCallHost {
             address: ctx.get_xcall_app().to_string(),
         },
         &[],
-    );
-    res
+    )
 }
 pub fn call_set_ibc_config(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
     let config = to_vec(&mock_ibc_config()).unwrap();
-    let res = ctx.app.execute_contract(
+
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_xcall_ibc_connection().clone(),
+        ctx.get_xcall_ibc_connection(),
         &cw_common::xcall_connection_msg::ExecuteMsg::SetIbcConfig { ibc_config: config },
         &[],
-    );
-    res
+    )
 }
 #[test]
 fn send_packet_success() {

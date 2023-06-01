@@ -22,6 +22,5 @@ pub fn from_binary_response<T: DeserializeOwned>(res: &[u8]) -> Result<T, StdErr
     let start = 0x7b;
     let start_index = res.iter().position(|&x| x == start).unwrap_or(0);
     let slice = &res[(start_index)..(res.len())];
-    println!("{}", hex::encode(slice));
     from_binary::<T>(&Binary(slice.to_vec()))
 }

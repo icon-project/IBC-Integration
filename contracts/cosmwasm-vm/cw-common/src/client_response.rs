@@ -232,8 +232,6 @@ pub struct PacketResponse {
 
 impl From<PacketResponse> for Packet {
     fn from(packet: PacketResponse) -> Self {
-        println!("{packet:?}");
-        // let data = hex::decode(packet.data).unwrap();
         Packet {
             sequence: packet.seq_on_a,
             port_id_on_a: packet.port_id_on_a,

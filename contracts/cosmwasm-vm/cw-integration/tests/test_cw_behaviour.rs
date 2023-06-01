@@ -1,5 +1,5 @@
 use cosmwasm_std::Addr;
-use cw_multi_test::{App, Executor};
+use cw_multi_test::Executor;
 use setup::init_mock_dapp_contract;
 
 use crate::setup::setup_context;

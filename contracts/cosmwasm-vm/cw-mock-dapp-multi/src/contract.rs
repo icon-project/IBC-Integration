@@ -69,7 +69,7 @@ impl<'a> CwMockService<'a> {
         info: MessageInfo,
         from: String,
         data: Vec<u8>,
-        protocols: Vec<String>,
+        _protocols: Vec<String>,
     ) -> Result<Response, ContractError> {
         if info.sender == from {
             let recieved_rollback =
@@ -106,7 +106,7 @@ impl<'a> CwMockService<'a> {
     }
 
     pub fn get_network_id(&self, address: String) -> Result<String, ContractError> {
-        let splits = address.split("/").collect::<Vec<&str>>();
+        let splits = address.split('/').collect::<Vec<&str>>();
         if splits.len() < 2 {
             return Err(ContractError::InvalidAddress {
                 address: address.to_string(),

@@ -46,20 +46,20 @@ impl TestContext {
     }
 
     pub fn set_light_client(&mut self, addr: Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::LightClient, addr);
+        self.contracts.insert(TestApps::LightClient, addr)
     }
     pub fn set_dapp(&mut self, addr: Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::Dapp, addr);
+        self.contracts.insert(TestApps::Dapp, addr)
     }
     pub fn set_ibc_core(&mut self, addr: Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::IbcCore, addr);
+        self.contracts.insert(TestApps::IbcCore, addr)
     }
 
     pub fn set_xcall_app(&mut self, addr: Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::XcallApp, addr);
+        self.contracts.insert(TestApps::XcallApp, addr)
     }
     pub fn set_xcall_ibc_connection(&mut self, addr: Addr) -> Option<Addr> {
-        return self.contracts.insert(TestApps::XcallIbcConnection, addr);
+        self.contracts.insert(TestApps::XcallIbcConnection, addr)
     }
 }
 
@@ -83,8 +83,7 @@ pub fn mock_ibc_config() -> IbcConfig {
         channel_id: "channel-3".to_string(),
     };
 
-    let ibc_config = IbcConfig::new(src, dst);
-    ibc_config
+    IbcConfig::new(src, dst)
 }
 
 pub fn mock_dapp_contract() -> Box<dyn Contract<Empty>> {
@@ -257,7 +256,7 @@ pub fn init_xcall_app_contract(mut ctx: TestContext) -> TestContext {
             xcall_app_contractcode_id,
             ctx.sender.clone(),
             &cw_xcall_app::msg::InstantiateMsg {
-                connection_host: ctx.get_xcall_ibc_connection().clone(),
+                connection_host: ctx.get_xcall_ibc_connection(),
                 timeout_height: 10,
             },
             &[],
@@ -292,11 +291,11 @@ pub fn init_xcall_ibc_connection_contract(mut ctx: TestContext) -> TestContext {
 }
 
 pub fn setup_context() -> TestContext {
-    let mut router = App::default();
+    let router = App::default();
     let sender = Addr::unchecked("sender");
-    return TestContext {
+    TestContext {
         app: router,
         contracts: HashMap::new(),
         sender,
-    };
+    }
 }

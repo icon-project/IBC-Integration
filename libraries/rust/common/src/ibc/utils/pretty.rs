@@ -23,7 +23,6 @@ mod tests {
 
     use prost::alloc::string::ToString;
     use std::{string::String, vec};
-    use tendermint::block::Header;
 
     #[test]
     fn test_pretty_vec_display() {

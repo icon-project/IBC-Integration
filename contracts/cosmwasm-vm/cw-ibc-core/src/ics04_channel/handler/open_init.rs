@@ -68,13 +68,13 @@ pub fn create_channel_submesssage(
         msg,
         funds,
     });
-    let sub_msg = SubMsg {
-        id: id,
+
+    SubMsg {
+        id,
         msg: on_channel,
         gas_limit: Some(GAS_FOR_SUBMESSAGE_XCALL),
         reply_on: ReplyOn::Never,
-    };
-    sub_msg
+    }
 }
 
 /// This function validates the channel open initialization message.

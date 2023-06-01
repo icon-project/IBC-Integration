@@ -200,7 +200,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<String, ContractError> {
         let capabilities = self
             .get_capability(store, name)
-            .map_err(|e| ContractError::Unauthorized {})?;
+            .map_err(|_e| ContractError::Unauthorized {})?;
 
         Ok(capabilities)
     }

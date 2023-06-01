@@ -118,16 +118,12 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let info = response.message_info;
                     let data = response.ibc_endpoint;
-                    let port_id = PortId::from(
-                        IbcPortId::from_str(&data.port_id)
-                            .map_err(|e| Into::<ContractError>::into(e))?,
-                    );
+                    let port_id =
+                        IbcPortId::from_str(&data.port_id).map_err(Into::<ContractError>::into)?;
                     debug_println!("after getting porrt {:?}", port_id);
 
-                    let channel_id = ChannelId::from(
-                        IbcChannelId::from_str(&data.channel_id)
-                            .map_err(|e| Into::<ContractError>::into(e))?,
-                    );
+                    let channel_id = IbcChannelId::from_str(&data.channel_id)
+                        .map_err(Into::<ContractError>::into)?;
                     debug_println!("after getting channel id {:?}", channel_id);
 
                     let channel_end =
