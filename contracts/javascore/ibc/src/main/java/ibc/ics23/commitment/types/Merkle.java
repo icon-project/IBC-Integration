@@ -196,6 +196,24 @@ public class Merkle {
         return true;
     }
 
+    public static byte[] prefixLengthInBigEndian(byte[] input) {
+        // calculate the length of the input array
+        int length = input.length;
+
+        // manually convert the length to a 2-byte array in big endian format
+        byte[] lengthPrefix = new byte[2];
+        lengthPrefix[0] = (byte) ((length >> 8) & 0xFF);
+        lengthPrefix[1] = (byte) (length & 0xFF);
+
+        // prefix the length to the input array
+        byte[] result = new byte[lengthPrefix.length + input.length];
+
+        System.arraycopy(lengthPrefix, 0, result, 0, lengthPrefix.length);
+        System.arraycopy(input, 0, result, lengthPrefix.length, input.length);
+
+        return result;
+    }
+
     private static boolean isInnerSpecEmpty(InnerSpec spec) {
         return spec == null;
     }

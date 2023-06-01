@@ -18,9 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static ibc.ics23.commitment.types.Merkle.getSDKSpecs;
-import static ibc.ics23.commitment.types.Merkle.isMerkleProofEmpty;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static ibc.ics23.commitment.types.Merkle.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MerkleTest {
 
@@ -80,4 +79,34 @@ public class MerkleTest {
         Merkle.verifyMembership(merkleProof, getSDKSpecs(), merkleRoot, merklePath, value);
     }
 
+    @Test
+    public void testPrefixLengthInBigEndian() {
+        // Test with an array of length 10
+        byte[] input = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        byte[] expected = new byte[]{0, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        assertArrayEquals(prefixLengthInBigEndian(input), expected);
+
+        // Test with an empty array
+        input = new byte[]{};
+        expected = new byte[]{0, 0};
+        assertArrayEquals(prefixLengthInBigEndian(input), expected);
+
+        // Test with an array of length 1
+        input = new byte[]{1};
+        expected = new byte[]{0, 1, 1};
+        assertArrayEquals(prefixLengthInBigEndian(input), expected);
+
+        // Test with an array of length 256
+        input = new byte[256];
+        for (int i = 0; i < 256; i++) {
+            input[i] = (byte) i;
+        }
+        expected = new byte[258];
+        expected[0] = 1;
+        expected[1] = 0;
+        for (int i = 0; i < 256; i++) {
+            expected[i + 2] = (byte) i;
+        }
+        assertArrayEquals(prefixLengthInBigEndian(input), expected);
+    }
 }

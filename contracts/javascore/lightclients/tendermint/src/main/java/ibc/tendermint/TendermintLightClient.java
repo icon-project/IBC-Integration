@@ -8,7 +8,6 @@ import ibc.ics23.commitment.types.Merkle;
 import ibc.ics24.host.IBCCommitment;
 import icon.proto.clients.tendermint.*;
 import icon.proto.core.client.Height;
-import icon.proto.core.commitment.LengthOp;
 import icon.proto.core.commitment.MerkleProof;
 import score.Address;
 import score.BranchDB;
@@ -21,8 +20,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
 
-import static ibc.ics23.commitment.Ops.doLengthOp;
 import static ibc.ics23.commitment.types.Merkle.applyPrefix;
+import static ibc.ics23.commitment.types.Merkle.prefixLengthInBigEndian;
 import static ibc.tendermint.TendermintHelper.*;
 import static score.Context.require;
 
@@ -219,7 +218,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         value = IBCCommitment.keccak256(value);
 
         // path = storage-prefix + lengthOP(prefix) + keccak256(path)
-        prefix = doLengthOp(LengthOp.FIXED32_LITTLE, prefix);
+        prefix = prefixLengthInBigEndian(prefix);
         path = ByteUtil.join(prefix, IBCCommitment.keccak256(path));
         byte[] pathPrefix = storagePrefix.get(clientId);
         if (pathPrefix != null) {
@@ -252,7 +251,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
             byte[] path) {
 
         // path = storage-prefix + lengthOP(prefix) + keccak256(path)
-        prefix = doLengthOp(LengthOp.FIXED32_LITTLE, prefix);
+        prefix = prefixLengthInBigEndian(prefix);
         path = ByteUtil.join(prefix, IBCCommitment.keccak256(path));
         byte[] pathPrefix = storagePrefix.get(clientId);
         if (pathPrefix != null) {
