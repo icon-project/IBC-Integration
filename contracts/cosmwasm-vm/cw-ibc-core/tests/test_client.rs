@@ -29,6 +29,7 @@ use cw_ibc_core::{
     traits::IbcClient,
     MsgUpgradeClient,
 };
+use debug_print::debug_println;
 use prost::Message;
 use setup::*;
 
@@ -317,8 +318,8 @@ fn check_for_create_client_message_into_raw_message() {
     };
 
     let raw_message: RawMsgCreateClient = RawMsgCreateClient::try_from(actual_message).unwrap();
-    println!("{raw_message:?}");
-    println!("{:?}", get_dummy_raw_msg_create_client());
+    debug_println!("{raw_message:?}");
+    debug_println!("{:?}", get_dummy_raw_msg_create_client());
 
     assert_eq!(raw_message, get_dummy_raw_msg_create_client())
 }

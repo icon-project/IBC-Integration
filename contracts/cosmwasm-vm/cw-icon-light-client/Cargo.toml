@@ -46,6 +46,7 @@ common = { path="../../../libraries/rust/common", default-features = false }
 cw-common = { path="../cw-common",default-features = false }
 prost = { workspace=true}
 serde-json-wasm = {workspace=true}
+debug_print = {workspace=true}
 
 
 [dev-dependencies]

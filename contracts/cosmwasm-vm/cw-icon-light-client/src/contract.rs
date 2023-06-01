@@ -2,6 +2,7 @@ use common::constants::ICON_CLIENT_TYPE;
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use cw_common::ibc_types::IbcHeight;
+use debug_print::debug_println;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
@@ -103,6 +104,7 @@ pub fn execute(
             );
 
             response.data = to_binary(&client_response).ok();
+            debug_println!("[CreateClient]: create client called with id {}",client_id);
 
             Ok(response)
         }

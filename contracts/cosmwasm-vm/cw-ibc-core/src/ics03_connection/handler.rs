@@ -27,6 +27,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: MsgConnectionOpenInit,
     ) -> Result<Response, ContractError> {
+
         let connection_identifier = self.generate_connection_idenfier(deps.storage)?;
 
         self.client_state(deps.storage, &message.client_id_on_a)?;
@@ -474,13 +475,13 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let connection_path =
             commitment::connection_path(&message.counterparty.connection_id.clone().unwrap());
-        println!("connkey: {:?}", HexString::from_bytes(&connection_path));
-        println!(
+        debug_println!("connkey: {:?}", HexString::from_bytes(&connection_path));
+        debug_println!(
             "root: {:?} ",
             HexString::from_bytes(&consensus_state_of_a_on_b.root().as_bytes().to_vec())
         );
 
-        println!(
+        debug_println!(
             "expected counterpart connection_end:{:?}",
             HexString::from_bytes(&expected_conn_end_on_a.encode_vec().unwrap())
         );
@@ -495,12 +496,12 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         // this is verifying tendermint client state and shouldn't have icon-client as an argument
-        println!(
+        debug_println!(
             "payload client state path {:?}",
             &message.counterparty.client_id()
         );
         let client_state_path = commitment::client_state_path(&message.counterparty.client_id());
-        println!(
+        debug_println!(
             "the clientstate value is  {:?}",
             message.client_state_of_b_on_a.value.clone()
         );
@@ -575,16 +576,16 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        println!("open try repluy ");
+        debug_println!("open try repluy ");
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
-                    println!("Res is ok ");
+                    debug_println!("Res is ok ");
 
                     let response: OpenTryResponse =
                         from_binary_response(&data).map_err(ContractError::Std)?;
 
-                    println!("Response parsed");
+                        debug_println!("Response parsed");
 
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
@@ -593,7 +594,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             }
                         })?;
 
-                    println!("counter_party_client_id id {:?}", counter_party_client_id);
+                        debug_println!("counter_party_client_id id {:?}", counter_party_client_id);
 
                     let counterparty_conn_id = match response.counterparty_connection_id.is_empty()
                     {
@@ -605,7 +606,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     };
 
-                    println!("counterparty conn id  {:?}", counterparty_conn_id);
+                    debug_println!("counterparty conn id  {:?}", counterparty_conn_id);
 
                     let counterparty_prefix =
                         CommitmentPrefix::try_from(response.counterparty_prefix)
@@ -614,7 +615,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             })
                             .map_err(Into::<ContractError>::into)?;
 
-                    println!("counterparty_prefix {:?}", counterparty_prefix);
+                            debug_println!("counterparty_prefix {:?}", counterparty_prefix);
 
                     let counterparty = Counterparty::new(
                         counter_party_client_id,
@@ -622,7 +623,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         counterparty_prefix,
                     );
 
-                    println!(
+                    debug_println!(
                         "respnose version {:?}",
                         HexString::from_bytes(&response.versions)
                     );
@@ -631,7 +632,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             error: DecodeError::new(error.to_string()),
                         })?;
 
-                    println!("version decode{:?}", version);
+                        debug_println!("version decode{:?}", version);
 
                     let delay_period = Duration::from_secs(response.delay_period);
 
@@ -641,11 +642,11 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     })?;
 
-                    println!("client id is{:?}", client_id);
+                    debug_println!("client id is{:?}", client_id);
 
                     let connection_id = self.generate_connection_idenfier(deps.storage)?;
 
-                    println!("connection id is{:?}", connection_id);
+                    debug_println!("connection id is{:?}", connection_id);
 
                     let conn_end = ConnectionEnd::new(
                         State::TryOpen,
@@ -655,7 +656,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         delay_period,
                     );
 
-                    println!("conn end{:?}", conn_end);
+                    debug_println!("conn end{:?}", conn_end);
 
                     let counterparty_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
@@ -663,8 +664,8 @@ impl<'a> CwIbcCoreContext<'a> {
                                 error: DecodeError::new(error.to_string()),
                             }
                         })?;
-                    println!("counterparty client id {:?}", counterparty_client_id);
-                    println!(
+                        debug_println!("counterparty client id {:?}", counterparty_client_id);
+                        debug_println!(
                         "Response connection id  {:?}",
                         &response.counterparty_connection_id
                     );

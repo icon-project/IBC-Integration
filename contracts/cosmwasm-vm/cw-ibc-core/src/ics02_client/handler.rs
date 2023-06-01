@@ -3,6 +3,7 @@ use crate::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT
 use super::{events::client_misbehaviour_event, *};
 use common::constants::ICON_CLIENT_TYPE;
 use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response};
+use debug_print::debug_println;
 use prost::{DecodeError, Message};
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
@@ -97,7 +98,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
         let sub_msg: SubMsg = SubMsg::reply_always(client_update_message, EXECUTE_UPDATE_CLIENT);
-        println!(
+        debug_println!(
             "Called Update Client On Lightclient for client id:{}",
             &message.client_id
         );
@@ -268,7 +269,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
-                    println!("{:?}", &data);
+                    debug_println!("{:?}", &data);
                     let callback_data: CreateClientResponse =
                         from_binary_response(&data).map_err(ContractError::Std)?;
 
@@ -339,7 +340,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let update_client_response: UpdateClientResponse = from_binary_response(&data)?;
-                    println!("Received Client Update Callback with data");
+                    debug_println!("Received Client Update Callback with data");
                     let client_id = update_client_response
                         .client_id()
                         .map_err(ContractError::from)?;

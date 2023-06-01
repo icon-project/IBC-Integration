@@ -13,6 +13,7 @@ use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::raw_types::connection::*;
 use cw_common::raw_types::Protobuf;
 use cw_common::raw_types::RawHeight;
+use debug_print::debug_println;
 use prost::{DecodeError, Message};
 
 // version info for migration info
@@ -51,6 +52,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
             .map_err(ContractError::Std)?;
+        
 
         self.init_channel_counter(deps.storage, u64::default())?;
         self.init_client_counter(deps.storage, 1)?;
@@ -284,7 +286,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         &height,
                     )
                     .map_err(|e| {
-                        println!("{e:?}");
+                        debug_println!("{e:?}");
                         ContractError::InvalidClientId { client_id }
                     })
                     .unwrap();
@@ -639,6 +641,7 @@ mod tests {
 
     use cw_common::hex_string::HexString;
     use cw_common::ibc_types::IbcClientType;
+    use debug_print::debug_println;
     use prost::Message;
 
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
@@ -729,7 +732,7 @@ mod tests {
         let result_bytes = hex::decode(result_parsed).unwrap();
 
         let result_decoded = Any::decode(result_bytes.as_ref()).unwrap();
-        println!("{result_decoded:?}");
+        debug_println!("{result_decoded:?}");
         assert_eq!(
             ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
             result_decoded.type_url

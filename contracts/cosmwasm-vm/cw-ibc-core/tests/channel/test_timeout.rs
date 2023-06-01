@@ -1,4 +1,5 @@
 use cw_common::from_binary_response;
+use debug_print::debug_println;
 
 use super::*;
 
@@ -175,7 +176,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let message = Reply { id: 0, result };
 
     let res = contract.timeout_packet_validate_reply_from_light_client(deps.as_mut(), message);
-    println!("{res:?}");
+    debug_println!("{res:?}");
 }
 
 #[test]
