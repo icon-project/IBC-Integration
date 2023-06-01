@@ -6,6 +6,11 @@ use super::*;
 pub struct InstantiateMsg {}
 
 #[cw_serde]
+pub struct MigrateMsg {
+    pub clear_store: bool,
+}
+
+#[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     #[returns(String)]

@@ -1,3 +1,5 @@
+use cosmwasm_std::Order;
+
 use super::*;
 
 /// The `CwIbcStore` struct stores various data related to the Inter-Blockchain Communication (IBC).
@@ -162,5 +164,16 @@ impl<'a> CwIbcStore<'a> {
     }
     pub fn packet_receipts(&self) -> &Map<'a, (String, String, u64), u64> {
         &self.packet_receipts
+    }
+
+    pub fn clear_storage(&self, store: &mut dyn Storage) {
+        let keys: Vec<_> = store
+            .range(None, None, Order::Ascending)
+            .map(|(k, _)| k)
+            .collect();
+        for k in keys {
+            debug_print::debug_println!("Removing Key {:?}", k);
+            store.remove(&k);
+        }
     }
 }

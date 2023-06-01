@@ -16,6 +16,7 @@ pub mod storage_keys;
 pub mod traits;
 pub use crate::error::ContractError;
 use gas_estimates::*;
+use ics04_channel::ics03_connection::msg::MigrateMsg;
 
 use crate::state::CwIbcStore;
 use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
@@ -130,4 +131,13 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
     let call_service = CwIbcCoreContext::default();
 
     call_service.reply(deps, env, msg)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    if msg.clear_store {
+        let store= CwIbcStore::default();
+        store.clear_storage(deps.storage);
+    }
+    Ok(Response::default())
 }

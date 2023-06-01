@@ -462,6 +462,7 @@ dependencies = [
  "cw-mock-ibc-core",
  "cw-multi-test",
  "cw-storage-plus",
+ "cw-xcall",
  "cw-xcall-app",
  "cw-xcall-ibc-connection",
  "hex",
