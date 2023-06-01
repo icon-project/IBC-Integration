@@ -1,4 +1,4 @@
-package e2e_test
+package e2e
 
 import (
 	"context"
@@ -18,9 +18,19 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
+const (
+	relayerImageEnv    = "RELAYER_IMAGE"
+	relayerImage       = "strangeloveventures/relayer"
+	relayerImageTagEnv = "RELAYER_IMAGE_TAG"
+	relayerImageTag    = "latest"
+)
+
 func TestICONToICON(t *testing.T) {
 	fmt.Println("test start")
-	cfg := GetConfig()
+	cfg, err := GetConfig()
+	if err != nil {
+		return
+	}
 	ctx := context.Background()
 	logger := zaptest.NewLogger(t)
 	iconChain1 := icon.NewIconLocalnet(t.Name(), logger, cfg.Icon.ChainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.Icon.KeystoreFile, cfg.Icon.KeystorePassword, cfg.Icon.Contracts)
@@ -32,7 +42,7 @@ func TestICONToICON(t *testing.T) {
 	if err != nil {
 		return
 	}
-	optionDocker := relayer.CustomDockerImage("relayer", "latest", "100:1000")
+	optionDocker := relayer.CustomDockerImage(getEnvOrDefault(relayerImageEnv, relayerImage), getEnvOrDefault(relayerImageTagEnv, relayerImageTag), "100:1000")
 
 	r := interchaintest.NewICONRelayerFactory(zaptest.NewLogger(t), optionDocker, relayer.ImagePull(false)).Build(
 		t, client, network)
@@ -109,5 +119,4 @@ func TestICONToICON(t *testing.T) {
 	ctx, err = iconChain2.ExecuteCall(ctx, reqId)
 	fmt.Println(ctx.Value("txResult"))
 	fmt.Println(err)
-
 }
