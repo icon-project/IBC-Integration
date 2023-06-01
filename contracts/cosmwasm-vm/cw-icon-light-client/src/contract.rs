@@ -276,11 +276,11 @@ pub fn execute(
             )?;
             let client_valid =
                 validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            let consensus_valid = validate_consensus_state(
-                &state.client_id,
-                &client,
-                &state.verify_client_consensus_state,
-            )?;
+            // let consensus_valid = validate_consensus_state(
+            //     &state.client_id,
+            //     &client,
+            //     &state.verify_client_consensus_state,
+            // )?;
 
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())

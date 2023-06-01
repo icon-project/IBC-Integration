@@ -94,10 +94,12 @@ impl<'a> CwIbcCoreContext<'a> {
                         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
                     );
 
-                    Ok(Response::new()
-                        .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_close_confirm_module_validation")
-                        .add_submessage(on_chan_close_confirm))
+                    Ok(
+                        Response::new()
+                            .add_attribute("action", "channel")
+                            .add_attribute("method", "channel_close_confirm_module_validation"),
+                        // .add_submessage(on_chan_close_confirm)
+                    )
                 }
                 None => Err(ChannelError::Other {
                     description: "Data from module is Missing".to_string(),

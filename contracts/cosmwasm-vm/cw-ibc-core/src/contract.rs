@@ -53,7 +53,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(ContractError::Std)?;
 
         self.init_channel_counter(deps.storage, u64::default())?;
-        self.init_client_counter(deps.storage, 1)?;
+        self.init_client_counter(deps.storage, u64::default())?;
         self.init_connection_counter(deps.storage, u64::default())?;
         self.set_owner(deps.storage, info.sender)?;
 

@@ -136,7 +136,7 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
     if msg.clear_store {
-        let store= CwIbcStore::default();
+        let store = CwIbcStore::default();
         store.clear_storage(deps.storage);
     }
     Ok(Response::default())
