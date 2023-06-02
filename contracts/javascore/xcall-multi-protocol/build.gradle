@@ -44,6 +44,11 @@ deployJar {
             uri = 'http://localhost:9082/api/v3'
             nid = 0x3
         }
+        uat {
+            uri = project.findProperty('uat.host') as String
+            nid = property('uat.nid') as Integer
+            to = "$xCallMultiProtocol"?:null
+        }
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''

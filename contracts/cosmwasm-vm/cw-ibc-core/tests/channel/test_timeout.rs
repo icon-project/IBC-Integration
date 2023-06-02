@@ -12,7 +12,7 @@ fn test_execute_timeout_packet() {
     ))
     .unwrap();
 
-    let packet = msg.packet.clone();
+    let packet = msg.packet;
     // Set up test environment
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
@@ -53,8 +53,8 @@ fn test_execute_timeout_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             chan_end_on_a_ordered,
         )
         .unwrap();
@@ -64,14 +64,14 @@ fn test_execute_timeout_packet() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a.clone().into(),
-            &packet.chan_id_on_a.clone().into(),
-            packet.sequence.clone(),
+            &packet.port_id_on_a,
+            &packet.chan_id_on_a,
+            packet.sequence,
             commitment,
         )
         .unwrap();
     // Call the function being tested
-    let res = contract.execute_timeout_packet(deps.as_mut(), message.clone());
+    let res = contract.execute_timeout_packet(deps.as_mut(), message);
 
     // Check that the function returns the expected result
     assert!(res.is_ok());
@@ -89,7 +89,7 @@ fn test_execute_timeout_packet_fails() {
     ))
     .unwrap();
 
-    let packet = msg.packet.clone();
+    let packet = msg.packet;
     // Set up test environment
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
@@ -123,14 +123,14 @@ fn test_execute_timeout_packet_fails() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a.clone().into(),
-            &packet.chan_id_on_a.clone().into(),
-            packet.sequence.clone(),
+            &packet.port_id_on_a,
+            &packet.chan_id_on_a,
+            packet.sequence,
             commitment,
         )
         .unwrap();
     contract
-        .execute_timeout_packet(deps.as_mut(), message.clone())
+        .execute_timeout_packet(deps.as_mut(), message)
         .unwrap();
 }
 
@@ -148,13 +148,13 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let info = create_mock_info("channel-creater", "umlg", 2000);
 
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = PortId::from(msg.packet.port_id_on_a.clone());
+    let port_id = msg.packet.port_id_on_a.clone();
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
     contract
-        .add_route(&mut deps.storage, module_id.clone().into(), &module)
+        .add_route(&mut deps.storage, module_id, &module)
         .unwrap();
     let message_info = cw_common::types::MessageInfo {
         sender: info.sender,
@@ -175,7 +175,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let message = Reply { id: 0, result };
 
     let res = contract.timeout_packet_validate_reply_from_light_client(deps.as_mut(), message);
-    println!("{:?}", res);
+    println!("{res:?}");
 }
 
 #[test]
@@ -199,7 +199,7 @@ fn test_packet_data() {
     };
     let bin = to_binary(&packet_data).unwrap();
     let data = from_binary_response::<PacketData>(&bin);
-    let packet_date = Packet::from(data.unwrap().packet);
+    let packet_date = data.unwrap().packet;
 
     assert_eq!(packet_date, msg.packet);
 }
@@ -230,8 +230,8 @@ fn test_timeout_packet_validate_to_light_client() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
@@ -241,10 +241,10 @@ fn test_timeout_packet_validate_to_light_client() {
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().clone(),
+        ClientId::default(),
         ConnectionCounterparty::new(
-            ClientId::default().clone(),
-            Some(ConnectionId::default().clone()),
+            ClientId::default(),
+            Some(ConnectionId::default()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -253,7 +253,7 @@ fn test_timeout_packet_validate_to_light_client() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone().into(),
+            chan_end_on_a_ordered.connection_hops()[0].clone(),
             conn_end_on_a,
         )
         .unwrap();
@@ -266,9 +266,9 @@ fn test_timeout_packet_validate_to_light_client() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a.clone().into(),
-            &packet.chan_id_on_a.clone().into(),
-            packet.sequence.clone(),
+            &packet.port_id_on_a,
+            &packet.chan_id_on_a,
+            packet.sequence,
             packet_commitment,
         )
         .unwrap();
@@ -288,7 +288,7 @@ fn test_timeout_packet_validate_to_light_client() {
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
-    let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
+    let client_type = IbcClientType::new("iconclient".to_string());
 
     contract
         .store_client_into_registry(

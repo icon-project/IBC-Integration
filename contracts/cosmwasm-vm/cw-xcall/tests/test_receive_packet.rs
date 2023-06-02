@@ -97,12 +97,8 @@ fn test_receive_packet_for_call_message_response() {
         "",
     );
 
-    let call_request = CallRequest::new(
-        alice().to_string(),
-        bob().to_string(),
-        vec![1, 2, 3].into(),
-        true,
-    );
+    let call_request =
+        CallRequest::new(alice().to_string(), bob().to_string(), vec![1, 2, 3], true);
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 1, call_request)
@@ -167,12 +163,8 @@ fn receive_packet_for_call_message_response_invalid_sequence_id() {
 
     let message: CallServiceMessage = data.try_into().unwrap();
 
-    let call_request = CallRequest::new(
-        alice().to_string(),
-        bob().to_string(),
-        vec![1, 2, 3].into(),
-        true,
-    );
+    let call_request =
+        CallRequest::new(alice().to_string(), bob().to_string(), vec![1, 2, 3], true);
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 2, call_request)
@@ -229,12 +221,8 @@ fn handle_response_emit_rollback_event() {
         "",
     );
 
-    let call_request = CallRequest::new(
-        alice().to_string(),
-        bob().to_string(),
-        vec![1, 2, 3].into(),
-        false,
-    );
+    let call_request =
+        CallRequest::new(alice().to_string(), bob().to_string(), vec![1, 2, 3], false);
 
     contract
         .set_call_request(mock_deps.as_mut().storage, 1, call_request)

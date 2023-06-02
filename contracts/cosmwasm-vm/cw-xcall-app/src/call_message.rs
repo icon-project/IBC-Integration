@@ -60,7 +60,7 @@ impl<'a> CwCallService<'a> {
 
         self.ensure_data_length(data.len())?;
         self.ensure_rollback_length(&rollback_data)?;
-        println!("{} Packet Validated", LOG_PREFIX);
+        println!("{LOG_PREFIX} Packet Validated");
 
         // TODO : ADD fee logic
 
@@ -83,7 +83,7 @@ impl<'a> CwCallService<'a> {
             info.sender.to_string(),
             to,
             sequence_no,
-            destinations.clone(),
+            destinations,
             need_response,
             data.to_vec(),
         );
@@ -110,10 +110,7 @@ impl<'a> CwCallService<'a> {
                     gas_limit: None,
                     reply_on: cosmwasm_std::ReplyOn::Always,
                 };
-                println!(
-                    "{} sent message to connection :{}",
-                    LOG_PREFIX, connection_host
-                );
+                println!("{LOG_PREFIX} sent message to connection :{connection_host}");
                 Ok(submessage)
             })
             .collect::<Result<Vec<SubMsg>, ContractError>>()?;

@@ -39,7 +39,7 @@ pub fn to_lookup<T: Eq + PartialEq + Hash + Clone>(vec: &Vec<T>) -> HashMap<T, b
     for val in vec {
         hash_map.insert(val.clone(), true);
     }
-    return hash_map;
+    hash_map
 }
 
 // solidity bytes32 equivalent

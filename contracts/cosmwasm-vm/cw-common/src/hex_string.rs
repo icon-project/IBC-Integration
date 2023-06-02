@@ -25,7 +25,7 @@ pub struct HexString(String);
 impl HexString {
     pub fn to_bytes(&self) -> Result<Vec<u8>, hex::FromHexError> {
         let str = self.0.replace("0x", "");
-        if str.len() == 0 {
+        if str.is_empty() {
             return Ok(Vec::<u8>::new());
         }
         hex::decode(str)
@@ -35,7 +35,7 @@ impl HexString {
         HexString(hex::encode(bytes))
     }
 
-    pub fn from_str(str:&str)->Self {
+    pub fn from_str(str: &str) -> Self {
         HexString(str.to_owned())
     }
 }

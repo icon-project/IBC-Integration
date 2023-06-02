@@ -35,7 +35,7 @@ jobs:
         run: docker logout public.ecr.aws && cd contracts/javascore/gochain-btp && make run
 
       - name: Check if all contracts are deployable
-        run: cd contracts/javascore && ./gradlew clean build && ./gradlew optimizedJar && ./gradlew deployToLocal
+        run: cd contracts/javascore && ./gradlew clean build && ./gradlew optimizedJar && ./gradlew deployToLocal -PdeploymentENV=local
 
       - name: Run integration tests
         run: cd contracts/javascore && ./gradlew integrationTest

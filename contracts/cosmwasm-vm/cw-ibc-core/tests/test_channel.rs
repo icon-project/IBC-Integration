@@ -6,7 +6,6 @@ use cosmwasm_std::{
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
 };
 
-use common::ibc::core::ics02_client::client_type::ClientType;
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 
 use common::ibc::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
@@ -139,11 +138,8 @@ fn test_channel_sequence_send_increment() {
 
     assert_eq!(sequence, result.unwrap());
 
-    let incremented_result = ctx.increase_next_sequence_send(
-        mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-    );
+    let incremented_result =
+        ctx.increase_next_sequence_send(mock_deps.as_mut().storage, port_id, channel_id);
     assert_eq!(Sequence::from(1), incremented_result.unwrap());
 }
 
@@ -168,11 +164,8 @@ fn test_channel_sequence_recv_increment() {
 
     assert_eq!(sequence, result.unwrap());
 
-    let incremented_result = ctx.increase_next_sequence_recv(
-        mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-    );
+    let incremented_result =
+        ctx.increase_next_sequence_recv(mock_deps.as_mut().storage, port_id, channel_id);
     assert_eq!(Sequence::from(1), incremented_result.unwrap());
 }
 
@@ -197,11 +190,8 @@ fn test_channel_sequence_ack_increment() {
 
     assert_eq!(sequence, result.unwrap());
 
-    let incremented_result = ctx.increase_next_sequence_ack(
-        mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-    );
+    let incremented_result =
+        ctx.increase_next_sequence_ack(mock_deps.as_mut().storage, port_id, channel_id);
     assert_eq!(Sequence::from(1), incremented_result.unwrap());
 }
 
@@ -212,12 +202,8 @@ fn test_channel_sequence_ack_fail() {
     let mut mock_deps = deps();
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
-    ctx.increase_next_sequence_ack(
-        mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-    )
-    .unwrap();
+    ctx.increase_next_sequence_ack(mock_deps.as_mut().storage, port_id, channel_id)
+        .unwrap();
 }
 
 #[test]
@@ -227,12 +213,8 @@ fn test_channel_sequence_send_fail() {
     let mut mock_deps = deps();
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
-    ctx.increase_next_sequence_send(
-        mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-    )
-    .unwrap();
+    ctx.increase_next_sequence_send(mock_deps.as_mut().storage, port_id, channel_id)
+        .unwrap();
 }
 
 #[test]
@@ -242,12 +224,8 @@ fn test_channel_sequence_recv_fail() {
     let mut mock_deps = deps();
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
-    ctx.increase_next_sequence_recv(
-        mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-    )
-    .unwrap();
+    ctx.increase_next_sequence_recv(mock_deps.as_mut().storage, port_id, channel_id)
+        .unwrap();
 }
 
 #[test]
@@ -291,7 +269,7 @@ pub fn test_to_and_from_channel_open_try() {
 #[test]
 fn channel_open_init_from_raw_good_parameter() {
     let default_raw_init_msg = get_dummy_raw_msg_chan_open_init(None);
-    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg.clone());
+    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg);
     assert_eq!(res_msg.is_ok(), true)
 }
 #[test]
@@ -300,9 +278,9 @@ fn channel_open_init_from_raw_incorrect_port_id_parameter() {
     let default_raw_init_msg = get_dummy_raw_msg_chan_open_init(None);
     let default_raw_init_msg = RawMsgChannelOpenInit {
         port_id: "p34/".to_string(),
-        ..default_raw_init_msg.clone()
+        ..default_raw_init_msg
     };
-    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg.clone());
+    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -313,14 +291,14 @@ fn channel_open_init_from_raw_missing_channel_parameter() {
         channel: None,
         ..default_raw_init_msg
     };
-    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg.clone());
+    let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg);
     res_msg.unwrap();
 }
 #[test]
 fn channel_open_confirm_from_raw_good_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
-    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_msg.clone());
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_msg);
     assert_eq!(res_msg.is_ok(), true)
 }
 #[test]
@@ -330,9 +308,9 @@ fn channel_open_confirm_from_raw_incorrect_port_id_parameter() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
         port_id: "p34/".to_string(),
-        ..default_raw_msg.clone()
+        ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -344,7 +322,7 @@ fn channel_open_confirm_from_raw_missing_height_parameter() {
         proof_height: None,
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -359,7 +337,7 @@ fn channel_open_confirm_from_raw_missing_proof_height_parameter() {
         }),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -371,7 +349,7 @@ fn channel_open_confirm_from_raw_missing_proof_try_parameter() {
         proof_ack: Vec::new(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -383,7 +361,7 @@ fn channel_open_confirm_from_raw_invalid_port_id_parameter() {
         port_id: "abcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfaabcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfa".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -395,7 +373,7 @@ fn channel_open_confirm_from_raw_bad_port_id_parameter() {
         port_id: "p".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg);
     res_msg.unwrap();
 }
 
@@ -407,11 +385,11 @@ fn channel_open_confirm_from_raw_valid_channel_id_parameter() {
         channel_id: "channel-34".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelOpenConfirm::try_from(default_raw_confirm_msg);
 
     let expected = MsgChannelOpenConfirm {
-        port_id_on_b: PortId::default().clone(),
-        chan_id_on_b: ChannelId::new(34).clone(),
+        port_id_on_b: PortId::default(),
+        chan_id_on_b: ChannelId::new(34),
         proof_chan_end_on_a:
             common::ibc::core::ics23_commitment::commitment::CommitmentProofBytes::try_from(
                 get_dummy_proof(),
@@ -428,7 +406,7 @@ fn channel_open_confirm_from_raw_valid_channel_id_parameter() {
 fn channel_open_try_from_raw_good_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_try(proof_height);
-    let res_msg = MsgChannelOpenTry::try_from(default_raw_msg.clone());
+    let res_msg = MsgChannelOpenTry::try_from(default_raw_msg);
     assert_eq!(res_msg.is_ok(), true)
 }
 #[test]
@@ -438,9 +416,9 @@ fn channel_open_try_from_raw_incorrect_port_id_parameter() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_try(proof_height);
     let default_raw_try_msg = RawMsgChannelOpenTry {
         port_id: "p34/".to_string(),
-        ..default_raw_msg.clone()
+        ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg.clone());
+    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -452,7 +430,7 @@ fn channel_open_try_from_raw_missing_height_parameter() {
         proof_height: None,
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg.clone());
+    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -467,7 +445,7 @@ fn channel_open_try_from_raw_missing_proof_height_parameter() {
         }),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg.clone());
+    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -479,7 +457,7 @@ fn channel_open_try_from_raw_missing_proof_init_parameter() {
         proof_init: Vec::new(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg.clone());
+    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -491,7 +469,7 @@ fn channel_open_try_from_raw_invalid_port_id_parameter() {
         port_id: "abcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfaabcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfa".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg.clone());
+    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -503,7 +481,7 @@ fn channel_open_try_from_raw_bad_port_id_parameter() {
         port_id: "p".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg.clone());
+    let res_msg = MsgChannelOpenTry::try_from(default_raw_try_msg);
     res_msg.unwrap();
 }
 
@@ -511,7 +489,7 @@ fn channel_open_try_from_raw_bad_port_id_parameter() {
 fn channel_open_ack_from_raw_good_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
-    let res_msg = MsgChannelOpenAck::try_from(default_raw_msg.clone());
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_msg);
     assert_eq!(res_msg.is_ok(), true)
 }
 #[test]
@@ -521,9 +499,9 @@ fn channel_open_ack_from_raw_incorrect_port_id_parameter() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
     let default_raw_ack_msg = RawMsgChannelOpenAck {
         port_id: "p34/".to_string(),
-        ..default_raw_msg.clone()
+        ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -535,7 +513,7 @@ fn channel_open_ack_from_raw_missing_height_parameter() {
         proof_height: None,
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -550,7 +528,7 @@ fn channel_open_ack_from_raw_missing_proof_height_parameter() {
         }),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -562,7 +540,7 @@ fn channel_open_ack_from_raw_missing_proof_try_parameter() {
         proof_try: Vec::new(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -574,7 +552,7 @@ fn channel_open_ack_from_raw_invalid_port_id_parameter() {
         port_id: "abcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfaabcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfa".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 #[test]
@@ -586,7 +564,7 @@ fn channel_open_ack_from_raw_bad_channel_id_parameter() {
         channel_id: "chshort".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelOpenAck::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 
@@ -616,11 +594,11 @@ fn channel_close_innit_from_raw_valid_channel_id_parameter() {
         channel_id: "channel-34".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelCloseInit::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelCloseInit::try_from(default_raw_confirm_msg);
 
     let expected = MsgChannelCloseInit {
-        port_id_on_a: PortId::default().clone(),
-        chan_id_on_a: ChannelId::new(34).clone(),
+        port_id_on_a: PortId::default(),
+        chan_id_on_a: ChannelId::new(34),
         signer: Signer::from_str("cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng").unwrap(),
     };
     assert_eq!(res_msg.unwrap(), expected);
@@ -634,7 +612,7 @@ fn channel_close_init_from_raw_bad_channel_id_parameter() {
         channel_id: "chshort".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelCloseInit::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelCloseInit::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 
@@ -646,7 +624,7 @@ fn channel_close_init_from_raw_bad_port_id_parameter() {
         port_id: "abcdefsdfasdfasdfasdfasdfasdfadsfasdgafsgadfasdfasdfasdfsdfasdfaghijklmnopqrstuabcdefsdfasdfasdfasdfasdfasdfadsfasdgafsgadfasdfasdfasdfsdfasdfaghijklmnopqrstu".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelCloseInit::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelCloseInit::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 
@@ -670,7 +648,7 @@ fn channel_close_confirm_from_raw_bad_channel_id_parameter_too_long() {
         channel_id: "channel-128391283791827398127398791283912837918273981273987912839".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelCloseConfirm::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelCloseConfirm::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 
@@ -686,7 +664,7 @@ fn channel_close_confirm_from_raw_missing_height_parameter() {
         }),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelCloseConfirm::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelCloseConfirm::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 
@@ -699,7 +677,7 @@ fn channel_close_confirm_from_raw_bad_channel_id_parameter() {
         channel_id: "chshort".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelCloseConfirm::try_from(default_raw_ack_msg.clone());
+    let res_msg = MsgChannelCloseConfirm::try_from(default_raw_ack_msg);
     res_msg.unwrap();
 }
 
@@ -711,11 +689,11 @@ fn channel_close_confirm_from_raw() {
         channel_id: "channel-34".to_string(),
         ..default_raw_msg
     };
-    let res_msg = MsgChannelCloseConfirm::try_from(default_raw_confirm_msg.clone());
+    let res_msg = MsgChannelCloseConfirm::try_from(default_raw_confirm_msg);
 
     let expected = MsgChannelCloseConfirm {
-        port_id_on_b: PortId::default().clone(),
-        chan_id_on_b: ChannelId::new(34).clone(),
+        port_id_on_b: PortId::default(),
+        chan_id_on_b: ChannelId::new(34),
         proof_chan_end_on_a:
             common::ibc::core::ics23_commitment::commitment::CommitmentProofBytes::try_from(
                 get_dummy_proof(),
@@ -732,12 +710,12 @@ fn channel_close_confirm_from_raw() {
 fn create_open_ack_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
-    let message = MsgChannelOpenAck::try_from(default_raw_msg.clone()).unwrap();
+    let message = MsgChannelOpenAck::try_from(default_raw_msg).unwrap();
     let event = create_open_ack_channel_event(
-        &message.port_id_on_a.as_str(),
-        &message.chan_id_on_a.as_str(),
+        message.port_id_on_a.as_str(),
+        message.chan_id_on_a.as_str(),
         IbcPortId::default().as_str(),
-        &message.chan_id_on_b.as_str(),
+        message.chan_id_on_b.as_str(),
         ConnectionId::default().as_str(),
     );
 
@@ -751,10 +729,10 @@ fn create_open_ack_channel_event_test() {
 fn create_open_confirm_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
-    let message = MsgChannelOpenConfirm::try_from(default_raw_msg.clone()).unwrap();
+    let message = MsgChannelOpenConfirm::try_from(default_raw_msg).unwrap();
     let event = create_open_confirm_channel_event(
-        &message.port_id_on_b.as_str(),
-        &message.chan_id_on_b.as_str(),
+        message.port_id_on_b.as_str(),
+        message.chan_id_on_b.as_str(),
         PortId::default().as_str(),
         ChannelId::default().as_str(),
         ConnectionId::default().as_str(),
@@ -769,7 +747,7 @@ fn create_open_confirm_channel_event_test() {
 #[test]
 fn create_open_init_channel_event_test() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_init(Some(10));
-    let message = MsgChannelOpenInit::try_from(default_raw_msg.clone()).unwrap();
+    let message = MsgChannelOpenInit::try_from(default_raw_msg).unwrap();
     let channel_id = ChannelId::new(10);
     let event = create_open_init_channel_event(
         &channel_id,
@@ -788,15 +766,15 @@ fn create_open_init_channel_event_test() {
 #[test]
 fn create_open_try_channel_event_test() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_try(10);
-    let message = MsgChannelOpenTry::try_from(default_raw_msg.clone()).unwrap();
+    let message = MsgChannelOpenTry::try_from(default_raw_msg).unwrap();
     let channel_id = ChannelId::new(11);
     let event = create_open_try_channel_event(
-        &channel_id.as_str(),
-        &message.port_id_on_b.as_str(),
-        &message.port_id_on_a.as_str(),
-        &message.chan_id_on_a.as_str(),
-        &message.connection_hops_on_b[0].as_str(),
-        &message.version_supported_on_a.as_str(),
+        channel_id.as_str(),
+        message.port_id_on_b.as_str(),
+        message.port_id_on_a.as_str(),
+        message.chan_id_on_a.as_str(),
+        message.connection_hops_on_b[0].as_str(),
+        message.version_supported_on_a.as_str(),
     );
 
     assert_eq!(IbcEventType::OpenTryChannel.as_str(), event.ty);
@@ -824,9 +802,9 @@ fn test_create_send_packet_event_fail() {
 
     let raw = RawPacket {
         data: vec![u8::MAX],
-        ..raw.clone()
+        ..raw
     };
-    let msg = Packet::try_from(raw.clone()).unwrap();
+    let msg = Packet::try_from(raw).unwrap();
     let _event =
         create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
 }
@@ -860,7 +838,7 @@ fn test_create_write_ack_packet_event() {
     let event = create_write_ack_event(
         ibc_packet_recv_message.packet,
         Order::Unordered.as_str(),
-        &IbcConnectionId::default().as_str(),
+        IbcConnectionId::default().as_str(),
     );
     assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
 }
@@ -872,9 +850,9 @@ fn test_create_write_ack_packet_event_fail() {
 
     let raw = RawPacket {
         data: vec![u8::MAX],
-        ..raw.clone()
+        ..raw
     };
-    let msg = Packet::try_from(raw.clone()).unwrap();
+    let msg = Packet::try_from(raw).unwrap();
     let _event =
         create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
 }
@@ -882,7 +860,7 @@ fn test_create_write_ack_packet_event_fail() {
 #[test]
 fn test_create_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
-    let packet = Packet::try_from(raw.clone()).unwrap();
+    let packet = Packet::try_from(raw).unwrap();
     let event = create_ack_packet_event(
         packet.port_id_on_a.as_str(),
         packet.chan_id_on_a.as_str(),
@@ -891,8 +869,8 @@ fn test_create_ack_packet_event() {
         packet.chan_id_on_b.as_str(),
         &packet.timeout_height_on_b.to_string(),
         &packet.timeout_timestamp_on_b.to_string(),
-        &Order::Ordered.as_str(),
-        &IbcConnectionId::default().as_str(),
+        Order::Ordered.as_str(),
+        IbcConnectionId::default().as_str(),
     );
     assert_eq!("acknowledge_packet", event.ty)
 }
@@ -900,7 +878,7 @@ fn test_create_ack_packet_event() {
 #[test]
 fn test_create_timout_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
-    let packet = Packet::try_from(raw.clone()).unwrap();
+    let packet = Packet::try_from(raw).unwrap();
     let event = create_packet_timeout_event(packet, &Order::Ordered);
     assert_eq!("timeout_packet", event.ty)
 }
@@ -912,7 +890,7 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-    let msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
+    let msg = MsgChannelOpenInit::try_from(raw).unwrap();
 
     contract
         .validate_channel_open_init(deps.as_mut(), info, &msg)
@@ -922,9 +900,9 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
 #[test]
 pub fn test_create_close_init_channel_event() {
     let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw.clone()).unwrap();
+    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let event =
-        create_close_init_channel_event(&msg.port_id_on_a.as_str(), &msg.chan_id_on_a.as_str());
+        create_close_init_channel_event(msg.port_id_on_a.as_str(), msg.chan_id_on_a.as_str());
 
     assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
 }
@@ -933,9 +911,9 @@ pub fn test_create_close_init_channel_event() {
 pub fn test_create_close_confirm_channel_event() {
     let proof_height = 10;
     let raw = get_dummy_raw_msg_chan_close_confirm(proof_height);
-    let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
+    let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let event =
-        create_close_confirm_channel_event(&msg.port_id_on_b.as_str(), &msg.chan_id_on_b.as_str());
+        create_close_confirm_channel_event(msg.port_id_on_b.as_str(), msg.chan_id_on_b.as_str());
 
     assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }
@@ -946,18 +924,18 @@ fn test_validate_open_init_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-    let mut msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
+    let mut msg = MsgChannelOpenInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = PortId::from(msg.port_id_on_a.clone());
+    let port_id = msg.port_id_on_a.clone();
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
+    let cx_module_id = module_id;
     contract
-        .add_route(&mut deps.storage, cx_module_id.clone(), &module)
+        .add_route(&mut deps.storage, cx_module_id, &module)
         .unwrap();
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -980,7 +958,7 @@ fn test_validate_open_init_channel() {
     msg.version_proposal = Version::from_str("xcall-1").unwrap();
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
         .unwrap();
 
     let res = contract.validate_channel_open_init(deps.as_mut(), info.clone(), &msg);
@@ -1007,7 +985,7 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-    let mut msg = MsgChannelOpenInit::try_from(raw.clone()).unwrap();
+    let mut msg = MsgChannelOpenInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -1029,7 +1007,7 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
     msg.version_proposal = Version::from_str("xcall-1").unwrap();
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .store_connection(deps.as_mut().storage, conn_id, conn_end)
         .unwrap();
 
     contract
@@ -1044,7 +1022,7 @@ fn test_validate_open_try_channel_fail_missing_connection_end() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let msg = MsgChannelOpenTry::try_from(raw).unwrap();
 
     contract
         .validate_channel_open_try(deps.as_mut(), info, &msg)
@@ -1057,18 +1035,18 @@ fn test_validate_open_try_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let mut msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = PortId::from(msg.port_id_on_a.clone());
+    let port_id = msg.port_id_on_a.clone();
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = cw_common::ibc_types::IbcModuleId::from(module_id.clone());
+    let cx_module_id = module_id;
     contract
-        .add_route(&mut deps.storage, cx_module_id.clone(), &module)
+        .add_route(&mut deps.storage, cx_module_id, &module)
         .unwrap();
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -1091,7 +1069,7 @@ fn test_validate_open_try_channel() {
     msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .store_connection(deps.as_mut().storage, conn_id, conn_end)
         .unwrap();
 
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -1109,7 +1087,7 @@ fn test_validate_open_try_channel() {
     contract
         .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
         .unwrap();
-    let client_type = ClientType::from(IbcClientType::new("iconclient".to_string()));
+    let client_type = IbcClientType::new("iconclient".to_string());
 
     contract
         .store_client_into_registry(
@@ -1134,7 +1112,7 @@ fn test_validate_open_try_channel() {
         )
         .unwrap();
 
-    let res = contract.validate_channel_open_try(deps.as_mut(), info.clone(), &msg);
+    let res = contract.validate_channel_open_try(deps.as_mut(), info, &msg);
 
     assert_eq!(res.is_ok(), true);
     assert_eq!(res.unwrap().messages[0].id, 421)
@@ -1147,7 +1125,7 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let mut msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -1168,7 +1146,7 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
     msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .store_connection(deps.as_mut().storage, conn_id, conn_end)
         .unwrap();
 
     contract
@@ -1181,7 +1159,7 @@ fn test_execute_open_try_channel() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let mut msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -1203,7 +1181,7 @@ fn test_execute_open_try_channel() {
     msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .store_connection(deps.as_mut().storage, conn_id, conn_end)
         .unwrap();
 
     let counter_party = Counterparty::new(msg.port_id_on_a.clone(), Some(msg.chan_id_on_a.clone()));
@@ -1218,15 +1196,15 @@ fn test_execute_open_try_channel() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            PortId::from(msg.port_id_on_b.clone()),
+            msg.port_id_on_b.clone(),
             channel_id_on_b.clone(),
             channel_end,
         )
         .unwrap();
 
     let expected_data = cosmwasm_std::IbcEndpoint {
-        port_id: PortId::from(msg.port_id_on_b.clone()).to_string(),
-        channel_id: channel_id_on_b.clone().to_string(),
+        port_id: msg.port_id_on_b.to_string(),
+        channel_id: channel_id_on_b.to_string(),
     };
 
     let response = SubMsgResponse {

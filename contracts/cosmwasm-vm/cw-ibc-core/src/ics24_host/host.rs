@@ -133,19 +133,18 @@ impl<'a> CwIbcCoreContext<'a> {
         name: Vec<u8>,
         address: String,
     ) -> Result<(), ContractError> {
-       let cap =self.ibc_store().capabilities().load(store, name.clone()).ok();
-       if let Some(_c) = cap {
-        return Err(ContractError::IbcContextError {
-                                    error: "Capability already claimed".to_string(),
-                                });
-       }
+        let cap = self
+            .ibc_store()
+            .capabilities()
+            .load(store, name.clone())
+            .ok();
+        if let Some(_c) = cap {
+            return Err(ContractError::IbcContextError {
+                error: "Capability already claimed".to_string(),
+            });
+        }
 
-       self.store_capability(store, name, address)
-
-      
-       
-
-        
+        self.store_capability(store, name, address)
     }
 
     /// The function checks if the caller has a specific capability stored in the provided storage.
@@ -173,7 +172,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> bool {
         let caller = info.sender.to_string();
         let capability = self.get_capability(store, name).unwrap();
-        if capability==caller{
+        if capability == caller {
             return true;
         }
         false
@@ -199,8 +198,10 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &mut dyn Storage,
         name: Vec<u8>,
     ) -> Result<String, ContractError> {
-        let capabilities = self.get_capability(store, name).map_err(|e|ContractError::Unauthorized {  })?;
-      
+        let capabilities = self
+            .get_capability(store, name)
+            .map_err(|_e| ContractError::Unauthorized {})?;
+
         Ok(capabilities)
     }
 

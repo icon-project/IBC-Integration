@@ -5,29 +5,25 @@ use std::{collections::HashMap, vec};
 use crate::account::*;
 use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
-    to_binary, to_vec, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcEndpoint,
-    IbcMsg, IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
+    to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcMsg, IbcTimeout,
+    IbcTimeoutBlock, SystemError, SystemResult, WasmQuery,
 };
 
-use cw_common::ibc_types::IbcHeight;
-use cw_common::{hex_string::HexString, ProstMessage};
-use cw_multi_test::AppResponse;
 use cw_xcall_app::{
-    error::ContractError,
     state::CwCallService,
     types::{message::CallServiceMessage, request::CallServiceMessageRequest},
 };
-use cw_xcall_ibc_connection::state::{CwIbcConnection, IbcConfig};
+
 use setup::test::*;
-use test_utils::{get_event, get_event_name, get_test_signed_headers, to_attribute_map};
+use test_utils::get_event;
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 
 #[test]
 fn send_packet_success() {
-    let mut mock_deps = deps();
+    let mock_deps = deps();
 
-    let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
+    let _mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
     let mut ctx = setup_contracts(mock_deps);
     call_set_xcall_host(&mut ctx).unwrap();
     call_set_ibc_config(&mut ctx).unwrap();

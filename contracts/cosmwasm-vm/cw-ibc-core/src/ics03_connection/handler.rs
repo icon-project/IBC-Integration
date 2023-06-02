@@ -29,7 +29,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.client_state(deps.storage, &message.client_id_on_a)?;
 
-        let client_id = ClientId::from(message.client_id_on_a.clone());
+        let client_id = message.client_id_on_a.clone();
 
         let lightclient_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
@@ -48,7 +48,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ClientError::ClientNotFound {
                 client_id: message.client_id_on_a,
             })
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
         }
 
         self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
@@ -59,7 +59,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     vec![version]
                 } else {
                     return Err(ConnectionError::EmptyVersions)
-                        .map_err(|e| Into::<ContractError>::into(e));
+                        .map_err(Into::<ContractError>::into);
                 }
             }
             None => self.get_compatible_versions(),
@@ -161,17 +161,17 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|_| ConnectionError::Other {
                 description: "failed to get host height".to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
         if msg.consensus_height_of_a_on_b > host_height {
             return Err(ConnectionError::InvalidConsensusHeight {
                 target_height: msg.consensus_height_of_a_on_b,
                 current_height: host_height,
             })
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
         }
 
         self.validate_self_client(msg.client_state_of_a_on_b.clone())?;
-        let conn_end_on_a = self.connection_end(deps.storage, msg.conn_id_on_a.clone().into())?;
+        let conn_end_on_a = self.connection_end(deps.storage, msg.conn_id_on_a.clone())?;
         let client_id_on_a = conn_end_on_a.client_id();
         let client_id_on_b = conn_end_on_a.counterparty().client_id();
 
@@ -181,7 +181,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ConnectionError::ConnectionMismatch {
                 connection_id: msg.conn_id_on_a,
             })
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
         }
 
         let client_cons_state_path_on_a =
@@ -191,11 +191,10 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|_| ConnectionError::Other {
                 description: "failed to fetch consensus state".to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
         let prefix_on_a = self.commitment_prefix();
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
-        let client_address =
-            self.get_client(deps.as_ref().storage, client_id_on_a.clone().into())?;
+        let client_address = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
 
         let expected_conn_end_on_b = ConnectionEnd::new(
             State::TryOpen,
@@ -307,12 +306,11 @@ impl<'a> CwIbcCoreContext<'a> {
                             }
                         })?;
 
-                    let mut conn_end =
-                        self.connection_end(deps.storage, connection_id.clone().into())?;
+                    let mut conn_end = self.connection_end(deps.storage, connection_id.clone())?;
 
                     if !conn_end.state_matches(&State::Init) {
                         return Err(ConnectionError::ConnectionMismatch { connection_id })
-                            .map_err(|e| Into::<ContractError>::into(e));
+                            .map_err(Into::<ContractError>::into);
                     }
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
@@ -337,10 +335,10 @@ impl<'a> CwIbcCoreContext<'a> {
                             .map_err(|error| ConnectionError::Other {
                                 description: error.to_string(),
                             })
-                            .map_err(|e| Into::<ContractError>::into(e))?;
+                            .map_err(Into::<ContractError>::into)?;
 
                     let counterparty = Counterparty::new(
-                        counter_party_client_id.clone(),
+                        counter_party_client_id,
                         counterparty_conn_id.clone(),
                         counterparty_prefix,
                     );
@@ -349,16 +347,16 @@ impl<'a> CwIbcCoreContext<'a> {
                     conn_end.set_version(version);
                     conn_end.set_counterparty(counterparty.clone());
 
-                    let counter_conn_id = ConnectionId::from(counterparty_conn_id.unwrap());
+                    let counter_conn_id = counterparty_conn_id.unwrap();
 
                     let event = create_open_ack_event(
-                        connection_id.clone().into(),
-                        conn_end.client_id().clone().into(),
+                        connection_id.clone(),
+                        conn_end.client_id().clone(),
                         counter_conn_id,
-                        counterparty.client_id().clone().into(),
+                        counterparty.client_id().clone(),
                     );
 
-                    self.store_connection(deps.storage, connection_id.clone().into(), conn_end)
+                    self.store_connection(deps.storage, connection_id.clone(), conn_end)
                         .unwrap();
 
                     Ok(Response::new()
@@ -369,11 +367,11 @@ impl<'a> CwIbcCoreContext<'a> {
                 None => Err(ConnectionError::Other {
                     description: "UNKNOWN ERROR".to_string(),
                 })
-                .map_err(|e| Into::<ContractError>::into(e)),
+                .map_err(Into::<ContractError>::into),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ConnectionError::Other { description: error })
-                    .map_err(|e| Into::<ContractError>::into(e))
+                    .map_err(Into::<ContractError>::into)
             }
         }
     }
@@ -410,17 +408,17 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|_| ConnectionError::Other {
                 description: "failed to get host height".to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
         if message.consensus_height_of_b_on_a > host_height {
             return Err(ConnectionError::InvalidConsensusHeight {
                 target_height: message.consensus_height_of_b_on_a,
                 current_height: host_height,
             })
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
         }
         let prefix_on_a = message.counterparty.prefix().clone();
         let prefix_on_b = self.commitment_prefix();
-        let client_id_on_b = ClientId::from(message.client_id_on_b.clone());
+        let client_id_on_b = message.client_id_on_b.clone();
 
         let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 
@@ -445,7 +443,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|_| ConnectionError::Other {
                 description: "failed to fetch consensus state".to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
 
         let connection_path =
             commitment::connection_path(&message.counterparty.connection_id.clone().unwrap());
@@ -546,7 +544,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         false => {
                             let connection_id =
                                 ConnectionId::from_str(&response.counterparty_connection_id)?;
-                            Some(connection_id.clone())
+                            Some(connection_id)
                         }
                     };
 
@@ -555,10 +553,10 @@ impl<'a> CwIbcCoreContext<'a> {
                             .map_err(|error| ConnectionError::Other {
                                 description: error.to_string(),
                             })
-                            .map_err(|e| Into::<ContractError>::into(e))?;
+                            .map_err(Into::<ContractError>::into)?;
 
                     let counterparty = Counterparty::new(
-                        counter_party_client_id.clone(),
+                        counter_party_client_id,
                         counterparty_conn_id,
                         counterparty_prefix,
                     );
@@ -615,11 +613,11 @@ impl<'a> CwIbcCoreContext<'a> {
                 None => Err(ConnectionError::Other {
                     description: "UNKNOWN ERROR".to_string(),
                 })
-                .map_err(|e| Into::<ContractError>::into(e)),
+                .map_err(Into::<ContractError>::into),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ConnectionError::Other { description: error })
-                    .map_err(|e| Into::<ContractError>::into(e))
+                    .map_err(Into::<ContractError>::into)
             }
         }
     }
@@ -643,21 +641,21 @@ impl<'a> CwIbcCoreContext<'a> {
         info: MessageInfo,
         msg: MsgConnectionOpenConfirm,
     ) -> Result<Response, ContractError> {
-        let conn_end_on_b = self.connection_end(deps.storage, msg.conn_id_on_b.clone().into())?;
+        let conn_end_on_b = self.connection_end(deps.storage, msg.conn_id_on_b.clone())?;
         let client_id_on_b = conn_end_on_b.client_id();
         let client_id_on_a = conn_end_on_b.counterparty().client_id();
         if !conn_end_on_b.state_matches(&State::TryOpen) {
             return Err(ConnectionError::ConnectionMismatch {
                 connection_id: msg.conn_id_on_b,
             })
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
         }
         let _client_state_of_a_on_b = self
             .client_state(deps.storage, client_id_on_b)
             .map_err(|_| ConnectionError::Other {
                 description: "failed to fetch client state".to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
         let _client_cons_state_path_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
         let consensus_state_of_a_on_b = self
@@ -665,12 +663,11 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|_| ConnectionError::Other {
                 description: "failed to fetch consensus state".to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
         let prefix_on_b = self.commitment_prefix();
 
-        let client_address =
-            self.get_client(deps.as_ref().storage, client_id_on_b.clone().into())?;
+        let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Open,
@@ -754,12 +751,11 @@ impl<'a> CwIbcCoreContext<'a> {
                             }
                         })?;
 
-                    let mut conn_end =
-                        self.connection_end(deps.storage, connection_id.clone().into())?;
+                    let mut conn_end = self.connection_end(deps.storage, connection_id.clone())?;
 
                     if !conn_end.state_matches(&State::TryOpen) {
                         return Err(ConnectionError::ConnectionMismatch { connection_id })
-                            .map_err(|e| Into::<ContractError>::into(e));
+                            .map_err(Into::<ContractError>::into);
                     }
                     let counter_party_client_id =
                         ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
@@ -784,26 +780,26 @@ impl<'a> CwIbcCoreContext<'a> {
                             .map_err(|error| ConnectionError::Other {
                                 description: error.to_string(),
                             })
-                            .map_err(|e| Into::<ContractError>::into(e))?;
+                            .map_err(Into::<ContractError>::into)?;
 
                     let counterparty = Counterparty::new(
-                        counter_party_client_id.clone(),
+                        counter_party_client_id,
                         counterparty_conn_id.clone(),
                         counterparty_prefix,
                     );
 
                     conn_end.set_state(State::Open);
 
-                    let counter_conn_id = ConnectionId::from(counterparty_conn_id.unwrap());
+                    let counter_conn_id = counterparty_conn_id.unwrap();
 
                     let event = create_open_confirm_event(
-                        connection_id.clone().into(),
-                        conn_end.client_id().clone().into(),
+                        connection_id.clone(),
+                        conn_end.client_id().clone(),
                         counter_conn_id,
-                        counterparty.client_id().clone().into(),
+                        counterparty.client_id().clone(),
                     );
 
-                    self.store_connection(deps.storage, connection_id.clone().into(), conn_end)
+                    self.store_connection(deps.storage, connection_id.clone(), conn_end)
                         .unwrap();
 
                     Ok(Response::new()
@@ -814,11 +810,11 @@ impl<'a> CwIbcCoreContext<'a> {
                 None => Err(ConnectionError::Other {
                     description: "UNKNOWN ERROR".to_string(),
                 })
-                .map_err(|e| Into::<ContractError>::into(e)),
+                .map_err(Into::<ContractError>::into),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ConnectionError::Other { description: error })
-                    .map_err(|e| Into::<ContractError>::into(e))
+                    .map_err(Into::<ContractError>::into)
             }
         }
     }

@@ -232,7 +232,7 @@ pub struct PacketResponse {
 
 impl From<PacketResponse> for Packet {
     fn from(packet: PacketResponse) -> Self {
-        println!("{:?}", packet);
+        println!("{packet:?}");
         // let data = hex::decode(packet.data).unwrap();
         Packet {
             sequence: packet.seq_on_a,

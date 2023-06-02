@@ -83,18 +83,14 @@ fn test_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
+            packet.port_id_on_b.clone(),
+            packet.chan_id_on_b.clone(),
             chan_end_on_b.clone(),
         )
         .unwrap();
     let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
     contract
-        .store_connection(
-            &mut deps.storage,
-            conn_id_on_b.clone().into(),
-            conn_end_on_b.clone(),
-        )
+        .store_connection(&mut deps.storage, conn_id_on_b.clone(), conn_end_on_b)
         .unwrap();
 
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -138,15 +134,15 @@ fn test_receive_packet() {
     contract
         .store_client_implementations(
             &mut deps.storage,
-            IbcClientId::default().into(),
+            IbcClientId::default(),
             light_client.to_string(),
         )
         .unwrap();
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
+            packet.port_id_on_b.clone(),
+            packet.chan_id_on_b,
             chan_end_on_b.clone(),
         )
         .unwrap();
@@ -165,13 +161,13 @@ fn test_receive_packet_validate_reply_from_light_client() {
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
     let packet = msg.packet.clone();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = PortId::from(msg.packet.port_id_on_b.clone());
+    let port_id = msg.packet.port_id_on_b.clone();
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
     contract
-        .add_route(&mut deps.storage, module_id.clone().into(), &module)
+        .add_route(&mut deps.storage, module_id, &module)
         .unwrap();
     let packet_repsone = PacketResponse {
         seq_on_a: msg.packet.sequence,
@@ -212,16 +208,16 @@ fn test_receive_packet_validate_reply_from_light_client() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
-            chan_end_on_b.clone(),
+            packet.port_id_on_b.clone(),
+            packet.chan_id_on_b,
+            chan_end_on_b,
         )
         .unwrap();
     contract
         .store_packet_receipt(
             &mut deps.storage,
-            &msg.packet.port_id_on_a.into(),
-            &msg.packet.chan_id_on_a.into(),
+            &msg.packet.port_id_on_a,
+            &msg.packet.chan_id_on_a,
             msg.packet.sequence,
             Receipt::Ok,
         )
@@ -242,13 +238,13 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
     let packet = msg.packet.clone();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = PortId::from(msg.packet.port_id_on_b.clone());
+    let port_id = msg.packet.port_id_on_b.clone();
     contract
         .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
         .unwrap();
     let module = Addr::unchecked("contractaddress");
     contract
-        .add_route(&mut deps.storage, module_id.clone().into(), &module)
+        .add_route(&mut deps.storage, module_id, &module)
         .unwrap();
 
     let packet_repsone = PacketResponse {
@@ -291,9 +287,9 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone().into(),
-            packet.chan_id_on_b.clone().into(),
-            chan_end_on_b.clone(),
+            packet.port_id_on_b.clone(),
+            packet.chan_id_on_b,
+            chan_end_on_b,
         )
         .unwrap();
 
@@ -354,11 +350,9 @@ fn execute_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
-            IbcChannelId::from_str(&packet.src.channel_id)
-                .unwrap()
-                .into(),
-            chan_end_on_b.clone(),
+            IbcPortId::from_str(&packet.src.port_id).unwrap(),
+            IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
+            chan_end_on_b,
         )
         .unwrap();
 
@@ -419,20 +413,16 @@ fn execute_receive_packet_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
-            IbcChannelId::from_str(&packet.src.channel_id)
-                .unwrap()
-                .into(),
-            chan_end_on_b.clone(),
+            IbcPortId::from_str(&packet.src.port_id).unwrap(),
+            IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
+            chan_end_on_b,
         )
         .unwrap();
     contract
         .store_next_sequence_recv(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
-            IbcChannelId::from_str(&packet.src.channel_id)
-                .unwrap()
-                .into(),
+            IbcPortId::from_str(&packet.src.port_id).unwrap(),
+            IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
             1.into(),
         )
         .unwrap();
@@ -440,10 +430,8 @@ fn execute_receive_packet_ordered() {
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
     let seq = contract.get_next_sequence_recv(
         &deps.storage,
-        IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
-        IbcChannelId::from_str(&packet.src.channel_id)
-            .unwrap()
-            .into(),
+        IbcPortId::from_str(&packet.src.port_id).unwrap(),
+        IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
     );
     assert!(res.is_ok());
     assert_eq!(res.unwrap().events[0].ty, "receive_packet");
@@ -505,11 +493,9 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.src.port_id).unwrap().into(),
-            IbcChannelId::from_str(&packet.src.channel_id)
-                .unwrap()
-                .into(),
-            chan_end_on_b.clone(),
+            IbcPortId::from_str(&packet.src.port_id).unwrap(),
+            IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
+            chan_end_on_b,
         )
         .unwrap();
     contract
@@ -539,8 +525,8 @@ fn test_lookup_module_packet() {
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
     ctx.store_module_by_port(
         &mut deps.storage,
-        msg.packet.port_id_on_a.clone().into(),
-        module_id.clone(),
+        msg.packet.port_id_on_a.clone(),
+        module_id,
     )
     .unwrap();
     let channel_msg = PacketMsg::Recv(msg);

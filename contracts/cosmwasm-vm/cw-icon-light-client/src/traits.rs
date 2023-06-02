@@ -150,7 +150,7 @@ pub trait IContext {
 
     fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
     fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>>;
-   
+
     fn get_config(&self) -> Result<Config, Self::Error>;
 
     fn insert_config(&mut self, config: &Config) -> Result<(), Self::Error>;

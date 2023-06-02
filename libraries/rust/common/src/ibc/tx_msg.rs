@@ -14,8 +14,7 @@ pub trait Msg: Clone {
             Ok(()) => buf,
             // Severe error that cannot be recovered.
             Err(e) => panic!(
-                "Cannot encode the proto message {:?} into a buffer due to underlying error: {}",
-                raw_msg, e
+                "Cannot encode the proto message {raw_msg:?} into a buffer due to underlying error: {e}"
             ),
         }
     }

@@ -404,7 +404,7 @@ impl<'a> BasicEncoder<'a> {
         self.buffer
             .extend_from_slice(&buffer[leading_empty_bytes..]);
         self.buffer[self.start_pos + position..].rotate_right(size_bytes as usize);
-        size_bytes as u8
+        size_bytes
     }
 
     /// Inserts list prefix at given position

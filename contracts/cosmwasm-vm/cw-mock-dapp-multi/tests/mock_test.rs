@@ -1,7 +1,11 @@
 pub mod setup;
 use cosmwasm::serde::to_vec;
 use cosmwasm_std::testing::mock_env;
-use cw_mock_dapp_multi::{state::{CwMockService, Connection}, types::InstantiateMsg, RollbackData};
+use cw_mock_dapp_multi::{
+    state::{Connection, CwMockService},
+    types::InstantiateMsg,
+    RollbackData,
+};
 use setup::*;
 
 #[test]
@@ -15,7 +19,7 @@ fn test_initialization() {
     };
 
     let res = ctx.instantiate(deps.as_mut(), env, info, msg);
-    println!("{:?}", res)
+    println!("{res:?}")
 }
 
 #[test]
@@ -46,7 +50,15 @@ fn test_send_message() {
     };
     ctx.instantiate(deps.as_mut(), env, info.clone(), msg)
         .unwrap();
-    ctx.add_connection(deps.as_mut().storage, "netid".to_string(), Connection{src_endpoint:"somesrc".into(),dest_endpoint:"somedest".to_owned()}).unwrap();
+    ctx.add_connection(
+        deps.as_mut().storage,
+        "netid".to_string(),
+        Connection {
+            src_endpoint: "somesrc".into(),
+            dest_endpoint: "somedest".to_owned(),
+        },
+    )
+    .unwrap();
     let res = ctx.send_call_message(
         deps.as_mut(),
         info,
@@ -54,7 +66,7 @@ fn test_send_message() {
         vec![1, 2, 3, 4],
         Some(vec![1, 2, 3, 4, 5]),
     );
-    
+
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 0)
 }
@@ -96,7 +108,7 @@ fn test_handle_message() {
         info,
         "xcall".to_string(),
         "helloError".as_bytes().to_vec(),
-        vec![]
+        vec![],
     );
     assert!(res.is_ok())
 }
@@ -121,7 +133,7 @@ fn test_handle_message_fail_revert() {
         info,
         "xcall".to_string(),
         "revertMessage".as_bytes().to_vec(),
-        vec![]
+        vec![],
     )
     .unwrap();
 }
@@ -154,7 +166,7 @@ fn test_handle_message_pass_true() {
         info,
         "hugobyte".to_string(),
         to_vec(&rollback_data).unwrap(),
-        vec![]
+        vec![],
     );
     assert!(res.is_ok());
     assert_eq!(res.unwrap().attributes[0].value, "RollbackDataReceived")
@@ -185,7 +197,7 @@ fn test_handle_message_fail_true() {
         info,
         "hugobyte".to_string(),
         to_vec(&rollback_data).unwrap(),
-        vec![]
+        vec![],
     )
     .unwrap();
 }

@@ -35,15 +35,23 @@ impl<'a> CwMockService<'a> {
             .xcall_address()
             .load(deps.storage)
             .map_err(|_e| ContractError::ModuleAddressNotFound)?;
-        let network_id=self.get_network_id(to.clone())?;
-        let connections=self.get_connections(deps.storage, network_id)?;
-        let (sources,destinations)=connections.into_iter().fold((Vec::new(),Vec::new()), |mut acc,x|{
-            acc.0.push(x.src_endpoint);
-            acc.1.push(x.dest_endpoint);
-            acc
-
-        });
-        let msg = cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage { to, data,sources,destinations, rollback };
+        let network_id = self.get_network_id(to.clone())?;
+        let connections = self.get_connections(deps.storage, network_id)?;
+        let (sources, destinations) =
+            connections
+                .into_iter()
+                .fold((Vec::new(), Vec::new()), |mut acc, x| {
+                    acc.0.push(x.src_endpoint);
+                    acc.1.push(x.dest_endpoint);
+                    acc
+                });
+        let msg = cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
+            to,
+            data,
+            sources,
+            destinations,
+            rollback,
+        };
         let message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: address,
             msg: to_binary(&msg).unwrap(),
@@ -61,9 +69,9 @@ impl<'a> CwMockService<'a> {
         info: MessageInfo,
         from: String,
         data: Vec<u8>,
-        protocols:Vec<String>
+        _protocols: Vec<String>,
     ) -> Result<Response, ContractError> {
-        if info.sender.to_string() == from {
+        if info.sender == from {
             let recieved_rollback =
                 serde_json_wasm::from_slice::<RollbackData>(&data).map_err(|e| {
                     ContractError::DecodeError {
@@ -97,10 +105,12 @@ impl<'a> CwMockService<'a> {
         }
     }
 
-    pub fn get_network_id(&self,address:String)->Result<String,ContractError>{
-        let splits=address.split("/").collect::<Vec<&str>>();
-        if splits.len()<2 {
-          return Err(ContractError::InvalidAddress { address: address.to_string() })
+    pub fn get_network_id(&self, address: String) -> Result<String, ContractError> {
+        let splits = address.split('/').collect::<Vec<&str>>();
+        if splits.len() < 2 {
+            return Err(ContractError::InvalidAddress {
+                address: address.to_string(),
+            });
         }
         Ok(splits[0].to_owned())
     }

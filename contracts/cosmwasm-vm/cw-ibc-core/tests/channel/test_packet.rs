@@ -19,10 +19,10 @@ fn test_packet_send() {
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().clone(),
+        ClientId::default(),
         ConnectionCounterparty::new(
-            ClientId::default().clone(),
-            Some(ConnectionId::default().clone()),
+            ClientId::default(),
+            Some(ConnectionId::default()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -40,24 +40,20 @@ fn test_packet_send() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             chan_end_on_a.clone(),
         )
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(
-            &mut deps.storage,
-            conn_id_on_a.clone().into(),
-            conn_end_on_a.clone(),
-        )
+        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
         .unwrap();
     contract
         .store_next_sequence_send(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             1.into(),
         )
         .unwrap();
@@ -101,7 +97,7 @@ fn test_packet_send() {
     let res = contract.send_packet(deps.as_mut(), packet);
     assert!(res.is_ok());
     let res = res.unwrap();
-    assert_eq!(res.clone().attributes[0].value, "send_packet");
+    assert_eq!(res.attributes[0].value, "send_packet");
     assert_eq!(res.events[0].ty, IbcEventType::SendPacket.as_str())
 }
 
@@ -143,10 +139,10 @@ fn test_packet_send_fail_misiing_sequense() {
 
     let conn_end_on_a = ConnectionEnd::new(
         ConnectionState::Open,
-        ClientId::default().clone(),
+        ClientId::default(),
         ConnectionCounterparty::new(
-            ClientId::default().clone(),
-            Some(ConnectionId::default().clone()),
+            ClientId::default(),
+            Some(ConnectionId::default()),
             conn_prefix.unwrap(),
         ),
         get_compatible_versions(),
@@ -164,18 +160,14 @@ fn test_packet_send_fail_misiing_sequense() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone().into(),
-            packet.chan_id_on_a.clone().into(),
+            packet.port_id_on_a.clone(),
+            packet.chan_id_on_a.clone(),
             chan_end_on_a.clone(),
         )
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(
-            &mut deps.storage,
-            conn_id_on_a.clone().into(),
-            conn_end_on_a.clone(),
-        )
+        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
         .unwrap();
 
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {

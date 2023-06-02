@@ -7,7 +7,7 @@ use cosmwasm_std::{Addr, Empty};
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::{core_msg as CoreMsg, hex_string::HexString};
 use cw_ibc_core::{execute, instantiate, query, reply};
-use cw_icon_light_client;
+
 use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
 use prost::Message;
 use test_utils::{get_event, get_event_name, get_test_signed_headers};
@@ -50,7 +50,7 @@ pub fn setup_test() -> TestContext {
             &cw_common::client_msg::InstantiateMsg::default(),
             &[],
             "LightClient",
-            Some(sender.clone().to_string()),
+            Some(sender.to_string()),
         )
         .unwrap();
 
@@ -61,7 +61,7 @@ pub fn setup_test() -> TestContext {
             &cw_common::core_msg::InstantiateMsg {},
             &[],
             "IBCCore",
-            Some(sender.clone().to_string()),
+            Some(sender.to_string()),
         )
         .unwrap();
 
@@ -74,7 +74,7 @@ pub fn setup_test() -> TestContext {
 }
 
 pub fn call_register_client_type(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::RegisterClient {
@@ -82,8 +82,7 @@ pub fn call_register_client_type(ctx: &mut TestContext) -> Result<AppResponse, A
             client_address: ctx.lightclient.clone(),
         },
         &[],
-    );
-    res
+    )
 }
 
 pub fn call_create_client(
@@ -101,16 +100,15 @@ pub fn call_create_client(
         consensus_state: Some(consensus_state.to_any()),
         signer: "signer".to_owned(),
     };
-    let res = ctx.app.execute_contract(
+
+    ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::CreateClient {
             msg: HexString::from_bytes(&msg_raw.encode_to_vec()),
         },
         &[],
-    );
-
-    res
+    )
 }
 
 pub fn call_update_client(
@@ -123,16 +121,15 @@ pub fn call_update_client(
         header: Some(signed_header.to_any()),
         signer: "signer".to_owned(),
     };
-    let res = ctx.app.execute_contract(
+
+    ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.ibc_core.clone(),
         &CoreMsg::ExecuteMsg::UpdateClient {
             msg: HexString::from_bytes(&msg_raw.encode_to_vec()),
         },
         &[],
-    );
-
-    res
+    )
 }
 
 #[test]

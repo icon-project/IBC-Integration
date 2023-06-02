@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "type": "object",
+  "required": [
+    "network_id",
+    "network_type_id",
+    "src_network_id"
+  ],
+  "properties": {
+    "network_id": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "network_type_id": {
+      "type": "integer",
+      "format": "uint128",
+      "minimum": 0.0
+    },
+    "src_network_id": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

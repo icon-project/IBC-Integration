@@ -82,12 +82,12 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         info: MessageInfo,
         message: IbcMsgUpdateClient,
     ) -> Result<Response, ContractError> {
-        let client_id = ClientId::from(message.client_id.clone());
+        let client_id = message.client_id.clone();
 
         let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
         let exec_message = LightClientMessage::UpdateClient {
-            client_id: client_id.as_str().to_string().clone(),
+            client_id: client_id.as_str().to_string(),
             signed_header: message.header.encode_to_vec(),
         };
 
@@ -136,7 +136,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             return Err(ClientError::ClientFrozen {
                 client_id: message.client_id,
             })
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
         }
 
         let old_consensus_state = self.consensus_state(
@@ -152,14 +152,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 time1: old_consensus_state.timestamp(),
                 time2: now,
             })
-            .map_err(|error| Into::<ContractError>::into(error))?;
+            .map_err(Into::<ContractError>::into)?;
         // Check if the latest consensus state is within the trust period.
         if old_client_state.expired(duration) {
             return Err(ClientError::HeaderNotWithinTrustPeriod {
                 latest_time: old_consensus_state.timestamp(),
                 update_time: now,
             })
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
         };
 
         // Validate the upgraded client state and consensus state and verify proofs against the root
@@ -173,7 +173,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 .map_err(ContractError::Std)?,
         };
 
-        let client_id = ClientId::from(message.client_id);
+        let client_id = message.client_id;
 
         let client_address = self.get_client(deps.storage, client_id.clone())?;
 
@@ -315,12 +315,11 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 None => Err(ClientError::Other {
                     description: "UNKNOWN ERROR".to_string(),
                 })
-                .map_err(|e| Into::<ContractError>::into(e)),
+                .map_err(Into::<ContractError>::into),
             },
 
             cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ClientError::Other { description: error })
-                    .map_err(|e| Into::<ContractError>::into(e))
+                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
             }
         }
     }
@@ -372,11 +371,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 None => Err(ClientError::Other {
                     description: "UNKNOWN ERROR".to_string(),
                 })
-                .map_err(|e| Into::<ContractError>::into(e)),
+                .map_err(Into::<ContractError>::into),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ClientError::Other { description: error })
-                    .map_err(|e| Into::<ContractError>::into(e))
+                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
             }
         }
     }
@@ -434,11 +432,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 None => Err(ClientError::Other {
                     description: "Invalid Response Data".to_string(),
                 })
-                .map_err(|e| Into::<ContractError>::into(e)),
+                .map_err(Into::<ContractError>::into),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ClientError::Other { description: error })
-                    .map_err(|e| Into::<ContractError>::into(e))
+                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
             }
         }
     }
@@ -469,7 +466,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         info: MessageInfo,
         message: MsgSubmitMisbehaviour,
     ) -> Result<Response, ContractError> {
-        let client_id = ClientId::from(message.client_id);
+        let client_id = message.client_id;
 
         let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
 
@@ -477,7 +474,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             return Err(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
             })
-            .map_err(|e| Into::<ContractError>::into(e));
+            .map_err(Into::<ContractError>::into);
         }
         let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
@@ -551,11 +548,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 None => Err(ClientError::Other {
                     description: "Invalid Response Data".to_string(),
                 })
-                .map_err(|e| Into::<ContractError>::into(e)),
+                .map_err(Into::<ContractError>::into),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ClientError::Other { description: error })
-                    .map_err(|e| Into::<ContractError>::into(e))
+                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
             }
         }
     }
