@@ -229,7 +229,7 @@ impl<'a> CwIbcCoreContext<'a> {
             expected_conn_end_on_b.encode_vec().unwrap(),
         );
 
-        let client_state_path = commitment::client_state_path(client_id_on_a);
+        let client_state_path = commitment::client_state_path(client_id_on_b);
         let verify_client_full_state = VerifyClientFullState::new(
             msg.proofs_height_on_b.to_string(),
             to_vec(&prefix_on_b)?,
@@ -257,9 +257,9 @@ impl<'a> CwIbcCoreContext<'a> {
             expected_response: OpenAckResponse {
                 conn_id: msg.conn_id_on_a.to_string(),
                 version: serde_json_wasm::to_vec(&msg.version).unwrap(),
-                counterparty_client_id: client_id_on_a.clone().to_string(),
-                counterparty_connection_id: msg.conn_id_on_a.to_string(),
-                counterparty_prefix: prefix_on_a.as_bytes().to_vec(),
+                counterparty_client_id: client_id_on_b.clone().to_string(),
+                counterparty_connection_id: msg.conn_id_on_b.to_string(),
+                counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
             },
         };
         let client_message =
@@ -753,14 +753,17 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into);
         }
-        debug_println!("[ConnOpenConfirm]: Connection State Matched");
-        let _client_state_of_a_on_b = self
-            .client_state(deps.storage, client_id_on_b)
-            .map_err(|_| ConnectionError::Other {
-                description: "failed to fetch client state".to_string(),
-            })
-            .map_err(Into::<ContractError>::into)?;
-        debug_println!("[ConnOpenConfirm]: Client State Decoded");
+
+        debug_println!("Connection State Matched");
+
+        // let _client_state_of_a_on_b = self
+        //     .client_state(deps.storage, client_id_on_b)
+        //     .map_err(|_| ConnectionError::Other {
+        //         description: "failed to fetch client state".to_string(),
+        //     })
+        //     .map_err(|e| Into::<ContractError>::into(e))?;
+        debug_println!("Client State Decoded");
+
         let _client_cons_state_path_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
         debug_println!("[ConnOpenConfirm]: Consensus State Path Decoded");
@@ -769,8 +772,9 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|_| ConnectionError::Other {
                 description: "failed to fetch consensus state".to_string(),
             })
-            .map_err(Into::<ContractError>::into)?;
-        debug_println!("[ConnOpenConfirm]: Consensus State Decoded");
+            .map_err(|e| Into::<ContractError>::into(e))?;
+        debug_println!("Consensus State Decoded");
+
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
         let prefix_on_b = self.commitment_prefix();
 
@@ -788,7 +792,13 @@ impl<'a> CwIbcCoreContext<'a> {
             conn_end_on_b.delay_period(),
         );
 
-        let connection_path = commitment::connection_path(&msg.conn_id_on_b);
+        let connection_path = commitment::connection_path(
+            conn_end_on_b
+                .counterparty()
+                .connection_id()
+                .clone()
+                .unwrap(),
+        );
         let verify_connection_state = VerifyConnectionState::new(
             msg.proof_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
@@ -797,16 +807,14 @@ impl<'a> CwIbcCoreContext<'a> {
             connection_path,
             expected_conn_end_on_a.encode_vec().unwrap(),
         );
-        debug_println!(
-            "[ConnOpenConfirm]: Verify Connection State {:?}",
-            verify_connection_state
-        );
+
+        debug_println!("Verify Connection State {:?}", verify_connection_state);
         let client_message = crate::ics04_channel::LightClientMessage::VerifyOpenConfirm {
             client_id: client_id_on_b.to_string(),
             verify_connection_state,
             expected_response: OpenConfirmResponse {
                 conn_id: msg.conn_id_on_b.clone().to_string(),
-                counterparty_client_id: client_id_on_b.to_string(),
+                counterparty_client_id: client_id_on_a.to_string(),
                 counterparty_connection_id: msg.conn_id_on_b.clone().to_string(),
                 counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
             },

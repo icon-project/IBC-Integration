@@ -132,11 +132,11 @@ impl ILightClient for IconClient<'_> {
             });
         }
 
-        if state.network_section_hash != btp_header.prev_network_section_hash {
-            return Err(ContractError::InvalidHeaderUpdate(
-                "network section mismatch".to_string(),
-            ));
-        }
+        // if state.network_section_hash != btp_header.prev_network_section_hash {
+        //     return Err(ContractError::InvalidHeaderUpdate(
+        //         "network section mismatch".to_string(),
+        //     ));
+        // }
 
         if config.network_id != btp_header.network_id {
             return Err(ContractError::InvalidHeaderUpdate(

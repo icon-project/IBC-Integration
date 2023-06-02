@@ -3,6 +3,7 @@ use common::ibc::core::ics04_channel::{
     packet::Receipt,
 };
 use cosmwasm_std::IbcReceiveResponse;
+use cw_common::from_binary_response;
 use prost::DecodeError;
 
 use super::*;
@@ -102,9 +103,9 @@ impl<'a> CwIbcCoreContext<'a> {
             conn_end_on_b.clone(),
         )?;
 
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        //
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let packet_data = PacketData::new(
             packet.clone(),
@@ -112,7 +113,7 @@ impl<'a> CwIbcCoreContext<'a> {
             None,
             cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
         );
         let packet_data = to_vec(&packet_data).map_err(|e| ContractError::IbcDecodeError {
@@ -170,11 +171,12 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let packet_data = from_binary::<PacketDataResponse>(&res).map_err(|e| {
-                        ContractError::IbcDecodeError {
-                            error: DecodeError::new(e.to_string()),
-                        }
-                    })?;
+                    let packet_data =
+                        from_binary_response::<PacketDataResponse>(&res).map_err(|e| {
+                            ContractError::IbcDecodeError {
+                                error: DecodeError::new(e.to_string()),
+                            }
+                        })?;
                     let info = packet_data.message_info;
                     let packet = Packet::from(packet_data.packet.clone());
 
@@ -222,14 +224,11 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let port_id = packet_data.packet.port_id_on_a.clone();
                     // Getting the module address for on packet timeout call
-                    let module_id = match self.lookup_module_by_port(deps.storage, port_id) {
-                        Ok(addr) => addr,
-                        Err(error) => return Err(error),
-                    };
-                    let contract_address = match self.get_route(deps.storage, module_id) {
-                        Ok(addr) => addr,
-                        Err(error) => return Err(error),
-                    };
+                    let contract_address =
+                        match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
+                            Ok(addr) => addr,
+                            Err(error) => return Err(error),
+                        };
 
                     let src = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_b.to_string(),
@@ -263,7 +262,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     };
                     let create_client_message: CosmosMsg =
                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-                            contract_addr: contract_address.to_string(),
+                            contract_addr: contract_address,
                             msg: to_binary(&cosm_msg).unwrap(),
                             funds: info.funds,
                         });
@@ -348,11 +347,12 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let response_data =
-                        from_binary::<IbcReceiveResponse>(&res).map_err(ContractError::Std)?;
-                    let response_data =
-                        from_binary::<XcallPacketResponseData>(&response_data.acknowledgement)
-                            .map_err(ContractError::Std)?;
+                    let response_data = from_binary_response::<IbcReceiveResponse>(&res)
+                        .map_err(ContractError::Std)?;
+                    let response_data = from_binary_response::<XcallPacketResponseData>(
+                        &response_data.acknowledgement,
+                    )
+                    .map_err(ContractError::Std)?;
                     let ack = response_data.acknowledgement;
                     let packet = response_data.packet.clone();
                     let port = response_data.packet.src.port_id;

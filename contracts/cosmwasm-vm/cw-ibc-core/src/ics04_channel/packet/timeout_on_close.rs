@@ -130,9 +130,9 @@ impl<'a> CwIbcCoreContext<'a> {
             client_id: conn_end_on_a.client_id().to_string(),
         };
 
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        //
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let data = PacketData {
             packet: msg.packet.clone(),
@@ -140,7 +140,7 @@ impl<'a> CwIbcCoreContext<'a> {
             acknowledgement: None,
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender.clone(),
-                funds,
+                funds: vec![],
             },
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {

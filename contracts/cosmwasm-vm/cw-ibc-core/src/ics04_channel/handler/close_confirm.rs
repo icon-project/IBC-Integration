@@ -60,7 +60,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let response = from_binary::<LightClientResponse>(&res).unwrap();
+                    let response = from_binary_response::<LightClientResponse>(&res).unwrap();
                     let info = response.message_info;
                     let data = response.ibc_endpoint;
                     let port_id =
@@ -70,13 +70,9 @@ impl<'a> CwIbcCoreContext<'a> {
                     let channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
-                    let module_id = match self.lookup_module_by_port(deps.storage, port_id.clone())
+                    let contract_address = match self
+                        .lookup_modules(deps.storage, port_id.clone().as_bytes().to_vec())
                     {
-                        Ok(addr) => addr,
-                        Err(error) => return Err(error),
-                    };
-                    let module_id = module_id;
-                    let contract_address = match self.get_route(deps.storage, module_id) {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),
                     };
@@ -88,7 +84,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
                     let data = to_binary(&data).map_err(Into::<ContractError>::into)?;
                     let on_chan_close_confirm = create_channel_submesssage(
-                        contract_address.to_string(),
+                        contract_address,
                         data,
                         info.funds,
                         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,

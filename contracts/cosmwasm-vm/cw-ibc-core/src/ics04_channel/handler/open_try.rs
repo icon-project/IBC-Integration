@@ -130,17 +130,11 @@ impl<'a> CwIbcCoreContext<'a> {
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
                     let contract_address =
-                        match self.lookup_module_by_port(deps.storage, port_id.clone()) {
+                        match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
                             Ok(addr) => addr,
                             Err(error) => return Err(error),
                         };
                     debug_println!("contract addres is  {:?}", contract_address);
-
-                    // let module_id = cw_common::ibc_types::IbcModuleId::from(module_id);
-                    // let contract_address = match self.get_route(deps.storage, module_id) {
-                    //     Ok(addr) => addr,
-                    //     Err(error) => return Err(error),
-                    // };
 
                     // Generate event for calling on channel open try in x-call
                     let sub_message = on_chan_open_try_submessage(

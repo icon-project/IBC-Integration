@@ -396,13 +396,13 @@ impl<'a> CwCallService<'a> {
                 counterparty_version: _,
             } => channel.endpoint,
         };
-        let channel = msg.channel();
+        // let channel = msg.channel();
 
-        check_order(&channel.order)?;
+        // check_order(&channel.order)?;
 
-        if let Some(counter_version) = msg.counterparty_version() {
-            check_version(counter_version)?;
-        }
+        // if let Some(counter_version) = msg.counterparty_version() {
+        //     check_version(counter_version)?;
+        // }
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())
@@ -437,20 +437,20 @@ impl<'a> CwCallService<'a> {
             } => channel.endpoint,
             CwChannelConnectMsg::OpenConfirm { channel } => channel.endpoint,
         };
-        let channel = msg.channel();
+        // let channel = msg.channel();
 
-        check_order(&channel.order)?;
+        // check_order(&channel.order)?;
 
-        if let Some(counter_version) = msg.counterparty_version() {
-            check_version(counter_version)?;
-        }
+        // if let Some(counter_version) = msg.counterparty_version() {
+        //     check_version(counter_version)?;
+        // }
 
-        let source = msg.channel().endpoint.clone();
-        let destination = msg.channel().counterparty_endpoint.clone();
-
-        let ibc_config = IbcConfig::new(source, destination);
-        let mut call_service = CwCallService::default();
-        call_service.save_config(store, &ibc_config)?;
+        // let source = msg.channel().endpoint.clone();
+        // let destination = msg.channel().counterparty_endpoint.clone();
+        //
+        // let ibc_config = IbcConfig::new(source, destination);
+        // let mut call_service = CwCallService::default();
+        // call_service.save_config(store, &ibc_config)?;
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())

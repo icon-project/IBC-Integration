@@ -54,7 +54,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(ContractError::Std)?;
 
         self.init_channel_counter(deps.storage, u64::default())?;
-        self.init_client_counter(deps.storage, 1)?;
+        self.init_client_counter(deps.storage, u64::default())?;
         self.init_connection_counter(deps.storage, u64::default())?;
         self.set_owner(deps.storage, info.sender)?;
 
@@ -572,6 +572,8 @@ impl<'a> CwIbcCoreContext<'a> {
 
         Ok(updated_coins)
     }
+
+    pub fn test_func() {}
 
     /// This function converts a hexadecimal string to a Rust type that implements the Message trait and
     /// can be converted to another type using the TryFrom trait.
