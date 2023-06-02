@@ -139,5 +139,5 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Co
         let store = CwIbcStore::default();
         store.clear_storage(deps.storage);
     }
-    Ok(Response::default())
+    Ok(Response::default().add_attribute("migrate", "successful"))
 }

@@ -227,7 +227,7 @@ impl<'a> CwIbcCoreContext<'a> {
             expected_conn_end_on_b.encode_vec().unwrap(),
         );
 
-        let client_state_path = commitment::client_state_path(client_id_on_a);
+        let client_state_path = commitment::client_state_path(client_id_on_b);
         let verify_client_full_state = VerifyClientFullState::new(
             msg.proofs_height_on_b.to_string(),
             to_vec(&prefix_on_b)?,

@@ -546,7 +546,7 @@ impl<'a> CwIbcCoreContext<'a> {
     // }
 
     pub fn host_height(&self) -> Result<common::ibc::Height, ContractError> {
-        let height = common::ibc::Height::new(10, 10).map_err(Into::<ContractError>::into)?;
+        let height = common::ibc::Height::new(0, 500055436).map_err(Into::<ContractError>::into)?;
         Ok(height)
     }
 

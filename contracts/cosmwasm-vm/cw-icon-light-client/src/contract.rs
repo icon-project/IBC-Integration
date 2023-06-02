@@ -1,6 +1,7 @@
 use common::constants::ICON_CLIENT_TYPE;
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
+use cosmwasm_schema::cw_serde;
 use cw_common::ibc_types::IbcHeight;
 
 #[cfg(feature = "mock")]
@@ -285,7 +286,7 @@ pub fn execute(
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
                 .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
-                .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
+                // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
                 .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
         }
 
@@ -519,6 +520,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_binary(&QueryHandler::get_latest_height(deps.storage, &client_id).unwrap())
         }
     }
+}
+
+#[cw_serde]
+pub struct MigrateMsg {}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::default().add_attribute("migrate", "successful"))
 }
 
 pub fn get_light_client<'a>(

@@ -1,3 +1,4 @@
+use cw_common::from_binary_response;
 use prost::DecodeError;
 
 use super::*;
@@ -111,9 +112,9 @@ impl<'a> CwIbcCoreContext<'a> {
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        //
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let data = PacketData {
             packet: msg.packet.clone(),
@@ -121,7 +122,7 @@ impl<'a> CwIbcCoreContext<'a> {
             acknowledgement: None,
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
@@ -209,23 +210,21 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let packet_data = from_binary::<PacketDataResponse>(&res).map_err(|e| {
-                        ContractError::IbcDecodeError {
-                            error: DecodeError::new(e.to_string()),
-                        }
-                    })?;
+                    let packet_data =
+                        from_binary_response::<PacketDataResponse>(&res).map_err(|e| {
+                            ContractError::IbcDecodeError {
+                                error: DecodeError::new(e.to_string()),
+                            }
+                        })?;
                     let info = packet_data.message_info;
                     let data = Packet::from(packet_data.packet.clone());
                     let port_id = packet_data.packet.port_id_on_a.clone();
                     // Getting the module address for on packet timeout call
-                    let module_id = match self.lookup_module_by_port(deps.storage, port_id) {
-                        Ok(addr) => addr,
-                        Err(error) => return Err(error),
-                    };
-                    let contract_address = match self.get_route(deps.storage, module_id) {
-                        Ok(addr) => addr,
-                        Err(error) => return Err(error),
-                    };
+                    let contract_address =
+                        match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
+                            Ok(addr) => addr,
+                            Err(error) => return Err(error),
+                        };
 
                     let src = CwEndPoint {
                         port_id: packet_data.packet.port_id_on_a.to_string(),
@@ -307,7 +306,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<CwPacket>(&res).unwrap();
+                    let data = from_binary_response::<CwPacket>(&res).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.src.channel_id).unwrap();
                     let port_id = IbcPortId::from_str(&data.src.port_id).unwrap();
                     let chan_end_on_a =

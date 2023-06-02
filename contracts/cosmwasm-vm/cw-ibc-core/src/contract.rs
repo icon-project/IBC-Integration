@@ -572,6 +572,8 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(updated_coins)
     }
 
+    pub fn test_func() {}
+
     /// This function converts a hexadecimal string to a Rust type that implements the Message trait and
     /// can be converted to another type using the TryFrom trait.
     ///

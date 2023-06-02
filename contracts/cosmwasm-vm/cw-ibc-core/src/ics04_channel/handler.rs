@@ -163,11 +163,16 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message.connection_hops_on_b.clone(),
             message.version_supported_on_a.clone(),
         );
-        debug_println!("soreded channel end:{:?} ", channel_end);
+        debug_println!(
+            "stoed: channel id: {:?}  portid :{:?} channel_end :{:?}",
+            channel_id_on_b,
+            message.port_id_on_b,
+            channel_end
+        );
         self.store_channel_end(
             deps.storage,
             message.port_id_on_b.clone(),
-            channel_id_on_b,
+            channel_id_on_b.clone(),
             channel_end,
         )?;
 
@@ -216,8 +221,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let create_client_message = LightClientMessage::VerifyChannel {
             endpoint: CwEndPoint {
-                port_id: port_id_on_a.to_string(),
-                channel_id: chan_id_on_a.to_string(),
+                port_id: message.port_id_on_b.clone().to_string(),
+                channel_id: channel_id_on_b.to_string(),
             },
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
@@ -324,14 +329,17 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_b.clone()],
             message.version_on_b.clone(),
         );
+
+        let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_b).unwrap();
         let chan_end_path_on_b = commitment::channel_path(port_id_on_b, &message.chan_id_on_b);
-        let vector = to_vec(&expected_chan_end_on_b);
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        let vector = raw_expected_chan.encode_to_vec();
+
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
             endpoint: CwEndPoint {
                 port_id: message.port_id_on_a.clone().to_string(),
@@ -343,7 +351,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 proof: message.proof_chan_end_on_b.clone().into(),
                 root: consensus_state_of_b_on_a.clone().root().into_vec(),
                 counterparty_chan_end_path: chan_end_path_on_b,
-                expected_counterparty_channel_end: vector.unwrap(),
+                expected_counterparty_channel_end: vector,
                 client_id: conn_end_on_a.client_id().to_string(),
             },
         };
@@ -453,17 +461,19 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             chan_end_on_b.version.clone(),
         );
+
+        let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_a).unwrap();
         let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
 
-        let vector = to_vec(&expected_chan_end_on_a);
+        let vector = raw_expected_chan.encode_to_vec();
 
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        //
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
             endpoint: CwEndPoint {
                 port_id: message.port_id_on_b.clone().to_string(),
@@ -475,7 +485,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 proof: message.proof_chan_end_on_a.clone().into(),
                 root: consensus_state_of_a_on_b.clone().root().into_vec(),
                 counterparty_chan_end_path: chan_end_path_on_a,
-                expected_counterparty_channel_end: vector.unwrap(),
+                expected_counterparty_channel_end: vector,
                 client_id: conn_end_on_b.client_id().to_string(),
             },
         };
@@ -538,22 +548,17 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
 
-        let module_id = match self.lookup_module_by_port(deps.storage, message.port_id_on_a.clone())
-        {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
-        let module_id = module_id;
-        let contract_address = match self.get_route(deps.storage, module_id) {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
+        let contract_address =
+            match self.lookup_modules(deps.storage, message.port_id_on_a.as_bytes().to_vec()) {
+                Ok(addr) => addr,
+                Err(error) => return Err(error),
+            };
 
         let sub_message = on_chan_close_init_submessage(message, &chan_end_on_a, &connection_id);
         let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_close_init = create_channel_submesssage(
-            contract_address.to_string(),
+            contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_CLOSE_INIT,
@@ -643,15 +648,17 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             chan_end_on_b.version().clone(),
         );
-        let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
-        let vector = to_vec(&expected_chan_end_on_a);
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_a).unwrap();
 
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
+        let vector = raw_expected_chan.encode_to_vec();
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        //
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
             endpoint: CwEndPoint {
                 port_id: message.port_id_on_b.clone().to_string(),
@@ -663,7 +670,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 proof: message.proof_chan_end_on_a.clone().into(),
                 root: consensus_state_of_a_on_b.clone().root().into_vec(),
                 counterparty_chan_end_path: chan_end_path_on_a,
-                expected_counterparty_channel_end: vector.unwrap(),
+                expected_counterparty_channel_end: vector,
                 client_id: conn_end_on_b.client_id().to_string(),
             },
         };
@@ -879,7 +886,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -934,7 +941,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -1001,7 +1008,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -1065,7 +1072,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
