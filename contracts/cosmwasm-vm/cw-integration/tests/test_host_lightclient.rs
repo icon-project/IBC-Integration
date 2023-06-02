@@ -196,7 +196,8 @@ fn call_bind_port(ctx: &mut TestContext, port_name: &str) -> Result<AppResponse,
             address: ctx.get_xcall_app().clone().to_string(),
         },
         &[],
-    )
+    );
+    res
 }
 
 #[test]
