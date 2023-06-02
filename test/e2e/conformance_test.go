@@ -16,13 +16,23 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
+const (
+	relayerImageEnv    = "RELAYER_IMAGE"
+	relayerImage       = "strangeloveventures/relayer"
+	relayerImageTagEnv = "RELAYER_IMAGE_TAG"
+	relayerImageTag    = "latest"
+)
+
 func TestConformance(t *testing.T) {
 	fmt.Println("test start")
-	cfg := GetConfig()
+	cfg, err := GetConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
 	ctx := context.Background()
 	logger := zaptest.NewLogger(t)
 
-	chainFactory := NewBuiltinChainFactory(logger, cfg)
+	chainFactory := NewBuiltinChainFactory(logger, cfg.ChainSpecs)
 	_chains, err := chainFactory.Chains(t.Name())
 	require.NoError(t, err)
 
@@ -39,7 +49,7 @@ func TestConformance(t *testing.T) {
 	if err != nil {
 		return
 	}
-	optionDocker := relayer.CustomDockerImage("relayer", "latest", "100:1000")
+	optionDocker := relayer.CustomDockerImage(getEnvOrDefault(relayerImageEnv, relayerImage), getEnvOrDefault(relayerImageTagEnv, relayerImageTag), "100:1000")
 
 	r := interchaintest.NewICONRelayerFactory(zaptest.NewLogger(t), optionDocker, relayer.ImagePull(false)).Build(
 		t, client, network)
@@ -103,8 +113,8 @@ func TestConformance(t *testing.T) {
 	))
 
 	r.StartRelayer(ctx, eRep, ibcPath)
-	nid1 := cfg[0].ChainConfig.ChainID
-	nid2 := cfg[1].ChainConfig.ChainID
+	nid1 := cfg.ChainSpecs[0].ChainConfig.ChainID
+	nid2 := cfg.ChainSpecs[1].ChainConfig.ChainID
 
 	// TODO get channel from relay
 	chainA.ConfigureBaseConnection(context.Background(), owner, "channel-0", nid2, contracts2.ContractAddress["connection"])

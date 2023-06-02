@@ -1,12 +1,10 @@
-package e2e
+package e2e_test
 
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/icon-project/icon-bridge/common/log"
 	"github.com/spf13/viper"
 )
 
@@ -28,18 +26,7 @@ type OuterConfig struct {
 
 func GetConfig() (*OuterConfig, error) {
 	var config = new(OuterConfig)
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	basePath := filepath.Dir(fmt.Sprintf("%s/..%c..%c", cwd, os.PathSeparator, os.PathSeparator))
-	if err := os.Setenv("BASE_PATH", basePath); err != nil {
-		log.Fatalf("Error setting BASE_PATH", err)
-	}
-	for _, v := range viper.AllKeys() {
-		viper.Set(v, os.ExpandEnv(viper.GetString(v)))
-	}
+	fmt.Println(viper.Get("chains"))
 	return config, viper.Unmarshal(config)
 }
 
