@@ -22,8 +22,7 @@ use cw_common::raw_types::Any;
 use cw_common::types::{PacketData, VerifyChannelState};
 
 use crate::constants::{
-    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH,
-    CONSENSUS_STATE_VALID, HEIGHT, MEMBERSHIP, NON_MEMBERSHIP,
+    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH, HEIGHT, MEMBERSHIP, NON_MEMBERSHIP,
 };
 use crate::error::ContractError;
 use crate::light_client::IconClient;
@@ -528,7 +527,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 pub struct MigrateMsg {}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     Ok(Response::default().add_attribute("migrate", "successful"))
 }
 

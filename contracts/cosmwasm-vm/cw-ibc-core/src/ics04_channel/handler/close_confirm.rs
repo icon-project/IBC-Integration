@@ -71,7 +71,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
                     let contract_address = match self
-                        .lookup_modules(deps.storage, port_id.clone().as_bytes().to_vec())
+                        .lookup_modules(deps.storage, port_id.as_bytes().to_vec())
                     {
                         Ok(addr) => addr,
                         Err(error) => return Err(error),

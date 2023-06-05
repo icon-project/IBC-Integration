@@ -258,7 +258,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     };
                     let create_client_message: CosmosMsg =
                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-                            contract_addr: contract_address.to_string(),
+                            contract_addr: contract_address,
                             msg: to_binary(&cosm_msg).unwrap(),
                             funds: info.funds,
                         });

@@ -151,7 +151,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     debug_println!("after converting data to binary ");
 
                     let on_chan_open_try = create_channel_submesssage(
-                        contract_address.to_string(),
+                        contract_address,
                         data,
                         info.funds,
                         EXECUTE_ON_CHANNEL_OPEN_TRY,

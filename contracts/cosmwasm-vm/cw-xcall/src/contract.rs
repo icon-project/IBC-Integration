@@ -389,7 +389,7 @@ impl<'a> CwCallService<'a> {
     /// `ContractError` is an enum that represents any errors that may occur during the execution of the
     /// function.
     fn on_channel_open(&self, msg: CwChannelOpenMsg) -> Result<Response, ContractError> {
-        let ibc_endpoint = match msg.clone() {
+        let ibc_endpoint = match msg {
             CwChannelOpenMsg::OpenInit { channel } => channel.endpoint,
             CwChannelOpenMsg::OpenTry {
                 channel,
@@ -427,7 +427,7 @@ impl<'a> CwCallService<'a> {
     /// that may occur during the execution of the function.
     fn on_channel_connect(
         &self,
-        store: &mut dyn Storage,
+        _store: &mut dyn Storage,
         msg: CwChannelConnectMsg,
     ) -> Result<Response, ContractError> {
         let ibc_endpoint = match msg.clone() {

@@ -188,16 +188,16 @@ pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) 
 }
 
 fn call_bind_port(ctx: &mut TestContext, port_name: &str) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    
+    ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::BindPort {
             port_id: port_name.to_string(),
-            address: ctx.get_xcall_app().clone().to_string(),
+            address: ctx.get_xcall_app().to_string(),
         },
         &[],
-    );
-    res
+    )
 }
 
 #[test]
@@ -206,7 +206,7 @@ fn test_connection_open_init() {
     let port_name = "mock-7";
     call_bind_port(&mut ctx, port_name.clone()).unwrap();
     call_register_client_type(&mut ctx).unwrap();
-    let res = query_get_capability(&ctx.app, port_name.to_string(), ctx.get_ibc_core().clone());
+    let res = query_get_capability(&ctx.app, port_name.to_string(), ctx.get_ibc_core());
 
     println!("mock app address {res:?}");
 

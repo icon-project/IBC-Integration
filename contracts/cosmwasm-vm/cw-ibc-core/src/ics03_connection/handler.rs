@@ -210,7 +210,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Counterparty::new(
                 client_id_on_a.clone(),
                 Some(msg.conn_id_on_a.clone()),
-                prefix_on_a.clone(),
+                prefix_on_a,
             ),
             vec![msg.version.clone()],
             conn_end_on_a.delay_period(),
@@ -772,7 +772,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(|_| ConnectionError::Other {
                 description: "failed to fetch consensus state".to_string(),
             })
-            .map_err(|e| Into::<ContractError>::into(e))?;
+            .map_err(Into::<ContractError>::into)?;
         debug_println!("Consensus State Decoded");
 
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
@@ -796,7 +796,6 @@ impl<'a> CwIbcCoreContext<'a> {
             conn_end_on_b
                 .counterparty()
                 .connection_id()
-                .clone()
                 .unwrap(),
         );
         let verify_connection_state = VerifyConnectionState::new(

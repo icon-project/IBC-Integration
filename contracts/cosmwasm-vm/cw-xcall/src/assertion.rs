@@ -223,8 +223,8 @@ impl<'a> CwCallService<'a> {
     /// execution.
     pub fn ensure_ibc_handler(
         &self,
-        store: &dyn Storage,
-        address: Addr,
+        _store: &dyn Storage,
+        _address: Addr,
     ) -> Result<(), ContractError> {
         // let ibc_host = self.get_host(store)?;
 
