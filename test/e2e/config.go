@@ -1,7 +1,6 @@
 package e2e_test
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/icon-project/ibc-integration/test/chains"
@@ -26,7 +25,6 @@ type OuterConfig struct {
 
 func GetConfig() (*OuterConfig, error) {
 	var config = new(OuterConfig)
-	fmt.Println(viper.Get("chains"))
 	return config, viper.Unmarshal(config)
 }
 
