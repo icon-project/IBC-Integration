@@ -32,11 +32,15 @@ func (c *CosmosTestnet) SetupIBC(ctx context.Context, keyName string) (context.C
 	panic("unimplemented")
 }
 
-func (c *CosmosTestnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, error) {
+func (c *CosmosTestnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
 	panic("unimplemented")
 }
 
-func (c *CosmosTestnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, error) {
+func (c *CosmosTestnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, error) {
+	panic("unimplemented")
+}
+
+func (c *CosmosTestnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, error) {
 	panic("unimplemented")
 }
 

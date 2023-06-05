@@ -56,10 +56,13 @@ type Wallet struct {
 func (it *IconTestnet) SetupIBC(ctx context.Context, keyName string) (context.Context, error) {
 	panic("unimplemented")
 }
-func (it *IconTestnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, error) {
+func (it *IconTestnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
 	panic("unimplemented")
 }
-func (it *IconTestnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, error) {
+func (it *IconTestnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, error) {
+	panic("unimplemented")
+}
+func (it *IconTestnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, error) {
 	panic("unimplemented")
 }
 func (it *IconTestnet) ExecuteCall(ctx context.Context, reqId string) (context.Context, error) {

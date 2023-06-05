@@ -36,7 +36,6 @@ type IconLocalnet struct {
 	FullNodes                 IconNodes
 	findTxMu                  sync.Mutex
 	keystorePath, keyPassword string
-	godWallet, godPassword    string
 	scorePaths                map[string]string
 	ibcAddresses              map[string]string
 }
@@ -50,8 +49,6 @@ func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConf
 		log:           log,
 		keystorePath:  keystorePath,
 		keyPassword:   keyPassword,
-		godWallet:     keystorePath,
-		godPassword:   keyPassword,
 		scorePaths:    scorePaths,
 	}
 }
@@ -243,7 +240,12 @@ func (c *IconLocalnet) GetAddress(ctx context.Context, keyName string) ([]byte, 
 
 // SendFunds sends funds to a wallet from a user account.
 func (c *IconLocalnet) SendFunds(ctx context.Context, keyName string, amount ibc.WalletAmount) error {
-	panic("not implemented") // TODO: Implement
+	c.CheckForKeyStore(ctx, keyName)
+
+	cmd := c.getFullNode().NodeCommand("rpc", "sendtx", "transfer", "--key_store", c.keystorePath, "--key_password", c.keyPassword,
+		"--to", amount.Address, "--value", fmt.Sprint(amount.Amount)+"000000000000000000", "--step_limit", "10000000000000")
+	_, _, err := c.getFullNode().Exec(ctx, cmd, nil)
+	return err
 }
 
 // SendIBCTransfer sends an IBC transfer returning a transaction or an error if the transfer failed.
@@ -362,11 +364,11 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	c.ibcAddresses = contracts.ContractAddress
 
 	params := `{"name": "test","country": "KOR","city": "Seoul","email": "prep@icon.foundation.com","website": "https://icon.kokoa.com","details": "https://icon.kokoa.com/json/details.json","p2pEndpoint": "localhost:9080"}`
-	_, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000000", keyName, "registerPRep", params)
+	_, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000000", "gochain", "registerPRep", params)
 	params = `{"pubKey":"0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5"}`
-	_, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000000", keyName, "setPRepNodePublicKey", params)
+	_, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000000", "gochain", "setPRepNodePublicKey", params)
 	params = `{"networkTypeName":"eth", "name":"testNetwork", "owner":"` + ibcAddress + `"}`
-	ctx, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000001", keyName, "openBTPNetwork", params)
+	ctx, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000001", "gochain", "openBTPNetwork", params)
 	height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
 	id := ctx.Value("txResult").(icontypes.TransactionResult).EventLogs[1].Indexed[2]
 	btpNetworkId, _ := icontypes.HexInt(id).Int()
@@ -386,7 +388,17 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	}), err
 }
 
-func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, error) {
+func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
+	ctx, err := c.ExecuteContract(context.Background(), c.ibcAddresses["connection"], keyName, "configureChannel", `{"channelId":"`+channel+`", "counterpartyNid":"`+counterpartyNid+`"}`)
+	if err != nil {
+		return ctx, err
+	}
+
+	ctx, err = c.ExecuteContract(context.Background(), c.ibcAddresses["dapp"], keyName, "addConnection", `{"nid":"`+counterpartyNid+`", "source":"`+c.ibcAddresses["connection"]+`", "destination":"`+counterpartyConnection+`"}`)
+	return ctx, err
+}
+
+func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, error) {
 	// TODO: send fees
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	var params string
@@ -398,7 +410,8 @@ func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyN
 
 	ctx, _ = c.ExecuteContract(context.Background(), c.ibcAddresses["dapp"], keyName, "sendMessage", params)
 	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
-	return targetChain.FindCallMessage(ctx, int64(height), c.ibcAddresses["dapp"], _to, sn)
+	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.ibcAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	return sn, reqId, err
 }
 
 func getSn(tx icontypes.TransactionResult) string {
@@ -410,13 +423,14 @@ func getSn(tx icontypes.TransactionResult) string {
 	return ""
 }
 
-func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, error) {
+func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, error) {
 	// TODO: send fees
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	params := `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
 	ctx, _ = c.ExecuteContract(context.Background(), c.ibcAddresses["xcall"], keyName, "sendCallMessage", params)
 	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
-	return targetChain.FindCallMessage(ctx, int64(height), c.ibcAddresses["dapp"], _to, sn)
+	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.ibcAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	return sn, reqId, err
 }
 
 func (c *IconLocalnet) ExecuteCall(ctx context.Context, reqId string) (context.Context, error) {
@@ -428,11 +442,11 @@ func (c *IconLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.
 }
 
 func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error) {
-	// index := []*string{&from, &to, &sn}
+	index := []*string{&from, &to, &sn}
 	filter := icontypes.EventFilter{
 		Addr:      icontypes.Address(c.ibcAddresses["xcall"]),
 		Signature: "CallMessage(str,str,int,int)",
-		// Indexed:   index,
+		Indexed:   index,
 	}
 	socketContext := context.Background()
 	req := icontypes.EventRequest{
@@ -547,6 +561,14 @@ func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, metho
 }
 
 func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
-	_, err := c.BuildWallet(ctx, keyName, "")
-	return err
+	address := c.CheckForKeyStore(ctx, keyName)
+	if address == "" {
+		return nil
+	}
+
+	amount := ibc.WalletAmount{
+		Address: address,
+		Amount:  10000,
+	}
+	return c.SendFunds(ctx, "gochain", amount)
 }
