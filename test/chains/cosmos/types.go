@@ -1,7 +1,6 @@
 package cosmos
 
 import (
-	"testing"
 	"time"
 
 	"github.com/icon-project/icon-bridge/common/codec"
@@ -11,9 +10,9 @@ import (
 
 type CosmosLocalnet struct {
 	*cosmos.CosmosChain
-	keyName  string
-	filepath map[string]string
-	t        *testing.T
+	keyName      string
+	filepath     map[string]string
+	ibcAddresses map[string]string
 }
 
 type Query struct {

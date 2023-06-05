@@ -1,18 +1,11 @@
-package e2e
+package e2e_test
 
 import (
-	"fmt"
-	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/icon-project/icon-bridge/common/log"
-	"github.com/spf13/viper"
 	"os"
-	"path/filepath"
-)
 
-type Config struct {
-	Icon         Chain `mapstructure:"icon"`
-	Counterparty Chain `mapstructure:"counterparty"`
-}
+	"github.com/icon-project/ibc-integration/test/chains"
+	"github.com/spf13/viper"
+)
 
 type Chain struct {
 	Name             string             `mapstructure:"name"`
@@ -26,21 +19,12 @@ type Chain struct {
 	Contracts        map[string]string  `mapstructure:"contracts"`
 }
 
-func GetConfig() (*Config, error) {
-	var config = new(Config)
+type OuterConfig struct {
+	ChainSpecs []*Chain `mapstructure:"chains"`
+}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	basePath := filepath.Dir(fmt.Sprintf("%s/..%c..%c", cwd, os.PathSeparator, os.PathSeparator))
-	if err := os.Setenv("BASE_PATH", basePath); err != nil {
-		log.Fatalf("Error setting BASE_PATH", err)
-	}
-	for _, v := range viper.AllKeys() {
-		viper.Set(v, os.ExpandEnv(viper.GetString(v)))
-	}
-	viper.Get("icon")
+func GetConfig() (*OuterConfig, error) {
+	var config = new(OuterConfig)
 	return config, viper.Unmarshal(config)
 }
 
