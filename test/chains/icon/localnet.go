@@ -329,7 +329,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 		return nil, err
 	}
 
-	client, err := c.getFullNode().DeployContract(ctx, c.scorePaths["client"], c.keystorePath, "") //"ibcHandler="+ibcAddress)
+	client, err := c.getFullNode().DeployContract(ctx, c.scorePaths["client"], c.keystorePath, "ibcHandler="+ibcAddress)
 	if err != nil {
 		return nil, err
 	}
