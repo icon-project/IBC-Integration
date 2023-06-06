@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 WALLET=fd # This account is default while running the chain on docker.
 ### LOCALNET ###
