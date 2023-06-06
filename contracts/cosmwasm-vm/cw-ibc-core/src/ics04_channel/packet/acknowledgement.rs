@@ -113,7 +113,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let consensus_state =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
-        let ack_commitment = commitment::compute_ack_commitment(&msg.acknowledgement);
+        // let ack_commitment = commitment::compute_ack_commitment();
         self.verify_connection_delay_passed(
             deps.storage,
             msg.proof_height_on_b,
@@ -143,7 +143,7 @@ impl<'a> CwIbcCoreContext<'a> {
             proof: msg.proof_acked_on_b.clone().into(),
             root: consensus_state.root().into_vec(),
             ack_path: ack_path_on_b,
-            ack: ack_commitment.into_vec(),
+            ack: msg.acknowledgement.clone().into(),
         };
         let packet_data = to_vec(&data)?;
         let light_client_message = LightClientMessage::VerifyPacketAcknowledgement {
@@ -251,7 +251,8 @@ impl<'a> CwIbcCoreContext<'a> {
                             timeout,
                         );
                         let address = Addr::unchecked(packet_data.signer.to_string());
-                        let ack = CwAcknowledgement::new(acknowledgement.as_bytes());
+                        let ack: CwAcknowledgement =
+                            CwAcknowledgement::new(acknowledgement.as_bytes());
                         let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketAck {
                             msg: cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address),
                         };
@@ -277,9 +278,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     .map_err(Into::<ContractError>::into)?,
                 }
             }
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                Err(PacketError::InvalidProof).map_err(Into::<ContractError>::into)?
-            }
+
+            cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
         }
     }
 
@@ -334,6 +334,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     {
                         return Ok(Response::new());
                     }
+
+                    // TODO: check ack_commitment returned from module
                     self.delete_packet_commitment(
                         deps.storage,
                         &port_id,

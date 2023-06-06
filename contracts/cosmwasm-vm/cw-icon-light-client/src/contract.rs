@@ -196,8 +196,8 @@ pub fn execute(
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &verify_packet_data.commitment,
                 &verify_packet_data.commitment_path,
+                &verify_packet_data.commitment,
             )?;
             let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
             let data =

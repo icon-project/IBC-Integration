@@ -277,9 +277,11 @@ impl<'a> CwIbcCoreContext<'a> {
                 })
                 .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                Err(PacketError::InvalidProof).map_err(Into::<ContractError>::into)
-            }
+
+            cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
+            // cosmwasm_std::SubMsgResult::Err(_) => {
+            // Err(PacketError::InvalidProof).map_err(Into::<ContractError>::into)
+            // }
         }
     }
 
@@ -364,9 +366,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 })
                 .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                Err(PacketError::InvalidProof).map_err(Into::<ContractError>::into)
-            }
+            cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
+            // cosmwasm_std::SubMsgResult::Err(_) => {
+            // Err(PacketError::InvalidProof).map_err(Into::<ContractError>::into)
+            // }
         }
     }
 }
