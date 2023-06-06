@@ -479,7 +479,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
-    let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
+    let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().messages[0].id, 531)
 }
@@ -591,7 +591,7 @@ fn test_acknowledgement_packet_validate_unordered() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
-    let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
+    let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().messages[0].id, 531)
 }
@@ -690,7 +690,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
-    let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, &msg);
+    let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
     assert!(res.is_ok());
     assert!(res.as_ref().unwrap().messages.is_empty())
 }
@@ -702,9 +702,10 @@ fn test_acknowledgement_packet_validate_fail_missing_channel() {
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let height = 10;
+    let env = mock_env();
     let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
 
     contract
-        .acknowledgement_packet_validate(deps.as_mut(), info, &msg)
+        .acknowledgement_packet_validate(deps.as_mut(), info, env, &msg)
         .unwrap();
 }

@@ -677,9 +677,9 @@ fn connection_open_ack_validate_fail() {
             consenus_state,
         )
         .unwrap();
-
+    let env = mock_env();
     contract
-        .connection_open_ack(deps.as_mut(), info, res_msg)
+        .connection_open_ack(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
 
@@ -770,8 +770,9 @@ fn connection_open_ack_validate() {
             consenus_state,
         )
         .unwrap();
+    let env = mock_env();
 
-    let res = contract.connection_open_ack(deps.as_mut(), info, res_msg);
+    let res = contract.connection_open_ack(deps.as_mut(), info, env, res_msg);
     assert_eq!(res.is_ok(), true)
 }
 
@@ -857,7 +858,7 @@ fn connection_validate_delay() {
         .unwrap();
 
     let result =
-        contract.verify_connection_delay_passed(&deps.storage, packet_proof_height, conn_end);
+        contract.verify_connection_delay_passed(&deps.storage, env, packet_proof_height, conn_end);
     assert_eq!(result.is_ok(), true)
 }
 
@@ -869,8 +870,9 @@ fn connection_validate_delay_fails() {
     let packet_proof_height = common::ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
+    let env = mock_env();
     contract
-        .verify_connection_delay_passed(&deps.storage, packet_proof_height, conn_end)
+        .verify_connection_delay_passed(&deps.storage, env, packet_proof_height, conn_end)
         .unwrap();
 }
 
@@ -1018,8 +1020,8 @@ fn connection_open_try_validate() {
             consenus_state,
         )
         .unwrap();
-
-    let res = contract.connection_open_try(deps.as_mut(), info, res_msg);
+    let env = mock_env();
+    let res = contract.connection_open_try(deps.as_mut(), info, env, res_msg);
     assert_eq!(res.is_ok(), true);
 }
 
@@ -1078,9 +1080,9 @@ fn open_try_validate_fails() {
             consenus_state,
         )
         .unwrap();
-
+    let env = mock_env();
     contract
-        .connection_open_try(deps.as_mut(), info, res_msg)
+        .connection_open_try(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
 #[test]
@@ -1746,9 +1748,10 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
     contract
         .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
         .unwrap();
+    let env = mock_env();
 
     contract
-        .connection_open_ack(deps.as_mut(), info, res_msg)
+        .connection_open_ack(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
 
@@ -1840,9 +1843,10 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
             consenus_state,
         )
         .unwrap();
+    let env = mock_env();
 
     contract
-        .connection_open_ack(deps.as_mut(), info, res_msg)
+        .connection_open_ack(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
 

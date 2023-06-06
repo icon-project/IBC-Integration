@@ -39,7 +39,6 @@ serde = { workspace=true }
 thiserror = { workspace=true}
 common = { path="../../../libraries/rust/common" }
 cw-common = { path="../cw-common" }
-cw-ibc-core = { path="../cw-ibc-core", features=["library"] }
 debug_print = "1.0.0"
 
 

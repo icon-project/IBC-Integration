@@ -73,11 +73,12 @@ pub use cw_common::commitment::*;
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::msg::{InstantiateMsg, QueryMsg};
+use crate::msg::InstantiateMsg;
 use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
 
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
+use cw_common::core_msg::QueryMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -104,7 +105,7 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: msg::QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let call_service = CwIbcCoreContext::default();
 
     call_service.query(deps, env, msg)

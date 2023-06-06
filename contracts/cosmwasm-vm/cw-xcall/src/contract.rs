@@ -430,7 +430,7 @@ impl<'a> CwCallService<'a> {
     /// that may occur during the execution of the function.
     fn on_channel_connect(
         &self,
-        _store: &mut dyn Storage,
+        store: &mut dyn Storage,
         msg: CwChannelConnectMsg,
     ) -> Result<Response, ContractError> {
         let ibc_endpoint = match msg.clone() {

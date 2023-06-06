@@ -2,6 +2,7 @@ use crate::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT
 
 use super::{events::client_misbehaviour_event, *};
 use common::constants::ICON_CLIENT_TYPE;
+use cosmwasm_std::Env;
 use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response};
 use debug_print::debug_println;
 use prost::{DecodeError, Message};
@@ -128,6 +129,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         message: IbcMsgUpgradeClient,
     ) -> Result<Response, ContractError> {
         let old_client_state = self.client_state(deps.as_ref().storage, &message.client_id)?;
@@ -146,7 +148,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             &old_client_state.latest_height(),
         )?;
 
-        let now = self.host_timestamp(deps.as_ref().storage)?;
+        let now = self.host_timestamp(&env)?;
         let duration = now
             .duration_since(&old_consensus_state.timestamp())
             .ok_or_else(|| ClientError::InvalidConsensusStateTimestamp {

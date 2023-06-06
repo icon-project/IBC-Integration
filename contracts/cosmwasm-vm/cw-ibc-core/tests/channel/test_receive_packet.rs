@@ -146,7 +146,7 @@ fn test_receive_packet() {
             chan_end_on_b.clone(),
         )
         .unwrap();
-    let res = contract.validate_receive_packet(deps.as_mut(), info, &msg);
+    let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 521);
@@ -510,9 +510,10 @@ fn test_receive_packet_fail_missing_channel() {
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let env = mock_env();
 
     contract
-        .validate_receive_packet(deps.as_mut(), info, &msg)
+        .validate_receive_packet(deps.as_mut(), info, env, &msg)
         .unwrap();
 }
 

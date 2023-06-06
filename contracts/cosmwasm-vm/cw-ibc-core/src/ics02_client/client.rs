@@ -3,6 +3,7 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::traits::AnyTypes;
 use common::{client_state::IClientState, consensus_state::IConsensusState};
+use cosmwasm_std::Env;
 use prost::DecodeError;
 use prost::Message;
 
@@ -545,19 +546,18 @@ impl<'a> CwIbcCoreContext<'a> {
     //     todo!()
     // }
 
-    pub fn host_height(&self) -> Result<common::ibc::Height, ContractError> {
-        let height = common::ibc::Height::new(0, 10000).map_err(Into::<ContractError>::into)?;
+    pub fn host_height(&self, env: &Env) -> Result<common::ibc::Height, ContractError> {
+        let height = env.block.height;
+        let height = common::ibc::Height::new(0, height).map_err(Into::<ContractError>::into)?;
         Ok(height)
     }
 
     pub fn host_timestamp(
         &self,
-        store: &dyn Storage,
+        env: &Env,
     ) -> Result<common::ibc::timestamp::Timestamp, ContractError> {
-        //TODO Update timestamp logic
-        let duration = self.ibc_store().expected_time_per_block().load(store)?;
-        let block_time = Duration::from_secs(duration);
-        IbcTimestamp::from_nanoseconds(block_time.as_nanos() as u64)
+        let current_timestamp = env.block.time;
+        IbcTimestamp::from_nanoseconds(current_timestamp.nanos() as u64)
             .map_err(|_e| ContractError::FailedConversion)
     }
 

@@ -26,6 +26,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         msg: MsgTimeoutOnClose,
     ) -> Result<Response, ContractError> {
         let packet = &msg.packet;
@@ -117,6 +118,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.verify_connection_delay_passed(
             deps.storage,
+            env,
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;

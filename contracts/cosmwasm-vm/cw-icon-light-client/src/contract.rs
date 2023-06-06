@@ -22,7 +22,8 @@ use cw_common::raw_types::Any;
 use cw_common::types::{PacketData, VerifyChannelState};
 
 use crate::constants::{
-    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH, HEIGHT, MEMBERSHIP, NON_MEMBERSHIP,
+    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH, HEIGHT,
+    MEMBERSHIP, NON_MEMBERSHIP,
 };
 use crate::error::ContractError;
 use crate::light_client::IconClient;

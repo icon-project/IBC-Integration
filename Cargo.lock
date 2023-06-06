@@ -585,7 +585,6 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-common",
- "cw-ibc-core",
  "cw-storage-plus",
  "cw2",
  "debug_print",

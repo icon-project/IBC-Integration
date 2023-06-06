@@ -191,7 +191,7 @@ pub fn build_query(contract: String, msg: Binary) -> QueryRequest<Empty> {
 }
 
 pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) -> String {
-    let query = cw_ibc_core::msg::QueryMsg::GetCapability { name: port_id };
+    let query = cw_common::core_msg::QueryMsg::GetCapability { name: port_id };
     let query = build_query(contract_address.to_string(), to_binary(&query).unwrap());
 
     let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
@@ -200,18 +200,17 @@ pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) 
     res
 }
 
-pub fn query_host_next_seq_send(app: &App, contract_address: Addr) -> u64 {
-    let query = cw_xcall::msg::QueryMsg::GetHostSendSeq {};
-    let query = build_query(contract_address.to_string(), to_binary(&query).unwrap());
+// pub fn query_host_next_seq_send(app: &App, contract_address: Addr) -> u64 {
+//     let query = cw_xcall::msg::QueryMsg::GetHostSendSeq {};
+//     let query = build_query(contract_address.to_string(), to_binary(&query).unwrap());
 
-    let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
-    println!("balances {:?}", balance);
-    let res: u64 = from_binary(&balance).unwrap();
-    res
-}
+//     let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
+//     println!("balances {:?}", balance);
+//     let res: u64 = from_binary(&balance).unwrap();
+//     res
+// }
 
 fn call_bind_port(ctx: &mut TestContext, port_name: &str) -> Result<AppResponse, AppError> {
-    
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core(),
@@ -268,9 +267,9 @@ fn test_packet_send() {
     // let data = [90, 91, 90, 91];
     // let result = call_xcall_message(&mut ctx, data.into());
 
-    let result = query_host_next_seq_send(&ctx.app, ctx.get_xcall_app());
+    //  let result = query_host_next_seq_send(&ctx.app, ctx.get_xcall_app());
 
-    println!("{:?}", &result);
+    //  println!("{:?}", &result);
 }
 
 #[test]

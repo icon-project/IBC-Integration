@@ -86,7 +86,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn execute(
         &mut self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         msg: CoreExecuteMsg,
     ) -> Result<Response, ContractError> {
@@ -126,12 +126,12 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ConnectionOpenTry { msg } => {
                 let message: MsgConnectionOpenTry =
                     Self::from_raw::<RawMsgConnectionOpenTry, MsgConnectionOpenTry>(&msg)?;
-                self.connection_open_try(deps, info, message)
+                self.connection_open_try(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenAck { msg } => {
                 let message: MsgConnectionOpenAck =
                     Self::from_raw::<RawMsgConnectionOpenAck, MsgConnectionOpenAck>(&msg)?;
-                self.connection_open_ack(deps, info, message)
+                self.connection_open_ack(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenConfirm { msg } => {
                 let message: MsgConnectionOpenConfirm =
@@ -193,18 +193,19 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ReceivePacket { msg } => {
                 let message: MsgRecvPacket =
                     Self::from_raw::<RawMessageRecvPacket, MsgRecvPacket>(&msg)?;
-                self.validate_receive_packet(deps, info, &message)
+                self.validate_receive_packet(deps, info, env, &message)
             }
             CoreExecuteMsg::AcknowledgementPacket { msg } => {
                 let message: MsgAcknowledgement =
                     Self::from_raw::<RawMessageAcknowledgement, MsgAcknowledgement>(&msg)?;
-                self.acknowledgement_packet_validate(deps, info, &message)
+                self.acknowledgement_packet_validate(deps, info, env, &message)
             }
             CoreExecuteMsg::RequestTimeout {} => todo!(),
             CoreExecuteMsg::Timeout { msg } => {
                 let message: MsgTimeout = Self::from_raw::<RawMessageTimeout, MsgTimeout>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
+                    env,
                     info,
                     cw_common::types::TimeoutMsgType::Timeout(message),
                 )
@@ -214,6 +215,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     Self::from_raw::<RawMessageTimeoutOnclose, MsgTimeoutOnClose>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
+                    env,
                     info,
                     cw_common::types::TimeoutMsgType::TimeoutOnClose(message),
                 )

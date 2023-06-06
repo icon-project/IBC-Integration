@@ -155,11 +155,12 @@ impl<'a> CwIbcCoreContext<'a> {
 
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         msg: MsgConnectionOpenAck,
     ) -> Result<Response, ContractError> {
         debug_println!("[ConnOpenAck]: Connection Open Ack");
         let host_height = self
-            .host_height()
+            .host_height(&env)
             .map_err(|_| ConnectionError::Other {
                 description: "failed to get host height".to_string(),
             })
@@ -422,13 +423,14 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         message: MsgConnectionOpenTry,
     ) -> Result<Response, ContractError> {
         //TODO validate
 
         self.validate_self_client(message.client_state_of_b_on_a.clone())?;
         let host_height = self
-            .host_height()
+            .host_height(&env)
             .map_err(|_| ConnectionError::Other {
                 description: "failed to get host height".to_string(),
             })
@@ -792,12 +794,8 @@ impl<'a> CwIbcCoreContext<'a> {
             conn_end_on_b.delay_period(),
         );
 
-        let connection_path = commitment::connection_path(
-            conn_end_on_b
-                .counterparty()
-                .connection_id()
-                .unwrap(),
-        );
+        let connection_path =
+            commitment::connection_path(conn_end_on_b.counterparty().connection_id().unwrap());
         let verify_connection_state = VerifyConnectionState::new(
             msg.proof_height_on_a.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,

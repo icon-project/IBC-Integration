@@ -129,12 +129,11 @@ impl<'a> CwIbcCoreContext<'a> {
                     let channel_end =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     // Getting the module address for on channel open try call
-                    let contract_address = match self
-                        .lookup_modules(deps.storage, port_id.as_bytes().to_vec())
-                    {
-                        Ok(addr) => addr,
-                        Err(error) => return Err(error),
-                    };
+                    let contract_address =
+                        match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
+                            Ok(addr) => addr,
+                            Err(error) => return Err(error),
+                        };
 
                     // Generate event for calling on channel open try in x-call
                     let sub_message = on_chan_open_ack_submessage(

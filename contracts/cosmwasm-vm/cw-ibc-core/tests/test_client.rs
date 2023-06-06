@@ -1003,7 +1003,7 @@ fn check_for_upgrade_client() {
     };
 
     let result = contract
-        .upgrade_client(deps.as_mut(), info, upgrdade_client_message)
+        .upgrade_client(deps.as_mut(), info, env, upgrdade_client_message)
         .unwrap();
 
     assert_eq!("upgrade_client", result.attributes[0].value)
@@ -1108,7 +1108,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     };
 
     contract
-        .upgrade_client(deps.as_mut(), info, upgrdade_client_message)
+        .upgrade_client(deps.as_mut(), info, env, upgrdade_client_message)
         .unwrap();
 }
 
@@ -1213,7 +1213,7 @@ fn fails_on_upgrade_client_frozen_client() {
     };
 
     contract
-        .upgrade_client(deps.as_mut(), info, upgrdade_client_message)
+        .upgrade_client(deps.as_mut(), info, env, upgrdade_client_message)
         .unwrap();
 }
 
@@ -1315,7 +1315,7 @@ fn check_for_execute_upgrade_client() {
     };
 
     contract
-        .upgrade_client(deps.as_mut(), info, upgrdade_client_message)
+        .upgrade_client(deps.as_mut(), info, env, upgrdade_client_message)
         .unwrap();
 
     let upgrade_client_response = UpgradeClientResponse::new(

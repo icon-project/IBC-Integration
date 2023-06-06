@@ -35,6 +35,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         message: MsgUpgradeClient,
     ) -> Result<Response, ContractError>;
     fn execute_upgrade_client_reply(

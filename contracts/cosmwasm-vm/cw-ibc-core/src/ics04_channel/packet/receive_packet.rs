@@ -31,6 +31,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         msg: &MsgRecvPacket,
     ) -> Result<Response, ContractError> {
         let packet = &msg.packet.clone();
@@ -67,7 +68,7 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
-        let latest_height = self.host_height()?;
+        let latest_height = self.host_height(&env)?;
         if msg.packet.timeout_height_on_b.has_expired(latest_height) {
             return Err(PacketError::LowPacketHeight {
                 chain_height: latest_height,
@@ -480,7 +481,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         &packet.sequence.to_string(),
                         &packet.dest.port_id,
                         &packet.dest.channel_id,
-                        &packet.timeout.block().unwrap().to_string(),
+                        &packet.timeout.block().unwrap().height.to_string(),
                         &timestamp,
                         chan_end_on_b.ordering.as_str(),
                         chan_end_on_b.connection_hops[0].as_str(),

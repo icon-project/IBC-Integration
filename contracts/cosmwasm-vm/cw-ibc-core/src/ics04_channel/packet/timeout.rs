@@ -26,6 +26,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         msg: MsgTimeout,
     ) -> Result<Response, ContractError> {
         let chan_end_on_a = self.get_channel_end(
@@ -109,6 +110,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.verify_connection_delay_passed(
             deps.storage,
+            env,
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;

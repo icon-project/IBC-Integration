@@ -39,7 +39,7 @@ impl<'a> CwIbcConnection<'a> {
         })?;
 
         println!("{LOG_PREFIX} Loaded IbcConfig");
-        let query_message = cw_common::core_msg::QueryMsg::SequenceSend {
+        let query_message = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
             port_id: ibc_config.src_endpoint().clone().port_id,
             channel_id: ibc_config.src_endpoint().clone().channel_id,
         };

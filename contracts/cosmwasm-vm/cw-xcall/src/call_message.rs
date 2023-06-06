@@ -67,22 +67,22 @@ impl<'a> CwCallService<'a> {
             .load(deps.as_ref().storage)
             .map_err(ContractError::Std)?;
 
-        // let query_message = cw_ibc_core::msg::QueryMsg::GetNextSequenceSend {
-        //     port_id: ibc_config.src_endpoint().clone().port_id,
-        //     channel_id: ibc_config.src_endpoint().clone().channel_id,
-        // };
+        let query_message = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
+            port_id: ibc_config.src_endpoint().clone().port_id,
+            channel_id: ibc_config.src_endpoint().clone().channel_id,
+        };
 
-        // let query_request = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
-        //     contract_addr: ibc_host.to_string(),
-        //     msg: to_binary(&query_message).map_err(ContractError::Std)?,
-        // });
+        let query_request = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+            contract_addr: ibc_host.to_string(),
+            msg: to_binary(&query_message).map_err(ContractError::Std)?,
+        });
 
-        // let sequence_number_host: u64 = deps
-        //     .querier
-        //     .query(&query_request)
-        //     .map_err(ContractError::Std)?;
+        let sequence_number_host: u64 = deps
+            .querier
+            .query(&query_request)
+            .map_err(ContractError::Std)?;
 
-        let sequence_number_host = 1;
+        // let sequence_number_host = 1;
 
         if need_response {
             let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);
