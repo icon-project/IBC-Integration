@@ -1,4 +1,5 @@
 use common::ibc::core::ics04_channel::Version;
+use cw_common::hex_string::HexString;
 
 use super::*;
 
@@ -9,7 +10,7 @@ pub const COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY: &str = "counterparty_port_id";
 pub const VERSION_ATTRIBUTE_KEY: &str = "version";
 
 // Packet constants
-pub const PKT_SEQ_ATTRIBUTE_KEY: &str = "packet_seq_on_a";
+pub const PKT_SEQ_ATTRIBUTE_KEY: &str = "packet_sequence";
 pub const PKT_DATA_ATTRIBUTE_KEY: &str = "packet_data";
 pub const PKT_DATA_HEX_ATTRIBUTE_KEY: &str = "packet_data_hex";
 pub const PKT_SRC_PORT_ATTRIBUTE_KEY: &str = "packet_src_port";
@@ -189,14 +190,10 @@ pub fn create_send_packet_event(
     channel_order: &Order,
     dst_connection_id: &IbcConnectionId,
 ) -> Result<Event, ContractError> {
-    let data = std::str::from_utf8(&packet.data)
-        .map_err(|_| ChannelError::NonUtf8PacketData)
-        .map_err(Into::<ContractError>::into)?;
     let hex_data = hex::encode(&packet.data);
 
     Ok(Event::new(IbcEventType::SendPacket.as_str())
-        .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)
-        .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data)
+        .add_attribute(PKT_DATA_ATTRIBUTE_KEY, hex_data)
         .add_attribute(
             PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
             packet.timeout_height_on_b.to_event_attribute_value(),
@@ -233,26 +230,24 @@ pub fn create_write_ack_event(
     packet: CwPacket,
     channel_order: &str,
     dst_connection_id: &str,
+    acknowledgement: &[u8],
 ) -> Result<Event, ContractError> {
-    let data = std::str::from_utf8(&packet.data)
-        .map_err(|_e| ChannelError::NonUtf8PacketData)
-        .map_err(Into::<ContractError>::into)?;
-    let hex_data = hex::encode(&packet.data);
-
     let timeout_height = Height::new(
         packet.timeout.block().unwrap().revision,
         packet.timeout.block().unwrap().height,
     )
     .map_err(|error| ContractError::IbcClientError { error })?;
 
+    let timestamp = match packet.timeout.timestamp() {
+        Some(t) => t.to_string(),
+        None => 0.to_string(),
+    };
+
     Ok(Event::new(IbcEventType::WriteAck.as_str())
-        .add_attribute(PKT_DATA_ATTRIBUTE_KEY, data)
-        .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data)
+        .add_attribute(PKT_ACK_HEX_ATTRIBUTE_KEY, hex::encode(acknowledgement))
+        .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex::encode(packet.data))
         .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height)
-        .add_attribute(
-            PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
-            packet.timeout.timestamp().unwrap().nanos().to_string(),
-        )
+        .add_attribute(PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY, timestamp)
         .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
         .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.src.port_id)
         .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.src.channel_id)
@@ -408,6 +403,7 @@ pub fn create_close_confirm_channel_event(port_id_on_b: &str, chan_id_on_b: &str
 /// A new `Event` object with attributes related to a receive packet event in an IBC protocol
 /// implementation.
 pub fn create_recieve_packet_event(
+    data: &[u8],
     port_id: &str,
     chan_id: &str,
     seq_on_a: &str,
@@ -419,6 +415,7 @@ pub fn create_recieve_packet_event(
     dst_connection_id: &str,
 ) -> Event {
     Event::new(IbcEventType::ReceivePacket.as_str())
+        .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex::encode(data))
         .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height_on_b)
         .add_attribute(PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY, timeout_timestamp_on_b)
         .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, seq_on_a)

@@ -1,3 +1,5 @@
+use debug_print::debug_println;
+
 use super::*;
 
 // version info for migration info
@@ -169,7 +171,8 @@ impl<'a> CwCallService<'a> {
                     kind: error.to_string(),
                 }),
             },
-
+            QueryMsg::GetIbcHost {} => to_binary(&self.get_ibc_host().load(deps.storage).unwrap()),
+            QueryMsg::GetIbcConfig {} => to_binary(&self.ibc_config().load(deps.storage).unwrap()),
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
             QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
@@ -437,20 +440,25 @@ impl<'a> CwCallService<'a> {
             } => channel.endpoint,
             CwChannelConnectMsg::OpenConfirm { channel } => channel.endpoint,
         };
-        // let channel = msg.channel();
+        let channel = msg.channel();
+        debug_println!("channel decoded");
+        check_order(&channel.order)?;
+        debug_println!("check order verified");
 
-        // check_order(&channel.order)?;
+        if let Some(counter_version) = msg.counterparty_version() {
+            check_version(counter_version)?;
+        }
 
-        // if let Some(counter_version) = msg.counterparty_version() {
-        //     check_version(counter_version)?;
-        // }
+        let source = msg.channel().endpoint.clone();
+        let destination = msg.channel().counterparty_endpoint.clone();
 
-        // let source = msg.channel().endpoint.clone();
-        // let destination = msg.channel().counterparty_endpoint.clone();
-        //
-        // let ibc_config = IbcConfig::new(source, destination);
-        // let mut call_service = CwCallService::default();
-        // call_service.save_config(store, &ibc_config)?;
+        debug_println!("successfully found soruce and destination");
+
+        let ibc_config = IbcConfig::new(source, destination);
+
+        let mut call_service = CwCallService::default();
+        call_service.save_config(store, &ibc_config)?;
+        debug_println!("save config");
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())
@@ -515,7 +523,7 @@ impl<'a> CwCallService<'a> {
         match self.receive_packet_data(deps, msg.packet) {
             Ok(ibc_response) => Ok(Response::new()
                 .add_attributes(ibc_response.attributes.clone())
-                .set_data(ibc_response.acknowledgement)
+                .set_data(to_vec(&ibc_response).unwrap())
                 .add_events(ibc_response.events)),
             Err(error) => Ok(Response::new()
                 .add_attribute("method", "ibc_packet_receive")

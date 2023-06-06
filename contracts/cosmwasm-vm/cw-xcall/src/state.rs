@@ -164,6 +164,11 @@ impl<'a> CwCallService<'a> {
     pub fn fee(&self) -> &Item<'a, u128> {
         &self.fee
     }
+
+    pub fn get_ibc_host(&self) -> &Item<'a, Addr> {
+        &self.ibc_host
+    }
+
     pub fn set_ibc_host(
         &self,
         store: &mut dyn Storage,

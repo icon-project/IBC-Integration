@@ -21,6 +21,10 @@ impl Acknowledgement {
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_slice()
     }
+
+    pub fn from_bytes(b: &[u8]) -> Acknowledgement {
+        Acknowledgement(b.to_vec())
+    }
 }
 
 impl AsRef<[u8]> for Acknowledgement {

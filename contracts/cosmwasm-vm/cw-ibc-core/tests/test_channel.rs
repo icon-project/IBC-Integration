@@ -839,6 +839,7 @@ fn test_create_write_ack_packet_event() {
         ibc_packet_recv_message.packet,
         Order::Unordered.as_str(),
         IbcConnectionId::default().as_str(),
+        &vec![],
     );
     assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
 }

@@ -20,7 +20,7 @@ impl Default for InstantiateMsg {
     fn default() -> Self {
         Self {
             src_network_id: "0x3.icon".to_string(),
-            network_id: 9,
+            network_id: 2,
             network_type_id: 1,
         }
     }
