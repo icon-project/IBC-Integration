@@ -18,7 +18,7 @@ import (
 
 const (
 	relayerImageEnv    = "RELAYER_IMAGE"
-	relayerImage       = "strangeloveventures/relayer"
+	relayerImage       = "debendraoli/relayer"
 	relayerImageTagEnv = "RELAYER_IMAGE_TAG"
 	relayerImageTag    = "latest"
 )
@@ -33,6 +33,7 @@ func TestConformance(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 
 	chainFactory := NewBuiltinChainFactory(logger, cfg.ChainSpecs)
+
 	_chains, err := chainFactory.Chains(t.Name())
 	require.NoError(t, err)
 
@@ -51,8 +52,7 @@ func TestConformance(t *testing.T) {
 	}
 	optionDocker := relayer.CustomDockerImage(getEnvOrDefault(relayerImageEnv, relayerImage), getEnvOrDefault(relayerImageTagEnv, relayerImageTag), "100:1000")
 
-	r := interchaintest.NewICONRelayerFactory(zaptest.NewLogger(t), optionDocker, relayer.ImagePull(false)).Build(
-		t, client, network)
+	r := interchaintest.NewICONRelayerFactory(zaptest.NewLogger(t), optionDocker, relayer.ImagePull(false)).Build(t, client, network)
 	// Reporter/logs
 	rep := testreporter.NewReporter(f)
 	eRep := rep.RelayerExecReporter(t)
