@@ -215,7 +215,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
             byte[] path,
             byte[] value) {
 
-        value = IBCCommitment.keccak256(value);
+        value = ByteUtil.convertBytesToStringBytes(IBCCommitment.keccak256(value));
 
         // path = storage-prefix + lengthOP(prefix) + keccak256(path)
         prefix = prefixLengthInBigEndian(prefix);
