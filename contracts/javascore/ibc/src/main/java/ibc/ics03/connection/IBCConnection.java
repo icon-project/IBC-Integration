@@ -1,9 +1,5 @@
 package ibc.ics03.connection;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Logger;
@@ -11,20 +7,24 @@ import ibc.icon.structs.messages.MsgConnectionOpenAck;
 import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
 import ibc.icon.structs.messages.MsgConnectionOpenInit;
 import ibc.icon.structs.messages.MsgConnectionOpenTry;
-import icon.proto.core.client.Height;
-import icon.proto.core.connection.MerklePrefix;
-import icon.proto.core.connection.ConnectionEnd;
-import icon.proto.core.connection.Counterparty;
-import icon.proto.core.connection.Version;
 import ibc.ics02.client.IBCClient;
 import ibc.ics24.host.IBCCommitment;
+import icon.proto.core.client.Height;
+import icon.proto.core.connection.ConnectionEnd;
+import icon.proto.core.connection.Counterparty;
+import icon.proto.core.connection.MerklePrefix;
+import icon.proto.core.connection.Version;
 import score.Context;
 import scorex.util.ArrayList;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 
 public class IBCConnection extends IBCClient {
     public static final String v1Identifier = "1";
     public static final List<String> supportedV1Features = List.of("ORDER_ORDERED", "ORDER_UNORDERED");
-    public static final byte[] commitmentPrefix = "ibc".getBytes();
+    public static final byte[] commitmentPrefix = "commitments".getBytes();
 
     Logger logger = new Logger("ibc-core");
 
@@ -194,7 +194,7 @@ public class IBCConnection extends IBCClient {
     /* Verification functions */
 
     private void verifyClientState(ConnectionEnd connection, byte[] height, byte[] path, byte[] proof,
-            byte[] clientStatebytes) {
+                                   byte[] clientStatebytes) {
         ILightClient client = getClient(connection.getClientId());
         client.verifyMembership(
                 connection.getClientId(),
@@ -208,7 +208,7 @@ public class IBCConnection extends IBCClient {
     }
 
     private void verifyClientConsensusState(ConnectionEnd connection, byte[] height, Height consensusHeight,
-            byte[] proof, byte[] consensusStateBytes) {
+                                            byte[] proof, byte[] consensusStateBytes) {
         byte[] consensusPath = IBCCommitment.consensusStatePath(connection.getCounterparty().getClientId(),
                 consensusHeight.getRevisionNumber(),
                 consensusHeight.getRevisionHeight());
@@ -226,8 +226,9 @@ public class IBCConnection extends IBCClient {
     }
 
     private void verifyConnectionState(ConnectionEnd connection, byte[] height, byte[] proof, String connectionId,
-            ConnectionEnd counterpartyConnection) {
+                                       ConnectionEnd counterpartyConnection) {
         ILightClient client = getClient(connection.getClientId());
+
         client.verifyMembership(
                 connection.getClientId(),
                 height,

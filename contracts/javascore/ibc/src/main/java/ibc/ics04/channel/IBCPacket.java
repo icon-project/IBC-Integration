@@ -142,7 +142,7 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(destinationPortId,
                 destinationChannel, sequence);
         Context.require(commitments.get(ackCommitmentKey) == null, "acknowledgement for packet already exists");
-        byte[] ackCommitment = IBCCommitment.sha256(acknowledgement);
+        byte[] ackCommitment = IBCCommitment.keccak256(acknowledgement);
         commitments.set(ackCommitmentKey, ackCommitment);
         sendBTPMessage(connection.getClientId(), ByteUtil.join(ackCommitmentKey, ackCommitment));
 
@@ -179,7 +179,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 proofHeight,
                 proof,
                 packetAckPath,
-                IBCCommitment.sha256(acknowledgement));
+                acknowledgement);
 
         if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             DictDB<String, BigInteger> nextSequenceAckSourcePort = nextSequenceAcknowledgements
@@ -398,12 +398,12 @@ public class IBCPacket extends IBCChannelHandshake {
     }
 
     private byte[] createPacketCommitment(Packet packet) {
-        return IBCCommitment.sha256(
-                ByteUtil.join(
-                        Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
-                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(), false),
-                        Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(), false),
-                        IBCCommitment.sha256(packet.getData())));
+        return IBCCommitment.keccak256(
+            ByteUtil.join(
+                    Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
+                    Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),false),
+                    Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),false),
+                    IBCCommitment.keccak256(packet.getData())));
     }
 
     private boolean isZero(Height height) {
