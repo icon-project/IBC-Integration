@@ -38,22 +38,19 @@ public class ByteUtil {
     }
 
     public static byte[] convertBytesToStringBytes(String hexString) {
-        var hexStringInBytes = StringUtil.hexToBytes(hexString);
-        List<Integer> intArr = new ArrayList<>();
-        for (byte b : hexStringInBytes) {
-            intArr.add(Byte.toUnsignedInt(b));
-        }
+        var bytes = StringUtil.hexToBytes(hexString);
+        return convertBytesToStringBytes(bytes);
+    }
+
+    public static byte[] convertBytesToStringBytes(byte[] bytes) {
         StringBuilder result = new StringBuilder();
         result.append("[");
-        for (Integer integer : intArr) {
-            result.append(integer).append(",");
+        for (byte b : bytes) {
+            var _unsignedValue=Byte.toUnsignedInt(b);
+            result.append(_unsignedValue).append(",");
         }
         result.deleteCharAt(result.length() - 1);
         result.append("]");
         return result.toString().getBytes();
-    }
-
-    public static byte[] convertBytesToStringBytes(byte[] inputByte) {
-        return convertBytesToStringBytes(StringUtil.bytesToHex(inputByte));
     }
 }
