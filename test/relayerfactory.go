@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/docker/docker/client"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-	iconRelayer "github.com/icon-project/ibc-integration/test/relayer/icon"
 	"github.com/icon-project/ibc-integration/test/relayer"
+	iconRelayer "github.com/icon-project/ibc-integration/test/relayer/icon"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +36,7 @@ type builtinRelayerFactory struct {
 }
 
 func NewICONRelayerFactory(logger *zap.Logger, options ...relayer.RelayerOption) RelayerFactory {
-	return builtinRelayerFactory{ log: logger, options: options}
+	return builtinRelayerFactory{log: logger, options: options}
 }
 
 // Build returns a relayer chosen depending on f.impl.
@@ -45,17 +45,17 @@ func (f builtinRelayerFactory) Build(
 	cli *client.Client,
 	networkID string,
 ) ibc.Relayer {
-		return iconRelayer.NewICONRelayer(
-			f.log,
-			t.Name(),
-			cli,
-			networkID,
-			f.options...,
-		)
+	return iconRelayer.NewICONRelayer(
+		f.log,
+		t.Name(),
+		cli,
+		networkID,
+		f.options...,
+	)
 }
 
 func (f builtinRelayerFactory) Name() string {
-	return "iconRelayer@";
+	return "iconRelayer@"
 }
 
 // Capabilities returns the set of capabilities for the
