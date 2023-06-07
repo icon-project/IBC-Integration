@@ -49,7 +49,7 @@ func TestConformance(t *testing.T) {
 	if err != nil {
 		return
 	}
-	optionDocker := relayer.CustomDockerImage(getEnvOrDefault(relayerImageEnv, relayerImage), getEnvOrDefault(relayerImageTagEnv, relayerImageTag), "100:1000")
+	optionDocker := relayer.CustomDockerImage(chains.GetEnvOrDefault(relayerImageEnv, relayerImage), chains.GetEnvOrDefault(relayerImageTagEnv, relayerImageTag), "100:1000")
 
 	r := interchaintest.NewICONRelayerFactory(zaptest.NewLogger(t), optionDocker, relayer.ImagePull(false)).Build(
 		t, client, network)

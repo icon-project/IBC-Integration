@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/icon-project/ibc-integration/test/chains"
 	"os"
 	"path"
 	"path/filepath"
@@ -25,8 +27,24 @@ import (
 )
 
 const (
-	rpcPort = "9080/tcp"
+	rpcPort              = "9080/tcp"
+	GOLOOP_IMAGE_ENV     = "GOLOOP_IMAGE"
+	GOLOOP_IMAGE         = "iconloop/goloop-icon"
+	GOLOOP_IMAGE_TAG_ENV = "GOLOOP_IMAGE_TAG"
+	GOLOOP_IMAGE_TAG     = "latest"
 )
+
+var ContainerEnvs = [9]string{
+	"GOCHAIN_CONFIG=/goloop/data/config.json",
+	"GOCHAIN_GENESIS=/goloop/data/genesis.json",
+	"GOCHAIN_DATA=/goloop/chain/iconee",
+	"GOCHAIN_LOGFILE=/goloop/chain/iconee.log",
+	"GOCHAIN_DB_TYPE=rocksdb",
+	"GOCHAIN_CLEAN_DATA=true",
+	"JAVAEE_BIN=/goloop/execman/bin/execman",
+	"PYEE_VERIFY_PACKAGE=true",
+	"ICON_CONFIG=/goloop/data/icon_config.json",
+}
 
 type IconNode struct {
 	VolumeName   string
@@ -62,18 +80,33 @@ func (in *IconNode) Name() string {
 // Create Node Container with ports exposed and published for host to communicate with
 func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 	imageRef := in.Image.Ref()
+	executablePath, err := os.Getwd()
+	testBasePath := path.Dir(executablePath)
 	containerConfig := &types.ContainerCreateConfig{
 		Config: &container.Config{
 			Image:    imageRef,
 			Hostname: in.HostName(),
-
-			Labels: map[string]string{dockerutil.CleanupLabel: in.TestName},
+			Env:      ContainerEnvs[:],
+			Labels:   map[string]string{dockerutil.CleanupLabel: in.TestName},
 		},
+
 		HostConfig: &container.HostConfig{
 			Binds:           in.Bind(),
 			PublishAllPorts: true,
 			AutoRemove:      false,
 			DNS:             []string{},
+			Mounts: []mount.Mount{
+				{
+					Type:   mount.TypeBind,
+					Source: fmt.Sprintf("%s/chains/icon/data/single", testBasePath),
+					Target: "/goloop/data",
+				},
+				{
+					Type:   mount.TypeBind,
+					Source: fmt.Sprintf("%s/chains/icon/data/governance", testBasePath),
+					Target: "/goloop/data/gov",
+				},
+			},
 		},
 		NetworkingConfig: &network.NetworkingConfig{
 			EndpointsConfig: map[string]*network.EndpointSettings{
@@ -131,7 +164,7 @@ func (in *IconNode) logger() *zap.Logger {
 }
 
 func (in *IconNode) Exec(ctx context.Context, cmd []string, env []string) ([]byte, []byte, error) {
-	job := dockerutil.NewImage(in.logger(), in.DockerClient, in.NetworkID, in.TestName, in.Image.Repository, in.Image.Version)
+	job := dockerutil.NewImage(in.logger(), in.DockerClient, in.NetworkID, in.TestName, chains.GetEnvOrDefault(GOLOOP_IMAGE_ENV, GOLOOP_IMAGE), chains.GetEnvOrDefault(GOLOOP_IMAGE_TAG_ENV, GOLOOP_IMAGE_TAG))
 	opts := dockerutil.ContainerOptions{
 		Env:   env,
 		Binds: in.Bind(),
