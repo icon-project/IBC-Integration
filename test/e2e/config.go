@@ -1,8 +1,6 @@
 package e2e_test
 
 import (
-	"os"
-
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/spf13/viper"
 )
@@ -28,9 +26,3 @@ func GetConfig() (*OuterConfig, error) {
 	return config, viper.Unmarshal(config)
 }
 
-func getEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
