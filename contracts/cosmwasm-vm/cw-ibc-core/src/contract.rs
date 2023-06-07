@@ -341,7 +341,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 let res = self
                     .get_next_sequence_recv(deps.storage, _port_id, _channel_id)
                     .unwrap();
-                to_binary(&res)
+                let sequence:u64= res.into();
+                to_binary(&sequence)
             }
             QueryMsg::GetNextSequenceAcknowledgement {
                 port_id,

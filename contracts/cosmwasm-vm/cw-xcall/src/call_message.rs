@@ -77,11 +77,11 @@ impl<'a> CwCallService<'a> {
             msg: to_binary(&query_message).map_err(ContractError::Std)?,
         });
 
-        let sequence_number_host: u64 = deps
+        let sequence_number_host_result: Binary = deps
             .querier
-            .query(&query_request)
-            .map_err(ContractError::Std)?;
-
+            .raw_query(&to_binary(&query_request).unwrap()).unwrap().unwrap();
+            
+        let sequence_number_host_result:u64=from_binary(&sequence_number_host_result).unwrap();
         // let sequence_number_host = 1;
 
         if need_response {
