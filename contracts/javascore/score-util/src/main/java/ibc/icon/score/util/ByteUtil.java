@@ -16,6 +16,9 @@
 
 package ibc.icon.score.util;
 
+import scorex.util.ArrayList;
+import java.util.List;
+
 public class ByteUtil {
 
     public static byte[] join(byte[]... data) {
@@ -32,5 +35,22 @@ public class ByteUtil {
         }
 
         return result;
+    }
+
+    public static byte[] convertBytesToStringBytes(String hexString) {
+        var bytes = StringUtil.hexToBytes(hexString);
+        return convertBytesToStringBytes(bytes);
+    }
+
+    public static byte[] convertBytesToStringBytes(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        result.append("[");
+        for (byte b : bytes) {
+            var _unsignedValue=Byte.toUnsignedInt(b);
+            result.append(_unsignedValue).append(",");
+        }
+        result.deleteCharAt(result.length() - 1);
+        result.append("]");
+        return result.toString().getBytes();
     }
 }
