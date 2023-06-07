@@ -16,7 +16,7 @@
 
 package ibc.icon.score.util;
 
-import java.util.ArrayList;
+import scorex.util.ArrayList;
 import java.util.List;
 
 public class ByteUtil {
@@ -48,7 +48,7 @@ public class ByteUtil {
         for (Integer integer : intArr) {
             result.append(integer).append(",");
         }
-        result = new StringBuilder(result.substring(0, result.length() - 1));
+        result.deleteCharAt(result.length() - 1);
         result.append("]");
         return result.toString().getBytes();
     }
