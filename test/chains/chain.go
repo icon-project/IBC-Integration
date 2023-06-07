@@ -2,6 +2,7 @@ package chains
 
 import (
 	"context"
+	"os"
 
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
@@ -69,4 +70,11 @@ func (c *ChainConfig) GetIBCChainConfig() ibc.ChainConfig {
 		TrustingPeriod: c.TrustingPeriod,
 		NoHostMount:    c.NoHostMount,
 	}
+}
+
+func GetEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }

@@ -16,6 +16,7 @@ public class Proof {
         if (!Arrays.equals(proof.getKey(), key)) {
             throw new UserRevertedException("Provided key doesn't match proof");
         }
+
         if (!Arrays.equals(proof.getValue(), value)) {
             throw new UserRevertedException("Provided value doesn't match proof");
         }
@@ -61,7 +62,8 @@ public class Proof {
         for (InnerOp innerOp : proofPath) {
             root = Ops.applyOp(innerOp, root);
             if (spec != null) {
-                if (root.length > spec.getInnerSpec().getChildSize().intValue() && spec.getInnerSpec().getChildSize().intValue() >= 32) {
+                if (root.length > spec.getInnerSpec().getChildSize().intValue()
+                        && spec.getInnerSpec().getChildSize().intValue() >= 32) {
                     throw new UserRevertedException("Inner error");
                 }
             }
@@ -86,8 +88,7 @@ public class Proof {
         Ops.checkAgainstSpec(proof.getLeaf(), spec);
         int proofPathSize = proof.getPath().size();
         if (spec.getMinDepth().compareTo(BigInteger.ZERO) > 0) {
-            boolean innerOpsDepthTooShort =
-                    BigInteger.valueOf(proofPathSize).compareTo(spec.getMinDepth()) < 0;
+            boolean innerOpsDepthTooShort = BigInteger.valueOf(proofPathSize).compareTo(spec.getMinDepth()) < 0;
             if (innerOpsDepthTooShort) {
                 throw new UserRevertedException("InnerOps depth too short");
             }
