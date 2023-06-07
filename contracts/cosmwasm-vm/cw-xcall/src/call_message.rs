@@ -72,10 +72,12 @@ impl<'a> CwCallService<'a> {
 
 
 
-        let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
-            port_id: ibc_config.src_endpoint().clone().port_id,
-            channel_id: ibc_config.src_endpoint().clone().channel_id,
-        };
+        // let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
+        //     port_id: ibc_config.src_endpoint().clone().port_id,
+        //     channel_id: ibc_config.src_endpoint().clone().channel_id,
+        // };
+
+        let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextClientSequence {  };
         
 
         let query_request = build_smart_query(ibc_host.to_string(), to_binary(&query_next_seq_send).unwrap());
