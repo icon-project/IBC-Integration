@@ -435,7 +435,7 @@ fn connection_open_init() {
 
     let cl = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_a, cl)
+        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_a, cl)
         .unwrap();
     contract
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
@@ -514,7 +514,7 @@ fn create_connection_open_try_event() {
     let event = create_open_try_event(
         connection_id,
         client_id,
-        counterparty_connection_id,
+        Some(counterparty_connection_id),
         counterparty_client_id,
     );
     assert_eq!(IbcEventType::OpenTryConnection.as_str(), event.ty);
@@ -664,7 +664,12 @@ fn connection_open_ack_validate_fail() {
     let client_state_bytes = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+        )
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -757,7 +762,12 @@ fn connection_open_ack_validate() {
     let client_state_bytes = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+        )
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -919,10 +929,10 @@ fn connection_open_try_execute() {
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let versions = RawVersion {
+    let versions = vec![RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
-    };
+    }];
     let conn_id = ConnectionId::new(1);
 
     let contract = CwIbcCoreContext::new();
@@ -1007,7 +1017,7 @@ fn connection_open_try_validate() {
     let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_b, cl)
+        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_b, cl)
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -1065,6 +1075,7 @@ fn open_try_validate_fails() {
     contract
         .store_client_state(
             &mut deps.storage,
+            &mock_env(),
             &res_msg.client_id_on_b,
             client_state_bytes,
         )
@@ -1157,7 +1168,12 @@ fn connection_open_confirm_validate() {
     let cl = client_state.to_any().encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &conn_end.client_id().clone(), cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &conn_end.client_id().clone(),
+            cl,
+        )
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -1357,7 +1373,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
     let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, cl)
+        .store_client_state(&mut deps.storage, &mock_env(), &client_id, cl)
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -1442,7 +1458,12 @@ fn connection_open_init_fails_of_clientstate() {
 
     let client_state_bytes = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+        )
         .unwrap();
 
     contract
@@ -1488,6 +1509,7 @@ fn connection_open_init_validate_invalid_client_id() {
     contract
         .store_client_state(
             &mut deps.storage,
+            &mock_env(),
             &res_msg.client_id_on_a,
             client_state_bytes,
         )
@@ -1637,7 +1659,7 @@ fn connection_open_try_empty_proof() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert_eq!(res_msg.is_ok(), true)
 }
 
 #[test]
@@ -1673,7 +1695,7 @@ fn connection_open_init_fails() {
 
     let cl = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_a, cl)
+        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_a, cl)
         .unwrap();
     contract
         .connection_open_init(deps.as_mut(), res_msg)
@@ -1746,7 +1768,12 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
     let client_state_bytes = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+        )
         .unwrap();
     let env = mock_env();
 
@@ -1830,7 +1857,12 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     let client_state_bytes = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+        )
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();

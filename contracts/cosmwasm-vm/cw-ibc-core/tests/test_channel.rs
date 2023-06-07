@@ -1,6 +1,7 @@
 use std::{str::FromStr, time::Duration};
 
 use common::traits::AnyTypes;
+use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
     to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
@@ -341,8 +342,7 @@ fn channel_open_confirm_from_raw_missing_proof_height_parameter() {
     res_msg.unwrap();
 }
 #[test]
-#[should_panic(expected = "InvalidProof")]
-fn channel_open_confirm_from_raw_missing_proof_try_parameter() {
+fn channel_open_confirm_from_raw_missing_proof_try_parameter_is_ok() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let default_raw_confirm_msg = RawMsgChannelOpenConfirm {
@@ -449,8 +449,7 @@ fn channel_open_try_from_raw_missing_proof_height_parameter() {
     res_msg.unwrap();
 }
 #[test]
-#[should_panic(expected = "InvalidProof")]
-fn channel_open_try_from_raw_missing_proof_init_parameter() {
+fn channel_open_try_from_raw_missing_proof_init_parameter_is_ok() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_try(proof_height);
     let default_raw_try_msg = RawMsgChannelOpenTry {
@@ -532,8 +531,7 @@ fn channel_open_ack_from_raw_missing_proof_height_parameter() {
     res_msg.unwrap();
 }
 #[test]
-#[should_panic(expected = "InvalidProof")]
-fn channel_open_ack_from_raw_missing_proof_try_parameter() {
+fn channel_open_ack_from_raw_missing_proof_try_is_ok() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
     let default_raw_ack_msg = RawMsgChannelOpenAck {
@@ -796,8 +794,7 @@ fn test_create_send_packet_event() {
 }
 
 #[test]
-#[should_panic(expected = "NonUtf8PacketData")]
-fn test_create_send_packet_event_fail() {
+fn test_create_send_packet_with_invalid_utf_ok() {
     let raw = get_dummy_raw_packet(15, 0);
 
     let raw = RawPacket {
@@ -839,14 +836,13 @@ fn test_create_write_ack_packet_event() {
         ibc_packet_recv_message.packet,
         Order::Unordered.as_str(),
         IbcConnectionId::default().as_str(),
-        &vec![],
+        &[],
     );
     assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
 }
 
 #[test]
-#[should_panic(expected = "NonUtf8PacketData")]
-fn test_create_write_ack_packet_event_fail() {
+fn test_create_write_ack_packet_event_with_invalidutf8_ok() {
     let raw = get_dummy_raw_packet(15, 0);
 
     let raw = RawPacket {
@@ -929,14 +925,21 @@ fn test_validate_open_init_channel() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+    // contract
+    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
+    //     .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+    // contract
+    //     .add_route(&mut deps.storage, cx_module_id, &module)
+    //     .unwrap();
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -980,7 +983,7 @@ fn test_validate_open_init_channel() {
 }
 
 #[test]
-#[should_panic(expected = "error: UnknownPort { port_id: PortId(\"defaultPort\")")]
+#[should_panic(expected = "Unauthorized")]
 fn test_validate_open_init_channel_fail_missing_module_id() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
@@ -1011,9 +1014,8 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
         .store_connection(deps.as_mut().storage, conn_id, conn_end)
         .unwrap();
 
-    contract
-        .validate_channel_open_init(deps.as_mut(), info, &msg)
-        .unwrap();
+    let res = contract.validate_channel_open_init(deps.as_mut(), info, &msg);
+    res.unwrap();
 }
 
 #[test]
@@ -1033,6 +1035,7 @@ fn test_validate_open_try_channel_fail_missing_connection_end() {
 #[test]
 fn test_validate_open_try_channel() {
     let mut deps = deps();
+    let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
@@ -1040,14 +1043,21 @@ fn test_validate_open_try_channel() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+    // contract
+    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
+    //     .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+    // contract
+    //     .add_route(&mut deps.storage, cx_module_id, &module)
+    //     .unwrap();
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -1086,7 +1096,7 @@ fn test_validate_open_try_channel() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 

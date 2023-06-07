@@ -294,18 +294,27 @@ fn acknowledgement_packet_validate_reply_from_light_client() {
     };
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let reply_message = Reply { id: 0, result };
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let _module_id =
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_a;
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+    // contract
+    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
+    //     .unwrap();
+    // contract
+    //     .add_route(&mut deps.storage, module_id, &module)
+    //     .unwrap();
     let module = Addr::unchecked("contractaddress");
     contract
-        .add_route(&mut deps.storage, module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let res = contract
         .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().clone().messages[0].id, 532);
 }
@@ -349,16 +358,23 @@ fn acknowledgement_packet_validate_reply_from_light_client_fail() {
     };
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let reply_message = Reply { id: 0, result };
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let _module_id =
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_a;
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+    // contract
+    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
+    //     .unwrap();
     let module = Addr::unchecked("contractaddress");
+    // contract
+    //     .add_route(&mut deps.storage, module_id, &module)
+    //     .unwrap();
     contract
-        .add_route(&mut deps.storage, module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
-
     contract
         .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message)
         .unwrap();
@@ -440,7 +456,7 @@ fn test_acknowledgement_packet_validate_ordered() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -489,7 +505,8 @@ fn test_acknowledgement_packet_validate_unordered() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
-    let env = mock_env();
+    let mut env = mock_env();
+    env.block.height = 100;
 
     let height = 10;
     let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
@@ -560,7 +577,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -577,6 +594,7 @@ fn test_acknowledgement_packet_validate_unordered() {
             consenus_state,
         )
         .unwrap();
+
     let light_client = Addr::unchecked("lightclient");
     contract
         .store_client_implementations(
@@ -585,6 +603,7 @@ fn test_acknowledgement_packet_validate_unordered() {
             light_client.to_string(),
         )
         .unwrap();
+
     contract
         .ibc_store()
         .expected_time_per_block()
@@ -659,7 +678,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],

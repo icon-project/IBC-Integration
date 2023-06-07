@@ -7,6 +7,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
+    let env = mock_env();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let height = 2;
@@ -86,7 +87,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 

@@ -126,11 +126,11 @@ impl<'a> CwCallService<'a> {
     ) -> Result<CwReceiveResponse, ContractError> {
         println!(
             "receive_packet_data {:?}",
-            HexString::from_bytes(&message.data.0.clone())
+            HexString::from_bytes(&message.data.0)
         );
         let call_service_message: CallServiceMessage =
             CallServiceMessage::try_from(message.data.0.clone())?;
-        println!("call service decoded {:?}", call_service_message);
+        println!("call service decoded {call_service_message:?}");
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {

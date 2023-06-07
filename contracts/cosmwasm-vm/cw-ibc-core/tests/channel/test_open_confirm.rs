@@ -11,6 +11,7 @@ use super::*;
 #[should_panic(expected = "UndefinedConnectionCounterparty")]
 fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     let mut deps = deps();
+    let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_confirm(10);
@@ -70,7 +71,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
@@ -105,6 +106,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
 #[test]
 fn test_validate_open_confirm_channel() {
     let mut deps = deps();
+    let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_confirm(10);
@@ -113,9 +115,16 @@ fn test_validate_open_confirm_channel() {
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_b.clone();
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+    // contract
+    //     .add_route(&mut deps.storage, cx_module_id, &module)
+    //     .unwrap();
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -172,7 +181,7 @@ fn test_validate_open_confirm_channel() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
@@ -241,14 +250,21 @@ fn test_execute_open_confirm_from_light_client() {
     );
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_b.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+    // contract
+    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
+    //     .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+    // contract
+    //     .add_route(&mut deps.storage, cx_module_id, &module)
+    //     .unwrap();
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let message_info = cw_common::types::MessageInfo {

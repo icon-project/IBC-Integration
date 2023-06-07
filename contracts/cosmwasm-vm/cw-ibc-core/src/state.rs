@@ -1,5 +1,7 @@
 use cosmwasm_std::Order;
 
+use crate::ics24_host::LastProcessedOn;
+
 use super::*;
 
 /// The `CwIbcStore` struct stores various data related to the Inter-Blockchain Communication (IBC).
@@ -82,6 +84,7 @@ pub struct CwIbcStore<'a> {
     expected_time_per_block: Item<'a, u64>,
     /// Stores packet receipts based on PortId,ChannelId and sequence
     packet_receipts: Map<'a, (String, String, u64), u64>,
+    last_processed_on: Map<'a, IbcClientId, LastProcessedOn>,
 }
 
 impl<'a> Default for CwIbcStore<'a> {
@@ -110,6 +113,7 @@ impl<'a> CwIbcStore<'a> {
             commitments: Map::new(StorageKey::Commitments.as_str()),
             expected_time_per_block: Item::new(StorageKey::BlockTime.as_str()),
             packet_receipts: Map::new(StorageKey::PacketReceipts.as_str()),
+            last_processed_on: Map::new(StorageKey::LastProcessedOn.as_str()),
         }
     }
     pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
@@ -164,6 +168,10 @@ impl<'a> CwIbcStore<'a> {
     }
     pub fn packet_receipts(&self) -> &Map<'a, (String, String, u64), u64> {
         &self.packet_receipts
+    }
+
+    pub fn last_processed_on(&self) -> &Map<'a, IbcClientId, LastProcessedOn> {
+        &self.last_processed_on
     }
 
     pub fn clear_storage(&self, store: &mut dyn Storage) {

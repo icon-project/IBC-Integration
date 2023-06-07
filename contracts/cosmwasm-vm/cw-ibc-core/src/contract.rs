@@ -13,6 +13,7 @@ use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::raw_types::connection::*;
 use cw_common::raw_types::Protobuf;
 use cw_common::raw_types::RawHeight;
+use cw_common::to_checked_address;
 use debug_print::debug_println;
 use prost::{DecodeError, Message};
 
@@ -226,7 +227,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: DecodeError::new(error.to_string()),
                     }
                 })?;
-                self.bind_port(deps.storage, &port_id, address)
+                let checked_address = to_checked_address(deps.as_ref(), &address).to_string();
+                self.bind_port(deps.storage, &port_id, checked_address)
             }
             CoreExecuteMsg::SetExpectedTimePerBlock { block_time } => {
                 self.set_expected_time_per_block(deps.storage, block_time)?;
@@ -341,7 +343,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let res = self
                     .get_next_sequence_recv(deps.storage, _port_id, _channel_id)
                     .unwrap();
-                let sequence:u64= res.into();
+                let sequence: u64 = res.into();
                 to_binary(&sequence)
             }
             QueryMsg::GetNextSequenceAcknowledgement {
@@ -456,14 +458,14 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn reply(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.id {
-            EXECUTE_CREATE_CLIENT => self.execute_create_client_reply(deps, message),
-            EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, message),
-            EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, message),
-            MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, message),
+            EXECUTE_CREATE_CLIENT => self.execute_create_client_reply(deps, env, message),
+            EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
+            EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
+            MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
             EXECUTE_CONNECTION_OPENTRY => self.execute_connection_open_try(deps, message),
             EXECUTE_CONNECTION_OPENACK => self.execute_connection_open_ack(deps, message),
             EXECUTE_CONNECTION_OPENCONFIRM => self.execute_connection_openconfirm(deps, message),

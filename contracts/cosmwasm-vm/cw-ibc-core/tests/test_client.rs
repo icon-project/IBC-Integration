@@ -452,7 +452,7 @@ fn check_for_create_client_message_response() {
     };
 
     let result = contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     assert_eq!(result.attributes[0].value, "execute_create_client_reply");
@@ -531,7 +531,7 @@ fn check_for_client_state_from_storage() {
     };
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     let client_id =
@@ -611,7 +611,7 @@ fn check_for_consensus_state_from_storage() {
     };
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     let client_id =
@@ -681,7 +681,7 @@ fn fail_on_create_client_message_error_response() {
     };
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 }
 
@@ -797,7 +797,7 @@ fn check_for_update_client_message() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -844,7 +844,8 @@ fn check_for_update_client_message() {
         }),
     };
 
-    let update_response = contract.execute_update_client_reply(deps.as_mut(), reply_message);
+    let update_response =
+        contract.execute_update_client_reply(deps.as_mut(), mock_env(), reply_message);
 
     assert!(update_response.is_ok());
 
@@ -901,7 +902,7 @@ fn fails_on_error_ressponse() {
         result: cosmwasm_std::SubMsgResult::Err("response_error".to_string()),
     };
     contract
-        .execute_update_client_reply(deps.as_mut(), reply_message)
+        .execute_update_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 }
 
@@ -971,7 +972,7 @@ fn check_for_upgrade_client() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -1076,7 +1077,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -1181,7 +1182,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -1283,7 +1284,7 @@ fn check_for_execute_upgrade_client() {
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
@@ -1338,7 +1339,7 @@ fn check_for_execute_upgrade_client() {
     };
 
     let result = contract
-        .execute_upgrade_client_reply(deps.as_mut(), reply_message)
+        .execute_upgrade_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     assert_eq!("iconclient-0", result.attributes[1].value);
@@ -1405,7 +1406,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     };
 
     contract
-        .execute_upgrade_client_reply(deps.as_mut(), reply_message)
+        .execute_upgrade_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 }
 
@@ -1434,7 +1435,7 @@ fn fails_on_unknown_response_on_execute_upgrade_client() {
     };
 
     contract
-        .execute_upgrade_client_reply(deps.as_mut(), reply_message)
+        .execute_upgrade_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 }
 
@@ -1470,7 +1471,7 @@ fn fails_on_null_response_data_on_execute_upgrade_client() {
     };
 
     contract
-        .execute_upgrade_client_reply(deps.as_mut(), reply_message)
+        .execute_upgrade_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 }
 
@@ -1635,7 +1636,7 @@ fn success_on_getting_client_state() {
     };
 
     contract
-        .execute_create_client_reply(deps.as_mut(), reply_message)
+        .execute_create_client_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
@@ -1698,6 +1699,7 @@ fn sucess_on_misbehaviour_validate() {
     contract
         .store_client_state(
             deps.as_mut().storage,
+            &mock_env(),
             &client_id,
             client_state.to_any().encode_to_vec(),
         )
@@ -1758,6 +1760,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
     contract
         .store_client_state(
             deps.as_mut().storage,
+            &mock_env(),
             &client_id,
             client_state.to_any().encode_to_vec(),
         )
@@ -1800,7 +1803,7 @@ fn fails_on_empty_response_misbehaviour() {
     };
 
     contract
-        .execute_misbehaviour_reply(deps.as_mut(), reply_message)
+        .execute_misbehaviour_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 }
 
@@ -1816,13 +1819,14 @@ fn fails_on_error_response_misbehaviour() {
     };
 
     contract
-        .execute_misbehaviour_reply(deps.as_mut(), reply_message)
+        .execute_misbehaviour_reply(deps.as_mut(), mock_env(), reply_message)
         .unwrap();
 }
 
 #[test]
 fn success_on_execute_misbehaviour() {
     let mut deps = deps();
+    let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
@@ -1851,7 +1855,7 @@ fn success_on_execute_misbehaviour() {
     };
 
     let result = contract
-        .execute_misbehaviour_reply(deps.as_mut(), reply_message)
+        .execute_misbehaviour_reply(deps.as_mut(), env, reply_message)
         .unwrap();
 
     assert_eq!("client_misbehaviour", result.events[0].ty);

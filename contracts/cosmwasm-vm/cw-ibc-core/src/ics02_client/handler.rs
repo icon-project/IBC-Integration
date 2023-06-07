@@ -266,6 +266,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn execute_create_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -292,6 +293,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
+                        &env,
                         &client_id,
                         callback_data.client_state_bytes().to_vec(),
                     )?;
@@ -336,6 +338,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn execute_update_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -351,6 +354,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
+                        &env,
                         &client_id,
                         update_client_response.client_state_bytes().to_vec(),
                     )?;
@@ -400,6 +404,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn execute_upgrade_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -411,6 +416,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
+                        &env,
                         &client_id,
                         response.client_state_commitment().to_vec(),
                     )?;
@@ -517,6 +523,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn execute_misbehaviour_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -539,6 +546,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
+                        &env,
                         &client_id,
                         misbehaviour_response.client_state_commitment,
                     )?;

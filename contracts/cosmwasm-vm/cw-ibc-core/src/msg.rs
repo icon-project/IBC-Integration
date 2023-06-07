@@ -1,5 +1,3 @@
-use cw_common::hex_string::HexString;
-
 use super::*;
 
 #[cw_serde]

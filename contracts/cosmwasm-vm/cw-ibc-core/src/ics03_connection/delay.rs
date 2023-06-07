@@ -12,7 +12,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &dyn Storage,
         env: Env,
-        packet_proof_height: Height,
+        _packet_proof_height: Height,
         connection_end: ConnectionEnd,
     ) -> Result<(), ContractError> {
         // Fetch the current host chain time and height.
@@ -21,9 +21,11 @@ impl<'a> CwIbcCoreContext<'a> {
 
         // Fetch the latest time and height that the counterparty client was updated on the host chain.
         let client_id = connection_end.client_id();
-        let last_client_update_time = self.client_update_time(client_id, &packet_proof_height)?;
+        let last_processed_on = self.last_processed_on(store, client_id)?;
+        let last_client_update_time =
+            self.client_update_time(client_id, last_processed_on.timestamp)?;
         let last_client_update_height =
-            self.client_update_height(client_id, &packet_proof_height)?;
+            self.client_update_height(client_id, last_processed_on.height)?;
 
         // Fetch the connection delay time and height periods.
         let conn_delay_time_period = connection_end.delay_period();

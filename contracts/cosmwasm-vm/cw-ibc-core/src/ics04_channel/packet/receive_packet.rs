@@ -495,7 +495,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         .add_attribute("message", "success: packet receive")
                         .add_event(event_recieve_packet);
 
-                    if ack.len() > 0 {
+                    if !ack.is_empty() {
                         self.store_packet_acknowledgement(
                             deps.storage,
                             &port_id,

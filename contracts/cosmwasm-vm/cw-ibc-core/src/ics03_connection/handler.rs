@@ -630,7 +630,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let counterparty = Counterparty::new(
                         counter_party_client_id,
-                        counterparty_conn_id,
+                        counterparty_conn_id.clone(),
                         counterparty_prefix,
                     );
 
@@ -684,8 +684,6 @@ impl<'a> CwIbcCoreContext<'a> {
                         &response.counterparty_connection_id
                     );
 
-                    let counterparty_conn_id =
-                        ConnectionId::from_str(&response.counterparty_connection_id).unwrap();
                     let event = create_open_try_event(
                         connection_id.clone(),
                         client_id.clone(),

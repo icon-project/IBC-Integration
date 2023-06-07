@@ -1,12 +1,8 @@
-use crate::{
-    cw_types::{
-        CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg,
-        CwPacketReceiveMsg, CwPacketTimeoutMsg,
-    },
-    hex_string::HexString,
+use crate::cw_types::{
+    CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg, CwPacketReceiveMsg,
+    CwPacketTimeoutMsg,
 };
-use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Addr;
+use cosmwasm_schema::cw_serde;
 
 #[cw_serde]
 pub enum ExecuteMsg {

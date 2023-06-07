@@ -47,7 +47,7 @@ pub fn create_open_init_event(
 pub fn create_open_try_event(
     connection_id: ConnectionId,
     client_id: ClientId,
-    counterparty_connection_id: ConnectionId,
+    counterparty_connection_id: Option<ConnectionId>,
     counterparty_client_id: ClientId,
 ) -> Event {
     Event::new(IbcEventType::OpenTryConnection.as_str())
@@ -55,7 +55,7 @@ pub fn create_open_try_event(
         .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
         .add_attribute(
             COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY,
-            counterparty_connection_id.as_str(),
+            counterparty_connection_id.map(|c|c.to_string()).unwrap_or("".to_owned()),
         )
         .add_attribute(
             COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,

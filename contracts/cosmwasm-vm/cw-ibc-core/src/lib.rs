@@ -55,7 +55,7 @@ pub use common::ibc::{
 };
 pub use constants::*;
 use context::CwIbcCoreContext;
-use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
 use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,

@@ -1,5 +1,4 @@
 use common::ibc::core::ics04_channel::Version;
-use cw_common::hex_string::HexString;
 
 use super::*;
 

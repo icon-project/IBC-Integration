@@ -4,6 +4,7 @@ use super::*;
 fn test_packet_send() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
+    let env = mock_env();
 
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
@@ -71,7 +72,7 @@ fn test_packet_send() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -122,6 +123,7 @@ fn test_packet_send_fail_channel_not_found() {
     expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })"
 )]
 fn test_packet_send_fail_misiing_sequense() {
+    let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
 
@@ -183,7 +185,7 @@ fn test_packet_send_fail_misiing_sequense() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],

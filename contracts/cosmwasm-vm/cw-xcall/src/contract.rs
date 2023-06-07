@@ -1,3 +1,4 @@
+use cw_common::to_checked_address;
 use debug_print::debug_println;
 
 use super::*;
@@ -42,7 +43,7 @@ impl<'a> CwCallService<'a> {
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-        self.init(deps.storage, info, msg)
+        self.init(deps, info, msg)
     }
 
     /// This function executes various messages based on their type and returns a response or an error.
@@ -234,7 +235,7 @@ impl<'a> CwCallService<'a> {
     /// occur during contract execution.
     fn init(
         &self,
-        store: &mut dyn Storage,
+        deps: DepsMut,
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
@@ -242,12 +243,13 @@ impl<'a> CwCallService<'a> {
         let last_request_id = u128::default();
         let owner = info.sender.as_str().to_string();
 
-        self.add_owner(store, owner.clone())?;
-        self.add_admin(store, info, owner)?;
-        self.init_last_sequence_no(store, last_sequence_no)?;
-        self.init_last_request_id(store, last_request_id)?;
-        self.set_timeout_height(store, msg.timeout_height)?;
-        self.set_ibc_host(store, msg.ibc_host.clone())?;
+        self.add_owner(deps.storage, owner.clone())?;
+        self.add_admin(deps.storage, info, owner)?;
+        self.init_last_sequence_no(deps.storage, last_sequence_no)?;
+        self.init_last_request_id(deps.storage, last_request_id)?;
+        self.set_timeout_height(deps.storage, msg.timeout_height)?;
+        let checked_host_address = to_checked_address(deps.as_ref(), msg.ibc_host.as_ref());
+        self.set_ibc_host(deps.storage, checked_host_address)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")

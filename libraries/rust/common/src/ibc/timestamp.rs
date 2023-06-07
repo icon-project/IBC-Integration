@@ -210,7 +210,7 @@ impl Timestamp {
     /// Checks whether the timestamp has expired when compared to the
     /// `other` timestamp. Returns an [`Expiry`] result.
     pub fn check_expiry(&self, other: &Timestamp) -> Expiry {
-        println!("other timestamp is {:?}", other);
+        println!("other timestamp is {other:?}");
         if other.time.is_none() {
             return Expiry::NotExpired;
         }

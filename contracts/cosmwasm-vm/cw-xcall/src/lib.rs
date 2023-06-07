@@ -55,7 +55,7 @@ use cw_common::cw_types::{
     CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
 
-use cosmwasm_std::{to_vec, QueryRequest};
+use cosmwasm_std::to_vec;
 use cw2::set_contract_version;
 use cw_common::ibc_types::IbcHeight as Height;
 use cw_common::types::Ack;

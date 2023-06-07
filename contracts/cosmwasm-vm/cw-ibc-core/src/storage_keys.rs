@@ -27,6 +27,7 @@ pub enum StorageKey {
     Capabilities,
     PacketReceipts,
     Owner,
+    LastProcessedOn,
 }
 
 impl StorageKey {
@@ -52,6 +53,7 @@ impl StorageKey {
             StorageKey::Capabilities => "capabilities",
             StorageKey::PacketReceipts => "packet_receipts",
             StorageKey::Owner => "owner",
+            StorageKey::LastProcessedOn => "last_processed_on",
         }
     }
 }

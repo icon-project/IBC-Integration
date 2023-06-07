@@ -18,6 +18,7 @@ pub trait IbcClient {
     fn execute_create_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError>;
     fn update_client(
@@ -29,6 +30,7 @@ pub trait IbcClient {
     fn execute_update_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError>;
     fn upgrade_client(
@@ -41,6 +43,7 @@ pub trait IbcClient {
     fn execute_upgrade_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError>;
     fn register_client(
@@ -65,6 +68,7 @@ pub trait IbcClient {
     fn execute_misbehaviour_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError>;
 }

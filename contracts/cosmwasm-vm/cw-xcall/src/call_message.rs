@@ -62,31 +62,30 @@ impl<'a> CwCallService<'a> {
 
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
         let ibc_host = self.get_host(deps.as_ref().storage)?;
-        debug_println!("IBC Host is {}",ibc_host);
+        debug_println!("IBC Host is {}", ibc_host);
 
         let ibc_config = self
             .ibc_config()
             .load(deps.as_ref().storage)
             .map_err(ContractError::Std)?;
 
-
-
-
         // let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
         //     port_id: ibc_config.src_endpoint().clone().port_id,
         //     channel_id: ibc_config.src_endpoint().clone().channel_id,
         // };
 
-        let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextClientSequence {  };
-        
+        let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextClientSequence {};
 
-        let query_request = build_smart_query(ibc_host.to_string(), to_binary(&query_next_seq_send).unwrap());
+        let query_request = build_smart_query(
+            ibc_host.to_string(),
+            to_binary(&query_next_seq_send).unwrap(),
+        );
 
-        let sequence_number_host: u64 = deps.as_ref()
+        let sequence_number_host: u64 = deps
+            .as_ref()
             .querier
             .query(&query_request)
             .map_err(ContractError::Std)?;
-
 
         if need_response {
             let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);

@@ -1,11 +1,11 @@
 mod setup;
-use std::process::{ExitCode, Termination};
+use std::process::Termination;
 
 use anyhow::Error as AppError;
 use common::constants::ICON_CLIENT_TYPE;
 use common::ibc::events::IbcEventType;
 
-use cosmwasm_std::{from_binary, to_binary, Addr, Binary, Empty, Querier, QueryRequest};
+use cosmwasm_std::{from_binary, to_binary, Addr, Empty, Querier, QueryRequest};
 
 use cw_common::{core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query};
 
@@ -134,14 +134,12 @@ pub fn call_channel_open_confirm(
 }
 
 pub fn call_receive_packet(ctx: &mut TestContext, msg: HexString) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_ibc_core().clone(),
+        ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::ReceivePacket { msg },
         &[],
-    );
-
-    res
+    )
 }
 
 #[test]
@@ -183,11 +181,10 @@ fn test_update_client() {
     assert!(result.is_ok());
 }
 
-
-
 pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) -> String {
     let query = cw_common::core_msg::QueryMsg::GetCapability { name: port_id };
-    let query: QueryRequest<Empty> = build_smart_query(contract_address.to_string(), to_binary(&query).unwrap());
+    let query: QueryRequest<Empty> =
+        build_smart_query(contract_address.to_string(), to_binary(&query).unwrap());
 
     let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
     println!("balances {balance:?}");
@@ -218,18 +215,16 @@ fn call_bind_port(ctx: &mut TestContext, port_name: &str) -> Result<AppResponse,
 }
 
 fn call_xcall_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppResponse, AppError> {
-    let res = ctx.app.execute_contract(
+    ctx.app.execute_contract(
         ctx.sender.clone(),
-        ctx.get_xcall_app().clone(),
+        ctx.get_xcall_app(),
         &cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
             to: "eth1".to_string(),
-            data: data,
+            data,
             rollback: None,
         },
         &[],
-    );
-
-    res
+    )
 }
 
 #[test]
@@ -257,7 +252,7 @@ fn test_packet_receiver() {
 
 #[test]
 fn test_packet_send() {
-    let mut ctx = test_connection_open_init();
+    let _ctx = test_connection_open_init();
 
     // let data = [90, 91, 90, 91];
     // let result = call_xcall_message(&mut ctx, data.into());
@@ -345,11 +340,11 @@ fn test_connection_open_init() -> TestContext {
 
     println!("this is nepalllllll{:?}", &result);
     assert!(result.is_ok());
-    return ctx;
+    ctx
 }
 
 impl Termination for TestContext {
     fn report(self) -> std::process::ExitCode {
-        return std::process::ExitCode::SUCCESS;
+        std::process::ExitCode::SUCCESS
     }
 }

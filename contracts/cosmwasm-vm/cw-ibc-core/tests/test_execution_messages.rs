@@ -309,6 +309,7 @@ fn test_for_connection_open_try() {
     contract
         .store_client_state(
             &mut deps.storage,
+            &mock_env(),
             &IbcClientId::from_str(&message.client_id).unwrap(),
             client_state.clone(),
         )
@@ -362,6 +363,7 @@ fn test_for_connection_open_try() {
     contract
         .store_client_state(
             &mut deps.storage,
+            &mock_env(),
             &IbcClientId::from_str(&message.client_id).unwrap(),
             cl.unwrap(),
         )
@@ -564,7 +566,12 @@ fn test_for_connection_open_ack() {
     let client_state_bytes = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+        )
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -698,7 +705,12 @@ fn test_for_connection_open_confirm() {
     let cl = client_state.to_any().encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &conn_end.client_id().clone(), cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &conn_end.client_id().clone(),
+            cl,
+        )
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -802,7 +814,7 @@ fn test_for_connection_open_try_fails() {
     let cl = client_state.to_any().encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_b, cl)
+        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_b, cl)
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -931,7 +943,12 @@ fn test_connection_open_confirm_fails() {
     let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &conn_end.client_id().clone(), cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &conn_end.client_id().clone(),
+            cl,
+        )
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
@@ -1018,7 +1035,7 @@ fn test_connection_open_try_fails_invalid_id() {
 
     let cl = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_a, cl)
+        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_a, cl)
         .unwrap();
     contract
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
@@ -1062,7 +1079,7 @@ fn test_connection_open_try_fails_invalid_id() {
     let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_b, cl)
+        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_b, cl)
         .unwrap();
 
     let consenus_state = consenus_state.to_any().encode_to_vec();
