@@ -13,6 +13,7 @@ pub mod xcall_app_msg;
 pub mod xcall_connection_msg;
 pub mod xcall_msg;
 pub mod xcall_payloads;
+pub mod query_helpers;
 use cosmwasm_std::{from_binary, Binary, StdError};
 use serde::de::DeserializeOwned;
 

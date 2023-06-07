@@ -1,4 +1,5 @@
-use cw_common::hex_string::HexString;
+use cw_common::{hex_string::HexString, query_helpers::build_smart_query};
+use debug_print::debug_println;
 
 use super::*;
 
@@ -61,28 +62,29 @@ impl<'a> CwCallService<'a> {
 
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
         let ibc_host = self.get_host(deps.as_ref().storage)?;
+        debug_println!("IBC Host is {}",ibc_host);
 
         let ibc_config = self
             .ibc_config()
             .load(deps.as_ref().storage)
             .map_err(ContractError::Std)?;
 
-        let query_message = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
+
+
+
+        let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
             port_id: ibc_config.src_endpoint().clone().port_id,
             channel_id: ibc_config.src_endpoint().clone().channel_id,
         };
+        
 
-        let query_request:QueryRequest<Empty> = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
-            contract_addr: ibc_host.to_string(),
-            msg: to_binary(&query_message).map_err(ContractError::Std)?,
-        });
+        let query_request = build_smart_query(ibc_host.to_string(), to_binary(&query_next_seq_send).unwrap());
 
-        let sequence_number_host_result: Binary = deps
+        let sequence_number_host: u64 = deps.as_ref()
             .querier
-            .raw_query(&to_binary(&query_request).unwrap()).unwrap().unwrap();
-            
-        let sequence_number_host:u64=from_binary(&sequence_number_host_result).unwrap();
-        // let sequence_number_host = 1;
+            .query(&query_request)
+            .map_err(ContractError::Std)?;
+
 
         if need_response {
             let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);

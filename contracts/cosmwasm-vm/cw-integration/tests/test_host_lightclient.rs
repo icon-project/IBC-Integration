@@ -7,7 +7,7 @@ use common::ibc::events::IbcEventType;
 
 use cosmwasm_std::{from_binary, to_binary, Addr, Binary, Empty, Querier, QueryRequest};
 
-use cw_common::{core_msg as CoreMsg, hex_string::HexString};
+use cw_common::{core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query};
 
 use cw_multi_test::{App, AppResponse, Executor};
 
@@ -183,16 +183,11 @@ fn test_update_client() {
     assert!(result.is_ok());
 }
 
-pub fn build_query(contract: String, msg: Binary) -> QueryRequest<Empty> {
-    QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
-        contract_addr: contract,
-        msg,
-    })
-}
+
 
 pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) -> String {
     let query = cw_common::core_msg::QueryMsg::GetCapability { name: port_id };
-    let query: QueryRequest<Empty> = build_query(contract_address.to_string(), to_binary(&query).unwrap());
+    let query: QueryRequest<Empty> = build_smart_query(contract_address.to_string(), to_binary(&query).unwrap());
 
     let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
     println!("balances {balance:?}");
