@@ -13,7 +13,7 @@ chains:
       bech32_prefix: hx
       bin: "/goloop/bin/goloop"
       image:
-        repository: goloop/gochain-icon
+        repository: iconloop/goloop-icon
         version: latest
         uid_gid: ''
     contracts:
@@ -31,8 +31,8 @@ chains:
       name: archway
       chain_id: archway-1
       image:
-        repository: archwaynetwork/archwayd
-        version: sha-8f53ac8
+        repository: debendraoli/archwayd
+        version: latest
         uid_gid: ''
       bin: archwayd
       bech32_prefix: archway
