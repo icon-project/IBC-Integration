@@ -192,7 +192,7 @@ pub fn build_query(contract: String, msg: Binary) -> QueryRequest<Empty> {
 
 pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) -> String {
     let query = cw_common::core_msg::QueryMsg::GetCapability { name: port_id };
-    let query = build_query(contract_address.to_string(), to_binary(&query).unwrap());
+    let query: QueryRequest<Empty> = build_query(contract_address.to_string(), to_binary(&query).unwrap());
 
     let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
     println!("balances {balance:?}");

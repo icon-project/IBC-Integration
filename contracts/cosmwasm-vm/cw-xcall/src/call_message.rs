@@ -72,7 +72,7 @@ impl<'a> CwCallService<'a> {
             channel_id: ibc_config.src_endpoint().clone().channel_id,
         };
 
-        let query_request = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+        let query_request:QueryRequest<Empty> = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
             contract_addr: ibc_host.to_string(),
             msg: to_binary(&query_message).map_err(ContractError::Std)?,
         });
@@ -81,7 +81,7 @@ impl<'a> CwCallService<'a> {
             .querier
             .raw_query(&to_binary(&query_request).unwrap()).unwrap().unwrap();
             
-        let sequence_number_host_result:u64=from_binary(&sequence_number_host_result).unwrap();
+        let sequence_number_host:u64=from_binary(&sequence_number_host_result).unwrap();
         // let sequence_number_host = 1;
 
         if need_response {
