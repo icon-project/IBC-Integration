@@ -18,7 +18,7 @@ import (
 
 const (
 	relayerImageEnv    = "RELAYER_IMAGE"
-	relayerImage       = "strangeloveventures/relayer"
+	relayerImage       = "ghcr.io/strangelove-ventures/relayer"
 	relayerImageTagEnv = "RELAYER_IMAGE_TAG"
 	relayerImageTag    = "latest"
 )
@@ -29,10 +29,12 @@ func TestConformance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println(cfg)
 	ctx := context.Background()
 	logger := zaptest.NewLogger(t)
 
 	chainFactory := NewBuiltinChainFactory(logger, cfg.ChainSpecs)
+
 	_chains, err := chainFactory.Chains(t.Name())
 	require.NoError(t, err)
 
