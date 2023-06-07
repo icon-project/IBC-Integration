@@ -29,7 +29,6 @@ func TestConformance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(cfg)
 	ctx := context.Background()
 	logger := zaptest.NewLogger(t)
 
