@@ -180,6 +180,6 @@ pub enum QueryMsg {
         channel_id: String,
         sequence: u64,
     },
-    // #[returns(u64)]
-    // SequenceSend { port_id: String, channel_id: String },
+    #[returns(Vec<String>)]
+    GetAllPorts {},
 }

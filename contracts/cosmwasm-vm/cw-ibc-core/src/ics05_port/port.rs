@@ -1,3 +1,5 @@
+use std::str::from_utf8;
+
 use super::*;
 
 /// This is an implementation of several helper functions for working with IBC (Inter-Blockchain
@@ -182,5 +184,23 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Vec<u8> {
         let path = format!("ports/{port_id}/channels/{channel_id}");
         path.as_bytes().to_vec()
+    }
+
+    pub fn get_all_ports(&self, store: &dyn Storage) -> Result<Vec<String>, StdError> {
+        return self
+            .ibc_store()
+            .capabilities()
+            .keys(store, None, None, cosmwasm_std::Order::Ascending)
+            .map(|k| {
+                k.and_then(|key| {
+                    return from_utf8(&key).map(|k| k.to_string()).map_err(|e| {
+                        StdError::ParseErr {
+                            target_type: "string".to_owned(),
+                            msg: "failed to parse key".to_owned(),
+                        }
+                    });
+                })
+            })
+            .collect::<Result<Vec<String>, StdError>>();
     }
 }

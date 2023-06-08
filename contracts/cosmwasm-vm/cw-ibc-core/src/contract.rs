@@ -436,6 +436,10 @@ impl<'a> CwIbcCoreContext<'a> {
                     Receipt::Ok => to_binary(&true),
                 }
             }
+            QueryMsg::GetAllPorts {} => {
+                let ports = self.get_all_ports(deps.storage).unwrap();
+                to_binary(&ports)
+            }
         }
     }
 
