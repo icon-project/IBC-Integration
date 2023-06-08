@@ -252,14 +252,14 @@ fn test_packet_receiver() {
 
 #[test]
 fn test_packet_send() {
-    let _ctx = test_connection_open_init();
+    let mut ctx = test_connection_open_init();
 
-    // let data = [90, 91, 90, 91];
-    // let result = call_xcall_message(&mut ctx, data.into());
+    let data = [90, 91, 90, 91];
+    let result = call_xcall_message(&mut ctx, data.into());
 
     //  let result = query_host_next_seq_send(&ctx.app, ctx.get_xcall_app());
 
-    //  println!("{:?}", &result);
+    println!("{:?}", &result);
 }
 
 #[test]

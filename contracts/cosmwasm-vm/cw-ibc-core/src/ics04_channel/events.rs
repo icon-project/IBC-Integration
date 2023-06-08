@@ -205,7 +205,7 @@ pub fn create_send_packet_event(
         .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.port_id_on_a.as_str())
         .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_a.as_str())
         .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
-        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
+        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_b.as_str())
         .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order.as_str())
         .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id.as_str()))
 }
