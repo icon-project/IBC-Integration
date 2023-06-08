@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	_ "github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -25,7 +24,6 @@ func TestMain(m *testing.M) {
 	if err := os.Setenv("BASE_PATH", basePath); err != nil {
 		log.Fatal("Error setting BASE_PATH:", err)
 	}
-	fmt.Println("BASE_PATH:", basePath)
 	contents, err := os.ReadFile(fmt.Sprintf("%s%c%s", cwd, os.PathSeparator, config))
 	if err != nil {
 		log.Fatal("error opening config file:", err)
