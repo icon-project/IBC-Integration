@@ -1,5 +1,5 @@
 mod setup;
-use std::process::Termination;
+use std::{process::Termination, str::FromStr};
 
 use anyhow::Error as AppError;
 use common::constants::ICON_CLIENT_TYPE;
@@ -156,7 +156,7 @@ fn test_create_client() {
     let signed_headers: Vec<RawPayload> = load_raw_messages();
     let result = call_create_client(
         &mut ctx,
-        HexString::from_str(signed_headers[0].message.as_str()),
+        HexString::from_str(signed_headers[0].message.as_str()).unwrap(),
     );
     println!("{:?}", &result);
     assert!(result.is_ok());
@@ -168,14 +168,14 @@ fn test_update_client() {
     let signed_headers: Vec<RawPayload> = load_raw_messages();
     let response = call_create_client(
         &mut ctx,
-        HexString::from_str(signed_headers[0].message.as_str()),
+        HexString::from_str(signed_headers[0].message.as_str()).unwrap(),
     )
     .unwrap();
     let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
     let _client_id = event.get("client_id").unwrap();
     let result = call_update_client(
         &mut ctx,
-        HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()),
+        HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()).unwrap(),
     );
     println!("{:?}", &result);
     assert!(result.is_ok());
@@ -235,7 +235,7 @@ fn test_packet_receiver() {
 
     let result = call_update_client(
         &mut ctx,
-        HexString::from_str(signed_headers[5].update.clone().unwrap().as_str()),
+        HexString::from_str(signed_headers[5].update.clone().unwrap().as_str()).unwrap(),
     );
 
     println!("{:?}", &result);
@@ -243,7 +243,7 @@ fn test_packet_receiver() {
 
     let result = call_receive_packet(
         &mut ctx,
-        HexString::from_str(signed_headers[5].message.clone().as_str()),
+        HexString::from_str(signed_headers[5].message.clone().as_str()).unwrap(),
     );
 
     println!("{:?}", &result);
@@ -276,21 +276,21 @@ fn test_connection_open_init() -> TestContext {
     let signed_headers: Vec<RawPayload> = load_raw_messages();
     let response = call_create_client(
         &mut ctx,
-        HexString::from_str(signed_headers[0].message.as_str()),
+        HexString::from_str(signed_headers[0].message.as_str()).unwrap(),
     )
     .unwrap();
     let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
     let _client_id = event.get("client_id").unwrap();
     let result = call_update_client(
         &mut ctx,
-        HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()),
+        HexString::from_str(signed_headers[1].update.clone().unwrap().as_str()).unwrap(),
     );
     println!("call_update client {:?}", &result);
     assert!(result.is_ok());
 
     let _result = call_connection_open_try(
         &mut ctx,
-        HexString::from_str(signed_headers[1].message.clone().as_str()),
+        HexString::from_str(signed_headers[1].message.clone().as_str()).unwrap(),
     );
 
     println!(" call_update client {:?}", &result);
@@ -298,14 +298,14 @@ fn test_connection_open_init() -> TestContext {
 
     let result = call_update_client(
         &mut ctx,
-        HexString::from_str(signed_headers[2].update.clone().unwrap().as_str()),
+        HexString::from_str(signed_headers[2].update.clone().unwrap().as_str()).unwrap(),
     );
     println!(" call_update client {:?}", &result);
     assert!(result.is_ok());
 
     let result = call_connection_open_confirm(
         &mut ctx,
-        HexString::from_str(signed_headers[2].message.clone().as_str()),
+        HexString::from_str(signed_headers[2].message.clone().as_str()).unwrap(),
     );
 
     println!("this is nepalllllll{:?}", &result);
@@ -313,14 +313,14 @@ fn test_connection_open_init() -> TestContext {
 
     let result = call_update_client(
         &mut ctx,
-        HexString::from_str(signed_headers[3].update.clone().unwrap().as_str()),
+        HexString::from_str(signed_headers[3].update.clone().unwrap().as_str()).unwrap(),
     );
     println!("{:?}", &result);
     assert!(result.is_ok());
 
     let result = call_channel_open_try(
         &mut ctx,
-        HexString::from_str(signed_headers[3].message.clone().as_str()),
+        HexString::from_str(signed_headers[3].message.clone().as_str()).unwrap(),
     );
 
     println!("this is nepalllllll{:?}", &result);
@@ -328,14 +328,14 @@ fn test_connection_open_init() -> TestContext {
 
     let result = call_update_client(
         &mut ctx,
-        HexString::from_str(signed_headers[4].update.clone().unwrap().as_str()),
+        HexString::from_str(signed_headers[4].update.clone().unwrap().as_str()).unwrap(),
     );
     println!("{:?}", &result);
     assert!(result.is_ok());
 
     let result = call_channel_open_confirm(
         &mut ctx,
-        HexString::from_str(signed_headers[4].message.clone().as_str()),
+        HexString::from_str(signed_headers[4].message.clone().as_str()).unwrap(),
     );
 
     println!("this is nepalllllll{:?}", &result);

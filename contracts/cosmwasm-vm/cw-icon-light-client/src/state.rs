@@ -20,8 +20,6 @@ const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS
 
 const CONFIG: Item<Config> = Item::new("CONFIG");
 
-const ADDRESS_TYPE_PREFIX: u8 = 0x00;
-
 pub struct CwContext<'a> {
     pub storage: &'a mut dyn Storage,
     pub api: &'a dyn Api,

@@ -5,7 +5,6 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::traits::AnyTypes;
 use common::utils::{calculate_root, keccak256};
-
 use cw_common::hex_string::HexString;
 use debug_print::debug_println;
 use prost::Message;

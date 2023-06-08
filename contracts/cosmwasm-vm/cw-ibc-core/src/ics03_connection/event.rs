@@ -55,7 +55,9 @@ pub fn create_open_try_event(
         .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
         .add_attribute(
             COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY,
-            counterparty_connection_id.map(|c|c.to_string()).unwrap_or("".to_owned()),
+            counterparty_connection_id
+                .map(|c| c.to_string())
+                .unwrap_or("".to_owned()),
         )
         .add_attribute(
             COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,

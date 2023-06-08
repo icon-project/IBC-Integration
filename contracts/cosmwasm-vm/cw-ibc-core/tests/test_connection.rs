@@ -295,7 +295,7 @@ fn connection_open_try_invalid_client_id_name_too_short() {
 #[test]
 fn test_commitment_prefix() {
     let contract = CwIbcCoreContext::new();
-    let expected = CommitmentPrefix::try_from(b"ibc".to_vec()).unwrap_or_default();
+    let expected = CommitmentPrefix::try_from(b"commitments".to_vec()).unwrap_or_default();
     let result = contract.commitment_prefix();
     assert_eq!(result, expected);
 }
