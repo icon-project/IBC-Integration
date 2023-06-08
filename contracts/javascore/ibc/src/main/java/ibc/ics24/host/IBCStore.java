@@ -125,7 +125,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     }
 
     @External(readonly = true)
-    public List<byte[]> getBindPorts() {
+    public List<byte[]> getAllPorts() {
         List<byte[]> ports = new ArrayList<>();
         final int size = portIds.size();
         for (int i = 0; i < size; i++) {
