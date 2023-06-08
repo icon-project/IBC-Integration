@@ -100,7 +100,7 @@ fn test_lookup_module_channel_fail() {
 fn test_bind_port() {
     let mut deps = deps();
     let ctx = CwIbcCoreContext::default();
-    let path = commitment::port_path(&PortId::default());
+    let path = PortId::default().to_string().as_bytes().to_vec();
 
     let res = ctx.bind_port(
         &mut deps.storage,

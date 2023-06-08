@@ -193,7 +193,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .keys(store, None, None, cosmwasm_std::Order::Ascending)
             .map(|k| {
                 k.and_then(|key| {
-                    return from_utf8(&key).map(|k| k.to_string()).map_err(|e| {
+                    return from_utf8(&key).map(|k| k.to_string()).map_err(|_e| {
                         StdError::ParseErr {
                             target_type: "string".to_owned(),
                             msg: "failed to parse key".to_owned(),

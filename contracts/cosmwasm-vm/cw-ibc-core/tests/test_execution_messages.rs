@@ -398,10 +398,10 @@ fn test_for_connection_open_try() {
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();
-    let versions = RawVersion {
+    let versions = vec![RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
-    };
+    }];
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
             "hello".as_bytes().to_vec(),
@@ -434,10 +434,10 @@ fn test_for_connection_open_try() {
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();
-    let versions = RawVersion {
+    let versions = vec![RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
-    };
+    }];
     let mock_response_data = OpenTryResponse::new(
         conn_id.as_str().to_owned(),
         client_id.to_string(),
@@ -842,10 +842,10 @@ fn test_for_connection_open_try_fails() {
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();
-    let versions = RawVersion {
+    let versions = vec![RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
-    };
+    }];
     let mock_response_data = OpenTryResponse::new(
         conn_id.as_str().to_owned(),
         client_id.to_string(),
