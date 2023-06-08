@@ -320,7 +320,7 @@ public class ConnectionTest extends TestBase {
                 .setPrefix(prefix).build();
 
         ConnectionEnd counterpartyConnection = ConnectionEnd.newBuilder()
-                .setClientId(clientId)
+                .setClientId(counterparty.getClientId())
                 .addVersions(0, version)
                 .setState(ConnectionEnd.State.STATE_TRYOPEN)
                 .setDelayPeriod(delayPeriod.longValue())
