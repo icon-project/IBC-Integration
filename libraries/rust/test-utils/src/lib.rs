@@ -179,6 +179,10 @@ pub fn load_raw_messages() -> Vec<RawPayload> {
     load_test_data::<RawPayload>("test_data/raw_payloads.json")
 }
 
+pub fn load_a2i_raw_messages() -> Vec<RawPayload> {
+    load_test_data::<RawPayload>("test_data/a2i.json")
+}
+
 pub fn load_test_data<T: for<'a> Deserialize<'a>>(path: &str) -> Vec<T> {
     let mut root = get_project_root().unwrap();
     root.push(path);

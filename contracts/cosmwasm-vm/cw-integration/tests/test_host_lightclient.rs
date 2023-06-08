@@ -14,7 +14,7 @@ use cw_multi_test::{App, AppResponse, Executor};
 use setup::{
     init_ibc_core_contract, init_light_client, init_xcall_mock_contract, setup_context, TestContext,
 };
-use test_utils::{get_event, get_event_name, load_raw_messages, RawPayload};
+use test_utils::{get_event, get_event_name, load_a2i_raw_messages, load_raw_messages, RawPayload};
 
 fn setup_test() -> TestContext {
     let mut context = setup_context();
@@ -109,6 +109,18 @@ pub fn call_connection_open_confirm(
     )
 }
 
+pub fn call_channel_open_init(
+    ctx: &mut TestContext,
+    msg: HexString,
+) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core(),
+        &CoreMsg::ExecuteMsg::ChannelOpenInit { msg },
+        &[],
+    )
+}
+
 pub fn call_channel_open_try(
     ctx: &mut TestContext,
     msg: HexString,
@@ -117,6 +129,18 @@ pub fn call_channel_open_try(
         ctx.sender.clone(),
         ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::ChannelOpenTry { msg },
+        &[],
+    )
+}
+
+pub fn call_channel_open_ack(
+    ctx: &mut TestContext,
+    msg: HexString,
+) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core(),
+        &CoreMsg::ExecuteMsg::ChannelOpenAck { msg },
         &[],
     )
 }
@@ -263,6 +287,84 @@ fn test_packet_send() {
 }
 
 #[test]
+fn test_conn_handshake_start_on_archway() -> TestContext {
+    let mut ctx = setup_test();
+    let port_name = "mock";
+    call_bind_port(&mut ctx, port_name.clone()).unwrap();
+    call_register_client_type(&mut ctx).unwrap();
+    let res = query_get_capability(&ctx.app, port_name.to_string(), ctx.get_ibc_core());
+
+    println!("mock app address {res:?}");
+
+    let signed_headers: Vec<RawPayload> = load_a2i_raw_messages();
+    let response = call_create_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[0].message.as_str()).unwrap(),
+    )
+    .unwrap();
+    let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
+    let _client_id = event.get("client_id").unwrap();
+
+    println!("Client Id:: {:?}", _client_id);
+
+    let result = call_connection_open_init(
+        &mut ctx,
+        HexString::from_str(signed_headers[1].message.clone().as_str()).unwrap(),
+    );
+
+    println!(" call_connection_open_init {:?}", &result);
+    assert!(result.is_ok());
+
+    let result = call_update_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[2].update.clone().unwrap().as_str()).unwrap(),
+    );
+    println!("call_update client {:?}", &result);
+    assert!(result.is_ok());
+
+    let result = call_connection_open_ack(
+        &mut ctx,
+        HexString::from_str(signed_headers[2].message.clone().as_str()).unwrap(),
+        &_client_id,
+    );
+
+    println!(" call_connection_open_ack {:?}", &result);
+    assert!(result.is_ok());
+    ctx
+}
+
+#[test]
+fn test_channel_handshake_start_on_archway() -> TestContext {
+    let mut ctx = test_conn_handshake_start_on_archway();
+    let signed_headers: Vec<RawPayload> = load_a2i_raw_messages();
+
+    let result = call_channel_open_init(
+        &mut ctx,
+        HexString::from_str(signed_headers[3].message.clone().as_str()).unwrap(),
+    );
+
+    println!("channel open init ::> {:?}", &result);
+    assert!(result.is_ok());
+
+    let result = call_update_client(
+        &mut ctx,
+        HexString::from_str(signed_headers[4].update.clone().unwrap().as_str()).unwrap(),
+    );
+    println!("call_update client {:?}", &result);
+    assert!(result.is_ok());
+
+    let result = call_channel_open_ack(
+        &mut ctx,
+        HexString::from_str(signed_headers[4].message.clone().as_str()).unwrap(),
+    );
+
+    println!("channel open ack ::> {:?}", &result);
+    assert!(result.is_ok());
+
+    ctx
+}
+
+#[test]
 fn test_connection_open_init() -> TestContext {
     // complete handshake
     let mut ctx = setup_test();
@@ -308,7 +410,7 @@ fn test_connection_open_init() -> TestContext {
         HexString::from_str(signed_headers[2].message.clone().as_str()).unwrap(),
     );
 
-    println!("this is nepalllllll{:?}", &result);
+    println!("connection_open_confirm ::> {:?}", &result);
     assert!(result.is_ok());
 
     let result = call_update_client(
@@ -323,7 +425,7 @@ fn test_connection_open_init() -> TestContext {
         HexString::from_str(signed_headers[3].message.clone().as_str()).unwrap(),
     );
 
-    println!("this is nepalllllll{:?}", &result);
+    println!("channel_open_try ::> {:?}", &result);
     assert!(result.is_ok());
 
     let result = call_update_client(
@@ -338,7 +440,7 @@ fn test_connection_open_init() -> TestContext {
         HexString::from_str(signed_headers[4].message.clone().as_str()).unwrap(),
     );
 
-    println!("this is nepalllllll{:?}", &result);
+    println!("channel_open_confirm ::> {:?}", &result);
     assert!(result.is_ok());
     ctx
 }
