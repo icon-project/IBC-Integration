@@ -223,14 +223,14 @@ impl<'a> CwCallService<'a> {
     /// execution.
     pub fn ensure_ibc_handler(
         &self,
-        _store: &dyn Storage,
-        _address: Addr,
+        store: &dyn Storage,
+        address: Addr,
     ) -> Result<(), ContractError> {
-        // let ibc_host = self.get_host(store)?;
+        let ibc_host = self.get_host(store)?;
 
-        // if ibc_host != address {
-        //     return Err(ContractError::OnlyIbcHandler {});
-        // }
+        if ibc_host != address {
+            return Err(ContractError::OnlyIbcHandler {});
+        }
         Ok(())
     }
 }
