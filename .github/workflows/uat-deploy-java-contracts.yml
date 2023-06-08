@@ -27,7 +27,8 @@ jobs:
       - name: Deploy all contracts on UAT environment
         working-directory: contracts/javascore
         run: |
-          echo $UAT_KEYSTORE_PATH
+          echo "hello $UAT_KEYSTORE_PATH"
+          ls -lh
           ./gradlew clean build 
           ./gradlew optimizedJar
           ./gradlew deployToUat -PdeploymentENV=uat -PkeystoreName=$UAT_KEYSTORE_PATH -PkeystorePass=$UAT_PASSWD
