@@ -129,7 +129,7 @@ public class IBCConnection extends IBCClient {
         expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
-        expectedConnection.setClientId(connection.getClientId());
+        expectedConnection.setClientId(connection.getCounterparty().getClientId());
         expectedConnection.setVersions(List.of(Version.decode(msg.getVersion())));
         expectedConnection.setState(ConnectionEnd.State.STATE_TRYOPEN);
         expectedConnection.setDelayPeriod(connection.getDelayPeriod());
