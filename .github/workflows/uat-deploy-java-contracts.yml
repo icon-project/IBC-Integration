@@ -4,11 +4,7 @@ on:
   push:
     branches:
       - "main"
-    secrets:
-      UAT_KEYSTORE_B64:
-        required: true
-      UAT_PASSWD:
-        required: true
+      - "fix/deployment-to-uat"
 
 jobs:
   deploy-contracts-uat:
