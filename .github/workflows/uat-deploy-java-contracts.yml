@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "main"
-      - "fix/deployment-to-uat"
 
 jobs:
   deploy-contracts-uat:
@@ -20,7 +19,6 @@ jobs:
           UAT_KEYSTORE_B64: ${{ secrets.UAT_KEYSTORE_B64 }}
         run: |
           echo $UAT_KEYSTORE_B64 | base64 -d > key.json
-          echo $UAT_KEYSTORE_PATH
 
       - name: Deploy all contracts on UAT environment
         working-directory: contracts/javascore
@@ -28,9 +26,6 @@ jobs:
           UAT_KEYSTORE_PATH: ./key.json
           UAT_PASSWD: ${{ secrets.UAT_PASSWD }}
         run: |
-          echo "hello $UAT_KEYSTORE_PATH"
-          echo "$UAT_PASSWD" | shasum
-          shasum ./key.json
           ./gradlew clean build 
           ./gradlew optimizedJar
           ./gradlew deployToUat -PdeploymentENV=uat -PkeystoreName=$UAT_KEYSTORE_PATH -PkeystorePass=$UAT_PASSWD
