@@ -123,10 +123,11 @@ public class CallServiceImpl implements CallService, FeeManage {
         }
         String from = new NetworkAddress(nid, caller.toString()).toString();
         CSMessageRequest msgReq = new CSMessageRequest(from, dst.account(), destinations,  sn, needResponse, _data);
+        byte[] msgBytes = msgReq.toBytes();
         for (String _src : sources) {
             Address src = Address.fromString(_src);
                 sendBTPMessage(src, fees.get(src), dst.net(), CSMessage.REQUEST,
-                needResponse ? sn : BigInteger.ZERO, msgReq.toBytes());
+                needResponse ? sn : BigInteger.ZERO, msgBytes);
         }
         CallMessageSent(caller, dst.toString(), sn);
         return sn;

@@ -1,0 +1,47 @@
+---
+chains:
+  - name: icon
+    version: '3'
+    environment: local
+    nid: '3'
+    keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
+    keystore_password: gochain
+    chain_config:
+      type: icon
+      name: goloop1
+      chain_id: icon1
+      bech32_prefix: hx
+      bin: "/goloop/bin/goloop"
+      image:
+        repository: goloop/gochain-icon
+        version: latest
+        uid_gid: ''
+    contracts:
+      ibc: "$BASE_PATH/contracts/javascore/ibc/build/libs/ibc-0.1.0-optimized.jar"
+      client: "$BASE_PATH/contracts/javascore/lightclients/mockclient/build/libs/mockclient-0.1.0-optimized.jar"
+      xcall: "$BASE_PATH/contracts/javascore/xcall-multi-protocol/build/libs/xcall-multi-protocol-0.1.0-optimized.jar"
+      connection: "$BASE_PATH/contracts/javascore/xcall-connection/build/libs/xcall-connection-0.1.0-optimized.jar"
+      dapp: "$BASE_PATH/contracts/javascore/modules/mock-dapp-multi-protocol/build/libs/mock-dapp-multi-protocol-0.1.0-optimized.jar"
+
+  - name: icon2
+    version: '3'
+    environment: local
+    nid: '3'
+    keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
+    keystore_password: gochain
+    chain_config:
+      type: icon
+      name: goloop2
+      chain_id: icon2
+      bech32_prefix: hx
+      bin: "/goloop/bin/goloop"
+      image:
+        repository: goloop/gochain-icon
+        version: latest
+        uid_gid: ''
+    contracts:
+      ibc: "$BASE_PATH/contracts/javascore/gochain-btp/contracts/ibc-optimized.jar"
+      client: "$BASE_PATH/contracts/javascore/lightclients/mockclient/build/libs/mockclient-0.1.0-optimized.jar"
+      xcall: "$BASE_PATH/contracts/javascore/xcall-multi-protocol/build/libs/xcall-multi-protocol-0.1.0-optimized.jar"
+      connection: "$BASE_PATH/contracts/javascore/xcall-connection/build/libs/xcall-connection-0.1.0-optimized.jar"
+      dapp: "$BASE_PATH/contracts/javascore/modules/mock-dapp-multi-protocol/build/libs/mock-dapp-multi-protocol-0.1.0-optimized.jar"

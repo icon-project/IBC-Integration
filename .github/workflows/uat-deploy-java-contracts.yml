@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - "main"
-    secrets:
-      UAT_KEYSTORE_B64:
-        required: true
-      UAT_PASSWD:
-        required: true
 
 jobs:
   deploy-contracts-uat:
@@ -18,15 +13,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-       - name: Retrieve the secret and decode it to a file
+      - name: Retrieve the secret and decode it to a file
         working-directory: contracts/javascore
         env:
           UAT_KEYSTORE_B64: ${{ secrets.UAT_KEYSTORE_B64 }}
-          UAT_PASSWD: ${{ secrets.UAT_PASSWD }}
-          UAT_KEYSTORE: ./key.json
-
         run: |
           echo $UAT_KEYSTORE_B64 | base64 -d > key.json
 
       - name: Deploy all contracts on UAT environment
-        run: cd contracts/javascore && ./gradlew clean build && ./gradlew optimizedJar && ./gradlew deployToUat -PdeploymentENV=uat -PkeystoreName=$UAT_KEYSTORE -PkeystorePass=$UAT_PASSWD
+        working-directory: contracts/javascore
+        env:
+          UAT_KEYSTORE_PATH: ./key.json
+          UAT_PASSWD: ${{ secrets.UAT_PASSWD }}
+        run: |
+          ./gradlew clean build 
+          ./gradlew optimizedJar
+          ./gradlew deployToUat -PdeploymentENV=uat -PkeystoreName=$UAT_KEYSTORE_PATH -PkeystorePass=$UAT_PASSWD

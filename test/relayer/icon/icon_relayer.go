@@ -54,6 +54,7 @@ type ICONRelayerChainConfigValue struct {
 	IconNetworkID     int    `json:"icon-network-id"`
 	BtpNetworkID      int    `json:"btp-network-id"`
 	StartBtpHeight    int    `json:"start-btp-height"`
+	BTPNetworkTypeID  int    `json:"btp-network-type-id"`
 	IbcHandlerAddress string `json:"ibc-handler-address"`
 }
 
@@ -91,6 +92,7 @@ func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, r
 			IconNetworkID:     3,
 			BtpNetworkID:      chainConfig.ConfigFileOverrides["btp-network-id"].(int),
 			StartBtpHeight:    chainConfig.ConfigFileOverrides["start-btp-height"].(int),
+			BTPNetworkTypeID:  chainConfig.ConfigFileOverrides["btp-network-type-id"].(int),
 			IbcHandlerAddress: chainConfig.ConfigFileOverrides["ibc-handler-address"].(string),
 		},
 	}

@@ -102,6 +102,7 @@ public class MultiProtocolSampleDapp implements CallServiceReceiver {
             rollbacks.set(id, null); // cleanup
             RollbackDataReceived(_from, stored.getSvcSn(), received.getRollback());
         } else {
+            Context.require(!new String(_data).equals("rollback"), "failed");
             // normal message delivery
             MessageReceived(_from, _data);
         }

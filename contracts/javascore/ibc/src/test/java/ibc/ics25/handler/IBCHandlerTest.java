@@ -252,7 +252,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         assertTrue(e.getMessage().contains(expectedErrorMessage));
 
         // Assert
-        List<byte[]> ports = (List<byte[]>)handler.call("getBindPorts");
+        List<byte[]> ports = (List<byte[]>)handler.call("getAllPorts");
         Address portModule = (Address)handler.call("getCapability", ports.get(0));
 
         assertEquals(1, ports.size());
