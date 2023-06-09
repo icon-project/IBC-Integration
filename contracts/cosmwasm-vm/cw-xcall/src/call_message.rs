@@ -1,3 +1,4 @@
+use common::rlp;
 use cw_common::{hex_string::HexString, query_helpers::build_smart_query};
 use debug_print::debug_println;
 
@@ -138,9 +139,7 @@ impl<'a> CwCallService<'a> {
                 source_channel: ibc_config.src_endpoint().clone().channel_id,
                 destination_port: ibc_config.dst_endpoint().clone().port_id,
                 destination_channel: ibc_config.dst_endpoint().clone().channel_id,
-                data: to_vec(&message).map_err(|error| ContractError::DecodeFailed {
-                    error: error.to_string(),
-                })?,
+                data: rlp::encode(&message).to_vec(),
                 timeout_height: Some(height.into()),
                 timeout_timestamp: 0,
             };
@@ -209,7 +208,7 @@ impl<'a> CwCallService<'a> {
 
         Ok(IbcMsg::SendPacket {
             channel_id: ibc_config.dst_endpoint().channel_id.clone(),
-            data: to_binary(&message).unwrap(),
+            data: rlp::encode(&message).to_vec(),
             timeout,
         })
     }
