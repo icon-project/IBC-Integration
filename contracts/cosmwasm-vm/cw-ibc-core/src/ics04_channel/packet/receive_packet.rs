@@ -481,7 +481,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         &packet.sequence.to_string(),
                         &packet.dest.port_id,
                         &packet.dest.channel_id,
-                        &packet.timeout.block().unwrap().height.to_string(),
+                        &self.timeout_height_to_str(packet.timeout.block().unwrap()),
                         &timestamp,
                         chan_end_on_b.ordering.as_str(),
                         chan_end_on_b.connection_hops[0].as_str(),
@@ -525,5 +525,9 @@ impl<'a> CwIbcCoreContext<'a> {
             },
             cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
         }
+    }
+
+    pub fn timeout_height_to_str(&self, timeout: CwTimeoutBlock) -> String {
+        return format!("{0}-{1}", timeout.revision, timeout.height);
     }
 }
