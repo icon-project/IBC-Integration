@@ -748,11 +748,11 @@ fn create_open_init_channel_event_test() {
     let message = MsgChannelOpenInit::try_from(default_raw_msg).unwrap();
     let channel_id = ChannelId::new(10);
     let event = create_open_init_channel_event(
-        &channel_id,
-        &message.port_id_on_a,
-        &message.port_id_on_a,
-        &message.connection_hops_on_a[0],
-        &message.version_proposal,
+        &channel_id.to_string(),
+        &message.port_id_on_a.to_string(),
+        &message.port_id_on_a.to_string(),
+        &message.connection_hops_on_a[0].to_string(),
+        &message.version_proposal.to_string(),
     );
 
     assert_eq!(IbcEventType::OpenInitChannel.as_str(), event.ty);

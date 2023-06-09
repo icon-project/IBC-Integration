@@ -41,18 +41,18 @@ pub const PKT_CONNECTION_ID_ATTRIBUTE_KEY: &str = "packet_connection";
 /// A new `Event` object with attributes related to an open init channel event in an inter-blockchain
 /// communication (IBC) protocol.
 pub fn create_open_init_channel_event(
-    channel_id: &ChannelId,
-    port_id_on_a: &IbcPortId,
-    port_id_on_b: &IbcPortId,
-    connection_hops_on_a: &IbcConnectionId,
-    version_proposal: &Version,
+    channel_id: &str,
+    port_id_on_a: &str,
+    port_id_on_b: &str,
+    connection_hops_on_a: &str,
+    version_proposal: &str,
 ) -> Event {
     Event::new(IbcEventType::OpenInitChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_a.as_str())
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str())
-        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, port_id_on_b.as_str())
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_hops_on_a.as_str())
-        .add_attribute(VERSION_ATTRIBUTE_KEY, version_proposal.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_a)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
+        .add_attribute(COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_hops_on_a)
+        .add_attribute(VERSION_ATTRIBUTE_KEY, version_proposal)
 }
 
 /// This function creates an event for an open try channel operation.

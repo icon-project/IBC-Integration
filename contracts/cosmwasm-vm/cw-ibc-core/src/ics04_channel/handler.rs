@@ -755,9 +755,24 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         1.into(),
                     )?;
 
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
-                    let channel_id_event = create_channel_id_generated_event(channel_id);
-                    Ok(Response::new().add_event(channel_id_event))
+                    self.store_channel(
+                        deps.storage,
+                        &port_id,
+                        &channel_id.clone(),
+                        channel_end.clone(),
+                    )?;
+                    let channel_id_event = create_channel_id_generated_event(channel_id.clone());
+
+                    let main_event = create_open_init_channel_event(
+                        channel_id.as_str(),
+                        port_id.as_str(),
+                        channel_end.counterparty().port_id().as_str(),
+                        channel_end.connection_hops()[0].as_str(),
+                        channel_end.version().as_str(),
+                    );
+                    Ok(Response::new()
+                        .add_event(channel_id_event)
+                        .add_event(main_event))
                 }
                 None => Err(ChannelError::Other {
                     description: "Data from module is Missing".to_string(),
