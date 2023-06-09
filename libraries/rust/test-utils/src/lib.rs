@@ -18,7 +18,7 @@ use cosmwasm_std::{Attribute, Event};
 
 pub mod constants;
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Clone)]
 pub struct RawPayload {
     pub step: String,
     pub update: Option<String>,
@@ -175,8 +175,13 @@ pub fn load_test_messages() -> Vec<TestMessageData> {
     load_test_data::<TestMessageData>("test_data/test_messages.json")
 }
 
-pub fn load_raw_messages() -> Vec<RawPayload> {
-    load_test_data::<RawPayload>("test_data/raw_payloads.json")
+pub fn load_raw_messages(path: &str) -> Vec<RawPayload> {
+    let path = format!("test_data/{}", path);
+    load_test_data::<RawPayload>(&path)
+}
+
+pub fn load_raw_payloads_icon_to_archway() -> Vec<RawPayload> {
+    return load_raw_messages("icon_to_archway_raw.json");
 }
 
 pub fn load_a2i_raw_messages() -> Vec<RawPayload> {

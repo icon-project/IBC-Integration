@@ -14,6 +14,8 @@ cw-common={path="../cw-common"}
 common = { path="../../../libraries/rust/common", default-features = false }
 ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde"]}
 prost = { workspace=true}
+strum="*"
+strum_macros = "0.24"
 
 [dev-dependencies]
 hex = "0.4.3"

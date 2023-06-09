@@ -1,12 +1,14 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use cosmwasm_std::{
     coins,
     testing::{mock_dependencies, mock_info, MockApi, MockQuerier, MockStorage},
     Addr, Empty, IbcEndpoint, MessageInfo, OwnedDeps,
 };
+use cw_integration::TestSteps;
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 use cw_xcall_ibc_connection::state::IbcConfig;
+use test_utils::{load_raw_payloads_icon_to_archway, RawPayload};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum TestApps {
@@ -21,6 +23,7 @@ pub struct TestContext {
     pub app: App,
     pub contracts: HashMap<TestApps, Addr>,
     pub sender: Addr,
+    pub test_data: Option<HashMap<TestSteps, RawPayload>>,
 }
 
 impl TestContext {
@@ -60,6 +63,16 @@ impl TestContext {
     }
     pub fn set_xcall_ibc_connection(&mut self, addr: Addr) -> Option<Addr> {
         self.contracts.insert(TestApps::XcallIbcConnection, addr)
+    }
+
+    pub fn get_test_data(&self, step: &TestSteps) -> RawPayload {
+        let payload = self
+            .test_data
+            .as_ref()
+            .and_then(|map| map.get(step))
+            .cloned();
+        let err = format!("Payload not Found for {:?}", step);
+        return payload.expect(&err);
     }
 }
 
@@ -290,12 +303,27 @@ pub fn init_xcall_ibc_connection_contract(mut ctx: TestContext) -> TestContext {
     ctx
 }
 
-pub fn setup_context() -> TestContext {
+pub fn raw_payload_to_map(payloads: Vec<RawPayload>) -> HashMap<TestSteps, RawPayload> {
+    let mut map = HashMap::<TestSteps, RawPayload>::new();
+    for payload in payloads {
+        let key = TestSteps::from_str(&payload.step).unwrap();
+        map.insert(key, payload);
+    }
+    return map;
+}
+
+pub fn get_icon_to_archway_payloads() -> HashMap<TestSteps, RawPayload> {
+    let payloads = load_raw_payloads_icon_to_archway();
+    return raw_payload_to_map(payloads);
+}
+
+pub fn setup_context(data: Option<HashMap<TestSteps, RawPayload>>) -> TestContext {
     let router = App::default();
     let sender = Addr::unchecked("sender");
     TestContext {
         app: router,
         contracts: HashMap::new(),
         sender,
+        test_data: data,
     }
 }
