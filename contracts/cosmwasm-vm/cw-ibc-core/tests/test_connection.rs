@@ -861,8 +861,10 @@ fn connection_validate_delay() {
     let packet_proof_height = common::ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
-    contract.store_last_processed_on(deps.as_mut().storage, &env, &conn_end.client_id()).unwrap();
-   
+    contract
+        .store_last_processed_on(deps.as_mut().storage, &env, &conn_end.client_id())
+        .unwrap();
+
     contract
         .ibc_store()
         .expected_time_per_block()

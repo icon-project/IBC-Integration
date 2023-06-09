@@ -650,7 +650,7 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(())
     }
 
-   pub fn store_last_processed_on(
+    pub fn store_last_processed_on(
         &self,
         store: &mut dyn Storage,
         env: &Env,
