@@ -1,4 +1,5 @@
 use common::ibc::core::ics04_channel::Version;
+use debug_print::debug_println;
 
 use super::*;
 
@@ -191,8 +192,9 @@ pub fn create_send_packet_event(
 ) -> Result<Event, ContractError> {
     let hex_data = hex::encode(&packet.data);
 
+    debug_println!("the hex data is {:?}", hex_data);
     Ok(Event::new(IbcEventType::SendPacket.as_str())
-        .add_attribute(PKT_DATA_ATTRIBUTE_KEY, hex_data)
+        .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data)
         .add_attribute(
             PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
             packet.timeout_height_on_b.to_event_attribute_value(),

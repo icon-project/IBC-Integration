@@ -40,7 +40,7 @@ thiserror = { workspace=true}
 common = { path="../../../libraries/rust/common" }
 cw-common = { path="../cw-common" }
 debug_print = "1.0.0"
-
+hex ={workspace=true }
 
 
 

@@ -100,6 +100,8 @@ pub fn create_packet_commitment_bytes(
     let packet_data_hash = keccak256(packet_data);
     hash_input.append(&mut packet_data_hash.to_vec());
 
+    println!("the hash input is:{:?}", hex::encode(hash_input.clone()));
+
     hash_input.to_vec()
 }
 

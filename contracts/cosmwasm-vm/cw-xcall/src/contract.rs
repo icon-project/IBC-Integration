@@ -1,4 +1,5 @@
-use cw_common::to_checked_address;
+use common::rlp;
+use cw_common::{from_binary_response, to_checked_address};
 use debug_print::debug_println;
 
 use super::*;
@@ -549,12 +550,18 @@ impl<'a> CwCallService<'a> {
     /// returned to the caller and `ContractError` is an enum representing the possible errors that can
     /// occur during the execution of the function.
     fn on_packet_ack(&self, ack: CwPacketAckMsg) -> Result<Response, ContractError> {
-        let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
-        let message: CallServiceMessage = from_binary(&ack.original_packet.data)?;
+        debug_println!("inside on_packet_ack");
+
+        let ack_response: Ack = Ack::Result(Binary(Vec::<u8>::new()));
+        debug_println!("ack response decoded");
+        let message: CallServiceMessage = rlp::decode(&ack.original_packet.data).unwrap();
+        debug_println!("call service message decoded");
         let message_type = match message.message_type() {
             CallServiceMessageType::CallServiceRequest => "call_service_request",
             CallServiceMessageType::CallServiceResponse => "call_service_response",
         };
+
+        debug_println!("matched message type p");
 
         match ack_response {
             Ack::Result(_) => {
@@ -564,7 +571,9 @@ impl<'a> CwCallService<'a> {
                     attr("message_type", message_type),
                 ];
 
-                Ok(Response::new().add_attributes(attributes))
+                Ok(Response::new()
+                    .add_attributes(attributes)
+                    .set_data(to_binary(&ack).unwrap()))
             }
             Ack::Error(err) => Ok(Response::new()
                 .add_attribute("action", "acknowledge")

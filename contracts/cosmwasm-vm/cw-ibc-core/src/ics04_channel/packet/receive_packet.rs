@@ -101,6 +101,7 @@ impl<'a> CwIbcCoreContext<'a> {
             &msg.packet.timeout_height_on_b,
             &msg.packet.timeout_timestamp_on_b,
         );
+        debug_println!("packet is -> {:?}", msg.packet);
         debug_println!(
             "packet.data is -> {:?}",
             HexString::from_bytes(&msg.packet.data)
