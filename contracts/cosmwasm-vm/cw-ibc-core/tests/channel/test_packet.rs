@@ -72,7 +72,7 @@ fn test_packet_send() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -85,15 +85,16 @@ fn test_packet_send() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            height,
-            consenus_state,
-        )
-        .unwrap();
+let consenus_state_any = consenus_state.to_any().encode_to_vec();
+contract
+    .store_consensus_state(
+        &mut deps.storage,
+        &IbcClientId::default(),
+        height,
+        consenus_state_any,
+        consenus_state.get_keccak_hash().to_vec()
+    )
+    .unwrap();
 
     let res = contract.send_packet(deps.as_mut(), packet);
     assert!(res.is_ok());
@@ -185,7 +186,7 @@ fn test_packet_send_fail_misiing_sequense() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -198,15 +199,16 @@ fn test_packet_send_fail_misiing_sequense() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            height,
-            consenus_state,
-        )
-        .unwrap();
+let consenus_state_any = consenus_state.to_any().encode_to_vec();
+contract
+    .store_consensus_state(
+        &mut deps.storage,
+        &IbcClientId::default(),
+        height,
+        consenus_state_any,
+        consenus_state.get_keccak_hash().to_vec()
+    )
+    .unwrap();
 
     contract.send_packet(deps.as_mut(), packet).unwrap();
 }

@@ -388,12 +388,11 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<Vec<u8>, ContractError> {
-        let client_key = commitment::client_state_commitment_key(&client_id);
 
         let client_state = self
             .ibc_store()
-            .commitments()
-            .load(store, client_key)
+            .client_states()
+            .load(store, client_id.clone())
             .map_err(|_| ContractError::IbcDecodeError {
                 error: DecodeError::new("NotFound ClientId(".to_owned() + client_id.as_str() + ")"),
             })?;
