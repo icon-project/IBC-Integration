@@ -98,7 +98,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
-        byte[] commitmentBytes = createPacketCommitment(packet);
+                byte[] commitmentBytes = createPacketCommitmentBytes(packet);
 
         verifyPacketCommitment(
                 connection,
@@ -398,12 +398,17 @@ public class IBCPacket extends IBCChannelHandshake {
     }
 
     private byte[] createPacketCommitment(Packet packet) {
-        return IBCCommitment.keccak256(
-            ByteUtil.join(
+                return IBCCommitment.keccak256(createPacketCommitmentBytes(packet));
+        }
+
+        private byte[] createPacketCommitmentBytes(Packet packet) {
+                return ByteUtil.join(
                     Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
-                    Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),false),
-                    Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),false),
-                    IBCCommitment.keccak256(packet.getData())));
+                                Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),
+                                                false),
+                                Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),
+                                                false),
+                                IBCCommitment.keccak256(packet.getData()));
     }
 
     private boolean isZero(Height height) {
