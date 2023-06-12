@@ -15,12 +15,12 @@ use cw_multi_test::{App, AppResponse, Executor};
 use setup::{
     init_ibc_core_contract, init_light_client, init_xcall_mock_contract, setup_context, TestContext,
 };
-use test_utils::{get_event, get_event_name, load_raw_payloads_icon_to_archway, RawPayload};
+use test_utils::{get_event, get_event_name, load_raw_payloads, RawPayload};
 
-use crate::setup::{get_icon_to_archway_payloads, raw_payload_to_map};
+use crate::setup::raw_payload_to_map;
 
-fn setup_test() -> TestContext {
-    let data = raw_payload_to_map(load_raw_payloads_icon_to_archway());
+fn setup_test(payload_file: &str) -> TestContext {
+    let data = raw_payload_to_map(load_raw_payloads(payload_file));
     let mut context = setup_context(Some(data));
     context = setup_contracts(context);
     context
@@ -70,8 +70,6 @@ pub fn call_update_client(ctx: &mut TestContext, msg: HexString) -> Result<AppRe
 pub fn call_connection_open_init(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
     let payload = ctx.get_test_data(&TestSteps::ConnOpenInit);
     let msg = HexString::from_str(&payload.message).unwrap();
-    let update = HexString::from_str(&payload.update.unwrap()).unwrap();
-    call_update_client(ctx, update).unwrap();
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core(),
@@ -119,6 +117,17 @@ pub fn call_connection_open_confirm(ctx: &mut TestContext) -> Result<AppResponse
     )
 }
 
+pub fn call_channel_open_init(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    let payload = ctx.get_test_data(&TestSteps::ChannelOpenInit);
+    let msg = HexString::from_str(&payload.message).unwrap();
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core(),
+        &CoreMsg::ExecuteMsg::ChannelOpenInit { msg },
+        &[],
+    )
+}
+
 pub fn call_channel_open_try(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
     let payload = ctx.get_test_data(&TestSteps::ChannelOpenTry);
     let msg = HexString::from_str(&payload.message).unwrap();
@@ -132,15 +141,15 @@ pub fn call_channel_open_try(ctx: &mut TestContext) -> Result<AppResponse, AppEr
     )
 }
 
-pub fn call_channel_open_init(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let payload = ctx.get_test_data(&TestSteps::ChannelOpenInit);
+pub fn call_channel_open_ack(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    let payload = ctx.get_test_data(&TestSteps::ChannelOpenAck);
     let msg = HexString::from_str(&payload.message).unwrap();
     let update = HexString::from_str(&payload.update.unwrap()).unwrap();
     call_update_client(ctx, update).unwrap();
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core(),
-        &CoreMsg::ExecuteMsg::ChannelOpenInit { msg },
+        &CoreMsg::ExecuteMsg::ChannelOpenAck { msg },
         &[],
     )
 }
@@ -166,7 +175,7 @@ pub fn call_channel_close_confirm(ctx: &mut TestContext) -> Result<AppResponse, 
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core(),
-        &CoreMsg::ExecuteMsg::ChannelCloseConfirm { msg},
+        &CoreMsg::ExecuteMsg::ChannelCloseConfirm { msg },
         &[],
     )
 }
@@ -211,7 +220,7 @@ fn call_bind_port(ctx: &mut TestContext, port_name: &str) -> Result<AppResponse,
 
 fn call_xcall_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppResponse, AppError> {
     ctx.app.execute_contract(
-        ctx.sender.clone(),
+        Addr::unchecked("archway1q6lr3hy5cxk4g74k9wcqyqarf9e97ckpn7t963"),
         ctx.get_xcall_app(),
         &cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
             to: "eth".to_string(),
@@ -223,7 +232,7 @@ fn call_xcall_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRespons
 }
 
 pub fn call_acknowledge_packet(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let payload = ctx.get_test_data(&TestSteps::AcknowledgePacket);
+    let payload = ctx.get_test_data(&TestSteps::AcknowledgementPacket);
     let msg = HexString::from_str(&payload.message).unwrap();
     let update = HexString::from_str(&payload.update.unwrap()).unwrap();
     call_update_client(ctx, update).unwrap();
@@ -248,14 +257,14 @@ pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) 
 
 #[test]
 fn test_register_client() {
-    let mut ctx = setup_test();
+    let mut ctx = setup_test("icon_to_archway_raw.json");
     let result = call_register_client_type(&mut ctx);
     assert!(result.is_ok());
 }
 
 #[test]
 fn test_create_client() {
-    let mut ctx = setup_test();
+    let mut ctx = setup_test("icon_to_archway_raw.json");
     call_register_client_type(&mut ctx).unwrap();
     let result = call_create_client(&mut ctx);
     assert!(result.is_ok());
@@ -263,7 +272,7 @@ fn test_create_client() {
 }
 #[test]
 fn test_update_client() {
-    let mut ctx = setup_test();
+    let mut ctx = setup_test("icon_to_archway_raw.json");
     call_register_client_type(&mut ctx).unwrap();
     let response = call_create_client(&mut ctx).unwrap();
     let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
@@ -289,7 +298,7 @@ fn test_packet_receiver() {
 
 #[test]
 fn test_packet_send() {
-    let mut ctx = test_icon_to_arcway_handshake();
+    let mut ctx = test_archway_to_icon_handshake();
 
     let data = [123, 100, 95, 112, 97];
     let result = call_xcall_message(&mut ctx, data.into());
@@ -304,7 +313,7 @@ fn test_packet_send() {
 #[test]
 fn test_icon_to_arcway_handshake() -> TestContext {
     // complete handshake
-    let mut ctx = setup_test();
+    let mut ctx = setup_test("icon_to_archway_raw.json");
     let port_name = "mock";
     call_bind_port(&mut ctx, port_name.clone()).unwrap();
     call_register_client_type(&mut ctx).unwrap();
@@ -336,6 +345,43 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     assert!(result.is_ok());
 
     println!("Channel Open Confirm Ok {:?}", &result);
+    ctx
+}
+
+fn test_archway_to_icon_handshake() -> TestContext {
+    // complete handshake
+    let mut ctx = setup_test("archway_to_icon_raw.json");
+    let port_name = "mock";
+    call_bind_port(&mut ctx, port_name.clone()).unwrap();
+    call_register_client_type(&mut ctx).unwrap();
+    let res = query_get_capability(&ctx.app, port_name.to_string(), ctx.get_ibc_core());
+
+    println!("mock app address {res:?}");
+
+    let response = call_create_client(&mut ctx);
+
+    assert!(response.is_ok());
+    println!("Create Client OK");
+
+    let result = call_connection_open_init(&mut ctx);
+
+    assert!(result.is_ok());
+    println!("Conn Open init Ok {:?}", &result);
+
+    let result = call_connection_open_ack(&mut ctx);
+
+    assert!(result.is_ok());
+    println!("Conn Open ack Ok {:?}", &result);
+
+    let result = call_channel_open_init(&mut ctx);
+
+    assert!(result.is_ok());
+    println!("Channel Open init Ok{:?}", &result);
+
+    let result = call_channel_open_ack(&mut ctx);
+    assert!(result.is_ok());
+
+    println!("Channel Open ack Ok {:?}", &result);
     ctx
 }
 

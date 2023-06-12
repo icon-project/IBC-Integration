@@ -8,7 +8,7 @@ use cosmwasm_std::{
 use cw_integration::TestSteps;
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 use cw_xcall_ibc_connection::state::IbcConfig;
-use test_utils::{load_raw_payloads_icon_to_archway, RawPayload};
+use test_utils::RawPayload;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum TestApps {
@@ -312,10 +312,10 @@ pub fn raw_payload_to_map(payloads: Vec<RawPayload>) -> HashMap<TestSteps, RawPa
     return map;
 }
 
-pub fn get_icon_to_archway_payloads() -> HashMap<TestSteps, RawPayload> {
-    let payloads = load_raw_payloads_icon_to_archway();
-    return raw_payload_to_map(payloads);
-}
+// pub fn get_icon_to_archway_payloads() -> HashMap<TestSteps, RawPayload> {
+//     let payloads = load_raw_payloads_icon_to_archway();
+//     return raw_payload_to_map(payloads);
+// }
 
 pub fn setup_context(data: Option<HashMap<TestSteps, RawPayload>>) -> TestContext {
     let router = App::default();

@@ -180,8 +180,8 @@ pub fn load_raw_messages(path: &str) -> Vec<RawPayload> {
     load_test_data::<RawPayload>(&path)
 }
 
-pub fn load_raw_payloads_icon_to_archway() -> Vec<RawPayload> {
-    return load_raw_messages("icon_to_archway_raw.json");
+pub fn load_raw_payloads(file_name: &str) -> Vec<RawPayload> {
+    return load_raw_messages(&file_name);
 }
 
 pub fn load_a2i_raw_messages() -> Vec<RawPayload> {
