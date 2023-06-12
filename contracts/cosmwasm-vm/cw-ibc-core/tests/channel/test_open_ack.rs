@@ -254,15 +254,10 @@ fn test_execute_open_ack_from_light_client() {
     );
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
-
+   
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
+   
 
     contract
         .claim_capability(
@@ -352,7 +347,7 @@ fn test_execute_open_ack_channel() {
         )
         .unwrap();
     contract
-        .store_channel(deps.as_mut().storage, &port_id, &channel_id, channel_end)
+        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
@@ -402,7 +397,7 @@ fn test_execute_open_ack_channel_fail_invalid_state() {
         )
         .unwrap();
     contract
-        .store_channel(deps.as_mut().storage, &port_id, &channel_id, channel_end)
+        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),

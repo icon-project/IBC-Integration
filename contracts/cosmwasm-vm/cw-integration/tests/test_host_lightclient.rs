@@ -132,6 +132,45 @@ pub fn call_channel_open_try(ctx: &mut TestContext) -> Result<AppResponse, AppEr
     )
 }
 
+pub fn call_channel_open_init(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    let payload = ctx.get_test_data(&TestSteps::ChannelOpenInit);
+    let msg = HexString::from_str(&payload.message).unwrap();
+    let update = HexString::from_str(&payload.update.unwrap()).unwrap();
+    call_update_client(ctx, update).unwrap();
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core(),
+        &CoreMsg::ExecuteMsg::ChannelOpenInit { msg },
+        &[],
+    )
+}
+
+pub fn call_channel_close_init(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    let payload = ctx.get_test_data(&TestSteps::ChannelCloseInit);
+    let msg = HexString::from_str(&payload.message).unwrap();
+    let update = HexString::from_str(&payload.update.unwrap()).unwrap();
+    call_update_client(ctx, update).unwrap();
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core(),
+        &CoreMsg::ExecuteMsg::ChannelCloseInit { port_id_on_a: "mock".to_string(), chan_id_on_a:"channel".to_string(), signer: HexString::from_str("deadbeef").unwrap() },
+        &[],
+    )
+}
+
+pub fn call_channel_close_confirm(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    let payload = ctx.get_test_data(&TestSteps::ChannelCloseConfirm);
+    let msg = HexString::from_str(&payload.message).unwrap();
+    let update = HexString::from_str(&payload.update.unwrap()).unwrap();
+    call_update_client(ctx, update).unwrap();
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core(),
+        &CoreMsg::ExecuteMsg::ChannelCloseConfirm { msg},
+        &[],
+    )
+}
+
 pub fn call_channel_open_confirm(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
     let payload = ctx.get_test_data(&TestSteps::ChannelOpenConfirm);
     let msg = HexString::from_str(&payload.message).unwrap();

@@ -165,13 +165,9 @@ fn test_receive_packet_validate_reply_from_light_client() {
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_b.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
+   
     let module = Addr::unchecked("contractaddress");
-    // contract
-    //     .add_route(&mut deps.storage, module_id, &module)
-    //     .unwrap();
+    
     contract
         .claim_capability(
             &mut deps.storage,
@@ -250,13 +246,9 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_b.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
+   
     let module = Addr::unchecked("contractaddress");
-    // contract
-    //     .add_route(&mut deps.storage, module_id, &module)
-    //     .unwrap();
+    
 
     contract
         .claim_capability(
