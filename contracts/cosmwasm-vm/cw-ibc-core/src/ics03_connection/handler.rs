@@ -26,11 +26,12 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: MsgConnectionOpenInit,
     ) -> Result<Response, ContractError> {
+        let client_id = message.client_id_on_a.clone();
+        self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
+
         let connection_identifier = self.generate_connection_idenfier(deps.storage)?;
 
         self.client_state(deps.storage, &message.client_id_on_a)?;
-
-        let client_id = message.client_id_on_a.clone();
 
         let lightclient_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
@@ -51,8 +52,6 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into);
         }
-
-        self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
 
         let versions = match message.version {
             Some(version) => {
@@ -95,9 +94,7 @@ impl<'a> CwIbcCoreContext<'a> {
             client_id.as_str(),
             message.counterparty.client_id().as_str(),
         );
-        self.increase_connection_counter(deps.storage)?;
-        self.store_connection_to_client(deps.storage, client_id, connection_identifier.clone())?;
-        self.store_connection(deps.storage, connection_identifier.clone(), connection_end)?;
+
         return Ok(Response::new()
             .add_event(event)
             .add_attribute("method", "connection_open_init")

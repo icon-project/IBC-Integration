@@ -58,6 +58,17 @@ pub fn acknowledgement_commitment_path(
         .into_bytes()
 }
 
+pub fn acknowledgement_commitment_key(
+    port_id: &PortId,
+    channel_id: &ChannelId,
+    sequence: Sequence,
+) -> Vec<u8> {
+    keccak256(&acknowledgement_commitment_path(
+        port_id, channel_id, sequence,
+    ))
+    .to_vec()
+}
+
 pub fn receipt_commitment_path(
     port_id: &PortId,
     channel_id: &ChannelId,
