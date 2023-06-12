@@ -168,7 +168,7 @@ fn test_for_channel_open_try_execution_message() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -184,13 +184,14 @@ fn test_for_channel_open_try_execution_message() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec()
         )
         .unwrap();
     let res = contract.execute(
@@ -336,7 +337,7 @@ fn test_for_channel_open_ack_execution() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -352,13 +353,14 @@ fn test_for_channel_open_ack_execution() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec()
         )
         .unwrap();
 
@@ -507,7 +509,7 @@ fn test_for_channel_open_confirm() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -523,13 +525,14 @@ fn test_for_channel_open_confirm() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec()
         )
         .unwrap();
     let res = contract.execute(
@@ -794,7 +797,7 @@ fn test_for_channel_close_confirm() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -810,13 +813,14 @@ fn test_for_channel_close_confirm() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec()
         )
         .unwrap();
     let res = contract.execute(
@@ -956,7 +960,7 @@ fn test_for_packet_send() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -969,15 +973,16 @@ fn test_for_packet_send() {
     }
     .try_into()
     .unwrap();
-    let consenus_state = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            height,
-            consenus_state,
-        )
-        .unwrap();
+let consenus_state_any = consenus_state.to_any().encode_to_vec();
+contract
+    .store_consensus_state(
+        &mut deps.storage,
+        &IbcClientId::default(),
+        height,
+        consenus_state_any,
+        consenus_state.get_keccak_hash().to_vec()
+    )
+    .unwrap();
 
     let res = contract.execute(
         deps.as_mut(),
@@ -1056,7 +1061,7 @@ fn test_for_recieve_packet() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -1065,13 +1070,14 @@ fn test_for_recieve_packet() {
     .unwrap();
 
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec()
         )
         .unwrap();
     let env = mock_env();
@@ -1295,7 +1301,7 @@ fn test_for_ack_execute() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client)
+        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -1303,13 +1309,14 @@ fn test_for_ack_execute() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec()
         )
         .unwrap();
     let light_client = Addr::unchecked("lightclient");
