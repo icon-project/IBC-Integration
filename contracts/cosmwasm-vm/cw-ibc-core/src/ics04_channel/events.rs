@@ -1,4 +1,4 @@
-use common::ibc::core::ics04_channel::Version;
+use common::ibc::core::ics04_channel::{timeout::TimeoutHeight, Version};
 use debug_print::debug_println;
 
 use super::*;
@@ -233,7 +233,7 @@ pub fn create_write_ack_event(
     dst_connection_id: &str,
     acknowledgement: &[u8],
 ) -> Result<Event, ContractError> {
-    let timeout_height = Height::new(
+    let height = Height::new(
         packet.timeout.block().unwrap().revision,
         packet.timeout.block().unwrap().height,
     )
@@ -244,10 +244,15 @@ pub fn create_write_ack_event(
         None => 0.to_string(),
     };
 
+    let timeout_height = TimeoutHeight::At(height);
+
     Ok(Event::new(IbcEventType::WriteAck.as_str())
         .add_attribute(PKT_ACK_HEX_ATTRIBUTE_KEY, hex::encode(acknowledgement))
         .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex::encode(packet.data))
-        .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height)
+        .add_attribute(
+            PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
+            timeout_height.to_event_attribute_value(),
+        )
         .add_attribute(PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY, timestamp)
         .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
         .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.src.port_id)
