@@ -13,6 +13,7 @@ use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::raw_types::connection::*;
 use cw_common::raw_types::Protobuf;
 use cw_common::raw_types::RawHeight;
+use cw_common::raw_types::channel::RawMsgChannelCloseInit;
 use cw_common::to_checked_address;
 use debug_print::debug_println;
 use prost::{DecodeError, Message};
@@ -160,18 +161,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_open_confirm(deps, info, &message)
             }
             CoreExecuteMsg::ChannelCloseInit {
-                port_id_on_a,
-                chan_id_on_a,
-                signer,
+               msg
             } => {
-                let signer = Self::to_signer(&signer)?;
-                let message = MsgChannelCloseInit {
-                    port_id_on_a: IbcPortId::from_str(&port_id_on_a)
-                        .map_err(|error| ContractError::IbcValidationError { error })?,
-                    chan_id_on_a: IbcChannelId::from_str(&chan_id_on_a)
-                        .map_err(|error| ContractError::IbcValidationError { error })?,
-                    signer,
-                };
+                let message=Self::from_raw::<RawMsgChannelCloseInit,MsgChannelCloseInit>(&msg)?;
+               
 
                 self.validate_channel_close_init(deps, info, &message)
             }

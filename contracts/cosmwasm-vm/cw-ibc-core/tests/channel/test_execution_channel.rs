@@ -5,6 +5,7 @@ use common::ibc::core::ics04_channel::{msgs::recv_packet::MsgRecvPacket, packet:
 use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cosmwasm_std::{Empty, IbcReceiveResponse};
+use cw_common::raw_types::Protobuf;
 use cw_common::{
     client_response::{LightClientResponse, PacketResponse, XcallPacketResponseData},
     core_msg::ExecuteMsg as CoreExecuteMsg,
@@ -659,14 +660,14 @@ fn test_for_channel_close_init() {
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
 
+    
+
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
         info,
         CoreExecuteMsg::ChannelCloseInit {
-            port_id_on_a: msg.port_id_on_a.to_string(),
-            chan_id_on_a: msg.chan_id_on_a.to_string(),
-            signer: HexString::from_bytes("alice".as_bytes()),
+           msg:HexString::from_bytes(&msg.encode_vec().unwrap())
         },
     );
 

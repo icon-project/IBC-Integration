@@ -36,6 +36,7 @@ pub mod channel {
         MsgChannelOpenInit as RawMsgChannelOpenInit, MsgChannelOpenTry as RawMsgChannelOpenTry,
         MsgRecvPacket as RawMessageRecvPacket, MsgTimeout as RawMessageTimeout,
         MsgTimeoutOnClose as RawMessageTimeoutOnclose, Packet as RawPacket,
+        
     };
     pub use ibc_proto::ibc::core::{
         channel::v1::Counterparty as RawCounterparty,

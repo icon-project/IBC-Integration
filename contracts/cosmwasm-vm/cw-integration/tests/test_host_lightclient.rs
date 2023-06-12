@@ -153,7 +153,7 @@ pub fn call_channel_close_init(ctx: &mut TestContext) -> Result<AppResponse, App
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core(),
-        &CoreMsg::ExecuteMsg::ChannelCloseInit { port_id_on_a: "mock".to_string(), chan_id_on_a:"channel".to_string(), signer: HexString::from_str("deadbeef").unwrap() },
+        &CoreMsg::ExecuteMsg::ChannelCloseInit { msg },
         &[],
     )
 }
