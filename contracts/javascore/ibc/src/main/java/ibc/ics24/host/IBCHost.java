@@ -30,8 +30,8 @@ public class IBCHost extends IBCStore {
      * @param portId Name of portId
      */
     public void addPortId(String portId) {
-        Context.require(!portId.equals(null), TAG + "Port Id cannot be null");
-        Context.require(capabilities.get(portCapabilityPath(portId)).equals(null),TAG + "PortId already exists");
+        Context.require(portId != null, TAG + "Port Id cannot be null");
+        Context.require(capabilities.get(portCapabilityPath(portId)) == null,TAG + "PortId already exists");
         portIds.add(portId);
     }
 
