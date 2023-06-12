@@ -88,17 +88,17 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(
                 packet.getTimeoutHeight().getRevisionHeight().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockHeight())
-                                .compareTo(packet.getTimeoutHeight().getRevisionHeight()) < 0,
+                        .compareTo(packet.getTimeoutHeight().getRevisionHeight()) < 0,
                 "block height >= packet timeout height");
         Context.require(
                 packet.getTimeoutTimestamp().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockTimestamp())
-                                .compareTo(packet.getTimeoutTimestamp()) < 0,
+                        .compareTo(packet.getTimeoutTimestamp()) < 0,
                 "block timestamp >= packet timeout timestamp");
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
-        byte[] commitmentBytes = createPacketCommitment(packet);
+        byte[] commitmentBytes = createPacketCommitmentBytes(packet);
 
         verifyPacketCommitment(
                 connection,
@@ -129,7 +129,7 @@ public class IBCPacket extends IBCChannelHandshake {
     }
 
     public void _writeAcknowledgement(String destinationPortId, String destinationChannel, BigInteger sequence,
-            byte[] acknowledgement) {
+                                      byte[] acknowledgement) {
         Context.require(acknowledgement.length > 0, "acknowledgement cannot be empty");
 
         Channel channel = Channel.decode(channels.at(destinationPortId).get(destinationChannel));
@@ -212,10 +212,10 @@ public class IBCPacket extends IBCChannelHandshake {
 
         boolean heightTimeout = packet.getTimeoutHeight().getRevisionHeight().compareTo(BigInteger.ZERO) > 0
                 && BigInteger.valueOf(Context.getBlockHeight())
-                        .compareTo(packet.getTimeoutHeight().getRevisionHeight()) >= 0;
+                .compareTo(packet.getTimeoutHeight().getRevisionHeight()) >= 0;
         boolean timeTimeout = packet.getTimeoutTimestamp().compareTo(BigInteger.ZERO) > 0
                 && BigInteger.valueOf(Context.getBlockTimestamp())
-                        .compareTo(packet.getTimeoutTimestamp()) < 0;
+                .compareTo(packet.getTimeoutTimestamp()) < 0;
         Context.require(heightTimeout || timeTimeout, "Packet has not yet timed out");
 
         if (channel.getOrdering() == Channel.Order.ORDER_UNORDERED) {
@@ -283,7 +283,7 @@ public class IBCPacket extends IBCChannelHandshake {
                     proofHeight,
                     proof,
                     packetReceiptKey
-                );
+            );
         } else if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             // ordered channel: check that packet has not been received
             // only allow timeout on next sequence so all sequences before the timed out
@@ -306,7 +306,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
             byte[] encodedChannel = channel.encode();
             updateChannelCommitment(connection.getClientId(), packet.getSourcePort(), packet.getSourceChannel(), encodedChannel);
-            channels.at( packet.getSourcePort()).set(packet.getSourceChannel(), encodedChannel);
+            channels.at(packet.getSourcePort()).set(packet.getSourceChannel(), encodedChannel);
         } else {
             Context.revert("unknown ordering type");
         }
@@ -398,12 +398,17 @@ public class IBCPacket extends IBCChannelHandshake {
     }
 
     private byte[] createPacketCommitment(Packet packet) {
-        return IBCCommitment.keccak256(
-            ByteUtil.join(
-                    Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
-                    Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),false),
-                    Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),false),
-                    IBCCommitment.keccak256(packet.getData())));
+        return IBCCommitment.keccak256(createPacketCommitmentBytes(packet));
+    }
+
+    public static byte[] createPacketCommitmentBytes(Packet packet) {
+        return ByteUtil.join(
+                Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
+                Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),
+                        false),
+                Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),
+                        false),
+                IBCCommitment.keccak256(packet.getData()));
     }
 
     private boolean isZero(Height height) {
