@@ -5,6 +5,7 @@ use common::ibc::core::ics04_channel::{msgs::recv_packet::MsgRecvPacket, packet:
 use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cosmwasm_std::{Empty, IbcReceiveResponse};
+use cw_common::raw_types::Protobuf;
 use cw_common::{
     client_response::{LightClientResponse, PacketResponse, XcallPacketResponseData},
     core_msg::ExecuteMsg as CoreExecuteMsg,
@@ -35,9 +36,7 @@ fn test_for_channel_open_init_execution_message() {
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
+    
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
     contract
@@ -47,9 +46,7 @@ fn test_for_channel_open_init_execution_message() {
             module.to_string(),
         )
         .unwrap();
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
+   
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
@@ -120,14 +117,10 @@ fn test_for_channel_open_try_execution_message() {
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
+ 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
+    
     contract
         .claim_capability(
             &mut deps.storage,
@@ -271,14 +264,10 @@ fn test_for_channel_open_ack_execution() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id.clone(), module_id.clone())
-    //     .unwrap();
+   
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
+   
     contract
         .claim_capability(
             &mut deps.storage,
@@ -458,15 +447,11 @@ fn test_for_channel_open_confirm() {
     );
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_b.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id.clone(), module_id.clone())
-    //     .unwrap();
+  
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
+   
     contract
         .claim_capability(
             &mut deps.storage,
@@ -613,14 +598,10 @@ fn test_for_channel_close_init() {
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
+    
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
+   
     contract
         .claim_capability(
             &mut deps.storage,
@@ -679,14 +660,14 @@ fn test_for_channel_close_init() {
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
 
+    
+
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
         info,
         CoreExecuteMsg::ChannelCloseInit {
-            port_id_on_a: msg.port_id_on_a.to_string(),
-            chan_id_on_a: msg.chan_id_on_a.to_string(),
-            signer: HexString::from_bytes("alice".as_bytes()),
+           msg:HexString::from_bytes(&msg.encode_vec().unwrap())
         },
     );
 
@@ -734,12 +715,7 @@ fn test_for_channel_close_confirm() {
     let port_id = msg.port_id_on_b.clone();
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id.clone(), module_id)
-    //     .unwrap();
+    
     contract
         .claim_capability(
             &mut deps.storage,
@@ -1158,13 +1134,9 @@ fn test_for_recieve_packet() {
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_b;
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
+   
     let module = Addr::unchecked("contractaddress");
-    // contract
-    //     .add_route(&mut deps.storage, module_id, &module)
-    //     .unwrap();
+    
     contract
         .claim_capability(
             &mut deps.storage,
@@ -1377,13 +1349,9 @@ fn test_for_ack_execute() {
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_a.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
+    
     let module = Addr::unchecked("contractaddress");
-    // contract
-    //     .add_route(&mut deps.storage, module_id, &module)
-    //     .unwrap();
+  
     contract
         .claim_capability(
             &mut deps.storage,

@@ -151,9 +151,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_a.clone();
-    // contract
-    //     .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-    //     .unwrap();
+    
     let module = Addr::unchecked("contractaddress");
     contract
         .claim_capability(
@@ -162,9 +160,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
             module.to_string(),
         )
         .unwrap();
-    // contract
-    //     .add_route(&mut deps.storage, module_id, &module)
-    //     .unwrap();
+   
     let message_info = cw_common::types::MessageInfo {
         sender: info.sender,
         funds: info.funds,

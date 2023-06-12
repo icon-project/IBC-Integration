@@ -70,9 +70,9 @@ pub enum ExecuteMsg {
         msg: HexString,
     },
     ChannelCloseInit {
-        port_id_on_a: String,
-        chan_id_on_a: String,
-        signer: HexString,
+      //raw message bytes:
+        //ibc_proto::ibc::core::channel::v1::MsgChannelCloseInit
+        msg: HexString,
     },
     ChannelCloseConfirm {
         //raw message bytes:
