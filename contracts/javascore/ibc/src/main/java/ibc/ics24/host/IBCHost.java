@@ -22,8 +22,18 @@ public class IBCHost extends IBCStore {
      */
     public void claimCapability(byte[] name, Address addr) {
         Context.require(capabilities.get(name) == null,  TAG + "Capability already claimed");
-        portIds.add(name);
         capabilities.set(name, addr);
+    }
+
+    /***
+     * addPortId adds given portId to a list of portIds that we track
+     * 
+     * @param portId Name of portId
+     */
+    public void addPortId(String portId) {
+        Context.require(!portId.equals(null), TAG + "Port Id cannot be null");
+        Context.require(!portExists(portId),TAG + "Port Already exists");
+        portIds.add(portId);
     }
 
     /**
@@ -65,5 +75,16 @@ public class IBCHost extends IBCStore {
         NullChecker.requireNotNull(id, "BTP network not configured");
         Context.call(chainScore, "sendBTPMessage", id, message);
     }
+
+    public boolean portExists(String portId) {
+        int size = portIds.size();
+        for (int i = 0; i < size; i++) {
+            if (portIds.get(i).equals(portId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 }
