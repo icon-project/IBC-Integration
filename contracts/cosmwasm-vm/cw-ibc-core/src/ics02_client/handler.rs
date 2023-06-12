@@ -295,14 +295,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &env,
                         &client_id,
-                        callback_data.client_state_bytes().to_vec(),
+                        callback_data.client_state_commitment().to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
                         &client_id,
                         callback_data.height(),
-                        callback_data.consensus_state_bytes().to_vec(),
+                        callback_data.consensus_state_commitment().to_vec(),
                     )?;
 
                     let event = create_client_event(
@@ -356,14 +356,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &env,
                         &client_id,
-                        update_client_response.client_state_bytes().to_vec(),
+                        update_client_response.client_state_commitment.to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
                         &client_id,
                         height,
-                        update_client_response.consensus_state_bytes().to_vec(),
+                        update_client_response.consensus_state_commitment.to_vec(),
                     )?;
 
                     let client_type = IbcClientType::from(client_id.clone());
