@@ -1,25 +1,18 @@
 package ibc.ics25.handler;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.verify;
+import com.iconloop.score.test.Account;
+import ibc.icon.structs.messages.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import score.Address;
+import test.proto.core.channel.ChannelOuterClass.Packet;
 
 import java.math.BigInteger;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
-import com.iconloop.score.test.Account;
-
-import ibc.icon.structs.messages.*;
-import score.Address;
-import test.proto.core.channel.ChannelOuterClass.Packet;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class IBCHandlerTest extends IBCHandlerTestBase {
     @BeforeEach
