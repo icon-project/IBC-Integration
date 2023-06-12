@@ -127,7 +127,7 @@ public class Merkle {
         if (i >= mp.getKeyPath().size()) {
             throw new UserRevertedException("index out of range. " + i + " (index) >= " + mp.getKeyPath().size() + " (len)");
         }
-        String key = StringUtil.decodeURL(mp.getKeyPath().get(i));
+        String key = mp.getKeyPath().get(i);
         return StringUtil.hexToBytes(key);
     }
 

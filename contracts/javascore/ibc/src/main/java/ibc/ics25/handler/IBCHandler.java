@@ -42,6 +42,7 @@ public class IBCHandler extends IBCHandlerPacket {
     @External
     public void bindPort(String portId, Address moduleAddress) {
         onlyOwner();
+        addPortId(portId);
         super.bindPort(portId, moduleAddress);
     }
 

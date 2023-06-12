@@ -4,29 +4,20 @@ import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-
-import ibc.icon.interfaces.ILightClientScoreInterface;
-import ibc.icon.score.util.ByteUtil;
 import ibc.icon.interfaces.ILightClient;
+import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.structs.messages.MsgCreateClient;
 import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.icon.test.MockContract;
-import ibc.ics24.host.IBCCommitment;
-import test.proto.core.client.Client.Height;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import java.math.BigInteger;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 public class ClientTest extends TestBase {
 
@@ -96,7 +87,7 @@ public class ClientTest extends TestBase {
         client.invoke(owner, "registerClient", msg.getClientType(), lightClient.getAddress());
         client.invoke(owner, "_createClient", msg);
 
-       // Assert
+        // Assert
         assertEquals(BigInteger.ONE, client.call("getNextClientSequence"));
         verify(lightClient.mock).createClient(expectedClientId, msg.getClientState(), msg.getConsensusState(), msg.getStoragePrefix());
     }

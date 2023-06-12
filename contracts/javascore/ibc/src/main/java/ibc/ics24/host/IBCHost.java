@@ -1,7 +1,6 @@
 package ibc.ics24.host;
 
 import score.Address;
-import score.ArrayDB;
 import score.Context;
 
 import java.math.BigInteger;
@@ -31,8 +30,8 @@ public class IBCHost extends IBCStore {
      * @param portId Name of portId
      */
     public void addPortId(String portId) {
-        Context.require(!portId.equals(null), TAG + "Port Id cannot be null");
-        Context.require(!portExists(portId),TAG + "Port Already exists");
+        Context.require(portId != null, TAG + "Port Id cannot be null");
+        Context.require(capabilities.get(portCapabilityPath(portId)) == null,TAG + "PortId already exists");
         portIds.add(portId);
     }
 
