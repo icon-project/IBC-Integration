@@ -8,8 +8,8 @@ pub enum CallServiceMessageType {
 
 #[cw_serde]
 pub struct CallServiceMessage {
-    message_type: CallServiceMessageType,
-    payload: Vec<u8>,
+    pub message_type: CallServiceMessageType,
+    pub payload: Vec<u8>,
 }
 
 impl CallServiceMessage {

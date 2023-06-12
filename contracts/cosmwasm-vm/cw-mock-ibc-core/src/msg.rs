@@ -14,9 +14,3 @@ pub enum ExecuteMsg {
     IbcConfig { msg: CwChannelConnectMsg },
 }
 
-#[cw_serde]
-#[derive(QueryResponses)]
-pub enum QueryMsg {
-    #[returns(u64)]
-    SequenceSend { port_id: String, channel_id: String },
-}

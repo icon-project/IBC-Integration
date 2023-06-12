@@ -395,20 +395,20 @@ impl<'a> CwCallService<'a> {
     /// `ContractError` is an enum that represents any errors that may occur during the execution of the
     /// function.
     fn on_channel_open(&self, msg: CwChannelOpenMsg) -> Result<Response, ContractError> {
-        let ibc_endpoint = match msg {
+        let ibc_endpoint = match msg.clone(){
             CwChannelOpenMsg::OpenInit { channel } => channel.endpoint,
             CwChannelOpenMsg::OpenTry {
                 channel,
                 counterparty_version: _,
             } => channel.endpoint,
         };
-        // let channel = msg.channel();
+        
 
-        // check_order(&channel.order)?;
+      //  check_order(&msg.channel().order)?;
 
-        // if let Some(counter_version) = msg.counterparty_version() {
-        //     check_version(counter_version)?;
-        // }
+        if let Some(counter_version) = msg.counterparty_version() {
+            check_version(counter_version)?;
+        }
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())

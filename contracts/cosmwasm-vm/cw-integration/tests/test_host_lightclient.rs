@@ -338,6 +338,9 @@ fn test_icon_to_arcway_handshake() -> TestContext {
 
     let result = call_channel_open_try(&mut ctx);
 
+    
+    println!("{:?}",result);
+
     assert!(result.is_ok());
     println!("Channel Open Try Ok{:?}", &result);
 

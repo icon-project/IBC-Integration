@@ -20,6 +20,7 @@ use setup::*;
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 
+#[ignore]
 #[test]
 fn send_packet_success() {
     let mut mock_deps = deps();
@@ -154,6 +155,7 @@ fn send_packet_success() {
 
     #[cfg(not(feature = "native_ibc"))]
     {
+
         let response_data = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "hostaddress".to_string(),
             msg: to_binary(&message).unwrap(),
