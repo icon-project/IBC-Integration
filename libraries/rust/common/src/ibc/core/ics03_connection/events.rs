@@ -50,7 +50,6 @@ impl From<Attributes> for Vec<abci::EventAttribute> {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenInit(Attributes);
 
@@ -91,7 +90,6 @@ impl From<OpenInit> for abci::Event {
         }
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenTry(Attributes);
@@ -135,7 +133,6 @@ impl From<OpenTry> for abci::Event {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenAck(Attributes);
 
@@ -177,7 +174,6 @@ impl From<OpenAck> for abci::Event {
         }
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenConfirm(Attributes);

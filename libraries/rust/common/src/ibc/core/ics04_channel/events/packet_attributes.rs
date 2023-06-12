@@ -32,7 +32,6 @@ const PKT_ACK_ATTRIBUTE_KEY: &str = "packet_ack";
 const PKT_ACK_HEX_ATTRIBUTE_KEY: &str = "packet_ack_hex";
 const PKT_CONNECTION_ID_ATTRIBUTE_KEY: &str = "packet_connection";
 
-
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct PacketDataAttribute {
     pub packet_data: Vec<u8>,
@@ -58,7 +57,6 @@ impl TryFrom<PacketDataAttribute> for Vec<abci::EventAttribute> {
         Ok(tags)
     }
 }
-
 
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct TimeoutHeightAttribute {
@@ -91,7 +89,6 @@ impl From<TimeoutTimestampAttribute> for abci::EventAttribute {
     }
 }
 
-
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct SequenceAttribute {
     pub sequence: Sequence,
@@ -102,7 +99,6 @@ impl From<SequenceAttribute> for abci::EventAttribute {
         (PKT_SEQ_ATTRIBUTE_KEY, attr.sequence.to_string()).into()
     }
 }
-
 
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct SrcPortIdAttribute {
@@ -115,7 +111,6 @@ impl From<SrcPortIdAttribute> for abci::EventAttribute {
     }
 }
 
-
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct SrcChannelIdAttribute {
     pub src_channel_id: ChannelId,
@@ -126,7 +121,6 @@ impl From<SrcChannelIdAttribute> for abci::EventAttribute {
         (PKT_SRC_CHANNEL_ATTRIBUTE_KEY, attr.src_channel_id.as_str()).into()
     }
 }
-
 
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct DstPortIdAttribute {
@@ -139,7 +133,6 @@ impl From<DstPortIdAttribute> for abci::EventAttribute {
     }
 }
 
-
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct DstChannelIdAttribute {
     pub dst_channel_id: ChannelId,
@@ -150,7 +143,6 @@ impl From<DstChannelIdAttribute> for abci::EventAttribute {
         (PKT_DST_CHANNEL_ATTRIBUTE_KEY, attr.dst_channel_id.as_str()).into()
     }
 }
-
 
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct ChannelOrderingAttribute {
@@ -163,7 +155,6 @@ impl From<ChannelOrderingAttribute> for abci::EventAttribute {
     }
 }
 
-
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct PacketConnectionIdAttribute {
     pub connection_id: ConnectionId,
@@ -174,7 +165,6 @@ impl From<PacketConnectionIdAttribute> for abci::EventAttribute {
         (PKT_CONNECTION_ID_ATTRIBUTE_KEY, attr.connection_id.as_str()).into()
     }
 }
-
 
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct AcknowledgementAttribute {

@@ -17,7 +17,6 @@ pub(super) const COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY: &str = "counterparty_cha
 const COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY: &str = "counterparty_port_id";
 const VERSION_ATTRIBUTE_KEY: &str = "version";
 
-
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct PortIdAttribute {
     pub port_id: PortId,
@@ -76,7 +75,6 @@ impl AsRef<ChannelId> for CounterpartyChannelIdAttribute {
     }
 }
 
-
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct ConnectionIdAttribute {
     pub connection_id: ConnectionId,
@@ -87,7 +85,6 @@ impl From<ConnectionIdAttribute> for abci::EventAttribute {
         (CONNECTION_ID_ATTRIBUTE_KEY, attr.connection_id.as_str()).into()
     }
 }
-
 
 #[derive(Clone, Debug, From, PartialEq, Eq)]
 pub struct VersionAttribute {

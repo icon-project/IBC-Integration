@@ -435,7 +435,13 @@ fn connection_open_init() {
 
     let cl = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_a, cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &res_msg.client_id_on_a,
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     contract
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
@@ -661,25 +667,27 @@ fn connection_open_ack_validate_fail() {
         )
         .unwrap();
 
-    let client_state_bytes = client_state.encode_to_vec();
+    let client_state_bytes_any = client_state.encode_to_vec();
 
     contract
         .store_client_state(
             &mut deps.storage,
             &mock_env(),
             &client_id,
-            client_state_bytes,
+            client_state_bytes_any,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &client_id,
             res_msg.proofs_height_on_b,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();
@@ -767,17 +775,19 @@ fn connection_open_ack_validate() {
             &mock_env(),
             &client_id,
             client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &conn_end.client_id().clone(),
             res_msg.proofs_height_on_b,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();
@@ -1018,20 +1028,27 @@ fn connection_open_try_validate() {
         )
         .unwrap();
 
-    let cl = client_state.encode_to_vec();
+    let cl = client_state.to_any().encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_b, cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &res_msg.client_id_on_b,
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &res_msg.client_id_on_b,
             res_msg.proofs_height_on_a,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();
@@ -1074,7 +1091,7 @@ fn open_try_validate_fails() {
     .try_into()
     .unwrap();
 
-    let client_state_bytes = client_state.encode_to_vec();
+    let client_state_bytes = client_state.to_any().encode_to_vec();
 
     contract
         .store_client_state(
@@ -1082,17 +1099,19 @@ fn open_try_validate_fails() {
             &mock_env(),
             &res_msg.client_id_on_b,
             client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &res_msg.client_id_on_b,
             res_msg.proofs_height_on_a,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();
@@ -1177,17 +1196,19 @@ fn connection_open_confirm_validate() {
             &mock_env(),
             &conn_end.client_id().clone(),
             cl,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &conn_end.client_id().clone(),
             res_msg.proof_height_on_a,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -1374,20 +1395,27 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         )
         .unwrap();
 
-    let cl = client_state.encode_to_vec();
+    let cl = client_state.to_any().encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &mock_env(), &client_id, cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &client_id,
             res_msg.proof_height_on_a,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -1467,6 +1495,7 @@ fn connection_open_init_fails_of_clientstate() {
             &mock_env(),
             &client_id,
             client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -1516,6 +1545,7 @@ fn connection_open_init_validate_invalid_client_id() {
             &mock_env(),
             &res_msg.client_id_on_a,
             client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     contract
@@ -1699,7 +1729,13 @@ fn connection_open_init_fails() {
 
     let cl = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &mock_env(), &res_msg.client_id_on_a, cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &res_msg.client_id_on_a,
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     contract
         .connection_open_init(deps.as_mut(), res_msg)
@@ -1777,6 +1813,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
             &mock_env(),
             &client_id,
             client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();
@@ -1866,17 +1903,19 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
             &mock_env(),
             &client_id,
             client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &conn_end.client_id().clone(),
             res_msg.proofs_height_on_b,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();

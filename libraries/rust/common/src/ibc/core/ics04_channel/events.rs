@@ -29,7 +29,6 @@ use super::packet::Sequence;
 use super::timeout::TimeoutHeight;
 use super::Version;
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenInit {
     port_id: PortIdAttribute,
@@ -87,7 +86,6 @@ impl From<OpenInit> for abci::Event {
         }
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenTry {
@@ -153,7 +151,6 @@ impl From<OpenTry> for abci::Event {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenAck {
     port_id: PortIdAttribute,
@@ -210,7 +207,6 @@ impl From<OpenAck> for abci::Event {
         }
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenConfirm {
@@ -325,7 +321,6 @@ impl From<CloseInit> for abci::Event {
         }
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CloseConfirm {
@@ -458,7 +453,6 @@ impl From<ChannelClosed> for abci::Event {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SendPacket {
     packet_data: PacketDataAttribute,
@@ -553,7 +547,6 @@ impl TryFrom<SendPacket> for abci::Event {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ReceivePacket {
     packet_data: PacketDataAttribute,
@@ -647,7 +640,6 @@ impl TryFrom<ReceivePacket> for abci::Event {
         })
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WriteAcknowledgement {
@@ -747,7 +739,6 @@ impl TryFrom<WriteAcknowledgement> for abci::Event {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AcknowledgePacket {
     timeout_height: TimeoutHeightAttribute,
@@ -833,7 +824,6 @@ impl TryFrom<AcknowledgePacket> for abci::Event {
         })
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TimeoutPacket {
