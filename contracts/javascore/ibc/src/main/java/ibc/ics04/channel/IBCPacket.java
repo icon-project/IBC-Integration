@@ -401,7 +401,7 @@ public class IBCPacket extends IBCChannelHandshake {
         return IBCCommitment.keccak256(createPacketCommitmentBytes(packet));
     }
 
-    private byte[] createPacketCommitmentBytes(Packet packet) {
+    public static byte[] createPacketCommitmentBytes(Packet packet) {
         return ByteUtil.join(
                 Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
                 Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),
