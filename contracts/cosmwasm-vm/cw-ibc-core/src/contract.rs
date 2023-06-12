@@ -275,19 +275,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 let addr = Addr::unchecked(res);
                 to_binary(&addr)
             }
-            QueryMsg::GetConsensusState { client_id, height } => {
-                let raw_height: RawHeight = RawHeight::decode(height.to_bytes().unwrap().as_ref())
-                    .map_err(|_| ClientError::InvalidHeight)
-                    .unwrap();
-                let height =
-                    Height::new(raw_height.revision_number, raw_height.revision_height).unwrap();
-
+            QueryMsg::GetConsensusState { client_id } => {
                 let res = self
-                    .consensus_state_any(
-                        deps.storage,
-                        &IbcClientId::from_str(&client_id).unwrap(),
-                        &height,
-                    )
+                    .consensus_state_any(deps.storage, &IbcClientId::from_str(&client_id).unwrap())
                     .map_err(|e| {
                         debug_println!("{e:?}");
                         ContractError::InvalidClientId { client_id }
@@ -730,13 +720,11 @@ mod tests {
                 &IbcClientId::from_str(&client_id).unwrap(),
                 height,
                 consensus_state.to_any().encode_to_vec(),
+                consensus_state.get_keccak_hash().to_vec(),
             )
             .unwrap();
 
-        let msg = QueryMsg::GetConsensusState {
-            client_id,
-            height: HexString::from_bytes(&raw_height.encode_to_vec()),
-        };
+        let msg = QueryMsg::GetConsensusState { client_id };
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
         let result_parsed: String = from_binary(&result).unwrap();
         let result_bytes = hex::decode(result_parsed).unwrap();

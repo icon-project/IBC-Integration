@@ -295,6 +295,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &env,
                         &client_id,
+                        callback_data.client_state_bytes().to_vec(),
                         callback_data.client_state_commitment().to_vec(),
                     )?;
 
@@ -302,6 +303,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &client_id,
                         callback_data.height(),
+                        callback_data.consensus_state_bytes().to_vec(),
                         callback_data.consensus_state_commitment().to_vec(),
                     )?;
 
@@ -356,6 +358,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &env,
                         &client_id,
+                        update_client_response.client_state_bytes.to_vec(),
                         update_client_response.client_state_commitment.to_vec(),
                     )?;
 
@@ -363,6 +366,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &client_id,
                         height,
+                        update_client_response.consensus_state_bytes.to_vec(),
                         update_client_response.consensus_state_commitment.to_vec(),
                     )?;
 
@@ -418,6 +422,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &env,
                         &client_id,
+                        response.client_state_bytes.to_vec(),
                         response.client_state_commitment().to_vec(),
                     )?;
 
@@ -425,6 +430,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &client_id,
                         response.height(),
+                        response.consensus_state_bytes.to_vec(),
                         response.consensus_state_commitment().to_vec(),
                     )?;
 
@@ -548,6 +554,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &env,
                         &client_id,
+                        misbehaviour_response.client_state_bytes,
                         misbehaviour_response.client_state_commitment,
                     )?;
 

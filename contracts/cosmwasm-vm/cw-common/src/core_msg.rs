@@ -152,10 +152,7 @@ pub enum QueryMsg {
     #[returns(String)]
     GetClientState { client_id: String },
     #[returns(String)]
-    GetConsensusState {
-        client_id: String,
-        height: HexString,
-    },
+    GetConsensusState { client_id: String },
     #[returns(bool)]
     GetPacketReceipt {
         port_id: String,

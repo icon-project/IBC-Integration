@@ -1320,7 +1320,9 @@ fn check_for_execute_upgrade_client() {
         .unwrap();
 
     let upgrade_client_response = UpgradeClientResponse::new(
+        upgrade_client_state.get_keccak_hash().to_vec(),
         upgrade_client_state.encode_to_vec(),
+        upgrade_consenus_state.get_keccak_hash().to_vec(),
         upgrade_consenus_state.encode_to_vec(),
         client_id.to_string(),
         "0-100".to_string(),
@@ -1387,7 +1389,9 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
         .unwrap();
 
     let upgrade_client_response = UpgradeClientResponse::new(
+        upgrade_client_state.get_keccak_hash().to_vec(),
         upgrade_client_state.encode_to_vec(),
+        upgrade_consenus_state.get_keccak_hash().to_vec(),
         upgrade_consenus_state.encode_to_vec(),
         "hello".to_string(),
         "0-100".to_string(),
@@ -1702,6 +1706,7 @@ fn sucess_on_misbehaviour_validate() {
             &mock_env(),
             &client_id,
             client_state.to_any().encode_to_vec(),
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let height = mock_height(10, 15).unwrap();
@@ -1763,6 +1768,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
             &mock_env(),
             &client_id,
             client_state.to_any().encode_to_vec(),
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let height = mock_height(10, 15).unwrap();
@@ -1841,8 +1847,11 @@ fn success_on_execute_misbehaviour() {
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
-    let response_message_data =
-        MisbehaviourResponse::new(client_id.to_string(), client_state.encode_to_vec());
+    let response_message_data = MisbehaviourResponse::new(
+        client_id.to_string(),
+        client_state.get_keccak_hash().to_vec(),
+        client_state.encode_to_vec(),
+    );
 
     let event = Event::new("empty");
 
