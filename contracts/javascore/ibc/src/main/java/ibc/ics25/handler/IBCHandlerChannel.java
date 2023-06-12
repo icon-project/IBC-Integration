@@ -55,6 +55,7 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
                 channel.getCounterparty().encode(),
                 channel.getVersion());
         claimCapability(channelCapabilityPath(msg.getPortId(), id), module._address());
+        addPortId(msg.getPortId());
 
         ChannelOpenInit(msg.getPortId(), id, msg.getChannel());
     }
@@ -74,6 +75,7 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
                 channel.getVersion(),
                 msg.getCounterpartyVersion());
         claimCapability(channelCapabilityPath(msg.getPortId(), id), module._address());
+        addPortId(msg.getPortId());
 
         ChannelOpenTry(msg.getPortId(), id, msg.getChannel());
     }

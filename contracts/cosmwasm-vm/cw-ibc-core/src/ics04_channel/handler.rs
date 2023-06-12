@@ -7,6 +7,7 @@ use self::{
     },
     open_try::channel_open_try_msg_validate,
 };
+use common::utils::keccak256;
 use cw_common::{commitment, from_binary_response, raw_types::channel::RawChannel};
 pub mod close_init;
 use close_init::*;
@@ -755,7 +756,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         1.into(),
                     )?;
 
-                    self.store_channel(
+                    self.store_channel_commitment(
                         deps.storage,
                         &port_id,
                         &channel_id.clone(),
@@ -859,7 +860,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_end.version().as_str(),
                     );
 
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end,
+                    )?;
                     Ok(Response::new()
                         .add_event(channel_id_event)
                         .add_event(main_event))
@@ -913,7 +919,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_end.clone(),
                     )?;
 
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end,
+                    )?;
 
                     let event =
                         create_close_init_channel_event(port_id.as_str(), channel_id.as_str());
@@ -973,7 +984,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end.clone(),
+                    )?;
 
                     let event = create_open_ack_channel_event(
                         port_id.as_str(),
@@ -1040,7 +1056,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end.clone(),
+                    )?;
 
                     let event = create_open_confirm_channel_event(
                         port_id.as_str(),
@@ -1104,7 +1125,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end.clone(),
+                    )?;
                     let event =
                         create_close_confirm_channel_event(port_id.as_str(), channel_id.as_str());
 
