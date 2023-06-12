@@ -1,6 +1,7 @@
 use super::*;
-use cw_common::commitment;
-use prost::DecodeError;
+use common::utils::keccak256;
+use cw_common::{commitment, raw_types::channel::RawChannel};
+use prost::{DecodeError, Message};
 impl<'a> CwIbcCoreContext<'a> {
     /// This function retrieves the channel_end of a specified channel from storage and returns it as a result.
     ///
@@ -515,7 +516,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// a `Result<(), ContractError>` which indicates that it either returns an empty `Ok` value or a
     /// `ContractError` if an error occurs during the execution of the function.
-    pub fn store_channel(
+    pub fn store_channel_commitment(
         &self,
         store: &mut dyn Storage,
         port_id: &IbcPortId,
@@ -524,11 +525,14 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let channel_commitment_key = commitment::channel_commitment_key(port_id, channel_id);
 
-        let channel_end_bytes = to_vec(&channel_end).map_err(ContractError::Std)?;
+        let raw_channel: RawChannel = channel_end.try_into().unwrap();
+        let channel_end_commitment = raw_channel.encode_to_vec();
 
-        self.ibc_store()
-            .commitments()
-            .save(store, channel_commitment_key, &channel_end_bytes)?;
+        self.ibc_store().commitments().save(
+            store,
+            channel_commitment_key,
+            &keccak256(&channel_end_commitment).to_vec(),
+        )?;
 
         Ok(())
     }
