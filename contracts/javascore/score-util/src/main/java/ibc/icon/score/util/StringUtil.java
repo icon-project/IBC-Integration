@@ -16,7 +16,6 @@
 
 package ibc.icon.score.util;
 
-import score.UserRevertedException;
 import scorex.util.ArrayList;
 import scorex.util.StringTokenizer;
 
