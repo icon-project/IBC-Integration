@@ -1,3 +1,5 @@
+use common::rlp;
+
 use super::*;
 
 /// The function creates a new event with attributes for a call execution and returns it.
@@ -46,12 +48,11 @@ pub fn event_xcall_message_sent(
     data: &CallServiceMessage,
 ) -> Event {
     let event = Event::new("xcall_message_sent");
-
     event
         .add_attribute("from", from)
         .add_attribute("ibchost_sequence_no", sequence_no.to_string())
         .add_attribute("sq_no", req_id.to_string())
-        .add_attribute("data", to_binary(data).unwrap().to_string())
+        .add_attribute("data", hex::encode(rlp::encode(data)))
 }
 
 /// The function creates an event object for a rollback execution with sequence number, code, and

@@ -73,7 +73,8 @@ impl TryFrom<RawMsgAcknowledgement> for MsgAcknowledgement {
     type Error = PacketError;
 
     fn try_from(raw_msg: RawMsgAcknowledgement) -> Result<Self, Self::Error> {
-        Ok(MsgAcknowledgement {
+        println!("raw message: {:?}", raw_msg);
+        let m = MsgAcknowledgement {
             packet: raw_msg
                 .packet
                 .ok_or(PacketError::MissingPacket)?
@@ -88,7 +89,9 @@ impl TryFrom<RawMsgAcknowledgement> for MsgAcknowledgement {
                 .and_then(|raw_height| raw_height.try_into().ok())
                 .ok_or(PacketError::MissingHeight)?,
             signer: raw_msg.signer.parse().map_err(PacketError::Signer)?,
-        })
+        };
+        println!("actual ack message{:?}", m);
+        Ok(m)
     }
 }
 

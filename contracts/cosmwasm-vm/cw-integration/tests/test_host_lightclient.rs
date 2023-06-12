@@ -175,10 +175,23 @@ fn call_xcall_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRespons
         ctx.sender.clone(),
         ctx.get_xcall_app(),
         &cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
-            to: "eth1".to_string(),
+            to: "eth".to_string(),
             data,
             rollback: None,
         },
+        &[],
+    )
+}
+
+pub fn call_acknowledge_packet(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    let payload = ctx.get_test_data(&TestSteps::AcknowledgePacket);
+    let msg = HexString::from_str(&payload.message).unwrap();
+    let update = HexString::from_str(&payload.update.unwrap()).unwrap();
+    call_update_client(ctx, update).unwrap();
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core(),
+        &CoreMsg::ExecuteMsg::AcknowledgementPacket { msg },
         &[],
     )
 }
@@ -239,12 +252,14 @@ fn test_packet_receiver() {
 fn test_packet_send() {
     let mut ctx = test_icon_to_arcway_handshake();
 
-    let data = [90, 91, 90, 91];
+    let data = [123, 100, 95, 112, 97];
     let result = call_xcall_message(&mut ctx, data.into());
-
     assert!(result.is_ok());
-
     println!("Packet Send Ok {:?}", &result);
+
+    let result = call_acknowledge_packet(&mut ctx);
+    assert!(result.is_ok());
+    println!("Packet Acknowledge Ok {:?}", &result);
 }
 
 #[test]

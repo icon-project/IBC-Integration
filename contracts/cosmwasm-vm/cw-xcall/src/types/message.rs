@@ -43,7 +43,7 @@ impl Encodable for CallServiceMessage {
             CallServiceMessageType::CallServiceRequest => 1,
             CallServiceMessageType::CallServiceResponse => 2,
         };
-        stream.append(&msg_type).append(&self.payload);
+        stream.begin_list(2).append(&msg_type).append(&self.payload);
     }
 }
 

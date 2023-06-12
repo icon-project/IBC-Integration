@@ -1,8 +1,9 @@
 use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
-    from_binary_response,
+    from_binary_response, hex_string,
 };
+use debug_print::debug_println;
 use prost::DecodeError;
 
 use super::*;
@@ -31,6 +32,7 @@ impl<'a> CwIbcCoreContext<'a> {
         env: Env,
         msg: &MsgAcknowledgement,
     ) -> Result<Response, ContractError> {
+        debug_println!("inside acknowledge packet validate ");
         let packet = &msg.packet;
         let chan_end_on_a = self.get_channel_end(
             deps.storage,
@@ -43,6 +45,8 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
+        debug_println!("chan end on a  state matched  ");
+
         let counterparty = Counterparty::new(
             packet.port_id_on_b.clone(),
             Some(packet.chan_id_on_b.clone()),
@@ -54,6 +58,8 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
+        debug_println!("counterparty matched");
+
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a.clone())?;
         if !conn_end_on_a.state_matches(&ConnectionState::Open) {
@@ -76,6 +82,21 @@ impl<'a> CwIbcCoreContext<'a> {
             // prevent an entire relay transaction from failing and consuming unnecessary fees.
             Err(_) => return Ok(Response::new()),
         };
+        debug_println!("Commitment on a {:?}", hex::encode(commitment_on_a.clone()));
+        debug_println!(
+            "from packet the timeout height is :{:?}",
+            packet.timeout_height_on_b
+        );
+        let compouted_packet_commitment = commitment::compute_packet_commitment(
+            &packet.data,
+            &packet.timeout_height_on_b,
+            &packet.timeout_timestamp_on_b,
+        );
+        debug_println!(
+            "computed packet commitment  {:?}",
+            hex::encode(compouted_packet_commitment.clone())
+        );
+
         if commitment_on_a
             != commitment::compute_packet_commitment(
                 &packet.data,
@@ -88,6 +109,8 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
+
+        debug_println!("packet commitment matched");
 
         if let Order::Ordered = chan_end_on_a.ordering {
             let next_seq_ack = self.get_next_sequence_ack(
@@ -103,6 +126,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 .map_err(Into::<ContractError>::into)?;
             }
         }
+        debug_println!("packet seq matched");
+
         let client_id_on_a = conn_end_on_a.client_id();
         let client_state_on_a = self.client_state(deps.storage, client_id_on_a)?;
         // The client must not be frozen.
@@ -196,6 +221,7 @@ impl<'a> CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(res) => {
                 match res.data {
                     Some(res) => {
+                        debug_println!("inside ack validate reply ");
                         let packet_data = from_binary_response::<PacketDataResponse>(&res)
                             .map_err(|e| ContractError::IbcDecodeError {
                                 error: DecodeError::new(e.to_string()),
@@ -211,6 +237,8 @@ impl<'a> CwIbcCoreContext<'a> {
                                 .map_err(Into::<ContractError>::into)?;
                             }
                         };
+                        debug_println!("after matching ackowledgement ");
+
                         let port_id = packet_data.packet.port_id_on_a.clone();
                         // Getting the module address for on packet timeout call
                         let contract_address =
@@ -262,8 +290,13 @@ impl<'a> CwIbcCoreContext<'a> {
                             CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                                 contract_addr: contract_address,
                                 msg: to_binary(&cosm_msg).unwrap(),
-                                funds: info.funds,
+                                funds: vec![],
                             });
+                        debug_println!(
+                            "after creating client message {:?} ",
+                            create_client_message
+                        );
+
                         let sub_msg: SubMsg = SubMsg::reply_on_success(
                             create_client_message,
                             VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
@@ -304,10 +337,15 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
+        debug_println!("replying from ack module {:?}", message);
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
+                    debug_println!("receiving reply from packet ack ");
+
                     let reply = from_binary_response::<CwPacketAckMsg>(&res).unwrap();
+                    debug_println!("received ack message from module ");
+
                     let packet = reply.original_packet;
                     let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
                     let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
@@ -337,6 +375,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         return Ok(Response::new());
                     }
 
+                    debug_println!(" after getting packet commitment ");
+
                     // TODO: check ack_commitment returned from module
                     self.delete_packet_commitment(
                         deps.storage,
@@ -360,6 +400,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 .map_err(Into::<ContractError>::into)?,
             },
             cosmwasm_std::SubMsgResult::Err(_) => {
+                debug_println!("error from module ack reply");
                 Err(PacketError::InvalidAcknowledgement).map_err(Into::<ContractError>::into)?
             }
         }

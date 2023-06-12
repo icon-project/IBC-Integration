@@ -199,7 +199,7 @@ pub fn init_xcall_mock_contract(mut ctx: TestContext, ibc_host: Addr) -> TestCon
             code_id,
             ctx.sender.clone(),
             &cw_xcall::msg::InstantiateMsg {
-                timeout_height: 5000000,
+                timeout_height: 500000,
                 ibc_host,
             },
             &[],

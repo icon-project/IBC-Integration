@@ -44,6 +44,8 @@ impl<'a> CwCallService<'a> {
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
+        // TODO: should be set to sender address for test case
+        // let from_address = "archway1q6lr3hy5cxk4g74k9wcqyqarf9e97ckpn7t963".to_string();
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),
@@ -70,12 +72,10 @@ impl<'a> CwCallService<'a> {
             .load(deps.as_ref().storage)
             .map_err(ContractError::Std)?;
 
-        // let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
-        //     port_id: ibc_config.src_endpoint().clone().port_id,
-        //     channel_id: ibc_config.src_endpoint().clone().channel_id,
-        // };
-
-        let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextClientSequence {};
+        let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
+            port_id: ibc_config.src_endpoint().clone().port_id,
+            channel_id: ibc_config.src_endpoint().clone().channel_id,
+        };
 
         let query_request = build_smart_query(
             ibc_host.to_string(),
@@ -89,13 +89,18 @@ impl<'a> CwCallService<'a> {
             .map_err(ContractError::Std)?;
 
         if need_response {
-            let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);
+            let request = CallRequest::new(
+                from_address.clone(),
+                to.clone(),
+                rollback_data,
+                need_response,
+            );
 
             self.set_call_request(deps.storage, sequence_no, request)?;
         }
 
         let call_request = CallServiceMessageRequest::new(
-            info.sender.to_string(),
+            from_address,
             to,
             sequence_no,
             need_response,
@@ -104,6 +109,8 @@ impl<'a> CwCallService<'a> {
 
         let message: CallServiceMessage = call_request.into();
         let timeout_height = self.get_timeout_height(deps.as_ref().storage);
+
+        debug_println!("the store timeout height is :{:?}", timeout_height);
 
         let event = event_xcall_message_sent(
             sequence_number_host,
@@ -144,6 +151,10 @@ impl<'a> CwCallService<'a> {
                 timeout_timestamp: 0,
             };
 
+            debug_println!(
+                "packet hex byte send is {:?}",
+                hex::encode(&packet_data.encode_to_vec())
+            );
             let message = cw_common::core_msg::ExecuteMsg::SendPacket {
                 packet: HexString::from_bytes(&packet_data.encode_to_vec()),
             };
