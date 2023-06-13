@@ -1,9 +1,9 @@
 ---
 chains:
   - name: icon
-    version: '3'
+    version: "3"
     environment: local
-    nid: '3'
+    nid: "3"
     keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
     keystore_password: gochain
     chain_config:
@@ -15,7 +15,7 @@ chains:
       image:
         repository: goloop/gochain-icon
         version: latest
-        uid_gid: ''
+        uid_gid: ""
     contracts:
       ibc: "$BASE_PATH/contracts/javascore/ibc/build/libs/ibc-0.1.0-optimized.jar"
       client: "$BASE_PATH/contracts/javascore/lightclients/mockclient/build/libs/mockclient-0.1.0-optimized.jar"
@@ -24,16 +24,16 @@ chains:
       dapp: "$BASE_PATH/contracts/javascore/modules/mock-dapp-multi-protocol/build/libs/mock-dapp-multi-protocol-0.1.0-optimized.jar"
 
   - name: archway
-    version: '3'
+    version: "3"
     environment: local
     chain_config:
       type: cosmos
       name: archway
       chain_id: archway-1
       image:
-        repository: archwaynetwork/archwayd
-        version: sha-8f53ac8
-        uid_gid: ''
+        repository: debendraoli/archwayd
+        version: latest
+        uid_gid: ""
       bin: archwayd
       bech32_prefix: archway
       denom: arch
@@ -42,7 +42,7 @@ chains:
       gas_adjustment: 1.3
       trusting_period: 508h
       no_host_mount: false
-    nid: '3'
+    nid: "3"
     keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
     keystore_password: gochain
     contracts:

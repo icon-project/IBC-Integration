@@ -25,4 +25,3 @@ func GetConfig() (*OuterConfig, error) {
 	var config = new(OuterConfig)
 	return config, viper.Unmarshal(config)
 }
-

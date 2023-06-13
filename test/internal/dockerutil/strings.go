@@ -30,7 +30,9 @@ func GetHostPort(cont types.ContainerJSON, portID string) string {
 		ip = "localhost"
 	}
 
-	// TODO differentiate port to fetch network port or local port separately
+    if runtime.GOOS == "darwin" {
+        return net.JoinHostPort(ip, m[0].HostPort)
+    }
 	return net.JoinHostPort(ip, m[1].HostPort)
 }
 

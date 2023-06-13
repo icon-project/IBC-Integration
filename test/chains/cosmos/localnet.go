@@ -6,15 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-
-	// "github.com/CosmWasm/go-cosmwasm"
-	// "github.com/CosmWasm/go-cosmwasm/rpc"
-	// "github.com/CosmWasm/go-cosmwasm/types"
 	"go.uber.org/zap"
+
+	"github.com/icon-project/ibc-integration/test/chains"
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 )
 
 var contracts = chains.ContractKey{

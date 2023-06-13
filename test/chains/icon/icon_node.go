@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/icon-project/ibc-integration/test/chains"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/docker/docker/api/types/mount"
+	"github.com/icon-project/ibc-integration/test/chains"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -29,7 +30,7 @@ import (
 const (
 	rpcPort              = "9080/tcp"
 	GOLOOP_IMAGE_ENV     = "GOLOOP_IMAGE"
-	GOLOOP_IMAGE         = "iconloop/goloop-icon"
+	GOLOOP_IMAGE         = "goloop"
 	GOLOOP_IMAGE_TAG_ENV = "GOLOOP_IMAGE_TAG"
 	GOLOOP_IMAGE_TAG     = "latest"
 )
@@ -81,6 +82,9 @@ func (in *IconNode) Name() string {
 func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 	imageRef := in.Image.Ref()
 	executablePath, err := os.Getwd()
+	if err != nil {
+		in.log.Error("Failed to get current working directory", zap.Error(err))
+	}
 	testBasePath := path.Dir(executablePath)
 	containerConfig := &types.ContainerCreateConfig{
 		Config: &container.Config{
@@ -116,14 +120,10 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 	}
 	cc, err := in.DockerClient.ContainerCreate(ctx, containerConfig.Config, containerConfig.HostConfig, containerConfig.NetworkingConfig, nil, in.Name())
 	if err != nil {
-		panic(err)
-	}
-	if err != nil {
-		return err
+		in.log.Error("Failed to create container", zap.Error(err))
 	}
 	in.ContainerID = cc.ID
 	return nil
-
 }
 
 func (in *IconNode) HostName() string {
@@ -231,8 +231,7 @@ func (in *IconNode) GetBalance(ctx context.Context, address string) (int64, erro
 func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
 	// Write Contract file to Docker volume
 	_, score := filepath.Split(scorePath)
-	err := in.CopyFile(ctx, scorePath, score)
-	if err != nil {
+	if err := in.CopyFile(ctx, scorePath, score); err != nil {
 		return "", fmt.Errorf("error copying keystore to Docker volume: %w", err)
 	}
 
@@ -374,7 +373,7 @@ func (in *IconNode) ExecCallTx(ctx context.Context, scoreAddress, methodName, ke
 	var output string
 	in.lock.Lock()
 	defer in.lock.Unlock()
-	stdout, _, err := in.Exec(ctx, in.ExecCallTxCommand(ctx, scoreAddress, methodName, keystorePath, params), nil)
+	stdout, _, err := in.Exec(ctx, in.ExecCallTxCommand(ctx, scoreAddress, methodName, keystorePath, params+" --gas auto"), nil)
 	if err != nil {
 		return "", err
 	}

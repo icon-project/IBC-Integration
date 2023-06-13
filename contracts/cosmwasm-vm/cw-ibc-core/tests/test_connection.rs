@@ -228,7 +228,7 @@ fn test_to_and_from_connection_open_confirm() {
 fn connection_open_init_from_raw_valid_parameter() {
     let default_raw_init_msg = get_dummy_raw_msg_conn_open_init();
     let res_msg = IbcMsgConnectionOpenInit::try_from(default_raw_init_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 
 #[test]
@@ -241,7 +241,7 @@ fn connection_invalid_client_id_parameter() {
         signer: get_dummy_bech32_account(),
     };
     let res_msg = IbcMsgConnectionOpenInit::try_from(default_raw_init_msg);
-    assert_eq!(res_msg.is_err(), true)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -257,14 +257,14 @@ fn connection_open_init_invalid_destination_connection_id() {
     };
 
     let res_msg = IbcMsgConnectionOpenInit::try_from(default_raw_init_msg);
-    assert_eq!(res_msg.is_err(), true)
+    assert!(res_msg.is_err())
 }
 
 #[test]
 fn connection_open_try_from_raw_valid_parameter() {
     let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
     let res_msg = MsgConnectionOpenTry::try_from(default_raw_try_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 
 #[test]
@@ -278,7 +278,7 @@ fn connection_open_try_destination_client_id_with_lower_case_and_special_charact
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 
 #[test]
@@ -289,7 +289,7 @@ fn connection_open_try_invalid_client_id_name_too_short() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -303,7 +303,7 @@ fn test_commitment_prefix() {
 fn connection_open_ack_from_raw_valid_parameter() {
     let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
     let res_msg = MsgConnectionOpenAck::try_from(default_raw_ack_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 
 #[test]
@@ -314,7 +314,7 @@ fn connection_open_ack_invalid_connection_id() {
         ..default_raw_ack_msg
     };
     let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -325,7 +325,7 @@ fn connection_open_ack_invalid_version() {
         ..default_raw_ack_msg
     };
     let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -339,7 +339,7 @@ fn connection_open_ack_invalid_proof_height_zero() {
         ..default_raw_ack_msg
     };
     let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -353,14 +353,14 @@ fn connection_open_ack_invalid_consensus_height_and_height_is_0() {
         ..default_raw_ack_msg
     };
     let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert!(res_msg.is_err())
 }
 
 #[test]
 fn connection_open_confirm_with_valid_parameter() {
     let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
     let res_msg = IbcMsgConnectionOpenConfirm::try_from(default_raw_confirm_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 
 #[test]
@@ -371,7 +371,7 @@ fn connection_open_confirm_invalid_connection_id_non_alpha() {
         ..default_raw_confirm_msg
     };
     let res_msg = IbcMsgConnectionOpenConfirm::try_from(confirm_msg);
-    assert_eq!(res_msg.is_err(), false)
+    assert!(res_msg.is_ok())
 }
 
 #[test]
@@ -385,7 +385,7 @@ fn connection_open_confirm_invalid_proof_height_zero() {
         ..default_raw_confirm_msg
     };
     let res_msg = IbcMsgConnectionOpenConfirm::try_from(confirm_msg);
-    assert_eq!(res_msg.is_err(), true)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -452,7 +452,7 @@ fn connection_open_init() {
 
     let res = contract.connection_open_init(deps.as_mut(), res_msg);
 
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
 }
 
 #[test]
@@ -793,7 +793,7 @@ fn connection_open_ack_validate() {
     let env = mock_env();
 
     let res = contract.connection_open_ack(deps.as_mut(), info, env, res_msg);
-    assert_eq!(res.is_ok(), true)
+    assert!(res.is_ok())
 }
 
 #[test]
@@ -861,7 +861,7 @@ fn connection_open_ack_executes() {
         result,
     };
     let res = contract.execute_connection_open_ack(deps.as_mut(), reply_msg);
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
 }
 
 #[test]
@@ -883,7 +883,7 @@ fn connection_validate_delay() {
 
     let result =
         contract.verify_connection_delay_passed(&deps.storage, env, packet_proof_height, conn_end);
-    assert_eq!(result.is_ok(), true)
+    assert!(result.is_ok())
 }
 
 #[test]
@@ -983,7 +983,7 @@ fn connection_open_try_execute() {
 
     let res = contract.execute_connection_open_try(deps.as_mut(), reply_msg);
 
-    assert_eq!(res.is_ok(), true)
+    assert!(res.is_ok())
 }
 
 #[test]
@@ -1053,7 +1053,7 @@ fn connection_open_try_validate() {
         .unwrap();
     let env = mock_env();
     let res = contract.connection_open_try(deps.as_mut(), info, env, res_msg);
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
 }
 
 #[test]
@@ -1213,7 +1213,7 @@ fn connection_open_confirm_validate() {
         .unwrap();
 
     let res = contract.connection_open_confirm(deps.as_mut(), info, res_msg);
-    assert_eq!(res.is_ok(), true)
+    assert!(res.is_ok())
 }
 
 #[test]
@@ -1274,7 +1274,7 @@ fn connection_open_confirm_execute() {
     };
     let res = contract.execute_connection_openconfirm(deps.as_mut(), reply_msg);
 
-    assert_eq!(res.is_ok(), true)
+    assert!(res.is_ok())
 }
 
 #[test]
@@ -1578,7 +1578,7 @@ fn test_update_connection_commitment() {
 
     let contract = CwIbcCoreContext::new();
     let res = contract.update_connection_commitment(&mut deps.storage, conn_id, conn_end);
-    assert_eq!(res.is_ok(), true)
+    assert!(res.is_ok())
 }
 
 #[test]
@@ -1606,7 +1606,7 @@ fn test_check_connection() {
         .connection_end(deps.as_ref().storage, conn_id)
         .unwrap();
     let res = contract.check_for_connection(&mut deps.storage, client_id);
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
 }
 
 #[test]
@@ -1629,7 +1629,7 @@ fn connection_open_try_invalid_client_id_name_too_long() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_err(), true)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -1643,7 +1643,7 @@ fn connection_open_try_with_valid_client_id_with_special_chars() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 
 #[test]
@@ -1654,7 +1654,7 @@ fn connection_open_try_empty_counterparty_versions() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -1668,7 +1668,7 @@ fn connection_open_try_invalid_proof_height_zero() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -1682,7 +1682,7 @@ fn connection_open_try_invalid_consensus_height_zero() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -1693,7 +1693,7 @@ fn connection_open_try_empty_proof() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 
 #[test]

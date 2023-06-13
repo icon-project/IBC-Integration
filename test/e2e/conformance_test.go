@@ -72,21 +72,19 @@ func TestConformance(t *testing.T) {
 
 		SkipPathCreation: false},
 	))
-	chainA.BuildWallets(ctx, owner)
-	chainB.BuildWallets(ctx, owner)
+	require.NoError(t, chainA.BuildWallets(ctx, owner))
+	require.NoError(t, chainB.BuildWallets(ctx, owner))
 
-	chainA.BuildWallets(ctx, user)
-	chainB.BuildWallets(ctx, user)
+	require.NoError(t, chainA.BuildWallets(ctx, user))
+	require.NoError(t, chainB.BuildWallets(ctx, user))
 
 	ctx, err = chainA.SetupIBC(ctx, owner)
+	require.NoError(t, err)
 	contracts1 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 	ctx, err = chainB.SetupIBC(ctx, owner)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
+
 	contracts2 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
 	fmt.Println(contracts1.ContractAddress)
 	fmt.Println(contracts2.ContractAddress)
@@ -113,7 +111,8 @@ func TestConformance(t *testing.T) {
 
 		SkipPathCreation: false},
 	))
-	r.StartRelayer(ctx, eRep, ibcPath)
+
+	require.NoError(t, r.StartRelayer(ctx, eRep, ibcPath))
 	nid1 := cfg.ChainSpecs[0].ChainConfig.ChainID
 	nid2 := cfg.ChainSpecs[1].ChainConfig.ChainID
 
@@ -125,17 +124,21 @@ func TestConformance(t *testing.T) {
 	dst := nid2 + "/" + contracts2.ContractAddress["dapp"]
 	_, reqId, err := chainA.XCall(context.Background(), chainB, user, dst, []byte(msg), nil)
 	ctx, err = chainB.ExecuteCall(ctx, reqId)
+	require.NoError(t, err)
 	fmt.Println(ctx.Value("txResult"))
 
 	msg = "rollback"
 	rollback := "rollback data"
 	sn, reqId, err := chainA.XCall(context.Background(), chainB, user, dst, []byte(msg), []byte(rollback))
+	require.NoError(t, err)
 
 	ctx, err = chainB.ExecuteCall(ctx, reqId)
+	require.NoError(t, err)
 	fmt.Println(ctx.Value("txResult"))
 	time.Sleep(10 * time.Second)
 
 	ctx, err = chainA.ExecuteRollback(ctx, sn)
+	require.NoError(t, err)
 	fmt.Println(ctx.Value("txResult"))
 	r.StopRelayer(ctx, eRep)
 }
