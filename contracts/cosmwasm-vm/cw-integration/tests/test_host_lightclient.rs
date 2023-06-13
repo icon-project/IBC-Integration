@@ -13,7 +13,7 @@ use cw_integration::TestSteps;
 use cw_multi_test::{App, AppResponse, Executor};
 
 use setup::{
-    init_ibc_core_contract, init_light_client, init_xcall_mock_contract, setup_context, TestContext,
+    init_ibc_core_contract, init_light_client, init_xcall_contract, setup_context, TestContext, init_xcall_ibc_connection_contract, init_xcall_app_contract,
 };
 use test_utils::{get_event, get_event_name, load_raw_payloads};
 
@@ -22,7 +22,7 @@ use crate::setup::raw_payload_to_map;
 fn setup_test(payload_file: &str) -> TestContext {
     let data = raw_payload_to_map(load_raw_payloads(payload_file));
     let mut context = setup_context(Some(data));
-    context = setup_contracts(context);
+    context = setup_xcall_multi_contracts(context);
     context
 }
 
@@ -30,7 +30,16 @@ pub fn setup_contracts(mut ctx: TestContext) -> TestContext {
     ctx = init_light_client(ctx);
     ctx = init_ibc_core_contract(ctx);
     let ibc_addr = ctx.get_ibc_core();
-    ctx = init_xcall_mock_contract(ctx, ibc_addr);
+    ctx = init_xcall_contract(ctx, ibc_addr);
+    ctx
+}
+
+pub fn setup_xcall_multi_contracts(mut ctx: TestContext) -> TestContext {
+    ctx = init_light_client(ctx);
+    ctx = init_ibc_core_contract(ctx);
+    ctx=  init_xcall_ibc_connection_contract(ctx);
+    let ibc_addr = ctx.get_ibc_core();
+    ctx = init_xcall_app_contract(ctx);
     ctx
 }
 
@@ -206,13 +215,28 @@ pub fn call_receive_packet(ctx: &mut TestContext) -> Result<AppResponse, AppErro
     )
 }
 
-fn call_bind_port(ctx: &mut TestContext, port_name: &str) -> Result<AppResponse, AppError> {
+fn call_bind_port(ctx: &mut TestContext, port_name: &str,addr:&str) -> Result<AppResponse, AppError> {
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::BindPort {
             port_id: port_name.to_string(),
-            address: ctx.get_xcall_app().to_string(),
+            address: addr.to_string(),
+        },
+        &[],
+    )
+}
+
+fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        Addr::unchecked("archway1q6lr3hy5cxk4g74k9wcqyqarf9e97ckpn7t963"),
+        ctx.get_xcall_app(),
+        &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
+            to: "eth".to_string(),
+            sources:vec![],
+            destinations:vec![],
+            data,
+            rollback: None,
         },
         &[],
     )
@@ -255,6 +279,17 @@ pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) 
     res
 }
 
+pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_xcall_ibc_connection(),
+        &cw_common::xcall_connection_msg::ExecuteMsg::SetXCallHost {
+            address: ctx.get_xcall_app().to_string(),
+        },
+        &[],
+    )
+}
+
 #[test]
 fn test_register_client() {
     let mut ctx = setup_test("icon_to_archway_raw.json");
@@ -291,7 +326,7 @@ fn test_packet_receiver() {
     let mut ctx = test_icon_to_arcway_handshake();
 
     let result = call_receive_packet(&mut ctx);
-
+    println!("{:?}",result);
     assert!(result.is_ok());
     println!("{:?}", &result);
 }
@@ -301,7 +336,8 @@ fn test_packet_send() {
     let mut ctx = test_archway_to_icon_handshake();
 
     let data = [123, 100, 95, 112, 97];
-    let result = call_xcall_message(&mut ctx, data.into());
+    let result = call_xcall_app_message(&mut ctx, data.into());
+    println!("{:?}",result);
     assert!(result.is_ok());
     println!("Packet Send Ok {:?}", &result);
 
@@ -315,8 +351,11 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     // complete handshake
     let mut ctx = setup_test("icon_to_archway_raw.json");
     let port_name = "mock";
-    call_bind_port(&mut ctx, port_name.clone()).unwrap();
+    let module_address=ctx.get_xcall_ibc_connection().to_string();
+    call_bind_port(&mut ctx, port_name.clone(),&module_address).unwrap();
     call_register_client_type(&mut ctx).unwrap();
+    call_set_xcall_host(&mut ctx).unwrap();
+    
     let res = query_get_capability(&ctx.app, port_name.to_string(), ctx.get_ibc_core());
 
     println!("mock app address {res:?}");
@@ -338,8 +377,6 @@ fn test_icon_to_arcway_handshake() -> TestContext {
 
     let result = call_channel_open_try(&mut ctx);
 
-    println!("{result:?}");
-
     assert!(result.is_ok());
     println!("Channel Open Try Ok{:?}", &result);
 
@@ -354,7 +391,8 @@ fn test_archway_to_icon_handshake() -> TestContext {
     // complete handshake
     let mut ctx = setup_test("archway_to_icon_raw.json");
     let port_name = "mock";
-    call_bind_port(&mut ctx, port_name.clone()).unwrap();
+    let module_address=ctx.get_xcall_ibc_connection().to_string();
+    call_bind_port(&mut ctx, port_name.clone(),&module_address).unwrap();
     call_register_client_type(&mut ctx).unwrap();
     let res = query_get_capability(&ctx.app, port_name.to_string(), ctx.get_ibc_core());
 
@@ -376,6 +414,7 @@ fn test_archway_to_icon_handshake() -> TestContext {
     println!("Conn Open ack Ok {:?}", &result);
 
     let result = call_channel_open_init(&mut ctx);
+    println!("{:?}",result);
 
     assert!(result.is_ok());
     println!("Channel Open init Ok{:?}", &result);
@@ -383,7 +422,7 @@ fn test_archway_to_icon_handshake() -> TestContext {
     let result = call_channel_open_ack(&mut ctx);
     assert!(result.is_ok());
 
-    println!("Channel Open ack Ok {:?}", &result);
+   // println!("Channel Open ack Ok {:?}", &result);
     ctx
 }
 

@@ -1,4 +1,5 @@
-use cosmwasm_std::from_slice;
+use cosmwasm_std::{from_slice, to_vec};
+use debug_print::debug_println;
 
 use crate::{
     state::{HOST_FORWARD_REPLY_ID, XCALL_FORWARD_REPLY_ID},
@@ -328,6 +329,8 @@ impl<'a> CwIbcConnection<'a> {
     /// `ContractError` is an enum that represents any errors that may occur during the execution of the
     /// function.
     fn on_channel_open(&self, msg: CwChannelOpenMsg) -> Result<Response, ContractError> {
+        debug_println!("[IbcConnection]: Called On channel open");
+        println!("{:?}",msg);
         let ibc_endpoint = match msg.clone() {
             CwChannelOpenMsg::OpenInit { channel } => channel.endpoint,
             CwChannelOpenMsg::OpenTry {
@@ -338,10 +341,12 @@ impl<'a> CwIbcConnection<'a> {
         let channel = msg.channel();
 
         check_order(&channel.order)?;
+        debug_println!("[IbcConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
         }
+        debug_println!("[IbcConnection]: check version pass");
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())
@@ -454,7 +459,7 @@ impl<'a> CwIbcConnection<'a> {
         match self.receive_packet_data(deps, msg.packet) {
             Ok(ibc_response) => Ok(Response::new()
                 .add_attributes(ibc_response.attributes.clone())
-                .set_data(ibc_response.acknowledgement)
+                .set_data(to_vec(&ibc_response).unwrap())
                 .add_events(ibc_response.events)),
             Err(error) => Ok(Response::new()
                 .add_attribute("method", "ibc_packet_receive")

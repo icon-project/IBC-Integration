@@ -138,7 +138,7 @@ pub fn ibc_core_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-pub fn xcall_mock_contract() -> Box<dyn Contract<Empty>> {
+pub fn xcall_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(cw_xcall::execute, cw_xcall::instantiate, cw_xcall::query)
         .with_reply(cw_xcall::reply);
     Box::new(contract)
@@ -191,8 +191,8 @@ pub fn init_ibc_core_contract(mut ctx: TestContext) -> TestContext {
     ctx
 }
 
-pub fn init_xcall_mock_contract(mut ctx: TestContext, ibc_host: Addr) -> TestContext {
-    let code_id = ctx.app.store_code(xcall_mock_contract());
+pub fn init_xcall_contract(mut ctx: TestContext, ibc_host: Addr) -> TestContext {
+    let code_id = ctx.app.store_code(xcall_contract());
     let addr = ctx
         .app
         .instantiate_contract(

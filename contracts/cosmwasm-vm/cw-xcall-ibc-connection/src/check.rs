@@ -7,7 +7,7 @@ use cw_common::cw_types::CwOrder;
 
 pub fn check_order(order: &CwOrder) -> Result<(), ContractError> {
     if order != &APP_ORDER {
-        Err(ContractError::OrderedChannel {})
+        Err(ContractError::UnOrderedChannel  {})
     } else {
         Ok(())
     }

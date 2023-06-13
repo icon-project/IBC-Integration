@@ -1,4 +1,5 @@
 use cosmwasm_std::DepsMut;
+use debug_print::debug_println;
 
 use super::*;
 use crate::{events::event_packet_received, state::XCALL_FORWARD_REPLY_ID};
@@ -35,7 +36,8 @@ impl<'a> CwIbcConnection<'a> {
         message: CwPacket,
     ) -> Result<CwReceiveResponse, ContractError> {
         let event = event_packet_received(&message);
-        let data = message.data;
+        debug_println!("[IBCConnection]: forwarding to xcall");
+        let data = message.data.clone();
         let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::ReceiveCallMessage { data: data.0 };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self
@@ -45,13 +47,21 @@ impl<'a> CwIbcConnection<'a> {
             msg: to_binary(&xcall_msg).unwrap(),
             funds: vec![],
         });
+        debug_println!("[IBCConnection]: message payload built");
+        
+        let acknowledgement_data =
+        to_binary(&cw_common::client_response::XcallPacketResponseData {
+            packet: message.clone(),
+            acknowledgement: make_ack_success().to_vec(),
+        })
+        .map_err(ContractError::Std)?;
 
         let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, XCALL_FORWARD_REPLY_ID);
 
         Ok(CwReceiveResponse::new()
             .add_attribute("action", "receive_packet_data")
             .add_attribute("method", "forward_to_xcall")
-            .set_ack(make_ack_success().to_vec())
+            .set_ack(acknowledgement_data)
             .add_event(event)
             .add_submessage(sub_msg))
     }
