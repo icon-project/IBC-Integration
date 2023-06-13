@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/strangelove-ventures/interchaintest/v7/relayer/rly"
 	"strings"
 
 	// "github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -45,22 +46,33 @@ func NewICONRelayer(log *zap.Logger, testName string, cli *client.Client, networ
 }
 
 type ICONRelayerChainConfigValue struct {
-	Key               string `json:"key"`
-	ChainID           string `json:"chain-id"`
-	RPCAddr           string `json:"rpc-addr"`
-	Timeout           string `json:"timeout"`
-	Keystore          string `json:"keystore"`
-	Password          string `json:"password"`
-	IconNetworkID     int    `json:"icon-network-id"`
-	BtpNetworkID      int    `json:"btp-network-id"`
-	StartBtpHeight    int    `json:"start-btp-height"`
-	BTPNetworkTypeID  int    `json:"btp-network-type-id"`
-	IbcHandlerAddress string `json:"ibc-handler-address"`
+	Key                   string `json:"key"`
+	ChainID               string `json:"chain-id"`
+	RPCAddr               string `json:"rpc-addr"`
+	Timeout               string `json:"timeout"`
+	Keystore              string `json:"keystore"`
+	Password              string `json:"password"`
+	IconNetworkID         int    `json:"icon-network-id"`
+	BtpNetworkID          int    `json:"btp-network-id"`
+	StartBtpHeight        int    `json:"start-btp-height"`
+	BTPNetworkTypeID      int    `json:"btp-network-type-id"`
+	IBCHandlerAddress     string `json:"ibc-handler-address"`
+	ArchwayHandlerAddress string `json:"archway-handler-address"`
+}
+
+type ArchRelayerChainConfigValue struct {
+	rly.CosmosRelayerChainConfigValue
+	IBCHandlerAddress string `json:"ibc-handler-address"`
 }
 
 type ICONRelayerChainConfig struct {
 	Type  string                      `json:"type"`
 	Value ICONRelayerChainConfigValue `json:"value"`
+}
+
+type ArchRelayerChainConfig struct {
+	Type  string                      `json:"type"`
+	Value ArchRelayerChainConfigValue `json:"value"`
 }
 
 const (
@@ -93,7 +105,7 @@ func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, r
 			BtpNetworkID:      chainConfig.ConfigFileOverrides["btp-network-id"].(int),
 			StartBtpHeight:    chainConfig.ConfigFileOverrides["start-btp-height"].(int),
 			BTPNetworkTypeID:  chainConfig.ConfigFileOverrides["btp-network-type-id"].(int),
-			IbcHandlerAddress: chainConfig.ConfigFileOverrides["ibc-handler-address"].(string),
+			IBCHandlerAddress: chainConfig.ConfigFileOverrides["ibc-handler-address"].(string),
 		},
 	}
 }
@@ -235,12 +247,32 @@ func (commander) UpdateClients(pathName, homeDir string) []string {
 }
 
 func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string) ([]byte, error) {
-	ICONRelayerChainConfig := ChainConfigToICONRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
-	jsonBytes, err := json.Marshal(ICONRelayerChainConfig)
-	if err != nil {
-		return nil, err
+
+	switch chainType := cfg.Type; chainType {
+	case "cosmos":
+		cosmosRelayerChainConfig := rly.ChainConfigToCosmosRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
+
+		archRelayerChainConfig := &ArchRelayerChainConfig{
+			Type: cosmosRelayerChainConfig.Type,
+			Value: ArchRelayerChainConfigValue{
+				CosmosRelayerChainConfigValue: cosmosRelayerChainConfig.Value,
+				IBCHandlerAddress:             cfg.ConfigFileOverrides["ibc-handler-address"].(string), //  "ibc-handler-address", //TODO
+			},
+		}
+		jsonBytes, err := json.Marshal(archRelayerChainConfig)
+		if err != nil {
+			return nil, err
+		}
+		return jsonBytes, nil
+
+	default:
+		ICONRelayerChainConfig := ChainConfigToICONRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
+		jsonBytes, err := json.Marshal(ICONRelayerChainConfig)
+		if err != nil {
+			return nil, err
+		}
+		return jsonBytes, nil
 	}
-	return jsonBytes, nil
 }
 
 func (commander) DefaultContainerImage() string {

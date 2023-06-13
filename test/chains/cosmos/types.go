@@ -1,18 +1,24 @@
 package cosmos
 
 import (
+	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"time"
 
 	"github.com/icon-project/icon-bridge/common/codec"
-	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 type CosmosLocalnet struct {
 	*cosmos.CosmosChain
+	cfg          ibc.ChainConfig
 	keyName      string
 	filepath     map[string]string
-	ibcAddresses map[string]string
+	IBCAddresses map[string]string
+}
+
+func (c *CosmosLocalnet) Config() ibc.ChainConfig {
+	return c.cfg
 }
 
 type Query struct {

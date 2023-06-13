@@ -26,6 +26,7 @@ func NewCosmosLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainCo
 	chain := cosmos.NewCosmosChain(testName, chainConfig, numValidators, numFullNodes, log)
 	return &CosmosLocalnet{
 		CosmosChain: chain,
+		cfg:         chain.Config(),
 		keyName:     keyPassword,
 		filepath:    contracts,
 	}, nil
@@ -38,7 +39,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 
 	ibcCodeId, err := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath["ibc"])
 	if err != nil {
-		return ctx, err
+		return nil, err
 	}
 
 	ibcAddress, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, ibcCodeId, "{}", true)
@@ -47,7 +48,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 	}
 
 	clientCodeId, err := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath["client"])
-	fmt.Println(clientCodeId)
+	fmt.Printf("clientId --%s", clientCodeId)
 	if err != nil {
 		return ctx, err
 	}
@@ -93,16 +94,14 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 
 	err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"bind_port":{"port_id":"mock", "address":"`+connectionAddress+`"}}`)
 	fmt.Println(err)
-	c.ibcAddresses = contracts.ContractAddress
-	// overrides := map[string]any{
-	// 	"ibc-handler-address": ibcAddress,
-	// 	"start-btp-height":    height + 1,
-	// 	"btp-network-id":      btpNetworkId,
-	// }
+	c.IBCAddresses = contracts.ContractAddress
+	overrides := map[string]any{
+		"ibc-handler-address": ibcAddress,
+	}
 
-	// cfg := c.cfg
-	// cfg.ConfigFileOverrides = overrides
-	// c.cfg = cfg
+	cfg := c.cfg
+	cfg.ConfigFileOverrides = overrides
+	c.cfg = cfg
 
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
 		ContractAddress: contracts.ContractAddress,

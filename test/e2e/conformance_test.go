@@ -18,7 +18,7 @@ import (
 
 const (
 	relayerImageEnv    = "RELAYER_IMAGE"
-	relayerImage       = "debendraoli/relayer"
+	relayerImage       = "relayer"
 	relayerImageTagEnv = "RELAYER_IMAGE_TAG"
 	relayerImageTag    = "latest"
 )
@@ -80,10 +80,13 @@ func TestConformance(t *testing.T) {
 
 	ctx, err = chainA.SetupIBC(ctx, owner)
 	contracts1 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-	fmt.Println(err)
+	if err != nil {
+		panic(err)
+	}
 	ctx, err = chainB.SetupIBC(ctx, owner)
-	fmt.Println(err)
-
+	if err != nil {
+		panic(err)
+	}
 	contracts2 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
 	fmt.Println(contracts1.ContractAddress)
 	fmt.Println(contracts2.ContractAddress)
@@ -101,7 +104,6 @@ func TestConformance(t *testing.T) {
 		Path:              ibcPath,
 		CreateChannelOpts: opts,
 	})
-
 	// Start the Relay
 	require.NoError(t, ic.BuildRelayer(ctx, eRep, interchaintest.InterchainBuildOptions{
 		TestName:          t.Name(),
@@ -111,7 +113,6 @@ func TestConformance(t *testing.T) {
 
 		SkipPathCreation: false},
 	))
-
 	r.StartRelayer(ctx, eRep, ibcPath)
 	nid1 := cfg.ChainSpecs[0].ChainConfig.ChainID
 	nid2 := cfg.ChainSpecs[1].ChainConfig.ChainID
