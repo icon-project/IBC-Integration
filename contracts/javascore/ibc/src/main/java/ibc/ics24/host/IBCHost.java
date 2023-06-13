@@ -75,15 +75,4 @@ public class IBCHost extends IBCStore {
         Context.call(chainScore, "sendBTPMessage", id, message);
     }
 
-    public boolean portExists(String portId) {
-        int size = portIds.size();
-        for (int i = 0; i < size; i++) {
-            if (portIds.get(i).equals(portId)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
 }
