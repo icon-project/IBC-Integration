@@ -53,6 +53,7 @@ pub fn get_dummy_raw_msg_recv_packet(height: u64) -> RawMsgRecvPacket {
 fn test_receive_packet() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
+    let env = mock_env();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
@@ -106,7 +107,13 @@ fn test_receive_packet() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -115,13 +122,14 @@ fn test_receive_packet() {
     .unwrap();
 
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();
@@ -146,7 +154,7 @@ fn test_receive_packet() {
             chan_end_on_b.clone(),
         )
         .unwrap();
-    let res = contract.validate_receive_packet(deps.as_mut(), info, &msg);
+    let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 521);
@@ -160,14 +168,18 @@ fn test_receive_packet_validate_reply_from_light_client() {
 
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
     let packet = msg.packet.clone();
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let _module_id =
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_b.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+
     let module = Addr::unchecked("contractaddress");
+
     contract
-        .add_route(&mut deps.storage, module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
     let packet_repsone = PacketResponse {
         seq_on_a: msg.packet.sequence,
@@ -237,14 +249,18 @@ fn test_receive_packet_validate_reply_from_light_client_fail() {
 
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
     let packet = msg.packet.clone();
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let _module_id =
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_b.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+
     let module = Addr::unchecked("contractaddress");
+
     contract
-        .add_route(&mut deps.storage, module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let packet_repsone = PacketResponse {
@@ -358,7 +374,7 @@ fn execute_receive_packet() {
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
 
-    assert_eq!(res.unwrap().events[0].ty, "receive_packet")
+    assert_eq!(res.unwrap().events[0].ty, "recv_packet")
 }
 
 #[test]
@@ -434,7 +450,7 @@ fn execute_receive_packet_ordered() {
         IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
     );
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().events[0].ty, "receive_packet");
+    assert_eq!(res.unwrap().events[0].ty, "recv_packet");
     assert!(seq.is_ok());
     assert_eq!(seq.unwrap(), 2.into())
 }
@@ -510,9 +526,10 @@ fn test_receive_packet_fail_missing_channel() {
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let env = mock_env();
 
     contract
-        .validate_receive_packet(deps.as_mut(), info, &msg)
+        .validate_receive_packet(deps.as_mut(), info, env, &msg)
         .unwrap();
 }
 
@@ -523,17 +540,19 @@ fn test_lookup_module_packet() {
     let module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    ctx.store_module_by_port(
+    ctx.claim_capability(
         &mut deps.storage,
-        msg.packet.port_id_on_a.clone(),
-        module_id,
+        msg.packet.port_id_on_a.as_bytes().to_vec(),
+        module_id.to_string(),
     )
     .unwrap();
-    let channel_msg = PacketMsg::Recv(msg);
-    let res = ctx.lookup_module_packet(&mut deps.storage, &channel_msg);
+    let res = ctx.lookup_modules(
+        &mut deps.storage,
+        msg.packet.port_id_on_a.to_string().as_bytes().to_vec(),
+    );
 
     assert!(res.is_ok());
-    assert_eq!("contractaddress", res.unwrap().to_string())
+    assert_eq!("contractaddress", res.unwrap())
 }
 
 #[test]

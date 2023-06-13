@@ -3,8 +3,11 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::traits::AnyTypes;
 use common::{client_state::IClientState, consensus_state::IConsensusState};
+use cosmwasm_std::Env;
 use prost::DecodeError;
 use prost::Message;
+
+use crate::ics24_host::LastProcessedOn;
 
 use super::*;
 
@@ -385,12 +388,10 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<Vec<u8>, ContractError> {
-        let client_key = commitment::client_state_commitment_key(&client_id);
-
         let client_state = self
             .ibc_store()
-            .commitments()
-            .load(store, client_key)
+            .client_states()
+            .load(store, client_id.clone())
             .map_err(|_| ContractError::IbcDecodeError {
                 error: DecodeError::new("NotFound ClientId(".to_owned() + client_id.as_str() + ")"),
             })?;
@@ -482,7 +483,10 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Any, ContractError> {
         let client_key = commitment::client_state_commitment_key(client_id);
 
-        let client_state_any_data = self.ibc_store().commitments().load(store, client_key)?;
+        let client_state_any_data = self
+            .ibc_store()
+            .client_states()
+            .load(store, client_id.clone())?;
         let client_state_any =
             Any::decode(client_state_any_data.as_slice()).map_err(Into::<ContractError>::into)?;
         Ok(client_state_any)
@@ -494,7 +498,12 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: &common::ibc::Height,
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
-        let consensus_state_any = self.consensus_state_any(store, client_id, height)?;
+        let consensus_state_key = commitment::consensus_state_commitment_key(
+            client_id,
+            height.revision_number(),
+            height.revision_height(),
+        );
+        let consensus_state_any = self.consensus_state_any(store, client_id)?;
 
         let consensus_state: ConsensusState =
             ConsensusState::from_any(consensus_state_any).map_err(Into::<ContractError>::into)?;
@@ -506,18 +515,11 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &dyn Storage,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-        height: &common::ibc::Height,
     ) -> Result<Any, ContractError> {
-        let consensus_state_key = commitment::consensus_state_commitment_key(
-            client_id,
-            height.revision_number(),
-            height.revision_height(),
-        );
-
         let consensus_state_data = self
             .ibc_store()
-            .commitments()
-            .load(store, consensus_state_key)?;
+            .consensus_states()
+            .load(store, client_id.clone())?;
         let consensus_state_any =
             Any::decode(consensus_state_data.as_slice()).map_err(Into::<ContractError>::into)?;
         Ok(consensus_state_any)
@@ -545,19 +547,18 @@ impl<'a> CwIbcCoreContext<'a> {
     //     todo!()
     // }
 
-    pub fn host_height(&self) -> Result<common::ibc::Height, ContractError> {
-        let height = common::ibc::Height::new(10, 10).map_err(Into::<ContractError>::into)?;
+    pub fn host_height(&self, env: &Env) -> Result<common::ibc::Height, ContractError> {
+        let height = env.block.height;
+        let height = common::ibc::Height::new(0, height).map_err(Into::<ContractError>::into)?;
         Ok(height)
     }
 
     pub fn host_timestamp(
         &self,
-        store: &dyn Storage,
+        env: &Env,
     ) -> Result<common::ibc::timestamp::Timestamp, ContractError> {
-        //TODO Update timestamp logic
-        let duration = self.ibc_store().expected_time_per_block().load(store)?;
-        let block_time = Duration::from_secs(duration);
-        IbcTimestamp::from_nanoseconds(block_time.as_nanos() as u64)
+        let current_timestamp = env.block.time;
+        IbcTimestamp::from_nanoseconds(current_timestamp.nanos())
             .map_err(|_e| ContractError::FailedConversion)
     }
 
@@ -579,18 +580,30 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn client_update_time(
         &self,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-        height: &common::ibc::Height,
+        time_nanos: u64,
     ) -> Result<common::ibc::timestamp::Timestamp, ContractError> {
-        Ok(IbcTimestamp::none())
+        Ok(IbcTimestamp::from_nanoseconds(time_nanos).unwrap())
     }
 
     pub fn client_update_height(
         &self,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-        height: &common::ibc::Height,
+        height: u64,
     ) -> Result<common::ibc::Height, ContractError> {
-        let height = common::ibc::Height::new(10, 10).map_err(Into::<ContractError>::into)?;
+        let height = common::ibc::Height::new(0, height).map_err(Into::<ContractError>::into)?;
         Ok(height)
+    }
+
+    pub fn last_processed_on(
+        &self,
+        store: &dyn Storage,
+        client_id: &common::ibc::core::ics24_host::identifier::ClientId,
+    ) -> Result<LastProcessedOn, ContractError> {
+        return self
+            .ibc_store()
+            .last_processed_on()
+            .load(store, client_id.clone())
+            .map_err(Into::<ContractError>::into);
     }
 
     pub fn max_expected_time_per_block(&self) -> std::time::Duration {
@@ -602,14 +615,20 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_client_state(
         &self,
         store: &mut dyn Storage,
+        env: &Env,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-        client_state: Vec<u8>,
+        client_state_any: Vec<u8>,
+        client_state_hash: Vec<u8>,
     ) -> Result<(), ContractError> {
         let client_key = commitment::client_state_commitment_key(client_id);
+        self.ibc_store()
+            .client_states()
+            .save(store, client_id.clone(), &client_state_any)?;
 
         self.ibc_store()
             .commitments()
-            .save(store, client_key, &client_state)?;
+            .save(store, client_key, &client_state_hash)?;
+        self.store_last_processed_on(store, env, client_id)?;
 
         Ok(())
     }
@@ -619,7 +638,8 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &mut dyn Storage,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: common::ibc::Height,
-        consensus_state: Vec<u8>,
+        consensus_state_any: Vec<u8>,
+        consensus_state_hash: Vec<u8>,
     ) -> Result<(), ContractError> {
         let consensus_key = commitment::consensus_state_commitment_key(
             client_id,
@@ -628,9 +648,29 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         self.ibc_store()
-            .commitments()
-            .save(store, consensus_key, &consensus_state)?;
+            .consensus_states()
+            .save(store, client_id.clone(), &consensus_state_any)?;
 
+        self.ibc_store()
+            .commitments()
+            .save(store, consensus_key, &consensus_state_hash)?;
+
+        Ok(())
+    }
+
+    pub fn store_last_processed_on(
+        &self,
+        store: &mut dyn Storage,
+        env: &Env,
+        client_id: &common::ibc::core::ics24_host::identifier::ClientId,
+    ) -> Result<(), ContractError> {
+        let last_processed = LastProcessedOn {
+            height: env.block.height,
+            timestamp: env.block.time.nanos(),
+        };
+        self.ibc_store()
+            .last_processed_on()
+            .save(store, client_id.clone(), &last_processed)?;
         Ok(())
     }
 

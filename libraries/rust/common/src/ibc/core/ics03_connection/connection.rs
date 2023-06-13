@@ -21,19 +21,6 @@ use crate::ibc::core::ics24_host::error::ValidationError;
 use crate::ibc::core::ics24_host::identifier::{ClientId, ConnectionId};
 use crate::ibc::timestamp::ZERO_DURATION;
 
-#[cfg_attr(
-    feature = "parity-scale-codec",
-    derive(
-        parity_scale_codec::Encode,
-        parity_scale_codec::Decode,
-        scale_info::TypeInfo
-    )
-)]
-#[cfg_attr(
-    feature = "borsh",
-    derive(borsh::BorshSerialize, borsh::BorshDeserialize)
-)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct IdentifiedConnectionEnd {
     pub connection_id: ConnectionId,

@@ -57,7 +57,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
             .newBranchDB(PACKET_RECEIPTS, Boolean.class);
 
     public static final DictDB<byte[],Address> capabilities = Context.newDictDB(CAPABILITIES, Address.class);
-    public static final ArrayDB<byte[]> portIds = Context.newArrayDB(PORT_IDS, byte[].class);
+    public static final ArrayDB<String> portIds = Context.newArrayDB(PORT_IDS, String.class);
     // Host Parameters
     public static final VarDB<BigInteger> expectedTimePerBlock = Context.newVarDB(EXPECTED_TIME_PER_BLOCK, BigInteger.class);
 
@@ -125,8 +125,8 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     }
 
     @External(readonly = true)
-    public List<byte[]> getBindPorts() {
-        List<byte[]> ports = new ArrayList<>();
+    public List<String> getAllPorts() {
+        List<String> ports = new ArrayList<>();
         final int size = portIds.size();
         for (int i = 0; i < size; i++) {
             ports.add(i, portIds.get(i));

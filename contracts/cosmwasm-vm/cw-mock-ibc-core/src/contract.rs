@@ -12,8 +12,9 @@ use cw_common::raw_types::channel::RawPacket;
 use cw_common::ProstMessage;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg};
 use crate::state::{State, STATE};
+use cw_common::core_msg::QueryMsg;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-mock-ibc-core";
@@ -157,7 +158,7 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::SequenceSend {
+        QueryMsg::GetNextSequenceSend {
             port_id: _,
             channel_id: _,
         } => {
@@ -165,6 +166,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
             Ok(to_binary(&state.sequence).unwrap())
         }
+        _ => Err(cosmwasm_std::StdError::NotFound {
+            kind: "Query Not Found".to_string(),
+        }),
     }
 }
 

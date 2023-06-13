@@ -34,15 +34,16 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn timeout_packet_validate(
         &self,
         deps: DepsMut,
+        env: Env,
         info: MessageInfo,
         timeout_msg_type: TimeoutMsgType,
     ) -> Result<Response, ContractError> {
         match timeout_msg_type {
             TimeoutMsgType::Timeout(msg) => {
-                self.timeout_packet_validate_to_light_client(deps, info, msg)
+                self.timeout_packet_validate_to_light_client(deps, info, env, msg)
             }
             TimeoutMsgType::TimeoutOnClose(msg) => {
-                self.timeout_on_close_packet_validate_to_light_client(deps, info, msg)
+                self.timeout_on_close_packet_validate_to_light_client(deps, info, env, msg)
             }
         }
     }

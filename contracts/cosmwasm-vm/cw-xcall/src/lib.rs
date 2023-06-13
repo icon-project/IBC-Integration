@@ -55,7 +55,7 @@ use cw_common::cw_types::{
     CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
 
-use cosmwasm_std::{to_vec, QueryRequest};
+use cosmwasm_std::to_vec;
 use cw2::set_contract_version;
 use cw_common::ibc_types::IbcHeight as Height;
 use cw_common::types::Ack;
@@ -182,4 +182,12 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
     let call_service = CwCallService::default();
 
     call_service.reply(deps, env, msg)
+}
+
+#[cw_serde]
+pub struct MigrateMsg {}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::default().add_attribute("migrate", "successful"))
 }

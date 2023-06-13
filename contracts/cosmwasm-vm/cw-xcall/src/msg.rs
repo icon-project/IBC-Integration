@@ -30,6 +30,10 @@ pub enum QueryMsg {
     #[returns(u128)]
     GetProtocolFee {},
     #[returns(String)]
+    GetIbcHost {},
+    #[returns(String)]
+    GetIbcConfig {},
+    #[returns(String)]
     GetProtocolFeeHandler {},
     #[returns(u64)]
     GetTimeoutHeight {},

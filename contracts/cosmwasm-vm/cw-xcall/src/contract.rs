@@ -1,3 +1,7 @@
+use common::rlp;
+use cw_common::to_checked_address;
+use debug_print::debug_println;
+
 use super::*;
 
 // version info for migration info
@@ -40,7 +44,7 @@ impl<'a> CwCallService<'a> {
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-        self.init(deps.storage, info, msg)
+        self.init(deps, info, msg)
     }
 
     /// This function executes various messages based on their type and returns a response or an error.
@@ -169,7 +173,8 @@ impl<'a> CwCallService<'a> {
                     kind: error.to_string(),
                 }),
             },
-
+            QueryMsg::GetIbcHost {} => to_binary(&self.get_ibc_host().load(deps.storage).unwrap()),
+            QueryMsg::GetIbcConfig {} => to_binary(&self.ibc_config().load(deps.storage).unwrap()),
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
             QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
@@ -231,7 +236,7 @@ impl<'a> CwCallService<'a> {
     /// occur during contract execution.
     fn init(
         &self,
-        store: &mut dyn Storage,
+        deps: DepsMut,
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
@@ -239,12 +244,13 @@ impl<'a> CwCallService<'a> {
         let last_request_id = u128::default();
         let owner = info.sender.as_str().to_string();
 
-        self.add_owner(store, owner.clone())?;
-        self.add_admin(store, info, owner)?;
-        self.init_last_sequence_no(store, last_sequence_no)?;
-        self.init_last_request_id(store, last_request_id)?;
-        self.set_timeout_height(store, msg.timeout_height)?;
-        self.set_ibc_host(store, msg.ibc_host.clone())?;
+        self.add_owner(deps.storage, owner.clone())?;
+        self.add_admin(deps.storage, info, owner)?;
+        self.init_last_sequence_no(deps.storage, last_sequence_no)?;
+        self.init_last_request_id(deps.storage, last_request_id)?;
+        self.set_timeout_height(deps.storage, msg.timeout_height)?;
+        let checked_host_address = to_checked_address(deps.as_ref(), msg.ibc_host.as_ref());
+        self.set_ibc_host(deps.storage, checked_host_address)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -396,9 +402,10 @@ impl<'a> CwCallService<'a> {
                 counterparty_version: _,
             } => channel.endpoint,
         };
-        let channel = msg.channel();
 
-        check_order(&channel.order)?;
+        debug_println!("On channel open msg: {:?}", msg);
+
+        check_order(&msg.channel().order)?;
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
@@ -438,8 +445,9 @@ impl<'a> CwCallService<'a> {
             CwChannelConnectMsg::OpenConfirm { channel } => channel.endpoint,
         };
         let channel = msg.channel();
-
+        debug_println!("channel decoded");
         check_order(&channel.order)?;
+        debug_println!("check order verified");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
@@ -448,9 +456,13 @@ impl<'a> CwCallService<'a> {
         let source = msg.channel().endpoint.clone();
         let destination = msg.channel().counterparty_endpoint.clone();
 
+        debug_println!("successfully found soruce and destination");
+
         let ibc_config = IbcConfig::new(source, destination);
+
         let mut call_service = CwCallService::default();
         call_service.save_config(store, &ibc_config)?;
+        debug_println!("save config");
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())
@@ -515,7 +527,7 @@ impl<'a> CwCallService<'a> {
         match self.receive_packet_data(deps, msg.packet) {
             Ok(ibc_response) => Ok(Response::new()
                 .add_attributes(ibc_response.attributes.clone())
-                .set_data(ibc_response.acknowledgement)
+                .set_data(to_vec(&ibc_response).unwrap())
                 .add_events(ibc_response.events)),
             Err(error) => Ok(Response::new()
                 .add_attribute("method", "ibc_packet_receive")
@@ -539,12 +551,18 @@ impl<'a> CwCallService<'a> {
     /// returned to the caller and `ContractError` is an enum representing the possible errors that can
     /// occur during the execution of the function.
     fn on_packet_ack(&self, ack: CwPacketAckMsg) -> Result<Response, ContractError> {
-        let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
-        let message: CallServiceMessage = from_binary(&ack.original_packet.data)?;
+        debug_println!("inside on_packet_ack");
+
+        let ack_response: Ack = Ack::Result(Binary(Vec::<u8>::new()));
+        debug_println!("ack response decoded");
+        let message: CallServiceMessage = rlp::decode(&ack.original_packet.data).unwrap();
+        debug_println!("call service message decoded");
         let message_type = match message.message_type() {
             CallServiceMessageType::CallServiceRequest => "call_service_request",
             CallServiceMessageType::CallServiceResponse => "call_service_response",
         };
+
+        debug_println!("matched message type p");
 
         match ack_response {
             Ack::Result(_) => {
@@ -554,7 +572,9 @@ impl<'a> CwCallService<'a> {
                     attr("message_type", message_type),
                 ];
 
-                Ok(Response::new().add_attributes(attributes))
+                Ok(Response::new()
+                    .add_attributes(attributes)
+                    .set_data(to_binary(&ack).unwrap()))
             }
             Ack::Error(err) => Ok(Response::new()
                 .add_attribute("action", "acknowledge")

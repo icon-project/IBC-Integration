@@ -210,6 +210,17 @@ impl Timestamp {
     /// Checks whether the timestamp has expired when compared to the
     /// `other` timestamp. Returns an [`Expiry`] result.
     pub fn check_expiry(&self, other: &Timestamp) -> Expiry {
+        println!("other timestamp is {other:?}");
+        if other.time.is_none() {
+            return Expiry::NotExpired;
+        }
+
+        // if let Some(t) = other.time {
+        //     if t == 0 {
+        //         return Expiry::NotExpired;
+        //     }
+        // }
+
         match (self.time, other.time) {
             (Some(time1), Some(time2)) => {
                 if time1 > time2 {

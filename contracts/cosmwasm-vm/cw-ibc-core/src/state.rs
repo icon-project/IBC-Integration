@@ -1,3 +1,7 @@
+use cosmwasm_std::Order;
+
+use crate::ics24_host::LastProcessedOn;
+
 use super::*;
 
 /// The `CwIbcStore` struct stores various data related to the Inter-Blockchain Communication (IBC).
@@ -61,6 +65,8 @@ use super::*;
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, IbcClientType, String>,
     client_types: Map<'a, IbcClientId, IbcClientType>,
+    client_states: Map<'a, IbcClientId, Vec<u8>>,
+    consensus_states: Map<'a, IbcClientId, Vec<u8>>,
     client_implementations: Map<'a, IbcClientId, String>,
     next_sequence_send: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_recv: Map<'a, (PortId, ChannelId), Sequence>,
@@ -80,6 +86,7 @@ pub struct CwIbcStore<'a> {
     expected_time_per_block: Item<'a, u64>,
     /// Stores packet receipts based on PortId,ChannelId and sequence
     packet_receipts: Map<'a, (String, String, u64), u64>,
+    last_processed_on: Map<'a, IbcClientId, LastProcessedOn>,
 }
 
 impl<'a> Default for CwIbcStore<'a> {
@@ -108,6 +115,9 @@ impl<'a> CwIbcStore<'a> {
             commitments: Map::new(StorageKey::Commitments.as_str()),
             expected_time_per_block: Item::new(StorageKey::BlockTime.as_str()),
             packet_receipts: Map::new(StorageKey::PacketReceipts.as_str()),
+            last_processed_on: Map::new(StorageKey::LastProcessedOn.as_str()),
+            client_states: Map::new(StorageKey::ClientStates.as_str()),
+            consensus_states: Map::new(StorageKey::ConsensusStates.as_str()),
         }
     }
     pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
@@ -162,5 +172,28 @@ impl<'a> CwIbcStore<'a> {
     }
     pub fn packet_receipts(&self) -> &Map<'a, (String, String, u64), u64> {
         &self.packet_receipts
+    }
+
+    pub fn last_processed_on(&self) -> &Map<'a, IbcClientId, LastProcessedOn> {
+        &self.last_processed_on
+    }
+
+    pub fn client_states(&self) -> &Map<'a, IbcClientId, Vec<u8>> {
+        &self.client_states
+    }
+
+    pub fn consensus_states(&self) -> &Map<'a, IbcClientId, Vec<u8>> {
+        &self.consensus_states
+    }
+
+    pub fn clear_storage(&self, store: &mut dyn Storage) {
+        let keys: Vec<_> = store
+            .range(None, None, Order::Ascending)
+            .map(|(k, _)| k)
+            .collect();
+        for k in keys {
+            debug_print::debug_println!("Removing Key {:?}", k);
+            store.remove(&k);
+        }
     }
 }

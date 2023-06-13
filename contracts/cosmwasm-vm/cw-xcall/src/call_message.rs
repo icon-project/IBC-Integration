@@ -1,4 +1,6 @@
-use cw_common::hex_string::HexString;
+use common::rlp;
+use cw_common::{hex_string::HexString, query_helpers::build_smart_query};
+use debug_print::debug_println;
 
 use super::*;
 
@@ -42,6 +44,8 @@ impl<'a> CwCallService<'a> {
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
+        // TODO: should be set to sender address for test case
+        // let from_address = "archway1q6lr3hy5cxk4g74k9wcqyqarf9e97ckpn7t963".to_string();
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),
@@ -61,35 +65,42 @@ impl<'a> CwCallService<'a> {
 
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
         let ibc_host = self.get_host(deps.as_ref().storage)?;
+        debug_println!("IBC Host is {}", ibc_host);
 
         let ibc_config = self
             .ibc_config()
             .load(deps.as_ref().storage)
             .map_err(ContractError::Std)?;
 
-        let query_message = cw_common::core_msg::QueryMsg::SequenceSend {
+        let query_next_seq_send = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
             port_id: ibc_config.src_endpoint().clone().port_id,
             channel_id: ibc_config.src_endpoint().clone().channel_id,
         };
 
-        let query_request = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
-            contract_addr: ibc_host.to_string(),
-            msg: to_binary(&query_message).map_err(ContractError::Std)?,
-        });
+        let query_request = build_smart_query(
+            ibc_host.to_string(),
+            to_binary(&query_next_seq_send).unwrap(),
+        );
 
         let sequence_number_host: u64 = deps
+            .as_ref()
             .querier
             .query(&query_request)
             .map_err(ContractError::Std)?;
 
         if need_response {
-            let request = CallRequest::new(from_address, to.clone(), rollback_data, need_response);
+            let request = CallRequest::new(
+                from_address.clone(),
+                to.clone(),
+                rollback_data,
+                need_response,
+            );
 
             self.set_call_request(deps.storage, sequence_no, request)?;
         }
 
         let call_request = CallServiceMessageRequest::new(
-            info.sender.to_string(),
+            from_address,
             to,
             sequence_no,
             need_response,
@@ -98,6 +109,8 @@ impl<'a> CwCallService<'a> {
 
         let message: CallServiceMessage = call_request.into();
         let timeout_height = self.get_timeout_height(deps.as_ref().storage);
+
+        debug_println!("the store timeout height is :{:?}", timeout_height);
 
         let event = event_xcall_message_sent(
             sequence_number_host,
@@ -133,13 +146,15 @@ impl<'a> CwCallService<'a> {
                 source_channel: ibc_config.src_endpoint().clone().channel_id,
                 destination_port: ibc_config.dst_endpoint().clone().port_id,
                 destination_channel: ibc_config.dst_endpoint().clone().channel_id,
-                data: to_vec(&message).map_err(|error| ContractError::DecodeFailed {
-                    error: error.to_string(),
-                })?,
+                data: rlp::encode(&message).to_vec(),
                 timeout_height: Some(height.into()),
                 timeout_timestamp: 0,
             };
 
+            debug_println!(
+                "packet hex byte send is {:?}",
+                hex::encode(packet_data.encode_to_vec())
+            );
             let message = cw_common::core_msg::ExecuteMsg::SendPacket {
                 packet: HexString::from_bytes(&packet_data.encode_to_vec()),
             };
@@ -204,7 +219,7 @@ impl<'a> CwCallService<'a> {
 
         Ok(IbcMsg::SendPacket {
             channel_id: ibc_config.dst_endpoint().channel_id.clone(),
-            data: to_binary(&message).unwrap(),
+            data: rlp::encode(&message).to_vec(),
             timeout,
         })
     }

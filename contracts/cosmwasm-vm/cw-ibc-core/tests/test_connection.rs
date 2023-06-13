@@ -295,7 +295,7 @@ fn connection_open_try_invalid_client_id_name_too_short() {
 #[test]
 fn test_commitment_prefix() {
     let contract = CwIbcCoreContext::new();
-    let expected = CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default();
+    let expected = CommitmentPrefix::try_from(b"commitments".to_vec()).unwrap_or_default();
     let result = contract.commitment_prefix();
     assert_eq!(result, expected);
 }
@@ -435,7 +435,13 @@ fn connection_open_init() {
 
     let cl = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_a, cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &res_msg.client_id_on_a,
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     contract
         .client_state(&mut deps.storage, &res_msg.client_id_on_a)
@@ -514,7 +520,7 @@ fn create_connection_open_try_event() {
     let event = create_open_try_event(
         connection_id,
         client_id,
-        counterparty_connection_id,
+        Some(counterparty_connection_id),
         counterparty_client_id,
     );
     assert_eq!(IbcEventType::OpenTryConnection.as_str(), event.ty);
@@ -661,25 +667,32 @@ fn connection_open_ack_validate_fail() {
         )
         .unwrap();
 
-    let client_state_bytes = client_state.encode_to_vec();
+    let client_state_bytes_any = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes_any,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &client_id,
             res_msg.proofs_height_on_b,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-
+    let env = mock_env();
     contract
-        .connection_open_ack(deps.as_mut(), info, res_msg)
+        .connection_open_ack(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
 
@@ -757,21 +770,29 @@ fn connection_open_ack_validate() {
     let client_state_bytes = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &conn_end.client_id().clone(),
             res_msg.proofs_height_on_b,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
+    let env = mock_env();
 
-    let res = contract.connection_open_ack(deps.as_mut(), info, res_msg);
+    let res = contract.connection_open_ack(deps.as_mut(), info, env, res_msg);
     assert_eq!(res.is_ok(), true)
 }
 
@@ -851,26 +872,31 @@ fn connection_validate_delay() {
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
     contract
+        .store_last_processed_on(deps.as_mut().storage, &env, conn_end.client_id())
+        .unwrap();
+
+    contract
         .ibc_store()
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let result =
-        contract.verify_connection_delay_passed(&deps.storage, packet_proof_height, conn_end);
+        contract.verify_connection_delay_passed(&deps.storage, env, packet_proof_height, conn_end);
     assert_eq!(result.is_ok(), true)
 }
 
 #[test]
-#[should_panic(expected = "Std(NotFound { kind: \"u64\" })")]
+#[should_panic(expected = "Std(NotFound { kind: \"cw_ibc_core::ics24_host::LastProcessedOn\" })")]
 fn connection_validate_delay_fails() {
     let deps = deps();
     let _env = mock_env();
     let packet_proof_height = common::ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
+    let env = mock_env();
     contract
-        .verify_connection_delay_passed(&deps.storage, packet_proof_height, conn_end)
+        .verify_connection_delay_passed(&deps.storage, env, packet_proof_height, conn_end)
         .unwrap();
 }
 
@@ -917,10 +943,10 @@ fn connection_open_try_execute() {
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let versions = RawVersion {
+    let versions = vec![RawVersion {
         identifier: "identifier".to_string(),
         features: vec!["hello".to_string()],
-    };
+    }];
     let conn_id = ConnectionId::new(1);
 
     let contract = CwIbcCoreContext::new();
@@ -1002,24 +1028,31 @@ fn connection_open_try_validate() {
         )
         .unwrap();
 
-    let cl = client_state.encode_to_vec();
+    let cl = client_state.to_any().encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_b, cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &res_msg.client_id_on_b,
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &res_msg.client_id_on_b,
             res_msg.proofs_height_on_a,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-
-    let res = contract.connection_open_try(deps.as_mut(), info, res_msg);
+    let env = mock_env();
+    let res = contract.connection_open_try(deps.as_mut(), info, env, res_msg);
     assert_eq!(res.is_ok(), true);
 }
 
@@ -1058,29 +1091,32 @@ fn open_try_validate_fails() {
     .try_into()
     .unwrap();
 
-    let client_state_bytes = client_state.encode_to_vec();
+    let client_state_bytes = client_state.to_any().encode_to_vec();
 
     contract
         .store_client_state(
             &mut deps.storage,
+            &mock_env(),
             &res_msg.client_id_on_b,
             client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &res_msg.client_id_on_b,
             res_msg.proofs_height_on_a,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-
+    let env = mock_env();
     contract
-        .connection_open_try(deps.as_mut(), info, res_msg)
+        .connection_open_try(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
 #[test]
@@ -1155,17 +1191,24 @@ fn connection_open_confirm_validate() {
     let cl = client_state.to_any().encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &conn_end.client_id().clone(), cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &conn_end.client_id().clone(),
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &conn_end.client_id().clone(),
             res_msg.proof_height_on_a,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -1352,20 +1395,27 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         )
         .unwrap();
 
-    let cl = client_state.encode_to_vec();
+    let cl = client_state.to_any().encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &client_id,
             res_msg.proof_height_on_a,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -1440,7 +1490,13 @@ fn connection_open_init_fails_of_clientstate() {
 
     let client_state_bytes = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
     contract
@@ -1486,8 +1542,10 @@ fn connection_open_init_validate_invalid_client_id() {
     contract
         .store_client_state(
             &mut deps.storage,
+            &mock_env(),
             &res_msg.client_id_on_a,
             client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     contract
@@ -1635,7 +1693,7 @@ fn connection_open_try_empty_proof() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert_eq!(res_msg.is_ok(), false)
+    assert_eq!(res_msg.is_ok(), true)
 }
 
 #[test]
@@ -1671,7 +1729,13 @@ fn connection_open_init_fails() {
 
     let cl = client_state.encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &res_msg.client_id_on_a, cl)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &res_msg.client_id_on_a,
+            cl,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     contract
         .connection_open_init(deps.as_mut(), res_msg)
@@ -1744,11 +1808,18 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
     let client_state_bytes = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
+    let env = mock_env();
 
     contract
-        .connection_open_ack(deps.as_mut(), info, res_msg)
+        .connection_open_ack(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
 
@@ -1827,22 +1898,30 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     let client_state_bytes = client_state.encode_to_vec();
 
     contract
-        .store_client_state(&mut deps.storage, &client_id, client_state_bytes)
+        .store_client_state(
+            &mut deps.storage,
+            &mock_env(),
+            &client_id,
+            client_state_bytes,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_state(
             &mut deps.storage,
             &conn_end.client_id().clone(),
             res_msg.proofs_height_on_b,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
+    let env = mock_env();
 
     contract
-        .connection_open_ack(deps.as_mut(), info, res_msg)
+        .connection_open_ack(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
 

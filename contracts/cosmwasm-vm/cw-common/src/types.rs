@@ -19,6 +19,7 @@ pub struct VerifyChannelState {
     pub counterparty_prefix: Vec<u8>,
     pub proof: Vec<u8>,
     pub root: Vec<u8>,
+    pub client_id: String,
     // commitment key
     pub counterparty_chan_end_path: Vec<u8>,
     // commitment bytes

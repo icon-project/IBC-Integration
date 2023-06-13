@@ -6,6 +6,7 @@ use super::*;
 #[should_panic(expected = "UndefinedConnectionCounterparty")]
 fn test_validate_open_try_channel_fail_missing_counterparty() {
     let mut deps = deps();
+    let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
@@ -13,14 +14,16 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -58,7 +61,13 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
@@ -75,13 +84,14 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -112,14 +122,16 @@ fn test_execute_open_try_from_light_client() {
 
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let message_info = cw_common::types::MessageInfo {
@@ -163,7 +175,7 @@ fn test_execute_open_try_from_light_client() {
         EXECUTE_ON_CHANNEL_OPEN_TRY,
     );
     let res = contract.execute_open_try_from_light_client(deps.as_mut(), reply);
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_try)
 }
 
@@ -179,14 +191,16 @@ fn test_execute_open_try_from_light_client_fail_missing_channel_end() {
 
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
 
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let message_info = cw_common::types::MessageInfo {

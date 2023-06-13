@@ -19,7 +19,7 @@ fn test_set_capability() {
     let address = "helo".to_string();
     let contract = CwIbcCoreContext::default();
     let result = contract.store_capability(&mut deps.storage, name, address);
-    assert_eq!(result.is_ok(), true)
+    assert!(result.is_ok())
 }
 
 #[test]
@@ -43,7 +43,7 @@ fn test_get_capability() {
         .store_capability(&mut deps.storage, name.clone(), address)
         .unwrap();
     let result = contract.get_capability(&mut deps.storage, name);
-    assert_eq!(result.is_ok(), true)
+    assert!(result.is_ok())
 }
 
 #[test]
@@ -58,7 +58,7 @@ fn test_claim_capability() {
         .unwrap();
     let result = contract.claim_capability(&mut deps.storage, name, address_to_claim);
     // only one address to one port
-    assert_eq!(result.is_err(), true);
+    assert!(result.is_err());
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn test_authenticate_capability_returns_true() {
         .store_capability(&mut deps.storage, name.clone(), address)
         .unwrap();
     let result = contract.authenticate_capability(&mut deps.storage, info, name);
-    assert_eq!(result, true)
+    assert!(result)
 }
 
 #[test]
@@ -109,7 +109,7 @@ fn test_authenticate_capability_returns_false() {
         .store_capability(&mut deps.storage, name.clone(), address)
         .unwrap();
     let result = contract.authenticate_capability(&mut deps.storage, info, name);
-    assert_eq!(result, false)
+    assert!(!result)
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn test_lookup_modules() {
         .unwrap();
 
     let result = contract.lookup_modules(&mut deps.storage, name);
-    assert_eq!(result.is_ok(), true)
+    assert!(result.is_ok())
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn test_set_expected_time_per_block() {
     let contract = CwIbcCoreContext::default();
     let block_delay = contract.calc_block_delay(&expected_time_per_block);
     let result = contract.set_expected_time_per_block(&mut deps.storage, block_delay);
-    assert_eq!(result.is_ok(), true)
+    assert!(result.is_ok())
 }
 
 #[test]
@@ -167,7 +167,7 @@ fn test_get_expected_time_per_block_fails() {
 fn test_validate_client_id_fail_invalid_min_length() {
     let client_type = ClientType::new("new".to_string());
     let client_id = ClientId::new(client_type, 1);
-    assert_eq!(client_id.is_err(), true)
+    assert!(client_id.is_err())
 }
 
 #[test]
@@ -176,21 +176,21 @@ fn test_validate_client_id_fail_invalid_max_length() {
         "newhauyduiwe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropssrt".to_string(),
     );
     let client_id = ClientId::new(client_type, 1);
-    assert_eq!(client_id.is_err(), true)
+    assert!(client_id.is_err())
 }
 
 #[test]
 fn test_validate_connection_id_fail_invalid_min_length() {
     let s = "qwertykey";
     let conn_id = ConnectionId::from_str(s);
-    assert_eq!(conn_id.is_err(), true)
+    assert!(conn_id.is_err())
 }
 
 #[test]
 fn test_validate_connection_id_fail_invalid_max_length() {
     let s = "qwertykeywe73o59jklsjkdnklsnakalkjhdertyuiimnndvxgwgrtyuuropsttt5";
     let conn_id = ConnectionId::from_str(s);
-    assert_eq!(conn_id.is_err(), true)
+    assert!(conn_id.is_err())
 }
 
 #[test]
@@ -224,7 +224,7 @@ fn test_validate_id_have_invalid_chars() {
 fn test_validate_port_id_fail_invalid_min_length() {
     let s = "q";
     let id = PortId::from_str(s);
-    assert_eq!(id.is_err(), true)
+    assert!(id.is_err())
 }
 
 #[test]

@@ -1,14 +1,20 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+use strum_macros::EnumString;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+#[derive(Debug, Eq, PartialEq, EnumString, Hash)]
+#[strum(serialize_all = "snake_case")]
+pub enum TestSteps {
+    CreateClient,
+    UpdateClient,
+    ConnOpenTry,
+    ConnOpenInit,
+    ConnOpenConfirm,
+    ConnOpenAck,
+    ChannelOpenInit,
+    ChannelOpenTry,
+    ChannelOpenConfirm,
+    ChannelOpenAck,
+    ChannelCloseInit,
+    ChannelCloseConfirm,
+    ReceivePacket,
+    AcknowledgementPacket,
 }

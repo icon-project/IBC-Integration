@@ -5,6 +5,7 @@ use cosmwasm_std::{
     IbcEndpoint, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 
+use cw_common::from_binary_response;
 use cw_common::types::Ack;
 
 use cw_xcall_app::ack::{on_ack_failure, on_ack_sucess};
@@ -90,7 +91,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Unordered,
+                cosmwasm_std::IbcOrder::Ordered,
                 "xcall-1",
                 "newconnection",
             ),
@@ -476,7 +477,8 @@ fn test_entry_point() {
     let query_message = QueryMsg::GetAdmin {};
 
     let response =
-        from_binary::<String>(&query(mock_deps.as_ref(), env, query_message).unwrap()).unwrap();
+        from_binary_response::<String>(&query(mock_deps.as_ref(), env, query_message).unwrap())
+            .unwrap();
 
     assert_eq!(response, admin_one().to_string())
 }

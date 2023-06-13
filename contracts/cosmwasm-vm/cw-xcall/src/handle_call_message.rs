@@ -1,3 +1,5 @@
+use cw_common::hex_string::HexString;
+
 use crate::ack::acknowledgement_data_on_success;
 
 use super::*;
@@ -122,14 +124,21 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         message: CwPacket,
     ) -> Result<CwReceiveResponse, ContractError> {
+        println!(
+            "receive_packet_data {:?}",
+            HexString::from_bytes(&message.data.0)
+        );
         let call_service_message: CallServiceMessage =
             CallServiceMessage::try_from(message.data.0.clone())?;
+        println!("call service decoded {call_service_message:?}");
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
+                println!("matched request ");
                 self.hanadle_request(deps, call_service_message.payload(), &message)
             }
             CallServiceMessageType::CallServiceResponse => {
+                println!("matched Response ");
                 self.handle_response(deps, call_service_message.payload(), &message)
             }
         }
@@ -158,6 +167,10 @@ impl<'a> CwCallService<'a> {
         data: &[u8],
         packet: &CwPacket,
     ) -> Result<CwReceiveResponse, ContractError> {
+        println!(
+            "handler request message decoded :{:?}",
+            HexString::from_bytes(data)
+        );
         let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
 

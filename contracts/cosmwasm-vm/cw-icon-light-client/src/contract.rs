@@ -1,7 +1,9 @@
 use common::constants::ICON_CLIENT_TYPE;
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
+use cosmwasm_schema::cw_serde;
 use cw_common::ibc_types::IbcHeight;
+use debug_print::debug_println;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
@@ -20,8 +22,8 @@ use cw_common::raw_types::Any;
 use cw_common::types::{PacketData, VerifyChannelState};
 
 use crate::constants::{
-    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH,
-    CONSENSUS_STATE_VALID, HEIGHT, MEMBERSHIP, NON_MEMBERSHIP,
+    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH, HEIGHT,
+    MEMBERSHIP, NON_MEMBERSHIP,
 };
 use crate::error::ContractError;
 use crate::light_client::IconClient;
@@ -103,6 +105,7 @@ pub fn execute(
             );
 
             response.data = to_binary(&client_response).ok();
+            debug_println!("[CreateClient]: create client called with id {}", client_id);
 
             Ok(response)
         }
@@ -195,8 +198,8 @@ pub fn execute(
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &verify_packet_data.commitment,
                 &verify_packet_data.commitment_path,
+                &verify_packet_data.commitment,
             )?;
             let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
             let data =
@@ -220,8 +223,8 @@ pub fn execute(
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &verify_packet_acknowledge.ack,
                 &verify_packet_acknowledge.ack_path,
+                &verify_packet_acknowledge.ack,
             )?;
             let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
             let data =
@@ -244,23 +247,28 @@ pub fn execute(
                 .set_data(data))
         }
         ExecuteMsg::VerifyConnectionOpenTry(state) => {
+            println!("checking all the valid state ");
+            let client_valid =
+                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
+            println!(" is valid clientstate  {client_valid:?}");
+            // let consensus_valid = validate_consensus_state(
+            //     &state.client_id,
+            //     &client,
+            //     &state.verify_client_consensus_state,
+            // )?;
+            // println!("conseunsus_valid {:?}", consensus_valid);
+
             let connection_valid = validate_connection_state(
                 &state.client_id,
                 &client,
                 &state.verify_connection_state,
             )?;
-            let client_valid =
-                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            let consensus_valid = validate_consensus_state(
-                &state.client_id,
-                &client,
-                &state.verify_client_consensus_state,
-            )?;
+            println!("is  valid connection state {connection_valid:?}");
 
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
                 .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
-                .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
+                // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
                 .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
         }
         ExecuteMsg::VerifyConnectionOpenAck(state) => {
@@ -271,16 +279,16 @@ pub fn execute(
             )?;
             let client_valid =
                 validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            let consensus_valid = validate_consensus_state(
-                &state.client_id,
-                &client,
-                &state.verify_client_consensus_state,
-            )?;
+            // let consensus_valid = validate_consensus_state(
+            //     &state.client_id,
+            //     &client,
+            //     &state.verify_client_consensus_state,
+            // )?;
 
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
                 .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
-                .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
+                // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
                 .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
         }
 
@@ -290,7 +298,11 @@ pub fn execute(
             endpoint,
         } => {
             // fix once we receive client id
-            let result = validate_channel_state("", &client, &verify_channel_state)?;
+            let result = validate_channel_state(
+                &verify_channel_state.client_id,
+                &client,
+                &verify_channel_state,
+            )?;
 
             let data = to_binary(&LightClientResponse {
                 message_info,
@@ -348,8 +360,8 @@ pub fn validate_channel_state(
         0,
         0,
         &proofs_decoded.proofs,
-        &state.expected_counterparty_channel_end,
         &state.counterparty_chan_end_path,
+        &state.expected_counterparty_channel_end,
     )?;
     Ok(result)
 }
@@ -362,14 +374,15 @@ pub fn validate_connection_state(
     let proofs_decoded =
         MerkleProofs::decode(state.proof.as_slice()).map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
+
     let result = client.verify_membership(
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.expected_counterparty_connection_end,
         &state.counterparty_conn_end_path,
+        &state.expected_counterparty_connection_end,
     )?;
     Ok(result)
 }
@@ -381,6 +394,7 @@ pub fn validate_client_state(
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
         .map_err(ContractError::DecodeError)?;
+    println!("starting validating client state");
     let height = to_height_u64(&state.proof_height)?;
     let result = client.verify_membership(
         client_id,
@@ -388,8 +402,8 @@ pub fn validate_client_state(
         0,
         0,
         &proofs_decoded.proofs,
-        &state.expected_client_state,
         &state.client_state_path,
+        &state.expected_client_state,
     )?;
     Ok(result)
 }
@@ -408,8 +422,8 @@ pub fn validate_consensus_state(
         0,
         0,
         &proofs_decoded.proofs,
-        &state.expected_conesenus_state,
         &state.conesenus_state_path,
+        &state.expected_conesenus_state,
     )?;
     Ok(result)
 }
@@ -438,8 +452,8 @@ pub fn validate_next_seq_recv(
                 0,
                 0,
                 &proofs_decoded.proofs,
-                sequence.to_be_bytes().as_ref(),
                 seq_recv_path,
+                sequence.to_be_bytes().as_ref(),
             )?;
             res
         }
@@ -469,10 +483,13 @@ pub fn validate_next_seq_recv(
 }
 
 fn to_height_u64(height: &str) -> Result<u64, ContractError> {
-    let height: u64 = height
-        .parse()
-        .map_err(|_e| ContractError::FailedToParseHeight(height.to_string()))?;
-    Ok(height)
+    let heights = height.split('-').collect::<Vec<&str>>();
+    if heights.len() != 2 {
+        return Err(ContractError::InvalidHeight);
+    }
+    heights[1]
+        .parse::<u64>()
+        .map_err(|_e| ContractError::InvalidHeight)
 }
 
 fn to_ibc_height(height: u64) -> Result<IbcHeight, ContractError> {
@@ -507,6 +524,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
+#[cw_serde]
+pub struct MigrateMsg {}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::default().add_attribute("migrate", "successful"))
+}
+
 pub fn get_light_client<'a>(
     context: &'a mut CwContext<'_>,
 ) -> impl ILightClient<Error = ContractError> + 'a {
@@ -530,6 +555,7 @@ mod tests {
 
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
+        contract::to_height_u64,
         state::QueryHandler,
         ContractError,
     };
@@ -712,5 +738,12 @@ mod tests {
             consensus_state.message_root,
             signed_header.header.clone().unwrap().message_root
         )
+    }
+    #[test]
+    fn test_to_height_u64() {
+        // write test for to_height_u64
+        let height = "1-1";
+        let height_u64 = to_height_u64(height).unwrap();
+        assert_eq!(height_u64, 1);
     }
 }

@@ -1,25 +1,18 @@
 package ibc.ics25.handler;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.verify;
+import com.iconloop.score.test.Account;
+import ibc.icon.structs.messages.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import score.Address;
+import test.proto.core.channel.ChannelOuterClass.Packet;
 
 import java.math.BigInteger;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
-import com.iconloop.score.test.Account;
-
-import ibc.icon.structs.messages.*;
-import score.Address;
-import test.proto.core.channel.ChannelOuterClass.Packet;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class IBCHandlerTest extends IBCHandlerTestBase {
     @BeforeEach
@@ -246,14 +239,14 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         handler.invoke(owner, "bindPort", portId, module.getAddress());
 
         // Act & Assert
-        String expectedErrorMessage = "Capability already claimed";
+        String expectedErrorMessage = "PortId already exists";
         Executable alreadyClaimed = () -> handler.invoke(owner, "bindPort", portId, sm.createAccount().getAddress());
         AssertionError e = assertThrows(AssertionError.class, alreadyClaimed);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
 
         // Assert
-        List<byte[]> ports = (List<byte[]>)handler.call("getBindPorts");
-        Address portModule = (Address)handler.call("getCapability", ports.get(0));
+        List<String> ports = (List<String>) handler.call("getAllPorts");
+        Address portModule = (Address) handler.call("getCapability", ports.get(0).getBytes());
 
         assertEquals(1, ports.size());
         assertEquals(module.getAddress(), portModule);

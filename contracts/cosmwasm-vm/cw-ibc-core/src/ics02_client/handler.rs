@@ -2,7 +2,9 @@ use crate::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT
 
 use super::{events::client_misbehaviour_event, *};
 use common::constants::ICON_CLIENT_TYPE;
+use cosmwasm_std::Env;
 use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response};
+use debug_print::debug_println;
 use prost::{DecodeError, Message};
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
@@ -97,7 +99,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
         let sub_msg: SubMsg = SubMsg::reply_always(client_update_message, EXECUTE_UPDATE_CLIENT);
-        println!(
+        debug_println!(
             "Called Update Client On Lightclient for client id:{}",
             &message.client_id
         );
@@ -127,6 +129,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         message: IbcMsgUpgradeClient,
     ) -> Result<Response, ContractError> {
         let old_client_state = self.client_state(deps.as_ref().storage, &message.client_id)?;
@@ -145,7 +148,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             &old_client_state.latest_height(),
         )?;
 
-        let now = self.host_timestamp(deps.as_ref().storage)?;
+        let now = self.host_timestamp(&env)?;
         let duration = now
             .duration_since(&old_consensus_state.timestamp())
             .ok_or_else(|| ClientError::InvalidConsensusStateTimestamp {
@@ -263,12 +266,13 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn execute_create_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
-                    println!("{:?}", &data);
+                    debug_println!("{:?}", &data);
                     let callback_data: CreateClientResponse =
                         from_binary_response(&data).map_err(ContractError::Std)?;
 
@@ -289,8 +293,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
+                        &env,
                         &client_id,
                         callback_data.client_state_bytes().to_vec(),
+                        callback_data.client_state_commitment().to_vec(),
                     )?;
 
                     self.store_consensus_state(
@@ -298,6 +304,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         &client_id,
                         callback_data.height(),
                         callback_data.consensus_state_bytes().to_vec(),
+                        callback_data.consensus_state_commitment().to_vec(),
                     )?;
 
                     let event = create_client_event(
@@ -333,13 +340,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn execute_update_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let update_client_response: UpdateClientResponse = from_binary_response(&data)?;
-                    println!("Received Client Update Callback with data");
+                    debug_println!("Received Client Update Callback with data");
                     let client_id = update_client_response
                         .client_id()
                         .map_err(ContractError::from)?;
@@ -348,15 +356,18 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
+                        &env,
                         &client_id,
-                        update_client_response.client_state_bytes().to_vec(),
+                        update_client_response.client_state_bytes.to_vec(),
+                        update_client_response.client_state_commitment.to_vec(),
                     )?;
 
                     self.store_consensus_state(
                         deps.storage,
                         &client_id,
                         height,
-                        update_client_response.consensus_state_bytes().to_vec(),
+                        update_client_response.consensus_state_bytes.to_vec(),
+                        update_client_response.consensus_state_commitment.to_vec(),
                     )?;
 
                     let client_type = IbcClientType::from(client_id.clone());
@@ -397,6 +408,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn execute_upgrade_client_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -408,7 +420,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
+                        &env,
                         &client_id,
+                        response.client_state_bytes.to_vec(),
                         response.client_state_commitment().to_vec(),
                     )?;
 
@@ -416,6 +430,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         deps.storage,
                         &client_id,
                         response.height(),
+                        response.consensus_state_bytes.to_vec(),
                         response.consensus_state_commitment().to_vec(),
                     )?;
 
@@ -514,6 +529,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn execute_misbehaviour_reply(
         &self,
         deps: DepsMut,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
@@ -536,7 +552,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     self.store_client_state(
                         deps.storage,
+                        &env,
                         &client_id,
+                        misbehaviour_response.client_state_bytes,
                         misbehaviour_response.client_state_commitment,
                     )?;
 

@@ -1,3 +1,4 @@
+use common::utils::keccak256;
 use prost::DecodeError;
 
 use super::*;
@@ -292,9 +293,11 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
 
+        let commitment_bytes = keccak256(&connection_end_bytes).to_vec();
+
         self.ibc_store()
             .commitments()
-            .save(store, connection_commit_key, &connection_end_bytes)?;
+            .save(store, connection_commit_key, &commitment_bytes)?;
 
         Ok(())
     }
@@ -305,7 +308,7 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
     pub fn commitment_prefix(&self) -> CommitmentPrefix {
-        CommitmentPrefix::try_from(b"Ibc".to_vec()).unwrap_or_default() //TODO
+        CommitmentPrefix::try_from(b"commitments".to_vec()).unwrap_or_default() //TODO
     }
 
     fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {

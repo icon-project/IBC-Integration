@@ -26,6 +26,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         msg: MsgTimeoutOnClose,
     ) -> Result<Response, ContractError> {
         let packet = &msg.packet;
@@ -117,6 +118,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.verify_connection_delay_passed(
             deps.storage,
+            env,
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;
@@ -127,11 +129,12 @@ impl<'a> CwIbcCoreContext<'a> {
             root: consensus_state_of_b_on_a.clone().root().into_vec(),
             counterparty_chan_end_path: chan_end_path_on_b,
             expected_counterparty_channel_end: vector.unwrap(),
+            client_id: conn_end_on_a.client_id().to_string(),
         };
 
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        //
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let data = PacketData {
             packet: msg.packet.clone(),
@@ -139,7 +142,7 @@ impl<'a> CwIbcCoreContext<'a> {
             acknowledgement: None,
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender.clone(),
-                funds,
+                funds: vec![],
             },
         };
         let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
