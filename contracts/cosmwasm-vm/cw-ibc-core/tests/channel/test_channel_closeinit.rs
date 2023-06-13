@@ -89,7 +89,7 @@ fn test_validate_close_init_channel() {
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
 
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_init)
 }
 

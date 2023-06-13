@@ -83,7 +83,7 @@ fn send_packet_success() {
         None,
     );
     println!("{result:?}");
-    assert_eq!(true, result.is_ok());
+    assert!(result.is_ok());
     let result = result.unwrap();
     let event = get_event(&result, "wasm-xcall_app_send_call_message_reply").unwrap();
     assert_eq!("success", event.get("status").unwrap());

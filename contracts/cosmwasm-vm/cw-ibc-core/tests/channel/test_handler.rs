@@ -175,7 +175,7 @@ fn test_execute_open_try_from_light_client() {
         EXECUTE_ON_CHANNEL_OPEN_TRY,
     );
     let res = contract.execute_open_try_from_light_client(deps.as_mut(), reply);
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_try)
 }
 
