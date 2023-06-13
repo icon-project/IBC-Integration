@@ -13,7 +13,7 @@ chains:
       bech32_prefix: hx
       bin: "/goloop/bin/goloop"
       image:
-        repository: iconloop/goloop-icon
+        repository: goloop/gochain-icon
         version: latest
         uid_gid: ''
     contracts:
