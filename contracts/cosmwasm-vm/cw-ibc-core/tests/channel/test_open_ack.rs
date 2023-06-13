@@ -224,7 +224,7 @@ fn test_validate_open_ack_channel() {
 
     let res = contract.validate_channel_open_ack(deps.as_mut(), info, &msg);
 
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 431)
 }
 
@@ -324,7 +324,7 @@ fn test_execute_open_ack_from_light_client() {
         EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
     );
     let res = contract.execute_open_ack_from_light_client_reply(deps.as_mut(), reply);
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_ack)
 }
 

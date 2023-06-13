@@ -261,5 +261,5 @@ fn handle_response_emit_rollback_event() {
         .query_request(mock_deps.as_mut().storage, 1)
         .unwrap();
 
-    assert_eq!(call_request.enabled(), true)
+    assert!(call_request.enabled())
 }

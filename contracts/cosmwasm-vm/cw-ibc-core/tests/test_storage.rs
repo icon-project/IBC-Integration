@@ -117,7 +117,7 @@ fn check_for_invalid_route() {
 
     let result = contract.has_route(deps.as_mut().storage, module_id_new);
 
-    assert_eq!(false, result)
+    assert!(!result)
 }
 
 #[test]

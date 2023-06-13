@@ -222,7 +222,7 @@ fn test_validate_close_confirm_channel() {
         .unwrap();
     let res = contract.validate_channel_close_confirm(deps.as_mut(), info, &msg);
 
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 461)
 }
 
@@ -317,7 +317,7 @@ fn test_execute_close_confirm_from_light_client() {
         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
     );
     let res = contract.execute_close_confirm_from_light_client_reply(deps.as_mut(), reply);
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_close_confirm)
 }
 

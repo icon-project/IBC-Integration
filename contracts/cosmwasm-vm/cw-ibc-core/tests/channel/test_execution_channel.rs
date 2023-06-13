@@ -686,7 +686,7 @@ fn test_for_channel_close_init() {
         },
     );
 
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().messages[0].id, 45);
     assert_eq!(res.unwrap().messages[0], on_chan_open_init);
 

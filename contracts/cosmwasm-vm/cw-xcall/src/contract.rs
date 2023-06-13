@@ -403,7 +403,9 @@ impl<'a> CwCallService<'a> {
             } => channel.endpoint,
         };
 
-        //  check_order(&msg.channel().order)?;
+        debug_println!("On channel open msg: {:?}", msg);
+
+        check_order(&msg.channel().order)?;
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
