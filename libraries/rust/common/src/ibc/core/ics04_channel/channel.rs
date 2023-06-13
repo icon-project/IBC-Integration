@@ -366,6 +366,25 @@ impl Order {
             }),
         }
     }
+
+    pub fn to_ibc_order(&self) -> Result<cosmwasm_std::IbcOrder, ChannelError> {
+        match self {
+            Order::None => Err(ChannelError::UnknownOrderType {
+                type_id: "None".to_string(),
+            }),
+            Order::Unordered => Ok(cosmwasm_std::IbcOrder::Unordered),
+            Order::Ordered => Ok(cosmwasm_std::IbcOrder::Ordered),
+        }
+    }
+}
+
+impl From<cosmwasm_std::IbcOrder> for Order {
+    fn from(value: cosmwasm_std::IbcOrder) -> Self {
+        match value {
+            cosmwasm_std::IbcOrder::Unordered => Order::Unordered,
+            cosmwasm_std::IbcOrder::Ordered => Order::Ordered,
+        }
+    }
 }
 
 impl FromStr for Order {

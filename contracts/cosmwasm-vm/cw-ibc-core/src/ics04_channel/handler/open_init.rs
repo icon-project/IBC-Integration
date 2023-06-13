@@ -30,7 +30,7 @@ pub fn on_chan_open_init_submessage(
     let ibc_channel = cosmwasm_std::IbcChannel::new(
         endpoint,
         counter_party,
-        cosmwasm_std::IbcOrder::Unordered,
+        msg.ordering.to_ibc_order().unwrap(),
         msg.version_proposal.to_string(),
         connection_id.to_string(),
     );

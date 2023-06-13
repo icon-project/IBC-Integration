@@ -46,6 +46,11 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         message: &MsgChannelOpenInit,
     ) -> Result<cosmwasm_std::Response, ContractError> {
         // connection hops should be 1
+        debug_println!(
+            "inside validate channel open init: input parameter: {:?}",
+            message
+        );
+
         if message.connection_hops_on_a.len() != 1 {
             return Err(ChannelError::InvalidConnectionHopsLength {
                 expected: 1,
