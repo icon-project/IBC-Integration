@@ -14,7 +14,7 @@ use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
 use cosmwasm_std::Response;
 use cosmwasm_std::Storage;
-use cosmwasm_std::{from_binary, to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
+use cosmwasm_std::{to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
 use cw_common::client_msg::{
     VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState,
 };

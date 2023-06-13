@@ -21,6 +21,10 @@ impl Acknowledgement {
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_slice()
     }
+
+    pub fn from_bytes(b: &[u8]) -> Acknowledgement {
+        Acknowledgement(b.to_vec())
+    }
 }
 
 impl AsRef<[u8]> for Acknowledgement {
@@ -69,7 +73,8 @@ impl TryFrom<RawMsgAcknowledgement> for MsgAcknowledgement {
     type Error = PacketError;
 
     fn try_from(raw_msg: RawMsgAcknowledgement) -> Result<Self, Self::Error> {
-        Ok(MsgAcknowledgement {
+        println!("raw message: {raw_msg:?}");
+        let m = MsgAcknowledgement {
             packet: raw_msg
                 .packet
                 .ok_or(PacketError::MissingPacket)?
@@ -84,7 +89,9 @@ impl TryFrom<RawMsgAcknowledgement> for MsgAcknowledgement {
                 .and_then(|raw_height| raw_height.try_into().ok())
                 .ok_or(PacketError::MissingHeight)?,
             signer: raw_msg.signer.parse().map_err(PacketError::Signer)?,
-        })
+        };
+        println!("actual ack message{m:?}");
+        Ok(m)
     }
 }
 

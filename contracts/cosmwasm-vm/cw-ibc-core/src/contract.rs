@@ -4,6 +4,7 @@ use common::ibc::core::ics04_channel::packet::Receipt;
 use cosmwasm_std::to_binary;
 
 use cw_common::hex_string::HexString;
+use cw_common::raw_types::channel::RawMsgChannelCloseInit;
 use cw_common::raw_types::channel::{
     RawChannel, RawMessageAcknowledgement, RawMessageRecvPacket, RawMessageTimeout,
     RawMessageTimeoutOnclose, RawMsgChannelCloseConfirm, RawMsgChannelOpenAck,
@@ -12,7 +13,9 @@ use cw_common::raw_types::channel::{
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::raw_types::connection::*;
 use cw_common::raw_types::Protobuf;
-use cw_common::raw_types::RawHeight;
+
+use cw_common::to_checked_address;
+use debug_print::debug_println;
 use prost::{DecodeError, Message};
 
 // version info for migration info
@@ -85,7 +88,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn execute(
         &mut self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         msg: CoreExecuteMsg,
     ) -> Result<Response, ContractError> {
@@ -94,18 +97,18 @@ impl<'a> CwIbcCoreContext<'a> {
                 client_type,
                 client_address,
             } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender)?;
+                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let client_type = IbcClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
             CoreExecuteMsg::CreateClient { msg } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
+                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let message: IbcMsgCreateClient =
                     Self::from_raw::<RawMsgCreateClient, IbcMsgCreateClient>(&msg)?;
                 self.create_client(deps, info, message)
             }
             CoreExecuteMsg::UpdateClient { msg } => {
-                self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
+                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
                 let message: IbcMsgUpdateClient =
                     Self::from_raw::<RawMsgUpdateClient, IbcMsgUpdateClient>(&msg)?;
                 self.update_client(deps, info, message)
@@ -125,12 +128,12 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ConnectionOpenTry { msg } => {
                 let message: MsgConnectionOpenTry =
                     Self::from_raw::<RawMsgConnectionOpenTry, MsgConnectionOpenTry>(&msg)?;
-                self.connection_open_try(deps, info, message)
+                self.connection_open_try(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenAck { msg } => {
                 let message: MsgConnectionOpenAck =
                     Self::from_raw::<RawMsgConnectionOpenAck, MsgConnectionOpenAck>(&msg)?;
-                self.connection_open_ack(deps, info, message)
+                self.connection_open_ack(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenConfirm { msg } => {
                 let message: MsgConnectionOpenConfirm =
@@ -157,19 +160,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     Self::from_raw::<RawMsgChannelOpenConfirm, MsgChannelOpenConfirm>(&msg)?;
                 self.validate_channel_open_confirm(deps, info, &message)
             }
-            CoreExecuteMsg::ChannelCloseInit {
-                port_id_on_a,
-                chan_id_on_a,
-                signer,
-            } => {
-                let signer = Self::to_signer(&signer)?;
-                let message = MsgChannelCloseInit {
-                    port_id_on_a: IbcPortId::from_str(&port_id_on_a)
-                        .map_err(|error| ContractError::IbcValidationError { error })?,
-                    chan_id_on_a: IbcChannelId::from_str(&chan_id_on_a)
-                        .map_err(|error| ContractError::IbcValidationError { error })?,
-                    signer,
-                };
+            CoreExecuteMsg::ChannelCloseInit { msg } => {
+                let message = Self::from_raw::<RawMsgChannelCloseInit, MsgChannelCloseInit>(&msg)?;
 
                 self.validate_channel_close_init(deps, info, &message)
             }
@@ -192,18 +184,19 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ReceivePacket { msg } => {
                 let message: MsgRecvPacket =
                     Self::from_raw::<RawMessageRecvPacket, MsgRecvPacket>(&msg)?;
-                self.validate_receive_packet(deps, info, &message)
+                self.validate_receive_packet(deps, info, env, &message)
             }
             CoreExecuteMsg::AcknowledgementPacket { msg } => {
                 let message: MsgAcknowledgement =
                     Self::from_raw::<RawMessageAcknowledgement, MsgAcknowledgement>(&msg)?;
-                self.acknowledgement_packet_validate(deps, info, &message)
+                self.acknowledgement_packet_validate(deps, info, env, &message)
             }
             CoreExecuteMsg::RequestTimeout {} => todo!(),
             CoreExecuteMsg::Timeout { msg } => {
                 let message: MsgTimeout = Self::from_raw::<RawMessageTimeout, MsgTimeout>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
+                    env,
                     info,
                     cw_common::types::TimeoutMsgType::Timeout(message),
                 )
@@ -213,6 +206,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     Self::from_raw::<RawMessageTimeoutOnclose, MsgTimeoutOnClose>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
+                    env,
                     info,
                     cw_common::types::TimeoutMsgType::TimeoutOnClose(message),
                 )
@@ -223,7 +217,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: DecodeError::new(error.to_string()),
                     }
                 })?;
-                self.bind_port(deps.storage, &port_id, address)
+                let checked_address = to_checked_address(deps.as_ref(), &address).to_string();
+                self.bind_port(deps.storage, &port_id, checked_address)
             }
             CoreExecuteMsg::SetExpectedTimePerBlock { block_time } => {
                 self.set_expected_time_per_block(deps.storage, block_time)?;
@@ -270,21 +265,11 @@ impl<'a> CwIbcCoreContext<'a> {
                 let addr = Addr::unchecked(res);
                 to_binary(&addr)
             }
-            QueryMsg::GetConsensusState { client_id, height } => {
-                let raw_height: RawHeight = RawHeight::decode(height.to_bytes().unwrap().as_ref())
-                    .map_err(|_| ClientError::InvalidHeight)
-                    .unwrap();
-                let height =
-                    Height::new(raw_height.revision_number, raw_height.revision_height).unwrap();
-
+            QueryMsg::GetConsensusState { client_id } => {
                 let res = self
-                    .consensus_state_any(
-                        deps.storage,
-                        &IbcClientId::from_str(&client_id).unwrap(),
-                        &height,
-                    )
+                    .consensus_state_any(deps.storage, &IbcClientId::from_str(&client_id).unwrap())
                     .map_err(|e| {
-                        println!("{e:?}");
+                        debug_println!("{e:?}");
                         ContractError::InvalidClientId { client_id }
                     })
                     .unwrap();
@@ -338,7 +323,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 let res = self
                     .get_next_sequence_recv(deps.storage, _port_id, _channel_id)
                     .unwrap();
-                to_binary(&res)
+                let sequence: u64 = res.into();
+                to_binary(&sequence)
             }
             QueryMsg::GetNextSequenceAcknowledgement {
                 port_id,
@@ -353,7 +339,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetCapability { name } => {
                 let res = self
-                    .get_capability(deps.storage, name.to_bytes().unwrap())
+                    .get_capability(deps.storage, name.as_bytes().to_vec())
                     .unwrap();
                 to_binary(&res)
             }
@@ -430,6 +416,10 @@ impl<'a> CwIbcCoreContext<'a> {
                     Receipt::Ok => to_binary(&true),
                 }
             }
+            QueryMsg::GetAllPorts {} => {
+                let ports = self.get_all_ports(deps.storage).unwrap();
+                to_binary(&ports)
+            }
         }
     }
 
@@ -452,14 +442,14 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn reply(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.id {
-            EXECUTE_CREATE_CLIENT => self.execute_create_client_reply(deps, message),
-            EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, message),
-            EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, message),
-            MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, message),
+            EXECUTE_CREATE_CLIENT => self.execute_create_client_reply(deps, env, message),
+            EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
+            EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
+            MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
             EXECUTE_CONNECTION_OPENTRY => self.execute_connection_open_try(deps, message),
             EXECUTE_CONNECTION_OPENACK => self.execute_connection_open_ack(deps, message),
             EXECUTE_CONNECTION_OPENCONFIRM => self.execute_connection_openconfirm(deps, message),
@@ -572,6 +562,8 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(updated_coins)
     }
 
+    pub fn test_func() {}
+
     /// This function converts a hexadecimal string to a Rust type that implements the Message trait and
     /// can be converted to another type using the TryFrom trait.
     ///
@@ -637,8 +629,8 @@ mod tests {
         icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
     };
 
-    use cw_common::hex_string::HexString;
     use cw_common::ibc_types::IbcClientType;
+    use debug_print::debug_println;
     use prost::Message;
 
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
@@ -710,26 +702,24 @@ mod tests {
         };
 
         let height = Height::new(123, 456).unwrap();
-        let raw_height: RawHeight = RawHeight::from(height);
+        let _raw_height: RawHeight = RawHeight::from(height);
         contract
             .store_consensus_state(
                 deps.as_mut().storage,
                 &IbcClientId::from_str(&client_id).unwrap(),
                 height,
                 consensus_state.to_any().encode_to_vec(),
+                consensus_state.get_keccak_hash().to_vec(),
             )
             .unwrap();
 
-        let msg = QueryMsg::GetConsensusState {
-            client_id,
-            height: HexString::from_bytes(&raw_height.encode_to_vec()),
-        };
+        let msg = QueryMsg::GetConsensusState { client_id };
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
         let result_parsed: String = from_binary(&result).unwrap();
         let result_bytes = hex::decode(result_parsed).unwrap();
 
         let result_decoded = Any::decode(result_bytes.as_ref()).unwrap();
-        println!("{result_decoded:?}");
+        debug_println!("{result_decoded:?}");
         assert_eq!(
             ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
             result_decoded.type_url

@@ -191,7 +191,7 @@ dependencies = [
  "dyn-clone",
  "hex",
  "hex-literal 0.3.4",
- "ibc-proto 0.26.0",
+ "ibc-proto",
  "ics23",
  "pbjson",
  "pbjson-types",
@@ -359,6 +359,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "curve25519-dalek-ng"
+version = "4.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c359b7249347e46fb28804470d071c921156ad62b3eef5d34e2ba867533dec8"
+dependencies = [
+ "byteorder",
+ "digest 0.9.0",
+ "rand_core 0.6.4",
+ "subtle-ng",
+ "zeroize",
+]
+
+[[package]]
 name = "cw-common"
 version = "0.1.0"
 dependencies = [
@@ -370,7 +383,7 @@ dependencies = [
  "getrandom",
  "hex",
  "hex-buffer-serde",
- "ibc-proto 0.26.0",
+ "ibc-proto",
  "prost 0.11.9",
  "schemars 0.8.12",
  "serde",
@@ -393,6 +406,7 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus",
  "cw2",
+ "debug_print",
  "getrandom",
  "hex",
  "hex-literal 0.4.1",
@@ -417,9 +431,9 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-common",
- "cw-multi-test",
  "cw-storage-plus",
  "cw2",
+ "debug_print",
  "getrandom",
  "hex",
  "hex-literal 0.4.1",
@@ -437,15 +451,27 @@ dependencies = [
 name = "cw-integration"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "common",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
+ "cw-common",
+ "cw-ibc-core",
+ "cw-icon-light-client",
  "cw-mock-dapp",
  "cw-mock-ibc-core",
  "cw-multi-test",
  "cw-storage-plus",
+ "cw-xcall",
+ "cw-xcall-app",
  "cw-xcall-ibc-connection",
  "hex",
+ "ibc",
+ "prost 0.11.9",
+ "strum",
+ "strum_macros",
+ "test-utils",
 ]
 
 [[package]]
@@ -563,6 +589,7 @@ dependencies = [
  "cw-common",
  "cw-storage-plus",
  "cw2",
+ "debug_print",
  "getrandom",
  "hex",
  "schemars 0.8.12",
@@ -581,10 +608,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-common",
- "cw-mock-ibc-core",
- "cw-multi-test",
  "cw-storage-plus",
- "cw-xcall-ibc-connection",
  "cw2",
  "getrandom",
  "hex",
@@ -626,6 +650,12 @@ dependencies = [
  "schemars 0.8.12",
  "serde",
 ]
+
+[[package]]
+name = "debug_print"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f215f9b7224f49fb73256115331f677d868b34d18b65dbe4db392e6021eea90"
 
 [[package]]
 name = "der"
@@ -724,6 +754,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ed25519-consensus"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c8465edc8ee7436ffea81d21a019b16676ee3db267aa8d5a8d729581ecf998b"
+dependencies = [
+ "curve25519-dalek-ng",
+ "hex",
+ "rand_core 0.6.4",
+ "sha2 0.9.9",
+ "zeroize",
+]
+
+[[package]]
 name = "ed25519-zebra"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -765,6 +808,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "erased-serde"
+version = "0.3.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f2b0c2380453a92ea8b6c8e5f64ecaafccddde8ceab55ff7a8ac1029f894569"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -802,6 +854,15 @@ checksum = "d013fc25338cc558c5c2cfbad646908fb23591e2404481826742b651c9af7160"
 dependencies = [
  "rand_core 0.6.4",
  "subtle",
+]
+
+[[package]]
+name = "fixed-hash"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "835c052cb0c08c1acf6ffd71c022172e18723949c8282f2b9f27efbc51e64534"
+dependencies = [
+ "static_assertions",
 ]
 
 [[package]]
@@ -986,25 +1047,43 @@ dependencies = [
 ]
 
 [[package]]
-name = "ibc-proto"
-version = "0.26.0"
+name = "ibc"
+version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9303a1308c886aea769ef0667c5caa422a78b01e9f8177fea8b91b08a4ff50c"
+checksum = "030b54b02c3f35ea7265da2beedf0d7d22492208919a6582f980ff3eae82c2d0"
 dependencies = [
- "base64 0.13.1",
  "bytes",
- "flex-error",
+ "cfg-if",
+ "derive_more",
+ "displaydoc",
+ "dyn-clone",
+ "erased-serde",
+ "ibc-proto",
+ "ics23",
+ "num-traits",
+ "parity-scale-codec",
+ "primitive-types",
  "prost 0.11.9",
+ "safe-regex",
+ "scale-info",
  "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.10.6",
  "subtle-encoding",
- "tendermint-proto 0.29.1",
+ "tendermint",
+ "tendermint-light-client-verifier",
+ "tendermint-proto",
+ "time",
+ "tracing",
+ "uint",
 ]
 
 [[package]]
 name = "ibc-proto"
-version = "0.28.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40a2d356a360473d212dd20779b11ce858e35ac5509c7e1953002fa247780759"
+checksum = "c9303a1308c886aea769ef0667c5caa422a78b01e9f8177fea8b91b08a4ff50c"
 dependencies = [
  "base64 0.13.1",
  "borsh",
@@ -1015,7 +1094,7 @@ dependencies = [
  "scale-info",
  "serde",
  "subtle-encoding",
- "tendermint-proto 0.30.0",
+ "tendermint-proto",
 ]
 
 [[package]]
@@ -1031,6 +1110,15 @@ dependencies = [
  "ripemd",
  "sha2 0.10.6",
  "sha3",
+]
+
+[[package]]
+name = "impl-serde"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebc88fc67028ae3db0c853baa36269d398d5f45b6982f95549ff5def78c935cd"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -1326,6 +1414,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "primitive-types"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f3486ccba82358b11a77516035647c34ba167dfa53312630de83b12bd4f3d66"
+dependencies = [
+ "fixed-hash",
+ "impl-serde",
+ "uint",
+]
+
+[[package]]
 name = "proc-macro-crate"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1561,6 +1660,12 @@ dependencies = [
  "linux-raw-sys",
  "windows-sys 0.48.0",
 ]
+
+[[package]]
+name = "rustversion"
+version = "1.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f3208ce4d8448b3f3e7d168a73f5e0c43a61e32930de3bceeccedb388b6bf06"
 
 [[package]]
 name = "ryu"
@@ -1894,6 +1999,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
+name = "strum"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
+
+[[package]]
+name = "strum_macros"
+version = "0.24.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
+dependencies = [
+ "heck",
+ "proc-macro2 1.0.58",
+ "quote 1.0.27",
+ "rustversion",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "subtle"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1907,6 +2031,12 @@ checksum = "7dcb1ed7b8330c5eed5441052651dd7a12c75e2ed88f2ec024ae1fa3a5e59945"
 dependencies = [
  "zeroize",
 ]
+
+[[package]]
+name = "subtle-ng"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 
 [[package]]
 name = "syn"
@@ -1963,6 +2093,7 @@ dependencies = [
  "bytes",
  "digest 0.10.7",
  "ed25519",
+ "ed25519-consensus",
  "flex-error",
  "futures",
  "num-traits",
@@ -1973,12 +2104,26 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "serde_repr",
+ "sha2 0.10.6",
  "signature",
  "subtle",
  "subtle-encoding",
- "tendermint-proto 0.29.1",
+ "tendermint-proto",
  "time",
  "zeroize",
+]
+
+[[package]]
+name = "tendermint-light-client-verifier"
+version = "0.29.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11c3dc3c75f7a5708ac0bf98374b2b1a2cf17b3a45ddfd5faab3c111aff7fc0e"
+dependencies = [
+ "derive_more",
+ "flex-error",
+ "serde",
+ "tendermint",
+ "time",
 ]
 
 [[package]]
@@ -1986,24 +2131,6 @@ name = "tendermint-proto"
 version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c943f78c929cdf14553842f705f2c30324bc35b9179caaa5c9b80620f60652e6"
-dependencies = [
- "bytes",
- "flex-error",
- "num-derive",
- "num-traits",
- "prost 0.11.9",
- "prost-types",
- "serde",
- "serde_bytes",
- "subtle-encoding",
- "time",
-]
-
-[[package]]
-name = "tendermint-proto"
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e553ed65874c3f35a71eb60d255edfea956274b5af37a0297d54bba039fe45e3"
 dependencies = [
  "bytes",
  "flex-error",
@@ -2038,7 +2165,7 @@ dependencies = [
  "getrandom",
  "hex",
  "hex-literal 0.4.1",
- "ibc-proto 0.28.0",
+ "ibc-proto",
  "prost 0.11.9",
  "serde",
  "serde_json",

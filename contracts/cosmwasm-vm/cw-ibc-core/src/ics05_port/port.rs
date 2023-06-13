@@ -1,5 +1,7 @@
+use std::str::from_utf8;
+
 use super::*;
-use cw_common::commitment;
+
 /// This is an implementation of several helper functions for working with IBC (Inter-Blockchain
 /// Communication) modules in a Cosmos SDK-based blockchain application.
 impl<'a> CwIbcCoreContext<'a> {
@@ -146,8 +148,14 @@ impl<'a> CwIbcCoreContext<'a> {
         port_id: &IbcPortId,
         address: String,
     ) -> Result<Response, ContractError> {
-        self.claim_capability(store, commitment::port_path(port_id), address.clone())?;
+        self.claim_capability(store, port_id.as_str().as_bytes().to_vec(), address.clone())?;
 
+        self.store_module_by_port(
+            store,
+            port_id.clone(),
+            ModuleId::from_str(&address).unwrap(),
+        )
+        .unwrap();
         Ok(Response::new()
             .add_attribute("method", "bind_port")
             .add_attribute("port_id", port_id.as_str())
@@ -176,5 +184,23 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Vec<u8> {
         let path = format!("ports/{port_id}/channels/{channel_id}");
         path.as_bytes().to_vec()
+    }
+
+    pub fn get_all_ports(&self, store: &dyn Storage) -> Result<Vec<String>, StdError> {
+        return self
+            .ibc_store()
+            .capabilities()
+            .keys(store, None, None, cosmwasm_std::Order::Ascending)
+            .map(|k| {
+                k.and_then(|key| {
+                    return from_utf8(&key).map(|k| k.to_string()).map_err(|_e| {
+                        StdError::ParseErr {
+                            target_type: "string".to_owned(),
+                            msg: "failed to parse key".to_owned(),
+                        }
+                    });
+                })
+            })
+            .collect::<Result<Vec<String>, StdError>>();
     }
 }

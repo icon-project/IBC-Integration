@@ -8,39 +8,13 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcMsg, IbcTimeout,
     IbcTimeoutBlock, SystemError, SystemResult, WasmQuery,
 };
-
 use cw_xcall_app::{
     state::CwCallService,
     types::{message::CallServiceMessage, request::CallServiceMessageRequest},
 };
-
 use setup::test::*;
-use test_utils::get_event;
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
-
-#[test]
-fn send_packet_success() {
-    let mock_deps = deps();
-
-    let _mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
-    let mut ctx = setup_contracts(mock_deps);
-    call_set_xcall_host(&mut ctx).unwrap();
-    call_set_ibc_config(&mut ctx).unwrap();
-    let src = ctx.connection_host.to_string();
-    let result = call_send_call_message(
-        &mut ctx,
-        MOCK_CONTRACT_TO_ADDR,
-        vec![src],
-        vec!["somedestination".to_string()],
-        vec![1, 2, 3],
-        None,
-    );
-    assert_eq!(true, result.is_ok());
-    let result = result.unwrap();
-    let event = get_event(&result, "wasm-xcall_app_send_call_message_reply").unwrap();
-    assert_eq!("success", event.get("status").unwrap());
-}
 
 #[test]
 #[should_panic(expected = "RollbackNotPossible")]

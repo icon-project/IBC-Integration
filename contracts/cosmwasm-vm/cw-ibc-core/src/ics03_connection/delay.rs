@@ -11,18 +11,21 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn verify_connection_delay_passed(
         &self,
         store: &dyn Storage,
-        packet_proof_height: Height,
+        env: Env,
+        _packet_proof_height: Height,
         connection_end: ConnectionEnd,
     ) -> Result<(), ContractError> {
         // Fetch the current host chain time and height.
-        let current_host_time = self.host_timestamp(store)?;
-        let current_host_height = self.host_height()?;
+        let current_host_time = self.host_timestamp(&env)?;
+        let current_host_height = self.host_height(&env)?;
 
         // Fetch the latest time and height that the counterparty client was updated on the host chain.
         let client_id = connection_end.client_id();
-        let last_client_update_time = self.client_update_time(client_id, &packet_proof_height)?;
+        let last_processed_on = self.last_processed_on(store, client_id)?;
+        let last_client_update_time =
+            self.client_update_time(client_id, last_processed_on.timestamp)?;
         let last_client_update_height =
-            self.client_update_height(client_id, &packet_proof_height)?;
+            self.client_update_height(client_id, last_processed_on.height)?;
 
         // Fetch the connection delay time and height periods.
         let conn_delay_time_period = connection_end.delay_period();

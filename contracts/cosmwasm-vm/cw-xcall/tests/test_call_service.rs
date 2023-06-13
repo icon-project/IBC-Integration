@@ -1,4 +1,3 @@
-mod account;
 mod setup;
 use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},

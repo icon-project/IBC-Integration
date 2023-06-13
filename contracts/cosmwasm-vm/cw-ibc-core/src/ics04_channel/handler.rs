@@ -7,16 +7,19 @@ use self::{
     },
     open_try::channel_open_try_msg_validate,
 };
-use cw_common::commitment;
+
+use cw_common::{commitment, from_binary_response, raw_types::channel::RawChannel};
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;
+use debug_print::debug_println;
 use open_ack::*;
 pub mod open_confirm;
 use open_confirm::*;
 
 pub mod close_confirm;
 pub use close_confirm::*;
+use prost::Message;
 
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     /// This function validates a channel open initialization message and generates an event for calling
@@ -59,16 +62,20 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             Err(error) => return Err(error),
         };
         let channel_id_on_a = ChannelId::new(counter); // creating new channel_id
-        let module_id = match self.lookup_module_by_port(deps.storage, message.port_id_on_a.clone())
-        {
+        let contract_address = match self.lookup_modules(
+            deps.storage,
+            message.port_id_on_a.clone().as_bytes().to_vec(),
+        ) {
             Ok(addr) => addr,
             Err(error) => return Err(error),
         };
-        let module_id = module_id;
-        let contract_address = match self.get_route(deps.storage, module_id) {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
+
+        debug_println!("contract address is : {:?} ", contract_address);
+        // let module_id = cw_common::ibc_types::IbcModuleId::from_str(module_id.as_str());
+        // let contract_address = match self.get_route(deps.storage, ) {
+        //     Ok(addr) => addr,
+        //     Err(error) => return Err(error),
+        // };
         // Store the channel details
         let counter_party = Counterparty::new(message.port_id_on_b.clone(), None);
         let channel_end = ChannelEnd::new(
@@ -90,7 +97,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_init = create_channel_submesssage(
-            contract_address.to_string(),
+            contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_INIT,
@@ -132,10 +139,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 },
             });
         }
+        debug_println!("Reached in channel open try");
         let connection_id = message.connection_hops_on_b[0].clone();
         let conn_end_on_b = self.connection_end(deps.storage, connection_id)?;
 
         channel_open_try_msg_validate(message, &conn_end_on_b)?;
+        debug_println!("channel open try msg validate ");
 
         let counter = match self.channel_counter(deps.storage) {
             Ok(counter) => counter,
@@ -147,6 +156,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message.port_id_on_a.clone(),
             Some(message.chan_id_on_a.clone()),
         );
+
         let channel_end = ChannelEnd::new(
             State::Uninitialized,
             message.ordering,
@@ -154,10 +164,16 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             message.connection_hops_on_b.clone(),
             message.version_supported_on_a.clone(),
         );
+        debug_println!(
+            "stoed: channel id: {:?}  portid :{:?} channel_end :{:?}",
+            channel_id_on_b,
+            message.port_id_on_b,
+            channel_end
+        );
         self.store_channel_end(
             deps.storage,
             message.port_id_on_b.clone(),
-            channel_id_on_b,
+            channel_id_on_b.clone(),
             channel_end,
         )?;
 
@@ -177,6 +193,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                         connection_id: message.connection_hops_on_b[0].clone(),
                     },
                 })?;
+
         if client_state_of_a_on_b.is_frozen() {
             return Err(ContractError::IbcChannelError {
                 error: ChannelError::FrozenClient {
@@ -185,6 +202,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
 
+        debug_println!("after frozen check");
         let expected_chan_end_on_a = ChannelEnd::new(
             State::Init,
             message.ordering,
@@ -192,21 +210,24 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             message.version_supported_on_a.clone(),
         );
+        let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_a).unwrap();
         let chan_end_path_on_a = commitment::channel_path(&port_id_on_a, &chan_id_on_a);
-        let vector = to_vec(&expected_chan_end_on_a);
+        let vector = raw_expected_chan.encode_to_vec();
 
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        debug_println!("after fee calculatation");
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
+        // debug_println!("after funding update");
 
         let create_client_message = LightClientMessage::VerifyChannel {
             endpoint: CwEndPoint {
-                port_id: port_id_on_a.to_string(),
-                channel_id: chan_id_on_a.to_string(),
+                port_id: message.port_id_on_b.clone().to_string(),
+                channel_id: channel_id_on_b.to_string(),
             },
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
             verify_channel_state: VerifyChannelState {
                 proof_height: message.proof_height_on_a.to_string(),
@@ -214,7 +235,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 proof: message.proof_chan_end_on_a.clone().into(),
                 root: consensus_state_of_a_on_b.clone().root().into_vec(),
                 counterparty_chan_end_path: chan_end_path_on_a,
-                expected_counterparty_channel_end: vector.unwrap(),
+                expected_counterparty_channel_end: vector,
+                client_id: conn_end_on_b.client_id().to_string(),
             },
         };
         let client_type = client_state_of_a_on_b.client_type();
@@ -233,6 +255,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         )
         .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
 
+        debug_println!("before calling light client ");
         Ok(Response::new()
             .add_attribute("action", "Light client channel open try call")
             .add_submessage(sub_msg))
@@ -307,14 +330,17 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_b.clone()],
             message.version_on_b.clone(),
         );
+
+        let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_b).unwrap();
         let chan_end_path_on_b = commitment::channel_path(port_id_on_b, &message.chan_id_on_b);
-        let vector = to_vec(&expected_chan_end_on_b);
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        let vector = raw_expected_chan.encode_to_vec();
+
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
             endpoint: CwEndPoint {
                 port_id: message.port_id_on_a.clone().to_string(),
@@ -326,7 +352,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 proof: message.proof_chan_end_on_b.clone().into(),
                 root: consensus_state_of_b_on_a.clone().root().into_vec(),
                 counterparty_chan_end_path: chan_end_path_on_b,
-                expected_counterparty_channel_end: vector.unwrap(),
+                expected_counterparty_channel_end: vector,
+                client_id: conn_end_on_a.client_id().to_string(),
             },
         };
         let client_type = client_state_of_b_on_a.client_type();
@@ -435,17 +462,19 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             chan_end_on_b.version.clone(),
         );
+
+        let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_a).unwrap();
         let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
 
-        let vector = to_vec(&expected_chan_end_on_a);
+        let vector = raw_expected_chan.encode_to_vec();
 
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        //
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
             endpoint: CwEndPoint {
                 port_id: message.port_id_on_b.clone().to_string(),
@@ -457,7 +486,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 proof: message.proof_chan_end_on_a.clone().into(),
                 root: consensus_state_of_a_on_b.clone().root().into_vec(),
                 counterparty_chan_end_path: chan_end_path_on_a,
-                expected_counterparty_channel_end: vector.unwrap(),
+                expected_counterparty_channel_end: vector,
+                client_id: conn_end_on_b.client_id().to_string(),
             },
         };
         let client_type = client_state_of_a_on_b.client_type();
@@ -519,22 +549,17 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
 
-        let module_id = match self.lookup_module_by_port(deps.storage, message.port_id_on_a.clone())
-        {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
-        let module_id = module_id;
-        let contract_address = match self.get_route(deps.storage, module_id) {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
+        let contract_address =
+            match self.lookup_modules(deps.storage, message.port_id_on_a.as_bytes().to_vec()) {
+                Ok(addr) => addr,
+                Err(error) => return Err(error),
+            };
 
         let sub_message = on_chan_close_init_submessage(message, &chan_end_on_a, &connection_id);
         let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_close_init = create_channel_submesssage(
-            contract_address.to_string(),
+            contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_CLOSE_INIT,
@@ -624,15 +649,17 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             chan_end_on_b.version().clone(),
         );
-        let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
-        let vector = to_vec(&expected_chan_end_on_a);
-        let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_a).unwrap();
 
-        let funds = self.update_fee(info.funds.clone(), fee)?;
+        let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
+        let vector = raw_expected_chan.encode_to_vec();
+        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        //
+        // let funds = self.update_fee(info.funds.clone(), fee)?;
         let create_client_message = LightClientMessage::VerifyChannel {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
-                funds,
+                funds: vec![],
             },
             endpoint: CwEndPoint {
                 port_id: message.port_id_on_b.clone().to_string(),
@@ -644,7 +671,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 proof: message.proof_chan_end_on_a.clone().into(),
                 root: consensus_state_of_a_on_b.clone().root().into_vec(),
                 counterparty_chan_end_path: chan_end_path_on_a,
-                expected_counterparty_channel_end: vector.unwrap(),
+                expected_counterparty_channel_end: vector,
+                client_id: conn_end_on_b.client_id().to_string(),
             },
         };
         let client_type = client_state_of_a_on_b.client_type();
@@ -692,7 +720,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -728,9 +756,24 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         1.into(),
                     )?;
 
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
-                    let channel_id_event = create_channel_id_generated_event(channel_id);
-                    Ok(Response::new().add_event(channel_id_event))
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end.clone(),
+                    )?;
+                    let channel_id_event = create_channel_id_generated_event(channel_id.clone());
+
+                    let main_event = create_open_init_channel_event(
+                        channel_id.as_str(),
+                        port_id.as_str(),
+                        channel_end.counterparty().port_id().as_str(),
+                        channel_end.connection_hops()[0].as_str(),
+                        channel_end.version().as_str(),
+                    );
+                    Ok(Response::new()
+                        .add_event(channel_id_event)
+                        .add_event(main_event))
                 }
                 None => Err(ChannelError::Other {
                     description: "Data from module is Missing".to_string(),
@@ -763,10 +806,11 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
+        debug_println!("reached execute_channelopenTry");
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -816,7 +860,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_end.version().as_str(),
                     );
 
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end,
+                    )?;
                     Ok(Response::new()
                         .add_event(channel_id_event)
                         .add_event(main_event))
@@ -856,7 +905,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -870,7 +919,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_end.clone(),
                     )?;
 
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end)?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end,
+                    )?;
 
                     let event =
                         create_close_init_channel_event(port_id.as_str(), channel_id.as_str());
@@ -911,7 +965,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -930,7 +984,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end.clone(),
+                    )?;
 
                     let event = create_open_ack_channel_event(
                         port_id.as_str(),
@@ -978,7 +1037,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -997,7 +1056,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end.clone(),
+                    )?;
 
                     let event = create_open_confirm_channel_event(
                         port_id.as_str(),
@@ -1042,7 +1106,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -1061,7 +1125,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         channel_id.clone(),
                         channel_end.clone(),
                     )?;
-                    self.store_channel(deps.storage, &port_id, &channel_id, channel_end.clone())?;
+                    self.store_channel_commitment(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        channel_end.clone(),
+                    )?;
                     let event =
                         create_close_confirm_channel_event(port_id.as_str(), channel_id.as_str());
 

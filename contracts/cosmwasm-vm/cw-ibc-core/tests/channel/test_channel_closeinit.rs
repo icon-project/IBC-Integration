@@ -26,16 +26,17 @@ fn test_validate_close_init_channel() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let _module_id =
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
-
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .store_capability(
+            &mut deps.storage,
+            port_id.to_string().as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
 
     let commitment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -103,13 +104,16 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
     let connection_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
@@ -163,7 +167,7 @@ fn test_execute_close_init_channel() {
         )
         .unwrap();
     contract
-        .store_channel(deps.as_mut().storage, &port_id, &channel_id, channel_end)
+        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
@@ -193,13 +197,16 @@ fn test_execute_close_init_channel_fail() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    contract
-        .store_module_by_port(&mut deps.storage, port_id, module_id.clone())
-        .unwrap();
+
     let module = Addr::unchecked("contractaddress");
-    let cx_module_id = module_id;
+    let _cx_module_id = module_id;
+
     contract
-        .add_route(&mut deps.storage, cx_module_id, &module)
+        .claim_capability(
+            &mut deps.storage,
+            port_id.as_bytes().to_vec(),
+            module.to_string(),
+        )
         .unwrap();
     let channel_id = msg.chan_id_on_a.clone();
     let port_id = msg.port_id_on_a;

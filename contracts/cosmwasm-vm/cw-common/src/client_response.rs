@@ -152,16 +152,20 @@ impl UpdateClientResponse {
 
 #[cw_serde]
 pub struct UpgradeClientResponse {
-    client_id: String,
-    height: String,
-    client_state_commitment: Vec<u8>,
-    consensus_state_commitment: Vec<u8>,
+    pub client_id: String,
+    pub height: String,
+    pub client_state_commitment: Vec<u8>,
+    pub consensus_state_commitment: Vec<u8>,
+    pub client_state_bytes: Vec<u8>,
+    pub consensus_state_bytes: Vec<u8>,
 }
 
 impl UpgradeClientResponse {
     pub fn new(
         client_state_commitment: Vec<u8>,
+        client_state_bytes: Vec<u8>,
         consensus_state_commitment: Vec<u8>,
+        consensus_state_bytes: Vec<u8>,
         client_id: String,
         height: String,
     ) -> Self {
@@ -170,6 +174,8 @@ impl UpgradeClientResponse {
             client_id,
             client_state_commitment,
             consensus_state_commitment,
+            client_state_bytes,
+            consensus_state_bytes,
         }
     }
 
@@ -200,13 +206,19 @@ impl UpgradeClientResponse {
 pub struct MisbehaviourResponse {
     client_id: String,
     pub client_state_commitment: Vec<u8>,
+    pub client_state_bytes: Vec<u8>,
 }
 
 impl MisbehaviourResponse {
-    pub fn new(client_id: String, client_state_commitment: Vec<u8>) -> Self {
+    pub fn new(
+        client_id: String,
+        client_state_commitment: Vec<u8>,
+        client_state_bytes: Vec<u8>,
+    ) -> Self {
         Self {
             client_id,
             client_state_commitment,
+            client_state_bytes,
         }
     }
     pub fn get_client_id(&self) -> &str {
@@ -232,8 +244,6 @@ pub struct PacketResponse {
 
 impl From<PacketResponse> for Packet {
     fn from(packet: PacketResponse) -> Self {
-        println!("{packet:?}");
-        // let data = hex::decode(packet.data).unwrap();
         Packet {
             sequence: packet.seq_on_a,
             port_id_on_a: packet.port_id_on_a,

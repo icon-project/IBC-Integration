@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 pub mod constants;
 pub mod context;
 pub mod contract;
@@ -15,6 +16,7 @@ pub mod storage_keys;
 pub mod traits;
 pub use crate::error::ContractError;
 use gas_estimates::*;
+use ics04_channel::ics03_connection::msg::MigrateMsg;
 
 use crate::state::CwIbcStore;
 use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
@@ -53,7 +55,7 @@ pub use common::ibc::{
 };
 pub use constants::*;
 use context::CwIbcCoreContext;
-use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
 use cosmwasm_std::{
     entry_point, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
@@ -71,11 +73,12 @@ pub use cw_common::commitment::*;
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::msg::{InstantiateMsg, QueryMsg};
+use crate::msg::InstantiateMsg;
 use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
 
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
+use cw_common::core_msg::QueryMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -102,7 +105,7 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: msg::QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let call_service = CwIbcCoreContext::default();
 
     call_service.query(deps, env, msg)
@@ -129,4 +132,13 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
     let call_service = CwIbcCoreContext::default();
 
     call_service.reply(deps, env, msg)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    if msg.clear_store {
+        let store = CwIbcStore::default();
+        store.clear_storage(deps.storage);
+    }
+    Ok(Response::default().add_attribute("migrate", "successful"))
 }

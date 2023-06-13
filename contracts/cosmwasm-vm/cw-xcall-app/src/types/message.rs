@@ -32,8 +32,8 @@ impl Encodable for CallServiceMessageType {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
         stream.begin_list(1);
         match self {
-            CallServiceMessageType::CallServiceRequest => stream.append::<u128>(&0),
-            CallServiceMessageType::CallServiceResponse => stream.append::<u128>(&1),
+            CallServiceMessageType::CallServiceRequest => stream.append::<u128>(&1),
+            CallServiceMessageType::CallServiceResponse => stream.append::<u128>(&2),
         };
     }
 }

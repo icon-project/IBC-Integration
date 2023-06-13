@@ -1,6 +1,7 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, str::FromStr};
 
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::StdError;
 use hex_buffer_serde::Hex;
 use schemars::JsonSchema;
 
@@ -22,6 +23,14 @@ impl Hex<Vec<u8>> for FromHexString {
 #[cw_serde]
 pub struct HexString(String);
 
+impl FromStr for HexString {
+    type Err = StdError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(HexString(s.to_owned()))
+    }
+}
+
 impl HexString {
     pub fn to_bytes(&self) -> Result<Vec<u8>, hex::FromHexError> {
         let str = self.0.replace("0x", "");
@@ -34,9 +43,11 @@ impl HexString {
     pub fn from_bytes(bytes: &[u8]) -> HexString {
         HexString(hex::encode(bytes))
     }
+}
 
-    pub fn from_str(str: &str) -> Self {
-        HexString(str.to_owned())
+impl From<&str> for HexString {
+    fn from(value: &str) -> Self {
+        HexString(value.to_owned())
     }
 }
 

@@ -7,6 +7,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
+    let env = mock_env();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let height = 2;
@@ -86,7 +87,13 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &IbcClientId::default(), client)
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
@@ -103,13 +110,14 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_b;
-    let consenus_state = consenus_state.to_any().encode_to_vec();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();
@@ -119,7 +127,8 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
-    let res = contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, msg);
+    let res =
+        contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 541)
 }

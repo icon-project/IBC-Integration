@@ -21,19 +21,7 @@ use crate::ibc::core::ics02_client::error::ClientError;
 /// A typical trust threshold is 1/3 in practice.
 /// This type accepts even a value of 0, (numerator = 0, denominator = 0),
 /// which is used in the client state of an upgrading client.
-#[cfg_attr(
-    feature = "parity-scale-codec",
-    derive(
-        parity_scale_codec::Encode,
-        parity_scale_codec::Decode,
-        scale_info::TypeInfo
-    )
-)]
-#[cfg_attr(
-    feature = "borsh",
-    derive(borsh::BorshSerialize, borsh::BorshDeserialize)
-)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct TrustThreshold {
     numerator: u64,

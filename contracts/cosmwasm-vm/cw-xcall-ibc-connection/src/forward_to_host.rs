@@ -39,7 +39,7 @@ impl<'a> CwIbcConnection<'a> {
         })?;
 
         println!("{LOG_PREFIX} Loaded IbcConfig");
-        let query_message = cw_common::core_msg::QueryMsg::SequenceSend {
+        let query_message = cw_common::core_msg::QueryMsg::GetNextSequenceSend {
             port_id: ibc_config.src_endpoint().clone().port_id,
             channel_id: ibc_config.src_endpoint().clone().channel_id,
         };
@@ -48,7 +48,7 @@ impl<'a> CwIbcConnection<'a> {
             contract_addr: ibc_host.to_string(),
             msg: to_binary(&query_message).map_err(ContractError::Std)?,
         });
-        println!("{LOG_PREFIX} Created Query Request");
+        println!("{LOG_PREFIX} Created Query Request {ibc_host}");
 
         let sequence_number_host: u64 = deps
             .querier
