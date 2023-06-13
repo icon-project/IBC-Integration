@@ -71,7 +71,13 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
@@ -95,7 +101,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -182,10 +188,13 @@ fn test_validate_open_confirm_channel() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,
-        client_state.get_keccak_hash().to_vec()
-    
-    )
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
@@ -202,7 +211,7 @@ fn test_validate_open_confirm_channel() {
     .try_into()
     .unwrap();
     let height = msg.proof_height_on_a;
-   
+
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -210,7 +219,7 @@ fn test_validate_open_confirm_channel() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let res = contract.validate_channel_open_confirm(deps.as_mut(), info, &msg);
@@ -256,11 +265,10 @@ fn test_execute_open_confirm_from_light_client() {
     );
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_b.clone();
-    
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-   
+
     contract
         .claim_capability(
             &mut deps.storage,

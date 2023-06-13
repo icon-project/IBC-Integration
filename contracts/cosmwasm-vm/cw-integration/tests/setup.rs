@@ -71,8 +71,8 @@ impl TestContext {
             .as_ref()
             .and_then(|map| map.get(step))
             .cloned();
-        let err = format!("Payload not Found for {:?}", step);
-        return payload.expect(&err);
+        let err = format!("Payload not Found for {step:?}");
+        payload.expect(&err)
     }
 }
 
@@ -309,7 +309,7 @@ pub fn raw_payload_to_map(payloads: Vec<RawPayload>) -> HashMap<TestSteps, RawPa
         let key = TestSteps::from_str(&payload.step).unwrap();
         map.insert(key, payload);
     }
-    return map;
+    map
 }
 
 // pub fn get_icon_to_archway_payloads() -> HashMap<TestSteps, RawPayload> {

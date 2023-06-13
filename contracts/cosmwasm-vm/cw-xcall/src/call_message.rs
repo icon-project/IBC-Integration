@@ -153,7 +153,7 @@ impl<'a> CwCallService<'a> {
 
             debug_println!(
                 "packet hex byte send is {:?}",
-                hex::encode(&packet_data.encode_to_vec())
+                hex::encode(packet_data.encode_to_vec())
             );
             let message = cw_common::core_msg::ExecuteMsg::SendPacket {
                 packet: HexString::from_bytes(&packet_data.encode_to_vec()),

@@ -4,6 +4,7 @@ use common::ibc::core::ics04_channel::packet::Receipt;
 use cosmwasm_std::to_binary;
 
 use cw_common::hex_string::HexString;
+use cw_common::raw_types::channel::RawMsgChannelCloseInit;
 use cw_common::raw_types::channel::{
     RawChannel, RawMessageAcknowledgement, RawMessageRecvPacket, RawMessageTimeout,
     RawMessageTimeoutOnclose, RawMsgChannelCloseConfirm, RawMsgChannelOpenAck,
@@ -12,8 +13,7 @@ use cw_common::raw_types::channel::{
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::raw_types::connection::*;
 use cw_common::raw_types::Protobuf;
-use cw_common::raw_types::RawHeight;
-use cw_common::raw_types::channel::RawMsgChannelCloseInit;
+
 use cw_common::to_checked_address;
 use debug_print::debug_println;
 use prost::{DecodeError, Message};
@@ -160,11 +160,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     Self::from_raw::<RawMsgChannelOpenConfirm, MsgChannelOpenConfirm>(&msg)?;
                 self.validate_channel_open_confirm(deps, info, &message)
             }
-            CoreExecuteMsg::ChannelCloseInit {
-               msg
-            } => {
-                let message=Self::from_raw::<RawMsgChannelCloseInit,MsgChannelCloseInit>(&msg)?;
-               
+            CoreExecuteMsg::ChannelCloseInit { msg } => {
+                let message = Self::from_raw::<RawMsgChannelCloseInit, MsgChannelCloseInit>(&msg)?;
 
                 self.validate_channel_close_init(deps, info, &message)
             }
@@ -632,7 +629,6 @@ mod tests {
         icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
     };
 
-    use cw_common::hex_string::HexString;
     use cw_common::ibc_types::IbcClientType;
     use debug_print::debug_println;
     use prost::Message;
@@ -706,7 +702,7 @@ mod tests {
         };
 
         let height = Height::new(123, 456).unwrap();
-        let raw_height: RawHeight = RawHeight::from(height);
+        let _raw_height: RawHeight = RawHeight::from(height);
         contract
             .store_consensus_state(
                 deps.as_mut().storage,

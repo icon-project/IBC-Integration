@@ -7,7 +7,7 @@ use self::{
     },
     open_try::channel_open_try_msg_validate,
 };
-use common::utils::keccak256;
+
 use cw_common::{commitment, from_binary_response, raw_types::channel::RawChannel};
 pub mod close_init;
 use close_init::*;
@@ -759,7 +759,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     self.store_channel_commitment(
                         deps.storage,
                         &port_id,
-                        &channel_id.clone(),
+                        &channel_id,
                         channel_end.clone(),
                     )?;
                     let channel_id_event = create_channel_id_generated_event(channel_id.clone());

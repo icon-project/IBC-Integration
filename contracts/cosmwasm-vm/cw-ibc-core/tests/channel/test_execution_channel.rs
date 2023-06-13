@@ -36,7 +36,7 @@ fn test_for_channel_open_init_execution_message() {
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    
+
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
     contract
@@ -46,7 +46,7 @@ fn test_for_channel_open_init_execution_message() {
             module.to_string(),
         )
         .unwrap();
-   
+
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
@@ -117,10 +117,10 @@ fn test_for_channel_open_try_execution_message() {
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
- 
+
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    
+
     contract
         .claim_capability(
             &mut deps.storage,
@@ -161,7 +161,13 @@ fn test_for_channel_open_try_execution_message() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -184,7 +190,7 @@ fn test_for_channel_open_try_execution_message() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let res = contract.execute(
@@ -264,10 +270,10 @@ fn test_for_channel_open_ack_execution() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-   
+
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-   
+
     contract
         .claim_capability(
             &mut deps.storage,
@@ -326,7 +332,13 @@ fn test_for_channel_open_ack_execution() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -349,7 +361,7 @@ fn test_for_channel_open_ack_execution() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -447,11 +459,10 @@ fn test_for_channel_open_confirm() {
     );
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_b.clone();
-  
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-   
+
     contract
         .claim_capability(
             &mut deps.storage,
@@ -494,7 +505,13 @@ fn test_for_channel_open_confirm() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -517,7 +534,7 @@ fn test_for_channel_open_confirm() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let res = contract.execute(
@@ -598,10 +615,10 @@ fn test_for_channel_close_init() {
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    
+
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-   
+
     contract
         .claim_capability(
             &mut deps.storage,
@@ -660,14 +677,12 @@ fn test_for_channel_close_init() {
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
 
-    
-
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
         info,
         CoreExecuteMsg::ChannelCloseInit {
-           msg:HexString::from_bytes(&msg.encode_vec().unwrap())
+            msg: HexString::from_bytes(&msg.encode_vec().unwrap()),
         },
     );
 
@@ -715,7 +730,7 @@ fn test_for_channel_close_confirm() {
     let port_id = msg.port_id_on_b.clone();
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    
+
     contract
         .claim_capability(
             &mut deps.storage,
@@ -773,7 +788,13 @@ fn test_for_channel_close_confirm() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -796,7 +817,7 @@ fn test_for_channel_close_confirm() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let res = contract.execute(
@@ -936,7 +957,13 @@ fn test_for_packet_send() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -949,16 +976,16 @@ fn test_for_packet_send() {
     }
     .try_into()
     .unwrap();
-let consenus_state_any = consenus_state.to_any().encode_to_vec();
-contract
-    .store_consensus_state(
-        &mut deps.storage,
-        &IbcClientId::default(),
-        height,
-        consenus_state_any,
-        consenus_state.get_keccak_hash().to_vec()
-    )
-    .unwrap();
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    contract
+        .store_consensus_state(
+            &mut deps.storage,
+            &IbcClientId::default(),
+            height,
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
 
     let res = contract.execute(
         deps.as_mut(),
@@ -1037,7 +1064,13 @@ fn test_for_recieve_packet() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -1053,7 +1086,7 @@ fn test_for_recieve_packet() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();
@@ -1134,9 +1167,9 @@ fn test_for_recieve_packet() {
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_b;
-   
+
     let module = Addr::unchecked("contractaddress");
-    
+
     contract
         .claim_capability(
             &mut deps.storage,
@@ -1273,7 +1306,13 @@ fn test_for_ack_execute() {
     .unwrap();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -1288,7 +1327,7 @@ fn test_for_ack_execute() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let light_client = Addr::unchecked("lightclient");
@@ -1349,9 +1388,9 @@ fn test_for_ack_execute() {
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_a.clone();
-    
+
     let module = Addr::unchecked("contractaddress");
-  
+
     contract
         .claim_capability(
             &mut deps.storage,

@@ -1,4 +1,4 @@
-use common::ibc::core::ics04_channel::{timeout::TimeoutHeight, Version};
+use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
 use debug_print::debug_println;
 
 use super::*;

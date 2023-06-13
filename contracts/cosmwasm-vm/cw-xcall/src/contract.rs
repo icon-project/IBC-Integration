@@ -1,5 +1,5 @@
 use common::rlp;
-use cw_common::{from_binary_response, to_checked_address};
+use cw_common::to_checked_address;
 use debug_print::debug_println;
 
 use super::*;
@@ -395,16 +395,15 @@ impl<'a> CwCallService<'a> {
     /// `ContractError` is an enum that represents any errors that may occur during the execution of the
     /// function.
     fn on_channel_open(&self, msg: CwChannelOpenMsg) -> Result<Response, ContractError> {
-        let ibc_endpoint = match msg.clone(){
+        let ibc_endpoint = match msg.clone() {
             CwChannelOpenMsg::OpenInit { channel } => channel.endpoint,
             CwChannelOpenMsg::OpenTry {
                 channel,
                 counterparty_version: _,
             } => channel.endpoint,
         };
-        
 
-      //  check_order(&msg.channel().order)?;
+        //  check_order(&msg.channel().order)?;
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;

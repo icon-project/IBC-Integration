@@ -529,6 +529,6 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 
     pub fn timeout_height_to_str(&self, timeout: CwTimeoutBlock) -> String {
-        return format!("{0}-{1}", timeout.revision, timeout.height);
+        format!("{0}-{1}", timeout.revision, timeout.height)
     }
 }

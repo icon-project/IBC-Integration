@@ -70,7 +70,7 @@ pub enum ExecuteMsg {
         msg: HexString,
     },
     ChannelCloseInit {
-      //raw message bytes:
+        //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgChannelCloseInit
         msg: HexString,
     },

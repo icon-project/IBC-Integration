@@ -83,11 +83,7 @@ impl<'a> CwIbcCoreContext<'a> {
             client_id.clone(),
             connection_identifier.clone(),
         )?;
-        self.store_connection(
-            deps.storage,
-            connection_identifier.clone(),
-            connection_end.clone(),
-        )?;
+        self.store_connection(deps.storage, connection_identifier.clone(), connection_end)?;
 
         let event = create_open_init_event(
             connection_identifier.as_str(),

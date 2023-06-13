@@ -748,9 +748,9 @@ fn create_open_init_channel_event_test() {
     let message = MsgChannelOpenInit::try_from(default_raw_msg).unwrap();
     let channel_id = ChannelId::new(10);
     let event = create_open_init_channel_event(
-        &channel_id.to_string(),
-        &message.port_id_on_a.to_string(),
-        &message.port_id_on_a.to_string(),
+        channel_id.as_ref(),
+        message.port_id_on_a.as_ref(),
+        message.port_id_on_a.as_ref(),
         &message.connection_hops_on_a[0].to_string(),
         &message.version_proposal.to_string(),
     );
@@ -925,11 +925,10 @@ fn test_validate_open_init_channel() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-   
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-   
+
     contract
         .claim_capability(
             &mut deps.storage,
@@ -1039,10 +1038,10 @@ fn test_validate_open_try_channel() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-   
+
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    
+
     contract
         .claim_capability(
             &mut deps.storage,

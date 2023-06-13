@@ -87,7 +87,13 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
@@ -111,7 +117,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();

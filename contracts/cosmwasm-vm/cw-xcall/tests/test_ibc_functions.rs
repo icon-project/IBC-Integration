@@ -1,5 +1,5 @@
 pub mod setup;
-use common::rlp;
+
 use cosmwasm_std::{
     testing::mock_env, to_binary, Addr, Binary, IbcAcknowledgement, IbcChannel,
     IbcChannelConnectMsg::OpenAck, IbcChannelOpenMsg::OpenInit, IbcChannelOpenMsg::OpenTry,
@@ -144,10 +144,9 @@ fn fails_on_open_channel_open_try_invalid_version() {
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
 
-   let res= contract
-        .execute(deps.as_mut(), mock_env, mock_info, execute_msg);
-    println!("{:?}",res);
-        res.unwrap();
+    let res = contract.execute(deps.as_mut(), mock_env, mock_info, execute_msg);
+    println!("{res:?}");
+    res.unwrap();
 }
 
 #[test]

@@ -1,7 +1,7 @@
 use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
-    from_binary_response, hex_string,
+    from_binary_response,
 };
 use debug_print::debug_println;
 use prost::DecodeError;
@@ -94,7 +94,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
         debug_println!(
             "computed packet commitment  {:?}",
-            hex::encode(compouted_packet_commitment.clone())
+            hex::encode(compouted_packet_commitment)
         );
 
         if commitment_on_a
@@ -226,7 +226,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             .map_err(|e| ContractError::IbcDecodeError {
                                 error: DecodeError::new(e.to_string()),
                             })?;
-                        let info = packet_data.message_info;
+                        let _info = packet_data.message_info;
                         let packet = Packet::from(packet_data.packet.clone());
                         let acknowledgement = match packet_data.acknowledgement {
                             Some(ack) => ack,

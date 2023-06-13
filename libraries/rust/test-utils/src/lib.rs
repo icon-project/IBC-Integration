@@ -176,12 +176,12 @@ pub fn load_test_messages() -> Vec<TestMessageData> {
 }
 
 pub fn load_raw_messages(path: &str) -> Vec<RawPayload> {
-    let path = format!("test_data/{}", path);
+    let path = format!("test_data/{path}");
     load_test_data::<RawPayload>(&path)
 }
 
 pub fn load_raw_payloads(file_name: &str) -> Vec<RawPayload> {
-    return load_raw_messages(&file_name);
+    load_raw_messages(file_name)
 }
 
 pub fn load_a2i_raw_messages() -> Vec<RawPayload> {

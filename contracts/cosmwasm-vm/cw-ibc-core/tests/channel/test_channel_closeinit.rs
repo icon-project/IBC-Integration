@@ -30,7 +30,6 @@ fn test_validate_close_init_channel() {
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
     let module = Addr::unchecked("contractaddress");
-   
 
     contract
         .store_capability(
@@ -105,10 +104,10 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-   
+
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-   
+
     contract
         .claim_capability(
             &mut deps.storage,
@@ -198,10 +197,10 @@ fn test_execute_close_init_channel_fail() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    
+
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-    
+
     contract
         .claim_capability(
             &mut deps.storage,

@@ -151,7 +151,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.packet.port_id_on_a.clone();
-    
+
     let module = Addr::unchecked("contractaddress");
     contract
         .claim_capability(
@@ -160,7 +160,7 @@ fn test_timeout_packet_validate_reply_from_light_client() {
             module.to_string(),
         )
         .unwrap();
-   
+
     let message_info = cw_common::types::MessageInfo {
         sender: info.sender,
         funds: info.funds,
@@ -292,7 +292,13 @@ fn test_timeout_packet_validate_to_light_client() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(&mut deps.storage, &env, &IbcClientId::default(), client,client_state.get_keccak_hash().to_vec())
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
@@ -316,7 +322,7 @@ fn test_timeout_packet_validate_to_light_client() {
             &IbcClientId::default(),
             height,
             consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec()
+            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     let env = mock_env();

@@ -1,5 +1,5 @@
 mod setup;
-use std::{ops::Deref, process::Termination, str::FromStr};
+use std::{process::Termination, str::FromStr};
 
 use anyhow::Error as AppError;
 use common::constants::ICON_CLIENT_TYPE;
@@ -15,7 +15,7 @@ use cw_multi_test::{App, AppResponse, Executor};
 use setup::{
     init_ibc_core_contract, init_light_client, init_xcall_mock_contract, setup_context, TestContext,
 };
-use test_utils::{get_event, get_event_name, load_raw_payloads, RawPayload};
+use test_utils::{get_event, get_event_name, load_raw_payloads};
 
 use crate::setup::raw_payload_to_map;
 
@@ -280,7 +280,7 @@ fn test_update_client() {
     let payload = ctx.get_test_data(&TestSteps::ConnOpenTry);
     let result = call_update_client(
         &mut ctx,
-        HexString::from_str(payload.update.clone().unwrap().as_str()).unwrap(),
+        HexString::from_str(payload.update.unwrap().as_str()).unwrap(),
     );
     println!("{:?}", &result);
     assert!(result.is_ok());
@@ -338,8 +338,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
 
     let result = call_channel_open_try(&mut ctx);
 
-    
-    println!("{:?}",result);
+    println!("{result:?}");
 
     assert!(result.is_ok());
     println!("Channel Open Try Ok{:?}", &result);

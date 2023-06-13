@@ -311,7 +311,7 @@ fn test_for_connection_open_try() {
             &mut deps.storage,
             &mock_env(),
             &IbcClientId::from_str(&message.client_id).unwrap(),
-            client_state_any.clone(),
+            client_state_any,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();

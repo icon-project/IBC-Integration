@@ -388,7 +388,6 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<Vec<u8>, ContractError> {
-
         let client_state = self
             .ibc_store()
             .client_states()

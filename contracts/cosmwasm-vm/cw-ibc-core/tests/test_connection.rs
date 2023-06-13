@@ -872,7 +872,7 @@ fn connection_validate_delay() {
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
     contract
-        .store_last_processed_on(deps.as_mut().storage, &env, &conn_end.client_id())
+        .store_last_processed_on(deps.as_mut().storage, &env, conn_end.client_id())
         .unwrap();
 
     contract
