@@ -6,7 +6,7 @@ use crate::account::*;
 use common::rlp;
 use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
-    to_binary, to_vec, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcEndpoint,
+    to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcEndpoint,
     IbcMsg, IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
 };
 
@@ -20,7 +20,6 @@ use cw_xcall::{
 use setup::*;
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
-
 
 #[test]
 fn send_packet_success() {

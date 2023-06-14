@@ -87,7 +87,7 @@ pub fn ibc_channel_connect(
     let destination = msg.channel().counterparty_endpoint.clone();
 
     let ibc_config = IbcConfig::new(source, destination);
-    debug_println!("[IBCConnection]: save ibc config is {:?}",ibc_config);
+    debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
 
     let mut call_service = CwIbcConnection::default();
     call_service.save_config(deps.storage, &ibc_config)?;

@@ -372,12 +372,13 @@ impl<'a> CwIbcCoreContext<'a> {
                     debug_println!("response from xcall {:?}", HexString::from_bytes(&res.0));
                     let response = from_binary_response::<IbcReceiveResponse>(&res)
                         .map_err(ContractError::Std)?;
-                    debug_println!("response acknowledgement {:?}", HexString::from_bytes(&response.acknowledgement));
+                    debug_println!(
+                        "response acknowledgement {:?}",
+                        HexString::from_bytes(&response.acknowledgement)
+                    );
                     let response_data: XcallPacketResponseData =
-                        from_binary_response::<XcallPacketResponseData>(
-                            &response.acknowledgement,
-                        )
-                        .map_err(ContractError::Std)?;
+                        from_binary_response::<XcallPacketResponseData>(&response.acknowledgement)
+                            .map_err(ContractError::Std)?;
                     debug_println!(
                         "our ack data is: {:?}",
                         HexString::from_bytes(&response_data.acknowledgement)

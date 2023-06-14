@@ -48,13 +48,13 @@ impl<'a> CwIbcConnection<'a> {
             funds: vec![],
         });
         debug_println!("[IBCConnection]: message payload built");
-        
+
         let acknowledgement_data =
-        to_binary(&cw_common::client_response::XcallPacketResponseData {
-            packet: message.clone(),
-            acknowledgement: make_ack_success().to_vec(),
-        })
-        .map_err(ContractError::Std)?;
+            to_binary(&cw_common::client_response::XcallPacketResponseData {
+                packet: message,
+                acknowledgement: make_ack_success().to_vec(),
+            })
+            .map_err(ContractError::Std)?;
 
         let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, XCALL_FORWARD_REPLY_ID);
 

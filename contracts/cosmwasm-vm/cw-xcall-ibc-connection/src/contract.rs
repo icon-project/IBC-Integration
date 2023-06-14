@@ -330,7 +330,7 @@ impl<'a> CwIbcConnection<'a> {
     /// function.
     fn on_channel_open(&self, msg: CwChannelOpenMsg) -> Result<Response, ContractError> {
         debug_println!("[IbcConnection]: Called On channel open");
-        println!("{:?}",msg);
+        println!("{msg:?}");
         let ibc_endpoint = match msg.clone() {
             CwChannelOpenMsg::OpenInit { channel } => channel.endpoint,
             CwChannelOpenMsg::OpenTry {
