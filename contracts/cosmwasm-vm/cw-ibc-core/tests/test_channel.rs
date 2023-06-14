@@ -3,7 +3,7 @@ use std::{str::FromStr, time::Duration};
 use common::traits::AnyTypes;
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
+    to_binary, Addr, Event, IbcChannel, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
 };
 
@@ -898,8 +898,18 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
 pub fn test_create_close_init_channel_event() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw).unwrap();
-    let event =
-        create_close_init_channel_event(msg.port_id_on_a.as_str(), msg.chan_id_on_a.as_str());
+    let channel_end = ChannelEnd {
+        state: State::Closed,
+        ordering: Order::Ordered,
+        remote: Counterparty::default(),
+        connection_hops: vec![ConnectionId::default()],
+        version: Version::default(),
+    };
+    let event = create_close_init_channel_event(
+        msg.port_id_on_a.as_str(),
+        msg.chan_id_on_a.as_str(),
+        channel_end,
+    );
 
     assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
 }
@@ -909,8 +919,18 @@ pub fn test_create_close_confirm_channel_event() {
     let proof_height = 10;
     let raw = get_dummy_raw_msg_chan_close_confirm(proof_height);
     let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
-    let event =
-        create_close_confirm_channel_event(msg.port_id_on_b.as_str(), msg.chan_id_on_b.as_str());
+    let channel_end = ChannelEnd {
+        state: State::Closed,
+        ordering: Order::Ordered,
+        remote: Counterparty::default(),
+        connection_hops: vec![ConnectionId::default()],
+        version: Version::default(),
+    };
+    let event = create_close_confirm_channel_event(
+        msg.port_id_on_b.as_str(),
+        msg.chan_id_on_b.as_str(),
+        channel_end,
+    );
 
     assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }

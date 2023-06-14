@@ -71,7 +71,7 @@ fn fails_on_open_channel_open_init_unordered_channel() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-fn success_on_open_channel_open_init_unordered_channel() {
+fn success_on_open_channel_open_init_ordered_channel() {
     let mut deps = deps();
 
     let mock_env = mock_env();
