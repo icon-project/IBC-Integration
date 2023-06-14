@@ -19,6 +19,7 @@ use cosmwasm_std::SubMsgResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 use cw_common::client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse};
+use cw_common::get_address_storage_prefix;
 use cw_common::ibc_types::IbcMsgConnectionOpenConfirm;
 use cw_common::ibc_types::IbcMsgConnectionOpenInit;
 use cw_common::raw_types::connection::RawCounterpartyConnection;
@@ -294,9 +295,11 @@ fn connection_open_try_invalid_client_id_name_too_short() {
 
 #[test]
 fn test_commitment_prefix() {
+    
     let contract = CwIbcCoreContext::new();
-    let expected = CommitmentPrefix::try_from(b"commitments".to_vec()).unwrap_or_default();
-    let result = contract.commitment_prefix();
+    let prefix=get_address_storage_prefix("cosmos2contract", "commitments");
+    let expected = CommitmentPrefix::try_from(prefix).unwrap_or_default();
+    let result = contract.commitment_prefix(&mock_env());
     assert_eq!(result, expected);
 }
 #[test]
@@ -699,6 +702,8 @@ fn connection_open_ack_validate_fail() {
 #[test]
 fn connection_open_ack_validate() {
     let mut deps = deps();
+    let mut env=mock_env();
+    env.contract.address=Addr::unchecked("archway17upmkapj64vcmc554gn8kqhkeaj79nsflaee44u8z6vtwwt9nkgswkx0j9");
     let info = create_mock_info("alice", "umlg", 2000);
 
     let contract = CwIbcCoreContext::default();
@@ -790,7 +795,6 @@ fn connection_open_ack_validate() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
 
     let res = contract.connection_open_ack(deps.as_mut(), info, env, res_msg);
     assert_eq!(res.is_ok(), true)
@@ -1212,7 +1216,7 @@ fn connection_open_confirm_validate() {
         )
         .unwrap();
 
-    let res = contract.connection_open_confirm(deps.as_mut(), info, res_msg);
+    let res = contract.connection_open_confirm(deps.as_mut(),mock_env(), info, res_msg);
     assert_eq!(res.is_ok(), true)
 }
 
@@ -1420,7 +1424,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         .unwrap();
 
     contract
-        .connection_open_confirm(deps.as_mut(), info, res_msg)
+        .connection_open_confirm(deps.as_mut(), mock_env(),info, res_msg)
         .unwrap();
 }
 

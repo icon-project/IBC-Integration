@@ -34,10 +34,16 @@ pub fn to_checked_address(deps: Deps, address: &str) -> Addr {
     deps.api.addr_validate(address).unwrap()
 }
 
+
 pub fn decode_bech32(addr: &str) -> Vec<u8> {
+    println!("{}",addr);
+    if addr.contains("contract"){
+        return addr.as_bytes().to_vec();
+    }
     let (_hrp, data, _variant) = bech32::decode(addr).unwrap();
     let pubkey = Vec::<u8>::from_base32(&data).unwrap();
     return pubkey;
+    
 }
 
 pub fn get_address_storage_prefix(addr: &str, storage_key: &str) -> Vec<u8> {
