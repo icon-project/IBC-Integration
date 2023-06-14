@@ -6,8 +6,8 @@ use crate::account::*;
 use common::rlp;
 use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
-    to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcEndpoint,
-    IbcMsg, IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
+    to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcEndpoint, IbcMsg,
+    IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
 };
 
 use cw_common::ibc_types::IbcHeight;
