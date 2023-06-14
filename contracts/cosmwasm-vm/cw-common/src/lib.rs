@@ -34,21 +34,19 @@ pub fn to_checked_address(deps: Deps, address: &str) -> Addr {
     deps.api.addr_validate(address).unwrap()
 }
 
-
 pub fn decode_bech32(addr: &str) -> Vec<u8> {
-    println!("{}",addr);
-    if addr.contains("contract"){
+    println!("{addr}");
+    if addr.contains("contract") {
         return addr.as_bytes().to_vec();
     }
     let (_hrp, data, _variant) = bech32::decode(addr).unwrap();
-    let pubkey = Vec::<u8>::from_base32(&data).unwrap();
-    return pubkey;
-    
+
+    Vec::<u8>::from_base32(&data).unwrap()
 }
 
 pub fn get_address_storage_prefix(addr: &str, storage_key: &str) -> Vec<u8> {
     let mut prefix = [0x03].to_vec();
-    prefix.extend(hex::encode(decode_bech32(&addr)).as_bytes());
+    prefix.extend(hex::encode(decode_bech32(addr)).as_bytes());
     prefix.extend(prefix_length_in_big_endian(storage_key.as_bytes().to_vec()));
     prefix
 }
@@ -66,8 +64,9 @@ fn prefix_length_in_big_endian(input: Vec<u8>) -> Vec<u8> {
     result
 }
 
+#[cfg(test)]
 mod tests {
-    use super::prefix_length_in_big_endian;
+    use crate::prefix_length_in_big_endian;
 
     #[test]
     fn test_fixed_16() {

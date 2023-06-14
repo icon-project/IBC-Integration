@@ -731,7 +731,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_open_confirm(
         &self,
         deps: DepsMut,
-        env:Env,
+        env: Env,
         info: MessageInfo,
         msg: MsgConnectionOpenConfirm,
     ) -> Result<Response, ContractError> {

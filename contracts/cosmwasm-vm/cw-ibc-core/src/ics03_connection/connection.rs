@@ -308,9 +308,9 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    pub fn commitment_prefix(&self,env:&Env) -> CommitmentPrefix {
-        let address=env.contract.address.to_string();
-        let prefix=get_address_storage_prefix(&address,"commitments");
+    pub fn commitment_prefix(&self, env: &Env) -> CommitmentPrefix {
+        let address = env.contract.address.to_string();
+        let prefix = get_address_storage_prefix(&address, "commitments");
         CommitmentPrefix::try_from(prefix).unwrap_or_default() //TODO
     }
 
