@@ -138,7 +138,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ConnectionOpenConfirm { msg } => {
                 let message: MsgConnectionOpenConfirm =
                     Self::from_raw::<RawMsgConnectionOpenConfirm, MsgConnectionOpenConfirm>(&msg)?;
-                self.connection_open_confirm(deps, info, message)
+                self.connection_open_confirm(deps,env, info, message)
             }
             CoreExecuteMsg::ChannelOpenInit { msg } => {
                 let message: MsgChannelOpenInit =

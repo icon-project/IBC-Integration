@@ -1,4 +1,5 @@
 use common::utils::keccak256;
+use cw_common::get_address_storage_prefix;
 use prost::DecodeError;
 
 use super::*;
@@ -307,8 +308,10 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    pub fn commitment_prefix(&self) -> CommitmentPrefix {
-        CommitmentPrefix::try_from(b"commitments".to_vec()).unwrap_or_default() //TODO
+    pub fn commitment_prefix(&self,env:&Env) -> CommitmentPrefix {
+        let address=env.contract.address.to_string();
+        let prefix=get_address_storage_prefix(&address,"commitments");
+        CommitmentPrefix::try_from(prefix).unwrap_or_default() //TODO
     }
 
     fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {
