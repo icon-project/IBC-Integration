@@ -3,7 +3,7 @@ use std::{str::FromStr, time::Duration};
 use common::traits::AnyTypes;
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    to_binary, Addr, Event, IbcChannel, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
+    to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
 };
 
