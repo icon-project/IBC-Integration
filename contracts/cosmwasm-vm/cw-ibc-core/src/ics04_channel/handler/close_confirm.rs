@@ -136,20 +136,10 @@ pub fn on_chan_close_confirm_submessage(
         port_id: counter_party_port_id.to_string(),
         channel_id: counter_party_channel.to_string(),
     };
-    let ibc_order = match channel_end.ordering {
-        Order::Unordered => cosmwasm_std::IbcOrder::Unordered,
-        Order::Ordered => cosmwasm_std::IbcOrder::Ordered,
-        Order::None => {
-            return Err(ChannelError::UnknownOrderType {
-                type_id: "None".to_string(),
-            })
-            .map_err(Into::<ContractError>::into)
-        }
-    };
     let ibc_channel = cosmwasm_std::IbcChannel::new(
         endpoint,
         counter_party,
-        ibc_order,
+        channel_end.ordering.to_ibc_order().unwrap(),
         channel_end.version.to_string(),
         channel_end.connection_hops[0].clone().as_str(),
     );
