@@ -10,13 +10,8 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::from_slice;
 
 #[cw_serde]
+#[derive(Default)]
 pub struct InstantiateMsg {}
-
-impl Default for InstantiateMsg {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 #[cw_serde]
 #[derive(QueryResponses)]

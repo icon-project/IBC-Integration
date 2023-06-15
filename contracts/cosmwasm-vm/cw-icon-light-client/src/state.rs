@@ -258,7 +258,7 @@ mod tests {
 
     use common::icon::icon::types::v1::SignedHeader;
     use cosmwasm_std::{
-        testing::{mock_dependencies, mock_env, mock_info, MockStorage},
+        testing::{mock_dependencies, mock_env, MockStorage},
         StdResult,
     };
     use cw_common::raw_types::Any;
@@ -462,7 +462,7 @@ mod tests {
 
         let msg = btp_header.get_network_type_section_decision_hash(
             TESTNET_SRC_NETWORK_ID,
-            TESTNET_NETWORK_TYPE_ID.into(),
+            TESTNET_NETWORK_TYPE_ID,
         );
         let address = "b040bff300eee91f7665ac8dcf89eb0871015306";
         let signature = signed_header.signatures[0].clone();
@@ -483,7 +483,7 @@ mod tests {
 
             let msg = btp_header.get_network_type_section_decision_hash(
                 TESTNET_SRC_NETWORK_ID,
-                TESTNET_NETWORK_TYPE_ID.into(),
+                TESTNET_NETWORK_TYPE_ID,
             );
             let address = "b040bff300eee91f7665ac8dcf89eb0871015306";
             let signature = signed_header.signatures[0].clone();

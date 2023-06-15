@@ -16,8 +16,6 @@ use common::icon::icon::types::v1::MerkleNode;
 use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::{Attribute, Event};
 
-pub mod constants;
-
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct RawPayload {
     pub step: String,
@@ -223,9 +221,7 @@ pub fn get_project_root() -> io::Result<PathBuf> {
     let path_ancestors = path.as_path().ancestors();
 
     for p in path_ancestors {
-        let has_cargo = read_dir(p)?
-            .into_iter()
-            .any(|p| p.unwrap().file_name() == *"Cargo.lock");
+        let has_cargo = read_dir(p)?.any(|p| p.unwrap().file_name() == *"Cargo.lock");
         if has_cargo {
             return Ok(PathBuf::from(p));
         }

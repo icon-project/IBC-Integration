@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use crate::constants::ICON_CLIENT_TYPE;
+use crate::constants::{
+    DEFAULT_NETWORK_ID, DEFAULT_NETWORK_TYPE_ID, DEFAULT_SRC_NETWORK_ID, ICON_CLIENT_TYPE,
+};
 use crate::ibc::core::ics02_client::error::ClientError;
 
 use crate::ibc::core::ics02_client::client_type::ClientType as IbcClientType;
@@ -108,10 +110,10 @@ impl IClientState for ClientState {
 }
 
 pub fn get_default_icon_client_state() -> ClientState {
-    return ClientState {
-        network_id: 1,
-        network_type_id: 1,
-        src_network_id: "0x3.icon".to_string(),
+    ClientState {
+        network_id: DEFAULT_NETWORK_ID,
+        network_type_id: DEFAULT_NETWORK_TYPE_ID,
+        src_network_id: DEFAULT_SRC_NETWORK_ID.to_string(),
         ..ClientState::default()
-    };
+    }
 }
