@@ -494,8 +494,8 @@ func (ic *Interchain) generateRelayerWallets(ctx context.Context) error {
 	for r, chains := range relayerChains {
 		for _, c := range chains {
 			// Just an ephemeral unique name, only for the local use of the keyring.
-			accountName := ic.relayers[r] + "-" + ic.chains[c]
-			newWallet, err := c.BuildRelayerWallet(ctx, accountName)
+			//accountName := ic.relayers[r] + "-" + ic.chains[c]
+			newWallet, err := c.BuildRelayerWallet(ctx, ic.chains[c])
 			if err != nil {
 				return err
 			}
@@ -527,14 +527,17 @@ func (ic *Interchain) configureRelayerKeys(ctx context.Context, rep *testreporte
 			); err != nil {
 				return fmt.Errorf("failed to configure relayer %s for chain %s: %w", ic.relayers[r], chainName, err)
 			}
-			// TODO restore key instead of hardcode
-			// if err := r.RestoreKey(ctx,
-			// 	rep,
-			// 	c.Config(), chainName,
-			// 	ic.relayerWallets[relayerChain{R: r, C: c}].Mnemonic(),
-			// ); err != nil {
-			// 	return fmt.Errorf("failed to restore key to relayer %s for chain %s: %w", ic.relayers[r], chainName, err)
-			// }
+			//TODO ignore key restore for icon
+			if c.Config().Type != "icon" {
+				if err := r.RestoreKey(ctx,
+					rep,
+					c.Config().ChainID, chainName,
+					c.Config().CoinType,
+					ic.relayerWallets[relayerChain{R: r, C: c}].Mnemonic(),
+				); err != nil {
+					return fmt.Errorf("failed to restore key to relayer %s for chain %s: %w", ic.relayers[r], chainName, err)
+				}
+			}
 		}
 	}
 
