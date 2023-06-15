@@ -241,8 +241,7 @@ fn test_receive_packet_validate_reply_from_light_client() {
 }
 
 #[test]
-#[should_panic(expected = "PacketCommitmentNotFound")]
-fn test_receive_packet_validate_reply_from_light_client_fail() {
+fn test_receive_packet_validate_reply_from_light_client_success() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);

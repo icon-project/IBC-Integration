@@ -338,8 +338,8 @@ impl<'a> CwIbcCoreContext<'a> {
                             chan_end_on_a.state = State::Closed;
                             self.store_channel_end(
                                 deps.storage,
-                                port_id.clone(),
-                                channel_id.clone(),
+                                port_id,
+                                channel_id,
                                 chan_end_on_a.clone(),
                             )?;
 
@@ -351,11 +351,10 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let event = Event::new(IbcEventType::Timeout.as_str())
                         .add_attribute("channel_order", chan_end_on_a.ordering().as_str());
-                    let mut events = vec![event];
+                    let events = vec![event];
                     if let Order::Ordered = chan_end_on_a.ordering {
-                        let close_init =
-                            create_close_init_channel_event(port_id.as_str(), channel_id.as_str());
-                        events.push(close_init);
+                        // let close_init = create_packet_timeout_event(,chann);
+                        // events.push(close_init);
                     }
 
                     Ok(Response::new()
