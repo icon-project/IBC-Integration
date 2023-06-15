@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/strangelove-ventures/interchaintest/v7/relayer/rly"
+	"strconv"
 	"strings"
+
+	"github.com/strangelove-ventures/interchaintest/v7/relayer/rly"
 
 	// "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/docker/docker/client"
@@ -62,6 +64,9 @@ type ICONRelayerChainConfigValue struct {
 
 type ArchRelayerChainConfigValue struct {
 	rly.CosmosRelayerChainConfigValue
+	KeyDir            string `json:"key-directory"`
+	MinGasAmount      int    `json:"min-gas-amount"`
+	CoinType          int    `json:"coin-type"`
 	IBCHandlerAddress string `json:"ibc-handler-address"`
 }
 
@@ -95,17 +100,18 @@ func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, r
 	return ICONRelayerChainConfig{
 		Type: chainType,
 		Value: ICONRelayerChainConfigValue{
-			Key:               "icx",
-			ChainID:           chainConfig.ChainID,
-			RPCAddr:           "http://" + rpcAddr + "/api/v3/",
-			Timeout:           "10s",
-			Keystore:          "/home/relayer/keys/godwallet.json",
-			Password:          "gochain",
-			IconNetworkID:     3,
-			BtpNetworkID:      chainConfig.ConfigFileOverrides["btp-network-id"].(int),
-			StartBtpHeight:    chainConfig.ConfigFileOverrides["start-btp-height"].(int),
-			BTPNetworkTypeID:  chainConfig.ConfigFileOverrides["btp-network-type-id"].(int),
-			IBCHandlerAddress: chainConfig.ConfigFileOverrides["ibc-handler-address"].(string),
+			Key:                   "icx",
+			ChainID:               chainConfig.ChainID,
+			RPCAddr:               "http://" + rpcAddr + "/api/v3/",
+			Timeout:               "10s",
+			Keystore:              "/home/relayer/keys/godwallet.json",
+			Password:              "gochain",
+			IconNetworkID:         3,
+			BtpNetworkID:          chainConfig.ConfigFileOverrides["btp-network-id"].(int),
+			StartBtpHeight:        chainConfig.ConfigFileOverrides["start-btp-height"].(int),
+			BTPNetworkTypeID:      chainConfig.ConfigFileOverrides["btp-network-type-id"].(int),
+			IBCHandlerAddress:     chainConfig.ConfigFileOverrides["ibc-handler-address"].(string),
+			ArchwayHandlerAddress: chainConfig.ConfigFileOverrides["archway-handler-address"].(string),
 		},
 	}
 }
@@ -217,9 +223,9 @@ func (commander) LinkPath(pathName, homeDir string, channelOpts ibc.CreateChanne
 		"rly", "tx", "link", pathName,
 		"--src-port", channelOpts.SourcePortName,
 		"--dst-port", channelOpts.DestPortName,
-		// "--order", channelOpts.Order.String(),
+		"--order", channelOpts.Order.String(),
 		// "--version", channelOpts.Version,
-		// "--client-tp", clientOpt.TrustingPeriod,
+		"--client-tp", clientOpt.TrustingPeriod, //should not be 0 set large integer in string e.g 1000m
 		"--debug",
 	}
 }
@@ -249,16 +255,20 @@ func (commander) UpdateClients(pathName, homeDir string) []string {
 func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string) ([]byte, error) {
 
 	switch chainType := cfg.Type; chainType {
-	case "cosmos":
+	case "cosmos", "archway":
 		cosmosRelayerChainConfig := rly.ChainConfigToCosmosRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
-
+		coinType, err := strconv.Atoi(cfg.CoinType)
 		archRelayerChainConfig := &ArchRelayerChainConfig{
 			Type: cosmosRelayerChainConfig.Type,
 			Value: ArchRelayerChainConfigValue{
 				CosmosRelayerChainConfigValue: cosmosRelayerChainConfig.Value,
-				IBCHandlerAddress:             cfg.ConfigFileOverrides["ibc-handler-address"].(string), //  "ibc-handler-address", //TODO
+				KeyDir:                        "/home/relayer/.relayer/keys/" + cfg.ChainID,
+				MinGasAmount:                  1000000,
+				CoinType:                      coinType,
+				IBCHandlerAddress:             cfg.ConfigFileOverrides["ibc-handler-address"].(string),
 			},
 		}
+
 		jsonBytes, err := json.Marshal(archRelayerChainConfig)
 		if err != nil {
 			return nil, err

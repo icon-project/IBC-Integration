@@ -28,6 +28,7 @@ type Chain interface {
 	ExecuteCall(ctx context.Context, reqId string) (context.Context, error)
 	ExecuteRollback(ctx context.Context, sn string) (context.Context, error)
 	FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error)
+	OverrideConfig(key string, value any)
 }
 
 type ChainConfig struct {

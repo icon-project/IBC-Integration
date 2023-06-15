@@ -58,6 +58,13 @@ func (c *IconLocalnet) Config() ibc.ChainConfig {
 	return c.cfg
 }
 
+func (c *IconLocalnet) OverrideConfig(key string, value any) {
+	if value == nil {
+		return
+	}
+	c.cfg.ConfigFileOverrides[key] = value
+}
+
 // Initialize initializes node structs so that things like initializing keys can be done before starting the chain
 func (c *IconLocalnet) Initialize(ctx context.Context, testName string, cli *client.Client, networkID string) error {
 	chainCfg := c.Config()
