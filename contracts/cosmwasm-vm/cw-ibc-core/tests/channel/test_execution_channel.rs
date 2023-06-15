@@ -156,6 +156,7 @@ fn test_for_channel_open_try_execution_message() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -327,6 +328,7 @@ fn test_for_channel_open_ack_execution() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -500,6 +502,7 @@ fn test_for_channel_open_confirm() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -783,6 +786,7 @@ fn test_for_channel_close_confirm() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -951,6 +955,7 @@ fn test_for_packet_send() {
         latest_height: 10,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1058,6 +1063,7 @@ fn test_for_recieve_packet() {
         latest_height: 12,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1301,6 +1307,7 @@ fn test_for_ack_execute() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

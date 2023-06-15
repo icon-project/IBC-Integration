@@ -1,5 +1,6 @@
 use std::{str::FromStr, time::Duration};
 
+use common::client_state::get_default_icon_client_state;
 use common::traits::AnyTypes;
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
@@ -1100,6 +1101,7 @@ fn test_validate_open_try_channel() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

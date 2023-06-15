@@ -17,6 +17,9 @@ impl ClientState {
         latest_height: u64,
         network_section_hash: Vec<u8>,
         validators: Vec<Vec<u8>>,
+        network_id: u64,
+        network_type_id: u64,
+        src_network_id: String,
     ) -> Result<Self, ClientError> {
         if max_clock_drift == 0 {
             return Err(ClientError::Other {
@@ -31,6 +34,9 @@ impl ClientState {
             latest_height,
             network_section_hash,
             validators,
+            network_id,
+            network_type_id,
+            src_network_id,
         })
     }
 }
@@ -99,4 +105,13 @@ impl IClientState for ClientState {
     fn client_type(&self) -> IbcClientType {
         IbcClientType::new(ICON_CLIENT_TYPE.to_string())
     }
+}
+
+pub fn get_default_icon_client_state() -> ClientState {
+    return ClientState {
+        network_id: 1,
+        network_type_id: 1,
+        src_network_id: "0x3.icon".to_string(),
+        ..ClientState::default()
+    };
 }

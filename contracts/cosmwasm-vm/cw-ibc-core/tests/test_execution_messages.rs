@@ -3,6 +3,7 @@ pub mod setup;
 use std::str::FromStr;
 use std::time::Duration;
 
+use common::client_state::get_default_icon_client_state;
 use common::ibc::core::ics24_host::identifier::ClientId;
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
@@ -52,6 +53,7 @@ fn test_for_create_client_execution_message() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -153,6 +155,7 @@ fn test_for_update_client_execution_messages() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -293,6 +296,7 @@ fn test_for_connection_open_try() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -526,6 +530,7 @@ fn test_for_connection_open_ack() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -666,6 +671,7 @@ fn test_for_connection_open_confirm() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -794,6 +800,7 @@ fn test_for_connection_open_try_fails() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -917,6 +924,7 @@ fn test_connection_open_confirm_fails() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1021,6 +1029,7 @@ fn test_connection_open_try_fails_invalid_id() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

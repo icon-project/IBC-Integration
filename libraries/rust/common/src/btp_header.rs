@@ -2,6 +2,7 @@ use ibc_proto::google::protobuf::Any;
 use ibc_proto::protobuf::Protobuf;
 use prost::{DecodeError, Message};
 
+use crate::client_state::get_default_icon_client_state;
 use crate::constants::ICON_BTP_HEADER_TYPE_URL;
 use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 
@@ -15,7 +16,7 @@ impl BtpHeader {
     pub fn get_network_type_section_decision_hash(
         &self,
         src_network_id: &str,
-        network_type: u128,
+        network_type: u64,
     ) -> [u8; 32] {
         keccak256(&self.get_network_type_section_decision_rlp(src_network_id, network_type))
     }
@@ -23,7 +24,7 @@ impl BtpHeader {
     pub fn get_network_type_section_decision_rlp(
         &self,
         src_network_id: &str,
-        network_type: u128,
+        network_type: u64,
     ) -> Vec<u8> {
         let mut ntsd = RlpStream::new_list(5);
 
@@ -82,6 +83,7 @@ impl BtpHeader {
             latest_height: self.main_height,
             network_section_hash: self.get_network_section_hash().to_vec(),
             validators: self.next_validators.clone(),
+            ..get_default_icon_client_state()
         }
     }
 

@@ -55,6 +55,7 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

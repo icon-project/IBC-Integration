@@ -3,6 +3,7 @@ use std::time::Duration;
 
 pub mod setup;
 
+use common::client_state::get_default_icon_client_state;
 use common::ibc::core::ics24_host::identifier::ClientId;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
@@ -414,6 +415,7 @@ fn connection_open_init() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -654,6 +656,7 @@ fn connection_open_ack_validate_fail() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -727,6 +730,7 @@ fn connection_open_ack_validate() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1015,6 +1019,7 @@ fn connection_open_try_validate() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1087,6 +1092,7 @@ fn open_try_validate_fails() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1148,6 +1154,7 @@ fn connection_open_confirm_validate() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1361,6 +1368,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1484,6 +1492,7 @@ fn connection_open_init_fails_of_clientstate() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1534,6 +1543,7 @@ fn connection_open_init_validate_invalid_client_id() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1723,6 +1733,7 @@ fn connection_open_init_fails() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1769,6 +1780,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1855,6 +1867,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

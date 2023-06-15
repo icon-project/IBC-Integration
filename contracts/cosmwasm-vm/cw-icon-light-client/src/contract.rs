@@ -48,12 +48,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|_e| ContractError::FailedToInitContract)?;
-    let config = Config::new(
-        msg.src_network_id,
-        msg.network_id,
-        msg.network_type_id,
-        info.sender,
-    );
+    let config = Config::new(info.sender);
     let mut context = CwContext::new(deps, _env);
     context.insert_config(&config)?;
     Ok(Response::default())
@@ -605,7 +600,7 @@ mod tests {
 
         assert_eq!(0, res.messages.len());
 
-        let config = Config::new("0x3.icon".to_string(), 1, 1, info.sender);
+        let config = Config::new(info.sender);
 
         let stored_config = QueryHandler::get_config(deps.as_ref().storage).unwrap();
         assert_eq!(config, stored_config);
