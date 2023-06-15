@@ -256,7 +256,10 @@ impl QueryHandler {
 mod tests {
     use super::*;
 
-    use common::icon::icon::types::v1::SignedHeader;
+    use common::{
+        constants::{DEFAULT_NETWORK_TYPE_ID, DEFAULT_SRC_NETWORK_ID},
+        icon::icon::types::v1::SignedHeader,
+    };
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, MockStorage},
         StdResult,
@@ -264,7 +267,7 @@ mod tests {
     use cw_common::raw_types::Any;
     use hex_literal::hex;
     use prost::Message;
-    use test_utils::constants::{TESTNET_NETWORK_TYPE_ID, TESTNET_SRC_NETWORK_ID};
+
     use test_utils::get_test_signed_headers;
 
     #[test]
@@ -461,8 +464,8 @@ mod tests {
         );
 
         let msg = btp_header.get_network_type_section_decision_hash(
-            TESTNET_SRC_NETWORK_ID,
-            TESTNET_NETWORK_TYPE_ID,
+            DEFAULT_SRC_NETWORK_ID,
+            DEFAULT_NETWORK_TYPE_ID,
         );
         let address = "b040bff300eee91f7665ac8dcf89eb0871015306";
         let signature = signed_header.signatures[0].clone();
@@ -482,8 +485,8 @@ mod tests {
             let btp_header = signed_header.header.clone().unwrap();
 
             let msg = btp_header.get_network_type_section_decision_hash(
-                TESTNET_SRC_NETWORK_ID,
-                TESTNET_NETWORK_TYPE_ID,
+                DEFAULT_SRC_NETWORK_ID,
+                DEFAULT_NETWORK_TYPE_ID,
             );
             let address = "b040bff300eee91f7665ac8dcf89eb0871015306";
             let signature = signed_header.signatures[0].clone();

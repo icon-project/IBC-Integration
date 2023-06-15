@@ -290,7 +290,7 @@ fn connection_open_try_invalid_client_id_name_too_short() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(!res_msg.is_ok())
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -315,7 +315,7 @@ fn connection_open_ack_invalid_connection_id() {
         ..default_raw_ack_msg
     };
     let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert!(!res_msg.is_ok())
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -326,7 +326,7 @@ fn connection_open_ack_invalid_version() {
         ..default_raw_ack_msg
     };
     let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert!(!res_msg.is_ok())
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -340,7 +340,7 @@ fn connection_open_ack_invalid_proof_height_zero() {
         ..default_raw_ack_msg
     };
     let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert!(!res_msg.is_ok())
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -354,7 +354,7 @@ fn connection_open_ack_invalid_consensus_height_and_height_is_0() {
         ..default_raw_ack_msg
     };
     let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert!(!res_msg.is_ok())
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -372,7 +372,7 @@ fn connection_open_confirm_invalid_connection_id_non_alpha() {
         ..default_raw_confirm_msg
     };
     let res_msg = IbcMsgConnectionOpenConfirm::try_from(confirm_msg);
-    assert!(!res_msg.is_err())
+    assert!(res_msg.is_ok())
 }
 
 #[test]
@@ -1664,7 +1664,7 @@ fn connection_open_try_empty_counterparty_versions() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(!res_msg.is_ok())
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -1678,7 +1678,7 @@ fn connection_open_try_invalid_proof_height_zero() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(!res_msg.is_ok())
+    assert!(res_msg.is_err())
 }
 
 #[test]
@@ -1692,7 +1692,7 @@ fn connection_open_try_invalid_consensus_height_zero() {
         ..default_raw_try_msg
     };
     let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(!res_msg.is_ok())
+    assert!(res_msg.is_err())
 }
 
 #[test]
