@@ -58,12 +58,6 @@ func TestConformance(t *testing.T) {
 	eRep := rep.RelayerExecReporter(t)
 
 	// Build interchain
-	const ibcPath = "icon-cosmoshub"
-	ic := interchaintest.NewInterchain().
-		AddChain(chainA.(ibc.Chain)).
-		AddChain(chainB.(ibc.Chain)).
-		AddRelayer(r, "relayer")
-
 	opts := ibc.CreateChannelOptions{
 		SourcePortName: "mock",
 		DestPortName:   "mock",
@@ -71,16 +65,21 @@ func TestConformance(t *testing.T) {
 		Version:        "ics20-1",
 	}
 
-	ic.AddLink(interchaintest.InterchainLink{
-		Chain1:            chainA.(ibc.Chain),
-		Chain2:            chainB.(ibc.Chain),
-		Relayer:           r,
-		Path:              ibcPath,
-		CreateChannelOpts: opts,
-		CreateClientOpts: ibc.CreateClientOptions{
-			TrustingPeriod: "100000m",
-		},
-	})
+	const ibcPath = "icon-cosmoshub"
+	ic := interchaintest.NewInterchain().
+		AddChain(chainA.(ibc.Chain)).
+		AddChain(chainB.(ibc.Chain)).
+		AddRelayer(r, "relayer").
+		AddLink(interchaintest.InterchainLink{
+			Chain1:            chainA.(ibc.Chain),
+			Chain2:            chainB.(ibc.Chain),
+			Relayer:           r,
+			Path:              ibcPath,
+			CreateChannelOpts: opts,
+			CreateClientOpts: ibc.CreateClientOptions{
+				TrustingPeriod: "100000m",
+			},
+		})
 
 	require.NoError(t, ic.BuildChains(ctx, eRep, interchaintest.InterchainBuildOptions{
 		TestName:          t.Name(),

@@ -48,9 +48,14 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 	}
 
 	clientCodeId, err := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath["client"])
-	fmt.Printf("clientId --%s", clientCodeId)
 	if err != nil {
 		return ctx, err
+	}
+
+	// Parameters here will be empty in the future
+	clientAddress, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, clientCodeId, `{"src_network_id": "0x3.ICON", "network_id": 1, "network_type_id": "1"}`, true)
+	if err != nil {
+		return nil, err
 	}
 
 	xCallCodeId, err := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath["xcall"])
@@ -85,15 +90,22 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 
 	contracts.ContractAddress = map[string]string{
 		"ibc":        ibcAddress,
-		"client":     "",
+		"client":     clientAddress,
 		"xcall":      xCallAddress,
 		"connection": connectionAddress,
 		"dapp":       dappAddress,
 	}
 	fmt.Println(contracts.ContractAddress)
 
+	err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"register_client":{"client_type":"iconclient", "client_address":"`+clientAddress+`"}}`)
+	if err != nil {
+		return nil, err
+	}
+
 	err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"bind_port":{"port_id":"mock", "address":"`+connectionAddress+`"}}`)
-	fmt.Println(err)
+	if err != nil {
+		return nil, err
+	}
 	c.IBCAddresses = contracts.ContractAddress
 	overrides := map[string]any{
 		"ibc-handler-address": ibcAddress,
