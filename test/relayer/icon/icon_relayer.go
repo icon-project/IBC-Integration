@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/strangelove-ventures/interchaintest/v7/relayer/rly"
+	"strconv"
 	"strings"
+
+	"github.com/strangelove-ventures/interchaintest/v7/relayer/rly"
 
 	// "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/docker/docker/client"
@@ -62,6 +64,9 @@ type ICONRelayerChainConfigValue struct {
 
 type ArchRelayerChainConfigValue struct {
 	rly.CosmosRelayerChainConfigValue
+	KeyDir            string `json:"key-directory"`
+	MinGasAmount      int    `json:"min-gas-amount"`
+	CoinType          int    `json:"coin-type"`
 	IBCHandlerAddress string `json:"ibc-handler-address"`
 }
 
@@ -252,14 +257,18 @@ func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName
 	switch chainType := cfg.Type; chainType {
 	case "cosmos", "archway":
 		cosmosRelayerChainConfig := rly.ChainConfigToCosmosRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
-
+		coinType, err := strconv.Atoi(cfg.CoinType)
 		archRelayerChainConfig := &ArchRelayerChainConfig{
 			Type: cosmosRelayerChainConfig.Type,
 			Value: ArchRelayerChainConfigValue{
 				CosmosRelayerChainConfigValue: cosmosRelayerChainConfig.Value,
-				IBCHandlerAddress:             cfg.ConfigFileOverrides["ibc-handler-address"].(string), //  "ibc-handler-address", //TODO
+				KeyDir:                        "/home/relayer/.relayer/keys/" + cfg.ChainID,
+				MinGasAmount:                  1000000,
+				CoinType:                      coinType,
+				IBCHandlerAddress:             cfg.ConfigFileOverrides["ibc-handler-address"].(string),
 			},
 		}
+
 		jsonBytes, err := json.Marshal(archRelayerChainConfig)
 		if err != nil {
 			return nil, err
