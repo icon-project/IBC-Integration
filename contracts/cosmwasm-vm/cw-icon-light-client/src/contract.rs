@@ -446,7 +446,8 @@ pub fn validate_next_seq_recv(
             let proofs_decoded =
                 MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
             let height = to_height_u64(height)?;
-            let res = client.verify_membership(
+
+            client.verify_membership(
                 client_id,
                 height,
                 0,
@@ -454,8 +455,7 @@ pub fn validate_next_seq_recv(
                 &proofs_decoded.proofs,
                 seq_recv_path,
                 sequence.to_be_bytes().as_ref(),
-            )?;
-            res
+            )?
         }
         LightClientPacketMessage::VerifyPacketReceiptAbsence {
             height,
