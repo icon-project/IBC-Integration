@@ -21,6 +21,13 @@ func (c *CosmosLocalnet) Config() ibc.ChainConfig {
 	return c.cfg
 }
 
+func (c *CosmosLocalnet) OverrideConfig(key string, value any) {
+	if value == nil {
+		return
+	}
+	c.cfg.ConfigFileOverrides[key] = value
+}
+
 type Query struct {
 	GetAdmin       *GetAdmin       `json:"get_admin,omitempty"`
 	GetProtocolFee *GetProtocolFee `json:"get_protocol_fee,omitempty"`
