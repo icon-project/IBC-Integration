@@ -14,6 +14,8 @@ pub mod xcall_app_msg;
 pub mod xcall_connection_msg;
 pub mod xcall_msg;
 pub mod xcall_payloads;
+use std::{fmt::format, str::from_utf8};
+
 use bech32::FromBase32;
 use cosmwasm_std::{from_binary, Addr, Binary, Deps, StdError};
 use serde::de::DeserializeOwned;
@@ -45,10 +47,12 @@ pub fn decode_bech32(addr: &str) -> Vec<u8> {
 }
 
 pub fn get_address_storage_prefix(addr: &str, storage_key: &str) -> Vec<u8> {
-    let mut prefix = [0x03].to_vec();
-    prefix.extend(hex::encode(decode_bech32(addr)).as_bytes());
-    prefix.extend(prefix_length_in_big_endian(storage_key.as_bytes().to_vec()));
-    prefix
+    let prefix = format!(
+        "03{}{}",
+        hex::encode(decode_bech32(addr)),
+        hex::encode(prefix_length_in_big_endian(storage_key.as_bytes().to_vec()))
+    );
+    prefix.as_bytes().to_vec()
 }
 
 fn prefix_length_in_big_endian(input: Vec<u8>) -> Vec<u8> {

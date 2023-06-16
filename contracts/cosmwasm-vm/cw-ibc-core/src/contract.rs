@@ -1,3 +1,5 @@
+use std::env;
+
 use super::*;
 use common::ibc::core::ics04_channel::packet::Receipt;
 
@@ -419,6 +421,11 @@ impl<'a> CwIbcCoreContext<'a> {
             QueryMsg::GetAllPorts {} => {
                 let ports = self.get_all_ports(deps.storage).unwrap();
                 to_binary(&ports)
+            }
+
+            QueryMsg::GetCommitmentPrefix {} => {
+                let prefix = self.commitment_prefix(&_env);
+                to_binary(&hex::encode(prefix.into_vec()))
             }
         }
     }
