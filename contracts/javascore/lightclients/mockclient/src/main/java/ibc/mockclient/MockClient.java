@@ -44,7 +44,7 @@ public class MockClient implements ILightClient {
     }
 
     @External
-    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes, @Optional byte[] _storagePrefix) {
+    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
         return Map.of(
             "clientStateCommitment", IBCCommitment.keccak256(clientStateBytes),
             "consensusStateCommitment", IBCCommitment.keccak256(consensusStateBytes),

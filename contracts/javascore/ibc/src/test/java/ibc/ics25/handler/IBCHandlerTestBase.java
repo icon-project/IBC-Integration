@@ -101,9 +101,8 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setConsensusState(new byte[0]);
         msg.setClientType(clientType);
         msg.setBtpNetworkId(4);
-        msg.setStoragePrefix(new byte[0]);
 
-        when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class), any(byte[].class)))
+        when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
                 .thenReturn(Map.of(
                         "clientStateCommitment", new byte[0],
                         "consensusStateCommitment", new byte[0],
