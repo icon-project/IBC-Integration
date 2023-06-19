@@ -243,13 +243,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
             byte[] prefix,
             byte[] path) {
 
-        // path = storage-prefix + lengthOP(prefix) + keccak256(path)
-        prefix = prefixLengthInBigEndian(prefix);
-        path = ByteUtil.join(prefix, IBCCommitment.keccak256(path));
-        byte[] pathPrefix = storagePrefix.get(clientId);
-        if (pathPrefix != null) {
-            path = ByteUtil.join(storagePrefix.get(clientId), path);
-        }
+        path = ByteUtil.join(prefix, StringUtil.bytesToHex(IBCCommitment.keccak256(path)).getBytes());
 
         Height height = Height.decode(heightBytes);
         ClientState clientState = ClientState.decode(mustGetClientState(clientId));
@@ -261,7 +255,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(StringUtil.bytesToHex(path));
+        var merklePath = applyPrefix(new String(path));
 
         Merkle.verifyNonMembership(merkleProof, Merkle.getSDKSpecs(), root, merklePath);
     }
