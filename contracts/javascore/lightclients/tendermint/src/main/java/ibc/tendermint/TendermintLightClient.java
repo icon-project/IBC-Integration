@@ -32,7 +32,6 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     public static final String CONSENSUS_STATES = "CONSENSUS_STATES";
     public static final String PROCESSED_TIMES = "PROCESSED_TIMES";
     public static final String PROCESSED_HEIGHTS = "PROCESSED_HEIGHTS";
-    public static final String STORAGE_PREFIX = "STORAGE_PREFIX";
 
     public static final DictDB<String, byte[]> clientStates = Context.newDictDB(CLIENT_STATES, byte[].class);
     public static final BranchDB<String, DictDB<BigInteger, byte[]>> consensusStates = Context.newBranchDB(
@@ -41,7 +40,6 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
             PROCESSED_TIMES, BigInteger.class);
     public static final BranchDB<String, DictDB<BigInteger, BigInteger>> processedHeights = Context.newBranchDB(
             PROCESSED_HEIGHTS, BigInteger.class);
-    public static final DictDB<String, byte[]> storagePrefix = Context.newDictDB(STORAGE_PREFIX, byte[].class);
 
     public TendermintLightClient(Address ibcHandler) {
         this.ibcHandler = ibcHandler;
@@ -66,11 +64,6 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 "height: " + decodedHeight.getRevisionHeight() + " does not have a consensus state");
         ConsensusState consensusState = ConsensusState.decode(encodedConsensusState);
         return consensusState.getTimestamp().getSeconds();
-    }
-
-    @External(readonly = true)
-    public byte[] getStoragePrefix(String clientId) {
-        return storagePrefix.get(clientId);
     }
 
     /**
@@ -101,8 +94,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
      * @dev createClient creates a new client with the given state
      */
     @External
-    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes,
-                                            @Optional byte[] _storagePrefix) {
+    public Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes) {
         onlyHandler();
         Context.require(clientStates.get(clientId) == null, "Client already exists");
         ClientState clientState = ClientState.decode(clientStateBytes);
@@ -112,9 +104,6 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         clientStates.set(clientId, clientStateBytes);
         consensusStates.at(clientId).set(clientState.getLatestHeight(), consensusStateBytes);
-        if (_storagePrefix != null && _storagePrefix.length > 0) {
-            storagePrefix.set(clientId, _storagePrefix);
-        }
 
         return Map.of(
                 "clientStateCommitment", IBCCommitment.keccak256(clientStateBytes),
