@@ -59,11 +59,11 @@ pub struct TestHex {
 
 #[cfg(test)]
 mod tests {
-    use std::{str::FromStr, borrow::Cow};
+    use std::{borrow::Cow, str::FromStr};
 
     use hex_buffer_serde::Hex;
 
-    use crate::hex_string::{HexString, FromHexString};
+    use crate::hex_string::{FromHexString, HexString};
 
     use super::TestHex;
 

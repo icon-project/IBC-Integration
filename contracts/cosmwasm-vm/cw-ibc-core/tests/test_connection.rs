@@ -8,7 +8,6 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::traits::AnyTypes;
 use cosmwasm_std::testing::mock_dependencies;
-use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::to_binary;
 use cosmwasm_std::to_vec;
 use cosmwasm_std::Addr;
@@ -297,9 +296,13 @@ fn connection_open_try_invalid_client_id_name_too_short() {
 #[test]
 fn test_commitment_prefix() {
     let contract = CwIbcCoreContext::new();
-    let prefix = get_address_storage_prefix("cosmos2contract", "commitments");
+    let mut env = get_mock_env();
+    let prefix = get_address_storage_prefix(
+        "archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl",
+        "commitments",
+    );
     let expected = CommitmentPrefix::try_from(prefix).unwrap_or_default();
-    let result = contract.commitment_prefix(mock_dependencies().as_ref(),&mock_env());
+    let result = contract.commitment_prefix(mock_dependencies().as_ref(), &env);
     assert_eq!(result, expected);
 }
 #[test]
@@ -440,7 +443,7 @@ fn connection_open_init() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &res_msg.client_id_on_a,
             cl,
             client_state.get_keccak_hash().to_vec(),
@@ -675,7 +678,7 @@ fn connection_open_ack_validate_fail() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &client_id,
             client_state_bytes_any,
             client_state.get_keccak_hash().to_vec(),
@@ -693,7 +696,7 @@ fn connection_open_ack_validate_fail() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
     contract
         .connection_open_ack(deps.as_mut(), info, env, res_msg)
         .unwrap();
@@ -702,7 +705,7 @@ fn connection_open_ack_validate_fail() {
 #[test]
 fn connection_open_ack_validate() {
     let mut deps = deps();
-    let mut env = mock_env();
+    let mut env = get_mock_env();
     env.contract.address =
         Addr::unchecked("archway17upmkapj64vcmc554gn8kqhkeaj79nsflaee44u8z6vtwwt9nkgswkx0j9");
     let info = create_mock_info("alice", "umlg", 2000);
@@ -778,7 +781,7 @@ fn connection_open_ack_validate() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &client_id,
             client_state_bytes,
             client_state.get_keccak_hash().to_vec(),
@@ -872,7 +875,7 @@ fn connection_open_ack_executes() {
 #[test]
 fn connection_validate_delay() {
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let packet_proof_height = common::ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
@@ -895,11 +898,11 @@ fn connection_validate_delay() {
 #[should_panic(expected = "Std(NotFound { kind: \"cw_ibc_core::ics24_host::LastProcessedOn\" })")]
 fn connection_validate_delay_fails() {
     let deps = deps();
-    let _env = mock_env();
+    let _env = get_mock_env();
     let packet_proof_height = common::ibc::core::ics02_client::height::Height::new(1, 1).unwrap();
     let conn_end = ConnectionEnd::default();
     let contract = CwIbcCoreContext::new();
-    let env = mock_env();
+    let env = get_mock_env();
     contract
         .verify_connection_delay_passed(&deps.storage, env, packet_proof_height, conn_end)
         .unwrap();
@@ -908,7 +911,7 @@ fn connection_validate_delay_fails() {
 #[test]
 fn test_block_delay() {
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let delay_time = Duration::new(1, 1);
     let contract = CwIbcCoreContext::new();
     contract
@@ -1038,7 +1041,7 @@ fn connection_open_try_validate() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &res_msg.client_id_on_b,
             cl,
             client_state.get_keccak_hash().to_vec(),
@@ -1056,7 +1059,8 @@ fn connection_open_try_validate() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
+
     let res = contract.connection_open_try(deps.as_mut(), info, env, res_msg);
     assert_eq!(res.is_ok(), true);
 }
@@ -1101,7 +1105,7 @@ fn open_try_validate_fails() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &res_msg.client_id_on_b,
             client_state_bytes,
             client_state.get_keccak_hash().to_vec(),
@@ -1119,7 +1123,7 @@ fn open_try_validate_fails() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
     contract
         .connection_open_try(deps.as_mut(), info, env, res_msg)
         .unwrap();
@@ -1128,7 +1132,7 @@ fn open_try_validate_fails() {
 fn connection_open_confirm_validate() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
-    let _env = mock_env();
+    let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     contract
         .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
@@ -1198,7 +1202,7 @@ fn connection_open_confirm_validate() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &conn_end.client_id().clone(),
             cl,
             client_state.get_keccak_hash().to_vec(),
@@ -1217,7 +1221,7 @@ fn connection_open_confirm_validate() {
         )
         .unwrap();
 
-    let res = contract.connection_open_confirm(deps.as_mut(), mock_env(), info, res_msg);
+    let res = contract.connection_open_confirm(deps.as_mut(), env, info, res_msg);
     assert_eq!(res.is_ok(), true)
 }
 
@@ -1340,7 +1344,7 @@ fn connection_open_confirm_execute_fails() {
 fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
-    let _env = mock_env();
+    let _env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     contract
         .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
@@ -1405,7 +1409,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &client_id,
             cl,
             client_state.get_keccak_hash().to_vec(),
@@ -1425,7 +1429,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         .unwrap();
 
     contract
-        .connection_open_confirm(deps.as_mut(), mock_env(), info, res_msg)
+        .connection_open_confirm(deps.as_mut(), get_mock_env(), info, res_msg)
         .unwrap();
 }
 
@@ -1497,7 +1501,7 @@ fn connection_open_init_fails_of_clientstate() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &client_id,
             client_state_bytes,
             client_state.get_keccak_hash().to_vec(),
@@ -1547,7 +1551,7 @@ fn connection_open_init_validate_invalid_client_id() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &res_msg.client_id_on_a,
             client_state_bytes,
             client_state.get_keccak_hash().to_vec(),
@@ -1736,7 +1740,7 @@ fn connection_open_init_fails() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &res_msg.client_id_on_a,
             cl,
             client_state.get_keccak_hash().to_vec(),
@@ -1815,13 +1819,13 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &client_id,
             client_state_bytes,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
 
     contract
         .connection_open_ack(deps.as_mut(), info, env, res_msg)
@@ -1905,7 +1909,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     contract
         .store_client_state(
             &mut deps.storage,
-            &mock_env(),
+            &get_mock_env(),
             &client_id,
             client_state_bytes,
             client_state.get_keccak_hash().to_vec(),
@@ -1923,7 +1927,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
 
     contract
         .connection_open_ack(deps.as_mut(), info, env, res_msg)

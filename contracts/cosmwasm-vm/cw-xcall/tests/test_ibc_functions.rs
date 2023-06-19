@@ -71,7 +71,7 @@ fn fails_on_open_channel_open_init_unordered_channel() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-fn success_on_open_channel_open_init_ordered_channel() {
+fn success_on_open_channel_open_init_unordered_channel() {
     let mut deps = deps();
 
     let mock_env = mock_env();
@@ -93,7 +93,7 @@ fn success_on_open_channel_open_init_ordered_channel() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
                 "newconnection",
             ),
@@ -133,7 +133,7 @@ fn fails_on_open_channel_open_try_invalid_version() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
                 "newconnection",
             ),
@@ -175,7 +175,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
             channel: IbcChannel::new(
                 src.clone(),
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "ics20-1",
                 "newconnection",
             ),
@@ -219,7 +219,7 @@ fn sucess_on_ibc_channel_connect() {
             channel: IbcChannel::new(
                 src.clone(),
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "ics20-1",
                 "newconnection",
             ),

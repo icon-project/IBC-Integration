@@ -19,8 +19,8 @@ use cosmwasm_std::{Attribute, Event};
 pub mod constants;
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct IntegrationData {
-    pub address:String,
-    pub data:Vec<RawPayload>,
+    pub address: String,
+    pub data: Vec<RawPayload>,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
@@ -180,7 +180,6 @@ pub fn load_test_messages() -> Vec<TestMessageData> {
     load_test_data::<TestMessageData>("test_data/test_messages.json")
 }
 
-
 pub fn load_raw_payloads(file_name: &str) -> IntegrationData {
     let path = format!("test_data/{file_name}");
     let mut root = get_project_root().unwrap();
@@ -190,8 +189,6 @@ pub fn load_raw_payloads(file_name: &str) -> IntegrationData {
     file.read_to_string(&mut data).unwrap();
     let data: IntegrationData = serde_json::from_str(&data).expect("JSON was not well-formatted");
     data
-
-    
 }
 
 pub fn load_a2i_raw_messages() -> Vec<RawPayload> {

@@ -37,7 +37,7 @@ pub fn to_checked_address(deps: Deps, address: &str) -> Addr {
 }
 
 pub fn decode_bech32(addr: &str) -> Vec<u8> {
-    println!("{addr}");
+    println!("Addr Received: {addr}");
     if addr.contains("contract") {
         return addr.as_bytes().to_vec();
     }

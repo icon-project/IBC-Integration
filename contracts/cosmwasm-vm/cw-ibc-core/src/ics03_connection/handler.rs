@@ -196,7 +196,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 description: "failed to fetch consensus state".to_string(),
             })
             .map_err(Into::<ContractError>::into)?;
-        let prefix_on_a = self.commitment_prefix(deps.as_ref(),&env);
+        let prefix_on_a = self.commitment_prefix(deps.as_ref(), &env);
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
         let client_address = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
 
@@ -438,7 +438,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into);
         }
         let prefix_on_a = message.counterparty.prefix().clone();
-        let prefix_on_b = self.commitment_prefix(deps.as_ref(),&env);
+        let prefix_on_b = self.commitment_prefix(deps.as_ref(), &env);
         let client_id_on_b = message.client_id_on_b.clone();
 
         debug_println!(
@@ -783,7 +783,7 @@ impl<'a> CwIbcCoreContext<'a> {
         debug_println!("Consensus State Decoded");
 
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
-        let prefix_on_b = self.commitment_prefix(deps.as_ref(),&env);
+        let prefix_on_b = self.commitment_prefix(deps.as_ref(), &env);
 
         let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 

@@ -308,25 +308,22 @@ impl<'a> CwIbcCoreContext<'a> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
-    pub fn commitment_prefix(&self,deps:Deps, env: &Env) -> CommitmentPrefix {
+    pub fn commitment_prefix(&self, deps: Deps, env: &Env) -> CommitmentPrefix {
         let address = self.get_self_address(deps, env);
-        
+
         let prefix = get_address_storage_prefix(&address, "commitments");
         CommitmentPrefix::try_from(prefix).unwrap_or_default() //TODO
     }
 
-    fn get_self_address(&self,deps:Deps, env:&Env)->String{
-        let addr=env.contract.address.to_string();
+    fn get_self_address(&self, deps: Deps, env: &Env) -> String {
+        let addr = env.contract.address.to_string();
         if addr.contains("contract") {
-            let info=get_contract_info(deps, addr.clone()).and_then(|info|{
-                return Ok(info.admin.unwrap_or("".to_owned()))
-            }).unwrap_or("".to_string());
+            let info = get_contract_info(deps, addr.clone())
+                .and_then(|info| return Ok(info.admin.unwrap_or("".to_owned())))
+                .unwrap_or("".to_string());
             return info;
-            
-
         }
         return addr;
-
     }
 
     fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {
