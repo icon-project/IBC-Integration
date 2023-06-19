@@ -213,7 +213,7 @@ fn test_packet_data() {
 fn test_timeout_packet_validate_to_light_client() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let proof_height = 50;
@@ -325,7 +325,7 @@ fn test_timeout_packet_validate_to_light_client() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
     contract
         .ibc_store()
         .expected_time_per_block()

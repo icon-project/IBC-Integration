@@ -6,7 +6,7 @@ use super::*;
 #[should_panic(expected = "UndefinedConnectionCounterparty")]
 fn test_validate_open_try_channel_fail_missing_counterparty() {
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);

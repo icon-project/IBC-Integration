@@ -176,7 +176,7 @@ pub fn get_dummy_raw_msg_chan_open_init(
     }
 }
 pub fn get_dummy_bech32_account() -> String {
-    "cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng".to_string()
+    "archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl".to_string()
 }
 
 pub fn get_dummy_account_id() -> Signer {
@@ -464,4 +464,10 @@ pub fn get_dummy_raw_msg_timeout_on_close(
         next_sequence_recv: 1,
         signer: get_dummy_bech32_account(),
     }
+}
+
+pub fn get_mock_env() -> Env {
+    let mut env = mock_env();
+    env.contract.address = Addr::unchecked("archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl");
+    env
 }
