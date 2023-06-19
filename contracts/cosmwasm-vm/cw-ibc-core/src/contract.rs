@@ -424,7 +424,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
 
             QueryMsg::GetCommitmentPrefix {} => {
-                let prefix = self.commitment_prefix(&_env);
+                let prefix = self.commitment_prefix(deps,&_env);
                 to_binary(&hex::encode(prefix.into_vec()))
             }
         }

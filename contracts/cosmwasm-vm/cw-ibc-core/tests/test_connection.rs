@@ -299,7 +299,7 @@ fn test_commitment_prefix() {
     let contract = CwIbcCoreContext::new();
     let prefix = get_address_storage_prefix("cosmos2contract", "commitments");
     let expected = CommitmentPrefix::try_from(prefix).unwrap_or_default();
-    let result = contract.commitment_prefix(&mock_env());
+    let result = contract.commitment_prefix(mock_dependencies().as_ref(),&mock_env());
     assert_eq!(result, expected);
 }
 #[test]

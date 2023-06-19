@@ -20,8 +20,10 @@ use test_utils::{get_event, get_event_name, load_raw_payloads};
 use crate::setup::raw_payload_to_map;
 
 fn setup_test(payload_file: &str) -> TestContext {
-    let data = raw_payload_to_map(load_raw_payloads(payload_file));
-    let mut context = setup_context(Some(data));
+    let integration_data=load_raw_payloads(payload_file);
+    let data = raw_payload_to_map(integration_data.data);
+
+    let mut context = setup_context(Some(data),Some(integration_data.address));
     context = setup_contracts(context);
     context
 }
@@ -289,6 +291,7 @@ fn test_update_client() {
 #[test]
 fn test_packet_receiver() {
     let mut ctx = test_icon_to_arcway_handshake();
+    
 
     let result = call_receive_packet(&mut ctx);
 
