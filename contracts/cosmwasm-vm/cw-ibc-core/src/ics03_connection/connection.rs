@@ -311,7 +311,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn commitment_prefix(&self, deps: Deps, env: &Env) -> CommitmentPrefix {
         let address = self.get_self_address(deps, env);
 
-        let prefix = get_address_storage_prefix(&address, "commitments");
+        let prefix = get_address_storage_prefix(&address, StorageKey::Commitments.as_str());
         CommitmentPrefix::try_from(prefix).unwrap_or_default() //TODO
     }
 
