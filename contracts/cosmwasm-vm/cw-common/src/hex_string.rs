@@ -59,7 +59,7 @@ pub struct TestHex {
 
 #[cfg(test)]
 mod tests {
-    use std::{borrow::Cow, str::FromStr};
+    use std::{str::FromStr};
 
     use hex_buffer_serde::Hex;
 
@@ -81,7 +81,7 @@ mod tests {
     #[test]
     fn test_from_bytes() {
         let bytes = vec![0x01, 0x02, 0x03];
-        let hex = FromHexString(());
+        let _hex = FromHexString(());
 
         assert_eq!(FromHexString::from_bytes(&bytes).unwrap(), bytes);
     }

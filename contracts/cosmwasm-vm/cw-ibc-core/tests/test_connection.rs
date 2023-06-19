@@ -296,7 +296,7 @@ fn connection_open_try_invalid_client_id_name_too_short() {
 #[test]
 fn test_commitment_prefix() {
     let contract = CwIbcCoreContext::new();
-    let mut env = get_mock_env();
+    let env = get_mock_env();
     let prefix = get_address_storage_prefix(
         "archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl",
         "commitments",

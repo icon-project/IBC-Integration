@@ -14,7 +14,7 @@ pub mod xcall_app_msg;
 pub mod xcall_connection_msg;
 pub mod xcall_msg;
 pub mod xcall_payloads;
-use std::{fmt::format, str::from_utf8};
+
 
 use bech32::FromBase32;
 use cosmwasm_std::{from_binary, Addr, Binary, Deps, StdError};

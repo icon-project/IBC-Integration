@@ -469,5 +469,5 @@ pub fn get_dummy_raw_msg_timeout_on_close(
 pub fn get_mock_env() -> Env {
     let mut env = mock_env();
     env.contract.address = Addr::unchecked("archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl");
-    return env;
+    env
 }

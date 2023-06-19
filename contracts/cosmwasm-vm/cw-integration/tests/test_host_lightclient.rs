@@ -315,7 +315,7 @@ fn test_packet_send() {
 #[test]
 fn test_icon_to_arcway_handshake() -> TestContext {
     // complete handshake
-    let mut env = mock_env();
+    let _env = mock_env();
     // env.contract.address =
     //     Addr::unchecked("");
     let mut ctx = setup_test("icon_to_archway_raw.json");
