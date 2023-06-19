@@ -59,7 +59,7 @@ pub struct TestHex {
 
 #[cfg(test)]
 mod tests {
-    use std::{str::FromStr};
+    use std::str::FromStr;
 
     use hex_buffer_serde::Hex;
 

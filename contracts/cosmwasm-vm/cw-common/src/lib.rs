@@ -15,7 +15,6 @@ pub mod xcall_connection_msg;
 pub mod xcall_msg;
 pub mod xcall_payloads;
 
-
 use bech32::FromBase32;
 use cosmwasm_std::{from_binary, Addr, Binary, Deps, StdError};
 use serde::de::DeserializeOwned;
