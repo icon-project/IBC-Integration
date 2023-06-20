@@ -5,7 +5,7 @@ use anyhow::Error as AppError;
 use common::constants::ICON_CLIENT_TYPE;
 use common::ibc::events::IbcEventType;
 
-use cosmwasm_std::{from_binary, to_binary, Addr, Empty, Querier, QueryRequest};
+use cosmwasm_std::{from_binary, testing::mock_env, to_binary, Addr, Empty, Querier, QueryRequest};
 
 use cw_common::{core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query};
 
@@ -20,8 +20,10 @@ use test_utils::{get_event, get_event_name, load_raw_payloads};
 use crate::setup::raw_payload_to_map;
 
 fn setup_test(payload_file: &str) -> TestContext {
-    let data = raw_payload_to_map(load_raw_payloads(payload_file));
-    let mut context = setup_context(Some(data));
+    let integration_data = load_raw_payloads(payload_file);
+    let data = raw_payload_to_map(integration_data.data);
+
+    let mut context = setup_context(Some(data), Some(integration_data.address));
     context = setup_contracts(context);
     context
 }
@@ -68,7 +70,7 @@ pub fn call_update_client(ctx: &mut TestContext, msg: HexString) -> Result<AppRe
 }
 
 pub fn call_connection_open_init(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let payload = ctx.get_test_data(&TestSteps::ConnOpenInit);
+    let payload = ctx.get_test_data(&TestSteps::ConnectionOpenInit);
     let msg = HexString::from_str(&payload.message).unwrap();
     ctx.app.execute_contract(
         ctx.sender.clone(),
@@ -79,7 +81,7 @@ pub fn call_connection_open_init(ctx: &mut TestContext) -> Result<AppResponse, A
 }
 
 pub fn call_connection_open_try(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let payload = ctx.get_test_data(&TestSteps::ConnOpenTry);
+    let payload = ctx.get_test_data(&TestSteps::ConnectionOpenTry);
     let msg = HexString::from_str(&payload.message).unwrap();
     let update = HexString::from_str(&payload.update.unwrap()).unwrap();
     call_update_client(ctx, update).unwrap();
@@ -92,7 +94,7 @@ pub fn call_connection_open_try(ctx: &mut TestContext) -> Result<AppResponse, Ap
 }
 
 pub fn call_connection_open_ack(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let payload = ctx.get_test_data(&TestSteps::ConnOpenAck);
+    let payload = ctx.get_test_data(&TestSteps::ConnectionOpenAck);
     let msg = HexString::from_str(&payload.message).unwrap();
     let update = HexString::from_str(&payload.update.unwrap()).unwrap();
     call_update_client(ctx, update).unwrap();
@@ -105,7 +107,7 @@ pub fn call_connection_open_ack(ctx: &mut TestContext) -> Result<AppResponse, Ap
 }
 
 pub fn call_connection_open_confirm(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let payload = ctx.get_test_data(&TestSteps::ConnOpenConfirm);
+    let payload = ctx.get_test_data(&TestSteps::ConnectionOpenConfirm);
     let msg = HexString::from_str(&payload.message).unwrap();
     let update = HexString::from_str(&payload.update.unwrap()).unwrap();
     call_update_client(ctx, update).unwrap();
@@ -277,7 +279,7 @@ fn test_update_client() {
     let response = call_create_client(&mut ctx).unwrap();
     let event = get_event(&response, &get_event_name(IbcEventType::CreateClient)).unwrap();
     let _client_id = event.get("client_id").unwrap();
-    let payload = ctx.get_test_data(&TestSteps::ConnOpenTry);
+    let payload = ctx.get_test_data(&TestSteps::ConnectionOpenTry);
     let result = call_update_client(
         &mut ctx,
         HexString::from_str(payload.update.unwrap().as_str()).unwrap(),
@@ -313,6 +315,9 @@ fn test_packet_send() {
 #[test]
 fn test_icon_to_arcway_handshake() -> TestContext {
     // complete handshake
+    let _env = mock_env();
+    // env.contract.address =
+    //     Addr::unchecked("");
     let mut ctx = setup_test("icon_to_archway_raw.json");
     let port_name = "mock";
     call_bind_port(&mut ctx, port_name.clone()).unwrap();

@@ -24,6 +24,7 @@ pub struct TestContext {
     pub contracts: HashMap<TestApps, Addr>,
     pub sender: Addr,
     pub test_data: Option<HashMap<TestSteps, RawPayload>>,
+    admin: Option<String>,
 }
 
 impl TestContext {
@@ -182,7 +183,7 @@ pub fn init_ibc_core_contract(mut ctx: TestContext) -> TestContext {
             &cw_common::core_msg::InstantiateMsg {},
             &[],
             "IBCCore",
-            Some(ctx.sender.clone().to_string()),
+            ctx.admin.clone(),
         )
         .unwrap();
 
@@ -317,7 +318,10 @@ pub fn raw_payload_to_map(payloads: Vec<RawPayload>) -> HashMap<TestSteps, RawPa
 //     return raw_payload_to_map(payloads);
 // }
 
-pub fn setup_context(data: Option<HashMap<TestSteps, RawPayload>>) -> TestContext {
+pub fn setup_context(
+    data: Option<HashMap<TestSteps, RawPayload>>,
+    admin: Option<String>,
+) -> TestContext {
     let router = App::default();
     let sender = Addr::unchecked("sender");
     TestContext {
@@ -325,5 +329,6 @@ pub fn setup_context(data: Option<HashMap<TestSteps, RawPayload>>) -> TestContex
         contracts: HashMap::new(),
         sender,
         test_data: data,
+        admin,
     }
 }

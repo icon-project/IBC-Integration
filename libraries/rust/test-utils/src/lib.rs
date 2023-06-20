@@ -17,6 +17,12 @@ use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::{Attribute, Event};
 
 #[derive(Debug, Deserialize, Default, Clone)]
+pub struct IntegrationData {
+    pub address: String,
+    pub data: Vec<RawPayload>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
 pub struct RawPayload {
     pub step: String,
     pub update: Option<String>,
@@ -173,13 +179,15 @@ pub fn load_test_messages() -> Vec<TestMessageData> {
     load_test_data::<TestMessageData>("test_data/test_messages.json")
 }
 
-pub fn load_raw_messages(path: &str) -> Vec<RawPayload> {
-    let path = format!("test_data/{path}");
-    load_test_data::<RawPayload>(&path)
-}
-
-pub fn load_raw_payloads(file_name: &str) -> Vec<RawPayload> {
-    load_raw_messages(file_name)
+pub fn load_raw_payloads(file_name: &str) -> IntegrationData {
+    let path = format!("test_data/{file_name}");
+    let mut root = get_project_root().unwrap();
+    root.push(path);
+    let mut file = File::open(root).unwrap();
+    let mut data = String::new();
+    file.read_to_string(&mut data).unwrap();
+    let data: IntegrationData = serde_json::from_str(&data).expect("JSON was not well-formatted");
+    data
 }
 
 pub fn load_a2i_raw_messages() -> Vec<RawPayload> {
