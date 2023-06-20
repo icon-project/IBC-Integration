@@ -1,4 +1,5 @@
 use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
+
 use debug_print::debug_println;
 
 use super::*;
@@ -357,10 +358,22 @@ pub fn create_packet_timeout_event(packet: Packet, channel_order: &Order) -> Eve
 /// The event being created is of type `CloseInitChannel`, which indicates that an initial channel
 /// handshake has been closed. The event includes attributes for the `port_id` and `channel_id`
 /// associated with the closed channel.
-pub fn create_close_init_channel_event(port_id: &str, channel_id: &str) -> Event {
+pub fn create_close_init_channel_event(
+    port_id: &str,
+    channel_id: &str,
+    channel_end: ChannelEnd,
+) -> Event {
     Event::new(IbcEventType::CloseInitChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id)
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
+        .add_attribute(
+            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
+            channel_end.counterparty().channel_id().unwrap().to_string(),
+        )
+        .add_attribute(
+            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
+            channel_end.counterparty().port_id().to_string(),
+        )
 }
 
 /// This function creates an event for confirming the closure of a channel.
@@ -378,10 +391,22 @@ pub fn create_close_init_channel_event(port_id: &str, channel_id: &str) -> Event
 /// A function is being defined that returns an `Event` object. The `Event` object is created with the
 /// type `CloseConfirmChannel` from the `IbcEventType` enum. The `Event` object also has two attributes
 /// added to it: `port_id_on_b` and `chan_id_on_b`, which are passed as arguments to the function.
-pub fn create_close_confirm_channel_event(port_id_on_b: &str, chan_id_on_b: &str) -> Event {
+pub fn create_close_confirm_channel_event(
+    port_id_on_b: &str,
+    chan_id_on_b: &str,
+    channel_end: ChannelEnd,
+) -> Event {
     Event::new(IbcEventType::CloseConfirmChannel.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
         .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_b)
+        .add_attribute(
+            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
+            channel_end.counterparty().channel_id().unwrap().to_string(),
+        )
+        .add_attribute(
+            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
+            channel_end.counterparty().port_id().to_string(),
+        )
 }
 
 /// This function creates an event for receiving a packet in an inter-blockchain communication protocol.

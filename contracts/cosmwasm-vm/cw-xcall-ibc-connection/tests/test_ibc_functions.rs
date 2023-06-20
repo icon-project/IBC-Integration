@@ -91,7 +91,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
                 "newconnection",
             ),

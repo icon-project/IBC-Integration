@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use crate::constants::ICON_CLIENT_TYPE;
+use crate::constants::{
+    DEFAULT_NETWORK_ID, DEFAULT_NETWORK_TYPE_ID, DEFAULT_SRC_NETWORK_ID, ICON_CLIENT_TYPE,
+};
 use crate::ibc::core::ics02_client::error::ClientError;
 
 use crate::ibc::core::ics02_client::client_type::ClientType as IbcClientType;
@@ -17,6 +19,9 @@ impl ClientState {
         latest_height: u64,
         network_section_hash: Vec<u8>,
         validators: Vec<Vec<u8>>,
+        network_id: u64,
+        network_type_id: u64,
+        src_network_id: String,
     ) -> Result<Self, ClientError> {
         if max_clock_drift == 0 {
             return Err(ClientError::Other {
@@ -31,6 +36,9 @@ impl ClientState {
             latest_height,
             network_section_hash,
             validators,
+            network_id,
+            network_type_id,
+            src_network_id,
         })
     }
 }
@@ -98,5 +106,14 @@ impl IClientState for ClientState {
 
     fn client_type(&self) -> IbcClientType {
         IbcClientType::new(ICON_CLIENT_TYPE.to_string())
+    }
+}
+
+pub fn get_default_icon_client_state() -> ClientState {
+    ClientState {
+        network_id: DEFAULT_NETWORK_ID,
+        network_type_id: DEFAULT_NETWORK_TYPE_ID,
+        src_network_id: DEFAULT_SRC_NETWORK_ID.to_string(),
+        ..ClientState::default()
     }
 }

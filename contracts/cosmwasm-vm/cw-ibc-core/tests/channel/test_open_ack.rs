@@ -11,7 +11,7 @@ use cw_ibc_core::ics04_channel::{
 #[should_panic(expected = "UndefinedConnectionCounterparty")]
 fn test_validate_open_ack_channel_fail_missing_counterparty() {
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_ack(10);
@@ -65,6 +65,7 @@ fn test_validate_open_ack_channel_fail_missing_counterparty() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -113,7 +114,7 @@ fn test_validate_open_ack_channel_fail_missing_counterparty() {
 #[test]
 fn test_validate_open_ack_channel() {
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_ack(10);
@@ -182,6 +183,7 @@ fn test_validate_open_ack_channel() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

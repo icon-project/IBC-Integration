@@ -4,7 +4,7 @@ use super::*;
 fn test_packet_send() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
 
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
@@ -66,6 +66,7 @@ fn test_packet_send() {
         latest_height: 10,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -130,7 +131,7 @@ fn test_packet_send_fail_channel_not_found() {
     expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })"
 )]
 fn test_packet_send_fail_misiing_sequense() {
-    let env = mock_env();
+    let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
 
@@ -186,6 +187,7 @@ fn test_packet_send_fail_misiing_sequense() {
         latest_height: 10,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

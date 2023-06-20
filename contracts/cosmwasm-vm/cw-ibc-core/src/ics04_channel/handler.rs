@@ -878,7 +878,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 None => Err(ChannelError::Other {
                     description: "Data from module is Missing".to_string(),
                 })
-                .map_err(|e| e.into()),
+                .map_err(|e: ChannelError| e.into()),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
@@ -928,11 +928,14 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         deps.storage,
                         &port_id,
                         &channel_id,
-                        channel_end,
+                        channel_end.clone(),
                     )?;
 
-                    let event =
-                        create_close_init_channel_event(port_id.as_str(), channel_id.as_str());
+                    let event = create_close_init_channel_event(
+                        port_id.as_str(),
+                        channel_id.as_str(),
+                        channel_end,
+                    );
                     Ok(Response::new().add_event(event))
                 }
                 None => Err(ChannelError::Other {
@@ -1136,8 +1139,11 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                         &channel_id,
                         channel_end.clone(),
                     )?;
-                    let event =
-                        create_close_confirm_channel_event(port_id.as_str(), channel_id.as_str());
+                    let event = create_close_confirm_channel_event(
+                        port_id.as_str(),
+                        channel_id.as_str(),
+                        channel_end.clone(),
+                    );
 
                     Ok(Response::new().add_event(event))
                 }

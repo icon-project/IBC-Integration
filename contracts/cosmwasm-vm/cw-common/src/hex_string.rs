@@ -59,6 +59,12 @@ pub struct TestHex {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
+    use hex_buffer_serde::Hex;
+
+    use crate::hex_string::{FromHexString, HexString};
+
     use super::TestHex;
 
     #[test]
@@ -70,5 +76,49 @@ mod tests {
         assert_eq!("{\"bytes\":\"deadbeef\"}", serialized.to_string());
         let deserialized = serde_json::from_str::<TestHex>("{\"bytes\":\"deadbeef\"}").unwrap();
         assert_eq!(test, deserialized);
+    }
+
+    #[test]
+    fn test_from_bytes() {
+        let bytes = vec![0x01, 0x02, 0x03];
+        let _hex = FromHexString(());
+
+        assert_eq!(FromHexString::from_bytes(&bytes).unwrap(), bytes);
+    }
+
+    #[test]
+    fn test_from_str() {
+        let s = "0x010203";
+        let hex_string = HexString::from_str(s).unwrap();
+        let expected = HexString(s.to_owned());
+
+        assert_eq!(hex_string, expected);
+    }
+
+    #[test]
+    fn test_to_bytes() {
+        let hex_string = HexString("010203".to_owned());
+        let bytes = hex_string.to_bytes().unwrap();
+        let expected = vec![0x01, 0x02, 0x03];
+
+        assert_eq!(bytes, expected);
+    }
+
+    #[test]
+    fn test_from_str_into_hex_string() {
+        let s = "0x010203";
+        let hex_string: HexString = s.into();
+        let expected = HexString(s.to_owned());
+
+        assert_eq!(hex_string, expected);
+    }
+
+    #[test]
+    fn test_from_bytes_into_hex_string() {
+        let bytes = vec![0x01, 0x02, 0x03];
+        let hex_string = HexString::from_bytes(&bytes);
+        let expected = HexString("010203".to_owned());
+
+        assert_eq!(hex_string, expected);
     }
 }

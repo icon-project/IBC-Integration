@@ -22,6 +22,9 @@ message ClientState {
   uint64 latest_height = 4;
   bytes network_section_hash = 5;
   repeated bytes validators= 6;
+  string src_network_id=7;
+  uint64 network_id=8;
+  uint64 network_type_id=9;
 
 }
 

@@ -1,3 +1,5 @@
+use std::str::from_utf8;
+
 use cw_common::{client_msg::VerifyConnectionPayload, from_binary_response, hex_string::HexString};
 use debug_print::debug_println;
 use prost::DecodeError;
@@ -27,7 +29,7 @@ impl<'a> CwIbcCoreContext<'a> {
         message: MsgConnectionOpenInit,
     ) -> Result<Response, ContractError> {
         let client_id = message.client_id_on_a.clone();
-        self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
+        // self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
 
         let connection_identifier = self.generate_connection_idenfier(deps.storage)?;
 
@@ -194,7 +196,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 description: "failed to fetch consensus state".to_string(),
             })
             .map_err(Into::<ContractError>::into)?;
-        let prefix_on_a = self.commitment_prefix();
+        let prefix_on_a = self.commitment_prefix(deps.as_ref(), &env);
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
         let client_address = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
 
@@ -436,8 +438,13 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into);
         }
         let prefix_on_a = message.counterparty.prefix().clone();
-        let prefix_on_b = self.commitment_prefix();
+        let prefix_on_b = self.commitment_prefix(deps.as_ref(), &env);
         let client_id_on_b = message.client_id_on_b.clone();
+
+        debug_println!(
+            "prefix_on_b is {:?}",
+            from_utf8(&prefix_on_b.clone().into_vec()).unwrap()
+        );
 
         let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 
@@ -453,6 +460,8 @@ impl<'a> CwIbcCoreContext<'a> {
             message.versions_on_a.clone(),
             message.delay_period,
         );
+
+        debug_println!("expected_connection_end {:?}", expected_conn_end_on_a);
 
         let consensus_state_of_a_on_b = self
             .consensus_state(
@@ -731,6 +740,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_open_confirm(
         &self,
         deps: DepsMut,
+        env: Env,
         info: MessageInfo,
         msg: MsgConnectionOpenConfirm,
     ) -> Result<Response, ContractError> {
@@ -769,7 +779,7 @@ impl<'a> CwIbcCoreContext<'a> {
         debug_println!("Consensus State Decoded");
 
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
-        let prefix_on_b = self.commitment_prefix();
+        let prefix_on_b = self.commitment_prefix(deps.as_ref(), &env);
 
         let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 

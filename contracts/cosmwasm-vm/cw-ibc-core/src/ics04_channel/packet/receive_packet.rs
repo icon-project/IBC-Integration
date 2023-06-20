@@ -225,18 +225,17 @@ impl<'a> CwIbcCoreContext<'a> {
                             self.validate_write_acknowledgement(deps.storage, &packet)?;
                         }
                     } else {
-                        // TODO: verify unordered
-                        let packet_rec = self.get_packet_receipt(
-                            deps.storage,
-                            &packet.port_id_on_a,
-                            &packet.chan_id_on_a,
-                            packet.sequence,
-                        );
-                        match packet_rec {
-                            Ok(_receipt) => {}
+                        // let packet_rec = self.get_packet_receipt(
+                        //     deps.storage,
+                        //     &packet.port_id_on_a,
+                        //     &packet.chan_id_on_a,
+                        //     packet.sequence,
+                        // );
+                        // match packet_rec {
+                        //     Ok(_receipt) => {}
 
-                            Err(e) => return Err(e),
-                        }
+                        //     Err(e) => return Err(e),
+                        // }
                         // Case where the recvPacket is successful and an
                         // acknowledgement will be written (not a no-op)
                         self.validate_write_acknowledgement(deps.storage, &packet)?;

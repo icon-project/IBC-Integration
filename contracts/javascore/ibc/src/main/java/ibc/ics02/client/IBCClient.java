@@ -34,7 +34,7 @@ public class IBCClient extends IBCHost {
         btpNetworkId.set(clientId, msg.getBtpNetworkId());
 
         ILightClient client = getClient(clientId);
-        client.createClient(clientId, msg.getClientState(), msg.getConsensusState(), msg.getStoragePrefix());
+        client.createClient(clientId, msg.getClientState(), msg.getConsensusState());
         // byte[] clientStateCommitment = response.get("clientStateCommitment");
         // byte[] consensusStateCommitment = response.get("consensusStateCommitment");
         // byte[] height = response.get("height");

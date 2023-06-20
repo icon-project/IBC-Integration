@@ -639,14 +639,14 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
         receipt: common::ibc::core::ics04_channel::packet::Receipt,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::receipt_commitment_path(port_id, channel_id, sequence);
+        let commitment_key = commitment::receipt_commitment_key(port_id, channel_id, sequence);
         let ok = match receipt {
             common::ibc::core::ics04_channel::packet::Receipt::Ok => true,
         };
-        let commitment_bytes = to_vec(&ok).map_err(ContractError::Std)?;
+        let commitment_bytes = keccak256(&ok.encode_to_vec()).to_vec();
         self.ibc_store()
             .commitments()
-            .save(store, commitment_path, &commitment_bytes)?;
+            .save(store, commitment_key, &commitment_bytes)?;
 
         Ok(())
     }
@@ -820,11 +820,11 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<common::ibc::core::ics04_channel::packet::Receipt, ContractError> {
-        let commitment_path = commitment::receipt_commitment_path(port_id, channel_id, sequence);
+        let commitment_key = commitment::receipt_commitment_key(port_id, channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
             .commitments()
-            .load(store, commitment_path)
+            .load(store, commitment_key)
             .map_err(|_| ContractError::IbcDecodeError {
                 error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;
