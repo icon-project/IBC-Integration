@@ -261,8 +261,8 @@ mod tests {
         icon::icon::types::v1::SignedHeader,
     };
     use cosmwasm_std::{
-        testing::{mock_dependencies, mock_env, MockStorage},
-        StdResult,
+        testing::{mock_dependencies, mock_env, MockStorage, mock_info},
+        StdResult, Addr,
     };
     use cw_common::raw_types::Any;
     use hex_literal::hex;
@@ -498,19 +498,19 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn test_cwcontext_get_config() {
-    //     let mut deps = mock_dependencies();
-    //     let info = mock_info("alice", &[]);
-    //     // Store config
-    //     let config = Config::new("my-config".to_string(), 1, 1, info.sender);
-    //     CONFIG.save(deps.as_mut().storage, &config).unwrap();
+    #[test]
+    fn test_cwcontext_get_config() {
+        let mut deps = mock_dependencies();
+        let info = mock_info("alice", &[]);
+        // Store config
+        let config = Config::new(Addr::unchecked("owner"));
+        CONFIG.save(deps.as_mut().storage, &config).unwrap();
 
-    //     // Retrieve config
-    //     let context = CwContext::new(deps.as_mut(), mock_env());
-    //     let result = context.get_config().unwrap();
-    //     assert_eq!(config, result);
-    // }
+        // Retrieve config
+        let context = CwContext::new(deps.as_mut(), mock_env());
+        let result = context.get_config().unwrap();
+        assert_eq!(config, result);
+    }
 
     #[test]
     fn insert_client_state_should_save_state() -> StdResult<()> {
