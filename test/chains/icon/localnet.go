@@ -376,7 +376,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	_, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000000", "gochain", "setPRepNodePublicKey", params)
 	params = `{"networkTypeName":"eth", "name":"testNetwork", "owner":"` + ibcAddress + `"}`
 	ctx, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000001", "gochain", "openBTPNetwork", params)
-	height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
+	//height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
 	id := ctx.Value("txResult").(icontypes.TransactionResult).EventLogs[1].Indexed[2]
 	typeId := ctx.Value("txResult").(icontypes.TransactionResult).EventLogs[1].Indexed[1]
 	btpNetworkId, _ := icontypes.HexInt(id).Int()
@@ -384,7 +384,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 
 	overrides := map[string]any{
 		"ibc-handler-address": ibcAddress,
-		"start-btp-height":    height + 1,
+		"start-btp-height":    0, // height + 1,
 		"btp-network-id":      btpNetworkId,
 		"btp-network-type-id": btpNetworkTypeId,
 	}

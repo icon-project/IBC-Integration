@@ -18,7 +18,7 @@ chains:
         uid_gid: ''
     contracts:
       ibc: "$BASE_PATH/contracts/javascore/ibc/build/libs/ibc-0.1.0-optimized.jar"
-      client: "$BASE_PATH/contracts/javascore/lightclients/mockclient/build/libs/mockclient-0.1.0-optimized.jar"
+      client: "$BASE_PATH/contracts/javascore/lightclients/tendermint/build/libs/tendermint-0.1.0-optimized.jar"
       xcall: "$BASE_PATH/contracts/javascore/xcall-multi-protocol/build/libs/xcall-multi-protocol-0.1.0-optimized.jar"
       connection: "$BASE_PATH/contracts/javascore/xcall-connection/build/libs/xcall-connection-0.1.0-optimized.jar"
       dapp: "$BASE_PATH/contracts/javascore/modules/mock-dapp-multi-protocol/build/libs/mock-dapp-multi-protocol-0.1.0-optimized.jar"
@@ -27,7 +27,7 @@ chains:
     version: '3'
     environment: local
     chain_config:
-      type: cosmos
+      type: archway
       name: archway
       chain_id: archway-1
       image:

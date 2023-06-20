@@ -53,7 +53,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 	}
 
 	// Parameters here will be empty in the future
-	clientAddress, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, clientCodeId, `{"src_network_id": "0x3.ICON", "network_id": 1, "network_type_id": "1"}`, true)
+	clientAddress, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, clientCodeId, `{"src_network_id": "0x3.icon", "network_id": 1, "network_type_id": "1"}`, true)
 	if err != nil {
 		return nil, err
 	}
