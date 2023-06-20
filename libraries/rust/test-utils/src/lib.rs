@@ -16,7 +16,6 @@ use common::icon::icon::types::v1::MerkleNode;
 use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::{Attribute, Event};
 
-pub mod constants;
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct IntegrationData {
     pub address: String,

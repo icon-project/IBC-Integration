@@ -66,6 +66,7 @@ fn test_packet_send() {
         latest_height: 10,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -186,6 +187,7 @@ fn test_packet_send_fail_misiing_sequense() {
         latest_height: 10,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

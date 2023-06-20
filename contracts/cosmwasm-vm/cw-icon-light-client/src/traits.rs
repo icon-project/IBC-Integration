@@ -19,34 +19,18 @@ pub struct ConsensusStateUpdate {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Config {
-    pub src_network_id: String,
-    pub network_id: u64,
-    pub network_type_id: u128,
     pub owner: Addr,
 }
 
 impl Config {
-    pub fn new(
-        src_network_id: String,
-        network_id: u64,
-        network_type_id: u128,
-        owner: Addr,
-    ) -> Self {
-        Self {
-            src_network_id,
-            network_id,
-            network_type_id,
-            owner,
-        }
+    pub fn new(owner: Addr) -> Self {
+        Self { owner }
     }
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            src_network_id: "icon".to_string(),
-            network_id: 1,
-            network_type_id: 1,
             owner: Addr::unchecked("test"),
         }
     }

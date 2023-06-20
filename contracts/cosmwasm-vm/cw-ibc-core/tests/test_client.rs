@@ -2,7 +2,7 @@ pub mod setup;
 
 use std::str::FromStr;
 
-use common::client_state::IClientState;
+use common::client_state::{get_default_icon_client_state, IClientState};
 use common::ibc::{
     core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour, signer::Signer, Height,
 };
@@ -352,6 +352,7 @@ fn check_for_create_client_message() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -399,6 +400,7 @@ fn check_for_create_client_message_response() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -481,6 +483,7 @@ fn check_for_client_state_from_storage() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -561,6 +564,7 @@ fn check_for_consensus_state_from_storage() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -647,6 +651,7 @@ fn fail_on_create_client_message_error_response() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -699,6 +704,7 @@ fn fails_on_create_client_message_without_proper_initialisation() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -742,6 +748,7 @@ fn check_for_update_client_message() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -807,6 +814,7 @@ fn check_for_update_client_message() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -874,6 +882,7 @@ fn fails_on_updating_non_existing_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -938,6 +947,7 @@ fn check_for_upgrade_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -982,6 +992,7 @@ fn check_for_upgrade_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1043,6 +1054,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1087,6 +1099,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1148,6 +1161,7 @@ fn fails_on_upgrade_client_frozen_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1192,6 +1206,7 @@ fn fails_on_upgrade_client_frozen_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1250,6 +1265,7 @@ fn check_for_execute_upgrade_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1294,6 +1310,7 @@ fn check_for_execute_upgrade_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1377,6 +1394,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1590,6 +1608,7 @@ fn success_on_getting_client_state() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1686,6 +1705,7 @@ fn sucess_on_misbehaviour_validate() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1748,6 +1768,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1841,6 +1862,7 @@ fn success_on_execute_misbehaviour() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
