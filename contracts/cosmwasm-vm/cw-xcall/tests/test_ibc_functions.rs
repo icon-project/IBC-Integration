@@ -31,7 +31,7 @@ use cw_xcall::{
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = "UnOrderedChannel")]
-fn fails_on_open_channel_open_init_unordered_channel() {
+fn fails_on_open_channel_open_init_ordered_channel() {
     let mut deps = deps();
 
     let mock_env = mock_env();
@@ -53,7 +53,7 @@ fn fails_on_open_channel_open_init_unordered_channel() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Unordered,
+                cosmwasm_std::IbcOrder::Ordered,
                 "ics20-1",
                 "newconnection",
             ),
@@ -264,7 +264,7 @@ fn fails_on_ibc_channel_connect_unordered_channel() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Unordered,
+                cosmwasm_std::IbcOrder::Ordered,
                 "ics20-1",
                 "newconnection",
             ),
@@ -308,7 +308,7 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
                 "newconnection",
             ),

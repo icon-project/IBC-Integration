@@ -24,7 +24,7 @@ fn setup_test(payload_file: &str) -> TestContext {
     let integration_data = load_raw_payloads(payload_file);
     let data = raw_payload_to_map(integration_data.data);
     let mut context = setup_context(Some(data), Some(integration_data.address));
-    context = setup_contracts(context);
+    context = setup_xcall_multi_contracts(context);
     context
 }
 
