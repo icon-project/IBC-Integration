@@ -28,9 +28,9 @@ impl<'a> IconClient<'a> {
     ) -> Result<bool, ContractError> {
         let mut votes = u128::default();
         let state = self.context.get_client_state(client_id)?;
-        let config = self.context.get_config()?;
+        // let config = self.context.get_config()?;
         let decision = header
-            .get_network_type_section_decision_hash(&config.src_network_id, config.network_type_id);
+            .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
         let validators_map = common::utils::to_lookup(&state.validators);
 
         let num_validators = state.validators.len() as u128;
@@ -122,7 +122,7 @@ impl ILightClient for IconClient<'_> {
     ) -> Result<ConsensusStateUpdate, Self::Error> {
         let btp_header = signed_header.header.clone().unwrap();
         let mut state = self.context.get_client_state(client_id)?;
-        let config = self.context.get_config()?;
+        // let config = self.context.get_config()?;
 
         if (btp_header.main_height - state.latest_height) > state.trusting_period {
             return Err(ContractError::TrustingPeriodElapsed {
@@ -137,7 +137,7 @@ impl ILightClient for IconClient<'_> {
             ));
         }
 
-        if config.network_id != btp_header.network_id {
+        if state.network_id != btp_header.network_id {
             return Err(ContractError::InvalidHeaderUpdate(
                 "network id mismatch".to_string(),
             ));

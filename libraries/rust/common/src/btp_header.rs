@@ -2,6 +2,7 @@ use ibc_proto::google::protobuf::Any;
 use ibc_proto::protobuf::Protobuf;
 use prost::{DecodeError, Message};
 
+use crate::client_state::get_default_icon_client_state;
 use crate::constants::ICON_BTP_HEADER_TYPE_URL;
 use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 
@@ -15,7 +16,7 @@ impl BtpHeader {
     pub fn get_network_type_section_decision_hash(
         &self,
         src_network_id: &str,
-        network_type: u128,
+        network_type: u64,
     ) -> [u8; 32] {
         keccak256(&self.get_network_type_section_decision_rlp(src_network_id, network_type))
     }
@@ -23,7 +24,7 @@ impl BtpHeader {
     pub fn get_network_type_section_decision_rlp(
         &self,
         src_network_id: &str,
-        network_type: u128,
+        network_type: u64,
     ) -> Vec<u8> {
         let mut ntsd = RlpStream::new_list(5);
 
@@ -82,6 +83,7 @@ impl BtpHeader {
             latest_height: self.main_height,
             network_section_hash: self.get_network_section_hash().to_vec(),
             validators: self.next_validators.clone(),
+            ..get_default_icon_client_state()
         }
     }
 
@@ -122,11 +124,11 @@ impl TryFrom<Any> for BtpHeader {
 
 #[cfg(test)]
 mod tests {
-    use crate::icon::icon::types::v1::SignedHeader;
-    use test_utils::{
-        constants::{TESTNET_NETWORK_TYPE_ID, TESTNET_SRC_NETWORK_ID},
-        get_test_headers, load_test_headers,
+    use crate::{
+        constants::{DEFAULT_NETWORK_TYPE_ID, DEFAULT_SRC_NETWORK_ID},
+        icon::icon::types::v1::SignedHeader,
     };
+    use test_utils::{get_test_headers, load_test_headers};
 
     use super::*;
     use hex_literal::hex;
@@ -177,16 +179,14 @@ mod tests {
     fn test_get_network_type_section_decision() {
         let expected=hex!("f0883078332e69636f6e01830143b900a02b2aa1cc61539d0ef83d0e9997703e18da44a5d44824757b2b38cdbf931c33d6");
         let header = &get_test_headers()[1];
-        let rlp_bytes = header.get_network_type_section_decision_rlp(
-            TESTNET_SRC_NETWORK_ID,
-            TESTNET_NETWORK_TYPE_ID.into(),
-        );
+        let rlp_bytes = header
+            .get_network_type_section_decision_rlp(DEFAULT_SRC_NETWORK_ID, DEFAULT_NETWORK_TYPE_ID);
         assert_eq!(hex::encode(expected), hex::encode(rlp_bytes));
         let expected_hash =
             hex!("8490fee35ce9f11a81c776311cfb42956ac0aa19d3c92bb832c2cef88bff4904");
         let hash = header.get_network_type_section_decision_hash(
-            TESTNET_SRC_NETWORK_ID,
-            TESTNET_NETWORK_TYPE_ID.into(),
+            DEFAULT_SRC_NETWORK_ID,
+            DEFAULT_NETWORK_TYPE_ID,
         );
         assert_eq!(hex::encode(expected_hash), hex::encode(hash));
     }

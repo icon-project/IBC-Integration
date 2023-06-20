@@ -78,6 +78,14 @@ pub fn receipt_commitment_path(
         .to_string()
         .into_bytes()
 }
+
+pub fn receipt_commitment_key(
+    port_id: &PortId,
+    channel_id: &ChannelId,
+    sequence: Sequence,
+) -> Vec<u8> {
+    keccak256(&receipt_commitment_path(port_id, channel_id, sequence)).to_vec()
+}
 pub fn next_seq_recv_commitment_path(port_id: &PortId, channel_id: &ChannelId) -> Vec<u8> {
     SeqRecvPath::new(port_id, channel_id)
         .to_string()

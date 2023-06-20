@@ -7,7 +7,7 @@ use crate::setup::setup_context;
 mod setup;
 #[test]
 fn test_cross_contract_rollback() {
-    let mut app = setup_context(None);
+    let mut app = setup_context(None, None);
     app = init_mock_dapp_contract(app);
     let caller = app.get_dapp();
     app = init_mock_dapp_contract(app);

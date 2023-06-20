@@ -1,7 +1,7 @@
 use std::{str::FromStr, time::Duration};
 
+use common::client_state::get_default_icon_client_state;
 use common::traits::AnyTypes;
-use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
     to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
@@ -397,7 +397,7 @@ fn channel_open_confirm_from_raw_valid_channel_id_parameter() {
             .unwrap(),
         proof_height_on_a: common::ibc::core::ics02_client::height::Height::new(0, proof_height)
             .unwrap(),
-        signer: Signer::from_str("cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng").unwrap(),
+        signer: Signer::from_str("archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl").unwrap(),
     };
     assert_eq!(res_msg.unwrap(), expected);
 }
@@ -597,7 +597,7 @@ fn channel_close_innit_from_raw_valid_channel_id_parameter() {
     let expected = MsgChannelCloseInit {
         port_id_on_a: PortId::default(),
         chan_id_on_a: ChannelId::new(34),
-        signer: Signer::from_str("cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng").unwrap(),
+        signer: Signer::from_str("archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl").unwrap(),
     };
     assert_eq!(res_msg.unwrap(), expected);
 }
@@ -699,7 +699,7 @@ fn channel_close_confirm_from_raw() {
             .unwrap(),
         proof_height_on_a: common::ibc::core::ics02_client::height::Height::new(0, proof_height)
             .unwrap(),
-        signer: Signer::from_str("cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng").unwrap(),
+        signer: Signer::from_str("archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl").unwrap(),
     };
     assert_eq!(res_msg.unwrap(), expected);
 }
@@ -898,8 +898,18 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
 pub fn test_create_close_init_channel_event() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw).unwrap();
-    let event =
-        create_close_init_channel_event(msg.port_id_on_a.as_str(), msg.chan_id_on_a.as_str());
+    let channel_end = ChannelEnd {
+        state: State::Closed,
+        ordering: Order::Ordered,
+        remote: Counterparty::default(),
+        connection_hops: vec![ConnectionId::default()],
+        version: Version::default(),
+    };
+    let event = create_close_init_channel_event(
+        msg.port_id_on_a.as_str(),
+        msg.chan_id_on_a.as_str(),
+        channel_end,
+    );
 
     assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
 }
@@ -909,8 +919,18 @@ pub fn test_create_close_confirm_channel_event() {
     let proof_height = 10;
     let raw = get_dummy_raw_msg_chan_close_confirm(proof_height);
     let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
-    let event =
-        create_close_confirm_channel_event(msg.port_id_on_b.as_str(), msg.chan_id_on_b.as_str());
+    let channel_end = ChannelEnd {
+        state: State::Closed,
+        ordering: Order::Ordered,
+        remote: Counterparty::default(),
+        connection_hops: vec![ConnectionId::default()],
+        version: Version::default(),
+    };
+    let event = create_close_confirm_channel_event(
+        msg.port_id_on_b.as_str(),
+        msg.chan_id_on_b.as_str(),
+        channel_end,
+    );
 
     assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }
@@ -1030,7 +1050,7 @@ fn test_validate_open_try_channel_fail_missing_connection_end() {
 #[test]
 fn test_validate_open_try_channel() {
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
@@ -1080,6 +1100,7 @@ fn test_validate_open_try_channel() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();

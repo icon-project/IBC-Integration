@@ -179,4 +179,6 @@ pub enum QueryMsg {
     },
     #[returns(Vec<String>)]
     GetAllPorts {},
+    #[returns(String)]
+    GetCommitmentPrefix {},
 }
