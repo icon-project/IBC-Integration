@@ -1,8 +1,10 @@
+use debug_print::debug_println;
+
 use super::*;
 
 /// These are constants used in the IBC (Inter-Blockchain Communication) protocol implementation in the
 /// Rust programming language.
-pub const IBC_VERSION: &str = "xcall-1";
+pub const IBC_VERSION: &str = "ics20-1";
 pub const APP_ORDER: CwOrder = CwOrder::Unordered;
 
 /// This function handles the opening of an IBC channel and performs some checks before returning a
@@ -32,12 +34,15 @@ pub fn ibc_channel_open(
     msg: CwChannelOpenMsg,
 ) -> Result<CwChannelOpenResponse, ContractError> {
     let channel = msg.channel();
+    debug_println!("[IBCConnection]: channel open called");
 
     check_order(&channel.order)?;
+    debug_println!("[IBCConnection]: order check passed");
 
     if let Some(counter_version) = msg.counterparty_version() {
         check_version(counter_version)?;
     }
+    debug_println!("[IBCConnection]: version check passed");
 
     Ok(Some(Cw3ChannelOpenResponse {
         version: IBC_VERSION.to_string(),
@@ -67,17 +72,23 @@ pub fn ibc_channel_connect(
     msg: CwChannelConnectMsg,
 ) -> Result<CwBasicResponse, ContractError> {
     let channel = msg.channel();
+    debug_println!("[IBCConnection]: channel connect called");
 
     check_order(&channel.order)?;
+    debug_println!("[IBCConnection]: check order pass");
 
     if let Some(counter_version) = msg.counterparty_version() {
         check_version(counter_version)?;
     }
 
+    debug_println!("[IBCConnection]: check version passed");
+
     let source = msg.channel().endpoint.clone();
     let destination = msg.channel().counterparty_endpoint.clone();
 
     let ibc_config = IbcConfig::new(source, destination);
+    debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
+
     let mut call_service = CwIbcConnection::default();
     call_service.save_config(deps.storage, &ibc_config)?;
 
@@ -109,6 +120,7 @@ pub fn ibc_channel_close(
 ) -> Result<CwBasicResponse, ContractError> {
     let channel = msg.channel().endpoint.channel_id.clone();
     // Reset the state for the channel.
+    debug_println!("[IBCConnection]: channel close called");
 
     Ok(CwBasicResponse::new()
         .add_attribute("method", "ibc_channel_close")
@@ -172,6 +184,7 @@ fn do_ibc_packet_receive(
 ) -> Result<CwReceiveResponse, ContractError> {
     let call_service = CwIbcConnection::default();
     let _channel = msg.packet.dest.channel_id.clone();
+    debug_println!("[IBCConnection]: Packet Received");
 
     call_service.receive_packet_data(deps, msg.packet)
 }

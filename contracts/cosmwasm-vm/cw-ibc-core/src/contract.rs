@@ -145,6 +145,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ChannelOpenInit { msg } => {
                 let message: MsgChannelOpenInit =
                     Self::from_raw::<RawMsgChannelOpenInit, MsgChannelOpenInit>(&msg)?;
+                debug_println!("[IBCCore] Channel Open Init Called");
                 self.validate_channel_open_init(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenTry { msg } => {

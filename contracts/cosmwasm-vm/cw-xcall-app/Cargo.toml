@@ -39,6 +39,7 @@ serde = { workspace=true}
 thiserror = { workspace=true}
 common = { path="../../../libraries/rust/common" }
 cw-common = { path="../cw-common" }
+debug_print={workspace=true}
 
 
 

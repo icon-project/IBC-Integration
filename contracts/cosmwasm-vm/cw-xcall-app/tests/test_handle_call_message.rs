@@ -50,7 +50,6 @@ fn test_execute_call_having_request_id_without_rollback() {
     let res = cw_callservice
         .execute_call(deps.as_mut(), info, request_id)
         .unwrap();
-
     match &res.messages[0].msg {
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr,

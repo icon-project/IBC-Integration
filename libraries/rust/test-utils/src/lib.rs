@@ -20,6 +20,7 @@ use cosmwasm_std::{Attribute, Event};
 pub struct IntegrationData {
     pub address: String,
     pub data: Vec<RawPayload>,
+    pub caller_address: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
