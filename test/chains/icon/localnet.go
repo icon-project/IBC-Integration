@@ -37,7 +37,7 @@ type IconLocalnet struct {
 	findTxMu                  sync.Mutex
 	keystorePath, keyPassword string
 	scorePaths                map[string]string
-	ibcAddresses              map[string]string
+	IBCAddresses              map[string]string
 }
 
 func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keystorePath string, keyPassword string, scorePaths map[string]string) chains.Chain {
@@ -56,6 +56,13 @@ func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConf
 // Config fetches the chain configuration.
 func (c *IconLocalnet) Config() ibc.ChainConfig {
 	return c.cfg
+}
+
+func (c *IconLocalnet) OverrideConfig(key string, value any) {
+	if value == nil {
+		return
+	}
+	c.cfg.ConfigFileOverrides[key] = value
 }
 
 // Initialize initializes node structs so that things like initializing keys can be done before starting the chain
@@ -361,7 +368,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 		"connection": connection,
 		"dapp":       dapp,
 	}
-	c.ibcAddresses = contracts.ContractAddress
+	c.IBCAddresses = contracts.ContractAddress
 
 	params := `{"name": "test","country": "KOR","city": "Seoul","email": "prep@icon.foundation.com","website": "https://icon.kokoa.com","details": "https://icon.kokoa.com/json/details.json","p2pEndpoint": "localhost:9080"}`
 	_, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000000", "gochain", "registerPRep", params)
@@ -369,7 +376,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	_, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000000", "gochain", "setPRepNodePublicKey", params)
 	params = `{"networkTypeName":"eth", "name":"testNetwork", "owner":"` + ibcAddress + `"}`
 	ctx, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000001", "gochain", "openBTPNetwork", params)
-	height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
+	//height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
 	id := ctx.Value("txResult").(icontypes.TransactionResult).EventLogs[1].Indexed[2]
 	typeId := ctx.Value("txResult").(icontypes.TransactionResult).EventLogs[1].Indexed[1]
 	btpNetworkId, _ := icontypes.HexInt(id).Int()
@@ -377,7 +384,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 
 	overrides := map[string]any{
 		"ibc-handler-address": ibcAddress,
-		"start-btp-height":    height + 1,
+		"start-btp-height":    0, // height + 1,
 		"btp-network-id":      btpNetworkId,
 		"btp-network-type-id": btpNetworkTypeId,
 	}
@@ -393,12 +400,12 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 }
 
 func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
-	ctx, err := c.ExecuteContract(context.Background(), c.ibcAddresses["connection"], keyName, "configureChannel", `{"channelId":"`+channel+`", "counterpartyNid":"`+counterpartyNid+`"}`)
+	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["connection"], keyName, "configureChannel", `{"channelId":"`+channel+`", "counterpartyNid":"`+counterpartyNid+`"}`)
 	if err != nil {
 		return ctx, err
 	}
 
-	ctx, err = c.ExecuteContract(context.Background(), c.ibcAddresses["dapp"], keyName, "addConnection", `{"nid":"`+counterpartyNid+`", "source":"`+c.ibcAddresses["connection"]+`", "destination":"`+counterpartyConnection+`"}`)
+	ctx, err = c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "addConnection", `{"nid":"`+counterpartyNid+`", "source":"`+c.IBCAddresses["connection"]+`", "destination":"`+counterpartyConnection+`"}`)
 	return ctx, err
 }
 
@@ -412,9 +419,9 @@ func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyN
 		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `", "_rollback":"` + hex.EncodeToString(rollback) + `"}`
 	}
 
-	ctx, _ = c.ExecuteContract(context.Background(), c.ibcAddresses["dapp"], keyName, "sendMessage", params)
+	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
 	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
-	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.ibcAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	return sn, reqId, err
 }
 
@@ -431,24 +438,24 @@ func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, k
 	// TODO: send fees
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	params := `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
-	ctx, _ = c.ExecuteContract(context.Background(), c.ibcAddresses["xcall"], keyName, "sendCallMessage", params)
+	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], keyName, "sendCallMessage", params)
 	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
-	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.ibcAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	return sn, reqId, err
 }
 
 func (c *IconLocalnet) ExecuteCall(ctx context.Context, reqId string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.ibcAddresses["xcall"], "gochain", "executeCall", `{"_reqId":"`+reqId+`"}`)
+	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeCall", `{"_reqId":"`+reqId+`"}`)
 }
 
 func (c *IconLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.ibcAddresses["xcall"], "gochain", "executeRollback", `{"_sn":"`+sn+`"}`)
+	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeRollback", `{"_sn":"`+sn+`"}`)
 }
 
 func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error) {
 	index := []*string{&from, &to, &sn}
 	filter := icontypes.EventFilter{
-		Addr:      icontypes.Address(c.ibcAddresses["xcall"]),
+		Addr:      icontypes.Address(c.IBCAddresses["xcall"]),
 		Signature: "CallMessage(str,str,int,int)",
 		Indexed:   index,
 	}

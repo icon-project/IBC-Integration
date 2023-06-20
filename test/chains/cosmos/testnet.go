@@ -32,6 +32,10 @@ func (c *CosmosTestnet) SetupIBC(ctx context.Context, keyName string) (context.C
 	panic("unimplemented")
 }
 
+func (it *CosmosTestnet) OverrideConfig(keyName string, value any) {
+	panic("unimplemented")
+}
+
 func (c *CosmosTestnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
 	panic("unimplemented")
 }
