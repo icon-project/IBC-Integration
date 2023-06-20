@@ -261,8 +261,8 @@ mod tests {
         icon::icon::types::v1::SignedHeader,
     };
     use cosmwasm_std::{
-        testing::{mock_dependencies, mock_env, MockStorage, mock_info},
-        StdResult, Addr,
+        testing::{mock_dependencies, mock_env, mock_info, MockStorage},
+        Addr, StdResult,
     };
     use cw_common::raw_types::Any;
     use hex_literal::hex;
