@@ -8,7 +8,7 @@ use cosmwasm_std::{
 use cw_integration::TestSteps;
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 use cw_xcall_ibc_connection::state::IbcConfig;
-use test_utils::RawPayload;
+use test_utils::{IntegrationData, RawPayload};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum TestApps {
@@ -24,7 +24,8 @@ pub struct TestContext {
     pub contracts: HashMap<TestApps, Addr>,
     pub sender: Addr,
     pub test_data: Option<HashMap<TestSteps, RawPayload>>,
-    admin: Option<String>,
+    pub admin: Option<String>,
+    pub caller: Option<String>,
 }
 
 impl TestContext {
@@ -318,17 +319,27 @@ pub fn raw_payload_to_map(payloads: Vec<RawPayload>) -> HashMap<TestSteps, RawPa
 //     return raw_payload_to_map(payloads);
 // }
 
-pub fn setup_context(
-    data: Option<HashMap<TestSteps, RawPayload>>,
-    admin: Option<String>,
-) -> TestContext {
+pub fn setup_context(data: Option<IntegrationData>) -> TestContext {
     let router = App::default();
     let sender = Addr::unchecked("sender");
-    TestContext {
+    if let Some(data) = data {
+        let test_data = raw_payload_to_map(data.data);
+        return TestContext {
+            app: router,
+            contracts: HashMap::new(),
+            sender,
+            test_data: Some(test_data),
+            admin: Some(data.address.clone()),
+            caller: data.caller_address.clone(),
+        };
+    }
+
+    return TestContext {
         app: router,
         contracts: HashMap::new(),
         sender,
-        test_data: data,
-        admin,
-    }
+        test_data: None,
+        admin: None,
+        caller: None,
+    };
 }

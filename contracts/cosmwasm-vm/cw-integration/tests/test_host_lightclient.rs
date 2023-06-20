@@ -22,8 +22,8 @@ use crate::setup::raw_payload_to_map;
 
 fn setup_test(payload_file: &str) -> TestContext {
     let integration_data = load_raw_payloads(payload_file);
-    let data = raw_payload_to_map(integration_data.data);
-    let mut context = setup_context(Some(data), Some(integration_data.address));
+
+    let mut context = setup_context(Some(integration_data));
     context = setup_xcall_multi_contracts(context);
     context
 }
@@ -235,7 +235,7 @@ fn call_bind_port(
 
 fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppResponse, AppError> {
     ctx.app.execute_contract(
-        Addr::unchecked("archway1q6lr3hy5cxk4g74k9wcqyqarf9e97ckpn7t963"),
+        Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
         &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
             to: "eth".to_string(),
@@ -250,7 +250,7 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
 
 fn call_xcall_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppResponse, AppError> {
     ctx.app.execute_contract(
-        Addr::unchecked("archway1q6lr3hy5cxk4g74k9wcqyqarf9e97ckpn7t963"),
+        Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
         &cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
             to: "eth".to_string(),
@@ -354,10 +354,6 @@ fn test_packet_send() {
 
 #[test]
 fn test_icon_to_arcway_handshake() -> TestContext {
-    // complete handshake
-    let _env = mock_env();
-    // env.contract.address =
-    //     Addr::unchecked("");
     let mut ctx = setup_test("icon_to_archway_raw.json");
     let port_name = "mock";
     let module_address = ctx.get_xcall_ibc_connection().to_string();

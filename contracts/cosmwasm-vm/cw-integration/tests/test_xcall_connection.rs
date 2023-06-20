@@ -21,7 +21,7 @@ fn setup_contracts(mut ctx: TestContext) -> TestContext {
 }
 
 fn setup_test() -> TestContext {
-    let mut context = setup_context(None, None);
+    let mut context = setup_context(None);
     context = setup_contracts(context);
     context
 }
