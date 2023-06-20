@@ -501,7 +501,7 @@ mod tests {
     #[test]
     fn test_cwcontext_get_config() {
         let mut deps = mock_dependencies();
-        let info = mock_info("alice", &[]);
+        let _info = mock_info("alice", &[]);
         // Store config
         let config = Config::new(Addr::unchecked("owner"));
         CONFIG.save(deps.as_mut().storage, &config).unwrap();

@@ -462,10 +462,6 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         debug_println!("expected_connection_end {:?}", expected_conn_end_on_a);
-        let actual_byte = hex::decode("0a0f30372d74656e6465726d696e742d3012230a0131120d4f524445525f4f524445524544120f4f524445525f554e4f524445524544180122400a0c69636f6e636c69656e742d301a300a2e034a9dcdcdcdaa5f2948b317265cc19b96f135b34de0ca4f65d9597546ae33d07a000b636f6d6d69746d656e7473").unwrap();
-        let actual_connection = ConnectionEnd::decode(actual_byte.as_slice()).unwrap();
-
-        debug_println!("actual connection {:?}", actual_connection);
 
         let consensus_state_of_a_on_b = self
             .consensus_state(
