@@ -86,9 +86,10 @@ impl<'a> CwIbcConnection<'a> {
     pub fn save_config(
         &mut self,
         store: &mut dyn Storage,
+        nid: String,
         config: &IbcConfig,
     ) -> Result<(), ContractError> {
-        match self.ibc_config().save(store, config) {
+        match self.ibc_config().save(store, nid, config) {
             Ok(_) => Ok(()),
             Err(err) => Err(ContractError::Std(err)),
         }

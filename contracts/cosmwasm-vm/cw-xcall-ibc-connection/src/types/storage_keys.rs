@@ -11,6 +11,8 @@ pub enum StorageKey {
     FeeHandler,
     Balance,
     Fee,
+    ConfiguredNetworks,
+    ClientIdByChannel,
 }
 
 impl StorageKey {
@@ -25,6 +27,8 @@ impl StorageKey {
             StorageKey::FeeHandler => "feehandler",
             StorageKey::Balance => "balance",
             StorageKey::Fee => "fee",
+            StorageKey::ConfiguredNetworks => "configured_networks",
+            StorageKey::ClientIdByChannel => "client_id_by_channel",
         }
     }
 }

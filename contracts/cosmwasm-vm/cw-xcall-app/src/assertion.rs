@@ -1,3 +1,7 @@
+use std::str::FromStr;
+
+use cw_common::xcall_types::network_address::NetworkAddress;
+
 use super::*;
 
 use crate::{
@@ -228,9 +232,9 @@ impl<'a> CwCallService<'a> {
         store: &dyn Storage,
         address: Addr,
     ) -> Result<(), ContractError> {
-        let ibc_host = self.get_connection_host(store)?;
+        let connections = self.get_all_connections(store)?;
 
-        if ibc_host != address {
+        if !connections.contains(&address.to_string()) {
             return Err(ContractError::OnlyIbcHandler {});
         }
         Ok(())

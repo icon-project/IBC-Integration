@@ -1,4 +1,4 @@
-use cosmwasm_std::{from_slice, to_vec};
+use cosmwasm_std::{from_slice, to_vec, IbcChannel};
 use debug_print::debug_println;
 
 use crate::{
@@ -85,9 +85,9 @@ impl<'a> CwIbcConnection<'a> {
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
-            ExecuteMsg::MessageFromXCall { data } => {
+            ExecuteMsg::MessageFromXCall { data, to } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");
-                self.forward_to_host(deps, info, env, data)
+                self.forward_to_host(deps, info, env, to, data)
             }
             ExecuteMsg::SetXCallHost { address } => {
                 self.ensure_owner(deps.as_ref().storage, &info)?;
@@ -102,16 +102,30 @@ impl<'a> CwIbcConnection<'a> {
                 self.update_admin(deps.storage, info, validated_address.to_string())
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
-            ExecuteMsg::SetIbcConfig { ibc_config } => {
+            ExecuteMsg::SetIbcConfig { ibc_config, nid } => {
                 self.ensure_owner(deps.as_ref().storage, &info)?;
                 let config = from_slice(&ibc_config).unwrap();
-                self.save_config(deps.storage, &config)?;
+                self.save_config(deps.storage, nid, &config)?;
+                Ok(Response::new())
+            }
+            ExecuteMsg::ConfigureNetwork {
+                network_id,
+                connection_id,
+                destination_port_id,
+            } => {
+                self.ensure_owner(deps.as_ref().storage, &info)?;
+                self.store_counterparty_nid(
+                    deps.storage,
+                    connection_id,
+                    destination_port_id,
+                    network_id,
+                )?;
                 Ok(Response::new())
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
-                Ok(self.on_channel_open(msg)?)
+                Ok(self.on_channel_open(deps.storage, msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelConnect { msg } => {
@@ -328,17 +342,16 @@ impl<'a> CwIbcConnection<'a> {
     /// struct that contains data and attributes that will be returned to the caller, and
     /// `ContractError` is an enum that represents any errors that may occur during the execution of the
     /// function.
-    fn on_channel_open(&self, msg: CwChannelOpenMsg) -> Result<Response, ContractError> {
+    pub fn on_channel_open(
+        &mut self,
+        store: &mut dyn Storage,
+        msg: CwChannelOpenMsg,
+    ) -> Result<Response, ContractError> {
         debug_println!("[IbcConnection]: Called On channel open");
         println!("{msg:?}");
-        let ibc_endpoint = match msg.clone() {
-            CwChannelOpenMsg::OpenInit { channel } => channel.endpoint,
-            CwChannelOpenMsg::OpenTry {
-                channel,
-                counterparty_version: _,
-            } => channel.endpoint,
-        };
+
         let channel = msg.channel();
+        let ibc_endpoint = channel.endpoint.clone();
 
         check_order(&channel.order)?;
         debug_println!("[IbcConnection]: check order pass");
@@ -347,6 +360,7 @@ impl<'a> CwIbcConnection<'a> {
             check_version(counter_version)?;
         }
         debug_println!("[IbcConnection]: check version pass");
+        self.setup_channel(store, channel.clone())?;
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())
@@ -369,35 +383,26 @@ impl<'a> CwIbcConnection<'a> {
     /// a `Result<Response, ContractError>` where `Response` is a struct that contains data and attributes
     /// related to the IBC channel connection, and `ContractError` is an enum that represents any errors
     /// that may occur during the execution of the function.
-    fn on_channel_connect(
-        &self,
+    pub fn on_channel_connect(
+        &mut self,
         store: &mut dyn Storage,
         msg: CwChannelConnectMsg,
     ) -> Result<Response, ContractError> {
-        let ibc_endpoint = match msg.clone() {
-            CwChannelConnectMsg::OpenAck {
-                channel,
-                counterparty_version: _,
-            } => channel.endpoint,
-            CwChannelConnectMsg::OpenConfirm { channel } => channel.endpoint,
-        };
         let channel = msg.channel();
+        debug_println!("[IBCConnection]: channel connect called");
 
         check_order(&channel.order)?;
+        debug_println!("[IBCConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
         }
 
-        let source = msg.channel().endpoint.clone();
-        let destination = msg.channel().counterparty_endpoint.clone();
-
-        let ibc_config = IbcConfig::new(source, destination);
-        let mut call_service = CwIbcConnection::default();
-        call_service.save_config(store, &ibc_config)?;
+        debug_println!("[IBCConnection]: check version passed");
+        self.setup_channel(store, channel.clone())?;
 
         Ok(Response::new()
-            .set_data(to_binary(&ibc_endpoint).unwrap())
+            .set_data(to_binary(&channel.endpoint.clone()).unwrap())
             .add_attribute("method", "on_channel_connect")
             .add_attribute(
                 "source_channel_id",
@@ -425,7 +430,7 @@ impl<'a> CwIbcConnection<'a> {
     /// Returns:
     ///
     /// A `Result` containing a `Response` or a `ContractError`.
-    fn on_channel_close(&self, msg: CwChannelCloseMsg) -> Result<Response, ContractError> {
+    pub fn on_channel_close(&self, msg: CwChannelCloseMsg) -> Result<Response, ContractError> {
         let ibc_endpoint = match msg.clone() {
             CwChannelCloseMsg::CloseInit { channel } => channel.endpoint,
             CwChannelCloseMsg::CloseConfirm { channel } => channel.endpoint,
@@ -451,7 +456,7 @@ impl<'a> CwIbcConnection<'a> {
     /// Returns:
     ///
     /// A `Result<Response, ContractError>` is being returned.
-    fn on_packet_receive(
+    pub fn on_packet_receive(
         &self,
         deps: DepsMut,
         msg: CwPacketReceiveMsg,
@@ -482,14 +487,8 @@ impl<'a> CwIbcConnection<'a> {
     /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to be
     /// returned to the caller and `ContractError` is an enum representing the possible errors that can
     /// occur during the execution of the function.
-    fn on_packet_ack(&self, ack: CwPacketAckMsg) -> Result<Response, ContractError> {
+    pub fn on_packet_ack(&self, ack: CwPacketAckMsg) -> Result<Response, ContractError> {
         let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
-        // let message: CallServiceMessage = from_binary(&ack.original_packet.data)?;
-        // let message_type = match message.message_type() {
-        //     CallServiceMessageType::CallServiceRequest => "call_service_request",
-        //     CallServiceMessageType::CallServiceResponse => "call_service_response",
-        // };
-
         match ack_response {
             Ack::Result(_) => {
                 let attributes = vec![attr("action", "acknowledge"), attr("success", "true")];
@@ -518,10 +517,28 @@ impl<'a> CwIbcConnection<'a> {
     /// attribute. The submessage is a reply on error with a `CosmosMsg::Custom` object that contains an
     /// `Empty` message. The attribute is a key-value pair
 
-    fn on_packet_timeout(&self, _msg: CwPacketTimeoutMsg) -> Result<Response, ContractError> {
+    pub fn on_packet_timeout(&self, _msg: CwPacketTimeoutMsg) -> Result<Response, ContractError> {
         let submsg = SubMsg::reply_on_error(CosmosMsg::Custom(Empty {}), ACK_FAILURE_ID);
         Ok(Response::new()
             .add_submessage(submsg)
             .add_attribute("method", "ibc_packet_timeout"))
+    }
+
+    pub fn setup_channel(
+        &mut self,
+        store: &mut dyn Storage,
+        channel: IbcChannel,
+    ) -> Result<(), ContractError> {
+        let source = channel.endpoint.clone();
+        let destination = channel.counterparty_endpoint.clone();
+
+        let ibc_config = IbcConfig::new(source.clone(), destination.clone());
+        debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
+
+        let nid =
+            self.get_counterparty_nid(store, channel.connection_id.clone(), destination.port_id)?;
+        self.save_config(store, nid, &ibc_config)?;
+
+        Ok(())
     }
 }

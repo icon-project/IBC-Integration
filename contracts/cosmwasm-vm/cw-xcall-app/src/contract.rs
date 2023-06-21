@@ -90,8 +90,11 @@ impl<'a> CwCallService<'a> {
                 rollback,
             } => {
                 println!("{LOG_PREFIX} Received Send Call Message");
-                self.validate_send_call(&sources, &destinations, &deps.querier, &info)?;
-                self.send_packet(deps, info, env, to, sources, destinations, data, rollback)
+                let sources = sources.unwrap_or(vec![]);
+                let dests = destinations.unwrap_or(vec![]);
+
+                self.validate_send_call(&sources, &dests, &deps.querier, &info)?;
+                self.send_packet(deps, info, env, to, sources, dests, data, rollback)
             }
             ExecuteMsg::ReceiveCallMessage { data } => self.receive_packet_data(deps, info, data),
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
@@ -245,7 +248,7 @@ impl<'a> CwCallService<'a> {
         self.init_last_sequence_no(store, last_sequence_no)?;
         self.init_last_request_id(store, last_request_id)?;
         self.set_timeout_height(store, msg.timeout_height)?;
-        self.set_connection_host(store, msg.connection_host.clone())?;
+        // self.set_connection_host(store, msg.connection_host.clone())?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")

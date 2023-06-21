@@ -214,21 +214,30 @@ fn sucess_on_ibc_channel_connect() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
-
+    let connection_id = "newconnection";
     let execute_message = ExecuteMsg::IbcChannelConnect {
         msg: OpenAck {
             channel: IbcChannel::new(
                 src.clone(),
-                dst,
+                dst.clone(),
                 cosmwasm_std::IbcOrder::Unordered,
                 "ics20-1",
-                "newconnection",
+                connection_id,
             ),
             counterparty_version: "ics20-1".to_owned(),
         },
     };
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
+        .unwrap();
+    let counterparty_nid = "btp";
+    contract
+        .store_counterparty_nid(
+            deps.as_mut().storage,
+            connection_id.to_owned(),
+            dst.port_id,
+            counterparty_nid.to_owned(),
+        )
         .unwrap();
 
     let result = contract
@@ -237,7 +246,10 @@ fn sucess_on_ibc_channel_connect() {
 
     assert_eq!("on_channel_connect", result.attributes[0].value);
 
-    let ibc_config = contract.ibc_config().load(deps.as_ref().storage).unwrap();
+    let ibc_config = contract
+        .ibc_config()
+        .load(deps.as_ref().storage, counterparty_nid.to_string())
+        .unwrap();
 
     assert_eq!(ibc_config.src_endpoint().port_id, src.port_id.as_str())
 }

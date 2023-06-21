@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{
     to_binary, to_vec, CosmosMsg, DepsMut, Env, MessageInfo, QueryRequest, Response, SubMsg,
     WasmMsg,
 };
-use cw_common::hex_string::HexString;
+use cw_common::{hex_string::HexString, xcall_types::network_address::NetworkAddress};
 
 use crate::{
     error::ContractError,
@@ -19,6 +21,7 @@ impl<'a> CwIbcConnection<'a> {
         deps: DepsMut,
         info: MessageInfo,
         _env: Env,
+        to: String,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
@@ -32,11 +35,15 @@ impl<'a> CwIbcConnection<'a> {
         let ibc_host = self.get_ibc_host(deps.as_ref().storage)?;
 
         println!("{} Forwarding to {}", LOG_PREFIX, &ibc_host);
+        let na = NetworkAddress::from_str(&to).unwrap();
 
-        let ibc_config = self.ibc_config().load(deps.as_ref().storage).map_err(|e| {
-            println!("{LOG_PREFIX} Failed Loading IbcConfig {e:?}");
-            ContractError::Std(e)
-        })?;
+        let ibc_config = self
+            .ibc_config()
+            .load(deps.as_ref().storage, na.get_nid().to_owned())
+            .map_err(|e| {
+                println!("{LOG_PREFIX} Failed Loading IbcConfig {e:?}");
+                ContractError::Std(e)
+            })?;
 
         println!("{LOG_PREFIX} Loaded IbcConfig");
         let query_message = cw_common::core_msg::QueryMsg::GetNextSequenceSend {

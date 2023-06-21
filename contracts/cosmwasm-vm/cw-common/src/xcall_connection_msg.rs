@@ -13,10 +13,17 @@ pub enum ExecuteMsg {
         address: String,
     },
     MessageFromXCall {
+        to: String,
         data: Vec<u8>,
     },
     SetIbcConfig {
         ibc_config: Vec<u8>,
+        nid: String,
+    },
+    ConfigureNetwork {
+        network_id: String,
+        connection_id: String,
+        destination_port_id: String,
     },
     UpdateAdmin {
         address: String,

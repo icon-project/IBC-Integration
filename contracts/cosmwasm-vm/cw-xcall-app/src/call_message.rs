@@ -1,3 +1,7 @@
+use std::str::FromStr;
+
+use cw_common::xcall_types::network_address::NetworkAddress;
+
 use crate::types::LOG_PREFIX;
 
 use super::*;
@@ -65,7 +69,13 @@ impl<'a> CwCallService<'a> {
         // TODO : ADD fee logic
 
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
-        let connection_host = self.get_connection_host(deps.as_ref().storage)?;
+        let mut confirmed_sources = sources;
+
+        if confirmed_sources.len() == 0 {
+            let na = NetworkAddress::from_str(&to)?;
+            let default = self.get_default_connection(deps.as_ref().storage, na.get_nid())?;
+            confirmed_sources = vec![default.to_string()]
+        }
 
         if need_response {
             let request = CallRequest::new(
@@ -81,7 +91,7 @@ impl<'a> CwCallService<'a> {
 
         let call_request = CallServiceMessageRequest::new(
             info.sender.to_string(),
-            to,
+            to.clone(),
             sequence_no,
             destinations,
             need_response,
@@ -93,10 +103,11 @@ impl<'a> CwCallService<'a> {
         let event = event_xcall_message_sent(info.sender.to_string(), sequence_no, &message);
 
         let message = cw_common::xcall_connection_msg::ExecuteMsg::MessageFromXCall {
+            to,
             data: to_vec(&message).unwrap(),
         };
 
-        let submessages = sources
+        let submessages = confirmed_sources
             .iter()
             .map(|r| {
                 let cosm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -110,7 +121,7 @@ impl<'a> CwCallService<'a> {
                     gas_limit: None,
                     reply_on: cosmwasm_std::ReplyOn::Always,
                 };
-                println!("{LOG_PREFIX} sent message to connection :{connection_host}");
+                println!("{LOG_PREFIX} sent message to connection :{r}");
                 Ok(submessage)
             })
             .collect::<Result<Vec<SubMsg>, ContractError>>()?;

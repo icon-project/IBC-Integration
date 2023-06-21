@@ -1,3 +1,5 @@
+use cw_storage_plus::Map;
+
 use super::*;
 
 /// These are constants defined in the `CwIbcConnection` struct that are used throughout the codebase.
@@ -95,12 +97,14 @@ impl IbcConfig {
 pub struct CwIbcConnection<'a> {
     owner: Item<'a, String>,
     admin: Item<'a, String>,
-    ibc_config: Item<'a, IbcConfig>,
+    ibc_config: Map<'a, String, IbcConfig>,
     ibc_host: Item<'a, Addr>,
     xcall_host: Item<'a, Addr>,
     timeout_height: Item<'a, u64>,
     fee_handler: Item<'a, String>,
     fee: Item<'a, u128>,
+    configured_networks: Map<'a, (String, String), String>,
+    client_id_by_channel: Map<'a, String, String>,
 }
 
 impl<'a> Default for CwIbcConnection<'a> {
@@ -114,12 +118,14 @@ impl<'a> CwIbcConnection<'a> {
         Self {
             owner: Item::new(StorageKey::Owner.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
-            ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
+            ibc_config: Map::new(StorageKey::IbcConfig.as_str()),
             ibc_host: Item::new(StorageKey::IbcHost.as_str()),
             timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
             xcall_host: Item::new(StorageKey::XCallHost.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
             fee: Item::new(StorageKey::Fee.as_str()),
+            configured_networks: Map::new(StorageKey::ConfiguredNetworks.as_str()),
+            client_id_by_channel: Map::new(StorageKey::ClientIdByChannel.as_str()),
         }
     }
 
@@ -131,7 +137,7 @@ impl<'a> CwIbcConnection<'a> {
         &self.admin
     }
 
-    pub fn ibc_config(&self) -> &Item<'a, IbcConfig> {
+    pub fn ibc_config(&self) -> &Map<'a, String, IbcConfig> {
         &self.ibc_config
     }
     pub fn set_ibc_host(
@@ -176,5 +182,53 @@ impl<'a> CwIbcConnection<'a> {
     }
     pub fn fee(&self) -> &Item<'a, u128> {
         &self.fee
+    }
+
+    pub fn get_client_id_by_channel(
+        &self,
+        store: &dyn Storage,
+        channel: String,
+    ) -> Result<String, ContractError> {
+        return self
+            .client_id_by_channel
+            .load(store, channel)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn store_client_id_by_channel(
+        &self,
+        store: &mut dyn Storage,
+        client_id: String,
+        channel: String,
+    ) -> Result<(), ContractError> {
+        return self
+            .client_id_by_channel
+            .save(store, client_id, &channel)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_counterparty_nid(
+        &self,
+        store: &dyn Storage,
+        connection_id: String,
+        port_id: String,
+    ) -> Result<String, ContractError> {
+        return self
+            .configured_networks
+            .load(store, (connection_id, port_id))
+            .map_err(ContractError::Std);
+    }
+
+    pub fn store_counterparty_nid(
+        &self,
+        store: &mut dyn Storage,
+        connection_id: String,
+        port_id: String,
+        nid: String,
+    ) -> Result<(), ContractError> {
+        return self
+            .configured_networks
+            .save(store, (connection_id, port_id), &nid)
+            .map_err(ContractError::Std);
     }
 }

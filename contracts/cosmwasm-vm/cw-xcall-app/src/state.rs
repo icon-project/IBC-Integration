@@ -1,3 +1,7 @@
+use cosmwasm_std::Order;
+use cw_storage_plus::{KeyDeserialize, PrimaryKey};
+use serde::de::DeserializeOwned;
+
 use super::*;
 
 /// These are constants defined in the `CwCallService` struct that are used throughout the codebase.
@@ -52,7 +56,7 @@ pub struct CwCallService<'a> {
     requests: Map<'a, u128, CallRequest>,
     fee_handler: Item<'a, String>,
     fee: Item<'a, u128>,
-    connection_host: Item<'a, Addr>,
+    default_connections: Map<'a, String, Addr>,
     timeout_height: Item<'a, u64>,
     pending_requests: Map<'a, (Vec<u8>, String), bool>,
     pending_responses: Map<'a, (Vec<u8>, String), bool>,
@@ -75,7 +79,7 @@ impl<'a> CwCallService<'a> {
             requests: Map::new(StorageKey::Requests.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
             fee: Item::new(StorageKey::Fee.as_str()),
-            connection_host: Item::new(StorageKey::ConnectionHost.as_str()),
+            default_connections: Map::new(StorageKey::DefaultConnections.as_str()),
             timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
             pending_requests: Map::new(StorageKey::PendingRequests.as_str()),
             pending_responses: Map::new(StorageKey::PendingRequests.as_str()),
@@ -112,17 +116,24 @@ impl<'a> CwCallService<'a> {
     pub fn fee(&self) -> &Item<'a, u128> {
         &self.fee
     }
-    pub fn set_connection_host(
+    pub fn set_default_connection(
         &self,
         store: &mut dyn Storage,
+        nid: String,
         address: Addr,
     ) -> Result<(), ContractError> {
-        self.connection_host
-            .save(store, &address)
+        self.default_connections
+            .save(store, nid, &address)
             .map_err(ContractError::Std)
     }
-    pub fn get_connection_host(&self, store: &dyn Storage) -> Result<Addr, ContractError> {
-        self.connection_host.load(store).map_err(ContractError::Std)
+    pub fn get_default_connection(
+        &self,
+        store: &dyn Storage,
+        nid: &str,
+    ) -> Result<Addr, ContractError> {
+        self.default_connections
+            .load(store, nid.to_string())
+            .map_err(ContractError::Std)
     }
     pub fn set_timeout_height(
         &self,
@@ -191,6 +202,12 @@ impl<'a> CwCallService<'a> {
             .map_err(ContractError::Std)
     }
 
+    pub fn get_all_connections(&self, store: &dyn Storage) -> Result<Vec<String>, ContractError> {
+        let res = self.get_all_values::<String, Addr>(store, &self.default_connections)?;
+        let addresses: Vec<String> = res.into_iter().map(|a| a.to_string()).collect();
+        Ok(addresses)
+    }
+
     fn get_by_prefix(
         &self,
         store: &dyn Storage,
@@ -219,5 +236,20 @@ impl<'a> CwCallService<'a> {
             self.pending_requests.remove(store, (hash.clone(), key))
         }
         Ok(())
+    }
+
+    fn get_all_values<
+        K: PrimaryKey<'a> + Clone + KeyDeserialize,
+        V: DeserializeOwned + Serialize,
+    >(
+        &self,
+        store: &dyn Storage,
+        map: &Map<K, V>,
+    ) -> Result<Vec<V>, ContractError> {
+        let values = map
+            .range(store, None, None, Order::Ascending)
+            .map(|r| r.map(|v| v.1))
+            .collect::<Result<Vec<V>, StdError>>();
+        return values.map_err(ContractError::Std);
     }
 }
