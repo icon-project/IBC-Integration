@@ -65,24 +65,25 @@ func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodName, param 
 
 func sendCallData(ctx context.Context, param string) string {
 	sendCall := ""
-	if param == "data size greater" {
+	switch param {
+	case "data size greater":
 		sendCall = packetExceedLimit
-	} else if param == "data size eqauls" {
+	case "data size eqauls":
 		sendCall = packetEqualLimit
-	} else if param == "data size less" {
+	case "data size less":
 		ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
 		dappAddr := ctxValue.ContractAddress["dapp"]
 		fmt.Println(args)
 		str := fmt.Sprintf(`{"send_call_message":{"to":"%s","data":[1,2,3],"rollback":[3,4,5]}}`, dappAddr)
 		fmt.Println(str)
 		return str
-	} else if param == "rollback size greater" {
+	case "rollback size greater":
 		sendCall = rollbackExceedLimit
-	} else if param == "rollback size eqauls" {
+	case "rollback size eqauls":
 		sendCall = rollbackEqualLimit
-	} else if param == "rollback size less" {
+	case "rollback size less":
 		sendCall = args
-	} else {
+	default:
 		sendCall = args
 	}
 	return sendCall

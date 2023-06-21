@@ -32,7 +32,10 @@ func NewCosmosLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainCo
 func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Context, error) {
 	var contracts chains.ContractKey
 	time.Sleep(4 * time.Second)
-	contractOwner, _, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
+	contractOwner, _, err := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
+	if err != nil {
+		return nil, err
+	}
 
 	ibcCodeId, err := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath["ibc"])
 	if err != nil {
@@ -50,7 +53,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 	}
 
 	// Parameters here will be empty in the future
-	clientAddress, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, clientCodeId, `{"src_network_id": "0x3.ICON", "network_id": 1, "network_type_id": "1"}`, true)
+	clientAddress, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, clientCodeId, `{"src_network_id": "0x3.icon", "network_id": 1, "network_type_id": "1"}`, true)
 	if err != nil {
 		return nil, err
 	}

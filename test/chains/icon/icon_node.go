@@ -30,7 +30,7 @@ import (
 const (
 	rpcPort              = "9080/tcp"
 	GOLOOP_IMAGE_ENV     = "GOLOOP_IMAGE"
-	GOLOOP_IMAGE         = "goloop"
+	GOLOOP_IMAGE         = "goloop-icon"
 	GOLOOP_IMAGE_TAG_ENV = "GOLOOP_IMAGE_TAG"
 	GOLOOP_IMAGE_TAG     = "latest"
 )
@@ -373,7 +373,7 @@ func (in *IconNode) ExecCallTx(ctx context.Context, scoreAddress, methodName, ke
 	var output string
 	in.lock.Lock()
 	defer in.lock.Unlock()
-	stdout, _, err := in.Exec(ctx, in.ExecCallTxCommand(ctx, scoreAddress, methodName, keystorePath, params+" --gas auto"), nil)
+	stdout, _, err := in.Exec(ctx, in.ExecCallTxCommand(ctx, scoreAddress, methodName, keystorePath, params), nil)
 	if err != nil {
 		return "", err
 	}
