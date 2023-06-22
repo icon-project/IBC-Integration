@@ -52,5 +52,5 @@ public interface FeeManage {
      * @return the sum of the protocol fee and the relay fee
      */
     @External(readonly=true)
-    BigInteger getFee(Address connection, String _net, boolean _rollback);
+    BigInteger getFee(String _net, boolean _rollback, @Optional String[] _sourceProtocols);
 }

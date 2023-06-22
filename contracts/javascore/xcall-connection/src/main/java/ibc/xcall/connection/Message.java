@@ -25,10 +25,12 @@ import score.ObjectWriter;
 
 public class Message {
     private final BigInteger sn;
+    private final BigInteger fee;
     private final byte[] data;
 
-    public Message(BigInteger sn, byte[] data) {
+    public Message(BigInteger sn, BigInteger fee, byte[] data) {
         this.sn = sn;
+        this.fee = fee;
         this.data = data;
     }
 
@@ -36,13 +38,18 @@ public class Message {
         return sn;
     }
 
+    public BigInteger getFee() {
+        return fee;
+    }
+
     public byte[] getData() {
         return data;
     }
 
     public static void writeObject(ObjectWriter w, Message m) {
-        w.beginList(2);
+        w.beginList(3);
         w.write(m.sn);
+        w.write(m.fee);
         w.writeNullable(m.data);
         w.end();
     }
@@ -50,8 +57,9 @@ public class Message {
     public static Message readObject(ObjectReader r) {
         r.beginList();
         Message m = new Message(
-                r.readBigInteger(),
-                r.readNullable(byte[].class)
+            r.readBigInteger(),
+            r.readBigInteger(),
+            r.readNullable(byte[].class)
         );
         r.end();
         return m;

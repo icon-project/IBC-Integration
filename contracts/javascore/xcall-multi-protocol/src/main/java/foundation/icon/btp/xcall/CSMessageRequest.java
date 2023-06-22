@@ -28,18 +28,22 @@ import java.util.List;
 public class CSMessageRequest {
     private final String from;
     private final String to;
-    private final String[] protocols;
     private final BigInteger sn;
     private final boolean rollback;
     private final byte[] data;
+    private final String[] protocols;
 
-    public CSMessageRequest(String from, String to, String[] protocols, BigInteger sn, boolean rollback, byte[] data) {
+
+    public CSMessageRequest(String from, String to, BigInteger sn, boolean rollback, byte[] data, String[] protocols) {
         this.from = from;
         this.to = to;
-        this.protocols = protocols;
         this.sn = sn;
         this.rollback = rollback;
         this.data = data;
+        if (protocols == null) {
+            protocols = new String[]{};
+        }
+        this.protocols = protocols;
     }
 
 
@@ -71,14 +75,15 @@ public class CSMessageRequest {
         w.beginList(6);
         w.write(m.from);
         w.write(m.to);
+
+        w.write(m.sn);
+        w.write(m.rollback);
+        w.writeNullable(m.data);
         w.beginList(m.protocols.length);
         for(String protocol : m.protocols) {
             w.write(protocol);
         }
         w.end();
-        w.write(m.sn);
-        w.write(m.rollback);
-        w.writeNullable(m.data);
         w.end();
     }
 
@@ -87,10 +92,10 @@ public class CSMessageRequest {
         CSMessageRequest m = new CSMessageRequest(
                 r.readString(),
                 r.readString(),
-                readProtocols(r),
                 r.readBigInteger(),
                 r.readBoolean(),
-                r.readNullable(byte[].class)
+                r.readNullable(byte[].class),
+                readProtocols(r)
         );
         r.end();
         return m;

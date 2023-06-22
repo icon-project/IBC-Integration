@@ -155,6 +155,11 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     }
 
     @External(readonly = true)
+    public byte[] getLatestHeight(String clientId) {
+        return getClient(clientId).getLatestHeight(clientId);
+    }
+
+    @External(readonly = true)
     public byte[] getClientState(String clientId) {
         return getClient(clientId).getClientState(clientId);
     }
