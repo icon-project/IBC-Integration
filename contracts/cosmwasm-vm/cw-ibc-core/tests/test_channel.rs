@@ -271,7 +271,7 @@ pub fn test_to_and_from_channel_open_try() {
 fn channel_open_init_from_raw_good_parameter() {
     let default_raw_init_msg = get_dummy_raw_msg_chan_open_init(None);
     let res_msg = MsgChannelOpenInit::try_from(default_raw_init_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 #[test]
 #[should_panic(expected = "Identifier(ContainSeparator { id: \"p34/\" })")]
@@ -300,7 +300,7 @@ fn channel_open_confirm_from_raw_good_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let res_msg = MsgChannelOpenConfirm::try_from(default_raw_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 #[test]
 #[should_panic(expected = "Identifier(ContainSeparator { id: \"p34/\" })")]
@@ -407,7 +407,7 @@ fn channel_open_try_from_raw_good_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_try(proof_height);
     let res_msg = MsgChannelOpenTry::try_from(default_raw_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 #[test]
 #[should_panic(expected = "Identifier(ContainSeparator { id: \"p34/\" })")]
@@ -489,7 +489,7 @@ fn channel_open_ack_from_raw_good_parameter() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
     let res_msg = MsgChannelOpenAck::try_from(default_raw_msg);
-    assert_eq!(res_msg.is_ok(), true)
+    assert!(res_msg.is_ok())
 }
 #[test]
 #[should_panic(expected = "Identifier(ContainSeparator { id: \"p34/\" })")]
@@ -993,7 +993,7 @@ fn test_validate_open_init_channel() {
         EXECUTE_ON_CHANNEL_OPEN_INIT,
     );
 
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_init)
 }
 
@@ -1143,7 +1143,7 @@ fn test_validate_open_try_channel() {
 
     let res = contract.validate_channel_open_try(deps.as_mut(), info, &msg);
 
-    assert_eq!(res.is_ok(), true);
+    assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 421)
 }
 

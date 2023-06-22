@@ -249,12 +249,15 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
 }
 
 fn call_xcall_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppResponse, AppError> {
+    // TODO
+    let timeout_height: u64 = 540;
     ctx.app.execute_contract(
         Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
         &cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
             to: "eth".to_string(),
             data,
+            timeout_height,
             rollback: None,
         },
         &[],
@@ -270,6 +273,19 @@ pub fn call_acknowledge_packet(ctx: &mut TestContext) -> Result<AppResponse, App
         ctx.sender.clone(),
         ctx.get_ibc_core(),
         &CoreMsg::ExecuteMsg::AcknowledgementPacket { msg },
+        &[],
+    )
+}
+
+pub fn call_timeout_packet(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    let payload = ctx.get_test_data(&TestSteps::TimeoutPacket);
+    let msg = HexString::from_str(&payload.message).unwrap();
+    let update = HexString::from_str(&payload.update.unwrap()).unwrap();
+    call_update_client(ctx, update).unwrap();
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_ibc_core(),
+        &CoreMsg::ExecuteMsg::TimeoutPacket { msg },
         &[],
     )
 }
@@ -347,6 +363,11 @@ fn test_packet_send() {
     assert!(result.is_ok());
     println!("Packet Send Ok {:?}", &result);
 
+    // // timeout_packet
+    // let result = call_timeout_packet(&mut ctx);
+    // assert!(result.is_ok());
+    // println!("Packet timeout Ok {:?}", &result);
+
     let result = call_acknowledge_packet(&mut ctx);
     assert!(result.is_ok());
     println!("Packet Acknowledge Ok {:?}", &result);
@@ -371,9 +392,8 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     println!("Create Client OK");
 
     let result = call_connection_open_try(&mut ctx);
-
-    assert!(result.is_ok());
     println!("Conn Open Try Ok {:?}", &result);
+    assert!(result.is_ok());
 
     let result = call_connection_open_confirm(&mut ctx);
 

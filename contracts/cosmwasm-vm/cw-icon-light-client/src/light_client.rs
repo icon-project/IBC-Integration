@@ -191,13 +191,17 @@ impl ILightClient for IconClient<'_> {
             HexString::from_bytes(value)
         );
         let path = keccak256(path).to_vec();
-        let value = keccak256(value).to_vec();
         debug_println!("[LightClient]: client id is: {:?}", client_id);
 
         let state = self.context.get_client_state(client_id)?;
 
         if state.frozen_height != 0 && height > state.frozen_height {
             return Err(ContractError::ClientStateFrozen(state.frozen_height));
+        }
+
+        let mut value_hash = value.to_vec();
+        if value.len() != 0 {
+            value_hash = keccak256(value).to_vec();
         }
 
         // let _ =
@@ -210,9 +214,9 @@ impl ILightClient for IconClient<'_> {
         );
         debug_println!(
             "[LightClient]: Value Hash {:?}",
-            HexString::from_bytes(&value)
+            HexString::from_bytes(&value_hash)
         );
-        let leaf = keccak256(&[path, value].concat());
+        let leaf = keccak256(&[path, value_hash].concat());
         debug_println!(
             "[LightClient]: Leaf Value {:?}",
             HexString::from_bytes(&leaf)
@@ -249,8 +253,8 @@ impl ILightClient for IconClient<'_> {
             delay_time_period,
             delay_block_period,
             proof,
-            &[],
             path,
+            &[],
         )
     }
 }

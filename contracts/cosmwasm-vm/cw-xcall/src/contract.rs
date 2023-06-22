@@ -85,9 +85,12 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
-            ExecuteMsg::SendCallMessage { to, data, rollback } => {
-                self.send_packet(deps, info, env, to, data, rollback)
-            }
+            ExecuteMsg::SendCallMessage {
+                to,
+                data,
+                timeout_height,
+                rollback,
+            } => self.send_packet(deps, info, env, to, data, timeout_height, rollback),
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {
                 self.execute_rollback(deps, info, sequence_no)
@@ -600,9 +603,10 @@ impl<'a> CwCallService<'a> {
     /// `Empty` message. The attribute is a key-value pair
 
     fn on_packet_timeout(&self, _msg: CwPacketTimeoutMsg) -> Result<Response, ContractError> {
-        let submsg = SubMsg::reply_on_error(CosmosMsg::Custom(Empty {}), ACK_FAILURE_ID);
+        // let submsg = SubMsg::reply_on_error(CosmosMsg::Custom(Empty {}), ACK_FAILURE_ID);
         Ok(Response::new()
-            .add_submessage(submsg)
+            .set_data(to_binary(&_msg.packet).unwrap())
+            // .add_submessage(submsg)
             .add_attribute("method", "ibc_packet_timeout"))
     }
     /// This function sends a reply message and returns a response or an error.

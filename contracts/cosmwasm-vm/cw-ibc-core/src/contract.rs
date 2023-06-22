@@ -195,7 +195,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.acknowledgement_packet_validate(deps, info, env, &message)
             }
             CoreExecuteMsg::RequestTimeout {} => todo!(),
-            CoreExecuteMsg::Timeout { msg } => {
+            CoreExecuteMsg::TimeoutPacket { msg } => {
                 let message: MsgTimeout = Self::from_raw::<RawMessageTimeout, MsgTimeout>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
