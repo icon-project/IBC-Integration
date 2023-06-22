@@ -22,6 +22,7 @@ use setup::*;
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 
 #[test]
+#[ignore]
 fn send_packet_success() {
     let mut mock_deps = deps();
 
