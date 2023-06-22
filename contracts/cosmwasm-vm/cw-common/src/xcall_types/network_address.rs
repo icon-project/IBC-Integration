@@ -8,12 +8,24 @@ pub struct NetworkAddress {
 }
 
 impl NetworkAddress {
+    pub fn new(nid:&str,address:&str)->Self{
+        Self{
+            nid:nid.to_owned(),
+            account:address.to_owned()
+        }
+    }
     pub fn get_nid(&self) -> &str {
         return &self.nid;
     }
 
     pub fn get_account(&self) -> &str {
         return &self.account;
+    }
+}
+
+impl ToString for NetworkAddress {
+    fn to_string(&self) -> String {
+        format!("{}/{}",self.nid,self.account)
     }
 }
 

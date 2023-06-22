@@ -238,14 +238,14 @@ impl<'a> CwCallService<'a> {
         Ok(())
     }
 
-    fn get_all_values<
-        K: PrimaryKey<'a> + Clone + KeyDeserialize,
-        V: DeserializeOwned + Serialize,
-    >(
+    fn get_all_values<K: PrimaryKey<'a> + Clone + KeyDeserialize, V: DeserializeOwned + Serialize>(
         &self,
         store: &dyn Storage,
-        map: &Map<K, V>,
-    ) -> Result<Vec<V>, ContractError> {
+        map: &Map<'a, K, V>,
+    ) -> Result<Vec<V>, ContractError>
+    where
+        K::Output: 'static,
+    {
         let values = map
             .range(store, None, None, Order::Ascending)
             .map(|r| r.map(|v| v.1))

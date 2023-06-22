@@ -8,6 +8,7 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcMsg, IbcTimeout,
     IbcTimeoutBlock, SystemError, SystemResult, WasmQuery,
 };
+use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_xcall_app::{
     state::CwCallService,
     types::{message::CallServiceMessage, request::CallServiceMessageRequest},
@@ -208,7 +209,7 @@ fn send_packet_success_needresponse() {
     });
 
     contract
-        .set_connection_host(mock_deps.as_mut().storage, Addr::unchecked("hostaddress"))
+        .set_default_connection(mock_deps.as_mut().storage, "btp".to_owned(),Addr::unchecked("hostaddress"))
         .unwrap();
     contract
         .set_timeout_height(mock_deps.as_mut().storage, 10)
@@ -219,7 +220,7 @@ fn send_packet_success_needresponse() {
             mock_deps.as_mut(),
             mock_info,
             mock_env(),
-            MOCK_CONTRACT_TO_ADDR.to_string(),
+            NetworkAddress::new("btp",MOCK_CONTRACT_TO_ADDR).to_string(),
             vec![],
             vec![],
             vec![1, 2, 3],
