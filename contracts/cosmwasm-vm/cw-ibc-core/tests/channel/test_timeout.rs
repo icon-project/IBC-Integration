@@ -217,7 +217,7 @@ fn test_timeout_packet_validate_to_light_client() {
     let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let proof_height = 50;
-    let timeout_height = proof_height-1;
+    let timeout_height = proof_height - 1;
     let timeout_timestamp = 0;
     let default_raw_msg =
         get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);

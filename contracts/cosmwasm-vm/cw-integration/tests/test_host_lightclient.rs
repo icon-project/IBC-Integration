@@ -18,8 +18,6 @@ use setup::{
 };
 use test_utils::{get_event, get_event_name, load_raw_payloads};
 
-
-
 fn setup_test(payload_file: &str) -> TestContext {
     let integration_data = load_raw_payloads(payload_file);
 
