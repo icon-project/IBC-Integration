@@ -5,7 +5,7 @@ use anyhow::Error as AppError;
 use common::constants::ICON_CLIENT_TYPE;
 use common::ibc::events::IbcEventType;
 
-use cosmwasm_std::{from_binary, testing::mock_env, to_binary, Addr, Empty, Querier, QueryRequest};
+use cosmwasm_std::{from_binary, to_binary, Addr, Empty, Querier, QueryRequest};
 
 use cw_common::{core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query};
 
@@ -18,7 +18,7 @@ use setup::{
 };
 use test_utils::{get_event, get_event_name, load_raw_payloads};
 
-use crate::setup::raw_payload_to_map;
+
 
 fn setup_test(payload_file: &str) -> TestContext {
     let integration_data = load_raw_payloads(payload_file);

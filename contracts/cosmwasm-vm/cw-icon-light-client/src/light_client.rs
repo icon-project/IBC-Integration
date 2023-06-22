@@ -200,7 +200,7 @@ impl ILightClient for IconClient<'_> {
         }
 
         let mut value_hash = value.to_vec();
-        if value.len() != 0 {
+        if !value.is_empty() {
             value_hash = keccak256(value).to_vec();
         }
 
