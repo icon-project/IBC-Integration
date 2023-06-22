@@ -48,7 +48,7 @@ public class Message {
 
     public static void writeObject(ObjectWriter w, Message m) {
         w.beginList(3);
-        w.write(m.sn);
+        w.writeNullable(m.sn);
         w.write(m.fee);
         w.writeNullable(m.data);
         w.end();
@@ -57,7 +57,7 @@ public class Message {
     public static Message readObject(ObjectReader r) {
         r.beginList();
         Message m = new Message(
-            r.readBigInteger(),
+            r.readNullable(BigInteger.class),
             r.readBigInteger(),
             r.readNullable(byte[].class)
         );

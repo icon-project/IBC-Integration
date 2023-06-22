@@ -3,6 +3,7 @@ package ibc.xcall.connection;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -293,7 +294,7 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
         Message msg = Message.fromBytes(packet.getData());
         assertArrayEquals(relayer.getAddress().toByteArray(), msg.getData());
         assertEquals(fee, msg.getFee());
-        assertEquals(BigInteger.ONE.negate(), msg.getSn());
+        assertNull(msg.getSn());
         assertEquals(BigInteger.ZERO, connection.call("getUnclaimedFees", defaultCounterpartyNid, relayer.getAddress()));
     }
 
@@ -310,7 +311,7 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
 
         Packet pct = new Packet();
         pct.setSequence(seq);
-        pct.setData(new Message(BigInteger.ONE.negate(), fee, relayer.getAddress().toByteArray()).toBytes());
+        pct.setData(new Message(null, fee, relayer.getAddress().toByteArray()).toBytes());
         pct.setSourcePort(defaultCounterpartyPort);
         pct.setSourceChannel(defaultCounterpartyChannel);
         pct.setDestinationPort(IBCConnection.PORT);

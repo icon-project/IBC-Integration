@@ -157,11 +157,13 @@ public class IBCConnection {
         BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
         unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
 
-        if (msg.getSn().compareTo(BigInteger.ZERO) > 0) {
-            incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), packet.getSequence());
-        } else if (msg.getSn().equals(BigInteger.valueOf(-1))) {
+        if (msg.getSn() == null)  {
             Context.transfer(new Address(msg.getData()), msg.getFee());
             return new byte[0];
+        }
+
+        if (msg.getSn().compareTo(BigInteger.ZERO) > 0) {
+            incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), packet.getSequence());
         }
 
         Context.call(xCall.get(), "handleMessage", nid, msg.getSn(), msg.getData());
@@ -316,7 +318,7 @@ public class IBCConnection {
         String channel = channels.get(nid);
         BigInteger seqNum = (BigInteger) Context.call(ibc.get(), "getNextSequenceSend", PORT, channel);
 
-        Message msg = new Message(BigInteger.ONE.negate(), amount, address);
+        Message msg = new Message(null, amount, address);
         Packet pct = new Packet();
 
         pct.setSequence(seqNum);

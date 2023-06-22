@@ -77,7 +77,7 @@ The Message struct is used for all packets sent. While acknowledgments only cons
 The Message struct is defined as follows:
 ```java
 class Message() {
-    BigIntger sn;
+    BigIntger sn; // Nullable
     BigIntger fee;
     byte[] data;
 
@@ -173,7 +173,6 @@ void sendMessage(String _to, String _svc, BigInteger _sn, byte[] _msg) {
 ```java
 public byte[] onRecvPacket(byte[] calldata, Address relayer) {
     onlyIBCHandler();
-    // TOOD fee logic
 
     Packet packet = Packet.decode(calldata);
     Message msg = Message.fromBytes(packet.getData());
@@ -181,11 +180,13 @@ public byte[] onRecvPacket(byte[] calldata, Address relayer) {
     assert nid != null;
     unclaimedPacketFees[nid][relayer] += msg.getFee();
 
+    if (msg.getSn() == null) {
+        Context.transfer(msg.getFee(), Address.fromBytes(msg.getData()))
+        return  new byte[0]
+    }
+
     if (msg.getSn() > 0) {
         incomingPackets[packet.getDestinationChannel()][msg.getSn()] = packet.getSequence());
-    } else if (msg.getSn() == -1) {
-         Context.transfer(msg.getFee(), Address.fromBytes(msg.getData()))
-         return  new byte[0]
     }
 
     xCall.handleMessage(nid, msg.getSn(), msg.getData());
@@ -274,7 +275,7 @@ public void claimFees(String nid, byte[] address) {
     unclaimedPacketFees[nid][relayer] = null
     assert amount > 0;
     String channel = channels.get(nid);
-    Message msg = new Message(-1, amount, address);
+    Message msg = new Message(null, amount, address);
     Packet packet = Packet(
         port
         channel
