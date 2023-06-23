@@ -1,5 +1,9 @@
 use cw_storage_plus::Map;
 
+use crate::types::{
+    channel_config::ChannelConfig, connection_config::ConnectionConfig, network_fees::NetworkFees,
+};
+
 use super::*;
 
 /// These are constants defined in the `CwIbcConnection` struct that are used throughout the codebase.
@@ -100,11 +104,13 @@ pub struct CwIbcConnection<'a> {
     ibc_config: Map<'a, String, IbcConfig>,
     ibc_host: Item<'a, Addr>,
     xcall_host: Item<'a, Addr>,
-    timeout_height: Item<'a, u64>,
     fee_handler: Item<'a, String>,
     fee: Item<'a, u128>,
     configured_networks: Map<'a, (String, String), String>,
-    client_id_by_channel: Map<'a, String, String>,
+    connection_configs: Map<'a, String, ConnectionConfig>,
+    channel_configs: Map<'a, String, ChannelConfig>,
+    network_fees: Map<'a, String, NetworkFees>,
+    unclaimed_packet_fees: Map<'a, (String, String), u128>,
 }
 
 impl<'a> Default for CwIbcConnection<'a> {
@@ -120,12 +126,14 @@ impl<'a> CwIbcConnection<'a> {
             admin: Item::new(StorageKey::Admin.as_str()),
             ibc_config: Map::new(StorageKey::IbcConfig.as_str()),
             ibc_host: Item::new(StorageKey::IbcHost.as_str()),
-            timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
             xcall_host: Item::new(StorageKey::XCallHost.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
             fee: Item::new(StorageKey::Fee.as_str()),
             configured_networks: Map::new(StorageKey::ConfiguredNetworks.as_str()),
-            client_id_by_channel: Map::new(StorageKey::ClientIdByChannel.as_str()),
+            channel_configs: Map::new(StorageKey::ChannelConfigs.as_str()),
+            connection_configs: Map::new(StorageKey::ConnectionConfigs.as_str()),
+            network_fees: Map::new(StorageKey::NetworkFees.as_str()),
+            unclaimed_packet_fees: Map::new(StorageKey::UnclaimedPacketFees.as_str()),
         }
     }
 
@@ -137,8 +145,27 @@ impl<'a> CwIbcConnection<'a> {
         &self.admin
     }
 
-    pub fn ibc_config(&self) -> &Map<'a, String, IbcConfig> {
-        &self.ibc_config
+    pub fn get_ibc_config(
+        &self,
+        store: &dyn Storage,
+        nid: &str,
+    ) -> Result<IbcConfig, ContractError> {
+        return self
+            .ibc_config
+            .load(store, nid.to_owned())
+            .map_err(ContractError::Std);
+    }
+
+    pub fn store_ibc_config(
+        &self,
+        store: &mut dyn Storage,
+        nid: &str,
+        config: &IbcConfig,
+    ) -> Result<(), ContractError> {
+        return self
+            .ibc_config
+            .save(store, nid.to_owned(), config)
+            .map_err(ContractError::Std);
     }
     pub fn set_ibc_host(
         &self,
@@ -165,18 +192,18 @@ impl<'a> CwIbcConnection<'a> {
     pub fn get_xcall_host(&self, store: &dyn Storage) -> Result<Addr, ContractError> {
         self.xcall_host.load(store).map_err(ContractError::Std)
     }
-    pub fn set_timeout_height(
-        &self,
-        store: &mut dyn Storage,
-        timeout_height: u64,
-    ) -> Result<(), ContractError> {
-        self.timeout_height
-            .save(store, &timeout_height)
-            .map_err(ContractError::Std)
-    }
-    pub fn get_timeout_height(&self, store: &dyn Storage) -> u64 {
-        self.timeout_height.load(store).unwrap_or(0)
-    }
+    // pub fn set_timeout_height(
+    //     &self,
+    //     store: &mut dyn Storage,
+    //     timeout_height: u64,
+    // ) -> Result<(), ContractError> {
+    //     self.timeout_height
+    //         .save(store, &timeout_height)
+    //         .map_err(ContractError::Std)
+    // }
+    // pub fn get_timeout_height(&self, store: &dyn Storage) -> u64 {
+    //     self.timeout_height.load(store).unwrap_or(0)
+    // }
     pub fn fee_handler(&self) -> &Item<'a, String> {
         &self.fee_handler
     }
@@ -184,51 +211,143 @@ impl<'a> CwIbcConnection<'a> {
         &self.fee
     }
 
-    pub fn get_client_id_by_channel(
+    pub fn get_channel_config(
         &self,
         store: &dyn Storage,
-        channel: String,
-    ) -> Result<String, ContractError> {
+        channel: &str,
+    ) -> Result<ChannelConfig, ContractError> {
         return self
-            .client_id_by_channel
-            .load(store, channel)
+            .channel_configs
+            .load(store, channel.to_owned())
             .map_err(ContractError::Std);
     }
 
-    pub fn store_client_id_by_channel(
+    pub fn store_channel_config(
         &self,
         store: &mut dyn Storage,
-        client_id: String,
-        channel: String,
+        channel: &str,
+        channel_config: &ChannelConfig,
     ) -> Result<(), ContractError> {
         return self
-            .client_id_by_channel
-            .save(store, client_id, &channel)
+            .channel_configs
+            .save(store, channel.to_owned(), channel_config)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_connection_config(
+        &self,
+        store: &dyn Storage,
+        connection_id: &str,
+    ) -> Result<ConnectionConfig, ContractError> {
+        return self
+            .connection_configs
+            .load(store, connection_id.to_owned())
+            .map_err(ContractError::Std);
+    }
+
+    pub fn store_connection_config(
+        &self,
+        store: &mut dyn Storage,
+        connection_id: &str,
+        config: &ConnectionConfig,
+    ) -> Result<(), ContractError> {
+        return self
+            .connection_configs
+            .save(store, connection_id.to_string(), config)
             .map_err(ContractError::Std);
     }
 
     pub fn get_counterparty_nid(
         &self,
         store: &dyn Storage,
-        connection_id: String,
-        port_id: String,
+        connection_id: &str,
+        port_id: &str,
     ) -> Result<String, ContractError> {
         return self
             .configured_networks
-            .load(store, (connection_id, port_id))
+            .load(store, (connection_id.to_string(), port_id.to_string()))
             .map_err(ContractError::Std);
     }
 
     pub fn store_counterparty_nid(
         &self,
         store: &mut dyn Storage,
-        connection_id: String,
-        port_id: String,
-        nid: String,
+        connection_id: &str,
+        port_id: &str,
+        nid: &str,
     ) -> Result<(), ContractError> {
         return self
             .configured_networks
-            .save(store, (connection_id, port_id), &nid)
+            .save(
+                store,
+                (connection_id.to_owned(), port_id.to_owned()),
+                &nid.to_string(),
+            )
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_network_fees(
+        &self,
+        store: &dyn Storage,
+        nid: &str,
+    ) -> Result<NetworkFees, ContractError> {
+        return self
+            .network_fees
+            .load(store, nid.to_string())
+            .map_err(ContractError::Std);
+    }
+
+    pub fn store_network_fees(
+        &self,
+        store: &mut dyn Storage,
+        nid: &str,
+        network_fees: &NetworkFees,
+    ) -> Result<(), ContractError> {
+        return self
+            .network_fees
+            .save(store, nid.to_owned(), &network_fees)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn add_unclaimed_packet_fees(
+        &self,
+        store: &mut dyn Storage,
+        nid: &str,
+        address: &str,
+        value: u128,
+    ) -> Result<(), ContractError> {
+        let mut acc = self
+            .unclaimed_packet_fees
+            .load(store, (nid.to_owned(), address.to_string()))
+            .unwrap_or(0);
+        acc = acc + value;
+        return self
+            .unclaimed_packet_fees
+            .save(store, (nid.to_owned(), address.to_owned()), &value)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_unclaimed_packet_fee(
+        &self,
+        store: &dyn Storage,
+        nid: &str,
+        address: &str,
+    ) -> Result<u128, ContractError> {
+        return self
+            .unclaimed_packet_fees
+            .load(store, (nid.to_owned(), address.to_owned()))
+            .map_err(ContractError::Std);
+    }
+
+    pub fn reset_unclaimed_packet_fees(
+        &self,
+        store: &mut dyn Storage,
+        nid: &str,
+        address: &str,
+    ) -> Result<(), ContractError> {
+        return self
+            .unclaimed_packet_fees
+            .save(store, (nid.to_owned(), address.to_owned()), &0_u128)
             .map_err(ContractError::Std);
     }
 }

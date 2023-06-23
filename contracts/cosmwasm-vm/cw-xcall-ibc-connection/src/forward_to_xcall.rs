@@ -38,7 +38,11 @@ impl<'a> CwIbcConnection<'a> {
         let event = event_packet_received(&message);
         debug_println!("[IBCConnection]: forwarding to xcall");
         let data = message.data.clone();
-        let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::ReceiveCallMessage { data: data.0 };
+        let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::ReceiveCallMessage {
+            msg: data.0,
+            sn: Some(0),
+            from: "".to_string(),
+        };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self
                 .get_xcall_host(deps.as_ref().storage)
@@ -64,34 +68,5 @@ impl<'a> CwIbcConnection<'a> {
             .set_ack(acknowledgement_data)
             .add_event(event)
             .add_submessage(sub_msg))
-    }
-
-    /// This function saves an IBC configuration to a storage and returns an error if it fails.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a mutable reference to a trait object of type `dyn Storage`. This is used
-    /// to interact with the storage of the smart contract. The `save` method of the `ibc_config` struct
-    /// is called with this `store` parameter to save the `config` parameter to the
-    /// * `config`: The `config` parameter is a reference to an `IbcConfig` struct that contains the
-    /// configuration settings for the IBC module. This struct contains various fields such as the chain
-    /// ID, the module account address, and the packet timeout settings. The `save_config` function is
-    /// responsible for persisting
-    ///
-    /// Returns:
-    ///
-    /// This function returns a `Result` with either an empty `Ok(())` value if the `config` is
-    /// successfully saved to the `store`, or a `ContractError` wrapped in `Err` if there was an error
-    /// while saving the `config`.
-    pub fn save_config(
-        &mut self,
-        store: &mut dyn Storage,
-        nid: String,
-        config: &IbcConfig,
-    ) -> Result<(), ContractError> {
-        match self.ibc_config().save(store, nid, config) {
-            Ok(_) => Ok(()),
-            Err(err) => Err(ContractError::Std(err)),
-        }
     }
 }

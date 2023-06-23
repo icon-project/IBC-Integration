@@ -48,8 +48,8 @@ impl<'a> CwMockService<'a> {
         let msg = cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
             to,
             data,
-            sources,
-            destinations,
+            sources: Some(sources),
+            destinations: Some(destinations),
             rollback,
         };
         let message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {

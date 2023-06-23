@@ -20,18 +20,18 @@ pub enum ExecuteMsg {
         ibc_config: Vec<u8>,
         nid: String,
     },
-    ConfigureNetwork {
-        network_id: String,
+    ConfigureConnection {
         connection_id: String,
         destination_port_id: String,
+        counterparty_nid: String,
+        lightclient_address: String,
+        client_id: String,
+        timeout_height: u64,
     },
     UpdateAdmin {
         address: String,
     },
     RemoveAdmin {},
-    SetTimeoutHeight {
-        height: u64,
-    },
 
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelOpen {
@@ -69,9 +69,11 @@ pub enum QueryMsg {
     #[returns(String)]
     GetAdmin {},
     #[returns(u64)]
-    GetTimeoutHeight {},
+    GetTimeoutHeight { channel_id: String },
     #[returns(u128)]
     GetProtocolFee {},
     #[returns(String)]
     GetProtocolFeeHandler {},
+    #[returns(u64)]
+    GetFee { nid: String, response: bool },
 }

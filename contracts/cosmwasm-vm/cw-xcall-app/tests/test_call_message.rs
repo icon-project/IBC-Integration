@@ -209,7 +209,11 @@ fn send_packet_success_needresponse() {
     });
 
     contract
-        .set_default_connection(mock_deps.as_mut().storage, "btp".to_owned(),Addr::unchecked("hostaddress"))
+        .set_default_connection(
+            mock_deps.as_mut().storage,
+            "btp".to_owned(),
+            Addr::unchecked("hostaddress"),
+        )
         .unwrap();
     contract
         .set_timeout_height(mock_deps.as_mut().storage, 10)
@@ -220,7 +224,7 @@ fn send_packet_success_needresponse() {
             mock_deps.as_mut(),
             mock_info,
             mock_env(),
-            NetworkAddress::new("btp",MOCK_CONTRACT_TO_ADDR).to_string(),
+            NetworkAddress::new("btp", MOCK_CONTRACT_TO_ADDR).to_string(),
             vec![],
             vec![],
             vec![1, 2, 3],

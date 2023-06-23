@@ -264,3 +264,41 @@ impl Decodable for i8 {
             })
     }
 }
+
+impl Encodable for i64 {
+    fn rlp_append(&self, s: &mut RlpStream) {
+        Encodable::rlp_append(&(*self as u64), s);
+    }
+}
+
+impl Decodable for i64 {
+    fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+        rlp.decoder().decode_value(|bytes| {
+            if bytes.len() as u32 > u64::BITS / 8 {
+                return Err(DecoderError::RlpInvalidLength);
+            }
+            let mut result: i64 = 0;
+
+            for &byte in bytes {
+                result <<= 8;
+                result |= byte as i64;
+            }
+            Ok(result)
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::rlp;
+
+    #[test]
+    fn test_i64_encoding() {
+        let value: i64 = 12098;
+        let encoded = rlp::encode(&value).to_vec();
+        println!("{}", hex::encode(&encoded));
+
+        let decoded: i64 = rlp::decode(&encoded).unwrap();
+        assert_eq!(decoded, value);
+    }
+}

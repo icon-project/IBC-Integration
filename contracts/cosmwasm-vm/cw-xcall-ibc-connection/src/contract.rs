@@ -1,9 +1,14 @@
+use common::{ibc::Height, rlp};
 use cosmwasm_std::{from_slice, to_vec, IbcChannel};
+use cw_common::{query_helpers::build_smart_query, raw_types::channel::RawPacket};
 use debug_print::debug_println;
 
 use crate::{
     state::{HOST_FORWARD_REPLY_ID, XCALL_FORWARD_REPLY_ID},
-    types::LOG_PREFIX,
+    types::{
+        channel_config::ChannelConfig, connection_config::ConnectionConfig, message::Message,
+        LOG_PREFIX,
+    },
 };
 
 use super::*;
@@ -105,20 +110,26 @@ impl<'a> CwIbcConnection<'a> {
             ExecuteMsg::SetIbcConfig { ibc_config, nid } => {
                 self.ensure_owner(deps.as_ref().storage, &info)?;
                 let config = from_slice(&ibc_config).unwrap();
-                self.save_config(deps.storage, nid, &config)?;
+                self.store_ibc_config(deps.storage, &nid, &config)?;
                 Ok(Response::new())
             }
-            ExecuteMsg::ConfigureNetwork {
-                network_id,
+            ExecuteMsg::ConfigureConnection {
                 connection_id,
                 destination_port_id,
+                counterparty_nid,
+                client_id,
+                timeout_height,
+                lightclient_address,
             } => {
                 self.ensure_owner(deps.as_ref().storage, &info)?;
-                self.store_counterparty_nid(
+                self.configure_connection(
                     deps.storage,
                     connection_id,
                     destination_port_id,
-                    network_id,
+                    counterparty_nid,
+                    lightclient_address,
+                    client_id,
+                    timeout_height,
                 )?;
                 Ok(Response::new())
             }
@@ -151,15 +162,6 @@ impl<'a> CwIbcConnection<'a> {
             ExecuteMsg::IbcPacketTimeout { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_packet_timeout(msg)?)
-            }
-            ExecuteMsg::SetTimeoutHeight { height } => {
-                self.ensure_admin(deps.as_ref().storage, info.sender)?;
-
-                self.set_timeout_height(deps.storage, height)?;
-
-                Ok(Response::new()
-                    .add_attribute("method", "set_timeout_height")
-                    .add_attribute("timeout_hieght", height.to_string()))
             }
             #[cfg(feature = "native_ibc")]
             _ => Err(ContractError::DecodeFailed {
@@ -197,9 +199,19 @@ impl<'a> CwIbcConnection<'a> {
                     kind: error.to_string(),
                 }),
             },
-            QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
+            QueryMsg::GetTimeoutHeight { channel_id } => {
+                let config = self.get_channel_config(deps.storage, &channel_id).unwrap();
+                to_binary(&config.timeout_height)
+            }
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps).unwrap()),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
+            QueryMsg::GetFee { nid, response } => {
+                let fees = self.get_network_fees(deps.storage, &nid).unwrap();
+                if response {
+                    return to_binary(&fees.ack_fee);
+                }
+                return to_binary(&fees.send_packet_fee);
+            }
         }
     }
     /// This function handles different types of reply messages and calls corresponding functions based on
@@ -265,7 +277,7 @@ impl<'a> CwIbcConnection<'a> {
 
         self.add_owner(store, owner.clone())?;
         self.add_admin(store, info, owner)?;
-        self.set_timeout_height(store, msg.timeout_height)?;
+        // self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
         self.add_fee(store, msg.protocol_fee)?;
 
@@ -403,20 +415,7 @@ impl<'a> CwIbcConnection<'a> {
 
         Ok(Response::new()
             .set_data(to_binary(&channel.endpoint.clone()).unwrap())
-            .add_attribute("method", "on_channel_connect")
-            .add_attribute(
-                "source_channel_id",
-                msg.channel().endpoint.channel_id.as_str(),
-            )
-            .add_attribute("source_port_id", msg.channel().endpoint.port_id.as_str())
-            .add_attribute(
-                "destination_channel_id",
-                msg.channel().counterparty_endpoint.channel_id.as_str(),
-            )
-            .add_attribute(
-                "destination_port_id",
-                msg.channel().counterparty_endpoint.port_id.as_str(),
-            ))
+            .add_attribute("method", "on_channel_connect"))
     }
     /// This function handles an IBC channel close message and returns a response with relevant attributes
     /// and data.
@@ -435,11 +434,9 @@ impl<'a> CwIbcConnection<'a> {
             CwChannelCloseMsg::CloseInit { channel } => channel.endpoint,
             CwChannelCloseMsg::CloseConfirm { channel } => channel.endpoint,
         };
-        let channel = msg.channel().endpoint.channel_id.clone();
 
         Ok(Response::new()
             .add_attribute("method", "ibc_channel_close")
-            .add_attribute("channel", channel)
             .set_data(to_binary(&ibc_endpoint).unwrap()))
     }
     /// This function receives an IBC packet and returns a response with acknowledgement and events or an
@@ -531,14 +528,143 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<(), ContractError> {
         let source = channel.endpoint.clone();
         let destination = channel.counterparty_endpoint.clone();
+        let channel_id = source.channel_id.clone();
 
+        let nid =
+            self.get_counterparty_nid(store, &channel.connection_id.clone(), &destination.port_id)?;
+        let connection_config = self.get_connection_config(store, &channel.connection_id)?;
         let ibc_config = IbcConfig::new(source.clone(), destination.clone());
         debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
 
-        let nid =
-            self.get_counterparty_nid(store, channel.connection_id.clone(), destination.port_id)?;
-        self.save_config(store, nid, &ibc_config)?;
+        self.store_ibc_config(store, &nid, &ibc_config)?;
+
+        self.store_channel_config(
+            store,
+            &channel_id,
+            &ChannelConfig {
+                timeout_height: connection_config.timeout_height,
+                client_id: connection_config.client_id,
+                counterparty_nid: nid,
+            },
+        )?;
 
         Ok(())
+    }
+
+    pub fn configure_connection(
+        &self,
+        store: &mut dyn Storage,
+        connection_id: String,
+        port_id: String,
+        counterparty_nid: String,
+        lightclient_address: String,
+        client_id: String,
+        timeout_height: u64,
+    ) -> Result<(), ContractError> {
+        if self
+            .get_counterparty_nid(store, &connection_id, &port_id)
+            .is_ok()
+        {
+            return Err(ContractError::ConnectionAlreadyConfigured {
+                connection_id,
+                port_id,
+            });
+        }
+        self.store_counterparty_nid(store, &connection_id, &port_id, &counterparty_nid)?;
+
+        self.store_connection_config(
+            store,
+            &connection_id,
+            &ConnectionConfig {
+                lightclient_address,
+                timeout_height,
+                client_id,
+            },
+        )?;
+
+        Ok(())
+    }
+
+    pub fn claimFees(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        nid: String,
+        address: String,
+    ) -> Result<SubMsg, ContractError> {
+        let fees = self.get_unclaimed_packet_fee(deps.as_ref().storage, &nid, &address)?;
+        let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
+
+        self.reset_unclaimed_packet_fees(deps.storage, &nid, &address)?;
+        let sequence_no = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
+        let message = Message {
+            sn: common::rlp::Nullable(None),
+            fee: fees,
+            data: address.as_bytes().to_vec(),
+        };
+        let timeout_height =
+            self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
+        let packet = self.create_packet(ibc_config, timeout_height, sequence_no, message);
+        let sub_msg = self.create_send_packet_submessage(deps, info, packet)?;
+        Ok(sub_msg)
+    }
+
+    pub fn create_packet<T: common::rlp::Encodable>(
+        &self,
+        ibc_config: IbcConfig,
+        timeout_height: Height,
+        sequence_no: u64,
+        data: T,
+    ) -> RawPacket {
+        let packet = RawPacket {
+            sequence: sequence_no,
+            source_port: ibc_config.src_endpoint().clone().port_id,
+            source_channel: ibc_config.src_endpoint().clone().channel_id,
+            destination_port: ibc_config.dst_endpoint().clone().port_id,
+            destination_channel: ibc_config.dst_endpoint().clone().channel_id,
+            data: rlp::encode(&data).to_vec(),
+            timeout_height: Some(timeout_height.into()),
+            timeout_timestamp: 0,
+        };
+        packet
+    }
+
+    pub fn query_timeout_height(
+        &self,
+        deps: Deps,
+        channel_id: &str,
+    ) -> Result<Height, ContractError> {
+        let channel_config = self.get_channel_config(deps.storage, channel_id)?;
+        let ibc_host = self.get_ibc_host(deps.storage)?;
+        let message = to_binary(&cw_common::core_msg::QueryMsg::GetLatestHeight {
+            client_id: channel_config.client_id,
+        })
+        .unwrap();
+        let query = build_smart_query(ibc_host.to_string(), message);
+        let latest_height: u64 = deps.querier.query(&query).map_err(ContractError::Std)?;
+        let timeout_height = latest_height + channel_config.timeout_height;
+        Ok(Height::new(0, timeout_height).unwrap())
+    }
+
+    pub fn query_host_sequence_no(
+        &self,
+        deps: Deps,
+        ibc_config: &IbcConfig,
+    ) -> Result<u64, ContractError> {
+        let ibc_host = self.get_ibc_host(deps.storage)?;
+        let query_message = to_binary(&cw_common::core_msg::QueryMsg::GetNextSequenceSend {
+            port_id: ibc_config.src_endpoint().clone().port_id,
+            channel_id: ibc_config.src_endpoint().clone().channel_id,
+        })
+        .unwrap();
+
+        let query_request = build_smart_query(ibc_host.to_string(), query_message);
+        println!("{LOG_PREFIX} Created Query Request {ibc_host}");
+
+        let sequence_number_host: u64 = deps
+            .querier
+            .query(&query_request)
+            .map_err(ContractError::Std)?;
+        Ok(sequence_number_host)
     }
 }

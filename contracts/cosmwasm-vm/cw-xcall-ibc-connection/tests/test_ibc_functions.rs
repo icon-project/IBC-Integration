@@ -11,6 +11,7 @@ use cw_common::types::Ack;
 use cw_xcall_app::ack::{on_ack_failure, on_ack_sucess};
 use cw_xcall_app::types::response::CallServiceMessageResponse;
 use cw_xcall_ibc_connection::msg::InstantiateMsg;
+use cw_xcall_ibc_connection::types::channel_config::ChannelConfig;
 use cw_xcall_ibc_connection::{execute, instantiate, query};
 use setup::*;
 pub mod account;
@@ -234,9 +235,9 @@ fn sucess_on_ibc_channel_connect() {
     contract
         .store_counterparty_nid(
             deps.as_mut().storage,
-            connection_id.to_owned(),
-            dst.port_id,
-            counterparty_nid.to_owned(),
+            &connection_id,
+            &dst.port_id,
+            &counterparty_nid,
         )
         .unwrap();
 
@@ -247,8 +248,7 @@ fn sucess_on_ibc_channel_connect() {
     assert_eq!("on_channel_connect", result.attributes[0].value);
 
     let ibc_config = contract
-        .ibc_config()
-        .load(deps.as_ref().storage, counterparty_nid.to_string())
+        .get_ibc_config(deps.as_ref().storage, &counterparty_nid)
         .unwrap();
 
     assert_eq!(ibc_config.src_endpoint().port_id, src.port_id.as_str())
@@ -607,15 +607,27 @@ fn success_on_setting_timeout_height() {
         )
         .unwrap();
 
-    let exec_message = ExecuteMsg::SetTimeoutHeight { height: 100 };
-
     contract
-        .execute(deps.as_mut(), mock_env.clone(), mock_info, exec_message)
+        .store_channel_config(
+            deps.as_mut().storage,
+            "channel",
+            &ChannelConfig {
+                client_id: "client_id".to_owned(),
+                counterparty_nid: "nid".to_string(),
+                timeout_height: 100,
+            },
+        )
         .unwrap();
 
     let response: u64 = from_binary(
         &contract
-            .query(deps.as_ref(), mock_env, QueryMsg::GetTimeoutHeight {})
+            .query(
+                deps.as_ref(),
+                mock_env,
+                QueryMsg::GetTimeoutHeight {
+                    channel_id: "channel".to_string(),
+                },
+            )
             .unwrap(),
     )
     .unwrap();

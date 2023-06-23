@@ -12,7 +12,10 @@ pub enum StorageKey {
     Balance,
     Fee,
     ConfiguredNetworks,
-    ClientIdByChannel,
+    ChannelConfigs,
+    ConnectionConfigs,
+    NetworkFees,
+    UnclaimedPacketFees,
 }
 
 impl StorageKey {
@@ -28,7 +31,10 @@ impl StorageKey {
             StorageKey::Balance => "balance",
             StorageKey::Fee => "fee",
             StorageKey::ConfiguredNetworks => "configured_networks",
-            StorageKey::ClientIdByChannel => "client_id_by_channel",
+            StorageKey::ChannelConfigs => "channel_configs",
+            StorageKey::ConnectionConfigs => "connection_configs",
+            StorageKey::NetworkFees => "network_fees",
+            StorageKey::UnclaimedPacketFees => "unclaimed_packet_fees",
         }
     }
 }

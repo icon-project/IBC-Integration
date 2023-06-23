@@ -250,6 +250,6 @@ impl<'a> CwCallService<'a> {
             .range(store, None, None, Order::Ascending)
             .map(|r| r.map(|v| v.1))
             .collect::<Result<Vec<V>, StdError>>();
-        return values.map_err(ContractError::Std);
+        values.map_err(ContractError::Std)
     }
 }

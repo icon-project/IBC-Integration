@@ -123,6 +123,8 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        _from: String,
+        _sn: Option<u128>,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         let call_service_message: CallServiceMessage = CallServiceMessage::try_from(message)?;
@@ -233,6 +235,7 @@ impl<'a> CwCallService<'a> {
         data: &[u8],
     ) -> Result<Response, ContractError> {
         let message: CallServiceMessageResponse = data.try_into()?;
+
         let response_sequence_no = message.sequence_no();
 
         let mut call_request = self.query_request(deps.storage, response_sequence_no)?;

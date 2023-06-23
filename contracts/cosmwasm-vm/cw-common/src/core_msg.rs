@@ -181,4 +181,7 @@ pub enum QueryMsg {
     GetAllPorts {},
     #[returns(String)]
     GetCommitmentPrefix {},
+
+    #[returns(u64)]
+    GetLatestHeight { client_id: String },
 }

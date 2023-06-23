@@ -1,7 +1,3 @@
-use std::str::FromStr;
-
-use cw_common::xcall_types::network_address::NetworkAddress;
-
 use super::*;
 
 use crate::{

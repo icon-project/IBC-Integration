@@ -71,7 +71,7 @@ impl<'a> CwCallService<'a> {
         let sequence_no = self.increment_last_sequence_no(deps.storage)?;
         let mut confirmed_sources = sources;
 
-        if confirmed_sources.len() == 0 {
+        if confirmed_sources.is_empty() {
             let na = NetworkAddress::from_str(&to)?;
             let default = self.get_default_connection(deps.as_ref().storage, na.get_nid())?;
             confirmed_sources = vec![default.to_string()]
