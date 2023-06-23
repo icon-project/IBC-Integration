@@ -16,7 +16,7 @@ public interface ILightClient {
      * createClient creates a new client with the given state. If succeeded, it returns a commitment for the initial
      * state.
      */
-    Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes, @Optional byte[] _storagePrefix);
+    Map<String, byte[]> createClient(String clientId, byte[] clientStateBytes, byte[] consensusStateBytes);
 
     /**
      * getTimestampAtHeight returns the timestamp of the consensus state at the given height.

@@ -44,8 +44,6 @@ impl<'a> CwCallService<'a> {
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
-        // TODO: should be set to sender address for test case
-        // let from_address = "archway1q6lr3hy5cxk4g74k9wcqyqarf9e97ckpn7t963".to_string();
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),

@@ -1,5 +1,5 @@
 pub mod setup;
-use cosmwasm_std::{testing::mock_env, Addr};
+use cosmwasm_std::Addr;
 use cw_common::ibc_types::IbcModuleId;
 use cw_ibc_core::context::CwIbcCoreContext;
 use setup::*;
@@ -125,7 +125,7 @@ fn check_for_setting_valid_block_height() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
 
-    let mock_env = mock_env();
+    let mock_env = get_mock_env();
 
     contract
         .block_height()

@@ -5,7 +5,6 @@ public class MsgCreateClient {
     private byte[] clientState;
     private byte[] consensusState;
     private int btpNetworkId;
-    private byte[] storagePrefix;
 
     public String getClientType() {
         return clientType;
@@ -37,13 +36,5 @@ public class MsgCreateClient {
 
     public void setBtpNetworkId(int btpNetworkId) {
         this.btpNetworkId = btpNetworkId;
-    }
-
-    public byte[] getStoragePrefix() {
-        return storagePrefix;
-    }
-
-    public void setStoragePrefix(byte[] storagePrefix) {
-        this.storagePrefix = storagePrefix;
     }
 }

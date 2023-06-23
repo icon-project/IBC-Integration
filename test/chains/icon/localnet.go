@@ -384,7 +384,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 
 	overrides := map[string]any{
 		"ibc-handler-address": ibcAddress,
-		"start-btp-height":    0,
+		"start-btp-height":    0, // height + 1,
 		"btp-network-id":      btpNetworkId,
 		"btp-network-type-id": btpNetworkTypeId,
 	}
@@ -565,7 +565,8 @@ func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, metho
 
 	// get query msg
 	queryMsg := c.GetQueryParam(methodName)
-	output, err := c.getFullNode().QueryContract(ctx, contractAddress, queryMsg, "")
+	output, err := c.getFullNode().QueryContract(ctx, contractAddress, queryMsg, params)
+
 	chains.Response = output
 	fmt.Printf("Response is : %s \n", output)
 	return ctx, err

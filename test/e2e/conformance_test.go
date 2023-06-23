@@ -101,7 +101,6 @@ func TestConformance(t *testing.T) {
 	require.NoError(t, err)
 	ctx, err = chainB.SetupIBC(ctx, owner)
 	require.NoError(t, err)
-
 	contracts2 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
 	fmt.Println(contracts1.ContractAddress)
 	fmt.Println(contracts2.ContractAddress)
@@ -122,7 +121,6 @@ func TestConformance(t *testing.T) {
 
 		SkipPathCreation: false},
 	))
-
 	require.NoError(t, r.StartRelayer(ctx, eRep, ibcPath))
 	nid1 := cfg.ChainSpecs[0].ChainConfig.ChainID
 	nid2 := cfg.ChainSpecs[1].ChainConfig.ChainID

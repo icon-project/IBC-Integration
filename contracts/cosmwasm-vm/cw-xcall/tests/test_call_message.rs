@@ -3,10 +3,11 @@ mod setup;
 use std::{collections::HashMap, vec};
 
 use crate::account::*;
+use common::rlp;
 use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
-    to_binary, to_vec, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcEndpoint,
-    IbcMsg, IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
+    to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcEndpoint, IbcMsg,
+    IbcTimeout, IbcTimeoutBlock, SystemError, SystemResult, WasmMsg, WasmQuery,
 };
 
 use cw_common::ibc_types::IbcHeight;
@@ -20,7 +21,6 @@ use setup::*;
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 
-#[ignore]
 #[test]
 fn send_packet_success() {
     let mut mock_deps = deps();
@@ -96,11 +96,7 @@ fn send_packet_success() {
         source_channel: ibc_config.src_endpoint().clone().channel_id,
         destination_port: ibc_config.dst_endpoint().clone().port_id,
         destination_channel: ibc_config.dst_endpoint().clone().channel_id,
-        data: to_vec(&message)
-            .map_err(|error| ContractError::DecodeFailed {
-                error: error.to_string(),
-            })
-            .unwrap(),
+        data: rlp::encode(&message).to_vec(),
         timeout_height: Some(height.into()),
         timeout_timestamp: 0,
     };

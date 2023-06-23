@@ -1,3 +1,5 @@
+use std::env;
+
 use super::*;
 use common::ibc::core::ics04_channel::packet::Receipt;
 
@@ -138,11 +140,12 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ConnectionOpenConfirm { msg } => {
                 let message: MsgConnectionOpenConfirm =
                     Self::from_raw::<RawMsgConnectionOpenConfirm, MsgConnectionOpenConfirm>(&msg)?;
-                self.connection_open_confirm(deps, info, message)
+                self.connection_open_confirm(deps, env, info, message)
             }
             CoreExecuteMsg::ChannelOpenInit { msg } => {
                 let message: MsgChannelOpenInit =
                     Self::from_raw::<RawMsgChannelOpenInit, MsgChannelOpenInit>(&msg)?;
+                debug_println!("[IBCCore] Channel Open Init Called");
                 self.validate_channel_open_init(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenTry { msg } => {
@@ -419,6 +422,11 @@ impl<'a> CwIbcCoreContext<'a> {
             QueryMsg::GetAllPorts {} => {
                 let ports = self.get_all_ports(deps.storage).unwrap();
                 to_binary(&ports)
+            }
+
+            QueryMsg::GetCommitmentPrefix {} => {
+                let prefix = self.commitment_prefix(deps, &_env);
+                to_binary(&hex::encode(prefix.into_vec()))
             }
         }
     }

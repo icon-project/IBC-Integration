@@ -53,7 +53,7 @@ pub fn get_dummy_raw_msg_recv_packet(height: u64) -> RawMsgRecvPacket {
 fn test_receive_packet() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
@@ -101,6 +101,7 @@ fn test_receive_packet() {
         latest_height: 12,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -132,7 +133,7 @@ fn test_receive_packet() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
     contract
         .ibc_store()
         .expected_time_per_block()
@@ -525,7 +526,7 @@ fn test_receive_packet_fail_missing_channel() {
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
 
     contract
         .validate_receive_packet(deps.as_mut(), info, env, &msg)

@@ -80,7 +80,6 @@ public class ClientTest extends TestBase {
         msg.setConsensusState(new byte[2]);
         msg.setClientState(new byte[3]);
         msg.setBtpNetworkId(4);
-        msg.setStoragePrefix(new byte[4]);
         String expectedClientId = msg.getClientType() + "-0";
 
         // Act
@@ -89,7 +88,7 @@ public class ClientTest extends TestBase {
 
         // Assert
         assertEquals(BigInteger.ONE, client.call("getNextClientSequence"));
-        verify(lightClient.mock).createClient(expectedClientId, msg.getClientState(), msg.getConsensusState(), msg.getStoragePrefix());
+        verify(lightClient.mock).createClient(expectedClientId, msg.getClientState(), msg.getConsensusState());
     }
 
     @Test

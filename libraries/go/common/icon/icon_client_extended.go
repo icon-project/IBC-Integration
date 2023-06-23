@@ -20,6 +20,9 @@ func NewClientState(
 	LatestHeight uint64,
 	NetworkSectionHash []byte,
 	Validators [][]byte,
+	SrcNetworkId string,
+	NetworkId uint64,
+	NetworkTypeId uint64,
 ) *ClientState {
 	return &ClientState{
 		TrustingPeriod,
@@ -28,7 +31,11 @@ func NewClientState(
 		LatestHeight,
 		NetworkSectionHash,
 		Validators,
+		SrcNetworkId,
+		NetworkId,
+		NetworkTypeId,
 	}
+
 }
 
 // GetChainID returns the chain-id
