@@ -1,4 +1,4 @@
-package interchaintest
+package api
 
 import (
 	"fmt"
