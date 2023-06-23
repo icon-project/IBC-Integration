@@ -40,8 +40,6 @@ func (s *server) getChain(name string) chains.Chain {
 	return s.chains[name]
 }
 
-var setup *server
-
 func NewServer(t *testing.T) *server {
 	cfg, err := GetConfig()
 	if err != nil {
@@ -157,7 +155,7 @@ func (s *server) overrideConfig() {
 }
 
 func setupIBCTest(t *testing.T) {
-
+	setup := NewServer(t)
 	setup.setDockerClient(interchaintest.DockerSetup(t))
 	setup.setupRelayer("", "", "")
 }
