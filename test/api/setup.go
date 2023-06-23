@@ -24,15 +24,44 @@ type server struct {
 		networkID string
 		client    *client.Client
 	}
-	relayer    struct{ relay ibc.Relayer; reporter ibc.RelayerExecReporter }
+	relayer struct {
+		relay    ibc.Relayer
+		reporter *testreporter.RelayerExecReporter
+	}
 	interchain *interchaintest.Interchain
 	ctx        context.Context
 	t          *testing.T
 	cfg        map[string]*Chain
+	ibcPath    string
+	contracts  map[string]chains.ContractKey
 }
 
 func (s *server) getChain(name string) chains.Chain {
 	return s.chains[name]
+}
+
+var setup *server
+
+func NewServer(t *testing.T) *server {
+	cfg, err := GetConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return &server{
+		ctx:        context.Background(),
+		t:          t,
+		logger:     zaptest.NewLogger(t),
+		chains:     make(map[string]chains.Chain),
+		interchain: interchaintest.NewInterchain(),
+		cfg:        cfg.mapChains(),
+		contracts:  make(map[string]chains.ContractKey),
+		ibcPath:    "icon-cosmoshub",
+		relayer: struct {
+			relay    ibc.Relayer
+			reporter *testreporter.RelayerExecReporter
+		}{reporter: configureLogReporter(t)},
+	}
 }
 
 func (s *server) linkRelayer(image, tag, gid string) {
@@ -44,7 +73,7 @@ func (s *server) linkChain(chainName string) {
 }
 
 func (s *server) setUpIBC(chain, keyName string) (context.Context, error) {
-	contracts1 := s.ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+	s.contracts[chain] = s.ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
 	return s.getChain(chain).SetupIBC(s.ctx, keyName)
 }
 
@@ -52,7 +81,7 @@ func (s *server) buildWallet(chain, keyName string) error {
 	return s.getChain(chain).BuildWallets(s.ctx, keyName)
 }
 
-func (s *server) addLink(chain1, chain2, ibcPath string) *interchaintest.Interchain {
+func (s *server) addLink(chain1, chain2 string) *interchaintest.Interchain {
 	opts := ibc.CreateChannelOptions{
 		SourcePortName: "mock",
 		DestPortName:   "mock",
@@ -62,8 +91,8 @@ func (s *server) addLink(chain1, chain2, ibcPath string) *interchaintest.Interch
 	return s.interchain.AddLink(interchaintest.InterchainLink{
 		Chain1:            s.getChain(chain1).(ibc.Chain),
 		Chain2:            s.getChain(chain2).(ibc.Chain),
-		Relayer:           s.relayer,
-		Path:              ibcPath,
+		Relayer:           s.relayer.relay,
+		Path:              s.ibcPath,
 		CreateChannelOpts: opts,
 		CreateClientOpts: ibc.CreateClientOptions{
 			TrustingPeriod: "100000m",
@@ -71,9 +100,11 @@ func (s *server) addLink(chain1, chain2, ibcPath string) *interchaintest.Interch
 	})
 }
 
-func (s *server) setupRelayer(image, tag, gid string) {
+func (s *server) setupRelayer(image, tag, gid string) ibc.Relayer {
 	option := relayer.CustomDockerImage(image, tag, gid)
-	s.relayer = interchaintest.NewICONRelayerFactory(s.logger, option, relayer.ImagePull(false)).Build(s.t, s.docker.client, s.docker.networkID)
+	relay := interchaintest.NewICONRelayerFactory(s.logger, option, relayer.ImagePull(false)).Build(s.t, s.docker.client, s.docker.networkID)
+	s.relayer.relay = relay
+	return relay
 }
 
 func (s *server) setDockerClient(client *client.Client, networkID string) {
@@ -81,95 +112,54 @@ func (s *server) setDockerClient(client *client.Client, networkID string) {
 	s.docker.networkID = networkID
 }
 
-func (s *server) setupConnection(chainName, keyName string) (context.Context, error) {
-	chain := s.getChain(chainName)
-	return chain.ConfigureBaseConnection(context.Background(), keyName, "channel-0", s.cfg[chainName].NID, contracts2.ContractAddress["connection"])
+func (s *server) getCounterContractKey(chainName string) chains.ContractKey {
+	for key, v := range s.contracts {
+		if key != chainName {
+			return v
+		}
+	}
+	panic("no counter contract key found")
 }
 
-func (s *server) startRelay() {
+func (s *server) setupConnection(chainName, keyName string) (context.Context, error) {
+	chain := s.getChain(chainName)
+	return chain.ConfigureBaseConnection(s.ctx, keyName, "channel-0", s.cfg[chainName].NID, s.getCounterContractKey(chainName).ContractAddress["connection"])
+}
+
+func (s *server) startRelay() error {
 	// Start the Relay
-	s.interchain.BuildRelayer(ctx, eRep, interchaintest.InterchainBuildOptions{
+	s.interchain.BuildRelayer(s.ctx, s.relayer.reporter, interchaintest.InterchainBuildOptions{
 		TestName:          s.t.Name(),
 		Client:            s.docker.client,
 		NetworkID:         s.docker.networkID,
 		BlockDatabaseFile: interchaintest.DefaultBlockDatabaseFilepath(),
 		SkipPathCreation:  false},
 	)
-	s.relayer.StartRelayer(sctx, eRep, ibcPath)
+	return s.relayer.relay.StartRelayer(s.ctx, s.relayer.reporter, s.ibcPath)
 }
 
-func (s *server) configureLogReporter() *testreporter.RelayerExecReporter {
+func configureLogReporter(t *testing.T) *testreporter.RelayerExecReporter {
 	f, err := interchaintest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
 	if err != nil {
-		s.t.Fatal(err)
+		t.Fatal(err)
 	}
 	// Reporter/logs
 	rep := testreporter.NewReporter(f)
-	return rep.RelayerExecReporter(s.t)
+	return rep.RelayerExecReporter(t)
+}
+
+func (s *server) overrideConfig() {
+	for chainName, chain := range s.chains {
+		if chain.(ibc.Chain).Config().Type == "icon" {
+			chain.OverrideConfig("archway-handler-address", s.getCounterContractKey(chainName).ContractAddress["ibc"])
+		}
+	}
 }
 
 func setupIBCTest(t *testing.T) {
 
-	cfg, err := GetConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var setup = &server{
-		ctx:        context.Background(),
-		t:          t,
-		logger:     zaptest.NewLogger(t),
-		chains:     make(map[string]chains.Chain),
-		interchain: interchaintest.NewInterchain(),
-		cfg:        cfg.mapChains(),
-		relayer: struct{relay ibc.Relayer; reporter ibc.RelayerExecReporter}{ reporter:  },
-	}
-
 	setup.setDockerClient(interchaintest.DockerSetup(t))
 	setup.setupRelayer("", "", "")
-
-	// Log location
-
-	// Build interchain
-
-	const ibcPath = "icon-cosmoshub"
-
-	ic.BuildChains(ctx, eRep, InterchainBuildOptions{
-		TestName:          t.Name(),
-		Client:            client,
-		NetworkID:         s.docker.NetworkID,
-		BlockDatabaseFile: DefaultBlockDatabaseFilepath(),
-
-		SkipPathCreation: false},
-	)
-
-	contracts1 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-	ctx, err = chainB.SetupIBC(ctx, owner)
-
-	contracts2 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-	if chainA.(ibc.Chain).Config().Type == "icon" {
-		chainA.OverrideConfig("archway-handler-address", contracts2.ContractAddress["ibc"])
-	}
-
-	if chainB.(ibc.Chain).Config().Type == "icon" {
-		chainB.OverrideConfig("archway-handler-address", contracts1.ContractAddress["ibc"])
-	}
-
-	// Start the Relay
-	ic.BuildRelayer(ctx, eRep, interchaintest.InterchainBuildOptions{
-		TestName:          t.Name(),
-		Client:            client,
-		NetworkID:         network,
-		BlockDatabaseFile: interchaintest.DefaultBlockDatabaseFilepath(),
-
-		SkipPathCreation: false},
-	)
-
-	r.StartRelayer(ctx, eRep, ibcPath)
-
-	// TODO get channel from relay
-	_, err = chainA.ConfigureBaseConnection(context.Background(), owner, "channel-0", nid2, contracts2.ContractAddress["connection"])
-	_, err = chainB.ConfigureBaseConnection(context.Background(), owner, "channel-0", nid1, contracts1.ContractAddress["connection"])
 }
 
 type BuiltinChainFactory struct {
