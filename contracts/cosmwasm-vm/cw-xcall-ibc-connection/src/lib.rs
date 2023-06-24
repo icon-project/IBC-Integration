@@ -7,13 +7,14 @@ pub mod error;
 pub mod events;
 pub mod fee;
 pub mod fee_handler;
-pub mod forward_to_host;
-pub mod forward_to_xcall;
 pub mod ibc;
 pub mod msg;
 pub mod owner;
+pub mod receive_packet;
+pub mod send_message;
 pub mod state;
 pub mod types;
+pub mod xcall;
 use crate::ack::{on_ack_failure, on_ack_sucess};
 use crate::{
     ack::{make_ack_fail, make_ack_success},

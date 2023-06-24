@@ -10,8 +10,10 @@ use super::*;
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
 pub const ACK_FAILURE_ID: u64 = 3;
-pub const HOST_FORWARD_REPLY_ID: u64 = 2;
-pub const XCALL_FORWARD_REPLY_ID: u64 = 4;
+
+pub const XCALL_SEND_MESSAGE_REPLY_ID: u64 = 2;
+pub const XCALL_HANDLE_MESSAGE_REPLY_ID: u64 = 4;
+pub const XCALL_HANDLE_ERROR_REPLY_ID: u64 = 5;
 
 /// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
 /// and destination endpoint, and a sequence number.
@@ -111,6 +113,9 @@ pub struct CwIbcConnection<'a> {
     channel_configs: Map<'a, String, ChannelConfig>,
     network_fees: Map<'a, String, NetworkFees>,
     unclaimed_packet_fees: Map<'a, (String, String), u128>,
+    unclaimed_ack_fees: Map<'a, (String, u64), u128>,
+    incoming_packets: Map<'a, (String, i64), u64>,
+    outgoing_packets: Map<'a, (String, u64), i64>,
 }
 
 impl<'a> Default for CwIbcConnection<'a> {
@@ -134,6 +139,9 @@ impl<'a> CwIbcConnection<'a> {
             connection_configs: Map::new(StorageKey::ConnectionConfigs.as_str()),
             network_fees: Map::new(StorageKey::NetworkFees.as_str()),
             unclaimed_packet_fees: Map::new(StorageKey::UnclaimedPacketFees.as_str()),
+            unclaimed_ack_fees: Map::new(StorageKey::UnClaimedAckFees.as_str()),
+            incoming_packets: Map::new(StorageKey::IncomingPackets.as_str()),
+            outgoing_packets: Map::new(StorageKey::IncomingPackets.as_str()),
         }
     }
 
@@ -192,18 +200,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn get_xcall_host(&self, store: &dyn Storage) -> Result<Addr, ContractError> {
         self.xcall_host.load(store).map_err(ContractError::Std)
     }
-    // pub fn set_timeout_height(
-    //     &self,
-    //     store: &mut dyn Storage,
-    //     timeout_height: u64,
-    // ) -> Result<(), ContractError> {
-    //     self.timeout_height
-    //         .save(store, &timeout_height)
-    //         .map_err(ContractError::Std)
-    // }
-    // pub fn get_timeout_height(&self, store: &dyn Storage) -> u64 {
-    //     self.timeout_height.load(store).unwrap_or(0)
-    // }
+
     pub fn fee_handler(&self) -> &Item<'a, String> {
         &self.fee_handler
     }
@@ -348,6 +345,109 @@ impl<'a> CwIbcConnection<'a> {
         return self
             .unclaimed_packet_fees
             .save(store, (nid.to_owned(), address.to_owned()), &0_u128)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn add_unclaimed_ack_fees(
+        &self,
+        store: &mut dyn Storage,
+        nid: &str,
+        sequence: u64,
+        value: u128,
+    ) -> Result<(), ContractError> {
+        let mut acc = self
+            .unclaimed_ack_fees
+            .load(store, (nid.to_owned(), sequence))
+            .unwrap_or(0);
+        acc = acc + value;
+        return self
+            .unclaimed_ack_fees
+            .save(store, (nid.to_owned(), sequence), &value)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_unclaimed_ack_fee(
+        &self,
+        store: &dyn Storage,
+        nid: &str,
+        sequence: u64,
+    ) -> Result<u128, ContractError> {
+        return self
+            .unclaimed_ack_fees
+            .load(store, (nid.to_owned(), sequence))
+            .map_err(ContractError::Std);
+    }
+
+    pub fn reset_unclaimed_ack_fees(
+        &self,
+        store: &mut dyn Storage,
+        nid: &str,
+        sequence: u64,
+    ) -> Result<(), ContractError> {
+        return self
+            .unclaimed_ack_fees
+            .save(store, (nid.to_owned(), sequence), &0_u128)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_incoming_packet_sequence(
+        &self,
+        store: &dyn Storage,
+        channel_id: &str,
+        sn: i64,
+    ) -> Result<u64, ContractError> {
+        return self
+            .incoming_packets
+            .load(store, (channel_id.to_owned(), sn))
+            .map_err(ContractError::Std);
+    }
+
+    pub fn store_incoming_packet_sequence(
+        &self,
+        store: &mut dyn Storage,
+        channel_id: &str,
+        sn: i64,
+        seq: u64,
+    ) -> Result<(), ContractError> {
+        return self
+            .incoming_packets
+            .save(store, (channel_id.to_owned(), sn), &seq)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_outgoing_packet_sn(
+        &self,
+        store: &dyn Storage,
+        channel_id: &str,
+        sequence: u64,
+    ) -> Result<i64, ContractError> {
+        return self
+            .outgoing_packets
+            .load(store, (channel_id.to_owned(), sequence))
+            .map_err(ContractError::Std);
+    }
+
+    pub fn remove_outgoing_packet_sn(
+        &self,
+        store: &mut dyn Storage,
+        channel_id: &str,
+        sequence: u64,
+    ) {
+        return self
+            .outgoing_packets
+            .remove(store, (channel_id.to_owned(), sequence));
+    }
+
+    pub fn store_outgoing_packet_sn(
+        &self,
+        store: &mut dyn Storage,
+        channel_id: &str,
+        sequence: u64,
+        sn: i64,
+    ) -> Result<(), ContractError> {
+        return self
+            .outgoing_packets
+            .save(store, (channel_id.to_owned(), sequence), &sn)
             .map_err(ContractError::Std);
     }
 }

@@ -239,8 +239,8 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
         ctx.get_xcall_app(),
         &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
             to: "eth".to_string(),
-            sources: vec![],
-            destinations: vec![],
+            sources: Some(vec![]),
+            destinations: Some(vec![]),
             data,
             rollback: None,
         },

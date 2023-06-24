@@ -12,9 +12,10 @@ pub enum ExecuteMsg {
     SetXCallHost {
         address: String,
     },
-    MessageFromXCall {
+    SendMessage {
         to: String,
-        data: Vec<u8>,
+        sn: i64,
+        msg: Vec<u8>,
     },
     SetIbcConfig {
         ibc_config: Vec<u8>,

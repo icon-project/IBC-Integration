@@ -62,6 +62,7 @@ impl<'a> CwIbcCoreContext<'a> {
         self.init_client_counter(deps.storage, u64::default())?;
         self.init_connection_counter(deps.storage, u64::default())?;
         self.set_owner(deps.storage, info.sender)?;
+        debug_println!("{:?}", info.funds);
 
         Ok(Response::new().add_attribute("method", "instantiate"))
     }

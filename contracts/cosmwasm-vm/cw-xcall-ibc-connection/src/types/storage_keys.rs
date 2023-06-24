@@ -16,6 +16,9 @@ pub enum StorageKey {
     ConnectionConfigs,
     NetworkFees,
     UnclaimedPacketFees,
+    UnClaimedAckFees,
+    IncomingPackets,
+    OutGoingPackets,
 }
 
 impl StorageKey {
@@ -35,6 +38,9 @@ impl StorageKey {
             StorageKey::ConnectionConfigs => "connection_configs",
             StorageKey::NetworkFees => "network_fees",
             StorageKey::UnclaimedPacketFees => "unclaimed_packet_fees",
+            StorageKey::IncomingPackets => "incoming_packets",
+            StorageKey::OutGoingPackets => "outgoing_packets",
+            StorageKey::UnClaimedAckFees => "unclaimed_ack_fees",
         }
     }
 }

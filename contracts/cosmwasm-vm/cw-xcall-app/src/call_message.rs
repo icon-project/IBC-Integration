@@ -102,9 +102,10 @@ impl<'a> CwCallService<'a> {
 
         let event = event_xcall_message_sent(info.sender.to_string(), sequence_no, &message);
 
-        let message = cw_common::xcall_connection_msg::ExecuteMsg::MessageFromXCall {
+        let message = cw_common::xcall_connection_msg::ExecuteMsg::SendMessage {
             to,
-            data: to_vec(&message).unwrap(),
+            sn: 0,
+            msg: to_vec(&message).unwrap(),
         };
 
         let submessages = confirmed_sources

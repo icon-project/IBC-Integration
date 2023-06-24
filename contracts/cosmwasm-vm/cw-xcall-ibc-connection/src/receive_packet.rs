@@ -1,8 +1,11 @@
-use cosmwasm_std::DepsMut;
+use std::str::from_utf8;
+
+use common::rlp;
+use cosmwasm_std::{coins, BankMsg, DepsMut};
 use debug_print::debug_println;
 
 use super::*;
-use crate::{events::event_packet_received, state::XCALL_FORWARD_REPLY_ID};
+use crate::{types::message::Message};
 
 impl<'a> CwIbcConnection<'a> {
     /// This function receives packet data, decodes it, and then handles either a request or a response
@@ -22,35 +25,39 @@ impl<'a> CwIbcConnection<'a> {
     /// Returns:
     ///
     /// a `Result` object with either an `IbcReceiveResponse` or a `ContractError`.
-    pub fn receive_packet_data(
+    pub fn do_packet_receive(
         &self,
         deps: DepsMut,
         message: CwPacket,
+        relayer: Addr,
     ) -> Result<CwReceiveResponse, ContractError> {
-        self.forward_to_xcall(deps, message)
-    }
+        let channel = message.dest.channel_id.clone();
+        let n_message: Message = rlp::decode(&message.data).unwrap();
+        let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
+        let nid = channel_config.counterparty_nid;
 
-    pub fn forward_to_xcall(
-        &self,
-        deps: DepsMut,
-        message: CwPacket,
-    ) -> Result<CwReceiveResponse, ContractError> {
-        let event = event_packet_received(&message);
+        self.add_unclaimed_packet_fees(deps.storage, &nid, relayer.as_str(), n_message.fee)?;
+
+        if n_message.sn.is_none() {
+            let receiver_address = from_utf8(&n_message.data).unwrap();
+            let amount = n_message.fee;
+            let msg = BankMsg::Send {
+                to_address: receiver_address.to_string(),
+                amount: coins(amount, "arch"),
+            };
+            return Ok(CwReceiveResponse::new().add_message(msg));
+        }
+
+        if let Some(sn) = n_message.sn.0 {
+            if sn > 0 {
+                self.store_incoming_packet_sequence(deps.storage, &channel, sn, message.sequence)?;
+            }
+        }
         debug_println!("[IBCConnection]: forwarding to xcall");
-        let data = message.data.clone();
-        let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::ReceiveCallMessage {
-            msg: data.0,
-            sn: Some(0),
-            from: "".to_string(),
-        };
-        let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: self
-                .get_xcall_host(deps.as_ref().storage)
-                .unwrap()
-                .to_string(),
-            msg: to_binary(&xcall_msg).unwrap(),
-            funds: vec![],
-        });
+        let data = message.data.0.clone();
+        let xcall_submessage =
+            self.call_xcall_handle_message(deps.storage, &nid, data, n_message.sn.0)?;
+
         debug_println!("[IBCConnection]: message payload built");
 
         let acknowledgement_data =
@@ -60,13 +67,8 @@ impl<'a> CwIbcConnection<'a> {
             })
             .map_err(ContractError::Std)?;
 
-        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, XCALL_FORWARD_REPLY_ID);
-
         Ok(CwReceiveResponse::new()
-            .add_attribute("action", "receive_packet_data")
-            .add_attribute("method", "forward_to_xcall")
             .set_ack(acknowledgement_data)
-            .add_event(event)
-            .add_submessage(sub_msg))
+            .add_submessage(xcall_submessage))
     }
 }

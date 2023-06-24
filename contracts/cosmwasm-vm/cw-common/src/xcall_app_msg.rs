@@ -18,10 +18,16 @@ pub enum ExecuteMsg {
         destinations: Option<Vec<String>>,
         rollback: Option<Vec<u8>>,
     },
-    ReceiveCallMessage {
+    HandleCallMessage {
         from: String,
-        sn: Option<u128>,
+        sn: Option<i64>,
         msg: Vec<u8>,
+    },
+
+    HandleError {
+        sn: i64,
+        code: i64,
+        msg: String,
     },
 
     ExecuteCall {

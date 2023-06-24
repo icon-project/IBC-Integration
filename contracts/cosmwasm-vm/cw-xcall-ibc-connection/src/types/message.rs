@@ -1,7 +1,7 @@
 use common::rlp::{self, Decodable, Encodable, Nullable};
 
 pub struct Message {
-    pub sn: Nullable<u64>,
+    pub sn: Nullable<i64>,
     pub fee: u128,
     pub data: Vec<u8>,
 }

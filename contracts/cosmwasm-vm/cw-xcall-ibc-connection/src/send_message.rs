@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use common::rlp::Nullable;
 use cosmwasm_std::{
     to_binary, to_vec, CosmosMsg, DepsMut, Env, MessageInfo, QueryRequest, Response, SubMsg,
     WasmMsg,
@@ -13,19 +14,20 @@ use debug_print::debug_println;
 use crate::{
     error::ContractError,
     events::event_message_forwarded,
-    state::{CwIbcConnection, HOST_FORWARD_REPLY_ID},
-    types::LOG_PREFIX,
+    state::CwIbcConnection,
+    types::{message::Message, network_fees::NetworkFees, LOG_PREFIX},
 };
 use cw_common::ibc_types::IbcHeight as Height;
 use cw_common::ProstMessage;
 
 impl<'a> CwIbcConnection<'a> {
-    pub fn forward_to_host(
+    pub fn send_message(
         &self,
         deps: DepsMut,
         info: MessageInfo,
         _env: Env,
-        to: String,
+        nid: String,
+        sn: i64,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
@@ -33,78 +35,64 @@ impl<'a> CwIbcConnection<'a> {
         self.ensure_data_length(message.len())?;
         println!("{LOG_PREFIX} Packet Validated");
 
-        // TODO : ADD fee logic
-
-        //  let sequence_no = self.increment_last_sequence_no(deps.storage)?;
-        let ibc_host = self.get_ibc_host(deps.as_ref().storage)?;
-
-        println!("{} Forwarding to {}", LOG_PREFIX, &ibc_host);
-        let na = NetworkAddress::from_str(&to).unwrap();
-
-        let ibc_config = self.get_ibc_config(deps.as_ref().storage, na.get_nid())?;
-
-        println!("{LOG_PREFIX} Loaded IbcConfig");
+        if sn < 0 {
+            // TODO: write acknowledgement
+        }
+        let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
         let sequence_number_host = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
+        let network_fee = self
+            .get_network_fees(deps.as_ref().storage, &nid)
+            .unwrap_or(NetworkFees::default());
 
-        println!("{LOG_PREFIX} Received host sequence no {sequence_number_host}");
+        if sn > 0 {
+            self.add_unclaimed_ack_fees(
+                deps.storage,
+                &nid,
+                sequence_number_host,
+                network_fee.ack_fee,
+            )?;
+        }
 
+        if sn != 0 {
+            self.store_outgoing_packet_sn(
+                deps.storage,
+                &ibc_config.src_endpoint().channel_id,
+                sequence_number_host,
+                sn,
+            )?;
+        }
         let timeout_height =
             self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
-
-        let event =
-            event_message_forwarded(sequence_number_host, info.sender.to_string(), &message);
-        println!("{} Message Forward Event {:?}", LOG_PREFIX, &event);
+        let msg = Message {
+            sn: Nullable::new(Some(sn)),
+            fee: network_fee.send_packet_fee,
+            data: message,
+        };
 
         #[cfg(feature = "native_ibc")]
         {
-            let packet = self.create_request_packet(deps, env, timeout_height, message.clone())?;
+            let packet = self.create_request_packet(deps, env, timeout_height, msg.clone())?;
 
             let submessage: SubMsg<Empty> =
                 SubMsg::reply_always(CosmosMsg::Ibc(packet), HOST_FORWARD_REPLY_ID);
 
             Ok(Response::new()
                 .add_submessage(submessage)
-                .add_attribute("method", "forward_packet")
-                .add_event(event))
+                .add_attribute("method", "send_message"))
         }
 
         #[cfg(not(feature = "native_ibc"))]
         {
             let packet_data =
-                self.create_packet(ibc_config, timeout_height, sequence_number_host, message);
+                self.create_packet(ibc_config, timeout_height, sequence_number_host, msg);
 
             println!("{} Raw Packet Created {:?}", LOG_PREFIX, &packet_data);
-            let submessage = self.create_send_packet_submessage(deps, info, packet_data)?;
+
+            let submessage = self.call_xcall_send_message(deps, info, packet_data)?;
             Ok(Response::new()
                 .add_submessage(submessage)
-                .add_attribute("action", "xcall-service")
-                .add_attribute("method", "forward_packet")
-                .add_event(event))
+                .add_attribute("method", "send_message"))
         }
-    }
-
-    pub fn create_send_packet_submessage(
-        &self,
-        deps: DepsMut,
-        info: MessageInfo,
-        packet: RawPacket,
-    ) -> Result<SubMsg, ContractError> {
-        let message = cw_common::core_msg::ExecuteMsg::SendPacket {
-            packet: HexString::from_bytes(&packet.encode_to_vec()),
-        };
-        let ibc_host = self.get_ibc_host(deps.as_ref().storage)?;
-        let submessage = SubMsg {
-            id: HOST_FORWARD_REPLY_ID,
-            msg: CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: ibc_host.to_string(),
-                msg: to_binary(&message).map_err(ContractError::Std)?,
-                funds: info.funds,
-            }),
-            gas_limit: None,
-            reply_on: cosmwasm_std::ReplyOn::Always,
-        };
-        debug_println!("{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
-        Ok(submessage)
     }
 }
 
@@ -132,7 +120,7 @@ impl<'a> CwIbcConnection<'a> {
         deps: DepsMut,
         env: Env,
         time_out_height: u64,
-        message: CallServiceMessage,
+        message: Message,
     ) -> Result<IbcMsg, ContractError> {
         let ibc_config = self
             .ibc_config()

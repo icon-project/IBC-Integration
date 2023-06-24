@@ -1,10 +1,13 @@
-use common::{ibc::Height, rlp};
-use cosmwasm_std::{from_slice, to_vec, IbcChannel};
+use common::{
+    ibc::Height,
+    rlp::{self, Nullable},
+};
+use cosmwasm_std::{coins, from_slice, to_vec, BankMsg, IbcChannel};
 use cw_common::{query_helpers::build_smart_query, raw_types::channel::RawPacket};
 use debug_print::debug_println;
 
 use crate::{
-    state::{HOST_FORWARD_REPLY_ID, XCALL_FORWARD_REPLY_ID},
+    state::XCALL_HANDLE_MESSAGE_REPLY_ID,
     types::{
         channel_config::ChannelConfig, connection_config::ConnectionConfig, message::Message,
         LOG_PREFIX,
@@ -53,6 +56,7 @@ impl<'a> CwIbcConnection<'a> {
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
         self.init(deps.storage, info, msg)
     }
 
@@ -90,9 +94,9 @@ impl<'a> CwIbcConnection<'a> {
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
-            ExecuteMsg::MessageFromXCall { data, to } => {
+            ExecuteMsg::SendMessage { msg, to, sn } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");
-                self.forward_to_host(deps, info, env, to, data)
+                self.send_message(deps, info, env, to, sn, msg)
             }
             ExecuteMsg::SetXCallHost { address } => {
                 self.ensure_owner(deps.as_ref().storage, &info)?;
@@ -156,12 +160,12 @@ impl<'a> CwIbcConnection<'a> {
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketAck { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
-                Ok(self.on_packet_ack(msg)?)
+                Ok(self.on_packet_ack(deps, msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcPacketTimeout { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
-                Ok(self.on_packet_timeout(msg)?)
+                Ok(self.on_packet_timeout(deps, msg)?)
             }
             #[cfg(feature = "native_ibc")]
             _ => Err(ContractError::DecodeFailed {
@@ -237,8 +241,8 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn reply(&self, deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
-            XCALL_FORWARD_REPLY_ID => self.reply_forward_xcall(deps, msg),
-            HOST_FORWARD_REPLY_ID => self.reply_forward_host(deps, msg),
+            XCALL_HANDLE_MESSAGE_REPLY_ID => self.xcall_handle_message_reply(deps, msg),
+            XCALL_SEND_MESSAGE_REPLY_ID => self.xcall_send_message_reply(deps, msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
@@ -287,7 +291,7 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("ibc_host", msg.ibc_host))
     }
 
-    fn reply_forward_xcall(
+    fn xcall_handle_message_reply(
         &self,
         _deps: DepsMut,
         message: Reply,
@@ -304,7 +308,7 @@ impl<'a> CwIbcConnection<'a> {
         }
     }
 
-    fn reply_forward_host(
+    fn xcall_send_message_reply(
         &self,
         _deps: DepsMut,
         message: Reply,
@@ -458,7 +462,7 @@ impl<'a> CwIbcConnection<'a> {
         deps: DepsMut,
         msg: CwPacketReceiveMsg,
     ) -> Result<Response, ContractError> {
-        match self.receive_packet_data(deps, msg.packet) {
+        match self.do_packet_receive(deps, msg.packet, msg.relayer) {
             Ok(ibc_response) => Ok(Response::new()
                 .add_attributes(ibc_response.attributes.clone())
                 .set_data(to_vec(&ibc_response).unwrap())
@@ -484,19 +488,28 @@ impl<'a> CwIbcConnection<'a> {
     /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to be
     /// returned to the caller and `ContractError` is an enum representing the possible errors that can
     /// occur during the execution of the function.
-    pub fn on_packet_ack(&self, ack: CwPacketAckMsg) -> Result<Response, ContractError> {
-        let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
-        match ack_response {
-            Ack::Result(_) => {
-                let attributes = vec![attr("action", "acknowledge"), attr("success", "true")];
+    pub fn on_packet_ack(
+        &self,
+        deps: DepsMut,
+        ack: CwPacketAckMsg,
+    ) -> Result<Response, ContractError> {
+        let packet = ack.original_packet;
+        let acknowledgement = ack.acknowledgement;
+        let channel = packet.src.channel_id.clone();
+        let seq = packet.sequence;
+        let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
+        let nid = channel_config.counterparty_nid;
 
-                Ok(Response::new().add_attributes(attributes))
-            }
-            Ack::Error(err) => Ok(Response::new()
-                .add_attribute("action", "acknowledge")
-                .add_attribute("success", "false")
-                .add_attribute("error", err)),
-        }
+        let sn = self.get_outgoing_packet_sn(deps.as_ref().storage, &channel, seq)?;
+        self.remove_outgoing_packet_sn(deps.storage, &channel, seq);
+
+        let submsg =
+            self.call_xcall_handle_message(deps.storage, &nid, acknowledgement.data.0, Some(sn))?;
+
+        let bank_msg =
+            self.settle_unclaimed_ack_fee(deps.storage, &nid, seq, ack.relayer.to_string())?;
+
+        Ok(Response::new().add_message(bank_msg).add_submessage(submsg))
     }
     /// This function handles a timeout event for an IBC packet and sends a reply message with an error
     /// code.
@@ -514,11 +527,47 @@ impl<'a> CwIbcConnection<'a> {
     /// attribute. The submessage is a reply on error with a `CosmosMsg::Custom` object that contains an
     /// `Empty` message. The attribute is a key-value pair
 
-    pub fn on_packet_timeout(&self, _msg: CwPacketTimeoutMsg) -> Result<Response, ContractError> {
-        let submsg = SubMsg::reply_on_error(CosmosMsg::Custom(Empty {}), ACK_FAILURE_ID);
-        Ok(Response::new()
-            .add_submessage(submsg)
-            .add_attribute("method", "ibc_packet_timeout"))
+    pub fn on_packet_timeout(
+        &self,
+        deps: DepsMut,
+        msg: CwPacketTimeoutMsg,
+    ) -> Result<Response, ContractError> {
+        let packet = msg.packet;
+        let channel_id = packet.src.channel_id.clone();
+        let channel_config = self.get_channel_config(deps.as_ref().storage, &channel_id)?;
+        let nid = channel_config.counterparty_nid;
+        let sn = self.get_outgoing_packet_sn(deps.storage, &channel_id, packet.sequence)?;
+
+        let n_message: Message = rlp::decode(&packet.data).unwrap();
+        self.remove_outgoing_packet_sn(deps.storage, &channel_id, packet.sequence);
+        self.add_unclaimed_ack_fees(deps.storage, &nid, packet.sequence, n_message.fee)?;
+        let submsg = self.call_xcall_handle_error(deps.storage, sn, -1, "Timeout".to_string())?;
+        let bank_msg = self.settle_unclaimed_ack_fee(
+            deps.storage,
+            &nid,
+            packet.sequence,
+            msg.relayer.to_string(),
+        )?;
+
+        Ok(Response::new().add_message(bank_msg).add_submessage(submsg))
+    }
+
+    pub fn settle_unclaimed_ack_fee(
+        &self,
+        store: &mut dyn Storage,
+        nid: &str,
+        seq: u64,
+        relayer: String,
+    ) -> Result<BankMsg, ContractError> {
+        let mut ack_fee = self.get_unclaimed_ack_fee(store, &nid, seq)?;
+        self.reset_unclaimed_ack_fees(store, &nid, seq)?;
+
+        let msg = BankMsg::Send {
+            to_address: relayer.to_string(),
+            amount: coins(ack_fee, "arch"),
+        };
+
+        Ok(msg)
     }
 
     pub fn setup_channel(
@@ -598,14 +647,14 @@ impl<'a> CwIbcConnection<'a> {
         self.reset_unclaimed_packet_fees(deps.storage, &nid, &address)?;
         let sequence_no = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
         let message = Message {
-            sn: common::rlp::Nullable(None),
+            sn: Nullable::new(None),
             fee: fees,
             data: address.as_bytes().to_vec(),
         };
         let timeout_height =
             self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
         let packet = self.create_packet(ibc_config, timeout_height, sequence_no, message);
-        let sub_msg = self.create_send_packet_submessage(deps, info, packet)?;
+        let sub_msg = self.call_xcall_send_message(deps, info, packet)?;
         Ok(sub_msg)
     }
 

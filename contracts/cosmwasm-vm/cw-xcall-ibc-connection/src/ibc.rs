@@ -132,7 +132,7 @@ pub fn ibc_packet_receive(
     let call_service = CwIbcConnection::default();
     let _channel = msg.packet.dest.channel_id.clone();
     debug_println!("[IBCConnection]: Packet Received");
-    let result = call_service.receive_packet_data(deps, msg.packet);
+    let result = call_service.do_packet_receive(deps, msg.packet, msg.relayer);
 
     match result {
         Ok(response) => Ok(response),
@@ -161,12 +161,12 @@ pub fn ibc_packet_receive(
 /// a `Result` object with an `IbcBasicResponse` on success or a `ContractError` on failure.
 #[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_ack(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     ack: CwPacketAckMsg,
 ) -> Result<CwBasicResponse, ContractError> {
     let call_service = CwIbcConnection::default();
-    let res = call_service.on_packet_ack(ack)?;
+    let res = call_service.on_packet_ack(deps, ack)?;
     Ok(CwBasicResponse::new()
         .add_attributes(res.attributes)
         .add_events(res.events))
@@ -191,11 +191,11 @@ pub fn ibc_packet_ack(
 /// a `Result` with an `IbcBasicResponse` on success or a `ContractError` on failure.
 #[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_timeout(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     msg: CwPacketTimeoutMsg,
 ) -> Result<CwBasicResponse, ContractError> {
     let call_service = CwIbcConnection::default();
-    let res = call_service.on_packet_timeout(msg)?;
+    let res = call_service.on_packet_timeout(deps, msg)?;
     Ok(CwBasicResponse::new().add_attributes(res.attributes))
 }

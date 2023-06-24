@@ -96,8 +96,11 @@ impl<'a> CwCallService<'a> {
                 self.validate_send_call(&sources, &dests, &deps.querier, &info)?;
                 self.send_packet(deps, info, env, to, sources, dests, data, rollback)
             }
-            ExecuteMsg::ReceiveCallMessage { msg, from, sn } => {
+            ExecuteMsg::HandleCallMessage { msg, from, sn } => {
                 self.receive_packet_data(deps, info, from, sn, msg)
+            }
+            ExecuteMsg::HandleError { sn, code, msg } => {
+                todo!()
             }
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {

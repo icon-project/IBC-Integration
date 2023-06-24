@@ -124,7 +124,7 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         info: MessageInfo,
         _from: String,
-        _sn: Option<u128>,
+        _sn: Option<i64>,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         let call_service_message: CallServiceMessage = CallServiceMessage::try_from(message)?;
