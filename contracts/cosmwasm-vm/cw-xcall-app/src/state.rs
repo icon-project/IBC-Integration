@@ -2,6 +2,8 @@ use cosmwasm_std::Order;
 use cw_storage_plus::{KeyDeserialize, PrimaryKey};
 use serde::de::DeserializeOwned;
 
+use crate::types::config::Config;
+
 use super::*;
 
 /// These are constants defined in the `CwCallService` struct that are used throughout the codebase.
@@ -33,7 +35,7 @@ pub const SEND_CALL_MESSAGE_REPLY_ID: u64 = 2;
 /// used to keep track of all the call requests made by the users of the `CwCallService` struct. The
 /// `u128` key is used to uniquely identify
 /// * `ibc_config`: This property is of type `Item<'a, IbcConfig>` and represents the IBC configuration
-/// for the call service. It is likely used to define the parameters and settings for inter-blockchain
+/// for the call service. It is likely used to define the parameters and storetings for inter-blockchain
 /// communication.
 /// * `fee_handler`: The `fee_handler` property is an `Item` that holds a `String` value. It likely
 /// represents the address or identifier of the entity responsible for handling fees associated with the
@@ -48,14 +50,15 @@ pub const SEND_CALL_MESSAGE_REPLY_ID: u64 = 2;
 /// the Call Service. This is the block height at which the Call Service will stop processing requests
 /// if they have not been completed.
 pub struct CwCallService<'a> {
-    last_sequence_no: Item<'a, u128>,
+    sn: Item<'a, u128>,
+    config: Item<'a, Config>,
     last_request_id: Item<'a, u128>,
     owner: Item<'a, String>,
     admin: Item<'a, String>,
     message_request: Map<'a, u128, CallServiceMessageRequest>,
     requests: Map<'a, u128, CallRequest>,
     fee_handler: Item<'a, String>,
-    fee: Item<'a, u128>,
+    protocol_fee: Item<'a, u128>,
     default_connections: Map<'a, String, Addr>,
     timeout_height: Item<'a, u64>,
     pending_requests: Map<'a, (Vec<u8>, String), bool>,
@@ -71,23 +74,47 @@ impl<'a> Default for CwCallService<'a> {
 impl<'a> CwCallService<'a> {
     pub fn new() -> Self {
         Self {
-            last_sequence_no: Item::new(StorageKey::SequenceNo.as_str()),
+            sn: Item::new(StorageKey::Sn.as_str()),
             last_request_id: Item::new(StorageKey::RequestNo.as_str()),
             owner: Item::new(StorageKey::Owner.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
             message_request: Map::new(StorageKey::MessageRequest.as_str()),
             requests: Map::new(StorageKey::Requests.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
-            fee: Item::new(StorageKey::Fee.as_str()),
+            protocol_fee: Item::new(StorageKey::ProtocolFee.as_str()),
             default_connections: Map::new(StorageKey::DefaultConnections.as_str()),
             timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
             pending_requests: Map::new(StorageKey::PendingRequests.as_str()),
             pending_responses: Map::new(StorageKey::PendingRequests.as_str()),
+            config: Item::new(StorageKey::Config.as_str()),
         }
     }
 
-    pub fn last_sequence_no(&self) -> &Item<'a, u128> {
-        &self.last_sequence_no
+    pub fn get_next_sn(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+        let mut sn = self.sn.load(store).unwrap_or(0);
+        sn = sn + 1;
+        self.sn.save(store, &sn)?;
+        return Ok(sn);
+    }
+
+    pub fn get_current_sn(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        return self.sn.load(store).map_err(ContractError::Std);
+    }
+
+    pub fn sn(&self) -> &Item<'a, u128> {
+        return &self.sn;
+    }
+
+    pub fn get_config(&self, store: &dyn Storage) -> Result<Config, ContractError> {
+        return self.config.load(store).map_err(ContractError::Std);
+    }
+
+    pub fn store_config(
+        &self,
+        store: &mut dyn Storage,
+        config: &Config,
+    ) -> Result<(), ContractError> {
+        return self.config.save(store, config).map_err(ContractError::Std);
     }
 
     pub fn last_request_id(&self) -> &Item<'a, u128> {
@@ -113,10 +140,8 @@ impl<'a> CwCallService<'a> {
     pub fn fee_handler(&self) -> &Item<'a, String> {
         &self.fee_handler
     }
-    pub fn fee(&self) -> &Item<'a, u128> {
-        &self.fee
-    }
-    pub fn set_default_connection(
+
+    pub fn store_default_connection(
         &self,
         store: &mut dyn Storage,
         nid: String,
@@ -135,7 +160,7 @@ impl<'a> CwCallService<'a> {
             .load(store, nid.to_string())
             .map_err(ContractError::Std)
     }
-    pub fn set_timeout_height(
+    pub fn store_timeout_height(
         &self,
         store: &mut dyn Storage,
         timeout_height: u64,
@@ -251,5 +276,19 @@ impl<'a> CwCallService<'a> {
             .map(|r| r.map(|v| v.1))
             .collect::<Result<Vec<V>, StdError>>();
         values.map_err(ContractError::Std)
+    }
+
+    pub fn get_protocol_fee(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        return self.protocol_fee.load(store).map_err(ContractError::Std);
+    }
+    pub fn store_protocol_fee(
+        &self,
+        store: &mut dyn Storage,
+        fee: u128,
+    ) -> Result<(), ContractError> {
+        return self
+            .protocol_fee
+            .save(store, &fee)
+            .map_err(ContractError::Std);
     }
 }

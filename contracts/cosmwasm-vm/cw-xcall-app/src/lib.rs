@@ -2,11 +2,12 @@ pub mod ack;
 pub mod admin;
 pub mod assertion;
 pub mod call_message;
+pub mod connection;
 pub mod contract;
 pub mod error;
 pub mod events;
-pub mod fee;
 pub mod fee_handler;
+pub mod fees;
 pub mod handle_call_message;
 pub mod helpers;
 pub mod msg;
@@ -14,6 +15,7 @@ pub mod owner;
 pub mod requests;
 pub mod state;
 pub mod types;
+
 use crate::{
     ack::{make_ack_fail, make_ack_success},
     error::ContractError,

@@ -39,13 +39,13 @@ pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
 /// Returns:
 ///
 /// an instance of the `Event` struct.
-pub fn event_xcall_message_sent(from: String, req_id: u128, data: &CallServiceMessage) -> Event {
+pub fn event_xcall_message_sent(from: String, destination:String, sn:u128) -> Event {
     let event = Event::new("xcall_message_sent");
 
     event
         .add_attribute("from", from)
-        .add_attribute("sq_no", req_id.to_string())
-        .add_attribute("data", to_binary(data).unwrap().to_string())
+        .add_attribute("destination", destination)
+        .add_attribute("sn", sn.to_string())
 }
 
 /// The function creates an event object for a rollback execution with sequence number, code, and

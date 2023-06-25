@@ -94,9 +94,9 @@ impl<'a> CwIbcConnection<'a> {
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
-            ExecuteMsg::SendMessage { msg, to, sn } => {
+            ExecuteMsg::SendMessage { msg, nid_to, sn } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");
-                self.send_message(deps, info, env, to, sn, msg)
+                self.send_message(deps, info, env, nid_to, sn, msg)
             }
             ExecuteMsg::SetXCallHost { address } => {
                 self.ensure_owner(deps.as_ref().storage, &info)?;

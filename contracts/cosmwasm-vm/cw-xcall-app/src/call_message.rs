@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use common::rlp;
+use cosmwasm_std::{coins, BankMsg};
 use cw_common::xcall_types::network_address::NetworkAddress;
 
 use crate::types::LOG_PREFIX;
@@ -36,7 +38,7 @@ impl<'a> CwCallService<'a> {
     /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
     /// contract execution and `ContractError` is an enum representing possible errors that can occur
     /// during contract execution.
-    pub fn send_packet(
+    pub fn send_call_message(
         &self,
         deps: DepsMut,
         info: MessageInfo,
@@ -47,11 +49,24 @@ impl<'a> CwCallService<'a> {
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
-        let from_address = info.sender.to_string();
+       
+        let caller = info.sender.clone();
+        let config = self.get_config(deps.as_ref().storage)?;
+        let nid = config.network_id;
+        let dst = NetworkAddress::from_str(&to)?;
+
+        self.validate_send_call(
+            deps.as_ref(),
+            dst.get_nid(),
+            &sources,
+            &destinations,
+            &rollback,
+            &info,
+        )?;
 
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
-            info.sender.clone(),
+            caller.clone(),
             rollback.clone(),
         )?;
 
@@ -66,20 +81,18 @@ impl<'a> CwCallService<'a> {
         self.ensure_rollback_length(&rollback_data)?;
         println!("{LOG_PREFIX} Packet Validated");
 
-        // TODO : ADD fee logic
-
-        let sequence_no = self.increment_last_sequence_no(deps.storage)?;
+        let sequence_no = self.get_next_sn(deps.storage)?;
         let mut confirmed_sources = sources;
+        let from = NetworkAddress::new(&nid, &caller.to_string());
 
         if confirmed_sources.is_empty() {
-            let na = NetworkAddress::from_str(&to)?;
-            let default = self.get_default_connection(deps.as_ref().storage, na.get_nid())?;
+            let default = self.get_default_connection(deps.as_ref().storage, dst.get_nid())?;
             confirmed_sources = vec![default.to_string()]
         }
 
         if need_response {
             let request = CallRequest::new(
-                from_address,
+                caller.clone().to_string(),
                 to.clone(),
                 destinations.clone(),
                 rollback_data,
@@ -90,7 +103,7 @@ impl<'a> CwCallService<'a> {
         }
 
         let call_request = CallServiceMessageRequest::new(
-            info.sender.to_string(),
+            from.to_string(),
             to.clone(),
             sequence_no,
             destinations,
@@ -100,54 +113,40 @@ impl<'a> CwCallService<'a> {
 
         let message: CallServiceMessage = call_request.into();
 
-        let event = event_xcall_message_sent(info.sender.to_string(), sequence_no, &message);
-
-        let message = cw_common::xcall_connection_msg::ExecuteMsg::SendMessage {
-            to,
-            sn: 0,
-            msg: to_vec(&message).unwrap(),
-        };
-
+        
         let submessages = confirmed_sources
             .iter()
             .map(|r| {
-                let cosm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: r.to_string(),
-                    msg: to_binary(&message).map_err(ContractError::Std)?,
-                    funds: info.funds.clone(),
-                });
-                let submessage = SubMsg {
-                    id: SEND_CALL_MESSAGE_REPLY_ID,
-                    msg: cosm_msg,
-                    gas_limit: None,
-                    reply_on: cosmwasm_std::ReplyOn::Always,
-                };
-                println!("{LOG_PREFIX} sent message to connection :{r}");
-                Ok(submessage)
+                let bytes = rlp::encode(&message).to_vec();
+                return self
+                    .query_connection_fee(deps.as_ref(), dst.get_nid(), need_response, r)
+                    .and_then(|fee| {
+                        let fund = coins(fee, config.denom.clone());
+                        return self.call_connection_send_message(
+                            r.to_string(),
+                            fund,
+                            dst.get_nid().to_string(),
+                            sequence_no,
+                            need_response,
+                            bytes,
+                        );
+                    });
             })
             .collect::<Result<Vec<SubMsg>, ContractError>>()?;
+        let protocol_fee= self.get_protocol_fee(deps.storage)?;
+        let fee_handler=self.fee_handler().load(deps.storage)?;
+
+        let msg = BankMsg::Send { to_address: fee_handler, amount: coins(protocol_fee,config.denom)};
+        let event = event_xcall_message_sent(caller.to_string(), dst.to_string(), sequence_no);
+
 
         Ok(Response::new()
+            .add_message(msg)
             .add_submessages(submessages)
             .add_attribute("action", "xcall-service")
             .add_attribute("method", "send_packet")
             .add_attribute("sequence_no", sequence_no.to_string())
             .add_event(event))
-    }
-
-    pub fn query_protocol_fee(
-        &self,
-        querier: &QuerierWrapper,
-        connection: &str,
-    ) -> Result<u128, ContractError> {
-        let query_message = cw_common::xcall_connection_msg::QueryMsg::GetProtocolFee {};
-
-        let query_request = QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
-            contract_addr: connection.to_string(),
-            msg: to_binary(&query_message).map_err(ContractError::Std)?,
-        });
-        let fee: u128 = querier.query(&query_request).map_err(ContractError::Std)?;
-        Ok(fee)
     }
 }
 

@@ -52,8 +52,8 @@ impl Decodable for CallServiceMessageType {
         let data = rlp.data()?;
         let rlp = rlp::Rlp::new(data);
         match rlp.as_val::<u8>()? {
-            0 => Ok(Self::CallServiceRequest),
-            1 => Ok(Self::CallServiceResponse),
+            1 => Ok(Self::CallServiceRequest),
+            2 => Ok(Self::CallServiceResponse),
             _ => Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
         }
     }

@@ -13,7 +13,7 @@ pub enum ExecuteMsg {
         address: String,
     },
     SendMessage {
-        to: String,
+        nid_to: String,
         sn: i64,
         msg: Vec<u8>,
     },

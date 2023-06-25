@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::StdError;
 
+#[derive(Clone)]
 pub struct NetworkAddress {
     nid: String,
     account: String,

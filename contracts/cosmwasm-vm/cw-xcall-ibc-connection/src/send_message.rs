@@ -36,7 +36,7 @@ impl<'a> CwIbcConnection<'a> {
         println!("{LOG_PREFIX} Packet Validated");
 
         if sn < 0 {
-            // TODO: write acknowledgement
+            return self.write_acknowledgement();
         }
         let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
         let sequence_number_host = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
@@ -93,6 +93,10 @@ impl<'a> CwIbcConnection<'a> {
                 .add_submessage(submessage)
                 .add_attribute("method", "send_message"))
         }
+    }
+
+    fn write_acknowledgement(&self) -> Result<Response, ContractError> {
+        todo!()
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::types::LOG_PREFIX;
+use crate::types::{config::Config, LOG_PREFIX};
 
 use super::*;
 // version info for migration info
@@ -78,7 +78,10 @@ impl<'a> CwCallService<'a> {
                     CwCallService::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address)
             }
-            ExecuteMsg::SetProtocolFee { value } => self.set_protocol_fee(deps, info, value),
+            ExecuteMsg::SetProtocolFee { value } => {
+                self.set_protocol_fee(deps, info, value).unwrap();
+                Ok(Response::new())
+            }
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, env, info, address)
             }
@@ -92,9 +95,7 @@ impl<'a> CwCallService<'a> {
                 println!("{LOG_PREFIX} Received Send Call Message");
                 let sources = sources.unwrap_or(vec![]);
                 let dests = destinations.unwrap_or(vec![]);
-
-                self.validate_send_call(&sources, &dests, &deps.querier, &info)?;
-                self.send_packet(deps, info, env, to, sources, dests, data, rollback)
+                self.send_call_message(deps, info, env, to, sources, dests, data, rollback)
             }
             ExecuteMsg::HandleCallMessage { msg, from, sn } => {
                 self.receive_packet_data(deps, info, from, sn, msg)
@@ -116,7 +117,7 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::SetTimeoutHeight { height } => {
                 self.ensure_admin(deps.as_ref().storage, info.sender)?;
 
-                self.set_timeout_height(deps.storage, height)?;
+                self.store_timeout_height(deps.storage, height)?;
 
                 Ok(Response::new()
                     .add_attribute("method", "set_timeout_height")
@@ -159,7 +160,7 @@ impl<'a> CwCallService<'a> {
                 }),
             },
 
-            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps)),
+            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps.storage).unwrap()),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
             QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
         }
@@ -200,17 +201,20 @@ impl<'a> CwCallService<'a> {
 
     pub fn validate_send_call(
         &self,
+        deps: Deps,
+        nid: &str,
         sources: &Vec<String>,
         destinations: &Vec<String>,
-        querier: &QuerierWrapper,
+        rollback: &Option<Vec<u8>>,
         info: &MessageInfo,
     ) -> Result<(), ContractError> {
         if sources.len() != destinations.len() {
             return Err(ContractError::ProtocolsMismatch);
         }
+        let has_rollback = rollback.is_some();
         let fees = sources
             .iter()
-            .map(|r| self.query_protocol_fee(querier, r))
+            .map(|r| self.get_total_required_fee(deps, nid, has_rollback, sources))
             .collect::<Result<Vec<u128>, ContractError>>()?;
 
         let total_required_fee: u128 = fees.iter().sum();
@@ -252,13 +256,19 @@ impl<'a> CwCallService<'a> {
         self.add_admin(store, info, owner)?;
         self.init_last_sequence_no(store, last_sequence_no)?;
         self.init_last_request_id(store, last_request_id)?;
-        self.set_timeout_height(store, msg.timeout_height)?;
+        self.store_config(
+            store,
+            &Config {
+                network_id: msg.network_id,
+                denom: msg.denom,
+            },
+        )?;
+        // self.set_timeout_height(store, msg.timeout_height)?;
         // self.set_connection_host(store, msg.connection_host.clone())?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
-            .add_attribute("method", "init")
-            .add_attribute("ibc_host", msg.connection_host))
+            .add_attribute("method", "init"))
     }
 
     /// This function handles the response of a call to a service and generates a response with an
@@ -279,18 +289,18 @@ impl<'a> CwCallService<'a> {
     /// returned by the contract and `ContractError` is an enum representing any errors that may occur
     /// during contract execution.
     fn reply_execute_rollback(&self, deps: Deps, msg: Reply) -> Result<Response, ContractError> {
-        let sequence_no = self.last_sequence_no().load(deps.storage)?;
+        let sn = self.get_current_sn(deps.storage)?;
 
         let response = match msg.result {
             cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageResponse::new(
-                sequence_no,
+                sn,
                 CallServiceResponseType::CallServiceResponseSuccess,
                 "",
             ),
             cosmwasm_std::SubMsgResult::Err(err) => {
                 let error_message = format!("CallService Reverted : {err}");
                 CallServiceMessageResponse::new(
-                    sequence_no,
+                    sn,
                     CallServiceResponseType::CallServiceResponseFailure,
                     &error_message,
                 )
@@ -298,7 +308,7 @@ impl<'a> CwCallService<'a> {
         };
 
         let event = event_rollback_executed(
-            sequence_no,
+            sn,
             to_int(response.response_code()),
             &to_string(response.message()).unwrap(),
         );

@@ -13,8 +13,8 @@ use super::*;
 /// context it's difficult to say for sure.
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub timeout_height: u64,
-    pub connection_host: Addr,
+    pub network_id: String,
+    pub denom: String,
 }
 
 /// The `#[cw_serde]` attribute is used to automatically generate serialization and deserialization code

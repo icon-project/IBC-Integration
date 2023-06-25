@@ -15,7 +15,7 @@ impl<'a> CwCallService<'a> {
     /// a `Result` containing a `u128` value or a `ContractError` if an error occurs. The `u128` value
     /// represents the last sequence number stored in the contract's storage.
     pub fn query_last_sequence_no(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        let last_sequence = self.last_sequence_no().load(store)?;
+        let last_sequence = self.get_current_sn(store)?;
 
         Ok(last_sequence)
     }
@@ -38,15 +38,7 @@ impl<'a> CwCallService<'a> {
         &self,
         store: &mut dyn Storage,
     ) -> Result<u128, ContractError> {
-        let sequence_no =
-            self.last_sequence_no()
-                .update(store, |mut seq| -> Result<_, ContractError> {
-                    seq += 1;
-
-                    Ok(seq)
-                })?;
-
-        Ok(sequence_no)
+        return self.get_next_sn(store);
     }
 
     /// This function sets the last sequence number in a storage and returns the updated value.
@@ -69,12 +61,12 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         sequence: u128,
     ) -> Result<u128, ContractError> {
-        let req_id =
-            self.last_sequence_no()
-                .update(store, |mut seq| -> Result<_, ContractError> {
-                    seq.clone_from(&sequence);
-                    Ok(seq)
-                })?;
+        let req_id = self
+            .sn()
+            .update(store, |mut seq| -> Result<_, ContractError> {
+                seq.clone_from(&sequence);
+                Ok(seq)
+            })?;
 
         Ok(req_id)
     }
@@ -348,7 +340,7 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         sequence_no: u128,
     ) -> Result<(), ContractError> {
-        match self.last_sequence_no().save(store, &sequence_no) {
+        match self.sn().save(store, &sequence_no) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
