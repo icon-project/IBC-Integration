@@ -8,8 +8,8 @@ pub enum CallServiceMessageType {
 
 #[cw_serde]
 pub struct CallServiceMessage {
-    message_type: CallServiceMessageType,
-    payload: Vec<u8>,
+    pub message_type: CallServiceMessageType,
+    pub payload: Vec<u8>,
 }
 
 impl CallServiceMessage {
@@ -28,42 +28,29 @@ impl CallServiceMessage {
     }
 }
 
-impl Encodable for CallServiceMessageType {
-    fn rlp_append(&self, stream: &mut rlp::RlpStream) {
-        stream.begin_list(1);
-        match self {
-            CallServiceMessageType::CallServiceRequest => stream.append::<u128>(&1),
-            CallServiceMessageType::CallServiceResponse => stream.append::<u128>(&2),
-        };
-    }
-}
 
 impl Encodable for CallServiceMessage {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
-        stream
-            .begin_list(2)
-            .append(&self.message_type)
-            .append(&self.payload);
+        let msg_type: u8 = match self.message_type {
+            CallServiceMessageType::CallServiceRequest => 1,
+            CallServiceMessageType::CallServiceResponse => 2,
+        };
+        stream.begin_list(2).append(&msg_type).append(&self.payload);
     }
 }
 
-impl Decodable for CallServiceMessageType {
-    fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
-        let data = rlp.data()?;
-        let rlp = rlp::Rlp::new(data);
-        match rlp.as_val::<u8>()? {
-            1 => Ok(Self::CallServiceRequest),
-            2 => Ok(Self::CallServiceResponse),
-            _ => Err(rlp::DecoderError::Custom("Invalid Bytes Sequence")),
-        }
-    }
-}
 
 impl Decodable for CallServiceMessage {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+        let msg_type: u8 = rlp.val_at(0)?;
+
         Ok(Self {
+            message_type: match msg_type {
+                1 => Ok(CallServiceMessageType::CallServiceRequest),
+                2 => Ok(CallServiceMessageType::CallServiceResponse),
+                _ => Err(rlp::DecoderError::Custom("Invalid type")),
+            }?,
             payload: rlp.val_at(1)?,
-            message_type: rlp.val_at(0)?,
         })
     }
 }
@@ -112,4 +99,37 @@ impl From<CallServiceMessage> for Binary {
     fn from(value: CallServiceMessage) -> Self {
         Binary(rlp::encode(&value).to_vec())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use common::rlp;
+
+    use super::CallServiceMessage;
+    /**
+     * CSMessage
+     type: CSMessage.REQUEST
+     data: 7465737431
+     RLP: C701857465737431
+ 
+     CSMessage
+     type: CSMessage.RESPONSE
+     data: 7465737431
+     RLP: C702857465737431
+     */
+
+
+    #[test]
+    fn test_csmessage_encoding(){
+        let data=hex::decode("7465737431").unwrap();
+        let message= CallServiceMessage::new(super::CallServiceMessageType::CallServiceRequest, data.clone());
+        let encoded= rlp::encode(&message);
+
+        assert_eq!("c701857465737431",hex::encode(encoded));
+
+        let message=CallServiceMessage::new(crate::types::message::CallServiceMessageType::CallServiceResponse,data.clone());
+        let encoded= rlp::encode(&message);
+        assert_eq!("c702857465737431",hex::encode(encoded));
+    }
+
 }

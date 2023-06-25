@@ -288,6 +288,29 @@ impl Decodable for i64 {
     }
 }
 
+impl Encodable for i32 {
+    fn rlp_append(&self, s: &mut RlpStream) {
+        Encodable::rlp_append(&(*self as u64), s);
+    }
+}
+
+impl Decodable for i32 {
+    fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+        rlp.decoder().decode_value(|bytes| {
+            if bytes.len() as u32 > u32::BITS / 8 {
+                return Err(DecoderError::RlpInvalidLength);
+            }
+            let mut result: i32 = 0;
+
+            for &byte in bytes {
+                result <<= 8;
+                result |= byte as i32;
+            }
+            Ok(result)
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::rlp;
