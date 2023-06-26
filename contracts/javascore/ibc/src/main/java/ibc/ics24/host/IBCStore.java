@@ -30,6 +30,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String NEXT_CONNECTION_SEQUENCE = "nextConnectionSequence";
     private static final String NEXT_CHANNEL_SEQUENCE = "nextChannelSequence";
     private static final String BTP_NETWORK_ID = "btpNetworkId";
+    private static final String TIMEOUT_REQUESTS = "timeout_requests";
 
     // DB Variables
     // Commitments
@@ -194,6 +195,15 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
 
     public void setBTPNetworkId(String clientId, int btpNetworkId) {
         this.btpNetworkId.set(clientId, btpNetworkId);
+    }
+
+    @External(readonly = true)
+    public boolean getRequestTimeout(byte[] packetHash) {
+        return timeoutRequests.getOrDefault(packetHash, false);
+    }
+
+    public void setRequestTimeout(byte[] packetHash) {
+        timeoutRequests.set(packetHash, true);
     }
 
 }
