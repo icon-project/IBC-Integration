@@ -41,6 +41,7 @@ impl<'a> CwCallService<'a> {
         _env: Env,
         to: String,
         data: Vec<u8>,
+        timeout_height: u64,
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
@@ -106,7 +107,7 @@ impl<'a> CwCallService<'a> {
         );
 
         let message: CallServiceMessage = call_request.into();
-        let timeout_height = self.get_timeout_height(deps.as_ref().storage);
+        // let timeout_height = self.get_timeout_height(deps.as_ref().storage);
 
         debug_println!("the store timeout height is :{:?}", timeout_height);
 

@@ -194,6 +194,10 @@ pub enum ExecuteMsg {
         verify_channel_state: VerifyChannelState,
         next_seq_recv_verification_result: LightClientPacketMessage,
     },
+    PacketTimeout {
+        client_id: String,
+        next_seq_recv_verification_result: LightClientPacketMessage,
+    },
     VerifyPacketData {
         client_id: String,
         verify_packet_data: VerifyPacketData,
