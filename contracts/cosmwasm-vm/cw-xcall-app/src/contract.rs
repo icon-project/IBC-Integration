@@ -314,7 +314,7 @@ impl<'a> CwCallService<'a> {
 
         let event = event_rollback_executed(
             sn,
-            to_int(response.response_code()),
+            (response.response_code().clone()).into(),
             &to_string(response.message()).unwrap(),
         );
 

@@ -17,6 +17,7 @@ pub enum StorageKey {
     PendingRequests,
     PendingResponses,
     Config,
+    ExecuteReqId,
 }
 
 impl StorageKey {
@@ -37,6 +38,7 @@ impl StorageKey {
             StorageKey::PendingRequests => "pending_requests",
             StorageKey::PendingResponses => "pending_responses",
             StorageKey::Config => "config",
+            StorageKey::ExecuteReqId => "execute_request_id",
         }
     }
 }

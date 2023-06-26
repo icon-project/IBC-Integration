@@ -28,7 +28,7 @@ impl<'a> CwCallService<'a> {
         info: MessageInfo,
         sequence_no: u128,
     ) -> Result<Response, ContractError> {
-        let call_request = self.query_request(deps.storage, sequence_no)?;
+        let call_request = self.get_call_request(deps.storage, sequence_no)?;
 
         self.ensure_call_request_not_null(sequence_no, &call_request)
             .unwrap();
@@ -141,7 +141,7 @@ impl<'a> CwCallService<'a> {
             self.remove_pending_request_by_hash(deps.storage, key)?;
         }
 
-        self.insert_request(deps.storage, request_id, request)?;
+        self.store_proxy_request(deps.storage, request_id, &request)?;
 
         let event = event_call_message(
             from.to_string(),
@@ -188,7 +188,7 @@ impl<'a> CwCallService<'a> {
 
         let response_sequence_no = message.sequence_no();
 
-        let mut call_request = self.query_request(deps.storage, response_sequence_no)?;
+        let mut call_request = self.get_call_request(deps.storage, response_sequence_no)?;
 
         if call_request.is_null() {
             let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
@@ -227,12 +227,12 @@ impl<'a> CwCallService<'a> {
                 let event = match message.message().is_empty() {
                     true => event_response_message(
                         response_sequence_no,
-                        to_int(message.response_code()),
+                        (message.response_code().clone()).into(),
                         "",
                     ),
                     false => event_response_message(
                         response_sequence_no,
-                        to_int(message.response_code()),
+                        (message.response_code().clone()).into(),
                         message.message(),
                     ),
                 };
@@ -247,7 +247,7 @@ impl<'a> CwCallService<'a> {
                 self.ensure_rollback_length(call_request.rollback())
                     .unwrap();
                 call_request.set_enabled();
-                self.set_call_request(deps.storage, response_sequence_no, call_request)?;
+                self.store_call_request(deps.storage, response_sequence_no, &call_request)?;
 
                 let event = event_rollback_message(response_sequence_no);
 

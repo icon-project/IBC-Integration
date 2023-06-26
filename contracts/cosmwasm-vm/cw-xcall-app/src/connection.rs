@@ -1,7 +1,6 @@
-use crate::types::LOG_PREFIX;
-use cosmwasm_std::{
-    coins, to_binary, Coin, CosmosMsg, Deps, QuerierWrapper, QueryRequest, SubMsg, WasmMsg,
-};
+use crate::types::{message::CallServiceMessage, LOG_PREFIX};
+use common::rlp;
+use cosmwasm_std::{coins, to_binary, Coin, CosmosMsg, Deps, QueryRequest, SubMsg, WasmMsg};
 
 use crate::{
     error::ContractError,
@@ -11,20 +10,21 @@ use crate::{
 impl<'a> CwCallService<'a> {
     pub fn call_connection_send_message(
         &self,
-        address: String,
+        address: &str,
         fee: Vec<Coin>,
-        nid_to: String,
-        sequence_no: u128,
-        need_response: bool,
-        msg: Vec<u8>,
+        nid_to: &str,
+        sn: i64,
+        msg: &CallServiceMessage,
     ) -> Result<SubMsg, ContractError> {
-        let sn: i64 = if need_response { sequence_no } else { 0 }
-            .try_into()
-            .unwrap();
-        let message = cw_common::xcall_connection_msg::ExecuteMsg::SendMessage { nid_to, sn, msg };
+        let msg = rlp::encode(msg).to_vec();
+        let message = cw_common::xcall_connection_msg::ExecuteMsg::SendMessage {
+            nid_to: nid_to.to_string(),
+            sn,
+            msg,
+        };
 
         let cosm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: address.clone(),
+            contract_addr: address.to_string(),
             msg: to_binary(&message).map_err(ContractError::Std)?,
             funds: fee,
         });

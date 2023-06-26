@@ -98,7 +98,7 @@ impl<'a> CwCallService<'a> {
                 need_response,
             );
 
-            self.set_call_request(deps.storage, sequence_no, request)?;
+            self.store_call_request(deps.storage, sequence_no, &request)?;
         }
 
         let call_request = CallServiceMessageRequest::new(
@@ -111,22 +111,22 @@ impl<'a> CwCallService<'a> {
         );
 
         let message: CallServiceMessage = call_request.into();
+        let sn: i64 = if need_response { sequence_no as i64 } else { 0 };
 
         let submessages = confirmed_sources
             .iter()
             .map(|r| {
-                let bytes = rlp::encode(&message).to_vec();
                 return self
                     .query_connection_fee(deps.as_ref(), dst.get_nid(), need_response, r)
                     .and_then(|fee| {
                         let fund = coins(fee, config.denom.clone());
+
                         return self.call_connection_send_message(
-                            r.to_string(),
+                            &r.to_string(),
                             fund,
-                            dst.get_nid().to_string(),
-                            sequence_no,
-                            need_response,
-                            bytes,
+                            dst.get_nid(),
+                            sn,
+                            &message,
                         );
                     });
             })

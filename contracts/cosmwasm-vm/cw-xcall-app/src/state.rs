@@ -55,14 +55,15 @@ pub struct CwCallService<'a> {
     last_request_id: Item<'a, u128>,
     owner: Item<'a, String>,
     admin: Item<'a, String>,
-    message_request: Map<'a, u128, CallServiceMessageRequest>,
-    requests: Map<'a, u128, CallRequest>,
+    proxy_request: Map<'a, u128, CallServiceMessageRequest>,
+    call_requests: Map<'a, u128, CallRequest>,
     fee_handler: Item<'a, String>,
     protocol_fee: Item<'a, u128>,
     default_connections: Map<'a, String, Addr>,
     timeout_height: Item<'a, u64>,
     pending_requests: Map<'a, (Vec<u8>, String), bool>,
     pending_responses: Map<'a, (Vec<u8>, String), bool>,
+    execute_request_id: Item<'a, u128>,
 }
 
 impl<'a> Default for CwCallService<'a> {
@@ -78,8 +79,8 @@ impl<'a> CwCallService<'a> {
             last_request_id: Item::new(StorageKey::RequestNo.as_str()),
             owner: Item::new(StorageKey::Owner.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
-            message_request: Map::new(StorageKey::MessageRequest.as_str()),
-            requests: Map::new(StorageKey::Requests.as_str()),
+            proxy_request: Map::new(StorageKey::MessageRequest.as_str()),
+            call_requests: Map::new(StorageKey::Requests.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
             protocol_fee: Item::new(StorageKey::ProtocolFee.as_str()),
             default_connections: Map::new(StorageKey::DefaultConnections.as_str()),
@@ -87,6 +88,7 @@ impl<'a> CwCallService<'a> {
             pending_requests: Map::new(StorageKey::PendingRequests.as_str()),
             pending_responses: Map::new(StorageKey::PendingRequests.as_str()),
             config: Item::new(StorageKey::Config.as_str()),
+            execute_request_id: Item::new(StorageKey::RequestNo.as_str()),
         }
     }
 
@@ -121,6 +123,24 @@ impl<'a> CwCallService<'a> {
         &self.last_request_id
     }
 
+    pub fn store_execute_request_id(
+        &self,
+        store: &mut dyn Storage,
+        req_id: u128,
+    ) -> Result<(), ContractError> {
+        return self
+            .execute_request_id
+            .save(store, &req_id)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_execute_request_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        return self
+            .execute_request_id
+            .load(store)
+            .map_err(ContractError::Std);
+    }
+
     pub fn owner(&self) -> &Item<'a, String> {
         &self.owner
     }
@@ -129,12 +149,65 @@ impl<'a> CwCallService<'a> {
         &self.admin
     }
 
-    pub fn message_request(&self) -> &Map<'a, u128, CallServiceMessageRequest> {
-        &self.message_request
+    pub fn get_proxy_request(
+        &self,
+        store: &dyn Storage,
+        id: u128,
+    ) -> Result<CallServiceMessageRequest, ContractError> {
+        self.proxy_request
+            .load(store, id)
+            .map_err(ContractError::Std)
     }
 
-    pub fn call_requests(&self) -> &Map<'a, u128, CallRequest> {
-        &self.requests
+    pub fn store_proxy_request(
+        &self,
+        store: &mut dyn Storage,
+        id: u128,
+        request: &CallServiceMessageRequest,
+    ) -> Result<(), ContractError> {
+        self.proxy_request
+            .save(store, id, request)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn remove_proxy_request(&self, store: &mut dyn Storage, id: u128) {
+        self.proxy_request.remove(store, id)
+    }
+
+    pub fn contains_proxy_request(
+        &self,
+        store: &dyn Storage,
+        request_id: u128,
+    ) -> Result<(), ContractError> {
+        match self.proxy_request.has(store, request_id) {
+            true => Ok(()),
+            false => Err(ContractError::InvalidRequestId { id: request_id }),
+        }
+    }
+
+    pub fn get_call_request(
+        &self,
+        store: &dyn Storage,
+        id: u128,
+    ) -> Result<CallRequest, ContractError> {
+        self.call_requests
+            .load(store, id)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn remove_call_request(&self, store: &mut dyn Storage, id: u128) {
+        self.call_requests.remove(store, id)
+    }
+
+    pub fn store_call_request(
+        &self,
+        store: &mut dyn Storage,
+        id: u128,
+        request: &CallRequest,
+    ) -> Result<(), ContractError> {
+        self.call_requests
+            .save(store, id, request)
+            .map_err(ContractError::Std)
     }
 
     pub fn fee_handler(&self) -> &Item<'a, String> {

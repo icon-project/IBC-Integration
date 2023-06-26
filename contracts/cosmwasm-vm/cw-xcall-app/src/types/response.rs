@@ -7,9 +7,26 @@ pub enum CallServiceResponseType {
     CallServiceResponseSuccess,
 }
 
-pub fn to_int(response_type: &CallServiceResponseType) -> i8 {
-    response_type.clone() as i8
+
+impl Into<i8> for CallServiceResponseType {
+    fn into(self) -> i8 {
+        self.clone() as i8
+    }
 }
+
+impl TryFrom<i8> for CallServiceResponseType {
+    type Error=rlp::DecoderError;
+
+    fn try_from(value: i8) -> Result<Self, Self::Error> {
+        match value {
+            -2 => Ok(CallServiceResponseType::CallServiceIbcError),
+            -1 => Ok(CallServiceResponseType::CallServiceResponseFailure),
+            0 => Ok(CallServiceResponseType::CallServiceResponseSuccess),
+            _ => Err(rlp::DecoderError::Custom("Invalid type")),
+        }
+    }
+}
+
 
 #[cw_serde]
 pub struct CallServiceMessageResponse {
@@ -53,11 +70,7 @@ impl CallServiceMessageResponse {
 
 impl Encodable for CallServiceMessageResponse {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
-        let code: i8 = match self.response_code {
-            CallServiceResponseType::CallServiceResponseSuccess => 0,
-            CallServiceResponseType::CallServiceResponseFailure => -1,
-            CallServiceResponseType::CallServiceIbcError => -2,
-        };
+        let code: i8 = self.response_code.clone().into();
 
         stream
             .begin_list(3)
@@ -69,16 +82,11 @@ impl Encodable for CallServiceMessageResponse {
 
 impl Decodable for CallServiceMessageResponse {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
-        let code: i32 = rlp.val_at(1)?;
+        let code: i8= rlp.val_at(1)?;
 
         Ok(Self {
             sequence_no: rlp.val_at(0)?,
-            response_code: match code {
-                -2 => Ok(CallServiceResponseType::CallServiceIbcError),
-                -1 => Ok(CallServiceResponseType::CallServiceResponseFailure),
-                0 => Ok(CallServiceResponseType::CallServiceResponseSuccess),
-                _ => Err(rlp::DecoderError::Custom("Invalid type")),
-            }?,
+            response_code: CallServiceResponseType::try_from(code)?,
             message: rlp.val_at(2)?,
         })
     }
