@@ -821,22 +821,10 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
     ) -> Result<common::ibc::core::ics04_channel::packet::Receipt, ContractError> {
         let commitment_key = commitment::receipt_commitment_key(port_id, channel_id, sequence);
-        let commitment_end_bytes = self
-            .ibc_store()
-            .commitments()
-            .load(store, commitment_key)
-            .map_err(|_| ContractError::IbcDecodeError {
-                error: DecodeError::new("PacketCommitmentNotFound".to_string()),
-            })?;
-        let commitment: bool =
-            serde_json_wasm::from_slice(&commitment_end_bytes).map_err(|error| {
-                ContractError::IbcDecodeError {
-                    error: DecodeError::new(error.to_string()),
-                }
-            })?;
-        match commitment {
-            true => Ok(common::ibc::core::ics04_channel::packet::Receipt::Ok),
-            false => Err(ContractError::IbcPacketError {
+        let commitment_end_bytes = self.ibc_store().commitments().load(store, commitment_key);
+        match commitment_end_bytes {
+            Ok(bytes) => Ok(common::ibc::core::ics04_channel::packet::Receipt::Ok),
+            Err(err) => Err(ContractError::IbcPacketError {
                 error: PacketError::PacketReceiptNotFound { sequence },
             }),
         }
