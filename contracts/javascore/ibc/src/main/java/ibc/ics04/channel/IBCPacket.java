@@ -194,9 +194,14 @@ public class IBCPacket extends IBCChannelHandshake {
         commitments.set(packetCommitmentKey, null);
     }
 
-    public void _requestTimeout(Packet packet) {
+        public void _requestTimeout(Packet packet, byte[] proofHeight, byte[] proof) {
+
+                byte[] packet_hash = IBCCommitment.keccak256(packet.encode());
+                Context.require(!getRequestTimeout(packet_hash), "timeout packet request already exist");
+
         // TODO limit what packets can be timedout to limit spam creating of btp blocks.
-        Channel channel = Channel.decode(channels.at(packet.getDestinationPort()).get(packet.getDestinationChannel()));
+                Channel channel = Channel
+                                .decode(channels.at(packet.getDestinationPort()).get(packet.getDestinationChannel()));
         Context.require(
                 packet.getSourcePort().equals(channel.getCounterparty().getPortId()),
                 "packet destination port doesn't match the counterparty's port");
@@ -218,30 +223,47 @@ public class IBCPacket extends IBCChannelHandshake {
                 .compareTo(packet.getTimeoutTimestamp()) < 0;
         Context.require(heightTimeout || timeTimeout, "Packet has not yet timed out");
 
+                byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
+                                packet.getSourceChannel(), packet.getSequence());
+                byte[] commitmentBytes = createPacketCommitmentBytes(packet);
+                verifyPacketCommitment(
+                                connection,
+                                proofHeight,
+                                proof,
+                                commitmentPath,
+                                commitmentBytes);
+
         if (channel.getOrdering() == Channel.Order.ORDER_UNORDERED) {
             DictDB<BigInteger, Boolean> packetReceipt = packetReceipts.at(packet.getDestinationPort())
                     .at(packet.getDestinationChannel());
             Context.require(
                     packetReceipt.get(packet.getSequence()) == null,
                     "packet sequence already has been received");
+
             sendBTPMessage(connection.getClientId(), IBCCommitment.packetReceiptCommitmentKey(
-                    packet.getDestinationPort(), packet.getDestinationChannel(), packet.getSequence()));
+                                        packet.getDestinationPort(), packet.getDestinationChannel(),
+                                        packet.getSequence()));
         } else if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             DictDB<String, BigInteger> nextSequenceDestinationPort = nextSequenceReceives
                     .at(packet.getDestinationPort());
-            BigInteger nextSequenceRecv = nextSequenceDestinationPort.getOrDefault(packet.getDestinationChannel(),
+                        BigInteger nextSequenceRecv = nextSequenceDestinationPort.getOrDefault(
+                                        packet.getDestinationChannel(),
                     BigInteger.ZERO);
             Context.require(
                     nextSequenceRecv.equals(packet.getSequence()),
                     "packet sequence != next receive sequence");
 
-            byte[] recvCommitmentKey = IBCCommitment.nextSequenceRecvCommitmentKey(packet.getDestinationPort(),
+                        byte[] recvCommitmentKey = IBCCommitment.nextSequenceRecvCommitmentKey(
+                                        packet.getDestinationPort(),
                     packet.getDestinationChannel());
             byte[] recvCommitment = Proto.encodeFixed64(packet.getSequence(), false);
+                        // ordered channel: check that the recv sequence is as claimed
             sendBTPMessage(connection.getClientId(), ByteUtil.join(recvCommitmentKey, recvCommitment));
         } else {
             Context.revert("unknown ordering type");
         }
+                setRequestTimeout(packet_hash);
+
     }
 
     public void _timeoutPacket(Packet packet, byte[] proofHeight, byte[] proof, BigInteger nextSequenceRecv) {

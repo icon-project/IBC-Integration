@@ -3,8 +3,8 @@ package ibc.icon.interfaces;
 import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
 import ibc.icon.structs.messages.MsgPacketTimeout;
+import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
 import score.annotation.EventLog;
-
 
 import foundation.icon.score.client.ScoreClient;
 
@@ -62,8 +62,7 @@ public interface IIBCPacket {
      * {@code @dev} requestTimeout is called by a module in order to prove the
      * absence of a packet on a channel.
      */
-    void requestTimeout(byte[] packetPb);
-
+    void requestTimeout(MsgRequestTimeoutPacket msg);
 
     /**
      * {@code @dev} requestTimeout is called by a module in order to prove the

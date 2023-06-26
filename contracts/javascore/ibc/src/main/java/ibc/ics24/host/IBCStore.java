@@ -69,6 +69,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     public static final VarDB<BigInteger> nextChannelSequence = Context.newVarDB(NEXT_CHANNEL_SEQUENCE, BigInteger.class);
 
     public static final DictDB<String, Integer> btpNetworkId = Context.newDictDB(BTP_NETWORK_ID, Integer.class);
+    public static final DictDB<byte[], Boolean> timeoutRequests = Context.newDictDB(TIMEOUT_REQUESTS, Boolean.class);
 
     @External(readonly = true)
     public byte[] getCommitment(byte[] key) {
