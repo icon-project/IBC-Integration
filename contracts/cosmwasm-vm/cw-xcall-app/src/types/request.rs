@@ -129,7 +129,7 @@ mod tests {
      data: 74657374
      protocol: []
      RLP: F83F8B3078312E4554482F307861AA63783030303030303030303030303030303030303030303030303030303030303030303030303031303215008474657374C0
- 
+
      CSMessageRequest
      from: 0x1.ETH/0xa
      to: cx0000000000000000000000000000000000000102
@@ -138,7 +138,7 @@ mod tests {
      data: 74657374
      protocol: [abc, cde, efg]
      RLP: F84B8B3078312E4554482F307861AA63783030303030303030303030303030303030303030303030303030303030303030303030303031303215008474657374CC836162638363646583656667
- 
+
      CSMessageRequest
      from: 0x1.ETH/0xa
      to: cx0000000000000000000000000000000000000102
@@ -148,7 +148,7 @@ mod tests {
      protocol: [abc, cde, efg]
      RLP: F84B8B3078312E4554482F307861AA63783030303030303030303030303030303030303030303030303030303030303030303030303031303215018474657374CC836162638363646583656667
 
-    
+
      */
 
     use common::rlp;
@@ -156,47 +156,42 @@ mod tests {
     use super::CallServiceMessageRequest;
 
     #[test]
-    fn test_csmessage_request_encoding(){
-        let data=hex::decode("74657374").unwrap();
-        let msg= CallServiceMessageRequest::new(
+    fn test_csmessage_request_encoding() {
+        let data = hex::decode("74657374").unwrap();
+        let msg = CallServiceMessageRequest::new(
             "0x1.ETH/0xa".to_string(),
             "cx0000000000000000000000000000000000000102".to_string(),
             21,
             vec![],
             false,
-            data.clone()
+            data.clone(),
         );
 
-        let encoded=rlp::encode(&msg);
+        let encoded = rlp::encode(&msg);
         assert_eq!("f83f8b3078312e4554482f307861aa63783030303030303030303030303030303030303030303030303030303030303030303030303031303215008474657374c0",hex::encode(encoded));
 
-
-        let msg= CallServiceMessageRequest::new(
+        let msg = CallServiceMessageRequest::new(
             "0x1.ETH/0xa".to_string(),
             "cx0000000000000000000000000000000000000102".to_string(),
             21,
             vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             false,
-            data.clone()
+            data.clone(),
         );
 
-        let encoded=rlp::encode(&msg);
+        let encoded = rlp::encode(&msg);
         assert_eq!("f84b8b3078312e4554482f307861aa63783030303030303030303030303030303030303030303030303030303030303030303030303031303215008474657374cc836162638363646583656667",hex::encode(encoded));
 
-
-
-        let msg= CallServiceMessageRequest::new(
+        let msg = CallServiceMessageRequest::new(
             "0x1.ETH/0xa".to_string(),
             "cx0000000000000000000000000000000000000102".to_string(),
             21,
             vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             true,
-            data.clone()
+            data.clone(),
         );
 
-        let encoded=rlp::encode(&msg);
+        let encoded = rlp::encode(&msg);
         assert_eq!("f84b8b3078312e4554482f307861aa63783030303030303030303030303030303030303030303030303030303030303030303030303031303215018474657374cc836162638363646583656667",hex::encode(encoded));
-
-
     }
 }

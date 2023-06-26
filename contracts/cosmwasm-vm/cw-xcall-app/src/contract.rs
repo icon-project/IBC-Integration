@@ -1,3 +1,5 @@
+use cw_common::xcall_types::network_address::NetworkAddress;
+
 use crate::types::{config::Config, LOG_PREFIX};
 
 use super::*;
@@ -151,7 +153,7 @@ impl<'a> CwCallService<'a> {
     /// representation of the result of the query or an error if the query fails. The specific result
     /// being returned depends on the type of `QueryMsg` being passed in and the logic of the
     /// corresponding match arm.
-    pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::GetAdmin {} => match self.query_admin(deps.storage) {
                 Ok(admin) => Ok(to_binary(&admin)?),
@@ -163,6 +165,9 @@ impl<'a> CwCallService<'a> {
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps.storage).unwrap()),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
             QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
+            QueryMsg::GetNetworkAddress {} => {
+                to_binary(&self.get_network_address(deps.storage, &env).unwrap())
+            }
         }
     }
     /// This function handles different types of reply messages and calls corresponding functions based on
@@ -188,7 +193,7 @@ impl<'a> CwCallService<'a> {
 
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
-            EXECUTE_CALL_ID => self.reply_execute_call_message(deps.as_ref(), env, msg),
+            EXECUTE_CALL_ID => self.execute_call_reply(deps.as_ref(), env, msg),
             EXECUTE_ROLLBACK_ID => self.reply_execute_rollback(deps.as_ref(), msg),
             SEND_CALL_MESSAGE_REPLY_ID => self.reply_sendcall_message(msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
@@ -320,60 +325,6 @@ impl<'a> CwCallService<'a> {
     }
 
     #[allow(unused_variables)]
-    fn reply_execute_call_message(
-        &self,
-        deps: Deps,
-        env: Env,
-        msg: Reply,
-    ) -> Result<Response, ContractError> {
-        let req_id = self.last_request_id().load(deps.storage)?;
-        let request = self.message_request().load(deps.storage, req_id)?;
-
-        let responses = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let code = 0;
-
-                let message_response = CallServiceMessageResponse::new(
-                    request.sequence_no(),
-                    CallServiceResponseType::CallServiceResponseSuccess,
-                    "success",
-                );
-                let event = event_call_executed(req_id, code, message_response.message());
-                (message_response, event)
-            }
-            cosmwasm_std::SubMsgResult::Err(err) => {
-                let code = -1;
-                let error_message = format!("CallService Reverted : {err}");
-                let message_response = CallServiceMessageResponse::new(
-                    request.sequence_no(),
-                    CallServiceResponseType::CallServiceResponseFailure,
-                    &error_message,
-                );
-                let event = event_call_executed(req_id, code, &error_message);
-                (message_response, event)
-            }
-        };
-
-        if !request.rollback() {
-            let message: CallServiceMessage = responses.0.into();
-
-            #[cfg(feature = "native_ibc")]
-            {
-                let packet = self.create_packet_response(deps, env, to_binary(&message).unwrap());
-
-                return Ok(Response::new()
-                    .add_attribute("action", "call_message")
-                    .add_attribute("method", "execute_callback")
-                    .add_message(packet));
-            }
-        }
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_callback")
-            .add_event(responses.1))
-    }
-
     #[cfg(feature = "native_ibc")]
     fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
         let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
@@ -429,5 +380,16 @@ impl<'a> CwCallService<'a> {
                 })
             }
         }
+    }
+
+    pub fn get_network_address(
+        &self,
+        store: &dyn Storage,
+        env: &Env,
+    ) -> Result<String, ContractError> {
+        let config = self.get_config(store)?;
+        let address = env.contract.address.to_string();
+        let na = NetworkAddress::new(&config.network_id, &address);
+        Ok(na.to_string())
     }
 }

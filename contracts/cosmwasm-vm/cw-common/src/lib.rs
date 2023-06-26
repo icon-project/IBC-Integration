@@ -4,6 +4,8 @@ pub mod commitment;
 pub mod constants;
 pub mod core_msg;
 pub mod cw_types;
+pub mod dapp_msg;
+pub mod dapp_multi_msg;
 pub mod errors;
 pub mod hex_string;
 pub mod ibc_types;

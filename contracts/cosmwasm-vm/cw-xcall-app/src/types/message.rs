@@ -28,7 +28,6 @@ impl CallServiceMessage {
     }
 }
 
-
 impl Encodable for CallServiceMessage {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
         let msg_type: u8 = match self.message_type {
@@ -38,7 +37,6 @@ impl Encodable for CallServiceMessage {
         stream.begin_list(2).append(&msg_type).append(&self.payload);
     }
 }
-
 
 impl Decodable for CallServiceMessage {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
@@ -107,29 +105,33 @@ mod tests {
 
     use super::CallServiceMessage;
     /**
-     * CSMessage
-     type: CSMessage.REQUEST
-     data: 7465737431
-     RLP: C701857465737431
- 
-     CSMessage
-     type: CSMessage.RESPONSE
-     data: 7465737431
-     RLP: C702857465737431
-     */
+    * CSMessage
+    type: CSMessage.REQUEST
+    data: 7465737431
+    RLP: C701857465737431
 
+    CSMessage
+    type: CSMessage.RESPONSE
+    data: 7465737431
+    RLP: C702857465737431
+    */
 
     #[test]
-    fn test_csmessage_encoding(){
-        let data=hex::decode("7465737431").unwrap();
-        let message= CallServiceMessage::new(super::CallServiceMessageType::CallServiceRequest, data.clone());
-        let encoded= rlp::encode(&message);
+    fn test_csmessage_encoding() {
+        let data = hex::decode("7465737431").unwrap();
+        let message = CallServiceMessage::new(
+            super::CallServiceMessageType::CallServiceRequest,
+            data.clone(),
+        );
+        let encoded = rlp::encode(&message);
 
-        assert_eq!("c701857465737431",hex::encode(encoded));
+        assert_eq!("c701857465737431", hex::encode(encoded));
 
-        let message=CallServiceMessage::new(crate::types::message::CallServiceMessageType::CallServiceResponse,data.clone());
-        let encoded= rlp::encode(&message);
-        assert_eq!("c702857465737431",hex::encode(encoded));
+        let message = CallServiceMessage::new(
+            crate::types::message::CallServiceMessageType::CallServiceResponse,
+            data.clone(),
+        );
+        let encoded = rlp::encode(&message);
+        assert_eq!("c702857465737431", hex::encode(encoded));
     }
-
 }

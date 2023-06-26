@@ -5,56 +5,6 @@ use crate::ack::acknowledgement_data_on_success;
 use super::*;
 
 impl<'a> CwCallService<'a> {
-    /// This function executes a call message to a smart contract and returns a response with a
-    /// submessage.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which provides access to the contract's dependencies
-    /// such as storage, API, and querier. It is used to interact with the blockchain and other
-    /// contracts.
-    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
-    /// being executed, such as the sender address, the amount of funds sent with the message, and the
-    /// gas limit.
-    /// * `request_id`: `request_id` is a unique identifier for a specific request made by a user. It is
-    /// used to retrieve the details of the request from the contract's storage and execute the
-    /// corresponding action.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// message and `ContractError` is an enum representing the possible errors that can occur during
-    /// contract execution.
-    pub fn execute_call(
-        &self,
-        deps: DepsMut,
-        info: MessageInfo,
-        request_id: u128,
-    ) -> Result<Response, ContractError> {
-        let proxy_requests = self
-            .query_message_request(deps.storage, request_id)
-            .unwrap();
-
-        self.ensure_request_not_null(request_id, &proxy_requests)
-            .unwrap();
-
-        let message = XCallMessage {
-            data: proxy_requests.data()?.to_vec(),
-        };
-        let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: proxy_requests.to().to_string(),
-            msg: to_binary(&message).unwrap(),
-            funds: info.funds,
-        });
-
-        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_CALL_ID);
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_call")
-            .add_submessage(sub_msg))
-    }
-
     /// This function executes a rollback operation for a previously made call request.
     ///
     /// Arguments:

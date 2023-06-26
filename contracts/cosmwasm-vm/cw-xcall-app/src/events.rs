@@ -39,7 +39,7 @@ pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
 /// Returns:
 ///
 /// an instance of the `Event` struct.
-pub fn event_xcall_message_sent(from: String, destination:String, sn:u128) -> Event {
+pub fn event_xcall_message_sent(from: String, destination: String, sn: u128) -> Event {
     let event = Event::new("xcall_message_sent");
 
     event

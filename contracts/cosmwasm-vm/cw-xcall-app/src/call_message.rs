@@ -49,7 +49,6 @@ impl<'a> CwCallService<'a> {
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
-       
         let caller = info.sender.clone();
         let config = self.get_config(deps.as_ref().storage)?;
         let nid = config.network_id;
@@ -113,7 +112,6 @@ impl<'a> CwCallService<'a> {
 
         let message: CallServiceMessage = call_request.into();
 
-        
         let submessages = confirmed_sources
             .iter()
             .map(|r| {
@@ -133,12 +131,14 @@ impl<'a> CwCallService<'a> {
                     });
             })
             .collect::<Result<Vec<SubMsg>, ContractError>>()?;
-        let protocol_fee= self.get_protocol_fee(deps.storage)?;
-        let fee_handler=self.fee_handler().load(deps.storage)?;
+        let protocol_fee = self.get_protocol_fee(deps.storage)?;
+        let fee_handler = self.fee_handler().load(deps.storage)?;
 
-        let msg = BankMsg::Send { to_address: fee_handler, amount: coins(protocol_fee,config.denom)};
+        let msg = BankMsg::Send {
+            to_address: fee_handler,
+            amount: coins(protocol_fee, config.denom),
+        };
         let event = event_xcall_message_sent(caller.to_string(), dst.to_string(), sequence_no);
-
 
         Ok(Response::new()
             .add_message(msg)
