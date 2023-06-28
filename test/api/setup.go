@@ -33,12 +33,14 @@ type Server struct {
 		service  ibc.Relayer
 		reporter *testreporter.RelayerExecReporter
 	}
-	interchain *interchaintest.Interchain
-	ctx        context.Context
-	t          *testing.T
-	cfg        map[string]*Chain
-	ibcPath    string
-	contracts  map[string]chains.ContractKey
+	interchain           *interchaintest.Interchain
+	ctx                  context.Context
+	t                    *testing.T
+	cfg                  map[string]*Chain
+	interchainLinkOption ibc.CreateChannelOptions
+	interchainLink       interchaintest.InterchainLink
+	ibcPath              string
+	contracts            map[string]chains.ContractKey
 }
 
 func (s *Server) SetIBCPath(path string) {
@@ -58,33 +60,51 @@ func NewServer(t *testing.T) *Server {
 	if err != nil {
 		t.Fatal(err)
 	}
+	logger := zaptest.NewLogger(t)
+	interchainLinkOption := ibc.CreateChannelOptions{
+		SourcePortName: "mock",
+		DestPortName:   "mock",
+		Order:          ibc.Unordered,
+		Version:        "ics20-1",
+	}
+	ibcPath := chains.GetEnvOrDefault("IBC_PATH", "icon-cosmoshub")
+	relayer := struct {
+		service  ibc.Relayer
+		reporter *testreporter.RelayerExecReporter
+	}{reporter: configureLogReporter(t)}
 	server := &Server{
-		ctx:        context.Background(),
-		t:          t,
-		logger:     zaptest.NewLogger(t),
-		chains:     make(map[string]chains.Chain),
-		interchain: interchaintest.NewInterchain(),
-		cfg:        cfg.mapChains(),
-		contracts:  make(map[string]chains.ContractKey),
-		ibcPath:    "icon-cosmoshub",
-		relayer: struct {
-			service  ibc.Relayer
-			reporter *testreporter.RelayerExecReporter
-		}{reporter: configureLogReporter(t)},
+		ctx:                  context.Background(),
+		t:                    t,
+		logger:               logger,
+		chains:               cfg.BuildChains(t.Name(), logger),
+		interchain:           interchaintest.NewInterchain(),
+		cfg:                  cfg.mapChains(),
+		interchainLinkOption: interchainLinkOption,
+		interchainLink: interchaintest.InterchainLink{
+			CreateChannelOpts: interchainLinkOption,
+			Path:              ibcPath,
+			Relayer:           relayer.service,
+			CreateClientOpts: ibc.CreateClientOptions{
+				TrustingPeriod: "100000m",
+			},
+		},
+		contracts: make(map[string]chains.ContractKey),
+		ibcPath:   ibcPath,
+		relayer:   relayer,
 	}
 	server.setDockerClient(interchaintest.DockerSetup(t))
 	return server
 }
 
-func (s *Server) linkRelayer(image, tag, gid string) {
-	s.interchain.AddRelayer(s.setupRelayer(image, tag, gid).(ibc.Relayer), "relayer")
+func (s *Server) addRelayer(image, tag, gid string) {
+	s.interchain.AddRelayer(s.SetupRelayer(image, tag, gid).(ibc.Relayer), "relayer")
 }
 
-func (s *Server) linkChain(chainName string) {
+func (s *Server) addChain(chainName string) {
 	s.interchain.AddChain(s.getChain(chainName).(ibc.Chain))
 }
 
-func (s *Server) setupIBC(chain, keyName string) (context.Context, error) {
+func (s *Server) SetupIBC(chain, keyName string) (context.Context, error) {
 	s.contracts[chain] = s.ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
 	return s.getChain(chain).SetupIBC(s.ctx, keyName)
 }
@@ -93,26 +113,13 @@ func (s *Server) buildWallet(chain, keyName string) error {
 	return s.getChain(chain).BuildWallets(s.ctx, keyName)
 }
 
-func (s *Server) addLink(chain1, chain2 string) *interchaintest.Interchain {
-	opts := ibc.CreateChannelOptions{
-		SourcePortName: "mock",
-		DestPortName:   "mock",
-		Order:          ibc.Unordered,
-		Version:        "ics20-1",
-	}
-	return s.interchain.AddLink(interchaintest.InterchainLink{
-		Chain1:            s.getChain(chain1).(ibc.Chain),
-		Chain2:            s.getChain(chain2).(ibc.Chain),
-		Relayer:           s.relayer.service,
-		Path:              s.ibcPath,
-		CreateChannelOpts: opts,
-		CreateClientOpts: ibc.CreateClientOptions{
-			TrustingPeriod: "100000m",
-		},
-	})
+func (s *Server) LinkChain(chain1, chain2 string) {
+	s.interchainLink.Chain1 = s.getChain(chain1).(ibc.Chain)
+	s.interchainLink.Chain2 = s.getChain(chain2).(ibc.Chain)
+	s.interchain.AddLink(s.interchainLink)
 }
 
-func (s *Server) setupRelayer(image, tag, gid string) ibc.Relayer {
+func (s *Server) SetupRelayer(image, tag, gid string) ibc.Relayer {
 	option := relayer.CustomDockerImage(image, tag, gid)
 	relay := interchaintest.NewICONRelayerFactory(s.logger, option, relayer.ImagePull(false)).Build(s.t, s.docker.client, s.docker.networkID)
 	s.relayer.service = relay
@@ -181,6 +188,9 @@ func (s *Server) Serve(mux *http.ServeMux) func() error {
 	g.Go(func() error {
 		<-gCtx.Done()
 		return server.Shutdown(context.Background())
+	})
+	g.Go(func() error {
+		return server.ListenAndServe()
 	})
 	return func() error {
 		if err := g.Wait(); err != nil {

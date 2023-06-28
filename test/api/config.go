@@ -53,3 +53,13 @@ func (c *Chain) buildChain(testName string, log *zap.Logger) chains.Chain {
 		panic(fmt.Errorf("unexpected error, unknown chain type: %s for chain: %s", c.ChainConfig.Type, c.Name))
 	}
 }
+
+// map chains
+
+func (o *OuterConfig) BuildChains(testName string, log *zap.Logger) map[string]chains.Chain {
+	chains := make(map[string]chains.Chain)
+	for _, c := range o.ChainSpecs {
+		chains[c.Name] = c.buildChain(testName, log)
+	}
+	return chains
+}
