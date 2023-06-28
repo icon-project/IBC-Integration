@@ -655,17 +655,19 @@ fn fails_on_configure_connection_unauthorized() {
         .instantiate(deps.as_mut(), mock_env.clone(), mock_info, init_message)
         .unwrap();
 
-    let exec_message = ExecuteMsg::ConfigureConnection { connection_id:"connection-1".to_string(), destination_port_id: "mock".to_string(), counterparty_nid: "cnid".to_string(), 
-    lightclient_address: "lightclient".to_string(), client_id: "client_id".to_string(), timeout_height: 1000};
+    let exec_message = ExecuteMsg::ConfigureConnection {
+        connection_id: "connection-1".to_string(),
+        destination_port_id: "mock".to_string(),
+        counterparty_nid: "cnid".to_string(),
+        lightclient_address: "lightclient".to_string(),
+        client_id: "client_id".to_string(),
+        timeout_height: 1000,
+    };
 
     let mock_info = create_mock_info("bob", "umlg", 2000);
     contract
         .execute(deps.as_mut(), mock_env.clone(), mock_info, exec_message)
         .unwrap();
-
-   
-
-    
 }
 
 #[test]

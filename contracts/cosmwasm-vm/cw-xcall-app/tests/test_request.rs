@@ -10,10 +10,7 @@ fn update_sequence() {
 
     let contract = CwCallService::default();
 
-    contract
-        .sn()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
     let result = contract
         .query_last_sequence_no(mock_deps.as_ref().storage)
@@ -103,10 +100,7 @@ fn set_sequence() {
 
     let contract = CwCallService::default();
 
-    contract
-        .sn()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
     let updated = contract
         .set_last_sequence_no(mock_deps.as_mut().storage, 20)

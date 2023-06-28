@@ -6,5 +6,3 @@ pub struct NetworkFees {
     pub send_packet_fee: u128,
     pub ack_fee: u128,
 }
-
-

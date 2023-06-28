@@ -28,10 +28,7 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
 
     let contract = CwCallService::default();
 
-    contract
-        .sn()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -82,10 +79,7 @@ fn send_packet_failure_due_data_len() {
 
     let contract = CwCallService::default();
 
-    contract
-        .sn()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
@@ -132,10 +126,7 @@ fn send_packet_failure_due_rollback_len() {
 
     let contract = CwCallService::default();
 
-    contract
-        .sn()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
@@ -180,10 +171,7 @@ fn send_packet_success_needresponse() {
 
     let contract = CwCallService::default();
 
-    contract
-        .sn()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
     mock_deps.querier.update_wasm(|r| {
         let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);

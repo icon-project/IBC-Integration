@@ -21,8 +21,8 @@ fn proper_instantiate() {
         env,
         mock_info,
         InstantiateMsg {
-            network_id:"nid".to_string(),
-            denom:"arch".to_string()
+            network_id: "nid".to_string(),
+            denom: "arch".to_string(),
         },
     )
     .unwrap();

@@ -23,8 +23,8 @@ use crate::{
     ack::{make_ack_fail, make_ack_success},
     error::ContractError,
     events::{
-        event_call_message, event_response_message,
-        event_rollback_message, event_xcall_message_sent,
+        event_call_message, event_response_message, event_rollback_message,
+        event_xcall_message_sent,
     },
     msg::{InstantiateMsg, QueryMsg},
     state::{
@@ -48,7 +48,6 @@ use cosmwasm_std::{
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
-
 
 use cw2::set_contract_version;
 use cw_common::types::Ack;

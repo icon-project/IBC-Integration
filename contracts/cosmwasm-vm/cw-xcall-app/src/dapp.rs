@@ -1,9 +1,6 @@
 use cosmwasm_std::{to_binary, Binary, CosmosMsg, MessageInfo, StdError, SubMsg, WasmMsg};
 
-use crate::{
-    error::ContractError,
-    state::{CwCallService},
-};
+use crate::{error::ContractError, state::CwCallService};
 
 impl<'a> CwCallService<'a> {
     pub fn call_dapp_handle_message(
@@ -51,7 +48,7 @@ impl<'a> CwCallService<'a> {
             data,
             protocols,
         };
-        
+
         to_binary(&message)
     }
 }

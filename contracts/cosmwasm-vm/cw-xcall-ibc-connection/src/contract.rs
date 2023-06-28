@@ -7,7 +7,7 @@ use cw_common::{query_helpers::build_smart_query, raw_types::channel::RawPacket}
 use debug_print::debug_println;
 
 use crate::{
-    state::XCALL_HANDLE_MESSAGE_REPLY_ID,
+    state::{XCALL_HANDLE_MESSAGE_REPLY_ID, HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID},
     types::{
         channel_config::ChannelConfig, connection_config::ConnectionConfig, message::Message,
         LOG_PREFIX,
@@ -242,7 +242,8 @@ impl<'a> CwIbcConnection<'a> {
     pub fn reply(&self, deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             XCALL_HANDLE_MESSAGE_REPLY_ID => self.xcall_handle_message_reply(deps, msg),
-            _XCALL_SEND_MESSAGE_REPLY_ID => self.xcall_send_message_reply(deps, msg),
+            HOST_SEND_MESSAGE_REPLY_ID => self.host_send_message_reply(deps, msg),
+            HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID=>self.host_write_acknowledgement_reply(deps, msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
@@ -308,7 +309,7 @@ impl<'a> CwIbcConnection<'a> {
         }
     }
 
-    fn xcall_send_message_reply(
+    fn host_send_message_reply(
         &self,
         _deps: DepsMut,
         message: Reply,
@@ -318,6 +319,23 @@ impl<'a> CwIbcConnection<'a> {
             SubMsgResult::Ok(_) => Ok(Response::new()
                 .add_attribute("action", "call_message")
                 .add_attribute("method", "reply_forward_host")),
+            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
+                code: message.id,
+                msg: error,
+            }),
+        }
+    }
+
+    fn host_write_acknowledgement_reply(
+        &self,
+        _deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        println!("{LOG_PREFIX} Reply From Write Acknowledgement Host");
+        match message.result {
+            SubMsgResult::Ok(_) => Ok(Response::new()
+                .add_attribute("action", "call_message")
+                .add_attribute("method", "reply_write_acknowledgement")),
             SubMsgResult::Err(error) => Err(ContractError::ReplyError {
                 code: message.id,
                 msg: error,
@@ -579,8 +597,7 @@ impl<'a> CwIbcConnection<'a> {
         let destination = channel.counterparty_endpoint.clone();
         let channel_id = source.channel_id.clone();
 
-        let nid =
-            self.get_counterparty_nid(store, &channel.connection_id, &destination.port_id)?;
+        let nid = self.get_counterparty_nid(store, &channel.connection_id, &destination.port_id)?;
         let connection_config = self.get_connection_config(store, &channel.connection_id)?;
         let ibc_config = IbcConfig::new(source, destination);
         debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
@@ -654,7 +671,7 @@ impl<'a> CwIbcConnection<'a> {
         let timeout_height =
             self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
         let packet = self.create_packet(ibc_config, timeout_height, sequence_no, message);
-        let sub_msg = self.call_xcall_send_message(deps, info, packet)?;
+        let sub_msg = self.call_host_send_message(deps, info, packet)?;
         Ok(sub_msg)
     }
 
@@ -678,42 +695,5 @@ impl<'a> CwIbcConnection<'a> {
         packet
     }
 
-    pub fn query_timeout_height(
-        &self,
-        deps: Deps,
-        channel_id: &str,
-    ) -> Result<Height, ContractError> {
-        let channel_config = self.get_channel_config(deps.storage, channel_id)?;
-        let ibc_host = self.get_ibc_host(deps.storage)?;
-        let message = to_binary(&cw_common::core_msg::QueryMsg::GetLatestHeight {
-            client_id: channel_config.client_id,
-        })
-        .unwrap();
-        let query = build_smart_query(ibc_host.to_string(), message);
-        let latest_height: u64 = deps.querier.query(&query).map_err(ContractError::Std)?;
-        let timeout_height = latest_height + channel_config.timeout_height;
-        Ok(Height::new(0, timeout_height).unwrap())
-    }
-
-    pub fn query_host_sequence_no(
-        &self,
-        deps: Deps,
-        ibc_config: &IbcConfig,
-    ) -> Result<u64, ContractError> {
-        let ibc_host = self.get_ibc_host(deps.storage)?;
-        let query_message = to_binary(&cw_common::core_msg::QueryMsg::GetNextSequenceSend {
-            port_id: ibc_config.src_endpoint().clone().port_id,
-            channel_id: ibc_config.src_endpoint().clone().channel_id,
-        })
-        .unwrap();
-
-        let query_request = build_smart_query(ibc_host.to_string(), query_message);
-        println!("{LOG_PREFIX} Created Query Request {ibc_host}");
-
-        let sequence_number_host: u64 = deps
-            .querier
-            .query(&query_request)
-            .map_err(ContractError::Std)?;
-        Ok(sequence_number_host)
-    }
+    
 }

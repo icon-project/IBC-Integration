@@ -130,15 +130,13 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         req_id: u128,
     ) -> Result<(), ContractError> {
-        self
-            .execute_request_id
+        self.execute_request_id
             .save(store, &req_id)
             .map_err(ContractError::Std)
     }
 
     pub fn get_execute_request_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        self
-            .execute_request_id
+        self.execute_request_id
             .load(store)
             .map_err(ContractError::Std)
     }
@@ -148,15 +146,13 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         req_id: u128,
     ) -> Result<(), ContractError> {
-        self
-            .execute_rollback_id
+        self.execute_rollback_id
             .save(store, &req_id)
             .map_err(ContractError::Std)
     }
 
     pub fn get_execute_rollback_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        self
-            .execute_rollback_id
+        self.execute_rollback_id
             .load(store)
             .map_err(ContractError::Std)
     }
@@ -379,8 +375,7 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         fee: u128,
     ) -> Result<(), ContractError> {
-        self
-            .protocol_fee
+        self.protocol_fee
             .save(store, &fee)
             .map_err(ContractError::Std)
     }

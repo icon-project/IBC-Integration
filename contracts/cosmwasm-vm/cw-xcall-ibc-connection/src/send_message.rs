@@ -1,19 +1,12 @@
-
-
 use common::rlp::Nullable;
-use cosmwasm_std::{
-    DepsMut, Env, MessageInfo, Response,
-};
-
-
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage};
+use cw_common::raw_types::channel::RawPacket;
 
 use crate::{
     error::ContractError,
-    state::CwIbcConnection,
+    state::{CwIbcConnection, IbcConfig},
     types::{message::Message, network_fees::NetworkFees, LOG_PREFIX},
 };
-
-
 
 impl<'a> CwIbcConnection<'a> {
     pub fn send_message(
@@ -29,11 +22,12 @@ impl<'a> CwIbcConnection<'a> {
 
         self.ensure_data_length(message.len())?;
         println!("{LOG_PREFIX} Packet Validated");
+        let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
 
         if sn < 0 {
-            return self.write_acknowledgement();
+            return self.write_acknowledgement(deps.storage, &ibc_config, message, sn);
         }
-        let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
+
         let sequence_number_host = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
         let network_fee = self
             .get_network_fees(deps.as_ref().storage, &nid)
@@ -83,15 +77,32 @@ impl<'a> CwIbcConnection<'a> {
 
             println!("{} Raw Packet Created {:?}", LOG_PREFIX, &packet_data);
 
-            let submessage = self.call_xcall_send_message(deps, info, packet_data)?;
+            let submessage = self.call_host_send_message(deps, info, packet_data)?;
             Ok(Response::new()
                 .add_submessage(submessage)
                 .add_attribute("method", "send_message"))
         }
     }
 
-    fn write_acknowledgement(&self) -> Result<Response, ContractError> {
-        todo!()
+    fn write_acknowledgement(
+        &self,
+        store: &mut dyn Storage,
+        config: &IbcConfig,
+        msg: Vec<u8>,
+        sn: i64,
+    ) -> Result<Response, ContractError> {
+        let channel_id = config.src_endpoint().channel_id.clone();
+        let sequence_no = self.get_incoming_packet_sequence(store, &channel_id, sn)?;
+        self.remove_incoming_packet_sequence(store, &channel_id, sn);
+
+        let packet = RawPacket {
+            sequence: sequence_no,
+            destination_port: config.src_endpoint().port_id.clone(),
+            destination_channel: channel_id,
+            ..Default::default()
+        };
+        let submsg = self.call_host_write_acknowledgement(store, packet, msg)?;
+        Ok(Response::new().add_submessage(submsg))
     }
 }
 

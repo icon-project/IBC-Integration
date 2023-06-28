@@ -176,8 +176,8 @@ fn check_for_rollback_in_response() {
         .unwrap();
 
     contract
-        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id).unwrap();
-        
+        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
+        .unwrap();
 
     let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
 
@@ -222,8 +222,8 @@ fn check_for_rollback_response_failure() {
         .unwrap();
 
     contract
-        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id).unwrap();
-       
+        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
+        .unwrap();
 
     let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
 
@@ -254,11 +254,10 @@ fn execute_rollback_success() {
 
     contract
         .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
-       
         .unwrap();
 
     let response = contract
-        .execute_rollback(mock_deps.as_mut(),mock_env(), mock_info, seq_id)
+        .execute_rollback(mock_deps.as_mut(), mock_env(), mock_info, seq_id)
         .unwrap();
 
     match response.messages[0].msg.clone() {
@@ -297,13 +296,12 @@ fn execute_rollback_failure() {
         .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
         .unwrap();
 
-        contract
+    contract
         .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
-       
         .unwrap();
 
     let response = contract
-        .execute_rollback(mock_deps.as_mut(),mock_env(), mock_info, seq_id)
+        .execute_rollback(mock_deps.as_mut(), mock_env(), mock_info, seq_id)
         .unwrap();
 
     match response.messages[0].msg.clone() {

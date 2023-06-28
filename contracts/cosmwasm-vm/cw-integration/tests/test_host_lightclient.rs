@@ -7,7 +7,7 @@ use common::ibc::events::IbcEventType;
 
 use cosmwasm_std::{from_binary, testing::mock_env, to_binary, Addr, Empty, Querier, QueryRequest};
 
-use cw_common::{core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query};
+use cw_common::{core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query, raw_types::connection::RawConnectionEnd};
 
 use cw_integration::TestSteps;
 use cw_multi_test::{App, AppResponse, Executor};
@@ -296,6 +296,22 @@ pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppErro
     )
 }
 
+pub fn call_configure_connection(ctx: &mut TestContext,connection_id:String,nid:String,client_id:String) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_xcall_ibc_connection(),
+        &cw_common::xcall_connection_msg::ExecuteMsg::ConfigureConnection {
+             connection_id, 
+             destination_port_id: "mock".to_string(), 
+             counterparty_nid: nid, 
+             lightclient_address: ctx.get_light_client().to_string(), 
+             client_id, 
+             timeout_height: 10,
+            },
+        &[],
+    )
+}
+
 #[test]
 fn test_register_client() {
     let mut ctx = setup_test("icon_to_archway_raw.json");
@@ -369,16 +385,32 @@ fn test_icon_to_arcway_handshake() -> TestContext {
 
     assert!(response.is_ok());
     println!("Create Client OK");
+    let event = get_event(&response.unwrap(), &get_event_name(IbcEventType::CreateClient)).unwrap();
+    let client_id = event.get("client_id").unwrap().to_string();
+    println!("Clientid is {}",client_id);
 
     let result = call_connection_open_try(&mut ctx);
 
     assert!(result.is_ok());
     println!("Conn Open Try Ok {:?}", &result);
 
+
     let result = call_connection_open_confirm(&mut ctx);
 
     assert!(result.is_ok());
     println!("Conn Open Confirm Ok {:?}", &result);
+    // now need to setup connection configuration for multi call
+    let event = get_event(&result.unwrap(), &get_event_name(IbcEventType::OpenConfirmConnection)).unwrap();
+    println!("{:?}",event);
+    let connection_id = event.get("connection_id").unwrap().to_string();
+    let nid= "icon".to_string();
+
+    let result= call_configure_connection(&mut ctx, connection_id, nid, client_id);
+
+    assert!(result.is_ok());
+    println!("Configure Connection Ok {:?}", &result);
+
+
 
     let result = call_channel_open_try(&mut ctx);
 

@@ -102,7 +102,11 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::HandleCallMessage { msg, from, sn } => {
                 self.handle_call_message(deps, info, from, sn, msg)
             }
-            ExecuteMsg::HandleError { sn: _, code: _, msg: _ } => {
+            ExecuteMsg::HandleError {
+                sn: _,
+                code: _,
+                msg: _,
+            } => {
                 todo!()
             }
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),

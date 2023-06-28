@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-
 use cosmwasm_std::{coins, BankMsg};
 use cw_common::xcall_types::network_address::NetworkAddress;
 

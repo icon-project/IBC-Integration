@@ -1,7 +1,3 @@
-
-
-
-
 use super::*;
 /// This is an implementation of two methods for the `CwCallService` struct.
 
