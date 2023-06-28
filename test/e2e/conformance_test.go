@@ -33,7 +33,9 @@ func TestConformance(t *testing.T) {
 
 	// Create the request body
 	body := map[string]string{
-		"test": "value",
+		"image": "relay",
+		"tag":   "latest",
+		"gid":   "1000:1000",
 	}
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
