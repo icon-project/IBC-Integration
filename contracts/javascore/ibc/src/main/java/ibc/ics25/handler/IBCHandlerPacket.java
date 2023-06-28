@@ -103,8 +103,7 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
 
     @External
     public void requestTimeout(MsgRequestTimeoutPacket msg) {
-        Packet packet = Packet.decode(msg.getPacket());
-        _requestTimeout(packet, msg.getProofHeight(), msg.getProof());
+        _requestTimeout(msg);
 
         TimeoutRequest(msg.getPacket());
     }

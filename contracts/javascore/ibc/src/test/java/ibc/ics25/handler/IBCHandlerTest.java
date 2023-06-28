@@ -111,9 +111,13 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     @Test
     void requestTimeoutPacket() throws Exception {
         establishCommunication();
+        MsgRequestTimeoutPacket timeoutPacket=new MsgRequestTimeoutPacket();
         Packet packet = getBaseCounterPacket();
         sm.getBlock().increase(timeoutHeight.longValue());
-        requestTimeout(packet);
+        timeoutPacket.setPacket(packet.toByteArray());
+        timeoutPacket.setProofHeight(new byte[0]);
+        timeoutPacket.setProof(new byte[0]);
+        requestTimeout(timeoutPacket);
     }
 
     @Test
