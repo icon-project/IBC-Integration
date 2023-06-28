@@ -14,3 +14,8 @@ func HandleError(w http.ResponseWriter, err error, statusCode int) {
 	w.WriteHeader(statusCode)
 	w.Write([]byte(err.Error()))
 }
+
+func HandleSuccess(w http.ResponseWriter, msg string, statusCode int) {
+	w.WriteHeader(statusCode)
+	w.Write([]byte(msg))
+}

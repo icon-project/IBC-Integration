@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"testing"
 	"time"
 
@@ -51,6 +48,10 @@ func (s *Server) SetIBCPath(path string) {
 
 func (s *Server) GetIBCPath(path string) string {
 	return s.ibcPath
+}
+
+func (s *Server) GetContractAddress(chainName string) string {
+	return s.contracts[chainName].ContractAddress["dapp"]
 }
 
 func (s *Server) getChain(name string) chains.Chain {
@@ -119,11 +120,30 @@ func (s *Server) SetupIBC(chain, keyName string) (context.Context, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.overrideConfig()
 	return s.setupConnection(ctx, chain, keyName)
 }
 
 func (s *Server) BuildWallet(chain, keyName string) error {
 	return s.getChain(chain).BuildWallets(s.ctx, keyName)
+}
+
+func (s *Server) ExecuteCall(srcChain, dstChain, keyName string, msg, rollback []byte) (any, error) {
+	sourceChain := s.getChain(srcChain)
+	destChain := s.getChain(dstChain)
+	dst := s.cfg[dstChain].ChainConfig.ChainID + "/" + s.GetContractAddress(dstChain)
+	sn, reqID, err := sourceChain.XCall(context.Background(), destChain, keyName, dst, msg, rollback)
+	if err != nil {
+		return nil, err
+	}
+	ctx, err := destChain.ExecuteCall(s.ctx, reqID)
+	if err != nil {
+		return nil, err
+	}
+	if rollback != nil {
+		ctx, err = sourceChain.ExecuteRollback(ctx, sn)
+	}
+	return ctx, nil
 }
 
 func (s *Server) LinkChain(chain1, chain2 string) error {
@@ -181,28 +201,18 @@ func (s *Server) overrideConfig() {
 	}
 }
 
-func (s *Server) Serve(mux *http.ServeMux) func() error {
-	ctx, cancel := context.WithCancel(s.ctx)
-	go func() {
-		c := make(chan os.Signal, syscall.SIGTERM)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-		<-c
-		cancel()
-	}()
-	g, gCtx := errgroup.WithContext(ctx)
+func (s *Server) StopRelayer() error {
+	return s.relayer.service.StopRelayer(s.ctx, s.relayer.reporter)
+}
+
+func (s *Server) Serve(gCtx context.Context, wg *errgroup.Group, mux *http.ServeMux) func(context.Context) error {
 	server := &http.Server{Addr: ":8080", Handler: mux, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second}
-	g.Go(func() error {
+	wg.Go(func() error {
 		<-gCtx.Done()
 		return server.Shutdown(context.Background())
 	})
-	g.Go(func() error {
+	wg.Go(func() error {
 		return server.ListenAndServe()
 	})
-	return func() error {
-		if err := g.Wait(); err != nil {
-			s.relayer.service.StopRelayer(s.ctx, s.relayer.reporter)
-			return fmt.Errorf("Server stopped, reason: %s", err)
-		}
-		return nil
-	}
+	return server.Shutdown
 }
