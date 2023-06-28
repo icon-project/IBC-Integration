@@ -188,7 +188,7 @@ mod tests {
             21,
             vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             true,
-            data.clone(),
+            data,
         );
 
         let encoded = rlp::encode(&msg);

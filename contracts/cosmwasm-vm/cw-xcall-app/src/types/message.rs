@@ -129,7 +129,7 @@ mod tests {
 
         let message = CallServiceMessage::new(
             crate::types::message::CallServiceMessageType::CallServiceResponse,
-            data.clone(),
+            data,
         );
         let encoded = rlp::encode(&message);
         assert_eq!("c702857465737431", hex::encode(encoded));

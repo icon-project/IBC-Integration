@@ -214,7 +214,7 @@ impl<'a> CwIbcConnection<'a> {
                 if response {
                     return to_binary(&fees.ack_fee);
                 }
-                return to_binary(&fees.send_packet_fee);
+                to_binary(&fees.send_packet_fee)
             }
         }
     }
@@ -242,7 +242,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn reply(&self, deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             XCALL_HANDLE_MESSAGE_REPLY_ID => self.xcall_handle_message_reply(deps, msg),
-            XCALL_SEND_MESSAGE_REPLY_ID => self.xcall_send_message_reply(deps, msg),
+            _XCALL_SEND_MESSAGE_REPLY_ID => self.xcall_send_message_reply(deps, msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
@@ -434,7 +434,7 @@ impl<'a> CwIbcConnection<'a> {
     ///
     /// A `Result` containing a `Response` or a `ContractError`.
     pub fn on_channel_close(&self, msg: CwChannelCloseMsg) -> Result<Response, ContractError> {
-        let ibc_endpoint = match msg.clone() {
+        let ibc_endpoint = match msg {
             CwChannelCloseMsg::CloseInit { channel } => channel.endpoint,
             CwChannelCloseMsg::CloseConfirm { channel } => channel.endpoint,
         };
@@ -559,11 +559,11 @@ impl<'a> CwIbcConnection<'a> {
         seq: u64,
         relayer: String,
     ) -> Result<BankMsg, ContractError> {
-        let mut ack_fee = self.get_unclaimed_ack_fee(store, &nid, seq)?;
-        self.reset_unclaimed_ack_fees(store, &nid, seq)?;
+        let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq)?;
+        self.reset_unclaimed_ack_fees(store, nid, seq)?;
 
         let msg = BankMsg::Send {
-            to_address: relayer.to_string(),
+            to_address: relayer,
             amount: coins(ack_fee, "arch"),
         };
 
@@ -580,9 +580,9 @@ impl<'a> CwIbcConnection<'a> {
         let channel_id = source.channel_id.clone();
 
         let nid =
-            self.get_counterparty_nid(store, &channel.connection_id.clone(), &destination.port_id)?;
+            self.get_counterparty_nid(store, &channel.connection_id, &destination.port_id)?;
         let connection_config = self.get_connection_config(store, &channel.connection_id)?;
-        let ibc_config = IbcConfig::new(source.clone(), destination.clone());
+        let ibc_config = IbcConfig::new(source, destination);
         debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
 
         self.store_ibc_config(store, &nid, &ibc_config)?;

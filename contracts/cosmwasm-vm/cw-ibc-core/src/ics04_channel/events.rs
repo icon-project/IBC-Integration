@@ -457,3 +457,16 @@ pub fn create_recieve_packet_event(
         .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order)
         .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id)
 }
+
+pub fn write_acknowledgement_event(
+    port_id: String,
+    channel_id: String,
+    sequence: u64,
+    ack: Vec<u8>,
+) -> Event {
+    Event::new(IbcEventType::WriteAck.as_str())
+        .add_attribute(PKT_ACK_HEX_ATTRIBUTE_KEY, hex::encode(ack))
+        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, sequence.to_string())
+        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, port_id)
+        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, channel_id)
+}

@@ -38,7 +38,7 @@ impl<'a> CwCallService<'a> {
         &self,
         store: &mut dyn Storage,
     ) -> Result<u128, ContractError> {
-        return self.get_next_sn(store);
+        self.get_next_sn(store)
     }
 
     /// This function sets the last sequence number in a storage and returns the updated value.

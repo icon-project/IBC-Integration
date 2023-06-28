@@ -1,6 +1,6 @@
 use crate::types::{message::CallServiceMessage, LOG_PREFIX};
 use common::rlp;
-use cosmwasm_std::{coins, to_binary, Coin, CosmosMsg, Deps, QueryRequest, SubMsg, WasmMsg};
+use cosmwasm_std::{to_binary, Coin, CosmosMsg, Deps, QueryRequest, SubMsg, WasmMsg};
 
 use crate::{
     error::ContractError,

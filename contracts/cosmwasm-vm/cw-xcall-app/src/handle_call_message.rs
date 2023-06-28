@@ -5,53 +5,6 @@ use crate::ack::acknowledgement_data_on_success;
 use super::*;
 
 impl<'a> CwCallService<'a> {
-    /// This function executes a rollback operation for a previously made call request.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: A mutable reference to the dependencies of the contract, which includes access to the
-    /// storage and other modules.
-    /// * `info`: `info` is a struct that contains information about the message sender, such as their
-    /// address and the amount of funds they are sending with the message. It is of type `MessageInfo`.
-    /// * `sequence_no`: The sequence number is a unique identifier assigned to each XCall request made
-    /// by the user. It is used to track the status of the request and to ensure that the correct request
-    /// is being executed or rolled back.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// contract execution and `ContractError` is an enum representing possible errors that can occur
-    /// during contract execution.
-    pub fn execute_rollback(
-        &self,
-        deps: DepsMut,
-        info: MessageInfo,
-        sequence_no: u128,
-    ) -> Result<Response, ContractError> {
-        let call_request = self.get_call_request(deps.storage, sequence_no)?;
-
-        self.ensure_call_request_not_null(sequence_no, &call_request)
-            .unwrap();
-        self.ensure_rollback_enabled(call_request.enabled())
-            .unwrap();
-
-        let message = XCallMessage {
-            data: call_request.rollback().to_vec(),
-        };
-        let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: call_request.to().to_string(),
-            msg: to_binary(&message).unwrap(),
-            funds: info.funds,
-        });
-
-        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_ROLLBACK_ID);
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_call")
-            .add_submessage(sub_msg))
-    }
-
     /// This function receives packet data, decodes it, and then handles either a request or a response
     /// based on the message type.
     ///
@@ -69,7 +22,7 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// a `Result` object with either an `IbcReceiveResponse` or a `ContractError`.
-    pub fn receive_packet_data(
+    pub fn handle_call_message(
         &self,
         deps: DepsMut,
         info: MessageInfo,
@@ -81,7 +34,7 @@ impl<'a> CwCallService<'a> {
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
-                self.hanadle_request(deps, info, call_service_message.payload())
+                self.handle_request(deps, info, call_service_message.payload())
             }
             CallServiceMessageType::CallServiceResponse => {
                 self.handle_response(deps, info, call_service_message.payload())
@@ -106,7 +59,7 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// an `IbcReceiveResponse` object wrapped in a `Result` with a possible `ContractError`.
-    pub fn hanadle_request(
+    pub fn handle_request(
         &self,
         deps: DepsMut,
         info: MessageInfo,

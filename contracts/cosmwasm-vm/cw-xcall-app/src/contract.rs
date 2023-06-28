@@ -100,14 +100,14 @@ impl<'a> CwCallService<'a> {
                 self.send_call_message(deps, info, env, to, sources, dests, data, rollback)
             }
             ExecuteMsg::HandleCallMessage { msg, from, sn } => {
-                self.receive_packet_data(deps, info, from, sn, msg)
+                self.handle_call_message(deps, info, from, sn, msg)
             }
-            ExecuteMsg::HandleError { sn, code, msg } => {
+            ExecuteMsg::HandleError { sn: _, code: _, msg: _ } => {
                 todo!()
             }
             ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
             ExecuteMsg::ExecuteRollback { sequence_no } => {
-                self.execute_rollback(deps, info, sequence_no)
+                self.execute_rollback(deps, env, info, sequence_no)
             }
             ExecuteMsg::UpdateAdmin { address } => {
                 let validated_address =
@@ -194,7 +194,7 @@ impl<'a> CwCallService<'a> {
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             EXECUTE_CALL_ID => self.execute_call_reply(deps.as_ref(), env, msg),
-            EXECUTE_ROLLBACK_ID => self.reply_execute_rollback(deps.as_ref(), msg),
+            EXECUTE_ROLLBACK_ID => self.execute_rollback_reply(deps.as_ref(), msg),
             SEND_CALL_MESSAGE_REPLY_ID => self.reply_sendcall_message(msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
@@ -219,7 +219,7 @@ impl<'a> CwCallService<'a> {
         let has_rollback = rollback.is_some();
         let fees = sources
             .iter()
-            .map(|r| self.get_total_required_fee(deps, nid, has_rollback, sources))
+            .map(|_r| self.get_total_required_fee(deps, nid, has_rollback, sources))
             .collect::<Result<Vec<u128>, ContractError>>()?;
 
         let total_required_fee: u128 = fees.iter().sum();
@@ -274,54 +274,6 @@ impl<'a> CwCallService<'a> {
         Ok(Response::new()
             .add_attribute("action", "instantiate")
             .add_attribute("method", "init"))
-    }
-
-    /// This function handles the response of a call to a service and generates a response with an
-    /// event.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is an instance of the `Deps` struct, which provides access to the contract's
-    /// dependencies such as storage, API, and context.
-    /// * `msg`: `msg` is a `Reply` struct that contains the result of a sub-message that was sent by
-    /// the contract to another contract or external system. It is used to construct a
-    /// `CallServiceMessageResponse` that will be returned as part of the `Response` to the original
-    /// message that triggered the
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to be
-    /// returned by the contract and `ContractError` is an enum representing any errors that may occur
-    /// during contract execution.
-    fn reply_execute_rollback(&self, deps: Deps, msg: Reply) -> Result<Response, ContractError> {
-        let sn = self.get_current_sn(deps.storage)?;
-
-        let response = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageResponse::new(
-                sn,
-                CallServiceResponseType::CallServiceResponseSuccess,
-                "",
-            ),
-            cosmwasm_std::SubMsgResult::Err(err) => {
-                let error_message = format!("CallService Reverted : {err}");
-                CallServiceMessageResponse::new(
-                    sn,
-                    CallServiceResponseType::CallServiceResponseFailure,
-                    &error_message,
-                )
-            }
-        };
-
-        let event = event_rollback_executed(
-            sn,
-            (response.response_code().clone()).into(),
-            &to_string(response.message()).unwrap(),
-        );
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_rollback")
-            .add_event(event))
     }
 
     #[allow(unused_variables)]

@@ -21,8 +21,8 @@ fn proper_instantiate() {
         env,
         mock_info,
         InstantiateMsg {
-            timeout_height: 10,
-            connection_host: Addr::unchecked("someaddress"),
+            network_id:"nid".to_string(),
+            denom:"arch".to_string()
         },
     )
     .unwrap();

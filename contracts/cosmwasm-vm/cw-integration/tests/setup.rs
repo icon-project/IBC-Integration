@@ -271,8 +271,9 @@ pub fn init_xcall_app_contract(mut ctx: TestContext) -> TestContext {
             xcall_app_contractcode_id,
             ctx.sender.clone(),
             &cw_xcall_app::msg::InstantiateMsg {
-                connection_host: ctx.get_xcall_ibc_connection(),
-                timeout_height: 10,
+                network_id:"nid".to_string(),
+                denom:"uarch".to_string()
+             
             },
             &[],
             "XCallApp",

@@ -23,7 +23,7 @@ fn test_execute_call_invalid_request_id() {
     let deps = mock_dependencies();
 
     cw_callservice
-        .contains_request(&deps.storage, 123456)
+        .contains_proxy_request(&deps.storage, 123456)
         .unwrap();
 }
 
@@ -44,7 +44,7 @@ fn test_execute_call_having_request_id_without_rollback() {
         vec![104, 101, 108, 108, 111],
     );
     cw_callservice
-        .insert_request(deps.as_mut().storage, request_id, proxy_requests)
+        .store_proxy_request(deps.as_mut().storage, request_id, &proxy_requests)
         .unwrap();
 
     let res = cw_callservice
@@ -96,7 +96,7 @@ fn test_successful_reply_message() {
         vec![],
     );
     contract
-        .insert_request(mock_deps.as_mut().storage, request_id, proxy_requests)
+        .store_proxy_request(mock_deps.as_mut().storage, request_id, &proxy_requests)
         .unwrap();
 
     contract
@@ -132,7 +132,7 @@ fn test_failed_reply_message() {
         vec![],
     );
     contract
-        .insert_request(mock_deps.as_mut().storage, request_id, proxy_requests)
+        .store_proxy_request(mock_deps.as_mut().storage, request_id, &proxy_requests)
         .unwrap();
 
     contract
@@ -172,13 +172,12 @@ fn check_for_rollback_in_response() {
     );
 
     contract
-        .set_call_request(mock_deps.as_mut().storage, seq_id, request)
+        .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
         .unwrap();
 
     contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &seq_id)
-        .unwrap();
+        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id).unwrap();
+        
 
     let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
 
@@ -191,7 +190,7 @@ fn test_invalid_sequence_no() {
     let deps = mock_dependencies();
     let contract = CwCallService::new();
     contract
-        .query_request(deps.as_ref().storage, 123456)
+        .get_proxy_request(deps.as_ref().storage, 123456)
         .unwrap();
 }
 
@@ -219,13 +218,12 @@ fn check_for_rollback_response_failure() {
     );
 
     contract
-        .set_call_request(mock_deps.as_mut().storage, seq_id, request)
+        .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
         .unwrap();
 
     contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &seq_id)
-        .unwrap();
+        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id).unwrap();
+       
 
     let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
 
@@ -251,16 +249,16 @@ fn execute_rollback_success() {
     );
 
     contract
-        .set_call_request(mock_deps.as_mut().storage, seq_id, request)
+        .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
         .unwrap();
 
     contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &seq_id)
+        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
+       
         .unwrap();
 
     let response = contract
-        .execute_rollback(mock_deps.as_mut(), mock_info, seq_id)
+        .execute_rollback(mock_deps.as_mut(),mock_env(), mock_info, seq_id)
         .unwrap();
 
     match response.messages[0].msg.clone() {
@@ -296,16 +294,16 @@ fn execute_rollback_failure() {
     );
 
     contract
-        .set_call_request(mock_deps.as_mut().storage, seq_id, request)
+        .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
         .unwrap();
 
-    contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &seq_id)
+        contract
+        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
+       
         .unwrap();
 
     let response = contract
-        .execute_rollback(mock_deps.as_mut(), mock_info, seq_id)
+        .execute_rollback(mock_deps.as_mut(),mock_env(), mock_info, seq_id)
         .unwrap();
 
     match response.messages[0].msg.clone() {

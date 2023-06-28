@@ -64,6 +64,7 @@ pub struct CwCallService<'a> {
     pending_requests: Map<'a, (Vec<u8>, String), bool>,
     pending_responses: Map<'a, (Vec<u8>, String), bool>,
     execute_request_id: Item<'a, u128>,
+    execute_rollback_id: Item<'a, u128>,
 }
 
 impl<'a> Default for CwCallService<'a> {
@@ -88,27 +89,28 @@ impl<'a> CwCallService<'a> {
             pending_requests: Map::new(StorageKey::PendingRequests.as_str()),
             pending_responses: Map::new(StorageKey::PendingRequests.as_str()),
             config: Item::new(StorageKey::Config.as_str()),
-            execute_request_id: Item::new(StorageKey::RequestNo.as_str()),
+            execute_request_id: Item::new(StorageKey::ExecuteReqId.as_str()),
+            execute_rollback_id: Item::new(StorageKey::ExecuteRollbackId.as_str()),
         }
     }
 
     pub fn get_next_sn(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
         let mut sn = self.sn.load(store).unwrap_or(0);
-        sn = sn + 1;
+        sn += 1;
         self.sn.save(store, &sn)?;
-        return Ok(sn);
+        Ok(sn)
     }
 
     pub fn get_current_sn(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        return self.sn.load(store).map_err(ContractError::Std);
+        self.sn.load(store).map_err(ContractError::Std)
     }
 
     pub fn sn(&self) -> &Item<'a, u128> {
-        return &self.sn;
+        &self.sn
     }
 
     pub fn get_config(&self, store: &dyn Storage) -> Result<Config, ContractError> {
-        return self.config.load(store).map_err(ContractError::Std);
+        self.config.load(store).map_err(ContractError::Std)
     }
 
     pub fn store_config(
@@ -116,7 +118,7 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         config: &Config,
     ) -> Result<(), ContractError> {
-        return self.config.save(store, config).map_err(ContractError::Std);
+        self.config.save(store, config).map_err(ContractError::Std)
     }
 
     pub fn last_request_id(&self) -> &Item<'a, u128> {
@@ -128,17 +130,35 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         req_id: u128,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .execute_request_id
             .save(store, &req_id)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn get_execute_request_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        return self
+        self
             .execute_request_id
             .load(store)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
+    }
+
+    pub fn store_execute_rollback_id(
+        &self,
+        store: &mut dyn Storage,
+        req_id: u128,
+    ) -> Result<(), ContractError> {
+        self
+            .execute_rollback_id
+            .save(store, &req_id)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn get_execute_rollback_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        self
+            .execute_rollback_id
+            .load(store)
+            .map_err(ContractError::Std)
     }
 
     pub fn owner(&self) -> &Item<'a, String> {
@@ -352,16 +372,16 @@ impl<'a> CwCallService<'a> {
     }
 
     pub fn get_protocol_fee(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        return self.protocol_fee.load(store).map_err(ContractError::Std);
+        self.protocol_fee.load(store).map_err(ContractError::Std)
     }
     pub fn store_protocol_fee(
         &self,
         store: &mut dyn Storage,
         fee: u128,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .protocol_fee
             .save(store, &fee)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 }

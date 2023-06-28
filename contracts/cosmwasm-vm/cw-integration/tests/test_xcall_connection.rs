@@ -41,8 +41,8 @@ pub fn call_send_call_message(
             to: to.to_string(),
             data,
             rollback,
-            sources,
-            destinations,
+            sources:Some(sources),
+            destinations:Some(destinations),
         },
         &[],
     )
@@ -58,13 +58,13 @@ pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppErro
         &[],
     )
 }
-pub fn call_set_ibc_config(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+pub fn call_set_ibc_config(ctx: &mut TestContext,nid:String) -> Result<AppResponse, AppError> {
     let config = to_vec(&mock_ibc_config()).unwrap();
 
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_xcall_ibc_connection(),
-        &cw_common::xcall_connection_msg::ExecuteMsg::SetIbcConfig { ibc_config: config },
+        &cw_common::xcall_connection_msg::ExecuteMsg::SetIbcConfig { ibc_config: config,nid },
         &[],
     )
 }
@@ -72,7 +72,7 @@ pub fn call_set_ibc_config(ctx: &mut TestContext) -> Result<AppResponse, AppErro
 fn send_packet_success() {
     let mut ctx = setup_test();
     call_set_xcall_host(&mut ctx).unwrap();
-    call_set_ibc_config(&mut ctx).unwrap();
+    call_set_ibc_config(&mut ctx,"nid".to_string()).unwrap();
     let src = ctx.get_xcall_ibc_connection().to_string();
     let result = call_send_call_message(
         &mut ctx,

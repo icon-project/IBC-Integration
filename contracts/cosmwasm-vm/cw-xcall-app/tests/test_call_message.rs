@@ -29,7 +29,7 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
     let contract = CwCallService::default();
 
     contract
-        .last_sequence_no()
+        .sn()
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
@@ -56,7 +56,7 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
     };
 
     let result = contract
-        .send_packet(
+        .send_call_message(
             mock_deps.as_mut(),
             mock_info,
             mock_env(),
@@ -83,7 +83,7 @@ fn send_packet_failure_due_data_len() {
     let contract = CwCallService::default();
 
     contract
-        .last_sequence_no()
+        .sn()
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
@@ -107,7 +107,7 @@ fn send_packet_failure_due_data_len() {
     });
 
     contract
-        .send_packet(
+        .send_call_message(
             mock_deps.as_mut(),
             mock_info,
             mock_env(),
@@ -133,7 +133,7 @@ fn send_packet_failure_due_rollback_len() {
     let contract = CwCallService::default();
 
     contract
-        .last_sequence_no()
+        .sn()
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
@@ -157,7 +157,7 @@ fn send_packet_failure_due_rollback_len() {
     });
 
     contract
-        .send_packet(
+        .send_call_message(
             mock_deps.as_mut(),
             mock_info,
             mock_env(),
@@ -181,7 +181,7 @@ fn send_packet_success_needresponse() {
     let contract = CwCallService::default();
 
     contract
-        .last_sequence_no()
+        .sn()
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
@@ -209,18 +209,18 @@ fn send_packet_success_needresponse() {
     });
 
     contract
-        .set_default_connection(
+        .store_default_connection(
             mock_deps.as_mut().storage,
             "btp".to_owned(),
             Addr::unchecked("hostaddress"),
         )
         .unwrap();
-    contract
-        .set_timeout_height(mock_deps.as_mut().storage, 10)
-        .unwrap();
+    // contract
+    //     .set_timeout_height(mock_deps.as_mut().storage, 10)
+    //     .unwrap();
 
     contract
-        .send_packet(
+        .send_call_message(
             mock_deps.as_mut(),
             mock_info,
             mock_env(),
@@ -233,8 +233,7 @@ fn send_packet_success_needresponse() {
         .unwrap();
 
     let result = contract
-        .call_requests()
-        .load(mock_deps.as_ref().storage, 1)
+        .get_call_request(mock_deps.as_ref().storage, 1)
         .unwrap();
 
     assert!(result.enabled())

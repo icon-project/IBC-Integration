@@ -7,15 +7,14 @@ pub enum CallServiceResponseType {
     CallServiceResponseSuccess,
 }
 
-
-impl Into<i8> for CallServiceResponseType {
-    fn into(self) -> i8 {
-        self.clone() as i8
+impl From<CallServiceResponseType> for i8 {
+    fn from(val: CallServiceResponseType) -> Self {
+        val as i8
     }
 }
 
 impl TryFrom<i8> for CallServiceResponseType {
-    type Error=rlp::DecoderError;
+    type Error = rlp::DecoderError;
 
     fn try_from(value: i8) -> Result<Self, Self::Error> {
         match value {
@@ -26,7 +25,6 @@ impl TryFrom<i8> for CallServiceResponseType {
         }
     }
 }
-
 
 #[cw_serde]
 pub struct CallServiceMessageResponse {
@@ -82,7 +80,7 @@ impl Encodable for CallServiceMessageResponse {
 
 impl Decodable for CallServiceMessageResponse {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
-        let code: i8= rlp.val_at(1)?;
+        let code: i8 = rlp.val_at(1)?;
 
         Ok(Self {
             sequence_no: rlp.val_at(0)?,

@@ -2,7 +2,7 @@ use cosmwasm_std::{to_binary, Binary, CosmosMsg, MessageInfo, StdError, SubMsg, 
 
 use crate::{
     error::ContractError,
-    state::{CwCallService, EXECUTE_CALL_ID},
+    state::{CwCallService},
 };
 
 impl<'a> CwCallService<'a> {
@@ -13,6 +13,7 @@ impl<'a> CwCallService<'a> {
         from: &str,
         data: Vec<u8>,
         protocols: Vec<String>,
+        reply_id: u64,
     ) -> Result<SubMsg, ContractError> {
         let cosm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: to.to_string(),
@@ -22,7 +23,7 @@ impl<'a> CwCallService<'a> {
             funds: info.funds,
         });
         let submessage = SubMsg {
-            id: EXECUTE_CALL_ID,
+            id: reply_id,
             msg: cosm_msg,
             gas_limit: None,
             reply_on: cosmwasm_std::ReplyOn::Always,
@@ -37,7 +38,7 @@ impl<'a> CwCallService<'a> {
         data: Vec<u8>,
         protocols: Vec<String>,
     ) -> Result<Binary, StdError> {
-        if protocols.len() == 0 {
+        if protocols.is_empty() {
             let message = cw_common::dapp_msg::ExecuteMsg::HandleCallMessage {
                 from: from.to_string(),
                 data,
@@ -48,9 +49,9 @@ impl<'a> CwCallService<'a> {
         let message = cw_common::dapp_multi_msg::ExecuteMsg::HandleCallMessage {
             from: from.to_string(),
             data,
-            protocols: protocols,
+            protocols,
         };
-        let msg = to_binary(&message);
-        return msg;
+        
+        to_binary(&message)
     }
 }

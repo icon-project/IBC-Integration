@@ -196,7 +196,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     Self::from_raw::<RawMessageAcknowledgement, MsgAcknowledgement>(&msg)?;
                 self.acknowledgement_packet_validate(deps, info, env, &message)
             }
-            CoreExecuteMsg::RequestTimeout {} => todo!(),
             CoreExecuteMsg::Timeout { msg } => {
                 let message: MsgTimeout = Self::from_raw::<RawMessageTimeout, MsgTimeout>(&msg)?;
                 self.timeout_packet_validate(
@@ -230,6 +229,15 @@ impl<'a> CwIbcCoreContext<'a> {
                 Ok(Response::new()
                     .add_attribute("method", "set_expected_time_per_block")
                     .add_attribute("time", block_time.to_string()))
+            }
+            CoreExecuteMsg::WriteAcknowledgement {
+                packet,
+                acknowledgement,
+            } => {
+                let packet_data = packet.to_bytes()?;
+                let packet: RawPacket = RawPacket::decode(packet_data.as_slice())?;
+                let ack = acknowledgement.to_bytes()?;
+                self.write_acknowledgement(deps, info, packet, ack)
             }
         }
         // Ok(Response::new())

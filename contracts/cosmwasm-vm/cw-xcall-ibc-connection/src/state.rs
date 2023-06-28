@@ -158,10 +158,10 @@ impl<'a> CwIbcConnection<'a> {
         store: &dyn Storage,
         nid: &str,
     ) -> Result<IbcConfig, ContractError> {
-        return self
+        self
             .ibc_config
             .load(store, nid.to_owned())
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn store_ibc_config(
@@ -170,10 +170,10 @@ impl<'a> CwIbcConnection<'a> {
         nid: &str,
         config: &IbcConfig,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .ibc_config
             .save(store, nid.to_owned(), config)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
     pub fn set_ibc_host(
         &self,
@@ -213,10 +213,10 @@ impl<'a> CwIbcConnection<'a> {
         store: &dyn Storage,
         channel: &str,
     ) -> Result<ChannelConfig, ContractError> {
-        return self
+        self
             .channel_configs
             .load(store, channel.to_owned())
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn store_channel_config(
@@ -225,10 +225,10 @@ impl<'a> CwIbcConnection<'a> {
         channel: &str,
         channel_config: &ChannelConfig,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .channel_configs
             .save(store, channel.to_owned(), channel_config)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn get_connection_config(
@@ -236,10 +236,10 @@ impl<'a> CwIbcConnection<'a> {
         store: &dyn Storage,
         connection_id: &str,
     ) -> Result<ConnectionConfig, ContractError> {
-        return self
+        self
             .connection_configs
             .load(store, connection_id.to_owned())
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn store_connection_config(
@@ -248,10 +248,10 @@ impl<'a> CwIbcConnection<'a> {
         connection_id: &str,
         config: &ConnectionConfig,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .connection_configs
             .save(store, connection_id.to_string(), config)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn get_counterparty_nid(
@@ -260,10 +260,10 @@ impl<'a> CwIbcConnection<'a> {
         connection_id: &str,
         port_id: &str,
     ) -> Result<String, ContractError> {
-        return self
+        self
             .configured_networks
             .load(store, (connection_id.to_string(), port_id.to_string()))
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn store_counterparty_nid(
@@ -273,14 +273,14 @@ impl<'a> CwIbcConnection<'a> {
         port_id: &str,
         nid: &str,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .configured_networks
             .save(
                 store,
                 (connection_id.to_owned(), port_id.to_owned()),
                 &nid.to_string(),
             )
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn get_network_fees(
@@ -288,10 +288,10 @@ impl<'a> CwIbcConnection<'a> {
         store: &dyn Storage,
         nid: &str,
     ) -> Result<NetworkFees, ContractError> {
-        return self
+        self
             .network_fees
             .load(store, nid.to_string())
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn store_network_fees(
@@ -300,10 +300,10 @@ impl<'a> CwIbcConnection<'a> {
         nid: &str,
         network_fees: &NetworkFees,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .network_fees
-            .save(store, nid.to_owned(), &network_fees)
-            .map_err(ContractError::Std);
+            .save(store, nid.to_owned(), network_fees)
+            .map_err(ContractError::Std)
     }
 
     pub fn add_unclaimed_packet_fees(
@@ -317,11 +317,11 @@ impl<'a> CwIbcConnection<'a> {
             .unclaimed_packet_fees
             .load(store, (nid.to_owned(), address.to_string()))
             .unwrap_or(0);
-        acc = acc + value;
-        return self
+        acc += value;
+        self
             .unclaimed_packet_fees
             .save(store, (nid.to_owned(), address.to_owned()), &value)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn get_unclaimed_packet_fee(
@@ -330,10 +330,10 @@ impl<'a> CwIbcConnection<'a> {
         nid: &str,
         address: &str,
     ) -> Result<u128, ContractError> {
-        return self
+        self
             .unclaimed_packet_fees
             .load(store, (nid.to_owned(), address.to_owned()))
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn reset_unclaimed_packet_fees(
@@ -342,10 +342,10 @@ impl<'a> CwIbcConnection<'a> {
         nid: &str,
         address: &str,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .unclaimed_packet_fees
             .save(store, (nid.to_owned(), address.to_owned()), &0_u128)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn add_unclaimed_ack_fees(
@@ -359,11 +359,11 @@ impl<'a> CwIbcConnection<'a> {
             .unclaimed_ack_fees
             .load(store, (nid.to_owned(), sequence))
             .unwrap_or(0);
-        acc = acc + value;
-        return self
+        acc += value;
+        self
             .unclaimed_ack_fees
             .save(store, (nid.to_owned(), sequence), &value)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn get_unclaimed_ack_fee(
@@ -372,10 +372,10 @@ impl<'a> CwIbcConnection<'a> {
         nid: &str,
         sequence: u64,
     ) -> Result<u128, ContractError> {
-        return self
+        self
             .unclaimed_ack_fees
             .load(store, (nid.to_owned(), sequence))
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn reset_unclaimed_ack_fees(
@@ -384,10 +384,10 @@ impl<'a> CwIbcConnection<'a> {
         nid: &str,
         sequence: u64,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .unclaimed_ack_fees
             .save(store, (nid.to_owned(), sequence), &0_u128)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn get_incoming_packet_sequence(
@@ -396,10 +396,10 @@ impl<'a> CwIbcConnection<'a> {
         channel_id: &str,
         sn: i64,
     ) -> Result<u64, ContractError> {
-        return self
+        self
             .incoming_packets
             .load(store, (channel_id.to_owned(), sn))
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn store_incoming_packet_sequence(
@@ -409,10 +409,10 @@ impl<'a> CwIbcConnection<'a> {
         sn: i64,
         seq: u64,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .incoming_packets
             .save(store, (channel_id.to_owned(), sn), &seq)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn get_outgoing_packet_sn(
@@ -421,10 +421,10 @@ impl<'a> CwIbcConnection<'a> {
         channel_id: &str,
         sequence: u64,
     ) -> Result<i64, ContractError> {
-        return self
+        self
             .outgoing_packets
             .load(store, (channel_id.to_owned(), sequence))
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 
     pub fn remove_outgoing_packet_sn(
@@ -433,9 +433,9 @@ impl<'a> CwIbcConnection<'a> {
         channel_id: &str,
         sequence: u64,
     ) {
-        return self
+        self
             .outgoing_packets
-            .remove(store, (channel_id.to_owned(), sequence));
+            .remove(store, (channel_id.to_owned(), sequence))
     }
 
     pub fn store_outgoing_packet_sn(
@@ -445,9 +445,9 @@ impl<'a> CwIbcConnection<'a> {
         sequence: u64,
         sn: i64,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .outgoing_packets
             .save(store, (channel_id.to_owned(), sequence), &sn)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 }

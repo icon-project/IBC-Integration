@@ -96,7 +96,10 @@ pub enum ExecuteMsg {
         //ibc_proto::ibc::core::channel::v1::MsgAcknowledgement
         msg: HexString,
     },
-    RequestTimeout {},
+    WriteAcknowledgement {
+        packet: HexString,
+        acknowledgement: HexString,
+    },
     Timeout {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgTimeout

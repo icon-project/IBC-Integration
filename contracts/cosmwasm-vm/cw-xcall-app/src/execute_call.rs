@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{Deps, DepsMut, Empty, Env, MessageInfo, Reply, Response, SubMsg};
+use cosmwasm_std::{Deps, DepsMut, Env, MessageInfo, Reply, Response, SubMsg};
 use cw_common::xcall_types::network_address::NetworkAddress;
 
 use crate::{
     error::ContractError,
     events::event_call_executed,
-    state::CwCallService,
+    state::{CwCallService, EXECUTE_CALL_ID},
     types::{
         message::CallServiceMessage,
         response::{CallServiceMessageResponse, CallServiceResponseType},
@@ -51,6 +51,7 @@ impl<'a> CwCallService<'a> {
             proxy_requests.from(),
             proxy_requests.data().unwrap().to_vec(),
             proxy_requests.protocols().clone(),
+            EXECUTE_CALL_ID,
         )?;
         self.remove_proxy_request(deps.storage, request_id);
         self.store_execute_request_id(deps.storage, request_id)?;
@@ -64,11 +65,11 @@ impl<'a> CwCallService<'a> {
     pub fn execute_call_reply(
         &self,
         deps: Deps,
-        env: Env,
+        _env: Env,
         msg: Reply,
     ) -> Result<Response, ContractError> {
         let req_id = self.get_execute_request_id(deps.storage)?;
-       
+
         let request = self.get_proxy_request(deps.storage, req_id)?;
 
         let (response, event) = match msg.result {
@@ -96,12 +97,12 @@ impl<'a> CwCallService<'a> {
             }
         };
         let mut submsgs: Vec<SubMsg> = vec![];
-        let sn: i64 = request.sequence_no() as i64 * -1;
+        let sn: i64 = -(request.sequence_no() as i64);
         if request.rollback() {
             let message: CallServiceMessage = response.into();
             let mut reply_address = request.protocols().clone();
             let from = NetworkAddress::from_str(request.from()).unwrap();
-            if request.protocols().len() == 0 {
+            if request.protocols().is_empty() {
                 let default_connection =
                     self.get_default_connection(deps.storage, from.get_nid())?;
                 reply_address = vec![default_connection.to_string()];

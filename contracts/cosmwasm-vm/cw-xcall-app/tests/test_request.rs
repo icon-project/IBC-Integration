@@ -11,7 +11,7 @@ fn update_sequence() {
     let contract = CwCallService::default();
 
     contract
-        .last_sequence_no()
+        .sn()
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 
@@ -104,7 +104,7 @@ fn set_sequence() {
     let contract = CwCallService::default();
 
     contract
-        .last_sequence_no()
+        .sn()
         .save(mock_deps.as_mut().storage, &0)
         .unwrap();
 

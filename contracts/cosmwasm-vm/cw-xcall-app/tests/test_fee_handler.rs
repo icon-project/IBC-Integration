@@ -136,6 +136,6 @@ fn get_protocol_fee() {
     contract
         .set_protocol_fee(deps.as_mut(), info, value)
         .unwrap();
-    let result = contract.get_protocol_fee(deps.as_ref());
+    let result = contract.get_protocol_fee(deps.as_ref().storage).unwrap();
     assert_eq!("123", result.to_string());
 }

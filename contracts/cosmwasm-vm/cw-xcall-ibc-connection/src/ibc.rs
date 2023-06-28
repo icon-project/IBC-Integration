@@ -1,5 +1,5 @@
-use common::{ibc::Height, rlp};
-use cw_common::raw_types::channel::RawPacket;
+
+
 use debug_print::debug_println;
 
 use super::*;
@@ -126,7 +126,7 @@ pub fn ibc_channel_close(
 #[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_receive(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     msg: CwPacketReceiveMsg,
 ) -> Result<CwReceiveResponse, Never> {
     let call_service = CwIbcConnection::default();

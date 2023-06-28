@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use common::rlp;
+
 use cosmwasm_std::{coins, BankMsg};
 use cw_common::xcall_types::network_address::NetworkAddress;
 
@@ -82,7 +82,7 @@ impl<'a> CwCallService<'a> {
 
         let sequence_no = self.get_next_sn(deps.storage)?;
         let mut confirmed_sources = sources;
-        let from = NetworkAddress::new(&nid, &caller.to_string());
+        let from = NetworkAddress::new(&nid, caller.as_ref());
 
         if confirmed_sources.is_empty() {
             let default = self.get_default_connection(deps.as_ref().storage, dst.get_nid())?;
@@ -91,7 +91,7 @@ impl<'a> CwCallService<'a> {
 
         if need_response {
             let request = CallRequest::new(
-                caller.clone().to_string(),
+                caller.to_string(),
                 to.clone(),
                 destinations.clone(),
                 rollback_data,
@@ -103,7 +103,7 @@ impl<'a> CwCallService<'a> {
 
         let call_request = CallServiceMessageRequest::new(
             from.to_string(),
-            to.clone(),
+            to,
             sequence_no,
             destinations,
             need_response,
