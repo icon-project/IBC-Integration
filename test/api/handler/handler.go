@@ -1,13 +1,19 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/icon-project/ibc-integration/test/api"
+	"github.com/icon-project/ibc-integration/test/api/handler/utils"
 	"github.com/icon-project/ibc-integration/test/chains"
+)
+
+var (
+	server *handler
+	once   sync.Once
 )
 
 type handler struct {
@@ -15,18 +21,16 @@ type handler struct {
 	mux *http.ServeMux
 }
 
-type IHandler interface {
-	SetupIBC() error
-	SetupRelay(string, string, string)
-	StartRelay()
-}
-
 func (h *handler) root(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello, World!"))
 }
 
-func (h *handler) Run() func() error {
-	return h.api.Serve(h.mux)
+func (h *handler) ServeHTTP() func() {
+	return func() {
+		once.Do(func() {
+			h.api.Serve(h.mux)
+		})
+	}
 }
 
 type setRelayRequest struct {
@@ -37,18 +41,18 @@ type setRelayRequest struct {
 
 func (h *handler) setupRelay(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		handleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 	var req setRelayRequest
-	if err := decodeJSONBody(r, &req); err != nil {
-		handleError(w, err, http.StatusBadRequest)
+	if err := utils.DecodeJSONBody(r, &req); err != nil {
+		utils.HandleError(w, err, http.StatusBadRequest)
 		return
 	}
 	image := chains.GetEnvOrDefault("RELAYER_IMAGE", req.Image)
 	tag := chains.GetEnvOrDefault("RELAYER_IMAGE_TAG", req.Tag)
 	gid := chains.GetEnvOrDefault("RELAYER_IMAGE_GID", req.GID)
-	h.api.SetupRelayer(image, tag, gid)
+	h.api.AddRelayer(image, tag, gid)
 }
 
 type LinkOption struct {
@@ -58,33 +62,75 @@ type LinkOption struct {
 
 func (h *handler) linkChain(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		handleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 	var req LinkOption
-	if err := decodeJSONBody(r, &req); err != nil {
-		handleError(w, err, http.StatusBadRequest)
+	if err := utils.DecodeJSONBody(r, &req); err != nil {
+		utils.HandleError(w, err, http.StatusBadRequest)
 		return
 	}
 	h.api.LinkChain(req.ChainA, req.ChainB)
 }
 
-func decodeJSONBody(r *http.Request, v interface{}) error {
-	defer r.Body.Close()
-	return json.NewDecoder(r.Body).Decode(v)
+type reqBuildWallet struct {
+	KeyName   string `json:"keyName"`
+	ChainName string `json:"chainName"`
 }
 
-func handleError(w http.ResponseWriter, err error, statusCode int) {
-	w.WriteHeader(statusCode)
-	w.Write([]byte(err.Error()))
+func (h *handler) buildWallet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+	var req []reqBuildWallet
+	if err := utils.DecodeJSONBody(r, &req); err != nil {
+		utils.HandleError(w, err, http.StatusBadRequest)
+		return
+	}
+	for _, v := range req {
+		h.api.BuildWallet(v.ChainName, v.KeyName)
+	}
+}
+
+type reqSetupIBC struct {
+	ChainName string `json:"chainName"`
+	KeyName   string `json:"keyName"`
+}
+
+func (h *handler) SetupIBC(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+	var req reqSetupIBC
+	if err := utils.DecodeJSONBody(r, &req); err != nil {
+		utils.HandleError(w, err, http.StatusBadRequest)
+		return
+	}
+	h.api.SetupIBC(req.ChainName, req.KeyName)
+}
+
+func (h *handler) StartRelay(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+	h.api.StartRelay()
 }
 
 func New(t *testing.T) *handler {
-	handler := &handler{api: api.NewServer(t)}
+	if server != nil {
+		return server
+	}
+	server = &handler{api: api.NewServer(t)}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handler.root)
-	mux.HandleFunc("/setup-relay", handler.setupRelay)
-	mux.HandleFunc("/link-chain", handler.linkChain)
-	handler.mux = mux
-	return handler
+	mux.HandleFunc("/", server.root)
+	mux.HandleFunc("/setup-relay", server.setupRelay)
+	mux.HandleFunc("/link-chain", server.linkChain)
+	mux.HandleFunc("/build-wallet", server.buildWallet)
+	mux.HandleFunc("/setup-ibc", server.SetupIBC)
+	mux.HandleFunc("/start-relay", server.StartRelay)
+	server.mux = mux
+	return server
 }
