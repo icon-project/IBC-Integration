@@ -3,6 +3,7 @@ package ibc.ics04.channel;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
+import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
 import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
@@ -194,9 +195,17 @@ public class IBCPacket extends IBCChannelHandshake {
         commitments.set(packetCommitmentKey, null);
     }
 
-    public void _requestTimeout(Packet packet) {
+    public void _requestTimeout(MsgRequestTimeoutPacket msg) {
+        byte[] packetHash = IBCCommitment.keccak256(msg.getPacket());
+        Context.require(!getRequestTimeout(packetHash), "timeout packet request already exist");
+
+        Packet packet = Packet.decode(msg.getPacket());
+        byte[] proofHeight = msg.getProofHeight();
+        byte[] proof = msg.getProof();
+
         // TODO limit what packets can be timedout to limit spam creating of btp blocks.
-        Channel channel = Channel.decode(channels.at(packet.getDestinationPort()).get(packet.getDestinationChannel()));
+        Channel channel = Channel
+                .decode(channels.at(packet.getDestinationPort()).get(packet.getDestinationChannel()));
         Context.require(
                 packet.getSourcePort().equals(channel.getCounterparty().getPortId()),
                 "packet destination port doesn't match the counterparty's port");
@@ -210,13 +219,24 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
                 "connection state is not OPEN");
 
-        boolean heightTimeout = packet.getTimeoutHeight().getRevisionHeight().compareTo(BigInteger.ZERO) > 0
+        BigInteger revisionHeight=packet.getTimeoutHeight().getRevisionHeight();
+        boolean heightTimeout = revisionHeight.compareTo(BigInteger.ZERO) > 0
                 && BigInteger.valueOf(Context.getBlockHeight())
-                .compareTo(packet.getTimeoutHeight().getRevisionHeight()) >= 0;
+                .compareTo(revisionHeight) >= 0;
         boolean timeTimeout = packet.getTimeoutTimestamp().compareTo(BigInteger.ZERO) > 0
                 && BigInteger.valueOf(Context.getBlockTimestamp())
                 .compareTo(packet.getTimeoutTimestamp()) < 0;
         Context.require(heightTimeout || timeTimeout, "Packet has not yet timed out");
+
+        byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
+                packet.getSourceChannel(), packet.getSequence());
+        byte[] commitmentBytes = createPacketCommitmentBytes(packet);
+        verifyPacketCommitment(
+                connection,
+                proofHeight,
+                proof,
+                commitmentPath,
+                commitmentBytes);
 
         if (channel.getOrdering() == Channel.Order.ORDER_UNORDERED) {
             DictDB<BigInteger, Boolean> packetReceipt = packetReceipts.at(packet.getDestinationPort())
@@ -224,24 +244,31 @@ public class IBCPacket extends IBCChannelHandshake {
             Context.require(
                     packetReceipt.get(packet.getSequence()) == null,
                     "packet sequence already has been received");
+
             sendBTPMessage(connection.getClientId(), IBCCommitment.packetReceiptCommitmentKey(
-                    packet.getDestinationPort(), packet.getDestinationChannel(), packet.getSequence()));
+                    packet.getDestinationPort(), packet.getDestinationChannel(),
+                    packet.getSequence()));
         } else if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             DictDB<String, BigInteger> nextSequenceDestinationPort = nextSequenceReceives
                     .at(packet.getDestinationPort());
-            BigInteger nextSequenceRecv = nextSequenceDestinationPort.getOrDefault(packet.getDestinationChannel(),
+            BigInteger nextSequenceRecv = nextSequenceDestinationPort.getOrDefault(
+                    packet.getDestinationChannel(),
                     BigInteger.ZERO);
             Context.require(
                     nextSequenceRecv.equals(packet.getSequence()),
                     "packet sequence != next receive sequence");
 
-            byte[] recvCommitmentKey = IBCCommitment.nextSequenceRecvCommitmentKey(packet.getDestinationPort(),
+            byte[] recvCommitmentKey = IBCCommitment.nextSequenceRecvCommitmentKey(
+                    packet.getDestinationPort(),
                     packet.getDestinationChannel());
             byte[] recvCommitment = Proto.encodeFixed64(packet.getSequence(), false);
+            // ordered channel: check that the recv sequence is as claimed
             sendBTPMessage(connection.getClientId(), ByteUtil.join(recvCommitmentKey, recvCommitment));
         } else {
             Context.revert("unknown ordering type");
         }
+        setRequestTimeout(packetHash);
+
     }
 
     public void _timeoutPacket(Packet packet, byte[] proofHeight, byte[] proof, BigInteger nextSequenceRecv) {

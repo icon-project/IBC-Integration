@@ -16,6 +16,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import ibc.icon.score.util.Proto;
+import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -527,13 +528,16 @@ public class PacketTest extends TestBase {
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         Height timeoutHeight = new Height();
         timeoutHeight.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight()));
+        MsgRequestTimeoutPacket timeoutPacket=new MsgRequestTimeoutPacket();
         basePacket.setTimeoutHeight(timeoutHeight);
         basePacket.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp()));
         byte[] commitmentPath = IBCCommitment.packetReceiptCommitmentKey(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
-
+        timeoutPacket.setPacket(basePacket.encode());
+        timeoutPacket.setProofHeight(new byte[0]);
+        timeoutPacket.setProof(new byte[0]);
         // Act
-        packet.invoke(owner, "_requestTimeout", basePacket);
+        packet.invoke(owner, "_requestTimeout", timeoutPacket);
 
         // Assert
         verify(packetSpy).sendBTPMessage(clientId, commitmentPath);
@@ -546,13 +550,16 @@ public class PacketTest extends TestBase {
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         Height timeoutHeight = new Height();
         timeoutHeight.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight()));
+        MsgRequestTimeoutPacket timeoutPacket=new MsgRequestTimeoutPacket();
         basePacket.setTimeoutHeight(timeoutHeight);
         basePacket.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp()));
         byte[] commitmentPath = IBCCommitment.nextSequenceRecvCommitmentKey(basePacket.getSourcePort(),
                 basePacket.getSourceChannel());
-
+        timeoutPacket.setPacket(basePacket.encode());
+        timeoutPacket.setProofHeight(new byte[0]);
+        timeoutPacket.setProof(new byte[0]);
         // Act
-        packet.invoke(owner, "_requestTimeout", basePacket);
+        packet.invoke(owner, "_requestTimeout", timeoutPacket);
 
         // Assert
         verify(packetSpy).sendBTPMessage(clientId,
