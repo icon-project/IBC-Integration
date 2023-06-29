@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
@@ -13,13 +12,12 @@ import (
 	"github.com/icon-project/ibc-integration/test/relayer"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
-	"golang.org/x/sync/errgroup"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 )
 
-type Server struct {
+type Setup struct {
 	logger *zap.Logger
 	ctx    context.Context
 	chains map[string]chains.Chain
@@ -42,27 +40,23 @@ type Server struct {
 	contracts             map[string]chains.ContractKey
 }
 
-func (s *Server) SetIBCPath(path string) {
+func (s *Setup) SetIBCPath(path string) {
 	s.ibcPath = path
 }
 
-func (s *Server) GetIBCPath(path string) string {
+func (s *Setup) GetIBCPath(path string) string {
 	return s.ibcPath
 }
 
-func (s *Server) GetContractAddress(chainName string) string {
+func (s *Setup) GetContractAddress(chainName string) string {
 	return s.contracts[chainName].ContractAddress["dapp"]
 }
 
-func (s *Server) getChain(name string) chains.Chain {
+func (s *Setup) getChain(name string) chains.Chain {
 	return s.chains[name]
 }
 
-func NewServer(t *testing.T) *Server {
-	cfg, err := GetConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
+func NewServer(t *testing.T, cfg *OuterConfig) *Setup {
 	logger := zaptest.NewLogger(t)
 	interchainLinkOption := ibc.CreateChannelOptions{
 		SourcePortName: "mock",
@@ -80,7 +74,7 @@ func NewServer(t *testing.T) *Server {
 		service  ibc.Relayer
 		reporter *testreporter.RelayerExecReporter
 	}{reporter: configureLogReporter(t)}
-	return &Server{
+	return &Setup{
 		ctx:                  context.Background(),
 		t:                    t,
 		logger:               logger,
@@ -110,25 +104,26 @@ func NewServer(t *testing.T) *Server {
 	}
 }
 
-func (s *Server) AddRelayer(image, tag, gid string) {
+func (s *Setup) AddRelayer(image, tag, gid string) {
 	s.interchain.AddRelayer(s.setupRelayer(image, tag, gid), "relayer")
 }
 
-func (s *Server) SetupIBC(chain, keyName string) (context.Context, error) {
+func (s *Setup) SetupIBC(chain, keyName string) (context.Context, error) {
 	s.contracts[chain] = s.ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
 	ctx, err := s.getChain(chain).SetupIBC(s.ctx, keyName)
 	if err != nil {
 		return nil, err
 	}
+	s.ctx = ctx
 	s.overrideConfig()
-	return s.setupConnection(ctx, chain, keyName)
+	return s.setupConnection(s.ctx, chain, keyName)
 }
 
-func (s *Server) BuildWallet(chain, keyName string) error {
+func (s *Setup) BuildWallet(chain, keyName string) error {
 	return s.getChain(chain).BuildWallets(s.ctx, keyName)
 }
 
-func (s *Server) ExecuteCall(srcChain, dstChain, keyName string, msg, rollback []byte) (any, error) {
+func (s *Setup) ExecuteCall(srcChain, dstChain, keyName string, msg, rollback []byte) (any, error) {
 	sourceChain := s.getChain(srcChain)
 	destChain := s.getChain(dstChain)
 	dst := s.cfg[dstChain].ChainConfig.ChainID + "/" + s.GetContractAddress(dstChain)
@@ -143,10 +138,10 @@ func (s *Server) ExecuteCall(srcChain, dstChain, keyName string, msg, rollback [
 	if rollback != nil {
 		ctx, err = sourceChain.ExecuteRollback(ctx, sn)
 	}
-	return ctx, nil
+	return ctx, err
 }
 
-func (s *Server) LinkChain(chain1, chain2 string) error {
+func (s *Setup) LinkChain(chain1, chain2 string) error {
 	chainA := s.getChain(chain1).(ibc.Chain)
 	chainB := s.getChain(chain2).(ibc.Chain)
 	s.interchain.AddChain(chainA).AddChain(chainB)
@@ -156,14 +151,14 @@ func (s *Server) LinkChain(chain1, chain2 string) error {
 	return s.interchain.BuildChains(s.ctx, s.relayer.reporter, s.interchainBuildOption)
 }
 
-func (s *Server) setupRelayer(image, tag, gid string) ibc.Relayer {
+func (s *Setup) setupRelayer(image, tag, gid string) ibc.Relayer {
 	option := relayer.CustomDockerImage(image, tag, gid)
 	relay := interchaintest.NewICONRelayerFactory(s.logger, option, relayer.ImagePull(false)).Build(s.t, s.docker.client, s.docker.networkID)
 	s.relayer.service = relay
 	return relay
 }
 
-func (s *Server) getCounterContractKey(chainName string) chains.ContractKey {
+func (s *Setup) GetCounterContractKey(chainName string) chains.ContractKey {
 	for key, v := range s.contracts {
 		if key != chainName {
 			return v
@@ -172,12 +167,12 @@ func (s *Server) getCounterContractKey(chainName string) chains.ContractKey {
 	panic("no counter contract key found")
 }
 
-func (s *Server) setupConnection(ctx context.Context, chainName, keyName string) (context.Context, error) {
+func (s *Setup) setupConnection(ctx context.Context, chainName, keyName string) (context.Context, error) {
 	chain := s.getChain(chainName)
-	return chain.ConfigureBaseConnection(s.ctx, keyName, "channel-0", s.cfg[chainName].NID, s.getCounterContractKey(chainName).ContractAddress["connection"])
+	return chain.ConfigureBaseConnection(s.ctx, keyName, "channel-0", s.cfg[chainName].ChainConfig.ChainID, s.GetCounterContractKey(chainName).ContractAddress["connection"])
 }
 
-func (s *Server) StartRelay() error {
+func (s *Setup) StartRelayer() error {
 	// Start the Relay
 	s.interchain.BuildRelayer(s.ctx, s.relayer.reporter, s.interchainBuildOption)
 	return s.relayer.service.StartRelayer(s.ctx, s.relayer.reporter, s.ibcPath)
@@ -186,33 +181,20 @@ func (s *Server) StartRelay() error {
 func configureLogReporter(t *testing.T) *testreporter.RelayerExecReporter {
 	f, err := interchaintest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
-	// Reporter/logs
 	rep := testreporter.NewReporter(f)
 	return rep.RelayerExecReporter(t)
 }
 
-func (s *Server) overrideConfig() {
+func (s *Setup) overrideConfig() {
 	for chainName, chain := range s.chains {
 		if chain.(ibc.Chain).Config().Type == "icon" {
-			chain.OverrideConfig("archway-handler-address", s.getCounterContractKey(chainName).ContractAddress["ibc"])
+			chain.OverrideConfig("archway-handler-address", s.GetCounterContractKey(chainName).ContractAddress["ibc"])
 		}
 	}
 }
 
-func (s *Server) StopRelayer() error {
+func (s *Setup) StopRelayer() error {
 	return s.relayer.service.StopRelayer(s.ctx, s.relayer.reporter)
-}
-
-func (s *Server) Serve(gCtx context.Context, wg *errgroup.Group, mux *http.ServeMux) func(context.Context) error {
-	server := &http.Server{Addr: ":8080", Handler: mux, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second}
-	wg.Go(func() error {
-		<-gCtx.Done()
-		return server.Shutdown(context.Background())
-	})
-	wg.Go(func() error {
-		return server.ListenAndServe()
-	})
-	return server.Shutdown
 }

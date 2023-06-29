@@ -1,9 +1,7 @@
 package e2e_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,16 +9,17 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/icon-project/ibc-integration/test/api"
 	"github.com/icon-project/ibc-integration/test/api/handler"
+	"github.com/icon-project/ibc-integration/test/api/handler/utils"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
-)
-
-const (
-	serverUrl = "http://localhost:8080"
 )
 
 func TestConformance(t *testing.T) {
 	fmt.Println("test start")
+	cfg, err := api.GetConfig()
+	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		c := make(chan os.Signal, syscall.SIGTERM)
@@ -29,31 +28,24 @@ func TestConformance(t *testing.T) {
 		cancel()
 	}()
 	wg, gCtx := errgroup.WithContext(ctx)
-	h := handler.New(t, gCtx, wg)
+	h := handler.New(t, cfg, gCtx, wg)
 
 	// Create the request body
 	body := map[string]string{
-		"image": "relay",
+		"image": "relayer",
 		"tag":   "latest",
 		"gid":   "1000:1000",
 	}
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		t.Fatalf("failed to marshal request body: %v", err)
-	}
 
-	// Create the HTTP request with the JSON body
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/setup-relay", serverUrl), bytes.NewBuffer(jsonBody))
+	// Send the request
+	resp, err := utils.Request(http.MethodPost, handler.RELAY_SETUP_PATH, body)
 	if err != nil {
-		t.Fatalf("failed to create HTTP request: %v", err)
+		t.Errorf("The HTTP request failed with error %s\n", err)
 	}
-
-	// Send the HTTP request
-	if _, err := http.DefaultClient.Do(req); err != nil {
-		t.Fatalf("failed to send HTTP request: %v", err)
-	}
+	t.Logf("Relay setup succeed with following response: %v", resp)
 
 	if err := wg.Wait(); err != nil {
-		h.StopRelayer()
+		t.Errorf("failed to wait for server to stop: %v", err)
 	}
+	h.StopRelayer()
 }

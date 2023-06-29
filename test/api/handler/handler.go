@@ -6,11 +6,23 @@ import (
 	"net/http"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/icon-project/ibc-integration/test/api"
 	"github.com/icon-project/ibc-integration/test/api/handler/utils"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	RELAY_SETUP_PATH     = "/relayer-setup"
+	RELAY_START_PATH     = "/relayer-start"
+	RELAY_STOP_PATH      = "/relayer-stop"
+	CHAIN_LINK           = "/link-chain"
+	WALLET_BUILD         = "/build-wallet"
+	IBC_SETUP            = "/setup-ibc"
+	CONTRACT_ADDRESS_GET = "/contract-address-get/"
+	EXECUTE_CALL         = "/execute-call"
 )
 
 var (
@@ -21,17 +33,42 @@ var (
 type handler struct {
 	ctx context.Context
 	wg  *errgroup.Group
-	api *api.Server
-	mux *http.ServeMux
+	api *api.Setup
 }
 
 func (h *handler) root(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello, World!"))
+	w.Write([]byte("Hello, World !"))
 }
 
-func (h *handler) serve() {
+func (h *handler) serve(mux *http.ServeMux) {
 	once.Do(func() {
-		h.api.Serve(h.ctx, h.wg, h.mux)
+		addr := fmt.Sprintf("%s:%s", chains.GetEnvOrDefault("HOST", "127.0.0.1"), chains.GetEnvOrDefault("PORT", "8080"))
+		server := &http.Server{
+			Addr:         addr,
+			Handler:      mux,
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+		}
+
+		h.wg.Go(func() error {
+			fmt.Printf("Starting server on: %s\n", addr)
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				return fmt.Errorf("failed to listen and serve: %w", err)
+			}
+			return nil
+		})
+
+		h.wg.Go(func() error {
+			<-h.ctx.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			if err := server.Shutdown(ctx); err != nil {
+				return fmt.Errorf("failed to shutdown server gracefully: %s", err)
+			}
+
+			return nil
+		})
 	})
 }
 
@@ -41,7 +78,7 @@ type setRelayRequest struct {
 	GID   string `json:"gid"`
 }
 
-func (h *handler) setupRelay(w http.ResponseWriter, r *http.Request) {
+func (h *handler) setupRelayer(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
 		return
@@ -51,6 +88,7 @@ func (h *handler) setupRelay(w http.ResponseWriter, r *http.Request) {
 		utils.HandleError(w, err, http.StatusBadRequest)
 		return
 	}
+	fmt.Println("setupRelayer", req)
 	image := chains.GetEnvOrDefault("RELAYER_IMAGE", req.Image)
 	tag := chains.GetEnvOrDefault("RELAYER_IMAGE_TAG", req.Tag)
 	gid := chains.GetEnvOrDefault("RELAYER_IMAGE_GID", req.GID)
@@ -82,7 +120,7 @@ type reqBuildWallet struct {
 
 func (h *handler) buildWallet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		utils.HandleError(w, fmt.Errorf("method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 	var req []reqBuildWallet
@@ -113,14 +151,13 @@ func (h *handler) setupIBC(w http.ResponseWriter, r *http.Request) {
 	h.api.SetupIBC(req.ChainName, req.KeyName)
 }
 
-func (h *handler) startRelay(w http.ResponseWriter, r *http.Request) {
+func (h *handler) startRelayer(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
-	if err := h.api.StartRelay(); err != nil {
+	if err := h.api.StartRelayer(); err != nil {
 		utils.HandleError(w, err, http.StatusInternalServerError)
-		return
 	}
 }
 
@@ -143,7 +180,7 @@ type reqExecuteCall struct {
 	Rollback  []byte `json:"rollback"`
 }
 
-func (h *handler) execteCall(w http.ResponseWriter, r *http.Request) {
+func (h *handler) executeCall(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
 		return
@@ -156,25 +193,29 @@ func (h *handler) execteCall(w http.ResponseWriter, r *http.Request) {
 	h.api.ExecuteCall(req.ChainName, req.DstChain, req.KeyName, req.Message, req.Rollback)
 }
 
+func (h *handler) stopRelayer(w http.ResponseWriter, r *http.Request) {
+	h.api.StopRelayer()
+}
+
 func (h *handler) StopRelayer() {
 	h.api.StopRelayer()
 }
 
-func New(t *testing.T, ctx context.Context, wg *errgroup.Group) *handler {
+func New(t *testing.T, cfg *api.OuterConfig, ctx context.Context, wg *errgroup.Group) *handler {
 	if server != nil {
 		return server
 	}
-	server = &handler{api: api.NewServer(t), ctx: ctx, wg: wg}
+	server = &handler{api: api.NewServer(t, cfg), ctx: ctx, wg: wg}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.root)
-	mux.HandleFunc("/setup-relay", server.setupRelay)
-	mux.HandleFunc("/link-chain", server.linkChain)
-	mux.HandleFunc("/build-wallet", server.buildWallet)
-	mux.HandleFunc("/setup-ibc", server.setupIBC)
-	mux.HandleFunc("/start-relay", server.startRelay)
-	mux.HandleFunc("/get-address/", server.getAddress)
-	mux.HandleFunc("/execute-call", server.execteCall)
-	server.mux = mux
-	server.serve()
+	mux.HandleFunc(RELAY_SETUP_PATH, server.setupRelayer)
+	mux.HandleFunc(RELAY_START_PATH, server.startRelayer)
+	mux.HandleFunc(RELAY_STOP_PATH, server.stopRelayer)
+	mux.HandleFunc(CHAIN_LINK, server.linkChain)
+	mux.HandleFunc(WALLET_BUILD, server.buildWallet)
+	mux.HandleFunc(IBC_SETUP, server.setupIBC)
+	mux.HandleFunc(CONTRACT_ADDRESS_GET, server.getAddress)
+	mux.HandleFunc(EXECUTE_CALL, server.executeCall)
+	server.serve(mux)
 	return server
 }
