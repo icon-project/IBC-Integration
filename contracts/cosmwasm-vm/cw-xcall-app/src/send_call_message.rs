@@ -42,7 +42,7 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         info: MessageInfo,
         _env: Env,
-        to: String,
+        to: NetworkAddress,
         sources: Vec<String>,
         destinations: Vec<String>,
         data: Vec<u8>,
@@ -51,11 +51,11 @@ impl<'a> CwCallService<'a> {
         let caller = info.sender.clone();
         let config = self.get_config(deps.as_ref().storage)?;
         let nid = config.network_id;
-        let dst = NetworkAddress::from_str(&to)?;
+        //let dst = to.clone();
 
         self.validate_send_call(
             deps.as_ref(),
-            dst.get_nid(),
+            to.get_nid(),
             &sources,
             &destinations,
             &rollback,
@@ -84,13 +84,13 @@ impl<'a> CwCallService<'a> {
         let from = NetworkAddress::new(&nid, caller.as_ref());
 
         if confirmed_sources.is_empty() {
-            let default = self.get_default_connection(deps.as_ref().storage, dst.get_nid())?;
+            let default = self.get_default_connection(deps.as_ref().storage, to.get_nid().as_str())?;
             confirmed_sources = vec![default.to_string()]
         }
 
         if need_response {
             let request = CallRequest::new(
-                caller.to_string(),
+                caller.clone(),
                 to.clone(),
                 destinations.clone(),
                 rollback_data,
@@ -101,8 +101,8 @@ impl<'a> CwCallService<'a> {
         }
 
         let call_request = CallServiceMessageRequest::new(
-            from.to_string(),
-            to,
+            from,
+            to.get_account().clone(),
             sequence_no,
             destinations,
             need_response,
@@ -116,14 +116,14 @@ impl<'a> CwCallService<'a> {
             .iter()
             .map(|r| {
                 return self
-                    .query_connection_fee(deps.as_ref(), dst.get_nid(), need_response, r)
+                    .query_connection_fee(deps.as_ref(), to.get_nid().as_str(), need_response, r)
                     .and_then(|fee| {
                         let fund = coins(fee, config.denom.clone());
 
                         return self.call_connection_send_message(
                             &r.to_string(),
                             fund,
-                            dst.get_nid(),
+                            to.clone(),
                             sn,
                             &message,
                         );
@@ -137,7 +137,7 @@ impl<'a> CwCallService<'a> {
             to_address: fee_handler,
             amount: coins(protocol_fee, config.denom),
         };
-        let event = event_xcall_message_sent(caller.to_string(), dst.to_string(), sequence_no);
+        let event = event_xcall_message_sent(caller.to_string(), to.to_string(), sequence_no);
 
         Ok(Response::new()
             .add_message(msg)

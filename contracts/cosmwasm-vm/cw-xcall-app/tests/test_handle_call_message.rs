@@ -1,9 +1,10 @@
 use cosmwasm_std::{
     from_binary,
     testing::{mock_dependencies, mock_env, mock_info},
-    Coin, CosmosMsg, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
+    Coin, CosmosMsg, Reply, SubMsgResponse, SubMsgResult, WasmMsg, Addr,
 };
 
+use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_xcall_app::{
     state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
@@ -36,8 +37,8 @@ fn test_execute_call_having_request_id_without_rollback() {
 
     let request_id = 123456;
     let proxy_requests = CallServiceMessageRequest::new(
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        NetworkAddress::new("nid", "mockaddress"),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
         vec![],
         false,
@@ -88,8 +89,8 @@ fn test_successful_reply_message() {
 
     let request_id = 123456;
     let proxy_requests = CallServiceMessageRequest::new(
-        " 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        NetworkAddress::new("nid", "mockaddress"),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
         vec![],
         false,
@@ -124,8 +125,8 @@ fn test_failed_reply_message() {
 
     let request_id = 123456;
     let proxy_requests = CallServiceMessageRequest::new(
-        " 88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        NetworkAddress::new("nid", "mockaddress"),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
         vec![],
         false,
@@ -164,8 +165,8 @@ fn check_for_rollback_in_response() {
     let seq_id = 123456;
 
     let request = CallRequest::new(
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
+        NetworkAddress::new("nid", "mockaddress"),
         vec![],
         vec![1, 2, 3],
         true,
@@ -210,8 +211,8 @@ fn check_for_rollback_response_failure() {
     let seq_id = 123456;
 
     let request = CallRequest::new(
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
+        NetworkAddress::new("nid", "mockaddress"),
         vec![],
         vec![],
         false,
@@ -241,8 +242,8 @@ fn execute_rollback_success() {
     let seq_id = 123456;
 
     let request = CallRequest::new(
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
+        NetworkAddress::new("nid", "mockaddress"),
         vec![],
         vec![1, 2, 3],
         true,
@@ -285,8 +286,8 @@ fn execute_rollback_failure() {
     let seq_id = 123456;
 
     let request = CallRequest::new(
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4".to_string(),
-        "88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_owned(),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
+        NetworkAddress::new("nid", "mockaddress"),
         vec![],
         vec![],
         false,

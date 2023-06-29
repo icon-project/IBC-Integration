@@ -1,6 +1,9 @@
 mod setup;
+use std::str::FromStr;
+
 use anyhow::Error as AppError;
 use cosmwasm_std::to_vec;
+use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
 
@@ -38,7 +41,7 @@ pub fn call_send_call_message(
         ctx.sender.clone(),
         ctx.get_xcall_app(),
         &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
-            to: to.to_string(),
+            to: NetworkAddress::from_str(to).unwrap(),
             data,
             rollback,
             sources: Some(sources),

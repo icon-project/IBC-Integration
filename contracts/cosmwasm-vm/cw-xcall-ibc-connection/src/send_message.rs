@@ -1,6 +1,6 @@
 use common::rlp::Nullable;
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage};
-use cw_common::raw_types::channel::RawPacket;
+use cw_common::{raw_types::channel::RawPacket, xcall_types::network_address::NetworkAddress};
 
 use crate::{
     error::ContractError,
@@ -14,7 +14,7 @@ impl<'a> CwIbcConnection<'a> {
         deps: DepsMut,
         info: MessageInfo,
         _env: Env,
-        nid: String,
+        to: NetworkAddress,
         sn: i64,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
@@ -22,6 +22,7 @@ impl<'a> CwIbcConnection<'a> {
 
         self.ensure_data_length(message.len())?;
         println!("{LOG_PREFIX} Packet Validated");
+        let nid= to.get_nid().to_string();
         let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
 
         if sn < 0 {

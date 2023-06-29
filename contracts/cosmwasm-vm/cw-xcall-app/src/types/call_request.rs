@@ -1,10 +1,13 @@
+use cosmwasm_std::Addr;
+use cw_common::xcall_types::network_address::NetworkAddress;
+
 use super::*;
 
 #[cw_serde]
 
 pub struct CallRequest {
-    from: String,
-    to: String,
+    from: Addr,
+    to: NetworkAddress,
     protocols: Vec<String>,
     rollback: Vec<u8>,
     enabled: bool,
@@ -12,8 +15,8 @@ pub struct CallRequest {
 
 impl CallRequest {
     pub fn new(
-        from: String,
-        to: String,
+        from: Addr,
+        to: NetworkAddress,
         protocols: Vec<String>,
         rollback: Vec<u8>,
         enabled: bool,
@@ -27,11 +30,11 @@ impl CallRequest {
         }
     }
 
-    pub fn from(&self) -> &str {
+    pub fn from(&self) -> &Addr {
         &self.from
     }
 
-    pub fn to(&self) -> &str {
+    pub fn to(&self) -> &NetworkAddress {
         &self.to
     }
 

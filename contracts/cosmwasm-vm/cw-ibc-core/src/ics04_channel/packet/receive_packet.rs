@@ -225,18 +225,6 @@ impl<'a> CwIbcCoreContext<'a> {
                             self.validate_write_acknowledgement(deps.storage, &packet)?;
                         }
                     } else {
-                        // let packet_rec = self.get_packet_receipt(
-                        //     deps.storage,
-                        //     &packet.port_id_on_a,
-                        //     &packet.chan_id_on_a,
-                        //     packet.sequence,
-                        // );
-                        // match packet_rec {
-                        //     Ok(_receipt) => {}
-
-                        //     Err(e) => return Err(e),
-                        // }
-                        // Case where the recvPacket is successful and an
                         // acknowledgement will be written (not a no-op)
                         self.validate_write_acknowledgement(deps.storage, &packet)?;
                     };
@@ -302,9 +290,6 @@ impl<'a> CwIbcCoreContext<'a> {
             },
 
             cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
-            // cosmwasm_std::SubMsgResult::Err(_) => {
-            // Err(PacketError::InvalidProof).map_err(Into::<ContractError>::into)?
-            // }
         }
     }
 
@@ -446,27 +431,6 @@ impl<'a> CwIbcCoreContext<'a> {
                         _ => {}
                     }
                     debug_println!("before after channel ordering check");
-
-                    // let acknowledgement: cw_common::types::Ack =
-                    //     from_binary(&to_vec(&ack).unwrap().into()).map_err(|e| {
-                    //         ContractError::IbcDecodeError {
-                    //             error: DecodeError::new(e.to_string()),
-                    //         }
-                    //     })?;
-                    // debug_println!("after ack");
-
-                    // let acknowledgement = match acknowledgement {
-                    //     cw_common::types::Ack::Result(binary) => binary,
-                    //     cw_common::types::Ack::Error(e) => {
-                    //         return Err(PacketError::AppModule { description: e })
-                    //             .map_err(Into::<ContractError>::into)?
-                    //     }
-                    // };
-                    // debug_println!("acknowledgement is {:?}", acknowledgement.0);
-                    // let acknowledgement = Acknowledgement::try_from(acknowledgement.0)
-                    //     .map_err(Into::<ContractError>::into)?;
-
-                    // debug_println!("after getting ack {:?}", acknowledgement);
 
                     let timestamp = match packet.timeout.timestamp() {
                         Some(t) => t.to_string(),

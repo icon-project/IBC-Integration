@@ -1,4 +1,5 @@
-use cosmwasm_std::{to_binary, Binary, CosmosMsg, MessageInfo, StdError, SubMsg, WasmMsg};
+use cosmwasm_std::{to_binary, Binary, CosmosMsg, MessageInfo, StdError, SubMsg, WasmMsg, Addr};
+use cw_common::xcall_types::network_address::NetworkAddress;
 
 use crate::{error::ContractError, state::CwCallService};
 
@@ -6,8 +7,8 @@ impl<'a> CwCallService<'a> {
     pub fn call_dapp_handle_message(
         &self,
         info: MessageInfo,
-        to: &str,
-        from: &str,
+        to: Addr,
+        from: NetworkAddress,
         data: Vec<u8>,
         protocols: Vec<String>,
         reply_id: u64,
@@ -31,20 +32,20 @@ impl<'a> CwCallService<'a> {
 
     pub fn get_handle_message(
         &self,
-        from: &str,
+        from: NetworkAddress,
         data: Vec<u8>,
         protocols: Vec<String>,
     ) -> Result<Binary, StdError> {
         if protocols.is_empty() {
             let message = cw_common::dapp_msg::ExecuteMsg::HandleCallMessage {
-                from: from.to_string(),
+                from: from,
                 data,
             };
             let msg = to_binary(&message);
             return msg;
         }
         let message = cw_common::dapp_multi_msg::ExecuteMsg::HandleCallMessage {
-            from: from.to_string(),
+            from: from,
             data,
             protocols,
         };

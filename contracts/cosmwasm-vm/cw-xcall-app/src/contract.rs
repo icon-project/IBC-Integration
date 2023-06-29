@@ -1,4 +1,4 @@
-use cw_common::xcall_types::network_address::NetworkAddress;
+use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
 
 use crate::types::{config::Config, LOG_PREFIX};
 
@@ -159,7 +159,7 @@ impl<'a> CwCallService<'a> {
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps.storage).unwrap()),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
             QueryMsg::GetNetworkAddress {} => {
-                to_binary(&self.get_network_address(deps.storage, &env).unwrap())
+                to_binary(&self.get_own_network_address(deps.storage, &env).unwrap())
             }
         }
     }
@@ -200,7 +200,7 @@ impl<'a> CwCallService<'a> {
     pub fn validate_send_call(
         &self,
         deps: Deps,
-        nid: &str,
+        nid: NetId,
         sources: &Vec<String>,
         destinations: &Vec<String>,
         rollback: &Option<Vec<u8>>,
@@ -212,7 +212,7 @@ impl<'a> CwCallService<'a> {
         let has_rollback = rollback.is_some();
         let fees = sources
             .iter()
-            .map(|_r| self.get_total_required_fee(deps, nid, has_rollback, sources))
+            .map(|_r| self.get_total_required_fee(deps, nid.as_str(), has_rollback, sources))
             .collect::<Result<Vec<u128>, ContractError>>()?;
 
         let total_required_fee: u128 = fees.iter().sum();
@@ -327,14 +327,14 @@ impl<'a> CwCallService<'a> {
         }
     }
 
-    pub fn get_network_address(
+    pub fn get_own_network_address(
         &self,
         store: &dyn Storage,
         env: &Env,
-    ) -> Result<String, ContractError> {
+    ) -> Result<NetworkAddress, ContractError> {
         let config = self.get_config(store)?;
         let address = env.contract.address.to_string();
         let na = NetworkAddress::new(&config.network_id, &address);
-        Ok(na.to_string())
+        Ok(na)
     }
 }

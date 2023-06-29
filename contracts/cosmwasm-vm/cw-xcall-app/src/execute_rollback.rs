@@ -39,12 +39,12 @@ impl<'a> CwCallService<'a> {
             .unwrap();
         self.ensure_rollback_enabled(call_request.enabled())
             .unwrap();
-        let from = self.get_network_address(deps.as_ref().storage, &env)?;
+        let from = self.get_own_network_address(deps.as_ref().storage, &env)?;
 
-        let sub_msg = self.call_dapp_handle_message(
-            info,
-            call_request.to(),
-            &from,
+        let sub_msg = self.call_dapp_handle_message(info,
+            // the original caller is stored as from in call request
+            call_request.from().clone(),
+            from,
             call_request.rollback().to_vec(),
             call_request.protocols().clone(),
             EXECUTE_ROLLBACK_ID,

@@ -1,6 +1,6 @@
 use crate::types::LOG_PREFIX;
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Empty, MessageInfo, Storage, SubMsg, WasmMsg};
-use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
+use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage, xcall_types::network_address::NetId};
 use debug_print::debug_println;
 
 use crate::{
@@ -15,7 +15,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn call_xcall_handle_message(
         &self,
         store: &dyn Storage,
-        nid: &str,
+        nid: &NetId,
         msg: Vec<u8>,
         sn: Option<i64>,
     ) -> Result<SubMsg, ContractError> {
@@ -23,7 +23,7 @@ impl<'a> CwIbcConnection<'a> {
         let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::HandleCallMessage {
             msg,
             sn,
-            from: nid.to_string(),
+            from: nid.clone(),
         };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: xcall_host.to_string(),
@@ -69,15 +69,15 @@ mod tests {
         connection
             .set_xcall_host(store, Addr::unchecked("xcall-address"))
             .unwrap();
-
-        let res = connection.call_xcall_handle_message(store, "nid", msg.clone(), sn);
+let nid=NetId::from("nid".to_string());
+        let res = connection.call_xcall_handle_message(store, &nid.clone(), msg.clone(), sn);
         assert!(res.is_ok());
 
         let expected_xcall_host = connection.get_xcall_host(store).unwrap().to_string();
         let expected_xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::HandleCallMessage {
-            msg: msg,
+             msg,
             sn,
-            from: "nid".to_string(),
+            from: nid,
         };
         let expected_call_message = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: expected_xcall_host,

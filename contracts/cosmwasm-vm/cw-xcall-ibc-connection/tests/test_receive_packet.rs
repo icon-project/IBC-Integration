@@ -8,6 +8,7 @@ use cosmwasm_std::{
     Addr, Binary, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 
+use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_xcall_app::types::{
     message::CallServiceMessage, request::CallServiceMessageRequest,
     response::CallServiceMessageResponse,
@@ -34,8 +35,8 @@ fn test_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        alice().to_string(),
+        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        Addr::unchecked(&alice().to_string()),
         1,
         vec![],
         false,

@@ -9,7 +9,7 @@ use cosmwasm_std::{from_binary, testing::mock_env, to_binary, Addr, Empty, Queri
 
 use cw_common::{
     core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query,
-    raw_types::connection::RawConnectionEnd,
+    raw_types::connection::RawConnectionEnd, xcall_types::network_address::NetworkAddress,
 };
 
 use cw_integration::TestSteps;
@@ -241,7 +241,7 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
         Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
         &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
-            to: "eth".to_string(),
+            to: NetworkAddress::new("eth","contractmock"),
             sources: Some(vec![]),
             destinations: Some(vec![]),
             data,

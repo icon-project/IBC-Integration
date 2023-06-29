@@ -1,4 +1,5 @@
 use common::utils::keccak256;
+use cw_common::xcall_types::network_address::NetId;
 
 use crate::ack::acknowledgement_data_on_success;
 
@@ -26,18 +27,18 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        _from: String,
-        _sn: Option<i64>,
+        from: NetId,
+        sn: Option<i64>,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         let call_service_message: CallServiceMessage = CallServiceMessage::try_from(message)?;
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
-                self.handle_request(deps, info, call_service_message.payload())
+                self.handle_request(deps, info, from,sn,call_service_message.payload())
             }
             CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, info, call_service_message.payload())
+                self.handle_response(deps, info,from,sn, call_service_message.payload())
             }
         }
     }
@@ -63,17 +64,43 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        from:NetId,
+        _sn: Option<i64>,
         data: &[u8],
     ) -> Result<Response, ContractError> {
+        /*
+         msgReq = CSMessageRequest.decode(data);
+    from = NetworkAddress(msgReq.from);
+    require(from.net() == srcNet);
+    source = getCaller();
+
+    if (msgReq.protocols.length > 1):
+        _hash = hash(data);
+        pendingReqs[_hash][source] = true;
+        for (protocol : msgReq.protocols):
+            if (!pendingReqs[_hash][protocol]):
+                return;
+
+        for (protocol : msgReq.protocols):
+            pendingReqs[_hash][protocol] = null;
+    else if (msgReq.protocols.length == 1):
+        require(source == msgReq.protocols[0]);
+    else:
+        require(source == defaultConnection[srcNet]);
+    reqId = getNextReqId();
+    proxyReqs[reqId] = msgReq;
+
+    emit CallMessage(msgReq.from, msgReq.to, msgReq.sn, reqId);
+         */
         let request_id = self.increment_last_request_id(deps.storage)?;
         let message_request: CallServiceMessageRequest = data.try_into()?;
 
-        let from = message_request.from();
+        let from = message_request.from().clone();
         let to = message_request.to();
 
         let request = CallServiceMessageRequest::new(
-            from.to_string(),
-            to.to_string(),
+            from.clone(),
+            to.clone(),
             message_request.sequence_no(),
             message_request.protocols().clone(),
             message_request.rollback(),
@@ -135,6 +162,8 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        from:NetId,
+        _sn: Option<i64>,
         data: &[u8],
     ) -> Result<Response, ContractError> {
         let message: CallServiceMessageResponse = data.try_into()?;

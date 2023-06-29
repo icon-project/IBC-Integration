@@ -6,7 +6,7 @@ use super::*;
 /// This is an implementation of two methods for the `CwCallService` struct.
 
 impl<'a> CwIbcConnection<'a> {
-    pub fn claimFees(
+    pub fn claim_fees(
         &self,
         deps: DepsMut,
         info: MessageInfo,

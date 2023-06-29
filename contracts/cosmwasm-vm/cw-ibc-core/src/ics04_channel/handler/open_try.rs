@@ -167,8 +167,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 })
                 .map_err(Into::<ContractError>::into),
             },
-            cosmwasm_std::SubMsgResult::Err(_) => {
-                Err(ChannelError::NoCommonVersion).map_err(Into::<ContractError>::into)
+            cosmwasm_std::SubMsgResult::Err(e) => {
+                Err(ChannelError::Other { description: e }).map_err(Into::<ContractError>::into)
             }
         }
     }

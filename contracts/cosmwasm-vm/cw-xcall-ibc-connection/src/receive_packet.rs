@@ -36,7 +36,7 @@ impl<'a> CwIbcConnection<'a> {
         let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
         let nid = channel_config.counterparty_nid;
 
-        self.add_unclaimed_packet_fees(deps.storage, &nid, relayer.as_str(), n_message.fee)?;
+        self.add_unclaimed_packet_fees(deps.storage, &nid.as_str(), relayer.as_str(), n_message.fee)?;
 
         if n_message.sn.is_none() {
             let receiver_address = from_utf8(&n_message.data).unwrap();

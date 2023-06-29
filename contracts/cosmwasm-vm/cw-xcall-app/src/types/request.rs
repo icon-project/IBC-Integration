@@ -1,12 +1,14 @@
 use common::rlp::Nullable;
+use cosmwasm_std::Addr;
+use cw_common::xcall_types::network_address::NetworkAddress;
 use serde::{Deserialize, Serialize};
-
+use std::str::FromStr;
 use super::*;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CallServiceMessageRequest {
-    from: String,
-    to: String,
+    from: NetworkAddress,
+    to: Addr,
     sequence_no: u128,
     protocols: Vec<String>,
     rollback: bool,
@@ -16,8 +18,8 @@ pub struct CallServiceMessageRequest {
 impl CallServiceMessageRequest {
     // TODO : Change to Option of Bytes
     pub fn new(
-        from: String,
-        to: String,
+        from: NetworkAddress,
+        to: Addr,
         sequence_no: u128,
         protocols: Vec<String>,
         rollback: bool,
@@ -37,11 +39,11 @@ impl CallServiceMessageRequest {
         }
     }
 
-    pub fn from(&self) -> &str {
+    pub fn from(&self) -> &NetworkAddress {
         &self.from
     }
 
-    pub fn to(&self) -> &str {
+    pub fn to(&self) -> &Addr {
         &self.to
     }
 
@@ -70,8 +72,8 @@ impl CallServiceMessageRequest {
 impl Encodable for CallServiceMessageRequest {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
         stream.begin_list(6);
-        stream.append(&self.from);
-        stream.append(&self.to);
+        stream.append(&self.from.to_string());
+        stream.append(&self.to.to_string());
         stream.append(&self.sequence_no);
         stream.append(&self.rollback);
         stream.append(&self.data);
@@ -86,9 +88,11 @@ impl Decodable for CallServiceMessageRequest {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
         let rlp_protocols = rlp.at(5)?;
         let list: Vec<String> = rlp_protocols.as_list()?;
+        let str_from:String =rlp.val_at(0)?;
+        let to_str:String=rlp.val_at(1)?;
         Ok(Self {
-            from: rlp.val_at(0)?,
-            to: rlp.val_at(1)?,
+            from: NetworkAddress::from_str(&str_from).map_err(|e|rlp::DecoderError::RlpInvalidLength)?,
+            to: Addr::unchecked(to_str),
             sequence_no: rlp.val_at(2)?,
             rollback: rlp.val_at(3)?,
             data: rlp.val_at(4)?,
@@ -151,7 +155,11 @@ mod tests {
 
      */
 
+    use std::str::FromStr;
+
     use common::rlp;
+    use cosmwasm_std::Addr;
+    use cw_common::xcall_types::network_address::NetworkAddress;
 
     use super::CallServiceMessageRequest;
 
@@ -159,8 +167,8 @@ mod tests {
     fn test_csmessage_request_encoding() {
         let data = hex::decode("74657374").unwrap();
         let msg = CallServiceMessageRequest::new(
-            "0x1.ETH/0xa".to_string(),
-            "cx0000000000000000000000000000000000000102".to_string(),
+            NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
+           Addr::unchecked( "cx0000000000000000000000000000000000000102"),
             21,
             vec![],
             false,
@@ -171,8 +179,8 @@ mod tests {
         assert_eq!("f83f8b3078312e4554482f307861aa63783030303030303030303030303030303030303030303030303030303030303030303030303031303215008474657374c0",hex::encode(encoded));
 
         let msg = CallServiceMessageRequest::new(
-            "0x1.ETH/0xa".to_string(),
-            "cx0000000000000000000000000000000000000102".to_string(),
+            NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
+           Addr::unchecked( "cx0000000000000000000000000000000000000102"),
             21,
             vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             false,
@@ -183,8 +191,8 @@ mod tests {
         assert_eq!("f84b8b3078312e4554482f307861aa63783030303030303030303030303030303030303030303030303030303030303030303030303031303215008474657374cc836162638363646583656667",hex::encode(encoded));
 
         let msg = CallServiceMessageRequest::new(
-            "0x1.ETH/0xa".to_string(),
-            "cx0000000000000000000000000000000000000102".to_string(),
+            NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
+           Addr::unchecked( "cx0000000000000000000000000000000000000102"),
             21,
             vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             true,

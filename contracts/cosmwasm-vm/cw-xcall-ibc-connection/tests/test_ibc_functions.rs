@@ -9,6 +9,7 @@ use cosmwasm_std::{
 use cw_common::from_binary_response;
 use cw_common::types::Ack;
 
+use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
 use cw_xcall_app::ack::{on_ack_failure, on_ack_sucess};
 use cw_xcall_app::types::response::CallServiceMessageResponse;
 use cw_xcall_ibc_connection::msg::InstantiateMsg;
@@ -34,7 +35,7 @@ fn fails_on_open_channel_open_init_ordered_channel() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
 
@@ -78,7 +79,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
 
@@ -136,7 +137,7 @@ fn fails_on_open_channel_open_try_invalid_version() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
 
@@ -178,7 +179,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
 
@@ -234,7 +235,7 @@ fn sucess_on_ibc_channel_connect() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
     let src = IbcEndpoint {
@@ -294,7 +295,7 @@ fn fails_on_ibc_channel_connect_unordered_channel() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
     let src = IbcEndpoint {
@@ -334,7 +335,7 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
     let src = IbcEndpoint {
@@ -372,6 +373,7 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_receive_packet_for_call_message_request() {
     use common::rlp::{self, Nullable};
+    use cw_common::xcall_types::network_address::NetworkAddress;
     use cw_xcall_ibc_connection::types::message::Message;
 
     let mut mock_deps = deps();
@@ -385,8 +387,8 @@ fn sucess_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        alice().to_string(),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
+        Addr::unchecked("alice"),
         1,
         vec![],
         false,
@@ -454,8 +456,10 @@ fn sucess_receive_packet_for_call_message_request() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ack_packet() {
+    use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
+
     let mut mock_deps = deps();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
     let mock_env = mock_env();
 
     let mut contract = CwIbcConnection::default();
@@ -482,8 +486,8 @@ fn sucess_on_ack_packet() {
     };
 
     let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        alice().to_string(),
+        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        Addr::unchecked("alice"),
         1,
         vec![],
         false,
@@ -506,7 +510,7 @@ fn sucess_on_ack_packet() {
     let channel_config = ChannelConfig {
         client_id: "client_id".to_string(),
         timeout_height: 100,
-        counterparty_nid: "nid".to_string(),
+        counterparty_nid: NetId::from("nid".to_string()),
     };
     contract
         .store_channel_config(mock_deps.as_mut().storage, &channel, &channel_config)
@@ -560,7 +564,7 @@ fn test_entry_point() {
 #[should_panic(expected = "NotFound")]
 fn fails_receive_packet_for_call_message_request() {
     let mut mock_deps = deps();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
     let mock_env = mock_env();
 
     let mut contract = CwIbcConnection::default();
@@ -570,8 +574,8 @@ fn fails_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        alice().to_string(),
+        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        Addr::unchecked("alice"),
         1,
         vec![],
         false,
@@ -614,7 +618,7 @@ fn fails_on_open_channel_open_init_unauthorized() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
 
@@ -648,7 +652,7 @@ fn success_on_setting_timeout_height() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
 
@@ -671,7 +675,7 @@ fn success_on_setting_timeout_height() {
             "channel",
             &ChannelConfig {
                 client_id: "client_id".to_owned(),
-                counterparty_nid: "nid".to_string(),
+                counterparty_nid: NetId::from("nid".to_string()),
                 timeout_height: 100,
             },
         )
@@ -699,7 +703,7 @@ fn fails_on_configure_connection_unauthorized() {
     let mut deps = deps();
 
     let mock_env = mock_env();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let mut contract = CwIbcConnection::default();
 
@@ -728,11 +732,11 @@ fn fails_on_configure_connection_unauthorized() {
 
 #[test]
 fn test_ack_success_on_call_request() {
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        alice().to_string(),
+        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        Addr::unchecked("alice"),
         1,
         vec![],
         false,
@@ -768,11 +772,11 @@ fn test_ack_success_on_call_request() {
 #[test]
 #[should_panic(expected = "ParseErr")]
 fn test_ack_on_fails() {
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        alice().to_string(),
+        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        Addr::unchecked("alice"),
         1,
         vec![],
         false,
@@ -837,11 +841,11 @@ fn test_ack_success_on_call_response() {
 
 #[test]
 fn test_ack_failure_on_call_request() {
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        alice().to_string(),
+        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        Addr::unchecked("alice"),
         1,
         vec![],
         false,
@@ -877,11 +881,11 @@ fn test_ack_failure_on_call_request() {
 #[test]
 #[should_panic(expected = "ParseErr")]
 fn fails_on_ack_failure_for_call_request() {
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        mock_info.sender.as_str().to_string(),
-        alice().to_string(),
+        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        Addr::unchecked("alice"),
         1,
         vec![],
         false,
@@ -947,7 +951,7 @@ fn test_ack_failure_on_call_response() {
 #[test]
 fn test_handle_response() {
     let mut mock_deps = deps();
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info("alice", "umlg", 2000);
     let mock_env = mock_env();
 
     let mut contract = CwIbcConnection::default();
@@ -1015,8 +1019,8 @@ fn test_for_call_service_request_from_rlp_bytes() {
     let cs_message_request = CallServiceMessageRequest::try_from(&hex_decode_rlp_data).unwrap();
 
     let expected_data = CallServiceMessageRequest::new(
-        "somecontractaddress".to_string(),
-        "somecontractaddress".to_string(),
+        NetworkAddress::new("nid","somecontractaddress"),
+        Addr::unchecked("somecontractaddress"),
         1,
         vec![],
         false,
@@ -1048,8 +1052,8 @@ fn test_for_call_message_data_from_rlp_bytes() {
     let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
 
     let expected_data = CallServiceMessageRequest::new(
-        "somecontractaddress".to_string(),
-        "somecontractaddress".to_string(),
+        NetworkAddress::new("nid","somecontractaddress"),
+        Addr::unchecked("somecontractaddress"),
         1,
         vec![],
         false,
@@ -1068,8 +1072,8 @@ fn test_call_message_from_raw_message() {
     let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
 
     let expected_data = CallServiceMessageRequest::new(
-        "somecontractaddress".to_string(),
-        "somecontractaddress".to_string(),
+        NetworkAddress::new("nid","somecontractaddress"),
+        Addr::unchecked("somecontractaddress"),
         1,
         vec![],
         false,

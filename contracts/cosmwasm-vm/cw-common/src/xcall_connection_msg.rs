@@ -1,7 +1,7 @@
-use crate::cw_types::{
+use crate::{cw_types::{
     CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg, CwPacketReceiveMsg,
     CwPacketTimeoutMsg,
-};
+}, xcall_types::network_address::NetworkAddress};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]
@@ -13,7 +13,7 @@ pub enum ExecuteMsg {
         address: String,
     },
     SendMessage {
-        nid_to: String,
+        net_to: NetworkAddress,
         sn: i64,
         msg: Vec<u8>,
     },

@@ -47,8 +47,8 @@ impl<'a> CwCallService<'a> {
 
         let sub_msg = self.call_dapp_handle_message(
             info,
-            proxy_requests.to(),
-            proxy_requests.from(),
+            proxy_requests.to().clone(),
+            proxy_requests.from().clone(),
             proxy_requests.data().unwrap().to_vec(),
             proxy_requests.protocols().clone(),
             EXECUTE_CALL_ID,
@@ -101,19 +101,19 @@ impl<'a> CwCallService<'a> {
         if request.rollback() {
             let message: CallServiceMessage = response.into();
             let mut reply_address = request.protocols().clone();
-            let from = NetworkAddress::from_str(request.from()).unwrap();
+            let from = request.from().clone();
             if request.protocols().is_empty() {
                 let default_connection =
-                    self.get_default_connection(deps.storage, from.get_nid())?;
+                    self.get_default_connection(deps.storage, from.get_nid().as_str())?;
                 reply_address = vec![default_connection.to_string()];
             }
             submsgs = reply_address
                 .iter()
                 .map(|to| {
-                    return self.call_connection_send_message(
+                   return self.call_connection_send_message(
                         to,
                         vec![],
-                        from.get_nid(),
+                        from.clone(),
                         sn,
                         &message,
                     );
