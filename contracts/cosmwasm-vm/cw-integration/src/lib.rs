@@ -5,10 +5,10 @@ use strum_macros::EnumString;
 pub enum TestSteps {
     CreateClient,
     UpdateClient,
-    ConnOpenTry,
-    ConnOpenInit,
-    ConnOpenConfirm,
-    ConnOpenAck,
+    ConnectionOpenTry,
+    ConnectionOpenInit,
+    ConnectionOpenConfirm,
+    ConnectionOpenAck,
     ChannelOpenInit,
     ChannelOpenTry,
     ChannelOpenConfirm,
@@ -17,4 +17,5 @@ pub enum TestSteps {
     ChannelCloseConfirm,
     ReceivePacket,
     AcknowledgementPacket,
+    TimeoutPacket,
 }

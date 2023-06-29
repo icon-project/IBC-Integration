@@ -407,7 +407,7 @@ public class CallServiceImpl extends AbstractCallService {
 
         handleReceivedPacket(_from, _from, _sn, _msg);
 
-        return new byte[0];
+        return new byte[1];
     }
 
 

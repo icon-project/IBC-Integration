@@ -22,7 +22,7 @@ fn test_for_channel_open_init_execution_message() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -103,7 +103,7 @@ fn test_for_channel_open_try_execution_message() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -156,6 +156,7 @@ fn test_for_channel_open_try_execution_message() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -258,7 +259,7 @@ fn test_for_channel_open_ack_execution() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -327,6 +328,7 @@ fn test_for_channel_open_ack_execution() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -431,7 +433,7 @@ fn test_for_channel_open_confirm() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -500,6 +502,7 @@ fn test_for_channel_open_confirm() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -601,7 +604,7 @@ fn test_for_channel_close_init() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -716,7 +719,7 @@ fn test_for_channel_close_confirm() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -783,6 +786,7 @@ fn test_for_channel_close_confirm() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -885,7 +889,7 @@ fn test_for_packet_send() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -951,6 +955,7 @@ fn test_for_packet_send() {
         latest_height: 10,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1006,7 +1011,7 @@ fn test_for_recieve_packet() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -1058,6 +1063,7 @@ fn test_for_recieve_packet() {
         latest_height: 12,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1089,7 +1095,7 @@ fn test_for_recieve_packet() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
     contract
         .ibc_store()
         .expected_time_per_block()
@@ -1228,7 +1234,7 @@ fn test_for_ack_execute() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
@@ -1301,6 +1307,7 @@ fn test_for_ack_execute() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -1457,7 +1464,7 @@ fn test_for_timeout_execution() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);
     let contract = CwIbcCoreContext::default();
-    let env = mock_env();
+    let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env, info, InstantiateMsg {})
         .unwrap();

@@ -56,6 +56,10 @@ type Wallet struct {
 func (it *IconTestnet) SetupIBC(ctx context.Context, keyName string) (context.Context, error) {
 	panic("unimplemented")
 }
+
+func (it *IconTestnet) OverrideConfig(keyName string, value any) {
+	panic("unimplemented")
+}
 func (it *IconTestnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
 	panic("unimplemented")
 }

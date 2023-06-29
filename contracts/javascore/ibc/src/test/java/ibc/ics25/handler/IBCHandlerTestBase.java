@@ -101,9 +101,8 @@ public class IBCHandlerTestBase extends TestBase {
         msg.setConsensusState(new byte[0]);
         msg.setClientType(clientType);
         msg.setBtpNetworkId(4);
-        msg.setStoragePrefix(new byte[0]);
 
-        when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class), any(byte[].class)))
+        when(lightClient.mock.createClient(any(String.class), any(byte[].class), any(byte[].class)))
                 .thenReturn(Map.of(
                         "clientStateCommitment", new byte[0],
                         "consensusStateCommitment", new byte[0],
@@ -443,9 +442,9 @@ public class IBCHandlerTestBase extends TestBase {
         verify(module.mock).onAcknowledgementPacket(msg.getPacket(), msg.getAcknowledgement(), relayer.getAddress());
     }
 
-    void requestTimeout(Packet packet) {
-        handler.invoke(relayer, "requestTimeout", packet.toByteArray());
-        verify(handlerSpy).TimeoutRequest(packet.toByteArray());
+    void requestTimeout(MsgRequestTimeoutPacket msg) {
+        handler.invoke(relayer, "requestTimeout", msg);
+        verify(handlerSpy).TimeoutRequest(msg.getPacket());
 
     }
 

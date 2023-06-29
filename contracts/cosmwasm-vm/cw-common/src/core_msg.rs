@@ -97,7 +97,7 @@ pub enum ExecuteMsg {
         msg: HexString,
     },
     RequestTimeout {},
-    Timeout {
+    TimeoutPacket {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgTimeout
         msg: HexString,
@@ -179,4 +179,6 @@ pub enum QueryMsg {
     },
     #[returns(Vec<String>)]
     GetAllPorts {},
+    #[returns(String)]
+    GetCommitmentPrefix {},
 }

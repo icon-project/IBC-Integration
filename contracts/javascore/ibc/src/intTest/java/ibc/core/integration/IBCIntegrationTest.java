@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import ibc.icon.structs.messages.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -26,21 +27,6 @@ import ibc.icon.interfaces.IIBCConnectionScoreClient;
 import ibc.icon.interfaces.IIBCHandlerScoreClient;
 import ibc.icon.interfaces.IIBCHostScoreClient;
 import ibc.icon.interfaces.IIBCPacketScoreClient;
-import ibc.icon.structs.messages.MsgChannelCloseConfirm;
-import ibc.icon.structs.messages.MsgChannelCloseInit;
-import ibc.icon.structs.messages.MsgChannelOpenAck;
-import ibc.icon.structs.messages.MsgChannelOpenConfirm;
-import ibc.icon.structs.messages.MsgChannelOpenInit;
-import ibc.icon.structs.messages.MsgChannelOpenTry;
-import ibc.icon.structs.messages.MsgConnectionOpenAck;
-import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
-import ibc.icon.structs.messages.MsgConnectionOpenInit;
-import ibc.icon.structs.messages.MsgConnectionOpenTry;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgPacketAcknowledgement;
-import ibc.icon.structs.messages.MsgPacketRecv;
-import ibc.icon.structs.messages.MsgPacketTimeout;
-import ibc.icon.structs.messages.MsgUpdateClient;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
@@ -90,7 +76,6 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
         msg.setConsensusState(new byte[0]);
         msg.setClientState(new byte[0]);
         msg.setBtpNetworkId(networkId);
-        msg.setStoragePrefix(new byte[0]);
 
         IIBCClientScoreClient client = getClientInterface(owner);
         var consumer = client.CreateClient((logs) -> {clientID = logs.get(0).getIdentifier();}, null);
@@ -388,6 +373,8 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
         BigInteger currentHeight = mockApp._lastBlockHeight();
         Height timeoutHeight = new Height();
         timeoutHeight.setRevisionHeight(currentHeight);
+        MsgRequestTimeoutPacket requestPacket=new MsgRequestTimeoutPacket();
+
         Packet pct = new Packet();
         pct.setSequence(currRecvCount);
         pct.setData("timeout".getBytes());
@@ -397,8 +384,11 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
         pct.setSourceChannel(counterpartyChannelId);
         pct.setTimeoutHeight(timeoutHeight);
         pct.setTimeoutTimestamp(BigInteger.ZERO);
+        requestPacket.setPacket(pct.encode());
+        requestPacket.setProof(new byte[]{});
+        requestPacket.setProofHeight(new byte[]{});
 
-        client.requestTimeout(pct.encode());
+        client.requestTimeout(requestPacket);
     }
 
     // Will close the Channel

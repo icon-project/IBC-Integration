@@ -213,11 +213,11 @@ fn test_packet_data() {
 fn test_timeout_packet_validate_to_light_client() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let proof_height = 50;
-    let timeout_height = proof_height;
+    let timeout_height = proof_height - 1;
     let timeout_timestamp = 0;
     let default_raw_msg =
         get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
@@ -283,9 +283,10 @@ fn test_timeout_packet_validate_to_light_client() {
         trusting_period: 2,
         frozen_height: 0,
         max_clock_drift: 5,
-        latest_height: 100,
+        latest_height: 10,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -325,7 +326,7 @@ fn test_timeout_packet_validate_to_light_client() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
     contract
         .ibc_store()
         .expected_time_per_block()
@@ -333,6 +334,7 @@ fn test_timeout_packet_validate_to_light_client() {
         .unwrap();
 
     let res = contract.timeout_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
+
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 541)
 }

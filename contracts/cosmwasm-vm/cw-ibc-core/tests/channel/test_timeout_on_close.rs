@@ -7,7 +7,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
-    let env = mock_env();
+    let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let height = 2;
@@ -81,6 +81,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
     }
     .try_into()
     .unwrap();
@@ -120,7 +121,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let env = mock_env();
+    let env = get_mock_env();
     contract
         .ibc_store()
         .expected_time_per_block()

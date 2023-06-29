@@ -44,16 +44,11 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|_e| ContractError::FailedToInitContract)?;
-    let config = Config::new(
-        msg.src_network_id,
-        msg.network_id,
-        msg.network_type_id,
-        info.sender,
-    );
+    let config = Config::new(info.sender);
     let mut context = CwContext::new(deps, _env);
     context.insert_config(&config)?;
     Ok(Response::default())
@@ -313,6 +308,18 @@ pub fn execute(
                 .add_attribute(MEMBERSHIP, result.to_string())
                 .set_data(data))
         }
+        ExecuteMsg::PacketTimeout {
+            client_id,
+            next_seq_recv_verification_result,
+        } => {
+            // let is_channel_valid =
+            //     validate_channel_state(&client_id, &client, &verify_channel_state)?;
+            let _sequence_valid =
+                validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
+            let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
+
+            Ok(Response::new().set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
+        }
         ExecuteMsg::TimeoutOnCLose {
             client_id,
             verify_channel_state,
@@ -446,7 +453,8 @@ pub fn validate_next_seq_recv(
             let proofs_decoded =
                 MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
             let height = to_height_u64(height)?;
-            let res = client.verify_membership(
+
+            client.verify_membership(
                 client_id,
                 height,
                 0,
@@ -454,8 +462,7 @@ pub fn validate_next_seq_recv(
                 &proofs_decoded.proofs,
                 seq_recv_path,
                 sequence.to_be_bytes().as_ref(),
-            )?;
-            res
+            )?
         }
         LightClientPacketMessage::VerifyPacketReceiptAbsence {
             height,
@@ -605,7 +612,7 @@ mod tests {
 
         assert_eq!(0, res.messages.len());
 
-        let config = Config::new("0x3.icon".to_string(), 1, 1, info.sender);
+        let config = Config::new(info.sender);
 
         let stored_config = QueryHandler::get_config(deps.as_ref().storage).unwrap();
         assert_eq!(config, stored_config);

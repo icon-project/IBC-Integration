@@ -18,6 +18,7 @@ pub enum ExecuteMsg {
     SendCallMessage {
         to: String,
         data: Vec<u8>,
+        timeout_height: u64,
         rollback: Option<Vec<u8>>,
     },
 

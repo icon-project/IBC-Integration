@@ -91,7 +91,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
                 "newconnection",
             ),
@@ -108,7 +108,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-#[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"xcall-1\" }")]
+#[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"ics20-1\" }")]
 fn fails_on_open_channel_open_try_invalid_version() {
     use cw_common::xcall_connection_msg::ExecuteMsg;
     use cw_xcall_ibc_connection::state::CwIbcConnection;
@@ -177,10 +177,10 @@ fn sucess_on_open_channel_open_try_valid_version() {
                 src.clone(),
                 dst,
                 cosmwasm_std::IbcOrder::Unordered,
-                "xcall-1",
+                "ics20-1",
                 "newconnection",
             ),
-            counterparty_version: "xcall-1".to_owned(),
+            counterparty_version: "ics20-1".to_owned(),
         },
     };
     contract
@@ -194,7 +194,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
     let result_data: IbcEndpoint = from_binary(&result.data.unwrap()).unwrap();
     assert_eq!(src.channel_id, result_data.channel_id);
 
-    assert_eq!("xcall-1", result.attributes[1].value)
+    assert_eq!("ics20-1", result.attributes[1].value)
 }
 
 #[test]
@@ -221,10 +221,10 @@ fn sucess_on_ibc_channel_connect() {
                 src.clone(),
                 dst,
                 cosmwasm_std::IbcOrder::Unordered,
-                "xcall-1",
+                "ics20-1",
                 "newconnection",
             ),
-            counterparty_version: "xcall-1".to_owned(),
+            counterparty_version: "ics20-1".to_owned(),
         },
     };
     contract
@@ -244,8 +244,8 @@ fn sucess_on_ibc_channel_connect() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-#[should_panic(expected = "OrderedChannel")]
-fn fails_on_ibc_channel_connect_ordered_channel() {
+#[should_panic(expected = "UnOrderedChannel")]
+fn fails_on_ibc_channel_connect_unordered_channel() {
     let mut deps = deps();
 
     let mock_env = mock_env();
@@ -284,7 +284,7 @@ fn fails_on_ibc_channel_connect_ordered_channel() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-#[should_panic(expected = " InvalidVersion { actual: \"xyz-1\", expected: \"xcall-1\" }")]
+#[should_panic(expected = " InvalidVersion { actual: \"xyz-1\", expected: \"ics20-1\" }")]
 fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
     let mut deps = deps();
 

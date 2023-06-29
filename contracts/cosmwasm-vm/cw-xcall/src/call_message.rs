@@ -41,11 +41,10 @@ impl<'a> CwCallService<'a> {
         _env: Env,
         to: String,
         data: Vec<u8>,
+        timeout_height: u64,
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
         let from_address = info.sender.to_string();
-        // TODO: should be set to sender address for test case
-        // let from_address = "archway1q6lr3hy5cxk4g74k9wcqyqarf9e97ckpn7t963".to_string();
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             info.sender.clone(),
@@ -108,7 +107,7 @@ impl<'a> CwCallService<'a> {
         );
 
         let message: CallServiceMessage = call_request.into();
-        let timeout_height = self.get_timeout_height(deps.as_ref().storage);
+        // let timeout_height = self.get_timeout_height(deps.as_ref().storage);
 
         debug_println!("the store timeout height is :{:?}", timeout_height);
 

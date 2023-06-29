@@ -8,7 +8,7 @@ use cosmwasm_std::{
 use cw_integration::TestSteps;
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 use cw_xcall_ibc_connection::state::IbcConfig;
-use test_utils::RawPayload;
+use test_utils::{IntegrationData, RawPayload};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum TestApps {
@@ -24,6 +24,8 @@ pub struct TestContext {
     pub contracts: HashMap<TestApps, Addr>,
     pub sender: Addr,
     pub test_data: Option<HashMap<TestSteps, RawPayload>>,
+    pub admin: Option<String>,
+    pub caller: Option<String>,
 }
 
 impl TestContext {
@@ -138,7 +140,7 @@ pub fn ibc_core_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-pub fn xcall_mock_contract() -> Box<dyn Contract<Empty>> {
+pub fn xcall_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(cw_xcall::execute, cw_xcall::instantiate, cw_xcall::query)
         .with_reply(cw_xcall::reply);
     Box::new(contract)
@@ -182,7 +184,7 @@ pub fn init_ibc_core_contract(mut ctx: TestContext) -> TestContext {
             &cw_common::core_msg::InstantiateMsg {},
             &[],
             "IBCCore",
-            Some(ctx.sender.clone().to_string()),
+            ctx.admin.clone(),
         )
         .unwrap();
 
@@ -191,8 +193,8 @@ pub fn init_ibc_core_contract(mut ctx: TestContext) -> TestContext {
     ctx
 }
 
-pub fn init_xcall_mock_contract(mut ctx: TestContext, ibc_host: Addr) -> TestContext {
-    let code_id = ctx.app.store_code(xcall_mock_contract());
+pub fn init_xcall_contract(mut ctx: TestContext, ibc_host: Addr) -> TestContext {
+    let code_id = ctx.app.store_code(xcall_contract());
     let addr = ctx
         .app
         .instantiate_contract(
@@ -317,13 +319,27 @@ pub fn raw_payload_to_map(payloads: Vec<RawPayload>) -> HashMap<TestSteps, RawPa
 //     return raw_payload_to_map(payloads);
 // }
 
-pub fn setup_context(data: Option<HashMap<TestSteps, RawPayload>>) -> TestContext {
+pub fn setup_context(data: Option<IntegrationData>) -> TestContext {
     let router = App::default();
     let sender = Addr::unchecked("sender");
+    if let Some(data) = data {
+        let test_data = raw_payload_to_map(data.data);
+        return TestContext {
+            app: router,
+            contracts: HashMap::new(),
+            sender,
+            test_data: Some(test_data),
+            admin: Some(data.address.clone()),
+            caller: data.caller_address,
+        };
+    }
+
     TestContext {
         app: router,
         contracts: HashMap::new(),
         sender,
-        test_data: data,
+        test_data: None,
+        admin: None,
+        caller: None,
     }
 }

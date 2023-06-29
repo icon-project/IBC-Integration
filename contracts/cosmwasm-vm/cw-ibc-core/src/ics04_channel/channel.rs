@@ -639,14 +639,14 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
         receipt: common::ibc::core::ics04_channel::packet::Receipt,
     ) -> Result<(), ContractError> {
-        let commitment_path = commitment::receipt_commitment_path(port_id, channel_id, sequence);
+        let commitment_key = commitment::receipt_commitment_key(port_id, channel_id, sequence);
         let ok = match receipt {
             common::ibc::core::ics04_channel::packet::Receipt::Ok => true,
         };
-        let commitment_bytes = to_vec(&ok).map_err(ContractError::Std)?;
+        let commitment_bytes = keccak256(&ok.encode_to_vec()).to_vec();
         self.ibc_store()
             .commitments()
-            .save(store, commitment_path, &commitment_bytes)?;
+            .save(store, commitment_key, &commitment_bytes)?;
 
         Ok(())
     }
@@ -820,23 +820,11 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: Sequence,
     ) -> Result<common::ibc::core::ics04_channel::packet::Receipt, ContractError> {
-        let commitment_path = commitment::receipt_commitment_path(port_id, channel_id, sequence);
-        let commitment_end_bytes = self
-            .ibc_store()
-            .commitments()
-            .load(store, commitment_path)
-            .map_err(|_| ContractError::IbcDecodeError {
-                error: DecodeError::new("PacketCommitmentNotFound".to_string()),
-            })?;
-        let commitment: bool =
-            serde_json_wasm::from_slice(&commitment_end_bytes).map_err(|error| {
-                ContractError::IbcDecodeError {
-                    error: DecodeError::new(error.to_string()),
-                }
-            })?;
-        match commitment {
-            true => Ok(common::ibc::core::ics04_channel::packet::Receipt::Ok),
-            false => Err(ContractError::IbcPacketError {
+        let commitment_key = commitment::receipt_commitment_key(port_id, channel_id, sequence);
+        let commitment_end_bytes = self.ibc_store().commitments().load(store, commitment_key);
+        match commitment_end_bytes {
+            Ok(bytes) => Ok(common::ibc::core::ics04_channel::packet::Receipt::Ok),
+            Err(err) => Err(ContractError::IbcPacketError {
                 error: PacketError::PacketReceiptNotFound { sequence },
             }),
         }

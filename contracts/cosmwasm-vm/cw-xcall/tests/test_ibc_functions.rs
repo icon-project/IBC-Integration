@@ -29,10 +29,9 @@ use cw_xcall::{
 };
 
 #[test]
-#[ignore]
 #[cfg(not(feature = "native_ibc"))]
-#[should_panic(expected = "UnorderedChannel")]
-fn fails_on_open_channel_open_init_unordered_channel() {
+#[should_panic(expected = "UnOrderedChannel")]
+fn fails_on_open_channel_open_init_ordered_channel() {
     let mut deps = deps();
 
     let mock_env = mock_env();
@@ -54,7 +53,7 @@ fn fails_on_open_channel_open_init_unordered_channel() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Unordered,
+                cosmwasm_std::IbcOrder::Ordered,
                 "ics20-1",
                 "newconnection",
             ),
@@ -93,7 +92,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
                 "newconnection",
             ),
@@ -133,7 +132,7 @@ fn fails_on_open_channel_open_try_invalid_version() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
                 "newconnection",
             ),
@@ -175,7 +174,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
             channel: IbcChannel::new(
                 src.clone(),
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "ics20-1",
                 "newconnection",
             ),
@@ -219,7 +218,7 @@ fn sucess_on_ibc_channel_connect() {
             channel: IbcChannel::new(
                 src.clone(),
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "ics20-1",
                 "newconnection",
             ),
@@ -242,9 +241,8 @@ fn sucess_on_ibc_channel_connect() {
 }
 
 #[test]
-#[ignore]
 #[cfg(not(feature = "native_ibc"))]
-#[should_panic(expected = "OrderedChannel")]
+#[should_panic(expected = "UnOrderedChannel")]
 fn fails_on_ibc_channel_connect_unordered_channel() {
     let mut deps = deps();
 
@@ -283,7 +281,6 @@ fn fails_on_ibc_channel_connect_unordered_channel() {
 }
 
 #[test]
-#[ignore]
 #[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = " InvalidVersion { actual: \"xyz-1\", expected: \"ics20-1\" }")]
 fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
@@ -311,7 +308,7 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
             channel: IbcChannel::new(
                 src,
                 dst,
-                cosmwasm_std::IbcOrder::Ordered,
+                cosmwasm_std::IbcOrder::Unordered,
                 "xcall-1",
                 "newconnection",
             ),
@@ -396,9 +393,10 @@ fn sucess_receive_packet_for_call_message_request() {
 }
 
 #[test]
-#[ignore]
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ack_packet() {
+    use common::rlp;
+
     let mut mock_deps = deps();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
     let mock_env = mock_env();
@@ -441,7 +439,7 @@ fn sucess_on_ack_packet() {
         .unwrap();
     let message: CallServiceMessage = data.try_into().unwrap();
 
-    let packet = IbcPacket::new(to_binary(&message).unwrap(), src, dst, 0, timeout);
+    let packet = IbcPacket::new(Binary(rlp::encode(&message).to_vec()), src, dst, 0, timeout);
 
     let ack_packet = IbcPacketAckMsg::new(ack, packet, Addr::unchecked("relayer"));
 

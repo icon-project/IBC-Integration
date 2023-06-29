@@ -225,18 +225,17 @@ impl<'a> CwIbcCoreContext<'a> {
                             self.validate_write_acknowledgement(deps.storage, &packet)?;
                         }
                     } else {
-                        // TODO: verify unordered
-                        let packet_rec = self.get_packet_receipt(
-                            deps.storage,
-                            &packet.port_id_on_a,
-                            &packet.chan_id_on_a,
-                            packet.sequence,
-                        );
-                        match packet_rec {
-                            Ok(_receipt) => {}
+                        // let packet_rec = self.get_packet_receipt(
+                        //     deps.storage,
+                        //     &packet.port_id_on_a,
+                        //     &packet.chan_id_on_a,
+                        //     packet.sequence,
+                        // );
+                        // match packet_rec {
+                        //     Ok(_receipt) => {}
 
-                            Err(e) => return Err(e),
-                        }
+                        //     Err(e) => return Err(e),
+                        // }
                         // Case where the recvPacket is successful and an
                         // acknowledgement will be written (not a no-op)
                         self.validate_write_acknowledgement(deps.storage, &packet)?;
@@ -370,14 +369,15 @@ impl<'a> CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
                     debug_println!("response from xcall {:?}", HexString::from_bytes(&res.0));
-                    let response_data = from_binary_response::<IbcReceiveResponse>(&res)
+                    let response = from_binary_response::<IbcReceiveResponse>(&res)
                         .map_err(ContractError::Std)?;
-
+                    debug_println!(
+                        "response acknowledgement {:?}",
+                        HexString::from_bytes(&response.acknowledgement)
+                    );
                     let response_data: XcallPacketResponseData =
-                        from_binary_response::<XcallPacketResponseData>(
-                            &response_data.acknowledgement,
-                        )
-                        .map_err(ContractError::Std)?;
+                        from_binary_response::<XcallPacketResponseData>(&response.acknowledgement)
+                            .map_err(ContractError::Std)?;
                     debug_println!(
                         "our ack data is: {:?}",
                         HexString::from_bytes(&response_data.acknowledgement)

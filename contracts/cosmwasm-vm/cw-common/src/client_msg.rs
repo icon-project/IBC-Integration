@@ -10,21 +10,8 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::from_slice;
 
 #[cw_serde]
-pub struct InstantiateMsg {
-    pub src_network_id: String,
-    pub network_id: u64,
-    pub network_type_id: u128,
-}
-
-impl Default for InstantiateMsg {
-    fn default() -> Self {
-        Self {
-            src_network_id: "0x3.icon".to_string(),
-            network_id: 1,
-            network_type_id: 1,
-        }
-    }
-}
+#[derive(Default)]
+pub struct InstantiateMsg {}
 
 #[cw_serde]
 #[derive(QueryResponses)]
@@ -205,6 +192,10 @@ pub enum ExecuteMsg {
     TimeoutOnCLose {
         client_id: String,
         verify_channel_state: VerifyChannelState,
+        next_seq_recv_verification_result: LightClientPacketMessage,
+    },
+    PacketTimeout {
+        client_id: String,
         next_seq_recv_verification_result: LightClientPacketMessage,
     },
     VerifyPacketData {
