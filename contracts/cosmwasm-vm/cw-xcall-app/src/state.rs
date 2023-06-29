@@ -60,7 +60,6 @@ pub struct CwCallService<'a> {
     fee_handler: Item<'a, String>,
     protocol_fee: Item<'a, u128>,
     default_connections: Map<'a, String, Addr>,
-    timeout_height: Item<'a, u64>,
     pending_requests: Map<'a, (Vec<u8>, String), bool>,
     pending_responses: Map<'a, (Vec<u8>, String), bool>,
     execute_request_id: Item<'a, u128>,
@@ -85,9 +84,8 @@ impl<'a> CwCallService<'a> {
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
             protocol_fee: Item::new(StorageKey::ProtocolFee.as_str()),
             default_connections: Map::new(StorageKey::DefaultConnections.as_str()),
-            timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
             pending_requests: Map::new(StorageKey::PendingRequests.as_str()),
-            pending_responses: Map::new(StorageKey::PendingRequests.as_str()),
+            pending_responses: Map::new(StorageKey::PendingResponses.as_str()),
             config: Item::new(StorageKey::Config.as_str()),
             execute_request_id: Item::new(StorageKey::ExecuteReqId.as_str()),
             execute_rollback_id: Item::new(StorageKey::ExecuteRollbackId.as_str()),
@@ -248,18 +246,6 @@ impl<'a> CwCallService<'a> {
         self.default_connections
             .load(store, nid.to_string())
             .map_err(ContractError::Std)
-    }
-    pub fn store_timeout_height(
-        &self,
-        store: &mut dyn Storage,
-        timeout_height: u64,
-    ) -> Result<(), ContractError> {
-        self.timeout_height
-            .save(store, &timeout_height)
-            .map_err(ContractError::Std)
-    }
-    pub fn get_timeout_height(&self, store: &dyn Storage) -> u64 {
-        self.timeout_height.load(store).unwrap_or(0)
     }
 
     pub fn get_pending_requests_by_hash(

@@ -119,16 +119,6 @@ impl<'a> CwCallService<'a> {
                 self.update_admin(deps.storage, info, validated_address)
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
-
-            ExecuteMsg::SetTimeoutHeight { height } => {
-                self.ensure_admin(deps.as_ref().storage, info.sender)?;
-
-                self.store_timeout_height(deps.storage, height)?;
-
-                Ok(Response::new()
-                    .add_attribute("method", "set_timeout_height")
-                    .add_attribute("timeout_hieght", height.to_string()))
-            }
             #[cfg(feature = "native_ibc")]
             _ => Err(ContractError::DecodeFailed {
                 error: "InvalidMessage Variant".to_string(),
@@ -168,7 +158,6 @@ impl<'a> CwCallService<'a> {
 
             QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps.storage).unwrap()),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
-            QueryMsg::GetTimeoutHeight {} => to_binary(&self.get_timeout_height(deps.storage)),
             QueryMsg::GetNetworkAddress {} => {
                 to_binary(&self.get_network_address(deps.storage, &env).unwrap())
             }

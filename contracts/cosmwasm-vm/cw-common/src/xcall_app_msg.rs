@@ -41,7 +41,5 @@ pub enum ExecuteMsg {
         address: String,
     },
     RemoveAdmin {},
-    SetTimeoutHeight {
-        height: u64,
-    },
+   
 }
