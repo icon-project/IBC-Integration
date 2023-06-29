@@ -71,7 +71,9 @@ fn fails_on_open_channel_open_init_ordered_channel() {
 #[cfg(not(feature = "native_ibc"))]
 fn success_on_open_channel_open_init_unordered_channel() {
     use cw_common::xcall_connection_msg::ExecuteMsg;
-    use cw_xcall_ibc_connection::{state::CwIbcConnection, types::connection_config::ConnectionConfig};
+    use cw_xcall_ibc_connection::{
+        state::CwIbcConnection, types::connection_config::ConnectionConfig,
+    };
 
     let mut deps = deps();
 
@@ -89,10 +91,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
         channel_id: "channel-3".to_string(),
     };
 
-    
-    let connection_id="newconnection".to_string();
-
-   
+    let connection_id = "newconnection".to_string();
 
     let execute_msg = ExecuteMsg::IbcChannelOpen {
         msg: OpenInit {
@@ -106,18 +105,23 @@ fn success_on_open_channel_open_init_unordered_channel() {
         },
     };
 
-    contract.configure_connection(deps.as_mut().storage, 
-        connection_id, 
-        dst.port_id.clone(), 
-        "nid".to_owned(), 
-        "lightclient".to_string(), 
-        "client-id".to_string(), 100).unwrap();
+    contract
+        .configure_connection(
+            deps.as_mut().storage,
+            connection_id,
+            dst.port_id.clone(),
+            "nid".to_owned(),
+            "lightclient".to_string(),
+            "client-id".to_string(),
+            100,
+        )
+        .unwrap();
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
 
     let result = contract.execute(deps.as_mut(), mock_env, mock_info, execute_msg);
-    println!("{:?}",result);
+    println!("{:?}", result);
 
     assert!(result.is_ok())
 }
@@ -199,12 +203,17 @@ fn sucess_on_open_channel_open_try_valid_version() {
             counterparty_version: "ics20-1".to_owned(),
         },
     };
-    contract.configure_connection(deps.as_mut().storage, 
-    "newconnection".to_string(), 
-    dst.port_id.clone(), 
-    "nid".to_owned(), 
-    "lightclient".to_string(), 
-    "client-id".to_string(), 100).unwrap();
+    contract
+        .configure_connection(
+            deps.as_mut().storage,
+            "newconnection".to_string(),
+            dst.port_id.clone(),
+            "nid".to_owned(),
+            "lightclient".to_string(),
+            "client-id".to_string(),
+            100,
+        )
+        .unwrap();
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
@@ -252,13 +261,18 @@ fn sucess_on_ibc_channel_connect() {
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
-    
-    contract.configure_connection(deps.as_mut().storage, 
-    "newconnection".to_string(), 
-    dst.port_id.clone(), 
-    "btp".to_owned(), 
-    "lightclient".to_string(), 
-    "client-id".to_string(), 100).unwrap();
+
+    contract
+        .configure_connection(
+            deps.as_mut().storage,
+            "newconnection".to_string(),
+            dst.port_id.clone(),
+            "btp".to_owned(),
+            "lightclient".to_string(),
+            "client-id".to_string(),
+            100,
+        )
+        .unwrap();
 
     let result = contract
         .execute(deps.as_mut(), mock_env, mock_info, execute_message)
@@ -380,8 +394,12 @@ fn sucess_receive_packet_for_call_message_request() {
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
-    let message:Message=Message { sn: Nullable::new(Some(1)), fee: 0, data: rlp::encode(&message).to_vec()};
-    let message_data=Binary(rlp::encode(&message).to_vec());
+    let message: Message = Message {
+        sn: Nullable::new(Some(1)),
+        fee: 0,
+        data: rlp::encode(&message).to_vec(),
+    };
+    let message_data = Binary(rlp::encode(&message).to_vec());
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -416,17 +434,21 @@ fn sucess_receive_packet_for_call_message_request() {
             Addr::unchecked("ibchostaddress"),
         )
         .unwrap();
-    contract.configure_connection(mock_deps.as_mut().storage, 
-    "newconnection".to_string(), 
-    dst.port_id.clone(), 
-    "nid".to_owned(), 
-    "lightclient".to_string(), 
-    "client-id".to_string(), 100).unwrap();
+    contract
+        .configure_connection(
+            mock_deps.as_mut().storage,
+            "newconnection".to_string(),
+            dst.port_id.clone(),
+            "nid".to_owned(),
+            "lightclient".to_string(),
+            "client-id".to_string(),
+            100,
+        )
+        .unwrap();
 
     let result = contract.execute(mock_deps.as_mut(), mock_env, mock_info, execute_message);
 
     assert!(result.is_ok());
-
 }
 
 #[test]
@@ -473,13 +495,22 @@ fn sucess_on_ack_packet() {
             Addr::unchecked(alice().as_str()),
         )
         .unwrap();
-    let channel=src.channel_id.clone();
-    contract.store_outgoing_packet_sn(mock_deps.as_mut().storage, &channel, 0, 1).unwrap();
-    contract.set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcall-host")).unwrap();
-    
-  
-    let channel_config= ChannelConfig { client_id: "client_id".to_string(), timeout_height: 100, counterparty_nid: "nid".to_string() };
-    contract.store_channel_config(mock_deps.as_mut().storage, &channel, &channel_config).unwrap();
+    let channel = src.channel_id.clone();
+    contract
+        .store_outgoing_packet_sn(mock_deps.as_mut().storage, &channel, 0, 1)
+        .unwrap();
+    contract
+        .set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcall-host"))
+        .unwrap();
+
+    let channel_config = ChannelConfig {
+        client_id: "client_id".to_string(),
+        timeout_height: 100,
+        counterparty_nid: "nid".to_string(),
+    };
+    contract
+        .store_channel_config(mock_deps.as_mut().storage, &channel, &channel_config)
+        .unwrap();
     let message: CallServiceMessage = data.try_into().unwrap();
 
     let packet = IbcPacket::new(to_binary(&message).unwrap(), src, dst, 0, timeout);
@@ -488,11 +519,8 @@ fn sucess_on_ack_packet() {
 
     let execute_message = ExecuteMsg::IbcPacketAck { msg: ack_packet };
 
-
-    let result = contract
-        .execute(mock_deps.as_mut(), mock_env, mock_info, execute_message);
+    let result = contract.execute(mock_deps.as_mut(), mock_env, mock_info, execute_message);
     assert!(result.is_ok());
-  
 }
 
 #[test]
@@ -511,9 +539,7 @@ fn test_entry_point() {
         env.clone(),
         mock_info.clone(),
         InstantiateMsg {
-            timeout_height: 10,
             ibc_host: Addr::unchecked("hostaddress"),
-            protocol_fee: 0,
         },
     )
     .unwrap();
@@ -627,9 +653,7 @@ fn success_on_setting_timeout_height() {
     let mut contract = CwIbcConnection::default();
 
     let init_message = InstantiateMsg {
-        timeout_height: 10,
         ibc_host: Addr::unchecked("ibchostaddress"),
-        protocol_fee: 0,
     };
 
     contract
@@ -680,9 +704,7 @@ fn fails_on_configure_connection_unauthorized() {
     let mut contract = CwIbcConnection::default();
 
     let init_message = InstantiateMsg {
-        timeout_height: 10,
         ibc_host: Addr::unchecked("ibchostaddress"),
-        protocol_fee: 0,
     };
 
     contract
@@ -950,12 +972,12 @@ fn test_handle_response() {
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
-    let message= Message {
-        sn:Nullable::new(Some(0)),
-        fee:0,
-        data:rlp::encode(&message).to_vec()
+    let message = Message {
+        sn: Nullable::new(Some(0)),
+        fee: 0,
+        data: rlp::encode(&message).to_vec(),
     };
-    let message_data=Binary(rlp::encode(&message).to_vec());
+    let message_data = Binary(rlp::encode(&message).to_vec());
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -990,7 +1012,7 @@ fn test_handle_response() {
 fn test_for_call_service_request_from_rlp_bytes() {
     let hex_decode_rlp_data = hex::decode("ed93736f6d65636f6e74726163746164647265737393736f6d65636f6e7472616374616464726573730100f800c0").unwrap();
 
-  let cs_message_request = CallServiceMessageRequest::try_from(&hex_decode_rlp_data).unwrap();
+    let cs_message_request = CallServiceMessageRequest::try_from(&hex_decode_rlp_data).unwrap();
 
     let expected_data = CallServiceMessageRequest::new(
         "somecontractaddress".to_string(),
@@ -1000,7 +1022,6 @@ fn test_for_call_service_request_from_rlp_bytes() {
         false,
         vec![],
     );
-   
 
     assert_eq!(expected_data, cs_message_request)
 }
@@ -1044,7 +1065,7 @@ fn test_call_message_from_raw_message() {
 
     let cs_message = CallServiceMessage::try_from(data).unwrap();
 
-   let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
+    let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
 
     let expected_data = CallServiceMessageRequest::new(
         "somecontractaddress".to_string(),

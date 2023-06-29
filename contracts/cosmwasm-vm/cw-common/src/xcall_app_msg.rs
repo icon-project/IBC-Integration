@@ -41,5 +41,4 @@ pub enum ExecuteMsg {
         address: String,
     },
     RemoveAdmin {},
-   
 }

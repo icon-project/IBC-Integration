@@ -292,9 +292,7 @@ pub fn init_xcall_ibc_connection_contract(mut ctx: TestContext) -> TestContext {
             ibc_connection_contract_code_id,
             ctx.sender.clone(),
             &cw_xcall_ibc_connection::msg::InstantiateMsg {
-                timeout_height: 1000,
                 ibc_host: ctx.get_ibc_core(),
-                protocol_fee: 0,
             },
             &[],
             "IBCConnection",

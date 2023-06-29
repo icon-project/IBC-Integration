@@ -11,7 +11,6 @@ pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
 pub const ACK_FAILURE_ID: u64 = 3;
 
-
 pub const XCALL_HANDLE_MESSAGE_REPLY_ID: u64 = 4;
 pub const XCALL_HANDLE_ERROR_REPLY_ID: u64 = 5;
 
@@ -109,8 +108,6 @@ pub struct CwIbcConnection<'a> {
     ibc_config: Map<'a, String, IbcConfig>,
     ibc_host: Item<'a, Addr>,
     xcall_host: Item<'a, Addr>,
-    fee_handler: Item<'a, String>,
-    fee: Item<'a, u128>,
     configured_networks: Map<'a, (String, String), String>,
     connection_configs: Map<'a, String, ConnectionConfig>,
     channel_configs: Map<'a, String, ChannelConfig>,
@@ -135,8 +132,6 @@ impl<'a> CwIbcConnection<'a> {
             ibc_config: Map::new(StorageKey::IbcConfig.as_str()),
             ibc_host: Item::new(StorageKey::IbcHost.as_str()),
             xcall_host: Item::new(StorageKey::XCallHost.as_str()),
-            fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
-            fee: Item::new(StorageKey::Fee.as_str()),
             configured_networks: Map::new(StorageKey::ConfiguredNetworks.as_str()),
             channel_configs: Map::new(StorageKey::ChannelConfigs.as_str()),
             connection_configs: Map::new(StorageKey::ConnectionConfigs.as_str()),
@@ -200,13 +195,6 @@ impl<'a> CwIbcConnection<'a> {
     }
     pub fn get_xcall_host(&self, store: &dyn Storage) -> Result<Addr, ContractError> {
         self.xcall_host.load(store).map_err(ContractError::Std)
-    }
-
-    pub fn fee_handler(&self) -> &Item<'a, String> {
-        &self.fee_handler
-    }
-    pub fn fee(&self) -> &Item<'a, u128> {
-        &self.fee
     }
 
     pub fn get_channel_config(

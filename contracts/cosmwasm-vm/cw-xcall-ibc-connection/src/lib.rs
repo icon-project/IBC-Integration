@@ -6,7 +6,6 @@ pub mod contract;
 pub mod error;
 pub mod events;
 pub mod fee;
-pub mod fee_handler;
 pub mod ibc;
 pub mod ibc_host;
 pub mod msg;

@@ -7,7 +7,7 @@ use cw_common::{query_helpers::build_smart_query, raw_types::channel::RawPacket}
 use debug_print::debug_println;
 
 use crate::{
-    state::{XCALL_HANDLE_MESSAGE_REPLY_ID, HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID},
+    state::{HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID},
     types::{
         channel_config::ChannelConfig, connection_config::ConnectionConfig, message::Message,
         LOG_PREFIX,
@@ -136,10 +136,17 @@ impl<'a> CwIbcConnection<'a> {
                     timeout_height,
                 )?;
                 Ok(Response::new())
-            },
-            ExecuteMsg::ClaimFees { nid , address}=>{
-                let fee_msg=self.claimFees(deps, info, nid, address)?;
+            }
+            ExecuteMsg::ClaimFees { nid, address } => {
+                let fee_msg = self.claimFees(deps, info, nid, address)?;
                 Ok(Response::new().add_submessage(fee_msg))
+            }
+            ExecuteMsg::SetFees {
+                nid,
+                packet_fee,
+                ack_fee,
+            } => {
+                return self.set_fee(deps.storage, nid, packet_fee, ack_fee);
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
@@ -211,14 +218,15 @@ impl<'a> CwIbcConnection<'a> {
                 let config = self.get_channel_config(deps.storage, &channel_id).unwrap();
                 to_binary(&config.timeout_height)
             }
-            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps).unwrap()),
-            QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
             QueryMsg::GetFee { nid, response } => {
                 let fees = self.get_network_fees(deps.storage, &nid).unwrap();
                 if response {
                     return to_binary(&fees.ack_fee);
                 }
                 to_binary(&fees.send_packet_fee)
+            }
+            QueryMsg::GetUnclaimedFee { nid, relayer } => {
+                to_binary(&self.get_unclaimed_fee(deps.storage, nid, relayer))
             }
         }
     }
@@ -247,7 +255,7 @@ impl<'a> CwIbcConnection<'a> {
         match msg.id {
             XCALL_HANDLE_MESSAGE_REPLY_ID => self.xcall_handle_message_reply(deps, msg),
             HOST_SEND_MESSAGE_REPLY_ID => self.host_send_message_reply(deps, msg),
-            HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID=>self.host_write_acknowledgement_reply(deps, msg),
+            HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID => self.host_write_acknowledgement_reply(deps, msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
@@ -288,7 +296,6 @@ impl<'a> CwIbcConnection<'a> {
         self.add_admin(store, info, owner)?;
         // self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
-        self.add_fee(store, msg.protocol_fee)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -655,30 +662,6 @@ impl<'a> CwIbcConnection<'a> {
         Ok(())
     }
 
-    pub fn claimFees(
-        &self,
-        deps: DepsMut,
-        info: MessageInfo,
-        nid: String,
-        address: String,
-    ) -> Result<SubMsg, ContractError> {
-        let fees = self.get_unclaimed_packet_fee(deps.as_ref().storage, &nid, &address)?;
-        let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
-
-        self.reset_unclaimed_packet_fees(deps.storage, &nid, &address)?;
-        let sequence_no = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
-        let message = Message {
-            sn: Nullable::new(None),
-            fee: fees,
-            data: address.as_bytes().to_vec(),
-        };
-        let timeout_height =
-            self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
-        let packet = self.create_packet(ibc_config, timeout_height, sequence_no, message);
-        let sub_msg = self.call_host_send_message(deps, info, packet)?;
-        Ok(sub_msg)
-    }
-
     pub fn create_packet<T: common::rlp::Encodable>(
         &self,
         ibc_config: IbcConfig,
@@ -698,6 +681,4 @@ impl<'a> CwIbcConnection<'a> {
         };
         packet
     }
-
-    
 }

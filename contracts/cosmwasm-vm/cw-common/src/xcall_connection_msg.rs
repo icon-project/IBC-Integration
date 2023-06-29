@@ -33,7 +33,16 @@ pub enum ExecuteMsg {
         address: String,
     },
     RemoveAdmin {},
-    ClaimFees {nid:String,address:String},
+    ClaimFees {
+        nid: String,
+        address: String,
+    },
+
+    SetFees {
+        nid: String,
+        packet_fee: u128,
+        ack_fee: u128,
+    },
 
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelOpen {
@@ -72,10 +81,8 @@ pub enum QueryMsg {
     GetAdmin {},
     #[returns(u64)]
     GetTimeoutHeight { channel_id: String },
-    #[returns(u128)]
-    GetProtocolFee {},
-    #[returns(String)]
-    GetProtocolFeeHandler {},
     #[returns(u64)]
     GetFee { nid: String, response: bool },
+    #[returns(u64)]
+    GetUnclaimedFee { nid: String, relayer: String },
 }

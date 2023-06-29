@@ -13,7 +13,5 @@ use super::*;
 /// context it's difficult to say for sure.
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub timeout_height: u64,
     pub ibc_host: Addr,
-    pub protocol_fee: u128,
 }

@@ -2,17 +2,19 @@ mod account;
 mod setup;
 
 use account::*;
-use common::rlp::{Nullable, self};
+use common::rlp::{self, Nullable};
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env},
-    Addr, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock, Binary,
+    Addr, Binary, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 
 use cw_xcall_app::types::{
     message::CallServiceMessage, request::CallServiceMessageRequest,
     response::CallServiceMessageResponse,
 };
-use cw_xcall_ibc_connection::{ibc::ibc_packet_receive, state::CwIbcConnection, types::message::Message};
+use cw_xcall_ibc_connection::{
+    ibc::ibc_packet_receive, state::CwIbcConnection, types::message::Message,
+};
 use setup::*;
 
 #[test]
@@ -40,10 +42,13 @@ fn test_receive_packet_for_call_message_request() {
         vec![1, 2, 3],
     );
 
-   
     let message: CallServiceMessage = data.try_into().unwrap();
-    let message :Message =Message { sn: Nullable::new(Some(0)), fee: 0, data: rlp::encode(&message).to_vec() };
-    let message_data=Binary(rlp::encode(&message).to_vec());
+    let message: Message = Message {
+        sn: Nullable::new(Some(0)),
+        fee: 0,
+        data: rlp::encode(&message).to_vec(),
+    };
+    let message_data = Binary(rlp::encode(&message).to_vec());
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -65,8 +70,6 @@ fn test_receive_packet_for_call_message_request() {
     let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
 
     assert!(result.is_ok());
-
-    
 }
 
 #[test]
@@ -91,8 +94,12 @@ fn test_receive_packet_for_call_message_response() {
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
-    let message :Message =Message { sn: Nullable::new(Some(0)), fee: 0, data: rlp::encode(&message).to_vec() };
-    let message_data=Binary(rlp::encode(&message).to_vec());
+    let message: Message = Message {
+        sn: Nullable::new(Some(0)),
+        fee: 0,
+        data: rlp::encode(&message).to_vec(),
+    };
+    let message_data = Binary(rlp::encode(&message).to_vec());
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -115,6 +122,4 @@ fn test_receive_packet_for_call_message_response() {
     let result = ibc_packet_receive(mock_deps.as_mut(), mock_env, packet_message);
 
     assert!(result.is_ok());
-
-    
 }

@@ -6,8 +6,8 @@ use debug_print::debug_println;
 use crate::{
     error::ContractError,
     state::{
-        CwIbcConnection, XCALL_HANDLE_ERROR_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID,HOST_SEND_MESSAGE_REPLY_ID
-        
+        CwIbcConnection, HOST_SEND_MESSAGE_REPLY_ID, XCALL_HANDLE_ERROR_REPLY_ID,
+        XCALL_HANDLE_MESSAGE_REPLY_ID,
     },
 };
 
@@ -51,8 +51,6 @@ impl<'a> CwIbcConnection<'a> {
         let sub_msg: SubMsg = SubMsg::reply_always(call_message, XCALL_HANDLE_ERROR_REPLY_ID);
         Ok(sub_msg)
     }
-
-    
 }
 
 #[cfg(test)]

@@ -21,9 +21,7 @@ fn proper_instantiate() {
         env,
         mock_info,
         InstantiateMsg {
-            timeout_height: 10,
             ibc_host: Addr::unchecked("someaddress"),
-            protocol_fee: 0,
         },
     )
     .unwrap();

@@ -1,14 +1,14 @@
+use crate::state::IbcConfig;
+use crate::types::LOG_PREFIX;
 use common::ibc::Height;
-use cosmwasm_std::{to_binary, CosmosMsg, Storage, SubMsg, DepsMut, MessageInfo, WasmMsg, Deps};
+use cosmwasm_std::{to_binary, CosmosMsg, Deps, DepsMut, MessageInfo, Storage, SubMsg, WasmMsg};
 use cw_common::query_helpers::build_smart_query;
 use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
 use debug_print::debug_println;
-use crate::state::IbcConfig;
-use crate::types::LOG_PREFIX;
 
 use crate::{
     error::ContractError,
-    state::{CwIbcConnection, HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID, HOST_SEND_MESSAGE_REPLY_ID},
+    state::{CwIbcConnection, HOST_SEND_MESSAGE_REPLY_ID, HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID},
 };
 
 impl<'a> CwIbcConnection<'a> {
