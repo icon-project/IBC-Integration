@@ -178,8 +178,6 @@ public byte[] onRecvPacket(byte[] calldata, Address relayer) {
     Message msg = Message.fromBytes(packet.getData());
     String nid = networkIds.get(packet.getDestinationChannel());
     assert nid != null;
-    unclaimedPacketFees[nid][relayer] += msg.getFee();
-
     if (msg.getSn() == null) {
         Context.transfer(msg.getFee(), Address.fromBytes(msg.getData()))
         return  new byte[0]
@@ -189,6 +187,7 @@ public byte[] onRecvPacket(byte[] calldata, Address relayer) {
         incomingPackets[packet.getDestinationChannel()][msg.getSn()] = packet.getSequence());
     }
 
+    unclaimedPacketFees[nid][relayer] += msg.getFee();
     xCall.handleMessage(nid, msg.getSn(), msg.getData());
     return new byte[0];
 }
@@ -384,16 +383,16 @@ public void transferAdmin(Address admin) {
 
 
  * @param connectionId The connection id of the connection/chain to open the connection to
- * @param portId  The allocated port name of the connection on the counterparty chain
+ * @param counterpartyPortId  The allocated port name of the connection on the counterparty chain
  * @param counterpartyNid The network Id to be associated with this connection
  * @param clientId The lightClient associated with this connection
  * @param timeoutHeight The timeoutheight to be used on packets, it is recommended to use a high value similar to the trusting period of the lightclient.
  */
-public void configureConnection(String connectionId, String portId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
+public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
     onlyAdmin();
-    assert configuredNetworkIds[connectionId][portId] == null
+    assert configuredNetworkIds[connectionId][counterpartyPortId] == null
     assert channels[counterpartyNid] == null;
-    configuredNetworkIds[connectionId][portId] = counterpartyNid
+    configuredNetworkIds[connectionId][counterpartyPortId] = counterpartyNid
     configuredClients[connectionId] = clientId
     configuredTimeoutHeight[connectionId] = timeoutHeight
 }

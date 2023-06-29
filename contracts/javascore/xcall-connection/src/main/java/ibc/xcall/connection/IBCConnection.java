@@ -99,11 +99,11 @@ public class IBCConnection {
     }
 
     @External
-    public void configureConnection(String connectionId, String portId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
+    public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
         onlyAdmin();
-        Context.require(configuredNetworkIds.at(connectionId).get(portId) == null);
+        Context.require(configuredNetworkIds.at(connectionId).get(counterpartyPortId) == null);
         Context.require(channels.get(counterpartyNid) == null);
-        configuredNetworkIds.at(connectionId).set(portId, counterpartyNid);
+        configuredNetworkIds.at(connectionId).set(counterpartyPortId, counterpartyNid);
         configuredClients.set(connectionId, clientId);
         configuredTimeoutHeight.set(connectionId, timeoutHeight);
     }
@@ -154,9 +154,6 @@ public class IBCConnection {
         String nid = networkIds.get(packet.getDestinationChannel());
         Context.require(nid != null);
 
-        BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
-        unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
-
         if (msg.getSn() == null)  {
             Context.transfer(new Address(msg.getData()), msg.getFee());
             return new byte[0];
@@ -165,6 +162,9 @@ public class IBCConnection {
         if (msg.getSn().compareTo(BigInteger.ZERO) > 0) {
             incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), packet.getSequence());
         }
+
+        BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
+        unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
 
         Context.call(xCall.get(), "handleMessage", nid, msg.getSn(), msg.getData());
         return new byte[0];

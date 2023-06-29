@@ -102,6 +102,10 @@ public class CSMessageRequest {
     }
 
     private static String[] readProtocols(ObjectReader r) {
+        if( !r.hasNext() ) {
+            return new String[]{};
+        }
+
         r.beginList();
         List<String> protocolsList = new ArrayList<>();
         while(r.hasNext()) {
