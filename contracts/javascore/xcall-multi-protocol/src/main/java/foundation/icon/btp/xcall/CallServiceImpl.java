@@ -111,7 +111,6 @@ public class CallServiceImpl implements CallService, FeeManage {
         // check if caller is a contract or rollback data is null in case of EOA
         Context.require(_rollback == null || caller.isContract(), "RollbackNotPossible");
         // check size of payloads to avoid abusing
-        Context.require(_data.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
         Context.require(_rollback == null || _rollback.length <= MAX_ROLLBACK_SIZE, "MaxRollbackSizeExceeded");
 
         boolean needResponse = _rollback != null && _rollback.length > 0;
@@ -125,7 +124,10 @@ public class CallServiceImpl implements CallService, FeeManage {
 
         String from = new NetworkAddress(NID, caller.toString()).toString();
         CSMessageRequest msgReq = new CSMessageRequest(from, dst.account(),  sn, needResponse, _data, destinations);
+
         byte[] msgBytes = msgReq.toBytes();
+        Context.require(msgBytes.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
+
         if (sources == null || sources.length == 0) {
             Address src = defaultConnection.get(dst.net());
             BigInteger fee = Context.call(BigInteger.class, src, "getFee", dst.net(), needResponse);
