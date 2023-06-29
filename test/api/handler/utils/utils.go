@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -36,7 +37,7 @@ func Request(method, path string, body interface{}) ([]byte, error) {
 	var (
 		req *http.Request
 		err error
-		url = fmt.Sprintf("%s/%s", baseUrl, path)
+		url = fmt.Sprintf("%s/%s", baseUrl, strings.TrimPrefix(path, "/"))
 	)
 
 	if method == http.MethodGet {

@@ -123,7 +123,7 @@ func (s *Setup) BuildWallet(chain, keyName string) error {
 	return s.getChain(chain).BuildWallets(s.ctx, keyName)
 }
 
-func (s *Setup) ExecuteCall(srcChain, dstChain, keyName string, msg, rollback []byte) (any, error) {
+func (s *Setup) ExecuteCall(srcChain, dstChain, keyName string, msg, rollback []byte) (context.Context, error) {
 	sourceChain := s.getChain(srcChain)
 	destChain := s.getChain(dstChain)
 	dst := s.cfg[dstChain].ChainConfig.ChainID + "/" + s.GetContractAddress(dstChain)
@@ -173,7 +173,6 @@ func (s *Setup) setupConnection(ctx context.Context, chainName, keyName string) 
 }
 
 func (s *Setup) StartRelayer() error {
-	// Start the Relay
 	s.interchain.BuildRelayer(s.ctx, s.relayer.reporter, s.interchainBuildOption)
 	return s.relayer.service.StartRelayer(s.ctx, s.relayer.reporter, s.ibcPath)
 }

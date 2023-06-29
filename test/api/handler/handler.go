@@ -80,7 +80,7 @@ type setRelayRequest struct {
 
 func (h *handler) setupRelayer(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		utils.HandleError(w, fmt.Errorf("method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 	var req setRelayRequest
@@ -88,7 +88,6 @@ func (h *handler) setupRelayer(w http.ResponseWriter, r *http.Request) {
 		utils.HandleError(w, err, http.StatusBadRequest)
 		return
 	}
-	fmt.Println("setupRelayer", req)
 	image := chains.GetEnvOrDefault("RELAYER_IMAGE", req.Image)
 	tag := chains.GetEnvOrDefault("RELAYER_IMAGE_TAG", req.Tag)
 	gid := chains.GetEnvOrDefault("RELAYER_IMAGE_GID", req.GID)
@@ -174,10 +173,10 @@ func (h *handler) getAddress(w http.ResponseWriter, r *http.Request) {
 
 type reqExecuteCall struct {
 	ChainName string `json:"chainName"`
+	KeyName   string `json:"user"`
 	DstChain  string `json:"dstChain"`
 	Message   []byte `json:"message"`
-	KeyName   string `json:"user"`
-	Rollback  []byte `json:"rollback"`
+	Rollback  []byte `json:"rollback,omitempty"`
 }
 
 func (h *handler) executeCall(w http.ResponseWriter, r *http.Request) {

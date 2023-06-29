@@ -27,8 +27,8 @@ func TestConformance(t *testing.T) {
 		<-c
 		cancel()
 	}()
-	wg, gCtx := errgroup.WithContext(ctx)
-	h := handler.New(t, cfg, gCtx, wg)
+	wg, ctx := errgroup.WithContext(ctx)
+	h := handler.New(t, cfg, ctx, wg)
 
 	// Create the request body
 	body := map[string]string{
