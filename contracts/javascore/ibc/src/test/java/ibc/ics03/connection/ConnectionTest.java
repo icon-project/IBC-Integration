@@ -97,8 +97,7 @@ public class ConnectionTest extends TestBase {
         consensusHeight = Height.newBuilder()
                 .setRevisionHeight(7)
                 .setRevisionNumber(8).build();
-        prefix = MerklePrefix.newBuilder()
-                .setKeyPrefix(ByteString.copyFrom(IBCConnection.commitmentPrefix)).build();
+        prefix = MerklePrefix.newBuilder().build();
 
         counterparty = Counterparty.newBuilder()
                 .setClientId("counterpartyId")

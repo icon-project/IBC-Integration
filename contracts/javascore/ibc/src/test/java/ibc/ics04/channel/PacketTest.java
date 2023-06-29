@@ -95,7 +95,7 @@ public class PacketTest extends TestBase {
 
         lightClient = new MockContract<>(ILightClientScoreInterface.class, ILightClient.class, sm, owner);
 
-        prefix.setKeyPrefix(IBCConnection.commitmentPrefix);
+        prefix.setKeyPrefix(new byte[0]);
         proofHeight.setRevisionHeight(BigInteger.valueOf(5));
         proofHeight.setRevisionNumber(BigInteger.valueOf(6));
 
