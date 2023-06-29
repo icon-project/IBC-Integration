@@ -315,9 +315,9 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary_response::<CwPacket>(&res).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.src.channel_id).unwrap();
-                    let port_id = IbcPortId::from_str(&data.src.port_id).unwrap();
+                    let packet = from_binary_response::<CwPacket>(&res).unwrap();
+                    let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
+                    let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
                     let chan_end_on_a =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if self
@@ -325,7 +325,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             deps.storage,
                             &port_id,
                             &channel_id,
-                            data.sequence.into(),
+                            packet.sequence.into(),
                         )
                         .is_err()
                     {
@@ -335,7 +335,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         deps.storage,
                         &port_id,
                         &channel_id,
-                        data.sequence.into(),
+                        packet.sequence.into(),
                     )?;
                     let chan_end_on_a = {
                         if let Order::Ordered = chan_end_on_a.ordering {
@@ -354,18 +354,29 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     };
 
-                    let event = Event::new(IbcEventType::Timeout.as_str())
-                        .add_attribute("channel_order", chan_end_on_a.ordering().as_str());
-                    let events = vec![event];
-                    if let Order::Ordered = chan_end_on_a.ordering {
-                        // let close_init = create_packet_timeout_event(,chann);
-                        // events.push(close_init);
-                    }
+                    let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
+                    let timeout_timestamp: String = packet
+                        .timeout
+                        .timestamp()
+                        .map(|t| t.to_string())
+                        .unwrap_or("0".to_string());
+
+                    let event = create_packet_timeout_event(
+                        &packet.src.port_id,
+                        &packet.src.channel_id,
+                        &packet.sequence.to_string(),
+                        &packet.dest.port_id,
+                        &packet.dest.channel_id,
+                        &packet.timeout.block().unwrap().height.to_string(),
+                        &timeout_timestamp,
+                        chan_end_on_a.ordering.as_str(),
+                        conn_id_on_a.as_str(),
+                    );
 
                     Ok(Response::new()
                         .add_attribute("action", "packet")
                         .add_attribute("method", "execute_timeout_packet")
-                        .add_events(events))
+                        .add_event(event))
                 }
                 None => Err(ChannelError::Other {
                     description: "Data from module is Missing".to_string(),
