@@ -31,14 +31,13 @@ func TestConformance(t *testing.T) {
 	h := handler.New(t, cfg, ctx, wg)
 
 	// Create the request body
-	body := map[string]string{
+
+	// Send the request
+	resp, err := utils.Request(http.MethodPost, handler.RELAY_SETUP_PATH, map[string]string{
 		"image": "relayer",
 		"tag":   "latest",
 		"gid":   "1000:1000",
-	}
-
-	// Send the request
-	resp, err := utils.Request(http.MethodPost, handler.RELAY_SETUP_PATH, body)
+	})
 	if err != nil {
 		t.Errorf("The HTTP request failed with error %s\n", err)
 	}

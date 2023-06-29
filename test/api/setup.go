@@ -141,6 +141,14 @@ func (s *Setup) ExecuteCall(srcChain, dstChain, keyName string, msg, rollback []
 	return ctx, err
 }
 
+func (s *Setup) ListChains() []string {
+	var chains []string
+	for chain := range s.chains {
+		chains = append(chains, chain)
+	}
+	return chains
+}
+
 func (s *Setup) LinkChain(chain1, chain2 string) error {
 	chainA := s.getChain(chain1).(ibc.Chain)
 	chainB := s.getChain(chain2).(ibc.Chain)

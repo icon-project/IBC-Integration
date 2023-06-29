@@ -23,12 +23,23 @@ func DecodeJSONBody(r *http.Request, v interface{}) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }
 
+func JSONResponse(v interface{}, w http.ResponseWriter) error {
+	body, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+	return nil
+}
+
 func HandleError(w http.ResponseWriter, err error, statusCode int) {
 	w.WriteHeader(statusCode)
 	w.Write([]byte(err.Error()))
 }
 
-func HandleSuccess(w http.ResponseWriter, msg string, statusCode int) {
+func HandleSuccess(w http.ResponseWriter, msg []byte, statusCode int) {
 	w.WriteHeader(statusCode)
 	w.Write([]byte(msg))
 }

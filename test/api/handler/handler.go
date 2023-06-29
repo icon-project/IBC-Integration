@@ -19,6 +19,7 @@ const (
 	RELAY_START_PATH     = "/relayer-start"
 	RELAY_STOP_PATH      = "/relayer-stop"
 	CHAIN_LINK           = "/link-chain"
+	CHAIN_LIST           = "/list-chains"
 	WALLET_BUILD         = "/build-wallet"
 	IBC_SETUP            = "/setup-ibc"
 	CONTRACT_ADDRESS_GET = "/contract-address-get/"
@@ -165,7 +166,19 @@ func (h *handler) getAddress(w http.ResponseWriter, r *http.Request) {
 	}
 	chainName := r.URL.Path[len("/get-address/"):]
 	addr := h.api.GetContractAddress(chainName)
-	utils.HandleSuccess(w, addr, http.StatusOK)
+	utils.HandleSuccess(w, []byte(addr), http.StatusOK)
+}
+
+func (s *handler) listChains(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+	chains := s.api.ListChains()
+	if err := utils.JSONResponse(chains, w); err != nil {
+		utils.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
 }
 
 type reqExecuteCall struct {
@@ -212,6 +225,7 @@ func New(t *testing.T, cfg *api.OuterConfig, ctx context.Context, wg *errgroup.G
 	mux.HandleFunc(IBC_SETUP, server.setupIBC)
 	mux.HandleFunc(CONTRACT_ADDRESS_GET, server.getAddress)
 	mux.HandleFunc(EXECUTE_CALL, server.executeCall)
+	mux.HandleFunc(CHAIN_LIST, server.listChains)
 	server.serve(mux)
 	return server
 }
