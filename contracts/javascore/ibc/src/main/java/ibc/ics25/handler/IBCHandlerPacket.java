@@ -7,6 +7,7 @@ import ibc.icon.interfaces.IIBCPacket;
 import ibc.icon.structs.messages.MsgPacketAcknowledgement;
 import ibc.icon.structs.messages.MsgPacketRecv;
 import ibc.icon.structs.messages.MsgPacketTimeout;
+import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
 import icon.proto.core.channel.Packet;
 import score.Context;
 import score.annotation.EventLog;
@@ -101,11 +102,10 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
     }
 
     @External
-    public void requestTimeout(byte[] packetPb) {
-        Packet packet = Packet.decode(packetPb);
-        _requestTimeout(packet);
+    public void requestTimeout(MsgRequestTimeoutPacket msg) {
+        _requestTimeout(msg);
 
-        TimeoutRequest(packetPb);
+        TimeoutRequest(msg.getPacket());
     }
 
     @External
