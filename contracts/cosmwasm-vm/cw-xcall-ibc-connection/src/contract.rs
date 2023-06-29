@@ -136,6 +136,10 @@ impl<'a> CwIbcConnection<'a> {
                     timeout_height,
                 )?;
                 Ok(Response::new())
+            },
+            ExecuteMsg::ClaimFees { nid , address}=>{
+                let fee_msg=self.claimFees(deps, info, nid, address)?;
+                Ok(Response::new().add_submessage(fee_msg))
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
@@ -577,7 +581,7 @@ impl<'a> CwIbcConnection<'a> {
         seq: u64,
         relayer: String,
     ) -> Result<BankMsg, ContractError> {
-        let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq)?;
+        let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq).unwrap_or(0);
         self.reset_unclaimed_ack_fees(store, nid, seq)?;
 
         let msg = BankMsg::Send {

@@ -368,6 +368,20 @@ fn test_packet_send() {
     println!("Packet Acknowledge Ok {:?}", &result);
 }
 
+pub fn get_client_id(res:&AppResponse)->String{
+    let event = get_event(res, &get_event_name(IbcEventType::CreateClient)).unwrap();
+    let client_id = event.get("client_id").unwrap().to_string();
+    return client_id;
+
+}
+
+pub fn get_connection_id(res:&AppResponse,event:IbcEventType)->String{
+    let event = get_event(&res, &get_event_name(event)).unwrap();
+    println!("{:?}",event);
+    let connection_id = event.get("connection_id").unwrap().to_string();
+    return connection_id;
+}
+
 #[test]
 fn test_icon_to_arcway_handshake() -> TestContext {
     let mut ctx = setup_test("icon_to_archway_raw.json");
@@ -385,8 +399,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
 
     assert!(response.is_ok());
     println!("Create Client OK");
-    let event = get_event(&response.unwrap(), &get_event_name(IbcEventType::CreateClient)).unwrap();
-    let client_id = event.get("client_id").unwrap().to_string();
+    let client_id = get_client_id(&response.unwrap());
     println!("Clientid is {}",client_id);
 
     let result = call_connection_open_try(&mut ctx);
@@ -400,9 +413,8 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     assert!(result.is_ok());
     println!("Conn Open Confirm Ok {:?}", &result);
     // now need to setup connection configuration for multi call
-    let event = get_event(&result.unwrap(), &get_event_name(IbcEventType::OpenConfirmConnection)).unwrap();
-    println!("{:?}",event);
-    let connection_id = event.get("connection_id").unwrap().to_string();
+   
+    let connection_id = get_connection_id(&result.unwrap(),IbcEventType::OpenConfirmConnection);
     let nid= "icon".to_string();
 
     let result= call_configure_connection(&mut ctx, connection_id, nid, client_id);
@@ -424,6 +436,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     ctx
 }
 
+#[test]
 fn test_archway_to_icon_handshake() -> TestContext {
     // complete handshake
     let mut ctx = setup_test("archway_to_icon_raw.json");
@@ -439,6 +452,8 @@ fn test_archway_to_icon_handshake() -> TestContext {
 
     assert!(response.is_ok());
     println!("Create Client OK");
+    let client_id = get_client_id(&response.unwrap());
+    println!("Clientid is {}",client_id);
 
     let result = call_connection_open_init(&mut ctx);
 
@@ -449,6 +464,13 @@ fn test_archway_to_icon_handshake() -> TestContext {
 
     assert!(result.is_ok());
     println!("Conn Open ack Ok {:?}", &result);
+
+    let connection_id = get_connection_id(&result.unwrap(),IbcEventType::OpenAckConnection);
+    let nid= "icon".to_string();
+
+    let result= call_configure_connection(&mut ctx, connection_id, nid, client_id);
+    assert!(result.is_ok());
+    println!("Configure Connection Ok {:?}", &result);
 
     let result = call_channel_open_init(&mut ctx);
     println!("{result:?}");
@@ -462,6 +484,9 @@ fn test_archway_to_icon_handshake() -> TestContext {
     // println!("Channel Open ack Ok {:?}", &result);
     ctx
 }
+
+
+
 
 impl Termination for TestContext {
     fn report(self) -> std::process::ExitCode {

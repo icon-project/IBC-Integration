@@ -32,7 +32,7 @@ impl<'a> CwIbcConnection<'a> {
         relayer: Addr,
     ) -> Result<CwReceiveResponse, ContractError> {
         let channel = message.dest.channel_id.clone();
-        let n_message: Message = rlp::decode(&message.data).unwrap();
+        let n_message: Message = rlp::decode(&message.data.0).unwrap();
         let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
         let nid = channel_config.counterparty_nid;
 

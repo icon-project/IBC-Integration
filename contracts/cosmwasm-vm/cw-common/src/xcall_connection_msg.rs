@@ -33,6 +33,7 @@ pub enum ExecuteMsg {
         address: String,
     },
     RemoveAdmin {},
+    ClaimFees {nid:String,address:String},
 
     #[cfg(not(feature = "native_ibc"))]
     IbcChannelOpen {
