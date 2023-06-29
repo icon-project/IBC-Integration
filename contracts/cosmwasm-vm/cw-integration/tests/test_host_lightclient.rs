@@ -241,7 +241,7 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
         Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
         &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
-            to: NetworkAddress::new("eth","contractmock"),
+            to: NetworkAddress::new("eth", "contractmock"),
             sources: Some(vec![]),
             destinations: Some(vec![]),
             data,

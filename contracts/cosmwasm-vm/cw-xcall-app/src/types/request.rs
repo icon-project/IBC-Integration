@@ -1,9 +1,9 @@
+use super::*;
 use common::rlp::Nullable;
 use cosmwasm_std::Addr;
 use cw_common::xcall_types::network_address::NetworkAddress;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use super::*;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CallServiceMessageRequest {
@@ -88,10 +88,11 @@ impl Decodable for CallServiceMessageRequest {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
         let rlp_protocols = rlp.at(5)?;
         let list: Vec<String> = rlp_protocols.as_list()?;
-        let str_from:String =rlp.val_at(0)?;
-        let to_str:String=rlp.val_at(1)?;
+        let str_from: String = rlp.val_at(0)?;
+        let to_str: String = rlp.val_at(1)?;
         Ok(Self {
-            from: NetworkAddress::from_str(&str_from).map_err(|e|rlp::DecoderError::RlpInvalidLength)?,
+            from: NetworkAddress::from_str(&str_from)
+                .map_err(|e| rlp::DecoderError::RlpInvalidLength)?,
             to: Addr::unchecked(to_str),
             sequence_no: rlp.val_at(2)?,
             rollback: rlp.val_at(3)?,
@@ -168,7 +169,7 @@ mod tests {
         let data = hex::decode("74657374").unwrap();
         let msg = CallServiceMessageRequest::new(
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
-           Addr::unchecked( "cx0000000000000000000000000000000000000102"),
+            Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,
             vec![],
             false,
@@ -180,7 +181,7 @@ mod tests {
 
         let msg = CallServiceMessageRequest::new(
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
-           Addr::unchecked( "cx0000000000000000000000000000000000000102"),
+            Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,
             vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             false,
@@ -192,7 +193,7 @@ mod tests {
 
         let msg = CallServiceMessageRequest::new(
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
-           Addr::unchecked( "cx0000000000000000000000000000000000000102"),
+            Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,
             vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             true,

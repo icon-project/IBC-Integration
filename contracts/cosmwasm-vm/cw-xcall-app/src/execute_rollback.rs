@@ -41,7 +41,8 @@ impl<'a> CwCallService<'a> {
             .unwrap();
         let from = self.get_own_network_address(deps.as_ref().storage, &env)?;
 
-        let sub_msg = self.call_dapp_handle_message(info,
+        let sub_msg = self.call_dapp_handle_message(
+            info,
             // the original caller is stored as from in call request
             call_request.from().clone(),
             from,

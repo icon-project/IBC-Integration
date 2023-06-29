@@ -1,4 +1,4 @@
-use common::utils::keccak256;
+use common::{rlp, utils::keccak256};
 use cw_common::xcall_types::network_address::NetId;
 
 use crate::ack::acknowledgement_data_on_success;
@@ -35,10 +35,10 @@ impl<'a> CwCallService<'a> {
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
-                self.handle_request(deps, info, from,sn,call_service_message.payload())
+                self.handle_request(deps, info, from, sn, call_service_message.payload())
             }
             CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, info,from,sn, call_service_message.payload())
+                self.handle_response(deps, info,  sn, call_service_message.payload())
             }
         }
     }
@@ -64,48 +64,25 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        from:NetId,
+        src_net: NetId,
         _sn: Option<i64>,
         data: &[u8],
     ) -> Result<Response, ContractError> {
-        /*
-         msgReq = CSMessageRequest.decode(data);
-    from = NetworkAddress(msgReq.from);
-    require(from.net() == srcNet);
-    source = getCaller();
+        let request: CallServiceMessageRequest = rlp::decode(data).unwrap();
 
-    if (msgReq.protocols.length > 1):
-        _hash = hash(data);
-        pendingReqs[_hash][source] = true;
-        for (protocol : msgReq.protocols):
-            if (!pendingReqs[_hash][protocol]):
-                return;
-
-        for (protocol : msgReq.protocols):
-            pendingReqs[_hash][protocol] = null;
-    else if (msgReq.protocols.length == 1):
-        require(source == msgReq.protocols[0]);
-    else:
-        require(source == defaultConnection[srcNet]);
-    reqId = getNextReqId();
-    proxyReqs[reqId] = msgReq;
-
-    emit CallMessage(msgReq.from, msgReq.to, msgReq.sn, reqId);
-         */
+        let from = request.from().clone();
+        if from.get_nid() != src_net {
+            return Err(ContractError::ProtocolsMismatch);
+        }
+        let source = info.sender.to_string();
+        let source_valid =
+            self.is_valid_source(deps.as_ref().storage, &src_net, &source, &request.protocols())?;
+        if !source_valid {
+            return Err(ContractError::ProtocolsMismatch);
+        }
         let request_id = self.increment_last_request_id(deps.storage)?;
-        let message_request: CallServiceMessageRequest = data.try_into()?;
 
-        let from = message_request.from().clone();
-        let to = message_request.to();
-
-        let request = CallServiceMessageRequest::new(
-            from.clone(),
-            to.clone(),
-            message_request.sequence_no(),
-            message_request.protocols().clone(),
-            message_request.rollback(),
-            message_request.data()?.into(),
-        );
+        let to = request.to();
 
         if request.protocols().len() > 1 {
             let key = keccak256(data).to_vec();
@@ -126,7 +103,7 @@ impl<'a> CwCallService<'a> {
         let event = event_call_message(
             from.to_string(),
             to.to_string(),
-            message_request.sequence_no(),
+            request.sequence_no(),
             request_id,
         );
         let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
@@ -162,32 +139,24 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        from:NetId,
         _sn: Option<i64>,
         data: &[u8],
     ) -> Result<Response, ContractError> {
-        let message: CallServiceMessageResponse = data.try_into()?;
+        let message: CallServiceMessageResponse = rlp::decode(data).unwrap();
 
         let response_sequence_no = message.sequence_no();
 
         let mut call_request = self.get_call_request(deps.storage, response_sequence_no)?;
 
+        let source = info.sender.to_string();
+        let source_valid =
+            self.is_valid_source(deps.as_ref().storage, &call_request.to().get_nid(), &source, call_request.protocols())?;
+        if !source_valid {
+            return Err(ContractError::ProtocolsMismatch);
+        }
+
         if call_request.is_null() {
-            let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
-                acknowledgement: make_ack_fail(format!(
-                    "handle_resposne: no request for {response_sequence_no}"
-                ))
-                .to_vec(),
-            })
-            .map_err(ContractError::Std)?;
-            return Ok(Response::new()
-                .add_attribute("action", "call_service")
-                .add_attribute("method", "handle_response")
-                .add_attribute(
-                    "message",
-                    format!("handle_resposne: no request for {response_sequence_no}"),
-                )
-                .set_data(acknowledgement_data));
+           return Ok(Response::new())
         }
 
         if call_request.protocols().len() > 1 {
@@ -255,5 +224,19 @@ impl<'a> CwCallService<'a> {
     /// remove the corresponding call request from the storage.
     pub fn cleanup_request(&self, store: &mut dyn Storage, sequence_no: u128) {
         self.remove_call_request(store, sequence_no);
+    }
+
+    pub fn is_valid_source(
+        &self,
+        store: &dyn Storage,
+        src_net: &NetId,
+        source: &String,
+        protocols:&Vec<String>,
+    ) -> Result<bool, ContractError> {
+        if protocols.contains(&source) {
+            return Ok(true);
+        }
+        let default_conn = self.get_default_connection(store, src_net.as_str())?;
+        return Ok(source.clone() == default_conn.to_string());
     }
 }

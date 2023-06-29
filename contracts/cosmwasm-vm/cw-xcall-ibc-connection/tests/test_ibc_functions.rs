@@ -9,7 +9,7 @@ use cosmwasm_std::{
 use cw_common::from_binary_response;
 use cw_common::types::Ack;
 
-use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
+use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
 use cw_xcall_app::ack::{on_ack_failure, on_ack_sucess};
 use cw_xcall_app::types::response::CallServiceMessageResponse;
 use cw_xcall_ibc_connection::msg::InstantiateMsg;
@@ -456,7 +456,7 @@ fn sucess_receive_packet_for_call_message_request() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ack_packet() {
-    use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
+    use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
 
     let mut mock_deps = deps();
     let mock_info = create_mock_info("alice", "umlg", 2000);
@@ -486,7 +486,7 @@ fn sucess_on_ack_packet() {
     };
 
     let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
         vec![],
@@ -574,7 +574,7 @@ fn fails_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
         vec![],
@@ -735,7 +735,7 @@ fn test_ack_success_on_call_request() {
     let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
         vec![],
@@ -775,7 +775,7 @@ fn test_ack_on_fails() {
     let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
         vec![],
@@ -844,7 +844,7 @@ fn test_ack_failure_on_call_request() {
     let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
         vec![],
@@ -884,7 +884,7 @@ fn fails_on_ack_failure_for_call_request() {
     let mock_info = create_mock_info("alice", "umlg", 2000);
 
     let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
         vec![],
@@ -1019,7 +1019,7 @@ fn test_for_call_service_request_from_rlp_bytes() {
     let cs_message_request = CallServiceMessageRequest::try_from(&hex_decode_rlp_data).unwrap();
 
     let expected_data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid","somecontractaddress"),
+        NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,
         vec![],
@@ -1052,7 +1052,7 @@ fn test_for_call_message_data_from_rlp_bytes() {
     let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
 
     let expected_data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid","somecontractaddress"),
+        NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,
         vec![],
@@ -1072,7 +1072,7 @@ fn test_call_message_from_raw_message() {
     let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
 
     let expected_data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid","somecontractaddress"),
+        NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,
         vec![],

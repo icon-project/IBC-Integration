@@ -22,7 +22,7 @@ impl<'a> CwIbcConnection<'a> {
 
         self.ensure_data_length(message.len())?;
         println!("{LOG_PREFIX} Packet Validated");
-        let nid= to.get_nid().to_string();
+        let nid = to.get_nid().to_string();
         let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
 
         if sn < 0 {

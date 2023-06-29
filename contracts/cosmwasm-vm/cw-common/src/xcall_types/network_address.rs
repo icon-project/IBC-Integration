@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{StdError, Addr};
+use cosmwasm_std::{Addr, StdError};
 
 #[cw_serde]
 #[derive(Eq)]
@@ -17,26 +17,21 @@ impl ToString for NetId {
     fn to_string(&self) -> String {
         self.0.to_string()
     }
-
-   
 }
 
 impl NetId {
-    pub fn as_str(&self)->&str {
+    pub fn as_str(&self) -> &str {
         &self.0
-   }
+    }
 }
 
-
-
 impl FromStr for NetId {
-    type Err=StdError;
+    type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(s.to_owned()))
     }
 }
-
 
 #[cw_serde]
 #[derive(Eq)]
@@ -44,7 +39,7 @@ pub struct NetworkAddress(String);
 
 impl NetworkAddress {
     pub fn new(nid: &str, address: &str) -> Self {
-       Self(format!("{}/{}",nid,address))
+        Self(format!("{}/{}", nid, address))
     }
     pub fn get_nid(&self) -> NetId {
         NetId(self.get_parts()[0].to_string())
@@ -54,8 +49,8 @@ impl NetworkAddress {
         Addr::unchecked(self.get_parts()[1])
     }
 
-    pub fn get_parts(&self)->Vec<&str>{
-        let parts=self.0.split("/").collect::<Vec<&str>>();
+    pub fn get_parts(&self) -> Vec<&str> {
+        let parts = self.0.split("/").collect::<Vec<&str>>();
         return parts;
     }
 }
@@ -76,7 +71,7 @@ impl FromStr for NetworkAddress {
                 msg: "Invalid Network Address".to_owned(),
             });
         }
-        let na = format!("{}/{}",parts[0],parts[1]);
+        let na = format!("{}/{}", parts[0], parts[1]);
         Ok(Self(na))
     }
 }

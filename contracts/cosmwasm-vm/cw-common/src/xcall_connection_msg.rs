@@ -1,7 +1,10 @@
-use crate::{cw_types::{
-    CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg, CwPacketReceiveMsg,
-    CwPacketTimeoutMsg,
-}, xcall_types::network_address::NetworkAddress};
+use crate::{
+    cw_types::{
+        CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg,
+        CwPacketReceiveMsg, CwPacketTimeoutMsg,
+    },
+    xcall_types::network_address::NetworkAddress,
+};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]

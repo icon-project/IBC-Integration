@@ -36,7 +36,7 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
     };
     let timeout = IbcTimeout::with_both(timeout_block, env.block.time.plus_seconds(300));
     let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked(MOCK_CONTRACT_TO_ADDR),
         1,
         vec![],

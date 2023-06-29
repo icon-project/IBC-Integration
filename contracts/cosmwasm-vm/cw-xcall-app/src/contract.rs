@@ -1,4 +1,4 @@
-use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
+use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
 
 use crate::types::{config::Config, LOG_PREFIX};
 

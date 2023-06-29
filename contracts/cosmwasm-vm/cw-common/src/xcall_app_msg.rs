@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 
-use crate::xcall_types::network_address::{NetworkAddress, NetId};
+use crate::xcall_types::network_address::{NetId, NetworkAddress};
 
 #[cw_serde]
 pub enum ExecuteMsg {

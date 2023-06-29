@@ -84,7 +84,8 @@ impl<'a> CwCallService<'a> {
         let from = NetworkAddress::new(&nid, caller.as_ref());
 
         if confirmed_sources.is_empty() {
-            let default = self.get_default_connection(deps.as_ref().storage, to.get_nid().as_str())?;
+            let default =
+                self.get_default_connection(deps.as_ref().storage, to.get_nid().as_str())?;
             confirmed_sources = vec![default.to_string()]
         }
 

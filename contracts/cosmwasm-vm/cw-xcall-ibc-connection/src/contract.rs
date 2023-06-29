@@ -537,8 +537,12 @@ impl<'a> CwIbcConnection<'a> {
         let submsg =
             self.call_xcall_handle_message(deps.storage, &nid, acknowledgement.data.0, Some(sn))?;
 
-        let bank_msg =
-            self.settle_unclaimed_ack_fee(deps.storage, &nid.as_str(), seq, ack.relayer.to_string())?;
+        let bank_msg = self.settle_unclaimed_ack_fee(
+            deps.storage,
+            &nid.as_str(),
+            seq,
+            ack.relayer.to_string(),
+        )?;
 
         Ok(Response::new().add_message(bank_msg).add_submessage(submsg))
     }

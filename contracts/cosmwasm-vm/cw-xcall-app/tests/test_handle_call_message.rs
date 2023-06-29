@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     from_binary,
     testing::{mock_dependencies, mock_env, mock_info},
-    Coin, CosmosMsg, Reply, SubMsgResponse, SubMsgResult, WasmMsg, Addr,
+    Addr, Coin, CosmosMsg, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 
 use cw_common::xcall_types::network_address::NetworkAddress;

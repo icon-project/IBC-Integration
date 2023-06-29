@@ -110,7 +110,7 @@ impl<'a> CwCallService<'a> {
             submsgs = reply_address
                 .iter()
                 .map(|to| {
-                   return self.call_connection_send_message(
+                    return self.call_connection_send_message(
                         to,
                         vec![],
                         from.clone(),

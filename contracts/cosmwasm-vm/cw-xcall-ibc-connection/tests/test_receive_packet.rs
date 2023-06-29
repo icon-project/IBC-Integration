@@ -35,7 +35,7 @@ fn test_receive_packet_for_call_message_request() {
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid",mock_info.sender.as_str()),
+        NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked(&alice().to_string()),
         1,
         vec![],
