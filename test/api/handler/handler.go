@@ -83,15 +83,12 @@ func (h *handler) setupRelayer(w http.ResponseWriter, r *http.Request) {
 		utils.HandleError(w, fmt.Errorf("method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
-	var req setRelayRequest
-	if err := utils.DecodeJSONBody(r, &req); err != nil {
+	var req = &setRelayRequest{Image: "relayer", Tag: "latest", GID: "1000:1000"}
+	if err := utils.DecodeJSONBody(r, req); err != nil {
 		utils.HandleError(w, err, http.StatusBadRequest)
 		return
 	}
-	image := chains.GetEnvOrDefault("RELAYER_IMAGE", req.Image)
-	tag := chains.GetEnvOrDefault("RELAYER_IMAGE_TAG", req.Tag)
-	gid := chains.GetEnvOrDefault("RELAYER_IMAGE_GID", req.GID)
-	h.api.AddRelayer(image, tag, gid)
+	h.api.AddRelayer(req.Image, req.Tag, req.GID)
 }
 
 type LinkOption struct {
@@ -101,7 +98,7 @@ type LinkOption struct {
 
 func (h *handler) linkChain(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.HandleError(w, fmt.Errorf("method %s not allowd", r.Method), http.StatusMethodNotAllowed)
+		utils.HandleError(w, fmt.Errorf("method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 	var req LinkOption
