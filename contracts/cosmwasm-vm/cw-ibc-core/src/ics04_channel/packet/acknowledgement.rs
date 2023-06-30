@@ -356,10 +356,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
 
                     let timeout_height = packet.timeout.block().unwrap();
-                    let timeout_height_str =
-                        Height::new(timeout_height.revision, timeout_height.height)
-                            .unwrap()
-                            .to_string();
+                    let timeout_height_str= packet.timeout.block().and_then(|b|{ Height::new(b.revision, b.height).ok() }).map(|h|h.to_string()).unwrap_or("0-0".to_string());
                     let event = create_ack_packet_event(
                         &packet.src.port_id,
                         &packet.src.channel_id,
