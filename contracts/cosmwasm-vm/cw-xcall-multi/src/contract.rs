@@ -4,7 +4,7 @@ use crate::types::{config::Config, LOG_PREFIX};
 
 use super::*;
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw-xcall-app";
+const CONTRACT_NAME: &str = "crates.io:cw-xcall-multi";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 impl<'a> CwCallService<'a> {

@@ -255,11 +255,11 @@ pub fn mock_ibc_core_contract() -> Box<dyn Contract<Empty>> {
 
 pub fn xcall_app_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        cw_xcall_app::execute,
-        cw_xcall_app::instantiate,
-        cw_xcall_app::query,
+        cw_xcall_multi::execute,
+        cw_xcall_multi::instantiate,
+        cw_xcall_multi::query,
     )
-    .with_reply(cw_xcall_app::reply);
+    .with_reply(cw_xcall_multi::reply);
     Box::new(contract)
 }
 
@@ -270,7 +270,7 @@ pub fn init_xcall_app_contract(mut ctx: TestContext) -> TestContext {
         .instantiate_contract(
             xcall_app_contractcode_id,
             ctx.sender.clone(),
-            &cw_xcall_app::msg::InstantiateMsg {
+            &cw_xcall_multi::msg::InstantiateMsg {
                 network_id: "nid".to_string(),
                 denom: "uarch".to_string(),
             },

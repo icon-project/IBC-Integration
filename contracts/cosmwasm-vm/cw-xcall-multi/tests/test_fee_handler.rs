@@ -3,7 +3,7 @@ use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR},
     Coin,
 };
-use cw_xcall_app::state::CwCallService;
+use cw_xcall_multi::state::CwCallService;
 pub mod account;
 use account::*;
 

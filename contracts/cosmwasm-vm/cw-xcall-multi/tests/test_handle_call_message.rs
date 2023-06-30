@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 
 use cw_common::xcall_types::network_address::NetworkAddress;
-use cw_xcall_app::{
+use cw_xcall_multi::{
     state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };

@@ -47,4 +47,4 @@ cosmwasm-check artifacts/cw_icon_light_client.wasm
 cosmwasm-check artifacts/cw_mock_dapp.wasm
 cosmwasm-check artifacts/cw_xcall.wasm
 cosmwasm-check artifacts/cw_xcall_ibc_connection.wasm
-cosmwasm-check artifacts/cw_xcall_app.wasm
+cosmwasm-check artifacts/cw_xcall_multi.wasm

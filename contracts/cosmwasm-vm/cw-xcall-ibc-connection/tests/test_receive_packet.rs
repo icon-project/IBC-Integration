@@ -9,12 +9,12 @@ use cosmwasm_std::{
 };
 
 use cw_common::xcall_types::network_address::NetworkAddress;
-use cw_xcall_app::types::{
-    message::CallServiceMessage, request::CallServiceMessageRequest,
-    response::CallServiceMessageResponse,
-};
 use cw_xcall_ibc_connection::{
     ibc::ibc_packet_receive, state::CwIbcConnection, types::message::Message,
+};
+use cw_xcall_multi::types::{
+    message::CallServiceMessage, request::CallServiceMessageRequest,
+    response::CallServiceMessageResponse,
 };
 use setup::*;
 
@@ -90,7 +90,7 @@ fn test_receive_packet_for_call_message_response() {
         .unwrap();
     let data = CallServiceMessageResponse::new(
         1,
-        cw_xcall_app::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        cw_xcall_multi::types::response::CallServiceResponseType::CallServiceResponseSuccess,
         "",
     );
 

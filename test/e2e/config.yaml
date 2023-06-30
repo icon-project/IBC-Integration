@@ -48,6 +48,6 @@ chains:
     contracts:
       ibc: "$BASE_PATH/artifacts/cw_ibc_core.wasm"
       client: "$BASE_PATH/artifacts/cw_icon_light_client.wasm"
-      xcall: "$BASE_PATH/artifacts/cw_xcall_app.wasm"
+      xcall: "$BASE_PATH/artifacts/cw_xcall_multi.wasm"
       connection: "$BASE_PATH/artifacts/cw_xcall_ibc_connection.wasm"
       dapp: "$BASE_PATH/artifacts/cw_mock_dapp_multi.wasm"

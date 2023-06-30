@@ -3,7 +3,7 @@ mod setup;
 use account::*;
 use cosmwasm_std::testing::mock_env;
 
-use cw_xcall_app::state::CwCallService;
+use cw_xcall_multi::state::CwCallService;
 use setup::test::*;
 
 #[test]
@@ -275,7 +275,7 @@ fn query_admin() {
     let result = contract.query(
         mock_deps.as_ref(),
         mock_env,
-        cw_xcall_app::msg::QueryMsg::GetAdmin {},
+        cw_xcall_multi::msg::QueryMsg::GetAdmin {},
     );
 
     assert!(result.is_err())
