@@ -208,33 +208,6 @@ impl<'a> CwCallService<'a> {
 
         Ok(())
     }
-    /// The function ensures that the given address is the IBC handler.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. It is used to interact
-    /// with the contract's storage and retrieve data from it. The `Storage` trait defines methods for
-    /// getting and setting key-value pairs in the contract's storage.
-    /// * `address`: The `address` parameter is of type `Addr` and represents the address of the IBC handler
-    /// that needs to be checked against the stored IBC host address.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<(), ContractError>` which means it can either return an `Ok(())` indicating that the
-    /// function executed successfully or an `Err(ContractError)` indicating that an error occurred during
-    /// execution.
-    pub fn ensure_connection_handler(
-        &self,
-        store: &dyn Storage,
-        address: Addr,
-    ) -> Result<(), ContractError> {
-        let connections = self.get_all_connections(store)?;
-
-        if !connections.contains(&address.to_string()) {
-            return Err(ContractError::OnlyIbcHandler {});
-        }
-        Ok(())
-    }
 
     pub fn ensure_enough_funds(
         &self,

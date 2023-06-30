@@ -103,20 +103,13 @@ impl<'a> CwCallService<'a> {
             let mut reply_address = request.protocols().clone();
             let from = request.from().clone();
             if request.protocols().is_empty() {
-                let default_connection =
-                    self.get_default_connection(deps.storage, from.nid())?;
+                let default_connection = self.get_default_connection(deps.storage, from.nid())?;
                 reply_address = vec![default_connection.to_string()];
             }
             submsgs = reply_address
                 .iter()
                 .map(|to| {
-                    return self.call_connection_send_message(
-                        to,
-                        vec![],
-                        from.clone(),
-                        sn,
-                        &message,
-                    );
+                    return self.call_connection_send_message(to, vec![], from.nid(), sn, &message);
                 })
                 .collect::<Result<Vec<SubMsg>, ContractError>>()?;
         }

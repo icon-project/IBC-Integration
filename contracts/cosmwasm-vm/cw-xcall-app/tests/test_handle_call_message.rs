@@ -40,9 +40,9 @@ fn test_execute_call_having_request_id_without_rollback() {
         NetworkAddress::new("nid", "mockaddress"),
         Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
-        vec![],
         false,
         vec![104, 101, 108, 108, 111],
+        vec![],
     );
     cw_callservice
         .store_proxy_request(deps.as_mut().storage, request_id, &proxy_requests)
@@ -92,8 +92,8 @@ fn test_successful_reply_message() {
         NetworkAddress::new("nid", "mockaddress"),
         Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
-        vec![],
         false,
+        vec![],
         vec![],
     );
     contract
@@ -128,8 +128,8 @@ fn test_failed_reply_message() {
         NetworkAddress::new("nid", "mockaddress"),
         Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
-        vec![],
         false,
+        vec![],
         vec![],
     );
     contract

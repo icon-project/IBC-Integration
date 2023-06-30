@@ -21,9 +21,9 @@ impl CallServiceMessageRequest {
         from: NetworkAddress,
         to: Addr,
         sequence_no: u128,
-        protocols: Vec<String>,
         rollback: bool,
         data: Vec<u8>,
+        protocols: Vec<String>,
     ) -> Self {
         let data_bytes = match data.is_empty() {
             true => None,
@@ -34,8 +34,8 @@ impl CallServiceMessageRequest {
             to,
             sequence_no,
             rollback,
-            protocols,
             data: Nullable::new(data_bytes),
+            protocols,
         }
     }
 
@@ -171,9 +171,9 @@ mod tests {
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
             Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,
-            vec![],
             false,
             data.clone(),
+            vec![],
         );
 
         let encoded = rlp::encode(&msg);
@@ -183,9 +183,9 @@ mod tests {
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
             Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,
-            vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             false,
             data.clone(),
+            vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
         );
 
         let encoded = rlp::encode(&msg);
@@ -195,9 +195,9 @@ mod tests {
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
             Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,
-            vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
             true,
             data,
+            vec!["abc".to_string(), "cde".to_string(), "efg".to_string()],
         );
 
         let encoded = rlp::encode(&msg);

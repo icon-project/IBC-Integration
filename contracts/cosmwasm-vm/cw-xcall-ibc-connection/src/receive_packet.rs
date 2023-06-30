@@ -35,22 +35,17 @@ impl<'a> CwIbcConnection<'a> {
         let n_message: Message = rlp::decode(&message.data.0).unwrap();
         let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
         let nid = channel_config.counterparty_nid;
-
+        let denom = self.get_denom(deps.as_ref().storage)?;
         if n_message.sn.is_none() {
             let receiver_address = from_utf8(&n_message.data).unwrap();
             let amount = n_message.fee;
             let msg = BankMsg::Send {
                 to_address: receiver_address.to_string(),
-                amount: coins(amount, "arch"),
+                amount: coins(amount, &denom),
             };
             return Ok(CwReceiveResponse::new().add_message(msg));
         }
-        self.add_unclaimed_packet_fees(
-            deps.storage,
-            &nid,
-            relayer.as_str(),
-            n_message.fee,
-        )?;
+        self.add_unclaimed_packet_fees(deps.storage, &nid, relayer.as_str(), n_message.fee)?;
 
         if let Some(sn) = n_message.sn.0 {
             if sn > 0 {
@@ -62,17 +57,6 @@ impl<'a> CwIbcConnection<'a> {
         let xcall_submessage =
             self.call_xcall_handle_message(deps.storage, &nid, data, n_message.sn.0)?;
 
-        debug_println!("[IBCConnection]: message payload built");
-
-        let acknowledgement_data =
-            to_binary(&cw_common::client_response::XcallPacketResponseData {
-                packet: message,
-                acknowledgement: make_ack_success().to_vec(),
-            })
-            .map_err(ContractError::Std)?;
-
-        Ok(CwReceiveResponse::new()
-            .set_ack(acknowledgement_data)
-            .add_submessage(xcall_submessage))
+        Ok(CwReceiveResponse::new().add_submessage(xcall_submessage))
     }
 }

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, StdError};
-use cw_storage_plus::{PrimaryKey, Key, KeyDeserialize};
+use cw_storage_plus::{Key, KeyDeserialize, PrimaryKey};
 
 #[cw_serde]
 #[derive(Eq)]
@@ -59,8 +59,6 @@ impl KeyDeserialize for NetId {
         Ok(net_id)
     }
 }
-
-
 
 #[cw_serde]
 #[derive(Eq)]

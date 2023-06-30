@@ -14,4 +14,7 @@ use super::*;
 #[cw_serde]
 pub struct InstantiateMsg {
     pub ibc_host: Addr,
+    pub port_id: String,
+    pub xcall_address: Addr,
+    pub denom: String,
 }

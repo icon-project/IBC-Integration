@@ -11,8 +11,8 @@ use debug_print::debug_println;
 use crate::{
     state::{HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID},
     types::{
-        channel_config::ChannelConfig, connection_config::ConnectionConfig, message::Message,
-        LOG_PREFIX,
+        channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
+        message::Message, LOG_PREFIX,
     },
 };
 
@@ -125,7 +125,6 @@ impl<'a> CwIbcConnection<'a> {
                 counterparty_nid,
                 client_id,
                 timeout_height,
-                lightclient_address,
             } => {
                 self.ensure_owner(deps.as_ref().storage, &info)?;
                 self.configure_connection(
@@ -133,7 +132,6 @@ impl<'a> CwIbcConnection<'a> {
                     connection_id,
                     destination_port_id,
                     counterparty_nid,
-                    lightclient_address,
                     client_id,
                     timeout_height,
                 )?;
@@ -298,6 +296,12 @@ impl<'a> CwIbcConnection<'a> {
         self.add_admin(store, info, owner)?;
         // self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
+        self.set_xcall_host(store, msg.xcall_address)?;
+        let config = Config {
+            port_id: msg.port_id,
+            denom: msg.denom,
+        };
+        self.store_config(store, &config)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -596,10 +600,11 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<BankMsg, ContractError> {
         let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq).unwrap_or(0);
         self.reset_unclaimed_ack_fees(store, nid, seq)?;
+        let denom = self.get_denom(store)?;
 
         let msg = BankMsg::Send {
             to_address: relayer,
-            amount: coins(ack_fee, "arch"),
+            amount: coins(ack_fee, &denom),
         };
 
         Ok(msg)
@@ -613,6 +618,11 @@ impl<'a> CwIbcConnection<'a> {
         let source = channel.endpoint.clone();
         let destination = channel.counterparty_endpoint.clone();
         let channel_id = source.channel_id.clone();
+
+        let our_port = self.get_port(store)?;
+        if our_port != source.port_id {
+            return Err(ContractError::InvalidPortId);
+        }
 
         let nid = self.get_counterparty_nid(store, &channel.connection_id, &destination.port_id)?;
         let connection_config = self.get_connection_config(store, &channel.connection_id)?;
@@ -638,28 +648,31 @@ impl<'a> CwIbcConnection<'a> {
         &self,
         store: &mut dyn Storage,
         connection_id: String,
-        port_id: String,
+        counterparty_port_id: String,
         counterparty_nid: NetId,
-        lightclient_address: String,
         client_id: String,
         timeout_height: u64,
     ) -> Result<(), ContractError> {
         if self
-            .get_counterparty_nid(store, &connection_id, &port_id)
+            .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
             .is_ok()
         {
             return Err(ContractError::ConnectionAlreadyConfigured {
                 connection_id,
-                port_id,
+                port_id: counterparty_port_id,
             });
         }
-        self.store_counterparty_nid(store, &connection_id, &port_id, &counterparty_nid)?;
+        self.store_counterparty_nid(
+            store,
+            &connection_id,
+            &counterparty_port_id,
+            &counterparty_nid,
+        )?;
 
         self.store_connection_config(
             store,
             &connection_id,
             &ConnectionConfig {
-                lightclient_address,
                 timeout_height,
                 client_id,
             },

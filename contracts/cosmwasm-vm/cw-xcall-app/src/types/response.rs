@@ -2,7 +2,7 @@ use super::*;
 
 #[cw_serde]
 pub enum CallServiceResponseType {
-    CallServiceIbcError = -2,
+    CallServiceError = -2,
     CallServiceResponseFailure,
     CallServiceResponseSuccess,
 }
@@ -18,7 +18,7 @@ impl TryFrom<i8> for CallServiceResponseType {
 
     fn try_from(value: i8) -> Result<Self, Self::Error> {
         match value {
-            -2 => Ok(CallServiceResponseType::CallServiceIbcError),
+            -2 => Ok(CallServiceResponseType::CallServiceError),
             -1 => Ok(CallServiceResponseType::CallServiceResponseFailure),
             0 => Ok(CallServiceResponseType::CallServiceResponseSuccess),
             _ => Err(rlp::DecoderError::Custom("Invalid type")),

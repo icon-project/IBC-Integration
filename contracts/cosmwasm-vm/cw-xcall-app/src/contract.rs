@@ -97,10 +97,10 @@ impl<'a> CwCallService<'a> {
                 println!("{LOG_PREFIX} Received Send Call Message");
                 let sources = sources.unwrap_or(vec![]);
                 let dests = destinations.unwrap_or(vec![]);
-                self.send_call_message(deps, info, env, to, sources, dests, data, rollback)
+                self.send_call_message(deps, info, env, to, data, rollback, sources, dests)
             }
-            ExecuteMsg::HandleCallMessage { msg, from, sn } => {
-                self.handle_call_message(deps, info, from, sn, msg)
+            ExecuteMsg::HandleMessage { msg, from, sn } => {
+                self.handle_message(deps, info, from, sn, msg)
             }
             ExecuteMsg::HandleError {
                 sn: _,

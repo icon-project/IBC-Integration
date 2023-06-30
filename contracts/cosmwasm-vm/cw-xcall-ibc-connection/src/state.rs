@@ -2,7 +2,8 @@ use cw_common::xcall_types::network_address::NetId;
 use cw_storage_plus::Map;
 
 use crate::types::{
-    channel_config::ChannelConfig, connection_config::ConnectionConfig, network_fees::NetworkFees,
+    channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
+    network_fees::NetworkFees,
 };
 
 use super::*;
@@ -105,6 +106,7 @@ impl IbcConfig {
 /// if they have not been completed.
 pub struct CwIbcConnection<'a> {
     owner: Item<'a, String>,
+    config: Item<'a, Config>,
     admin: Item<'a, String>,
     ibc_config: Map<'a, NetId, IbcConfig>,
     ibc_host: Item<'a, Addr>,
@@ -129,6 +131,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn new() -> Self {
         Self {
             owner: Item::new(StorageKey::Owner.as_str()),
+            config: Item::new(StorageKey::Config.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
             ibc_config: Map::new(StorageKey::IbcConfig.as_str()),
             ibc_host: Item::new(StorageKey::IbcHost.as_str()),
@@ -150,6 +153,19 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn admin(&self) -> &Item<'a, String> {
         &self.admin
+    }
+
+    pub fn get_config(&self, store: &dyn Storage) -> Result<Config, ContractError> {
+        self.config.load(store).map_err(ContractError::Std)
+    }
+
+    pub fn store_config(
+        &self,
+        store: &mut dyn Storage,
+
+        config: &Config,
+    ) -> Result<(), ContractError> {
+        self.config.save(store, config).map_err(ContractError::Std)
     }
 
     pub fn get_ibc_config(
@@ -259,11 +275,7 @@ impl<'a> CwIbcConnection<'a> {
         nid: &NetId,
     ) -> Result<(), ContractError> {
         self.configured_networks
-            .save(
-                store,
-                (connection_id.to_owned(), port_id.to_owned()),
-                nid,
-            )
+            .save(store, (connection_id.to_owned(), port_id.to_owned()), nid)
             .map_err(ContractError::Std)
     }
 
@@ -353,6 +365,16 @@ impl<'a> CwIbcConnection<'a> {
         self.unclaimed_ack_fees
             .load(store, (nid.to_owned(), sequence))
             .map_err(ContractError::Std)
+    }
+
+    pub fn get_denom(&self, store: &dyn Storage) -> Result<String, ContractError> {
+        let config = self.get_config(store)?;
+        return Ok(config.denom.to_owned());
+    }
+
+    pub fn get_port(&self, store: &dyn Storage) -> Result<String, ContractError> {
+        let config = self.get_config(store)?;
+        return Ok(config.port_id.to_owned());
     }
 
     pub fn reset_unclaimed_ack_fees(

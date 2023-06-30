@@ -14,10 +14,15 @@ impl<'a> CwIbcConnection<'a> {
         nid: NetId,
         address: String,
     ) -> Result<SubMsg, ContractError> {
-        let fees = self.get_unclaimed_packet_fee(deps.as_ref().storage, &nid, &address)?;
+        let caller = info.sender.clone();
+        let fees =
+            self.get_unclaimed_packet_fee(deps.as_ref().storage, &nid, &caller.to_string())?;
+        if fees == 0 {
+            return Err(ContractError::NoFeesAccrued);
+        }
         let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
 
-        self.reset_unclaimed_packet_fees(deps.storage, &nid, &address)?;
+        self.reset_unclaimed_packet_fees(deps.storage, &nid, &caller.to_string())?;
         let sequence_no = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
         let message = Message {
             sn: Nullable::new(None),

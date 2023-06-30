@@ -70,7 +70,7 @@ pub fn call_set_ibc_config(ctx: &mut TestContext, nid: String) -> Result<AppResp
         ctx.get_xcall_ibc_connection(),
         &cw_common::xcall_connection_msg::ExecuteMsg::SetIbcConfig {
             ibc_config: config,
-            nid:NetId::from(nid),
+            nid: NetId::from(nid),
         },
         &[],
     )

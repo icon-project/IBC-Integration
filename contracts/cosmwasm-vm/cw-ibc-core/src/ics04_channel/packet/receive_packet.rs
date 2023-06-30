@@ -483,10 +483,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     Ok(res)
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(Into::<ContractError>::into)?,
+                None => Ok(Response::new()),
             },
             cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
         }

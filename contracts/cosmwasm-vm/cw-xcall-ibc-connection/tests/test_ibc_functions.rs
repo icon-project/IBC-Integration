@@ -112,7 +112,6 @@ fn success_on_open_channel_open_init_unordered_channel() {
             connection_id,
             dst.port_id.clone(),
             NetId::from("nid".to_string()),
-            "lightclient".to_string(),
             "client-id".to_string(),
             100,
         )
@@ -210,7 +209,6 @@ fn sucess_on_open_channel_open_try_valid_version() {
             "newconnection".to_string(),
             dst.port_id.clone(),
             NetId::from("nid".to_string()),
-            "lightclient".to_string(),
             "client-id".to_string(),
             100,
         )
@@ -271,7 +269,6 @@ fn sucess_on_ibc_channel_connect() {
             "newconnection".to_string(),
             dst.port_id.clone(),
             NetId::from("btp".to_string()),
-            "lightclient".to_string(),
             "client-id".to_string(),
             100,
         )
@@ -392,9 +389,9 @@ fn sucess_receive_packet_for_call_message_request() {
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
-        vec![],
         false,
         vec![1, 2, 3],
+        vec![],
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -444,7 +441,6 @@ fn sucess_receive_packet_for_call_message_request() {
             "newconnection".to_string(),
             dst.port_id.clone(),
             NetId::from("cnid".to_string()),
-            "lightclient".to_string(),
             "client-id".to_string(),
             100,
         )
@@ -491,9 +487,9 @@ fn sucess_on_ack_packet() {
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
-        vec![],
         false,
         vec![1, 2, 3],
+        vec![],
     );
     contract
         .set_ibc_host(
@@ -546,6 +542,9 @@ fn test_entry_point() {
         mock_info.clone(),
         InstantiateMsg {
             ibc_host: Addr::unchecked("hostaddress"),
+            xcall_address: Addr::unchecked("xcalladdress"),
+            denom: "arch".to_string(),
+            port_id: "mock".to_string(),
         },
     )
     .unwrap();
@@ -579,9 +578,9 @@ fn fails_receive_packet_for_call_message_request() {
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
-        vec![],
         false,
         vec![1, 2, 3],
+        vec![],
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -660,6 +659,9 @@ fn success_on_setting_timeout_height() {
 
     let init_message = InstantiateMsg {
         ibc_host: Addr::unchecked("ibchostaddress"),
+        xcall_address: Addr::unchecked("xcalladdress"),
+        denom: "arch".to_string(),
+        port_id: "mock".to_string(),
     };
 
     contract
@@ -711,6 +713,9 @@ fn fails_on_configure_connection_unauthorized() {
 
     let init_message = InstantiateMsg {
         ibc_host: Addr::unchecked("ibchostaddress"),
+        xcall_address: Addr::unchecked("xcalladdress"),
+        denom: "arch".to_string(),
+        port_id: "mock".to_string(),
     };
 
     contract
@@ -721,7 +726,7 @@ fn fails_on_configure_connection_unauthorized() {
         connection_id: "connection-1".to_string(),
         destination_port_id: "mock".to_string(),
         counterparty_nid: NetId::from("cnid".to_string()),
-        lightclient_address: "lightclient".to_string(),
+
         client_id: "client_id".to_string(),
         timeout_height: 1000,
     };
@@ -740,9 +745,9 @@ fn test_ack_success_on_call_request() {
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
-        vec![],
         false,
         vec![1, 2, 3],
+        vec![],
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -780,9 +785,9 @@ fn test_ack_on_fails() {
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
-        vec![],
         false,
         vec![1, 2, 3],
+        vec![],
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -849,9 +854,9 @@ fn test_ack_failure_on_call_request() {
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
-        vec![],
         false,
         vec![1, 2, 3],
+        vec![],
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -889,9 +894,9 @@ fn fails_on_ack_failure_for_call_request() {
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
-        vec![],
         false,
         vec![1, 2, 3],
+        vec![],
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -1024,8 +1029,8 @@ fn test_for_call_service_request_from_rlp_bytes() {
         NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,
-        vec![],
         false,
+        vec![],
         vec![],
     );
 
@@ -1039,7 +1044,7 @@ fn test_for_call_service_response_from_rlp_bytes() {
 
     let expected_data = CallServiceMessageResponse::new(
         1,
-        cw_xcall_app::types::response::CallServiceResponseType::CallServiceIbcError,
+        cw_xcall_app::types::response::CallServiceResponseType::CallServiceError,
         "hello",
     );
 
@@ -1057,8 +1062,8 @@ fn test_for_call_message_data_from_rlp_bytes() {
         NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,
-        vec![],
         false,
+        vec![],
         vec![],
     );
 
@@ -1077,8 +1082,8 @@ fn test_call_message_from_raw_message() {
         NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,
-        vec![],
         false,
+        vec![],
         vec![],
     );
 

@@ -16,11 +16,11 @@ pub enum ExecuteMsg {
     SendCallMessage {
         to: NetworkAddress,
         data: Vec<u8>,
+        rollback: Option<Vec<u8>>,
         sources: Option<Vec<String>>,
         destinations: Option<Vec<String>>,
-        rollback: Option<Vec<u8>>,
     },
-    HandleCallMessage {
+    HandleMessage {
         from: NetId,
         sn: Option<i64>,
         msg: Vec<u8>,

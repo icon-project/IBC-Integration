@@ -3,7 +3,7 @@ use crate::{
         CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg,
         CwPacketReceiveMsg, CwPacketTimeoutMsg,
     },
-    xcall_types::network_address::{NetworkAddress, NetId},
+    xcall_types::network_address::{NetId, NetworkAddress},
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
@@ -16,7 +16,7 @@ pub enum ExecuteMsg {
         address: String,
     },
     SendMessage {
-        to: NetworkAddress,
+        to: NetId,
         sn: i64,
         msg: Vec<u8>,
     },
@@ -28,7 +28,6 @@ pub enum ExecuteMsg {
         connection_id: String,
         destination_port_id: String,
         counterparty_nid: NetId,
-        lightclient_address: String,
         client_id: String,
         timeout_height: u64,
     },

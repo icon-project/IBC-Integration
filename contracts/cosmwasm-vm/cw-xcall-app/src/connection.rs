@@ -1,7 +1,7 @@
 use crate::types::{message::CallServiceMessage, LOG_PREFIX};
 use common::rlp;
 use cosmwasm_std::{to_binary, Coin, CosmosMsg, Deps, QueryRequest, SubMsg, WasmMsg};
-use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
+use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
 
 use crate::{
     error::ContractError,
@@ -13,7 +13,7 @@ impl<'a> CwCallService<'a> {
         &self,
         address: &str,
         fee: Vec<Coin>,
-        to: NetworkAddress,
+        to: NetId,
         sn: i64,
         msg: &CallServiceMessage,
     ) -> Result<SubMsg, ContractError> {

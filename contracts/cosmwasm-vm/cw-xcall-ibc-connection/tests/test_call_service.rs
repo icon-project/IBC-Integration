@@ -22,6 +22,9 @@ fn proper_instantiate() {
         mock_info,
         InstantiateMsg {
             ibc_host: Addr::unchecked("someaddress"),
+            xcall_address: Addr::unchecked("xcalladdress"),
+            denom: "arch".to_string(),
+            port_id: "mock".to_string(),
         },
     )
     .unwrap();

@@ -47,4 +47,8 @@ pub enum ContractError {
         connection_id: String,
         port_id: String,
     },
+    #[error("NoFeesAccrued")]
+    NoFeesAccrued,
+    #[error("InvalidPortId")]
+    InvalidPortId,
 }

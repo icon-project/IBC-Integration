@@ -100,7 +100,7 @@ pub enum ExecuteMsg {
         packet: HexString,
         acknowledgement: HexString,
     },
-    TimeoutPacket  {
+    TimeoutPacket {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgTimeout
         msg: HexString,

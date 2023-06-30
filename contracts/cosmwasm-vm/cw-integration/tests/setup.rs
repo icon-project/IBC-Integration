@@ -293,6 +293,9 @@ pub fn init_xcall_ibc_connection_contract(mut ctx: TestContext) -> TestContext {
             ctx.sender.clone(),
             &cw_xcall_ibc_connection::msg::InstantiateMsg {
                 ibc_host: ctx.get_ibc_core(),
+                denom: "arch".to_string(),
+                port_id: "mock".to_string(),
+                xcall_address: ctx.get_xcall_app(),
             },
             &[],
             "IBCConnection",

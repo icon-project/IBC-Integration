@@ -23,7 +23,7 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// a `Result` object with either an `IbcReceiveResponse` or a `ContractError`.
-    pub fn handle_call_message(
+    pub fn handle_message(
         &self,
         deps: DepsMut,
         info: MessageInfo,
@@ -38,7 +38,7 @@ impl<'a> CwCallService<'a> {
                 self.handle_request(deps, info, from, sn, call_service_message.payload())
             }
             CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, info,  sn, call_service_message.payload())
+                self.handle_response(deps, info, sn, call_service_message.payload())
             }
         }
     }
@@ -75,8 +75,12 @@ impl<'a> CwCallService<'a> {
             return Err(ContractError::ProtocolsMismatch);
         }
         let source = info.sender.to_string();
-        let source_valid =
-            self.is_valid_source(deps.as_ref().storage, src_net, &source, &request.protocols())?;
+        let source_valid = self.is_valid_source(
+            deps.as_ref().storage,
+            src_net,
+            &source,
+            &request.protocols(),
+        )?;
         if !source_valid {
             return Err(ContractError::ProtocolsMismatch);
         }
@@ -149,17 +153,19 @@ impl<'a> CwCallService<'a> {
         let mut call_request = self.get_call_request(deps.storage, response_sequence_no)?;
 
         if call_request.is_null() {
-            return Ok(Response::new())
-         }
+            return Ok(Response::new());
+        }
 
         let source = info.sender.to_string();
-        let source_valid =
-            self.is_valid_source(deps.as_ref().storage, call_request.to().nid(), &source, call_request.protocols())?;
+        let source_valid = self.is_valid_source(
+            deps.as_ref().storage,
+            call_request.to().nid(),
+            &source,
+            call_request.protocols(),
+        )?;
         if !source_valid {
             return Err(ContractError::ProtocolsMismatch);
         }
-
-       
 
         if call_request.protocols().len() > 1 {
             let key = keccak256(data).to_vec();
@@ -233,7 +239,7 @@ impl<'a> CwCallService<'a> {
         store: &dyn Storage,
         src_net: NetId,
         source: &String,
-        protocols:&Vec<String>,
+        protocols: &Vec<String>,
     ) -> Result<bool, ContractError> {
         if protocols.contains(&source) {
             return Ok(true);

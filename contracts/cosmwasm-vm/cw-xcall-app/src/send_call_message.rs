@@ -43,10 +43,10 @@ impl<'a> CwCallService<'a> {
         info: MessageInfo,
         _env: Env,
         to: NetworkAddress,
-        sources: Vec<String>,
-        destinations: Vec<String>,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
+        sources: Vec<String>,
+        destinations: Vec<String>,
     ) -> Result<Response, ContractError> {
         let caller = info.sender.clone();
         let config = self.get_config(deps.as_ref().storage)?;
@@ -83,8 +83,7 @@ impl<'a> CwCallService<'a> {
         let from = NetworkAddress::new(&nid, caller.as_ref());
 
         if confirmed_sources.is_empty() {
-            let default =
-                self.get_default_connection(deps.as_ref().storage, to.nid())?;
+            let default = self.get_default_connection(deps.as_ref().storage, to.nid())?;
             confirmed_sources = vec![default.to_string()]
         }
 
@@ -94,7 +93,7 @@ impl<'a> CwCallService<'a> {
                 to.clone(),
                 destinations.clone(),
                 rollback_data,
-                need_response,
+                false,
             );
 
             self.store_call_request(deps.storage, sequence_no, &request)?;
@@ -104,9 +103,9 @@ impl<'a> CwCallService<'a> {
             from,
             to.account().clone(),
             sequence_no,
-            destinations,
             need_response,
             data.to_vec(),
+            destinations,
         );
 
         let message: CallServiceMessage = call_request.into();
@@ -123,7 +122,7 @@ impl<'a> CwCallService<'a> {
                         return self.call_connection_send_message(
                             &r.to_string(),
                             fund,
-                            to.clone(),
+                            to.nid(),
                             sn,
                             &message,
                         );
