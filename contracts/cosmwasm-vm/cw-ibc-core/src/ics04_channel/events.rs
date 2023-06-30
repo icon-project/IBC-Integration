@@ -379,6 +379,11 @@ pub fn create_close_init_channel_event(
             COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
             channel_end.counterparty().port_id().to_string(),
         )
+        .add_attribute(
+            CONN_ID_ATTRIBUTE_KEY,
+            channel_end.connection_hops[0].to_string(),
+        )
+        .add_attribute(VERSION_ATTRIBUTE_KEY, channel_end.version().to_string())
 }
 
 /// This function creates an event for confirming the closure of a channel.
