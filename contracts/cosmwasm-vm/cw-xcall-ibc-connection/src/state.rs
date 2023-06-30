@@ -20,8 +20,6 @@ pub const XCALL_HANDLE_ERROR_REPLY_ID: u64 = 2;
 pub const HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID: u64 = 3;
 pub const HOST_SEND_MESSAGE_REPLY_ID: u64 = 4;
 
-
-
 /// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
 /// and destination endpoint, and a sequence number.
 ///

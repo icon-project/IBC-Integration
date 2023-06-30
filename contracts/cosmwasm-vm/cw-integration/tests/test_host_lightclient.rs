@@ -325,7 +325,7 @@ pub fn call_configure_connection(
         ctx.get_xcall_ibc_connection(),
         &cw_common::xcall_connection_msg::ExecuteMsg::ConfigureConnection {
             connection_id,
-            destination_port_id: "mock".to_string(),
+            counterparty_port_id: "mock".to_string(),
             counterparty_nid: NetId::from(nid),
             client_id,
             timeout_height: 10,
