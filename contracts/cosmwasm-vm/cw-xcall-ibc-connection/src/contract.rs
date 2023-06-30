@@ -7,7 +7,7 @@ use cw_common::{raw_types::channel::RawPacket, xcall_types::network_address::Net
 use debug_print::debug_println;
 
 use crate::{
-    state::{HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID},
+    state::{HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID, XCALL_HANDLE_ERROR_REPLY_ID,HOST_SEND_MESSAGE_REPLY_ID},
     types::{
         channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
         message::Message, LOG_PREFIX,
@@ -249,10 +249,11 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn reply(&self, deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
-            XCALL_HANDLE_MESSAGE_REPLY_ID => self.xcall_handle_message_reply(deps, msg),
-            _HOST_SEND_MESSAGE_REPLY_ID => self.host_send_message_reply(deps, msg),
-            HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID => self.host_write_acknowledgement_reply(deps, msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
+            XCALL_HANDLE_MESSAGE_REPLY_ID => self.xcall_handle_message_reply(deps, msg),
+            XCALL_HANDLE_ERROR_REPLY_ID=>self.xcall_handle_error_reply(deps, msg),
+            HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID => self.host_write_acknowledgement_reply(deps, msg),
+            HOST_SEND_MESSAGE_REPLY_ID => self.host_send_message_reply(deps, msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
                 msg: "Unknown".to_string(),
@@ -314,7 +315,24 @@ impl<'a> CwIbcConnection<'a> {
         match message.result {
             SubMsgResult::Ok(_) => Ok(Response::new()
                 .add_attribute("action", "call_message")
-                .add_attribute("method", "reply_forward_xcall")),
+                .add_attribute("method", "xcall_handle_message_reply")),
+            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
+                code: message.id,
+                msg: error,
+            }),
+        }
+    }
+
+    fn xcall_handle_error_reply(
+        &self,
+        _deps: DepsMut,
+        message: Reply,
+    ) -> Result<Response, ContractError> {
+        println!("{LOG_PREFIX} Reply From Forward XCall");
+        match message.result {
+            SubMsgResult::Ok(_) => Ok(Response::new()
+                .add_attribute("action", "call_message")
+                .add_attribute("method", "xcall_handle_error_reply")),
             SubMsgResult::Err(error) => Err(ContractError::ReplyError {
                 code: message.id,
                 msg: error,

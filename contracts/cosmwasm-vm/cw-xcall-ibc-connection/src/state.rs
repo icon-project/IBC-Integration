@@ -11,13 +11,16 @@ use super::*;
 /// These are constants defined in the `CwIbcConnection` struct that are used throughout the codebase.
 pub const MAX_DATA_SIZE: u64 = 2048;
 pub const MAX_ROLLBACK_SIZE: u64 = 1024;
-pub const ACK_FAILURE_ID: u64 = 3;
 
-pub const XCALL_HANDLE_MESSAGE_REPLY_ID: u64 = 4;
-pub const XCALL_HANDLE_ERROR_REPLY_ID: u64 = 5;
+pub const ACK_FAILURE_ID: u64 = 0;
 
-pub const HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID: u64 = 6;
-pub const HOST_SEND_MESSAGE_REPLY_ID: u64 = 2;
+pub const XCALL_HANDLE_MESSAGE_REPLY_ID: u64 = 1;
+pub const XCALL_HANDLE_ERROR_REPLY_ID: u64 = 2;
+
+pub const HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID: u64 = 3;
+pub const HOST_SEND_MESSAGE_REPLY_ID: u64 = 4;
+
+
 
 /// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
 /// and destination endpoint, and a sequence number.
