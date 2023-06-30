@@ -1,4 +1,6 @@
-use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
+use common::ibc::core::ics04_channel::{
+    msgs::acknowledgement::MsgAcknowledgement, timeout::TimeoutHeight,
+};
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
     from_binary_response,
@@ -352,13 +354,19 @@ impl<'a> CwIbcCoreContext<'a> {
                     let chan_end_on_a =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
+
+                    let timeout_height = packet.timeout.block().unwrap();
+                    let timeout_height_str =
+                        Height::new(timeout_height.revision, timeout_height.height)
+                            .unwrap()
+                            .to_string();
                     let event = create_ack_packet_event(
                         &packet.src.port_id,
                         &packet.src.channel_id,
                         &packet.sequence.to_string(),
                         &packet.dest.port_id,
                         &packet.dest.channel_id,
-                        &packet.timeout.block().unwrap().height.to_string(),
+                        &timeout_height_str,
                         &packet.timeout.timestamp().unwrap().to_string(),
                         chan_end_on_a.ordering.as_str(),
                         conn_id_on_a.as_str(),
