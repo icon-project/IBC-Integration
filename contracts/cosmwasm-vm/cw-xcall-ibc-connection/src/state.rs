@@ -369,12 +369,12 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn get_denom(&self, store: &dyn Storage) -> Result<String, ContractError> {
         let config = self.get_config(store)?;
-        return Ok(config.denom.to_owned());
+        Ok(config.denom)
     }
 
     pub fn get_port(&self, store: &dyn Storage) -> Result<String, ContractError> {
         let config = self.get_config(store)?;
-        return Ok(config.port_id.to_owned());
+        Ok(config.port_id)
     }
 
     pub fn reset_unclaimed_ack_fees(

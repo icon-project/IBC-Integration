@@ -37,12 +37,12 @@ impl<'a> CwCallService<'a> {
         protocols: Vec<String>,
     ) -> Result<Binary, StdError> {
         if protocols.is_empty() {
-            let message = cw_common::dapp_msg::ExecuteMsg::HandleCallMessage { from: from, data };
+            let message = cw_common::dapp_msg::ExecuteMsg::HandleCallMessage { from, data };
             let msg = to_binary(&message);
             return msg;
         }
         let message = cw_common::dapp_multi_msg::ExecuteMsg::HandleCallMessage {
-            from: from,
+            from,
             data,
             protocols,
         };

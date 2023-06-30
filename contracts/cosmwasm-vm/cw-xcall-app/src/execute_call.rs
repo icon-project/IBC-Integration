@@ -1,7 +1,4 @@
-use std::str::FromStr;
-
 use cosmwasm_std::{Deps, DepsMut, Env, MessageInfo, Reply, Response, SubMsg};
-use cw_common::xcall_types::network_address::NetworkAddress;
 
 use crate::{
     error::ContractError,
@@ -108,9 +105,7 @@ impl<'a> CwCallService<'a> {
             }
             submsgs = reply_address
                 .iter()
-                .map(|to| {
-                    return self.call_connection_send_message(to, vec![], from.nid(), sn, &message);
-                })
+                .map(|to| self.call_connection_send_message(to, vec![], from.nid(), sn, &message))
                 .collect::<Result<Vec<SubMsg>, ContractError>>()?;
         }
 

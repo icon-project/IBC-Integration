@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use common::{
     ibc::Height,
     rlp::{self},
@@ -145,9 +143,7 @@ impl<'a> CwIbcConnection<'a> {
                 nid,
                 packet_fee,
                 ack_fee,
-            } => {
-                return self.set_fee(deps.storage, nid, packet_fee, ack_fee);
-            }
+            } => self.set_fee(deps.storage, nid, packet_fee, ack_fee),
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
@@ -254,7 +250,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn reply(&self, deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             XCALL_HANDLE_MESSAGE_REPLY_ID => self.xcall_handle_message_reply(deps, msg),
-            HOST_SEND_MESSAGE_REPLY_ID => self.host_send_message_reply(deps, msg),
+            _HOST_SEND_MESSAGE_REPLY_ID => self.host_send_message_reply(deps, msg),
             HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID => self.host_write_acknowledgement_reply(deps, msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
@@ -543,7 +539,7 @@ impl<'a> CwIbcConnection<'a> {
 
         let bank_msg = self.settle_unclaimed_ack_fee(
             deps.storage,
-            &nid.as_str(),
+            nid.as_str(),
             seq,
             ack.relayer.to_string(),
         )?;
@@ -583,7 +579,7 @@ impl<'a> CwIbcConnection<'a> {
         let submsg = self.call_xcall_handle_error(deps.storage, sn, -1, "Timeout".to_string())?;
         let bank_msg = self.settle_unclaimed_ack_fee(
             deps.storage,
-            &nid.as_str(),
+            nid.as_str(),
             packet.sequence,
             msg.relayer.to_string(),
         )?;
@@ -604,7 +600,7 @@ impl<'a> CwIbcConnection<'a> {
 
         let msg = BankMsg::Send {
             to_address: relayer,
-            amount: coins(ack_fee, &denom),
+            amount: coins(ack_fee, denom),
         };
 
         Ok(msg)
@@ -637,7 +633,7 @@ impl<'a> CwIbcConnection<'a> {
             &ChannelConfig {
                 timeout_height: connection_config.timeout_height,
                 client_id: connection_config.client_id,
-                counterparty_nid: NetId::from(nid),
+                counterparty_nid: nid,
             },
         )?;
 

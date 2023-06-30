@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use cosmwasm_std::{coins, BankMsg};
 use cw_common::xcall_types::network_address::NetworkAddress;
 
@@ -101,7 +99,7 @@ impl<'a> CwCallService<'a> {
 
         let call_request = CallServiceMessageRequest::new(
             from,
-            to.account().clone(),
+            to.account(),
             sequence_no,
             need_response,
             data.to_vec(),
@@ -119,13 +117,13 @@ impl<'a> CwCallService<'a> {
                     .and_then(|fee| {
                         let fund = coins(fee, config.denom.clone());
 
-                        return self.call_connection_send_message(
+                        self.call_connection_send_message(
                             &r.to_string(),
                             fund,
                             to.nid(),
                             sn,
                             &message,
-                        );
+                        )
                     });
             })
             .collect::<Result<Vec<SubMsg>, ContractError>>()?;

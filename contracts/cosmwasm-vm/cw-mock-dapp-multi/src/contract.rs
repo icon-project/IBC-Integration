@@ -1,6 +1,5 @@
 use std::str::from_utf8;
 
-use cosmwasm_std::Addr;
 use cw_common::xcall_types::network_address::NetworkAddress;
 
 use super::*;

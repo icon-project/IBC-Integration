@@ -92,7 +92,7 @@ impl Decodable for CallServiceMessageRequest {
         let to_str: String = rlp.val_at(1)?;
         Ok(Self {
             from: NetworkAddress::from_str(&str_from)
-                .map_err(|e| rlp::DecoderError::RlpInvalidLength)?,
+                .map_err(|_e| rlp::DecoderError::RlpInvalidLength)?,
             to: Addr::unchecked(to_str),
             sequence_no: rlp.val_at(2)?,
             rollback: rlp.val_at(3)?,

@@ -11,7 +11,6 @@ use cw_common::{
     core_msg as CoreMsg,
     hex_string::HexString,
     query_helpers::build_smart_query,
-    raw_types::connection::RawConnectionEnd,
     xcall_types::network_address::{NetId, NetworkAddress},
 };
 
@@ -399,14 +398,14 @@ fn test_packet_send() {
 pub fn get_client_id(res: &AppResponse) -> String {
     let event = get_event(res, &get_event_name(IbcEventType::CreateClient)).unwrap();
     let client_id = event.get("client_id").unwrap().to_string();
-    return client_id;
+    client_id
 }
 
 pub fn get_connection_id(res: &AppResponse, event: IbcEventType) -> String {
-    let event = get_event(&res, &get_event_name(event)).unwrap();
+    let event = get_event(res, &get_event_name(event)).unwrap();
     println!("{:?}", event);
     let connection_id = event.get("connection_id").unwrap().to_string();
-    return connection_id;
+    connection_id
 }
 
 #[test]

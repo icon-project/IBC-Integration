@@ -1,7 +1,7 @@
 use crate::types::{message::CallServiceMessage, LOG_PREFIX};
 use common::rlp;
 use cosmwasm_std::{to_binary, Coin, CosmosMsg, Deps, QueryRequest, SubMsg, WasmMsg};
-use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
+use cw_common::xcall_types::network_address::NetId;
 
 use crate::{
     error::ContractError,

@@ -17,7 +17,7 @@ pub mod types;
 pub mod xcall;
 
 use crate::{
-    ack::{make_ack_fail, make_ack_success},
+    ack::make_ack_fail,
     check::{check_order, check_version},
     error::ContractError,
     ibc::IBC_VERSION,
@@ -27,9 +27,8 @@ use crate::{
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, Never, QuerierWrapper, Reply, Response, StdError, StdResult, Storage, SubMsg,
-    SubMsgResult,
+    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, Event, MessageInfo, Never, Reply,
+    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};

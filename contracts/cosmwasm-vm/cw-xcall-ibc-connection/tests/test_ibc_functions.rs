@@ -24,7 +24,7 @@ use account::alice;
 use cosmwasm_std::from_binary;
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 
-use cw_xcall_app::types::message::{CallServiceMessage, CallServiceMessageType};
+use cw_xcall_app::types::message::CallServiceMessage;
 use cw_xcall_app::types::request::CallServiceMessageRequest;
 use cw_xcall_ibc_connection::state::CwIbcConnection;
 
@@ -72,9 +72,7 @@ fn fails_on_open_channel_open_init_ordered_channel() {
 #[cfg(not(feature = "native_ibc"))]
 fn success_on_open_channel_open_init_unordered_channel() {
     use cw_common::xcall_connection_msg::ExecuteMsg;
-    use cw_xcall_ibc_connection::{
-        state::CwIbcConnection, types::connection_config::ConnectionConfig,
-    };
+    use cw_xcall_ibc_connection::state::CwIbcConnection;
 
     let mut deps = deps();
 
@@ -110,7 +108,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
         .configure_connection(
             deps.as_mut().storage,
             connection_id,
-            dst.port_id.clone(),
+            dst.port_id,
             NetId::from("nid".to_string()),
             "client-id".to_string(),
             100,
@@ -207,7 +205,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
         .configure_connection(
             deps.as_mut().storage,
             "newconnection".to_string(),
-            dst.port_id.clone(),
+            dst.port_id,
             NetId::from("nid".to_string()),
             "client-id".to_string(),
             100,
@@ -267,7 +265,7 @@ fn sucess_on_ibc_channel_connect() {
         .configure_connection(
             deps.as_mut().storage,
             "newconnection".to_string(),
-            dst.port_id.clone(),
+            dst.port_id,
             NetId::from("btp".to_string()),
             "client-id".to_string(),
             100,
@@ -439,7 +437,7 @@ fn sucess_receive_packet_for_call_message_request() {
         .configure_connection(
             mock_deps.as_mut().storage,
             "newconnection".to_string(),
-            dst.port_id.clone(),
+            dst.port_id,
             NetId::from("cnid".to_string()),
             "client-id".to_string(),
             100,
@@ -655,7 +653,7 @@ fn success_on_setting_timeout_height() {
     let mock_env = mock_env();
     let mock_info = create_mock_info("alice", "umlg", 2000);
 
-    let mut contract = CwIbcConnection::default();
+    let contract = CwIbcConnection::default();
 
     let init_message = InstantiateMsg {
         ibc_host: Addr::unchecked("ibchostaddress"),
@@ -665,12 +663,7 @@ fn success_on_setting_timeout_height() {
     };
 
     contract
-        .instantiate(
-            deps.as_mut(),
-            mock_env.clone(),
-            mock_info.clone(),
-            init_message,
-        )
+        .instantiate(deps.as_mut(), mock_env.clone(), mock_info, init_message)
         .unwrap();
 
     contract
@@ -733,7 +726,7 @@ fn fails_on_configure_connection_unauthorized() {
 
     let mock_info = create_mock_info("bob", "umlg", 2000);
     contract
-        .execute(deps.as_mut(), mock_env.clone(), mock_info, exec_message)
+        .execute(deps.as_mut(), mock_env, mock_info, exec_message)
         .unwrap();
 }
 

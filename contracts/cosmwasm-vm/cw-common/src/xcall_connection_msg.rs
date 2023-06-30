@@ -3,7 +3,7 @@ use crate::{
         CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg,
         CwPacketReceiveMsg, CwPacketTimeoutMsg,
     },
-    xcall_types::network_address::{NetId, NetworkAddress},
+    xcall_types::network_address::NetId,
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
 

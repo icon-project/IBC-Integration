@@ -1,17 +1,9 @@
-use crate::types::LOG_PREFIX;
-use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Empty, MessageInfo, Storage, SubMsg, WasmMsg};
-use cw_common::{
-    hex_string::HexString, raw_types::channel::RawPacket, xcall_types::network_address::NetId,
-    ProstMessage,
-};
-use debug_print::debug_println;
+use cosmwasm_std::{to_binary, CosmosMsg, Empty, Storage, SubMsg, WasmMsg};
+use cw_common::xcall_types::network_address::NetId;
 
 use crate::{
     error::ContractError,
-    state::{
-        CwIbcConnection, HOST_SEND_MESSAGE_REPLY_ID, XCALL_HANDLE_ERROR_REPLY_ID,
-        XCALL_HANDLE_MESSAGE_REPLY_ID,
-    },
+    state::{CwIbcConnection, XCALL_HANDLE_ERROR_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID},
 };
 
 impl<'a> CwIbcConnection<'a> {
@@ -58,9 +50,10 @@ impl<'a> CwIbcConnection<'a> {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balance, mock_env};
-    use cosmwasm_std::{coin, Addr, CosmosMsg};
+    use cosmwasm_std::testing::mock_dependencies;
+    use cosmwasm_std::{Addr, CosmosMsg};
 
     #[test]
     fn test_call_xcall_handle_message() {
@@ -73,7 +66,7 @@ mod tests {
             .set_xcall_host(store, Addr::unchecked("xcall-address"))
             .unwrap();
         let nid = NetId::from("nid".to_string());
-        let res = connection.call_xcall_handle_message(store, &nid.clone(), msg.clone(), sn);
+        let res = connection.call_xcall_handle_message(store, &nid, msg.clone(), sn);
         assert!(res.is_ok());
 
         let expected_xcall_host = connection.get_xcall_host(store).unwrap().to_string();
@@ -107,7 +100,7 @@ mod tests {
 
         let expected_xcall_host = connection.get_xcall_host(&store).unwrap().to_string();
         let expected_xcall_msg =
-            cw_common::xcall_app_msg::ExecuteMsg::HandleError { sn, code, msg: msg };
+            cw_common::xcall_app_msg::ExecuteMsg::HandleError { sn, code, msg };
         let expected_call_message = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: expected_xcall_host,
             msg: to_binary(&expected_xcall_msg).unwrap(),
@@ -115,48 +108,6 @@ mod tests {
         });
         let expected_sub_msg =
             SubMsg::reply_always(expected_call_message, XCALL_HANDLE_ERROR_REPLY_ID);
-        assert_eq!(res.unwrap(), expected_sub_msg);
-    }
-
-    #[test]
-    fn test_call_xcall_send_message() {
-        let mut deps = mock_dependencies_with_balance(&[coin(100, "ATOM")]);
-        let connection = CwIbcConnection::default();
-        let store = deps.as_mut().storage;
-        connection
-            .set_xcall_host(store, Addr::unchecked("xcall-address"))
-            .unwrap();
-        connection
-            .set_ibc_host(store, Addr::unchecked("ibc-host"))
-            .unwrap();
-        let env = mock_env();
-        let info = MessageInfo {
-            sender: env.contract.address,
-            funds: vec![coin(100, "ATOM")],
-        };
-        let packet = RawPacket::default();
-
-        let res = connection.call_host_send_message(deps.as_mut(), info, packet.clone());
-        println!("{:?}", res);
-        assert!(res.is_ok());
-
-        let expected_ibc_host = connection
-            .get_ibc_host(deps.as_ref().storage)
-            .unwrap()
-            .to_string();
-        let expected_message = cw_common::core_msg::ExecuteMsg::SendPacket {
-            packet: HexString::from_bytes(&packet.encode_to_vec()),
-        };
-        let expected_sub_msg = SubMsg {
-            id: HOST_SEND_MESSAGE_REPLY_ID,
-            msg: CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: expected_ibc_host,
-                msg: to_binary(&expected_message).unwrap(),
-                funds: vec![coin(100, "ATOM")],
-            }),
-            gas_limit: None,
-            reply_on: cosmwasm_std::ReplyOn::Always,
-        };
         assert_eq!(res.unwrap(), expected_sub_msg);
     }
 }

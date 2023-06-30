@@ -77,8 +77,8 @@ impl NetworkAddress {
     }
 
     pub fn get_parts(&self) -> Vec<&str> {
-        let parts = self.0.split("/").collect::<Vec<&str>>();
-        return parts;
+        let parts = self.0.split('/').collect::<Vec<&str>>();
+        parts
     }
 }
 

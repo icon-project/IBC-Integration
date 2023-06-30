@@ -75,12 +75,8 @@ impl<'a> CwCallService<'a> {
             return Err(ContractError::ProtocolsMismatch);
         }
         let source = info.sender.to_string();
-        let source_valid = self.is_valid_source(
-            deps.as_ref().storage,
-            src_net,
-            &source,
-            &request.protocols(),
-        )?;
+        let source_valid =
+            self.is_valid_source(deps.as_ref().storage, src_net, &source, request.protocols())?;
         if !source_valid {
             return Err(ContractError::ProtocolsMismatch);
         }
@@ -241,10 +237,10 @@ impl<'a> CwCallService<'a> {
         source: &String,
         protocols: &Vec<String>,
     ) -> Result<bool, ContractError> {
-        if protocols.contains(&source) {
+        if protocols.contains(source) {
             return Ok(true);
         }
         let default_conn = self.get_default_connection(store, src_net)?;
-        return Ok(source.clone() == default_conn.to_string());
+        Ok(source.clone() == default_conn)
     }
 }
