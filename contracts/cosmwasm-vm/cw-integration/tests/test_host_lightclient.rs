@@ -43,9 +43,8 @@ pub fn setup_contracts(mut ctx: TestContext) -> TestContext {
 pub fn setup_xcall_multi_contracts(mut ctx: TestContext) -> TestContext {
     ctx = init_light_client(ctx);
     ctx = init_ibc_core_contract(ctx);
-    ctx = init_xcall_ibc_connection_contract(ctx);
-    let _ibc_addr = ctx.get_ibc_core();
     ctx = init_xcall_app_contract(ctx);
+    ctx = init_xcall_ibc_connection_contract(ctx);
     ctx
 }
 
