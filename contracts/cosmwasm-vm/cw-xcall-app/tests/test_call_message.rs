@@ -8,7 +8,7 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcMsg, IbcTimeout,
     IbcTimeoutBlock, SystemError, SystemResult, WasmQuery,
 };
-use cw_common::xcall_types::network_address::NetworkAddress;
+use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
 use cw_xcall_app::{
     state::CwCallService,
     types::{config::Config, message::CallServiceMessage, request::CallServiceMessageRequest},
@@ -208,7 +208,7 @@ fn send_packet_success_needresponse() {
     contract
         .store_default_connection(
             mock_deps.as_mut().storage,
-            "btp".to_owned(),
+            NetId::from("btp".to_owned()),
             Addr::unchecked("hostaddress"),
         )
         .unwrap();

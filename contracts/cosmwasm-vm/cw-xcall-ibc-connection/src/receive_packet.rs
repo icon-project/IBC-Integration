@@ -47,7 +47,7 @@ impl<'a> CwIbcConnection<'a> {
         }
         self.add_unclaimed_packet_fees(
             deps.storage,
-            &nid.as_str(),
+            &nid,
             relayer.as_str(),
             n_message.fee,
         )?;

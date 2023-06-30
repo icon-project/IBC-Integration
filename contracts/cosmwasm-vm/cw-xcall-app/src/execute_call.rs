@@ -104,7 +104,7 @@ impl<'a> CwCallService<'a> {
             let from = request.from().clone();
             if request.protocols().is_empty() {
                 let default_connection =
-                    self.get_default_connection(deps.storage, from.get_nid().as_str())?;
+                    self.get_default_connection(deps.storage, from.nid())?;
                 reply_address = vec![default_connection.to_string()];
             }
             submsgs = reply_address

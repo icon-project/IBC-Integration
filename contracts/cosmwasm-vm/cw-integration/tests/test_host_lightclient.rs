@@ -9,7 +9,7 @@ use cosmwasm_std::{from_binary, to_binary, Addr, Empty, Querier, QueryRequest};
 
 use cw_common::{
     core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query,
-    raw_types::connection::RawConnectionEnd, xcall_types::network_address::NetworkAddress,
+    raw_types::connection::RawConnectionEnd, xcall_types::network_address::{NetworkAddress, NetId},
 };
 
 use cw_integration::TestSteps;
@@ -325,7 +325,7 @@ pub fn call_configure_connection(
         &cw_common::xcall_connection_msg::ExecuteMsg::ConfigureConnection {
             connection_id,
             destination_port_id: "mock".to_string(),
-            counterparty_nid: nid,
+            counterparty_nid: NetId::from(nid),
             lightclient_address: ctx.get_light_client().to_string(),
             client_id,
             timeout_height: 10,

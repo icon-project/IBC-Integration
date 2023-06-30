@@ -111,7 +111,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
             deps.as_mut().storage,
             connection_id,
             dst.port_id.clone(),
-            "nid".to_owned(),
+            NetId::from("nid".to_string()),
             "lightclient".to_string(),
             "client-id".to_string(),
             100,
@@ -209,7 +209,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
             deps.as_mut().storage,
             "newconnection".to_string(),
             dst.port_id.clone(),
-            "nid".to_owned(),
+            NetId::from("nid".to_string()),
             "lightclient".to_string(),
             "client-id".to_string(),
             100,
@@ -232,6 +232,8 @@ fn sucess_on_open_channel_open_try_valid_version() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ibc_channel_connect() {
+    use std::str::FromStr;
+
     let mut deps = deps();
 
     let mock_env = mock_env();
@@ -268,7 +270,7 @@ fn sucess_on_ibc_channel_connect() {
             deps.as_mut().storage,
             "newconnection".to_string(),
             dst.port_id.clone(),
-            "btp".to_owned(),
+            NetId::from("btp".to_string()),
             "lightclient".to_string(),
             "client-id".to_string(),
             100,
@@ -282,7 +284,7 @@ fn sucess_on_ibc_channel_connect() {
     assert_eq!("on_channel_connect", result.attributes[0].value);
 
     let ibc_config = contract
-        .get_ibc_config(deps.as_ref().storage, "btp")
+        .get_ibc_config(deps.as_ref().storage, &NetId::from_str("btp").unwrap())
         .unwrap();
 
     assert_eq!(ibc_config.src_endpoint().port_id, src.port_id.as_str())
@@ -441,7 +443,7 @@ fn sucess_receive_packet_for_call_message_request() {
             mock_deps.as_mut().storage,
             "newconnection".to_string(),
             dst.port_id.clone(),
-            "nid".to_owned(),
+            NetId::from("cnid".to_string()),
             "lightclient".to_string(),
             "client-id".to_string(),
             100,
@@ -718,7 +720,7 @@ fn fails_on_configure_connection_unauthorized() {
     let exec_message = ExecuteMsg::ConfigureConnection {
         connection_id: "connection-1".to_string(),
         destination_port_id: "mock".to_string(),
-        counterparty_nid: "cnid".to_string(),
+        counterparty_nid: NetId::from("cnid".to_string()),
         lightclient_address: "lightclient".to_string(),
         client_id: "client_id".to_string(),
         timeout_height: 1000,

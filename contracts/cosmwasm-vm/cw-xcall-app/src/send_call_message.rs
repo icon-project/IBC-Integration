@@ -51,11 +51,10 @@ impl<'a> CwCallService<'a> {
         let caller = info.sender.clone();
         let config = self.get_config(deps.as_ref().storage)?;
         let nid = config.network_id;
-        //let dst = to.clone();
 
         self.validate_send_call(
             deps.as_ref(),
-            to.get_nid(),
+            to.nid(),
             &sources,
             &destinations,
             &rollback,
@@ -85,7 +84,7 @@ impl<'a> CwCallService<'a> {
 
         if confirmed_sources.is_empty() {
             let default =
-                self.get_default_connection(deps.as_ref().storage, to.get_nid().as_str())?;
+                self.get_default_connection(deps.as_ref().storage, to.nid())?;
             confirmed_sources = vec![default.to_string()]
         }
 
@@ -103,7 +102,7 @@ impl<'a> CwCallService<'a> {
 
         let call_request = CallServiceMessageRequest::new(
             from,
-            to.get_account().clone(),
+            to.account().clone(),
             sequence_no,
             destinations,
             need_response,
@@ -117,7 +116,7 @@ impl<'a> CwCallService<'a> {
             .iter()
             .map(|r| {
                 return self
-                    .query_connection_fee(deps.as_ref(), to.get_nid().as_str(), need_response, r)
+                    .query_connection_fee(deps.as_ref(), to.nid(), need_response, r)
                     .and_then(|fee| {
                         let fund = coins(fee, config.denom.clone());
 

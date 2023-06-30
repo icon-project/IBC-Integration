@@ -1,4 +1,5 @@
 use common::rlp::Nullable;
+use cw_common::xcall_types::network_address::NetId;
 
 use crate::types::{message::Message, network_fees::NetworkFees};
 
@@ -10,7 +11,7 @@ impl<'a> CwIbcConnection<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        nid: String,
+        nid: NetId,
         address: String,
     ) -> Result<SubMsg, ContractError> {
         let fees = self.get_unclaimed_packet_fee(deps.as_ref().storage, &nid, &address)?;
@@ -33,7 +34,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn set_fee(
         &self,
         store: &mut dyn Storage,
-        nid: String,
+        nid: NetId,
         packet_fee: u128,
         ack_fee: u128,
     ) -> Result<Response, ContractError> {
@@ -41,11 +42,11 @@ impl<'a> CwIbcConnection<'a> {
             send_packet_fee: packet_fee,
             ack_fee,
         };
-        self.store_network_fees(store, &nid, &net_fee)?;
+        self.store_network_fees(store, nid, &net_fee)?;
         Ok(Response::new())
     }
 
-    pub fn get_unclaimed_fee(&self, store: &dyn Storage, nid: String, address: String) -> u128 {
+    pub fn get_unclaimed_fee(&self, store: &dyn Storage, nid: NetId, address: String) -> u128 {
         let fees = self
             .get_unclaimed_packet_fee(store, &nid, &address)
             .unwrap_or(0);

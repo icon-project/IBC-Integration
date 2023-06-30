@@ -1,3 +1,4 @@
+use cw_common::xcall_types::network_address::NetId;
 use cw_storage_plus::Map;
 
 use crate::types::{
@@ -105,13 +106,13 @@ impl IbcConfig {
 pub struct CwIbcConnection<'a> {
     owner: Item<'a, String>,
     admin: Item<'a, String>,
-    ibc_config: Map<'a, String, IbcConfig>,
+    ibc_config: Map<'a, NetId, IbcConfig>,
     ibc_host: Item<'a, Addr>,
     xcall_host: Item<'a, Addr>,
-    configured_networks: Map<'a, (String, String), String>,
+    configured_networks: Map<'a, (String, String), NetId>,
     connection_configs: Map<'a, String, ConnectionConfig>,
     channel_configs: Map<'a, String, ChannelConfig>,
-    network_fees: Map<'a, String, NetworkFees>,
+    network_fees: Map<'a, NetId, NetworkFees>,
     unclaimed_packet_fees: Map<'a, (String, String), u128>,
     unclaimed_ack_fees: Map<'a, (String, u64), u128>,
     incoming_packets: Map<'a, (String, i64), u64>,
@@ -154,7 +155,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn get_ibc_config(
         &self,
         store: &dyn Storage,
-        nid: &str,
+        nid: &NetId,
     ) -> Result<IbcConfig, ContractError> {
         self.ibc_config
             .load(store, nid.to_owned())
@@ -164,7 +165,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn store_ibc_config(
         &self,
         store: &mut dyn Storage,
-        nid: &str,
+        nid: &NetId,
         config: &IbcConfig,
     ) -> Result<(), ContractError> {
         self.ibc_config
@@ -244,7 +245,7 @@ impl<'a> CwIbcConnection<'a> {
         store: &dyn Storage,
         connection_id: &str,
         port_id: &str,
-    ) -> Result<String, ContractError> {
+    ) -> Result<NetId, ContractError> {
         self.configured_networks
             .load(store, (connection_id.to_string(), port_id.to_string()))
             .map_err(ContractError::Std)
@@ -255,13 +256,13 @@ impl<'a> CwIbcConnection<'a> {
         store: &mut dyn Storage,
         connection_id: &str,
         port_id: &str,
-        nid: &str,
+        nid: &NetId,
     ) -> Result<(), ContractError> {
         self.configured_networks
             .save(
                 store,
                 (connection_id.to_owned(), port_id.to_owned()),
-                &nid.to_string(),
+                nid,
             )
             .map_err(ContractError::Std)
     }
@@ -269,77 +270,77 @@ impl<'a> CwIbcConnection<'a> {
     pub fn get_network_fees(
         &self,
         store: &dyn Storage,
-        nid: &str,
+        nid: NetId,
     ) -> Result<NetworkFees, ContractError> {
         self.network_fees
-            .load(store, nid.to_string())
+            .load(store, nid)
             .map_err(ContractError::Std)
     }
 
     pub fn store_network_fees(
         &self,
         store: &mut dyn Storage,
-        nid: &str,
+        nid: NetId,
         network_fees: &NetworkFees,
     ) -> Result<(), ContractError> {
         self.network_fees
-            .save(store, nid.to_owned(), network_fees)
+            .save(store, nid, network_fees)
             .map_err(ContractError::Std)
     }
 
     pub fn add_unclaimed_packet_fees(
         &self,
         store: &mut dyn Storage,
-        nid: &str,
+        nid: &NetId,
         address: &str,
         value: u128,
     ) -> Result<(), ContractError> {
         let mut acc = self
             .unclaimed_packet_fees
-            .load(store, (nid.to_owned(), address.to_string()))
+            .load(store, (nid.to_string(), address.to_string()))
             .unwrap_or(0);
         acc += value;
         self.unclaimed_packet_fees
-            .save(store, (nid.to_owned(), address.to_owned()), &value)
+            .save(store, (nid.to_string(), address.to_owned()), &value)
             .map_err(ContractError::Std)
     }
 
     pub fn get_unclaimed_packet_fee(
         &self,
         store: &dyn Storage,
-        nid: &str,
+        nid: &NetId,
         address: &str,
     ) -> Result<u128, ContractError> {
         self.unclaimed_packet_fees
-            .load(store, (nid.to_owned(), address.to_owned()))
+            .load(store, (nid.to_string(), address.to_owned()))
             .map_err(ContractError::Std)
     }
 
     pub fn reset_unclaimed_packet_fees(
         &self,
         store: &mut dyn Storage,
-        nid: &str,
+        nid: &NetId,
         address: &str,
     ) -> Result<(), ContractError> {
         self.unclaimed_packet_fees
-            .save(store, (nid.to_owned(), address.to_owned()), &0_u128)
+            .save(store, (nid.to_string(), address.to_owned()), &0_u128)
             .map_err(ContractError::Std)
     }
 
     pub fn add_unclaimed_ack_fees(
         &self,
         store: &mut dyn Storage,
-        nid: &str,
+        nid: &NetId,
         sequence: u64,
         value: u128,
     ) -> Result<(), ContractError> {
         let mut acc = self
             .unclaimed_ack_fees
-            .load(store, (nid.to_owned(), sequence))
+            .load(store, (nid.to_string(), sequence))
             .unwrap_or(0);
         acc += value;
         self.unclaimed_ack_fees
-            .save(store, (nid.to_owned(), sequence), &value)
+            .save(store, (nid.to_string(), sequence), &value)
             .map_err(ContractError::Std)
     }
 

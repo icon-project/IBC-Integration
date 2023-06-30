@@ -212,7 +212,7 @@ impl<'a> CwCallService<'a> {
         let has_rollback = rollback.is_some();
         let fees = sources
             .iter()
-            .map(|_r| self.get_total_required_fee(deps, nid.as_str(), has_rollback, sources))
+            .map(|_r| self.get_total_required_fee(deps, nid.clone(), has_rollback, sources))
             .collect::<Result<Vec<u128>, ContractError>>()?;
 
         let total_required_fee: u128 = fees.iter().sum();

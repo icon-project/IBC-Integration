@@ -1,7 +1,7 @@
 use crate::types::{message::CallServiceMessage, LOG_PREFIX};
 use common::rlp;
 use cosmwasm_std::{to_binary, Coin, CosmosMsg, Deps, QueryRequest, SubMsg, WasmMsg};
-use cw_common::xcall_types::network_address::NetworkAddress;
+use cw_common::xcall_types::network_address::{NetworkAddress, NetId};
 
 use crate::{
     error::ContractError,
@@ -13,12 +13,12 @@ impl<'a> CwCallService<'a> {
         &self,
         address: &str,
         fee: Vec<Coin>,
-        net_to: NetworkAddress,
+        to: NetworkAddress,
         sn: i64,
         msg: &CallServiceMessage,
     ) -> Result<SubMsg, ContractError> {
         let msg = rlp::encode(msg).to_vec();
-        let message = cw_common::xcall_connection_msg::ExecuteMsg::SendMessage { net_to, sn, msg };
+        let message = cw_common::xcall_connection_msg::ExecuteMsg::SendMessage { to, sn, msg };
 
         let cosm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: address.to_string(),
@@ -38,12 +38,12 @@ impl<'a> CwCallService<'a> {
     pub fn query_connection_fee(
         &self,
         deps: Deps,
-        nid: &str,
+        nid: NetId,
         need_response: bool,
         address: &str,
     ) -> Result<u128, ContractError> {
         let query_message = cw_common::xcall_connection_msg::QueryMsg::GetFee {
-            nid: nid.to_string(),
+            nid,
             response: need_response,
         };
 

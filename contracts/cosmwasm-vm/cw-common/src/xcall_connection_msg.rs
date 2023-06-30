@@ -3,7 +3,7 @@ use crate::{
         CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg,
         CwPacketReceiveMsg, CwPacketTimeoutMsg,
     },
-    xcall_types::network_address::NetworkAddress,
+    xcall_types::network_address::{NetworkAddress, NetId},
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
@@ -16,18 +16,18 @@ pub enum ExecuteMsg {
         address: String,
     },
     SendMessage {
-        net_to: NetworkAddress,
+        to: NetworkAddress,
         sn: i64,
         msg: Vec<u8>,
     },
     SetIbcConfig {
         ibc_config: Vec<u8>,
-        nid: String,
+        nid: NetId,
     },
     ConfigureConnection {
         connection_id: String,
         destination_port_id: String,
-        counterparty_nid: String,
+        counterparty_nid: NetId,
         lightclient_address: String,
         client_id: String,
         timeout_height: u64,
@@ -37,12 +37,12 @@ pub enum ExecuteMsg {
     },
     RemoveAdmin {},
     ClaimFees {
-        nid: String,
+        nid: NetId,
         address: String,
     },
 
     SetFees {
-        nid: String,
+        nid: NetId,
         packet_fee: u128,
         ack_fee: u128,
     },
@@ -85,7 +85,7 @@ pub enum QueryMsg {
     #[returns(u64)]
     GetTimeoutHeight { channel_id: String },
     #[returns(u64)]
-    GetFee { nid: String, response: bool },
+    GetFee { nid: NetId, response: bool },
     #[returns(u64)]
-    GetUnclaimedFee { nid: String, relayer: String },
+    GetUnclaimedFee { nid: NetId, relayer: String },
 }

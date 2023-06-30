@@ -1,4 +1,5 @@
 use cosmwasm_std::Order;
+use cw_common::xcall_types::network_address::NetId;
 use cw_storage_plus::{KeyDeserialize, PrimaryKey};
 use serde::de::DeserializeOwned;
 
@@ -59,7 +60,7 @@ pub struct CwCallService<'a> {
     call_requests: Map<'a, u128, CallRequest>,
     fee_handler: Item<'a, String>,
     protocol_fee: Item<'a, u128>,
-    default_connections: Map<'a, String, Addr>,
+    default_connections: Map<'a, NetId, Addr>,
     pending_requests: Map<'a, (Vec<u8>, String), bool>,
     pending_responses: Map<'a, (Vec<u8>, String), bool>,
     execute_request_id: Item<'a, u128>,
@@ -231,7 +232,7 @@ impl<'a> CwCallService<'a> {
     pub fn store_default_connection(
         &self,
         store: &mut dyn Storage,
-        nid: String,
+        nid: NetId,
         address: Addr,
     ) -> Result<(), ContractError> {
         self.default_connections
@@ -241,10 +242,10 @@ impl<'a> CwCallService<'a> {
     pub fn get_default_connection(
         &self,
         store: &dyn Storage,
-        nid: &str,
+        nid: NetId,
     ) -> Result<Addr, ContractError> {
         self.default_connections
-            .load(store, nid.to_string())
+            .load(store, nid)
             .map_err(ContractError::Std)
     }
 
@@ -303,7 +304,7 @@ impl<'a> CwCallService<'a> {
     }
 
     pub fn get_all_connections(&self, store: &dyn Storage) -> Result<Vec<String>, ContractError> {
-        let res = self.get_all_values::<String, Addr>(store, &self.default_connections)?;
+        let res = self.get_all_values::<NetId, Addr>(store, &self.default_connections)?;
         let addresses: Vec<String> = res.into_iter().map(|a| a.to_string()).collect();
         Ok(addresses)
     }

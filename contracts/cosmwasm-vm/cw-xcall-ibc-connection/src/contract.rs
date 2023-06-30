@@ -96,9 +96,9 @@ impl<'a> CwIbcConnection<'a> {
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
-            ExecuteMsg::SendMessage { msg, net_to, sn } => {
+            ExecuteMsg::SendMessage { msg, to, sn } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");
-                self.send_message(deps, info, env, net_to, sn, msg)
+                self.send_message(deps, info, env, to, sn, msg)
             }
             ExecuteMsg::SetXCallHost { address } => {
                 self.ensure_owner(deps.as_ref().storage, &info)?;
@@ -221,7 +221,7 @@ impl<'a> CwIbcConnection<'a> {
                 to_binary(&config.timeout_height)
             }
             QueryMsg::GetFee { nid, response } => {
-                let fees = self.get_network_fees(deps.storage, &nid).unwrap();
+                let fees = self.get_network_fees(deps.storage, nid).unwrap();
                 if response {
                     return to_binary(&fees.ack_fee);
                 }
@@ -575,7 +575,7 @@ impl<'a> CwIbcConnection<'a> {
 
         let n_message: Message = rlp::decode(&packet.data).unwrap();
         self.remove_outgoing_packet_sn(deps.storage, &channel_id, packet.sequence);
-        self.add_unclaimed_ack_fees(deps.storage, &nid.as_str(), packet.sequence, n_message.fee)?;
+        self.add_unclaimed_ack_fees(deps.storage, &nid, packet.sequence, n_message.fee)?;
         let submsg = self.call_xcall_handle_error(deps.storage, sn, -1, "Timeout".to_string())?;
         let bank_msg = self.settle_unclaimed_ack_fee(
             deps.storage,
@@ -639,7 +639,7 @@ impl<'a> CwIbcConnection<'a> {
         store: &mut dyn Storage,
         connection_id: String,
         port_id: String,
-        counterparty_nid: String,
+        counterparty_nid: NetId,
         lightclient_address: String,
         client_id: String,
         timeout_height: u64,

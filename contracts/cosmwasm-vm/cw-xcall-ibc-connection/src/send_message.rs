@@ -22,7 +22,7 @@ impl<'a> CwIbcConnection<'a> {
 
         self.ensure_data_length(message.len())?;
         println!("{LOG_PREFIX} Packet Validated");
-        let nid = to.get_nid().to_string();
+        let nid = to.nid();
         let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
 
         if sn < 0 {
@@ -31,7 +31,7 @@ impl<'a> CwIbcConnection<'a> {
 
         let sequence_number_host = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
         let network_fee = self
-            .get_network_fees(deps.as_ref().storage, &nid)
+            .get_network_fees(deps.as_ref().storage, nid.clone())
             .unwrap_or(NetworkFees::default());
 
         if sn > 0 {

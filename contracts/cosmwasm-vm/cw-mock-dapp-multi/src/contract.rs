@@ -39,7 +39,7 @@ impl<'a> CwMockService<'a> {
             .load(deps.storage)
             .map_err(|_e| ContractError::ModuleAddressNotFound)?;
 
-        let network_id = to.get_nid().to_string();
+        let network_id = to.nid().to_string();
         let connections = self.get_connections(deps.storage, network_id)?;
         let (sources, destinations) =
             connections
@@ -75,7 +75,7 @@ impl<'a> CwMockService<'a> {
         data: Vec<u8>,
         _protocols: Vec<String>,
     ) -> Result<Response, ContractError> {
-        if info.sender == from.get_account() {
+        if info.sender == from.account() {
             let recieved_rollback =
                 serde_json_wasm::from_slice::<RollbackData>(&data).map_err(|e| {
                     ContractError::DecodeError {
