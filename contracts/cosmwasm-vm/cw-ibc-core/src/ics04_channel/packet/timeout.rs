@@ -362,11 +362,12 @@ impl<'a> CwIbcCoreContext<'a> {
                         .map(|t| t.to_string())
                         .unwrap_or("0".to_string());
 
-                    let timeout_height = packet.timeout.block().unwrap();
-                    let timeout_height_str =
-                        Height::new(timeout_height.revision, timeout_height.height)
-                            .unwrap()
-                            .to_string();
+                    let timeout_height = packet
+                        .timeout
+                        .block()
+                        .and_then(|b| Height::new(b.revision, b.height).ok())
+                        .map(|h| h.to_string())
+                        .unwrap_or("0-0".to_string());
 
                     let event = create_packet_timeout_event(
                         &packet.src.port_id,
@@ -374,7 +375,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         &packet.sequence.to_string(),
                         &packet.dest.port_id,
                         &packet.dest.channel_id,
-                        &timeout_height_str,
+                        &timeout_height,
                         &timeout_timestamp,
                         chan_end_on_a.ordering.as_str(),
                         conn_id_on_a.as_str(),
