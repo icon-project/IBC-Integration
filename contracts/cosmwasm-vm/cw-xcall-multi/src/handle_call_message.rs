@@ -176,27 +176,20 @@ impl<'a> CwCallService<'a> {
 
             self.remove_pending_responses_by_hash(deps.storage, key)?;
         }
+        let response_event = event_response_message(
+            response_sequence_no,
+            (message.response_code().clone()).into(),
+            message.message(),
+        );
 
         match message.response_code() {
             CallServiceResponseType::CallServiceResponseSuccess => {
-                let event = match message.message().is_empty() {
-                    true => event_response_message(
-                        response_sequence_no,
-                        (message.response_code().clone()).into(),
-                        "",
-                    ),
-                    false => event_response_message(
-                        response_sequence_no,
-                        (message.response_code().clone()).into(),
-                        message.message(),
-                    ),
-                };
                 self.cleanup_request(deps.storage, response_sequence_no);
                 Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
                     .set_data(acknowledgement_data_on_success()?)
-                    .add_event(event))
+                    .add_event(response_event))
             }
             _ => {
                 self.ensure_rollback_length(call_request.rollback())
@@ -204,13 +197,14 @@ impl<'a> CwCallService<'a> {
                 call_request.set_enabled();
                 self.store_call_request(deps.storage, response_sequence_no, &call_request)?;
 
-                let event = event_rollback_message(response_sequence_no);
+                let rollback_event = event_rollback_message(response_sequence_no);
 
                 Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
                     .set_data(acknowledgement_data_on_success()?)
-                    .add_event(event))
+                    .add_event(response_event)
+                    .add_event(rollback_event))
             }
         }
     }
