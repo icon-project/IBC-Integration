@@ -308,6 +308,18 @@ pub fn execute(
                 .add_attribute(MEMBERSHIP, result.to_string())
                 .set_data(data))
         }
+        ExecuteMsg::PacketTimeout {
+            client_id,
+            next_seq_recv_verification_result,
+        } => {
+            // let is_channel_valid =
+            //     validate_channel_state(&client_id, &client, &verify_channel_state)?;
+            let _sequence_valid =
+                validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
+            let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
+
+            Ok(Response::new().set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
+        }
         ExecuteMsg::TimeoutOnCLose {
             client_id,
             verify_channel_state,

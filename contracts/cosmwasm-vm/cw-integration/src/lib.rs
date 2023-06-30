@@ -17,4 +17,5 @@ pub enum TestSteps {
     ChannelCloseConfirm,
     ReceivePacket,
     AcknowledgementPacket,
+    TimeoutPacket,
 }

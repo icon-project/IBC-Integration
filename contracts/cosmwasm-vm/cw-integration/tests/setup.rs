@@ -328,16 +328,16 @@ pub fn setup_context(data: Option<IntegrationData>) -> TestContext {
             sender,
             test_data: Some(test_data),
             admin: Some(data.address.clone()),
-            caller: data.caller_address.clone(),
+            caller: data.caller_address,
         };
     }
 
-    return TestContext {
+    TestContext {
         app: router,
         contracts: HashMap::new(),
         sender,
         test_data: None,
         admin: None,
         caller: None,
-    };
+    }
 }

@@ -38,7 +38,14 @@ impl<'a> CwMockService<'a> {
             .load(deps.storage)
             .map_err(|_e| ContractError::ModuleAddressNotFound)?;
 
-        let msg = cw_common::xcall_msg::ExecuteMsg::SendCallMessage { to, data, rollback };
+        let timeout_height: u64 = 0;
+
+        let msg = cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
+            to,
+            data,
+            timeout_height,
+            rollback,
+        };
         let message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: address,
             msg: to_binary(&msg).unwrap(),

@@ -82,7 +82,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_id_on_a = conn_end_on_a.client_id();
         let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
 
-        if msg
+        if !msg
             .packet
             .timeout_height_on_b
             .has_expired(msg.proof_height_on_b)
@@ -95,18 +95,18 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
-        let timestamp_of_b = consensus_state_of_b_on_a.timestamp();
-        if let Expiry::Expired = msg
-            .packet
-            .timeout_timestamp_on_b
-            .check_expiry(&timestamp_of_b)
-        {
-            return Err(PacketError::PacketTimeoutTimestampNotReached {
-                timeout_timestamp: msg.packet.timeout_timestamp_on_b,
-                chain_timestamp: timestamp_of_b,
-            })
-            .map_err(Into::<ContractError>::into);
-        }
+        // let timestamp_of_b = consensus_state_of_b_on_a.timestamp();
+        // if let Expiry::Expired = msg
+        //     .packet
+        //     .timeout_timestamp_on_b
+        //     .check_expiry(&timestamp_of_b)
+        // {
+        //     return Err(PacketError::PacketTimeoutTimestampNotReached {
+        //         timeout_timestamp: msg.packet.timeout_timestamp_on_b,
+        //         chain_timestamp: timestamp_of_b,
+        //     })
+        //     .map_err(Into::<ContractError>::into);
+        // }
 
         self.verify_connection_delay_passed(
             deps.storage,
@@ -131,57 +131,62 @@ impl<'a> CwIbcCoreContext<'a> {
             error: DecodeError::new(e.to_string()),
         })?;
 
-        let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
-            if msg.packet.sequence < msg.next_seq_recv_on_b {
-                return Err(PacketError::InvalidPacketSequence {
-                    given_sequence: msg.packet.sequence,
-                    next_sequence: msg.next_seq_recv_on_b,
-                })
-                .map_err(Into::<ContractError>::into);
-            }
-            let seq_recv_path_on_b = commitment::next_seq_recv_commitment_path(
-                &msg.packet.port_id_on_b.clone(),
-                &msg.packet.chan_id_on_b.clone(),
-            );
+        let next_seq_recv_verification_result: LightClientPacketMessage =
+            if chan_end_on_a.order_matches(&Order::Ordered) {
+                if msg.packet.sequence < msg.next_seq_recv_on_b {
+                    return Err(PacketError::InvalidPacketSequence {
+                        given_sequence: msg.packet.sequence,
+                        next_sequence: msg.next_seq_recv_on_b,
+                    })
+                    .map_err(Into::<ContractError>::into);
+                }
+                let seq_recv_path_on_b = commitment::next_seq_recv_commitment_path(
+                    &msg.packet.port_id_on_b.clone(),
+                    &msg.packet.chan_id_on_b.clone(),
+                );
 
-            LightClientPacketMessage::VerifyNextSequenceRecv {
-                height: msg.proof_height_on_b.to_string(),
-                prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                proof: msg.proof_unreceived_on_b.clone().into(),
-                root: consensus_state_of_b_on_a.root().into_vec(),
-                seq_recv_path: seq_recv_path_on_b,
-                sequence: msg.packet.sequence.into(),
-                packet_data,
-            }
-        } else {
-            let receipt_path_on_b = commitment::receipt_commitment_path(
-                &msg.packet.port_id_on_b,
-                &msg.packet.chan_id_on_b,
-                msg.packet.sequence,
-            );
+                LightClientPacketMessage::VerifyNextSequenceRecv {
+                    height: msg.proof_height_on_b.to_string(),
+                    prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
+                    proof: msg.proof_unreceived_on_b.clone().into(),
+                    root: consensus_state_of_b_on_a.root().into_vec(),
+                    seq_recv_path: seq_recv_path_on_b,
+                    sequence: msg.packet.sequence.into(),
+                    packet_data,
+                }
+            } else {
+                let receipt_path_on_b = commitment::receipt_commitment_path(
+                    &msg.packet.port_id_on_b,
+                    &msg.packet.chan_id_on_b,
+                    msg.packet.sequence,
+                );
 
-            LightClientPacketMessage::VerifyPacketReceiptAbsence {
-                height: msg.proof_height_on_b.to_string(),
-                prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                proof: msg.proof_unreceived_on_b.clone().into(),
-                root: consensus_state_of_b_on_a.root().into_vec(),
-                receipt_path: receipt_path_on_b,
-                packet_data,
-            }
-        };
+                LightClientPacketMessage::VerifyPacketReceiptAbsence {
+                    height: msg.proof_height_on_b.to_string(),
+                    prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
+                    proof: msg.proof_unreceived_on_b.clone().into(),
+                    root: consensus_state_of_b_on_a.root().into_vec(),
+                    receipt_path: receipt_path_on_b,
+                    packet_data,
+                }
+            };
         let client_type = client_state_of_b_on_a.client_type();
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
+
+        let payload = cw_common::client_msg::ExecuteMsg::PacketTimeout {
+            client_id: client_id_on_a.to_string(),
+            next_seq_recv_verification_result: next_seq_recv_verification_result,
+        };
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: light_client_address,
-            msg: to_binary(&next_seq_recv_verification_result).unwrap(),
+            msg: to_binary(&payload).unwrap(),
             funds: info.funds,
         });
         let sub_msg: SubMsg = SubMsg::reply_always(
             create_client_message,
             VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT,
-        )
-        .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        );
 
         Ok(Response::new()
             .add_attribute("action", "Light client packet timeout call")
@@ -307,9 +312,9 @@ impl<'a> CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
                 Some(res) => {
-                    let data = from_binary_response::<CwPacket>(&res).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.src.channel_id).unwrap();
-                    let port_id = IbcPortId::from_str(&data.src.port_id).unwrap();
+                    let packet = from_binary_response::<CwPacket>(&res).unwrap();
+                    let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
+                    let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
                     let chan_end_on_a =
                         self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                     if self
@@ -317,7 +322,7 @@ impl<'a> CwIbcCoreContext<'a> {
                             deps.storage,
                             &port_id,
                             &channel_id,
-                            data.sequence.into(),
+                            packet.sequence.into(),
                         )
                         .is_err()
                     {
@@ -327,7 +332,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         deps.storage,
                         &port_id,
                         &channel_id,
-                        data.sequence.into(),
+                        packet.sequence.into(),
                     )?;
                     let chan_end_on_a = {
                         if let Order::Ordered = chan_end_on_a.ordering {
@@ -346,18 +351,29 @@ impl<'a> CwIbcCoreContext<'a> {
                         }
                     };
 
-                    let event = Event::new(IbcEventType::Timeout.as_str())
-                        .add_attribute("channel_order", chan_end_on_a.ordering().as_str());
-                    let events = vec![event];
-                    if let Order::Ordered = chan_end_on_a.ordering {
-                        // let close_init = create_packet_timeout_event(,chann);
-                        // events.push(close_init);
-                    }
+                    let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
+                    let timeout_timestamp: String = packet
+                        .timeout
+                        .timestamp()
+                        .map(|t| t.to_string())
+                        .unwrap_or("0".to_string());
+
+                    let event = create_packet_timeout_event(
+                        &packet.src.port_id,
+                        &packet.src.channel_id,
+                        &packet.sequence.to_string(),
+                        &packet.dest.port_id,
+                        &packet.dest.channel_id,
+                        &packet.timeout.block().unwrap().height.to_string(),
+                        &timeout_timestamp,
+                        chan_end_on_a.ordering.as_str(),
+                        conn_id_on_a.as_str(),
+                    );
 
                     Ok(Response::new()
                         .add_attribute("action", "packet")
                         .add_attribute("method", "execute_timeout_packet")
-                        .add_events(events))
+                        .add_event(event))
                 }
                 None => Err(ChannelError::Other {
                     description: "Data from module is Missing".to_string(),

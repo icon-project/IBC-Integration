@@ -442,9 +442,9 @@ public class IBCHandlerTestBase extends TestBase {
         verify(module.mock).onAcknowledgementPacket(msg.getPacket(), msg.getAcknowledgement(), relayer.getAddress());
     }
 
-    void requestTimeout(Packet packet) {
-        handler.invoke(relayer, "requestTimeout", packet.toByteArray());
-        verify(handlerSpy).TimeoutRequest(packet.toByteArray());
+    void requestTimeout(MsgRequestTimeoutPacket msg) {
+        handler.invoke(relayer, "requestTimeout", msg);
+        verify(handlerSpy).TimeoutRequest(msg.getPacket());
 
     }
 
