@@ -26,7 +26,7 @@ pub enum ExecuteMsg {
     },
     ConfigureConnection {
         connection_id: String,
-        destination_port_id: String,
+        counterparty_port_id: String,
         counterparty_nid: NetId,
         client_id: String,
         timeout_height: u64,

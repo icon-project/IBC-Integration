@@ -119,7 +119,7 @@ impl<'a> CwIbcConnection<'a> {
             }
             ExecuteMsg::ConfigureConnection {
                 connection_id,
-                destination_port_id,
+                counterparty_port_id,
                 counterparty_nid,
                 client_id,
                 timeout_height,
@@ -128,7 +128,7 @@ impl<'a> CwIbcConnection<'a> {
                 self.configure_connection(
                     deps.storage,
                     connection_id,
-                    destination_port_id,
+                    counterparty_port_id,
                     counterparty_nid,
                     client_id,
                     timeout_height,

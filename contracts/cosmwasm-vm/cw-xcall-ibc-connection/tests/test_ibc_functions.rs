@@ -717,7 +717,7 @@ fn fails_on_configure_connection_unauthorized() {
 
     let exec_message = ExecuteMsg::ConfigureConnection {
         connection_id: "connection-1".to_string(),
-        destination_port_id: "mock".to_string(),
+        counterparty_port_id: "mock".to_string(),
         counterparty_nid: NetId::from("cnid".to_string()),
 
         client_id: "client_id".to_string(),
