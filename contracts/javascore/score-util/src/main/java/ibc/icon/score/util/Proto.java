@@ -101,7 +101,13 @@ public class Proto {
         if (item == null) {
             return new byte[0];
         }
-        return encode(order, item.encode());
+
+        byte[] encodedItem =  item.encode();
+        if (encodedItem.length == 0){
+            return new byte[] {(byte)(order << 3 | 2), 0};
+        }
+
+        return encode(order, encodedItem);
     }
 
     public static byte[] encodeStringArray(int order, List<String> items) {

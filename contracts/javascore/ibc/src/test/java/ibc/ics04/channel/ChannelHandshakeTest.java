@@ -91,8 +91,7 @@ public class ChannelHandshakeTest extends TestBase {
                 .setRevisionHeight(5)
                 .setRevisionNumber(6).build();
 
-        prefix = MerklePrefix.newBuilder()
-                .setKeyPrefix(ByteString.copyFrom(IBCConnection.commitmentPrefix)).build();
+        prefix = MerklePrefix.newBuilder().build();
 
         connectionCounterparty = Connection.Counterparty.newBuilder()
                 .setClientId(clientId)
