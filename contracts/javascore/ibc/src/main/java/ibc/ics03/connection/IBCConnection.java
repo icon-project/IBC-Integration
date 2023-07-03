@@ -1,5 +1,9 @@
 package ibc.ics03.connection;
 
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
+
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Logger;
@@ -12,19 +16,13 @@ import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.client.Height;
 import icon.proto.core.connection.ConnectionEnd;
 import icon.proto.core.connection.Counterparty;
-import icon.proto.core.connection.MerklePrefix;
 import icon.proto.core.connection.Version;
 import score.Context;
 import scorex.util.ArrayList;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-
 public class IBCConnection extends IBCClient {
     public static final String v1Identifier = "1";
     public static final List<String> supportedV1Features = List.of("ORDER_ORDERED", "ORDER_UNORDERED");
-    public static final byte[] commitmentPrefix = "commitments".getBytes();
 
     Logger logger = new Logger("ibc-core");
 
@@ -64,13 +62,9 @@ public class IBCConnection extends IBCClient {
         connection.setDelayPeriod(msg.getDelayPeriod());
         connection.setCounterparty(counterparty);
 
-        MerklePrefix prefix = new MerklePrefix();
-        prefix.setKeyPrefix(commitmentPrefix);
-
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(msg.getClientId());
         expectedCounterparty.setConnectionId("");
-        expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(counterparty.getClientId());
@@ -120,13 +114,9 @@ public class IBCConnection extends IBCClient {
         // require(validateSelfClient(msg.clientStateBytes), "failed to validate self
         // client state");
 
-        MerklePrefix prefix = new MerklePrefix();
-        prefix.setKeyPrefix(commitmentPrefix);
-
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(connection.getClientId());
         expectedCounterparty.setConnectionId(msg.getConnectionId());
-        expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getCounterparty().getClientId());
@@ -166,13 +156,9 @@ public class IBCConnection extends IBCClient {
         int state = connection.getState();
         Context.require(state == ConnectionEnd.State.STATE_TRYOPEN, "connection state is not TRYOPEN");
 
-        MerklePrefix prefix = new MerklePrefix();
-        prefix.setKeyPrefix(commitmentPrefix);
-
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(connection.getClientId());
         expectedCounterparty.setConnectionId(msg.getConnectionId());
-        expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getCounterparty().getClientId());
