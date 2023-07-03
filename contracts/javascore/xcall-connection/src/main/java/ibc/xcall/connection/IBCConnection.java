@@ -239,7 +239,7 @@ public class IBCConnection {
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
-        Context.require(portId == PORT, "Invalid port");
+        Context.require(portId.equals(PORT), "Invalid port");
         Context.require(counterPartyNid != null, "Connection not configured");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
 
@@ -262,7 +262,7 @@ public class IBCConnection {
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
-        Context.require(portId == PORT, "Invalid port");
+        Context.require(portId.equals(PORT), "Invalid port");
         Context.require(counterPartyNid != null, "Connection not configured");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
         lightClients.set(channelId, configuredClients.get(connectionId));

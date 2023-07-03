@@ -78,7 +78,7 @@ public class MultiProtocolSampleDapp implements CallServiceReceiver {
     private BigInteger _sendCallMessage(BigInteger value, String to, byte[] data, byte[] rollback) {
         try {
             String net = NetworkAddress.valueOf(to).net();
-            return Context.call(BigInteger.class, value, this.callSvc, "sendCallMessage", to, new String[]{source.get(net)}, new String[]{destination.get(net)}, data, rollback);
+            return Context.call(BigInteger.class, value, this.callSvc, "sendCallMessage", to, data, rollback, new String[]{source.get(net)}, new String[]{destination.get(net)});
         } catch (UserRevertedException e) {
             // propagate the error code to the caller
             Context.revert(e.getCode(), "UserReverted");
