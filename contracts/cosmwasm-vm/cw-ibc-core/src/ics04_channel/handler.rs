@@ -1027,47 +1027,41 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    if !channel_end.state_matches(&State::TryOpen) {
-                        return Err(ChannelError::InvalidChannelState {
-                            channel_id,
-                            state: channel_end.state,
-                        })
-                        .map_err(|e| e.into());
-                    }
-                    channel_end.set_state(State::Open); // State Change
-                    self.store_channel_end(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        channel_end.clone(),
-                    )?;
-                    self.store_channel_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        channel_end.clone(),
-                    )?;
-
-                    let event = create_open_confirm_channel_event(
-                        port_id.as_str(),
-                        channel_id.as_str(),
-                        channel_end.counterparty().port_id().as_str(),
-                        channel_end.counterparty().channel_id().unwrap().as_str(),
-                        channel_end.connection_hops()[0].as_str(),
-                    );
-                    Ok(Response::new().add_event(event))
+            cosmwasm_std::SubMsgResult::Ok(res) => {
+                let data :IbcEndpoint= self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE)?;
+                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
+                let mut channel_end =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                if !channel_end.state_matches(&State::TryOpen) {
+                    return Err(ChannelError::InvalidChannelState {
+                        channel_id,
+                        state: channel_end.state,
+                    })
+                    .map_err(|e| e.into());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e| e.into()),
+                channel_end.set_state(State::Open); // State Change
+                self.store_channel_end(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    channel_end.clone(),
+                )?;
+                self.store_channel_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    channel_end.clone(),
+                )?;
+
+                let event = create_open_confirm_channel_event(
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    channel_end.counterparty().port_id().as_str(),
+                    channel_end.counterparty().channel_id().unwrap().as_str(),
+                    channel_end.connection_hops()[0].as_str(),
+                );
+                Ok(Response::new().add_event(event))
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())

@@ -78,6 +78,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     // Generate event for calling on channel open try in x-call
                     let sub_message =
                         on_chan_open_confirm_submessage(&channel_end, &port_id, &channel_id)?;
+                        self.store_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE, &sub_message.channel().endpoint)?;
                     let data =
                         cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
                     let data = to_binary(&data).unwrap();
