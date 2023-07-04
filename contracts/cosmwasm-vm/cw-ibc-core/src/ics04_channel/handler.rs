@@ -20,6 +20,7 @@ use open_confirm::*;
 pub mod close_confirm;
 pub use close_confirm::*;
 use prost::Message;
+use cosmwasm_std::IbcEndpoint;
 
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     /// This function validates a channel open initialization message and generates an event for calling
@@ -99,6 +100,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         // Generate event for calling on channel open init in x-call
         let sub_message = on_chan_open_init_submessage(message, &channel_id_on_a, &connection_id);
+        self.store_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_INIT, &sub_message.channel().endpoint)?;
         let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_init = create_channel_submesssage(
@@ -723,67 +725,61 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let data:IbcEndpoint = self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_INIT)?;
+                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
+                let mut channel_end =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 
-                    if channel_end.state != State::Uninitialized {
-                        return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
-                    }
-                    channel_end.state = State::Init;
-                    self.store_channel_end(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        channel_end.clone(),
-                    )?;
-                    let _sequence = self.increase_channel_sequence(deps.storage)?;
-                    self.store_next_sequence_send(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-                    self.store_next_sequence_recv(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-                    self.store_next_sequence_ack(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-
-                    self.store_channel_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        channel_end.clone(),
-                    )?;
-                    let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-
-                    let main_event = create_open_init_channel_event(
-                        channel_id.as_str(),
-                        port_id.as_str(),
-                        channel_end.counterparty().port_id().as_str(),
-                        channel_end.connection_hops()[0].as_str(),
-                        channel_end.version().as_str(),
-                    );
-                    Ok(Response::new()
-                        .add_event(channel_id_event)
-                        .add_event(main_event))
+                if channel_end.state != State::Uninitialized {
+                    return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e| e.into()),
+                channel_end.state = State::Init;
+                self.store_channel_end(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    channel_end.clone(),
+                )?;
+                let _sequence = self.increase_channel_sequence(deps.storage)?;
+                self.store_next_sequence_send(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+                self.store_next_sequence_recv(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+                self.store_next_sequence_ack(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+
+                self.store_channel_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    channel_end.clone(),
+                )?;
+                let channel_id_event = create_channel_id_generated_event(channel_id.clone());
+
+                let main_event = create_open_init_channel_event(
+                    channel_id.as_str(),
+                    port_id.as_str(),
+                    channel_end.counterparty().port_id().as_str(),
+                    channel_end.connection_hops()[0].as_str(),
+                    channel_end.version().as_str(),
+                );
+                Ok(Response::new()
+                    .add_event(channel_id_event)
+                    .add_event(main_event))
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
