@@ -809,9 +809,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         debug_println!("reached execute_channelopenTry");
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
+            cosmwasm_std::SubMsgResult::Ok(_res) =>{
+                let data: IbcEndpoint = self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_TRY)?;
                     let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                     let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                     let mut channel_end =
@@ -870,11 +869,6 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     Ok(Response::new()
                         .add_event(channel_id_event)
                         .add_event(main_event))
-                }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e: ChannelError| e.into()),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
