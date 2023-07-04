@@ -459,7 +459,7 @@ impl<'a> CwIbcConnection<'a> {
         match self.receive_packet_data(deps, msg.packet) {
             Ok(ibc_response) => Ok(Response::new()
                 .add_attributes(ibc_response.attributes.clone())
-                .set_data(to_vec(&ibc_response).unwrap())
+                .set_data(to_vec(&ibc_response.acknowledgement).unwrap())
                 .add_events(ibc_response.events)),
             Err(error) => Ok(Response::new()
                 .add_attribute("method", "ibc_packet_receive")

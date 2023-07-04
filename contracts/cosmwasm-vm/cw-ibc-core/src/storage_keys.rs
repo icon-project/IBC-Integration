@@ -30,6 +30,7 @@ pub enum StorageKey {
     LastProcessedOn,
     ClientStates,
     ConsensusStates,
+    CallbackData,
 }
 
 impl StorageKey {
@@ -58,6 +59,7 @@ impl StorageKey {
             StorageKey::LastProcessedOn => "last_processed_on",
             StorageKey::ClientStates => "client_states",
             StorageKey::ConsensusStates => "consensus_states",
+            StorageKey::CallbackData => "callback_data",
         }
     }
 }

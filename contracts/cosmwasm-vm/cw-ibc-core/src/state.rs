@@ -1,4 +1,5 @@
-use cosmwasm_std::Order;
+use cosmwasm_std::{from_slice, to_vec, Order};
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::ics24_host::LastProcessedOn;
 
@@ -87,6 +88,7 @@ pub struct CwIbcStore<'a> {
     /// Stores packet receipts based on PortId,ChannelId and sequence
     packet_receipts: Map<'a, (String, String, u64), u64>,
     last_processed_on: Map<'a, IbcClientId, LastProcessedOn>,
+    callback_data: Map<'a, u64, Vec<u8>>,
 }
 
 impl<'a> Default for CwIbcStore<'a> {
@@ -118,6 +120,7 @@ impl<'a> CwIbcStore<'a> {
             last_processed_on: Map::new(StorageKey::LastProcessedOn.as_str()),
             client_states: Map::new(StorageKey::ClientStates.as_str()),
             consensus_states: Map::new(StorageKey::ConsensusStates.as_str()),
+            callback_data: Map::new(StorageKey::CallbackData.as_str()),
         }
     }
     pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
@@ -186,6 +189,10 @@ impl<'a> CwIbcStore<'a> {
         &self.consensus_states
     }
 
+    pub fn callback_data(&self) -> &Map<'a, u64, Vec<u8>> {
+        &self.callback_data
+    }
+
     pub fn clear_storage(&self, store: &mut dyn Storage) {
         let keys: Vec<_> = store
             .range(None, None, Order::Ascending)
@@ -196,4 +203,6 @@ impl<'a> CwIbcStore<'a> {
             store.remove(&k);
         }
     }
+
+   
 }
