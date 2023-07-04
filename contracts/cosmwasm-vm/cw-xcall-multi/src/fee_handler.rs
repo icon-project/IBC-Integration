@@ -24,11 +24,11 @@ impl<'a> CwCallService<'a> {
     pub fn set_protocol_feehandler(
         &self,
         deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
+        env: &Env,
+        info: &MessageInfo,
         address: String,
     ) -> Result<Response, ContractError> {
-        self.ensure_admin(deps.storage, info.sender)?;
+        self.ensure_admin(deps.storage, info.sender.clone())?;
         self.add_feehandler(deps.storage, &address)?;
 
         if address.len().ne(&0) {

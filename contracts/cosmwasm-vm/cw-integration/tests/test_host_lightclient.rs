@@ -18,8 +18,9 @@ use cw_integration::TestSteps;
 use cw_multi_test::{App, AppResponse, Executor};
 
 use setup::{
-    init_ibc_core_contract, init_light_client, init_xcall_app_contract, init_xcall_contract,
-    init_xcall_ibc_connection_contract, setup_context, TestContext,
+    init_ibc_core_contract, init_light_client, init_mock_dapp_multi_contract,
+    init_xcall_app_contract, init_xcall_contract, init_xcall_ibc_connection_contract,
+    setup_context, TestContext,
 };
 use test_utils::{get_event, get_event_name, load_raw_payloads};
 
@@ -44,7 +45,34 @@ pub fn setup_xcall_multi_contracts(mut ctx: TestContext) -> TestContext {
     ctx = init_ibc_core_contract(ctx);
     ctx = init_xcall_app_contract(ctx);
     ctx = init_xcall_ibc_connection_contract(ctx);
+    ctx = init_mock_dapp_multi_contract(ctx);
     ctx
+}
+
+pub fn call_multi_dapp_send_message(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_dapp(),
+        &cw_common::dapp_multi_msg::ExecuteMsg::SendCallMessage {
+            to: NetworkAddress::new("icon", "someaddress"),
+            data: vec![72, 101, 108, 108, 111],
+            rollback: None,
+        },
+        &[],
+    )
+}
+
+pub fn call_multi_dapp_add_connection(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_dapp(),
+        &cw_common::dapp_multi_msg::ExecuteMsg::AddConnection {
+            src_endpoint: ctx.get_xcall_ibc_connection().to_string(),
+            dest_endpoint: "cx00000".to_string(),
+            network_id: "icon".to_string(),
+        },
+        &[],
+    )
 }
 
 pub fn call_register_client_type(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
@@ -371,6 +399,18 @@ fn test_packet_receiver() {
 
     let result = call_receive_packet(&mut ctx);
     println!("{result:?}");
+    assert!(result.is_ok());
+    println!("{:?}", &result);
+}
+
+#[test]
+fn test_packet_send_multi_dapp() {
+    let mut ctx = test_icon_to_arcway_handshake();
+    call_multi_dapp_add_connection(&mut ctx).unwrap();
+
+    let result = call_multi_dapp_send_message(&mut ctx);
+    println!("{result:?}");
+    ctx.list_contracts();
     assert!(result.is_ok());
     println!("{:?}", &result);
 }

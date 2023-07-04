@@ -61,6 +61,8 @@ impl<'a> CwMockService<'a> {
             funds: info.funds,
         });
 
+        println!("{:?}", message);
+
         Ok(Response::new()
             .add_attribute("Action", "SendMessage")
             .add_message(message))

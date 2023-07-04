@@ -50,15 +50,6 @@ impl<'a> CwCallService<'a> {
         let config = self.get_config(deps.as_ref().storage)?;
         let nid = config.network_id;
 
-        self.validate_send_call(
-            deps.as_ref(),
-            to.nid(),
-            &sources,
-            &destinations,
-            &rollback,
-            &info,
-        )?;
-
         self.ensure_caller_is_contract_and_rollback_is_null(
             deps.as_ref(),
             caller.clone(),
@@ -115,7 +106,11 @@ impl<'a> CwCallService<'a> {
                 return self
                     .query_connection_fee(deps.as_ref(), to.nid(), need_response, r)
                     .and_then(|fee| {
-                        let fund = coins(fee, config.denom.clone());
+                        let fund = if fee > 0 {
+                            coins(fee, config.denom.clone())
+                        } else {
+                            vec![]
+                        };
 
                         self.call_connection_send_message(
                             &r.to_string(),
@@ -127,22 +122,63 @@ impl<'a> CwCallService<'a> {
                     });
             })
             .collect::<Result<Vec<SubMsg>, ContractError>>()?;
-        let protocol_fee = self.get_protocol_fee(deps.storage)?;
+        let protocol_fee = self.get_protocol_fee(deps.storage);
         let fee_handler = self.fee_handler().load(deps.storage)?;
 
-        let msg = BankMsg::Send {
-            to_address: fee_handler,
-            amount: coins(protocol_fee, config.denom),
-        };
         let event = event_xcall_message_sent(caller.to_string(), to.to_string(), sequence_no);
-
-        Ok(Response::new()
-            .add_message(msg)
+        println!("{LOG_PREFIX} Sent Bank Message");
+        let mut res = Response::new()
             .add_submessages(submessages)
             .add_attribute("action", "xcall-service")
             .add_attribute("method", "send_packet")
             .add_attribute("sequence_no", sequence_no.to_string())
-            .add_event(event))
+            .add_event(event);
+        if protocol_fee > 0 {
+            let msg = BankMsg::Send {
+                to_address: fee_handler,
+                amount: coins(protocol_fee, config.denom),
+            };
+            res = res.add_message(msg);
+        }
+        Ok(res)
+    }
+
+    /// This function sends a reply message and returns a response or an error.
+    ///
+    /// Arguments:
+    ///
+    /// * `message`: The `message` parameter is of type `Reply`, which is a struct that contains
+    /// information about the result of a sub-message that was sent by the contract. It has two fields:
+    /// `id`, which is a unique identifier for the sub-message, and `result`, which is an enum that
+    /// represents
+    ///
+    /// Returns:
+    ///
+    /// The function `reply_sendcall_message` returns a `Result` object, which can either be an `Ok`
+    /// variant containing a `Response` object with two attributes ("action" and "method"), or an `Err`
+    /// variant containing a `ContractError` object with a code and a message.
+    pub fn send_call_message_reply(&self, message: Reply) -> Result<Response, ContractError> {
+        println!("{LOG_PREFIX} Received Callback From SendCallMessage");
+
+        match message.result {
+            SubMsgResult::Ok(res) => {
+                println!("{LOG_PREFIX} Call Success");
+                println!("{:?}", res);
+                Ok(Response::new()
+                    .add_attribute("action", "reply")
+                    .add_attribute("method", "sendcall_message"))
+            }
+            SubMsgResult::Err(error) => {
+                println!(
+                    "{} SendMessageCall Failed with error {}",
+                    LOG_PREFIX, &error
+                );
+                Err(ContractError::ReplyError {
+                    code: message.id,
+                    msg: error,
+                })
+            }
+        }
     }
 }
 

@@ -78,14 +78,14 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::SetAdmin { address } => {
                 let validated_address =
                     CwCallService::validate_address(deps.api, address.as_str())?;
-                self.add_admin(deps.storage, info, validated_address)
+                self.add_admin(deps.storage, &info, validated_address)
             }
             ExecuteMsg::SetProtocolFee { value } => {
                 self.set_protocol_fee(deps, info, value).unwrap();
                 Ok(Response::new())
             }
             ExecuteMsg::SetProtocolFeeHandler { address } => {
-                self.set_protocol_feehandler(deps, env, info, address)
+                self.set_protocol_feehandler(deps, &env, &info, address)
             }
             ExecuteMsg::SendCallMessage {
                 to,
@@ -156,7 +156,7 @@ impl<'a> CwCallService<'a> {
                 }),
             },
 
-            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps.storage).unwrap()),
+            QueryMsg::GetProtocolFee {} => to_binary(&self.get_protocol_fee(deps.storage)),
             QueryMsg::GetProtocolFeeHandler {} => to_binary(&self.get_protocol_feehandler(deps)),
             QueryMsg::GetNetworkAddress {} => {
                 to_binary(&self.get_own_network_address(deps.storage, &env).unwrap())
@@ -188,7 +188,7 @@ impl<'a> CwCallService<'a> {
         match msg.id {
             EXECUTE_CALL_ID => self.execute_call_reply(deps.as_ref(), env, msg),
             EXECUTE_ROLLBACK_ID => self.execute_rollback_reply(deps.as_ref(), msg),
-            SEND_CALL_MESSAGE_REPLY_ID => self.reply_sendcall_message(msg),
+            SEND_CALL_MESSAGE_REPLY_ID => self.send_call_message_reply(msg),
             ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
@@ -251,9 +251,10 @@ impl<'a> CwCallService<'a> {
         let owner = info.sender.as_str().to_string();
 
         self.add_owner(store, owner.clone())?;
-        self.add_admin(store, info, owner)?;
+        self.add_admin(store, &info, owner)?;
         self.init_last_sequence_no(store, last_sequence_no)?;
         self.init_last_request_id(store, last_request_id)?;
+        let caller = info.sender.clone();
         self.store_config(
             store,
             &Config {
@@ -261,6 +262,7 @@ impl<'a> CwCallService<'a> {
                 denom: msg.denom,
             },
         )?;
+        self.store_protocol_fee_handler(store, caller.to_string())?;
         // self.set_timeout_height(store, msg.timeout_height)?;
         // self.set_connection_host(store, msg.connection_host.clone())?;
 
@@ -286,44 +288,6 @@ impl<'a> CwCallService<'a> {
         match reply.result {
             SubMsgResult::Ok(_) => Ok(Response::new()),
             SubMsgResult::Err(err) => Ok(Response::new().set_data(make_ack_fail(err))),
-        }
-    }
-
-    /// This function sends a reply message and returns a response or an error.
-    ///
-    /// Arguments:
-    ///
-    /// * `message`: The `message` parameter is of type `Reply`, which is a struct that contains
-    /// information about the result of a sub-message that was sent by the contract. It has two fields:
-    /// `id`, which is a unique identifier for the sub-message, and `result`, which is an enum that
-    /// represents
-    ///
-    /// Returns:
-    ///
-    /// The function `reply_sendcall_message` returns a `Result` object, which can either be an `Ok`
-    /// variant containing a `Response` object with two attributes ("action" and "method"), or an `Err`
-    /// variant containing a `ContractError` object with a code and a message.
-    fn reply_sendcall_message(&self, message: Reply) -> Result<Response, ContractError> {
-        println!("{LOG_PREFIX} Received Callback From SendCallMessage");
-
-        match message.result {
-            SubMsgResult::Ok(_) => {
-                println!("{LOG_PREFIX} Call Success");
-                Ok(Response::new()
-                    .add_attribute("action", "reply")
-                    .add_attribute("method", "sendcall_message")
-                    .add_event(
-                        Event::new("xcall_app_send_call_message_reply")
-                            .add_attribute("status", "success"),
-                    ))
-            }
-            SubMsgResult::Err(error) => {
-                println!("{} Call Failed with error {}", LOG_PREFIX, &error);
-                Err(ContractError::ReplyError {
-                    code: message.id,
-                    msg: error,
-                })
-            }
         }
     }
 

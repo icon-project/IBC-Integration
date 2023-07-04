@@ -280,14 +280,10 @@ impl<'a> CwIbcConnection<'a> {
             .map_err(ContractError::Std)
     }
 
-    pub fn get_network_fees(
-        &self,
-        store: &dyn Storage,
-        nid: NetId,
-    ) -> Result<NetworkFees, ContractError> {
+    pub fn get_network_fees(&self, store: &dyn Storage, nid: NetId) -> NetworkFees {
         self.network_fees
             .load(store, nid)
-            .map_err(ContractError::Std)
+            .unwrap_or(NetworkFees::default())
     }
 
     pub fn store_network_fees(

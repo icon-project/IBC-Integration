@@ -8,6 +8,7 @@ use cosmwasm_std::{
 use cw_integration::TestSteps;
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 use cw_xcall_ibc_connection::state::IbcConfig;
+use strum_macros::Display;
 use test_utils::{IntegrationData, RawPayload};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -76,6 +77,14 @@ impl TestContext {
         let err = format!("Payload not Found for {step:?}");
         payload.expect(&err)
     }
+
+    pub fn list_contracts(&self) {
+        println!("Lightclient {}", self.get_light_client());
+        println!("IbcHost {}", self.get_ibc_core());
+        println!("IbcConnection {}", self.get_xcall_ibc_connection());
+        println!("Xcall {}", self.get_xcall_app());
+        println!("Dapp {}", self.get_dapp())
+    }
 }
 
 pub fn create_mock_info(creator: &str, denom: &str, amount: u128) -> MessageInfo {
@@ -108,6 +117,35 @@ pub fn mock_dapp_contract() -> Box<dyn Contract<Empty>> {
         cw_mock_dapp::query,
     );
     Box::new(contract)
+}
+
+pub fn mock_dapp_multi_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        cw_mock_dapp_multi::execute,
+        cw_mock_dapp_multi::instantiate,
+        cw_mock_dapp_multi::query,
+    );
+    Box::new(contract)
+}
+
+pub fn init_mock_dapp_multi_contract(mut ctx: TestContext) -> TestContext {
+    let code_id = ctx.app.store_code(mock_dapp_multi_contract());
+    let contract_addr = ctx
+        .app
+        .instantiate_contract(
+            code_id,
+            ctx.sender.clone(),
+            &cw_mock_dapp_multi::types::InstantiateMsg {
+                address: ctx.get_xcall_app().to_string(),
+            },
+            &[],
+            "MockApp",
+            Some(ctx.sender.clone().to_string()),
+        )
+        .unwrap();
+    ctx.set_dapp(contract_addr);
+
+    ctx
 }
 
 pub fn init_mock_dapp_contract(mut ctx: TestContext) -> TestContext {
@@ -293,7 +331,7 @@ pub fn init_xcall_ibc_connection_contract(mut ctx: TestContext) -> TestContext {
             ctx.sender.clone(),
             &cw_xcall_ibc_connection::msg::InstantiateMsg {
                 ibc_host: ctx.get_ibc_core(),
-                denom: "arch".to_string(),
+                denom: "uarch".to_string(),
                 port_id: "mock".to_string(),
                 xcall_address: ctx.get_xcall_app(),
             },

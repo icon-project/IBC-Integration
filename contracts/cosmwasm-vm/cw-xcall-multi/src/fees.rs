@@ -44,7 +44,7 @@ impl<'a> CwCallService<'a> {
         has_rollback: bool,
         sources: &Vec<String>,
     ) -> Result<u128, ContractError> {
-        let protocol_fee = self.get_protocol_fee(deps.storage)?;
+        let protocol_fee = self.get_protocol_fee(deps.storage);
         let default = self.get_default_connection(deps.storage, nid.clone())?;
         let mut connections: &Vec<String> = &vec![default.to_string()];
         if !sources.is_empty() {

@@ -17,9 +17,9 @@ use super::*;
 /// added to it. The event represents the execution of a call.
 pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
     Event::new("CallExecuted")
-        .add_attribute("_reqId", request_id.to_string())
-        .add_attribute("_code", code.to_string())
-        .add_attribute("_msg", msg.to_string())
+        .add_attribute("reqId", request_id.to_string())
+        .add_attribute("code", code.to_string())
+        .add_attribute("msg", msg.to_string())
 }
 
 /// This Rust function creates an event for a message sent through a cross-chain communication protocol.
@@ -43,9 +43,9 @@ pub fn event_xcall_message_sent(from: String, destination: String, sn: u128) -> 
     let event = Event::new("CallMessageSent");
 
     event
-        .add_attribute("_from", from)
-        .add_attribute("_to", destination)
-        .add_attribute("_sn", sn.to_string())
+        .add_attribute("from", from)
+        .add_attribute("to", destination)
+        .add_attribute("sn", sn.to_string())
 }
 
 /// The function creates an event object for a rollback execution with sequence number, code, and
@@ -66,9 +66,9 @@ pub fn event_xcall_message_sent(from: String, destination: String, sn: u128) -> 
 /// A new `Event` object with attributes "request_id", "code", and "msg" added to it.
 pub fn event_rollback_executed(sequence_no: u128, code: i8, msg: &str) -> Event {
     Event::new("RollbackExecuted")
-        .add_attribute("_sn", sequence_no.to_string())
-        .add_attribute("_code", code.to_string())
-        .add_attribute("_msg", msg.to_string())
+        .add_attribute("sn", sequence_no.to_string())
+        .add_attribute("code", code.to_string())
+        .add_attribute("msg", msg.to_string())
 }
 
 /// The function creates a new event with attributes for a call message in Rust.
@@ -92,10 +92,10 @@ pub fn event_rollback_executed(sequence_no: u128, code: i8, msg: &str) -> Event 
 /// "call_message", "from", "to", "sequence_no", and "request_id".
 pub fn event_call_message(from: String, to: String, sequence_no: u128, request_id: u128) -> Event {
     Event::new("CallMessage")
-        .add_attribute("_from", from)
-        .add_attribute("_to", to)
-        .add_attribute("_sn", sequence_no.to_string())
-        .add_attribute("_reqId", request_id.to_string())
+        .add_attribute("from", from)
+        .add_attribute("to", to)
+        .add_attribute("sn", sequence_no.to_string())
+        .add_attribute("reqId", request_id.to_string())
 }
 
 /// The function creates an event with a "rollback_message" type and a sequence number attribute.
@@ -111,7 +111,7 @@ pub fn event_call_message(from: String, to: String, sequence_no: u128, request_i
 /// A new `Event` object with the name "rollback_message" and an attribute "sequence_no" with the value
 /// of `sequence_no` converted to a string.
 pub fn event_rollback_message(sequence_no: u128) -> Event {
-    Event::new("RollbackMessage ").add_attribute("_sn", sequence_no.to_string())
+    Event::new("RollbackMessage ").add_attribute("sn", sequence_no.to_string())
 }
 
 /// This Rust function creates an event with attributes for a response message.
@@ -131,7 +131,7 @@ pub fn event_rollback_message(sequence_no: u128) -> Event {
 /// A new `Event` object with the attributes `sequence_no`, `response_code`, and `message` added to it.
 pub fn event_response_message(sequence_no: u128, response_code: i8, message: &str) -> Event {
     Event::new("ResponseMessage")
-        .add_attribute("_sn", sequence_no.to_string())
-        .add_attribute("_code", response_code.to_string())
-        .add_attribute("_msg", message.to_string())
+        .add_attribute("sn", sequence_no.to_string())
+        .add_attribute("code", response_code.to_string())
+        .add_attribute("msg", message.to_string())
 }

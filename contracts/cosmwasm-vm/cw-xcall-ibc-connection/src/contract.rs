@@ -97,8 +97,9 @@ impl<'a> CwIbcConnection<'a> {
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
-            ExecuteMsg::SendMessage { msg, to, sn } => {
+            ExecuteMsg::SendMessage { to, sn, msg } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");
+                // return Ok(Response::new());
                 self.send_message(deps, info, env, to, sn, msg)
             }
             ExecuteMsg::SetXCallHost { address } => {
@@ -218,7 +219,7 @@ impl<'a> CwIbcConnection<'a> {
                 to_binary(&config.timeout_height)
             }
             QueryMsg::GetFee { nid, response } => {
-                let fees = self.get_network_fees(deps.storage, nid).unwrap();
+                let fees = self.get_network_fees(deps.storage, nid);
                 if response {
                     return to_binary(&(fees.send_packet_fee + fees.ack_fee));
                 }

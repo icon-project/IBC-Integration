@@ -473,6 +473,7 @@ dependencies = [
  "cw-ibc-core",
  "cw-icon-light-client",
  "cw-mock-dapp",
+ "cw-mock-dapp-multi",
  "cw-mock-ibc-core",
  "cw-multi-test",
  "cw-storage-plus",

@@ -18,7 +18,8 @@ impl<'a> CwIbcConnection<'a> {
         sn: i64,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
+        // self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
+
         println!("{LOG_PREFIX} Packet Validated");
         let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
 
@@ -27,9 +28,7 @@ impl<'a> CwIbcConnection<'a> {
         }
 
         let sequence_number_host = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
-        let network_fee = self
-            .get_network_fees(deps.as_ref().storage, nid.clone())
-            .unwrap_or(NetworkFees::default());
+        let network_fee = self.get_network_fees(deps.as_ref().storage, nid.clone());
 
         if sn > 0 {
             self.add_unclaimed_ack_fees(

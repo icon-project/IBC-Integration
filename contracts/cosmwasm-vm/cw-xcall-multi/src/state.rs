@@ -354,8 +354,8 @@ impl<'a> CwCallService<'a> {
         values.map_err(ContractError::Std)
     }
 
-    pub fn get_protocol_fee(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        self.protocol_fee.load(store).map_err(ContractError::Std)
+    pub fn get_protocol_fee(&self, store: &dyn Storage) -> u128 {
+        self.protocol_fee.load(store).unwrap_or(0)
     }
     pub fn store_protocol_fee(
         &self,
@@ -364,6 +364,16 @@ impl<'a> CwCallService<'a> {
     ) -> Result<(), ContractError> {
         self.protocol_fee
             .save(store, &fee)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn store_protocol_fee_handler(
+        &self,
+        store: &mut dyn Storage,
+        handler: String,
+    ) -> Result<(), ContractError> {
+        self.fee_handler
+            .save(store, &handler)
             .map_err(ContractError::Std)
     }
 }
