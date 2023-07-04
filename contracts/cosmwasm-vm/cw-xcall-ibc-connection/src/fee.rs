@@ -15,7 +15,7 @@ impl<'a> CwIbcConnection<'a> {
         address: String,
     ) -> Result<SubMsg, ContractError> {
         let caller = info.sender.clone();
-        let fees = self.get_unclaimed_packet_fee(deps.as_ref().storage, &nid, caller.as_ref())?;
+        let fees = self.get_unclaimed_packet_fee(deps.as_ref().storage, &nid, caller.as_ref());
         if fees == 0 {
             return Err(ContractError::NoFeesAccrued);
         }
@@ -52,6 +52,5 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn get_unclaimed_fee(&self, store: &dyn Storage, nid: NetId, address: String) -> u128 {
         self.get_unclaimed_packet_fee(store, &nid, &address)
-            .unwrap_or(0)
     }
 }

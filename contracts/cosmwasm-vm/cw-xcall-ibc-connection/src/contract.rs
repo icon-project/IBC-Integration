@@ -220,9 +220,9 @@ impl<'a> CwIbcConnection<'a> {
             QueryMsg::GetFee { nid, response } => {
                 let fees = self.get_network_fees(deps.storage, nid).unwrap();
                 if response {
-                    return to_binary(&fees.ack_fee);
+                    return to_binary(&(fees.send_packet_fee + fees.ack_fee));
                 }
-                to_binary(&fees.send_packet_fee)
+                to_binary(&(fees.send_packet_fee))
             }
             QueryMsg::GetUnclaimedFee { nid, relayer } => {
                 to_binary(&self.get_unclaimed_fee(deps.storage, nid, relayer))
@@ -615,7 +615,7 @@ impl<'a> CwIbcConnection<'a> {
         seq: u64,
         relayer: String,
     ) -> Result<BankMsg, ContractError> {
-        let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq).unwrap_or(0);
+        let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq);
         self.reset_unclaimed_ack_fees(store, nid, seq)?;
         let denom = self.get_denom(store)?;
 

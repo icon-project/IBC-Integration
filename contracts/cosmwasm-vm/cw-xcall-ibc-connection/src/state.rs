@@ -323,10 +323,10 @@ impl<'a> CwIbcConnection<'a> {
         store: &dyn Storage,
         nid: &NetId,
         address: &str,
-    ) -> Result<u128, ContractError> {
+    ) -> u128 {
         self.unclaimed_packet_fees
             .load(store, (nid.to_string(), address.to_owned()))
-            .map_err(ContractError::Std)
+            .unwrap_or(0)
     }
 
     pub fn reset_unclaimed_packet_fees(
@@ -357,15 +357,10 @@ impl<'a> CwIbcConnection<'a> {
             .map_err(ContractError::Std)
     }
 
-    pub fn get_unclaimed_ack_fee(
-        &self,
-        store: &dyn Storage,
-        nid: &str,
-        sequence: u64,
-    ) -> Result<u128, ContractError> {
+    pub fn get_unclaimed_ack_fee(&self, store: &dyn Storage, nid: &str, sequence: u64) -> u128 {
         self.unclaimed_ack_fees
             .load(store, (nid.to_owned(), sequence))
-            .map_err(ContractError::Std)
+            .unwrap_or(0)
     }
 
     pub fn get_denom(&self, store: &dyn Storage) -> Result<String, ContractError> {
