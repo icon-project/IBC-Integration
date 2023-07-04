@@ -1,5 +1,0 @@
-2023-07-03T05:47:06.894314Z  INFO sui::client_commands:                              Object ID                              |  Gas Value 
-2023-07-03T05:47:06.894636Z  INFO sui::client_commands: ----------------------------------------------------------------------------------
-2023-07-03T05:47:06.894641Z  INFO sui::client_commands:  0x28ee023c1243edb034a3a637f9076aaaeeb5eff89b5927ad69dbe50a5f46481e | 10000000000
-2023-07-03T05:47:06.894657Z  INFO sui::client_commands:  0x4962ce68e94febcad1714cd905f689c71efc6fa3dd44822cc5950287e02cf7b0 | 9945501264 
-2023-07-03T05:47:06.894658Z  INFO sui::client_commands:  0x5073cc11c118d14b0985586d2ed5ed1eb101a71844240229a68b0727e43bc768 | 9986290520 
