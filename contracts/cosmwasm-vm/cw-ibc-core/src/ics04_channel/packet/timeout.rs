@@ -1,3 +1,4 @@
+use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
 use cw_common::from_binary_response;
 use prost::DecodeError;
 
@@ -361,13 +362,20 @@ impl<'a> CwIbcCoreContext<'a> {
                         .map(|t| t.to_string())
                         .unwrap_or("0".to_string());
 
+                    let timeout_height = packet
+                        .timeout
+                        .block()
+                        .and_then(|b| Height::new(b.revision, b.height).ok())
+                        .map(|h| h.to_string())
+                        .unwrap_or("0-0".to_string());
+
                     let event = create_packet_timeout_event(
                         &packet.src.port_id,
                         &packet.src.channel_id,
                         &packet.sequence.to_string(),
                         &packet.dest.port_id,
                         &packet.dest.channel_id,
-                        &packet.timeout.block().unwrap().height.to_string(),
+                        &timeout_height,
                         &timeout_timestamp,
                         chan_end_on_a.ordering.as_str(),
                         conn_id_on_a.as_str(),
