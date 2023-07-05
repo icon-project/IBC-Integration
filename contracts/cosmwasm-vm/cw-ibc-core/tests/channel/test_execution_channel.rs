@@ -11,6 +11,7 @@ use cw_common::{
     core_msg::ExecuteMsg as CoreExecuteMsg,
     hex_string::HexString,
 };
+use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 use cw_ibc_core::{
     ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
     EXECUTE_ON_CHANNEL_CLOSE_INIT,
@@ -1151,6 +1152,8 @@ fn test_for_recieve_packet() {
         acknowledgement: None,
         message_info,
     };
+    contract.store_callback_data(deps.as_mut().storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE, &expected_data).unwrap();
+
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");

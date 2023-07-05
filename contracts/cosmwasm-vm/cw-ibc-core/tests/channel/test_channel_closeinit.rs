@@ -80,6 +80,8 @@ fn test_validate_close_init_channel() {
 
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
     let expected = on_chan_close_init_submessage(&msg, &channel_end, &connection_id);
+    contract.store_callback_data(deps.as_mut().storage, EXECUTE_ON_CHANNEL_CLOSE_INIT, &expected.channel().endpoint).unwrap();
+
     let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
@@ -214,6 +216,8 @@ fn test_execute_close_init_channel_fail() {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),
     };
+    contract.store_callback_data(deps.as_mut().storage, EXECUTE_ON_CHANNEL_CLOSE_INIT, &expected_data).unwrap();
+
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
         events: vec![Event::new("Action").add_attribute("method", "channel_close_init")],
