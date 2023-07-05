@@ -88,6 +88,7 @@ pub struct CwIbcStore<'a> {
     /// Stores packet receipts based on PortId,ChannelId and sequence
     packet_receipts: Map<'a, (String, String, u64), u64>,
     last_processed_on: Map<'a, IbcClientId, LastProcessedOn>,
+    // Stores data by replyid to be used later on reply from cross contract call
     callback_data: Map<'a, u64, Vec<u8>>,
 }
 
