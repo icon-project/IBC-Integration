@@ -1,7 +1,5 @@
 use super::*;
-use common::ibc::core::ics04_channel::{
-    msgs::acknowledgement::MsgAcknowledgement
-};
+use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use cosmwasm_std::IbcPacketAckMsg;
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
