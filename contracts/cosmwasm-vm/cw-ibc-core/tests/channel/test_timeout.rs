@@ -1,4 +1,5 @@
 use cw_common::from_binary_response;
+use cw_ibc_core::VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE;
 use debug_print::debug_println;
 
 use super::*;
@@ -33,6 +34,8 @@ fn test_execute_timeout_packet() {
     let timeout = IbcTimeout::with_block(timeout);
     // Set up test input data
     let data = IbcPacket::new(data, src, dest, 1, timeout);
+    contract.store_callback_data(deps.as_mut().storage, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE, &data).unwrap();
+
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
         data: Some(data_bin),
@@ -110,6 +113,8 @@ fn test_execute_timeout_packet_fails() {
     let timeout = IbcTimeout::with_block(timeout);
     // Set up test input data
     let data = IbcPacket::new(data, src, dest, 1, timeout);
+    contract.store_callback_data(deps.as_mut().storage, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE, &data).unwrap();
+
     let data_bin = to_binary(&data).unwrap();
     let result = SubMsgResponse {
         data: Some(data_bin),

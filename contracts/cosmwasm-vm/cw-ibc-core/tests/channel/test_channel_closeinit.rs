@@ -175,6 +175,7 @@ fn test_execute_close_init_channel() {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),
     };
+    contract.store_callback_data(deps.as_mut().storage, EXECUTE_ON_CHANNEL_CLOSE_INIT, &expected_data).unwrap();
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
         events: vec![Event::new("Action").add_attribute("method", "channel_close_init")],

@@ -11,7 +11,7 @@ use cw_common::{
     core_msg::ExecuteMsg as CoreExecuteMsg,
     hex_string::HexString,
 };
-use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
+use cw_ibc_core::{VALIDATE_ON_PACKET_RECEIVE_ON_MODULE, VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT};
 use cw_ibc_core::{
     ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
     EXECUTE_ON_CHANNEL_CLOSE_INIT,
@@ -1152,13 +1152,12 @@ fn test_for_recieve_packet() {
         acknowledgement: None,
         message_info,
     };
-    contract.store_callback_data(deps.as_mut().storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE, &expected_data).unwrap();
-
+   
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 521,
+        id: VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1189,7 +1188,8 @@ fn test_for_recieve_packet() {
     let response = contract.reply(deps.as_mut(), env.clone(), reply_message);
 
     assert!(response.is_ok());
-    assert_eq!(response.unwrap().messages[0].id, 522);
+
+    assert_eq!(response.unwrap().messages[0].id, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -1207,21 +1207,14 @@ fn test_for_recieve_packet() {
     };
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
+    contract.store_callback_data(deps.as_mut().storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE, &packet).unwrap();
 
-    let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
-    let event = Event::new("test");
-    let acknowledgement = XcallPacketResponseData {
-        packet,
-        acknowledgement: make_ack_success().to_vec(),
-    };
-    let ack = ack.add_event(event);
-    let ack_data_bin = to_binary(&acknowledgement).unwrap();
-    let ack = ack.set_ack(ack_data_bin);
 
-    let mock_data_binary = to_binary(&ack).unwrap();
+
+    let mock_data_binary = to_binary(&make_ack_success().to_vec()).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 522,
+        id: VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
