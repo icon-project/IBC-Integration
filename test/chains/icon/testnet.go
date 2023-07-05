@@ -26,6 +26,21 @@ type IconTestnet struct {
 	url              string
 }
 
+func (it *IconTestnet) DeployXCallMockApp(ctx context.Context, connection chains.XCallConnection) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (it *IconTestnet) GetIBCAddress(key string) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (it *IconTestnet) SetupXCall(ctx context.Context, portId, keyName string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 type Block struct {
 	Height int64
 }
@@ -60,7 +75,7 @@ func (it *IconTestnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 func (it *IconTestnet) OverrideConfig(keyName string, value any) {
 	panic("unimplemented")
 }
-func (it *IconTestnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
+func (it *IconTestnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	panic("unimplemented")
 }
 func (it *IconTestnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, error) {

@@ -343,30 +343,9 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	// TODO: variable clientType
 	c.ExecuteContract(context.Background(), ibcAddress, "gochain", "registerClient", `{"clientType":"`+"07-tendermint"+`", "client":"`+client+`"}`)
 
-	nid := c.cfg.ChainID
-	xcall, err := c.getFullNode().DeployContract(ctx, c.scorePaths["xcall"], c.keystorePath, `{"networkId":"`+nid+`"}`)
-	if err != nil {
-		return nil, err
-	}
-
-	connection, err := c.getFullNode().DeployContract(ctx, c.scorePaths["connection"], c.keystorePath, `{"_xCall":"`+xcall+`","_ibc":"`+ibcAddress+`", "_nid":"`+nid+`", "_timeoutHeight":"100"}`)
-	if err != nil {
-		return nil, err
-	}
-
-	dapp, err := c.getFullNode().DeployContract(ctx, c.scorePaths["dapp"], c.keystorePath, `{"_callService":"`+xcall+`"}`)
-	if err != nil {
-		return nil, err
-	}
-
-	c.ExecuteContract(context.Background(), ibcAddress, "gochain", "bindPort", `{"portId":"mock", "moduleAddress":"`+connection+`"}`)
-
 	contracts.ContractAddress = map[string]string{
-		"ibc":        ibcAddress,
-		"client":     client,
-		"xcall":      xcall,
-		"connection": connection,
-		"dapp":       dapp,
+		"ibc":    ibcAddress,
+		"client": client,
 	}
 	c.IBCAddresses = contracts.ContractAddress
 
@@ -399,14 +378,64 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	}), err
 }
 
-func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
-	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["connection"], keyName, "configureChannel", `{"channelId":"`+channel+`", "counterpartyNid":"`+counterpartyNid+`"}`)
+func (c *IconLocalnet) SetupXCall(ctx context.Context, portId string, keyName string) error {
+	nid := c.cfg.ChainID
+	ibcAddress := c.IBCAddresses["ibc"]
+	xcall, err := c.getFullNode().DeployContract(ctx, c.scorePaths["xcall"], c.keystorePath, `{"networkId":"`+nid+`"}`)
 	if err != nil {
-		return ctx, err
+		panic(err)
 	}
 
-	ctx, err = c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "addConnection", `{"nid":"`+counterpartyNid+`", "source":"`+c.IBCAddresses["connection"]+`", "destination":"`+counterpartyConnection+`"}`)
-	return ctx, err
+	connection, err := c.getFullNode().DeployContract(ctx, c.scorePaths["connection"], c.keystorePath, `{"_xCall":"`+xcall+`","_ibc":"`+ibcAddress+`", "port":"`+portId+`"}`)
+	if err != nil {
+		panic(err)
+	}
+
+	c.ExecuteContract(context.Background(), ibcAddress, "gochain", "bindPort", `{"portId":"`+portId+`", "moduleAddress":"`+connection+`"}`)
+
+	c.IBCAddresses["xcall"] = xcall
+	c.IBCAddresses["connection"] = connection
+	return nil
+}
+
+func (c *IconLocalnet) DeployXCallMockApp(ctx context.Context, connection chains.XCallConnection) error {
+	xcall := c.IBCAddresses["xcall"]
+	params := `{"_callService":"` + xcall + `"}`
+	dapp, err := c.getFullNode().DeployContract(ctx, c.scorePaths["dapp"], c.keystorePath, params)
+	if err != nil {
+		return err
+	}
+	params = `{"nid":"` + connection.CounterpartyNid + `", "source":"` + c.IBCAddresses["connection"] + `", "destination":"` + connection.ConnectionId + `"}`
+	ctx, err = c.ExecuteContract(context.Background(), dapp, connection.KeyName, "addConnection", params)
+	if err != nil {
+		panic(err)
+	}
+	c.IBCAddresses["dapp"] = dapp
+	return nil
+}
+
+func (c *IconLocalnet) GetIBCAddress(key string) string {
+	value, exist := c.IBCAddresses[key]
+	if !exist {
+		panic(fmt.Sprintf(`IBC address not exist %s`, key))
+	}
+	return value
+}
+
+func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
+	temp := "07-tendermint-0"
+	params := `{"connectionId":"` + connection.ConnectionId + `","counterpartyPortId":"` + connection.CounterPortId + `","counterpartyNid":"` + connection.CounterpartyNid + `","clientId":"` + temp + `","timeoutHeight":"0x64"}`
+	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["connection"], connection.KeyName, "configureConnection", params)
+	if err != nil {
+		panic(err)
+	}
+	params = `{"nid":"` + connection.CounterpartyNid + `","connection":"` + c.IBCAddresses["connection"] + `"}`
+	ctx, err = c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], connection.KeyName, "setDefaultConnection", params)
+	if err != nil {
+		panic(err)
+	}
+
+	return ctx, nil
 }
 
 func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, error) {
@@ -518,6 +547,7 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 	contracts.ContractAddress = map[string]string{
 		contractName: scoreAddress,
 	}
+	c.IBCAddresses[contractName] = scoreAddress
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
 		ContractAddress: contracts.ContractAddress,
 		ContractOwner:   contracts.ContractOwner,

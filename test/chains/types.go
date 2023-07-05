@@ -1,11 +1,24 @@
 package chains
 
-const FaucetAccountKeyName = "faucet"
+const (
+	FaucetAccountKeyName = "faucet"
+	BASE_PATH            = "BASE_PATH"
+)
 
 type ContractKey struct {
 	ContractAddress map[string]string
 	ContractOwner   map[string]string
 }
+
+type XCallConnection struct {
+	KeyName         string
+	ConnectionId    string
+	ClientId        string
+	CounterpartyNid string
+	PortId          string
+	CounterPortId   string
+}
+
 type LastBlock struct{}
 
 type ContractName struct {

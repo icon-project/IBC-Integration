@@ -36,7 +36,7 @@ func (it *CosmosTestnet) OverrideConfig(keyName string, value any) {
 	panic("unimplemented")
 }
 
-func (c *CosmosTestnet) ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error) {
+func (c *CosmosTestnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	panic("unimplemented")
 }
 
