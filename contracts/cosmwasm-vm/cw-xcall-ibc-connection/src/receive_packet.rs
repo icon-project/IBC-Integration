@@ -53,7 +53,7 @@ impl<'a> CwIbcConnection<'a> {
             }
         }
         debug_println!("[IBCConnection]: forwarding to xcall");
-        let data = message.data.0;
+        let data = n_message.data;
         let xcall_submessage =
             self.call_xcall_handle_message(deps.storage, &nid, data, n_message.sn.0)?;
 
