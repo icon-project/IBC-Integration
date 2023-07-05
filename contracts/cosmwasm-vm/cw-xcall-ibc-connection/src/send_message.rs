@@ -5,7 +5,7 @@ use cw_common::{raw_types::channel::RawPacket, xcall_types::network_address::Net
 use crate::{
     error::ContractError,
     state::{CwIbcConnection, IbcConfig},
-    types::{message::Message, network_fees::NetworkFees, LOG_PREFIX},
+    types::{message::Message, LOG_PREFIX},
 };
 
 impl<'a> CwIbcConnection<'a> {
