@@ -1,3 +1,6 @@
+use cosmwasm_std::{from_slice, to_vec};
+use serde::{de::DeserializeOwned, Serialize};
+
 use super::*;
 /// The `CwIbcCoreContext` struct represents the core context of a Cosmos SDK contract for
 /// inter-blockchain communication.
@@ -63,5 +66,36 @@ impl<'a> CwIbcCoreContext<'a> {
     }
     pub fn set_owner(&self, store: &mut dyn Storage, address: Addr) -> Result<(), ContractError> {
         self.owner.save(store, &address).map_err(ContractError::Std)
+    }
+
+    pub fn store_callback_data<T>(
+        &self,
+        store: &mut dyn Storage,
+        id: u64,
+        data: &T,
+    ) -> Result<(), ContractError>
+    where
+        T: Serialize + ?Sized,
+    {
+        let bytes = to_vec(data).map_err(ContractError::Std)?;
+        return self
+            .cw_ibc_store
+            .callback_data()
+            .save(store, id, &bytes)
+            .map_err(ContractError::Std);
+    }
+
+    pub fn get_callback_data<T: DeserializeOwned>(
+        &self,
+        store: &dyn Storage,
+        id: u64,
+    ) -> Result<T, ContractError> {
+        let bytes = self
+            .cw_ibc_store
+            .callback_data()
+            .load(store, id)
+            .map_err(ContractError::Std)?;
+        let data = from_slice::<T>(&bytes).map_err(ContractError::Std)?;
+        Ok(data)
     }
 }

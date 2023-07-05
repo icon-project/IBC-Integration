@@ -259,6 +259,12 @@ impl<'a> CwIbcCoreContext<'a> {
                     let timeout = CwTimeout::with_block(timeoutblock);
                     let ibc_packet =
                         CwPacket::new(data, src, dest, packet_data.packet.seq_on_a.into(), timeout);
+                    self.store_callback_data(
+                        deps.storage,
+                        VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
+                        &ibc_packet,
+                    )?;
+
                     let address = Addr::unchecked(packet_data.signer.to_string());
                     let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketTimeout {
                         msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
@@ -310,76 +316,80 @@ impl<'a> CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let packet = from_binary_response::<CwPacket>(&res).unwrap();
-                    let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
-                    let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
-                    let chan_end_on_a =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    if self
-                        .get_packet_commitment(
-                            deps.storage,
-                            &port_id,
-                            &channel_id,
-                            packet.sequence.into(),
-                        )
-                        .is_err()
-                    {
-                        return Ok(Response::new());
-                    }
-                    self.delete_packet_commitment(
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let packet: CwPacket = self.get_callback_data(
+                    deps.as_ref().storage,
+                    VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
+                )?;
+                let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
+                let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
+                let chan_end_on_a =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                if self
+                    .get_packet_commitment(
                         deps.storage,
                         &port_id,
                         &channel_id,
                         packet.sequence.into(),
-                    )?;
-                    let chan_end_on_a = {
-                        if let Order::Ordered = chan_end_on_a.ordering {
-                            let mut chan_end_on_a = chan_end_on_a;
-                            chan_end_on_a.state = State::Closed;
-                            self.store_channel_end(
-                                deps.storage,
-                                port_id,
-                                channel_id,
-                                chan_end_on_a.clone(),
-                            )?;
-
-                            chan_end_on_a
-                        } else {
-                            chan_end_on_a
-                        }
-                    };
-
-                    let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
-                    let timeout_timestamp: String = packet
-                        .timeout
-                        .timestamp()
-                        .map(|t| t.to_string())
-                        .unwrap_or("0".to_string());
-
-                    let event = create_packet_timeout_event(
-                        &packet.src.port_id,
-                        &packet.src.channel_id,
-                        &packet.sequence.to_string(),
-                        &packet.dest.port_id,
-                        &packet.dest.channel_id,
-                        &packet.timeout.block().unwrap().height.to_string(),
-                        &timeout_timestamp,
-                        chan_end_on_a.ordering.as_str(),
-                        conn_id_on_a.as_str(),
-                    );
-
-                    Ok(Response::new()
-                        .add_attribute("action", "packet")
-                        .add_attribute("method", "execute_timeout_packet")
-                        .add_event(event))
+                    )
+                    .is_err()
+                {
+                    return Ok(Response::new());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
-            },
+                self.delete_packet_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    packet.sequence.into(),
+                )?;
+                let chan_end_on_a = {
+                    if let Order::Ordered = chan_end_on_a.ordering {
+                        let mut chan_end_on_a = chan_end_on_a;
+                        chan_end_on_a.state = State::Closed;
+                        self.store_channel_end(
+                            deps.storage,
+                            port_id,
+                            channel_id,
+                            chan_end_on_a.clone(),
+                        )?;
+
+                        chan_end_on_a
+                    } else {
+                        chan_end_on_a
+                    }
+                };
+
+                let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
+                let timeout_timestamp: String = packet
+                    .timeout
+                    .timestamp()
+                    .map(|t| t.to_string())
+                    .unwrap_or("0".to_string());
+
+                let timeout_height = packet
+                    .timeout
+                    .block()
+                    .and_then(|b| Height::new(b.revision, b.height).ok())
+                    .map(|h| h.to_string())
+                    .unwrap_or("0-0".to_string());
+
+                let event = create_packet_timeout_event(
+                    &packet.src.port_id,
+                    &packet.src.channel_id,
+                    &packet.sequence.to_string(),
+                    &packet.dest.port_id,
+                    &packet.dest.channel_id,
+                    &timeout_height,
+                    &timeout_timestamp,
+                    chan_end_on_a.ordering.as_str(),
+                    conn_id_on_a.as_str(),
+                );
+
+                Ok(Response::new()
+                    .add_attribute("action", "packet")
+                    .add_attribute("method", "execute_timeout_packet")
+                    .add_event(event))
+            }
             cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
         }
     }

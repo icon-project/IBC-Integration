@@ -127,7 +127,7 @@ impl TryFrom<Vec<u8>> for CommitmentPrefix {
 
     fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
         if bytes.is_empty() {
-            Err(Self::Error::EmptyCommitmentPrefix)
+            Ok(Self { bytes: Vec::new() })
         } else {
             Ok(Self { bytes })
         }

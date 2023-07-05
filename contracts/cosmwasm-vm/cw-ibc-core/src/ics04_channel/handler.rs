@@ -19,6 +19,7 @@ use open_confirm::*;
 
 pub mod close_confirm;
 pub use close_confirm::*;
+use cosmwasm_std::IbcEndpoint;
 use prost::Message;
 
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
@@ -99,6 +100,11 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         // Generate event for calling on channel open init in x-call
         let sub_message = on_chan_open_init_submessage(message, &channel_id_on_a, &connection_id);
+        self.store_callback_data(
+            deps.storage,
+            EXECUTE_ON_CHANNEL_OPEN_INIT,
+            &sub_message.channel().endpoint,
+        )?;
         let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_init = create_channel_submesssage(
@@ -561,6 +567,11 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             };
 
         let sub_message = on_chan_close_init_submessage(message, &chan_end_on_a, &connection_id);
+        self.store_callback_data(
+            deps.storage,
+            EXECUTE_ON_CHANNEL_CLOSE_INIT,
+            &sub_message.channel().endpoint,
+        )?;
         let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_close_init = create_channel_submesssage(
@@ -723,68 +734,63 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let data: IbcEndpoint =
+                    self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_INIT)?;
+                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
+                let mut channel_end =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 
-                    if channel_end.state != State::Uninitialized {
-                        return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
-                    }
-                    channel_end.state = State::Init;
-                    self.store_channel_end(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        channel_end.clone(),
-                    )?;
-                    let _sequence = self.increase_channel_sequence(deps.storage)?;
-                    self.store_next_sequence_send(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-                    self.store_next_sequence_recv(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-                    self.store_next_sequence_ack(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-
-                    self.store_channel_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        channel_end.clone(),
-                    )?;
-                    let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-
-                    let main_event = create_open_init_channel_event(
-                        channel_id.as_str(),
-                        port_id.as_str(),
-                        channel_end.counterparty().port_id().as_str(),
-                        channel_end.connection_hops()[0].as_str(),
-                        channel_end.version().as_str(),
-                    );
-                    Ok(Response::new()
-                        .add_event(channel_id_event)
-                        .add_event(main_event))
+                if channel_end.state != State::Uninitialized {
+                    return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e| e.into()),
-            },
+                channel_end.state = State::Init;
+                self.store_channel_end(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    channel_end.clone(),
+                )?;
+                let _sequence = self.increase_channel_sequence(deps.storage)?;
+                self.store_next_sequence_send(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+                self.store_next_sequence_recv(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+                self.store_next_sequence_ack(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+
+                self.store_channel_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    channel_end.clone(),
+                )?;
+                let channel_id_event = create_channel_id_generated_event(channel_id.clone());
+
+                let main_event = create_open_init_channel_event(
+                    channel_id.as_str(),
+                    port_id.as_str(),
+                    channel_end.counterparty().port_id().as_str(),
+                    channel_end.connection_hops()[0].as_str(),
+                    channel_end.version().as_str(),
+                );
+                Ok(Response::new()
+                    .add_event(channel_id_event)
+                    .add_event(main_event))
+            }
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
             }
@@ -813,73 +819,63 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         debug_println!("reached execute_channelopenTry");
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let data: IbcEndpoint =
+                    self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_TRY)?;
+                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
+                let mut channel_end =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 
-                    if channel_end.state != State::Uninitialized {
-                        return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
-                    }
-                    channel_end.state = State::TryOpen;
-                    self.store_channel_end(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        channel_end.clone(),
-                    )?;
-                    let _sequence = self.increase_channel_sequence(deps.storage)?;
-                    self.store_next_sequence_send(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-                    self.store_next_sequence_recv(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-                    self.store_next_sequence_ack(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        1.into(),
-                    )?;
-                    let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-                    let main_event = create_open_try_channel_event(
-                        channel_id.as_str(),
-                        port_id.as_str(),
-                        channel_end.counterparty().port_id().as_str(),
-                        channel_end
-                            .counterparty()
-                            .channel_id
-                            .clone()
-                            .unwrap()
-                            .as_str(),
-                        channel_end.connection_hops()[0].as_str(),
-                        channel_end.version().as_str(),
-                    );
-
-                    self.store_channel_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        channel_end,
-                    )?;
-                    Ok(Response::new()
-                        .add_event(channel_id_event)
-                        .add_event(main_event))
+                if channel_end.state != State::Uninitialized {
+                    return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e: ChannelError| e.into()),
-            },
+                channel_end.state = State::TryOpen;
+                self.store_channel_end(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    channel_end.clone(),
+                )?;
+                let _sequence = self.increase_channel_sequence(deps.storage)?;
+                self.store_next_sequence_send(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+                self.store_next_sequence_recv(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+                self.store_next_sequence_ack(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    1.into(),
+                )?;
+                let channel_id_event = create_channel_id_generated_event(channel_id.clone());
+                let main_event = create_open_try_channel_event(
+                    channel_id.as_str(),
+                    port_id.as_str(),
+                    channel_end.counterparty().port_id().as_str(),
+                    channel_end
+                        .counterparty()
+                        .channel_id
+                        .clone()
+                        .unwrap()
+                        .as_str(),
+                    channel_end.connection_hops()[0].as_str(),
+                    channel_end.version().as_str(),
+                );
+
+                self.store_channel_commitment(deps.storage, &port_id, &channel_id, channel_end)?;
+                Ok(Response::new()
+                    .add_event(channel_id_event)
+                    .add_event(main_event))
+            }
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
             }
@@ -908,41 +904,36 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let data: IbcEndpoint =
+                    self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_CLOSE_INIT)?;
+                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
+                let mut channel_end =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
 
-                    channel_end.set_state(State::Closed); // State change
-                    self.store_channel_end(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        channel_end.clone(),
-                    )?;
+                channel_end.set_state(State::Closed); // State change
+                self.store_channel_end(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    channel_end.clone(),
+                )?;
 
-                    self.store_channel_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        channel_end.clone(),
-                    )?;
+                self.store_channel_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    channel_end.clone(),
+                )?;
 
-                    let event = create_close_init_channel_event(
-                        port_id.as_str(),
-                        channel_id.as_str(),
-                        channel_end,
-                    );
-                    Ok(Response::new().add_event(event))
-                }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e| e.into()),
-            },
+                let event = create_close_init_channel_event(
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    channel_end,
+                );
+                Ok(Response::new().add_event(event))
+            }
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
             }
@@ -971,50 +962,47 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    if !channel_end.state_matches(&State::Init) {
-                        return Err(ChannelError::InvalidChannelState {
-                            channel_id,
-                            state: channel_end.state,
-                        })
-                        .map_err(|e| e.into());
-                    }
-                    channel_end.set_state(State::Open); // State Change
-                    self.store_channel_end(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        channel_end.clone(),
-                    )?;
-                    self.store_channel_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        channel_end.clone(),
-                    )?;
-
-                    let event = create_open_ack_channel_event(
-                        port_id.as_str(),
-                        channel_id.as_str(),
-                        channel_end.counterparty().port_id().as_str(),
-                        channel_end.counterparty().channel_id().unwrap().as_str(),
-                        channel_end.connection_hops()[0].as_str(),
-                    );
-                    Ok(Response::new()
-                        .add_event(event)
-                        .add_attribute("method", "execute_channel_open_ack"))
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let data: IbcEndpoint = self.get_callback_data(
+                    deps.as_ref().storage,
+                    EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
+                )?;
+                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
+                let mut channel_end =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                if !channel_end.state_matches(&State::Init) {
+                    return Err(ChannelError::InvalidChannelState {
+                        channel_id,
+                        state: channel_end.state,
+                    })
+                    .map_err(|e| e.into());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e| e.into()),
-            },
+                channel_end.set_state(State::Open); // State Change
+                self.store_channel_end(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    channel_end.clone(),
+                )?;
+                self.store_channel_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    channel_end.clone(),
+                )?;
+
+                let event = create_open_ack_channel_event(
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    channel_end.counterparty().port_id().as_str(),
+                    channel_end.counterparty().channel_id().unwrap().as_str(),
+                    channel_end.connection_hops()[0].as_str(),
+                );
+                Ok(Response::new()
+                    .add_event(event)
+                    .add_attribute("method", "execute_channel_open_ack"))
+            }
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
             }
@@ -1043,48 +1031,45 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    if !channel_end.state_matches(&State::TryOpen) {
-                        return Err(ChannelError::InvalidChannelState {
-                            channel_id,
-                            state: channel_end.state,
-                        })
-                        .map_err(|e| e.into());
-                    }
-                    channel_end.set_state(State::Open); // State Change
-                    self.store_channel_end(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        channel_end.clone(),
-                    )?;
-                    self.store_channel_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        channel_end.clone(),
-                    )?;
-
-                    let event = create_open_confirm_channel_event(
-                        port_id.as_str(),
-                        channel_id.as_str(),
-                        channel_end.counterparty().port_id().as_str(),
-                        channel_end.counterparty().channel_id().unwrap().as_str(),
-                        channel_end.connection_hops()[0].as_str(),
-                    );
-                    Ok(Response::new().add_event(event))
+            cosmwasm_std::SubMsgResult::Ok(res) => {
+                let data: IbcEndpoint = self.get_callback_data(
+                    deps.as_ref().storage,
+                    EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
+                )?;
+                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
+                let mut channel_end =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                if !channel_end.state_matches(&State::TryOpen) {
+                    return Err(ChannelError::InvalidChannelState {
+                        channel_id,
+                        state: channel_end.state,
+                    })
+                    .map_err(|e| e.into());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e| e.into()),
-            },
+                channel_end.set_state(State::Open); // State Change
+                self.store_channel_end(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    channel_end.clone(),
+                )?;
+                self.store_channel_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    channel_end.clone(),
+                )?;
+
+                let event = create_open_confirm_channel_event(
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    channel_end.counterparty().port_id().as_str(),
+                    channel_end.counterparty().channel_id().unwrap().as_str(),
+                    channel_end.connection_hops()[0].as_str(),
+                );
+                Ok(Response::new().add_event(event))
+            }
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
             }
@@ -1112,46 +1097,43 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let data = from_binary_response::<cosmwasm_std::IbcEndpoint>(&res).unwrap();
-                    let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                    let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                    let mut channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    if channel_end.state_matches(&State::Closed) {
-                        return Err(ChannelError::InvalidChannelState {
-                            channel_id,
-                            state: channel_end.state,
-                        })
-                        .map_err(|e| e.into());
-                    }
-                    channel_end.set_state(State::Closed); // State Change
-                    self.store_channel_end(
-                        deps.storage,
-                        port_id.clone(),
-                        channel_id.clone(),
-                        channel_end.clone(),
-                    )?;
-                    self.store_channel_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        channel_end.clone(),
-                    )?;
-                    let event = create_close_confirm_channel_event(
-                        port_id.as_str(),
-                        channel_id.as_str(),
-                        channel_end.clone(),
-                    );
-
-                    Ok(Response::new().add_event(event))
+            cosmwasm_std::SubMsgResult::Ok(res) => {
+                let data: IbcEndpoint = self.get_callback_data(
+                    deps.as_ref().storage,
+                    EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
+                )?;
+                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
+                let mut channel_end =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                if channel_end.state_matches(&State::Closed) {
+                    return Err(ChannelError::InvalidChannelState {
+                        channel_id,
+                        state: channel_end.state,
+                    })
+                    .map_err(|e| e.into());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(|e| e.into()),
-            },
+                channel_end.set_state(State::Closed); // State Change
+                self.store_channel_end(
+                    deps.storage,
+                    port_id.clone(),
+                    channel_id.clone(),
+                    channel_end.clone(),
+                )?;
+                self.store_channel_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    channel_end.clone(),
+                )?;
+                let event = create_close_confirm_channel_event(
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    channel_end.clone(),
+                );
+
+                Ok(Response::new().add_event(event))
+            }
             cosmwasm_std::SubMsgResult::Err(error) => {
                 Err(ChannelError::Other { description: error }).map_err(|e| e.into())
             }
