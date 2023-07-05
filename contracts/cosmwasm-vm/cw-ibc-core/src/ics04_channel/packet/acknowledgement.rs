@@ -1,14 +1,12 @@
-use common::ibc::core::ics04_channel::{
-    msgs::acknowledgement::MsgAcknowledgement, timeout::TimeoutHeight,
-};
+use super::*;
+use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
+use cosmwasm_std::IbcPacketAckMsg;
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
     from_binary_response,
 };
 use debug_print::debug_println;
 use prost::DecodeError;
-
-use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     /// This function validates an acknowledgement packet.
@@ -285,9 +283,17 @@ impl<'a> CwIbcCoreContext<'a> {
                         let address = Addr::unchecked(packet_data.signer.to_string());
                         let ack: CwAcknowledgement =
                             CwAcknowledgement::new(acknowledgement.as_bytes());
+                        let packet_ack_msg: CwPacketAckMsg =
+                            cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
+                        self.store_callback_data(
+                            deps.storage,
+                            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+                            &packet_ack_msg,
+                        )?;
                         let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketAck {
-                            msg: cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address),
+                            msg: packet_ack_msg,
                         };
+
                         let create_client_message: CosmosMsg =
                             CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                                 contract_addr: contract_address,
@@ -341,73 +347,70 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         debug_println!("replying from ack module {:?}", message);
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    debug_println!("receiving reply from packet ack ");
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
+                debug_println!("receiving reply from packet ack ");
 
-                    let reply = from_binary_response::<CwPacketAckMsg>(&res).unwrap();
-                    debug_println!("received ack message from module ");
+                let reply: IbcPacketAckMsg = self.get_callback_data(
+                    deps.as_ref().storage,
+                    VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+                )?;
+                debug_println!("received ack message from module ");
 
-                    let packet = reply.original_packet;
-                    let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
-                    let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
-                    let chan_end_on_a =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
+                let packet = reply.original_packet;
+                let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
+                let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
+                let chan_end_on_a =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
 
-                    let timeout_height = packet
-                        .timeout
-                        .block()
-                        .and_then(|b| Height::new(b.revision, b.height).ok())
-                        .map(|h| h.to_string())
-                        .unwrap_or("0-0".to_string());
-                    let event = create_ack_packet_event(
-                        &packet.src.port_id,
-                        &packet.src.channel_id,
-                        &packet.sequence.to_string(),
-                        &packet.dest.port_id,
-                        &packet.dest.channel_id,
-                        &timeout_height,
-                        &packet.timeout.timestamp().unwrap().to_string(),
-                        chan_end_on_a.ordering.as_str(),
-                        conn_id_on_a.as_str(),
-                    );
-                    if self
-                        .get_packet_commitment(
-                            deps.storage,
-                            &port_id,
-                            &channel_id,
-                            packet.sequence.into(),
-                        )
-                        .is_err()
-                    {
-                        return Ok(Response::new());
-                    }
-
-                    debug_println!(" after getting packet commitment ");
-
-                    // TODO: check ack_commitment returned from module
-                    self.delete_packet_commitment(
+                let timeout_height = packet
+                    .timeout
+                    .block()
+                    .and_then(|b| Height::new(b.revision, b.height).ok())
+                    .map(|h| h.to_string())
+                    .unwrap_or("0-0".to_string());
+                let event = create_ack_packet_event(
+                    &packet.src.port_id,
+                    &packet.src.channel_id,
+                    &packet.sequence.to_string(),
+                    &packet.dest.port_id,
+                    &packet.dest.channel_id,
+                    &timeout_height,
+                    &packet.timeout.timestamp().unwrap().to_string(),
+                    chan_end_on_a.ordering.as_str(),
+                    conn_id_on_a.as_str(),
+                );
+                if self
+                    .get_packet_commitment(
                         deps.storage,
                         &port_id,
                         &channel_id,
                         packet.sequence.into(),
-                    )?;
-                    if let Order::Ordered = chan_end_on_a.ordering {
-                        // Note: in validation, we verified that `msg.packet.sequence == nextSeqRecv`
-                        // (where `nextSeqRecv` is the value in the store)
-                        self.increase_next_sequence_ack(deps.storage, port_id, channel_id)?;
-                    }
-                    Ok(Response::new()
-                        .add_attribute("action", "packet")
-                        .add_attribute("method", "execute_acknowledgement_packet")
-                        .add_event(event))
+                    )
+                    .is_err()
+                {
+                    return Ok(Response::new());
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(Into::<ContractError>::into)?,
-            },
+
+                debug_println!(" after getting packet commitment ");
+
+                // TODO: check ack_commitment returned from module
+                self.delete_packet_commitment(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    packet.sequence.into(),
+                )?;
+                if let Order::Ordered = chan_end_on_a.ordering {
+                    // Note: in validation, we verified that `msg.packet.sequence == nextSeqRecv`
+                    // (where `nextSeqRecv` is the value in the store)
+                    self.increase_next_sequence_ack(deps.storage, port_id, channel_id)?;
+                }
+                Ok(Response::new()
+                    .add_attribute("action", "packet")
+                    .add_attribute("method", "execute_acknowledgement_packet")
+                    .add_event(event))
+            }
             cosmwasm_std::SubMsgResult::Err(_) => {
                 debug_println!("error from module ack reply");
                 Err(PacketError::InvalidAcknowledgement).map_err(Into::<ContractError>::into)?

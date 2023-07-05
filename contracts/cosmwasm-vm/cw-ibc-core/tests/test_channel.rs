@@ -1255,6 +1255,13 @@ fn test_execute_open_try_channel() {
         port_id: msg.port_id_on_b.to_string(),
         channel_id: channel_id_on_b.to_string(),
     };
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            EXECUTE_ON_CHANNEL_OPEN_TRY,
+            &expected_data,
+        )
+        .unwrap();
 
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
