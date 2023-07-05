@@ -365,7 +365,13 @@ fn test_execute_open_ack_channel() {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),
     };
-    contract.store_callback_data(deps.as_mut().storage, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE, &expected_data).unwrap();
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
+            &expected_data,
+        )
+        .unwrap();
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
         events: vec![Event::new("Action").add_attribute("method", "channel_open_ack")],
@@ -416,7 +422,13 @@ fn test_execute_open_ack_channel_fail_invalid_state() {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),
     };
-    contract.store_callback_data(deps.as_mut().storage, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE, &expected_data).unwrap();
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
+            &expected_data,
+        )
+        .unwrap();
 
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),

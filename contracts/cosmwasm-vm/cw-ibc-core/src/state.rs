@@ -203,6 +203,4 @@ impl<'a> CwIbcStore<'a> {
             store.remove(&k);
         }
     }
-
-   
 }

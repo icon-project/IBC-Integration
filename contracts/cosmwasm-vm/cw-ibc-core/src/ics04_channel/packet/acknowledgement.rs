@@ -1,14 +1,14 @@
+use super::*;
 use common::ibc::core::ics04_channel::{
     msgs::acknowledgement::MsgAcknowledgement, timeout::TimeoutHeight,
 };
+use cosmwasm_std::IbcPacketAckMsg;
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
     from_binary_response,
 };
 use debug_print::debug_println;
 use prost::DecodeError;
-use cosmwasm_std::IbcPacketAckMsg;
-use super::*;
 
 impl<'a> CwIbcCoreContext<'a> {
     /// This function validates an acknowledgement packet.
@@ -285,12 +285,17 @@ impl<'a> CwIbcCoreContext<'a> {
                         let address = Addr::unchecked(packet_data.signer.to_string());
                         let ack: CwAcknowledgement =
                             CwAcknowledgement::new(acknowledgement.as_bytes());
-                        let packet_ack_msg: CwPacketAckMsg=cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
-                        self.store_callback_data(deps.storage, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE, &packet_ack_msg)?;
+                        let packet_ack_msg: CwPacketAckMsg =
+                            cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
+                        self.store_callback_data(
+                            deps.storage,
+                            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+                            &packet_ack_msg,
+                        )?;
                         let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketAck {
-                            msg:packet_ack_msg ,
+                            msg: packet_ack_msg,
                         };
-                      
+
                         let create_client_message: CosmosMsg =
                             CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
                                 contract_addr: contract_address,
@@ -347,7 +352,10 @@ impl<'a> CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
                 debug_println!("receiving reply from packet ack ");
 
-                let reply:IbcPacketAckMsg = self.get_callback_data(deps.as_ref().storage, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE)?;
+                let reply: IbcPacketAckMsg = self.get_callback_data(
+                    deps.as_ref().storage,
+                    VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+                )?;
                 debug_println!("received ack message from module ");
 
                 let packet = reply.original_packet;
@@ -404,7 +412,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("action", "packet")
                     .add_attribute("method", "execute_acknowledgement_packet")
                     .add_event(event))
-            },
+            }
             cosmwasm_std::SubMsgResult::Err(_) => {
                 debug_println!("error from module ack reply");
                 Err(PacketError::InvalidAcknowledgement).map_err(Into::<ContractError>::into)?

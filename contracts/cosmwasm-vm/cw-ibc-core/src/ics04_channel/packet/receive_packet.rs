@@ -225,7 +225,6 @@ impl<'a> CwIbcCoreContext<'a> {
                             self.validate_write_acknowledgement(deps.storage, &packet)?;
                         }
                     } else {
-                        
                         self.validate_write_acknowledgement(deps.storage, &packet)?;
                     };
 
@@ -264,7 +263,11 @@ impl<'a> CwIbcCoreContext<'a> {
                     let ibc_packet =
                         CwPacket::new(data, src, dest, packet_data.packet.seq_on_a.into(), timeout);
                     let address = Addr::unchecked(packet_data.signer.to_string());
-                    self.store_callback_data(deps.storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE, &ibc_packet)?;
+                    self.store_callback_data(
+                        deps.storage,
+                        VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+                        &ibc_packet,
+                    )?;
                     let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketReceive {
                         msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
                     };
@@ -356,12 +359,14 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(res) => {
-
-                let ack:Vec<u8> = match res.data {
+                let ack: Vec<u8> = match res.data {
                     Some(data) => data.0,
                     None => Vec::new(),
                 };
-                let packet:CwPacket = self.get_callback_data(deps.as_ref().storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE)?;
+                let packet: CwPacket = self.get_callback_data(
+                    deps.as_ref().storage,
+                    VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+                )?;
                 let port = packet.src.port_id.clone();
                 let chan = packet.src.channel_id.clone();
                 let seq = packet.sequence;
@@ -396,9 +401,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 debug_println!("after packet already received ");
 
                 if packet_already_received {
-                    return Ok(
-                        Response::new().add_attribute("message", "Packet already received")
-                    );
+                    return Ok(Response::new().add_attribute("message", "Packet already received"));
                 }
 
                 debug_println!("before channel ordering check");
@@ -475,9 +478,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
 
                 Ok(res)
-
-            
-            },
+            }
             cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
         }
     }

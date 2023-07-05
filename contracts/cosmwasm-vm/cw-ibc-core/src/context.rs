@@ -1,5 +1,5 @@
-use cosmwasm_std::{to_vec, from_slice};
-use serde::{Serialize, de::DeserializeOwned};
+use cosmwasm_std::{from_slice, to_vec};
+use serde::{de::DeserializeOwned, Serialize};
 
 use super::*;
 /// The `CwIbcCoreContext` struct represents the core context of a Cosmos SDK contract for
@@ -79,7 +79,8 @@ impl<'a> CwIbcCoreContext<'a> {
     {
         let bytes = to_vec(data).map_err(ContractError::Std)?;
         return self
-            .cw_ibc_store.callback_data()
+            .cw_ibc_store
+            .callback_data()
             .save(store, id, &bytes)
             .map_err(ContractError::Std);
     }
@@ -90,7 +91,8 @@ impl<'a> CwIbcCoreContext<'a> {
         id: u64,
     ) -> Result<T, ContractError> {
         let bytes = self
-            .cw_ibc_store.callback_data()
+            .cw_ibc_store
+            .callback_data()
             .load(store, id)
             .map_err(ContractError::Std)?;
         let data = from_slice::<T>(&bytes).map_err(ContractError::Std)?;
