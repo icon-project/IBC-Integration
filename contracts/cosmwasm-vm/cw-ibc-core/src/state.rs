@@ -1,6 +1,5 @@
-use cosmwasm_std::Order;
-
 use crate::ics24_host::LastProcessedOn;
+use cosmwasm_std::Order;
 
 use super::*;
 
@@ -10,58 +9,81 @@ use super::*;
 ///
 /// * `client_registry`: A mapping between client types and their corresponding client identifiers
 /// (IDs).
+///
 /// * `client_types`: A mapping between a client ID and its corresponding client type.
+///
+/// * `client_states`: A mapping between a client ID and its corresponding state in byte.
+///
+/// * `consensus_states`: A mapping between a client ID and its corresponding consensus state.
+///
 /// * `client_implementations`: `client_implementations` is a mapping between `ClientId` and a string
 /// representing the implementation of the client. In the context of the Cosmos SDK and the IBC
 /// protocol, a client is a module that is responsible for verifying the validity of the state of a
 /// remote blockchain. The implementation of a
+///
 /// * `next_sequence_send`: `next_seq_on_a_send` is a mapping between a tuple of `(PortId, ChannelId)`
 /// and a `seq_on_a` number. It stores the next seq_on_a number that should be used when sending a
 /// packet on the given channel. This is used to ensure that packets are sent in order and to prevent
 /// replay
+///
 /// * `next_seq_on_a_recv`: `next_seq_on_a_recv` is a mapping between a tuple of `(PortId, ChannelId)`
 /// and a `seq_on_a` value. It stores the next expected seq_on_a number for a packet to be received on a
 /// particular channel. This is used to ensure that packets are received in the correct order and to
 /// detect
+///
 /// * `next_seq_on_a_ack`: `next_seq_on_a_ack` is a mapping between a tuple of `(PortId, ChannelId)` and
 /// a `seq_on_a` value. It stores the next expected seq_on_a number for an acknowledgement message to be
 /// received on a particular channel. This is used to ensure that acknowledgement messages are received
 /// in the correct order and
-/// * `next_client_seq_on_a`: `next_client_seq_on_a` is an `Item` that stores the next available
+///
+/// * `next_client_sequence`: `next_client_sequence` is an `Item` that stores the next available
 /// seq_on_a number for creating a new client. It is likely used to ensure that each new client created
 /// has a unique seq_on_a number.
-/// * `next_connection_seq_on_a`: `next_connection_seq_on_a` is an `Item` that stores the next available
+///
+/// * `next_connection_sequence`: `next_connection_sequence` is an `Item` that stores the next available
 /// seq_on_a number for creating a new connection. It is used to ensure that each new connection has a
 /// unique identifier.
-/// * `next_channel_seq_on_a`: `next_channel_seq_on_a` is an `Item` that stores the next available
+///
+/// * `next_channel_sequence`: `next_channel_sequence` is an `Item` that stores the next available
 /// seq_on_a number for a channel. It is used to ensure that each channel has a unique seq_on_a number
 /// when it is created.
+///
 /// * `client_connections`: A mapping between a client ID and its associated connection ID. This is used
 /// to keep track of the connection associated with each client.
+///
 /// * `connections`: `connections` is a mapping between `ConnectionId` and a byte vector (`Vec<u8>`). It
 /// stores the connection state associated with each connection identifier. This state can include
 /// information such as the connection version, the connection status, and any associated metadata.
+///
 /// * `channels`: The `channels` property is a map that stores the channel end information for each
 /// channel identified by a tuple of `(PortId, ChannelId)`. The `ChannelEnd` struct contains information
-/// such as the channel state, ordering, and counterparty channel information. This map is used to keep
-/// track of
+/// such as the channel state, ordering, and counterparty channel information.
+///
 /// * `port_to_module`: `port_to_module` is a mapping between `PortId` and `IbcModuleId`. It stores the
 /// module identifier for each port. This is useful for routing packets between different modules in the
 /// IBC protocol.
+///
 /// * `capabilities`: The `capabilities` property is a map that stores addresses based on capability
 /// names. In the context of the Cosmos SDK and IBC (Inter-Blockchain Communication) protocol,
 /// capabilities are used to grant permissions to modules to perform certain actions. This map allows
 /// for easy lookup of addresses associated with specific capabilities.
+///
 /// * `commitments`: The `commitments` property is a map that stores commitments based on keys. The keys
 /// can be PacketCommitment, AckCommitment, Connection, Channel, or Client. The values are byte arrays
 /// that represent the commitments. This map is used to keep track of the commitments made during the
 /// IBC
+///
 /// * `expected_time_per_block`: The expected time duration of a block in the blockchain network. This
 /// is used to calculate the timeout for certain operations in the IBC protocol.
+///
 /// * `packet_receipts`: The `packet_receipts` property is a map that stores packet receipts based on
 /// the PortId, ChannelId, and seq_on_a. It maps a tuple of `(String, String, u64)` to a `u64` value,
-/// where the first two elements of the tuple represent the PortId and
-/// const
+/// where the first two elements of the tuple represent the PortId and Channel Id
+///
+/// * `last_processed_on`: The `last_processed_on` property is a map that stores last processed block time and height for each client.
+///
+/// * `callback_data`: Map of reply id to bytes that can be used as context when callback returns.
+///
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, IbcClientType, String>,
     client_types: Map<'a, IbcClientId, IbcClientType>,
@@ -87,6 +109,8 @@ pub struct CwIbcStore<'a> {
     /// Stores packet receipts based on PortId,ChannelId and sequence
     packet_receipts: Map<'a, (String, String, u64), u64>,
     last_processed_on: Map<'a, IbcClientId, LastProcessedOn>,
+    // Stores data by replyid to be used later on reply from cross contract call
+    callback_data: Map<'a, u64, Vec<u8>>,
 }
 
 impl<'a> Default for CwIbcStore<'a> {
@@ -118,6 +142,7 @@ impl<'a> CwIbcStore<'a> {
             last_processed_on: Map::new(StorageKey::LastProcessedOn.as_str()),
             client_states: Map::new(StorageKey::ClientStates.as_str()),
             consensus_states: Map::new(StorageKey::ConsensusStates.as_str()),
+            callback_data: Map::new(StorageKey::CallbackData.as_str()),
         }
     }
     pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
@@ -184,6 +209,10 @@ impl<'a> CwIbcStore<'a> {
 
     pub fn consensus_states(&self) -> &Map<'a, IbcClientId, Vec<u8>> {
         &self.consensus_states
+    }
+
+    pub fn callback_data(&self) -> &Map<'a, u64, Vec<u8>> {
+        &self.callback_data
     }
 
     pub fn clear_storage(&self, store: &mut dyn Storage) {

@@ -322,22 +322,27 @@ pub fn create_ack_packet_event(
 /// Returns:
 ///
 /// an `Event` object.
-pub fn create_packet_timeout_event(packet: Packet, channel_order: &Order) -> Event {
+pub fn create_packet_timeout_event(
+    port_id: &str,
+    chan_id: &str,
+    seq_on_a: &str,
+    dst_port_id: &str,
+    dst_chan_id: &str,
+    timeout_height_on_b: &str,
+    timeout_timestamp_on_b: &str,
+    channel_order: &str,
+    dst_connection_id: &str,
+) -> Event {
     Event::new(IbcEventType::Timeout.as_str())
-        .add_attribute(
-            PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
-            packet.timeout_height_on_b.to_event_attribute_value(),
-        )
-        .add_attribute(
-            PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
-            packet.timeout_timestamp_on_b.nanoseconds().to_string(),
-        )
-        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
-        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.port_id_on_a.as_str())
-        .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_a.as_str())
-        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
-        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
-        .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order.as_str())
+        .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height_on_b)
+        .add_attribute(PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY, timeout_timestamp_on_b)
+        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, seq_on_a)
+        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, port_id)
+        .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, chan_id)
+        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, dst_port_id)
+        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, dst_chan_id)
+        .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order)
+        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id)
 }
 
 /// This function creates a new event for closing an initialized channel in the Inter-Blockchain
@@ -374,6 +379,11 @@ pub fn create_close_init_channel_event(
             COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
             channel_end.counterparty().port_id().to_string(),
         )
+        .add_attribute(
+            CONN_ID_ATTRIBUTE_KEY,
+            channel_end.connection_hops[0].to_string(),
+        )
+        .add_attribute(VERSION_ATTRIBUTE_KEY, channel_end.version().to_string())
 }
 
 /// This function creates an event for confirming the closure of a channel.
@@ -407,6 +417,11 @@ pub fn create_close_confirm_channel_event(
             COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
             channel_end.counterparty().port_id().to_string(),
         )
+        .add_attribute(
+            CONN_ID_ATTRIBUTE_KEY,
+            channel_end.connection_hops[0].to_string(),
+        )
+        .add_attribute(VERSION_ATTRIBUTE_KEY, channel_end.version().to_string())
 }
 
 /// This function creates an event for receiving a packet in an inter-blockchain communication protocol.

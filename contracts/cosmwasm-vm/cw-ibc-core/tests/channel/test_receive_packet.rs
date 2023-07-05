@@ -11,6 +11,7 @@ use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::timestamp::Timestamp;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
+use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 
 use super::*;
 
@@ -335,6 +336,13 @@ fn execute_receive_packet() {
     };
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+            &packet,
+        )
+        .unwrap();
 
     let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
     let event = Event::new("test");
@@ -397,6 +405,13 @@ fn execute_receive_packet_ordered() {
     };
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+            &packet,
+        )
+        .unwrap();
 
     let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
     let event = Event::new("test");
@@ -477,6 +492,13 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
     };
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+            &packet,
+        )
+        .unwrap();
 
     let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
     let event = Event::new("test");

@@ -876,7 +876,27 @@ fn test_create_ack_packet_event() {
 fn test_create_timout_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
     let packet = Packet::try_from(raw).unwrap();
-    let event = create_packet_timeout_event(packet, &Order::Ordered);
+    let port_id: &str = packet.port_id_on_a.as_ref();
+    let chan_id: &str = packet.chan_id_on_a.as_ref();
+    let seq_on_a: &str = &packet.sequence.to_string();
+    let dst_port_id: &str = packet.port_id_on_b.as_ref();
+
+    let dst_chan_id: &str = packet.chan_id_on_b.as_ref();
+    let timeout_height_on_b: &str = &packet.timeout_height_on_b.to_string();
+    let timeout_timestamp_on_b: &str = &packet.timeout_timestamp_on_b.to_string();
+    let channel_order: &str = &Order::Ordered.to_string();
+    let dst_connection_id: &str = "connection-1";
+    let event = create_packet_timeout_event(
+        port_id,
+        chan_id,
+        seq_on_a,
+        dst_port_id,
+        dst_chan_id,
+        timeout_height_on_b,
+        timeout_timestamp_on_b,
+        channel_order,
+        dst_connection_id,
+    );
     assert_eq!("timeout_packet", event.ty)
 }
 
@@ -1235,6 +1255,13 @@ fn test_execute_open_try_channel() {
         port_id: msg.port_id_on_b.to_string(),
         channel_id: channel_id_on_b.to_string(),
     };
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            EXECUTE_ON_CHANNEL_OPEN_TRY,
+            &expected_data,
+        )
+        .unwrap();
 
     let response = SubMsgResponse {
         data: Some(to_binary(&expected_data).unwrap()),
