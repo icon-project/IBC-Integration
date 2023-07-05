@@ -2,7 +2,6 @@ use common::ibc::core::ics04_channel::{
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
-use cosmwasm_std::IbcReceiveResponse;
 use cw_common::{from_binary_response, hex_string::HexString};
 use debug_print::debug_println;
 use prost::DecodeError;

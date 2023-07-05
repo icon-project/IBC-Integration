@@ -1,6 +1,6 @@
 use super::*;
 use common::ibc::core::ics04_channel::{
-    msgs::acknowledgement::MsgAcknowledgement, timeout::TimeoutHeight,
+    msgs::acknowledgement::MsgAcknowledgement
 };
 use cosmwasm_std::IbcPacketAckMsg;
 use cw_common::{

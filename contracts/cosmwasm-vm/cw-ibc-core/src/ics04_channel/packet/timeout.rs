@@ -1,4 +1,3 @@
-use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
 use cw_common::from_binary_response;
 use prost::DecodeError;
 

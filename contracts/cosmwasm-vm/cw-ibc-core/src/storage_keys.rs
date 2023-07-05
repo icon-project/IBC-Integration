@@ -2,7 +2,7 @@ use super::*;
 
 #[cw_serde]
 
-/// This is defining an enumeration called `StorageKey` with 23 possible values. Each value represents a
+/// This is defining an enumeration called `StorageKey` with 24 possible values. Each value represents a
 /// key that can be used to access a specific piece of data in a storage system. The `as_str` method is
 /// also defined to convert each value to its corresponding string representation. This code is likely
 /// part of a larger system that uses a key-value store to persist data.
