@@ -1,4 +1,5 @@
 use cw_common::client_response::PacketResponse;
+use cw_ibc_core::VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE;
 
 use super::*;
 
@@ -39,6 +40,14 @@ fn test_acknowledgement_packet_execute() {
     let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+            &cosm_msg,
+        )
+        .unwrap();
+
     let data_bin = to_binary(&cosm_msg).unwrap();
     let result = SubMsgResponse {
         data: Some(data_bin),
@@ -122,6 +131,14 @@ fn test_acknowledgement_packet_execute_ordered() {
     let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+            &cosm_msg,
+        )
+        .unwrap();
+
     let data_bin = to_binary(&cosm_msg).unwrap();
     let result = SubMsgResponse {
         data: Some(data_bin),
@@ -214,6 +231,14 @@ fn test_acknowledgement_packet_execute_fail() {
     let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
+    contract
+        .store_callback_data(
+            deps.as_mut().storage,
+            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+            &cosm_msg,
+        )
+        .unwrap();
+
     let data_bin = to_binary(&cosm_msg).unwrap();
     let result = SubMsgResponse {
         data: Some(data_bin),

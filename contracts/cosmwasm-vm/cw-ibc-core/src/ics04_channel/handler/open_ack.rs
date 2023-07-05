@@ -142,6 +142,11 @@ impl<'a> CwIbcCoreContext<'a> {
                         &channel_id,
                         &channel_end.connection_hops[0].clone(),
                     )?;
+                    self.store_callback_data(
+                        deps.storage,
+                        EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
+                        &sub_message.channel().endpoint,
+                    )?;
                     let data =
                         cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
                     let data = to_binary(&data).unwrap();

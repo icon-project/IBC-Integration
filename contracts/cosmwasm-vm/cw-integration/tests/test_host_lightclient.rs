@@ -410,6 +410,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     ctx
 }
 
+#[test]
 fn test_archway_to_icon_handshake() -> TestContext {
     // complete handshake
     let mut ctx = setup_test("archway_to_icon_raw.json");

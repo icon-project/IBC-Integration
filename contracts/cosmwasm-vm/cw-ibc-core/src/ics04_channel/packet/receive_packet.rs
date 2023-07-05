@@ -2,7 +2,6 @@ use common::ibc::core::ics04_channel::{
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
-use cosmwasm_std::IbcReceiveResponse;
 use cw_common::{from_binary_response, hex_string::HexString};
 use debug_print::debug_println;
 use prost::DecodeError;
@@ -225,19 +224,6 @@ impl<'a> CwIbcCoreContext<'a> {
                             self.validate_write_acknowledgement(deps.storage, &packet)?;
                         }
                     } else {
-                        // let packet_rec = self.get_packet_receipt(
-                        //     deps.storage,
-                        //     &packet.port_id_on_a,
-                        //     &packet.chan_id_on_a,
-                        //     packet.sequence,
-                        // );
-                        // match packet_rec {
-                        //     Ok(_receipt) => {}
-
-                        //     Err(e) => return Err(e),
-                        // }
-                        // Case where the recvPacket is successful and an
-                        // acknowledgement will be written (not a no-op)
                         self.validate_write_acknowledgement(deps.storage, &packet)?;
                     };
 
@@ -276,6 +262,11 @@ impl<'a> CwIbcCoreContext<'a> {
                     let ibc_packet =
                         CwPacket::new(data, src, dest, packet_data.packet.seq_on_a.into(), timeout);
                     let address = Addr::unchecked(packet_data.signer.to_string());
+                    self.store_callback_data(
+                        deps.storage,
+                        VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+                        &ibc_packet,
+                    )?;
                     let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketReceive {
                         msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
                     };
@@ -366,164 +357,127 @@ impl<'a> CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    debug_println!("response from xcall {:?}", HexString::from_bytes(&res.0));
-                    let response = from_binary_response::<IbcReceiveResponse>(&res)
-                        .map_err(ContractError::Std)?;
-                    debug_println!(
-                        "response acknowledgement {:?}",
-                        HexString::from_bytes(&response.acknowledgement)
-                    );
-                    let response_data: XcallPacketResponseData =
-                        from_binary_response::<XcallPacketResponseData>(&response.acknowledgement)
-                            .map_err(ContractError::Std)?;
-                    debug_println!(
-                        "our ack data is: {:?}",
-                        HexString::from_bytes(&response_data.acknowledgement)
-                    );
-                    let ack = response_data.acknowledgement;
-                    let packet = response_data.packet.clone();
-                    let port = response_data.packet.src.port_id;
-                    let chan = response_data.packet.src.channel_id;
-                    let seq = response_data.packet.sequence;
-                    let channel_id =
-                        IbcChannelId::from_str(&chan).map_err(Into::<ContractError>::into)?;
-                    let port_id = IbcPortId::from_str(&port).unwrap();
+            cosmwasm_std::SubMsgResult::Ok(res) => {
+                let ack: Vec<u8> = match res.data {
+                    Some(data) => data.0,
+                    None => Vec::new(),
+                };
+                let packet: CwPacket = self.get_callback_data(
+                    deps.as_ref().storage,
+                    VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+                )?;
+                let port = packet.src.port_id.clone();
+                let chan = packet.src.channel_id.clone();
+                let seq = packet.sequence;
+                let channel_id =
+                    IbcChannelId::from_str(&chan).map_err(Into::<ContractError>::into)?;
+                let port_id = IbcPortId::from_str(&port).unwrap();
 
-                    let chan_end_on_b =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    debug_println!("execute_receive_packet decoding of data successful");
-                    let packet_already_received = match chan_end_on_b.ordering {
-                        // Note: ibc-go doesn't make the check for `Order::None` channels
-                        Order::None => false,
-                        Order::Unordered => self
-                            .get_packet_receipt(deps.storage, &port_id, &channel_id, seq.into())
-                            .is_ok(),
-                        Order::Ordered => {
-                            let next_seq_recv = self.get_next_sequence_recv(
-                                deps.storage,
-                                port_id.clone(),
-                                channel_id.clone(),
-                            )?;
+                let chan_end_on_b =
+                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                debug_println!("execute_receive_packet decoding of data successful");
+                let packet_already_received = match chan_end_on_b.ordering {
+                    // Note: ibc-go doesn't make the check for `Order::None` channels
+                    Order::None => false,
+                    Order::Unordered => self
+                        .get_packet_receipt(deps.storage, &port_id, &channel_id, seq.into())
+                        .is_ok(),
+                    Order::Ordered => {
+                        let next_seq_recv = self.get_next_sequence_recv(
+                            deps.storage,
+                            port_id.clone(),
+                            channel_id.clone(),
+                        )?;
 
-                            // the seq_on_a number has already been incremented, so
-                            // another relayer already relayed the packet
-                            seq < Into::<u64>::into(next_seq_recv)
-                        }
-                    };
-
-                    // TODO: check validity of packet commitment from module
-
-                    debug_println!("after packet already received ");
-
-                    if packet_already_received {
-                        return Ok(
-                            Response::new().add_attribute("message", "Packet already received")
-                        );
+                        // the seq_on_a number has already been incremented, so
+                        // another relayer already relayed the packet
+                        seq < Into::<u64>::into(next_seq_recv)
                     }
+                };
 
-                    debug_println!("before channel ordering check");
+                // TODO: check validity of packet commitment from module
 
-                    // `recvPacket` core handler state changes
-                    match chan_end_on_b.ordering {
-                        Order::Unordered => {
-                            self.store_packet_receipt(
-                                deps.storage,
-                                &port_id,
-                                &channel_id,
-                                seq.into(),
-                                Receipt::Ok,
-                            )?;
-                        }
-                        Order::Ordered => {
-                            self.increase_next_sequence_recv(
-                                deps.storage,
-                                port_id.clone(),
-                                channel_id.clone(),
-                            )?;
-                        }
-                        _ => {}
-                    }
-                    debug_println!("before after channel ordering check");
+                debug_println!("after packet already received ");
 
-                    // let acknowledgement: cw_common::types::Ack =
-                    //     from_binary(&to_vec(&ack).unwrap().into()).map_err(|e| {
-                    //         ContractError::IbcDecodeError {
-                    //             error: DecodeError::new(e.to_string()),
-                    //         }
-                    //     })?;
-                    // debug_println!("after ack");
+                if packet_already_received {
+                    return Ok(Response::new().add_attribute("message", "Packet already received"));
+                }
 
-                    // let acknowledgement = match acknowledgement {
-                    //     cw_common::types::Ack::Result(binary) => binary,
-                    //     cw_common::types::Ack::Error(e) => {
-                    //         return Err(PacketError::AppModule { description: e })
-                    //             .map_err(Into::<ContractError>::into)?
-                    //     }
-                    // };
-                    // debug_println!("acknowledgement is {:?}", acknowledgement.0);
-                    // let acknowledgement = Acknowledgement::try_from(acknowledgement.0)
-                    //     .map_err(Into::<ContractError>::into)?;
+                debug_println!("before channel ordering check");
 
-                    // debug_println!("after getting ack {:?}", acknowledgement);
-
-                    let timestamp = match packet.timeout.timestamp() {
-                        Some(t) => t.to_string(),
-                        None => 0.to_string(),
-                    };
-
-                    debug_println!("timestamp: {:?}", timestamp);
-
-                    let event_recieve_packet = create_recieve_packet_event(
-                        &packet.data,
-                        &packet.src.port_id,
-                        &packet.src.channel_id,
-                        &packet.sequence.to_string(),
-                        &packet.dest.port_id,
-                        &packet.dest.channel_id,
-                        &self.timeout_height_to_str(packet.timeout.block().unwrap()),
-                        &timestamp,
-                        chan_end_on_b.ordering.as_str(),
-                        chan_end_on_b.connection_hops[0].as_str(),
-                    );
-
-                    debug_println!("event recieve packet: {:?}", event_recieve_packet);
-
-                    let mut res = Response::new()
-                        .add_attribute("action", "channel")
-                        .add_attribute("method", "execute_receive_packet")
-                        .add_attribute("message", "success: packet receive")
-                        .add_event(event_recieve_packet);
-
-                    if !ack.is_empty() {
-                        self.store_packet_acknowledgement(
+                // `recvPacket` core handler state changes
+                match chan_end_on_b.ordering {
+                    Order::Unordered => {
+                        self.store_packet_receipt(
                             deps.storage,
                             &port_id,
                             &channel_id,
                             seq.into(),
-                            commitment::compute_ack_commitment(&Acknowledgement::from_bytes(&ack)),
+                            Receipt::Ok,
                         )?;
-
-                        let write_ack_event = create_write_ack_event(
-                            packet,
-                            chan_end_on_b.ordering.as_str(),
-                            chan_end_on_b.connection_hops[0].as_str(),
-                            &ack,
-                        )?;
-
-                        res = res
-                            .add_attribute("message", "success: packet write acknowledgement")
-                            .add_event(write_ack_event);
                     }
-
-                    Ok(res)
+                    Order::Ordered => {
+                        self.increase_next_sequence_recv(
+                            deps.storage,
+                            port_id.clone(),
+                            channel_id.clone(),
+                        )?;
+                    }
+                    _ => {}
                 }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(Into::<ContractError>::into)?,
-            },
+                debug_println!("before after channel ordering check");
+
+                let timestamp = match packet.timeout.timestamp() {
+                    Some(t) => t.to_string(),
+                    None => 0.to_string(),
+                };
+
+                debug_println!("timestamp: {:?}", timestamp);
+
+                let event_recieve_packet = create_recieve_packet_event(
+                    &packet.data,
+                    &packet.src.port_id,
+                    &packet.src.channel_id,
+                    &packet.sequence.to_string(),
+                    &packet.dest.port_id,
+                    &packet.dest.channel_id,
+                    &self.timeout_height_to_str(packet.timeout.block().unwrap()),
+                    &timestamp,
+                    chan_end_on_b.ordering.as_str(),
+                    chan_end_on_b.connection_hops[0].as_str(),
+                );
+
+                debug_println!("event recieve packet: {:?}", event_recieve_packet);
+
+                let mut res = Response::new()
+                    .add_attribute("action", "channel")
+                    .add_attribute("method", "execute_receive_packet")
+                    .add_attribute("message", "success: packet receive")
+                    .add_event(event_recieve_packet);
+
+                if !ack.is_empty() {
+                    self.store_packet_acknowledgement(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        seq.into(),
+                        commitment::compute_ack_commitment(&Acknowledgement::from_bytes(&ack)),
+                    )?;
+
+                    let write_ack_event = create_write_ack_event(
+                        packet,
+                        chan_end_on_b.ordering.as_str(),
+                        chan_end_on_b.connection_hops[0].as_str(),
+                        &ack,
+                    )?;
+
+                    res = res
+                        .add_attribute("message", "success: packet write acknowledgement")
+                        .add_event(write_ack_event);
+                }
+
+                Ok(res)
+            }
             cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
         }
     }
