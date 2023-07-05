@@ -16,11 +16,11 @@ chains:
         version: latest
         uid_gid: ''
     contracts:
-      ibc: "$BASE_PATH/artifacts/java-artifacts/ibc-0.1.0-optimized.jar"
-      client: "$BASE_PATH/artifacts/java-artifacts/tendermint-0.1.0-optimized.jar"
-      xcall: "$BASE_PATH/artifacts/java-artifacts/xcall-multi-protocol-0.1.0-optimized.jar"
-      connection: "$BASE_PATH/artifacts/java-artifacts/xcall-connection-0.1.0-optimized.jar"
-      dapp: "$BASE_PATH/artifacts/java-artifacts/mock-dapp-multi-protocol-0.1.0-optimized.jar"
+      ibc: "$BASE_PATH/artifacts/icon/ibc-0.1.0-optimized.jar"
+      client: "$BASE_PATH/artifacts/icon/tendermint-0.1.0-optimized.jar"
+      xcall: "$BASE_PATH/artifacts/icon/xcall-multi-protocol-0.1.0-optimized.jar"
+      connection: "$BASE_PATH/artifacts/icon/xcall-connection-0.1.0-optimized.jar"
+      dapp: "$BASE_PATH/artifacts/icon/mock-dapp-multi-protocol-0.1.0-optimized.jar"
 
   - name: archway
     version: '3'
@@ -45,11 +45,11 @@ chains:
     keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
     keystore_password: gochain
     contracts:
-      ibc: "$BASE_PATH/artifacts/cw_ibc_core.wasm"
-      client: "$BASE_PATH/artifacts/cw_icon_light_client.wasm"
-      xcall: "$BASE_PATH/artifacts/cw_xcall_multi.wasm"
-      connection: "$BASE_PATH/artifacts/cw_xcall_ibc_connection.wasm"
-      dapp: "$BASE_PATH/artifacts/cw_mock_dapp_multi.wasm"
+      ibc: "$BASE_PATH/artifacts/archway/cw_ibc_core.wasm"
+      client: "$BASE_PATH/artifacts/archway/cw_icon_light_client.wasm"
+      xcall: "$BASE_PATH/artifacts/archway/cw_xcall_multi.wasm"
+      connection: "$BASE_PATH/artifacts/archway/cw_xcall_ibc_connection.wasm"
+      dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
 relayer:
   image: relayer
   tag: latest

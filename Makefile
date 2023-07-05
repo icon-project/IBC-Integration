@@ -12,8 +12,10 @@ export GO111MODULE = on
 
 protoVer=0.11.1
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
+openJdkImage=adoptopenjdk/openjdk11
 containerProtoGenGo=$(PROJECT_NAME)-proto-gen-go-$(protoVer)
 containerProtoGenRust=$(PROJECT_NAME)-proto-gen-rust-$(protoVer)
+containerOptimizedJar=$(PROJECT_NAME)-optimized-jar
 containerProtoFmt=$(PROJECT_NAME)-proto-fmt-$(protoVer)
 
 proto-all: proto-format proto-lint proto-gen
@@ -35,6 +37,15 @@ proto-gen-rust:
 	@echo "Generating Rust Protobuf files"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenRust}$$"; then docker start -a $(containerProtoGenRust); else docker run  --name $(containerProtoGenRust) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
 		sh ./scripts/protocgen_rust.sh; fi
+
+optimize-jar:
+	@echo "Generating optimized jar for ICON contracts"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerOptimizedJar}$$"; then docker start -a ${containerOptimizedJar}; else docker run  --name $(containerOptimizedJar) -v $(CURDIR):/workspace --workdir /workspace -d $(openJdkImage) \
+		sh ./scripts/optimize-jar.sh; fi
+
+optimize-cosmwasm:
+	@echo "Generating optimized cosmwasm for Archway contracts"
+	sh ./scripts/optimize-cosmwasm.sh
 
 gobuild:
 	go build .
