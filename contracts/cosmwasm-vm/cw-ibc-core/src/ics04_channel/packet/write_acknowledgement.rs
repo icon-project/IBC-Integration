@@ -36,7 +36,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if !authenticated {
             return Err(ContractError::Unauthorized {});
         }
-        if !ack.len() > 0 {
+        if !(ack.len() > 0) {
             return Err(ContractError::IbcPacketError {
                 error: cw_common::ibc_types::PacketError::InvalidAcknowledgement,
             });

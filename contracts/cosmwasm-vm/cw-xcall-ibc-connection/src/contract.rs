@@ -520,7 +520,7 @@ impl<'a> CwIbcConnection<'a> {
                 .add_attributes(ibc_response.attributes.clone())
                 .add_submessages(ibc_response.messages)
                 .add_events(ibc_response.events)),
-            Err(error) =>Err(error),
+            Err(error) => Err(error),
         }
     }
 

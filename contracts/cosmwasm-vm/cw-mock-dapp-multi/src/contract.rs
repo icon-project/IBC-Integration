@@ -101,7 +101,7 @@ impl<'a> CwMockService<'a> {
             let msg_data = from_utf8(&data).map_err(|e| ContractError::DecodeError {
                 error: e.to_string(),
             })?;
-            if "revertMessage" == msg_data {
+            if "rollback" == msg_data {
                 return Err(ContractError::RevertFromDAPP);
             }
             Ok(Response::new()
