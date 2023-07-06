@@ -36,7 +36,7 @@ import java.util.Map;
 public class CallServiceImpl implements CallService, FeeManage {
     public static final int MAX_DATA_SIZE = 2048;
     public static final int MAX_ROLLBACK_SIZE = 1024;
-    public static String nid;
+    public static String NID;
 
     private final VarDB<BigInteger> sn = Context.newVarDB("sn", BigInteger.class);
     private final VarDB<BigInteger> reqId = Context.newVarDB("reqId", BigInteger.class);
@@ -45,19 +45,32 @@ public class CallServiceImpl implements CallService, FeeManage {
     private final DictDB<BigInteger, CSMessageRequest> proxyReqs = Context.newDictDB("proxyReqs", CSMessageRequest.class);
     private final BranchDB<byte[], DictDB<String, Boolean>> pendingReqs = Context.newBranchDB("pendingReqs", Boolean.class);
     private final BranchDB<BigInteger, DictDB<String, Boolean>> pendingResponses = Context.newBranchDB("pendingResponses", Boolean.class);
+    private final DictDB<BigInteger, Boolean> successfulResponses = Context.newDictDB("successfulResponses", Boolean.class);
+
+    private final DictDB<String, Address> defaultConnection = Context.newDictDB("defaultConnection", Address.class);
 
     // for fee-related operations
     private final VarDB<Address> admin = Context.newVarDB("admin", Address.class);
     private final VarDB<BigInteger> protocolFee = Context.newVarDB("protocolFee", BigInteger.class);
+    private final VarDB<Address> feeHandler = Context.newVarDB("feeHandler", Address.class);
 
     public CallServiceImpl(String networkId) {
-        nid = networkId;
+        NID = networkId;
+        if (admin.get() == null) {
+            admin.set(Context.getCaller());
+            feeHandler.set(Context.getCaller());
+        }
     }
 
     /* Implementation-specific external */
     @External(readonly=true)
     public String getNetworkAddress() {
-        return new NetworkAddress(nid, Context.getAddress()).toString();
+        return new NetworkAddress(NID, Context.getAddress()).toString();
+    }
+
+    @External(readonly=true)
+    public String getNetworkId() {
+        return NID;
     }
 
     private void checkCallerOrThrow(Address caller, String errMsg) {
@@ -89,47 +102,54 @@ public class CallServiceImpl implements CallService, FeeManage {
     @Override
     @Payable
     @External
-    public BigInteger sendCallMessage(String _to, String[] sources, String[] destinations, byte[] _data,  @Optional byte[] _rollback) {
+    public BigInteger sendCallMessage(String _to,
+                                      byte[] _data,
+                                      @Optional byte[] _rollback,
+                                      @Optional String[] sources,
+                                      @Optional String[] destinations) {
         Address caller = Context.getCaller();
         // check if caller is a contract or rollback data is null in case of EOA
         Context.require(_rollback == null || caller.isContract(), "RollbackNotPossible");
         // check size of payloads to avoid abusing
-        Context.require(_data.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
         Context.require(_rollback == null || _rollback.length <= MAX_ROLLBACK_SIZE, "MaxRollbackSizeExceeded");
 
-        boolean needResponse = _rollback != null;
+        boolean needResponse = _rollback != null && _rollback.length > 0;
         NetworkAddress dst = NetworkAddress.valueOf(_to);
-        BigInteger value = Context.getValue();
-
-        BigInteger requiredFee = BigInteger.ZERO;
-        Map<Address, BigInteger> fees = new HashMap<>();
-        int nrConnections = sources.length;
-        Context.require(nrConnections == destinations.length);
-        for (int i = 0; i < nrConnections; i++) {
-            Address src = Address.fromString(sources[i]);
-            BigInteger fee = getFee(src, dst.net(), needResponse);
-            requiredFee = requiredFee.add(fee);
-            fees.put(src, fee);
-        }
-
-        BigInteger protocolFee = getProtocolFee();
-        requiredFee = requiredFee.add(protocolFee);
-        Context.require(value.compareTo(requiredFee) >= 0, "InsufficientFee");
 
         BigInteger sn = getNextSn();
         if (needResponse) {
-            CallRequest req = new CallRequest(caller, dst.toString(), sources, _rollback);
+            CallRequest req = new CallRequest(caller, dst.net(), sources, _rollback);
             requests.set(sn, req);
         }
-        String from = new NetworkAddress(nid, caller.toString()).toString();
-        CSMessageRequest msgReq = new CSMessageRequest(from, dst.account(), destinations,  sn, needResponse, _data);
+
+        String from = new NetworkAddress(NID, caller.toString()).toString();
+        CSMessageRequest msgReq = new CSMessageRequest(from, dst.account(),  sn, needResponse, _data, destinations);
+
         byte[] msgBytes = msgReq.toBytes();
-        for (String _src : sources) {
-            Address src = Address.fromString(_src);
-                sendBTPMessage(src, fees.get(src), dst.net(), CSMessage.REQUEST,
+        Context.require(msgBytes.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
+
+        if (sources == null || sources.length == 0) {
+            Address src = defaultConnection.get(dst.net());
+            BigInteger fee = Context.call(BigInteger.class, src, "getFee", dst.net(), needResponse);
+            sendMessage(src, fee, dst.net(), CSMessage.REQUEST,
                 needResponse ? sn : BigInteger.ZERO, msgBytes);
+        } else {
+            for (String _src : sources) {
+                Address src = Address.fromString(_src);
+                BigInteger fee = Context.call(BigInteger.class, src, "getFee", dst.net(), needResponse);
+                sendMessage(src, fee, dst.net(), CSMessage.REQUEST,
+                    needResponse ? sn : BigInteger.ZERO, msgBytes);
+            }
+
         }
+
+        BigInteger protocolFee = getProtocolFee();
+        BigInteger balance = Context.getBalance(Context.getAddress());
+        Context.require(balance.compareTo(protocolFee) >= 0);
+        Context.transfer(feeHandler.get(), balance);
+
         CallMessageSent(caller, dst.toString(), sn);
+
         return sn;
     }
 
@@ -144,8 +164,13 @@ public class CallServiceImpl implements CallService, FeeManage {
         NetworkAddress from = NetworkAddress.valueOf(req.getFrom());
         CSMessageResponse msgRes = null;
         try {
-            CallServiceReceiver proxy = new CallServiceReceiverScoreInterface(Address.fromString(req.getTo()));
-            proxy.handleCallMessage(req.getFrom(), req.getData(), req.getProtocols());
+            Address to = Address.fromString(req.getTo());
+            if (req.getProtocols().length == 0) {
+                Context.call(to, "handleCallMessage", req.getFrom(), req.getData());
+            } else {
+                Context.call(to, "handleCallMessage", req.getFrom(), req.getData(), req.getProtocols());
+            }
+
             msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.SUCCESS, "");
         } catch (UserRevertedException e) {
             int code = e.getCode();
@@ -159,11 +184,16 @@ public class CallServiceImpl implements CallService, FeeManage {
             }
             CallExecuted(_reqId, msgRes.getCode(), msgRes.getMsg());
             // send response only when there was a rollback
-            if (req.needRollback()) {
-                BigInteger sn = req.getSn().negate();
-                for (String protocol : req.getProtocols()) {
-                    sendBTPMessage(Address.fromString(protocol), BigInteger.ZERO, from.net(), CSMessage.RESPONSE, sn, msgRes.toBytes());
+            if (!req.needRollback()) {
+                return;
+            }
 
+            BigInteger sn = req.getSn().negate();
+            if (req.getProtocols().length == 0) {
+                sendMessage(defaultConnection.get(from.net()), BigInteger.ZERO, from.net(), CSMessage.RESPONSE, sn, msgRes.toBytes());
+            } else {
+                for (String protocol : req.getProtocols()) {
+                    sendMessage(Address.fromString(protocol), BigInteger.ZERO, from.net(), CSMessage.RESPONSE, sn, msgRes.toBytes());
                 }
             }
         }
@@ -179,8 +209,11 @@ public class CallServiceImpl implements CallService, FeeManage {
 
         CSMessageResponse msgRes = null;
         try {
-            CallServiceReceiver proxy = new CallServiceReceiverScoreInterface(req.getFrom());
-            proxy.handleCallMessage(getNetworkAddress(), req.getRollback(), req.getProtocols());
+            if (req.getProtocols().length == 0) {
+                Context.call(req.getFrom(), "handleCallMessage", getNetworkAddress(), req.getRollback());
+            } else {
+                Context.call(req.getFrom(), "handleCallMessage", getNetworkAddress(), req.getRollback(), req.getProtocols());
+            }
             msgRes = new CSMessageResponse(_sn, CSMessageResponse.SUCCESS, "");
         } catch (UserRevertedException e) {
             int code = e.getCode();
@@ -192,8 +225,14 @@ public class CallServiceImpl implements CallService, FeeManage {
             if (msgRes == null) {
                 msgRes = new CSMessageResponse(_sn, CSMessageResponse.FAILURE, "UnknownFailure");
             }
+
             RollbackExecuted(_sn, msgRes.getCode(), msgRes.getMsg());
         }
+    }
+
+    @External(readonly=true)
+    public boolean verifySuccess(BigInteger sn) {
+        return successfulResponses.getOrDefault(sn, false);
     }
 
     @Override
@@ -223,13 +262,25 @@ public class CallServiceImpl implements CallService, FeeManage {
     /* ========== Interfaces with BMC ========== */
     @External
     public void handleBTPMessage(String _from, String _svc, BigInteger _sn, byte[] _msg) {
+      handleMessage(_from, _sn, _msg);
+    }
+
+    @External
+    public void handleBTPError(String _src, String _svc, BigInteger _sn, long _code, String _msg) {
+        handleError(_sn, _code, _msg);
+    }
+    /* ========================================= */
+
+
+    @External
+    public void handleMessage(String _from, BigInteger _sn, byte[] _msg) {
         CSMessage msg = CSMessage.fromBytes(_msg);
         switch (msg.getType()) {
             case CSMessage.REQUEST:
                 handleRequest(_from, _sn, msg.getData());
                 break;
             case CSMessage.RESPONSE:
-                handleResponse(_from, _sn, msg.getData());
+                handleResponse( _sn, msg.getData());
                 break;
             default:
                 Context.revert("UnknownMsgType(" + msg.getType() + ")");
@@ -237,14 +288,13 @@ public class CallServiceImpl implements CallService, FeeManage {
     }
 
     @External
-    public void handleBTPError(String _src, String _svc, BigInteger _sn, long _code, String _msg) {
-        String errMsg = "BTPError{code=" + _code + ", msg=" + _msg + "}";
-        CSMessageResponse res = new CSMessageResponse(_sn, CSMessageResponse.BTP_ERROR, errMsg);
-        handleResponse(_src, _sn, res.toBytes());
+    public void handleError(BigInteger _sn, long _code, String _msg) {
+        String errMsg = "Error{code=" + _code + ", msg=" + _msg + "}";
+        CSMessageResponse res = new CSMessageResponse(_sn, CSMessageResponse.ERROR, errMsg);
+        handleResponse(_sn, res.toBytes());
     }
-    /* ========================================= */
 
-    private BigInteger sendBTPMessage(Address _connection, BigInteger value, String netTo, int msgType, BigInteger sn, byte[] data) {
+    private BigInteger sendMessage(Address _connection, BigInteger value, String netTo, int msgType, BigInteger sn, byte[] data) {
         CSMessage msg = new CSMessage(msgType, data);
         ConnectionScoreInterface connection = new ConnectionScoreInterface(_connection);
         return connection.sendMessage(value, netTo, NAME, sn, msg.toBytes());
@@ -255,7 +305,8 @@ public class CallServiceImpl implements CallService, FeeManage {
         String[] protocols = msgReq.getProtocols();
         String from = msgReq.getFrom();
         Context.require(NetworkAddress.valueOf(from).net().equals(netFrom));
-        String source = Context.getCaller().toString();
+        Address sourceAddress = Context.getCaller();
+        String source = sourceAddress.toString();
 
         if (protocols.length > 1) {
             byte[] hash = Context.hash("sha-256", data);
@@ -270,9 +321,12 @@ public class CallServiceImpl implements CallService, FeeManage {
             for (String protocol : protocols) {
                 pendingRequests.set(protocol, null);
             }
-        } else {
+        } else if (protocols.length == 1) {
             Context.require(source.equals(protocols[0]));
+        } else {
+            Context.require(sourceAddress.equals(defaultConnection.get(netFrom)));
         }
+
         String to = msgReq.getTo();
         BigInteger reqId = getNextReqId();
         proxyReqs.set(reqId, msgReq);
@@ -281,11 +335,12 @@ public class CallServiceImpl implements CallService, FeeManage {
         CallMessage(msgReq.getFrom(), to, msgReq.getSn(), reqId);
     }
 
-    private void handleResponse(String netFrom, BigInteger sn, byte[] data) {
+    private void handleResponse(BigInteger sn, byte[] data) {
         CSMessageResponse msgRes = CSMessageResponse.fromBytes(data);
         BigInteger resSn = msgRes.getSn();
         CallRequest req = requests.get(resSn);
-        String source = Context.getCaller().toString();
+        Address sourceAddress = Context.getCaller();
+        String source = sourceAddress.toString();
 
         if (req == null) {
             Context.println("handleResponse: no request for " + resSn);
@@ -305,8 +360,10 @@ public class CallServiceImpl implements CallService, FeeManage {
             for (String protocol : protocols) {
                 pendingResponse.set(protocol, null);
             }
-        } else {
+        } else if (protocols.length == 1) {
             Context.require(source.equals(protocols[0]));
+        } else {
+            Context.require(sourceAddress.equals(defaultConnection.get(req.getTo())));
         }
 
         String errMsg = msgRes.getMsg();
@@ -314,9 +371,10 @@ public class CallServiceImpl implements CallService, FeeManage {
         switch (msgRes.getCode()) {
             case CSMessageResponse.SUCCESS:
                 cleanupCallRequest(resSn);
+                successfulResponses.set(resSn, true);
                 break;
             case CSMessageResponse.FAILURE:
-            case CSMessageResponse.BTP_ERROR:
+            case CSMessageResponse.ERROR:
             default:
                 // emit rollback event
                 Context.require(req.getRollback() != null, "NoRollbackData");
@@ -344,14 +402,35 @@ public class CallServiceImpl implements CallService, FeeManage {
         protocolFee.set(_value);
     }
 
+    @External
+    public void  setProtocolFeeHandler(Address address){
+        checkCallerOrThrow(admin(), "OnlyAdmin");
+        feeHandler.set(address);
+    }
+
+    @External
+    public void  setDefaultConnection(String nid, Address connection){
+        checkCallerOrThrow(admin(), "OnlyAdmin");
+        defaultConnection.set(nid, connection);
+    }
+
     @External(readonly=true)
     public BigInteger getProtocolFee() {
         return protocolFee.getOrDefault(BigInteger.ZERO);
     }
 
     @External(readonly=true)
-    public BigInteger getFee(Address _connection, String _net, boolean _rollback) {
-        ConnectionScoreInterface connection = new ConnectionScoreInterface(_connection);
-        return connection.getFee(_net, _rollback);
+    public BigInteger getFee(String _net, boolean _rollback, @Optional String[] sources) {
+        BigInteger fee = getProtocolFee();
+        if (sources == null || sources.length == 0) {
+            return fee.add(Context.call(BigInteger.class, defaultConnection.get(_net), "getFee", _net, _rollback));
+        }
+
+        for (String protocol : sources) {
+            Address address = Address.fromString(protocol);
+            fee = fee.add(Context.call(BigInteger.class, address, "getFee", _net, _rollback));
+        }
+
+        return fee;
     }
 }

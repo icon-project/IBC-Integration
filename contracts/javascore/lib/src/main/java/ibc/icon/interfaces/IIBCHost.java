@@ -54,6 +54,9 @@ public interface IIBCHost {
     BigInteger getNextChannelSequence();
 
     @External(readonly = true)
+    byte[] getLatestHeight(String clientId);
+
+    @External(readonly = true)
     byte[] getClientState(String clientId);
 
     @External(readonly = true)

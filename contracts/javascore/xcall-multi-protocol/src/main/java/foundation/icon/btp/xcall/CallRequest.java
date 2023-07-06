@@ -33,6 +33,9 @@ public class CallRequest {
     public CallRequest(Address from, String to, String[] protocols, byte[] rollback) {
         this.from = from;
         this.to = to;
+        if (protocols == null) {
+            protocols = new String[]{};
+        }
         this.protocols = protocols;
         this.rollback = rollback;
         this.enabled = false;
