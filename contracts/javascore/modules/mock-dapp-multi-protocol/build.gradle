@@ -22,6 +22,7 @@ deployJar {
         berlin {
             uri = 'https://berlin.net.solidwallet.io/api/v3'
             nid = 0x7
+            // to = "$mockDAppMultiProtocol"?:null
         }
         lisbon {
             uri = 'https://lisbon.net.solidwallet.io/api/v3'
@@ -30,6 +31,7 @@ deployJar {
         local {
             uri = 'http://localhost:9082/api/v3'
             nid = 0x3
+            // to = "$mockDAppMultiProtocol"?:null
         }
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''

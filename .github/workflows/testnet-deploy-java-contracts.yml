@@ -1,0 +1,32 @@
+name: Deploy javascore contracts to Berlin testnet
+
+on:
+  push:
+    branches:
+      - "main"
+      - "466-initiate-btp-node-for-archway-on-icon-testnet"
+
+jobs:
+  deploy-contracts-testnet:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Retrieve the secret and decode it to a file
+        working-directory: contracts/javascore
+        env:
+          UAT_KEYSTORE_B64: ${{ secrets.BERLIN_TESTNET_KEYSTORE_B64 }}
+        run: |
+          echo $BERLIN_TESTNET_KEYSTORE_B64 | base64 -d > key.json
+
+      - name: Deploy all contracts on UAT environment
+        working-directory: contracts/javascore
+        env:
+          BERLIN_TESTNET_KEYSTORE_PATH: ./key.json
+          BERLIN_TESTNET_PASSWD: ${{ secrets.UAT_PASSWD }}
+        run: |
+          ./gradlew clean build 
+          ./gradlew optimizedJar
+          ./gradlew deployToBerlin -PdeploymentENV=berlin -PkeystoreName=$BERLIN_TESTNET_KEYSTORE_PATH -PkeystorePass=$BERLIN_TESTNET_PASSWD

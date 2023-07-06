@@ -26,6 +26,7 @@ deployJar {
         berlin {
             uri = 'https://berlin.net.solidwallet.io/api/v3'
             nid = 0x7
+            to = "$mockDApp"?:null
         }
         lisbon {
             uri = 'https://lisbon.net.solidwallet.io/api/v3'
