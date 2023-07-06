@@ -16,9 +16,9 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<SubMsg, ContractError> {
         let xcall_host = self.get_xcall_host(store)?;
         let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::HandleMessage {
-            msg,
-            sn,
             from: nid.clone(),
+            sn,
+            msg,
         };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: xcall_host.to_string(),

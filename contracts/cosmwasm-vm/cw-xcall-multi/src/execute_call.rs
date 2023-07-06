@@ -50,7 +50,7 @@ impl<'a> CwCallService<'a> {
             proxy_requests.protocols().clone(),
             EXECUTE_CALL_ID,
         )?;
-        self.remove_proxy_request(deps.storage, request_id);
+
         self.store_execute_request_id(deps.storage, request_id)?;
 
         Ok(Response::new()
@@ -61,13 +61,14 @@ impl<'a> CwCallService<'a> {
 
     pub fn execute_call_reply(
         &self,
-        deps: Deps,
+        deps: DepsMut,
         _env: Env,
         msg: Reply,
     ) -> Result<Response, ContractError> {
         let req_id = self.get_execute_request_id(deps.storage)?;
 
         let request = self.get_proxy_request(deps.storage, req_id)?;
+        self.remove_proxy_request(deps.storage, req_id);
 
         let (response, event) = match msg.result {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
