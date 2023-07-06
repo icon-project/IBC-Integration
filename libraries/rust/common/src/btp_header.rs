@@ -40,12 +40,16 @@ impl BtpHeader {
 
     pub fn get_network_section_rlp(&self) -> Vec<u8> {
         let mut ns = RlpStream::new_list(5);
-
-        ns.append(&Into::<u128>::into(self.network_id));
+        ns.append(&self.network_id);
         ns.append(&self.update_number);
         ns.append(&self.prev_network_section_hash);
         ns.append(&self.message_count);
-        ns.append(&self.message_root);
+        
+        if self.message_root.len() > 0 {
+            ns.append(&self.message_root);
+        } else {
+            ns.append_null();
+        }
 
         let encoded = ns.as_raw().to_vec();
         encoded
