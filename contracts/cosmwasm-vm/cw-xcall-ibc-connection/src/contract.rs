@@ -109,18 +109,6 @@ impl<'a> CwIbcConnection<'a> {
                 self.set_xcall_host(deps.storage, validated_address)?;
                 Ok(Response::new())
             }
-            ExecuteMsg::UpdateAdmin { address } => {
-                let validated_address =
-                    CwIbcConnection::validate_address(deps.api, address.as_str())?;
-                self.update_admin(deps.storage, info, validated_address.to_string())
-            }
-            ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
-            ExecuteMsg::SetIbcConfig { ibc_config, nid } => {
-                self.ensure_owner(deps.as_ref().storage, &info)?;
-                let config = from_slice(&ibc_config).unwrap();
-                self.store_ibc_config(deps.storage, &nid, &config)?;
-                Ok(Response::new())
-            }
             ExecuteMsg::ConfigureConnection {
                 connection_id,
                 counterparty_port_id,

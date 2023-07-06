@@ -530,7 +530,7 @@ fn test_entry_point() {
     let mock_info = create_mock_info("owner", "uconst", 200000);
     let env = mock_env();
 
-    let msg = cw_common::xcall_connection_msg::ExecuteMsg::UpdateAdmin {
+    let msg = cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
         address: admin_one().to_string(),
     };
 

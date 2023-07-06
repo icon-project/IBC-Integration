@@ -20,10 +20,6 @@ pub enum ExecuteMsg {
         sn: i64,
         msg: Vec<u8>,
     },
-    SetIbcConfig {
-        ibc_config: Vec<u8>,
-        nid: NetId,
-    },
     ConfigureConnection {
         connection_id: String,
         counterparty_port_id: String,
@@ -31,10 +27,6 @@ pub enum ExecuteMsg {
         client_id: String,
         timeout_height: u64,
     },
-    UpdateAdmin {
-        address: String,
-    },
-    RemoveAdmin {},
     ClaimFees {
         nid: NetId,
         address: String,

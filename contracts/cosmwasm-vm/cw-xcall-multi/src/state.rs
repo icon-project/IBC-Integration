@@ -388,8 +388,7 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         sn: u128,
     ) -> Result<(), ContractError> {
-        self
-            .successful_responses
+        self.successful_responses
             .save(store, sn, &true)
             .map_err(ContractError::Std)
     }
