@@ -43,7 +43,11 @@ public interface CallService {
      */
     @Payable
     @External
-    BigInteger sendCallMessage(String _to, String[] sources, String[] destinations, byte[] _data,  @Optional byte[] _rollback);
+    BigInteger sendCallMessage(String _to,
+                                byte[] _data,
+                                @Optional byte[] _rollback,
+                                @Optional String[] sources,
+                                @Optional String[] destinations);
 
     /**
      * Notifies that the requested call message has been sent.

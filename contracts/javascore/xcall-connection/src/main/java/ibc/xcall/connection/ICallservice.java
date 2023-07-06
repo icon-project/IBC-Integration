@@ -19,7 +19,7 @@ public interface ICallservice {
      * @param _msg Bytes ( serialized bytes of ServiceMessage )
      */
     @External
-    void handleBTPMessage(String _from, String _svc, BigInteger _sn, byte[] _msg);
+    void handleMessage(String _from, BigInteger _sn, byte[] _msg);
 
     /**
      * Handle the error on delivering the message.
@@ -32,5 +32,5 @@ public interface ICallservice {
      * @param _msg String ( message of the error )
      */
     @External
-    void handleBTPError(String _src, String _svc, BigInteger _sn, long _code, String _msg);
+    void handleError( BigInteger _sn, long _code, String _msg);
 }
