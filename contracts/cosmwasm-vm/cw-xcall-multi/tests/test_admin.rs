@@ -104,7 +104,7 @@ fn update_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            &mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -142,7 +142,7 @@ fn update_existing_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            &mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -180,7 +180,7 @@ fn add_existing_admin() {
     let response = contract
         .add_admin(
             mock_deps.as_mut().storage,
-            &mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -217,7 +217,7 @@ fn remove_existing_admin_and_add_admin() {
     let response = contract
         .add_admin(
             mock_deps.as_mut().storage,
-            &mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -420,7 +420,7 @@ fn update_admin_fails() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            &mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -458,7 +458,7 @@ fn update_admin_fails_on_null_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            &mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();

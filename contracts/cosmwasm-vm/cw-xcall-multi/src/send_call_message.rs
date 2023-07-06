@@ -46,7 +46,7 @@ impl<'a> CwCallService<'a> {
         sources: Vec<String>,
         destinations: Vec<String>,
     ) -> Result<Response, ContractError> {
-        let caller = info.sender.clone();
+        let caller = info.sender;
         let config = self.get_config(deps.as_ref().storage)?;
         let nid = config.network_id;
 

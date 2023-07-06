@@ -8,7 +8,7 @@ use cosmwasm_std::{
 use cw_integration::TestSteps;
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 use cw_xcall_ibc_connection::state::IbcConfig;
-use strum_macros::Display;
+
 use test_utils::{IntegrationData, RawPayload};
 
 #[derive(Debug, PartialEq, Eq, Hash)]

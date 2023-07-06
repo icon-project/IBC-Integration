@@ -2,7 +2,7 @@ use common::{
     ibc::Height,
     rlp::{self},
 };
-use cosmwasm_std::{coins, from_slice, to_vec, BankMsg, IbcChannel};
+use cosmwasm_std::{coins, from_slice, BankMsg, IbcChannel};
 use cw_common::{raw_types::channel::RawPacket, xcall_types::network_address::NetId};
 use debug_print::debug_println;
 

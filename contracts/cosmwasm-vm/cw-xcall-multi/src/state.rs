@@ -380,7 +380,7 @@ impl<'a> CwCallService<'a> {
     }
 
     pub fn get_successful_response(&self, store: &dyn Storage, sn: u128) -> bool {
-        return self.successful_responses.load(store, sn).unwrap_or(false);
+        self.successful_responses.load(store, sn).unwrap_or(false)
     }
 
     pub fn set_successful_response(
@@ -388,9 +388,9 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         sn: u128,
     ) -> Result<(), ContractError> {
-        return self
+        self
             .successful_responses
             .save(store, sn, &true)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 }

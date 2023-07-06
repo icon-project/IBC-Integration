@@ -24,7 +24,7 @@ impl<'a> CwIbcConnection<'a> {
         let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
 
         if sn < 0 {
-            return self.write_acknowledgement(deps.storage, &ibc_config, message, sn * -1);
+            return self.write_acknowledgement(deps.storage, &ibc_config, message, -sn);
         }
 
         let sequence_number_host = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
