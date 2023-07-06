@@ -25,7 +25,7 @@ jobs:
         working-directory: contracts/javascore
         env:
           BERLIN_TESTNET_KEYSTORE_PATH: ./key.json
-          BERLIN_TESTNET_PASSWD: ${{ secrets.UAT_PASSWD }}
+          BERLIN_TESTNET_PASSWD: ${{ secrets.BERLIN_TESTNET_PASSWD }}
         run: |
           ./gradlew clean build 
           ./gradlew optimizedJar
