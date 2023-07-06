@@ -185,6 +185,7 @@ impl<'a> CwCallService<'a> {
         match message.response_code() {
             CallServiceResponseType::CallServiceResponseSuccess => {
                 self.cleanup_request(deps.storage, response_sequence_no);
+                self.set_successful_response(deps.storage, response_sequence_no)?;
                 Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")

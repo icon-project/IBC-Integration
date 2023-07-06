@@ -33,4 +33,6 @@ pub enum QueryMsg {
     GetProtocolFeeHandler {},
     #[returns(String)]
     GetNetworkAddress {},
+    #[returns(bool)]
+    VerifySuccess { sn: u128 },
 }

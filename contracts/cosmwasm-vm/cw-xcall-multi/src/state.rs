@@ -63,6 +63,7 @@ pub struct CwCallService<'a> {
     default_connections: Map<'a, NetId, Addr>,
     pending_requests: Map<'a, (Vec<u8>, String), bool>,
     pending_responses: Map<'a, (Vec<u8>, String), bool>,
+    successful_responses: Map<'a, u128, bool>,
     execute_request_id: Item<'a, u128>,
     execute_rollback_id: Item<'a, u128>,
 }
@@ -87,6 +88,7 @@ impl<'a> CwCallService<'a> {
             default_connections: Map::new(StorageKey::DefaultConnections.as_str()),
             pending_requests: Map::new(StorageKey::PendingRequests.as_str()),
             pending_responses: Map::new(StorageKey::PendingResponses.as_str()),
+            successful_responses: Map::new(StorageKey::SuccessfulResponses.as_str()),
             config: Item::new(StorageKey::Config.as_str()),
             execute_request_id: Item::new(StorageKey::ExecuteReqId.as_str()),
             execute_rollback_id: Item::new(StorageKey::ExecuteRollbackId.as_str()),
@@ -375,5 +377,20 @@ impl<'a> CwCallService<'a> {
         self.fee_handler
             .save(store, &handler)
             .map_err(ContractError::Std)
+    }
+
+    pub fn get_successful_response(&self, store: &dyn Storage, sn: u128) -> bool {
+        return self.successful_responses.load(store, sn).unwrap_or(false);
+    }
+
+    pub fn set_successful_response(
+        &self,
+        store: &mut dyn Storage,
+        sn: u128,
+    ) -> Result<(), ContractError> {
+        return self
+            .successful_responses
+            .save(store, sn, &true)
+            .map_err(ContractError::Std);
     }
 }

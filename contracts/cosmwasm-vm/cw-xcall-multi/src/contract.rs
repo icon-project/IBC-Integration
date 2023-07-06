@@ -161,6 +161,9 @@ impl<'a> CwCallService<'a> {
             QueryMsg::GetNetworkAddress {} => {
                 to_binary(&self.get_own_network_address(deps.storage, &env).unwrap())
             }
+            QueryMsg::VerifySuccess { sn } => {
+                to_binary(&self.get_successful_response(deps.storage, sn))
+            }
         }
     }
     /// This function handles different types of reply messages and calls corresponding functions based on
