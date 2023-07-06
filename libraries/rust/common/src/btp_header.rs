@@ -5,6 +5,7 @@ use prost::{DecodeError, Message};
 use crate::client_state::get_default_icon_client_state;
 use crate::constants::ICON_BTP_HEADER_TYPE_URL;
 use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use debug_print::debug_println;
 
 use crate::rlp::RlpStream;
 use crate::{
@@ -35,12 +36,19 @@ impl BtpHeader {
         ntsd.append(&self.get_network_type_section_hash().as_slice());
 
         let encoded = ntsd.as_raw().to_vec();
+        debug_println!("network type section decision rlp: {}",hex::encode(&encoded));
         encoded
     }
 
     pub fn get_network_section_rlp(&self) -> Vec<u8> {
         let mut ns = RlpStream::new_list(5);
+        // debug_println!("message_count {} update number {}",&self.message_count,self.update_number);
+        debug_println!("BTP Header {:?}",self);
 
+        // let msg_sn= self.update_number-self.message_count;
+        // debug_println!("message_sn {}",msg_sn);
+        // let mut update_number=if self.main_height==401 {self.update_number+1 }else{self.update_number};
+        
         ns.append(&Into::<u128>::into(self.network_id));
         ns.append(&self.update_number);
         ns.append(&self.prev_network_section_hash);
@@ -48,6 +56,7 @@ impl BtpHeader {
         ns.append(&self.message_root);
 
         let encoded = ns.as_raw().to_vec();
+        debug_println!("network section rlp: {}",hex::encode(&encoded));
         encoded
     }
 
@@ -65,14 +74,17 @@ impl BtpHeader {
         nts.append(&self.get_network_section_root().as_slice());
 
         let encoded = nts.as_raw().to_vec();
+        debug_println!("network type section rlp {}",hex::encode(&encoded));
         encoded
     }
 
     pub fn get_network_section_root(&self) -> [u8; 32] {
-        calculate_root(
+        let root= calculate_root(
             self.get_network_section_hash(),
             &self.network_section_to_root,
-        )
+        );
+        debug_println!("network section root {}",hex::encode(&root));
+        root
     }
 
     pub fn to_client_state(&self, trusting_period: u64, max_clock_drift: u64) -> ClientState {

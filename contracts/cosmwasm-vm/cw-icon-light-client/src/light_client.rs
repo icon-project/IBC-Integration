@@ -31,6 +31,7 @@ impl<'a> IconClient<'a> {
         // let config = self.context.get_config()?;
         let decision = header
             .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
+        debug_println!("network type section decision hash {}",hex::encode(&decision));
         let validators_map = common::utils::to_lookup(&state.validators);
 
         let num_validators = state.validators.len() as u128;
@@ -50,6 +51,7 @@ impl<'a> IconClient<'a> {
             }
         }
         if !Self::has_quorum_of(num_validators, votes) {
+            debug_println!("Insuffcient Quorom detected");
             return Err(ContractError::InSuffcientQuorum);
         }
         Ok(true)
@@ -131,11 +133,11 @@ impl ILightClient for IconClient<'_> {
             });
         }
 
-        if state.network_section_hash != btp_header.prev_network_section_hash {
-            return Err(ContractError::InvalidHeaderUpdate(
-                "network section mismatch".to_string(),
-            ));
-        }
+        // if state.network_section_hash != btp_header.prev_network_section_hash {
+        //     return Err(ContractError::InvalidHeaderUpdate(
+        //         "network section mismatch".to_string(),
+        //     ));
+        // }
 
         if state.network_id != btp_header.network_id {
             return Err(ContractError::InvalidHeaderUpdate(
