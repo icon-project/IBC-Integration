@@ -18,6 +18,7 @@ impl<'a> CwCallService<'a> {
         msg: &CallServiceMessage,
     ) -> Result<SubMsg, ContractError> {
         let msg = rlp::encode(msg).to_vec();
+        self.ensure_data_length(msg.len())?;
         let message = cw_common::xcall_connection_msg::ExecuteMsg::SendMessage { to, sn, msg };
 
         let cosm_msg = CosmosMsg::Wasm(WasmMsg::Execute {

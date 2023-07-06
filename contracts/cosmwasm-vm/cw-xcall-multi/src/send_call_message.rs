@@ -63,7 +63,6 @@ impl<'a> CwCallService<'a> {
             None => vec![],
         };
 
-        self.ensure_data_length(data.len())?;
         self.ensure_rollback_length(&rollback_data)?;
         println!("{LOG_PREFIX} Packet Validated");
 

@@ -199,29 +199,6 @@ impl<'a> CwCallService<'a> {
             }),
         }
     }
-
-    pub fn validate_send_call(
-        &self,
-        deps: Deps,
-        nid: NetId,
-        sources: &Vec<String>,
-        destinations: &Vec<String>,
-        rollback: &Option<Vec<u8>>,
-        info: &MessageInfo,
-    ) -> Result<(), ContractError> {
-        if sources.len() != destinations.len() {
-            return Err(ContractError::ProtocolsMismatch);
-        }
-        let has_rollback = rollback.is_some();
-        let fees = sources
-            .iter()
-            .map(|_r| self.get_total_required_fee(deps, nid.clone(), has_rollback, sources))
-            .collect::<Result<Vec<u128>, ContractError>>()?;
-
-        let total_required_fee: u128 = fees.iter().sum();
-        self.ensure_enough_funds(total_required_fee, info)?;
-        Ok(())
-    }
 }
 
 impl<'a> CwCallService<'a> {

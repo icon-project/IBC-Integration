@@ -80,7 +80,6 @@ impl<'a> CwCallService<'a> {
         if !source_valid {
             return Err(ContractError::ProtocolsMismatch);
         }
-        let request_id = self.increment_last_request_id(deps.storage)?;
 
         let to = request.to();
 
@@ -97,6 +96,7 @@ impl<'a> CwCallService<'a> {
 
             self.remove_pending_request_by_hash(deps.storage, key)?;
         }
+        let request_id = self.increment_last_request_id(deps.storage)?;
 
         self.store_proxy_request(deps.storage, request_id, &request)?;
 
