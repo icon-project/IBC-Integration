@@ -17,7 +17,7 @@ jobs:
       - name: Retrieve the secret and decode it to a file
         working-directory: contracts/javascore
         env:
-          UAT_KEYSTORE_B64: ${{ secrets.BERLIN_TESTNET_KEYSTORE_B64 }}
+          BERLIN_TESTNET_KEYSTORE_B64: ${{ secrets.BERLIN_TESTNET_KEYSTORE_B64 }}
         run: |
           echo $BERLIN_TESTNET_KEYSTORE_B64 | base64 -d > key.json
 
