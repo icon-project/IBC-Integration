@@ -3,13 +3,13 @@ use std::str::FromStr;
 
 use anyhow::Error as AppError;
 
-
 use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
 
 use setup::{
-    init_mock_ibc_core_contract, init_xcall_app_contract, init_xcall_ibc_connection_contract, TestContext,
+    init_mock_ibc_core_contract, init_xcall_app_contract, init_xcall_ibc_connection_contract,
+    TestContext,
 };
 use test_utils::get_event;
 

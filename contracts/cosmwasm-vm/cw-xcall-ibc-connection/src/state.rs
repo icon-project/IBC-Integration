@@ -75,36 +75,43 @@ impl IbcConfig {
 /// height.
 ///
 /// Properties:
-///
-/// * `last_sequence_no`: A field of type `Item` that stores the last sequence number used in a call
-/// service message.
-/// * `last_request_id`: This is a field of type `Item<'a, u128>` which stores the last request ID used
-/// by the `CwIbcConnection` struct. The `Item` type is a wrapper around a value that can be stored in a
-/// persistent storage, and the `'a` lifetime parameter indicates that
-/// * `owner`: The `owner` property is a `String` type field that holds the address of the owner of the
+/// /// * `owner`: The `owner` property is a `String` type field that holds the address of the owner of the
 /// `CwIbcConnection` struct.
-/// * `admin`: `admin` is a field of type `Item<'a, String>` in the `CwIbcConnection` struct. It is a
+///
+///  * `admin`: `admin` is a field of type `Item<'a, String>` in the `CwIbcConnection` struct. It is a
 /// reference to a string that represents the address of the admin of the call service. The `Item` type
 /// is a wrapper around a reference to a value of a
-/// * `message_request`: A map that stores CallServiceMessageRequest structs with a u128 key.
-/// * `requests`: `requests` is a `Map` that stores `CallRequest` objects with a `u128` key. This map is
-/// used to keep track of all the call requests made by the users of the `CwIbcConnection` struct. The
-/// `u128` key is used to uniquely identify
-/// * `ibc_config`: This property is of type `Item<'a, IbcConfig>` and represents the IBC configuration
-/// for the call service. It is likely used to define the parameters and settings for inter-blockchain
+///
+/// * `ibc_config`: This property is of type `Map<'a, NetId,IbcConfig>` and represents the IBC configuration
+/// for the given network. It is likely used to define the parameters and settings for inter-blockchain
 /// communication.
-/// * `fee_handler`: The `fee_handler` property is an `Item` that holds a `String` value. It likely
-/// represents the address or identifier of the entity responsible for handling fees associated with the
-/// `CwIbcConnection` struct.
-/// * `fee`: `fee` is a field of type `Item<'a, u128>` in the `CwIbcConnection` struct. It is a reference
-/// to an item of type `u128` that represents the fee for the call service. The `Item` type is a wrapper
-/// around a reference to
-/// * `ibc_host`: `ibc_host` is a field of type `Item<'a, Addr>` in a struct called `CwIbcConnection`. It
+///
+///  * `ibc_host`: `ibc_host` is a field of type `Item<'a, Addr>` in a struct called `CwIbcConnection`. It
 /// is likely used to store the address of the IBC host that the `CwIbcConnection` interacts with. The
 /// `Addr` type likely represents a network
-/// * `timeout_height`: The `timeout_height` property is an `Item` that stores the timeout height for
-/// the Call Service. This is the block height at which the Call Service will stop processing requests
-/// if they have not been completed.
+///
+/// * `xcall_host`: `xcall_host` is a field of type `Item<'a, Addr>` in a struct called `CwIbcConnection`. It
+/// is likely used to store the address of the Xcall App that the `CwIbcConnection` interacts with.
+///
+///
+/// * `configured_networks`: `configured_networks` stores relation between connectionId ,
+///  counterpartyPortId and counterpartyNetId
+///
+/// * `connection_configs`: `connection_configs` stores ConnectionConfig for given connectionId.
+///
+/// * `channel_configs`: `channel_configs` stores ChannelConfig for given channel.
+///
+/// * `network_fees`: `network_fees` stores NetworkFeesInfo for given network id.
+///
+/// * `unclaimed_packet_fees`: `unclaimed_packet_fees` acculumulated packet fees for given network and relayer.
+///
+/// * `unclaimed_ack_fees`: `unclaimed_ack_fees` stores ack fee for given packet by networkId.
+///
+/// * `incoming_packets`: `incoming_packets` stores incoming packets for reference.
+///
+/// * `outgoing_packets`: `outgoing_packets` stores outgoing packets for reference.
+///
+
 pub struct CwIbcConnection<'a> {
     owner: Item<'a, String>,
     config: Item<'a, Config>,
