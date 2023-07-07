@@ -61,11 +61,27 @@ impl BtpHeader {
 
     pub fn get_network_type_section_rlp(&self) -> Vec<u8> {
         let mut nts = RlpStream::new_list(2);
-        nts.append(&self.next_proof_context_hash);
+        let next_proof_context_hash=self.get_next_proof_context_hash(&self.next_validators);
+        nts.append(&next_proof_context_hash);
         nts.append(&self.get_network_section_root().as_slice());
 
         let encoded = nts.as_raw().to_vec();
         encoded
+    }
+
+    pub fn get_next_proof_context_rlp(&self,validators:&Vec<Vec<u8>>)->Vec<u8>{
+        let mut rlp =RlpStream::new_list(1);
+        let rlp=RlpStream::begin_list(&mut rlp, validators.len());
+        for v in validators.iter() {
+            rlp.append(v);
+        }
+        return rlp.as_raw().to_vec();
+
+
+    }
+
+    pub fn get_next_proof_context_hash(&self,validators:&Vec<Vec<u8>>)->Vec<u8>{
+        return keccak256(&self.get_next_proof_context_rlp(validators)).to_vec();
     }
 
     pub fn get_network_section_root(&self) -> [u8; 32] {
@@ -128,6 +144,7 @@ mod tests {
         constants::{DEFAULT_NETWORK_TYPE_ID, DEFAULT_SRC_NETWORK_ID},
         icon::icon::types::v1::SignedHeader,
     };
+    use hex::FromHexError;
     use test_utils::{get_test_headers, load_test_headers};
 
     use super::*;
@@ -144,7 +161,7 @@ mod tests {
     fn relay_bytes_to_signed_header() {
         let headers = load_test_headers();
         for header in headers {
-            let buff = hex::decode(header.encoded_protobuf.replace("0x", "")).unwrap();
+            let buff = hex::decode(header.encoded_protobuf.replace("", "")).unwrap();
             let decoded = SignedHeader::decode(buff.as_slice());
 
             assert!(decoded.is_ok());
@@ -175,6 +192,8 @@ mod tests {
         assert_eq!(hex::encode(expected_hash), hex::encode(hash));
     }
 
+    
+
     #[test]
     fn test_get_network_type_section_decision() {
         let expected=hex!("f0883078332e69636f6e01830143b900a02b2aa1cc61539d0ef83d0e9997703e18da44a5d44824757b2b38cdbf931c33d6");
@@ -192,7 +211,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_network_section_hash_sequence() {
+    fn test_get_network_section_hash_sequence_proof_context() {
         let headers = get_test_headers();
         for (i, header) in headers.iter().enumerate() {
             if i == headers.len() - 3 {
@@ -200,7 +219,22 @@ mod tests {
             }
             let expected = &headers[i + 1].prev_network_section_hash;
             let current = header.get_network_section_hash();
-            assert_eq!(hex::encode(expected), hex::encode(current))
+            assert_eq!(hex::encode(expected), hex::encode(current));
+            assert_eq!(hex::encode(&header.next_proof_context_hash), hex::encode(&header.get_next_proof_context_hash(&header.next_validators)));
+
         }
+    }
+    #[test]
+    fn test_get_proof_context_hash_sample(){
+        let validators=["c004b435729ea1f957e610429fa3ada197a1fbb5","17b782e32f74a7b75932fa88a8aa5015aee5924c","18acde338c2ce71657559c8a97cf66a9386ae6f4","497a1ab7973fbaac11f3fc1347e1c8e8f0ffe2a0","40ed0daccb2835164594819156754976b49e630d"];
+        let validators=validators.into_iter().map(|v|hex::decode(v)).collect::<Result<Vec<Vec<u8>>,FromHexError>>().unwrap();
+        let rlp_raw=BtpHeader::default().get_next_proof_context_rlp(&validators);
+        let rlp_encoded=hex::encode(rlp_raw);
+        assert_eq!("f86bf86994c004b435729ea1f957e610429fa3ada197a1fbb59417b782e32f74a7b75932fa88a8aa5015aee5924c9418acde338c2ce71657559c8a97cf66a9386ae6f494497a1ab7973fbaac11f3fc1347e1c8e8f0ffe2a09440ed0daccb2835164594819156754976b49e630d",&rlp_encoded);
+
+        let proof_hash=BtpHeader::default().get_next_proof_context_hash(&validators);
+        assert_eq!("7bbcd8b5c7c1dc7dda4036d9ec85c8ae3b77d042e5c0028fb3fcb5d4eb82b973",hex::encode(proof_hash));
+
+
     }
 }
