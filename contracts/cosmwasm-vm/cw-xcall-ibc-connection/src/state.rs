@@ -317,7 +317,7 @@ impl<'a> CwIbcConnection<'a> {
             .unwrap_or(0);
         acc += value;
         self.unclaimed_packet_fees
-            .save(store, (nid.to_string(), address.to_owned()), &value)
+            .save(store, (nid.to_string(), address.to_owned()), &acc)
             .map_err(ContractError::Std)
     }
 
@@ -356,7 +356,7 @@ impl<'a> CwIbcConnection<'a> {
             .unwrap_or(0);
         acc += value;
         self.unclaimed_ack_fees
-            .save(store, (nid.to_string(), sequence), &value)
+            .save(store, (nid.to_string(), sequence), &acc)
             .map_err(ContractError::Std)
     }
 
