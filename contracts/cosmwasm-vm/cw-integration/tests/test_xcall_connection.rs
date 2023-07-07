@@ -1,12 +1,15 @@
 mod setup;
+use std::str::FromStr;
+
 use anyhow::Error as AppError;
-use cosmwasm_std::to_vec;
+
+use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
 
 use setup::{
     init_mock_ibc_core_contract, init_xcall_app_contract, init_xcall_ibc_connection_contract,
-    mock_ibc_config, TestContext,
+    TestContext,
 };
 use test_utils::get_event;
 
@@ -38,11 +41,11 @@ pub fn call_send_call_message(
         ctx.sender.clone(),
         ctx.get_xcall_app(),
         &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
-            to: to.to_string(),
+            to: NetworkAddress::from_str(to).unwrap(),
             data,
             rollback,
-            sources,
-            destinations,
+            sources: Some(sources),
+            destinations: Some(destinations),
         },
         &[],
     )
@@ -58,25 +61,15 @@ pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppErro
         &[],
     )
 }
-pub fn call_set_ibc_config(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
-    let config = to_vec(&mock_ibc_config()).unwrap();
 
-    ctx.app.execute_contract(
-        ctx.sender.clone(),
-        ctx.get_xcall_ibc_connection(),
-        &cw_common::xcall_connection_msg::ExecuteMsg::SetIbcConfig { ibc_config: config },
-        &[],
-    )
-}
 #[test]
 fn send_packet_success() {
     let mut ctx = setup_test();
     call_set_xcall_host(&mut ctx).unwrap();
-    call_set_ibc_config(&mut ctx).unwrap();
     let src = ctx.get_xcall_ibc_connection().to_string();
     let result = call_send_call_message(
         &mut ctx,
-        MOCK_CONTRACT_TO_ADDR,
+        &format!("btp/{}", MOCK_CONTRACT_TO_ADDR),
         vec![src],
         vec!["somedestination".to_string()],
         vec![1, 2, 3],

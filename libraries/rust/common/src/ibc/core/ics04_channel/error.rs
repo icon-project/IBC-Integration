@@ -185,6 +185,8 @@ pub enum PacketError {
         port_id: PortId,
         channel_id: ChannelId,
     },
+    /// `{0}`
+    Other(String),
 }
 
 #[cfg(feature = "std")]
