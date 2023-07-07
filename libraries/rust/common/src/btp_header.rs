@@ -44,7 +44,7 @@ impl BtpHeader {
         ns.append(&self.update_number);
         ns.append(&self.prev_network_section_hash);
         ns.append(&self.message_count);
-        
+
         if self.message_root.len() > 0 {
             ns.append(&self.message_root);
         } else {
