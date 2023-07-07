@@ -15,12 +15,12 @@ impl<'a> CwIbcConnection<'a> {
     pub fn call_host_write_acknowledgement(
         &self,
         store: &dyn Storage,
-        packet: RawPacket,
+        packet: HexString,
         msg: Vec<u8>,
     ) -> Result<SubMsg, ContractError> {
         let host_address = self.get_ibc_host(store)?;
         let message = cw_common::core_msg::ExecuteMsg::WriteAcknowledgement {
-            packet: HexString::from_bytes(&packet.encode_to_vec()),
+            packet,
             acknowledgement: HexString::from_bytes(&msg),
         };
 

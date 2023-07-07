@@ -1,4 +1,4 @@
-use cw_common::xcall_types::network_address::NetId;
+use cw_common::{hex_string::HexString, xcall_types::network_address::NetId};
 use cw_storage_plus::Map;
 
 use crate::types::{
@@ -125,7 +125,7 @@ pub struct CwIbcConnection<'a> {
     network_fees: Map<'a, NetId, NetworkFees>,
     unclaimed_packet_fees: Map<'a, (String, String), u128>,
     unclaimed_ack_fees: Map<'a, (String, u64), u128>,
-    incoming_packets: Map<'a, (String, i64), u64>,
+    incoming_packets: Map<'a, (String, i64), HexString>,
     outgoing_packets: Map<'a, (String, u64), i64>,
 }
 
@@ -387,12 +387,12 @@ impl<'a> CwIbcConnection<'a> {
             .map_err(ContractError::Std)
     }
 
-    pub fn get_incoming_packet_sequence(
+    pub fn get_incoming_packet(
         &self,
         store: &dyn Storage,
         channel_id: &str,
         sn: i64,
-    ) -> Result<u64, ContractError> {
+    ) -> Result<HexString, ContractError> {
         self.incoming_packets
             .load(store, (channel_id.to_owned(), sn))
             .map_err(ContractError::Std)
@@ -407,15 +407,15 @@ impl<'a> CwIbcConnection<'a> {
             .remove(store, (channel_id.to_owned(), sequence))
     }
 
-    pub fn store_incoming_packet_sequence(
+    pub fn store_incoming_packet(
         &self,
         store: &mut dyn Storage,
         channel_id: &str,
         sn: i64,
-        seq: u64,
+        packet: HexString,
     ) -> Result<(), ContractError> {
         self.incoming_packets
-            .save(store, (channel_id.to_owned(), sn), &seq)
+            .save(store, (channel_id.to_owned(), sn), &packet)
             .map_err(ContractError::Std)
     }
 

@@ -1229,7 +1229,7 @@ fn connection_open_confirm_validate() {
         .unwrap();
 
     let res = contract.connection_open_confirm(deps.as_mut(), env, info, res_msg);
-    assert_eq!(res.is_ok(), true)
+    assert!(res.is_ok())
 }
 
 #[test]

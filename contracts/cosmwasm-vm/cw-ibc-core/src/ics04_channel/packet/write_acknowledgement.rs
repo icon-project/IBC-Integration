@@ -1,6 +1,5 @@
-use std::str::FromStr;
-
-use crate::ChannelError::InvalidChannelState;
+use super::*;
+use crate::{ics04_channel::create_write_ack_event, ChannelError::InvalidChannelState};
 use common::{
     ibc::core::ics04_channel::{channel::State, commitment::AcknowledgementCommitment},
     utils::keccak256,
@@ -9,23 +8,21 @@ use cosmwasm_std::{DepsMut, MessageInfo, Response};
 use cw_common::{
     commitment::acknowledgement_commitment_key,
     ibc_types::{IbcChannelId, IbcPortId, Sequence},
-    raw_types::channel::RawPacket,
 };
+use std::str::FromStr;
 
-use crate::{context::CwIbcCoreContext, ics04_channel::write_acknowledgement_event, ContractError};
+use crate::{context::CwIbcCoreContext, ContractError};
 
 impl<'a> CwIbcCoreContext<'a> {
     pub fn write_acknowledgement(
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        packet: RawPacket,
+        packet: Packet,
         ack: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        let dest_port = IbcPortId::from_str(&packet.destination_port)
-            .map_err(|e| ContractError::IbcValidationError { error: e })?;
-        let dest_channel = IbcChannelId::from_str(&packet.destination_channel)
-            .map_err(|e| ContractError::IbcValidationError { error: e })?;
+        let dest_port = &packet.port_id_on_b;
+        let dest_channel = &packet.chan_id_on_b;
         let seq = packet.sequence;
 
         let authenticated = self.authenticate_capability(
@@ -65,12 +62,13 @@ impl<'a> CwIbcCoreContext<'a> {
             AcknowledgementCommitment::from(ack_commitment),
         )?;
 
-        let event = write_acknowledgement_event(
-            packet.destination_port.clone(),
-            packet.destination_channel.clone(),
-            packet.sequence,
-            ack,
-        );
+        let event = create_write_ack_event_raw(
+            packet,
+            channel.ordering.as_str(),
+            channel.connection_hops[0].as_str(),
+            &ack,
+        )
+        .unwrap();
 
         Ok(Response::new().add_event(event))
     }

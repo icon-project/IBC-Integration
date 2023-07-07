@@ -1,6 +1,6 @@
 use common::rlp::Nullable;
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage};
-use cw_common::{raw_types::channel::RawPacket, xcall_types::network_address::NetId};
+use cw_common::xcall_types::network_address::NetId;
 
 use crate::{
     error::ContractError,
@@ -89,15 +89,9 @@ impl<'a> CwIbcConnection<'a> {
         sn: i64,
     ) -> Result<Response, ContractError> {
         let channel_id = config.src_endpoint().channel_id.clone();
-        let sequence_no = self.get_incoming_packet_sequence(store, &channel_id, sn)?;
+        let packet = self.get_incoming_packet(store, &channel_id, sn)?;
         self.remove_incoming_packet_sequence(store, &channel_id, sn);
 
-        let packet = RawPacket {
-            sequence: sequence_no,
-            destination_port: config.src_endpoint().port_id.clone(),
-            destination_channel: channel_id,
-            ..Default::default()
-        };
         let submsg = self.call_host_write_acknowledgement(store, packet, msg)?;
         Ok(Response::new().add_submessage(submsg))
     }
