@@ -4,6 +4,8 @@ pub mod commitment;
 pub mod constants;
 pub mod core_msg;
 pub mod cw_types;
+pub mod dapp_msg;
+pub mod dapp_multi_msg;
 pub mod errors;
 pub mod hex_string;
 pub mod ibc_types;
@@ -14,6 +16,7 @@ pub mod xcall_app_msg;
 pub mod xcall_connection_msg;
 pub mod xcall_msg;
 pub mod xcall_payloads;
+pub mod xcall_types;
 
 use bech32::FromBase32;
 use cosmwasm_std::{from_binary, Addr, Binary, Deps, StdError};

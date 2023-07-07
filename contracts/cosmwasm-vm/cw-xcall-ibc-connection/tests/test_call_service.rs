@@ -21,9 +21,10 @@ fn proper_instantiate() {
         env,
         mock_info,
         InstantiateMsg {
-            timeout_height: 10,
             ibc_host: Addr::unchecked("someaddress"),
-            protocol_fee: 0,
+            xcall_address: Addr::unchecked("xcalladdress"),
+            denom: "arch".to_string(),
+            port_id: "mock".to_string(),
         },
     )
     .unwrap();

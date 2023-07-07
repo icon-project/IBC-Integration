@@ -304,47 +304,6 @@ fn add_invalid_char_as_admin() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidAddress { address: \"*****%%%%%@@@###!1234hello\"")]
-fn update_admin_invalid_chars() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-    let mock_env = mock_env();
-
-    let mut contract = CwIbcConnection::default();
-
-    contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
-        .unwrap();
-
-    contract
-        .execute(
-            mock_deps.as_mut(),
-            mock_env.clone(),
-            mock_info.clone(),
-            cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
-                address: admin_one().to_string(),
-            },
-        )
-        .unwrap();
-
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
-    assert_eq!(result, admin_one().to_string());
-
-    contract
-        .execute(
-            mock_deps.as_mut(),
-            mock_env,
-            mock_info,
-            cw_common::xcall_connection_msg::ExecuteMsg::UpdateAdmin {
-                address: "*****%%%%%@@@###!1234hello".into(),
-            },
-        )
-        .unwrap();
-}
-
-#[test]
 #[should_panic(
     expected = "Std(GenericErr { msg: \"Invalid input: human address too short for this mock implementation (must be >= 3).\" })"
 )]

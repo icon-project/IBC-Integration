@@ -7,14 +7,20 @@ use common::ibc::events::IbcEventType;
 
 use cosmwasm_std::{from_binary, to_binary, Addr, Empty, Querier, QueryRequest};
 
-use cw_common::{core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query};
+use cw_common::{
+    core_msg as CoreMsg,
+    hex_string::HexString,
+    query_helpers::build_smart_query,
+    xcall_types::network_address::{NetId, NetworkAddress},
+};
 
 use cw_integration::TestSteps;
 use cw_multi_test::{App, AppResponse, Executor};
 
 use setup::{
-    init_ibc_core_contract, init_light_client, init_xcall_app_contract, init_xcall_contract,
-    init_xcall_ibc_connection_contract, setup_context, TestContext,
+    init_ibc_core_contract, init_light_client, init_mock_dapp_multi_contract,
+    init_xcall_app_contract, init_xcall_contract, init_xcall_ibc_connection_contract,
+    setup_context, TestContext,
 };
 use test_utils::{get_event, get_event_name, load_raw_payloads};
 
@@ -37,10 +43,36 @@ pub fn setup_contracts(mut ctx: TestContext) -> TestContext {
 pub fn setup_xcall_multi_contracts(mut ctx: TestContext) -> TestContext {
     ctx = init_light_client(ctx);
     ctx = init_ibc_core_contract(ctx);
-    ctx = init_xcall_ibc_connection_contract(ctx);
-    let _ibc_addr = ctx.get_ibc_core();
     ctx = init_xcall_app_contract(ctx);
+    ctx = init_xcall_ibc_connection_contract(ctx);
+    ctx = init_mock_dapp_multi_contract(ctx);
     ctx
+}
+
+pub fn call_multi_dapp_send_message(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_dapp(),
+        &cw_common::dapp_multi_msg::ExecuteMsg::SendCallMessage {
+            to: NetworkAddress::new("icon", "someaddress"),
+            data: vec![72, 101, 108, 108, 111],
+            rollback: None,
+        },
+        &[],
+    )
+}
+
+pub fn call_multi_dapp_add_connection(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_dapp(),
+        &cw_common::dapp_multi_msg::ExecuteMsg::AddConnection {
+            src_endpoint: ctx.get_xcall_ibc_connection().to_string(),
+            dest_endpoint: "cx00000".to_string(),
+            network_id: "icon".to_string(),
+        },
+        &[],
+    )
 }
 
 pub fn call_register_client_type(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
@@ -236,9 +268,9 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
         Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
         &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
-            to: "eth".to_string(),
-            sources: vec![],
-            destinations: vec![],
+            to: NetworkAddress::new("eth", "contractmock"),
+            sources: Some(vec![]),
+            destinations: Some(vec![]),
             data,
             rollback: None,
         },
@@ -310,6 +342,26 @@ pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppErro
     )
 }
 
+pub fn call_configure_connection(
+    ctx: &mut TestContext,
+    connection_id: String,
+    nid: String,
+    client_id: String,
+) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_xcall_ibc_connection(),
+        &cw_common::xcall_connection_msg::ExecuteMsg::ConfigureConnection {
+            connection_id,
+            counterparty_port_id: "mock".to_string(),
+            counterparty_nid: NetId::from(nid),
+            client_id,
+            timeout_height: 10,
+        },
+        &[],
+    )
+}
+
 #[test]
 fn test_register_client() {
     let mut ctx = setup_test("icon_to_archway_raw.json");
@@ -352,6 +404,18 @@ fn test_packet_receiver() {
 }
 
 #[test]
+fn test_packet_send_multi_dapp() {
+    let mut ctx = test_icon_to_arcway_handshake();
+    call_multi_dapp_add_connection(&mut ctx).unwrap();
+
+    let result = call_multi_dapp_send_message(&mut ctx);
+    println!("{result:?}");
+    ctx.list_contracts();
+    assert!(result.is_ok());
+    println!("{:?}", &result);
+}
+
+#[test]
 fn test_packet_send() {
     let mut ctx = test_archway_to_icon_handshake();
 
@@ -371,6 +435,19 @@ fn test_packet_send() {
     println!("Packet Acknowledge Ok {:?}", &result);
 }
 
+pub fn get_client_id(res: &AppResponse) -> String {
+    let event = get_event(res, &get_event_name(IbcEventType::CreateClient)).unwrap();
+    let client_id = event.get("client_id").unwrap().to_string();
+    client_id
+}
+
+pub fn get_connection_id(res: &AppResponse, event: IbcEventType) -> String {
+    let event = get_event(res, &get_event_name(event)).unwrap();
+    println!("{:?}", event);
+    let connection_id = event.get("connection_id").unwrap().to_string();
+    connection_id
+}
+
 #[test]
 fn test_icon_to_arcway_handshake() -> TestContext {
     let mut ctx = setup_test("icon_to_archway_raw.json");
@@ -388,6 +465,8 @@ fn test_icon_to_arcway_handshake() -> TestContext {
 
     assert!(response.is_ok());
     println!("Create Client OK");
+    let client_id = get_client_id(&response.unwrap());
+    println!("Clientid is {}", client_id);
 
     let result = call_connection_open_try(&mut ctx);
     println!("Conn Open Try Ok {:?}", &result);
@@ -397,6 +476,15 @@ fn test_icon_to_arcway_handshake() -> TestContext {
 
     assert!(result.is_ok());
     println!("Conn Open Confirm Ok {:?}", &result);
+    // now need to setup connection configuration for multi call
+
+    let connection_id = get_connection_id(&result.unwrap(), IbcEventType::OpenConfirmConnection);
+    let nid = "icon".to_string();
+
+    let result = call_configure_connection(&mut ctx, connection_id, nid, client_id);
+
+    assert!(result.is_ok());
+    println!("Configure Connection Ok {:?}", &result);
 
     let result = call_channel_open_try(&mut ctx);
 
@@ -426,6 +514,8 @@ fn test_archway_to_icon_handshake() -> TestContext {
 
     assert!(response.is_ok());
     println!("Create Client OK");
+    let client_id = get_client_id(&response.unwrap());
+    println!("Clientid is {}", client_id);
 
     let result = call_connection_open_init(&mut ctx);
 
@@ -436,6 +526,13 @@ fn test_archway_to_icon_handshake() -> TestContext {
 
     assert!(result.is_ok());
     println!("Conn Open ack Ok {:?}", &result);
+
+    let connection_id = get_connection_id(&result.unwrap(), IbcEventType::OpenAckConnection);
+    let nid = "icon".to_string();
+
+    let result = call_configure_connection(&mut ctx, connection_id, nid, client_id);
+    assert!(result.is_ok());
+    println!("Configure Connection Ok {:?}", &result);
 
     let result = call_channel_open_init(&mut ctx);
     println!("{result:?}");

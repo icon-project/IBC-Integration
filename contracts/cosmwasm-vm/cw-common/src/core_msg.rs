@@ -96,7 +96,10 @@ pub enum ExecuteMsg {
         //ibc_proto::ibc::core::channel::v1::MsgAcknowledgement
         msg: HexString,
     },
-    RequestTimeout {},
+    WriteAcknowledgement {
+        packet: HexString,
+        acknowledgement: HexString,
+    },
     TimeoutPacket {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgTimeout
@@ -181,4 +184,7 @@ pub enum QueryMsg {
     GetAllPorts {},
     #[returns(String)]
     GetCommitmentPrefix {},
+
+    #[returns(u64)]
+    GetLatestHeight { client_id: String },
 }
