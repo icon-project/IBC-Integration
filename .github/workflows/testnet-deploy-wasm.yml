@@ -34,7 +34,7 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           fingerprint: "DAAFA799CBEEB98A9E9F27B9CB74C586AEC1A809"
           trust_level: 5
-          
+
       # - name: Install stable toolchain
       #   uses: actions-rs/toolchain@v1
       #   with:
@@ -56,6 +56,7 @@ jobs:
           CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
         run: |
           archwayd keys list
+          pass init DAAFA799CBEEB98A9E9F27B9CB74C586AEC1A809
           echo "Installing expect"
           sudo apt-get update >/dev/null
           sudo apt-get install expect >/dev/null
