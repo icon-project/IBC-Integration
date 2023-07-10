@@ -65,7 +65,7 @@ jobs:
           set timeout -1
           spawn /home/runner/go/bin/archwayd keys import constantine3_wallet key.json
           expect "Enter passphrase to decrypt your key:"
-          send -- "$CONSTANTINE_PASSPHRASE\r"
+          send -- "12345678\r"
           expect eof
           EOD
 
