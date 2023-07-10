@@ -56,6 +56,7 @@ jobs:
           CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
         run: |
           archwayd keys list
+          gpg --list-secret-keys
           pass init DAAFA799CBEEB98A9E9F27B9CB74C586AEC1A809
           echo "Installing expect"
           sudo apt-get update >/dev/null
