@@ -50,15 +50,16 @@ jobs:
           CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
         run: |
           archwayd keys list
-          which archwayd
           echo "Installing expect"
           sudo apt-get update >/dev/null
           sudo apt-get install expect >/dev/null
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > key.json
           /usr/bin/expect <<EOD
+          set timeout -1
           spawn /home/runner/go/bin/archwayd keys import constantine3_wallet key.json
           expect "Enter passphrase to decrypt your key:"
           send -- "$CONSTANTINE_PASSPHRASE\r"
+          expect eof
           EOD
 
           # echo "CONSTANTINE_PASSPHRASE" | archwayd keys import constantine3_wallet key.json
