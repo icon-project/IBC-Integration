@@ -62,11 +62,13 @@ jobs:
           sudo apt-get update >/dev/null
           sudo apt-get install expect >/dev/null
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > key.json
+          echo "12345678" | /home/runner/go/bin/archwayd keys import constantine3_wallet key.json
+          which expect
           /usr/bin/expect <<EOD
-          set timeout -1
+          set timeout 60
           spawn /home/runner/go/bin/archwayd keys import constantine3_wallet key.json
           expect "Enter passphrase to decrypt your key:"
-          send -- "12345678\r"
+          send "12345678\r"
           expect eof
           EOD
 
