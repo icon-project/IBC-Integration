@@ -28,7 +28,13 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
         shell: bash
 
-
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          fingerprint: "C787AB518A0C08B7AE1E1ADA2809A1A84E32159A"
+          trust_level: 5
+          
       # - name: Install stable toolchain
       #   uses: actions-rs/toolchain@v1
       #   with:
