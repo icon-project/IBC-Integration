@@ -1,0 +1,8 @@
+which expect
+/usr/bin/expect <<EOD
+set timeout 60
+spawn archwayd keys import constantine3_wallet temp.key
+expect "Enter passphrase to decrypt your key:"
+send "12345678\r"
+expect eof
+EOD

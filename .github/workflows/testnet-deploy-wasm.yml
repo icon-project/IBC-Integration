@@ -61,8 +61,9 @@ jobs:
           echo "Installing expect"
           sudo apt-get update >/dev/null
           sudo apt-get install expect >/dev/null
-          echo $CONSTANTINE_TESTNET_KEY | base64 -d > key.json
-          echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3_wallet key.json
+          echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
+          bash ./scripts/import_key.expect
+          echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3_wallet temp.key
           # which expect
           # /usr/bin/expect <<EOD
           # set timeout 60
