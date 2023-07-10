@@ -57,7 +57,8 @@ sed -i "s|^ARCHWAY_ADDRESS=.*|ARCHWAY_ADDRESS=archway1z6r0f8r735mfrtrd4uv6x9f77t
 cd ./contracts/cosmwasm-vm/icon-ibc-setup
 make archway
 # This wasm directory is inside the docker container
-for CONTRACT_WASM in /contracts/artifacts/*.wasm; do
-  echo "=> Deploying $CONTRACT_WASM"
-  deploy_wasm "$CONTRACT_WASM" 
-done
+# for CONTRACT_WASM in /contracts/artifacts/*.wasm; do
+#   echo "=> Deploying $CONTRACT_WASM"
+#   deploy_wasm "$CONTRACT_WASM" 
+# done
+
