@@ -51,6 +51,16 @@ jobs:
         run: |
           archwayd keys list
           which archwayd
+          sudo apt-get update
+          sudo apt-get install expect
+          expect_script=$(expect -c "
+          set timeout -1
+          spawn archwayd keys import constantine3_wallet constantine3.key
+          expect \"Enter passphrase to decrypt your key:\"
+          send \"$CONSTANTINE_PASSPHRASE\r\"
+          expect eof
+          ")
+
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > key.json
           echo "CONSTANTINE_PASSPHRASE" | archwayd keys import constantine3_wallet key.json
           archwayd keys list
