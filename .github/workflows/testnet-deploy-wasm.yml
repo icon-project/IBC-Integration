@@ -13,6 +13,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      # Install and setup go
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19
+
+      # setup gopath
+      - name: Set PATH
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        shell: bash
+
 
       # - name: Install stable toolchain
       #   uses: actions-rs/toolchain@v1
@@ -26,12 +41,10 @@ jobs:
       #   uses: Swatinem/rust-cache@v2
 
       - name: Download and Install archwayd
-        run: |
-          sudo curl -L -o /usr/local/bin/archwayd https://github.com/archway-network/archway/releases/download/v1.0.1/archwayd_linux_amd64
-          sudo chmod +x /usr/local/bin/archwayd
+        working-directory: contracts/javascore
+        run: make install
 
       - name: Retrieve the secret and decode it to a file
-        working-directory: contracts/javascore
         env:
           CONSTANTINE_TESTNET_KEY: ${{ secrets.CONSTANTINE_TESTNET_KEY }}
           CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
