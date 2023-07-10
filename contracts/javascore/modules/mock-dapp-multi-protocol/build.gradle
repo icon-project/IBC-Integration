@@ -22,7 +22,7 @@ deployJar {
         berlin {
             uri = 'https://berlin.net.solidwallet.io/api/v3'
             nid = 0x7
-            // to = "$mockDAppMultiProtocol"?:null
+            to = "$mockDAppMultiProtocol"?:null
         }
         lisbon {
             uri = 'https://lisbon.net.solidwallet.io/api/v3'
@@ -37,6 +37,6 @@ deployJar {
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-        arg('_callService', 'hxb6b5791be0b5ef67063b3c10b840fb81514db2fd')
+        arg('_callService', "$xCallMultiProtocol")
     }
 }

@@ -43,6 +43,8 @@ subprojects {
         xCall = findProperty("${deploymentENV}.contracts.xcall") as String
         xCallMultiProtocol = findProperty("${deploymentENV}.contracts.xcall-multi-protocol") as String
         xCallConnection = findProperty("${deploymentENV}.contracts.xcall-connection") as String
+        mockDAppMultiProtocol = findProperty("${deploymentENV}.contracts.mock-dapp-multi-protocol") as String
+        
     }
 
     dependencies {
