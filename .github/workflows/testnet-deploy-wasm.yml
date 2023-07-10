@@ -36,6 +36,8 @@ jobs:
           CONSTANTINE_TESTNET_KEY: ${{ secrets.CONSTANTINE_TESTNET_KEY }}
           CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
         run: |
+          archwayd keys list
+          which archwayd
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > key.json
           echo "CONSTANTINE_PASSPHRASE" | archwayd keys import constantine3_wallet key.json
           archwayd keys list
