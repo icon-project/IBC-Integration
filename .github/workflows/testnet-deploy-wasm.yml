@@ -41,7 +41,7 @@ jobs:
       #   uses: Swatinem/rust-cache@v2
 
       - name: Download and Install archwayd
-        working-directory: contracts/javascore
+        working-directory: contracts/cosmwasm-vm/archway
         run: make install
 
       - name: Retrieve the secret and decode it to a file

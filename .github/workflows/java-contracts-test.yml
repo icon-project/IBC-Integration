@@ -4,13 +4,13 @@ on:
   pull_request:
     branches:
       - '**'
-    paths:
-      - 'contracts/javascore/**'
+    # paths:
+      # - 'contracts/javascore/**'
   push:
     branches:
       - main
-    paths:
-      - 'contracts/javascore/**'
+    # paths:
+      # - 'contracts/javascore/**'
 
 jobs:
   unit-test:
