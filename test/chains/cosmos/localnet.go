@@ -94,7 +94,7 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 		return err
 	}
 
-	xCallAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, xCallCodeId, `{"network_id": "07-tendermint", "denom":"`+denom+`"}`, true)
+	xCallAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, xCallCodeId, `{"network_id": "`+c.Config().ChainID+`", "denom":"`+denom+`"}`, true)
 	if err != nil {
 		return err
 	}
@@ -105,11 +105,6 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 	}
 
 	connectionAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, connectionCodeId, `{"port_id":"`+portId+`","xcall_address":"`+xCallAddress+`", "denom":"`+denom+`", "ibc_host":"`+ibcAddress+`"}`, true)
-	if err != nil {
-		return err
-	}
-
-	err = c.CosmosChain.ExecuteContract(context.Background(), keyName, connectionAddress, `{"set_x_call_host":{ "address":"`+xCallAddress+`"}}`)
 	if err != nil {
 		return err
 	}
@@ -126,7 +121,7 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 
 func (c *CosmosLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	temp := "iconclient-0"
-	params := `{"connection_id":"` + connection.ConnectionId + `","counterparty_port_id":"` + connection.CounterPortId + `","counterparty_nid":"` + connection.CounterpartyNid + `","client_id":"` + temp + `","timeout_height":100}`
+	params := `{"connection_id":"` + connection.ConnectionId + `","counterparty_port_id":"` + connection.CounterPartyPortId + `","counterparty_nid":"` + connection.CounterpartyNid + `","client_id":"` + temp + `","timeout_height":100}`
 	_, err := c.ExecuteContract(context.Background(), c.IBCAddresses["connection"], connection.KeyName, "configure_connection", params)
 
 	return ctx, err
@@ -152,7 +147,7 @@ func (c *CosmosLocalnet) DeployXCallMockApp(ctx context.Context, connection chai
 		return err
 	}
 
-	_, err = c.ExecuteContract(context.Background(), dappAddress, connection.KeyName, "add_connection", `{"src_endpoint":"`+c.IBCAddresses["connection"]+`", "dest_endpoint":"`+connection.ConnectionId+`","network_id":"`+connection.CounterpartyNid+`"}`)
+	_, err = c.ExecuteContract(context.Background(), dappAddress, connection.KeyName, "add_connection", `{"src_endpoint":"`+c.IBCAddresses["connection"]+`", "dest_endpoint":"`+connection.CounterPartyConnection+`","network_id":"`+connection.CounterpartyNid+`"}`)
 	if err != nil {
 		return err
 	}
@@ -165,7 +160,7 @@ func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, ke
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	rollbackArray := strings.Join(strings.Fields(fmt.Sprintf("%d", rollback)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s, "rollback":%s}`, _to, dataArray, rollbackArray)
-	height, _ := c.CosmosChain.Height(ctx)
+	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], chains.FaucetAccountKeyName, "send_call_message", params)
 	if err != nil {
 		return "", "", err
@@ -180,7 +175,7 @@ func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, ke
 func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, error) {
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s}`, _to, dataArray)
-	height, _ := c.CosmosChain.Height(ctx)
+	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], keyName, "send_call_message", params)
 	if err != nil {
 		return "", "", err
@@ -195,10 +190,10 @@ func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain,
 func (c *CosmosLocalnet) findSn(tx *TxResul) string {
 	// find better way to parse events
 	for _, event := range tx.Events {
-		if event.Type == "wasm-xcall_message_sent" {
+		if event.Type == "wasm-CallMessageSent" {
 			for _, attribute := range event.Attributes {
 				keyName, _ := base64.StdEncoding.DecodeString(attribute.Key)
-				if string(keyName) == "sq_no" {
+				if string(keyName) == "sn" {
 					sn, _ := base64.StdEncoding.DecodeString(attribute.Value)
 					return string(sn)
 				}
@@ -230,29 +225,21 @@ func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64,
 	defer client.Stop()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	query := fmt.Sprintf(`tx.height > %d
-		AND message.module='wasm'
-		AND wasm._contract_address='%s'
-		AND wasm-call-message.from='%s'
-		AND wasm-call-message.to='%s'
-		AND wasm-call-message.sn='%s'`,
-		startHeight, c.IBCAddresses["xcall"], from, to, sn)
+	query := strings.Join([]string{"tm.event = 'Tx'",
+		fmt.Sprintf("tx.height > %d ", startHeight),
+		fmt.Sprintf("message.module = 'wasm'"),
+		fmt.Sprintf("wasm._contract_address = '%s'", c.IBCAddresses["xcall"]),
+		fmt.Sprintf("wasm-CallMessage.from CONTAINS '%s'", from),
+		fmt.Sprintf("wasm-CallMessage.to CONTAINS '%s'", to),
+		fmt.Sprintf("wasm-CallMessage.sn CONTAINS '%s'", sn),
+	}, " AND ")
 	txs, err := client.Subscribe(ctx, "wasm-client", query)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//for e := range txs {
-	//	return e.Events["wasm-call-message.reqId"][0], nil
-	//}
-
-	select {
-	case e := <-txs:
-		log.Println("Received NewBlock event:", e.Events["wasm-call-message.reqId"][0])
-		return e.Events["wasm-call-message.reqId"][0], nil
-	case <-ctx.Done():
-		fmt.Println("i am here")
-		return "", ctx.Err()
+	for e := range txs {
+		return e.Events["wasm-CallMessage.reqId"][0], nil
 	}
 
 	return "", fmt.Errorf("No message found")

@@ -11,12 +11,13 @@ type ContractKey struct {
 }
 
 type XCallConnection struct {
-	KeyName         string
-	ConnectionId    string
-	ClientId        string
-	CounterpartyNid string
-	PortId          string
-	CounterPortId   string
+	KeyName                string
+	ConnectionId           string
+	ClientId               string
+	CounterpartyNid        string
+	PortId                 string
+	CounterPartyPortId     string
+	CounterPartyConnection string
 }
 
 type LastBlock struct{}

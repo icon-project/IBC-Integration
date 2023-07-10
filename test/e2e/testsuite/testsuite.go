@@ -3,6 +3,7 @@ package testsuite
 import (
 	"context"
 	"fmt"
+
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains/cosmos"
 	"github.com/icon-project/ibc-integration/test/chains/icon"
@@ -10,8 +11,9 @@ import (
 	"github.com/icon-project/ibc-integration/test/e2e/testconfig"
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 
-	"github.com/icon-project/ibc-integration/test/chains"
 	"strings"
+
+	"github.com/icon-project/ibc-integration/test/chains"
 
 	dockerclient "github.com/docker/docker/client"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
@@ -91,19 +93,19 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) {
 	s.Require().NoError(chainB.SetupXCall(ctx, portId, Owner))
 
 	ctx, err = chainA.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
-		KeyName:         Owner,
-		CounterpartyNid: chainB.(ibc.Chain).Config().ChainID,
-		ConnectionId:    "connection-0", //TODO
-		PortId:          portId,
-		CounterPortId:   portId,
+		KeyName:            Owner,
+		CounterpartyNid:    chainB.(ibc.Chain).Config().ChainID,
+		ConnectionId:       "connection-0", //TODO
+		PortId:             portId,
+		CounterPartyPortId: portId,
 	})
 	s.Require().NoError(err)
 	ctx, err = chainB.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
-		KeyName:         Owner,
-		CounterpartyNid: chainA.(ibc.Chain).Config().ChainID,
-		ConnectionId:    "connection-0", //TODO
-		PortId:          portId,
-		CounterPortId:   portId,
+		KeyName:            Owner,
+		CounterpartyNid:    chainA.(ibc.Chain).Config().ChainID,
+		ConnectionId:       "connection-0", //TODO
+		PortId:             portId,
+		CounterPartyPortId: portId,
 	})
 	s.Require().NoError(err)
 	err = s.relayer.CreateChannel(ctx, s.GetRelayerExecReporter(), s.GetPathName(s.pathNameIndex-1), ibc.CreateChannelOptions{
@@ -206,19 +208,21 @@ func (s *E2ETestSuite) DeployMockApp(ctx context.Context, port string) {
 	chainA, chainB := s.GetChains()
 	var err error
 	err = chainA.DeployXCallMockApp(ctx, chains.XCallConnection{
-		KeyName:         Owner,
-		CounterpartyNid: chainB.(ibc.Chain).Config().ChainID,
-		ConnectionId:    "connection-0", //TODO
-		PortId:          port,
-		CounterPortId:   port,
+		KeyName:                Owner,
+		CounterpartyNid:        chainB.(ibc.Chain).Config().ChainID,
+		ConnectionId:           "connection-0", //TODO
+		PortId:                 port,
+		CounterPartyPortId:     port,
+		CounterPartyConnection: chainB.GetIBCAddress("connection"),
 	})
 	s.Require().NoError(err)
 	err = chainB.DeployXCallMockApp(ctx, chains.XCallConnection{
-		KeyName:         Owner,
-		CounterpartyNid: chainA.(ibc.Chain).Config().ChainID,
-		ConnectionId:    "connection-0", //TODO
-		PortId:          port,
-		CounterPortId:   port,
+		KeyName:                Owner,
+		CounterpartyNid:        chainA.(ibc.Chain).Config().ChainID,
+		ConnectionId:           "connection-0", //TODO
+		PortId:                 port,
+		CounterPartyPortId:     port,
+		CounterPartyConnection: chainA.GetIBCAddress("connection"),
 	})
 	s.Require().NoError(err)
 }

@@ -405,7 +405,7 @@ func (c *IconLocalnet) DeployXCallMockApp(ctx context.Context, connection chains
 	if err != nil {
 		return err
 	}
-	params = `{"nid":"` + connection.CounterpartyNid + `", "source":"` + c.IBCAddresses["connection"] + `", "destination":"` + connection.ConnectionId + `"}`
+	params = `{"nid":"` + connection.CounterpartyNid + `", "source":"` + c.IBCAddresses["connection"] + `", "destination":"` + connection.CounterPartyConnection + `"}`
 	ctx, err = c.ExecuteContract(context.Background(), dapp, connection.KeyName, "addConnection", params)
 	if err != nil {
 		panic(err)
@@ -424,7 +424,7 @@ func (c *IconLocalnet) GetIBCAddress(key string) string {
 
 func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	temp := "07-tendermint-0"
-	params := `{"connectionId":"` + connection.ConnectionId + `","counterpartyPortId":"` + connection.CounterPortId + `","counterpartyNid":"` + connection.CounterpartyNid + `","clientId":"` + temp + `","timeoutHeight":"0x64"}`
+	params := `{"connectionId":"` + connection.ConnectionId + `","counterpartyPortId":"` + connection.CounterPartyPortId + `","counterpartyNid":"` + connection.CounterpartyNid + `","clientId":"` + temp + `","timeoutHeight":"100"}`
 	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["connection"], connection.KeyName, "configureConnection", params)
 	if err != nil {
 		panic(err)
@@ -457,7 +457,8 @@ func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyN
 func getSn(tx icontypes.TransactionResult) string {
 	for _, log := range tx.EventLogs {
 		if string(log.Indexed[0]) == "CallMessageSent(Address,str,int)" {
-			return log.Indexed[3]
+			sn, _ := strconv.ParseInt(log.Indexed[3], 0, 64)
+			return strconv.FormatInt(sn, 10)
 		}
 	}
 	return ""
