@@ -54,14 +54,14 @@ jobs:
           echo "Installing expect"
           sudo apt-get update >/dev/null
           sudo apt-get install expect >/dev/null
+          echo $CONSTANTINE_TESTNET_KEY | base64 -d > key.json
           /usr/bin/expect <<EOD
-          spawn /home/runner/go/bin/archwayd
+          spawn /home/runner/go/bin/archwayd keys import constantine3_wallet key.json
           expect "Enter passphrase to decrypt your key:"
           send -- "$CONSTANTINE_PASSPHRASE\r"
           EOD
 
-          echo $CONSTANTINE_TESTNET_KEY | base64 -d > key.json
-          echo "CONSTANTINE_PASSPHRASE" | archwayd keys import constantine3_wallet key.json
+          # echo "CONSTANTINE_PASSPHRASE" | archwayd keys import constantine3_wallet key.json
           archwayd keys list
 
       # - name: Compile WASM
