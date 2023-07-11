@@ -25,8 +25,8 @@ jobs:
           sed -i 's/latest/v0.4.0/' docker-compose.yaml
           docker compose -f docker-compose.yaml up -d
           # git clean submodule directory
-          git checkout .
-          git clean -fdx
+          # git checkout .
+          # git clean -fdx
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -43,6 +43,7 @@ jobs:
         run: |
           echo $PWD
           ls
+          git status
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
           bash ./optimize_build.sh
