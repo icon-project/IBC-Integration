@@ -1,9 +1,7 @@
 use crate::state::IbcConfig;
 use crate::types::LOG_PREFIX;
 use common::ibc::Height;
-use cosmwasm_std::{
-    to_binary, CosmosMsg, Deps, DepsMut, MessageInfo, Storage, SubMsg, WasmMsg,
-};
+use cosmwasm_std::{to_binary, CosmosMsg, Deps, DepsMut, MessageInfo, Storage, SubMsg, WasmMsg};
 use cw_common::cw_types::CwPacket;
 use cw_common::query_helpers::build_smart_query;
 use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
@@ -22,7 +20,6 @@ impl<'a> CwIbcConnection<'a> {
         msg: Vec<u8>,
     ) -> Result<SubMsg, ContractError> {
         let host_address = self.get_ibc_host(store)?;
-        
 
         let message = cw_common::core_msg::ExecuteMsg::WriteAcknowledgement {
             packet,

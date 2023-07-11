@@ -4,7 +4,7 @@ use cw_common::xcall_types::network_address::NetId;
 
 use crate::{
     error::ContractError,
-    state::{CwIbcConnection, IbcConfig},
+    state::{CwIbcConnection, IbcConfig, HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID},
     types::{message::Message, LOG_PREFIX},
 };
 
@@ -90,8 +90,7 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<Response, ContractError> {
         let channel_id = config.src_endpoint().channel_id.clone();
         let packet = self.get_incoming_packet(store, &channel_id, sn)?;
-        self.remove_incoming_packet_sequence(store, &channel_id, sn);
-
+        self.remove_incoming_packet(store, &channel_id, sn);
         let submsg = self.call_host_write_acknowledgement(store, packet, msg)?;
         Ok(Response::new().add_submessage(submsg))
     }

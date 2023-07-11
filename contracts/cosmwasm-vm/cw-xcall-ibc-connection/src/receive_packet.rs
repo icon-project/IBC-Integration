@@ -3,7 +3,7 @@ use std::str::from_utf8;
 use super::*;
 use crate::types::message::Message;
 
-use common::{rlp};
+use common::rlp;
 use cosmwasm_std::{coins, BankMsg, DepsMut};
 
 use debug_print::debug_println;

@@ -322,9 +322,12 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<Response, ContractError> {
         println!("{LOG_PREFIX} Reply From Forward XCall");
         match message.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()
-                .add_attribute("action", "call_message")
-                .add_attribute("method", "xcall_handle_error_reply")),
+            SubMsgResult::Ok(_) => {
+                // self.remove_outgoing_packet_sn(store, channel_id, sequence)
+                Ok(Response::new()
+                    .add_attribute("action", "call_message")
+                    .add_attribute("method", "xcall_handle_error_reply"))
+            }
             SubMsgResult::Err(error) => Err(ContractError::ReplyError {
                 code: message.id,
                 msg: error,
@@ -351,7 +354,7 @@ impl<'a> CwIbcConnection<'a> {
 
     fn host_write_acknowledgement_reply(
         &self,
-        _deps: DepsMut,
+        deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
         println!("{LOG_PREFIX} Reply From Write Acknowledgement Host");

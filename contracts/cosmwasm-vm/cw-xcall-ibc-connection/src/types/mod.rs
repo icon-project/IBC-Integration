@@ -1,5 +1,6 @@
 pub mod storage_keys;
 pub use common::rlp;
+use cosmwasm_schema::cw_serde;
 pub mod channel_config;
 pub mod config;
 pub mod connection_config;

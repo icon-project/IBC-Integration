@@ -1,5 +1,7 @@
-use cw_common::{xcall_types::network_address::NetId};
+use cosmwasm_std::{from_slice, to_vec};
+use cw_common::xcall_types::network_address::NetId;
 use cw_storage_plus::Map;
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::types::{
     channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
@@ -151,7 +153,7 @@ impl<'a> CwIbcConnection<'a> {
             unclaimed_packet_fees: Map::new(StorageKey::UnclaimedPacketFees.as_str()),
             unclaimed_ack_fees: Map::new(StorageKey::UnClaimedAckFees.as_str()),
             incoming_packets: Map::new(StorageKey::IncomingPackets.as_str()),
-            outgoing_packets: Map::new(StorageKey::IncomingPackets.as_str()),
+            outgoing_packets: Map::new(StorageKey::OutGoingPackets.as_str()),
         }
     }
 
@@ -397,12 +399,7 @@ impl<'a> CwIbcConnection<'a> {
             .load(store, (channel_id.to_owned(), sn))
             .map_err(ContractError::Std)
     }
-    pub fn remove_incoming_packet_sequence(
-        &self,
-        store: &mut dyn Storage,
-        channel_id: &str,
-        sequence: i64,
-    ) {
+    pub fn remove_incoming_packet(&self, store: &mut dyn Storage, channel_id: &str, sequence: i64) {
         self.incoming_packets
             .remove(store, (channel_id.to_owned(), sequence))
     }
