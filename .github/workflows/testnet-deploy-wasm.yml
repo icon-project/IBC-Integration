@@ -62,7 +62,8 @@ jobs:
           sudo apt-get update >/dev/null
           sudo apt-get install expect >/dev/null
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
-          bash ./scripts/import_key.expect
+          bash ./scripts/import_key.expect  
+          gpgconf --kill gpg-agent
           echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3_wallet temp.key
           # which expect
           # /usr/bin/expect <<EOD
