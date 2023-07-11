@@ -11,12 +11,22 @@ pub enum StorageKey {
     FeeHandler,
     Balance,
     Fee,
+    ConfiguredNetworks,
+    ChannelConfigs,
+    ConnectionConfigs,
+    NetworkFees,
+    UnclaimedPacketFees,
+    UnClaimedAckFees,
+    IncomingPackets,
+    OutGoingPackets,
+    Config,
 }
 
 impl StorageKey {
     pub fn as_str(&self) -> &'static str {
         match self {
             StorageKey::Owner => "owner",
+            StorageKey::Config => "config",
             StorageKey::Admin => "admin",
             StorageKey::IbcConfig => "ibcconfig",
             StorageKey::IbcHost => "ibc_host",
@@ -25,6 +35,14 @@ impl StorageKey {
             StorageKey::FeeHandler => "feehandler",
             StorageKey::Balance => "balance",
             StorageKey::Fee => "fee",
+            StorageKey::ConfiguredNetworks => "configured_networks",
+            StorageKey::ChannelConfigs => "channel_configs",
+            StorageKey::ConnectionConfigs => "connection_configs",
+            StorageKey::NetworkFees => "network_fees",
+            StorageKey::UnclaimedPacketFees => "unclaimed_packet_fees",
+            StorageKey::IncomingPackets => "incoming_packets",
+            StorageKey::OutGoingPackets => "outgoing_packets",
+            StorageKey::UnClaimedAckFees => "unclaimed_ack_fees",
         }
     }
 }

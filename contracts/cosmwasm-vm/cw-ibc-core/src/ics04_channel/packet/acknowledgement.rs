@@ -411,9 +411,9 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("method", "execute_acknowledgement_packet")
                     .add_event(event))
             }
-            cosmwasm_std::SubMsgResult::Err(_) => {
+            cosmwasm_std::SubMsgResult::Err(e) => {
                 debug_println!("error from module ack reply");
-                Err(PacketError::InvalidAcknowledgement).map_err(Into::<ContractError>::into)?
+                Err(PacketError::Other(e)).map_err(Into::<ContractError>::into)?
             }
         }
     }

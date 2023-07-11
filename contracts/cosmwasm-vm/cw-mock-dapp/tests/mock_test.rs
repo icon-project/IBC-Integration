@@ -1,6 +1,9 @@
 pub mod setup;
+use std::str::FromStr;
+
 use cosmwasm::serde::to_vec;
 use cosmwasm_std::testing::mock_env;
+use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_mock_dapp::{state::CwMockService, types::InstantiateMsg, RollbackData};
 use setup::*;
 
@@ -92,7 +95,7 @@ fn test_handle_message() {
     let res = ctx.handle_call_message(
         deps.as_mut(),
         info,
-        "xcall".to_string(),
+        NetworkAddress::from_str("xcall/address").unwrap(),
         "helloError".as_bytes().to_vec(),
     );
     assert!(res.is_ok())
@@ -116,7 +119,7 @@ fn test_handle_message_fail_revert() {
     ctx.handle_call_message(
         deps.as_mut(),
         info,
-        "xcall".to_string(),
+        NetworkAddress::from_str("xcall/address").unwrap(),
         "revertMessage".as_bytes().to_vec(),
     )
     .unwrap();
@@ -148,7 +151,7 @@ fn test_handle_message_pass_true() {
     let res = ctx.handle_call_message(
         deps.as_mut(),
         info,
-        "hugobyte".to_string(),
+        NetworkAddress::from_str("xcall/hugobyte").unwrap(),
         to_vec(&rollback_data).unwrap(),
     );
     assert!(res.is_ok());
@@ -178,7 +181,7 @@ fn test_handle_message_fail_true() {
     ctx.handle_call_message(
         deps.as_mut(),
         info,
-        "hugobyte".to_string(),
+        NetworkAddress::from_str("xcall/hugobyte").unwrap(),
         to_vec(&rollback_data).unwrap(),
     )
     .unwrap();

@@ -1,6 +1,9 @@
 pub mod setup;
+use std::str::FromStr;
+
 use cosmwasm::serde::to_vec;
 use cosmwasm_std::testing::mock_env;
+use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_mock_dapp_multi::{
     state::{Connection, CwMockService},
     types::InstantiateMsg,
@@ -62,7 +65,7 @@ fn test_send_message() {
     let res = ctx.send_call_message(
         deps.as_mut(),
         info,
-        "netid/xcall".to_string(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         vec![1, 2, 3, 4],
         Some(vec![1, 2, 3, 4, 5]),
     );
@@ -82,7 +85,7 @@ fn test_send_message_fail() {
     ctx.send_call_message(
         deps.as_mut(),
         info,
-        "xcall".to_string(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         vec![1, 2, 3, 4],
         Some(vec![1, 2, 3, 4, 5]),
     )
@@ -106,7 +109,7 @@ fn test_handle_message() {
     let res = ctx.handle_call_message(
         deps.as_mut(),
         info,
-        "xcall".to_string(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         "helloError".as_bytes().to_vec(),
         vec![],
     );
@@ -131,7 +134,7 @@ fn test_handle_message_fail_revert() {
     ctx.handle_call_message(
         deps.as_mut(),
         info,
-        "xcall".to_string(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         "revertMessage".as_bytes().to_vec(),
         vec![],
     )
@@ -164,7 +167,7 @@ fn test_handle_message_pass_true() {
     let res = ctx.handle_call_message(
         deps.as_mut(),
         info,
-        "hugobyte".to_string(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         to_vec(&rollback_data).unwrap(),
         vec![],
     );
@@ -195,7 +198,7 @@ fn test_handle_message_fail_true() {
     ctx.handle_call_message(
         deps.as_mut(),
         info,
-        "hugobyte".to_string(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         to_vec(&rollback_data).unwrap(),
         vec![],
     )

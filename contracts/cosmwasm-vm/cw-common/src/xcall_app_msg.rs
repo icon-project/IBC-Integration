@@ -1,5 +1,7 @@
 use cosmwasm_schema::cw_serde;
 
+use crate::xcall_types::network_address::{NetId, NetworkAddress};
+
 #[cw_serde]
 pub enum ExecuteMsg {
     SetAdmin {
@@ -12,14 +14,22 @@ pub enum ExecuteMsg {
         address: String,
     },
     SendCallMessage {
-        to: String,
+        to: NetworkAddress,
         data: Vec<u8>,
-        sources: Vec<String>,
-        destinations: Vec<String>,
         rollback: Option<Vec<u8>>,
+        sources: Option<Vec<String>>,
+        destinations: Option<Vec<String>>,
     },
-    ReceiveCallMessage {
-        data: Vec<u8>,
+    HandleMessage {
+        from: NetId,
+        sn: Option<i64>,
+        msg: Vec<u8>,
+    },
+
+    HandleError {
+        sn: i64,
+        code: i64,
+        msg: String,
     },
 
     ExecuteCall {
@@ -33,7 +43,4 @@ pub enum ExecuteMsg {
         address: String,
     },
     RemoveAdmin {},
-    SetTimeoutHeight {
-        height: u64,
-    },
 }

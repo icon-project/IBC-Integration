@@ -166,7 +166,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// returned, otherwise `false` is returned.
     pub fn authenticate_capability(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         info: MessageInfo,
         name: Vec<u8>,
     ) -> bool {
@@ -195,7 +195,7 @@ impl<'a> CwIbcCoreContext<'a> {
     /// returned. Otherwise, an `Ok` variant containing the `capabilities` vector is returned.
     pub fn lookup_modules(
         &self,
-        store: &mut dyn Storage,
+        store: &dyn Storage,
         name: Vec<u8>,
     ) -> Result<String, ContractError> {
         let capabilities = self

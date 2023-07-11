@@ -48,4 +48,4 @@ debug_print={workspace=true}
 cosmwasm = "0.7.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
 hex = "0.4.3"
-cw-xcall-app = { path="../cw-xcall-app" }
+cw-xcall-multi = { path="../cw-xcall-multi" }

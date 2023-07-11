@@ -6,6 +6,7 @@ use common::ibc::core::ics04_channel::packet::Receipt;
 use cosmwasm_std::to_binary;
 
 use cw_common::hex_string::HexString;
+use cw_common::query_helpers::build_smart_query;
 use cw_common::raw_types::channel::RawMsgChannelCloseInit;
 use cw_common::raw_types::channel::{
     RawChannel, RawMessageAcknowledgement, RawMessageRecvPacket, RawMessageTimeout,
@@ -61,6 +62,7 @@ impl<'a> CwIbcCoreContext<'a> {
         self.init_client_counter(deps.storage, u64::default())?;
         self.init_connection_counter(deps.storage, u64::default())?;
         self.set_owner(deps.storage, info.sender)?;
+        debug_println!("{:?}", info.funds);
 
         Ok(Response::new().add_attribute("method", "instantiate"))
     }
@@ -194,7 +196,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     Self::from_raw::<RawMessageAcknowledgement, MsgAcknowledgement>(&msg)?;
                 self.acknowledgement_packet_validate(deps, info, env, &message)
             }
-            CoreExecuteMsg::RequestTimeout {} => todo!(),
             CoreExecuteMsg::TimeoutPacket { msg } => {
                 let message: MsgTimeout = Self::from_raw::<RawMessageTimeout, MsgTimeout>(&msg)?;
                 self.timeout_packet_validate(
@@ -228,6 +229,15 @@ impl<'a> CwIbcCoreContext<'a> {
                 Ok(Response::new()
                     .add_attribute("method", "set_expected_time_per_block")
                     .add_attribute("time", block_time.to_string()))
+            }
+            CoreExecuteMsg::WriteAcknowledgement {
+                packet,
+                acknowledgement,
+            } => {
+                let packet_data = packet.to_bytes()?;
+                let packet: RawPacket = RawPacket::decode(packet_data.as_slice())?;
+                let ack = acknowledgement.to_bytes()?;
+                self.write_acknowledgement(deps, info, packet, ack)
             }
         }
         // Ok(Response::new())
@@ -427,6 +437,21 @@ impl<'a> CwIbcCoreContext<'a> {
             QueryMsg::GetCommitmentPrefix {} => {
                 let prefix = self.commitment_prefix(deps, &_env);
                 to_binary(&hex::encode(prefix.into_vec()))
+            }
+            QueryMsg::GetLatestHeight { client_id } => {
+                let msg = to_binary(&cw_common::client_msg::QueryMsg::GetLatestHeight {
+                    client_id: client_id.clone(),
+                })?;
+                let client_address = self
+                    .get_client_implementations(
+                        deps.storage,
+                        IbcClientId::from_str(&client_id).unwrap(),
+                    )
+                    .unwrap();
+                let query = build_smart_query(client_address, msg);
+                let height: u64 = deps.querier.query(&query).unwrap();
+
+                to_binary(&height)
             }
         }
     }

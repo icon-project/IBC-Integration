@@ -42,4 +42,13 @@ pub enum ContractError {
     InvalidAddress { address: String },
     #[error("OnlyIbcHandler")]
     OnlyIbcHandler {},
+    #[error("Connection Already Configured for {connection_id} and {port_id}")]
+    ConnectionAlreadyConfigured {
+        connection_id: String,
+        port_id: String,
+    },
+    #[error("NoFeesAccrued")]
+    NoFeesAccrued,
+    #[error("InvalidPortId")]
+    InvalidPortId,
 }
