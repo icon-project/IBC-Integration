@@ -234,13 +234,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet,
                 acknowledgement,
             } => {
-                let packet_data = packet.to_bytes()?;
-                let packet: RawPacket = RawPacket::decode(packet_data.as_slice())?;
-                let data: Packet = Packet::try_from(packet)
-                    .map_err(|error| ContractError::IbcPacketError { error })?;
-
                 let ack = acknowledgement.to_bytes()?;
-                self.write_acknowledgement(deps, info, data, ack)
+                self.write_acknowledgement(deps, info, packet, ack)
             }
         }
         // Ok(Response::new())

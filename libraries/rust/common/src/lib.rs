@@ -4,12 +4,12 @@ use crate::ibc::core::ics24_host::identifier::ClientId;
 use constants::{
     ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL, ICON_SIGNED_HEADER_TYPE_URL,
 };
-use cosmwasm_std::StdError;
+use cosmwasm_std::{StdError, IbcPacket};
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
 use ibc::core::{
     ics02_client::client_type::ClientType,
     ics24_host::identifier::{ChannelId, ConnectionId, PortId},
-    ics26_routing::context::ModuleId,
+    ics26_routing::context::ModuleId, ics04_channel::packet::Packet,
 };
 use icon::icon::{
     lightclient::v1::{ClientState, ConsensusState},

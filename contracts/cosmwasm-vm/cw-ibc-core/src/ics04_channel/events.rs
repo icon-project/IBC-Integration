@@ -264,32 +264,6 @@ pub fn create_write_ack_event(
         .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id))
 }
 
-pub fn create_write_ack_event_raw(
-    packet: Packet,
-    channel_order: &str,
-    dst_connection_id: &str,
-    acknowledgement: &[u8],
-) -> Result<Event, ContractError> {
-    Ok(Event::new(IbcEventType::WriteAck.as_str())
-        .add_attribute(PKT_ACK_HEX_ATTRIBUTE_KEY, hex::encode(acknowledgement))
-        .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex::encode(packet.data))
-        .add_attribute(
-            PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
-            packet.timeout_height_on_b.to_event_attribute_value(),
-        )
-        .add_attribute(
-            PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
-            packet.timeout_timestamp_on_b.nanoseconds().to_string(),
-        )
-        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
-        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.port_id_on_a.as_str())
-        .add_attribute(PKT_SRC_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_a.as_str())
-        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.port_id_on_b.as_str())
-        .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, packet.chan_id_on_b.as_str())
-        .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order)
-        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id))
-}
-
 /// The function creates an AckPacket event with various attributes in Rust.
 ///
 /// Arguments:

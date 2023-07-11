@@ -18,11 +18,16 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        packet: Packet,
+        packet: CwPacket,
         ack: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        let dest_port = &packet.port_id_on_b;
-        let dest_channel = &packet.chan_id_on_b;
+        let dest_port = &packet.dest.port_id;
+        let dest_channel = &packet.dest.channel_id;
+
+        let ibc_port = IbcPortId::from_str(&dest_port)
+            .map_err(|e| ContractError::IbcValidationError { error: e })?;
+        let ibc_channel = IbcChannelId::from_str(dest_channel)
+            .map_err(|e| ContractError::IbcValidationError { error: e })?;
         let seq = packet.sequence;
 
         let authenticated = self.authenticate_capability(
@@ -39,15 +44,12 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        let channel = self.get_channel_end(
-            deps.as_ref().storage,
-            dest_port.clone(),
-            dest_channel.clone(),
-        )?;
+        let channel =
+            self.get_channel_end(deps.as_ref().storage, ibc_port.clone(), ibc_channel.clone())?;
         if channel.state != State::Open {
             return Err(ContractError::IbcChannelError {
                 error: InvalidChannelState {
-                    channel_id: dest_channel.clone(),
+                    channel_id: ibc_channel.clone(),
                     state: channel.state,
                 },
             });
@@ -56,13 +58,13 @@ impl<'a> CwIbcCoreContext<'a> {
         let ack_commitment = keccak256(&ack).to_vec();
         self.store_packet_acknowledgement(
             deps.storage,
-            &dest_port,
-            &dest_channel,
+            &ibc_port,
+            &ibc_channel,
             Sequence::from(seq),
             AcknowledgementCommitment::from(ack_commitment),
         )?;
 
-        let event = create_write_ack_event_raw(
+        let event = create_write_ack_event(
             packet,
             channel.ordering.as_str(),
             channel.connection_hops[0].as_str(),

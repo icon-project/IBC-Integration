@@ -1,6 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
 
+use crate::cw_types::CwPacket;
 use crate::hex_string::HexString;
 
 #[cw_serde]
@@ -97,7 +98,7 @@ pub enum ExecuteMsg {
         msg: HexString,
     },
     WriteAcknowledgement {
-        packet: HexString,
+        packet: CwPacket,
         acknowledgement: HexString,
     },
     TimeoutPacket {

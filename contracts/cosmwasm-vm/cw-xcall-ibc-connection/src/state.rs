@@ -1,4 +1,4 @@
-use cw_common::{hex_string::HexString, xcall_types::network_address::NetId};
+use cw_common::{xcall_types::network_address::NetId};
 use cw_storage_plus::Map;
 
 use crate::types::{
@@ -125,7 +125,7 @@ pub struct CwIbcConnection<'a> {
     network_fees: Map<'a, NetId, NetworkFees>,
     unclaimed_packet_fees: Map<'a, (String, String), u128>,
     unclaimed_ack_fees: Map<'a, (String, u64), u128>,
-    incoming_packets: Map<'a, (String, i64), HexString>,
+    incoming_packets: Map<'a, (String, i64), CwPacket>,
     outgoing_packets: Map<'a, (String, u64), i64>,
 }
 
@@ -392,7 +392,7 @@ impl<'a> CwIbcConnection<'a> {
         store: &dyn Storage,
         channel_id: &str,
         sn: i64,
-    ) -> Result<HexString, ContractError> {
+    ) -> Result<CwPacket, ContractError> {
         self.incoming_packets
             .load(store, (channel_id.to_owned(), sn))
             .map_err(ContractError::Std)
@@ -412,7 +412,7 @@ impl<'a> CwIbcConnection<'a> {
         store: &mut dyn Storage,
         channel_id: &str,
         sn: i64,
-        packet: HexString,
+        packet: CwPacket,
     ) -> Result<(), ContractError> {
         self.incoming_packets
             .save(store, (channel_id.to_owned(), sn), &packet)
