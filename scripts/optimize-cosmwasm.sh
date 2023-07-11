@@ -25,7 +25,7 @@ if [ "$CUR_RUSTC_VERS" != "$RUSTC_VERS" ] || [ "$CUR_WASMOPT_VERS" != "$WASMOPT_
   echo -e "\n ** Warning: The required versions for Rust and wasm-opt are ${RUSTC_VERS} and ${WASMOPT_VERS}, respectively. Building with different versions may result in failure.\n"
 fi
 
-mkdir -p artifacts
+mkdir -p artifacts/archway
 cargo fmt --all
 cargo clippy --fix --allow-dirty
 cargo clean
@@ -38,23 +38,24 @@ RUSTFLAGS='-C link-arg=-s' cargo build --workspace --exclude test-utils --releas
 for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do
   NAME=$(basename "$WASM" .wasm)${SUFFIX}.wasm
   echo "Creating intermediate hash for $NAME ..."
-  sha256sum -- "$WASM" | tee -a artifacts/checksums_intermediate.txt
+  sha256sum -- "$WASM" | tee -a artifacts/archway/checksums_intermediate.txt
   echo "Optimizing $NAME ..."
-  wasm-opt -Oz "$WASM" -o "artifacts/$NAME"
+  wasm-opt -Oz "$WASM" -o "artifacts/archway/$NAME"
 done
 
 # check all generated wasm files
-cosmwasm-check artifacts/cw_ibc_core.wasm
-cosmwasm-check artifacts/cw_icon_light_client.wasm
-cosmwasm-check artifacts/cw_mock_dapp.wasm
-cosmwasm-check artifacts/cw_xcall.wasm
-cosmwasm-check artifacts/cw_xcall_ibc_connection.wasm
-cosmwasm-check artifacts/cw_xcall_multi.wasm
+cosmwasm-check artifacts/archway/cw_ibc_core.wasm
+cosmwasm-check artifacts/archway/cw_icon_light_client.wasm
+cosmwasm-check artifacts/archway/cw_mock_dapp.wasm
+cosmwasm-check artifacts/archway/cw_xcall.wasm
+cosmwasm-check artifacts/archway/cw_xcall_ibc_connection.wasm
+cosmwasm-check artifacts/archway/cw_xcall_multi.wasm
 
-# validate size 
+
+# validate size
 echo "Check if size of wasm file exceeds $MAX_WASM_SIZE kilobytes..."
-for file in artifacts/*.wasm
-do 
+for file in artifacts/archway/*.wasm
+do
 size=$(du -k "$file" | awk '{print $1}')
 if [[ $size -gt $MAX_WASM_SIZE ]]; then
 echo "Error: $file : $size KB has exceeded maximum contract size limit of $MAX_WASM_SIZE KB."
@@ -63,5 +64,3 @@ fi
 echo "$file : $size KB"
 done
 echo "The size of all contracts is well within the $MAX_WASM_SIZE KB limit."
-
-

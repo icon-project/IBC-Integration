@@ -48,18 +48,17 @@ func NewICONRelayer(log *zap.Logger, testName string, cli *client.Client, networ
 }
 
 type ICONRelayerChainConfigValue struct {
-	Key                   string `json:"key"`
-	ChainID               string `json:"chain-id"`
-	RPCAddr               string `json:"rpc-addr"`
-	Timeout               string `json:"timeout"`
-	Keystore              string `json:"keystore"`
-	Password              string `json:"password"`
-	IconNetworkID         int    `json:"icon-network-id"`
-	BtpNetworkID          int    `json:"btp-network-id"`
-	StartBtpHeight        int    `json:"start-btp-height"`
-	BTPNetworkTypeID      int    `json:"btp-network-type-id"`
-	IBCHandlerAddress     string `json:"ibc-handler-address"`
-	ArchwayHandlerAddress string `json:"archway-handler-address"`
+	Key               string `json:"key"`
+	ChainID           string `json:"chain-id"`
+	RPCAddr           string `json:"rpc-addr"`
+	Timeout           string `json:"timeout"`
+	Keystore          string `json:"keystore"`
+	Password          string `json:"password"`
+	IconNetworkID     int    `json:"icon-network-id"`
+	BtpNetworkID      int    `json:"btp-network-id"`
+	StartBtpHeight    int    `json:"start-btp-height"`
+	BTPNetworkTypeID  int    `json:"btp-network-type-id"`
+	IBCHandlerAddress string `json:"ibc-handler-address"`
 }
 
 type ArchRelayerChainConfigValue struct {
@@ -100,18 +99,17 @@ func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, r
 	return ICONRelayerChainConfig{
 		Type: chainType,
 		Value: ICONRelayerChainConfigValue{
-			Key:                   "icx",
-			ChainID:               chainConfig.ChainID,
-			RPCAddr:               "http://" + rpcAddr + "/api/v3/",
-			Timeout:               "10s",
-			Keystore:              "/home/relayer/keys/godwallet.json",
-			Password:              "gochain",
-			IconNetworkID:         3,
-			BtpNetworkID:          chainConfig.ConfigFileOverrides["btp-network-id"].(int),
-			StartBtpHeight:        chainConfig.ConfigFileOverrides["start-btp-height"].(int),
-			BTPNetworkTypeID:      chainConfig.ConfigFileOverrides["btp-network-type-id"].(int),
-			IBCHandlerAddress:     chainConfig.ConfigFileOverrides["ibc-handler-address"].(string),
-			ArchwayHandlerAddress: chainConfig.ConfigFileOverrides["archway-handler-address"].(string),
+			Key:               "icx",
+			ChainID:           chainConfig.ChainID,
+			RPCAddr:           "http://" + rpcAddr + "/api/v3/",
+			Timeout:           "10s",
+			Keystore:          "/home/relayer/keys/godwallet.json",
+			Password:          "gochain",
+			IconNetworkID:     3,
+			BtpNetworkID:      chainConfig.ConfigFileOverrides["btp-network-id"].(int),
+			StartBtpHeight:    chainConfig.ConfigFileOverrides["start-btp-height"].(int),
+			BTPNetworkTypeID:  chainConfig.ConfigFileOverrides["btp-network-type-id"].(int),
+			IBCHandlerAddress: chainConfig.ConfigFileOverrides["ibc-handler-address"].(string),
 		},
 	}
 }

@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/icon-project/ibc-integration/test/chains"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/docker/docker/api/types/mount"
+	"github.com/icon-project/ibc-integration/test/chains"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -80,8 +81,8 @@ func (in *IconNode) Name() string {
 // Create Node Container with ports exposed and published for host to communicate with
 func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 	imageRef := in.Image.Ref()
-	executablePath, err := os.Getwd()
-	testBasePath := path.Dir(executablePath)
+	testBasePath := os.Getenv(chains.BASE_PATH)
+
 	containerConfig := &types.ContainerCreateConfig{
 		Config: &container.Config{
 			Image:    imageRef,
@@ -98,12 +99,12 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 			Mounts: []mount.Mount{
 				{
 					Type:   mount.TypeBind,
-					Source: fmt.Sprintf("%s/chains/icon/data/single", testBasePath),
+					Source: fmt.Sprintf("%s/test/chains/icon/data/single", testBasePath),
 					Target: "/goloop/data",
 				},
 				{
 					Type:   mount.TypeBind,
-					Source: fmt.Sprintf("%s/chains/icon/data/governance", testBasePath),
+					Source: fmt.Sprintf("%s/test/chains/icon/data/governance", testBasePath),
 					Target: "/goloop/data/gov",
 				},
 			},
@@ -116,14 +117,11 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 	}
 	cc, err := in.DockerClient.ContainerCreate(ctx, containerConfig.Config, containerConfig.HostConfig, containerConfig.NetworkingConfig, nil, in.Name())
 	if err != nil {
-		panic(err)
-	}
-	if err != nil {
+		in.log.Error("Failed to create container", zap.Error(err))
 		return err
 	}
 	in.ContainerID = cc.ID
 	return nil
-
 }
 
 func (in *IconNode) HostName() string {
@@ -231,8 +229,7 @@ func (in *IconNode) GetBalance(ctx context.Context, address string) (int64, erro
 func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
 	// Write Contract file to Docker volume
 	_, score := filepath.Split(scorePath)
-	err := in.CopyFile(ctx, scorePath, score)
-	if err != nil {
+	if err := in.CopyFile(ctx, scorePath, score); err != nil {
 		return "", fmt.Errorf("error copying keystore to Docker volume: %w", err)
 	}
 
