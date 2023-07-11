@@ -60,7 +60,7 @@ jobs:
           pass init C787AB518A0C08B7AE1E1ADA2809A1A84E32159A
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
           gpgconf --kill gpg-agent
-          echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3_wallet temp.key --keyring-backend test
+          echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3Wallet temp.key --keyring-backend test
           archwayd keys list
 
       - name: Compile WASM
@@ -84,11 +84,5 @@ jobs:
           done
           echo "The size of all contracts is well within the 800 KB limit."
 
-      # - name: Deploy WASM
-      #   run: |
-      #     container=$(docker ps --format '{{.Names}}')
-      #     rm -rf artifacts/cw_common.wasm
-      #     cp -r {artifacts,scripts/deploy_cosmwasm.sh} contracts/cosmwasm-vm/archway/contracts
-      #     docker ps -a
-      #     docker exec $container chmod +x /contracts/deploy_cosmwasm.sh
-      #     docker exec $container /contracts/deploy_cosmwasm.sh
+      - name: Deploy WASM
+        run: bash -x scripts/deploy_cosmwasm.sh
