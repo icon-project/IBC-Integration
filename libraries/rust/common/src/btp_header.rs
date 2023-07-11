@@ -159,7 +159,7 @@ mod tests {
     fn relay_bytes_to_signed_header() {
         let headers = load_test_headers();
         for header in headers {
-            let buff = hex::decode(header.encoded_protobuf.replace("", "")).unwrap();
+            let buff = hex::decode(header.encoded_protobuf.replace("0x", "")).unwrap();
             let decoded = SignedHeader::decode(buff.as_slice());
 
             assert!(decoded.is_ok());
