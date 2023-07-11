@@ -1,6 +1,8 @@
 package cosmos
 
 import (
+	"context"
+	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"time"
@@ -67,6 +69,21 @@ type CosmosTestnet struct {
 	url              string
 	Client           rpcclient.Client
 	ChainID          string
+}
+
+func (it *CosmosTestnet) DeployXCallMockApp(ctx context.Context, connection chains.XCallConnection) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CosmosTestnet) GetIBCAddress(key string) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CosmosTestnet) SetupXCall(ctx context.Context, portId, keyName string) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 type Result struct {

@@ -22,13 +22,16 @@ type Chain interface {
 	FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error)
 	BuildWallets(ctx context.Context, keyName string) error
 	SetupIBC(ctx context.Context, keyName string) (context.Context, error)
-	ConfigureBaseConnection(ctx context.Context, keyName, channel, counterpartyNid, counterpartyConnection string) (context.Context, error)
+	SetupXCall(ctx context.Context, portId, keyName string) error
+	ConfigureBaseConnection(ctx context.Context, connection XCallConnection) (context.Context, error)
 	XCall(ctx context.Context, targetChain Chain, keyName, _to string, data, rollback []byte) (string, string, error)
 	EOAXCall(ctx context.Context, targetChain Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, error)
 	ExecuteCall(ctx context.Context, reqId string) (context.Context, error)
 	ExecuteRollback(ctx context.Context, sn string) (context.Context, error)
 	FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error)
 	OverrideConfig(key string, value any)
+	GetIBCAddress(key string) string
+	DeployXCallMockApp(ctx context.Context, connection XCallConnection) error
 }
 
 type ChainConfig struct {
