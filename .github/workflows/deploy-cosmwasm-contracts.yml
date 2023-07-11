@@ -11,6 +11,7 @@ on:
       - contracts/cosmwasm-vm/**
       - libraries/common/rust/**
       - .github/workflows/deploy-cosmwasm-contracts.yml
+      
 jobs:
   Build:
     name: Build & Deploy Cosmasm Contracts
