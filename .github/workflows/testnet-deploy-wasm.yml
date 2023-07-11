@@ -46,58 +46,23 @@ jobs:
       # - name: Cache Rust dependencies
       #   uses: Swatinem/rust-cache@v2
 
-      - name: Download and Install archwayd
-        working-directory: contracts/cosmwasm-vm/archway
-        run: make install
+      # - name: Download and Install archwayd
+      #   working-directory: contracts/cosmwasm-vm/archway
+      #   run: make install
 
       - name: Retrieve the secret and decode it to a file
         env:
           CONSTANTINE_TESTNET_KEY: ${{ secrets.CONSTANTINE_TESTNET_KEY }}
           CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
         run: |
-          # export GNUPGHOME="$(mktemp -d)"
-          # echo "Create gpg "
-          # cat >foo <<EOF
-          # %echo Generating a basic OpenPGP key
-          # Key-Type: DSA
-          # Key-Length: 1024
-          # Subkey-Type: ELG-E
-          # Subkey-Length: 1024
-          # Name-Real: constantine
-          # Name-Comment: archway testnet
-          # Name-Email: gpg@example.com
-          # Expire-Date: 0
-          # Passphrase: abc
-          # # Do a commit here, so that we can later print "done" :-)
-          # %commit
-          # %echo done
-          # EOF
-          # gpg --batch --generate-key foo
-          # archwayd keys list
-          # docker run --rm -it -v ~/.archway:/root/.archway ghcr.io/archway-network/archwayd:v1.0.1 keys list
+          docker run --rm -it -v ~/.archway:/root/.archway ghcr.io/archway-network/archwayd:v1.0.1 keys list
           gpg --list-secret-keys
           pass init C787AB518A0C08B7AE1E1ADA2809A1A84E32159A
-          echo "Installing expect"
-          sudo apt-get update >/dev/null
-          sudo apt-get install expect >/dev/null
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
           gpgconf --kill gpg-agent
-          # rm ~/.gnupg/S.*
-          # gpg-connect-agent reloadagent /bye
-          # sleep 5
-          # bash ./scripts/import_key.expect  
           echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3_wallet temp.key
-          # which expect
-          # /usr/bin/expect <<EOD
-          # set timeout 60
-          # spawn /home/runner/go/bin/archwayd keys import constantine3_wallet key.json
-          # expect "Enter passphrase to decrypt your key:"
-          # send "12345678\r"
-          # expect eof
-          # EOD
+          docker run --rm -it -v ~/.archway:/root/.archway ghcr.io/archway-network/archwayd:v1.0.1 keys list
 
-          # echo "CONSTANTINE_PASSPHRASE" | archwayd keys import constantine3_wallet key.json
-          archwayd keys list
 
       # - name: Compile WASM
       #   run: |
