@@ -46,9 +46,9 @@ jobs:
       # - name: Cache Rust dependencies
       #   uses: Swatinem/rust-cache@v2
 
-      # - name: Download and Install archwayd
-      #   working-directory: contracts/cosmwasm-vm/archway
-      #   run: make install
+      - name: Download and Install archwayd
+        working-directory: contracts/cosmwasm-vm/archway
+        run: make install
 
       - name: Retrieve the secret and decode it to a file
         env:
@@ -60,30 +60,29 @@ jobs:
           pass init C787AB518A0C08B7AE1E1ADA2809A1A84E32159A
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
           gpgconf --kill gpg-agent
-          echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3_wallet temp.key
-          docker run --rm -it -v ~/.archway:/root/.archway ghcr.io/archway-network/archwayd:v1.0.1 keys list
+          echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3_wallet temp.key --keyring-backend test
+          archwayd keys list
 
+      - name: Compile WASM
+        run: |
+          rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          bash ./optimize_build.sh
 
-      # - name: Compile WASM
-      #   run: |
-      #     rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
-      #     rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
-      #     bash ./optimize_build.sh
-
-      # - name: Check WASM Size
-      #   run: |
-      #     max_size=800 
-      #     echo "Check if size of wasm file exceeds $max_size kilobytes..."
-      #     for file in artifacts/*.wasm
-      #     do 
-      #     size=$(du -k "$file" | awk '{print $1}')
-      #     if [[ $size -gt $max_size ]]; then
-      #     echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
-      #     exit 1
-      #     fi
-      #     echo "$file : $size KB"
-      #     done
-      #     echo "The size of all contracts is well within the 800 KB limit."
+      - name: Check WASM Size
+        run: |
+          max_size=800 
+          echo "Check if size of wasm file exceeds $max_size kilobytes..."
+          for file in artifacts/*.wasm
+          do 
+          size=$(du -k "$file" | awk '{print $1}')
+          if [[ $size -gt $max_size ]]; then
+          echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
+          exit 1
+          fi
+          echo "$file : $size KB"
+          done
+          echo "The size of all contracts is well within the 800 KB limit."
 
       # - name: Deploy WASM
       #   run: |

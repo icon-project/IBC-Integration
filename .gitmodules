@@ -9,3 +9,6 @@
 [submodule "contracts/cosmwasm-vm/icon-ibc-setup"]
 	path = contracts/cosmwasm-vm/icon-ibc-setup
 	url = https://github.com/izyak/icon-ibc-setup.git
+[submodule "contracts/contracts/cosmwasm-vm/icon-ibc-setup"]
+	path = contracts/contracts/cosmwasm-vm/icon-ibc-setup
+	url = https://github.com/izyak/icon-ibc-setup.git
