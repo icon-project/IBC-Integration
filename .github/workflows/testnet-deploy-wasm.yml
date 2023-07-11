@@ -35,16 +35,16 @@ jobs:
           fingerprint: "C787AB518A0C08B7AE1E1ADA2809A1A84E32159A"
           trust_level: 5
 
-      # - name: Install stable toolchain
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: 1.69.0
-      #     target: wasm32-unknown-unknown
-      #     override: true
-      #     profile: minimal
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.69.0
+          target: wasm32-unknown-unknown
+          override: true
+          profile: minimal
 
-      # - name: Cache Rust dependencies
-      #   uses: Swatinem/rust-cache@v2
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Download and Install archwayd
         working-directory: contracts/cosmwasm-vm/archway
