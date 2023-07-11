@@ -42,8 +42,6 @@ func NewIconChain(t *testing.T, ctx context.Context, environment string, chainCo
 		),
 		)
 		return localchain, nil
-	case "testnet":
-		return NewIconTestnet(chainConfig.Bin, nid, keystorePath, keyPassword, "5000000000", url, scorePaths), nil
 	default:
 		return nil, fmt.Errorf("unknown environment: %s", environment)
 	}
