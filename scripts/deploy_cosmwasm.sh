@@ -45,17 +45,14 @@ deploy_wasm() {
 
 # Correct path
 echo $PWD
-ls
-ls ../contracts/cosmwasm-vm
-echo $PWD
-sed -i "s|^CONTRACTS_DIR=.*|CONTRACTS_DIR=$PWD/IBC-Integration|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
-sed -i "s|^ARCHWAY_WALLET=.*|ARCHWAY_WALLET=constantine3Wallet|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
-sed -i "s|^ARCHWAY_NETWORK=.*|ARCHWAY_NETWORK=testnet|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
-sed -i "s|^ARCHWAY_NETWORK=.*|ARCHWAY_NETWORK=testnet|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
-sed -i "s|constantine-2|constantine-3|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
-sed -i '2i\sed -x' ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
+sed -i "s|^CONTRACTS_DIR=.*|CONTRACTS_DIR=$PWD/IBC-Integration|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
+sed -i "s|^ARCHWAY_WALLET=.*|ARCHWAY_WALLET=constantine3Wallet|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
+sed -i "s|^ARCHWAY_NETWORK=.*|ARCHWAY_NETWORK=testnet|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
+sed -i "s|^ARCHWAY_NETWORK=.*|ARCHWAY_NETWORK=testnet|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
+sed -i "s|constantine-2|constantine-3|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
+sed -i '2i\sed -x' ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
 
-cd ../contracts/cosmwasm-vm/icon-ibc-setup
+cd ./contracts/cosmwasm-vm/icon-ibc-setup
 make archway
 # # This wasm directory is inside the docker container
 # for CONTRACT_WASM in /contracts/artifacts/*.wasm; do

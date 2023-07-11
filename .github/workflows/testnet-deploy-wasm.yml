@@ -16,71 +16,71 @@ jobs:
         with:
           submodules: true
 
-      # # Install and setup go
-      # - name: Set up Go 1.19
-      #   uses: actions/setup-go@v2
-      #   with:
-      #     go-version: 1.19
+      # Install and setup go
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19
 
-      # # setup gopath
-      # - name: Set PATH
-      #   run: |
-      #     echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-      #   shell: bash
+      # setup gopath
+      - name: Set PATH
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        shell: bash
 
-      # - name: Import GPG key
-      #   uses: crazy-max/ghaction-import-gpg@v5
-      #   with:
-      #     gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-      #     fingerprint: "C787AB518A0C08B7AE1E1ADA2809A1A84E32159A"
-      #     trust_level: 5
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          fingerprint: "C787AB518A0C08B7AE1E1ADA2809A1A84E32159A"
+          trust_level: 5
 
-      # - name: Install stable toolchain
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: 1.69.0
-      #     target: wasm32-unknown-unknown
-      #     override: true
-      #     profile: minimal
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.69.0
+          target: wasm32-unknown-unknown
+          override: true
+          profile: minimal
 
-      # - name: Cache Rust dependencies
-      #   uses: Swatinem/rust-cache@v2
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
 
-      # - name: Download and Install archwayd
-      #   working-directory: contracts/cosmwasm-vm/archway
-      #   run: make install
+      - name: Download and Install archwayd
+        working-directory: contracts/cosmwasm-vm/archway
+        run: make install
 
-      # - name: Retrieve the secret and decode it to a file
-      #   env:
-      #     CONSTANTINE_TESTNET_KEY: ${{ secrets.CONSTANTINE_TESTNET_KEY }}
-      #     CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
-      #   run: |
-      #     pass init C787AB518A0C08B7AE1E1ADA2809A1A84E32159A
-      #     echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
-      #     gpgconf --kill gpg-agent
-      #     echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3Wallet temp.key --keyring-backend test
-      #     archwayd keys list
+      - name: Retrieve the secret and decode it to a file
+        env:
+          CONSTANTINE_TESTNET_KEY: ${{ secrets.CONSTANTINE_TESTNET_KEY }}
+          CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
+        run: |
+          pass init C787AB518A0C08B7AE1E1ADA2809A1A84E32159A
+          echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
+          gpgconf --kill gpg-agent
+          echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3Wallet temp.key --keyring-backend test
+          archwayd keys list
 
-      # - name: Compile WASM
-      #   run: |
-      #     rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
-      #     rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
-      #     bash ./optimize_build.sh
+      - name: Compile WASM
+        run: |
+          rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          bash ./optimize_build.sh
 
-      # - name: Check WASM Size
-      #   run: |
-      #     max_size=800 
-      #     echo "Check if size of wasm file exceeds $max_size kilobytes..."
-      #     for file in artifacts/*.wasm
-      #     do 
-      #     size=$(du -k "$file" | awk '{print $1}')
-      #     if [[ $size -gt $max_size ]]; then
-      #     echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
-      #     exit 1
-      #     fi
-      #     echo "$file : $size KB"
-      #     done
-      #     echo "The size of all contracts is well within the 800 KB limit."
+      - name: Check WASM Size
+        run: |
+          max_size=800 
+          echo "Check if size of wasm file exceeds $max_size kilobytes..."
+          for file in artifacts/*.wasm
+          do 
+          size=$(du -k "$file" | awk '{print $1}')
+          if [[ $size -gt $max_size ]]; then
+          echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
+          exit 1
+          fi
+          echo "$file : $size KB"
+          done
+          echo "The size of all contracts is well within the 800 KB limit."
 
       - name: Deploy WASM
         run: bash -x scripts/deploy_cosmwasm.sh testnet
