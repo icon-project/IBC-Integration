@@ -322,11 +322,9 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<Response, ContractError> {
         println!("{LOG_PREFIX} Reply From Forward XCall");
         match message.result {
-            SubMsgResult::Ok(_) => {
-                Ok(Response::new()
-                    .add_attribute("action", "call_message")
-                    .add_attribute("method", "xcall_handle_error_reply"))
-            }
+            SubMsgResult::Ok(_) => Ok(Response::new()
+                .add_attribute("action", "call_message")
+                .add_attribute("method", "xcall_handle_error_reply")),
             SubMsgResult::Err(error) => Err(ContractError::ReplyError {
                 code: message.id,
                 msg: error,
