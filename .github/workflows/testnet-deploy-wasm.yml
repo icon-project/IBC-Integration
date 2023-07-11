@@ -55,8 +55,6 @@ jobs:
           CONSTANTINE_TESTNET_KEY: ${{ secrets.CONSTANTINE_TESTNET_KEY }}
           CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
         run: |
-          docker run --rm -it -v ~/.archway:/root/.archway ghcr.io/archway-network/archwayd:v1.0.1 keys list
-          gpg --list-secret-keys
           pass init C787AB518A0C08B7AE1E1ADA2809A1A84E32159A
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
           gpgconf --kill gpg-agent
