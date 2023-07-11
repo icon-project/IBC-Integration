@@ -83,4 +83,7 @@ jobs:
           echo "The size of all contracts is well within the 800 KB limit."
 
       - name: Deploy WASM
-        run: bash -x scripts/deploy_cosmwasm.sh testnet
+        run: |
+          archwayd keys list
+          archwayd query bank balances archway1z6r0f8r735mfrtrd4uv6x9f77tc6dsqzxtj7j4 --node https://rpc.constantine.archway.tech:443
+          bash -x scripts/deploy_cosmwasm.sh testnet

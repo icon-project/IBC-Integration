@@ -50,6 +50,8 @@ sed -i "s|^ARCHWAY_WALLET=.*|ARCHWAY_WALLET=constantine3Wallet|" ./contracts/cos
 sed -i "s|^ARCHWAY_NETWORK=.*|ARCHWAY_NETWORK=testnet|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
 sed -i "s|^ARCHWAY_NETWORK=.*|ARCHWAY_NETWORK=testnet|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
 sed -i "s|constantine-2|constantine-3|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
+sed -i "s|^ARCHWAY_ADDRESS=.*|ARCHWAY_ADDRESS=archway1z6r0f8r735mfrtrd4uv6x9f77tc6dsqzxtj7j4|" ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
+
 # sed -i '2i\sed -x' ./contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
 
 cd ./contracts/cosmwasm-vm/icon-ibc-setup
