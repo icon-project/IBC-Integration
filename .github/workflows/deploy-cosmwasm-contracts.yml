@@ -4,10 +4,10 @@ on:
     branches:
       - main
       - fix/use-complete-packet-data-for-write-ack
-  pull_request:
-    branches:
-      - main
-    paths:
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
       - contracts/cosmwasm-vm/**
       - .github/workflows/deploy-cosmwasm-contracts.yml
 jobs:
