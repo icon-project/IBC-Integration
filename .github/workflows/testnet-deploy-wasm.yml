@@ -83,4 +83,4 @@ jobs:
           echo "The size of all contracts is well within the 800 KB limit."
 
       - name: Deploy WASM
-        run: bash -x scripts/deploy_cosmwasm.sh
+        run: bash -x scripts/deploy_cosmwasm.sh testnet
