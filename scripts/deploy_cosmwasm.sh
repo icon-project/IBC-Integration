@@ -18,7 +18,7 @@ if [ "$1" == "local" ]; then
   CHAIN_ID=localnet
   WALLET=fd # This account is default while running the chain on docker.
   TOKEN=stake
-elif [ "$1" == "testnet" ]
+elif [ "$1" == "testnet" ]; then
   ENDPOINT=https://rpc.constantine.archway.tech:443
   CHAIN_ID=constantine-3
   WALLET=constantine2_wallet
