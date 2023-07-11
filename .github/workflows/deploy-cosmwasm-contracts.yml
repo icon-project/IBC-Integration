@@ -36,8 +36,8 @@ jobs:
           override: true
           profile: minimal
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+      # - name: Cache Rust dependencies
+      #   uses: Swatinem/rust-cache@v2
 
       - name: Compile WASM
         run: |
