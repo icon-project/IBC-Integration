@@ -26,7 +26,7 @@ use crate::{
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, Event, MessageInfo, Never, Reply,
+    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Never, Reply,
     Response, StdError, StdResult, Storage, SubMsg, SubMsgResult,
 };
 #[cfg(feature = "native_ibc")]

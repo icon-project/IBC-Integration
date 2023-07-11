@@ -354,7 +354,7 @@ impl<'a> CwIbcConnection<'a> {
 
     fn host_write_acknowledgement_reply(
         &self,
-        deps: DepsMut,
+        _deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
         println!("{LOG_PREFIX} Reply From Write Acknowledgement Host");

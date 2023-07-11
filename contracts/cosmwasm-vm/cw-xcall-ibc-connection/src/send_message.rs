@@ -4,7 +4,7 @@ use cw_common::xcall_types::network_address::NetId;
 
 use crate::{
     error::ContractError,
-    state::{CwIbcConnection, IbcConfig, HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID},
+    state::{CwIbcConnection, IbcConfig},
     types::{message::Message, LOG_PREFIX},
 };
 
