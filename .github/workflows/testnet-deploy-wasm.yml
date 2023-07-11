@@ -82,9 +82,9 @@ jobs:
           sudo apt-get install expect >/dev/null
           echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
           gpgconf --kill gpg-agent
-          rm ~/.gnupg/S.*
-          gpg-connect-agent reloadagent /bye
-          sleep 5
+          # rm ~/.gnupg/S.*
+          # gpg-connect-agent reloadagent /bye
+          # sleep 5
           # bash ./scripts/import_key.expect  
           echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3_wallet temp.key
           # which expect
