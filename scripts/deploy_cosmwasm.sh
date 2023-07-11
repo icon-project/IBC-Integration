@@ -44,6 +44,8 @@ deploy_wasm() {
 }
 
 # Correct path
+ls ../contracts/cosmwasm-vm
+echo $PWD
 sed -i "s|^CONTRACTS_DIR=.*|CONTRACTS_DIR=$PWD/IBC-Integration|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
 sed -i "s|^ARCHWAY_WALLET=.*|ARCHWAY_WALLET=constantine3Wallet|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
 sed -i "s|^ARCHWAY_NETWORK=.*|ARCHWAY_NETWORK=testnet|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
