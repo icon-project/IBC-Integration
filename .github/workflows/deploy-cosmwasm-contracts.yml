@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - fix/use-complete-packet-data-for-write-ack
   pull_request:
     branches:
       - main
@@ -21,8 +22,6 @@ jobs:
 
       - name: Start local Archway Blockchain
         run: |
-          echo $PWD
-          ls
           cd contracts/cosmwasm-vm/archway
           sed -i 's/latest/v0.4.0/' docker-compose.yaml
           docker compose -f docker-compose.yaml up -d
@@ -43,9 +42,6 @@ jobs:
 
       - name: Compile WASM
         run: |
-          echo $PWD
-          ls
-          git status
           ls /home/runner/work/IBC-Integration
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
