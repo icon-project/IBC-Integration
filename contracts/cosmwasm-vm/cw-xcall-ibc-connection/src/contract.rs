@@ -323,7 +323,6 @@ impl<'a> CwIbcConnection<'a> {
         println!("{LOG_PREFIX} Reply From Forward XCall");
         match message.result {
             SubMsgResult::Ok(_) => {
-                // self.remove_outgoing_packet_sn(store, channel_id, sequence)
                 Ok(Response::new()
                     .add_attribute("action", "call_message")
                     .add_attribute("method", "xcall_handle_error_reply"))

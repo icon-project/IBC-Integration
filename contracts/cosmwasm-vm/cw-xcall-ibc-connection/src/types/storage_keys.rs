@@ -20,7 +20,6 @@ pub enum StorageKey {
     IncomingPackets,
     OutGoingPackets,
     Config,
-    CallbackData,
 }
 
 impl StorageKey {
@@ -44,7 +43,6 @@ impl StorageKey {
             StorageKey::IncomingPackets => "incoming_packets",
             StorageKey::OutGoingPackets => "outgoing_packets",
             StorageKey::UnClaimedAckFees => "unclaimed_ack_fees",
-            StorageKey::CallbackData => "callback_data",
         }
     }
 }
