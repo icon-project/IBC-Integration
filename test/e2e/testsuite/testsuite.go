@@ -125,11 +125,11 @@ func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ..
 		SkipPathCreation:  true,
 	}
 	s.Require().NoError(ic.BuildChains(ctx, eRep, buildOptions))
-	chainA.BuildWallets(ctx, Owner)
-	chainB.BuildWallets(ctx, Owner)
+	s.Require().NoError(chainA.BuildWallets(ctx, Owner))
+	s.Require().NoError(chainB.BuildWallets(ctx, Owner))
 
-	chainA.BuildWallets(ctx, User)
-	chainB.BuildWallets(ctx, User)
+	s.Require().NoError(chainA.BuildWallets(ctx, User))
+	s.Require().NoError(chainB.BuildWallets(ctx, User))
 	var err error
 	ctx, err = chainA.SetupIBC(ctx, Owner)
 	if err != nil {
