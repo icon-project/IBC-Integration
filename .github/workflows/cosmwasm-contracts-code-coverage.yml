@@ -1,12 +1,13 @@
 name: CosmWasm contracts Codecov
 
 on:
-  # pull_request:
-    # branches:
-      # - "**"
-    # paths:
-      # - "contracts/cosmwasm-vm/**"
-      # - ".github/workflows/cosmwasm-contracts-code-coverage.yml"
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "contracts/cosmwasm-vm/**"
+      - "libraries/common/rust/**"
+      - ".github/workflows/cosmwasm-contracts-code-coverage.yml"
   push:
     branches:
       - main
