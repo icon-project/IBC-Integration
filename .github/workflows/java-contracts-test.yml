@@ -1,9 +1,9 @@
 name: Test Java contracts
 
 on:
-  pull_request:
-    branches:
-      - '**'
+  # pull_request:
+  #   branches:
+  #     - '**'
     # paths:
       # - 'contracts/javascore/**'
   push:
