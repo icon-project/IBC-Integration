@@ -55,24 +55,24 @@ jobs:
           CONSTANTINE_TESTNET_KEY: ${{ secrets.CONSTANTINE_TESTNET_KEY }}
           CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
         run: |
-          export GNUPGHOME="$(mktemp -d)"
-          echo "Create gpg "
-          cat >foo <<EOF
-          %echo Generating a basic OpenPGP key
-          Key-Type: DSA
-          Key-Length: 1024
-          Subkey-Type: ELG-E
-          Subkey-Length: 1024
-          Name-Real: constantine
-          Name-Comment: archway testnet
-          Name-Email: gpg@example.com
-          Expire-Date: 0
-          Passphrase: abc
-          # Do a commit here, so that we can later print "done" :-)
-          %commit
-          %echo done
-          EOF
-          gpg --batch --generate-key foo
+          # export GNUPGHOME="$(mktemp -d)"
+          # echo "Create gpg "
+          # cat >foo <<EOF
+          # %echo Generating a basic OpenPGP key
+          # Key-Type: DSA
+          # Key-Length: 1024
+          # Subkey-Type: ELG-E
+          # Subkey-Length: 1024
+          # Name-Real: constantine
+          # Name-Comment: archway testnet
+          # Name-Email: gpg@example.com
+          # Expire-Date: 0
+          # Passphrase: abc
+          # # Do a commit here, so that we can later print "done" :-)
+          # %commit
+          # %echo done
+          # EOF
+          # gpg --batch --generate-key foo
           # archwayd keys list
           # docker run --rm -it -v ~/.archway:/root/.archway ghcr.io/archway-network/archwayd:v1.0.1 keys list
           gpg --list-secret-keys
