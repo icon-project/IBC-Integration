@@ -55,7 +55,7 @@ deployJar {
     endpoints {
         berlin {
             uri = 'https://berlin.net.solidwallet.io/api/v3'
-            nid = 0x8
+            nid = 0x7
             to = "$mockClient"?:null
         }
         lisbon {
