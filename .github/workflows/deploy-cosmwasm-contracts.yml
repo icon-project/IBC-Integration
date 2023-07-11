@@ -21,6 +21,8 @@ jobs:
 
       - name: Start local Archway Blockchain
         run: |
+          echo $PWD
+          ls
           cd contracts/cosmwasm-vm/archway
           sed -i 's/latest/v0.4.0/' docker-compose.yaml
           docker compose -f docker-compose.yaml up -d
