@@ -44,6 +44,8 @@ deploy_wasm() {
 }
 
 # Correct path
+echo $PWD
+ls
 ls ../contracts/cosmwasm-vm
 echo $PWD
 sed -i "s|^CONTRACTS_DIR=.*|CONTRACTS_DIR=$PWD/IBC-Integration|" ../contracts/cosmwasm-vm/icon-ibc-setup/consts.sh
