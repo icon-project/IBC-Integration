@@ -42,10 +42,9 @@ jobs:
 
       - name: Compile WASM
         run: |
-          ls /home/runner/work/IBC-Integration
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
-          bash ../optimize_build.sh
+          bash ./optimize_build.sh
 
       - name: Check WASM Size
         run: |
