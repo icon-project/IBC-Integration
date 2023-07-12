@@ -1,6 +1,9 @@
 use crate::types::{message::CallServiceMessage, LOG_PREFIX};
 use common::rlp;
-use cosmwasm_std::{to_binary, Coin, CosmosMsg, Deps, QueryRequest, SubMsg, WasmMsg};
+use cosmwasm_std::{
+    to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QueryRequest, SubMsg, WasmMsg,
+};
+use cosmwasm_std::{MessageInfo, Response};
 use cw_common::xcall_types::network_address::NetId;
 
 use crate::{
@@ -57,5 +60,18 @@ impl<'a> CwCallService<'a> {
             .query(&query_request)
             .map_err(ContractError::Std)?;
         Ok(fee)
+    }
+
+    pub fn set_default_connection(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        nid: NetId,
+        address: Addr,
+    ) -> Result<Response, ContractError> {
+        self.ensure_admin(deps.storage, info.sender)?;
+        self.store_default_connection(deps.storage, nid, address)?;
+
+        Ok(Response::new().add_attribute("method", "set_default_connection"))
     }
 }
