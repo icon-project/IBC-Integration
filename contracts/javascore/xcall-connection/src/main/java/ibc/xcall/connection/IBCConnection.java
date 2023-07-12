@@ -154,6 +154,9 @@ public class IBCConnection {
         String nid = networkIds.get(packet.getDestinationChannel());
         Context.require(nid != null);
 
+        BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
+        unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
+
         if (msg.getSn() == null)  {
             Context.transfer(new Address(msg.getData()), msg.getFee());
             return new byte[0];
@@ -163,8 +166,7 @@ public class IBCConnection {
             incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), calldata);
         }
 
-        BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
-        unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
+
 
         Context.call(xCall.get(), "handleMessage", nid, msg.getSn(), msg.getData());
         return new byte[0];
@@ -234,7 +236,6 @@ public class IBCConnection {
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
         Context.require(portId.equals(PORT), "Invalid port");
-        Context.require(counterPartyNid != null, "Connection not configured");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
 
         lightClients.set(channelId, configuredClients.get(connectionId));
@@ -257,7 +258,6 @@ public class IBCConnection {
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
         Context.require(portId.equals(PORT), "Invalid port");
-        Context.require(counterPartyNid != null, "Connection not configured");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
         lightClients.set(channelId, configuredClients.get(connectionId));
         destinationPort.set(channelId, counterpartyPortId);
