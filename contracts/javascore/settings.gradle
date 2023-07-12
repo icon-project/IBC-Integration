@@ -1,32 +1,13 @@
 rootProject.name = 'javascore'
 include(
-        'score-util',
-        'proto-util',
-        'lib',
         'test-lib',
-        'ibc',
         'xcall',
-        'xcall-connection',
-        'xcall-multi-protocol',
-        // 'lightclients:archway',
 )
 
-include(':tendermint')
-project(':tendermint').projectDir = file("lightclients/tendermint")
-project(':tendermint').name = "tendermint"
+include(':dapp-simple')
+project(':dapp-simple').projectDir = file("example-dapps/dapp-simple")
+project(':dapp-simple').name = "dapp-simple"
 
-include(':mockclient')
-project(':mockclient').projectDir = file("lightclients/mockclient")
-project(':mockclient').name = "mockclient"
-
-include(':mockapp')
-project(':mockapp').projectDir = file("modules/mockapp")
-project(':mockapp').name = "mockapp"
-
-include(':mock-dapp')
-project(':mock-dapp').projectDir = file("modules/mock-dapp")
-project(':mock-dapp').name = "mock-dapp"
-
-include(':mock-dapp-multi-protocol')
-project(':mock-dapp-multi-protocol').projectDir = file("modules/mock-dapp-multi-protocol")
-project(':mock-dapp-multi-protocol').name = "mock-dapp-multi-protocol"
+include(':dapp-multi-protocol')
+project(':dapp-multi-protocol').projectDir = file("example-dapps/dapp-multi-protocol")
+project(':dapp-multi-protocol').name = "dapp-multi-protocol"

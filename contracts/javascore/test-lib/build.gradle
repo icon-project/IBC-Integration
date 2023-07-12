@@ -8,7 +8,6 @@ dependencies {
     compileOnly("foundation.icon:javaee-api:$javaeeVersion")
     implementation("foundation.icon:javaee-scorex:$scorexVersion")
     implementation("foundation.icon:icon-sdk:$iconsdkVersion")
-    implementation project(':score-util')
 
     implementation("foundation.icon:javaee-score-client:$scoreClientVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
