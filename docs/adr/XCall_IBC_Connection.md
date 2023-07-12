@@ -61,7 +61,7 @@ networkIds : channelId -> NetworkId
 destinationChannel: channelId -> counterPartyChannelId
 destinationPort: channelId -> counterPartyPortId
 
-incomingPackets: channel -> sn -> packetSequence
+incomingPackets: channel -> sn -> packet
 outgoingPackets: channel -> paketSequence -> sn
 
 sendPacketFee: NetworkId -> int
@@ -157,13 +157,8 @@ void sendMessage(String _to, String _svc, BigInteger _sn, byte[] _msg) {
 ```java
  private void writeAcknowledgement(String _to, BigInteger _sn, byte[] _msg) {
     String channel = channels.get(_to);
-    BigInteger sequenceNumber = incomingPackets[channel][_sn]
+    byte[] packet = incomingPackets[channel][_sn]
     incomingPackets[channel][_sn] = null;
-
-    Packet packet = new Packet();
-    packet.setSequence(sequenceNumber);
-    packet.setDestinationPort(PORT);
-    packet.setDestinationChannel(channel);
 
     ibc.writeAcknowledgement(packet, _msg);
 }
@@ -178,6 +173,7 @@ public byte[] onRecvPacket(byte[] calldata, Address relayer) {
     Message msg = Message.fromBytes(packet.getData());
     String nid = networkIds.get(packet.getDestinationChannel());
     assert nid != null;
+
     if (msg.getSn() == null) {
         Context.transfer(msg.getFee(), Address.fromBytes(msg.getData()))
         return  new byte[0]

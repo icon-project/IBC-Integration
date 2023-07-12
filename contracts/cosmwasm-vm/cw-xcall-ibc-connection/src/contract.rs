@@ -551,7 +551,9 @@ impl<'a> CwIbcConnection<'a> {
             ack.relayer.to_string(),
         )?;
 
-        Ok(Response::new().add_message(bank_msg).add_submessage(submsg))
+        Ok(Response::new()
+            .add_messages(bank_msg)
+            .add_submessage(submsg))
     }
     /// This function handles a timeout event for an IBC packet and sends a reply message with an error
     /// code.
@@ -591,7 +593,9 @@ impl<'a> CwIbcConnection<'a> {
             msg.relayer.to_string(),
         )?;
 
-        Ok(Response::new().add_message(bank_msg).add_submessage(submsg))
+        Ok(Response::new()
+            .add_messages(bank_msg)
+            .add_submessage(submsg))
     }
 
     pub fn settle_unclaimed_ack_fee(
@@ -600,8 +604,11 @@ impl<'a> CwIbcConnection<'a> {
         nid: &str,
         seq: u64,
         relayer: String,
-    ) -> Result<BankMsg, ContractError> {
+    ) -> Result<Vec<BankMsg>, ContractError> {
         let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq);
+        if ack_fee == 0 {
+            return Ok(vec![]);
+        }
         self.reset_unclaimed_ack_fees(store, nid, seq)?;
         let denom = self.get_denom(store)?;
 
@@ -610,7 +617,7 @@ impl<'a> CwIbcConnection<'a> {
             amount: coins(ack_fee, denom),
         };
 
-        Ok(msg)
+        Ok(vec![msg])
     }
 
     pub fn setup_channel(
