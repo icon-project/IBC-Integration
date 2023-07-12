@@ -5,9 +5,7 @@ use common::{
     utils::keccak256,
 };
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
-use cw_common::{
-    ibc_types::{IbcChannelId, IbcPortId, Sequence},
-};
+use cw_common::ibc_types::{IbcChannelId, IbcPortId, Sequence};
 use std::str::FromStr;
 
 use crate::{context::CwIbcCoreContext, ContractError};
