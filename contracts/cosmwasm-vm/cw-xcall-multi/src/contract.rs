@@ -167,7 +167,7 @@ impl<'a> CwCallService<'a> {
             QueryMsg::VerifySuccess { sn } => {
                 to_binary(&self.get_successful_response(deps.storage, sn))
             }
-            QueryMsg::GetConnection { nid } => {
+            QueryMsg::GetDefaultConnection { nid } => {
                 to_binary(&self.get_default_connection(deps.storage, nid).unwrap())
             }
         }

@@ -38,5 +38,5 @@ pub enum QueryMsg {
     #[returns(bool)]
     VerifySuccess { sn: u128 },
     #[returns(String)]
-    GetConnection { nid: NetId },
+    GetDefaultConnection { nid: NetId },
 }
