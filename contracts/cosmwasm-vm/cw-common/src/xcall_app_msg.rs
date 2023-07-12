@@ -1,4 +1,5 @@
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::Addr;
 
 use crate::xcall_types::network_address::{NetId, NetworkAddress};
 
@@ -13,6 +14,7 @@ pub enum ExecuteMsg {
     SetProtocolFeeHandler {
         address: String,
     },
+
     SendCallMessage {
         to: NetworkAddress,
         data: Vec<u8>,
@@ -43,4 +45,8 @@ pub enum ExecuteMsg {
         address: String,
     },
     RemoveAdmin {},
+    SetDefaultConnection {
+        nid: NetId,
+        address: Addr,
+    },
 }
