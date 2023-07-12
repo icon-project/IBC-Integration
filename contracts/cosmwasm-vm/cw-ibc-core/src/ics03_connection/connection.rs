@@ -319,9 +319,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let addr = env.contract.address.to_string();
         if addr.contains("contract") {
             let info = get_contract_info(deps, addr.clone())
-                .and_then(|info| return Ok(info.admin.unwrap_or("".to_owned())))
-                .unwrap_or("".to_string());
-            return info;
+                .and_then(|info| return Ok(info.admin.unwrap_or("".to_owned())));
+            return info.unwrap_or("".to_string());
         }
         return addr;
     }
