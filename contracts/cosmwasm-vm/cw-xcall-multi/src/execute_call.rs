@@ -1,4 +1,4 @@
-use cosmwasm_std::{Deps, DepsMut, Env, MessageInfo, Reply, Response, SubMsg};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Reply, Response, SubMsg};
 
 use crate::{
     error::ContractError,
