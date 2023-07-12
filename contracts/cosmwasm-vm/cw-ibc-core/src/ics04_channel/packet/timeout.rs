@@ -176,7 +176,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let payload = cw_common::client_msg::ExecuteMsg::PacketTimeout {
             client_id: client_id_on_a.to_string(),
-            next_seq_recv_verification_result: next_seq_recv_verification_result,
+            next_seq_recv_verification_result,
         };
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: light_client_address,

@@ -6,7 +6,6 @@ use common::{
 };
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
 use cw_common::{
-    commitment::acknowledgement_commitment_key,
     ibc_types::{IbcChannelId, IbcPortId, Sequence},
 };
 use std::str::FromStr;
@@ -24,7 +23,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let dest_port = &packet.dest.port_id;
         let dest_channel = &packet.dest.channel_id;
 
-        let ibc_port = IbcPortId::from_str(&dest_port)
+        let ibc_port = IbcPortId::from_str(dest_port)
             .map_err(|e| ContractError::IbcValidationError { error: e })?;
         let ibc_channel = IbcChannelId::from_str(dest_channel)
             .map_err(|e| ContractError::IbcValidationError { error: e })?;
@@ -38,7 +37,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if !authenticated {
             return Err(ContractError::Unauthorized {});
         }
-        if !(ack.len() > 0) {
+        if !!ack.is_empty() {
             return Err(ContractError::IbcPacketError {
                 error: cw_common::ibc_types::PacketError::InvalidAcknowledgement,
             });
@@ -49,7 +48,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if channel.state != State::Open {
             return Err(ContractError::IbcChannelError {
                 error: InvalidChannelState {
-                    channel_id: ibc_channel.clone(),
+                    channel_id: ibc_channel,
                     state: channel.state,
                 },
             });
