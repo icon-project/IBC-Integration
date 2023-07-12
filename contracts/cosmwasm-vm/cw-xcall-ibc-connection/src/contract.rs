@@ -606,7 +606,7 @@ impl<'a> CwIbcConnection<'a> {
         relayer: String,
     ) -> Result<Vec<BankMsg>, ContractError> {
         let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq);
-        if ack_fee <= 0 {
+        if ack_fee == 0 {
             return Ok(vec![]);
         }
         self.reset_unclaimed_ack_fees(store, nid, seq)?;
