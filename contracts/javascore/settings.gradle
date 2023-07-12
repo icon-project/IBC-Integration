@@ -1,4 +1,4 @@
-rootProject.name = 'javascore'
+rootProject.name = 'xcall'
 include(
         'test-lib',
         'xcall',
