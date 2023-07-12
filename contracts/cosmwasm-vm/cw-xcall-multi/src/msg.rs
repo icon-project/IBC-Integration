@@ -1,3 +1,5 @@
+use cw_common::xcall_types::network_address::NetId;
+
 use super::*;
 
 /// This is a Rust struct representing a message to instantiate a contract with timeout height and IBC
@@ -35,4 +37,6 @@ pub enum QueryMsg {
     GetNetworkAddress {},
     #[returns(bool)]
     VerifySuccess { sn: u128 },
+    #[returns(String)]
+    GetDefaultConnection { nid: NetId },
 }

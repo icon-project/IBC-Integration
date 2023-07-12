@@ -38,9 +38,6 @@ func NewCosmosChain(t *testing.T, ctx context.Context, environment string, chain
 		),
 		)
 		return localchain, nil
-
-	case "testnet":
-		return NewCosmosTestnet(chainConfig.Bin, keystorePath, keyPassword, "5000000000", url, contractPaths, chainID), nil
 	default:
 		return nil, fmt.Errorf("unknown environment: %s", environment)
 	}
