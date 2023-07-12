@@ -44,7 +44,7 @@ jobs:
         run: |
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
-          bash ./optimize_build.sh
+          make optimize-cosmwasm
 
       - name: Check WASM Size
         run: |
@@ -64,7 +64,7 @@ jobs:
       - name: Deploy WASM
         run: |
           container=$(docker ps --format '{{.Names}}')
-          rm -rf artifacts/cw_common.wasm
+          rm -rf artifacts/archway/cw_common.wasm
           cp -r {artifacts,scripts/deploy_cosmwasm.sh} contracts/cosmwasm-vm/archway/contracts
           docker ps -a
           docker exec $container chmod +x /contracts/deploy_cosmwasm.sh

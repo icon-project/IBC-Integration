@@ -1,4 +1,4 @@
-use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
+use cw_common::xcall_types::network_address::NetworkAddress;
 
 use crate::types::{config::Config, LOG_PREFIX};
 
@@ -119,6 +119,9 @@ impl<'a> CwCallService<'a> {
                 self.update_admin(deps.storage, info, validated_address)
             }
             ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
+            ExecuteMsg::SetDefaultConnection { nid, address } => {
+                self.set_default_connection(deps, info, nid, address)
+            }
             #[cfg(feature = "native_ibc")]
             _ => Err(ContractError::DecodeFailed {
                 error: "InvalidMessage Variant".to_string(),
@@ -163,6 +166,9 @@ impl<'a> CwCallService<'a> {
             }
             QueryMsg::VerifySuccess { sn } => {
                 to_binary(&self.get_successful_response(deps.storage, sn))
+            }
+            QueryMsg::GetDefaultConnection { nid } => {
+                to_binary(&self.get_default_connection(deps.storage, nid).unwrap())
             }
         }
     }
