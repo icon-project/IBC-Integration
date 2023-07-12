@@ -3,10 +3,11 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-    paths:
+      - fix/use-complete-packet-data-for-write-ack
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
       - contracts/cosmwasm-vm/**
       - libraries/common/rust/**
       - .github/workflows/deploy-cosmwasm-contracts.yml
@@ -37,8 +38,8 @@ jobs:
           override: true
           profile: minimal
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+      # - name: Cache Rust dependencies
+      #   uses: Swatinem/rust-cache@v2
 
       - name: Compile WASM
         run: |

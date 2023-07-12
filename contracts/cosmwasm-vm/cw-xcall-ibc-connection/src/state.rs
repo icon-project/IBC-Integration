@@ -125,7 +125,7 @@ pub struct CwIbcConnection<'a> {
     network_fees: Map<'a, NetId, NetworkFees>,
     unclaimed_packet_fees: Map<'a, (String, String), u128>,
     unclaimed_ack_fees: Map<'a, (String, u64), u128>,
-    incoming_packets: Map<'a, (String, i64), u64>,
+    incoming_packets: Map<'a, (String, i64), CwPacket>,
     outgoing_packets: Map<'a, (String, u64), i64>,
 }
 
@@ -151,7 +151,7 @@ impl<'a> CwIbcConnection<'a> {
             unclaimed_packet_fees: Map::new(StorageKey::UnclaimedPacketFees.as_str()),
             unclaimed_ack_fees: Map::new(StorageKey::UnClaimedAckFees.as_str()),
             incoming_packets: Map::new(StorageKey::IncomingPackets.as_str()),
-            outgoing_packets: Map::new(StorageKey::IncomingPackets.as_str()),
+            outgoing_packets: Map::new(StorageKey::OutGoingPackets.as_str()),
         }
     }
 
@@ -387,35 +387,30 @@ impl<'a> CwIbcConnection<'a> {
             .map_err(ContractError::Std)
     }
 
-    pub fn get_incoming_packet_sequence(
+    pub fn get_incoming_packet(
         &self,
         store: &dyn Storage,
         channel_id: &str,
         sn: i64,
-    ) -> Result<u64, ContractError> {
+    ) -> Result<CwPacket, ContractError> {
         self.incoming_packets
             .load(store, (channel_id.to_owned(), sn))
             .map_err(ContractError::Std)
     }
-    pub fn remove_incoming_packet_sequence(
-        &self,
-        store: &mut dyn Storage,
-        channel_id: &str,
-        sequence: i64,
-    ) {
+    pub fn remove_incoming_packet(&self, store: &mut dyn Storage, channel_id: &str, sequence: i64) {
         self.incoming_packets
             .remove(store, (channel_id.to_owned(), sequence))
     }
 
-    pub fn store_incoming_packet_sequence(
+    pub fn store_incoming_packet(
         &self,
         store: &mut dyn Storage,
         channel_id: &str,
         sn: i64,
-        seq: u64,
+        packet: CwPacket,
     ) -> Result<(), ContractError> {
         self.incoming_packets
-            .save(store, (channel_id.to_owned(), sn), &seq)
+            .save(store, (channel_id.to_owned(), sn), &packet)
             .map_err(ContractError::Std)
     }
 

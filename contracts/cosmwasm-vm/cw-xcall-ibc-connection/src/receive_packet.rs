@@ -1,12 +1,12 @@
 use std::str::from_utf8;
 
-use common::rlp;
-use cosmwasm_std::{coins, BankMsg, DepsMut};
-use debug_print::debug_println;
-
 use super::*;
 use crate::types::message::Message;
 
+use common::rlp;
+use cosmwasm_std::{coins, BankMsg, DepsMut};
+
+use debug_print::debug_println;
 impl<'a> CwIbcConnection<'a> {
     /// This function receives packet data, decodes it, and then handles either a request or a response
     /// based on the message type.
@@ -28,11 +28,11 @@ impl<'a> CwIbcConnection<'a> {
     pub fn do_packet_receive(
         &self,
         deps: DepsMut,
-        message: CwPacket,
+        packet: CwPacket,
         relayer: Addr,
     ) -> Result<CwReceiveResponse, ContractError> {
-        let channel = message.dest.channel_id.clone();
-        let n_message: Message = rlp::decode(&message.data.0).unwrap();
+        let channel = packet.dest.channel_id.clone();
+        let n_message: Message = rlp::decode(&packet.data.0).unwrap();
         let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
         let nid = channel_config.counterparty_nid;
         let denom = self.get_denom(deps.as_ref().storage)?;
@@ -49,7 +49,7 @@ impl<'a> CwIbcConnection<'a> {
 
         if let Some(sn) = n_message.sn.0 {
             if sn > 0 {
-                self.store_incoming_packet_sequence(deps.storage, &channel, sn, message.sequence)?;
+                self.store_incoming_packet(deps.storage, &channel, sn, packet)?;
             }
         }
         debug_println!("[IBCConnection]: forwarding to xcall");

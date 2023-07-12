@@ -67,7 +67,7 @@ impl<'a> CwCallService<'a> {
         println!("{LOG_PREFIX} Packet Validated");
 
         let sequence_no = self.get_next_sn(deps.storage)?;
-        let mut confirmed_sources = sources;
+        let mut confirmed_sources = sources.clone();
         let from = NetworkAddress::new(&nid, caller.as_ref());
 
         if confirmed_sources.is_empty() {
@@ -76,13 +76,8 @@ impl<'a> CwCallService<'a> {
         }
 
         if need_response {
-            let request = CallRequest::new(
-                caller.clone(),
-                to.clone(),
-                destinations.clone(),
-                rollback_data,
-                false,
-            );
+            let request =
+                CallRequest::new(caller.clone(), to.clone(), sources, rollback_data, false);
 
             self.store_call_request(deps.storage, sequence_no, &request)?;
         }

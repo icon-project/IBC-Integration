@@ -4,7 +4,6 @@ pub mod assertion;
 pub mod check;
 pub mod contract;
 pub mod error;
-pub mod events;
 pub mod fee;
 pub mod ibc;
 pub mod ibc_host;
@@ -27,8 +26,8 @@ use crate::{
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, Event, MessageInfo, Never, Reply,
-    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult,
+    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Never, Reply, Response,
+    StdError, StdResult, Storage, SubMsg, SubMsgResult,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
