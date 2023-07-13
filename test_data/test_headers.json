@@ -13,7 +13,11 @@
         "MessageRoot": "0x7702db70e830e07b4ff46313456fc86d677c7eeca0c011d7e7dcdd48d5aacfe2",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "TrustedHeight":27
       },
       "Signature": [
         "0x6c8b2bc2c3d31e34bd4ed9db6eff7d5dc647b13c58ae77d54e0b05141cb7a7995102587f1fa33fd56815463c6b78e100217c29ddca20fcace80510e3dab03a1600"
@@ -35,7 +39,11 @@
         "MessageRoot": "0x6fc96aeaecd1ed511dd7ee363638a0d76fc9d19e859f48afde692082909966b3",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "TrustedHeight":27
       },
       "Signature": [
         "0x28386014518524f7dd8d6cfb107779768da0db1893579d008ae946392cc249945e336cb5a1bb440529a282fb10d7ff7c88559f045a14c5f5f40673cce7f4b74f01"
@@ -57,7 +65,11 @@
         "MessageRoot": "0xc631e6e36a003dd9978c2d5f0da37b91027d77a24697c03012f926c1fa9f8c80",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "TrustedHeight":82873
       },
       "Signature": [
         "0x0770ab93131899b41e8efd2499b610b1b1e790556f95251bf925dd03c1e5f4d4370a95f6a743300f9a2943a09f04427ca087ef602e5f460f626630f19b99704301"
@@ -79,7 +91,11 @@
         "MessageRoot": "0xc2be84a1ae05b19723b9eb130874dc0f91c260e66224ee991e2e7d3813233f0e",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "TrustedHeight":82876
       },
       "Signature": [
         "0x6ab6ec262e7cea1bb31d7aebc9cd54d4b02c1016f5f4521721de0be5b6b40b122d63e40d3925f97dd2e88e0845a35c5ec39a9f6a3cb8315731df9c3a60ac78eb00"
@@ -101,7 +117,11 @@
         "MessageRoot": "0xeede9d1aa2c49f4126d06d44266f239cc9c8fab78e8d5bba6fdb4cd5f3d6539b",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "TrustedHeight":82878
       },
       "Signature": [
         "0x43d016e7a227d63e34ae74b40a7371ece1d3fc1c01f20050b3c4f19ce9f9ab504eecba6273afda90d0ab81d83c9ee9f135d1256c39eeb0b9a3b0e226704b72f100"
@@ -126,7 +146,9 @@
         ],
         "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "TrustedHeight":82879
+        
       },
       "Signature": [
         "0x7921b62f6ee21bcfb663b44230e9b55133f00804302ed592afde2c69864eadec01ad9dfca2639761da5cefd0cbf29984b60582e0959b64765aa3664134f221a900"
@@ -151,7 +173,8 @@
         ],
         "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "TrustedHeight":82881
       },
       "Signature": [
         "0xabdd35ab436003fdadec2367653bc9e367fabba5c738b5d2c874b53ba77fb7f020fb54db87fb0ff6cbbaa813244b49c2e2818e01820fb9470e2cffeead6b87bf00"
@@ -176,7 +199,8 @@
         ],
         "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "TrustedHeight":82883
       },
       "Signature": [
         "0xd07cf1193f7865ef37025a883b033bfcb983e90005bdfafc906e882a64335d3c65aa85f5d9c2b52763acc3f0e9e8d9616473d663e74bee55ef8f224e4d4b05ae01"
@@ -201,7 +225,8 @@
         ],
         "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "TrustedHeight":82884
       },
       "Signature": [
         "0x0159010d1c67d155cbb2165cee41643fb8a0babcb11ef20c3d1480c6ef97059055ebb10ee7ffa580b6d839e2b8665b38dd1b7823c5b542671abf43fd3b12f1b901"
@@ -226,7 +251,8 @@
         ],
         "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "TrustedHeight":82886
       },
       "Signature": [
         "0x2f7fe01de7596c5ae4d068cf61268fa3f0109e8da4226d95dd82589f471a21d715b319d6d8c7d182b028501d8db2b1c3abf5d75b5da937bdfd17598c6c1b5e6401"
@@ -254,7 +280,8 @@
         ],
         "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "TrustedHeight":82887
       },
       "Signature": [
         "0x1fe5b781182c145e484e7808ca08d124f1813c44bd056a1526b185b3a8d7b81009cde33a1d1534539cb0394b86901667b956881b362649922b5de1aa56d471b601"
@@ -283,7 +310,8 @@
         ],
         "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
-        ]
+        ],
+        "TrustedHeight":8838
       },
       "Signature": [
         "0x1fe5b781182c145e484e7808ca08d124f1813c44bd056a1526b185b3a8d7b81009cde33a1d1534539cb0394b86901667b956881b362649922b5de1aa56d471b601"

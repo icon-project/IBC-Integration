@@ -156,8 +156,7 @@ fn test_for_channel_open_try_execution_message() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+      
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -182,6 +181,7 @@ fn test_for_channel_open_try_execution_message() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -328,8 +328,7 @@ fn test_for_channel_open_ack_execution() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+      
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -354,6 +353,7 @@ fn test_for_channel_open_ack_execution() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -502,8 +502,7 @@ fn test_for_channel_open_confirm() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+      
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -528,6 +527,7 @@ fn test_for_channel_open_confirm() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -786,8 +786,7 @@ fn test_for_channel_close_confirm() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+      
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -812,6 +811,7 @@ fn test_for_channel_close_confirm() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -955,8 +955,7 @@ fn test_for_packet_send() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 10,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+      
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -974,6 +973,7 @@ fn test_for_packet_send() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1063,8 +1063,7 @@ fn test_for_recieve_packet() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 12,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+      
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1082,6 +1081,7 @@ fn test_for_recieve_packet() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1308,8 +1308,7 @@ fn test_for_ack_execute() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+      
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1326,6 +1325,7 @@ fn test_for_ack_execute() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();

@@ -350,7 +350,7 @@ fn check_for_create_client_message() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -399,7 +399,6 @@ fn check_for_create_client_message_response() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
 
         ..get_default_icon_client_state()
     }
@@ -483,7 +482,7 @@ fn check_for_client_state_from_storage() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -565,7 +564,7 @@ fn check_for_consensus_state_from_storage() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -653,7 +652,7 @@ fn fail_on_create_client_message_error_response() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -707,7 +706,7 @@ fn fails_on_create_client_message_without_proper_initialisation() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+      
 
         ..get_default_icon_client_state()
     }
@@ -752,7 +751,7 @@ fn check_for_update_client_message() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+        
 
         ..get_default_icon_client_state()
     }
@@ -819,7 +818,7 @@ fn check_for_update_client_message() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -887,7 +886,7 @@ fn fails_on_updating_non_existing_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -952,7 +951,7 @@ fn check_for_upgrade_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+        
 
         ..get_default_icon_client_state()
     }
@@ -998,7 +997,7 @@ fn check_for_upgrade_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
+        
 
         ..get_default_icon_client_state()
     }
@@ -1061,7 +1060,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -1107,7 +1106,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
+       
 
         ..get_default_icon_client_state()
     }
@@ -1170,7 +1169,7 @@ fn fails_on_upgrade_client_frozen_client() {
         frozen_height: 3,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -1216,7 +1215,7 @@ fn fails_on_upgrade_client_frozen_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
+       
 
         ..get_default_icon_client_state()
     }
@@ -1276,7 +1275,7 @@ fn check_for_execute_upgrade_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+      
 
         ..get_default_icon_client_state()
     }
@@ -1322,7 +1321,7 @@ fn check_for_execute_upgrade_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
+      
 
         ..get_default_icon_client_state()
     }
@@ -1407,7 +1406,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
+      
 
         ..get_default_icon_client_state()
     }
@@ -1622,7 +1621,7 @@ fn success_on_getting_client_state() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -1720,7 +1719,7 @@ fn sucess_on_misbehaviour_validate() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
 
         ..get_default_icon_client_state()
     }
@@ -1783,7 +1782,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         frozen_height: 10,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1876,7 +1875,7 @@ fn success_on_execute_misbehaviour() {
         frozen_height: 10,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
+       
         ..get_default_icon_client_state()
     }
     .try_into()
