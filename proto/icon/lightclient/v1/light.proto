@@ -20,23 +20,29 @@ message ClientState {
   uint64 frozen_height = 2;
   uint64 max_clock_drift = 3;
   uint64 latest_height = 4;
-  bytes network_section_hash = 5;
-  repeated bytes validators= 6;
-  string src_network_id=7;
-  uint64 network_id=8;
-  uint64 network_type_id=9;
+  string src_network_id=5;
+  uint64 network_id=6;
+  uint64 network_type_id=7;
+  TrustLevel trust_level=8;
+
 
 }
 
 message ConsensusState {
 
   bytes message_root= 1;
+  bytes next_proof_context_hash=2;
 }
 
 message BlockUpdate {
 
   icon.types.v1.SignedHeader header =1;
 
+}
+
+message TrustLevel {
+  uint64 numerator = 1;
+  uint64 denominator= 2;
 }
 
 message Misbehaviour {

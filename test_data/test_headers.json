@@ -123,6 +123,9 @@
         "MessageRoot": "0x433b18719630764b4ece09f4da04efd3fed49942d45db6f3cec97d019754f655",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
         ]
       },
       "Signature": [
@@ -144,6 +147,9 @@
         "MessageCount": 2,
         "MessageRoot": "0xe128ae7111a77d1c6706e944d891eae5eec9f91b30c14d52966f6e391648f5db",
         "NextValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
         ]
       },
@@ -167,6 +173,9 @@
         "MessageRoot": "0x336b10fc1c9ebb674bef3b6fdf4c724cfc49fdacab3d067e75872017276d2afb",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
         ]
       },
       "Signature": [
@@ -189,6 +198,9 @@
         "MessageRoot": "0xae5a5d3e1847ccf75fb54f18d38879c80e09459b947e75c1499eeac094fc55a5",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
         ]
       },
       "Signature": [
@@ -210,6 +222,9 @@
         "MessageCount": 2,
         "MessageRoot": "0xab4cd80472568b4d7232e5ffd05cd5d62d93e6ed868aa27efd380560c7758a88",
         "NextValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
         ]
       },
@@ -236,6 +251,9 @@
         "MessageRoot": "0x1d3e959a209edac3c177894763ed624417a4b1ce3bbc33b188ca137ed8198b0e",
         "NextValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "CurrentValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
         ]
       },
       "Signature": [
@@ -261,6 +279,9 @@
         "MessageCount": 1,
         "MessageRoot": "0x1d3e959a209edac3c177894763ed624417a4b1ce3bbc33b188ca137ed8198b0e",
         "NextValidators": [
+          "0xb040bff300eee91f7665ac8dcf89eb0871015306"
+        ],
+        "CurrentValidators": [
           "0xb040bff300eee91f7665ac8dcf89eb0871015306"
         ]
       },

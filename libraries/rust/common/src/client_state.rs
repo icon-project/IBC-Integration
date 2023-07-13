@@ -7,6 +7,7 @@ use crate::ibc::core::ics02_client::error::ClientError;
 
 use crate::ibc::core::ics02_client::client_type::ClientType as IbcClientType;
 use crate::ibc::Height as IbcHeight;
+use crate::icon::icon::lightclient::v1::TrustLevel;
 use crate::{constants::ICON_CLIENT_STATE_TYPE_URL, icon::icon::lightclient::v1::ClientState};
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use prost::Message;
@@ -17,11 +18,10 @@ impl ClientState {
         frozen_height: u64,
         max_clock_drift: u64,
         latest_height: u64,
-        network_section_hash: Vec<u8>,
-        validators: Vec<Vec<u8>>,
         network_id: u64,
         network_type_id: u64,
         src_network_id: String,
+        trust_level: TrustLevel,
     ) -> Result<Self, ClientError> {
         if max_clock_drift == 0 {
             return Err(ClientError::Other {
@@ -34,11 +34,10 @@ impl ClientState {
             frozen_height,
             max_clock_drift,
             latest_height,
-            network_section_hash,
-            validators,
             network_id,
             network_type_id,
             src_network_id,
+            trust_level: Some(trust_level),
         })
     }
 }

@@ -45,7 +45,9 @@ message BTPHeader{
 	bytes       prev_network_section_hash   = 7; 
     uint64      message_count   = 8;
     bytes       message_root    = 9;
-    repeated    bytes nextValidators = 10; 
+    repeated    bytes nextValidators = 10;
+    repeated    bytes currentValidators = 11;
+    uint64      trusted_height   = 12;
 }
 
 message  MerkleNode {

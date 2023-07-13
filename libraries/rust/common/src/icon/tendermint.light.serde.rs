@@ -2160,13 +2160,13 @@ impl serde::Serialize for PublicKey {
         if let Some(v) = self.sum.as_ref() {
             match v {
                 public_key::Sum::Ed25519(v) => {
-                    struct_ser.serialize_field("ed25519", pbjson::private::base64::encode(v).as_str())?;
+                    struct_ser.serialize_field("ed25519", pbjson::private::base64::encode(&v).as_str())?;
                 }
                 public_key::Sum::Secp256k1(v) => {
-                    struct_ser.serialize_field("secp256k1", pbjson::private::base64::encode(v).as_str())?;
+                    struct_ser.serialize_field("secp256k1", pbjson::private::base64::encode(&v).as_str())?;
                 }
                 public_key::Sum::Sr25519(v) => {
-                    struct_ser.serialize_field("sr25519", pbjson::private::base64::encode(v).as_str())?;
+                    struct_ser.serialize_field("sr25519", pbjson::private::base64::encode(&v).as_str())?;
                 }
             }
         }

@@ -33,9 +33,9 @@ pub enum ContractError {
     ClientStateAlreadyExists(String),
     #[error("Config not found or initialized")]
     ConfigNotFound,
-    #[error("Trusting Period elapsed. Height: {update_height:?} client is at {saved_height:?}")]
+    #[error("Trusting Period elapsed. Height: {update_height:?} trusted height is at {trusted_height:?}")]
     TrustingPeriodElapsed {
-        saved_height: u64,
+        trusted_height: u64,
         update_height: u64,
     },
     #[error("Invalid header update {0}")]
@@ -71,6 +71,12 @@ pub enum ContractError {
 
     #[error("InvalidHeight")]
     InvalidHeight,
+
+    #[error("InvalidProofContextHash")]
+    InvalidProofContextHash,
+
+    #[error("UpdateBlockOlderThanTrustedHeight")]
+    UpdateBlockOlderThanTrustedHeight,
 }
 
 impl From<CwErrors> for ContractError {

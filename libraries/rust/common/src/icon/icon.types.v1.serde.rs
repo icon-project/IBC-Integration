@@ -37,6 +37,12 @@ impl serde::Serialize for BtpHeader {
         if !self.next_validators.is_empty() {
             len += 1;
         }
+        if !self.current_validators.is_empty() {
+            len += 1;
+        }
+        if self.trusted_height != 0 {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("icon.types.v1.BTPHeader", len)?;
         if self.main_height != 0 {
             struct_ser.serialize_field("main_height", ToString::to_string(&self.main_height).as_str())?;
@@ -68,6 +74,12 @@ impl serde::Serialize for BtpHeader {
         if !self.next_validators.is_empty() {
             struct_ser.serialize_field("nextValidators", &self.next_validators.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
         }
+        if !self.current_validators.is_empty() {
+            struct_ser.serialize_field("currentValidators", &self.current_validators.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
+        }
+        if self.trusted_height != 0 {
+            struct_ser.serialize_field("trusted_height", ToString::to_string(&self.trusted_height).as_str())?;
+        }
         struct_ser.end()
     }
 }
@@ -96,6 +108,9 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
             "message_root",
             "messageRoot",
             "nextValidators",
+            "currentValidators",
+            "trusted_height",
+            "trustedHeight",
         ];
 
         #[allow(clippy::enum_variant_names)]
@@ -110,6 +125,8 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
             MessageCount,
             MessageRoot,
             NextValidators,
+            CurrentValidators,
+            TrustedHeight,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -141,6 +158,8 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                             "messageCount" | "message_count" => Ok(GeneratedField::MessageCount),
                             "messageRoot" | "message_root" => Ok(GeneratedField::MessageRoot),
                             "nextValidators" => Ok(GeneratedField::NextValidators),
+                            "currentValidators" => Ok(GeneratedField::CurrentValidators),
+                            "trustedHeight" | "trusted_height" => Ok(GeneratedField::TrustedHeight),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -170,6 +189,8 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                 let mut message_count__ = None;
                 let mut message_root__ = None;
                 let mut next_validators__ = None;
+                let mut current_validators__ = None;
+                let mut trusted_height__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::MainHeight => {
@@ -251,6 +272,23 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                                     .into_iter().map(|x| x.0).collect())
                             ;
                         }
+                        GeneratedField::CurrentValidators => {
+                            if current_validators__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("currentValidators"));
+                            }
+                            current_validators__ = 
+                                Some(map.next_value::<Vec<::pbjson::private::BytesDeserialize<_>>>()?
+                                    .into_iter().map(|x| x.0).collect())
+                            ;
+                        }
+                        GeneratedField::TrustedHeight => {
+                            if trusted_height__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("trustedHeight"));
+                            }
+                            trusted_height__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
                     }
                 }
                 Ok(BtpHeader {
@@ -264,6 +302,8 @@ impl<'de> serde::Deserialize<'de> for BtpHeader {
                     message_count: message_count__.unwrap_or_default(),
                     message_root: message_root__.unwrap_or_default(),
                     next_validators: next_validators__.unwrap_or_default(),
+                    current_validators: current_validators__.unwrap_or_default(),
+                    trusted_height: trusted_height__.unwrap_or_default(),
                 })
             }
         }

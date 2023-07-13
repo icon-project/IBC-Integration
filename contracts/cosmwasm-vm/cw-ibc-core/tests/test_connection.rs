@@ -48,18 +48,10 @@ use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenT
 use common::ibc::core::ics03_connection::version::get_compatible_versions;
 use common::ibc::core::ics03_connection::version::Version;
 use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;
+use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::ibc::events::IbcEventType;
 use cw_common::ibc_types::IbcClientId;
 use cw_ibc_core::ConnectionEnd;
-// use ibc_proto::common::ibc::core::client::v1::Height;
-// use ibc_proto::common::ibc::core::connection::v1::Counterparty as RawCounterparty;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenConfirm;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
-use common::ibc::core::ics24_host::identifier::ConnectionId;
 use prost::Message;
 use setup::*;
 
@@ -420,7 +412,6 @@ fn connection_open_init() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
         ..get_default_icon_client_state()
     }
     .try_into()

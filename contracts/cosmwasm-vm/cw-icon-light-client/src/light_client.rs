@@ -25,16 +25,20 @@ impl<'a> IconClient<'a> {
         client_id: &str,
         header: &BtpHeader,
         signatures: &Vec<Vec<u8>>,
+        validators: &Vec<Vec<u8>>,
     ) -> Result<bool, ContractError> {
         let mut votes = u128::default();
         let state = self.context.get_client_state(client_id)?;
         // let config = self.context.get_config()?;
         let decision = header
             .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
-        debug_println!("network type section decision hash {}",hex::encode(&decision));
-        let validators_map = common::utils::to_lookup(&state.validators);
+        debug_println!(
+            "network type section decision hash {}",
+            hex::encode(&decision)
+        );
+        let validators_map = common::utils::to_lookup(validators);
 
-        let num_validators = state.validators.len() as u128;
+        let num_validators = validators.len() as u128;
 
         for signature in signatures {
             let signer = self
@@ -123,21 +127,30 @@ impl ILightClient for IconClient<'_> {
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
         let btp_header = signed_header.header.clone().unwrap();
-        let mut state = self.context.get_client_state(client_id)?;
-        // let config = self.context.get_config()?;
 
-        if (btp_header.main_height - state.latest_height) > state.trusting_period {
+        let mut state = self.context.get_client_state(client_id)?;
+
+        if btp_header.trusted_height > btp_header.main_height {
+            return Err(ContractError::UpdateBlockOlderThanTrustedHeight);
+        }
+
+        let trusted_consensus_state = self
+            .context
+            .get_consensus_state(client_id, btp_header.trusted_height)?;
+
+        let current_proof_context_hash =
+            btp_header.get_next_proof_context_hash(&btp_header.current_validators);
+
+        if current_proof_context_hash != trusted_consensus_state.next_proof_context_hash {
+            return Err(ContractError::InvalidProofContextHash);
+        }
+
+        if (btp_header.trusted_height - btp_header.main_height) > state.trusting_period {
             return Err(ContractError::TrustingPeriodElapsed {
-                saved_height: state.latest_height,
+                trusted_height: btp_header.trusted_height,
                 update_height: btp_header.main_height,
             });
         }
-
-        // if state.network_section_hash != btp_header.prev_network_section_hash {
-        //     return Err(ContractError::InvalidHeaderUpdate(
-        //         "network section mismatch".to_string(),
-        //     ));
-        // }
 
         if state.network_id != btp_header.network_id {
             return Err(ContractError::InvalidHeaderUpdate(
@@ -145,14 +158,18 @@ impl ILightClient for IconClient<'_> {
             ));
         }
 
-        let _valid = self.check_block_proof(client_id, &btp_header, &signed_header.signatures)?;
+        let _valid = self.check_block_proof(
+            client_id,
+            &btp_header,
+            &signed_header.signatures,
+            &btp_header.current_validators,
+        )?;
 
-        state.validators = btp_header.next_validators.clone();
-        state.latest_height = btp_header.main_height;
-        state.network_section_hash = btp_header.get_network_section_hash().to_vec();
-        let consensus_state = ConsensusState {
-            message_root: btp_header.message_root,
-        };
+        if state.latest_height < btp_header.main_height {
+            state.latest_height = btp_header.main_height;
+        }
+
+        let consensus_state = btp_header.to_consensus_state();
         self.context.insert_client_state(client_id, state.clone())?;
         self.context.insert_consensus_state(
             client_id,

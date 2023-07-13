@@ -679,7 +679,7 @@ mod tests {
         assert_eq!(
             result,
             Err(ContractError::TrustingPeriodElapsed {
-                saved_height: stored_client_state.latest_height,
+                trusted_height: stored_client_state.latest_height,
                 update_height: signed_header.header.clone().unwrap().main_height
             })
         );
@@ -731,15 +731,6 @@ mod tests {
 
         assert_eq!(updated_client_state.latest_height, block_height);
 
-        assert_eq!(
-            updated_client_state.network_section_hash,
-            signed_header
-                .header
-                .clone()
-                .unwrap()
-                .get_network_section_hash()
-                .to_vec()
-        );
 
         assert_eq!(
             consensus_state.message_root,

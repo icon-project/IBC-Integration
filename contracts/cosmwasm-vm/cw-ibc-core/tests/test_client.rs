@@ -351,7 +351,7 @@ fn check_for_create_client_message() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -359,6 +359,7 @@ fn check_for_create_client_message() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -399,7 +400,7 @@ fn check_for_create_client_message_response() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -407,6 +408,7 @@ fn check_for_create_client_message_response() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -482,7 +484,7 @@ fn check_for_client_state_from_storage() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -490,6 +492,7 @@ fn check_for_client_state_from_storage() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -563,7 +566,7 @@ fn check_for_consensus_state_from_storage() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -571,6 +574,7 @@ fn check_for_consensus_state_from_storage() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -650,7 +654,7 @@ fn fail_on_create_client_message_error_response() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -658,6 +662,7 @@ fn fail_on_create_client_message_error_response() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -703,7 +708,7 @@ fn fails_on_create_client_message_without_proper_initialisation() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -711,6 +716,7 @@ fn fails_on_create_client_message_without_proper_initialisation() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -747,7 +753,7 @@ fn check_for_update_client_message() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -755,6 +761,7 @@ fn check_for_update_client_message() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -813,7 +820,7 @@ fn check_for_update_client_message() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -881,7 +888,7 @@ fn fails_on_updating_non_existing_client() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -946,7 +953,7 @@ fn check_for_upgrade_client() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -954,6 +961,7 @@ fn check_for_upgrade_client() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -991,7 +999,7 @@ fn check_for_upgrade_client() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1000,6 +1008,7 @@ fn check_for_upgrade_client() {
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1053,7 +1062,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1061,6 +1070,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1098,7 +1108,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1107,6 +1117,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1160,7 +1171,7 @@ fn fails_on_upgrade_client_frozen_client() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1168,6 +1179,7 @@ fn fails_on_upgrade_client_frozen_client() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1205,7 +1217,7 @@ fn fails_on_upgrade_client_frozen_client() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1214,6 +1226,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1264,7 +1277,7 @@ fn check_for_execute_upgrade_client() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1272,6 +1285,7 @@ fn check_for_execute_upgrade_client() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1309,7 +1323,7 @@ fn check_for_execute_upgrade_client() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1318,6 +1332,7 @@ fn check_for_execute_upgrade_client() {
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1393,7 +1408,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1402,6 +1417,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1607,7 +1623,7 @@ fn success_on_getting_client_state() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1615,6 +1631,7 @@ fn success_on_getting_client_state() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1704,7 +1721,7 @@ fn sucess_on_misbehaviour_validate() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1767,7 +1784,6 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1861,7 +1877,6 @@ fn success_on_execute_misbehaviour() {
         max_clock_drift: 5,
         latest_height: 100,
         network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1897,6 +1912,7 @@ fn success_on_execute_misbehaviour() {
 fn success_on_raw_from_consensus_state() {
     let raw = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     };
 
     let consenus_state: ConsensusState = raw.clone().try_into().unwrap();

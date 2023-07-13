@@ -1,4 +1,5 @@
 use crate::cw_types::CwEndpoint;
+use crate::hex_string::HexString;
 use crate::{
     client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse, PacketDataResponse},
     errors::CwErrors,

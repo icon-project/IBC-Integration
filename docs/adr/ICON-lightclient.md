@@ -57,8 +57,10 @@ interface ClientState {
   frozenHeight: uint64
   maxClockDrift: uint64
   latestHeight: uint64
-  networkSectionHash: []byte
-  validators: [][]byte
+  networkId: u64,
+  networkTypeId: u64,
+  srcNetworkId: String,
+  trust_level: TrustLevel
 }
 ```
 
@@ -68,7 +70,8 @@ The client tracks the messageRoot for each block update
 
 ```typescript
 interface ConsensusState {
-  messageRoot: []byte
+  messageRoot: []byte,
+  nextProofContextHash: []byte
 }
 ```
 
@@ -87,6 +90,8 @@ interface BTPBlockHeader {
   messagesRoot: []byte
   messageCount: uint64
   nextValidators: [][]byte
+  currentValidators: [][]byte
+  trustedHeight: uint64
 }
 ```
 
@@ -199,7 +204,7 @@ function initialise(
         maxClockDrift: uint64,
         header: BTPBlockHeader
     ) : ClientState {
-    consensusState = { header.messageRoot }
+    consensusState = { header.messageRoot , header.nextProofContextHash}
     SRC_NETWORK_ID = srcNetworkId
     NETWORK_TYPE_ID = networkTypeId
     NETWORK_ID = header.networkId
@@ -233,18 +238,24 @@ Verify validity of regular update to the client
 ```typescript
 function verifyHeader(blockUpdate: BlockUpdate) {
     header = blockUpdate.header
-    clientState = provableStore.get("clients/{NETWORK_ID}/clientState")
+    clientState = provableStore.get("clients/{CLIENT_ID}/clientState")
+    consensusState=  provableStore.get("clients/{CLIENT_ID}/consensusStates/{header.trustedHeight}")
+
     // assert header has correct networkId
     assert(header.networkId == NETWORK_ID)
+
+    assert(header.trustedHeight > header.mainHeight)
     
     // assert trusting period has not yet passed
-    assert(header.mainHeight - clientState.latestHeight < clientState.trustingPeriod)
+    assert(header.trustedHeight - header.mainHeight < clientState.trustingPeriod)
 
-      // assert networkSectionHashes match
-    assert(clientstate.networkSectionHash == header.prev)
+    currentProofContextHash=get_proof_context_hash(header.currentValidators)
+
+    // assert current validators hash matches trusted context hash
+    assert(consensusState.nextProofContextHash==currentProofContextHash)
 
     // call the BTP block proof verification
-    assert(verifyBlockProof(header, blockUpdate.signatures, clientState.validators))
+    assert(verifyBlockProof(header, blockUpdate.signatures, header.currentValidators))
 }
 ```
 
@@ -263,13 +274,15 @@ function updateState(header: BTPBlockHeader) {
     }
 
     // set latest height and networkSection and save the client state
-    clientState.latestHeight = header.mainHeight
-    clientState.networkSectionHash = header.getNetworkSectionHash()
-    provableStore.set("clients/{NETWORK_ID}/clientState", clientState)
+    if header.mainHeight>clientState.latestHeight {
+       clientState.latestHeight = header.mainHeight
+    }
+   
+    provableStore.set("clients/{CLIENT_ID}/clientState", clientState)
     
     // create recorded consensus state, save it
-    consensusState = ConsensusState{header.messageRoot}
-    provableStore.set("clients/{NETWORK_ID}/consensusStates/{header.mainHeight}", consensusState)
+    consensusState = ConsensusState{header.messageRoot,header.nextProofContextHeight}
+    provableStore.set("clients/{CLIENT_ID}/consensusStates/{header.mainHeight}", consensusState)
 
     //TODO VERIFY NEED  
     {
