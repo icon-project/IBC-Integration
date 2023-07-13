@@ -1,8 +1,11 @@
 pub mod call_request;
+pub mod config;
 pub mod message;
 pub mod request;
 pub mod response;
 pub mod storage_keys;
+
+pub const LOG_PREFIX: &str = "[xcall_app]:";
 
 use crate::error::ContractError;
 pub use common::rlp;

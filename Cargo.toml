@@ -1,16 +1,7 @@
 [workspace]
 members = [
-    "contracts/cosmwasm-vm/cw-icon-light-client",
-    "contracts/cosmwasm-vm/cw-xcall",
-    "contracts/cosmwasm-vm/cw-ibc-core",
-    "contracts/cosmwasm-vm/cw-common",
-    "libraries/rust/common",
-    "contracts/cosmwasm-vm/cw-mock-dapp",
-    "contracts/cosmwasm-vm/cw-mock-ibc-core",
-    "contracts/cosmwasm-vm/cw-xcall-ibc-connection",
-     "contracts/cosmwasm-vm/cw-xcall-multi",
-     "contracts/cosmwasm-vm/cw-integration",
-     "contracts/cosmwasm-vm/cw-mock-dapp-multi",
+    "contracts/cosmwasm-vm/*",
+   
 ]
 
 [workspace.package]

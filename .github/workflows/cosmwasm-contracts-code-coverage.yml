@@ -6,7 +6,6 @@ on:
       - "**"
     paths:
       - "contracts/cosmwasm-vm/**"
-      - "libraries/common/rust/**"
       - ".github/workflows/cosmwasm-contracts-code-coverage.yml"
   push:
     branches:
@@ -33,7 +32,7 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate code coverage
-        run: cargo llvm-cov --lcov --output-path lcov.info --package cw-xcall --package cw-ibc-core --package cw-icon-light-client
+        run: cargo llvm-cov --lcov --output-path lcov.info --package cw-xcall
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:

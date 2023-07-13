@@ -64,19 +64,3 @@ jobs:
       - name: Run cargo clippy
         run: |
           cargo clippy
-
-      - name: Generate schema
-        run: |
-          ../../scripts/run_in_subprojects.sh cw-xcall cw-icon-light-client
-
-      - name: Verify schema
-        uses: tj-actions/verify-changed-files@v14
-        id: verify-schema
-        with:
-          files: |
-            contracts/cosmwasm-vm/*/schema/**
-
-      - name: Display changed schemas
-        if: steps.verify-schema.outputs.files_changed == 'true'
-        run: |
-          echo "Changed files: ${{ steps.verify-schema.outputs.changed_files }}"

@@ -30,10 +30,12 @@ impl<'a> CwCallService<'a> {
         address: Addr,
         rollback: Option<Vec<u8>>,
     ) -> Result<(), ContractError> {
-        ensure!(
-            (is_contract(deps.querier, address) || rollback.is_none()),
-            ContractError::RollbackNotPossible
-        );
+        if rollback.is_some() {
+            ensure!(
+                is_contract(deps.querier, address),
+                ContractError::RollbackNotPossible
+            );
+        }
 
         Ok(())
     }
@@ -206,31 +208,20 @@ impl<'a> CwCallService<'a> {
 
         Ok(())
     }
-    /// The function ensures that the given address is the IBC handler.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. It is used to interact
-    /// with the contract's storage and retrieve data from it. The `Storage` trait defines methods for
-    /// getting and setting key-value pairs in the contract's storage.
-    /// * `address`: The `address` parameter is of type `Addr` and represents the address of the IBC handler
-    /// that needs to be checked against the stored IBC host address.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<(), ContractError>` which means it can either return an `Ok(())` indicating that the
-    /// function executed successfully or an `Err(ContractError)` indicating that an error occurred during
-    /// execution.
-    pub fn ensure_ibc_handler(
-        &self,
-        store: &dyn Storage,
-        address: Addr,
-    ) -> Result<(), ContractError> {
-        let ibc_host = self.get_host(store)?;
 
-        if ibc_host != address {
-            return Err(ContractError::OnlyIbcHandler {});
-        }
+    pub fn ensure_enough_funds(
+        &self,
+        required_fee: u128,
+        info: &MessageInfo,
+    ) -> Result<(), ContractError> {
+        let total_funds: u128 = info
+            .funds
+            .iter()
+            .map(|c| c.amount.into())
+            .collect::<Vec<u128>>()
+            .iter()
+            .sum();
+        ensure!(total_funds >= required_fee, ContractError::InsuffcientFunds);
         Ok(())
     }
 }

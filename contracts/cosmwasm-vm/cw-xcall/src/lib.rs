@@ -1,69 +1,60 @@
 pub mod ack;
 pub mod admin;
 pub mod assertion;
-pub mod call_message;
-pub mod check;
+pub mod connection;
 pub mod contract;
+pub mod dapp;
 pub mod error;
 pub mod events;
-pub mod fee;
+pub mod execute_call;
+pub mod execute_rollback;
 pub mod fee_handler;
+pub mod fees;
 pub mod handle_call_message;
 pub mod helpers;
-pub mod ibc;
 pub mod msg;
 pub mod owner;
 pub mod requests;
+pub mod send_call_message;
 pub mod state;
 pub mod types;
-use crate::ack::{on_ack_failure, on_ack_sucess};
+
 use crate::{
     ack::{make_ack_fail, make_ack_success},
-    check::{check_order, check_version},
     error::ContractError,
     events::{
-        event_call_executed, event_call_message, event_response_message, event_rollback_executed,
-        event_rollback_message, event_xcall_message_sent,
+        event_call_message, event_response_message, event_rollback_message,
+        event_xcall_message_sent,
     },
-    ibc::{APP_ORDER, IBC_VERSION},
     msg::{InstantiateMsg, QueryMsg},
     state::{
-        CwCallService, IbcConfig, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID,
+        CwCallService, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID,
         SEND_CALL_MESSAGE_REPLY_ID,
     },
     types::{
         call_request::CallRequest,
         message::{CallServiceMessage, CallServiceMessageType},
         request::CallServiceMessageRequest,
-        response::{to_int, CallServiceMessageResponse, CallServiceResponseType},
+        response::{CallServiceMessageResponse, CallServiceResponseType},
         storage_keys::StorageKey,
     },
 };
-use common::types::message::CrossContractMessage::XCallMessage;
+
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, MessageInfo, Never, QuerierWrapper, Reply,
-    Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, MessageInfo, QuerierWrapper, Reply, Response,
+    StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
 
-use cw_common::cw_types::{
-    Cw3ChannelOpenResponse, CwBasicResponse, CwChannelCloseMsg, CwChannelConnectMsg,
-    CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwOrder, CwPacket, CwPacketAckMsg,
-    CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
-};
-
-use cosmwasm_std::to_vec;
 use cw2::set_contract_version;
-use cw_common::ibc_types::IbcHeight as Height;
 use cw_common::types::Ack;
-use cw_common::xcall_msg::ExecuteMsg;
-use cw_common::ProstMessage;
+use cw_common::xcall_app_msg::ExecuteMsg;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
-use schemars::_serde_json::to_string;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -186,7 +177,6 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
 
 #[cw_serde]
 pub struct MigrateMsg {}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     Ok(Response::default().add_attribute("migrate", "successful"))

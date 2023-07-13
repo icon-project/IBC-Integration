@@ -1,11 +1,9 @@
+mod account;
 mod setup;
-use cosmwasm_std::{
-    testing::{mock_env, MOCK_CONTRACT_ADDR},
-    Addr,
-};
+use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
 
 use cw_xcall::{instantiate, msg::InstantiateMsg, state::CwCallService};
-use setup::*;
+use setup::test::*;
 
 #[test]
 
@@ -20,8 +18,8 @@ fn proper_instantiate() {
         env,
         mock_info,
         InstantiateMsg {
-            timeout_height: 10,
-            ibc_host: Addr::unchecked("someaddress"),
+            network_id: "nid".to_string(),
+            denom: "arch".to_string(),
         },
     )
     .unwrap();

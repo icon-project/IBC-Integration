@@ -135,7 +135,7 @@ fn test_handle_message_fail_revert() {
         deps.as_mut(),
         info,
         NetworkAddress::from_str("netid/xcall").unwrap(),
-        "revertMessage".as_bytes().to_vec(),
+        "rollback".as_bytes().to_vec(),
         vec![],
     )
     .unwrap();
@@ -167,11 +167,12 @@ fn test_handle_message_pass_true() {
     let res = ctx.handle_call_message(
         deps.as_mut(),
         info,
-        NetworkAddress::from_str("netid/xcall").unwrap(),
+        NetworkAddress::from_str("netid/hugobyte").unwrap(),
         to_vec(&rollback_data).unwrap(),
         vec![],
     );
     assert!(res.is_ok());
+    println!("{:?}", res);
     assert_eq!(res.unwrap().attributes[0].value, "RollbackDataReceived")
 }
 
@@ -198,7 +199,7 @@ fn test_handle_message_fail_true() {
     ctx.handle_call_message(
         deps.as_mut(),
         info,
-        NetworkAddress::from_str("netid/xcall").unwrap(),
+        NetworkAddress::from_str("netid/hugobyte").unwrap(),
         to_vec(&rollback_data).unwrap(),
         vec![],
     )

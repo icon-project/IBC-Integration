@@ -21,7 +21,7 @@ fn set_protocol_fee_handler() {
         .unwrap();
 
     contract
-        .add_admin(deps.as_mut().storage, info, admin_one().to_string())
+        .add_admin(deps.as_mut().storage, &info, admin_one().to_string())
         .unwrap();
 
     contract
@@ -36,7 +36,7 @@ fn set_protocol_fee_handler() {
         .update_balance(MOCK_CONTRACT_ADDR.to_string(), balance);
 
     let response = contract
-        .set_protocol_feehandler(deps.as_mut(), env, info, address.clone())
+        .set_protocol_feehandler(deps.as_mut(), &env, &info, address.clone())
         .unwrap();
     match response.messages[0].msg.clone() {
         cosmwasm_std::CosmosMsg::Bank(bank_msg) => match bank_msg {
@@ -63,11 +63,11 @@ fn test_invalid_input() {
         .unwrap();
 
     cw_callservice
-        .add_admin(deps.as_mut().storage, info.clone(), admin_one().to_string())
+        .add_admin(deps.as_mut().storage, &info, admin_one().to_string())
         .unwrap();
 
     cw_callservice
-        .set_protocol_feehandler(deps.as_mut(), env, info, address)
+        .set_protocol_feehandler(deps.as_mut(), &env, &info, address)
         .unwrap();
 }
 
@@ -84,7 +84,7 @@ fn get_protocol_fee_handler() {
         .unwrap();
 
     contract
-        .add_admin(deps.as_mut().storage, info, admin_one().to_string())
+        .add_admin(deps.as_mut().storage, &info, admin_one().to_string())
         .unwrap();
     contract
         .fee_handler()
@@ -92,7 +92,7 @@ fn get_protocol_fee_handler() {
         .unwrap();
     let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "ucosm")]);
     contract
-        .set_protocol_feehandler(deps.as_mut(), env, info, address)
+        .set_protocol_feehandler(deps.as_mut(), &env, &info, address)
         .unwrap();
     let result = contract.get_protocol_feehandler(deps.as_ref());
     assert_eq!("xyz", result);
@@ -110,7 +110,7 @@ fn set_protocol_fee() {
         .unwrap();
 
     contract
-        .add_admin(deps.as_mut().storage, info, admin_one().to_string())
+        .add_admin(deps.as_mut().storage, &info, admin_one().to_string())
         .unwrap();
 
     let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "uconst")]);
@@ -130,12 +130,12 @@ fn get_protocol_fee() {
         .unwrap();
 
     contract
-        .add_admin(deps.as_mut().storage, info, admin_one().to_string())
+        .add_admin(deps.as_mut().storage, &info, admin_one().to_string())
         .unwrap();
     let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "ucosm")]);
     contract
         .set_protocol_fee(deps.as_mut(), info, value)
         .unwrap();
-    let result = contract.get_protocol_fee(deps.as_ref());
+    let result = contract.get_protocol_fee(deps.as_ref().storage);
     assert_eq!("123", result.to_string());
 }

@@ -37,8 +37,8 @@ cw2 = {workspace=true}
 schemars = {workspace=true}
 serde = { workspace=true}
 thiserror = { workspace=true}
-common = { path="../../../libraries/rust/common" }
-cw-common = { path="../cw-common" }
+common ={ git = "https://github.com/icon-project/IBC-Integration.git",branch="main" }
+cw-common = { git = "https://github.com/icon-project/IBC-Integration.git",branch="main" }
 serde-json-wasm = {workspace=true}
 
 [dev-dependencies]

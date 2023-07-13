@@ -1,107 +1,11 @@
-use cw_common::hex_string::HexString;
+use common::{rlp, utils::keccak256};
+use cw_common::xcall_types::network_address::NetId;
 
 use crate::ack::acknowledgement_data_on_success;
 
 use super::*;
 
 impl<'a> CwCallService<'a> {
-    /// This function executes a call message to a smart contract and returns a response with a
-    /// submessage.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which provides access to the contract's dependencies
-    /// such as storage, API, and querier. It is used to interact with the blockchain and other
-    /// contracts.
-    /// * `info`: `info` is a struct of type `MessageInfo` which contains information about the message
-    /// being executed, such as the sender address, the amount of funds sent with the message, and the
-    /// gas limit.
-    /// * `request_id`: `request_id` is a unique identifier for a specific request made by a user. It is
-    /// used to retrieve the details of the request from the contract's storage and execute the
-    /// corresponding action.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// message and `ContractError` is an enum representing the possible errors that can occur during
-    /// contract execution.
-    pub fn execute_call(
-        &self,
-        deps: DepsMut,
-        info: MessageInfo,
-        request_id: u128,
-    ) -> Result<Response, ContractError> {
-        let proxy_requests = self
-            .query_message_request(deps.storage, request_id)
-            .unwrap();
-
-        self.ensure_request_not_null(request_id, &proxy_requests)
-            .unwrap();
-
-        let message = XCallMessage {
-            data: proxy_requests.data()?.to_vec(),
-        };
-        let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: proxy_requests.to().to_string(),
-            msg: to_binary(&message).unwrap(),
-            funds: info.funds,
-        });
-
-        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_CALL_ID);
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_call")
-            .add_submessage(sub_msg))
-    }
-
-    /// This function executes a rollback operation for a previously made call request.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: A mutable reference to the dependencies of the contract, which includes access to the
-    /// storage and other modules.
-    /// * `info`: `info` is a struct that contains information about the message sender, such as their
-    /// address and the amount of funds they are sending with the message. It is of type `MessageInfo`.
-    /// * `sequence_no`: The sequence number is a unique identifier assigned to each XCall request made
-    /// by the user. It is used to track the status of the request and to ensure that the correct request
-    /// is being executed or rolled back.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// contract execution and `ContractError` is an enum representing possible errors that can occur
-    /// during contract execution.
-    pub fn execute_rollback(
-        &self,
-        deps: DepsMut,
-        info: MessageInfo,
-        sequence_no: u128,
-    ) -> Result<Response, ContractError> {
-        let call_request = self.query_request(deps.storage, sequence_no)?;
-
-        self.ensure_call_request_not_null(sequence_no, &call_request)
-            .unwrap();
-        self.ensure_rollback_enabled(call_request.enabled())
-            .unwrap();
-
-        let message = XCallMessage {
-            data: call_request.rollback().to_vec(),
-        };
-        let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: call_request.to().to_string(),
-            msg: to_binary(&message).unwrap(),
-            funds: info.funds,
-        });
-
-        let sub_msg: SubMsg = SubMsg::reply_on_success(call_message, EXECUTE_ROLLBACK_ID);
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_call")
-            .add_submessage(sub_msg))
-    }
-
     /// This function receives packet data, decodes it, and then handles either a request or a response
     /// based on the message type.
     ///
@@ -119,27 +23,22 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// a `Result` object with either an `IbcReceiveResponse` or a `ContractError`.
-    pub fn receive_packet_data(
+    pub fn handle_message(
         &self,
         deps: DepsMut,
-        message: CwPacket,
-    ) -> Result<CwReceiveResponse, ContractError> {
-        println!(
-            "receive_packet_data {:?}",
-            HexString::from_bytes(&message.data.0)
-        );
-        let call_service_message: CallServiceMessage =
-            CallServiceMessage::try_from(message.data.0.clone())?;
-        println!("call service decoded {call_service_message:?}");
+        info: MessageInfo,
+        from: NetId,
+        sn: Option<i64>,
+        message: Vec<u8>,
+    ) -> Result<Response, ContractError> {
+        let call_service_message: CallServiceMessage = CallServiceMessage::try_from(message)?;
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
-                println!("matched request ");
-                self.hanadle_request(deps, call_service_message.payload(), &message)
+                self.handle_request(deps, info, from, sn, call_service_message.payload())
             }
             CallServiceMessageType::CallServiceResponse => {
-                println!("matched Response ");
-                self.handle_response(deps, call_service_message.payload(), &message)
+                self.handle_response(deps, info, sn, call_service_message.payload())
             }
         }
     }
@@ -161,49 +60,61 @@ impl<'a> CwCallService<'a> {
     /// Returns:
     ///
     /// an `IbcReceiveResponse` object wrapped in a `Result` with a possible `ContractError`.
-    pub fn hanadle_request(
+    pub fn handle_request(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
+        src_net: NetId,
+        _sn: Option<i64>,
         data: &[u8],
-        packet: &CwPacket,
-    ) -> Result<CwReceiveResponse, ContractError> {
-        println!(
-            "handler request message decoded :{:?}",
-            HexString::from_bytes(data)
-        );
+    ) -> Result<Response, ContractError> {
+        let request: CallServiceMessageRequest = rlp::decode(data).unwrap();
+
+        let from = request.from().clone();
+        if from.nid() != src_net {
+            return Err(ContractError::ProtocolsMismatch);
+        }
+        let source = info.sender.to_string();
+        let source_valid =
+            self.is_valid_source(deps.as_ref().storage, src_net, &source, request.protocols())?;
+        if !source_valid {
+            return Err(ContractError::ProtocolsMismatch);
+        }
+
+        let to = request.to();
+
+        if request.protocols().len() > 1 {
+            let key = keccak256(data).to_vec();
+            let caller = info.sender;
+            self.save_pending_requests(deps.storage, key.clone(), caller.to_string())?;
+            let registered =
+                self.get_pending_requests_by_hash(deps.as_ref().storage, key.clone())?;
+
+            if registered.len() != request.protocols().len() {
+                return Ok(Response::new());
+            }
+
+            self.remove_pending_request_by_hash(deps.storage, key)?;
+        }
         let request_id = self.increment_last_request_id(deps.storage)?;
-        let message_request: CallServiceMessageRequest = data.try_into()?;
 
-        let from = message_request.from();
-        let to = message_request.to();
-
-        let request = CallServiceMessageRequest::new(
-            from.to_string(),
-            to.to_string(),
-            message_request.sequence_no(),
-            message_request.rollback(),
-            message_request.data()?.into(),
-        );
-
-        self.insert_request(deps.storage, request_id, request)?;
+        self.store_proxy_request(deps.storage, request_id, &request)?;
 
         let event = event_call_message(
             from.to_string(),
             to.to_string(),
-            message_request.sequence_no(),
+            request.sequence_no(),
             request_id,
         );
-        let acknowledgement_data =
-            to_binary(&cw_common::client_response::XcallPacketResponseData {
-                packet: packet.clone(),
-                acknowledgement: make_ack_success().to_vec(),
-            })
-            .map_err(ContractError::Std)?;
+        let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
+            acknowledgement: make_ack_success().to_vec(),
+        })
+        .map_err(ContractError::Std)?;
 
-        Ok(CwReceiveResponse::new()
+        Ok(Response::new()
             .add_attribute("action", "call_service")
             .add_attribute("method", "handle_response")
-            .set_ack(acknowledgement_data)
+            .set_data(acknowledgement_data)
             .add_event(event))
     }
 
@@ -227,68 +138,74 @@ impl<'a> CwCallService<'a> {
     pub fn handle_response(
         &self,
         deps: DepsMut,
+        info: MessageInfo,
+        _sn: Option<i64>,
         data: &[u8],
-        packet: &CwPacket,
-    ) -> Result<CwReceiveResponse, ContractError> {
-        let message: CallServiceMessageResponse = data.try_into()?;
+    ) -> Result<Response, ContractError> {
+        let message: CallServiceMessageResponse = rlp::decode(data).unwrap();
+
         let response_sequence_no = message.sequence_no();
 
-        let mut call_request = self.query_request(deps.storage, response_sequence_no)?;
+        let mut call_request = self.get_call_request(deps.storage, response_sequence_no)?;
 
         if call_request.is_null() {
-            let acknowledgement_data =
-                to_binary(&cw_common::client_response::XcallPacketResponseData {
-                    packet: packet.clone(),
-                    acknowledgement: make_ack_fail(format!(
-                        "handle_resposne: no request for {response_sequence_no}"
-                    ))
-                    .to_vec(),
-                })
-                .map_err(ContractError::Std)?;
-            return Ok(CwReceiveResponse::new()
-                .add_attribute("action", "call_service")
-                .add_attribute("method", "handle_response")
-                .set_ack(acknowledgement_data)
-                .add_attribute(
-                    "message",
-                    format!("handle_resposne: no request for {response_sequence_no}"),
-                ));
+            return Ok(Response::new());
         }
+
+        let source = info.sender.to_string();
+        let source_valid = self.is_valid_source(
+            deps.as_ref().storage,
+            call_request.to().nid(),
+            &source,
+            call_request.protocols(),
+        )?;
+        if !source_valid {
+            return Err(ContractError::ProtocolsMismatch);
+        }
+
+        if call_request.protocols().len() > 1 {
+            let key = keccak256(data).to_vec();
+            let caller = info.sender;
+            self.save_pending_responses(deps.storage, key.clone(), caller.to_string())?;
+            let registered =
+                self.get_pending_responses_by_hash(deps.as_ref().storage, key.clone())?;
+
+            if registered.len() != call_request.protocols().len() {
+                return Ok(Response::new());
+            }
+
+            self.remove_pending_responses_by_hash(deps.storage, key)?;
+        }
+        let response_event = event_response_message(
+            response_sequence_no,
+            (message.response_code().clone()).into(),
+            message.message(),
+        );
 
         match message.response_code() {
             CallServiceResponseType::CallServiceResponseSuccess => {
-                let event = match message.message().is_empty() {
-                    true => event_response_message(
-                        response_sequence_no,
-                        to_int(message.response_code()),
-                        "",
-                    ),
-                    false => event_response_message(
-                        response_sequence_no,
-                        to_int(message.response_code()),
-                        message.message(),
-                    ),
-                };
                 self.cleanup_request(deps.storage, response_sequence_no);
-                Ok(CwReceiveResponse::new()
+                self.set_successful_response(deps.storage, response_sequence_no)?;
+                Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
-                    .set_ack(acknowledgement_data_on_success(packet)?)
-                    .add_event(event))
+                    .set_data(acknowledgement_data_on_success()?)
+                    .add_event(response_event))
             }
             _ => {
                 self.ensure_rollback_length(call_request.rollback())
                     .unwrap();
                 call_request.set_enabled();
-                self.set_call_request(deps.storage, response_sequence_no, call_request)?;
+                self.store_call_request(deps.storage, response_sequence_no, &call_request)?;
 
-                let event = event_rollback_message(response_sequence_no);
+                let rollback_event = event_rollback_message(response_sequence_no);
 
-                Ok(CwReceiveResponse::new()
+                Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
-                    .set_ack(acknowledgement_data_on_success(packet)?)
-                    .add_event(event))
+                    .set_data(acknowledgement_data_on_success()?)
+                    .add_event(response_event)
+                    .add_event(rollback_event))
             }
         }
     }
@@ -308,31 +225,17 @@ impl<'a> CwCallService<'a> {
         self.remove_call_request(store, sequence_no);
     }
 
-    /// This function saves an IBC configuration to a storage and returns an error if it fails.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a mutable reference to a trait object of type `dyn Storage`. This is used
-    /// to interact with the storage of the smart contract. The `save` method of the `ibc_config` struct
-    /// is called with this `store` parameter to save the `config` parameter to the
-    /// * `config`: The `config` parameter is a reference to an `IbcConfig` struct that contains the
-    /// configuration settings for the IBC module. This struct contains various fields such as the chain
-    /// ID, the module account address, and the packet timeout settings. The `save_config` function is
-    /// responsible for persisting
-    ///
-    /// Returns:
-    ///
-    /// This function returns a `Result` with either an empty `Ok(())` value if the `config` is
-    /// successfully saved to the `store`, or a `ContractError` wrapped in `Err` if there was an error
-    /// while saving the `config`.
-    pub fn save_config(
-        &mut self,
-        store: &mut dyn Storage,
-        config: &IbcConfig,
-    ) -> Result<(), ContractError> {
-        match self.ibc_config().save(store, config) {
-            Ok(_) => Ok(()),
-            Err(err) => Err(ContractError::Std(err)),
+    pub fn is_valid_source(
+        &self,
+        store: &dyn Storage,
+        src_net: NetId,
+        source: &String,
+        protocols: &Vec<String>,
+    ) -> Result<bool, ContractError> {
+        if protocols.contains(source) {
+            return Ok(true);
         }
+        let default_conn = self.get_default_connection(store, src_net)?;
+        Ok(source.clone() == default_conn)
     }
 }

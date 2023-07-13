@@ -1,3 +1,10 @@
+use cosmwasm_std::Order;
+use cw_common::xcall_types::network_address::NetId;
+use cw_storage_plus::{KeyDeserialize, PrimaryKey};
+use serde::de::DeserializeOwned;
+
+use crate::types::config::Config;
+
 use super::*;
 
 /// These are constants defined in the `CwCallService` struct that are used throughout the codebase.
@@ -7,56 +14,6 @@ pub const EXECUTE_CALL_ID: u64 = 0;
 pub const EXECUTE_ROLLBACK_ID: u64 = 1;
 pub const ACK_FAILURE_ID: u64 = 3;
 pub const SEND_CALL_MESSAGE_REPLY_ID: u64 = 2;
-
-/// The `IbcConfig` struct represents a configuration for inter-blockchain communication with a source
-/// and destination endpoint, and a sequence number.
-///
-/// Properties:
-///
-/// * `sequence`: The `sequence` property is an unsigned 128-bit integer that represents the sequence
-/// number of the IBC transaction. It is used to ensure that transactions are processed in the correct
-/// order and to prevent replay attacks.
-/// * `src`: `src` is a property of the `IbcConfig` struct that represents the source endpoint of an
-/// Inter-Blockchain Communication (IBC) transaction. An IBC endpoint is a unique identifier for a
-/// blockchain network that can send or receive IBC packets. It typically includes information such as
-/// the chain ID
-/// * `dst`: `dst` is a property of the `IbcConfig` struct and represents the destination endpoint of an
-/// Inter-Blockchain Communication (IBC) transaction. It is of type `IbcEndpoint`, which likely contains
-/// information such as the chain ID, address, and port of the destination chain.
-#[cw_serde]
-pub struct IbcConfig {
-    sequence: u128,
-    src: CwEndPoint,
-    dst: CwEndPoint,
-}
-
-/// This is an implementation block for the `IbcConfig` struct, defining several methods that can be
-/// called on instances of the struct.
-impl IbcConfig {
-    pub fn new(src: CwEndPoint, dst: CwEndPoint) -> Self {
-        Self {
-            src,
-            dst,
-            sequence: u128::default(),
-        }
-    }
-
-    pub fn src_endpoint(&self) -> &CwEndPoint {
-        &self.src
-    }
-
-    pub fn dst_endpoint(&self) -> &CwEndPoint {
-        &self.dst
-    }
-
-    pub fn sequence(&self) -> u128 {
-        self.sequence
-    }
-
-    pub fn next_sequence(&self) -> Option<u128> {
-        self.sequence.checked_add(1)
-    }
-}
 
 /// This is a Rust struct representing a Call Service with various fields such as last sequence number,
 /// owner, admin, message request, requests, IBC configuration, fee handler, fee, IBC host, and timeout
@@ -79,7 +36,7 @@ impl IbcConfig {
 /// used to keep track of all the call requests made by the users of the `CwCallService` struct. The
 /// `u128` key is used to uniquely identify
 /// * `ibc_config`: This property is of type `Item<'a, IbcConfig>` and represents the IBC configuration
-/// for the call service. It is likely used to define the parameters and settings for inter-blockchain
+/// for the call service. It is likely used to define the parameters and storetings for inter-blockchain
 /// communication.
 /// * `fee_handler`: The `fee_handler` property is an `Item` that holds a `String` value. It likely
 /// represents the address or identifier of the entity responsible for handling fees associated with the
@@ -94,17 +51,21 @@ impl IbcConfig {
 /// the Call Service. This is the block height at which the Call Service will stop processing requests
 /// if they have not been completed.
 pub struct CwCallService<'a> {
-    last_sequence_no: Item<'a, u128>,
+    sn: Item<'a, u128>,
+    config: Item<'a, Config>,
     last_request_id: Item<'a, u128>,
     owner: Item<'a, String>,
     admin: Item<'a, String>,
-    message_request: Map<'a, u128, CallServiceMessageRequest>,
-    requests: Map<'a, u128, CallRequest>,
-    ibc_config: Item<'a, IbcConfig>,
+    proxy_request: Map<'a, u128, CallServiceMessageRequest>,
+    call_requests: Map<'a, u128, CallRequest>,
     fee_handler: Item<'a, String>,
-    fee: Item<'a, u128>,
-    ibc_host: Item<'a, Addr>,
-    timeout_height: Item<'a, u64>,
+    protocol_fee: Item<'a, u128>,
+    default_connections: Map<'a, NetId, Addr>,
+    pending_requests: Map<'a, (Vec<u8>, String), bool>,
+    pending_responses: Map<'a, (Vec<u8>, String), bool>,
+    successful_responses: Map<'a, u128, bool>,
+    execute_request_id: Item<'a, u128>,
+    execute_rollback_id: Item<'a, u128>,
 }
 
 impl<'a> Default for CwCallService<'a> {
@@ -116,26 +77,85 @@ impl<'a> Default for CwCallService<'a> {
 impl<'a> CwCallService<'a> {
     pub fn new() -> Self {
         Self {
-            last_sequence_no: Item::new(StorageKey::SequenceNo.as_str()),
+            sn: Item::new(StorageKey::Sn.as_str()),
             last_request_id: Item::new(StorageKey::RequestNo.as_str()),
             owner: Item::new(StorageKey::Owner.as_str()),
             admin: Item::new(StorageKey::Admin.as_str()),
-            message_request: Map::new(StorageKey::MessageRequest.as_str()),
-            requests: Map::new(StorageKey::Requests.as_str()),
-            ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
+            proxy_request: Map::new(StorageKey::MessageRequest.as_str()),
+            call_requests: Map::new(StorageKey::Requests.as_str()),
             fee_handler: Item::new(StorageKey::FeeHandler.as_str()),
-            fee: Item::new(StorageKey::Fee.as_str()),
-            ibc_host: Item::new(StorageKey::IbcHost.as_str()),
-            timeout_height: Item::new(StorageKey::TimeoutHeight.as_str()),
+            protocol_fee: Item::new(StorageKey::ProtocolFee.as_str()),
+            default_connections: Map::new(StorageKey::DefaultConnections.as_str()),
+            pending_requests: Map::new(StorageKey::PendingRequests.as_str()),
+            pending_responses: Map::new(StorageKey::PendingResponses.as_str()),
+            successful_responses: Map::new(StorageKey::SuccessfulResponses.as_str()),
+            config: Item::new(StorageKey::Config.as_str()),
+            execute_request_id: Item::new(StorageKey::ExecuteReqId.as_str()),
+            execute_rollback_id: Item::new(StorageKey::ExecuteRollbackId.as_str()),
         }
     }
 
-    pub fn last_sequence_no(&self) -> &Item<'a, u128> {
-        &self.last_sequence_no
+    pub fn get_next_sn(&self, store: &mut dyn Storage) -> Result<u128, ContractError> {
+        let mut sn = self.sn.load(store).unwrap_or(0);
+        sn += 1;
+        self.sn.save(store, &sn)?;
+        Ok(sn)
+    }
+
+    pub fn get_current_sn(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        self.sn.load(store).map_err(ContractError::Std)
+    }
+
+    pub fn sn(&self) -> &Item<'a, u128> {
+        &self.sn
+    }
+
+    pub fn get_config(&self, store: &dyn Storage) -> Result<Config, ContractError> {
+        self.config.load(store).map_err(ContractError::Std)
+    }
+
+    pub fn store_config(
+        &self,
+        store: &mut dyn Storage,
+        config: &Config,
+    ) -> Result<(), ContractError> {
+        self.config.save(store, config).map_err(ContractError::Std)
     }
 
     pub fn last_request_id(&self) -> &Item<'a, u128> {
         &self.last_request_id
+    }
+
+    pub fn store_execute_request_id(
+        &self,
+        store: &mut dyn Storage,
+        req_id: u128,
+    ) -> Result<(), ContractError> {
+        self.execute_request_id
+            .save(store, &req_id)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn get_execute_request_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        self.execute_request_id
+            .load(store)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn store_execute_rollback_id(
+        &self,
+        store: &mut dyn Storage,
+        req_id: u128,
+    ) -> Result<(), ContractError> {
+        self.execute_rollback_id
+            .save(store, &req_id)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn get_execute_rollback_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
+        self.execute_rollback_id
+            .load(store)
+            .map_err(ContractError::Std)
     }
 
     pub fn owner(&self) -> &Item<'a, String> {
@@ -146,51 +166,230 @@ impl<'a> CwCallService<'a> {
         &self.admin
     }
 
-    pub fn message_request(&self) -> &Map<'a, u128, CallServiceMessageRequest> {
-        &self.message_request
+    pub fn get_proxy_request(
+        &self,
+        store: &dyn Storage,
+        id: u128,
+    ) -> Result<CallServiceMessageRequest, ContractError> {
+        self.proxy_request
+            .load(store, id)
+            .map_err(ContractError::Std)
     }
 
-    pub fn call_requests(&self) -> &Map<'a, u128, CallRequest> {
-        &self.requests
+    pub fn store_proxy_request(
+        &self,
+        store: &mut dyn Storage,
+        id: u128,
+        request: &CallServiceMessageRequest,
+    ) -> Result<(), ContractError> {
+        self.proxy_request
+            .save(store, id, request)
+            .map_err(ContractError::Std)
     }
 
-    pub fn ibc_config(&self) -> &Item<'a, IbcConfig> {
-        &self.ibc_config
+    pub fn remove_proxy_request(&self, store: &mut dyn Storage, id: u128) {
+        self.proxy_request.remove(store, id)
+    }
+
+    pub fn contains_proxy_request(
+        &self,
+        store: &dyn Storage,
+        request_id: u128,
+    ) -> Result<(), ContractError> {
+        match self.proxy_request.has(store, request_id) {
+            true => Ok(()),
+            false => Err(ContractError::InvalidRequestId { id: request_id }),
+        }
+    }
+
+    pub fn get_call_request(
+        &self,
+        store: &dyn Storage,
+        id: u128,
+    ) -> Result<CallRequest, ContractError> {
+        self.call_requests
+            .load(store, id)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn remove_call_request(&self, store: &mut dyn Storage, id: u128) {
+        self.call_requests.remove(store, id)
+    }
+
+    pub fn store_call_request(
+        &self,
+        store: &mut dyn Storage,
+        id: u128,
+        request: &CallRequest,
+    ) -> Result<(), ContractError> {
+        self.call_requests
+            .save(store, id, request)
+            .map_err(ContractError::Std)
     }
 
     pub fn fee_handler(&self) -> &Item<'a, String> {
         &self.fee_handler
     }
-    pub fn fee(&self) -> &Item<'a, u128> {
-        &self.fee
-    }
 
-    pub fn get_ibc_host(&self) -> &Item<'a, Addr> {
-        &self.ibc_host
-    }
-
-    pub fn set_ibc_host(
+    pub fn store_default_connection(
         &self,
         store: &mut dyn Storage,
+        nid: NetId,
         address: Addr,
     ) -> Result<(), ContractError> {
-        self.ibc_host
-            .save(store, &address)
+        self.default_connections
+            .save(store, nid, &address)
             .map_err(ContractError::Std)
     }
-    pub fn get_host(&self, store: &dyn Storage) -> Result<Addr, ContractError> {
-        self.ibc_host.load(store).map_err(ContractError::Std)
+    pub fn get_default_connection(
+        &self,
+        store: &dyn Storage,
+        nid: NetId,
+    ) -> Result<Addr, ContractError> {
+        self.default_connections
+            .load(store, nid)
+            .map_err(ContractError::Std)
     }
-    pub fn set_timeout_height(
+
+    pub fn get_pending_requests_by_hash(
+        &self,
+        store: &dyn Storage,
+        hash: Vec<u8>,
+    ) -> Result<Vec<(String, bool)>, ContractError> {
+        self.get_by_prefix(store, &self.pending_requests, hash)
+    }
+
+    pub fn remove_pending_request_by_hash(
         &self,
         store: &mut dyn Storage,
-        timeout_height: u64,
+        hash: Vec<u8>,
     ) -> Result<(), ContractError> {
-        self.timeout_height
-            .save(store, &timeout_height)
+        self.remove_by_prefix(store, &self.pending_requests, hash)
+    }
+
+    pub fn save_pending_requests(
+        &self,
+        store: &mut dyn Storage,
+        hash: Vec<u8>,
+        caller: String,
+    ) -> Result<(), ContractError> {
+        self.pending_requests
+            .save(store, (hash, caller), &true)
             .map_err(ContractError::Std)
     }
-    pub fn get_timeout_height(&self, store: &dyn Storage) -> u64 {
-        self.timeout_height.load(store).unwrap_or(0)
+
+    pub fn get_pending_responses_by_hash(
+        &self,
+        store: &dyn Storage,
+        hash: Vec<u8>,
+    ) -> Result<Vec<(String, bool)>, ContractError> {
+        self.get_by_prefix(store, &self.pending_responses, hash)
+    }
+
+    pub fn remove_pending_responses_by_hash(
+        &self,
+        store: &mut dyn Storage,
+        hash: Vec<u8>,
+    ) -> Result<(), ContractError> {
+        self.remove_by_prefix(store, &self.pending_responses, hash)
+    }
+
+    pub fn save_pending_responses(
+        &self,
+        store: &mut dyn Storage,
+        hash: Vec<u8>,
+        caller: String,
+    ) -> Result<(), ContractError> {
+        self.pending_responses
+            .save(store, (hash, caller), &true)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn get_all_connections(&self, store: &dyn Storage) -> Result<Vec<String>, ContractError> {
+        let res = self.get_all_values::<NetId, Addr>(store, &self.default_connections)?;
+        let addresses: Vec<String> = res.into_iter().map(|a| a.to_string()).collect();
+        Ok(addresses)
+    }
+
+    fn get_by_prefix(
+        &self,
+        store: &dyn Storage,
+        map: &Map<(Vec<u8>, String), bool>,
+        hash: Vec<u8>,
+    ) -> Result<Vec<(String, bool)>, ContractError> {
+        let requests: StdResult<Vec<(String, bool)>> = map
+            .prefix(hash)
+            .range(store, None, None, cosmwasm_std::Order::Ascending)
+            .collect();
+        requests.map_err(ContractError::Std)
+    }
+
+    fn remove_by_prefix(
+        &self,
+        store: &mut dyn Storage,
+        map: &Map<(Vec<u8>, String), bool>,
+        hash: Vec<u8>,
+    ) -> Result<(), ContractError> {
+        let keys: StdResult<Vec<String>> = map
+            .prefix(hash.clone())
+            .keys(store, None, None, cosmwasm_std::Order::Ascending)
+            .collect();
+        let keys = keys.map_err(ContractError::Std)?;
+        for key in keys {
+            self.pending_requests.remove(store, (hash.clone(), key))
+        }
+        Ok(())
+    }
+
+    fn get_all_values<K: PrimaryKey<'a> + Clone + KeyDeserialize, V: DeserializeOwned + Serialize>(
+        &self,
+        store: &dyn Storage,
+        map: &Map<'a, K, V>,
+    ) -> Result<Vec<V>, ContractError>
+    where
+        K::Output: 'static,
+    {
+        let values = map
+            .range(store, None, None, Order::Ascending)
+            .map(|r| r.map(|v| v.1))
+            .collect::<Result<Vec<V>, StdError>>();
+        values.map_err(ContractError::Std)
+    }
+
+    pub fn get_protocol_fee(&self, store: &dyn Storage) -> u128 {
+        self.protocol_fee.load(store).unwrap_or(0)
+    }
+    pub fn store_protocol_fee(
+        &self,
+        store: &mut dyn Storage,
+        fee: u128,
+    ) -> Result<(), ContractError> {
+        self.protocol_fee
+            .save(store, &fee)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn store_protocol_fee_handler(
+        &self,
+        store: &mut dyn Storage,
+        handler: String,
+    ) -> Result<(), ContractError> {
+        self.fee_handler
+            .save(store, &handler)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn get_successful_response(&self, store: &dyn Storage, sn: u128) -> bool {
+        self.successful_responses.load(store, sn).unwrap_or(false)
+    }
+
+    pub fn set_successful_response(
+        &self,
+        store: &mut dyn Storage,
+        sn: u128,
+    ) -> Result<(), ContractError> {
+        self.successful_responses
+            .save(store, sn, &true)
+            .map_err(ContractError::Std)
     }
 }

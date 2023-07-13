@@ -2,7 +2,7 @@ mod account;
 mod setup;
 
 use cw_xcall::state::CwCallService;
-use setup::*;
+use setup::test::*;
 
 #[test]
 fn update_sequence() {
@@ -10,10 +10,7 @@ fn update_sequence() {
 
     let contract = CwCallService::default();
 
-    contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
     let result = contract
         .query_last_sequence_no(mock_deps.as_ref().storage)
@@ -39,10 +36,6 @@ fn update_sequence_without_proper_initialisation() {
     let mut mock_deps = deps();
 
     let contract = CwCallService::default();
-
-    contract
-        .increment_last_sequence_no(mock_deps.as_mut().storage)
-        .unwrap();
 
     let result = contract
         .query_last_sequence_no(mock_deps.as_ref().storage)
@@ -103,10 +96,7 @@ fn set_sequence() {
 
     let contract = CwCallService::default();
 
-    contract
-        .last_sequence_no()
-        .save(mock_deps.as_mut().storage, &0)
-        .unwrap();
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
     let updated = contract
         .set_last_sequence_no(mock_deps.as_mut().storage, 20)

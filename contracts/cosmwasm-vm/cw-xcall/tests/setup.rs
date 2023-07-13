@@ -11,6 +11,12 @@ pub struct MockEnvBuilder {
     env: Env,
 }
 
+impl Default for MockEnvBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MockEnvBuilder {
     pub fn new() -> MockEnvBuilder {
         MockEnvBuilder {
@@ -51,13 +57,17 @@ impl MockEnvBuilder {
     }
 }
 
-pub fn create_mock_info(creator: &str, denom: &str, amount: u128) -> MessageInfo {
-    let funds = coins(amount, denom);
-    mock_info(creator, &funds)
-}
+#[cfg(test)]
+pub mod test {
+    use super::*;
+    pub fn create_mock_info(creator: &str, denom: &str, amount: u128) -> MessageInfo {
+        let funds = coins(amount, denom);
+        mock_info(creator, &funds)
+    }
 
-pub fn deps() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
-    mock_dependencies()
+    pub fn deps() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
+        mock_dependencies()
+    }
 }
 
 #[test]

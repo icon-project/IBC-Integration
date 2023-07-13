@@ -1,4 +1,6 @@
 use super::*;
+use cw_common::cw_types::CwBasicResponse;
+use cw_common::cw_types::CwPacket;
 
 /// This Rust function returns a binary representation of a successful Ack result.
 ///
@@ -102,9 +104,8 @@ pub fn on_ack_failure(packet: CwPacket, error: &str) -> Result<CwBasicResponse, 
 /// result of encoding a `cw_common::client_response::XcallPacketResponseData` object that contains a
 /// clone of the `packet` argument and a successful acknowledgement message represented as a vector of
 /// bytes.
-pub fn acknowledgement_data_on_success(packet: &CwPacket) -> Result<Binary, ContractError> {
-    to_binary(&cw_common::client_response::XcallPacketResponseData {
-        packet: packet.clone(),
+pub fn acknowledgement_data_on_success() -> Result<Binary, ContractError> {
+    to_binary(&cw_common::client_response::XcallPacketAck {
         acknowledgement: make_ack_success().to_vec(),
     })
     .map_err(ContractError::Std)

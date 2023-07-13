@@ -2,18 +2,23 @@ use super::*;
 
 #[cw_serde]
 pub enum StorageKey {
-    SequenceNo,
+    Sn,
     RequestNo,
     Owner,
     Admin,
     MessageRequest,
     Requests,
-    IbcConfig,
     FeeHandler,
     Balance,
-    Fee,
-    IbcHost,
-    TimeoutHeight,
+    ProtocolFee,
+    DefaultConnections,
+    Connections,
+    PendingRequests,
+    PendingResponses,
+    SuccessfulResponses,
+    Config,
+    ExecuteReqId,
+    ExecuteRollbackId,
 }
 
 impl StorageKey {
@@ -22,15 +27,20 @@ impl StorageKey {
             StorageKey::Owner => "owner",
             StorageKey::Admin => "admin",
             StorageKey::MessageRequest => "message_request",
-            StorageKey::SequenceNo => "sequenceno",
+            StorageKey::Sn => "sn",
             StorageKey::RequestNo => "requestno",
             StorageKey::Requests => "requests",
-            StorageKey::IbcConfig => "ibcconfig",
             StorageKey::FeeHandler => "feehandler",
             StorageKey::Balance => "balance",
-            StorageKey::Fee => "fee",
-            StorageKey::IbcHost => "ibc_host",
-            StorageKey::TimeoutHeight => "timeout_height",
+            StorageKey::ProtocolFee => "protocol_fee",
+            StorageKey::DefaultConnections => "default_connections",
+            StorageKey::Connections => "connections",
+            StorageKey::PendingRequests => "pending_requests",
+            StorageKey::PendingResponses => "pending_responses",
+            StorageKey::SuccessfulResponses => "successful_responses",
+            StorageKey::Config => "config",
+            StorageKey::ExecuteReqId => "execute_request_id",
+            StorageKey::ExecuteRollbackId => "execute_request_id",
         }
     }
 }

@@ -4,7 +4,7 @@ use account::*;
 use cosmwasm_std::testing::mock_env;
 
 use cw_xcall::state::CwCallService;
-use setup::*;
+use setup::test::*;
 
 #[test]
 #[should_panic(expected = "Unauthorized")]
@@ -18,7 +18,7 @@ fn add_admin_unauthorized() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info,
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -39,7 +39,7 @@ fn add_admin() {
     let response = contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info,
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -69,7 +69,7 @@ fn update_admin_unauthorzied() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info,
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -104,7 +104,7 @@ fn update_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -142,7 +142,7 @@ fn update_existing_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -180,7 +180,7 @@ fn add_existing_admin() {
     let response = contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -196,7 +196,7 @@ fn add_existing_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info,
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -217,7 +217,7 @@ fn remove_existing_admin_and_add_admin() {
     let response = contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -236,7 +236,7 @@ fn remove_existing_admin_and_add_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info,
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -260,7 +260,7 @@ fn add_admin_with_empty_address() {
         .unwrap();
 
     contract
-        .add_admin(mock_deps.as_mut().storage, mock_info, "".to_string())
+        .add_admin(mock_deps.as_mut().storage, &mock_info, "".to_string())
         .unwrap();
 }
 
@@ -300,7 +300,7 @@ fn add_invalid_char_as_admin() {
             mock_deps.as_mut(),
             mock_env,
             mock_info,
-            cw_common::xcall_msg::ExecuteMsg::SetAdmin {
+            cw_common::xcall_app_msg::ExecuteMsg::SetAdmin {
                 address: "*************".into(),
             },
         )
@@ -326,7 +326,7 @@ fn update_admin_invalid_chars() {
             mock_deps.as_mut(),
             mock_env.clone(),
             mock_info.clone(),
-            cw_common::xcall_msg::ExecuteMsg::SetAdmin {
+            cw_common::xcall_app_msg::ExecuteMsg::SetAdmin {
                 address: admin_one().to_string(),
             },
         )
@@ -341,7 +341,7 @@ fn update_admin_invalid_chars() {
             mock_deps.as_mut(),
             mock_env,
             mock_info,
-            cw_common::xcall_msg::ExecuteMsg::UpdateAdmin {
+            cw_common::xcall_app_msg::ExecuteMsg::UpdateAdmin {
                 address: "*****%%%%%@@@###!1234hello".into(),
             },
         )
@@ -369,7 +369,7 @@ fn validate_address_add_admin_size_lessthan_3() {
             mock_deps.as_mut(),
             mock_env,
             mock_info,
-            cw_common::xcall_msg::ExecuteMsg::SetAdmin {
+            cw_common::xcall_app_msg::ExecuteMsg::SetAdmin {
                 address: "sm".into(),
             },
         )
@@ -397,7 +397,7 @@ fn validate_address_add_admin_size_more_than_45() {
             mock_deps.as_mut(),
             mock_env,
             mock_info,
-            cw_common::xcall_msg::ExecuteMsg::SetAdmin {
+            cw_common::xcall_app_msg::ExecuteMsg::SetAdmin {
                 address: "eddiuo6lbp05golmz3rb5n7hbi4c5hhyh0rb1w6cslyjt5mhwd0chn3x254lyorpx4dzvrvsc9h2em44be2rj193dwe".into(),
             },
         )
@@ -420,7 +420,7 @@ fn update_admin_fails() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -458,7 +458,7 @@ fn update_admin_fails_on_null_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info.clone(),
+            &mock_info,
             admin_one().to_string(),
         )
         .unwrap();

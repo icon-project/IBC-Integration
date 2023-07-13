@@ -1,3 +1,5 @@
+use cw_common::xcall_types::network_address::NetId;
+
 use super::*;
 
 /// This is a Rust struct representing a message to instantiate a contract with timeout height and IBC
@@ -13,8 +15,8 @@ use super::*;
 /// context it's difficult to say for sure.
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub timeout_height: u64,
-    pub ibc_host: Addr,
+    pub network_id: String,
+    pub denom: String,
 }
 
 /// The `#[cw_serde]` attribute is used to automatically generate serialization and deserialization code
@@ -30,11 +32,11 @@ pub enum QueryMsg {
     #[returns(u128)]
     GetProtocolFee {},
     #[returns(String)]
-    GetIbcHost {},
-    #[returns(String)]
-    GetIbcConfig {},
-    #[returns(String)]
     GetProtocolFeeHandler {},
-    #[returns(u64)]
-    GetTimeoutHeight {},
+    #[returns(String)]
+    GetNetworkAddress {},
+    #[returns(bool)]
+    VerifySuccess { sn: u128 },
+    #[returns(String)]
+    GetDefaultConnection { nid: NetId },
 }

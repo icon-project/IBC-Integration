@@ -44,7 +44,7 @@ impl<'a> CwCallService<'a> {
     pub fn add_admin(
         &self,
         store: &mut dyn Storage,
-        info: MessageInfo,
+        info: &MessageInfo,
         admin: String,
     ) -> Result<Response, ContractError> {
         if admin.is_empty() {
