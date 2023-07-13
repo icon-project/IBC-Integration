@@ -8,7 +8,7 @@ members = [
     "contracts/cosmwasm-vm/cw-mock-dapp",
     "contracts/cosmwasm-vm/cw-mock-ibc-core",
     "contracts/cosmwasm-vm/cw-xcall-ibc-connection",
-     "contracts/cosmwasm-vm/cw-xcall-app",
+     "contracts/cosmwasm-vm/cw-xcall-multi",
      "contracts/cosmwasm-vm/cw-integration",
      "contracts/cosmwasm-vm/cw-mock-dapp-multi",
 ]

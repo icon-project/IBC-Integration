@@ -474,12 +474,13 @@ dependencies = [
  "cw-ibc-core",
  "cw-icon-light-client",
  "cw-mock-dapp",
+ "cw-mock-dapp-multi",
  "cw-mock-ibc-core",
  "cw-multi-test",
  "cw-storage-plus",
  "cw-xcall",
- "cw-xcall-app",
  "cw-xcall-ibc-connection",
+ "cw-xcall-multi",
  "hex",
  "ibc",
  "prost 0.11.9",
@@ -612,7 +613,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xcall-app"
+name = "cw-xcall-ibc-connection"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "cosmwasm",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-common",
+ "cw-storage-plus",
+ "cw-xcall-multi",
+ "cw2",
+ "debug_print",
+ "getrandom",
+ "hex",
+ "schemars 0.8.12",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-xcall-multi"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -630,27 +652,6 @@ dependencies = [
  "schemars 0.8.12",
  "serde",
  "test-utils",
- "thiserror",
-]
-
-[[package]]
-name = "cw-xcall-ibc-connection"
-version = "0.1.0"
-dependencies = [
- "common",
- "cosmwasm",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-common",
- "cw-storage-plus",
- "cw-xcall-app",
- "cw2",
- "debug_print",
- "getrandom",
- "hex",
- "schemars 0.8.12",
- "serde",
  "thiserror",
 ]
 

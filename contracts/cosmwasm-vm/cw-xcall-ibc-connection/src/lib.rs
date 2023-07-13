@@ -4,19 +4,19 @@ pub mod assertion;
 pub mod check;
 pub mod contract;
 pub mod error;
-pub mod events;
 pub mod fee;
-pub mod fee_handler;
-pub mod forward_to_host;
-pub mod forward_to_xcall;
 pub mod ibc;
+pub mod ibc_host;
 pub mod msg;
 pub mod owner;
+pub mod receive_packet;
+pub mod send_message;
 pub mod state;
 pub mod types;
-use crate::ack::{on_ack_failure, on_ack_sucess};
+pub mod xcall;
+
 use crate::{
-    ack::{make_ack_fail, make_ack_success},
+    ack::make_ack_fail,
     check::{check_order, check_version},
     error::ContractError,
     ibc::IBC_VERSION,
@@ -26,9 +26,8 @@ use crate::{
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    attr, entry_point, from_binary, to_binary, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty,
-    Env, Event, MessageInfo, Never, QuerierWrapper, Reply, Response, StdError, StdResult, Storage,
-    SubMsg, SubMsgResult, WasmMsg,
+    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Never, Reply, Response,
+    StdError, StdResult, Storage, SubMsg, SubMsgResult,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
@@ -39,7 +38,7 @@ use cw_common::cw_types::{
     CwChannelOpenMsg, CwChannelOpenResponse, CwEndPoint, CwOrder, CwPacket, CwPacketAckMsg,
     CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
-use cw_common::types::Ack;
+
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 use cw_storage_plus::Item;
 use thiserror::Error;
@@ -159,4 +158,11 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
     let call_service = CwIbcConnection::default();
 
     call_service.reply(deps, env, msg)
+}
+
+#[cw_serde]
+pub struct MigrateMsg {}
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::default().add_attribute("migrate", "successful"))
 }

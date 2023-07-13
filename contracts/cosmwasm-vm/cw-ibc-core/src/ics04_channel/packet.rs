@@ -12,6 +12,7 @@ pub mod receive_packet;
 pub use receive_packet::*;
 pub mod acknowledgement;
 pub use acknowledgement::*;
+pub mod write_acknowledgement;
 
 impl<'a> CwIbcCoreContext<'a> {
     /// This function validates a timeout packet based on its type.

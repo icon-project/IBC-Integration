@@ -49,7 +49,7 @@ public class IBCConnection {
     protected final DictDB<String, String> destinationPort = Context.newDictDB("destinationChannel", String.class);
     protected final DictDB<String, String> destinationChannel = Context.newDictDB("destinationPort", String.class);
 
-    protected final BranchDB<String, DictDB<BigInteger, BigInteger>> incomingPackets = Context.newBranchDB("incomingPackets", BigInteger.class);
+    protected final BranchDB<String, DictDB<BigInteger, byte[]>> incomingPackets = Context.newBranchDB("incomingPackets", byte[].class);
     protected final BranchDB<String, DictDB<BigInteger, BigInteger>> outgoingPackets = Context.newBranchDB("outgoingPackets", BigInteger.class);
 
     protected final DictDB<String, BigInteger> sendPacketFee = Context.newDictDB("sendPacketFee", BigInteger.class);
@@ -160,7 +160,7 @@ public class IBCConnection {
         }
 
         if (msg.getSn().compareTo(BigInteger.ZERO) > 0) {
-            incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), packet.getSequence());
+            incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), calldata);
         }
 
         BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
@@ -209,15 +209,9 @@ public class IBCConnection {
 
     private void writeAcknowledgement(String _to, BigInteger _sn, byte[] _msg) {
         String channel = channels.get(_to);
-        Packet pct = new Packet();
-        BigInteger sequenceNumber = incomingPackets.at(channel).get(_sn);
+        byte[] packet = incomingPackets.at(channel).get(_sn);
         incomingPackets.at(channel).set(_sn, null);
-
-        pct.setSequence(sequenceNumber);
-        pct.setDestinationPort(PORT);
-        pct.setDestinationChannel(channel);
-
-        Context.call(ibc.get(), "writeAcknowledgement", (Object)pct.encode(), _msg);
+        Context.call(ibc.get(), "writeAcknowledgement", (Object)packet, _msg);
     }
 
     private Height getTimeoutHeight(String channelId) {
