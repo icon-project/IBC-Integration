@@ -1,3 +1,4 @@
+use common::utils::keccak256;
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Reply, Response, SubMsg};
 
 use crate::{
@@ -36,8 +37,14 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         info: MessageInfo,
         request_id: u128,
+        data: Vec<u8>,
     ) -> Result<Response, ContractError> {
         let proxy_requests = self.get_proxy_request(deps.storage, request_id).unwrap();
+
+        let data_hash = keccak256(&data).to_vec();
+        if data_hash != proxy_requests.data().unwrap().to_vec() {
+            return Err(ContractError::DataMismatch);
+        }
 
         self.ensure_request_not_null(request_id, &proxy_requests)
             .unwrap();
@@ -46,7 +53,7 @@ impl<'a> CwCallService<'a> {
             info,
             proxy_requests.to().clone(),
             proxy_requests.from().clone(),
-            proxy_requests.data().unwrap().to_vec(),
+            data,
             proxy_requests.protocols().clone(),
             EXECUTE_CALL_ID,
         )?;

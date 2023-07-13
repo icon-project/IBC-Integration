@@ -1,6 +1,6 @@
 # Javascore
 
-This folder contains the smart contracts for ICON-IBC in java.
+This folder contains the smart contracts for ICON-XCall in java.
 
 ### Requirement
 
@@ -10,7 +10,7 @@ This folder contains the smart contracts for ICON-IBC in java.
 
 ```shell
 # build specific contract
-./gradlew ibc:build
+./gradlew xcall:build
 
 # build all
 ./gradlew build
@@ -18,10 +18,10 @@ This folder contains the smart contracts for ICON-IBC in java.
 
 ### Optimized Jar
 ```shell
-./gradlew ibc:optimizedJar
+./gradlew xcall:optimizedJar
 ```
 
 ### Deploy Contract
 ```shell
-./gradlew ibc:deployToLocal -PkeystoreName=<your_wallet_json> -PkeystorePass=<password>
+./gradlew xcall:deployToLocal -PkeystoreName=<your_wallet_json> -PkeystorePass=<password>
 ```

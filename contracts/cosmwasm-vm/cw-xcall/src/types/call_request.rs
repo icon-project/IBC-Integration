@@ -1,5 +1,5 @@
 use cosmwasm_std::Addr;
-use cw_common::xcall_types::network_address::NetworkAddress;
+use cw_xcall_lib::network_address::NetworkAddress;
 
 use super::*;
 

@@ -157,34 +157,6 @@ impl<'a> CwCallService<'a> {
         Ok(())
     }
 
-    /// This function checks if the sender of a message is the owner of a contract.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a reference to the storage implementation that the contract is using. It is
-    /// used to load and store data on the blockchain. In this function, it is used to load the current
-    /// owner of the contract from storage.
-    /// * `info`: `info` is a reference to a `MessageInfo` struct which contains information about the
-    /// current message being processed by the contract. This includes the sender of the message, the amount
-    /// of funds attached to the message, and other metadata. The `ensure_owner` function uses the `sender`
-    /// field of
-    ///
-    /// Returns:
-    ///
-    /// The `ensure_owner` function is returning a `Result` type with the `Ok` variant containing an empty
-    /// tuple `()` if the `info.sender` matches the owner loaded from storage, and a `ContractError` if the
-    /// sender is not authorized.
-    pub fn ensure_owner(
-        &self,
-        store: &dyn Storage,
-        info: &MessageInfo,
-    ) -> Result<(), ContractError> {
-        let owner = self.owner().load(store)?;
-
-        ensure_eq!(info.sender, owner, ContractError::Unauthorized {});
-
-        Ok(())
-    }
     /// The function ensures that the given address is the admin of the contract.
     ///
     /// Arguments:
@@ -206,22 +178,6 @@ impl<'a> CwCallService<'a> {
         let admin = self.query_admin(store)?;
         ensure_eq!(admin, address, ContractError::OnlyAdmin);
 
-        Ok(())
-    }
-
-    pub fn ensure_enough_funds(
-        &self,
-        required_fee: u128,
-        info: &MessageInfo,
-    ) -> Result<(), ContractError> {
-        let total_funds: u128 = info
-            .funds
-            .iter()
-            .map(|c| c.amount.into())
-            .collect::<Vec<u128>>()
-            .iter()
-            .sum();
-        ensure!(total_funds >= required_fee, ContractError::InsuffcientFunds);
         Ok(())
     }
 }

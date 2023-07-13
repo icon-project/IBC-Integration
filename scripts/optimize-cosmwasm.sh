@@ -21,7 +21,7 @@ fi
 CUR_WASMOPT_VERS=$(wasm-opt --version | awk '{print $3}')
 CUR_RUSTC_VERS=$(rustc -V | awk '{print $2}')
 
-if [ "$CUR_RUSTC_VERS" != "$RUSTC_VERS" ] || [ "$CUR_WASMOPT_VERS" != "$WASMOPT_VERS" ]; then   
+if [ "$CUR_RUSTC_VERS" != "$RUSTC_VERS" ] || [ "$CUR_WASMOPT_VERS" != "$WASMOPT_VERS" ]; then
   echo -e "\n ** Warning: The required versions for Rust and wasm-opt are ${RUSTC_VERS} and ${WASMOPT_VERS}, respectively. Building with different versions may result in failure.\n"
 fi
 
@@ -45,9 +45,9 @@ done
 
 # check all generated wasm files
 
-cosmwasm-check artifacts/archway/cw_mock_dapp.wasm
-cosmwasm-check artifacts/archway/cw_mock_dapp_multi.wasm
-cosmwasm-check artifacts/archway/cw_xcall_multi.wasm
+~/.cargo/bin/cosmwasm-check  artifacts/archway/cw_mock_dapp.wasm
+~/.cargo/bin/cosmwasm-check artifacts/archway/cw_mock_dapp_multi.wasm
+~/.cargo/bin/cosmwasm-check  artifacts/archway/cw_xcall.wasm
 
 
 # validate size

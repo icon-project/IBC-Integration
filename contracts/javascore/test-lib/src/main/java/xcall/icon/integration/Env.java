@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ibc.icon.integration;
+package xcall.icon.integration;
 
 import foundation.icon.icx.crypto.KeystoreException;
 import foundation.icon.score.client.Wallet;

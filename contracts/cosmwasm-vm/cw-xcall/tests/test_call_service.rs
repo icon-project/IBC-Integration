@@ -32,9 +32,9 @@ fn proper_instantiate() {
 
     assert_eq!(0, last_request_id);
 
-    let owner = store.query_owner(mock_deps.as_ref().storage).unwrap();
+    let admin = store.query_admin(mock_deps.as_ref().storage).unwrap();
 
-    assert_eq!(MOCK_CONTRACT_ADDR, owner)
+    assert_eq!(MOCK_CONTRACT_ADDR, admin)
 }
 
 #[test]

@@ -90,12 +90,19 @@ pub fn event_rollback_executed(sequence_no: u128, code: i8, msg: &str) -> Event 
 ///
 /// A function is being returned that creates an instance of the `Event` struct with the attributes
 /// "call_message", "from", "to", "sequence_no", and "request_id".
-pub fn event_call_message(from: String, to: String, sequence_no: u128, request_id: u128) -> Event {
+pub fn event_call_message(
+    from: String,
+    to: String,
+    sequence_no: u128,
+    request_id: u128,
+    data: Vec<u8>,
+) -> Event {
     Event::new("CallMessage")
         .add_attribute("from", from)
         .add_attribute("to", to)
         .add_attribute("sn", sequence_no.to_string())
         .add_attribute("reqId", request_id.to_string())
+        .add_attribute("data", format!("{:?}", data))
 }
 
 /// The function creates an event with a "rollback_message" type and a sequence number attribute.

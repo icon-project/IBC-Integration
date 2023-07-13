@@ -4,7 +4,6 @@ use super::*;
 pub enum StorageKey {
     Sn,
     RequestNo,
-    Owner,
     Admin,
     MessageRequest,
     Requests,
@@ -24,7 +23,6 @@ pub enum StorageKey {
 impl StorageKey {
     pub fn as_str(&self) -> &'static str {
         match self {
-            StorageKey::Owner => "owner",
             StorageKey::Admin => "admin",
             StorageKey::MessageRequest => "message_request",
             StorageKey::Sn => "sn",

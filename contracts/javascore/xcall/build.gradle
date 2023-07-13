@@ -43,7 +43,7 @@ deployJar {
         uat {
             uri = project.findProperty('uat.host') as String
             nid = property('uat.nid') as Integer
-            to = "$xCallMultiProtocol"?:null
+            to = "$xCall"?:null
         }
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''

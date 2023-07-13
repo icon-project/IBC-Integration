@@ -1,4 +1,3 @@
-pub mod ack;
 pub mod admin;
 pub mod assertion;
 pub mod connection;
@@ -13,24 +12,19 @@ pub mod fees;
 pub mod handle_call_message;
 pub mod helpers;
 pub mod msg;
-pub mod owner;
 pub mod requests;
 pub mod send_call_message;
 pub mod state;
 pub mod types;
 
 use crate::{
-    ack::{make_ack_fail, make_ack_success},
     error::ContractError,
     events::{
         event_call_message, event_response_message, event_rollback_message,
         event_xcall_message_sent,
     },
     msg::{InstantiateMsg, QueryMsg},
-    state::{
-        CwCallService, ACK_FAILURE_ID, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID,
-        SEND_CALL_MESSAGE_REPLY_ID,
-    },
+    state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID, SEND_CALL_MESSAGE_REPLY_ID},
     types::{
         call_request::CallRequest,
         message::{CallServiceMessage, CallServiceMessageType},
@@ -42,17 +36,14 @@ use crate::{
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    attr, ensure, ensure_eq, entry_point, from_binary, to_binary, Addr, Api, Binary, Coin,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, MessageInfo, QuerierWrapper, Reply, Response,
-    StdError, StdResult, Storage, SubMsg, SubMsgResult, WasmMsg,
+    ensure, ensure_eq, entry_point, to_binary, Addr, Api, Binary, CosmosMsg, Deps, DepsMut, Env,
+    Event, MessageInfo, QuerierWrapper, Reply, Response, StdError, StdResult, Storage, SubMsg,
+    SubMsgResult, WasmMsg,
 };
-#[cfg(feature = "native_ibc")]
-use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
 
 use cw2::set_contract_version;
-use cw_common::types::Ack;
-use cw_common::xcall_app_msg::ExecuteMsg;
 use cw_storage_plus::{Item, Map};
+use cw_xcall_lib::xcall_msg::ExecuteMsg;
 use schemars::JsonSchema;
 
 use serde::{Deserialize, Serialize};

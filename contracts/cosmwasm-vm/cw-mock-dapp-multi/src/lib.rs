@@ -13,11 +13,10 @@ use cosmwasm_std::{
 
 pub use contract::*;
 use cw2::set_contract_version;
-pub use cw_common::dapp_multi_msg::ExecuteMsg;
 use cw_storage_plus::{Item, Map};
 pub use errors::*;
 pub use helper::*;
-use msg::QueryMsg;
+use msg::{ExecuteMsg, QueryMsg};
 use state::{Connection, CwMockService};
 use thiserror::Error;
 use types::InstantiateMsg;

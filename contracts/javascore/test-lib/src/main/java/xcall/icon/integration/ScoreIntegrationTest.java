@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ibc.icon.integration;
+package xcall.icon.integration;
 
 import foundation.icon.icx.KeyWallet;
 import foundation.icon.jsonrpc.Address;
@@ -44,9 +44,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static ibc.icon.integration.Env.Chain;
-import static ibc.icon.integration.Env.getDefaultChain;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static xcall.icon.integration.Env.Chain;
+import static xcall.icon.integration.Env.getDefaultChain;
 
 @Tag("integration")
 @TestMethodOrder(value = MethodOrderer.OrderAnnotation.class)

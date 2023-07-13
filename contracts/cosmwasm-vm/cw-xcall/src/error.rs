@@ -8,15 +8,9 @@ pub enum ContractError {
     Unauthorized {},
     #[error("ERR_REPLY_ERROR|{code:?}|{msg:?}")]
     ReplyError { code: u64, msg: String },
-    #[error("Only Unordered Channels Are Supported")]
-    OrderedChannel {},
-    #[error("Invalid IBC Channel Version. Got ({actual}), expected ({expected})")]
-    InvalidVersion { actual: String, expected: String },
     #[error("Admin Already Exist")]
     AdminAlreadyExist,
     #[error("OwnerAlreadyExist")]
-    OwnerAlreadyExist,
-    #[error("AdminNotExist")]
     AdminNotExist,
     #[error("RollbackNotPossible")]
     RollbackNotPossible,
@@ -40,10 +34,10 @@ pub enum ContractError {
     AdminAddressCannotBeNull {},
     #[error("InvalidAddress {address}")]
     InvalidAddress { address: String },
-    #[error("OnlyIbcHandler")]
-    OnlyIbcHandler {},
     #[error("InsuffcientFunds")]
     InsuffcientFunds,
     #[error("ProtocolsMismatch")]
     ProtocolsMismatch,
+    #[error("DataMismatch")]
+    DataMismatch,
 }

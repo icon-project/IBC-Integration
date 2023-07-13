@@ -1,14 +1,15 @@
+use common::utils::keccak256;
 use cosmwasm_std::{
     from_binary,
     testing::{mock_dependencies, mock_env, mock_info},
     Addr, Coin, CosmosMsg, Reply, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 
-use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_xcall::{
     state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
+use cw_xcall_lib::network_address::NetworkAddress;
 mod account;
 mod setup;
 use crate::account::alice;
@@ -29,19 +30,45 @@ fn test_execute_call_invalid_request_id() {
 }
 
 #[test]
-fn test_execute_call_having_request_id_without_rollback() {
+#[should_panic(expected = "DataMismatch")]
+fn test_execute_call_with_wrong_data() {
     let mut deps = mock_dependencies();
 
     let info = mock_info("user1", &[Coin::new(1000, "ucosm")]);
     let cw_callservice = CwCallService::default();
-
+    let data = vec![104, 101, 108, 108, 111];
     let request_id = 123456;
     let proxy_requests = CallServiceMessageRequest::new(
         NetworkAddress::new("nid", "mockaddress"),
         Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
         false,
-        vec![104, 101, 108, 108, 111],
+        keccak256(&[104, 106, 108, 108, 111]).to_vec(),
+        vec![],
+    );
+    cw_callservice
+        .store_proxy_request(deps.as_mut().storage, request_id, &proxy_requests)
+        .unwrap();
+
+    cw_callservice
+        .execute_call(deps.as_mut(), info, request_id, data)
+        .unwrap();
+}
+
+#[test]
+fn test_execute_call_having_request_id_without_rollback() {
+    let mut deps = mock_dependencies();
+
+    let info = mock_info("user1", &[Coin::new(1000, "ucosm")]);
+    let cw_callservice = CwCallService::default();
+    let data = vec![104, 101, 108, 108, 111];
+    let request_id = 123456;
+    let proxy_requests = CallServiceMessageRequest::new(
+        NetworkAddress::new("nid", "mockaddress"),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
+        123,
+        false,
+        keccak256(&data).to_vec(),
         vec![],
     );
     cw_callservice
@@ -49,7 +76,7 @@ fn test_execute_call_having_request_id_without_rollback() {
         .unwrap();
 
     let res = cw_callservice
-        .execute_call(deps.as_mut(), info, request_id)
+        .execute_call(deps.as_mut(), info, request_id, data)
         .unwrap();
     match &res.messages[0].msg {
         CosmosMsg::Wasm(WasmMsg::Execute {

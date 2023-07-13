@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ibc.icon.test;
+package xcall.icon.test;
 
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
