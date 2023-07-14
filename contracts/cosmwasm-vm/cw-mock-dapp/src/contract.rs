@@ -5,7 +5,7 @@ use cw_xcall_lib::{network_address::NetworkAddress, xcall_msg::ExecuteMsg};
 use super::*;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw-mock-dapp-multi";
+const CONTRACT_NAME: &str = "crates.io:cw-mock-dapp";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 impl<'a> CwMockService<'a> {
