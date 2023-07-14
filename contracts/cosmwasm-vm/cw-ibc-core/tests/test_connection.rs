@@ -651,7 +651,7 @@ fn connection_open_ack_validate_fail() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -728,7 +728,7 @@ fn connection_open_ack_validate() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1016,7 +1016,7 @@ fn connection_open_try_validate() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1090,7 +1090,7 @@ fn open_try_validate_fails() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1152,7 +1152,7 @@ fn connection_open_confirm_validate() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1366,7 +1366,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1489,7 +1489,7 @@ fn connection_open_init_fails_of_clientstate() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1539,7 +1539,7 @@ fn connection_open_init_validate_invalid_client_id() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1728,7 +1728,7 @@ fn connection_open_init_fails() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1774,7 +1774,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1861,7 +1861,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()

@@ -301,7 +301,7 @@ fn test_timeout_packet_validate_to_light_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 10,
-       
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -328,7 +328,7 @@ fn test_timeout_packet_validate_to_light_client() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash:vec![1,2,3]
+        next_proof_context_hash: vec![1, 2, 3],
     }
     .try_into()
     .unwrap();

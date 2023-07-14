@@ -100,7 +100,7 @@ fn test_receive_packet() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 12,
-       
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -118,7 +118,7 @@ fn test_receive_packet() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash:vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();

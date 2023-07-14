@@ -156,7 +156,7 @@ fn test_for_channel_open_try_execution_message() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -328,7 +328,7 @@ fn test_for_channel_open_ack_execution() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -502,7 +502,7 @@ fn test_for_channel_open_confirm() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -786,7 +786,7 @@ fn test_for_channel_close_confirm() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -955,7 +955,7 @@ fn test_for_packet_send() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 10,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1063,7 +1063,7 @@ fn test_for_recieve_packet() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 12,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1308,7 +1308,7 @@ fn test_for_ack_execute() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()

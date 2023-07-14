@@ -1118,7 +1118,6 @@ fn test_validate_open_try_channel() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        
 
         ..get_default_icon_client_state()
     }

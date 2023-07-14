@@ -64,7 +64,7 @@ fn test_packet_send() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 10,
-       
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -185,7 +185,7 @@ fn test_packet_send_fail_misiing_sequense() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 10,
-       
+
         ..get_default_icon_client_state()
     }
     .try_into()

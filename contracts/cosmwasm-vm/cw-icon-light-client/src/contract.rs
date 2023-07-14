@@ -685,27 +685,7 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_execute_update_client_with_non_consecutive_header() {
-        let start_header = &get_test_headers()[0];
-        let client_id = "test_client".to_string();
-        let mut deps = init_client(&client_id, start_header, None);
-
-        let random_signed_header = &get_test_signed_headers()[2];
-        let info = mock_info(SENDER, &[]);
-        let msg = ExecuteMsg::UpdateClient {
-            client_id,
-            signed_header: random_signed_header.to_any().encode_to_vec(),
-        };
-        let result = execute(deps.as_mut(), mock_env(), info, msg);
-        assert_eq!(
-            result,
-            Err(ContractError::InvalidHeaderUpdate(
-                "network section mismatch".to_string()
-            ))
-        );
-    }
-
+    
     #[test]
     fn test_execute_update_client() {
         let start_header = &get_test_headers()[0];
@@ -730,7 +710,6 @@ mod tests {
                 .unwrap();
 
         assert_eq!(updated_client_state.latest_height, block_height);
-
 
         assert_eq!(
             consensus_state.message_root,

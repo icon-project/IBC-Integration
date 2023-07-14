@@ -113,7 +113,10 @@ pub fn get_default_icon_client_state() -> ClientState {
         network_id: DEFAULT_NETWORK_ID,
         network_type_id: DEFAULT_NETWORK_TYPE_ID,
         src_network_id: DEFAULT_SRC_NETWORK_ID.to_string(),
-        trust_level: Some(TrustLevel{numerator:2,denominator:3}),
+        trust_level: Some(TrustLevel {
+            numerator: 2,
+            denominator: 3,
+        }),
         ..ClientState::default()
     }
 }

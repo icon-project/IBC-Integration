@@ -1,7 +1,7 @@
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
-use common::icon::icon::lightclient::v1::{ClientState, TrustLevel};
 use common::icon::icon::lightclient::v1::ConsensusState;
+use common::icon::icon::lightclient::v1::{ClientState, TrustLevel};
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::traits::AnyTypes;
 use common::utils::{calculate_root, keccak256};
@@ -17,7 +17,7 @@ impl<'a> IconClient<'a> {
     pub fn new(context: &'a mut dyn IContext<Error = crate::ContractError>) -> Self {
         Self { context }
     }
-    pub fn has_quorum_of(n_validators: u64, votes: u64,trust_level:&TrustLevel) -> bool {
+    pub fn has_quorum_of(n_validators: u64, votes: u64, trust_level: &TrustLevel) -> bool {
         votes * trust_level.denominator > n_validators * trust_level.numerator
     }
     pub fn check_block_proof(
@@ -29,12 +29,12 @@ impl<'a> IconClient<'a> {
     ) -> Result<bool, ContractError> {
         let mut votes = u64::default();
         let state = self.context.get_client_state(client_id)?;
-        let trust_level: TrustLevel=state.trust_level.unwrap();
+        let trust_level: TrustLevel = state.trust_level.unwrap();
         let decision = header
             .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
         debug_println!(
             "network type section decision hash {}",
-            hex::encode(&decision)
+            hex::encode(decision)
         );
         let validators_map = common::utils::to_lookup(validators);
 
@@ -50,11 +50,11 @@ impl<'a> IconClient<'a> {
                 }
             }
 
-            if Self::has_quorum_of(num_validators, votes,&trust_level) {
+            if Self::has_quorum_of(num_validators, votes, &trust_level) {
                 break;
             }
         }
-        if !Self::has_quorum_of(num_validators, votes,&trust_level) {
+        if !Self::has_quorum_of(num_validators, votes, &trust_level) {
             debug_println!("Insuffcient Quorom detected");
             return Err(ContractError::InSuffcientQuorum);
         }
@@ -144,7 +144,7 @@ impl ILightClient for IconClient<'_> {
             return Err(ContractError::InvalidProofContextHash);
         }
 
-        if (btp_header.trusted_height - btp_header.main_height) > state.trusting_period {
+        if ( btp_header.main_height - btp_header.trusted_height) > state.trusting_period {
             return Err(ContractError::TrustingPeriodElapsed {
                 trusted_height: btp_header.trusted_height,
                 update_height: btp_header.main_height,

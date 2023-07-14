@@ -53,7 +53,7 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-      
+
         ..get_default_icon_client_state()
     }
     .try_into()

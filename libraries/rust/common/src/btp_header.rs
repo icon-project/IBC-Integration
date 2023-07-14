@@ -4,7 +4,7 @@ use prost::{DecodeError, Message};
 
 use crate::client_state::get_default_icon_client_state;
 use crate::constants::ICON_BTP_HEADER_TYPE_URL;
-use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState, TrustLevel};
+use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use debug_print::debug_println;
 
 use crate::rlp::RlpStream;
@@ -98,7 +98,7 @@ impl BtpHeader {
             self.get_network_section_hash(),
             &self.network_section_to_root,
         );
-        debug_println!("network section root {}", hex::encode(&root));
+        debug_println!("network section root {}", hex::encode(root));
         root
     }
 

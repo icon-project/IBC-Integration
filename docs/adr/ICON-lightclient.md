@@ -256,10 +256,10 @@ function verifyHeader(blockUpdate: BlockUpdate) {
     // assert header has correct networkId
     assert(header.networkId == NETWORK_ID)
 
-    assert(header.trustedHeight > header.mainHeight)
+    assert(header.trustedHeight < header.mainHeight)
     
     // assert trusting period has not yet passed
-    assert(header.trustedHeight - header.mainHeight < clientState.trustingPeriod)
+    assert(header.mainHeight - header.trustedHeight  < clientState.trustingPeriod)
 
     currentProofContextHash=get_proof_context_hash(header.currentValidators)
 

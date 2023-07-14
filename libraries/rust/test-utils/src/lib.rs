@@ -58,7 +58,6 @@ pub struct TestSignedHeader {
     #[serde(rename(deserialize = "BTPHeader"))]
     pub btp_header: TestHeader,
     pub signature: Vec<String>,
-    
 }
 
 #[derive(Debug, Deserialize)]
