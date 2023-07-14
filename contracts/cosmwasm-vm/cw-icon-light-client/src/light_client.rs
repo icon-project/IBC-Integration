@@ -144,7 +144,7 @@ impl ILightClient for IconClient<'_> {
             return Err(ContractError::InvalidProofContextHash);
         }
 
-        if ( btp_header.main_height - btp_header.trusted_height) > state.trusting_period {
+        if (btp_header.main_height - btp_header.trusted_height) > state.trusting_period {
             return Err(ContractError::TrustingPeriodElapsed {
                 trusted_height: btp_header.trusted_height,
                 update_height: btp_header.main_height,

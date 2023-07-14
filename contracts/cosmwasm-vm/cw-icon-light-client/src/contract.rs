@@ -685,7 +685,6 @@ mod tests {
         );
     }
 
-    
     #[test]
     fn test_execute_update_client() {
         let start_header = &get_test_headers()[0];
