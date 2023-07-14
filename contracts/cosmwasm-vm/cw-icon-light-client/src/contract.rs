@@ -3,7 +3,7 @@ use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cw_common::ibc_types::IbcHeight;
-use cw_common::query_helpers::get_contract_info;
+
 use debug_print::debug_println;
 
 #[cfg(feature = "mock")]
@@ -49,7 +49,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|_e| ContractError::FailedToInitContract)?;
-    let config = Config::new(info.sender,msg.ibc_host);
+    let config = Config::new(info.sender, msg.ibc_host);
     let mut context = CwContext::new(deps, _env);
     context.insert_config(&config)?;
     Ok(Response::default())
@@ -78,7 +78,8 @@ pub fn execute(
                 .map_err(ContractError::DecodeError)?;
             let consensus_state = ConsensusState::from_any(consensus_state_any.clone())
                 .map_err(ContractError::DecodeError)?;
-            let update = client.create_client(info.sender,&client_id, client_state, consensus_state)?;
+            let update =
+                client.create_client(info.sender, &client_id, client_state, consensus_state)?;
 
             let mut response = Response::new()
                 .add_attribute(
@@ -111,7 +112,7 @@ pub fn execute(
         } => {
             let header_any = Any::decode(signed_header.as_slice()).unwrap();
             let header = SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
-            let update = client.update_client(info.sender,&client_id, header)?;
+            let update = client.update_client(info.sender, &client_id, header)?;
             let response_data = to_binary(&UpdateClientResponse {
                 height: to_ibc_height(update.height).map(|h| h.to_string())?,
                 client_id,
@@ -538,11 +539,10 @@ pub fn get_light_client<'a>(
     return IconClient::new(context);
 }
 
-pub fn ensure_owner(deps:Deps,info:&MessageInfo)->Result<(),ContractError>{
-
-    let config= QueryHandler::get_config(deps.storage)?;
+pub fn ensure_owner(deps: Deps, info: &MessageInfo) -> Result<(), ContractError> {
+    let config = QueryHandler::get_config(deps.storage)?;
     if info.sender != config.owner {
-        return Err(ContractError::Unauthorized {  })
+        return Err(ContractError::Unauthorized {});
     }
     Ok(())
 }
@@ -553,7 +553,7 @@ mod tests {
     use common::icon::icon::types::v1::{BtpHeader, SignedHeader};
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
-        OwnedDeps, Response, Addr,
+        Addr, OwnedDeps, Response,
     };
     use cw2::get_contract_version;
     use cw_common::raw_types::Any;
@@ -574,7 +574,9 @@ mod tests {
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
-        let msg = InstantiateMsg{ibc_host:Addr::unchecked("ibc_host")};
+        let msg = InstantiateMsg {
+            ibc_host: Addr::unchecked("ibc_host"),
+        };
         let info = mock_info(SENDER, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
@@ -605,14 +607,14 @@ mod tests {
         let mut deps = mock_dependencies();
         let env = mock_env();
         let info = mock_info(SENDER, &[]);
-       
+
         let msg = InstantiateMsg::default();
 
         let res: Response = instantiate(deps.as_mut(), env, info.clone(), msg.clone()).unwrap();
 
         assert_eq!(0, res.messages.len());
 
-        let config = Config::new(info.sender,msg.ibc_host.clone());
+        let config = Config::new(info.sender, msg.ibc_host);
 
         let stored_config = QueryHandler::get_config(deps.as_ref().storage).unwrap();
         assert_eq!(config, stored_config);

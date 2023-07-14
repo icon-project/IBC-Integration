@@ -12,12 +12,14 @@ use cosmwasm_std::{from_slice, Addr};
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub ibc_host:Addr
+    pub ibc_host: Addr,
 }
 
 impl Default for InstantiateMsg {
     fn default() -> Self {
-        Self { ibc_host: Addr::unchecked("ibc_host")}
+        Self {
+            ibc_host: Addr::unchecked("ibc_host"),
+        }
     }
 }
 

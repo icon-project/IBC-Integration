@@ -94,7 +94,7 @@ impl ILightClient for IconClient<'_> {
 
     fn create_client(
         &mut self,
-        caller:Addr,
+        caller: Addr,
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
@@ -125,7 +125,7 @@ impl ILightClient for IconClient<'_> {
 
     fn update_client(
         &mut self,
-        caller:Addr,
+        caller: Addr,
         client_id: &str,
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
