@@ -8,11 +8,18 @@ use crate::{
     },
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::from_slice;
+use cosmwasm_std::{from_slice, Addr};
 
 #[cw_serde]
-#[derive(Default)]
-pub struct InstantiateMsg {}
+pub struct InstantiateMsg {
+    pub ibc_host:Addr
+}
+
+impl Default for InstantiateMsg {
+    fn default() -> Self {
+        Self { ibc_host: Addr::unchecked("ibc_host")}
+    }
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]

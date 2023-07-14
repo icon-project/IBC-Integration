@@ -151,6 +151,21 @@ impl<'a> IContext for CwContext<'a> {
     ) -> Result<u64, Self::Error> {
         QueryHandler::get_processed_blocknumber_at_height(self.storage, client_id, height)
     }
+
+    fn ensure_ibc_host(&self,caller:cosmwasm_std::Addr)-> Result<(), Self::Error> {
+        let config=self.get_config()?;
+        if caller!=config.ibc_host {
+            return Err(ContractError::Unauthorized {  })
+        }
+        Ok(())
+    }
+    fn ensure_owner(&self,caller:cosmwasm_std::Addr)-> Result<(), Self::Error> {
+        let config=self.get_config()?;
+        if caller!=config.owner {
+            return Err(ContractError::Unauthorized {  })
+        }
+        Ok(())
+    }
 }
 
 pub struct QueryHandler {}
@@ -503,7 +518,7 @@ mod tests {
         let mut deps = mock_dependencies();
         let _info = mock_info("alice", &[]);
         // Store config
-        let config = Config::new(Addr::unchecked("owner"));
+        let config = Config::new(Addr::unchecked("owner"),Addr::unchecked("alice"));
         CONFIG.save(deps.as_mut().storage, &config).unwrap();
 
         // Retrieve config
