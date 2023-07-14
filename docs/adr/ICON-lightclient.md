@@ -50,6 +50,14 @@ NETWORK_ID : unit64
 
 The BTP lightclient state tracks  current validator set, latestNetworkSectionHash, trusting period, latest height, and a possible frozen height.
 
+```typescript
+interface TrustLevel {
+  denominator:uint64,
+  numerator:uint64,
+}
+
+```
+
 
 ```typescript
 interface ClientState {
@@ -166,7 +174,7 @@ function verifyBlockProof(
             }
         }
         // assert 2/3 of validators has signed the networkSectionDecision 
-        assert(hasQuorumOf(validators.length, votes), Errors.ERR_UNKNOWN);
+        assert(hasQuorumOf(validators.length, votes,clientState.trust_level), Errors.ERR_UNKNOWN);
     }
 }
 ```
@@ -209,13 +217,17 @@ function initialise(
     NETWORK_TYPE_ID = networkTypeId
     NETWORK_ID = header.networkId
     provableStore.set("clients/{NETWORK_ID}/consensusStates/{header.mainHeight}", consensusState)
+  
     return ClientState {
       trustingPeriod
       frozenHeight: null
       maxClockDrift
-      latestHeight: header.mainHeight
-      networkSectionHash: header.getNetworkSectionHash()
-      validatorHash: header.nextValidators
+      latestHeight: header.mainHeight,
+      srcNetworkId,
+      networkTypeId,
+      header.networkId,
+      header.trustLevel
+     
     }
 }
 ```
@@ -274,7 +286,7 @@ function updateState(header: BTPBlockHeader) {
     }
 
     // set latest height and networkSection and save the client state
-    if header.mainHeight>clientState.latestHeight {
+    if header.mainHeight > clientState.latestHeight {
        clientState.latestHeight = header.mainHeight
     }
    

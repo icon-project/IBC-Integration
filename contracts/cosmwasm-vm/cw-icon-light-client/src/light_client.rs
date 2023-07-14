@@ -1,6 +1,6 @@
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
-use common::icon::icon::lightclient::v1::ClientState;
+use common::icon::icon::lightclient::v1::{ClientState, TrustLevel};
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
 use common::traits::AnyTypes;
@@ -17,8 +17,8 @@ impl<'a> IconClient<'a> {
     pub fn new(context: &'a mut dyn IContext<Error = crate::ContractError>) -> Self {
         Self { context }
     }
-    pub fn has_quorum_of(n_validators: u128, votes: u128) -> bool {
-        votes * 3 > n_validators * 2
+    pub fn has_quorum_of(n_validators: u64, votes: u64,trust_level:&TrustLevel) -> bool {
+        votes * trust_level.denominator > n_validators * trust_level.numerator
     }
     pub fn check_block_proof(
         &self,
@@ -27,9 +27,9 @@ impl<'a> IconClient<'a> {
         signatures: &Vec<Vec<u8>>,
         validators: &Vec<Vec<u8>>,
     ) -> Result<bool, ContractError> {
-        let mut votes = u128::default();
+        let mut votes = u64::default();
         let state = self.context.get_client_state(client_id)?;
-        // let config = self.context.get_config()?;
+        let trust_level: TrustLevel=state.trust_level.unwrap();
         let decision = header
             .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
         debug_println!(
@@ -38,7 +38,7 @@ impl<'a> IconClient<'a> {
         );
         let validators_map = common::utils::to_lookup(validators);
 
-        let num_validators = validators.len() as u128;
+        let num_validators = validators.len() as u64;
 
         for signature in signatures {
             let signer = self
@@ -50,11 +50,11 @@ impl<'a> IconClient<'a> {
                 }
             }
 
-            if Self::has_quorum_of(num_validators, votes) {
+            if Self::has_quorum_of(num_validators, votes,&trust_level) {
                 break;
             }
         }
-        if !Self::has_quorum_of(num_validators, votes) {
+        if !Self::has_quorum_of(num_validators, votes,&trust_level) {
             debug_println!("Insuffcient Quorom detected");
             return Err(ContractError::InSuffcientQuorum);
         }
@@ -90,7 +90,6 @@ impl<'a> IconClient<'a> {
 
 impl ILightClient for IconClient<'_> {
     type Error = crate::ContractError;
-    // convert string to int
 
     fn create_client(
         &mut self,
