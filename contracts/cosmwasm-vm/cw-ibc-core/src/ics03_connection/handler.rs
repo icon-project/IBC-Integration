@@ -29,24 +29,14 @@ impl<'a> CwIbcCoreContext<'a> {
         message: MsgConnectionOpenInit,
     ) -> Result<Response, ContractError> {
         let client_id = message.client_id_on_a.clone();
-        // self.check_for_connection(deps.as_ref().storage, client_id.clone())?;
 
         let connection_identifier = self.generate_connection_idenfier(deps.storage)?;
 
         self.client_state(deps.storage, &message.client_id_on_a)?;
 
-        let lightclient_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
+        let client = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
-        let query_message = cw_common::client_msg::QueryMsg::GetClientState {
-            client_id: client_id.as_str().to_string(),
-        };
-
-        let query = QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: lightclient_address,
-            msg: to_binary(&query_message).map_err(ContractError::Std)?,
-        });
-
-        let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
+        let response: Vec<u8> = client.get_client_state(deps.as_ref(), &client_id)?;
 
         if response.is_empty() {
             return Err(ClientError::ClientNotFound {
@@ -198,7 +188,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into)?;
         let prefix_on_a = self.commitment_prefix(deps.as_ref(), &env);
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
-        let client_address = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
+        let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
 
         let expected_conn_end_on_b: ConnectionEnd = ConnectionEnd::new(
             State::TryOpen,
@@ -258,21 +248,54 @@ impl<'a> CwIbcCoreContext<'a> {
                 counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
             },
         };
-        let client_message =
-            crate::ics04_channel::LightClientMessage::VerifyConnectionOpenAck(payload);
 
-        let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: client_address,
-            msg: to_binary(&client_message)?,
-            funds: info.funds,
-        });
-        debug_println!("[ConnOpenAck]: Validating On Light Client");
+        client.verify_connection_open_ack(deps.as_ref(), payload)?;
 
-        let sub_message = SubMsg::reply_always(wasm_execute_message, EXECUTE_CONNECTION_OPENACK);
+        let connection_id = msg.conn_id_on_a.clone();
+
+        let version: Version = msg.version.clone();
+
+        let mut conn_end = self.connection_end(deps.storage, connection_id.clone())?;
+
+        if !conn_end.state_matches(&State::Init) {
+            return Err(ConnectionError::ConnectionMismatch { connection_id })
+                .map_err(Into::<ContractError>::into);
+        }
+        debug_println!("[ConnOpenAckReply]: Conn end state matches");
+        let counter_party_client_id = client_id_on_b.clone();
+
+        let counterparty_conn_id = msg.conn_id_on_b;
+
+        let counterparty_prefix = prefix_on_b.clone();
+
+        let counterparty = Counterparty::new(
+            counter_party_client_id,
+            Some(counterparty_conn_id.clone()),
+            counterparty_prefix,
+        );
+
+        conn_end.set_state(State::Open);
+        conn_end.set_version(version);
+        conn_end.set_counterparty(counterparty.clone());
+
+        let event = create_open_ack_event(
+            connection_id.clone(),
+            conn_end.client_id().clone(),
+            counterparty_conn_id,
+            counterparty.client_id().clone(),
+        );
+
+        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
+            .unwrap();
+        debug_println!("[ConnOpenAckReply]: Connection Stored");
+
+        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)
+            .unwrap();
 
         Ok(Response::new()
-            .add_submessage(sub_message)
-            .add_attribute("method", "connection_open_ack"))
+            .add_attribute("method", "execute_connection_open_ack")
+            .add_attribute("connection_id", connection_id.as_str())
+            .add_event(event))
     }
 
     /// This method executes the opening acknowledgement of an IBC connection and updates the
@@ -446,7 +469,7 @@ impl<'a> CwIbcCoreContext<'a> {
             from_utf8(&prefix_on_b.clone().into_vec()).unwrap()
         );
 
-        let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
+        let client = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 
         // no idea what is this  is this suppose to be like this ?????
         let client_consensus_state_path_on_b = commitment::consensus_state_path(
@@ -552,20 +575,82 @@ impl<'a> CwIbcCoreContext<'a> {
             },
         };
 
-        let client_message =
-            crate::ics04_channel::LightClientMessage::VerifyConnectionOpenTry(payload);
+        client.verify_connection_open_try(deps.as_ref(), payload)?;
 
-        let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: client_address,
-            msg: to_binary(&client_message).unwrap(),
-            funds: info.funds,
-        });
+        let counter_party_client_id = message.counterparty.client_id().clone();
 
-        let sub_message = SubMsg::reply_always(wasm_execute_message, EXECUTE_CONNECTION_OPENTRY);
+        debug_println!(
+            "[ConnOpenTryReply]: counter_party_client_id id {:?}",
+            counter_party_client_id
+        );
+
+        let counterparty_conn_id = message.counterparty.connection_id().cloned();
+
+        debug_println!(
+            "[ConnOpenTryReply]: counterparty conn id  {:?}",
+            counterparty_conn_id
+        );
+
+        let counterparty_prefix = message.counterparty.prefix().clone();
+
+        debug_println!(
+            "[ConnOpenTryReply]: counterparty_prefix {:?}",
+            counterparty_prefix
+        );
+
+        let counterparty = Counterparty::new(
+            counter_party_client_id,
+            counterparty_conn_id.clone(),
+            counterparty_prefix,
+        );
+
+        let version: Vec<Version> = message.versions_on_a.clone();
+
+        debug_println!("[ConnOpenTryReply]: version decode{:?}", version);
+
+        let delay_period = message.delay_period;
+
+        let client_id = client_id_on_b.clone();
+
+        debug_println!("[ConnOpenTryReply]: client id is{:?}", client_id);
+
+        let connection_id = self.generate_connection_idenfier(deps.storage)?;
+
+        debug_println!("[ConnOpenTryReply]: connection id is{:?}", connection_id);
+
+        let conn_end = ConnectionEnd::new(
+            State::TryOpen,
+            client_id.clone(),
+            counterparty,
+            version,
+            delay_period,
+        );
+
+        debug_println!("[ConnOpenTryReply]: conn end{:?}", conn_end);
+
+        let counterparty_client_id = message.counterparty.client_id().clone();
+        debug_println!(
+            "[ConnOpenTryReply]: counterparty client id {:?}",
+            counterparty_client_id
+        );
+
+        let event = create_open_try_event(
+            connection_id.clone(),
+            client_id.clone(),
+            counterparty_conn_id,
+            counterparty_client_id,
+        );
+        self.store_connection_to_client(deps.storage, client_id, connection_id.clone())?;
+        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
+            .unwrap();
+
+        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)
+            .unwrap();
 
         Ok(Response::new()
-            .add_submessage(sub_message)
-            .add_attribute("method", "connection_open_try"))
+            .add_attribute("method", "execute_connection_open_try")
+            .add_attribute("connection_id", connection_id.as_str())
+            .add_event(event))
     }
 
     /// The below code is implementing a function `execute_connection_open_try` that handles the result
@@ -781,7 +866,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
         let prefix_on_b = self.commitment_prefix(deps.as_ref(), &env);
 
-        let client_address = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
+        let client = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
 
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Open,
@@ -807,33 +892,85 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         debug_println!("Verify Connection State {:?}", verify_connection_state);
-        let client_message = crate::ics04_channel::LightClientMessage::VerifyOpenConfirm {
-            client_id: client_id_on_b.to_string(),
-            verify_connection_state,
-            expected_response: OpenConfirmResponse {
-                conn_id: msg.conn_id_on_b.clone().to_string(),
-                counterparty_client_id: client_id_on_a.to_string(),
-                counterparty_connection_id: conn_end_on_b
-                    .counterparty()
-                    .connection_id()
-                    .unwrap()
-                    .to_string(),
-                counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
-            },
+        let expected_response = OpenConfirmResponse {
+            conn_id: msg.conn_id_on_b.clone().to_string(),
+            counterparty_client_id: client_id_on_a.to_string(),
+            counterparty_connection_id: conn_end_on_b
+                .counterparty()
+                .connection_id()
+                .unwrap()
+                .to_string(),
+            counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
         };
 
-        let wasm_execute_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: client_address,
-            msg: to_binary(&client_message).unwrap(),
-            funds: info.funds,
-        });
+        client.verify_connection_open_confirm(
+            deps.as_ref(),
+            verify_connection_state,
+            client_id_on_b,
+            expected_response,
+        )?;
 
-        let sub_message =
-            SubMsg::reply_always(wasm_execute_message, EXECUTE_CONNECTION_OPENCONFIRM);
-        debug_println!("[ConnOpenConfirm]: Verify to light client");
+        let connection_id = msg.conn_id_on_b.clone();
+        debug_println!(
+            "[ConnOpenConfirmReply]: Parsed Connection Id {:?}",
+            connection_id
+        );
+        let mut conn_end = self.connection_end(deps.storage, connection_id.clone())?;
+        debug_println!(
+            "[ConnOpenConfirmReply]: Stored Connection End {:?}",
+            conn_end
+        );
+
+        if !conn_end.state_matches(&State::TryOpen) {
+            return Err(ConnectionError::ConnectionMismatch { connection_id })
+                .map_err(Into::<ContractError>::into);
+        }
+        debug_println!("[ConnOpenConfirmReply]: Stored Connection State Matched");
+        let counter_party_client_id = client_id_on_a.clone();
+        debug_println!(
+            "[ConnOpenConfirmReply]: CounterParty ClientId {:?}",
+            counter_party_client_id
+        );
+        let counterparty_conn_id = conn_end_on_b.counterparty().connection_id().cloned();
+        debug_println!(
+            "[ConnOpenConfirmReply]: CounterParty ConnId {:?}",
+            counterparty_conn_id
+        );
+        let counterparty_prefix = prefix_on_b;
+        let counterparty = Counterparty::new(
+            counter_party_client_id,
+            counterparty_conn_id.clone(),
+            counterparty_prefix,
+        );
+        debug_println!("[ConnOpenConfirmReply]: CounterParty  {:?}", counterparty);
+        conn_end.set_state(State::Open);
+
+        let counter_conn_id = counterparty_conn_id.unwrap();
+        debug_println!(
+            "[ConnOpenConfirmReply]: CounterParty ConnId {:?}",
+            counter_conn_id
+        );
+
+        let event = create_open_confirm_event(
+            connection_id.clone(),
+            conn_end.client_id().clone(),
+            counter_conn_id,
+            counterparty.client_id().clone(),
+        );
+
+        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
+            .unwrap();
+        debug_println!("[ConnOpenConfirmReply]: Connection Stored");
+
+        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)
+            .unwrap();
+
+        debug_println!("[ConnOpenConfirmReply]: Commitment Stored Stored");
+
         Ok(Response::new()
-            .add_submessage(sub_message)
-            .add_attribute("method", "connection_open_confirm"))
+            .add_attribute("method", "execute_connection_open_confirm")
+            .add_attribute("connection_id", connection_id.as_str())
+            .add_event(event))
     }
 
     /// This method executes the opening confirmation of an IBC connection and returns a response or an

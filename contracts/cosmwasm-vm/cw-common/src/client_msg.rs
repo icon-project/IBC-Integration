@@ -22,6 +22,66 @@ pub enum QueryMsg {
     GetConsensusState { client_id: String, height: u64 },
     #[returns(Vec<u8>)]
     GetClientState { client_id: String },
+    #[returns(bool)]
+    VerifyMembership {
+        client_id: String,
+        message_bytes: Vec<u8>,
+        path: Vec<u8>,
+        proofs: Vec<u8>,
+        height: u64,
+        delay_time_period: u64,
+        delay_block_period: u64,
+    },
+    #[returns(bool)]
+    VerifyNonMembership {
+        client_id: String,
+        path: Vec<u8>,
+        proofs: Vec<u8>,
+        height: u64,
+        delay_time_period: u64,
+        delay_block_period: u64,
+    },
+    #[returns(bool)]
+    VerifyChannel {
+        message_info: MessageInfo,
+        endpoint: CwEndpoint,
+        verify_channel_state: VerifyChannelState,
+        // add all props that we need on response
+    },
+    #[returns(bool)]
+    VerifyOpenConfirm {
+        expected_response: OpenConfirmResponse,
+        client_id: String,
+        verify_connection_state: VerifyConnectionState,
+        // add all props that we need on response
+    },
+    #[returns(bool)]
+    TimeoutOnCLose {
+        client_id: String,
+        verify_channel_state: VerifyChannelState,
+        next_seq_recv_verification_result: LightClientPacketMessage,
+    },
+    #[returns(bool)]
+    PacketTimeout {
+        client_id: String,
+        next_seq_recv_verification_result: LightClientPacketMessage,
+    },
+    #[returns(bool)]
+    VerifyPacketData {
+        client_id: String,
+        verify_packet_data: VerifyPacketData,
+        packet_data: Vec<u8>,
+    },
+    #[returns(bool)]
+    VerifyPacketAcknowledgement {
+        client_id: String,
+        verify_packet_acknowledge: VerifyPacketAcknowledgement,
+        packet_data: Vec<u8>,
+    },
+    #[returns(bool)]
+    VerifyConnectionOpenTry(VerifyConnectionPayload<OpenTryResponse>),
+    #[returns(bool)]
+    VerifyConnectionOpenAck(VerifyConnectionPayload<OpenAckResponse>),
 }
 
 #[cw_serde]
@@ -150,66 +210,66 @@ pub enum ExecuteMsg {
         client_id: String,
         signed_header: Vec<u8>,
     },
-    VerifyMembership {
-        client_id: String,
-        message_bytes: Vec<u8>,
-        path: Vec<u8>,
-        proofs: Vec<u8>,
-        height: u64,
-        delay_time_period: u64,
-        delay_block_period: u64,
-    },
-    VerifyNonMembership {
-        client_id: String,
-        path: Vec<u8>,
-        proofs: Vec<u8>,
-        height: u64,
-        delay_time_period: u64,
-        delay_block_period: u64,
-    },
+    // VerifyMembership {
+    //     client_id: String,
+    //     message_bytes: Vec<u8>,
+    //     path: Vec<u8>,
+    //     proofs: Vec<u8>,
+    //     height: u64,
+    //     delay_time_period: u64,
+    //     delay_block_period: u64,
+    // },
+    // VerifyNonMembership {
+    //     client_id: String,
+    //     path: Vec<u8>,
+    //     proofs: Vec<u8>,
+    //     height: u64,
+    //     delay_time_period: u64,
+    //     delay_block_period: u64,
+    // },
     UpgradeClient {
         upgraded_client_state: Vec<u8>,
         upgraded_consensus_state: Vec<u8>,
         proof_upgrade_client: Vec<u8>,
         proof_upgrade_consensus_state: Vec<u8>,
     },
-    VerifyChannel {
-        message_info: MessageInfo,
-        endpoint: CwEndpoint,
-        verify_channel_state: VerifyChannelState,
-        // add all props that we need on response
-    },
+    // VerifyChannel {
+    //     message_info: MessageInfo,
+    //     endpoint: CwEndpoint,
+    //     verify_channel_state: VerifyChannelState,
+    //     // add all props that we need on response
+    // },
     Misbehaviour {
         client_id: String,
         misbehaviour: Vec<u8>,
     },
-    VerifyOpenConfirm {
-        expected_response: OpenConfirmResponse,
-        client_id: String,
-        verify_connection_state: VerifyConnectionState,
-        // add all props that we need on response
-    },
-    TimeoutOnCLose {
-        client_id: String,
-        verify_channel_state: VerifyChannelState,
-        next_seq_recv_verification_result: LightClientPacketMessage,
-    },
-    PacketTimeout {
-        client_id: String,
-        next_seq_recv_verification_result: LightClientPacketMessage,
-    },
-    VerifyPacketData {
-        client_id: String,
-        verify_packet_data: VerifyPacketData,
-        packet_data: Vec<u8>,
-    },
-    VerifyPacketAcknowledgement {
-        client_id: String,
-        verify_packet_acknowledge: VerifyPacketAcknowledgement,
-        packet_data: Vec<u8>,
-    },
-    VerifyConnectionOpenTry(VerifyConnectionPayload<OpenTryResponse>),
-    VerifyConnectionOpenAck(VerifyConnectionPayload<OpenAckResponse>),
+    // VerifyOpenConfirm {
+    //     expected_response: OpenConfirmResponse,
+    //     client_id: String,
+    //     verify_connection_state: VerifyConnectionState,
+    //     // add all props that we need on response
+    // },
+    // TimeoutOnCLose {
+    //     client_id: String,
+    //     verify_channel_state: VerifyChannelState,
+    //     next_seq_recv_verification_result: LightClientPacketMessage,
+    // },
+    // PacketTimeout {
+    //     client_id: String,
+    //     next_seq_recv_verification_result: LightClientPacketMessage,
+    // },
+    // VerifyPacketData {
+    //     client_id: String,
+    //     verify_packet_data: VerifyPacketData,
+    //     packet_data: Vec<u8>,
+    // },
+    // VerifyPacketAcknowledgement {
+    //     client_id: String,
+    //     verify_packet_acknowledge: VerifyPacketAcknowledgement,
+    //     packet_data: Vec<u8>,
+    // },
+    // VerifyConnectionOpenTry(VerifyConnectionPayload<OpenTryResponse>),
+    // VerifyConnectionOpenAck(VerifyConnectionPayload<OpenAckResponse>),
 }
 
 #[cw_serde]

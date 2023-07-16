@@ -10,6 +10,7 @@ pub mod ics04_channel;
 pub mod ics05_port;
 pub mod ics24_host;
 pub mod ics26_routing;
+pub mod light_client;
 pub mod msg;
 pub mod state;
 pub mod storage_keys;

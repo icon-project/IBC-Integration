@@ -273,7 +273,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     )
                     .map_err(|_| ContractError::InvalidClientId { client_id })
                     .unwrap();
-                let addr = Addr::unchecked(res);
+                let addr = Addr::unchecked(res.get_address());
                 to_binary(&addr)
             }
             QueryMsg::GetConsensusState { client_id } => {
@@ -440,13 +440,13 @@ impl<'a> CwIbcCoreContext<'a> {
                 let msg = to_binary(&cw_common::client_msg::QueryMsg::GetLatestHeight {
                     client_id: client_id.clone(),
                 })?;
-                let client_address = self
+                let client = self
                     .get_client_implementations(
                         deps.storage,
                         IbcClientId::from_str(&client_id).unwrap(),
                     )
                     .unwrap();
-                let query = build_smart_query(client_address, msg);
+                let query = build_smart_query(client.get_address(), msg);
                 let height: u64 = deps.querier.query(&query).unwrap();
 
                 to_binary(&height)

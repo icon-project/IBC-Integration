@@ -1,12 +1,16 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
+use common::icon::icon::types::v1::MerkleNode;
 use common::traits::AnyTypes;
+use common::utils::calculate_root;
 use common::utils::keccak256;
 use cosmwasm_std::Api;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
+use cw_common::hex_string::HexString;
 use cw_storage_plus::{Item, Map};
+use debug_print::debug_println;
 use prost::Message;
 
 use crate::traits::Config;
@@ -249,6 +253,101 @@ impl QueryHandler {
                 client_id: client_id.to_string(),
                 height,
             })
+    }
+
+    /**
+     * @dev verifyMembership is a generic proof verification method which verifies a proof of the existence of a value at a given CommitmentPath at the specified height.
+     * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
+     */
+    pub fn verify_membership(
+        storage: &dyn Storage,
+        client_id: &str,
+        height: u64,
+        delay_time_period: u64,
+        delay_block_period: u64,
+        proof: &Vec<MerkleNode>,
+        value: &[u8],
+        path: &[u8],
+    ) -> Result<bool, ContractError> {
+        debug_println!(
+            "[LightClient]: Path Bytes  {:?}",
+            HexString::from_bytes(path)
+        );
+        debug_println!(
+            "[LightClient]: Value Bytes  {:?}",
+            HexString::from_bytes(value)
+        );
+        let path = keccak256(path).to_vec();
+        debug_println!("[LightClient]: client id is: {:?}", client_id);
+
+        let state = Self::get_client_state(storage, client_id)?;
+
+        if state.frozen_height != 0 && height > state.frozen_height {
+            return Err(ContractError::ClientStateFrozen(state.frozen_height));
+        }
+
+        let mut value_hash = value.to_vec();
+        if !value.is_empty() {
+            value_hash = keccak256(value).to_vec();
+        }
+
+        // let _ =
+        //     self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
+        let consensus_state: ConsensusState =
+            Self::get_consensus_state(storage, client_id, height)?;
+        debug_println!(
+            "[LightClient]: Path Hash {:?}",
+            HexString::from_bytes(&path)
+        );
+        debug_println!(
+            "[LightClient]: Value Hash {:?}",
+            HexString::from_bytes(&value_hash)
+        );
+        let leaf = keccak256(&[path, value_hash].concat());
+        debug_println!(
+            "[LightClient]: Leaf Value {:?}",
+            HexString::from_bytes(&leaf)
+        );
+
+        let message_root = calculate_root(leaf, proof);
+        debug_println!(
+            "[LightClient]: Stored Message Root {:?} ",
+            hex::encode(consensus_state.message_root.clone())
+        );
+        debug_println!(
+            "[LightClient]: Calculated Message Root : {:?}",
+            HexString::from_bytes(&message_root)
+        );
+        if consensus_state.message_root != message_root {
+            return Err(ContractError::InvalidMessageRoot(hex::encode(message_root)));
+        }
+
+        Ok(true)
+    }
+
+    /**
+     * @dev verifyNonMembership is a generic proof verification method which verifies the absence of a given CommitmentPath at a specified height.
+     * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
+     */
+    pub fn verify_non_membership(
+        storage: &dyn Storage,
+        client_id: &str,
+        height: u64,
+        delay_time_period: u64,
+        delay_block_period: u64,
+        proof: &Vec<MerkleNode>,
+        path: &[u8],
+    ) -> Result<bool, ContractError> {
+        Self::verify_membership(
+            storage,
+            client_id,
+            height,
+            delay_time_period,
+            delay_block_period,
+            proof,
+            path,
+            &[],
+        )
     }
 }
 

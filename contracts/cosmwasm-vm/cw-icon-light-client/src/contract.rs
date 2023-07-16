@@ -12,7 +12,8 @@ use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_slice, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    from_slice, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    Storage,
 };
 use cw2::set_contract_version;
 use cw_common::client_response::{
@@ -136,205 +137,205 @@ pub fn execute(
                 .add_attribute(HEIGHT, update.height.to_string())
                 .set_data(response_data))
         }
-        ExecuteMsg::VerifyMembership {
-            client_id,
-            message_bytes,
-            proofs,
-            path,
-            height,
-            delay_time_period,
-            delay_block_period,
-        } => {
-            let proofs_decoded =
-                MerkleProofs::decode(proofs.as_slice()).map_err(ContractError::DecodeError)?;
-            let result = client.verify_membership(
-                &client_id,
-                height,
-                delay_time_period,
-                delay_block_period,
-                &proofs_decoded.proofs,
-                &message_bytes,
-                &path,
-            )?;
-            Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
-        }
-        ExecuteMsg::VerifyNonMembership {
-            client_id,
+        // ExecuteMsg::VerifyMembership {
+        //     client_id,
+        //     message_bytes,
+        //     proofs,
+        //     path,
+        //     height,
+        //     delay_time_period,
+        //     delay_block_period,
+        // } => {
+        //     let proofs_decoded =
+        //         MerkleProofs::decode(proofs.as_slice()).map_err(ContractError::DecodeError)?;
+        //     let result = client.verify_membership(
+        //         &client_id,
+        //         height,
+        //         delay_time_period,
+        //         delay_block_period,
+        //         &proofs_decoded.proofs,
+        //         &message_bytes,
+        //         &path,
+        //     )?;
+        //     Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
+        // }
+        // ExecuteMsg::VerifyNonMembership {
+        //     client_id,
 
-            proofs,
-            path,
-            height,
-            delay_time_period,
-            delay_block_period,
-        } => {
-            let proofs_decoded =
-                MerkleProofs::decode(proofs.as_slice()).map_err(ContractError::DecodeError)?;
-            let result = client.verify_non_membership(
-                &client_id,
-                height,
-                delay_time_period,
-                delay_block_period,
-                &proofs_decoded.proofs,
-                &path,
-            )?;
-            Ok(Response::new().add_attribute(NON_MEMBERSHIP, result.to_string()))
-        }
-        ExecuteMsg::VerifyPacketData {
-            client_id,
-            verify_packet_data,
-            packet_data,
-        } => {
-            let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
-                .map_err(ContractError::DecodeError)?;
-            let height = to_height_u64(&verify_packet_data.height)?;
-            let result = client.verify_membership(
-                &client_id,
-                height,
-                0,
-                0,
-                &proofs_decoded.proofs,
-                &verify_packet_data.commitment_path,
-                &verify_packet_data.commitment,
-            )?;
-            let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
-            let data =
-                to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
+        //     proofs,
+        //     path,
+        //     height,
+        //     delay_time_period,
+        //     delay_block_period,
+        // } => {
+        //     let proofs_decoded =
+        //         MerkleProofs::decode(proofs.as_slice()).map_err(ContractError::DecodeError)?;
+        //     let result = client.verify_non_membership(
+        //         &client_id,
+        //         height,
+        //         delay_time_period,
+        //         delay_block_period,
+        //         &proofs_decoded.proofs,
+        //         &path,
+        //     )?;
+        //     Ok(Response::new().add_attribute(NON_MEMBERSHIP, result.to_string()))
+        // }
+        // ExecuteMsg::VerifyPacketData {
+        //     client_id,
+        //     verify_packet_data,
+        //     packet_data,
+        // } => {
+        //     let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
+        //         .map_err(ContractError::DecodeError)?;
+        //     let height = to_height_u64(&verify_packet_data.height)?;
+        //     let result = client.verify_membership(
+        //         &client_id,
+        //         height,
+        //         0,
+        //         0,
+        //         &proofs_decoded.proofs,
+        //         &verify_packet_data.commitment_path,
+        //         &verify_packet_data.commitment,
+        //     )?;
+        //     let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
+        //     let data =
+        //         to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
 
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, result.to_string())
-                .set_data(data))
-        }
-        ExecuteMsg::VerifyPacketAcknowledgement {
-            client_id,
-            verify_packet_acknowledge,
-            packet_data,
-        } => {
-            let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
-                .map_err(ContractError::DecodeError)?;
-            let height = to_height_u64(&verify_packet_acknowledge.height)?;
-            let result = client.verify_membership(
-                &client_id,
-                height,
-                0,
-                0,
-                &proofs_decoded.proofs,
-                &verify_packet_acknowledge.ack_path,
-                &verify_packet_acknowledge.ack,
-            )?;
-            let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
-            let data =
-                to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
+        //     Ok(Response::new()
+        //         .add_attribute(MEMBERSHIP, result.to_string())
+        //         .set_data(data))
+        // }
+        // ExecuteMsg::VerifyPacketAcknowledgement {
+        //     client_id,
+        //     verify_packet_acknowledge,
+        //     packet_data,
+        // } => {
+        //     let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
+        //         .map_err(ContractError::DecodeError)?;
+        //     let height = to_height_u64(&verify_packet_acknowledge.height)?;
+        //     let result = client.verify_membership(
+        //         &client_id,
+        //         height,
+        //         0,
+        //         0,
+        //         &proofs_decoded.proofs,
+        //         &verify_packet_acknowledge.ack_path,
+        //         &verify_packet_acknowledge.ack,
+        //     )?;
+        //     let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
+        //     let data =
+        //         to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
 
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, result.to_string())
-                .set_data(data))
-        }
-        ExecuteMsg::VerifyOpenConfirm {
-            client_id,
-            verify_connection_state,
-            expected_response,
-        } => {
-            let result = validate_connection_state(&client_id, &client, &verify_connection_state)?;
-            let data = to_binary(&expected_response).map_err(ContractError::Std)?;
+        //     Ok(Response::new()
+        //         .add_attribute(MEMBERSHIP, result.to_string())
+        //         .set_data(data))
+        // }
+        // ExecuteMsg::VerifyOpenConfirm {
+        //     client_id,
+        //     verify_connection_state,
+        //     expected_response,
+        // } => {
+        //     let result = validate_connection_state(&client_id, &client, &verify_connection_state)?;
+        //     let data = to_binary(&expected_response).map_err(ContractError::Std)?;
 
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, result.to_string())
-                .set_data(data))
-        }
-        ExecuteMsg::VerifyConnectionOpenTry(state) => {
-            println!("checking all the valid state ");
-            let client_valid =
-                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            println!(" is valid clientstate  {client_valid:?}");
-            // let consensus_valid = validate_consensus_state(
-            //     &state.client_id,
-            //     &client,
-            //     &state.verify_client_consensus_state,
-            // )?;
-            // println!("conseunsus_valid {:?}", consensus_valid);
+        //     Ok(Response::new()
+        //         .add_attribute(MEMBERSHIP, result.to_string())
+        //         .set_data(data))
+        // }
+        // ExecuteMsg::VerifyConnectionOpenTry(state) => {
+        //     println!("checking all the valid state ");
+        //     let client_valid =
+        //         validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
+        //     println!(" is valid clientstate  {client_valid:?}");
+        //     // let consensus_valid = validate_consensus_state(
+        //     //     &state.client_id,
+        //     //     &client,
+        //     //     &state.verify_client_consensus_state,
+        //     // )?;
+        //     // println!("conseunsus_valid {:?}", consensus_valid);
 
-            let connection_valid = validate_connection_state(
-                &state.client_id,
-                &client,
-                &state.verify_connection_state,
-            )?;
-            println!("is  valid connection state {connection_valid:?}");
+        //     let connection_valid = validate_connection_state(
+        //         &state.client_id,
+        //         &client,
+        //         &state.verify_connection_state,
+        //     )?;
+        //     println!("is  valid connection state {connection_valid:?}");
 
-            Ok(Response::new()
-                .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
-                .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
-                // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
-                .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
-        }
-        ExecuteMsg::VerifyConnectionOpenAck(state) => {
-            let connection_valid = validate_connection_state(
-                &state.client_id,
-                &client,
-                &state.verify_connection_state,
-            )?;
-            let client_valid =
-                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            // let consensus_valid = validate_consensus_state(
-            //     &state.client_id,
-            //     &client,
-            //     &state.verify_client_consensus_state,
-            // )?;
+        //     Ok(Response::new()
+        //         .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
+        //         .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
+        //         // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
+        //         .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
+        // }
+        // ExecuteMsg::VerifyConnectionOpenAck(state) => {
+        //     let connection_valid = validate_connection_state(
+        //         &state.client_id,
+        //         &client,
+        //         &state.verify_connection_state,
+        //     )?;
+        //     let client_valid =
+        //         validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
+        //     // let consensus_valid = validate_consensus_state(
+        //     //     &state.client_id,
+        //     //     &client,
+        //     //     &state.verify_client_consensus_state,
+        //     // )?;
 
-            Ok(Response::new()
-                .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
-                .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
-                // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
-                .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
-        }
+        //     Ok(Response::new()
+        //         .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
+        //         .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
+        //         // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
+        //         .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
+        // }
 
-        ExecuteMsg::VerifyChannel {
-            verify_channel_state,
-            message_info,
-            endpoint,
-        } => {
-            // fix once we receive client id
-            let result = validate_channel_state(
-                &verify_channel_state.client_id,
-                &client,
-                &verify_channel_state,
-            )?;
+        // ExecuteMsg::VerifyChannel {
+        //     verify_channel_state,
+        //     message_info,
+        //     endpoint,
+        // } => {
+        //     // fix once we receive client id
+        //     let result = validate_channel_state(
+        //         &verify_channel_state.client_id,
+        //         &client,
+        //         &verify_channel_state,
+        //     )?;
 
-            let data = to_binary(&LightClientResponse {
-                message_info,
-                ibc_endpoint: endpoint,
-            })
-            .map_err(ContractError::Std)?;
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, result.to_string())
-                .set_data(data))
-        }
-        ExecuteMsg::PacketTimeout {
-            client_id,
-            next_seq_recv_verification_result,
-        } => {
-            // let is_channel_valid =
-            //     validate_channel_state(&client_id, &client, &verify_channel_state)?;
-            let _sequence_valid =
-                validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
-            let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
+        //     let data = to_binary(&LightClientResponse {
+        //         message_info,
+        //         ibc_endpoint: endpoint,
+        //     })
+        //     .map_err(ContractError::Std)?;
+        //     Ok(Response::new()
+        //         .add_attribute(MEMBERSHIP, result.to_string())
+        //         .set_data(data))
+        // }
+        // ExecuteMsg::PacketTimeout {
+        //     client_id,
+        //     next_seq_recv_verification_result,
+        // } => {
+        //     // let is_channel_valid =
+        //     //     validate_channel_state(&client_id, &client, &verify_channel_state)?;
+        //     let _sequence_valid =
+        //         validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
+        //     let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
 
-            Ok(Response::new().set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
-        }
-        ExecuteMsg::TimeoutOnCLose {
-            client_id,
-            verify_channel_state,
-            next_seq_recv_verification_result,
-        } => {
-            let is_channel_valid =
-                validate_channel_state(&client_id, &client, &verify_channel_state)?;
-            let _sequence_valid =
-                validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
-            let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
+        //     Ok(Response::new().set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
+        // }
+        // ExecuteMsg::TimeoutOnCLose {
+        //     client_id,
+        //     verify_channel_state,
+        //     next_seq_recv_verification_result,
+        // } => {
+        //     let is_channel_valid =
+        //         validate_channel_state(&client_id, &client, &verify_channel_state)?;
+        //     let _sequence_valid =
+        //         validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
+        //     let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
 
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, is_channel_valid.to_string())
-                .set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
-        }
+        //     Ok(Response::new()
+        //         .add_attribute(MEMBERSHIP, is_channel_valid.to_string())
+        //         .set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
+        // }
         ExecuteMsg::Misbehaviour {
             client_id: _,
             misbehaviour: _,
@@ -355,88 +356,92 @@ pub fn execute(
 
 pub fn validate_channel_state(
     client_id: &str,
-    client: &IconClient,
+    storage: &dyn Storage,
     state: &VerifyChannelState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded =
         MerkleProofs::decode(state.proof.as_slice()).map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
-    let result = client.verify_membership(
+    let result = QueryHandler::verify_membership(
+        storage,
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.counterparty_chan_end_path,
         &state.expected_counterparty_channel_end,
+        &state.counterparty_chan_end_path,
     )?;
     Ok(result)
 }
 
 pub fn validate_connection_state(
     client_id: &str,
-    client: &IconClient,
+    storage: &dyn Storage,
     state: &VerifyConnectionState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded =
         MerkleProofs::decode(state.proof.as_slice()).map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
 
-    let result = client.verify_membership(
+    let result = QueryHandler::verify_membership(
+        storage,
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.counterparty_conn_end_path,
         &state.expected_counterparty_connection_end,
+        &state.counterparty_conn_end_path,
     )?;
     Ok(result)
 }
 
 pub fn validate_client_state(
     client_id: &str,
-    client: &IconClient,
+    storage: &dyn Storage,
     state: &VerifyClientFullState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
         .map_err(ContractError::DecodeError)?;
     println!("starting validating client state");
     let height = to_height_u64(&state.proof_height)?;
-    let result = client.verify_membership(
+    let result = QueryHandler::verify_membership(
+        storage,
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.client_state_path,
         &state.expected_client_state,
+        &state.client_state_path,
     )?;
     Ok(result)
 }
 
 pub fn validate_consensus_state(
     client_id: &str,
-    client: &IconClient,
+    storage: &dyn Storage,
     state: &VerifyClientConsensusState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.consensus_state_proof.as_slice())
         .map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
-    let result = client.verify_membership(
+    let result = QueryHandler::verify_membership(
+        storage,
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.conesenus_state_path,
         &state.expected_conesenus_state,
+        &state.conesenus_state_path,
     )?;
     Ok(result)
 }
 
 pub fn validate_next_seq_recv(
-    client: &IconClient,
+    storage: &dyn Storage,
     client_id: &str,
     state: &LightClientPacketMessage,
 ) -> Result<bool, ContractError> {
@@ -454,14 +459,15 @@ pub fn validate_next_seq_recv(
                 MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
             let height = to_height_u64(height)?;
 
-            client.verify_membership(
+            QueryHandler::verify_membership(
+                storage,
                 client_id,
                 height,
                 0,
                 0,
                 &proofs_decoded.proofs,
-                seq_recv_path,
                 sequence.to_be_bytes().as_ref(),
+                seq_recv_path,
             )?
         }
         LightClientPacketMessage::VerifyPacketReceiptAbsence {
@@ -476,7 +482,8 @@ pub fn validate_next_seq_recv(
                 MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
             let height = to_height_u64(height)?;
 
-            client.verify_non_membership(
+            QueryHandler::verify_non_membership(
+                storage,
                 client_id,
                 height,
                 0,
@@ -527,6 +534,187 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
         QueryMsg::GetLatestHeight { client_id } => {
             to_binary(&QueryHandler::get_latest_height(deps.storage, &client_id).unwrap())
+        }
+        QueryMsg::VerifyMembership {
+            client_id,
+            message_bytes,
+            proofs,
+            path,
+            height,
+            delay_time_period,
+            delay_block_period,
+        } => {
+            let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
+                .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
+            let result = QueryHandler::verify_membership(
+                deps.storage,
+                &client_id,
+                height,
+                delay_time_period,
+                delay_block_period,
+                &proofs_decoded.proofs,
+                &message_bytes,
+                &path,
+            )
+            .unwrap_or(false);
+            to_binary(&result)
+        }
+        QueryMsg::VerifyNonMembership {
+            client_id,
+
+            proofs,
+            path,
+            height,
+            delay_time_period,
+            delay_block_period,
+        } => {
+            let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
+                .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
+            let result = QueryHandler::verify_non_membership(
+                deps.storage,
+                &client_id,
+                height,
+                delay_time_period,
+                delay_block_period,
+                &proofs_decoded.proofs,
+                &path,
+            )
+            .unwrap_or(false);
+            to_binary(&result)
+        }
+        QueryMsg::VerifyPacketData {
+            client_id,
+            verify_packet_data,
+            packet_data,
+        } => {
+            let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
+                .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
+            let height = to_height_u64(&verify_packet_data.height).unwrap();
+            let result = QueryHandler::verify_membership(
+                deps.storage,
+                &client_id,
+                height,
+                0,
+                0,
+                &proofs_decoded.proofs,
+                &verify_packet_data.commitment_path,
+                &verify_packet_data.commitment,
+            )
+            .unwrap_or(false);
+
+            to_binary(&result)
+        }
+        QueryMsg::VerifyPacketAcknowledgement {
+            client_id,
+            verify_packet_acknowledge,
+            packet_data,
+        } => {
+            let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
+                .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
+            let height = to_height_u64(&verify_packet_acknowledge.height).unwrap();
+            let result = QueryHandler::verify_membership(
+                deps.storage,
+                &client_id,
+                height,
+                0,
+                0,
+                &proofs_decoded.proofs,
+                &verify_packet_acknowledge.ack_path,
+                &verify_packet_acknowledge.ack,
+            )
+            .unwrap_or(false);
+
+            to_binary(&result)
+        }
+        QueryMsg::VerifyOpenConfirm {
+            client_id,
+            verify_connection_state,
+            expected_response,
+        } => {
+            let result =
+                validate_connection_state(&client_id, deps.storage, &verify_connection_state)
+                    .unwrap_or(false);
+            to_binary(&result)
+        }
+        QueryMsg::VerifyConnectionOpenTry(state) => {
+            println!("checking all the valid state ");
+            let client_valid = validate_client_state(
+                &state.client_id,
+                deps.storage,
+                &state.verify_client_full_state,
+            )
+            .unwrap_or(false);
+            println!(" is valid clientstate  {client_valid:?}");
+
+            let connection_valid = validate_connection_state(
+                &state.client_id,
+                deps.storage,
+                &state.verify_connection_state,
+            )
+            .unwrap_or(false);
+            to_binary(&(client_valid && connection_valid))
+        }
+        QueryMsg::VerifyConnectionOpenAck(state) => {
+            let connection_valid = validate_connection_state(
+                &state.client_id,
+                deps.storage,
+                &state.verify_connection_state,
+            )
+            .unwrap();
+            let client_valid = validate_client_state(
+                &state.client_id,
+                deps.storage,
+                &state.verify_client_full_state,
+            )
+            .unwrap();
+
+            to_binary(&(client_valid && connection_valid))
+        }
+
+        QueryMsg::VerifyChannel {
+            verify_channel_state,
+            message_info,
+            endpoint,
+        } => {
+            // fix once we receive client id
+            let result = validate_channel_state(
+                &verify_channel_state.client_id,
+                deps.storage,
+                &verify_channel_state,
+            )
+            .unwrap();
+
+            to_binary(&result)
+        }
+        QueryMsg::PacketTimeout {
+            client_id,
+            next_seq_recv_verification_result,
+        } => {
+            // let is_channel_valid =
+            //     validate_channel_state(&client_id, &client, &verify_channel_state)?;
+            let _sequence_valid = validate_next_seq_recv(
+                deps.storage,
+                &client_id,
+                &next_seq_recv_verification_result,
+            )
+            .unwrap();
+            to_binary(&_sequence_valid)
+        }
+        QueryMsg::TimeoutOnCLose {
+            client_id,
+            verify_channel_state,
+            next_seq_recv_verification_result,
+        } => {
+            let is_channel_valid =
+                validate_channel_state(&client_id, deps.storage, &verify_channel_state).unwrap();
+            let _sequence_valid = validate_next_seq_recv(
+                deps.storage,
+                &client_id,
+                &next_seq_recv_verification_result,
+            )
+            .unwrap();
+
+            to_binary(&(is_channel_valid && _sequence_valid))
         }
     }
 }
@@ -607,7 +795,6 @@ mod tests {
         let env = mock_env();
         let info = mock_info(SENDER, &[]);
         let msg = InstantiateMsg::default();
-
         let res: Response = instantiate(deps.as_mut(), env, info.clone(), msg).unwrap();
 
         assert_eq!(0, res.messages.len());

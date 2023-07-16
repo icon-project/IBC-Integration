@@ -173,25 +173,78 @@ impl<'a> CwIbcCoreContext<'a> {
             ack: msg.acknowledgement.clone().into(),
         };
         let packet_data = to_vec(&data)?;
-        let light_client_message = LightClientMessage::VerifyPacketAcknowledgement {
-            client_id: client_id_on_a.to_string(),
+        let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
+
+        client.verify_packet_acknowledge(
+            deps.as_ref(),
             verify_packet_acknowledge,
+            &client_id_on_a,
             packet_data,
+        )?;
+
+        let packet = msg.packet.clone();
+        let acknowledgement = msg.acknowledgement.clone();
+        debug_println!("after matching ackowledgement ");
+
+        let port_id = packet.port_id_on_a.clone();
+        // Getting the module address for on packet timeout call
+        let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
+        {
+            Ok(addr) => addr,
+            Err(error) => return Err(error),
         };
-        let light_client_address =
-            self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
+
+        let src = CwEndPoint {
+            port_id: packet.port_id_on_a.to_string(),
+            channel_id: packet.chan_id_on_a.to_string(),
+        };
+        let dest = CwEndPoint {
+            port_id: packet.port_id_on_b.to_string(),
+            channel_id: packet.chan_id_on_b.to_string(),
+        };
+        let timeoutblock = match packet.timeout_height_on_b {
+            common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
+                revision: 1,
+                height: 1,
+            },
+            common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
+                revision: x.revision_number(),
+                height: x.revision_height(),
+            },
+        };
+        let timestamp = packet.timeout_timestamp_on_b.nanoseconds();
+        let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
+        let timeout = CwTimeout::with_both(timeoutblock, ibctimestamp);
+
+        let ibc_packet = CwPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
+        let address = Addr::unchecked(msg.signer.to_string());
+        let ack: CwAcknowledgement = CwAcknowledgement::new(acknowledgement.as_bytes());
+        let packet_ack_msg: CwPacketAckMsg =
+            cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
+        self.store_callback_data(
+            deps.storage,
+            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+            &packet_ack_msg,
+        )?;
+        let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketAck {
+            msg: packet_ack_msg,
+        };
+
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: light_client_address,
-            msg: to_binary(&light_client_message).unwrap(),
-            funds: info.funds,
+            contract_addr: contract_address,
+            msg: to_binary(&cosm_msg).unwrap(),
+            funds: vec![],
         });
-        let sub_msg: SubMsg = SubMsg::reply_always(
+        debug_println!("after creating client message {:?} ", create_client_message);
+
+        let sub_msg: SubMsg = SubMsg::reply_on_success(
             create_client_message,
-            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT,
+            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
         );
 
         Ok(Response::new()
-            .add_attribute("action", "Light client packet acklowledgement call")
+            .add_attribute("action", "packet")
+            .add_attribute("method", "packet_acknowledgement_module")
             .add_submessage(sub_msg))
     }
 
