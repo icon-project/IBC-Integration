@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cw_common::xcall_types::network_address::NetId;
+use cw_xcall_lib::network_address::NetId;
 
 #[cw_serde]
 pub struct ChannelConfig {

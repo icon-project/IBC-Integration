@@ -23,7 +23,7 @@ fn test_cross_contract_rollback() {
     let result = app.app.execute_contract(
         sender,
         caller,
-        &cw_mock_dapp::ExecuteMsg::TestCall {
+        &cw_mock_dapp::msg::ExecuteMsg::TestCall {
             success_addr: success.to_string(),
             fail_addr: fail.to_string(),
         },

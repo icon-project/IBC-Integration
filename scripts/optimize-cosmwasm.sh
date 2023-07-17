@@ -46,10 +46,7 @@ done
 # check all generated wasm files
 cosmwasm-check artifacts/archway/cw_ibc_core.wasm
 cosmwasm-check artifacts/archway/cw_icon_light_client.wasm
-cosmwasm-check artifacts/archway/cw_mock_dapp.wasm
-cosmwasm-check artifacts/archway/cw_xcall.wasm
 cosmwasm-check artifacts/archway/cw_xcall_ibc_connection.wasm
-cosmwasm-check artifacts/archway/cw_xcall_multi.wasm
 
 
 # validate size

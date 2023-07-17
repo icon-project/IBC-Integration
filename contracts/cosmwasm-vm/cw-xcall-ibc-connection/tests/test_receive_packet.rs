@@ -2,24 +2,27 @@ mod account;
 mod setup;
 
 use account::*;
-use common::rlp::{self, Nullable};
+
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env},
     Addr, Binary, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 
-use cw_common::xcall_types::network_address::NetworkAddress;
+use cw_xcall::types::{
+    message::CallServiceMessage,
+    request::CallServiceMessageRequest,
+    response::CallServiceMessageResponse,
+    rlp::{self},
+};
 use cw_xcall_ibc_connection::{
     ibc::ibc_packet_receive, state::CwIbcConnection, types::message::Message,
 };
-use cw_xcall_multi::types::{
-    message::CallServiceMessage, request::CallServiceMessageRequest,
-    response::CallServiceMessageResponse,
-};
+use cw_xcall_lib::network_address::NetworkAddress;
 use setup::*;
 
 #[test]
 fn test_receive_packet_for_call_message_request() {
+    
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
     let mock_env = mock_env();
@@ -45,11 +48,11 @@ fn test_receive_packet_for_call_message_request() {
 
     let message: CallServiceMessage = data.try_into().unwrap();
     let message: Message = Message {
-        sn: Nullable::new(Some(0)),
+        sn: common::rlp::Nullable::new(Some(0)),
         fee: 0,
         data: rlp::encode(&message).to_vec(),
     };
-    let message_data = Binary(rlp::encode(&message).to_vec());
+    let message_data = Binary(common::rlp::encode(&message).to_vec());
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -90,17 +93,17 @@ fn test_receive_packet_for_call_message_response() {
         .unwrap();
     let data = CallServiceMessageResponse::new(
         1,
-        cw_xcall_multi::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
         "",
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
     let message: Message = Message {
-        sn: Nullable::new(Some(0)),
+        sn: common::rlp::Nullable::new(Some(0)),
         fee: 0,
         data: rlp::encode(&message).to_vec(),
     };
-    let message_data = Binary(rlp::encode(&message).to_vec());
+    let message_data = Binary(common::rlp::encode(&message).to_vec());
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
