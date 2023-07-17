@@ -1031,7 +1031,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => {
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let data: IbcEndpoint = self.get_callback_data(
                     deps.as_ref().storage,
                     EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
@@ -1097,7 +1097,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => {
+            cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let data: IbcEndpoint = self.get_callback_data(
                     deps.as_ref().storage,
                     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,

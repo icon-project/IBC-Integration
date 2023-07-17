@@ -1,5 +1,7 @@
 use std::str::from_utf8;
 
+use cw_common::xcall_types::network_address::NetworkAddress;
+
 use super::*;
 
 // version info for migration info
@@ -26,7 +28,7 @@ impl<'a> CwMockService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        to: String,
+        to: NetworkAddress,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
@@ -35,7 +37,8 @@ impl<'a> CwMockService<'a> {
             .xcall_address()
             .load(deps.storage)
             .map_err(|_e| ContractError::ModuleAddressNotFound)?;
-        let network_id = self.get_network_id(to.clone())?;
+
+        let network_id = to.nid().to_string();
         let connections = self.get_connections(deps.storage, network_id)?;
         let (sources, destinations) =
             connections
@@ -48,8 +51,8 @@ impl<'a> CwMockService<'a> {
         let msg = cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
             to,
             data,
-            sources,
-            destinations,
+            sources: Some(sources),
+            destinations: Some(destinations),
             rollback,
         };
         let message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -57,6 +60,8 @@ impl<'a> CwMockService<'a> {
             msg: to_binary(&msg).unwrap(),
             funds: info.funds,
         });
+
+        println!("{:?}", message);
 
         Ok(Response::new()
             .add_attribute("Action", "SendMessage")
@@ -67,11 +72,11 @@ impl<'a> CwMockService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        from: String,
+        from: NetworkAddress,
         data: Vec<u8>,
         _protocols: Vec<String>,
     ) -> Result<Response, ContractError> {
-        if info.sender == from {
+        if info.sender == from.account() {
             let recieved_rollback =
                 serde_json_wasm::from_slice::<RollbackData>(&data).map_err(|e| {
                     ContractError::DecodeError {
@@ -90,28 +95,18 @@ impl<'a> CwMockService<'a> {
 
             Ok(Response::new()
                 .add_attribute("action", "RollbackDataReceived")
-                .add_attribute("from", from)
+                .add_attribute("from", from.to_string())
                 .add_attribute("sequence", seq.to_string()))
         } else {
             let msg_data = from_utf8(&data).map_err(|e| ContractError::DecodeError {
                 error: e.to_string(),
             })?;
-            if "revertMessage" == msg_data {
+            if "rollback" == msg_data {
                 return Err(ContractError::RevertFromDAPP);
             }
             Ok(Response::new()
-                .add_attribute("from", from)
+                .add_attribute("from", from.to_string())
                 .add_attribute("data", msg_data))
         }
-    }
-
-    pub fn get_network_id(&self, address: String) -> Result<String, ContractError> {
-        let splits = address.split('/').collect::<Vec<&str>>();
-        if splits.len() < 2 {
-            return Err(ContractError::InvalidAddress {
-                address: address.to_string(),
-            });
-        }
-        Ok(splits[0].to_owned())
     }
 }

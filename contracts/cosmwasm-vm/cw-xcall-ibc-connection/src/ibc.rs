@@ -29,20 +29,12 @@ pub const APP_ORDER: CwOrder = CwOrder::Unordered;
 /// field set to a string representing the IBC version.
 #[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_channel_open(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     msg: CwChannelOpenMsg,
 ) -> Result<CwChannelOpenResponse, ContractError> {
-    let channel = msg.channel();
-    debug_println!("[IBCConnection]: channel open called");
-
-    check_order(&channel.order)?;
-    debug_println!("[IBCConnection]: order check passed");
-
-    if let Some(counter_version) = msg.counterparty_version() {
-        check_version(counter_version)?;
-    }
-    debug_println!("[IBCConnection]: version check passed");
+    let mut service = CwIbcConnection::default();
+    let _res = service.on_channel_open(deps.storage, msg)?;
 
     Ok(Some(Cw3ChannelOpenResponse {
         version: IBC_VERSION.to_string(),
@@ -71,28 +63,11 @@ pub fn ibc_channel_connect(
     _env: Env,
     msg: CwChannelConnectMsg,
 ) -> Result<CwBasicResponse, ContractError> {
-    let channel = msg.channel();
-    debug_println!("[IBCConnection]: channel connect called");
-
-    check_order(&channel.order)?;
-    debug_println!("[IBCConnection]: check order pass");
-
-    if let Some(counter_version) = msg.counterparty_version() {
-        check_version(counter_version)?;
-    }
-
-    debug_println!("[IBCConnection]: check version passed");
-
-    let source = msg.channel().endpoint.clone();
-    let destination = msg.channel().counterparty_endpoint.clone();
-
-    let ibc_config = IbcConfig::new(source, destination);
-    debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
-
-    let mut call_service = CwIbcConnection::default();
-    call_service.save_config(deps.storage, &ibc_config)?;
-
-    Ok(CwBasicResponse::new().add_attribute("method", "ibc_channel_connect"))
+    let mut service = CwIbcConnection::default();
+    let res = service.on_channel_connect(deps.storage, msg)?;
+    Ok(CwBasicResponse::new()
+        .add_attributes(res.attributes)
+        .add_events(res.events))
 }
 
 /// This Rust function handles closing an IBC channel and resets its state.
@@ -118,13 +93,12 @@ pub fn ibc_channel_close(
     _env: Env,
     msg: CwChannelCloseMsg,
 ) -> Result<CwBasicResponse, ContractError> {
-    let channel = msg.channel().endpoint.channel_id.clone();
-    // Reset the state for the channel.
-    debug_println!("[IBCConnection]: channel close called");
+    let service = CwIbcConnection::default();
+    let res = service.on_channel_close(msg)?;
 
     Ok(CwBasicResponse::new()
-        .add_attribute("method", "ibc_channel_close")
-        .add_attribute("channel", channel))
+        .add_attributes(res.attributes)
+        .add_events(res.events))
 }
 
 /// This function receives an IBC packet and returns a response or an error message.
@@ -150,43 +124,21 @@ pub fn ibc_channel_close(
 #[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_receive(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     msg: CwPacketReceiveMsg,
 ) -> Result<CwReceiveResponse, Never> {
-    match do_ibc_packet_receive(deps, env, msg) {
+    let call_service = CwIbcConnection::default();
+    let _channel = msg.packet.dest.channel_id.clone();
+    debug_println!("[IBCConnection]: Packet Received");
+    let result = call_service.do_packet_receive(deps, msg.packet, msg.relayer);
+
+    match result {
         Ok(response) => Ok(response),
         Err(error) => Ok(CwReceiveResponse::new()
             .add_attribute("method", "ibc_packet_receive")
             .add_attribute("error", error.to_string())
             .set_ack(make_ack_fail(error.to_string()))),
     }
-}
-/// This function receives an IBC packet and calls a service to handle the packet data.
-///
-/// Arguments:
-///
-/// * `deps`: `deps` is a mutable reference to the dependencies of the contract. These dependencies
-/// include the storage, API, and other modules that the contract may need to interact with.
-/// * `_env`: _env is an object of type `Env` which represents the current execution environment of the
-/// contract. It contains information such as the current block height, time, and chain ID.
-/// * `msg`: The `msg` parameter is of type `IbcPacketReceiveMsg`, which represents a message containing
-/// an IBC packet that has been received by the contract. It contains information such as the packet
-/// data, the source and destination channels, and the sequence numbers of the packets.
-///
-/// Returns:
-///
-/// a `Result` with either an `IbcReceiveResponse` or a `ContractError`.
-
-fn do_ibc_packet_receive(
-    deps: DepsMut,
-    _env: Env,
-    msg: CwPacketReceiveMsg,
-) -> Result<CwReceiveResponse, ContractError> {
-    let call_service = CwIbcConnection::default();
-    let _channel = msg.packet.dest.channel_id.clone();
-    debug_println!("[IBCConnection]: Packet Received");
-
-    call_service.receive_packet_data(deps, msg.packet)
 }
 
 /// This function handles the acknowledgement of an IBC packet in Rust.
@@ -207,16 +159,15 @@ fn do_ibc_packet_receive(
 /// a `Result` object with an `IbcBasicResponse` on success or a `ContractError` on failure.
 #[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_ack(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     ack: CwPacketAckMsg,
 ) -> Result<CwBasicResponse, ContractError> {
-    let ack_response: Ack = from_binary(&ack.acknowledgement.data)?;
-
-    match ack_response {
-        Ack::Result(_) => on_ack_sucess(ack.original_packet),
-        Ack::Error(err) => on_ack_failure(ack.original_packet, &err),
-    }
+    let call_service = CwIbcConnection::default();
+    let res = call_service.on_packet_ack(deps, ack)?;
+    Ok(CwBasicResponse::new()
+        .add_attributes(res.attributes)
+        .add_events(res.events))
 }
 
 /// This Rust function handles a timeout for an IBC packet and sends a reply message with an error code.
@@ -238,12 +189,11 @@ pub fn ibc_packet_ack(
 /// a `Result` with an `IbcBasicResponse` on success or a `ContractError` on failure.
 #[cfg_attr(feature = "native_ibc", entry_point)]
 pub fn ibc_packet_timeout(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
-    _msg: CwPacketTimeoutMsg,
+    msg: CwPacketTimeoutMsg,
 ) -> Result<CwBasicResponse, ContractError> {
-    let submsg = SubMsg::reply_on_error(CosmosMsg::Custom(Empty {}), ACK_FAILURE_ID);
-    Ok(CwBasicResponse::new()
-        .add_submessage(submsg)
-        .add_attribute("method", "ibc_packet_timeout"))
+    let call_service = CwIbcConnection::default();
+    let res = call_service.on_packet_timeout(deps, msg)?;
+    Ok(CwBasicResponse::new().add_attributes(res.attributes))
 }

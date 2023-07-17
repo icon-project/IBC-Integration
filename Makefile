@@ -12,6 +12,8 @@ export GO111MODULE = on
 
 protoVer=0.11.1
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
+builderImage=contract-builder
+containerBuilder=$(PROJECT_NAME)-optimize-builder-img
 containerProtoGenGo=$(PROJECT_NAME)-proto-gen-go-$(protoVer)
 containerProtoGenRust=$(PROJECT_NAME)-proto-gen-rust-$(protoVer)
 containerProtoFmt=$(PROJECT_NAME)-proto-fmt-$(protoVer)
@@ -35,6 +37,22 @@ proto-gen-rust:
 	@echo "Generating Rust Protobuf files"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenRust}$$"; then docker start -a $(containerProtoGenRust); else docker run  --name $(containerProtoGenRust) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
 		sh ./scripts/protocgen_rust.sh; fi
+
+build-builder-img:
+	@echo "Generating optimized cosmwasm for Archway contracts"
+	docker build -t "${builderImage}" . -f ./scripts/.DockerfileContractBuilder
+
+optimize-jar:
+	@echo "Generating optimized jar for ICON contracts"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run  --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-jar.sh; fi
+
+optimize-cosmwasm:
+	@echo "Generating optimized cosmwasm for Archway contracts"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run  --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-cosmwasm.sh; fi
+
+optimize-build:
+	@echo "Generating optimized contracts..."
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run  --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-build.sh; fi
 
 gobuild:
 	go build .

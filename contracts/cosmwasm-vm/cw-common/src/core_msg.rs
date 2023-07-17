@@ -1,6 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
 
+use crate::cw_types::CwPacket;
 use crate::hex_string::HexString;
 
 #[cw_serde]
@@ -96,7 +97,10 @@ pub enum ExecuteMsg {
         //ibc_proto::ibc::core::channel::v1::MsgAcknowledgement
         msg: HexString,
     },
-    RequestTimeout {},
+    WriteAcknowledgement {
+        packet: CwPacket,
+        acknowledgement: HexString,
+    },
     TimeoutPacket {
         //raw message bytes:
         //ibc_proto::ibc::core::channel::v1::MsgTimeout
@@ -181,4 +185,7 @@ pub enum QueryMsg {
     GetAllPorts {},
     #[returns(String)]
     GetCommitmentPrefix {},
+
+    #[returns(u64)]
+    GetLatestHeight { client_id: String },
 }

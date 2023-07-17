@@ -13,9 +13,9 @@ The sendMessage function is responsible for sending a message to a specified tar
 
 The behavior of sendMessage depends on the value of sn (sequence number). If sn is greater than 0, it indicates a new message that requires a response. In this case, both the sending fee and the response fee should be included. If sn is 0, it signifies a one-way message where no response is expected. If sn is less than 0, it implies that the message is a response to a previously received message. In this scenario, no fee is included in the sending message since it should have already been paid when the positive sn was sent.
 
-After handling the sn value, the sendMessage function triggers the handleBTPMessage function on the targetNetwork. It passes targetNetwork, svc, sn, and msg as arguments to handleBTPMessage. The purpose of this function is to handle the incoming message on the specified targetNetwork's xCall contract.
+After handling the sn value, the sendMessage function triggers the handleMessage function on the targetNetwork. It passes targetNetwork, sn, and msg as arguments to handleMessage. The purpose of this function is to handle the incoming message on the specified targetNetwork's xCall contract.
 
-In case the message fails to be delivered for any reason, the code triggers the handleBTPError function. It passes an empty string as the first argument, svc, sn, errorCode, and errorMessage to the handleBTPError function. The responsibility of this function is to handle errors that occur during the message delivery process.
+In case the message fails to be delivered for any reason, the code triggers the handleError function. It passes sn, errorCode, and errorMessage to the function. The responsibility of this function is to handle errors that occur during the message delivery process.
 
 The second external function, getFee(network, response), calculates and returns the fee required to send a message to the specified network and back. It takes into account the optional response parameter when determining the fee.
 
@@ -24,22 +24,23 @@ In summary, this code snippet illustrates a specific behavior expected from a co
 external function sendMessage(targetNetwork, svc, sn, msg)
     if sn < 0:
         sn = sn.negate()
-    On targetNetwork, trigger handleBTPMessage(targetNetwork, svc, sn, msg)
+    On targetNetwork, trigger handleMessage(targetNetwork, sn, msg)
     if message fails to deliver:
-        trigger handleBTPError("", svc, sn, errorCode, errorMessage)
+        trigger handleBTPError(sn, errorCode, errorMessage)
 ```
 
 ``` javascript
 external function getFee(network, response)
     Returns the fee required to send a message to "network" and back, considering the optional response parameter.
+...
 ```
 
 ## General IBC Connection Design Overview
 The IBC (Inter-Blockchain Communication) connection facilitates communication between different chains using IBC channels and ports. This connection relies on the administrator to associate network IDs with specific connections/ports. Once established, these properties become immutable and cannot be changed. Consequently, users can depend on the stability and reliability of a configured connection to another chain.
 
-For message transmission, the sendPacket function is utilized. All responses are handled through acknowledgments, ensuring reliable delivery. If a packet timeout occurs, it will be treated as an error, indicating a failure in the message transmission process.
+All responses are handled through acknowledgments If a packet timeout occurs, it will be treated as an error.
 
-Two types of fees are associated with this connection. The first fee pertains to delivering the packet itself, while the second fee is related to delivering an acknowledgment. These fee amounts are determined and controlled by the administrator. To ensure user safety, there are caps on the fee amounts, preventing excessive charges.
+Two types of fees are associated with this connection. The first fee pertains to delivering the packet itself, while the second fee is related to delivering an acknowledgment. These fee amounts are determined and controlled by the administrator. To ensure user safety, there should be caps on the fee amounts, preventing excessive charges.
 
 Additionally, the packet fee rewards are included with the message and stored on the counterparty connections. These rewards can be claimed separately through a distinct message, providing a mechanism for managing and distributing the associated fees.
 
@@ -47,8 +48,12 @@ Additionally, the packet fee rewards are included with the message and stored on
 
 ### Storage
 ```
-TIMEOUT_HEIGHT = <Some high fixed value>
 configuredNetworkIds : connection->port->NetworkId
+configuredClients : connection->clientId
+configuredTimeoutHeight : connection->timeoutHeight
+
+lightClients : channelId->clientId
+timeoutHeights : channelId->timeoutHeight
 
 PORT: portId
 channels : NetworkId -> channelId
@@ -56,7 +61,7 @@ networkIds : channelId -> NetworkId
 destinationChannel: channelId -> counterPartyChannelId
 destinationPort: channelId -> counterPartyPortId
 
-incomingPackets: channel -> sn -> packetSequence
+incomingPackets: channel -> sn -> packet
 outgoingPackets: channel -> paketSequence -> sn
 
 sendPacketFee: NetworkId -> int
@@ -72,7 +77,7 @@ The Message struct is used for all packets sent. While acknowledgments only cons
 The Message struct is defined as follows:
 ```java
 class Message() {
-    String sn;
+    BigIntger sn; // Nullable
     BigIntger fee;
     byte[] data;
 
@@ -90,6 +95,16 @@ data: The data attribute stores the xCall messsage or int case of a fee claim it
 
 The toBytes() method is implemented to convert the Message struct into a byte array representation using the RLP (Recursive Length Prefix) encoding.
 
+### Contract initialization
+```javascript
+function init(Address _xCall, Address _ibc, String port) {
+    xCall.set(_xCall);
+    ibc.set(_ibc);
+    admin.set(Context.getCaller());
+    PORT = port
+}
+```
+
 ### Sending Messages
 ```java
 /**
@@ -103,19 +118,22 @@ The toBytes() method is implemented to convert the Message struct into a byte ar
  */
 void sendMessage(String _to, String _svc, BigInteger _sn, byte[] _msg) {
     onlyXCall();
+    String channel = channels.get(caller).get(_to);
+
     if (_sn.compareTo(BigInteger.ZERO) < 0) {
         writeAcknowledgement(_to, _sn.negate(), _msg);
         return
     }
+
+    seqNum = ibc.getNextSequenceSend(PORT, channel)
     packetfee = sendPacketFee.get(_to)
     _ackFee = 0;
     if (sn.compareTo(BigInteger.ZERO) > 0) {
         _ackFee = ackFee[_to]
+        unclaimedAckFees[_to][seqNum] = _ackFee;
     }
 
     assert Context.value() == packetfee + _ackFee
-
-    String channel = channels.get(_to);
     if (!_sn.equals(BigInteger.ZERO)) {
         outgoingPackets[channel][seqNum] = _sn;
     }
@@ -127,10 +145,10 @@ void sendMessage(String _to, String _svc, BigInteger _sn, byte[] _msg) {
         destinationPort[channel]
         destinationChannel[channel]
         msg.toBytes()
-        TIMEOUT_HEIGHT
+        getTimeoutHeight(channel)
     );
 
-    unclaimedAckFees[_to][packet.sequence] = _ackFee;
+
 
     ibc.sendPacket(packet);
 }
@@ -139,13 +157,8 @@ void sendMessage(String _to, String _svc, BigInteger _sn, byte[] _msg) {
 ```java
  private void writeAcknowledgement(String _to, BigInteger _sn, byte[] _msg) {
     String channel = channels.get(_to);
-    BigInteger sequenceNumber = incomingPackets[channel][_sn]
+    byte[] packet = incomingPackets[channel][_sn]
     incomingPackets[channel][_sn] = null;
-
-    Packet packet = new Packet();
-    packet.setSequence(sequenceNumber);
-    packet.setDestinationPort(PORT);
-    packet.setDestinationChannel(channel);
 
     ibc.writeAcknowledgement(packet, _msg);
 }
@@ -155,20 +168,23 @@ void sendMessage(String _to, String _svc, BigInteger _sn, byte[] _msg) {
 ```java
 public byte[] onRecvPacket(byte[] calldata, Address relayer) {
     onlyIBCHandler();
+
     Packet packet = Packet.decode(calldata);
     Message msg = Message.fromBytes(packet.getData());
     String nid = networkIds.get(packet.getDestinationChannel());
     assert nid != null;
-    unclaimedPacketFees[nid][relayer] += msg.getFee();
 
-    if (msg.getSn() > 0) {
-        incomingPackets[packet.getDestinationChannel()][msg.getSn()] = packet.getSequence();
-    } else if (msg.getSn() == -1) {
-         Context.transfer(msg.getFee(), Address.fromBytes(msg.getData()))
-         return  new byte[0]
+    if (msg.getSn() == null) {
+        Context.transfer(msg.getFee(), Address.fromBytes(msg.getData()))
+        return  new byte[0]
     }
 
-    xCall.handleBTPMessage(nid, "xcall", msg.getSn(), msg.getData());
+    if (msg.getSn() > 0) {
+        incomingPackets[packet.getDestinationChannel()][msg.getSn()] = packet.getSequence());
+    }
+
+    unclaimedPacketFees[nid][relayer] += msg.getFee();
+    xCall.handleMessage(nid, msg.getSn(), msg.getData());
     return new byte[0];
 }
 ```
@@ -187,7 +203,7 @@ public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Add
     Context.transfer(unclaimedAckFees[_to][packet.sequence], relayer)
     unclaimedAckFees[nid][packet.sequence] = null
 
-    xCall.handleBTPMessage(nid, "xcall", sn, acknowledgement);
+    xCall.handleMessage(nid, sn, acknowledgement);
 }
 ```
 
@@ -200,14 +216,23 @@ public void onTimeoutPacket(byte[] calldata, Address relayer) {
     outgoingPackets.at(packet.getSourceChannel()).set(packet.getSequence(), null);
     String nid = networkIds[packet.getSourceChannel()];
 
+    assert sn != null;
+
     fee = msg.getFee();
     if (sn != null) {
         fee += unclaimedAckFees[nid][packet.sequence];
         unclaimedAckFees[nid][packet.sequence] = null
-        xCall.handleBTPError("", "xcall", sn, -1, "Timeout");
+        xCall.handleError(sn, -1, "Timeout");
     }
 
     Context.transfer(fee, relayer)
+}
+```
+
+```java
+private Height getTimeoutHeight(String channelId) {
+    height = ibc.getLatestHeight(lightClients[channelId])
+    return height + timeoutHeights[channelId]
 }
 ```
 
@@ -219,35 +244,47 @@ public void onTimeoutPacket(byte[] calldata, Address relayer) {
  * If _to is not reachable, then it reverts.
  * If _to does not exist in the fee table, then it returns zero.
  *
- * @param _to       String ( BTP Network Address of the destination BMC )
+ * @param _to       String Network Id of target chain
  * @param _response Boolean ( Whether the responding fee is included )
  * @return Integer (The fee of sending a message to a given destination network )
  */
 public BigInteger getFee(String _to, boolean _response) {
-    fee = 0
+    fee = sendPacketFee[_to]
     if response {
-        fee = ackFee[_to]
+        fee += ackFee[_to]
     }
 
-    return sendPacketFee[_to] + fee
+    return fee
 }
-
+```
+```java
+/**
+ * Claims fees gathered on 'nid' chain to specific address native to that chain.
+ *
+ * @param nid       String Network Id of target chain
+ * @param address Byte representation of address on target chain
+ */
 public void claimFees(String nid, byte[] address) {
-    relayer = getCaller()
+    relayer = Context.getCaller()
     BigInteger amount = unclaimedPacketFees[nid][relayer]
+    unclaimedPacketFees[nid][relayer] = null
     assert amount > 0;
     String channel = channels.get(nid);
-    Message msg = new Message(-1, amount, address);
+    Message msg = new Message(null, amount, address);
     Packet packet = Packet(
         port
         channel
         destinationPort[channel]
         destinationChannel[channel]
         msg
-        TIMEOUT_HEIGHT
+        getTimeoutHeight(channel)
     );
     ibc.sendPacket(packet);
 
+}
+
+public BigInteger getUnclaimedFees(String nid, Address relayer) {
+    return  unclaimedPacketFees[nid][relayer]
 }
 
 ```
@@ -260,15 +297,18 @@ public void onChanOpenInit(int order, String[] connectionHops, String portId, St
     assert order == Undorderd
 
     // TODO verify version
-    Counterparty counterparty = Counterparty.decode(counterpartyPb);
+    String connectionId = connectionHops[0]
+    Counterparty counterparty = Counterparty.decode(counterpartyPb)
     String counterpartyPortId = counterparty.getPortId()
-    String counterPartyNid = configuredNetworkIds[connectionHops[0]][counterpartyPortId]
+    String counterPartyNid = configuredNetworkIds[connectionId][counterpartyPortId]
     assert portId == PORT;
-    assert counterPartNid != null
+    assert counterPartyNid != null
     assert channels[counterPartyNid] == null
+    lightClients[channelId] = configuredClients[connectionId]
     destinationPort[channelId] = counterpartyPortId
     channels[counterPartyNid] = channelId
     networkIds[channelId] = counterPartyNid
+    timeoutHeights[channelId] = configuredTimeoutHeight[connectionId]
 }
 ```
 
@@ -280,17 +320,19 @@ public void onChanOpenTry(int order, String[] connectionHops, String portId, Str
     assert order == Undorderd
     // TODO verify version
 
-    Counterparty counterparty = Counterparty.decode(counterpartyPb);
+    String connectionId = connectionHops[0]
+    Counterparty counterparty = Counterparty.decode(counterpartyPb)
     String counterpartyPortId = counterparty.getPortId()
-    String counterPartyNid = configuredNetworkIds[connectionHops[0]][counterpartyPortId]
+    String counterPartyNid = configuredNetworkIds[connectionId][counterpartyPortId]
     assert portId == PORT;
-    assert counterPartNid != null
+    assert counterPartyNid != null
     assert channels[counterPartyNid] == null
-
+    lightClients[channelId] = configuredClients[connectionId]
     destinationPort[channelId] = counterpartyPortId
-    channels[counterPartyNid] = channelId
     destinationChannel[channelId] = counterparty.getChannelId();
+    channels[counterPartyNid] = channelId
     networkIds[channelId] = counterPartyNid
+    timeoutHeights[channelId] = configuredTimeoutHeight[connectionId]
 }
 ```
 ```java
@@ -310,15 +352,10 @@ public void onChanOpenConfirm(String portId, String channelId) {
 }
 ```
 
-Once a channel is closed, no further action is required. By assigning an empty string to the channel ID, the IBC system ensures that no messages will be processed through that specific channel. This effectively halts any communication through the closed channel. However, timeouts are still implemented to allow for the recovery of lost messages.
-
-Setting the channel ID to an empty string also serves another important purpose: it prevents the administrator from replacing the connection. With an empty channel ID, any attempt to modify or replace the existing connection is prohibited. Instead, to establish a new connection with the desired chain, a new contract must be deployed. This ensures the stability and integrity of the established connection,
-
 *Todo improve recovery without redeploying*
 ```java
 public void onChanCloseInit(String portId, String channelId) {
-    nid = networkIds[channelId]
-    channels[nid] = ""
+    revert()
 }
 ```
 ```java
@@ -337,20 +374,32 @@ public void transferAdmin(Address admin) {
 ```
 
 ```java
-public void configureConnection(String connectionId, String portId, String counterpartyNid) {
+/**
+ * Configures a ibc connection so that a channel can be establised for a specigic nid
+
+
+ * @param connectionId The connection id of the connection/chain to open the connection to
+ * @param counterpartyPortId  The allocated port name of the connection on the counterparty chain
+ * @param counterpartyNid The network Id to be associated with this connection
+ * @param clientId The lightClient associated with this connection
+ * @param timeoutHeight The timeoutheight to be used on packets, it is recommended to use a high value similar to the trusting period of the lightclient.
+ */
+public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
     onlyAdmin();
-    assert configuredNetworkIds[connectionId][portId] == null
+    assert configuredNetworkIds[connectionId][counterpartyPortId] == null
     assert channels[counterpartyNid] == null;
-    configuredNetworkIds[connectionId][portId] = counterpartyNid
+    configuredNetworkIds[connectionId][counterpartyPortId] = counterpartyNid
+    configuredClients[connectionId] = clientId
+    configuredTimeoutHeight[connectionId] = timeoutHeight
 }
 ```
 
 ```java
-void setFee(String _to, BigIntger packetFee, BigIntger ackFee) {
+void setFee(String nid, BigInteger packetFee, BigInteger ackFee) {
     onlyAdmin();
     //check chainn specfic limits
-    sendPacketFee[_to] = packetFee
-    ackFee[_to] = ackFee
+    sendPacketFee[nid] = packetFee
+    ackFee[nid] = ackFee
 }
 ```
 
@@ -363,7 +412,9 @@ After a connections is established for a specific networkId it can't change but 
 
 ## Implementations
 
+
 ## History
+
 
 ## Copyright
 

@@ -1,6 +1,9 @@
-use crate::cw_types::{
-    CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg, CwPacketReceiveMsg,
-    CwPacketTimeoutMsg,
+use crate::{
+    cw_types::{
+        CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg,
+        CwPacketReceiveMsg, CwPacketTimeoutMsg,
+    },
+    xcall_types::network_address::NetId,
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
@@ -12,18 +15,27 @@ pub enum ExecuteMsg {
     SetXCallHost {
         address: String,
     },
-    MessageFromXCall {
-        data: Vec<u8>,
+    SendMessage {
+        to: NetId,
+        sn: i64,
+        msg: Vec<u8>,
     },
-    SetIbcConfig {
-        ibc_config: Vec<u8>,
+    ConfigureConnection {
+        connection_id: String,
+        counterparty_port_id: String,
+        counterparty_nid: NetId,
+        client_id: String,
+        timeout_height: u64,
     },
-    UpdateAdmin {
+    ClaimFees {
+        nid: NetId,
         address: String,
     },
-    RemoveAdmin {},
-    SetTimeoutHeight {
-        height: u64,
+
+    SetFees {
+        nid: NetId,
+        packet_fee: u128,
+        ack_fee: u128,
     },
 
     #[cfg(not(feature = "native_ibc"))]
@@ -62,9 +74,9 @@ pub enum QueryMsg {
     #[returns(String)]
     GetAdmin {},
     #[returns(u64)]
-    GetTimeoutHeight {},
-    #[returns(u128)]
-    GetProtocolFee {},
-    #[returns(String)]
-    GetProtocolFeeHandler {},
+    GetTimeoutHeight { channel_id: String },
+    #[returns(u64)]
+    GetFee { nid: NetId, response: bool },
+    #[returns(u64)]
+    GetUnclaimedFee { nid: NetId, relayer: String },
 }

@@ -1,41 +1,34 @@
 package e2e_test
 
 import (
-	"bytes"
-	"flag"
-	"fmt"
-	"log"
-	"os"
-	"path/filepath"
+	"context"
+	"github.com/icon-project/ibc-integration/test/e2e/tests"
+	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
+	"github.com/stretchr/testify/suite"
 	"testing"
-
-	"github.com/spf13/viper"
 )
 
-func TestMain(m *testing.M) {
-	var config string
-	cwd, err := os.Getwd()
-	flag.StringVar(&config, "config", "config.yaml", "config file name")
-	flag.StringVar(&config, "config", "config.yaml", "config file name")
-	flag.Parse()
-	if config == "" && err != nil {
-		log.Fatal("Config not provided")
-	}
-	basePath := filepath.Dir(fmt.Sprintf("%s/..%c..%c", cwd, os.PathSeparator, os.PathSeparator))
-	basePath := filepath.Dir(fmt.Sprintf("%s/..%c..%c", cwd, os.PathSeparator, os.PathSeparator))
-	if err := os.Setenv("BASE_PATH", basePath); err != nil {
-		log.Fatal("Error setting BASE_PATH:", err)
-	}
-	contents, err := os.ReadFile(fmt.Sprintf("%s%c%s", cwd, os.PathSeparator, config))
-	if err != nil {
-		log.Fatal("error opening config file:", err)
-	}
-	reader := bytes.NewBuffer([]byte(os.ExpandEnv(string(contents))))
-	viper.AutomaticEnv()
-	viper.SetConfigType(filepath.Ext(config)[1:])
-	viper.SetConfigType(filepath.Ext(config)[1:])
-	if err := viper.ReadConfig(reader); err != nil {
-		log.Fatal("Error reading config file:", err)
-	}
-	os.Exit(m.Run())
+func TestE2ETestSuite(t *testing.T) {
+	suite.Run(t, new(E2ETest))
+}
+
+type E2ETest struct {
+	testsuite.E2ETestSuite
+}
+
+func (s *E2ETest) TestE2E_all() {
+
+	t := s.T()
+	ctx := context.TODO()
+	relayer := s.SetupChainsAndRelayer(ctx)
+	s.StartRelayer(relayer)
+
+	t.Run("test xcall", func(t *testing.T) {
+		xcall := tests.XCallTestSuite{
+			E2ETestSuite: &s.E2ETestSuite,
+			T:            t,
+		}
+		xcall.TestDemo()
+	})
+	s.StopRelayer(ctx, relayer)
 }

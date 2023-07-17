@@ -317,13 +317,12 @@ impl<'a> CwIbcCoreContext<'a> {
 
     fn get_self_address(&self, deps: Deps, env: &Env) -> String {
         let addr = env.contract.address.to_string();
+
         if addr.contains("contract") {
-            let info = get_contract_info(deps, addr.clone())
-                .and_then(|info| return Ok(info.admin.unwrap_or("".to_owned())))
-                .unwrap_or("".to_string());
-            return info;
+            let info = get_contract_info(deps, addr).unwrap();
+            return info.admin.unwrap();
         }
-        return addr;
+        addr
     }
 
     fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {

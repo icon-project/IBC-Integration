@@ -18,6 +18,7 @@ package foundation.icon.btp.xcall;
 
 import foundation.icon.score.client.ScoreInterface;
 import score.annotation.External;
+import score.annotation.Optional;
 
 @ScoreInterface
 public interface CallServiceReceiver {
@@ -30,5 +31,5 @@ public interface CallServiceReceiver {
      * @param _data The calldata delivered from the caller
      */
     @External
-    void handleCallMessage(String _from, byte[] _data, String[] protocols);
+    void handleCallMessage(String _from, byte[] _data, @Optional String[] protocols);
 }

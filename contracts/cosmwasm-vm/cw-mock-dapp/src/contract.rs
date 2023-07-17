@@ -1,5 +1,7 @@
 use std::str::from_utf8;
 
+use cw_common::xcall_types::network_address::NetworkAddress;
+
 use super::*;
 
 // version info for migration info
@@ -59,10 +61,10 @@ impl<'a> CwMockService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        from: String,
+        from: NetworkAddress,
         data: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        if info.sender == from {
+        if info.sender == from.account() {
             let recieved_rollback =
                 serde_json_wasm::from_slice::<RollbackData>(&data).map_err(|e| {
                     ContractError::DecodeError {
@@ -81,7 +83,7 @@ impl<'a> CwMockService<'a> {
 
             Ok(Response::new()
                 .add_attribute("action", "RollbackDataReceived")
-                .add_attribute("from", from)
+                .add_attribute("from", from.to_string())
                 .add_attribute("sequence", seq.to_string()))
         } else {
             let msg_data = from_utf8(&data).map_err(|e| ContractError::DecodeError {
@@ -91,7 +93,7 @@ impl<'a> CwMockService<'a> {
                 return Err(ContractError::RevertFromDAPP);
             }
             Ok(Response::new()
-                .add_attribute("from", from)
+                .add_attribute("from", from.to_string())
                 .add_attribute("data", msg_data))
         }
     }
