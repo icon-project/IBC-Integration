@@ -1,3 +1,4 @@
+use crate::constants::TRUST_LEVEL;
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
 use common::icon::icon::lightclient::v1::ConsensusState;
@@ -30,7 +31,7 @@ impl<'a> IconClient<'a> {
     ) -> Result<bool, ContractError> {
         let mut votes = u64::default();
         let state = self.context.get_client_state(client_id)?;
-        let trust_level: TrustLevel = state.trust_level.unwrap();
+        let trust_level: &TrustLevel = &TRUST_LEVEL;
         let decision = header
             .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
         debug_println!(
@@ -51,11 +52,11 @@ impl<'a> IconClient<'a> {
                 }
             }
 
-            if Self::has_quorum_of(num_validators, votes, &trust_level) {
+            if Self::has_quorum_of(num_validators, votes, trust_level) {
                 break;
             }
         }
-        if !Self::has_quorum_of(num_validators, votes, &trust_level) {
+        if !Self::has_quorum_of(num_validators, votes, trust_level) {
             debug_println!("Insuffcient Quorom detected");
             return Err(ContractError::InSuffcientQuorum);
         }
@@ -99,7 +100,7 @@ impl ILightClient for IconClient<'_> {
         client_state: ClientState,
         consensus_state: ConsensusState,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
-        self.context.ensure_owner(caller)?;
+       // self.context.ensure_owner(caller)?;
         let exists = self.context.get_client_state(client_id).is_ok();
         if exists {
             return Err(ContractError::ClientStateAlreadyExists(
@@ -129,29 +130,29 @@ impl ILightClient for IconClient<'_> {
         client_id: &str,
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
-        self.context.ensure_ibc_host(caller)?;
+        // self.context.ensure_ibc_host(caller)?;
         let btp_header = signed_header.header.clone().unwrap();
 
         let mut state = self.context.get_client_state(client_id)?;
 
-        if btp_header.trusted_height > btp_header.main_height {
+        if signed_header.trusted_height > btp_header.main_height {
             return Err(ContractError::UpdateBlockOlderThanTrustedHeight);
         }
 
         let trusted_consensus_state = self
             .context
-            .get_consensus_state(client_id, btp_header.trusted_height)?;
+            .get_consensus_state(client_id, signed_header.trusted_height)?;
 
         let current_proof_context_hash =
-            btp_header.get_next_proof_context_hash(&btp_header.current_validators);
+            btp_header.get_next_proof_context_hash(&signed_header.current_validators);
 
         if current_proof_context_hash != trusted_consensus_state.next_proof_context_hash {
             return Err(ContractError::InvalidProofContextHash);
         }
 
-        if (btp_header.main_height - btp_header.trusted_height) > state.trusting_period {
+        if (btp_header.main_height - signed_header.trusted_height) > state.trusting_period {
             return Err(ContractError::TrustingPeriodElapsed {
-                trusted_height: btp_header.trusted_height,
+                trusted_height: signed_header.trusted_height,
                 update_height: btp_header.main_height,
             });
         }
@@ -166,7 +167,7 @@ impl ILightClient for IconClient<'_> {
             client_id,
             &btp_header,
             &signed_header.signatures,
-            &btp_header.current_validators,
+            &signed_header.current_validators,
         )?;
 
         if state.latest_height < btp_header.main_height {

@@ -21,7 +21,6 @@ impl ClientState {
         network_id: u64,
         network_type_id: u64,
         src_network_id: String,
-        trust_level: TrustLevel,
     ) -> Result<Self, ClientError> {
         if max_clock_drift == 0 {
             return Err(ClientError::Other {
@@ -37,7 +36,6 @@ impl ClientState {
             network_id,
             network_type_id,
             src_network_id,
-            trust_level: Some(trust_level),
         })
     }
 }
@@ -113,10 +111,6 @@ pub fn get_default_icon_client_state() -> ClientState {
         network_id: DEFAULT_NETWORK_ID,
         network_type_id: DEFAULT_NETWORK_TYPE_ID,
         src_network_id: DEFAULT_SRC_NETWORK_ID.to_string(),
-        trust_level: Some(TrustLevel {
-            numerator: 2,
-            denominator: 3,
-        }),
         ..ClientState::default()
     }
 }

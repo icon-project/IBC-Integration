@@ -43,8 +43,6 @@ pub struct TestHeader {
     pub message_count: u64,
     pub message_root: String,
     pub next_validators: Vec<String>,
-    pub current_validators: Vec<String>,
-    pub trusted_height: u64,
 }
 #[derive(Debug, Deserialize)]
 pub struct TestHeaderData {
@@ -58,6 +56,8 @@ pub struct TestSignedHeader {
     #[serde(rename(deserialize = "BTPHeader"))]
     pub btp_header: TestHeader,
     pub signature: Vec<String>,
+    pub trusted_height: u64,
+    pub current_validators: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -134,12 +134,6 @@ impl TryFrom<TestHeader> for BtpHeader {
             )?,
             round: value.round,
             update_number: value.update_number,
-            current_validators: value
-                .current_validators
-                .into_iter()
-                .map(|v| hex::decode(v.replace("0x", "")).unwrap())
-                .collect(),
-            trusted_height: value.trusted_height,
         };
         Ok(btp_header)
     }
@@ -158,6 +152,12 @@ impl TryFrom<TestSignedHeader> for SignedHeader {
         Ok(SignedHeader {
             header: Some(btp_header),
             signatures,
+            current_validators: value
+                .current_validators
+                .into_iter()
+                .map(|v| hex::decode(v.replace("0x", "")).unwrap())
+                .collect(),
+            trusted_height: value.trusted_height,
         })
     }
 }

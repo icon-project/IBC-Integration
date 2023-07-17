@@ -119,9 +119,6 @@ impl serde::Serialize for ClientState {
         if self.network_type_id != 0 {
             len += 1;
         }
-        if self.trust_level.is_some() {
-            len += 1;
-        }
         let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.ClientState", len)?;
         if self.trusting_period != 0 {
             struct_ser.serialize_field("trusting_period", ToString::to_string(&self.trusting_period).as_str())?;
@@ -143,9 +140,6 @@ impl serde::Serialize for ClientState {
         }
         if self.network_type_id != 0 {
             struct_ser.serialize_field("network_type_id", ToString::to_string(&self.network_type_id).as_str())?;
-        }
-        if let Some(v) = self.trust_level.as_ref() {
-            struct_ser.serialize_field("trust_level", v)?;
         }
         struct_ser.end()
     }
@@ -171,8 +165,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
             "networkId",
             "network_type_id",
             "networkTypeId",
-            "trust_level",
-            "trustLevel",
         ];
 
         #[allow(clippy::enum_variant_names)]
@@ -184,7 +176,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
             SrcNetworkId,
             NetworkId,
             NetworkTypeId,
-            TrustLevel,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -213,7 +204,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
                             "srcNetworkId" | "src_network_id" => Ok(GeneratedField::SrcNetworkId),
                             "networkId" | "network_id" => Ok(GeneratedField::NetworkId),
                             "networkTypeId" | "network_type_id" => Ok(GeneratedField::NetworkTypeId),
-                            "trustLevel" | "trust_level" => Ok(GeneratedField::TrustLevel),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -240,7 +230,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
                 let mut src_network_id__ = None;
                 let mut network_id__ = None;
                 let mut network_type_id__ = None;
-                let mut trust_level__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::TrustingPeriod => {
@@ -297,12 +286,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
                                 Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
-                        GeneratedField::TrustLevel => {
-                            if trust_level__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("trustLevel"));
-                            }
-                            trust_level__ = map.next_value()?;
-                        }
                     }
                 }
                 Ok(ClientState {
@@ -313,7 +296,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
                     src_network_id: src_network_id__.unwrap_or_default(),
                     network_id: network_id__.unwrap_or_default(),
                     network_type_id: network_type_id__.unwrap_or_default(),
-                    trust_level: trust_level__,
                 })
             }
         }

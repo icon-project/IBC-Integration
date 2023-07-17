@@ -220,13 +220,14 @@ fn test_for_update_client_execution_messages() {
         )
         .unwrap(),
         next_validators: vec![hex::decode("00b040bff300eee91f7665ac8dcf89eb0871015306").unwrap()],
-        current_validators: vec![hex::decode("00b040bff300eee91f7665ac8dcf89eb0871015306").unwrap()],
-        trusted_height: 26,
+       
     };
 
     let signed_header: RawSignedHeader = RawSignedHeader {
         header: Some(btp_header),
         signatures: vec![hex::decode("6c8b2bc2c3d31e34bd4ed9db6eff7d5dc647b13c58ae77d54e0b05141cb7a7995102587f1fa33fd56815463c6b78e100217c29ddca20fcace80510e3dab03a1600").unwrap()],
+        current_validators: vec![hex::decode("00b040bff300eee91f7665ac8dcf89eb0871015306").unwrap()],
+        trusted_height: 26,
     }
     .try_into()
     .unwrap();

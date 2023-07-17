@@ -671,6 +671,11 @@ mod tests {
 
         let signed_header = &get_test_signed_headers()[1];
         let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg {
+            ibc_host:Addr::unchecked(SENDER),
+        };
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+        
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
             signed_header: signed_header.to_any().encode_to_vec(),
@@ -697,6 +702,11 @@ mod tests {
         let header_any: Any = signed_header.to_any();
         let block_height = signed_header.header.clone().unwrap().main_height;
         let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg {
+            ibc_host:Addr::unchecked(SENDER),
+        };
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
             signed_header: header_any.encode_to_vec(),

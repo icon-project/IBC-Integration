@@ -23,7 +23,6 @@ message ClientState {
   string src_network_id=5;
   uint64 network_id=6;
   uint64 network_type_id=7;
-  TrustLevel trust_level=8;
 
 
 }
