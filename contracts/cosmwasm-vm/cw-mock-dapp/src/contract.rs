@@ -1,6 +1,6 @@
 use std::str::from_utf8;
 
-use cw_common::xcall_types::network_address::NetworkAddress;
+use cw_xcall_lib::{network_address::NetworkAddress, xcall_msg::ExecuteMsg};
 
 use super::*;
 
@@ -28,7 +28,7 @@ impl<'a> CwMockService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        to: String,
+        to: NetworkAddress,
         data: Vec<u8>,
         rollback: Option<Vec<u8>>,
     ) -> Result<Response, ContractError> {
@@ -38,12 +38,11 @@ impl<'a> CwMockService<'a> {
             .load(deps.storage)
             .map_err(|_e| ContractError::ModuleAddressNotFound)?;
 
-        let timeout_height: u64 = 0;
-
-        let msg = cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
+        let msg = ExecuteMsg::SendCallMessage {
             to,
             data,
-            timeout_height,
+            sources: None,
+            destinations: None,
             rollback,
         };
         let message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -51,6 +50,8 @@ impl<'a> CwMockService<'a> {
             msg: to_binary(&msg).unwrap(),
             funds: info.funds,
         });
+
+        println!("{:?}", message);
 
         Ok(Response::new()
             .add_attribute("Action", "SendMessage")
@@ -89,7 +90,7 @@ impl<'a> CwMockService<'a> {
             let msg_data = from_utf8(&data).map_err(|e| ContractError::DecodeError {
                 error: e.to_string(),
             })?;
-            if "revertMessage" == msg_data {
+            if "rollback" == msg_data {
                 return Err(ContractError::RevertFromDAPP);
             }
             Ok(Response::new()

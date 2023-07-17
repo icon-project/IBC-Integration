@@ -30,7 +30,7 @@ public class CSMessageRequest {
     private final String to;
     private final BigInteger sn;
     private final boolean rollback;
-    private final byte[] data;
+    private byte[] data;
     private final String[] protocols;
 
 
@@ -69,6 +69,10 @@ public class CSMessageRequest {
 
     public byte[] getData() {
         return data;
+    }
+
+    public void hashData() {
+        this.data = Context.hash("keccak-256", this.data);
     }
 
     public static void writeObject(ObjectWriter w, CSMessageRequest m) {

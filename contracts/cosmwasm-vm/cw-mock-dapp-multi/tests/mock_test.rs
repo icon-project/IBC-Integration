@@ -3,12 +3,12 @@ use std::str::FromStr;
 
 use cosmwasm::serde::to_vec;
 use cosmwasm_std::testing::mock_env;
-use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_mock_dapp_multi::{
     state::{Connection, CwMockService},
     types::InstantiateMsg,
     RollbackData,
 };
+use cw_xcall_lib::network_address::NetworkAddress;
 use setup::*;
 
 #[test]

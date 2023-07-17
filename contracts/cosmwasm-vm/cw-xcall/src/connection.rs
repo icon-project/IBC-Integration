@@ -4,7 +4,8 @@ use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QueryRequest, SubMsg, WasmMsg,
 };
 use cosmwasm_std::{MessageInfo, Response};
-use cw_common::xcall_types::network_address::NetId;
+use cw_xcall_lib::network_address::NetId;
+use cw_xcall_lib::xcall_connection_msg;
 
 use crate::{
     error::ContractError,
@@ -22,7 +23,7 @@ impl<'a> CwCallService<'a> {
     ) -> Result<SubMsg, ContractError> {
         let msg = rlp::encode(msg).to_vec();
         self.ensure_data_length(msg.len())?;
-        let message = cw_common::xcall_connection_msg::ExecuteMsg::SendMessage { to, sn, msg };
+        let message = xcall_connection_msg::ExecuteMsg::SendMessage { to, sn, msg };
 
         let cosm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: address.to_string(),
@@ -46,7 +47,7 @@ impl<'a> CwCallService<'a> {
         need_response: bool,
         address: &str,
     ) -> Result<u128, ContractError> {
-        let query_message = cw_common::xcall_connection_msg::QueryMsg::GetFee {
+        let query_message = xcall_connection_msg::QueryMsg::GetFee {
             nid,
             response: need_response,
         };

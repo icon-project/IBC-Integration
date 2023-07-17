@@ -34,8 +34,8 @@ import foundation.icon.xcall.DefaultCallServiceReceiver;
 import foundation.icon.xcall.Connection;
 import foundation.icon.xcall.NetworkAddress;
 import foundation.icon.ee.types.Address;
-import ibc.icon.test.MockContract;
 import score.UserRevertedException;
+import xcall.icon.test.MockContract;
 
 public class CallServiceTest extends TestBase {
     protected final ServiceManager sm = getServiceManager();
@@ -135,7 +135,7 @@ public class CallServiceTest extends TestBase {
         xcall.invoke(baseConnection.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
 
         // Assert
-        verify(xcallSpy).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE);
+        verify(xcallSpy).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
     }
 
     @Test
@@ -150,7 +150,7 @@ public class CallServiceTest extends TestBase {
         assertThrows(Exception.class, ()->xcall.invoke(otherConnection, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes()));
 
         // Assert
-        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE);
+        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
     }
 
     @Test
@@ -165,7 +165,7 @@ public class CallServiceTest extends TestBase {
         xcall.invoke(baseConnection.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
 
         // Assert
-        verify(xcallSpy).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE);
+        verify(xcallSpy).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
     }
 
     @Test
@@ -181,7 +181,7 @@ public class CallServiceTest extends TestBase {
         assertThrows(Exception.class, ()-> xcall.invoke(invalidConnection, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes()));
 
         // Assert
-        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE);
+        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
     }
 
     @Test
@@ -197,11 +197,11 @@ public class CallServiceTest extends TestBase {
 
         // Act
         xcall.invoke(connection1.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
-        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE);
+        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
         xcall.invoke(connection2.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
 
         // Assert
-        verify(xcallSpy, times(1)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE);
+        verify(xcallSpy, times(1)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
     }
 
     @Test
@@ -213,7 +213,7 @@ public class CallServiceTest extends TestBase {
         xcall.invoke(baseConnection.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
 
         // Act
-        xcall.invoke(user, "executeCall", BigInteger.ONE);
+        xcall.invoke(user, "executeCall", BigInteger.ONE, data);
 
         // Assert
         verify(dapp.mock).handleCallMessage(ethDapp.toString(), data, new String[]{baseConnection.getAddress().toString()});
@@ -232,7 +232,7 @@ public class CallServiceTest extends TestBase {
         xcall.invoke(baseConnection.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
 
         // Act
-        xcall.invoke(user, "executeCall", BigInteger.ONE);
+        xcall.invoke(user, "executeCall", BigInteger.ONE, data);
 
         // Assert
         verify(defaultDapp.mock).handleCallMessage(ethDapp.toString(), data);
@@ -253,7 +253,7 @@ public class CallServiceTest extends TestBase {
         xcall.invoke(connection2.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
 
         // Act
-        xcall.invoke(user, "executeCall", BigInteger.ONE);
+        xcall.invoke(user, "executeCall", BigInteger.ONE, data);
 
         // Assert
         verify(dapp.mock).handleCallMessage(ethDapp.toString(), data, connections);
@@ -274,7 +274,7 @@ public class CallServiceTest extends TestBase {
         xcall.invoke(connection2.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
 
         // Act
-        xcall.invoke(user, "executeCall", BigInteger.ONE);
+        xcall.invoke(user, "executeCall", BigInteger.ONE, data);
 
         // Assert
         CSMessageResponse msgRes = new CSMessageResponse(BigInteger.ONE, CSMessageResponse.SUCCESS, "");
@@ -295,7 +295,7 @@ public class CallServiceTest extends TestBase {
         xcall.invoke(baseConnection.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
         // Act
         doThrow(new UserRevertedException()).when(dapp.mock).handleCallMessage(ethDapp.toString(), data, new String[]{baseConnection.getAddress().toString()});
-        xcall.invoke(user, "executeCall", BigInteger.ONE);
+        xcall.invoke(user, "executeCall", BigInteger.ONE, data);
 
         // Assert
         CSMessageResponse msgRes = new CSMessageResponse(BigInteger.ONE, CSMessageResponse.FAILURE,  "score.RevertedException");

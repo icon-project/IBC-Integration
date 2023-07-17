@@ -1,4 +1,4 @@
-use cw_common::xcall_types::network_address::NetworkAddress;
+use cw_xcall_lib::network_address::NetworkAddress;
 
 use crate::types::{config::Config, LOG_PREFIX};
 
@@ -78,14 +78,15 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::SetAdmin { address } => {
                 let validated_address =
                     CwCallService::validate_address(deps.api, address.as_str())?;
-                self.add_admin(deps.storage, &info, validated_address)
+                self.ensure_admin(deps.storage, info.sender)?;
+                self.set_admin(deps.storage, validated_address)
             }
             ExecuteMsg::SetProtocolFee { value } => {
                 self.set_protocol_fee(deps, info, value).unwrap();
                 Ok(Response::new())
             }
             ExecuteMsg::SetProtocolFeeHandler { address } => {
-                self.set_protocol_feehandler(deps, &env, &info, address)
+                self.set_protocol_feehandler(deps, &info, address)
             }
             ExecuteMsg::SendCallMessage {
                 to,
@@ -109,23 +110,15 @@ impl<'a> CwCallService<'a> {
             } => {
                 todo!()
             }
-            ExecuteMsg::ExecuteCall { request_id } => self.execute_call(deps, info, request_id),
+            ExecuteMsg::ExecuteCall { request_id, data } => {
+                self.execute_call(deps, info, request_id, data)
+            }
             ExecuteMsg::ExecuteRollback { sequence_no } => {
                 self.execute_rollback(deps, env, info, sequence_no)
             }
-            ExecuteMsg::UpdateAdmin { address } => {
-                let validated_address =
-                    CwCallService::validate_address(deps.api, address.as_str())?;
-                self.update_admin(deps.storage, info, validated_address)
-            }
-            ExecuteMsg::RemoveAdmin {} => self.remove_admin(deps.storage, info),
             ExecuteMsg::SetDefaultConnection { nid, address } => {
                 self.set_default_connection(deps, info, nid, address)
             }
-            #[cfg(feature = "native_ibc")]
-            _ => Err(ContractError::DecodeFailed {
-                error: "InvalidMessage Variant".to_string(),
-            }),
         }
     }
 
@@ -198,7 +191,6 @@ impl<'a> CwCallService<'a> {
             EXECUTE_CALL_ID => self.execute_call_reply(deps, env, msg),
             EXECUTE_ROLLBACK_ID => self.execute_rollback_reply(deps.as_ref(), msg),
             SEND_CALL_MESSAGE_REPLY_ID => self.send_call_message_reply(msg),
-            ACK_FAILURE_ID => self.reply_ack_on_error(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
                 msg: "Unknown".to_string(),
@@ -208,24 +200,6 @@ impl<'a> CwCallService<'a> {
 }
 
 impl<'a> CwCallService<'a> {
-    /// This function initializes the contract with default values and sets various parameters such as
-    /// the timeout height and IBC host.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: A mutable reference to a trait object that implements the `Storage` trait. This is
-    /// used to store and retrieve data from the contract's storage.
-    /// * `info`: `info` is a struct that contains information about the message sender, such as their
-    /// address and the amount of tokens they sent with the message. It is of type `MessageInfo`.
-    /// * `msg`: InstantiateMsg is a struct that contains the parameters passed during contract
-    /// instantiation. It is defined somewhere in the code and likely contains fields such as
-    /// `timeout_height` and `ibc_host`.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// contract execution and `ContractError` is an enum representing the possible errors that can
-    /// occur during contract execution.
     fn init(
         &self,
         store: &mut dyn Storage,
@@ -234,13 +208,10 @@ impl<'a> CwCallService<'a> {
     ) -> Result<Response, ContractError> {
         let last_sequence_no = u128::default();
         let last_request_id = u128::default();
-        let owner = info.sender.as_str().to_string();
-
-        self.add_owner(store, owner.clone())?;
-        self.add_admin(store, &info, owner)?;
+        self.set_admin(store, info.sender.clone())?;
         self.init_last_sequence_no(store, last_sequence_no)?;
         self.init_last_request_id(store, last_request_id)?;
-        let caller = info.sender.clone();
+        let caller = info.sender;
         self.store_config(
             store,
             &Config {
@@ -249,32 +220,10 @@ impl<'a> CwCallService<'a> {
             },
         )?;
         self.store_protocol_fee_handler(store, caller.to_string())?;
-        // self.set_timeout_height(store, msg.timeout_height)?;
-        // self.set_connection_host(store, msg.connection_host.clone())?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
             .add_attribute("method", "init"))
-    }
-
-    #[allow(unused_variables)]
-    #[cfg(feature = "native_ibc")]
-    fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
-        let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
-
-        let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
-
-        IbcMsg::SendPacket {
-            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
-            data,
-            timeout,
-        }
-    }
-    fn reply_ack_on_error(&self, reply: Reply) -> Result<Response, ContractError> {
-        match reply.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()),
-            SubMsgResult::Err(err) => Ok(Response::new().set_data(make_ack_fail(err))),
-        }
     }
 
     pub fn get_own_network_address(

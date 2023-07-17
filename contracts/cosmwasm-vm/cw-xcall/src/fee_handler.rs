@@ -24,31 +24,12 @@ impl<'a> CwCallService<'a> {
     pub fn set_protocol_feehandler(
         &self,
         deps: DepsMut,
-        env: &Env,
-        _info: &MessageInfo,
+        info: &MessageInfo,
         address: String,
     ) -> Result<Response, ContractError> {
+        self.ensure_admin(deps.storage, info.sender.clone())?;
         self.add_feehandler(deps.storage, &address)?;
-
-        if address.len().ne(&0) {
-            let accrued_fees = self.get_balance(deps.querier, env.contract.address.to_string())?;
-
-            if accrued_fees.amount.u128() > 0 {
-                let message: CosmosMsg<Empty> = CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
-                    to_address: address,
-                    amount: vec![accrued_fees],
-                });
-
-                return Ok(Response::new()
-                    .add_message(message)
-                    .add_attribute("action", "accrued_fees")
-                    .add_attribute("method", "setprotocol_feehandler"));
-            }
-        };
-
-        Ok(Response::new()
-            .add_attribute("action", "accrued_fees")
-            .add_attribute("method", "setprotocol_feehandler"))
+        Ok(Response::new().add_attribute("method", "set_protocol_feehandler"))
     }
 
     /// This function retrieves the protocol fee handler address from storage.
@@ -114,24 +95,5 @@ impl<'a> CwCallService<'a> {
             Ok(address) => Ok(address),
             Err(error) => Err(ContractError::Std(error)),
         }
-    }
-
-    /// This Rust function queries the balance of a given address using a QuerierWrapper.
-    ///
-    /// Arguments:
-    ///
-    /// * `querier`: The `querier` parameter is an instance of the `QuerierWrapper` struct, which is
-    /// used to query the blockchain for information such as account balances, contract state, and
-    /// transaction history. It provides a set of methods for querying the blockchain, such as
-    /// `query_balance` which is used
-    /// * `address`: The `address` parameter is a `String` representing the address of the account for
-    /// which we want to get the balance.
-    ///
-    /// Returns:
-    ///
-    /// The `get_balance` function is returning a `Coin` object, which represents the balance of a given
-    /// address in a specific denomination (in this case, "uconst").
-    fn get_balance(&self, querier: QuerierWrapper, address: String) -> StdResult<Coin> {
-        querier.query_balance(address, "uconst")
     }
 }

@@ -330,9 +330,9 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
  "cw-multi-test",
  "cw-storage-plus",
+ "cw-xcall-lib",
  "cw2",
  "getrandom",
  "schemars 0.8.12",
@@ -350,9 +350,9 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
  "cw-multi-test",
  "cw-storage-plus",
+ "cw-xcall-lib",
  "cw2",
  "getrandom",
  "schemars 0.8.12",
@@ -408,6 +408,29 @@ dependencies = [
 
 [[package]]
 name = "cw-xcall"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "common",
+ "cosmwasm",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-common",
+ "cw-storage-plus",
+ "cw-xcall-lib",
+ "cw2",
+ "debug_print",
+ "getrandom",
+ "hex",
+ "schemars 0.8.12",
+ "serde",
+ "test-utils",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-xcall-lib"
 version = "0.1.0"
 dependencies = [
  "anyhow",

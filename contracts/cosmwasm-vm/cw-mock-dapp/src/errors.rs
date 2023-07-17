@@ -16,4 +16,8 @@ pub enum ContractError {
     ModuleAddressNotFound,
     #[error("MisiingRollBack {sequence}")]
     MisiingRollBack { sequence: u64 },
+    #[error("Connection Not Found {network_id}")]
+    ConnectionNotFound { network_id: String },
+    #[error("Invalid Address {address}")]
+    InvalidAddress { address: String },
 }

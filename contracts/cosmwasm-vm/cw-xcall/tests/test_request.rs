@@ -33,7 +33,7 @@ fn update_sequence() {
 #[should_panic(expected = "Std(NotFound { kind: \"u128\" })")]
 
 fn update_sequence_without_proper_initialisation() {
-    let mut mock_deps = deps();
+    let mock_deps = deps();
 
     let contract = CwCallService::default();
 

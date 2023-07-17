@@ -1,6 +1,6 @@
 use std::str::from_utf8;
 
-use cw_common::xcall_types::network_address::NetworkAddress;
+use cw_xcall_lib::{network_address::NetworkAddress, xcall_msg::ExecuteMsg};
 
 use super::*;
 
@@ -48,7 +48,7 @@ impl<'a> CwMockService<'a> {
                     acc.1.push(x.dest_endpoint);
                     acc
                 });
-        let msg = cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
+        let msg = ExecuteMsg::SendCallMessage {
             to,
             data,
             sources: Some(sources),

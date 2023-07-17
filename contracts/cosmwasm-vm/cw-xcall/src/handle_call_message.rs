@@ -1,28 +1,9 @@
 use common::{rlp, utils::keccak256};
-use cw_common::xcall_types::network_address::NetId;
-
-use crate::ack::acknowledgement_data_on_success;
+use cw_xcall_lib::network_address::NetId;
 
 use super::*;
 
 impl<'a> CwCallService<'a> {
-    /// This function receives packet data, decodes it, and then handles either a request or a response
-    /// based on the message type.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which is short for "dependencies mutable". It is a
-    /// struct that provides access to the dependencies needed by the contract to execute its logic.
-    /// These dependencies include the storage, the API to interact with the blockchain, and the querier
-    /// to query data
-    /// * `message`: The `message` parameter is of type `IbcPacket` and represents the packet received
-    /// by the contract from another chain. It contains the data sent by the sender chain and metadata
-    /// about the packet, such as the sender and receiver addresses, the sequence number, and the
-    /// timeout height.
-    ///
-    /// Returns:
-    ///
-    /// a `Result` object with either an `IbcReceiveResponse` or a `ContractError`.
     pub fn handle_message(
         &self,
         deps: DepsMut,
@@ -43,23 +24,6 @@ impl<'a> CwCallService<'a> {
         }
     }
 
-    /// This function handles a request by incrementing the last request ID, parsing a message request,
-    /// inserting the request into storage, and returning an acknowledgement response.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
-    /// contract. These dependencies include the storage, API, and other modules that the contract may need
-    /// to interact with.
-    /// * `data`: `data` is a slice of bytes that contains the serialized `CallServiceMessageRequest`
-    /// message sent by the client. This message contains information about the service call to be made,
-    /// such as the sender, recipient, sequence number, and data payload.
-    /// * `packet`: `packet` is an IBC packet received by the contract. It contains information about the
-    /// sender, receiver, and the data being transmitted.
-    ///
-    /// Returns:
-    ///
-    /// an `IbcReceiveResponse` object wrapped in a `Result` with a possible `ContractError`.
     pub fn handle_request(
         &self,
         deps: DepsMut,
@@ -98,43 +62,30 @@ impl<'a> CwCallService<'a> {
         }
         let request_id = self.increment_last_request_id(deps.storage)?;
 
-        self.store_proxy_request(deps.storage, request_id, &request)?;
+        let req = CallServiceMessageRequest::new(
+            request.from().clone(),
+            request.to().clone(),
+            request.sequence_no(),
+            request.rollback(),
+            keccak256(request.data().unwrap()).to_vec(),
+            request.protocols().clone(),
+        );
+        self.store_proxy_request(deps.storage, request_id, &req)?;
 
         let event = event_call_message(
             from.to_string(),
             to.to_string(),
             request.sequence_no(),
             request_id,
+            request.data().unwrap().to_vec(),
         );
-        let acknowledgement_data = to_binary(&cw_common::client_response::XcallPacketAck {
-            acknowledgement: make_ack_success().to_vec(),
-        })
-        .map_err(ContractError::Std)?;
 
         Ok(Response::new()
             .add_attribute("action", "call_service")
             .add_attribute("method", "handle_response")
-            .set_data(acknowledgement_data)
             .add_event(event))
     }
 
-    /// This function handles the response received from a call to an external service.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` struct, which is a mutable reference to the dependencies of the
-    /// contract. These dependencies include the storage, API, and other modules that the contract may
-    /// need to interact with.
-    /// * `data`: `data` is a slice of bytes that contains the response message received from the
-    /// external service provider. It is converted into a `CallServiceMessageResponse` struct using the
-    /// `try_into()` method.
-    /// * `packet`: `packet` is an IBC packet that was received by the contract and triggered the
-    /// `handle_response` function. It contains information about the source and destination chains, as
-    /// well as the data payload that was sent.
-    ///
-    /// Returns:
-    ///
-    /// a `Result` containing an `IbcReceiveResponse` on success or a `ContractError` on failure.
     pub fn handle_response(
         &self,
         deps: DepsMut,
@@ -189,7 +140,6 @@ impl<'a> CwCallService<'a> {
                 Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
-                    .set_data(acknowledgement_data_on_success()?)
                     .add_event(response_event))
             }
             _ => {
@@ -203,7 +153,6 @@ impl<'a> CwCallService<'a> {
                 Ok(Response::new()
                     .add_attribute("action", "call_service")
                     .add_attribute("method", "handle_response")
-                    .set_data(acknowledgement_data_on_success()?)
                     .add_event(response_event)
                     .add_event(rollback_event))
             }

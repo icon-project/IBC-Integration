@@ -30,6 +30,7 @@ import score.annotation.Payable;
 import scorex.util.HashMap;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -155,20 +156,22 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     @Override
     @External
-    public void executeCall(BigInteger _reqId) {
+    public void executeCall(BigInteger _reqId, byte[] _data) {
         CSMessageRequest req = proxyReqs.get(_reqId);
         Context.require(req != null, "InvalidRequestId");
         // cleanup
         proxyReqs.set(_reqId, null);
+        // compare the given data hash with the saved one
+        Context.require(Arrays.equals(getDataHash(_data), req.getData()), "DataHashMismatch");
 
         NetworkAddress from = NetworkAddress.valueOf(req.getFrom());
         CSMessageResponse msgRes = null;
         try {
             Address to = Address.fromString(req.getTo());
             if (req.getProtocols().length == 0) {
-                Context.call(to, "handleCallMessage", req.getFrom(), req.getData());
+                Context.call(to, "handleCallMessage", req.getFrom(), _data);
             } else {
-                Context.call(to, "handleCallMessage", req.getFrom(), req.getData(), req.getProtocols());
+                Context.call(to, "handleCallMessage", req.getFrom(), _data, req.getProtocols());
             }
 
             msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.SUCCESS, "");
@@ -237,7 +240,7 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     @Override
     @EventLog(indexed=3)
-    public void CallMessage(String _from, String _to, BigInteger _sn, BigInteger _reqId) {}
+    public void CallMessage(String _from, String _to, BigInteger _sn, BigInteger _reqId, byte[] _data) {}
 
     @Override
     @EventLog(indexed=1)
@@ -329,10 +332,12 @@ public class CallServiceImpl implements CallService, FeeManage {
 
         String to = msgReq.getTo();
         BigInteger reqId = getNextReqId();
-        proxyReqs.set(reqId, msgReq);
 
         // emit event to notify the user
-        CallMessage(msgReq.getFrom(), to, msgReq.getSn(), reqId);
+        CallMessage(msgReq.getFrom(), to, msgReq.getSn(), reqId, msgReq.getData());
+
+        msgReq.hashData();
+        proxyReqs.set(reqId, msgReq);
     }
 
     private void handleResponse(BigInteger sn, byte[] data) {
@@ -382,6 +387,10 @@ public class CallServiceImpl implements CallService, FeeManage {
                 requests.set(resSn, req);
                 RollbackMessage(resSn);
         }
+    }
+
+    private byte[] getDataHash(byte[] data) {
+        return Context.hash("keccak-256", data);
     }
 
     @External(readonly=true)

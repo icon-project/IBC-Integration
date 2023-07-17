@@ -1,6 +1,6 @@
-# Contributing to IBC-Integration
+# Contributing to XCall
 
-The following is a set of guidelines for contributing to IBC-Integration.
+The following is a set of guidelines for contributing to XCall.
 
 These guidelines are subject to change. Feel free to propose changes to this document in a pull request.
 
@@ -14,7 +14,7 @@ Before sending your pull requests, make sure you do the following:
 
 ## Code of Conduct
 
-The IBC-Integration project is governed by the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md). Participants are expected to uphold this code.
+The XCall project is governed by the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md). Participants are expected to uphold this code.
 
 ## Questions
 
@@ -31,22 +31,22 @@ We have a vibrant developer community and several community resources to ask que
 
 ### Reporting Bugs
 
-Before creating bug reports, please check **[our list of issues](https://github.com/icon-project/ibc-integration/issues)** to see if an
+Before creating bug reports, please check **[our list of issues](https://github.com/icon-project/xCall/issues)** to see if an
 issue already exists.
 
 > **Note:** For existing issues, please add a comment to the existing issue instead of opening a new issue. If the issue is closed and
 > the problem persists, please open a new issue and include a link to the original issue in the body of your new one.
 
-When you are creating a bug report, please fill out [the required template](https://github.com/icon-project/ibc-integration/blob/main/.github/ISSUE_TEMPLATE/bug.md) and include as many details as possible.
+When you are creating a bug report, please fill out [the required template](https://github.com/icon-project/xCall/blob/main/.github/ISSUE_TEMPLATE/bug.md) and include as many details as possible.
 
 ### Contributing Code
 
-If you want to contribute, start working through the IBC-Integration repository, navigate to the Github "issues" tab and start looking through issues. We recommed issues labeled "good first issue". These are issues that we believe are particularly well suited for newcomers. If you decide to start on an issue, leave a comment so that other people know that you're working on it. If you want to help out, but not alone, use the issue comment thread to coordinate.
+If you want to contribute, start working through the xCall repository, navigate to the Github "issues" tab and start looking through issues. We recommend issues labeled "good first issue". These are issues that we believe are particularly well suited for newcomers. If you decide to start on an issue, leave a comment so that other people know that you're working on it. If you want to help out, but not alone, use the issue comment thread to coordinate.
 
 Please see the [ICON Foundation Development Guidelines](https://github.com/icon-project/community/blob/main/guidelines/technical-development/development-guidelines.md)
 for information regarding our development standards and practices.
 
-### IBC-Integration Core Development Process
+### Core Development Process
 
 This section is intended for developers and project managers that are involved with core IBC-Integration.
 

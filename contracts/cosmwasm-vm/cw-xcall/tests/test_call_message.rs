@@ -5,14 +5,11 @@ use std::{collections::HashMap, vec};
 use crate::account::*;
 use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
-    to_binary, Addr, Binary, ContractInfoResponse, ContractResult, CosmosMsg, IbcMsg, IbcTimeout,
-    IbcTimeoutBlock, SystemError, SystemResult, WasmQuery,
+    to_binary, Addr, Binary, ContractInfoResponse, ContractResult, SystemError, SystemResult,
+    WasmQuery,
 };
-use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
-use cw_xcall::{
-    state::CwCallService,
-    types::{config::Config, message::CallServiceMessage, request::CallServiceMessageRequest},
-};
+use cw_xcall::{state::CwCallService, types::config::Config};
+use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 use setup::test::*;
 
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
@@ -24,33 +21,10 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
 
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
 
-    let env = mock_env();
-
     let contract = CwCallService::default();
 
     contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
 
-    let timeout_block = IbcTimeoutBlock {
-        revision: 0,
-        height: 3,
-    };
-    let timeout = IbcTimeout::with_both(timeout_block, env.block.time.plus_seconds(300));
-    let data = CallServiceMessageRequest::new(
-        NetworkAddress::new("nid", mock_info.sender.as_str()),
-        Addr::unchecked(MOCK_CONTRACT_TO_ADDR),
-        1,
-        true,
-        vec![1, 2, 3],
-        vec![],
-    );
-
-    let message: CallServiceMessage = data.into();
-
-    let expected_packet = IbcMsg::SendPacket {
-        channel_id: "channel-3".to_string(),
-        data: to_binary(&message).unwrap(),
-        timeout,
-    };
     contract
         .store_config(
             mock_deps.as_mut().storage,
@@ -61,7 +35,7 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
         )
         .unwrap();
 
-    let result = contract
+    contract
         .send_call_message(
             mock_deps.as_mut(),
             mock_info,
@@ -73,8 +47,6 @@ fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
             vec![],
         )
         .unwrap();
-
-    assert_eq!(result.messages[0].msg, CosmosMsg::Ibc(expected_packet))
 }
 
 #[test]
@@ -106,9 +78,10 @@ fn send_packet_failure_due_data_len() {
                 }
             }
             // protocol fee query
-            WasmQuery::Smart { contract_addr, msg } => {
-                SystemResult::Ok(ContractResult::Ok(to_binary(&0_u128).unwrap()))
-            }
+            WasmQuery::Smart {
+                contract_addr: _,
+                msg: _,
+            } => SystemResult::Ok(ContractResult::Ok(to_binary(&0_u128).unwrap())),
             _ => todo!(),
         }
     });

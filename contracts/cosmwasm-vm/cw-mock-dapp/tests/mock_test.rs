@@ -3,8 +3,8 @@ use std::str::FromStr;
 
 use cosmwasm::serde::to_vec;
 use cosmwasm_std::testing::mock_env;
-use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_mock_dapp::{state::CwMockService, types::InstantiateMsg, RollbackData};
+use cw_xcall_lib::network_address::NetworkAddress;
 use setup::*;
 
 #[test]
@@ -49,13 +49,15 @@ fn test_send_message() {
     };
     ctx.instantiate(deps.as_mut(), env, info.clone(), msg)
         .unwrap();
+
     let res = ctx.send_call_message(
         deps.as_mut(),
         info,
-        "xcall".to_string(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         vec![1, 2, 3, 4],
         Some(vec![1, 2, 3, 4, 5]),
     );
+
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 0)
 }
@@ -71,7 +73,7 @@ fn test_send_message_fail() {
     ctx.send_call_message(
         deps.as_mut(),
         info,
-        "xcall".to_string(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         vec![1, 2, 3, 4],
         Some(vec![1, 2, 3, 4, 5]),
     )
@@ -95,7 +97,7 @@ fn test_handle_message() {
     let res = ctx.handle_call_message(
         deps.as_mut(),
         info,
-        NetworkAddress::from_str("xcall/address").unwrap(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
         "helloError".as_bytes().to_vec(),
     );
     assert!(res.is_ok())
@@ -119,8 +121,8 @@ fn test_handle_message_fail_revert() {
     ctx.handle_call_message(
         deps.as_mut(),
         info,
-        NetworkAddress::from_str("xcall/address").unwrap(),
-        "revertMessage".as_bytes().to_vec(),
+        NetworkAddress::from_str("netid/xcall").unwrap(),
+        "rollback".as_bytes().to_vec(),
     )
     .unwrap();
 }
@@ -151,10 +153,11 @@ fn test_handle_message_pass_true() {
     let res = ctx.handle_call_message(
         deps.as_mut(),
         info,
-        NetworkAddress::from_str("xcall/hugobyte").unwrap(),
+        NetworkAddress::from_str("netid/hugobyte").unwrap(),
         to_vec(&rollback_data).unwrap(),
     );
     assert!(res.is_ok());
+    println!("{:?}", res);
     assert_eq!(res.unwrap().attributes[0].value, "RollbackDataReceived")
 }
 
@@ -181,7 +184,7 @@ fn test_handle_message_fail_true() {
     ctx.handle_call_message(
         deps.as_mut(),
         info,
-        NetworkAddress::from_str("xcall/hugobyte").unwrap(),
+        NetworkAddress::from_str("netid/hugobyte").unwrap(),
         to_vec(&rollback_data).unwrap(),
     )
     .unwrap();

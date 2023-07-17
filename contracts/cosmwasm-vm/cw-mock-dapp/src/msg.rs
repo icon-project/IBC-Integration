@@ -1,4 +1,27 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cw_xcall_lib::network_address::NetworkAddress;
+
+#[cw_serde]
+pub enum ExecuteMsg {
+    SendCallMessage {
+        to: NetworkAddress,
+        data: Vec<u8>,
+        rollback: Option<Vec<u8>>,
+    },
+    HandleCallMessage {
+        from: NetworkAddress,
+        data: Vec<u8>,
+    },
+    XCallMessage {
+        data: Vec<u8>,
+    },
+    SuccessCall {},
+    FailureCall {},
+    TestCall {
+        success_addr: String,
+        fail_addr: String,
+    },
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]

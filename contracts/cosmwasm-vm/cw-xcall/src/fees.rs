@@ -1,5 +1,3 @@
-use cw_common::xcall_types::network_address::NetId;
-
 use super::*;
 /// This is an implementation of two methods for the `CwCallService` struct.
 
@@ -35,26 +33,5 @@ impl<'a> CwCallService<'a> {
         self.store_protocol_fee(deps.storage, value)?;
 
         Ok(Response::new().add_attribute("method", "set_protocolfee"))
-    }
-
-    pub fn get_total_required_fee(
-        &self,
-        deps: Deps,
-        nid: NetId,
-        has_rollback: bool,
-        sources: &Vec<String>,
-    ) -> Result<u128, ContractError> {
-        let protocol_fee = self.get_protocol_fee(deps.storage);
-        let default = self.get_default_connection(deps.storage, nid.clone())?;
-        let mut connections: &Vec<String> = &vec![default.to_string()];
-        if !sources.is_empty() {
-            connections = sources
-        }
-        let connection_fees = connections
-            .iter()
-            .map(|addr| self.query_connection_fee(deps, nid.clone(), has_rollback, addr))
-            .collect::<Result<Vec<u128>, ContractError>>()?;
-        let total_fees: u128 = protocol_fee + connection_fees.iter().sum::<u128>();
-        Ok(total_fees)
     }
 }

@@ -48,12 +48,14 @@ CallMessage event is emitted when a new message is received by xCall and is read
  `_to` A string representation of the callee address
  `_sn` The serial number of the request from the source
  `_reqId` The request id of the destination chain used in execute call
+ `_data` The calldata
 ```javascript
 CallMessage {
     String _from,
     String _to,
     Integer _sn,
-    Integer _reqId
+    Integer _reqId,
+    byte[] data
 }
 ```
 #### CallExecuted
@@ -123,14 +125,20 @@ CallMessageSent{
 
 #### Execution
 
-The user on the destination chain recognizes the call request and invokes the following method on xcall with the given _reqId.
+The user on the destination chain recognizes the call request and invokes the following method on xcall with the given _reqId and _data.
+To minimize the gas cost, the calldata payload delivered from the source chain are exported to event, `_data` field,
+instead of storing it in the state db.
+The `_data` payload should be repopulated by the user (or client) when calling the following `executeCall` method.
+Then `xcall` compares it with the saved hash value to validate its integrity.
+
 ```javascript
 /**
  * Executes the requested call message.
  *
  * @param _reqId The request Id
+ * @param _data The calldata
  */
-external executeCall(BigInteger _reqId);
+external executeCall(BigInteger _reqId, byte[] _data);
 ```
 The user on the source chain recognizes the rollback situation and invokes the following method on xcall with the given _sn.
 Note that the executeRollback can be called only when the original call request has responded with a failure.
@@ -457,9 +465,10 @@ internal function handleRequest(String srcNet, Integer sn, bytes data) {
     else:
         require(source == defaultConnection[srcNet]);
     reqId = getNextReqId();
-    proxyReqs[reqId] = msgReq;
 
-    emit CallMessage(msgReq.from, msgReq.to, msgReq.sn, reqId);
+    emit CallMessage(msgReq.from, msgReq.to, msgReq.sn, reqId, msgReq.data);
+    msgReq.data = hash(msgReq.data)
+    proxyReqs[reqId] = msgReq;
 }
 ```
 
@@ -507,17 +516,19 @@ internal function handleResponse(sn Integer, data bytes) {
 #### Message Execution
 
 ```javascript
-external function executeCall(Integer _reqId) {
+external function executeCall(Integer _reqId, byte[] data) {
         req = proxyReqs[_reqId];
         require(req != null, "InvalidRequestId");
         proxyReqs[_reqId] == null;
 
+        assert hash(data) == req.data
+
         from = NetworkAddress(req.from);
         try:
             if req.protocols == []:
-                req.to->handleCallMessage(req.from, req.data);
+                req.to->handleCallMessage(req.from, data);
             else:
-                req.to->handleCallMessage(req.from, req.data, req.protocols);
+                req.to->handleCallMessage(req.from, data, req.protocols);
             response = new CSMessageResponse(req.sn, CSMessageResponse.SUCCESS, "");
         catch:
             response = new CSMessageResponse(req.sn, CSMessageResponse.FAILURE, ErrorMessage);
@@ -562,12 +573,16 @@ external function executeRollback(Integer _sn) {
 ### Admin methods
 
 ```javascript
+adminOnly function setAdmin(Address admin){
+    admin = admin
+}
+
 adminOnly function setProtocolFeeHandler(Address address){
     protocolFeeHandler = address
 }
 
 adminOnly function setProtocolFee(Integer fee){
-    protocolFee  = fee
+    protocolFee = fee
 }
 
 adminOnly function setDefaultConnection(String nid, Address connection){
