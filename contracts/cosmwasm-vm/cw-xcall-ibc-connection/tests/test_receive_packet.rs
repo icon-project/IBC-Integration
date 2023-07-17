@@ -22,7 +22,6 @@ use setup::*;
 
 #[test]
 fn test_receive_packet_for_call_message_request() {
-    
     let mut mock_deps = mock_dependencies();
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
     let mock_env = mock_env();
