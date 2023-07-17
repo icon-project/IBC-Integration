@@ -368,10 +368,10 @@ pub fn call_set_default_connection(
 ) -> Result<AppResponse, AppError> {
     ctx.app.execute_contract(
         ctx.sender.clone(),
-            ctx.get_xcall_app(),
-        &cw_common::xcall_app_msg::ExecuteMsg::SetDefaultConnection { 
-            nid: NetId::from(nid), 
-            address: ctx.get_xcall_ibc_connection()
+        ctx.get_xcall_app(),
+        &cw_common::xcall_app_msg::ExecuteMsg::SetDefaultConnection {
+            nid: NetId::from(nid),
+            address: ctx.get_xcall_ibc_connection(),
         },
         &[],
     )
