@@ -60,6 +60,7 @@ use cw_ibc_core::ConnectionEnd;
 // use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 // use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
+use cw_ibc_core::light_client::light_client::LightClient;
 use prost::Message;
 use setup::*;
 
@@ -429,7 +430,7 @@ fn connection_open_init() {
         .store_client_implementations(
             deps.as_mut().storage,
             ClientId::from_str("iconclient-0").unwrap(),
-            "lightclientaddress".to_string(),
+            LightClient::new("lightclientaddress".to_string()),
         )
         .unwrap();
 
@@ -667,12 +668,12 @@ fn connection_open_ack_validate_fail() {
     .try_into()
     .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             client_id.clone(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
 
@@ -744,12 +745,12 @@ fn connection_open_ack_validate() {
     .try_into()
     .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             client_id.clone(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
 
@@ -1032,12 +1033,12 @@ fn connection_open_try_validate() {
     .try_into()
     .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             res_msg.client_id_on_b.clone(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
 
@@ -1195,12 +1196,12 @@ fn connection_open_confirm_validate() {
         )
         .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             conn_end.client_id().clone(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
 
@@ -1403,12 +1404,12 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         .store_connection(&mut deps.storage, res_msg.conn_id_on_b.clone(), conn_end)
         .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             client_id.clone(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
 
@@ -1794,12 +1795,12 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
     .try_into()
     .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             client_id.clone(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
 
@@ -1881,12 +1882,12 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     .try_into()
     .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             client_id.clone(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
 

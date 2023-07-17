@@ -1,5 +1,5 @@
 use cw_common::client_response::PacketResponse;
-use cw_ibc_core::VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE;
+use cw_ibc_core::{VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE, light_client::light_client::LightClient};
 
 use super::*;
 
@@ -497,12 +497,12 @@ fn test_acknowledgement_packet_validate_ordered() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let light_client = Addr::unchecked("lightclient");
+    let light_client =LightClient::new( "lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             IbcClientId::default(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
     contract
@@ -627,12 +627,12 @@ fn test_acknowledgement_packet_validate_unordered() {
         )
         .unwrap();
 
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             IbcClientId::default(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
 
@@ -735,12 +735,12 @@ fn test_acknowledgement_packet_validate_without_commitment() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             IbcClientId::default(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
     contract

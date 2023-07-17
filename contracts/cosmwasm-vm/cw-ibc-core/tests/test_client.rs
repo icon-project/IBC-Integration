@@ -20,6 +20,7 @@ use cw_common::raw_types::Any;
 use common::ibc::core::ics02_client::client_type::ClientType;
 use common::ibc::core::ics24_host::identifier::ClientId;
 use common::ibc::mock::header::MockHeader;
+use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::events::{
@@ -76,7 +77,7 @@ fn store_client_implement_success() {
 
     let client_id = ClientId::new(client_type, 1).unwrap();
 
-    let light_client_address = "light-client".to_string();
+    let light_client_address = LightClient::new("light-client".to_string());
 
     contract
         .store_client_implementations(
@@ -1536,7 +1537,7 @@ fn sucess_on_getting_client() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
-    let client_address = "newclientaddress".to_string();
+    let client_address = LightClient::new("newclientaddress".to_string());
 
     contract
         .store_client_implementations(
@@ -1578,13 +1579,6 @@ fn fails_on_getting_client_empty_client() {
 
     let client_address = "".to_string();
 
-    contract
-        .store_client_implementations(
-            mock_deps.as_mut().storage,
-            client_id.clone(),
-            client_address,
-        )
-        .unwrap();
 
     contract
         .get_client(mock_deps.as_ref().storage, client_id)
@@ -1716,7 +1710,7 @@ fn sucess_on_misbehaviour_validate() {
         .store_client_implementations(
             deps.as_mut().storage,
             client_id.clone(),
-            "clientaddress".to_string(),
+            LightClient::new("clientaddress".to_string()),
         )
         .unwrap();
 
@@ -1779,7 +1773,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .store_client_implementations(
             deps.as_mut().storage,
             client_id.clone(),
-            "clientaddress".to_string(),
+            LightClient::new("clientaddress".to_string()),
         )
         .unwrap();
 

@@ -10,6 +10,7 @@ use cw_common::{
     core_msg::ExecuteMsg as CoreExecuteMsg,
     hex_string::HexString,
 };
+use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
     EXECUTE_ON_CHANNEL_CLOSE_INIT,
@@ -1103,12 +1104,12 @@ fn test_for_recieve_packet() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             IbcClientId::default(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
     contract
@@ -1340,12 +1341,12 @@ fn test_for_ack_execute() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
     contract
         .store_client_implementations(
             &mut deps.storage,
             IbcClientId::default(),
-            light_client.to_string(),
+            light_client,
         )
         .unwrap();
     contract
