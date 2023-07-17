@@ -54,7 +54,7 @@ echo "Check if size of wasm file exceeds $MAX_WASM_SIZE kilobytes..."
 for file in artifacts/archway/*.wasm
 do
 size=$(du -k "$file" | awk '{print $1}')
-if [[ $size -gt $MAX_WASM_SIZE ]]; then
+if [ $size -gt $MAX_WASM_SIZE ]; then
 echo "Error: $file : $size KB has exceeded maximum contract size limit of $MAX_WASM_SIZE KB."
 exit 1
 fi
