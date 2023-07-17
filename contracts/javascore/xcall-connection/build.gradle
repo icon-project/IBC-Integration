@@ -22,11 +22,6 @@ jacocoTestReport {
     }
 }
 
-tasks.named('compileIntTestJava') {
-    dependsOn(':mock-dapp:optimizedJar')
-}
-
-
 optimizedJar {
     dependsOn(project(':lib').jar)
     dependsOn(project(':score-util').jar)
