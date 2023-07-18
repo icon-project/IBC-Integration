@@ -1,9 +1,9 @@
 use cosmwasm_std::IbcChannel;
 use cw_common::client_response::LightClientResponse;
-use cw_ibc_core::ics04_channel::{
+use cw_ibc_core::{ics04_channel::{
     channel_close_confirm_validate, on_chan_close_confirm_submessage,
     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
-};
+}, light_client::light_client::LightClient};
 
 use super::*;
 
@@ -222,10 +222,12 @@ fn test_validate_close_confirm_channel() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
+    contract.store_client_implementations(&mut deps.storage, IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
+    mock_lightclient_reply(&mut deps);
     let res = contract.validate_channel_close_confirm(deps.as_mut(), info, &msg);
-
+println!("{:?}",res);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 461)
+    assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE)
 }
 
 #[test]

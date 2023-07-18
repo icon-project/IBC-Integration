@@ -142,9 +142,14 @@ fn test_receive_packet() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
+
+ contract.bind_port(&mut deps.storage, &packet.port_id_on_b, "moduleaddress".to_string()).unwrap();
+
     contract
         .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
+    mock_lightclient_reply(&mut deps);
+  
     contract
         .store_channel_end(
             &mut deps.storage,
@@ -154,9 +159,9 @@ fn test_receive_packet() {
         )
         .unwrap();
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
-
+    println!("{:?}",res);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 521);
+    assert_eq!(res.unwrap().messages[0].id, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 }
 
 #[test]

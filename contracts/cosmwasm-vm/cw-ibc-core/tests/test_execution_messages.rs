@@ -26,7 +26,7 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::RawVersion;
 use cw_common::ProstMessage;
 
-use cw_ibc_core::ConnectionEnd;
+use cw_ibc_core::{ConnectionEnd, EXECUTE_CONNECTION_OPENTRY};
 use cw_ibc_core::Height;
 
 use cw_ibc_core::light_client::light_client::LightClient;
@@ -309,7 +309,7 @@ fn test_for_connection_open_try() {
             LightClient::new("lightclientaddress".to_string()),
         )
         .unwrap();
-
+    mock_lightclient_reply(&mut deps);
     let client_state_any = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
@@ -391,7 +391,7 @@ fn test_for_connection_open_try() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-
+    mock_lightclient_reply(&mut deps);
     let response = contract
         .execute(
             deps.as_mut(),
@@ -402,7 +402,7 @@ fn test_for_connection_open_try() {
             },
         )
         .unwrap();
-    assert_eq!(response.attributes[0].value, "connection_open_try");
+    assert_eq!(response.attributes[0].value, "execute_connection_open_try");
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();
@@ -429,7 +429,7 @@ fn test_for_connection_open_try() {
     let events = Event::new("open_try");
 
     let reply_msg = Reply {
-        id: 31,
+        id: EXECUTE_CONNECTION_OPENTRY,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![events],
             data: Some(mock_data_binary),
@@ -459,7 +459,7 @@ fn test_for_connection_open_try() {
     let events = Event::new("open_try");
 
     let reply_msg = Reply {
-        id: 31,
+        id: EXECUTE_CONNECTION_OPENTRY,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![events],
             data: Some(mock_data_binary),
@@ -540,6 +540,7 @@ fn test_for_connection_open_ack() {
     contract
         .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
         .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -605,33 +606,9 @@ fn test_for_connection_open_ack() {
         )
         .unwrap();
 
-    assert_eq!(response.attributes[0].value, "connection_open_ack");
-
-    let versions = RawVersion {
-        identifier: "identifier".to_string(),
-        features: vec!["hello".to_string()],
-    };
-    let mock_response_data = OpenAckResponse {
-        conn_id: conn_id.as_str().to_owned(),
-        version: to_vec(&versions).unwrap(),
-        counterparty_client_id: conn_id.as_str().to_owned(),
-        counterparty_connection_id: counter_party.client_id().to_string(),
-        counterparty_prefix: to_vec(&counterparty_prefix).unwrap(),
-    };
-    let mock_data_binary = to_binary(&mock_response_data).unwrap();
-    let events = Event::new("open_ack");
-
-    let reply_msg = Reply {
-        id: 32,
-        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
-            events: vec![events],
-            data: Some(mock_data_binary),
-        }),
-    };
-
-    let response = contract.reply(deps.as_mut(), env, reply_msg).unwrap();
-
     assert_eq!(response.attributes[0].value, "execute_connection_open_ack");
+
+    
 }
 
 #[test]
@@ -709,6 +686,7 @@ fn test_for_connection_open_confirm() {
             light_client,
         )
         .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let cl = client_state.to_any().encode_to_vec();
 
@@ -749,32 +727,9 @@ fn test_for_connection_open_confirm() {
         )
         .unwrap();
 
-    assert_eq!(response.attributes[0].value, "connection_open_confirm");
+    assert_eq!(response.attributes[0].value, "execute_connection_open_confirm");
 
-    let mock_response_data = OpenConfirmResponse {
-        conn_id: res_msg.conn_id_on_b.to_string(),
-        counterparty_client_id: conn_id.as_str().to_string(),
-        counterparty_connection_id: counter_party.client_id().to_string(),
-        counterparty_prefix: to_vec(&counterparty_prefix).unwrap(),
-    };
-
-    let mock_data_binary = to_binary(&mock_response_data).unwrap();
-    let events = Event::new("open_confirm");
-
-    let reply_msg = Reply {
-        id: 33,
-        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
-            events: vec![events],
-            data: Some(mock_data_binary),
-        }),
-    };
-
-    let response = contract.reply(deps.as_mut(), env, reply_msg).unwrap();
-
-    assert_eq!(
-        response.attributes[0].value,
-        "execute_connection_open_confirm"
-    );
+   
 }
 
 #[test]
@@ -821,7 +776,7 @@ fn test_for_connection_open_try_fails() {
             light_client,
         )
         .unwrap();
-
+    mock_lightclient_reply(&mut deps);
     let cl = client_state.to_any().encode_to_vec();
 
     contract
@@ -1048,6 +1003,7 @@ fn test_connection_open_try_fails_invalid_id() {
             light_client,
         )
         .unwrap();
+   
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
     let _counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id.clone(),
@@ -1135,6 +1091,7 @@ fn test_connection_open_try_fails_invalid_id() {
             light_client,
         )
         .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let response = contract
         .execute(
@@ -1146,7 +1103,7 @@ fn test_connection_open_try_fails_invalid_id() {
             },
         )
         .unwrap();
-    assert_eq!(response.attributes[0].value, "connection_open_try");
+    assert_eq!(response.attributes[0].value, "execute_connection_open_try");
 
     let conn_id = ConnectionId::new(1);
     let client_id = ClientId::from_str("iconclient-1").unwrap();

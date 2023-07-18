@@ -742,9 +742,12 @@ fn connection_open_ack_validate() {
     .unwrap();
 
     let light_client = LightClient::new("lightclient".to_string());
-    contract
-        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
-        .unwrap();
+
+   
+       contract
+           .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+           .unwrap();
+       mock_lightclient_reply(&mut deps);
 
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -1027,12 +1030,10 @@ fn connection_open_try_validate() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            res_msg.client_id_on_b.clone(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
+    mock_lightclient_reply(&mut deps);
+
 
     let cl = client_state.to_any().encode_to_vec();
 
@@ -1064,7 +1065,7 @@ fn connection_open_try_validate() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidClientId")]
+#[should_panic(expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"default-0\") } }")]
 fn open_try_validate_fails() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
@@ -1188,14 +1189,12 @@ fn connection_open_confirm_validate() {
         )
         .unwrap();
 
-    let light_client = LightClient::new("lightclient".to_string());
-    contract
-        .store_client_implementations(
-            &mut deps.storage,
-            conn_end.client_id().clone(),
-            light_client,
-        )
-        .unwrap();
+        let light_client = LightClient::new("lightclient".to_string());
+        contract
+            .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+            .unwrap();
+        mock_lightclient_reply(&mut deps);
+    
 
     let cl = client_state.to_any().encode_to_vec();
 

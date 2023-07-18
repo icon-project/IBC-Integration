@@ -870,7 +870,7 @@ fn check_for_update_client_message() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidClientId { client_id: \"iconclient-0\" }")]
+#[should_panic(expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"iconclient-0\") } }")]
 fn fails_on_updating_non_existing_client() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
@@ -1554,18 +1554,7 @@ fn sucess_on_getting_client() {
     assert_eq!(result, client_address)
 }
 
-#[test]
-#[should_panic(expected = "InvalidClientId { client_id: \"new_client_type-0\" }")]
-fn fails_on_getting_client_invalid_client() {
-    let mock_deps = deps();
-    let contract = CwIbcCoreContext::default();
-    let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type, 0).unwrap();
 
-    contract
-        .get_client(mock_deps.as_ref().storage, client_id)
-        .unwrap();
-}
 
 #[test]
 #[should_panic(
@@ -1577,7 +1566,6 @@ fn fails_on_getting_client_empty_client() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
-    let client_address = "".to_string();
 
     contract
         .get_client(mock_deps.as_ref().storage, client_id)

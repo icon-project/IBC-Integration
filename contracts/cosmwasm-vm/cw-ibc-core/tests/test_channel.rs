@@ -31,6 +31,7 @@ use cw_ibc_core::ics04_channel::open_init::{
 };
 use cw_ibc_core::ics04_channel::open_try::on_chan_open_try_submessage;
 use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY};
+use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
@@ -1079,16 +1080,14 @@ fn test_validate_open_try_channel() {
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
 
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
+    let light_client = LightClient::new("lightclient".to_string());
 
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
+    contract.bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string()).unwrap();
+   
+       contract
+           .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+           .unwrap();
+       mock_lightclient_reply(&mut deps);
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -1164,7 +1163,7 @@ fn test_validate_open_try_channel() {
     let res = contract.validate_channel_open_try(deps.as_mut(), info, &msg);
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 421)
+    assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY)
 }
 
 #[test]

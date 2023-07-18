@@ -1,3 +1,5 @@
+use cw_ibc_core::{light_client::light_client::LightClient, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE};
+
 use super::*;
 
 #[test]
@@ -98,13 +100,14 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
         .unwrap();
     let client_type = IbcClientType::new("iconclient".to_string());
 
+    let light_client = LightClient::new("lightclient".to_string());
+
+ contract.bind_port(&mut deps.storage, &packet.port_id_on_b, "moduleaddress".to_string()).unwrap();
+
     contract
-        .store_client_into_registry(
-            &mut deps.storage,
-            client_type,
-            "contractaddress".to_string(),
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
+    mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
     }
@@ -131,5 +134,5 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
     let res =
         contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 541)
+    assert_eq!(res.unwrap().messages[0].id, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE)
 }

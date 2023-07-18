@@ -16,7 +16,7 @@ use cw_ibc_core::{
     EXECUTE_ON_CHANNEL_CLOSE_INIT,
 };
 use cw_ibc_core::{
-    VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+    VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE, EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
 };
 use prost::Message;
 
@@ -120,17 +120,16 @@ fn test_for_channel_open_try_execution_message() {
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
+    let light_client = LightClient::new("lightclient".to_string());
 
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
+ contract.bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string()).unwrap();
 
     contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
+    mock_lightclient_reply(&mut deps);
+
+    
     let commitment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
@@ -207,7 +206,7 @@ fn test_for_channel_open_try_execution_message() {
     );
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 421);
+    assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY);
 
     let reply_message = cosmwasm_std::IbcEndpoint {
         port_id: msg.port_id_on_a.to_string(),
@@ -272,19 +271,16 @@ fn test_for_channel_open_ack_execution() {
     let raw = get_dummy_raw_msg_chan_open_ack(10);
     let msg = MsgChannelOpenAck::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    
     let port_id = msg.port_id_on_a.clone();
 
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
+    let light_client = LightClient::new("lightclient".to_string());
+    contract.bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string()).unwrap();
 
     contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -380,7 +376,7 @@ fn test_for_channel_open_ack_execution() {
     );
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 431);
+    assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE);
 
     let reply_message = cosmwasm_std::IbcEndpoint {
         port_id: msg.port_id_on_a.to_string(),
@@ -462,19 +458,18 @@ fn test_for_channel_open_confirm() {
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_b.clone();
 
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
+    let port_id = msg.port_id_on_b.clone();
+    let light_client = LightClient::new("lightclient".to_string());
+
+ contract.bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string()).unwrap();
 
     contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
+    mock_lightclient_reply(&mut deps);
+
+   
     let conn_id = ConnectionId::new(0);
     contract
         .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
@@ -553,7 +548,7 @@ fn test_for_channel_open_confirm() {
     );
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 441);
+    assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE);
 
     let reply_message = cosmwasm_std::IbcEndpoint {
         port_id: msg.port_id_on_b.to_string(),
@@ -732,18 +727,15 @@ fn test_for_channel_close_confirm() {
     let raw = get_dummy_raw_msg_chan_close_confirm(10);
     let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+  
     let port_id = msg.port_id_on_b.clone();
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
+    let light_client = LightClient::new("lightclient".to_string());
+    contract.bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string()).unwrap();
 
     contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
+    mock_lightclient_reply(&mut deps);
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
     );
@@ -835,9 +827,10 @@ fn test_for_channel_close_confirm() {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
+    println!("{:?}",res);
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 461);
+    assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE);
 
     let reply_message = cosmwasm_std::IbcEndpoint {
         port_id: msg.port_id_on_b.to_string(),
@@ -1023,6 +1016,14 @@ fn test_for_recieve_packet() {
     let raw = get_dummy_raw_msg_recv_packet(12);
     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
     let packet = msg.packet.clone();
+    let light_client = LightClient::new("lightclient".to_string());
+    
+    contract.bind_port(&mut deps.storage, &packet.port_id_on_b, "moduleaddress".to_string()).unwrap();
+
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
     let chan_end_on_b = ChannelEnd::new(
         State::Open,
         Order::default(),
@@ -1127,7 +1128,7 @@ fn test_for_recieve_packet() {
     );
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 521);
+    assert_eq!(res.unwrap().messages[0].id, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
     let message_info = cw_common::types::MessageInfo {
         sender: info.sender,
@@ -1169,19 +1170,7 @@ fn test_for_recieve_packet() {
             Receipt::Ok,
         )
         .unwrap();
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_b;
-
-    let module = Addr::unchecked("contractaddress");
-
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
+    
     let response = contract.reply(deps.as_mut(), env.clone(), reply_message);
 
     assert!(response.is_ok());
@@ -1337,15 +1326,20 @@ fn test_for_ack_execute() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let light_client = LightClient::new("lightclient".to_string());
-    contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
-        .unwrap();
+   
     contract
         .ibc_store()
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
+    let light_client = LightClient::new("lightclient".to_string());
+    contract.bind_port(&mut deps.storage, &packet.port_id_on_b, "moduleaddress".to_string()).unwrap();
+
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
+   
 
     let res = contract.execute(
         deps.as_mut(),
@@ -1355,9 +1349,10 @@ fn test_for_ack_execute() {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
+    println!("{:?}",res);
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 531);
+    assert_eq!(res.unwrap().messages[0].id, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE);
 
     let packet_repsone = PacketResponse {
         seq_on_a: msg.packet.sequence,
@@ -1388,19 +1383,8 @@ fn test_for_ack_execute() {
             data: Some(mock_data_binary),
         }),
     };
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_a.clone();
 
-    let module = Addr::unchecked("contractaddress");
-
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
+    
     let response = contract.reply(deps.as_mut(), env.clone(), reply_message);
 
     assert!(response.is_ok());

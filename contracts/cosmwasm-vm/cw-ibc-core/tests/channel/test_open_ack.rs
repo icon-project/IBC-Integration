@@ -1,11 +1,11 @@
 use super::*;
 use cosmwasm_std::IbcChannel;
 use cw_common::client_response::LightClientResponse;
-use cw_ibc_core::ics04_channel::{
+use cw_ibc_core::{ics04_channel::{
     open_ack::{channel_open_ack_validate, on_chan_open_ack_submessage},
     open_try::channel_open_try_msg_validate,
     EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
-};
+}, light_client::light_client::LightClient};
 
 #[test]
 #[should_panic(expected = "UndefinedConnectionCounterparty")]
@@ -122,18 +122,14 @@ fn test_validate_open_ack_channel() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
+    let light_client = LightClient::new("lightclient".to_string());
+
+    contract.bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string()).unwrap();
+   
+       contract
+           .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+           .unwrap();
+       mock_lightclient_reply(&mut deps);
 
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -227,7 +223,7 @@ fn test_validate_open_ack_channel() {
     let res = contract.validate_channel_open_ack(deps.as_mut(), info, &msg);
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 431)
+    assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE)
 }
 
 #[test]
