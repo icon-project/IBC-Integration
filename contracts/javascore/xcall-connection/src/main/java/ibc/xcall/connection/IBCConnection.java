@@ -327,7 +327,7 @@ public class IBCConnection {
         Context.call(ibc.get(), "sendPacket", (Object)pct.encode());
     }
 
-    @External
+    @External(readonly = true)
     public BigInteger getUnclaimedFees(String nid, Address relayer) {
         return unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
     }
