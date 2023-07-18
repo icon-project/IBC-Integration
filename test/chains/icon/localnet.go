@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -438,7 +439,7 @@ func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection c
 	return ctx, nil
 }
 
-func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, error) {
+func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, string, error) {
 	// TODO: send fees
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	var params string
@@ -450,8 +451,8 @@ func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyN
 
 	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
 	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
-	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
-	return sn, reqId, err
+	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	return sn, reqId, destData, err
 }
 
 func getSn(tx icontypes.TransactionResult) string {
@@ -464,32 +465,68 @@ func getSn(tx icontypes.TransactionResult) string {
 	return ""
 }
 
-func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, error) {
+func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error) {
 	// TODO: send fees
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	params := `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
 	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], keyName, "sendCallMessage", params)
 	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
-	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
-	return sn, reqId, err
+	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	return sn, reqId, destData, err
 }
 
-func (c *IconLocalnet) ExecuteCall(ctx context.Context, reqId string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeCall", `{"_reqId":"`+reqId+`"}`)
+func (c *IconLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
+	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeCall", `{"_reqId":"`+reqId+`","_data":"`+data+`"}`)
 }
 
 func (c *IconLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
 	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeRollback", `{"_sn":"`+sn+`"}`)
 }
 
-func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error) {
+func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, string, error) {
 	index := []*string{&from, &to, &sn}
+	event, err := c.FindEvent(ctx, startHeight, "xcall", "CallMessage(str,str,int,int,bytes)", index)
+	if err != nil {
+		return "", "", err
+	}
+
+	intHeight, _ := event.Height.Int()
+	block, _ := c.getFullNode().Client.GetBlockByHeight(&icontypes.BlockHeightParam{Height: icontypes.NewHexInt(int64(intHeight - 1))})
+	i, _ := event.Index.Int()
+	tx := block.NormalTransactions[i]
+	trResult, _ := c.getFullNode().TransactionResult(ctx, string(tx.TxHash))
+	eventIndex, _ := event.Events[0].Int()
+	reqId := trResult.EventLogs[eventIndex].Data[0]
+	data := trResult.EventLogs[eventIndex].Data[1]
+	return reqId, data, nil
+}
+
+func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, string, error) {
+	index := []*string{&sn}
+	event, err := c.FindEvent(ctx, startHeight, "xcall", "ResponseMessage(int,int,str)", index)
+	if err != nil {
+		return "", "", err
+	}
+
+	intHeight, _ := event.Height.Int()
+	block, _ := c.getFullNode().Client.GetBlockByHeight(&icontypes.BlockHeightParam{Height: icontypes.NewHexInt(int64(intHeight - 1))})
+	i, _ := event.Index.Int()
+	tx := block.NormalTransactions[i]
+	trResult, _ := c.getFullNode().TransactionResult(ctx, string(tx.TxHash))
+	eventIndex, _ := event.Events[0].Int()
+	code, _ := strconv.ParseInt(trResult.EventLogs[eventIndex].Data[0], 0, 64)
+	msg := trResult.EventLogs[eventIndex].Data[1]
+
+	return strconv.FormatInt(code, 10), msg, nil
+}
+
+func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, signature string, index []*string) (*icontypes.EventNotification, error) {
 	filter := icontypes.EventFilter{
-		Addr:      icontypes.Address(c.IBCAddresses["xcall"]),
-		Signature: "CallMessage(str,str,int,int)",
+		Addr:      icontypes.Address(c.IBCAddresses[contract]),
+		Signature: signature,
 		Indexed:   index,
 	}
-	socketContext := context.Background()
+	socketContext, cancel := context.WithCancel(context.Background())
 	req := icontypes.EventRequest{
 		EventFilter: filter,
 		Height:      icontypes.NewHexInt(startHeight),
@@ -500,20 +537,22 @@ func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, f
 		return nil
 	}
 	errRespose := func(conn *websocket.Conn, err error) {}
-	go c.getFullNode().Client.MonitorEvent(socketContext, &req, response, errRespose)
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("Recovered: %v", err)
+			}
+		}()
+		c.getFullNode().Client.MonitorEvent(socketContext, &req, response, errRespose)
+	}()
 
 	select {
 	case v := <-channel:
-		intHeight, _ := v.Height.Int()
-		block2, _ := c.getFullNode().Client.GetBlockByHeight(&icontypes.BlockHeightParam{Height: icontypes.NewHexInt(int64(intHeight - 1))})
-		index, _ := v.Index.Int()
-		tx := block2.NormalTransactions[index]
-		trResult, _ := c.getFullNode().TransactionResult(ctx, string(tx.TxHash))
-		eventIndex, _ := v.Events[0].Int()
-		reqId := trResult.EventLogs[eventIndex].Data[0]
-		return reqId, nil
+		cancel()
+		return v, nil
 	case <-time.After(20 * time.Second):
-		return "", fmt.Errorf("failed to find eventLog")
+		cancel()
+		return nil, fmt.Errorf("failed to find eventLog")
 	}
 }
 

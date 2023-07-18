@@ -41,6 +41,8 @@ common = { path="../../../libraries/rust/common" }
 cw-common = { path="../cw-common" }
 hex={workspace=true}
 debug_print={workspace=true}
+cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="main"}
+cw-xcall = {package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="main"}
 
 
 
@@ -48,4 +50,4 @@ debug_print={workspace=true}
 cosmwasm = "0.7.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
 hex = "0.4.3"
-cw-xcall-multi = { path="../cw-xcall-multi" }
+cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="main"}

@@ -18,11 +18,23 @@ Additional information on how IBC works can be found [here](https://ibc.cosmos.n
 - [IBC INTEGRATION](#ibc-integration)
 - [Table of Content](#table-of-content)
   - [About  ](#about--)
+  - [Installation  ](#installation--)
   - [Getting Started  ](#getting-started--)
     - [Prerequiste](#prerequiste)
     - [Running the tests](#testing)
 
 ## About <a name = "about"> </a>
+
+## Installation <a name = "installation"> </a>
+This project uses git submodules. Use the following command to clone the repository. 
+```sh
+git clone --recurse-submodules https://github.com/icon-project/IBC-Integration
+```
+To update submodules, run the following command,
+```
+git submodule init
+git submodule update --remote
+```
 
 ## Getting Started <a name = "getting_started"> </a>
 

@@ -6,3 +6,6 @@
 	path = contracts/cosmwasm-vm/archway
 	url = https://github.com/archway-network/archway.git
     
+[submodule "xCall"]
+	path = xCall
+	url = https://github.com/icon-project/xCall.git

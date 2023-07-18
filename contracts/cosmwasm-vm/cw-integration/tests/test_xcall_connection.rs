@@ -3,10 +3,10 @@ use std::str::FromStr;
 
 use anyhow::Error as AppError;
 
-use cw_common::xcall_types::network_address::NetworkAddress;
 use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
 
+use cw_xcall_lib::network_address::NetworkAddress;
 use setup::{
     init_mock_ibc_core_contract, init_xcall_app_contract, init_xcall_ibc_connection_contract,
     TestContext,
@@ -40,7 +40,7 @@ pub fn call_send_call_message(
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_xcall_app(),
-        &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
+        &cw_xcall_lib::xcall_msg::ExecuteMsg::SendCallMessage {
             to: NetworkAddress::from_str(to).unwrap(),
             data,
             rollback,

@@ -7,6 +7,9 @@ cd contracts/javascore
 ./gradlew clean optimizedJar
 cd -
 
+cd xCall/contracts/javascore
+./gradlew clean optimizedJar
+cd -
 for jar in $(find . -type f -name "*optimized.jar" | grep  /build/libs/); do
   NAME=$(basename "$jar" .jar)${SUFFIX}.jar
   echo "Creating intermediate hash for ${NAME}..."
