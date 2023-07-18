@@ -362,6 +362,21 @@ pub fn call_configure_connection(
     )
 }
 
+pub fn call_set_default_connection(
+    ctx: &mut TestContext,
+    nid: String,
+) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_xcall_app(),
+        &cw_common::xcall_app_msg::ExecuteMsg::SetDefaultConnection {
+            nid: NetId::from(nid),
+            address: ctx.get_xcall_ibc_connection(),
+        },
+        &[],
+    )
+}
+
 #[test]
 fn test_register_client() {
     let mut ctx = setup_test("icon_to_archway_raw.json");
@@ -481,10 +496,15 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     let connection_id = get_connection_id(&result.unwrap(), IbcEventType::OpenConfirmConnection);
     let nid = "icon".to_string();
 
-    let result = call_configure_connection(&mut ctx, connection_id, nid, client_id);
+    let result = call_configure_connection(&mut ctx, connection_id, nid.clone(), client_id);
 
     assert!(result.is_ok());
     println!("Configure Connection Ok {:?}", &result);
+
+    let result = call_set_default_connection(&mut ctx, nid);
+
+    assert!(result.is_ok());
+    println!("Set Default Connection Ok {:?}", &result);
 
     let result = call_channel_open_try(&mut ctx);
 
