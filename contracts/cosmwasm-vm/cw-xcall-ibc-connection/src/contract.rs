@@ -3,7 +3,8 @@ use common::{
     rlp::{self},
 };
 use cosmwasm_std::{coins, BankMsg, IbcChannel};
-use cw_common::{raw_types::channel::RawPacket, xcall_types::network_address::NetId};
+use cw_common::raw_types::channel::RawPacket;
+use cw_xcall_lib::network_address::NetId;
 use debug_print::debug_println;
 
 use crate::{

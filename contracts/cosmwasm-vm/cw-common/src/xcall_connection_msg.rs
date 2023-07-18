@@ -1,11 +1,9 @@
-use crate::{
-    cw_types::{
-        CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg,
-        CwPacketReceiveMsg, CwPacketTimeoutMsg,
-    },
-    xcall_types::network_address::NetId,
+use crate::cw_types::{
+    CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg, CwPacketReceiveMsg,
+    CwPacketTimeoutMsg,
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cw_xcall_lib::network_address::NetId;
 
 #[cw_serde]
 pub enum ExecuteMsg {

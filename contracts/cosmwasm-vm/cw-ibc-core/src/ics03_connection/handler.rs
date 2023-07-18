@@ -813,7 +813,11 @@ impl<'a> CwIbcCoreContext<'a> {
             expected_response: OpenConfirmResponse {
                 conn_id: msg.conn_id_on_b.clone().to_string(),
                 counterparty_client_id: client_id_on_a.to_string(),
-                counterparty_connection_id: msg.conn_id_on_b.clone().to_string(),
+                counterparty_connection_id: conn_end_on_b
+                    .counterparty()
+                    .connection_id()
+                    .unwrap()
+                    .to_string(),
                 counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
             },
         };

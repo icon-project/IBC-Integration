@@ -227,6 +227,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "common"
+version = "0.1.0"
+source = "git+https://github.com/icon-project/IBC-Integration.git?branch=main#3aff4c7bc6302752a55f36c43b1abfc1bb96a4c6"
+dependencies = [
+ "bytes",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "derive_more",
+ "displaydoc",
+ "dyn-clone",
+ "hex",
+ "hex-literal 0.3.4",
+ "ibc-proto",
+ "ics23",
+ "pbjson",
+ "pbjson-types",
+ "prost 0.11.9",
+ "prost-types",
+ "rlp-derive",
+ "rustc-hex",
+ "safe-regex",
+ "serde",
+ "serde-json-wasm 0.5.1",
+ "serde_json",
+ "sha2 0.10.6",
+ "sha3",
+ "subtle-encoding",
+ "tendermint",
+ "time",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -390,10 +423,12 @@ version = "0.1.0"
 dependencies = [
  "bech32",
  "bytes",
- "common",
+ "common 0.1.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
+ "cw-xcall",
+ "cw-xcall-lib",
  "getrandom",
  "hex",
  "hex-buffer-serde",
@@ -407,15 +442,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-common"
+version = "0.1.0"
+source = "git+https://github.com/icon-project/IBC-Integration.git?branch=main#3aff4c7bc6302752a55f36c43b1abfc1bb96a4c6"
+dependencies = [
+ "bech32",
+ "bytes",
+ "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "hex",
+ "hex-buffer-serde",
+ "ibc-proto",
+ "prost 0.11.9",
+ "schemars 0.8.12",
+ "serde",
+ "serde-json-wasm 0.5.1",
+ "serde_json",
+]
+
+[[package]]
 name = "cw-ibc-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "bytes",
- "common",
+ "common 0.1.0",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-common",
+ "cw-common 0.1.0",
  "cw-icon-light-client",
  "cw-multi-test",
  "cw-storage-plus",
@@ -439,12 +495,12 @@ name = "cw-icon-light-client"
 version = "0.1.0"
 dependencies = [
  "bytes",
- "common",
+ "common 0.1.0",
  "cosmwasm",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
+ "cw-common 0.1.0",
  "cw-storage-plus",
  "cw2",
  "debug_print",
@@ -466,11 +522,11 @@ name = "cw-integration"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "common",
+ "common 0.1.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
+ "cw-common 0.1.0",
  "cw-ibc-core",
  "cw-icon-light-client",
  "cw-mock-dapp",
@@ -480,7 +536,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-xcall",
  "cw-xcall-ibc-connection",
- "cw-xcall-multi",
+ "cw-xcall-lib",
  "hex",
  "ibc",
  "prost 0.11.9",
@@ -492,17 +548,15 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp"
 version = "0.1.0"
+source = "git+https://github.com/icon-project/xCall.git?branch=main#614b17e9022d81dd4777a47d3fc556c568ba95e1"
 dependencies = [
- "common",
- "cosmwasm",
+ "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
- "cw-multi-test",
  "cw-storage-plus",
+ "cw-xcall-lib",
  "cw2",
- "getrandom",
  "schemars 0.8.12",
  "serde",
  "serde-json-wasm 0.5.1",
@@ -512,17 +566,15 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp-multi"
 version = "0.1.0"
+source = "git+https://github.com/icon-project/xCall.git?branch=main#614b17e9022d81dd4777a47d3fc556c568ba95e1"
 dependencies = [
- "common",
- "cosmwasm",
+ "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
- "cw-multi-test",
  "cw-storage-plus",
+ "cw-xcall-lib",
  "cw2",
- "getrandom",
  "schemars 0.8.12",
  "serde",
  "serde-json-wasm 0.5.1",
@@ -533,11 +585,11 @@ dependencies = [
 name = "cw-mock-ibc-core"
 version = "0.1.0"
 dependencies = [
- "common",
+ "common 0.1.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
+ "cw-common 0.1.0",
  "cw-storage-plus",
  "cw2",
  "getrandom",
@@ -595,18 +647,17 @@ dependencies = [
 [[package]]
 name = "cw-xcall"
 version = "0.1.0"
+source = "git+https://github.com/icon-project/xCall.git?branch=main#614b17e9022d81dd4777a47d3fc556c568ba95e1"
 dependencies = [
- "common",
- "cosmwasm",
+ "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
+ "cw-common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cw-storage-plus",
+ "cw-xcall-lib",
  "cw2",
  "debug_print",
- "getrandom",
- "hex",
  "schemars 0.8.12",
  "serde",
  "thiserror",
@@ -616,14 +667,15 @@ dependencies = [
 name = "cw-xcall-ibc-connection"
 version = "0.1.0"
 dependencies = [
- "common",
+ "common 0.1.0",
  "cosmwasm",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
+ "cw-common 0.1.0",
  "cw-storage-plus",
- "cw-xcall-multi",
+ "cw-xcall",
+ "cw-xcall-lib",
  "cw2",
  "debug_print",
  "getrandom",
@@ -634,24 +686,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xcall-multi"
+name = "cw-xcall-lib"
 version = "0.1.0"
+source = "git+https://github.com/icon-project/xCall.git?branch=main#614b17e9022d81dd4777a47d3fc556c568ba95e1"
 dependencies = [
- "anyhow",
- "common",
- "cosmwasm",
+ "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
+ "cw-common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cw-storage-plus",
  "cw2",
  "debug_print",
- "getrandom",
- "hex",
  "schemars 0.8.12",
  "serde",
- "test-utils",
  "thiserror",
 ]
 
@@ -2163,7 +2211,7 @@ dependencies = [
 name = "test-utils"
 version = "0.1.0"
 dependencies = [
- "common",
+ "common 0.1.0",
  "cosmwasm-std",
  "cw-multi-test",
  "getrandom",

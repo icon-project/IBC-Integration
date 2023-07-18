@@ -1,5 +1,5 @@
 use cosmwasm_std::{to_binary, CosmosMsg, Empty, Storage, SubMsg, WasmMsg};
-use cw_common::xcall_types::network_address::NetId;
+use cw_xcall_lib::network_address::NetId;
 
 use crate::{
     error::ContractError,
@@ -15,7 +15,7 @@ impl<'a> CwIbcConnection<'a> {
         sn: Option<i64>,
     ) -> Result<SubMsg, ContractError> {
         let xcall_host = self.get_xcall_host(store)?;
-        let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::HandleMessage {
+        let xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleMessage {
             from: nid.clone(),
             sn,
             msg,
@@ -37,7 +37,7 @@ impl<'a> CwIbcConnection<'a> {
         msg: String,
     ) -> Result<SubMsg, ContractError> {
         let xcall_host = self.get_xcall_host(store)?;
-        let xcall_msg = cw_common::xcall_app_msg::ExecuteMsg::HandleError { sn, code, msg };
+        let xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleError { sn, code, msg };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: xcall_host.to_string(),
             msg: to_binary(&xcall_msg).unwrap(),
@@ -54,6 +54,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::mock_dependencies;
     use cosmwasm_std::{Addr, CosmosMsg};
+    use cw_xcall_lib::network_address::NetId;
 
     #[test]
     fn test_call_xcall_handle_message() {
@@ -71,7 +72,7 @@ mod tests {
 
         let expected_xcall_host = connection.get_xcall_host(store).unwrap().to_string();
         let expected_xcall_msg =
-            cw_common::xcall_app_msg::ExecuteMsg::HandleMessage { msg, sn, from: nid };
+            cw_xcall_lib::xcall_msg::ExecuteMsg::HandleMessage { msg, sn, from: nid };
         let expected_call_message = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: expected_xcall_host,
             msg: to_binary(&expected_xcall_msg).unwrap(),
@@ -99,8 +100,7 @@ mod tests {
         assert!(res.is_ok());
 
         let expected_xcall_host = connection.get_xcall_host(&store).unwrap().to_string();
-        let expected_xcall_msg =
-            cw_common::xcall_app_msg::ExecuteMsg::HandleError { sn, code, msg };
+        let expected_xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleError { sn, code, msg };
         let expected_call_message = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: expected_xcall_host,
             msg: to_binary(&expected_xcall_msg).unwrap(),

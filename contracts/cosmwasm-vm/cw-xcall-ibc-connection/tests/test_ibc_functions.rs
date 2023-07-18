@@ -8,14 +8,14 @@ use cosmwasm_std::{
 
 use cw_common::from_binary_response;
 use cw_common::types::Ack;
+use cw_xcall_ibc_connection::ack::{on_ack_failure, on_ack_sucess};
+use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 
-use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
+use cw_xcall::types::response::CallServiceMessageResponse;
 use cw_xcall_ibc_connection::msg::InstantiateMsg;
 use cw_xcall_ibc_connection::types::channel_config::ChannelConfig;
 use cw_xcall_ibc_connection::types::message::Message;
 use cw_xcall_ibc_connection::{execute, instantiate, query};
-use cw_xcall_multi::ack::{on_ack_failure, on_ack_sucess};
-use cw_xcall_multi::types::response::CallServiceMessageResponse;
 use setup::*;
 pub mod account;
 use account::admin_one;
@@ -24,9 +24,9 @@ use account::alice;
 use cosmwasm_std::from_binary;
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 
+use cw_xcall::types::message::CallServiceMessage;
+use cw_xcall::types::request::CallServiceMessageRequest;
 use cw_xcall_ibc_connection::state::CwIbcConnection;
-use cw_xcall_multi::types::message::CallServiceMessage;
-use cw_xcall_multi::types::request::CallServiceMessageRequest;
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
@@ -172,6 +172,7 @@ fn fails_on_open_channel_open_try_invalid_version() {
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_on_open_channel_open_try_valid_version() {
     use cosmwasm_std::from_binary;
+    use cw_xcall_lib::network_address::NetId;
 
     let mut deps = deps();
 
@@ -229,6 +230,8 @@ fn sucess_on_open_channel_open_try_valid_version() {
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ibc_channel_connect() {
     use std::str::FromStr;
+
+    use cw_xcall_lib::network_address::NetId;
 
     let mut deps = deps();
 
@@ -370,8 +373,9 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_receive_packet_for_call_message_request() {
     use common::rlp::{self, Nullable};
-    use cw_common::xcall_types::network_address::NetworkAddress;
+
     use cw_xcall_ibc_connection::types::message::Message;
+    use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 
     let mut mock_deps = deps();
     let mock_info = create_mock_info("ibchostaddress", "umlg", 2000);
@@ -396,7 +400,7 @@ fn sucess_receive_packet_for_call_message_request() {
     let message: Message = Message {
         sn: Nullable::new(Some(1)),
         fee: 0,
-        data: rlp::encode(&message).to_vec(),
+        data: cw_xcall::types::rlp::encode(&message).to_vec(),
     };
     let message_data = Binary(rlp::encode(&message).to_vec());
 
@@ -452,7 +456,7 @@ fn sucess_receive_packet_for_call_message_request() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn sucess_on_ack_packet() {
-    use cw_common::xcall_types::network_address::{NetId, NetworkAddress};
+    use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 
     let mut mock_deps = deps();
     let mock_info = create_mock_info("alice", "umlg", 2000);
@@ -807,9 +811,9 @@ fn test_ack_on_fails() {
 
 #[test]
 fn test_ack_success_on_call_response() {
-    let data = cw_xcall_multi::types::response::CallServiceMessageResponse::new(
+    let data = cw_xcall::types::response::CallServiceMessageResponse::new(
         0,
-        cw_xcall_multi::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
         "Success",
     );
 
@@ -918,7 +922,7 @@ fn fails_on_ack_failure_for_call_request() {
 fn test_ack_failure_on_call_response() {
     let data = CallServiceMessageResponse::new(
         0,
-        cw_xcall_multi::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
         "Success",
     );
 
@@ -971,7 +975,7 @@ fn test_handle_response() {
 
     let data = CallServiceMessageResponse::new(
         0,
-        cw_xcall_multi::types::response::CallServiceResponseType::CallServiceResponseSuccess,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
         "Success",
     );
 
@@ -979,7 +983,7 @@ fn test_handle_response() {
     let message = Message {
         sn: Nullable::new(Some(0)),
         fee: 0,
-        data: rlp::encode(&message).to_vec(),
+        data: cw_xcall::types::rlp::encode(&message).to_vec(),
     };
     let message_data = Binary(rlp::encode(&message).to_vec());
 
@@ -1037,7 +1041,7 @@ fn test_for_call_service_response_from_rlp_bytes() {
 
     let expected_data = CallServiceMessageResponse::new(
         1,
-        cw_xcall_multi::types::response::CallServiceResponseType::CallServiceError,
+        cw_xcall::types::response::CallServiceResponseType::CallServiceError,
         "hello",
     );
 
