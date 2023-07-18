@@ -1,5 +1,6 @@
 use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
 
+use cw_common::raw_types::channel::RawPacket;
 use debug_print::debug_println;
 
 use super::*;
@@ -271,7 +272,7 @@ pub fn create_channel_event(
             Ok(event)
         }
         _ => Err(ContractError::InvalidEventType {
-            event: "Connection Event".to_string(),
+            event: "Channel Event".to_string(),
             event_type: event_type.as_str().to_string(),
         }),
     }
@@ -309,6 +310,7 @@ pub fn create_channel_id_generated_event(channel_id: ChannelId) -> Event {
 /// Returns:
 ///
 /// a `Result` with either an `Event` or a `ContractError`.
+
 pub fn create_send_packet_event(
     packet: Packet,
     channel_order: &Order,
@@ -515,4 +517,56 @@ pub fn create_recieve_packet_event(
         .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, dst_chan_id)
         .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order)
         .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id)
+}
+
+pub fn create_packet_event(
+    event_type: IbcEventType,
+    packet: RawPacket,
+    channel_order: &Order,
+    dst_connection_id: &IbcConnectionId,
+    ack: Option<Vec<u8>>,
+) -> Result<Event, ContractError> {
+    let timeout_height = packet
+        .timeout_height
+        .map(|h| format!("{}-{}", h.revision_number, h.revision_height))
+        .unwrap_or("0-0".to_string());
+    let mut event = Event::new(event_type.as_str())
+        .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
+        .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.source_port.as_str())
+        .add_attribute(
+            PKT_SRC_CHANNEL_ATTRIBUTE_KEY,
+            packet.source_channel.as_str(),
+        )
+        .add_attribute(PKT_DST_PORT_ATTRIBUTE_KEY, packet.destination_port.as_str())
+        .add_attribute(
+            PKT_DST_CHANNEL_ATTRIBUTE_KEY,
+            packet.destination_channel.as_str(),
+        )
+        .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order.as_str())
+        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id.as_str())
+        .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height)
+        .add_attribute(
+            PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
+            packet.timeout_timestamp.to_string(),
+        );
+
+    match event_type {
+        IbcEventType::SendPacket | IbcEventType::ReceivePacket => {
+            let hex_data = hex::encode(&packet.data);
+            event = event.add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data);
+            Ok(event)
+        }
+        IbcEventType::WriteAck => {
+            let hex_data = hex::encode(&packet.data);
+            event = event
+                .add_attribute(PKT_ACK_HEX_ATTRIBUTE_KEY, hex::encode(ack.unwrap()))
+                .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data);
+            Ok(event)
+        }
+        IbcEventType::AckPacket | IbcEventType::Timeout => Ok(event),
+        _ => Err(ContractError::InvalidEventType {
+            event: "Packet Event".to_string(),
+            event_type: event_type.as_str().to_string(),
+        }),
+    }
 }
