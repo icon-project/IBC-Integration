@@ -1,0 +1,44 @@
+FROM adoptopenjdk/openjdk11
+
+
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:/opt/binaryen/bin:$PATH \
+    RUST_VERSION=1.69.0
+
+
+RUN set -eux; \
+    apt update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        gcc  \
+        libc6-dev \
+        ; \
+    BINARYEN_VERS=110; \
+    BINARYEN_URL="https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERS}/binaryen-version_${BINARYEN_VERS}-x86_64-linux.tar.gz";\
+    ARCH="$(dpkg --print-architecture)"; \
+    case "${ARCH}" in \
+        aarch64|arm64)rustArch='aarch64-unknown-linux-gnu'; rustupSha256='673e336c81c65e6b16dcdede33f4cc9ed0f08bde1dbe7a935f113605292dc800' ;; \
+        amd64|x86_64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db' ;; \
+        *) echo >&2 "unsupported architecture: ARCH"; exit 1 ;; \
+    esac; \
+    url="https://static.rust-lang.org/rustup/archive/1.26.0/${rustArch}/rustup-init"; \
+    curl -LfsSo /tmp/rustup-init  ${url}; \
+    curl -LfsSo /tmp/binaryen.tar.gz  ${BINARYEN_URL}; \
+    cd /tmp; \
+    echo "${rustupSha256} *rustup-init" | sha256sum -c -; \
+    chmod +x rustup-init; \
+    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
+    rm rustup-init; \
+    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
+    rustup --version; \
+    cargo --version; \
+    rustc --version; \
+    rustup component add clippy rustfmt;\
+    mkdir -p /opt/binaryen; \
+    cd /opt/binaryen; \
+    tar -xf /tmp/binaryen.tar.gz --strip-components=1; \
+    rm -rf /tmp/binaryen.tar.gz; \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
