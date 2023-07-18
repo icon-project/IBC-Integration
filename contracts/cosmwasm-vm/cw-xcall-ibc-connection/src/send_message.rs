@@ -1,6 +1,6 @@
 use common::rlp::Nullable;
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage};
-use cw_common::xcall_types::network_address::NetId;
+use cw_xcall_lib::network_address::NetId;
 
 use crate::{
     error::ContractError,

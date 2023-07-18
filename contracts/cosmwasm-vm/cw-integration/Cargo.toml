@@ -22,12 +22,13 @@ hex = "0.4.3"
 cw-multi-test = "0.16.4"
 cw-xcall-ibc-connection = { path="../cw-xcall-ibc-connection" }
 cw-mock-ibc-core = { path="../cw-mock-ibc-core" }
-cw-mock-dapp = { path="../cw-mock-dapp" }
-cw-mock-dapp-multi = { path="../cw-mock-dapp-multi" }
+cw-mock-dapp = { git="https://github.com/icon-project/xCall.git", branch="main" }
+cw-mock-dapp-multi = { git="https://github.com/icon-project/xCall.git", branch="main" }
 cw-icon-light-client = { path="../cw-icon-light-client" }
 cw-ibc-core={path="../cw-ibc-core"}
-cw-xcall-multi={path="../cw-xcall-multi"}
-cw-xcall={path="../cw-xcall"}
+cw-xcall={package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="main"}
+cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="main"}
+#cw-xcall={path="../cw-xcall"}
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 

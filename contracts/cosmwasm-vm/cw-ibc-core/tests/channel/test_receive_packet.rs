@@ -322,12 +322,12 @@ fn execute_receive_packet() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let src = IbcEndpoint {
+    let dst = IbcEndpoint {
         port_id: "our-port".to_string(),
         channel_id: "channel-1".to_string(),
     };
 
-    let dst = IbcEndpoint {
+    let src = IbcEndpoint {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
@@ -371,8 +371,8 @@ fn execute_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.src.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
+            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
             chan_end_on_b,
         )
         .unwrap();
@@ -391,12 +391,12 @@ fn execute_receive_packet_ordered() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let src = IbcEndpoint {
+    let dst = IbcEndpoint {
         port_id: "our-port".to_string(),
         channel_id: "channel-1".to_string(),
     };
 
-    let dst = IbcEndpoint {
+    let src = IbcEndpoint {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
@@ -441,16 +441,16 @@ fn execute_receive_packet_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.src.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
+            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
             chan_end_on_b,
         )
         .unwrap();
     contract
         .store_next_sequence_recv(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.src.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
+            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
             1.into(),
         )
         .unwrap();
@@ -458,8 +458,8 @@ fn execute_receive_packet_ordered() {
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
     let seq = contract.get_next_sequence_recv(
         &deps.storage,
-        IbcPortId::from_str(&packet.src.port_id).unwrap(),
-        IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
+        IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+        IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
     );
     assert!(res.is_ok());
     assert_eq!(res.unwrap().events[0].ty, "recv_packet");
@@ -478,12 +478,12 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let src = IbcEndpoint {
+    let dst = IbcEndpoint {
         port_id: "our-port".to_string(),
         channel_id: "channel-1".to_string(),
     };
 
-    let dst = IbcEndpoint {
+    let src = IbcEndpoint {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
@@ -519,8 +519,8 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
         State::Open,
         Order::Ordered,
         Counterparty::new(
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            Some(IbcChannelId::from_str(&packet.dest.channel_id).unwrap()),
+            IbcPortId::from_str(&packet.src.port_id).unwrap(),
+            Some(IbcChannelId::from_str(&packet.src.channel_id).unwrap()),
         ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
@@ -528,8 +528,8 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.src.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.src.channel_id).unwrap(),
+            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
             chan_end_on_b,
         )
         .unwrap();

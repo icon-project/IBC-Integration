@@ -101,8 +101,8 @@ public class IBCConnection {
     @External
     public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
         onlyAdmin();
-        Context.require(configuredNetworkIds.at(connectionId).get(counterpartyPortId) == null);
-        Context.require(channels.get(counterpartyNid) == null);
+        Context.require(configuredNetworkIds.at(connectionId).get(counterpartyPortId) == null, "connection and port already configured");
+        Context.require(channels.get(counterpartyNid) == null, "networkId already configured");
         configuredNetworkIds.at(connectionId).set(counterpartyPortId, counterpartyNid);
         configuredClients.set(connectionId, clientId);
         configuredTimeoutHeight.set(connectionId, timeoutHeight);
@@ -152,7 +152,10 @@ public class IBCConnection {
         Packet packet = Packet.decode(calldata);
         Message msg = Message.fromBytes(packet.getData());
         String nid = networkIds.get(packet.getDestinationChannel());
-        Context.require(nid != null);
+        Context.require(nid != null, "Channel is not configured");
+
+        BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
+        unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
 
         if (msg.getSn() == null)  {
             Context.transfer(new Address(msg.getData()), msg.getFee());
@@ -163,8 +166,7 @@ public class IBCConnection {
             incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), calldata);
         }
 
-        BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
-        unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
+
 
         Context.call(xCall.get(), "handleMessage", nid, msg.getSn(), msg.getData());
         return new byte[0];
@@ -179,8 +181,8 @@ public class IBCConnection {
         outgoingPackets.at(packet.getSourceChannel()).set(packet.getSequence(), null);
         String nid = networkIds.get(packet.getSourceChannel());
 
-        Context.require(nid != null);
-        Context.require(sn != null);
+        Context.require(nid != null, "Channel is not configured");
+        Context.require(sn != null, "Packet with this sn does not exist");
 
         Context.transfer(relayer, unclaimedAckFees.at(nid).get(packet.getSequence()));
         unclaimedAckFees.at(nid).set(packet.getSequence(), null);
@@ -197,7 +199,7 @@ public class IBCConnection {
         outgoingPackets.at(packet.getSourceChannel()).set(packet.getSequence(), null);
         String nid = networkIds.get(packet.getSourceChannel());
 
-        Context.require(sn != null);
+        Context.require(sn != null, "Packet with this sn does not exist");
 
         BigInteger fee = msg.getFee();
         fee = fee.add(unclaimedAckFees.at(nid).get(packet.getSequence()));
@@ -234,7 +236,6 @@ public class IBCConnection {
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
         Context.require(portId.equals(PORT), "Invalid port");
-        Context.require(counterPartyNid != null, "Connection not configured");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
 
         lightClients.set(channelId, configuredClients.get(connectionId));
@@ -257,7 +258,6 @@ public class IBCConnection {
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
         Context.require(portId.equals(PORT), "Invalid port");
-        Context.require(counterPartyNid != null, "Connection not configured");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
         lightClients.set(channelId, configuredClients.get(connectionId));
         destinationPort.set(channelId, counterpartyPortId);
@@ -277,7 +277,7 @@ public class IBCConnection {
     @External
     public void onChanOpenConfirm(String portId, String channelId) {
         onlyIBCHandler();
-        Context.require(portId.equals(PORT));
+        Context.require(portId.equals(PORT), "Invalid port");
     }
 
     //TODO
@@ -327,7 +327,7 @@ public class IBCConnection {
         Context.call(ibc.get(), "sendPacket", (Object)pct.encode());
     }
 
-    @External
+    @External(readonly = true)
     public BigInteger getUnclaimedFees(String nid, Address relayer) {
         return unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
     }
