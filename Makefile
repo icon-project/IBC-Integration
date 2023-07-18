@@ -39,7 +39,7 @@ proto-gen-rust:
 		sh ./scripts/protocgen_rust.sh; fi
 
 build-builder-img:
-	@echo "Generating optimized cosmwasm for Archway contracts"
+	@echo "Build builder image"
 	docker build -t "${builderImage}" . -f ./scripts/.DockerfileContractBuilder
 
 optimize-jar:
