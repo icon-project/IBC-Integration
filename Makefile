@@ -44,11 +44,11 @@ build-builder-img:
 
 optimize-jar:
 	@echo "Generating optimized jar for ICON contracts"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run  --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-jar.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-icon$$"; then docker start -a "${containerBuilder}-icon" ; else docker run  --name "${containerBuilder}-icon"   -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-jar.sh; fi
 
 optimize-cosmwasm:
 	@echo "Generating optimized cosmwasm for Archway contracts"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run  --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-cosmwasm.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-cosmwasm$$"; then docker start -a "${containerBuilder}-cosmwasm" ; else docker run  --name "${containerBuilder}-cosmwasm"  -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-cosmwasm.sh; fi
 
 optimize-build:
 	@echo "Generating optimized contracts..."
