@@ -61,5 +61,3 @@ fi
 echo "$file : $size KB"
 done
 echo "The size of all contracts is well within the $MAX_WASM_SIZE KB limit."
-
-./scripts/build-xcall.sh

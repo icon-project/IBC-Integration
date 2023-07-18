@@ -3,5 +3,5 @@
 set -e
 cd xCall
 ./scripts/optimize-cosmwasm.sh
- echo "$PWD"
+echo "$PWD"
 cp artifacts/archway/*.wasm ../artifacts/archway/

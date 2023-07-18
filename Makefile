@@ -50,6 +50,11 @@ optimize-cosmwasm:
 	@echo "Generating optimized cosmwasm for Archway contracts"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-cosmwasm$$"; then docker start -a "${containerBuilder}-cosmwasm" ; else docker run  --name "${containerBuilder}-cosmwasm"  -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-cosmwasm.sh; fi
 
+optimize-xcall:
+	@echo "Generating optimized xcall cosmwasm for Archway contracts"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-xcall$$"; then docker start -a "${containerBuilder}-xcall" ; else docker run  --name "${containerBuilder}-xcall"  -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/build-xcall.sh; fi
+
+
 optimize-build:
 	@echo "Generating optimized contracts..."
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run  --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-build.sh; fi
