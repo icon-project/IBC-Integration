@@ -1579,7 +1579,6 @@ fn fails_on_getting_client_empty_client() {
 
     let client_address = "".to_string();
 
-
     contract
         .get_client(mock_deps.as_ref().storage, client_id)
         .unwrap();

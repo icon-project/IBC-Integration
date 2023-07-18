@@ -1106,11 +1106,7 @@ fn test_for_recieve_packet() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            IbcClientId::default(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
     contract
         .store_channel_end(
@@ -1343,11 +1339,7 @@ fn test_for_ack_execute() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            IbcClientId::default(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
     contract
         .ibc_store()

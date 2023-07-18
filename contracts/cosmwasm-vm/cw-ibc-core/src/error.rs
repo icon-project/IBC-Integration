@@ -1,5 +1,5 @@
 use common::ibc::core::ics03_connection::error::ConnectionError;
-use cw_common::errors::CwErrors;
+use cw_common::{errors::CwErrors, ibc_types::IbcEventType};
 use hex::FromHexError;
 use prost::DecodeError;
 
@@ -71,6 +71,9 @@ pub enum ContractError {
 
     #[error("Light Client Validation failed for {0}")]
     LightClientValidationFailed(String),
+
+    #[error("Invalid EventType in {event} {event_type}")]
+    InvalidEventType { event: String, event_type: String },
 }
 
 impl From<FromHexError> for ContractError {

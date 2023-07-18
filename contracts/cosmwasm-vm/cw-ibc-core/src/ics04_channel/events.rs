@@ -154,6 +154,129 @@ pub fn create_open_confirm_channel_event(
         .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_id)
 }
 
+// This function creates a new event for closing an initialized channel in the Inter-Blockchain
+/// Communication protocol, with the given port and channel IDs as attributes.
+///
+/// Arguments:
+///
+/// * `port_id`: The `port_id` parameter is a string that represents the identifier of the port
+/// associated with the channel being closed. In the context of the Inter-Blockchain Communication (IBC)
+/// protocol, a port is a module that provides access to a specific blockchain network.
+/// * `channel_id`: The `channel_id` parameter is a string that represents the unique identifier of a
+/// channel in the Inter-Blockchain Communication (IBC) protocol. It is used to identify a specific
+/// channel between two connected blockchains.
+///
+/// Returns:
+///
+/// an instance of the `Event` struct, which represents an event that can be emitted by the IBC module.
+/// The event being created is of type `CloseInitChannel`, which indicates that an initial channel
+/// handshake has been closed. The event includes attributes for the `port_id` and `channel_id`
+/// associated with the closed channel.
+pub fn create_close_init_channel_event(
+    port_id: &str,
+    channel_id: &str,
+    channel_end: ChannelEnd,
+) -> Event {
+    Event::new(IbcEventType::CloseInitChannel.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
+        .add_attribute(
+            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
+            channel_end.counterparty().channel_id().unwrap().to_string(),
+        )
+        .add_attribute(
+            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
+            channel_end.counterparty().port_id().to_string(),
+        )
+        .add_attribute(
+            CONN_ID_ATTRIBUTE_KEY,
+            channel_end.connection_hops[0].to_string(),
+        )
+        .add_attribute(VERSION_ATTRIBUTE_KEY, channel_end.version().to_string())
+}
+
+/// This function creates an event for confirming the closure of a channel.
+///
+/// Arguments:
+///
+/// * `port_id_on_b`: The `port_id_on_b` parameter is a string that represents the identifier of the
+/// port on the counterparty chain that the channel being closed is associated with.
+/// * `chan_id_on_b`: `chan_id_on_b` is a string variable that represents the channel identifier on the
+/// counterparty chain. It is used as an input parameter to create a new `CloseConfirmChannel` event in
+/// the `create_close_confirm_channel_event` function.
+///
+/// Returns:
+///
+/// A function is being defined that returns an `Event` object. The `Event` object is created with the
+/// type `CloseConfirmChannel` from the `IbcEventType` enum. The `Event` object also has two attributes
+/// added to it: `port_id_on_b` and `chan_id_on_b`, which are passed as arguments to the function.
+pub fn create_close_confirm_channel_event(
+    port_id_on_b: &str,
+    chan_id_on_b: &str,
+    channel_end: ChannelEnd,
+) -> Event {
+    Event::new(IbcEventType::CloseConfirmChannel.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_b)
+        .add_attribute(
+            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
+            channel_end.counterparty().channel_id().unwrap().to_string(),
+        )
+        .add_attribute(
+            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
+            channel_end.counterparty().port_id().to_string(),
+        )
+        .add_attribute(
+            CONN_ID_ATTRIBUTE_KEY,
+            channel_end.connection_hops[0].to_string(),
+        )
+        .add_attribute(VERSION_ATTRIBUTE_KEY, channel_end.version().to_string())
+}
+
+pub fn create_channel_event(
+    event_type: IbcEventType,
+    port_id: &str,
+    channel_id: &str,
+    channel: ChannelEnd,
+) -> Result<Event, ContractError> {
+    let mut event = Event::new(event_type.as_str())
+        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id)
+        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
+        .add_attribute(
+            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
+            channel.counterparty().port_id.as_str(),
+        )
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, channel.connection_hops[0].as_str());
+    match event_type {
+        IbcEventType::OpenInitChannel => {
+            event = event.add_attribute(VERSION_ATTRIBUTE_KEY, channel.version().to_string());
+            Ok(event)
+        }
+        IbcEventType::OpenTryChannel
+        | IbcEventType::CloseInitChannel
+        | IbcEventType::CloseConfirmChannel => {
+            event = event
+                .add_attribute(VERSION_ATTRIBUTE_KEY, channel.version().to_string())
+                .add_attribute(
+                    COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
+                    channel.counterparty().channel_id().unwrap().to_string(),
+                );
+            Ok(event)
+        }
+        IbcEventType::OpenAckChannel | IbcEventType::OpenConfirmChannel => {
+            event = event.add_attribute(
+                COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
+                channel.counterparty().channel_id().unwrap().to_string(),
+            );
+            Ok(event)
+        }
+        _ => Err(ContractError::InvalidEventType {
+            event: "Connection Event".to_string(),
+            event_type: event_type.as_str().to_string(),
+        }),
+    }
+}
+
 /// This function creates an event with a "channel_id_created" tag and adds a channel ID attribute to
 /// it.
 ///
@@ -343,85 +466,6 @@ pub fn create_packet_timeout_event(
         .add_attribute(PKT_DST_CHANNEL_ATTRIBUTE_KEY, dst_chan_id)
         .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order)
         .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id)
-}
-
-/// This function creates a new event for closing an initialized channel in the Inter-Blockchain
-/// Communication protocol, with the given port and channel IDs as attributes.
-///
-/// Arguments:
-///
-/// * `port_id`: The `port_id` parameter is a string that represents the identifier of the port
-/// associated with the channel being closed. In the context of the Inter-Blockchain Communication (IBC)
-/// protocol, a port is a module that provides access to a specific blockchain network.
-/// * `channel_id`: The `channel_id` parameter is a string that represents the unique identifier of a
-/// channel in the Inter-Blockchain Communication (IBC) protocol. It is used to identify a specific
-/// channel between two connected blockchains.
-///
-/// Returns:
-///
-/// an instance of the `Event` struct, which represents an event that can be emitted by the IBC module.
-/// The event being created is of type `CloseInitChannel`, which indicates that an initial channel
-/// handshake has been closed. The event includes attributes for the `port_id` and `channel_id`
-/// associated with the closed channel.
-pub fn create_close_init_channel_event(
-    port_id: &str,
-    channel_id: &str,
-    channel_end: ChannelEnd,
-) -> Event {
-    Event::new(IbcEventType::CloseInitChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id)
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, channel_id)
-        .add_attribute(
-            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
-            channel_end.counterparty().channel_id().unwrap().to_string(),
-        )
-        .add_attribute(
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            channel_end.counterparty().port_id().to_string(),
-        )
-        .add_attribute(
-            CONN_ID_ATTRIBUTE_KEY,
-            channel_end.connection_hops[0].to_string(),
-        )
-        .add_attribute(VERSION_ATTRIBUTE_KEY, channel_end.version().to_string())
-}
-
-/// This function creates an event for confirming the closure of a channel.
-///
-/// Arguments:
-///
-/// * `port_id_on_b`: The `port_id_on_b` parameter is a string that represents the identifier of the
-/// port on the counterparty chain that the channel being closed is associated with.
-/// * `chan_id_on_b`: `chan_id_on_b` is a string variable that represents the channel identifier on the
-/// counterparty chain. It is used as an input parameter to create a new `CloseConfirmChannel` event in
-/// the `create_close_confirm_channel_event` function.
-///
-/// Returns:
-///
-/// A function is being defined that returns an `Event` object. The `Event` object is created with the
-/// type `CloseConfirmChannel` from the `IbcEventType` enum. The `Event` object also has two attributes
-/// added to it: `port_id_on_b` and `chan_id_on_b`, which are passed as arguments to the function.
-pub fn create_close_confirm_channel_event(
-    port_id_on_b: &str,
-    chan_id_on_b: &str,
-    channel_end: ChannelEnd,
-) -> Event {
-    Event::new(IbcEventType::CloseConfirmChannel.as_str())
-        .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id_on_b)
-        .add_attribute(CHANNEL_ID_ATTRIBUTE_KEY, chan_id_on_b)
-        .add_attribute(
-            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
-            channel_end.counterparty().channel_id().unwrap().to_string(),
-        )
-        .add_attribute(
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            channel_end.counterparty().port_id().to_string(),
-        )
-        .add_attribute(
-            CONN_ID_ATTRIBUTE_KEY,
-            channel_end.connection_hops[0].to_string(),
-        )
-        .add_attribute(VERSION_ATTRIBUTE_KEY, channel_end.version().to_string())
 }
 
 /// This function creates an event for receiving a packet in an inter-blockchain communication protocol.

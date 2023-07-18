@@ -135,3 +135,39 @@ pub fn create_open_confirm_event(
             counterparty_client_id_on_a.as_str(),
         )
 }
+
+pub fn create_connection_event(
+    event_type: IbcEventType,
+    connection_id: ConnectionId,
+    client_id: ClientId,
+    counterparty_connection_id: Option<ConnectionId>,
+    counterparty_client_id: ClientId,
+) -> Result<Event, ContractError> {
+    let mut event = Event::new(event_type.as_str());
+    event = event
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, connection_id.as_str())
+        .add_attribute(CLIENT_ID_ATTRIBUTE_KEY, client_id.as_str())
+        .add_attribute(
+            COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,
+            counterparty_client_id.as_str(),
+        );
+
+    match event_type {
+        IbcEventType::OpenInitConnection => Ok(event),
+        IbcEventType::OpenTryConnection
+        | IbcEventType::OpenAckConnection
+        | IbcEventType::OpenConfirmConnection => {
+            event = event.add_attribute(
+                COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY,
+                counterparty_connection_id
+                    .map(|c| c.to_string())
+                    .unwrap_or("".to_owned()),
+            );
+            Ok(event)
+        }
+        _ => Err(ContractError::InvalidEventType {
+            event: "Connection Event".to_string(),
+            event_type: event_type.as_str().to_string(),
+        }),
+    }
+}

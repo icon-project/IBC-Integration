@@ -670,11 +670,7 @@ fn connection_open_ack_validate_fail() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            client_id.clone(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
         .unwrap();
 
     let client_state_bytes_any = client_state.encode_to_vec();
@@ -747,11 +743,7 @@ fn connection_open_ack_validate() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            client_id.clone(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
         .unwrap();
 
     let counterparty_prefix =
@@ -1406,11 +1398,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            client_id.clone(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
         .unwrap();
 
     let cl = client_state.to_any().encode_to_vec();
@@ -1797,11 +1785,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            client_id.clone(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
         .unwrap();
 
     let counterparty_prefix =
@@ -1884,11 +1868,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            client_id.clone(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
         .unwrap();
 
     let counterparty_prefix =

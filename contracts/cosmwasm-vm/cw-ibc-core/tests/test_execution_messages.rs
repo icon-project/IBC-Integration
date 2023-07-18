@@ -538,11 +538,7 @@ fn test_for_connection_open_ack() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            client_id.clone(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
         .unwrap();
 
     let counterparty_prefix =

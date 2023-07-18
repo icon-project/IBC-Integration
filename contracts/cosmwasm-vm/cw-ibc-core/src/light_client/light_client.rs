@@ -4,15 +4,17 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, CosmosMsg, Deps, QueryRequest, SubMsg};
 use cw_common::client_msg::{LightClientPacketMessage, VerifyConnectionState};
 use cw_common::client_response::{OpenConfirmResponse, OpenTryResponse};
+use cw_common::cw_types::CwEndpoint;
 use cw_common::ibc_types::IbcClientId;
 use cw_common::raw_types::Any;
-use cw_common::types::{VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData, MessageInfo};
+use cw_common::types::{
+    MessageInfo, VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData,
+};
 use cw_common::{
     client_msg::VerifyConnectionPayload, client_response::OpenAckResponse,
     query_helpers::build_smart_query,
 };
 use prost::Message;
-use cw_common::cw_types::CwEndpoint;
 
 #[cw_serde]
 pub struct LightClient {
@@ -164,12 +166,14 @@ impl LightClient {
     pub fn verify_channel(
         &self,
         deps: Deps,
-        message_info: MessageInfo, endpoint: CwEndpoint, verify_channel_state: VerifyChannelState 
+        message_info: MessageInfo,
+        endpoint: CwEndpoint,
+        verify_channel_state: VerifyChannelState,
     ) -> Result<(), ContractError> {
         let msg = to_binary(&cw_common::client_msg::QueryMsg::VerifyChannel {
-           message_info,
-           endpoint,
-           verify_channel_state
+            message_info,
+            endpoint,
+            verify_channel_state,
         })
         .unwrap();
         let query = build_smart_query(self.address.clone(), msg);

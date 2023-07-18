@@ -11,8 +11,8 @@ use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::timestamp::Timestamp;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
-use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 use cw_ibc_core::light_client::light_client::LightClient;
+use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 
 use super::*;
 
@@ -143,11 +143,7 @@ fn test_receive_packet() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            IbcClientId::default(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
     contract
         .store_channel_end(
