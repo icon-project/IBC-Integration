@@ -23,7 +23,7 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
+    Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo, Deps, WasmQuery, ContractResult, SystemResult, to_binary,
 };
 
 use common::ibc::{
@@ -470,4 +470,14 @@ pub fn get_mock_env() -> Env {
     let mut env = mock_env();
     env.contract.address = Addr::unchecked("archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl");
     env
+}
+
+pub fn mock_lightclient_reply(deps:&mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>){
+    deps.querier.update_wasm(|r| match r {
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg: _,
+        } => SystemResult::Ok(ContractResult::Ok(to_binary(&true).unwrap())),
+        _ => todo!(),
+    });
 }
