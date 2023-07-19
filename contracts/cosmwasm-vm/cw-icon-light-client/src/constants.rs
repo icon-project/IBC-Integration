@@ -8,4 +8,7 @@ pub const NON_MEMBERSHIP: &str = "non-membership";
 pub const CONNECTION_STATE_VALID: &str = "connection_state_valid";
 pub const CLIENT_STATE_VALID: &str = "client_state_valid";
 pub const CONSENSUS_STATE_VALID: &str = "consensus_state_valid";
-pub const TRUST_LEVEL:TrustLevel = TrustLevel {numerator:2,denominator:3};
+pub const TRUST_LEVEL: TrustLevel = TrustLevel {
+    numerator: 2,
+    denominator: 3,
+};

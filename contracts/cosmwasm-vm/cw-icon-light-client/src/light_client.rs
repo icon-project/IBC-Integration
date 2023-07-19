@@ -95,12 +95,12 @@ impl ILightClient for IconClient<'_> {
 
     fn create_client(
         &mut self,
-        caller: Addr,
+        _caller: Addr,
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
-       // self.context.ensure_owner(caller)?;
+        // self.context.ensure_owner(caller)?;
         let exists = self.context.get_client_state(client_id).is_ok();
         if exists {
             return Err(ContractError::ClientStateAlreadyExists(
@@ -126,7 +126,7 @@ impl ILightClient for IconClient<'_> {
 
     fn update_client(
         &mut self,
-        caller: Addr,
+        _caller: Addr,
         client_id: &str,
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {

@@ -7,7 +7,7 @@ use crate::ibc::core::ics02_client::error::ClientError;
 
 use crate::ibc::core::ics02_client::client_type::ClientType as IbcClientType;
 use crate::ibc::Height as IbcHeight;
-use crate::icon::icon::lightclient::v1::TrustLevel;
+
 use crate::{constants::ICON_CLIENT_STATE_TYPE_URL, icon::icon::lightclient::v1::ClientState};
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use prost::Message;
