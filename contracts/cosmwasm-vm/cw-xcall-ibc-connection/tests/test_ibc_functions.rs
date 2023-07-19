@@ -493,11 +493,7 @@ fn sucess_receive_packet_for_call_message_request() {
     };
 
     contract
-        .store_channel_config(
-            mock_deps.as_mut().storage,
-            &dst.channel_id,
-            &channel_config,
-        )
+        .store_channel_config(mock_deps.as_mut().storage, &dst.channel_id, &channel_config)
         .unwrap();
 
     let result = contract.execute(mock_deps.as_mut(), mock_env, mock_info, execute_message);
