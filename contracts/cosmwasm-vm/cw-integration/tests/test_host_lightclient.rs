@@ -7,20 +7,15 @@ use common::ibc::events::IbcEventType;
 
 use cosmwasm_std::{from_binary, to_binary, Addr, Empty, Querier, QueryRequest};
 
-use cw_common::{
-    core_msg as CoreMsg,
-    hex_string::HexString,
-    query_helpers::build_smart_query,
-    xcall_types::network_address::{NetId, NetworkAddress},
-};
+use cw_common::{core_msg as CoreMsg, hex_string::HexString, query_helpers::build_smart_query};
 
 use cw_integration::TestSteps;
 use cw_multi_test::{App, AppResponse, Executor};
 
+use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 use setup::{
     init_ibc_core_contract, init_light_client, init_mock_dapp_multi_contract,
-    init_xcall_app_contract, init_xcall_contract, init_xcall_ibc_connection_contract,
-    setup_context, TestContext,
+    init_xcall_app_contract, init_xcall_ibc_connection_contract, setup_context, TestContext,
 };
 use test_utils::{get_event, get_event_name, load_raw_payloads};
 
@@ -30,14 +25,6 @@ fn setup_test(payload_file: &str) -> TestContext {
     let mut context = setup_context(Some(integration_data));
     context = setup_xcall_multi_contracts(context);
     context
-}
-
-pub fn setup_contracts(mut ctx: TestContext) -> TestContext {
-    ctx = init_light_client(ctx);
-    ctx = init_ibc_core_contract(ctx);
-    let ibc_addr = ctx.get_ibc_core();
-    ctx = init_xcall_contract(ctx, ibc_addr);
-    ctx
 }
 
 pub fn setup_xcall_multi_contracts(mut ctx: TestContext) -> TestContext {
@@ -53,7 +40,7 @@ pub fn call_multi_dapp_send_message(ctx: &mut TestContext) -> Result<AppResponse
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_dapp(),
-        &cw_common::dapp_multi_msg::ExecuteMsg::SendCallMessage {
+        &cw_mock_dapp_multi::msg::ExecuteMsg::SendCallMessage {
             to: NetworkAddress::new("icon", "someaddress"),
             data: vec![72, 101, 108, 108, 111],
             rollback: None,
@@ -66,7 +53,7 @@ pub fn call_multi_dapp_add_connection(ctx: &mut TestContext) -> Result<AppRespon
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_dapp(),
-        &cw_common::dapp_multi_msg::ExecuteMsg::AddConnection {
+        &cw_mock_dapp_multi::msg::ExecuteMsg::AddConnection {
             src_endpoint: ctx.get_xcall_ibc_connection().to_string(),
             dest_endpoint: "cx00000".to_string(),
             network_id: "icon".to_string(),
@@ -267,7 +254,7 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
     ctx.app.execute_contract(
         Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
-        &cw_common::xcall_app_msg::ExecuteMsg::SendCallMessage {
+        &cw_xcall_lib::xcall_msg::ExecuteMsg::SendCallMessage {
             to: NetworkAddress::new("eth", "contractmock"),
             sources: Some(vec![]),
             destinations: Some(vec![]),
@@ -357,6 +344,21 @@ pub fn call_configure_connection(
             counterparty_nid: NetId::from(nid),
             client_id,
             timeout_height: 10,
+        },
+        &[],
+    )
+}
+
+pub fn call_set_default_connection(
+    ctx: &mut TestContext,
+    nid: String,
+) -> Result<AppResponse, AppError> {
+    ctx.app.execute_contract(
+        ctx.sender.clone(),
+        ctx.get_xcall_app(),
+        &cw_xcall_lib::xcall_msg::ExecuteMsg::SetDefaultConnection {
+            nid: NetId::from(nid),
+            address: ctx.get_xcall_ibc_connection(),
         },
         &[],
     )
@@ -481,10 +483,15 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     let connection_id = get_connection_id(&result.unwrap(), IbcEventType::OpenConfirmConnection);
     let nid = "icon".to_string();
 
-    let result = call_configure_connection(&mut ctx, connection_id, nid, client_id);
+    let result = call_configure_connection(&mut ctx, connection_id, nid.clone(), client_id);
 
     assert!(result.is_ok());
     println!("Configure Connection Ok {:?}", &result);
+
+    let result = call_set_default_connection(&mut ctx, nid);
+
+    assert!(result.is_ok());
+    println!("Set Default Connection Ok {:?}", &result);
 
     let result = call_channel_open_try(&mut ctx);
 

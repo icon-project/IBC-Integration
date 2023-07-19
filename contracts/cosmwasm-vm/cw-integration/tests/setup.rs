@@ -178,12 +178,6 @@ pub fn ibc_core_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-pub fn xcall_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(cw_xcall::execute, cw_xcall::instantiate, cw_xcall::query)
-        .with_reply(cw_xcall::reply);
-    Box::new(contract)
-}
-
 pub fn lightclient_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         cw_icon_light_client::contract::execute,
@@ -231,28 +225,6 @@ pub fn init_ibc_core_contract(mut ctx: TestContext) -> TestContext {
     ctx
 }
 
-pub fn init_xcall_contract(mut ctx: TestContext, ibc_host: Addr) -> TestContext {
-    let code_id = ctx.app.store_code(xcall_contract());
-    let addr = ctx
-        .app
-        .instantiate_contract(
-            code_id,
-            ctx.sender.clone(),
-            &cw_xcall::msg::InstantiateMsg {
-                timeout_height: 500000,
-                ibc_host,
-            },
-            &[],
-            "Xcall",
-            Some(ctx.sender.clone().to_string()),
-        )
-        .unwrap();
-
-    ctx.set_xcall_app(addr);
-
-    ctx
-}
-
 pub fn init_mock_ibc_core_contract(mut ctx: TestContext) -> TestContext {
     let ibc_core_code_id = ctx.app.store_code(mock_ibc_core_contract());
     let ibc_core_addr = ctx
@@ -292,12 +264,8 @@ pub fn mock_ibc_core_contract() -> Box<dyn Contract<Empty>> {
 }
 
 pub fn xcall_app_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(
-        cw_xcall_multi::execute,
-        cw_xcall_multi::instantiate,
-        cw_xcall_multi::query,
-    )
-    .with_reply(cw_xcall_multi::reply);
+    let contract = ContractWrapper::new(cw_xcall::execute, cw_xcall::instantiate, cw_xcall::query)
+        .with_reply(cw_xcall::reply);
     Box::new(contract)
 }
 
@@ -308,7 +276,7 @@ pub fn init_xcall_app_contract(mut ctx: TestContext) -> TestContext {
         .instantiate_contract(
             xcall_app_contractcode_id,
             ctx.sender.clone(),
-            &cw_xcall_multi::msg::InstantiateMsg {
+            &cw_xcall::msg::InstantiateMsg {
                 network_id: "nid".to_string(),
                 denom: "uarch".to_string(),
             },
