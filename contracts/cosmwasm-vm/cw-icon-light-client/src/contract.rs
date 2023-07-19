@@ -595,7 +595,7 @@ mod tests {
         instantiate(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            info,
             InstantiateMsg::default(),
         )
         .unwrap();
@@ -640,7 +640,7 @@ mod tests {
         let env = mock_env();
         let msg = InstantiateMsg::default();
 
-        let res: Response = instantiate(deps.as_mut(), env, info.clone(), msg.clone()).unwrap();
+        let _res: Response = instantiate(deps.as_mut(), env, info, msg).unwrap();
 
         let start_header = &get_test_headers()[0];
         let client_state = start_header.to_client_state(1000000, 0);
@@ -687,7 +687,7 @@ mod tests {
         let signed_header = &get_test_signed_headers()[1];
         let info = mock_info(SENDER, &[]);
         let msg = InstantiateMsg::default();
-        let _result: Response = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let info = mock_info("ibc_host", &[]);
 

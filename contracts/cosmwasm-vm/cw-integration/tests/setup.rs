@@ -199,7 +199,7 @@ pub fn init_light_client(mut ctx: TestContext) -> TestContext {
             light_client_code_id,
             ctx.sender.clone(),
             &cw_common::client_msg::InstantiateMsg {
-                ibc_host: ctx.get_ibc_core().clone(),
+                ibc_host: ctx.get_ibc_core(),
             },
             &[],
             "LightClient",

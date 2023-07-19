@@ -455,7 +455,7 @@ fn sucess_receive_packet_for_call_message_request() {
         )
         .unwrap();
 
-    let packet = IbcPacket::new(message_data, src.clone(), dst.clone(), 0, timeout);
+    let packet = IbcPacket::new(message_data, src, dst.clone(), 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
     let execute_message = ExecuteMsg::IbcPacketReceive {
@@ -495,7 +495,7 @@ fn sucess_receive_packet_for_call_message_request() {
     contract
         .store_channel_config(
             mock_deps.as_mut().storage,
-            &dst.channel_id.clone(),
+            &dst.channel_id,
             &channel_config,
         )
         .unwrap();
