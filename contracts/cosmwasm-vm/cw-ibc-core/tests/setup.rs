@@ -23,8 +23,8 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Deps, Empty, Env, MessageInfo,
-    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
+    to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, MessageInfo, OwnedDeps,
+    SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
 use common::ibc::{

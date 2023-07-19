@@ -1,8 +1,7 @@
 use std::str::from_utf8;
 
-use cw_common::{client_msg::VerifyConnectionPayload, from_binary_response, hex_string::HexString};
+use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString};
 use debug_print::debug_println;
-use prost::DecodeError;
 
 use super::*;
 
@@ -139,7 +138,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
 
         deps: DepsMut,
-        info: MessageInfo,
+        _info: MessageInfo,
         env: Env,
         msg: MsgConnectionOpenAck,
     ) -> Result<Response, ContractError> {
@@ -469,7 +468,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let delay_period = message.delay_period;
 
-        let client_id = client_id_on_b.clone();
+        let client_id = client_id_on_b;
 
         debug_println!("[ConnOpenTryReply]: client id is{:?}", client_id);
 
@@ -530,7 +529,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         env: Env,
-        info: MessageInfo,
+        _info: MessageInfo,
         msg: MsgConnectionOpenConfirm,
     ) -> Result<Response, ContractError> {
         debug_println!("[ConnOpenConfirm]: Connection Open Confirm");

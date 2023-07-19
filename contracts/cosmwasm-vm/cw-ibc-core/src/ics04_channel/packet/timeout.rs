@@ -170,11 +170,11 @@ impl<'a> CwIbcCoreContext<'a> {
                     packet_data,
                 }
             };
-        let client_type = client_state_of_b_on_a.client_type();
+        let _client_type = client_state_of_b_on_a.client_type();
         let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
         client.verify_timeout(
             deps.as_ref(),
-            &client_id_on_a,
+            client_id_on_a,
             next_seq_recv_verification_result,
         )?;
 

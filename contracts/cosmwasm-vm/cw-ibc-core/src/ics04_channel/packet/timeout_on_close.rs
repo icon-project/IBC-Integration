@@ -186,7 +186,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
         client.verify_timeout_on_close(
             deps.as_ref(),
-            &client_id_on_a,
+            client_id_on_a,
             verify_channel_state,
             next_seq_recv_verification_result,
         )?;

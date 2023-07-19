@@ -368,7 +368,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_b = commitment::channel_path(port_id_on_b, &message.chan_id_on_b);
         let vector = raw_expected_chan.encode_to_vec();
 
-        let message_info = cw_common::types::MessageInfo {
+        let _message_info = cw_common::types::MessageInfo {
             sender: info.sender,
             funds: vec![],
         };

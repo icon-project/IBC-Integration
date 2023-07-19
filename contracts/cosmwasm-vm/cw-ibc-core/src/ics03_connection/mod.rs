@@ -14,11 +14,10 @@ use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
 use cosmwasm_std::Response;
 use cosmwasm_std::Storage;
-use cosmwasm_std::{to_binary, to_vec, CosmosMsg, MessageInfo, Reply, SubMsg};
+use cosmwasm_std::{to_vec, MessageInfo};
 use cw_common::client_msg::{
     VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState,
 };
-use cw_common::client_response::{OpenAckResponse, OpenTryResponse};
 
 pub use super::*;
 use common::ibc::core::ics03_connection::connection::ConnectionEnd;
@@ -40,8 +39,6 @@ use common::ibc::{
     },
     events::IbcEventType,
 };
-use cosmwasm_std::{QueryRequest, WasmQuery};
-use cw_common::client_response::OpenConfirmResponse;
+
 use cw_common::commitment;
 use cw_common::raw_types::Protobuf;
-use std::{str::FromStr, time::Duration};

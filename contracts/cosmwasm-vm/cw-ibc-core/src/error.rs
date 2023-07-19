@@ -1,5 +1,5 @@
 use common::ibc::core::ics03_connection::error::ConnectionError;
-use cw_common::{errors::CwErrors, ibc_types::IbcEventType};
+use cw_common::errors::CwErrors;
 use hex::FromHexError;
 use prost::DecodeError;
 

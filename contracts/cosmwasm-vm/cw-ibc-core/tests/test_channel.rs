@@ -1077,7 +1077,8 @@ fn test_validate_open_try_channel() {
     let raw = get_dummy_raw_msg_chan_open_try(10);
     let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let _module_id =
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
 
     let light_client = LightClient::new("lightclient".to_string());

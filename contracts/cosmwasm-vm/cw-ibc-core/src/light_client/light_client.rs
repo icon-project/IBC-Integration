@@ -1,19 +1,12 @@
-use crate::EXECUTE_UPDATE_CLIENT;
-use crate::{ics03_connection::IbcClient, ContractError};
+use crate::{ContractError, EXECUTE_UPDATE_CLIENT};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, CosmosMsg, Deps, QueryRequest, SubMsg};
+use cosmwasm_std::{to_binary, CosmosMsg, Deps, SubMsg};
 use cw_common::client_msg::{LightClientPacketMessage, VerifyConnectionState};
-use cw_common::client_response::{OpenConfirmResponse, OpenTryResponse};
-use cw_common::cw_types::CwEndpoint;
+
 use cw_common::ibc_types::IbcClientId;
 use cw_common::raw_types::Any;
-use cw_common::types::{
-    MessageInfo, VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData,
-};
-use cw_common::{
-    client_msg::VerifyConnectionPayload, client_response::OpenAckResponse,
-    query_helpers::build_smart_query,
-};
+use cw_common::types::{VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData};
+use cw_common::{client_msg::VerifyConnectionPayload, query_helpers::build_smart_query};
 use prost::Message;
 
 #[cw_serde]
@@ -173,7 +166,7 @@ impl LightClient {
     }
 
     pub fn get_address(&self) -> String {
-        return self.address.clone();
+        self.address.clone()
     }
 
     pub fn get_client_state(

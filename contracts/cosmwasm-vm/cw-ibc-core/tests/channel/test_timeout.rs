@@ -318,7 +318,7 @@ fn test_timeout_packet_validate_to_light_client() {
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let client_type = IbcClientType::new("iconclient".to_string());
+    let _client_type = IbcClientType::new("iconclient".to_string());
 
     let light_client = LightClient::new("lightclient".to_string());
 

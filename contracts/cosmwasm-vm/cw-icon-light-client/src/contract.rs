@@ -16,16 +16,11 @@ use cosmwasm_std::{
     Storage,
 };
 use cw2::set_contract_version;
-use cw_common::client_response::{
-    CreateClientResponse, LightClientResponse, PacketDataResponse, UpdateClientResponse,
-};
+use cw_common::client_response::{CreateClientResponse, PacketDataResponse, UpdateClientResponse};
 use cw_common::raw_types::Any;
 use cw_common::types::{PacketData, VerifyChannelState};
 
-use crate::constants::{
-    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH, HEIGHT,
-    MEMBERSHIP, NON_MEMBERSHIP,
-};
+use crate::constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT};
 use crate::error::ContractError;
 use crate::light_client::IconClient;
 use crate::state::{CwContext, QueryHandler};

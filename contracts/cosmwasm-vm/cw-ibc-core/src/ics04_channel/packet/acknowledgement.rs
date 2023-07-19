@@ -172,13 +172,13 @@ impl<'a> CwIbcCoreContext<'a> {
             ack_path: ack_path_on_b,
             ack: msg.acknowledgement.clone().into(),
         };
-        let packet_data = to_vec(&data)?;
+        let _packet_data = to_vec(&data)?;
         let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
 
         client.verify_packet_acknowledge(
             deps.as_ref(),
             verify_packet_acknowledge,
-            &client_id_on_a,
+            client_id_on_a,
         )?;
 
         let packet = msg.packet.clone();

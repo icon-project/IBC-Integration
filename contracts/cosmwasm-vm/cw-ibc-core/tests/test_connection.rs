@@ -10,16 +10,13 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 use common::traits::AnyTypes;
 use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::to_binary;
-use cosmwasm_std::to_vec;
+
 use cosmwasm_std::Addr;
 use cosmwasm_std::ContractResult;
-use cosmwasm_std::Event;
-use cosmwasm_std::Reply;
-use cosmwasm_std::SubMsgResponse;
-use cosmwasm_std::SubMsgResult;
+
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
-use cw_common::client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse};
+
 use cw_common::get_address_storage_prefix;
 use cw_common::ibc_types::IbcMsgConnectionOpenConfirm;
 use cw_common::ibc_types::IbcMsgConnectionOpenInit;
@@ -29,8 +26,7 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenConfirm;
 use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::connection::RawMsgConnectionOpenTry;
 use cw_common::raw_types::RawHeight;
-use cw_common::raw_types::RawVersion;
-use cw_ibc_core::constants::*;
+
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics03_connection::event::create_open_ack_event;
 use cw_ibc_core::ics03_connection::event::create_open_confirm_event;

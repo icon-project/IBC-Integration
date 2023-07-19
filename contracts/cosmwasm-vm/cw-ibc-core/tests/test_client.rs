@@ -1561,7 +1561,7 @@ fn sucess_on_getting_client() {
     expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"new_client_type-0\") } }"
 )]
 fn fails_on_getting_client_empty_client() {
-    let mut mock_deps = deps();
+    let mock_deps = deps();
     let contract = CwIbcCoreContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();

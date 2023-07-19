@@ -129,7 +129,7 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         debug_println!("new packet data made:");
-        let packet_data = to_vec(&packet_data).map_err(|e| ContractError::IbcDecodeError {
+        let _packet_data = to_vec(&packet_data).map_err(|e| ContractError::IbcDecodeError {
             error: DecodeError::new(e.to_string()),
         })?;
         let verify_packet_data = VerifyPacketData {
@@ -142,7 +142,7 @@ impl<'a> CwIbcCoreContext<'a> {
         };
 
         let client = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
-        client.verify_packet_data(deps.as_ref(), verify_packet_data, &client_id_on_b)?;
+        client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id_on_b)?;
 
         let chan_end_on_b = self.get_channel_end(
             deps.storage,
@@ -167,10 +167,10 @@ impl<'a> CwIbcCoreContext<'a> {
             if packet.sequence == next_seq_recv {
                 // Case where the recvPacket is successful and an
                 // acknowledgement will be written (not a no-op)
-                self.validate_write_acknowledgement(deps.storage, &packet)?;
+                self.validate_write_acknowledgement(deps.storage, packet)?;
             }
         } else {
-            self.validate_write_acknowledgement(deps.storage, &packet)?;
+            self.validate_write_acknowledgement(deps.storage, packet)?;
         };
 
         let port_id = packet.port_id_on_a.clone();

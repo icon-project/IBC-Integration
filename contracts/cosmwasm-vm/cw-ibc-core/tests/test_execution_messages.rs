@@ -14,8 +14,7 @@ use cosmwasm_std::ContractResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 use cosmwasm_std::{to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
-use cw_common::client_response::OpenAckResponse;
-use cw_common::client_response::OpenConfirmResponse;
+
 use cw_common::client_response::OpenTryResponse;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::core_msg::ExecuteMsg;
@@ -26,8 +25,8 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::RawVersion;
 use cw_common::ProstMessage;
 
+use cw_ibc_core::ConnectionEnd;
 use cw_ibc_core::Height;
-use cw_ibc_core::{ConnectionEnd, EXECUTE_CONNECTION_OPENTRY};
 
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{context::CwIbcCoreContext, msg::InstantiateMsg};
@@ -343,7 +342,7 @@ fn test_for_connection_open_init() {
     });
 
     let response = contract
-        .execute(deps.as_mut(), env.clone(), info.clone(), exec_message)
+        .execute(deps.as_mut(), env, info, exec_message)
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "connection_open_init");
@@ -418,7 +417,7 @@ fn test_for_connection_open_try() {
     let response = contract
         .execute(
             deps.as_mut(),
-            env.clone(),
+            env,
             info,
             CoreExecuteMsg::ConnectionOpenTry {
                 msg: HexString::from_bytes(&message.encode_to_vec()),
@@ -510,13 +509,13 @@ fn test_for_connection_open_ack() {
     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id,
         None,
-        counterparty_prefix.clone(),
+        counterparty_prefix,
     );
 
     let conn_end = ConnectionEnd::new(
         common::ibc::core::ics03_connection::connection::State::Init,
         IbcClientId::default(),
-        counter_party.clone(),
+        counter_party,
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
@@ -551,13 +550,13 @@ fn test_for_connection_open_ack() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let conn_id = ConnectionId::new(0);
+    let _conn_id = ConnectionId::new(0);
     let _conn_id_on_b = ConnectionId::new(1);
 
     let response = contract
         .execute(
             deps.as_mut(),
-            env.clone(),
+            env,
             info,
             ExecuteMsg::ConnectionOpenAck {
                 msg: HexString::from_bytes(&message.encode_to_vec()),
@@ -616,17 +615,17 @@ fn test_for_connection_open_confirm() {
     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id,
         res_msg.conn_id_on_b.clone().into(),
-        counterparty_prefix.clone(),
+        counterparty_prefix,
     );
 
     let conn_end = ConnectionEnd::new(
         common::ibc::core::ics03_connection::connection::State::TryOpen,
         IbcClientId::default(),
-        counter_party.clone(),
+        counter_party,
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let conn_id = ConnectionId::new(1);
+    let _conn_id = ConnectionId::new(1);
     contract
         .store_connection(
             &mut deps.storage,
@@ -676,7 +675,7 @@ fn test_for_connection_open_confirm() {
     let response = contract
         .execute(
             deps.as_mut(),
-            env.clone(),
+            env,
             info,
             ExecuteMsg::ConnectionOpenConfirm {
                 msg: HexString::from_bytes(&message.encode_to_vec()),

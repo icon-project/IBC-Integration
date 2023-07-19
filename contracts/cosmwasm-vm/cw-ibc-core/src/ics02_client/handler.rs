@@ -1,6 +1,6 @@
 use crate::{
-    light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT,
-    EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR,
+    light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT, EXECUTE_UPGRADE_CLIENT,
+    MISBEHAVIOUR,
 };
 
 use super::{events::client_misbehaviour_event, *};
@@ -84,7 +84,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn update_client(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
+        _info: MessageInfo,
         message: IbcMsgUpdateClient,
     ) -> Result<Response, ContractError> {
         let client_id = message.client_id.clone();
