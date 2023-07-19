@@ -1,5 +1,5 @@
 use common::rlp::Nullable;
-use cw_common::xcall_types::network_address::NetId;
+use cw_xcall_lib::network_address::NetId;
 
 use crate::types::{message::Message, network_fees::NetworkFees};
 

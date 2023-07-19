@@ -3,7 +3,7 @@ version = '0.1.0'
 dependencies {
     implementation project(':lib')
     implementation project(':score-util')
-    implementation project(':xcall-multi-protocol')
+    implementation 'xcall:xcall'
     testImplementation project(':test-lib')
 }
 
@@ -21,11 +21,6 @@ jacocoTestReport {
         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
 }
-
-tasks.named('compileIntTestJava') {
-    dependsOn(':mock-dapp:optimizedJar')
-}
-
 
 optimizedJar {
     dependsOn(project(':lib').jar)

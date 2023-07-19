@@ -16,6 +16,7 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"go.uber.org/zap"
 )
@@ -156,35 +157,35 @@ func (c *CosmosLocalnet) DeployXCallMockApp(ctx context.Context, connection chai
 	return nil
 }
 
-func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, error) {
+func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, string, error) {
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	rollbackArray := strings.Join(strings.Fields(fmt.Sprintf("%d", rollback)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s, "rollback":%s}`, _to, dataArray, rollbackArray)
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], chains.FaucetAccountKeyName, "send_call_message", params)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	tx := ctx.Value("txResult").(*TxResul)
 	sn := c.findSn(tx)
-	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
-	return sn, reqId, err
+	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	return sn, reqId, destData, err
 }
 
-func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, error) {
+func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error) {
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s}`, _to, dataArray)
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], keyName, "send_call_message", params)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	tx := ctx.Value("txResult").(*TxResul)
 	sn := c.findSn(tx)
-	reqId, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
-	return sn, reqId, err
+	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	return sn, reqId, destData, err
 }
 
 func (c *CosmosLocalnet) findSn(tx *TxResul) string {
@@ -203,15 +204,40 @@ func (c *CosmosLocalnet) findSn(tx *TxResul) string {
 	return ""
 }
 
-func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`"}`)
+func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
+	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
 }
 
 func (c *CosmosLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
 	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
 }
 
-func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, error) {
+func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, string, error) {
+	index := strings.Join([]string{
+		fmt.Sprintf("wasm-CallMessage.from CONTAINS '%s'", from),
+		fmt.Sprintf("wasm-CallMessage.to CONTAINS '%s'", to),
+		fmt.Sprintf("wasm-CallMessage.sn CONTAINS '%s'", sn),
+	}, " AND ")
+	event, err := c.FindEvent(ctx, startHeight, "xcall", index)
+	if err != nil {
+		return "", "", err
+	}
+
+	return event.Events["wasm-CallMessage.reqId"][0], event.Events["wasm-CallMessage.data"][0], nil
+
+}
+
+func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, string, error) {
+	index := fmt.Sprintf("wasm-ResponseMessage.sn CONTAINS '%s'", sn)
+	event, err := c.FindEvent(ctx, startHeight, "xcall", index)
+	if err != nil {
+		return "", "", err
+	}
+
+	return event.Events["wasm-ResponseMessage.code"][0], event.Events["wasm-ResponseMessage.msg"][0], nil
+}
+
+func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, index string) (*ctypes.ResultEvent, error) {
 	endpoint := c.GetHostRPCAddress()
 	client, err := rpchttp.New(endpoint, "/websocket")
 	if err != nil {
@@ -223,26 +249,25 @@ func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64,
 		log.Fatal(err)
 	}
 	defer client.Stop()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
 	query := strings.Join([]string{"tm.event = 'Tx'",
-		fmt.Sprintf("tx.height > %d ", startHeight),
+		fmt.Sprintf("tx.height >= %d ", startHeight),
 		fmt.Sprintf("message.module = 'wasm'"),
-		fmt.Sprintf("wasm._contract_address = '%s'", c.IBCAddresses["xcall"]),
-		fmt.Sprintf("wasm-CallMessage.from CONTAINS '%s'", from),
-		fmt.Sprintf("wasm-CallMessage.to CONTAINS '%s'", to),
-		fmt.Sprintf("wasm-CallMessage.sn CONTAINS '%s'", sn),
+		fmt.Sprintf("wasm._contract_address = '%s'", c.IBCAddresses[contract]),
+		fmt.Sprintf(index),
 	}, " AND ")
-	txs, err := client.Subscribe(ctx, "wasm-client", query)
+	channel, err := client.Subscribe(ctx, "wasm-client", query)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	for e := range txs {
-		return e.Events["wasm-CallMessage.reqId"][0], nil
+	select {
+	case event := <-channel:
+		cancel()
+		return &event, nil
+	case <-time.After(20 * time.Second):
+		cancel()
+		return nil, fmt.Errorf("failed to find eventLog")
 	}
-
-	return "", fmt.Errorf("No message found")
 }
 
 func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {

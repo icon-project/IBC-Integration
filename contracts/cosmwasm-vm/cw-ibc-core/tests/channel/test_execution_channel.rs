@@ -1199,12 +1199,12 @@ fn test_for_recieve_packet() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let src = IbcEndpoint {
+    let dst: IbcEndpoint = IbcEndpoint {
         port_id: packet.port_id_on_b.to_string(),
         channel_id: packet.chan_id_on_a.to_string(),
     };
 
-    let dst = IbcEndpoint {
+    let src = IbcEndpoint {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
