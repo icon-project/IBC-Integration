@@ -1,10 +1,7 @@
-use crate::cw_types::CwEndpoint;
 use crate::{
-    client_response::{OpenAckResponse, OpenConfirmResponse, OpenTryResponse, PacketDataResponse},
+    client_response::PacketDataResponse,
     errors::CwErrors,
-    types::{
-        MessageInfo, PacketData, VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData,
-    },
+    types::{PacketData, VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData},
 };
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::from_slice;
@@ -50,7 +47,7 @@ pub enum QueryMsg {
     },
     #[returns(bool)]
     VerifyOpenConfirm {
-      //  expected_response: OpenConfirmResponse,
+        //  expected_response: OpenConfirmResponse,
         client_id: String,
         verify_connection_state: VerifyConnectionState,
         // add all props that we need on response
@@ -70,13 +67,13 @@ pub enum QueryMsg {
     VerifyPacketData {
         client_id: String,
         verify_packet_data: VerifyPacketData,
-       // packet_data: Vec<u8>,
+        // packet_data: Vec<u8>,
     },
     #[returns(bool)]
     VerifyPacketAcknowledgement {
         client_id: String,
         verify_packet_acknowledge: VerifyPacketAcknowledgement,
-      //  packet_data: Vec<u8>,
+        //  packet_data: Vec<u8>,
     },
     #[returns(bool)]
     VerifyConnectionOpenTry(VerifyConnectionPayload),
@@ -278,7 +275,7 @@ pub struct VerifyConnectionPayload {
     pub verify_connection_state: VerifyConnectionState,
     pub verify_client_full_state: VerifyClientFullState,
     pub verify_client_consensus_state: VerifyClientConsensusState,
-   // pub expected_response: T,
+    // pub expected_response: T,
 }
 
 impl TryFrom<LightClientPacketMessage> for PacketDataResponse {

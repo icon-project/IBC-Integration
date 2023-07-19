@@ -585,7 +585,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::VerifyPacketData {
             client_id,
             verify_packet_data,
-           // packet_data,
+            // packet_data,
         } => {
             let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
                 .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
@@ -607,7 +607,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::VerifyPacketAcknowledgement {
             client_id,
             verify_packet_acknowledge,
-           // packet_data,
+            // packet_data,
         } => {
             let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
                 .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
@@ -629,7 +629,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::VerifyOpenConfirm {
             client_id,
             verify_connection_state,
-          //  expected_response,
+            //  expected_response,
         } => {
             let result =
                 validate_connection_state(&client_id, deps.storage, &verify_connection_state)

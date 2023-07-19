@@ -1,5 +1,5 @@
 use cw_common::from_binary_response;
-use cw_ibc_core::{VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE, light_client::light_client::LightClient};
+use cw_ibc_core::{light_client::light_client::LightClient, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE};
 use debug_print::debug_println;
 
 use super::*;
@@ -322,7 +322,13 @@ fn test_timeout_packet_validate_to_light_client() {
 
     let light_client = LightClient::new("lightclient".to_string());
 
- contract.bind_port(&mut deps.storage, &packet.port_id_on_a, "moduleaddress".to_string()).unwrap();
+    contract
+        .bind_port(
+            &mut deps.storage,
+            &packet.port_id_on_a,
+            "moduleaddress".to_string(),
+        )
+        .unwrap();
 
     contract
         .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
@@ -354,5 +360,8 @@ fn test_timeout_packet_validate_to_light_client() {
     let res = contract.timeout_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE)
+    assert_eq!(
+        res.unwrap().messages[0].id,
+        VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE
+    )
 }

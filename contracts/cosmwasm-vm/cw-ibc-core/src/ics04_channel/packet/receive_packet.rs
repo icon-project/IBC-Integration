@@ -142,11 +142,7 @@ impl<'a> CwIbcCoreContext<'a> {
         };
 
         let client = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
-        client.verify_packet_data(
-            deps.as_ref(),
-            verify_packet_data,
-            &client_id_on_b,
-        )?;
+        client.verify_packet_data(deps.as_ref(), verify_packet_data, &client_id_on_b)?;
 
         let chan_end_on_b = self.get_channel_end(
             deps.storage,

@@ -225,20 +225,11 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_a).unwrap();
         let chan_end_path_on_a = commitment::channel_path(&port_id_on_a, &chan_id_on_a);
         let vector = raw_expected_chan.encode_to_vec();
-
-        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
         debug_println!("after fee calculatation");
-        // let funds = self.update_fee(info.funds.clone(), fee)?;
-        // debug_println!("after funding update");
 
         let endpoint = CwEndPoint {
             port_id: message.port_id_on_b.clone().to_string(),
             channel_id: channel_id_on_b.to_string(),
-        };
-        let message_info = cw_common::types::MessageInfo {
-            sender: info.sender,
-            funds: vec![],
         };
         let verify_channel_state = VerifyChannelState {
             proof_height: message.proof_height_on_a.to_string(),
@@ -249,34 +240,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             expected_counterparty_channel_end: vector,
             client_id: conn_end_on_b.client_id().to_string(),
         };
-
-        // let create_client_message = LightClientMessage::VerifyChannel {
-        //     endpoint,
-        //     message_info,
-        //     verify_channel_state,
-        // };
-        let client_type = client_state_of_a_on_b.client_type();
         let client_id = conn_end_on_b.client_id().clone();
 
         let client = self.get_client(deps.as_ref().storage, client_id)?;
-
-        // let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-        //     contract_addr: light_client_address,
-        //     msg: to_binary(&create_client_message).map_err(ContractError::Std)?,
-        //     funds: info.funds,
-        // });
-
-        // let sub_msg: SubMsg = SubMsg::reply_always(
-        //     create_client_message,
-        //     EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT,
-        // )
-        // .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        // debug_println!("before calling light client ");
-        // Ok(Response::new()
-        //     .add_attribute("action", "Light client channel open try call")
-        //     .add_submessage(sub_msg))
-
+        client.verify_channel(deps.as_ref(), verify_channel_state)?;
         let port_id =
             IbcPortId::from_str(&endpoint.port_id).map_err(Into::<ContractError>::into)?;
         debug_println!("after getting porrt {:?}", port_id);
@@ -418,29 +385,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             expected_counterparty_channel_end: vector,
             client_id: conn_end_on_a.client_id().to_string(),
         };
-
-        // let create_client_message = LightClientMessage::VerifyChannel {
-        //     message_info,
-        //     endpoint,
-        //     verify_channel_state
-        // };
         let client_id = conn_end_on_a.client_id().clone();
         let client = self.get_client(deps.as_ref().storage, client_id)?;
-        client.verify_channel(
-            deps.as_ref(),
-            verify_channel_state,
-        )?;
-
-        // let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-        //     contract_addr: light_client_address,
-        //     msg: to_binary(&create_client_message).unwrap(),
-        //     funds: info.funds,
-        // });
-        // let sub_msg: SubMsg = SubMsg::reply_always(
-        //     create_client_message,
-        //     EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT,
-        // )
-        // .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
+        client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         chan_end_on_a.set_version(message.version_on_b.clone());
         chan_end_on_a.set_counterparty_channel_id(message.chan_id_on_b.clone());
@@ -571,14 +518,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
 
         let vector = raw_expected_chan.encode_to_vec();
-
-        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-        //
-        // let funds = self.update_fee(info.funds.clone(), fee)?;
-        let message_info = cw_common::types::MessageInfo {
-            sender: info.sender,
-            funds: vec![],
-        };
         let endpoint = CwEndPoint {
             port_id: message.port_id_on_b.clone().to_string(),
             channel_id: message.chan_id_on_b.clone().to_string(),
@@ -592,37 +531,11 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             expected_counterparty_channel_end: vector,
             client_id: conn_end_on_b.client_id().to_string(),
         };
-        // let create_client_message = LightClientMessage::VerifyChannel {
-        //     message_info,
-        //     endpoint,
-        //     verify_channel_state
 
-        // };
         let client_id = conn_end_on_b.client_id().clone();
-        let client_type = client_state_of_a_on_b.client_type();
+
         let client = self.get_client(deps.as_ref().storage, client_id)?;
-        client.verify_channel(
-            deps.as_ref(),
-            verify_channel_state,
-        )?;
-
-        // let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-        //     contract_addr: light_client_address,
-        //     msg: to_binary(&create_client_message).unwrap(),
-        //     funds: info.funds,
-        // });
-        // let sub_msg: SubMsg = SubMsg::reply_always(
-        //     create_client_message,
-        //     EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT,
-        // )
-        // .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        // Ok(Response::new()
-        //     .add_attribute("action", "light_client_channel_open_confirm_call")
-        //     .add_submessage(sub_msg))
-
-        let info = message_info;
-        // let data = response.ibc_endpoint;
+        client.verify_channel(deps.as_ref(), verify_channel_state)?;
         let port_id = IbcPortId::from_str(&endpoint.port_id).unwrap();
         let channel_id = IbcChannelId::from_str(&endpoint.channel_id).unwrap();
         let channel_end =
@@ -805,13 +718,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let chan_end_path_on_a = commitment::channel_path(port_id_on_a, chan_id_on_a);
         let vector = raw_expected_chan.encode_to_vec();
-        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-        //
-        // let funds = self.update_fee(info.funds.clone(), fee)?;
-        let message_info = cw_common::types::MessageInfo {
-            sender: info.sender,
-            funds: vec![],
-        };
+
         let endpoint = CwEndPoint {
             port_id: message.port_id_on_b.clone().to_string(),
             channel_id: message.chan_id_on_b.clone().to_string(),
@@ -825,33 +732,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             expected_counterparty_channel_end: vector,
             client_id: conn_end_on_b.client_id().to_string(),
         };
-        // let create_client_message = LightClientMessage::VerifyChannel {
-        //     message_info,
-        //     endpoint,
-        //     verify_channel_state,
-        // };
-        let client_type = client_state_of_a_on_b.client_type();
+
         let client_id = conn_end_on_b.client_id().clone();
         let client = self.get_client(deps.as_ref().storage, client_id)?;
-        client.verify_channel(
-            deps.as_ref(),
-            verify_channel_state,
-        )?;
-
-        // let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-        //     contract_addr: light_client_address,
-        //     msg: to_binary(&create_client_message).unwrap(),
-        //     funds: info.funds,
-        // });
-        // let sub_msg: SubMsg = SubMsg::reply_always(
-        //     create_client_message,
-        //     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT,
-        // )
-        // .with_gas_limit(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-
-        // Ok(Response::new()
-        //     .add_attribute("action", "light_client_channel_close_confirm_call")
-        //     .add_submessage(sub_msg))
+        client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         let port_id =
             IbcPortId::from_str(&endpoint.port_id).map_err(Into::<ContractError>::into)?;

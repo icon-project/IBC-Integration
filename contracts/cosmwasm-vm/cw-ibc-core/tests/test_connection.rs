@@ -743,11 +743,10 @@ fn connection_open_ack_validate() {
 
     let light_client = LightClient::new("lightclient".to_string());
 
-   
-       contract
-           .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
-           .unwrap();
-       mock_lightclient_reply(&mut deps);
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -895,7 +894,6 @@ fn connection_open_try_validate() {
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
-
     let cl = client_state.to_any().encode_to_vec();
 
     contract
@@ -926,7 +924,9 @@ fn connection_open_try_validate() {
 }
 
 #[test]
-#[should_panic(expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"default-0\") } }")]
+#[should_panic(
+    expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"default-0\") } }"
+)]
 fn open_try_validate_fails() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 2000);
@@ -1050,12 +1050,11 @@ fn connection_open_confirm_validate() {
         )
         .unwrap();
 
-        let light_client = LightClient::new("lightclient".to_string());
-        contract
-            .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
-            .unwrap();
-        mock_lightclient_reply(&mut deps);
-    
+    let light_client = LightClient::new("lightclient".to_string());
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let cl = client_state.to_any().encode_to_vec();
 
@@ -1083,120 +1082,6 @@ fn connection_open_confirm_validate() {
 
     let res = contract.connection_open_confirm(deps.as_mut(), env, info, res_msg);
     assert!(res.is_ok())
-}
-
-#[test]
-fn connection_open_confirm_execute() {
-    let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
-    let raw = get_dummy_raw_msg_conn_open_confirm();
-    let mut msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
-            raw,
-        )
-        .unwrap();
-    let _store = contract.init_connection_counter(deps.as_mut().storage, u64::default());
-
-    let counterparty_prefix =
-        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-            "hello".as_bytes().to_vec(),
-        )
-        .unwrap();
-    let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        counterparty_client_id,
-        None,
-        counterparty_prefix.clone(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::TryOpen,
-        IbcClientId::default(),
-        counter_party.clone(),
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    let conn_id = ConnectionId::new(1);
-    msg.conn_id_on_b = conn_id.clone();
-    let contract = CwIbcCoreContext::new();
-    contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
-        .unwrap();
-    contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
-        .unwrap();
-    let mock_response_data = OpenConfirmResponse {
-        conn_id: conn_id.as_str().to_owned(),
-        counterparty_client_id: conn_id.as_str().to_owned(),
-        counterparty_connection_id: counter_party.client_id().to_string(),
-        counterparty_prefix: to_vec(&counterparty_prefix).unwrap(),
-    };
-    let mock_data_binary = to_binary(&mock_response_data).unwrap();
-    let events = Event::new("open_ack");
-    let response = SubMsgResponse {
-        data: Some(mock_data_binary),
-        events: vec![events],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(response);
-    let reply_msg = Reply {
-        id: EXECUTE_CONNECTION_OPENCONFIRM,
-        result,
-    };
-    // let res = contract.execute_connection_openconfirm(deps.as_mut(), reply_msg);
-
-    // assert!(res.is_ok())
-}
-
-#[test]
-#[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
-fn connection_open_confirm_execute_fails() {
-    let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
-    let raw = get_dummy_raw_msg_conn_open_confirm();
-    let mut msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
-            raw,
-        )
-        .unwrap();
-    let _store = contract.init_connection_counter(deps.as_mut().storage, u64::default());
-
-    let counterparty_prefix =
-        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-            "hello".as_bytes().to_vec(),
-        )
-        .unwrap();
-    let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        counterparty_client_id,
-        None,
-        counterparty_prefix.clone(),
-    );
-    let conn_id = ConnectionId::new(1);
-    msg.conn_id_on_b = conn_id.clone();
-    let contract = CwIbcCoreContext::new();
-
-    contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
-        .unwrap();
-    let mock_response_data = OpenConfirmResponse {
-        conn_id: conn_id.as_str().to_owned(),
-        counterparty_client_id: conn_id.as_str().to_owned(),
-        counterparty_connection_id: counter_party.client_id().to_string(),
-        counterparty_prefix: to_vec(&counterparty_prefix).unwrap(),
-    };
-    let mock_data_binary = to_binary(&mock_response_data).unwrap();
-    let events = Event::new("open_ack");
-    let response = SubMsgResponse {
-        data: Some(mock_data_binary),
-        events: vec![events],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(response);
-    let reply_msg = Reply {
-        id: EXECUTE_CONNECTION_OPENCONFIRM,
-        result,
-    };
-    // contract
-    //     .execute_connection_openconfirm(deps.as_mut(), reply_msg)
-    //     .unwrap();
 }
 
 #[test]
@@ -1787,4 +1672,3 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         .connection_open_ack(deps.as_mut(), info, env, res_msg)
         .unwrap();
 }
-

@@ -77,12 +77,10 @@ impl LightClient {
         deps: Deps,
         verify_connection_state: VerifyConnectionState,
         client_id: &IbcClientId,
-       
     ) -> Result<(), ContractError> {
         let msg = to_binary(&cw_common::client_msg::QueryMsg::VerifyOpenConfirm {
             client_id: client_id.to_string(),
             verify_connection_state,
-           
         })
         .unwrap();
         let query = build_smart_query(self.address.clone(), msg);
@@ -95,13 +93,11 @@ impl LightClient {
         deps: Deps,
         verify_packet_acknowledge: VerifyPacketAcknowledgement,
         client_id: &IbcClientId,
-        
     ) -> Result<(), ContractError> {
         let msg = to_binary(
             &cw_common::client_msg::QueryMsg::VerifyPacketAcknowledgement {
                 client_id: client_id.to_string(),
                 verify_packet_acknowledge,
-                
             },
         )
         .unwrap();
@@ -115,12 +111,10 @@ impl LightClient {
         deps: Deps,
         verify_packet_data: VerifyPacketData,
         client_id: &IbcClientId,
-        
     ) -> Result<(), ContractError> {
         let msg = to_binary(&cw_common::client_msg::QueryMsg::VerifyPacketData {
             client_id: client_id.to_string(),
             verify_packet_data,
-           
         })
         .unwrap();
         let query = build_smart_query(self.address.clone(), msg);
@@ -166,11 +160,10 @@ impl LightClient {
     pub fn verify_channel(
         &self,
         deps: Deps,
-       
+
         verify_channel_state: VerifyChannelState,
     ) -> Result<(), ContractError> {
         let msg = to_binary(&cw_common::client_msg::QueryMsg::VerifyChannel {
-           
             verify_channel_state,
         })
         .unwrap();

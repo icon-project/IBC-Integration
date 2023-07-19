@@ -1082,12 +1082,14 @@ fn test_validate_open_try_channel() {
 
     let light_client = LightClient::new("lightclient".to_string());
 
-    contract.bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string()).unwrap();
-   
-       contract
-           .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
-           .unwrap();
-       mock_lightclient_reply(&mut deps);
+    contract
+        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
+        .unwrap();
+
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),

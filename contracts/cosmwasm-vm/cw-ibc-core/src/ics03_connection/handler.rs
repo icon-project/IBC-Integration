@@ -291,7 +291,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_event(event))
     }
 
-   
     /// This method handles the opening of a connection open try between two IBC clients.
     ///
     /// Arguments:
@@ -314,7 +313,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_open_try(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
+        _info: MessageInfo,
         env: Env,
         message: MsgConnectionOpenTry,
     ) -> Result<Response, ContractError> {
@@ -428,11 +427,11 @@ impl<'a> CwIbcCoreContext<'a> {
             client_consensus_state_path_on_b,
         );
 
-        let payload = VerifyConnectionPayload{
+        let payload = VerifyConnectionPayload {
             client_id: client_id_on_b.to_string(),
             verify_connection_state,
             verify_client_full_state,
-            verify_client_consensus_state
+            verify_client_consensus_state,
         };
 
         client.verify_connection_open_try(deps.as_ref(), payload)?;
@@ -513,7 +512,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_event(event))
     }
 
-   
     /// This function handles the confirmation of an open connection between two parties in an IBC
     /// protocol implementation.
     ///
@@ -549,14 +547,6 @@ impl<'a> CwIbcCoreContext<'a> {
         }
 
         debug_println!("Connection State Matched");
-
-        // let _client_state_of_a_on_b = self
-        //     .client_state(deps.storage, client_id_on_b)
-        //     .map_err(|_| ConnectionError::Other {
-        //         description: "failed to fetch client state".to_string(),
-        //     })
-        //     .map_err(|e| Into::<ContractError>::into(e))?;
-        debug_println!("Client State Decoded");
 
         let _client_cons_state_path_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
@@ -602,7 +592,6 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.as_ref(),
             verify_connection_state,
             client_id_on_b,
-            
         )?;
 
         let connection_id = msg.conn_id_on_b.clone();
@@ -667,6 +656,4 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("connection_id", connection_id.as_str())
             .add_event(event))
     }
-
-   
 }

@@ -102,7 +102,13 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let light_client = LightClient::new("lightclient".to_string());
 
- contract.bind_port(&mut deps.storage, &packet.port_id_on_b, "moduleaddress".to_string()).unwrap();
+    contract
+        .bind_port(
+            &mut deps.storage,
+            &packet.port_id_on_b,
+            "moduleaddress".to_string(),
+        )
+        .unwrap();
 
     contract
         .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
@@ -134,5 +140,8 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
     let res =
         contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE)
+    assert_eq!(
+        res.unwrap().messages[0].id,
+        VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE
+    )
 }
