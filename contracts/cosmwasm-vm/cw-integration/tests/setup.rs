@@ -11,6 +11,9 @@ use cw_xcall_ibc_connection::state::IbcConfig;
 
 use test_utils::{IntegrationData, RawPayload};
 
+pub const PORT: &str = "xcall";
+pub const COUNTERPARTY_NID: &str = "0x3.icon";
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum TestApps {
     LightClient,
@@ -300,7 +303,7 @@ pub fn init_xcall_ibc_connection_contract(mut ctx: TestContext) -> TestContext {
             &cw_xcall_ibc_connection::msg::InstantiateMsg {
                 ibc_host: ctx.get_ibc_core(),
                 denom: "uarch".to_string(),
-                port_id: "mock".to_string(),
+                port_id: PORT.to_string(),
                 xcall_address: ctx.get_xcall_app(),
             },
             &[],
