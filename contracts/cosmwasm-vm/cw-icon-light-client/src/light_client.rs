@@ -126,11 +126,11 @@ impl ILightClient for IconClient<'_> {
 
     fn update_client(
         &mut self,
-        _caller: Addr,
+        caller: Addr,
         client_id: &str,
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
-        //  self.context.ensure_ibc_host(caller)?;
+        self.context.ensure_ibc_host(caller)?;
         let btp_header = signed_header.header.clone().unwrap();
 
         let mut state = self.context.get_client_state(client_id)?;
