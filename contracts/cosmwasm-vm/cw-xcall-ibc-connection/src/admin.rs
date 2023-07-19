@@ -63,10 +63,8 @@ impl<'a> CwIbcConnection<'a> {
         }
         self.admin().save(store, &admin);
         Ok(Response::new()
-                    .add_attribute("method", "add_admin")
-                    .add_attribute("admin", admin.to_string()))
-
-       
+            .add_attribute("method", "add_admin")
+            .add_attribute("admin", admin.to_string()))
     }
 
     /// This function updates the admin address of a contract if the caller is the owner and the new

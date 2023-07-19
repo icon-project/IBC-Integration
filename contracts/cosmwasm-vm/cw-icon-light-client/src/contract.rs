@@ -592,7 +592,13 @@ mod tests {
         let client_state = header.to_client_state(trusting_period.unwrap_or(1000000), 0);
         let consensus_state = header.to_consensus_state();
         let info = mock_info(SENDER, &[]);
-        instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg::default()).unwrap();
+        instantiate(
+            deps.as_mut(),
+            mock_env(),
+            info.clone(),
+            InstantiateMsg::default(),
+        )
+        .unwrap();
         let msg = ExecuteMsg::CreateClient {
             client_id: client_id.to_string(),
             client_state: client_state.to_any().encode_to_vec(),

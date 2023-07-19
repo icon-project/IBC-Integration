@@ -100,7 +100,7 @@ impl ILightClient for IconClient<'_> {
         client_state: ClientState,
         consensus_state: ConsensusState,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
-       // self.context.ensure_ibc_host(caller)?;
+        // self.context.ensure_ibc_host(caller)?;
         let exists = self.context.get_client_state(client_id).is_ok();
         if exists {
             return Err(ContractError::ClientStateAlreadyExists(
@@ -130,7 +130,7 @@ impl ILightClient for IconClient<'_> {
         client_id: &str,
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
-      //  self.context.ensure_ibc_host(caller)?;
+        //  self.context.ensure_ibc_host(caller)?;
         let btp_header = signed_header.header.clone().unwrap();
 
         let mut state = self.context.get_client_state(client_id)?;

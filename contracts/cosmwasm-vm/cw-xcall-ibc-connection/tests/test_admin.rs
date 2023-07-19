@@ -164,8 +164,6 @@ fn update_existing_admin() {
     assert_eq!(result, admin_two().to_string());
 }
 
-
-
 #[test]
 fn remove_existing_admin_and_add_admin() {
     let mut mock_deps = deps();

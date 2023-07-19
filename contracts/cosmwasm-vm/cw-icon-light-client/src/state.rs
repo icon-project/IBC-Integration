@@ -162,7 +162,7 @@ impl<'a> IContext for CwContext<'a> {
     }
     fn ensure_owner(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
         let config = self.get_config()?;
-        debug_eprintln!("owner {:?} caller {}",config.owner,caller.to_string());
+        debug_eprintln!("owner {:?} caller {}", config.owner, caller.to_string());
         if caller != config.owner {
             return Err(ContractError::Unauthorized {});
         }

@@ -93,7 +93,15 @@ fn success_on_open_channel_open_init_unordered_channel() {
         channel_id: "channel-3".to_string(),
     };
 
-    contract.store_config(deps.as_mut().storage, &Config{port_id:"our-port".to_string(),denom:"arch".to_string()}).unwrap();
+    contract
+        .store_config(
+            deps.as_mut().storage,
+            &Config {
+                port_id: "our-port".to_string(),
+                denom: "arch".to_string(),
+            },
+        )
+        .unwrap();
 
     let connection_id = "newconnection".to_string();
 
@@ -220,7 +228,15 @@ fn sucess_on_open_channel_open_try_valid_version() {
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
-    contract.store_config(deps.as_mut().storage, &Config{port_id:"our-port".to_string(),denom:"arch".to_string()}).unwrap();
+    contract
+        .store_config(
+            deps.as_mut().storage,
+            &Config {
+                port_id: "our-port".to_string(),
+                denom: "arch".to_string(),
+            },
+        )
+        .unwrap();
 
     let result = contract
         .execute(deps.as_mut(), mock_env, mock_info, execute_message)
@@ -269,7 +285,15 @@ fn sucess_on_ibc_channel_connect() {
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
-    contract.store_config(deps.as_mut().storage, &Config{port_id:"our-port".to_string(),denom:"arch".to_string()}).unwrap();
+    contract
+        .store_config(
+            deps.as_mut().storage,
+            &Config {
+                port_id: "our-port".to_string(),
+                denom: "arch".to_string(),
+            },
+        )
+        .unwrap();
     contract
         .configure_connection(
             deps.as_mut().storage,
@@ -453,19 +477,31 @@ fn sucess_receive_packet_for_call_message_request() {
             100,
         )
         .unwrap();
-    contract.store_config(mock_deps.as_mut().storage, &Config{port_id:"our-port".to_string(),denom:"arch".to_string()}).unwrap();
+    contract
+        .store_config(
+            mock_deps.as_mut().storage,
+            &Config {
+                port_id: "our-port".to_string(),
+                denom: "arch".to_string(),
+            },
+        )
+        .unwrap();
     let channel_config = ChannelConfig {
         client_id: "client_id".to_string(),
         timeout_height: 100,
         counterparty_nid: NetId::from("nid".to_string()),
     };
-    
+
     contract
-        .store_channel_config(mock_deps.as_mut().storage, &dst.channel_id.clone(), &channel_config)
+        .store_channel_config(
+            mock_deps.as_mut().storage,
+            &dst.channel_id.clone(),
+            &channel_config,
+        )
         .unwrap();
-    
+
     let result = contract.execute(mock_deps.as_mut(), mock_env, mock_info, execute_message);
-     println!("{:?}",result);
+    println!("{:?}", result);
     assert!(result.is_ok());
 }
 
@@ -550,8 +586,6 @@ fn test_entry_point() {
     let mock_info = create_mock_info("owner", "uconst", 200000);
     let env = mock_env();
 
-   
-
     instantiate(
         mock_deps.as_mut(),
         env.clone(),
@@ -564,9 +598,9 @@ fn test_entry_point() {
         },
     )
     .unwrap();
-let msg = cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
-    address: admin_one().to_string(),
-};
+    let msg = cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
+        address: admin_one().to_string(),
+    };
 
     execute(mock_deps.as_mut(), env.clone(), mock_info, msg).unwrap();
 
@@ -790,8 +824,6 @@ fn test_ack_success_on_call_request() {
     assert!(ack.is_ok())
 }
 
-
-
 #[test]
 fn test_ack_success_on_call_response() {
     let data = cw_xcall::types::response::CallServiceMessageResponse::new(
@@ -948,11 +980,26 @@ fn test_handle_response() {
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
-    contract.store_channel_config(&mut mock_deps.storage,
-         &dst.channel_id, 
-         &ChannelConfig { client_id: "client".to_string(), 
-         timeout_height:1000, counterparty_nid:NetId::from_str("nid").unwrap() }).unwrap();
-    contract.store_config(mock_deps.as_mut().storage, &Config{port_id:"our-port".to_string(),denom:"arch".to_string()}).unwrap();
+    contract
+        .store_channel_config(
+            &mut mock_deps.storage,
+            &dst.channel_id,
+            &ChannelConfig {
+                client_id: "client".to_string(),
+                timeout_height: 1000,
+                counterparty_nid: NetId::from_str("nid").unwrap(),
+            },
+        )
+        .unwrap();
+    contract
+        .store_config(
+            mock_deps.as_mut().storage,
+            &Config {
+                port_id: "our-port".to_string(),
+                denom: "arch".to_string(),
+            },
+        )
+        .unwrap();
     let packet = IbcPacket::new(message_data, src, dst, 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
@@ -965,7 +1012,7 @@ fn test_handle_response() {
         },
     );
 
-    println!("{:?}",res);
+    println!("{:?}", res);
 
     assert!(res.is_ok())
 }
@@ -985,7 +1032,7 @@ fn test_for_call_service_request_from_rlp_bytes() {
         vec![],
     );
 
-   assert_eq!(expected_data, cs_message_request)
+    assert_eq!(expected_data, cs_message_request)
 }
 
 #[test]
