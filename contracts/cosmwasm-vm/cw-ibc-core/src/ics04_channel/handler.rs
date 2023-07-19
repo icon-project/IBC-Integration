@@ -428,8 +428,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client = self.get_client(deps.as_ref().storage, client_id)?;
         client.verify_channel(
             deps.as_ref(),
-            message_info,
-            endpoint.clone(),
             verify_channel_state,
         )?;
 
@@ -605,8 +603,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client = self.get_client(deps.as_ref().storage, client_id)?;
         client.verify_channel(
             deps.as_ref(),
-            message_info.clone(),
-            endpoint.clone(),
             verify_channel_state,
         )?;
 
@@ -839,8 +835,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client = self.get_client(deps.as_ref().storage, client_id)?;
         client.verify_channel(
             deps.as_ref(),
-            message_info,
-            endpoint.clone(),
             verify_channel_state,
         )?;
 

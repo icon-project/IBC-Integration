@@ -146,7 +146,6 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.as_ref(),
             verify_packet_data,
             &client_id_on_b,
-            packet_data,
         )?;
 
         let chan_end_on_b = self.get_channel_end(

@@ -235,18 +235,11 @@ impl<'a> CwIbcCoreContext<'a> {
             consensus_state_path_on_b,
             client_cons_state_path_on_a.clone().as_bytes(),
         );
-        let payload = VerifyConnectionPayload::<OpenAckResponse> {
+        let payload = VerifyConnectionPayload {
             client_id: client_id_on_a.to_string(),
             verify_connection_state,
             verify_client_full_state,
             verify_client_consensus_state,
-            expected_response: OpenAckResponse {
-                conn_id: msg.conn_id_on_a.to_string(),
-                version: serde_json_wasm::to_vec(&msg.version).unwrap(),
-                counterparty_client_id: client_id_on_b.clone().to_string(),
-                counterparty_connection_id: msg.conn_id_on_b.to_string(),
-                counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
-            },
         };
 
         client.verify_connection_open_ack(deps.as_ref(), payload)?;
@@ -298,126 +291,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_event(event))
     }
 
-    /// This method executes the opening acknowledgement of an IBC connection and updates the
-    /// connection state accordingly.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
-    /// contract. These dependencies include the storage, querier, and API interfaces.
-    /// * `message`: `message` is a `Reply` struct that contains the result of a submessage sent by the
-    /// contract. It is used to extract the data returned by the submessage and process it accordingly.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to be
-    /// returned by the contract and `ContractError` is an enum representing the possible errors that can
-    /// occur during the execution of the function.
-    pub fn execute_connection_open_ack(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        debug_println!("[ConnOpenAckReply]: Open Ack Reply");
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
-                Some(data) => {
-                    let response: OpenAckResponse =
-                        from_binary_response(&data).map_err(ContractError::Std)?;
-                    debug_println!("[ConnOpenAckReply]: Response Decoded {:?}", response);
-
-                    let connection_id =
-                        IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
-                            ContractError::IbcDecodeError {
-                                error: DecodeError::new(error.to_string()),
-                            }
-                        })?;
-
-                    let version: Version =
-                        serde_json_wasm::from_slice(&response.version).map_err(|error| {
-                            ContractError::IbcDecodeError {
-                                error: DecodeError::new(error.to_string()),
-                            }
-                        })?;
-
-                    let mut conn_end = self.connection_end(deps.storage, connection_id.clone())?;
-
-                    if !conn_end.state_matches(&State::Init) {
-                        return Err(ConnectionError::ConnectionMismatch { connection_id })
-                            .map_err(Into::<ContractError>::into);
-                    }
-                    debug_println!("[ConnOpenAckReply]: Conn end state matches");
-                    let counter_party_client_id =
-                        ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
-                            ContractError::IbcDecodeError {
-                                error: DecodeError::new(error.to_string()),
-                            }
-                        })?;
-
-                    let counterparty_conn_id = match response.counterparty_connection_id.is_empty()
-                    {
-                        true => None,
-                        false => {
-                            let connection_id =
-                                IbcConnectionId::from_str(&response.counterparty_connection_id)
-                                    .unwrap();
-                            Some(connection_id)
-                        }
-                    };
-
-                    let counterparty_prefix =
-                        CommitmentPrefix::try_from(response.counterparty_prefix)
-                            .map_err(|error| ConnectionError::Other {
-                                description: error.to_string(),
-                            })
-                            .map_err(Into::<ContractError>::into)?;
-
-                    let counterparty = Counterparty::new(
-                        counter_party_client_id,
-                        counterparty_conn_id.clone(),
-                        counterparty_prefix,
-                    );
-
-                    conn_end.set_state(State::Open);
-                    conn_end.set_version(version);
-                    conn_end.set_counterparty(counterparty.clone());
-
-                    let counter_conn_id = counterparty_conn_id.unwrap();
-
-                    let event = create_open_ack_event(
-                        connection_id.clone(),
-                        conn_end.client_id().clone(),
-                        counter_conn_id,
-                        counterparty.client_id().clone(),
-                    );
-
-                    self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
-                        .unwrap();
-                    debug_println!("[ConnOpenAckReply]: Connection Stored");
-
-                    self.update_connection_commitment(
-                        deps.storage,
-                        connection_id.clone(),
-                        conn_end,
-                    )
-                    .unwrap();
-
-                    Ok(Response::new()
-                        .add_attribute("method", "execute_connection_open_ack")
-                        .add_attribute("connection_id", connection_id.as_str())
-                        .add_event(event))
-                }
-                None => Err(ConnectionError::Other {
-                    description: "UNKNOWN ERROR".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
-            },
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ConnectionError::Other { description: error })
-                    .map_err(Into::<ContractError>::into)
-            }
-        }
-    }
+   
     /// This method handles the opening of a connection open try between two IBC clients.
     ///
     /// Arguments:
@@ -554,25 +428,11 @@ impl<'a> CwIbcCoreContext<'a> {
             client_consensus_state_path_on_b,
         );
 
-        let payload = VerifyConnectionPayload::<OpenTryResponse> {
+        let payload = VerifyConnectionPayload{
             client_id: client_id_on_b.to_string(),
             verify_connection_state,
             verify_client_full_state,
-            verify_client_consensus_state,
-            expected_response: OpenTryResponse {
-                conn_id: "".to_string(),
-                client_id: client_id_on_b.to_string(),
-                counterparty_client_id: message.counterparty.client_id().clone().to_string(),
-
-                counterparty_connection_id: message
-                    .counterparty
-                    .connection_id()
-                    .map(|c| c.to_string())
-                    .unwrap_or("".to_string()),
-                counterparty_prefix: message.counterparty.prefix().as_bytes().to_vec(),
-                versions: serde_json_wasm::to_vec(&message.versions_on_a.clone()).unwrap(),
-                delay_period: message.delay_period.as_secs(),
-            },
+            verify_client_consensus_state
         };
 
         client.verify_connection_open_try(deps.as_ref(), payload)?;
@@ -653,161 +513,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_event(event))
     }
 
-    /// The below code is implementing a function `execute_connection_open_try` that handles the result
-    /// of a submessage sent to open a connection in an IBC (Inter-Blockchain Communication) protocol.
-    /// It extracts the relevant information from the submessage result, such as the counterparty client
-    /// ID, connection ID, and commitment prefix, and uses them to create a new connection end. It then
-    /// stores the connection end in the contract's storage and returns a response with relevant
-    /// attributes and events. If there is an error in the submessage result, it returns an error with a
-    /// description of the error.
-    pub fn execute_connection_open_try(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        debug_println!("[ConnOpenTryReply]:open try repluy ");
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
-                Some(data) => {
-                    debug_println!("[ConnOpenTryReply]: Res is ok ");
-
-                    let response: OpenTryResponse =
-                        from_binary_response(&data).map_err(ContractError::Std)?;
-
-                    debug_println!("[ConnOpenTryReply]: Response parsed");
-
-                    let counter_party_client_id =
-                        ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
-                            ContractError::IbcDecodeError {
-                                error: DecodeError::new(error.to_string()),
-                            }
-                        })?;
-
-                    debug_println!(
-                        "[ConnOpenTryReply]: counter_party_client_id id {:?}",
-                        counter_party_client_id
-                    );
-
-                    let counterparty_conn_id = match response.counterparty_connection_id.is_empty()
-                    {
-                        true => None,
-                        false => {
-                            let connection_id =
-                                ConnectionId::from_str(&response.counterparty_connection_id)?;
-                            Some(connection_id)
-                        }
-                    };
-
-                    debug_println!(
-                        "[ConnOpenTryReply]: counterparty conn id  {:?}",
-                        counterparty_conn_id
-                    );
-
-                    let counterparty_prefix =
-                        CommitmentPrefix::try_from(response.counterparty_prefix)
-                            .map_err(|error| ConnectionError::Other {
-                                description: error.to_string(),
-                            })
-                            .map_err(Into::<ContractError>::into)?;
-
-                    debug_println!(
-                        "[ConnOpenTryReply]: counterparty_prefix {:?}",
-                        counterparty_prefix
-                    );
-
-                    let counterparty = Counterparty::new(
-                        counter_party_client_id,
-                        counterparty_conn_id.clone(),
-                        counterparty_prefix,
-                    );
-
-                    debug_println!(
-                        "[ConnOpenTryReply]: respnose version {:?}",
-                        HexString::from_bytes(&response.versions)
-                    );
-                    let version: Vec<Version> = serde_json_wasm::from_slice(&response.versions)
-                        .map_err(|error| ContractError::IbcDecodeError {
-                            error: DecodeError::new(error.to_string()),
-                        })?;
-
-                    debug_println!("[ConnOpenTryReply]: version decode{:?}", version);
-
-                    let delay_period = Duration::from_secs(response.delay_period);
-
-                    let client_id = ClientId::from_str(&response.client_id).map_err(|error| {
-                        ContractError::IbcDecodeError {
-                            error: DecodeError::new(error.to_string()),
-                        }
-                    })?;
-
-                    debug_println!("[ConnOpenTryReply]: client id is{:?}", client_id);
-
-                    let connection_id = self.generate_connection_idenfier(deps.storage)?;
-
-                    debug_println!("[ConnOpenTryReply]: connection id is{:?}", connection_id);
-
-                    let conn_end = ConnectionEnd::new(
-                        State::TryOpen,
-                        client_id.clone(),
-                        counterparty,
-                        version,
-                        delay_period,
-                    );
-
-                    debug_println!("[ConnOpenTryReply]: conn end{:?}", conn_end);
-
-                    let counterparty_client_id =
-                        ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
-                            ContractError::IbcDecodeError {
-                                error: DecodeError::new(error.to_string()),
-                            }
-                        })?;
-                    debug_println!(
-                        "[ConnOpenTryReply]: counterparty client id {:?}",
-                        counterparty_client_id
-                    );
-                    debug_println!(
-                        "[ConnOpenTryReply]: Response connection id  {:?}",
-                        &response.counterparty_connection_id
-                    );
-
-                    let event = create_open_try_event(
-                        connection_id.clone(),
-                        client_id.clone(),
-                        counterparty_conn_id,
-                        counterparty_client_id,
-                    );
-                    self.store_connection_to_client(
-                        deps.storage,
-                        client_id,
-                        connection_id.clone(),
-                    )?;
-                    self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
-                        .unwrap();
-
-                    self.update_connection_commitment(
-                        deps.storage,
-                        connection_id.clone(),
-                        conn_end,
-                    )
-                    .unwrap();
-
-                    Ok(Response::new()
-                        .add_attribute("method", "execute_connection_open_try")
-                        .add_attribute("connection_id", connection_id.as_str())
-                        .add_event(event))
-                }
-                None => Err(ConnectionError::Other {
-                    description: "UNKNOWN ERROR".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
-            },
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ConnectionError::Other { description: error })
-                    .map_err(Into::<ContractError>::into)
-            }
-        }
-    }
+   
     /// This function handles the confirmation of an open connection between two parties in an IBC
     /// protocol implementation.
     ///
@@ -892,22 +598,11 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         debug_println!("Verify Connection State {:?}", verify_connection_state);
-        let expected_response = OpenConfirmResponse {
-            conn_id: msg.conn_id_on_b.clone().to_string(),
-            counterparty_client_id: client_id_on_a.to_string(),
-            counterparty_connection_id: conn_end_on_b
-                .counterparty()
-                .connection_id()
-                .unwrap()
-                .to_string(),
-            counterparty_prefix: prefix_on_b.as_bytes().to_vec(),
-        };
-
         client.verify_connection_open_confirm(
             deps.as_ref(),
             verify_connection_state,
             client_id_on_b,
-            expected_response,
+            
         )?;
 
         let connection_id = msg.conn_id_on_b.clone();
@@ -973,140 +668,5 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_event(event))
     }
 
-    /// This method executes the opening confirmation of an IBC connection and returns a response or an
-    /// error.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
-    /// contract. These dependencies include the storage, querier, and API interfaces. The `DepsMut`
-    /// object is used to interact with these dependencies and perform operations such as reading and
-    /// writing data
-    /// * `message`: `message` is a `Reply` struct that contains the result of a submessage sent by the
-    /// contract. Specifically, it contains the result of a `connection openconfirm` submessage, which
-    /// confirms the opening of a connection between two IBC-enabled blockchains. The function extracts
-    /// relevant information from the
-    ///
-    /// Returns:
-    ///
-    /// This function returns a `Result<Response, ContractError>` where `Response` and `ContractError`
-    /// are defined in the `cosmwasm_std` and `ibc` crates respectively.
-    pub fn execute_connection_openconfirm(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        debug_println!("[ConnOpenConfirmReply]: OpenConfirm Reply Received");
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
-                Some(data) => {
-                    let response: OpenConfirmResponse =
-                        from_binary_response(&data).map_err(ContractError::Std)?;
-                    debug_println!(
-                        "[ConnOpenConfirmReply]: OpenConfirm Response Decoded {:?}",
-                        response
-                    );
-
-                    let connection_id =
-                        IbcConnectionId::from_str(&response.conn_id).map_err(|error| {
-                            ContractError::IbcDecodeError {
-                                error: DecodeError::new(error.to_string()),
-                            }
-                        })?;
-                    debug_println!(
-                        "[ConnOpenConfirmReply]: Parsed Connection Id {:?}",
-                        connection_id
-                    );
-                    let mut conn_end = self.connection_end(deps.storage, connection_id.clone())?;
-                    debug_println!(
-                        "[ConnOpenConfirmReply]: Stored Connection End {:?}",
-                        conn_end
-                    );
-
-                    if !conn_end.state_matches(&State::TryOpen) {
-                        return Err(ConnectionError::ConnectionMismatch { connection_id })
-                            .map_err(Into::<ContractError>::into);
-                    }
-                    debug_println!("[ConnOpenConfirmReply]: Stored Connection State Matched");
-                    let counter_party_client_id =
-                        ClientId::from_str(&response.counterparty_client_id).map_err(|error| {
-                            ContractError::IbcDecodeError {
-                                error: DecodeError::new(error.to_string()),
-                            }
-                        })?;
-                    debug_println!(
-                        "[ConnOpenConfirmReply]: CounterParty ClientId {:?}",
-                        counter_party_client_id
-                    );
-                    let counterparty_conn_id = match response.counterparty_connection_id.is_empty()
-                    {
-                        true => None,
-                        false => {
-                            let connection_id =
-                                IbcConnectionId::from_str(&response.counterparty_connection_id)
-                                    .unwrap();
-                            Some(connection_id)
-                        }
-                    };
-                    debug_println!(
-                        "[ConnOpenConfirmReply]: CounterParty ConnId {:?}",
-                        counterparty_conn_id
-                    );
-                    let counterparty_prefix =
-                        CommitmentPrefix::try_from(response.counterparty_prefix)
-                            .map_err(|error| ConnectionError::Other {
-                                description: error.to_string(),
-                            })
-                            .map_err(Into::<ContractError>::into)?;
-
-                    let counterparty = Counterparty::new(
-                        counter_party_client_id,
-                        counterparty_conn_id.clone(),
-                        counterparty_prefix,
-                    );
-                    debug_println!("[ConnOpenConfirmReply]: CounterParty  {:?}", counterparty);
-                    conn_end.set_state(State::Open);
-
-                    let counter_conn_id = counterparty_conn_id.unwrap();
-                    debug_println!(
-                        "[ConnOpenConfirmReply]: CounterParty ConnId {:?}",
-                        counter_conn_id
-                    );
-
-                    let event = create_open_confirm_event(
-                        connection_id.clone(),
-                        conn_end.client_id().clone(),
-                        counter_conn_id,
-                        counterparty.client_id().clone(),
-                    );
-
-                    self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
-                        .unwrap();
-                    debug_println!("[ConnOpenConfirmReply]: Connection Stored");
-
-                    self.update_connection_commitment(
-                        deps.storage,
-                        connection_id.clone(),
-                        conn_end,
-                    )
-                    .unwrap();
-
-                    debug_println!("[ConnOpenConfirmReply]: Commitment Stored Stored");
-
-                    Ok(Response::new()
-                        .add_attribute("method", "execute_connection_open_confirm")
-                        .add_attribute("connection_id", connection_id.as_str())
-                        .add_event(event))
-                }
-                None => Err(ConnectionError::Other {
-                    description: "UNKNOWN ERROR".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
-            },
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ConnectionError::Other { description: error })
-                    .map_err(Into::<ContractError>::into)
-            }
-        }
-    }
+   
 }

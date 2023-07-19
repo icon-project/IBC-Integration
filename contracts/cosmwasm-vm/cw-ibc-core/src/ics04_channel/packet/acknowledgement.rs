@@ -179,7 +179,7 @@ impl<'a> CwIbcCoreContext<'a> {
             deps.as_ref(),
             verify_packet_acknowledge,
             &client_id_on_a,
-            packet_data,
+            
         )?;
 
         let packet = msg.packet.clone();

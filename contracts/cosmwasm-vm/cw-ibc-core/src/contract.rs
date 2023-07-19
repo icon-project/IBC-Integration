@@ -481,9 +481,9 @@ impl<'a> CwIbcCoreContext<'a> {
             EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
-            EXECUTE_CONNECTION_OPENTRY => self.execute_connection_open_try(deps, message),
-            EXECUTE_CONNECTION_OPENACK => self.execute_connection_open_ack(deps, message),
-            EXECUTE_CONNECTION_OPENCONFIRM => self.execute_connection_openconfirm(deps, message),
+            // EXECUTE_CONNECTION_OPENTRY => self.execute_connection_open_try(deps, message),
+            // EXECUTE_CONNECTION_OPENACK => self.execute_connection_open_ack(deps, message),
+            // EXECUTE_CONNECTION_OPENCONFIRM => self.execute_connection_openconfirm(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_INIT => self.execute_channel_open_init(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_TRY => self.execute_channel_open_try(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT => {
