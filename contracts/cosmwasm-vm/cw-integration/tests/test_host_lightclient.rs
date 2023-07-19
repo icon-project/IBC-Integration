@@ -29,8 +29,8 @@ fn setup_test(payload_file: &str) -> TestContext {
 }
 
 pub fn setup_xcall_multi_contracts(mut ctx: TestContext) -> TestContext {
-    ctx = init_light_client(ctx);
     ctx = init_ibc_core_contract(ctx);
+    ctx = init_light_client(ctx);
     ctx = init_xcall_app_contract(ctx);
     ctx = init_xcall_ibc_connection_contract(ctx);
     ctx = init_mock_dapp_multi_contract(ctx);
@@ -57,7 +57,7 @@ pub fn call_multi_dapp_add_connection(ctx: &mut TestContext) -> Result<AppRespon
         &cw_mock_dapp_multi::msg::ExecuteMsg::AddConnection {
             src_endpoint: ctx.get_xcall_ibc_connection().to_string(),
             dest_endpoint: "cx00000".to_string(),
-            network_id: "icon".to_string(),
+            network_id: COUNTERPARTY_NID.to_string(),
         },
         &[],
     )
@@ -430,15 +430,6 @@ fn test_packet_send() {
     println!("{result:?}");
     assert!(result.is_ok());
     println!("Packet Send Ok {:?}", &result);
-
-    // // timeout_packet
-    // let result = call_timeout_packet(&mut ctx);
-    // assert!(result.is_ok());
-    // println!("Packet timeout Ok {:?}", &result);
-
-    // let result = call_acknowledge_packet(&mut ctx);
-    // assert!(result.is_ok());
-    // println!("Packet Acknowledge Ok {:?}", &result);
 }
 
 pub fn get_client_id(res: &AppResponse) -> String {

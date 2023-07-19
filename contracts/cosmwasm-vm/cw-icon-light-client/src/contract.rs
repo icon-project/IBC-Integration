@@ -592,11 +592,13 @@ mod tests {
         let client_state = header.to_client_state(trusting_period.unwrap_or(1000000), 0);
         let consensus_state = header.to_consensus_state();
         let info = mock_info(SENDER, &[]);
+        instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg::default()).unwrap();
         let msg = ExecuteMsg::CreateClient {
             client_id: client_id.to_string(),
             client_state: client_state.to_any().encode_to_vec(),
             consensus_state: consensus_state.to_any().encode_to_vec(),
         };
+        let info = mock_info("ibc_host", &[]);
 
         execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         deps
@@ -629,6 +631,11 @@ mod tests {
         let client_id = "test_client".to_string();
         let mut deps = setup();
         let info = mock_info(SENDER, &[]);
+        let env = mock_env();
+        let msg = InstantiateMsg::default();
+
+        let res: Response = instantiate(deps.as_mut(), env, info.clone(), msg.clone()).unwrap();
+
         let start_header = &get_test_headers()[0];
         let client_state = start_header.to_client_state(1000000, 0);
         let consensus_state = start_header.to_consensus_state();
@@ -639,6 +646,8 @@ mod tests {
             client_state: client_state_any.encode_to_vec(),
             consensus_state: consensus_state_any.encode_to_vec(),
         };
+
+        let info = mock_info("ibc_host", &[]);
 
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
 
@@ -671,10 +680,10 @@ mod tests {
 
         let signed_header = &get_test_signed_headers()[1];
         let info = mock_info(SENDER, &[]);
-        let msg = InstantiateMsg {
-            ibc_host: Addr::unchecked(SENDER),
-        };
+        let msg = InstantiateMsg::default();
         let _result: Response = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
 
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),

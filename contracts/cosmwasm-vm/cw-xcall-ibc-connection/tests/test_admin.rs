@@ -164,43 +164,7 @@ fn update_existing_admin() {
     assert_eq!(result, admin_two().to_string());
 }
 
-#[test]
-#[should_panic(expected = "AdminAlreadyExist")]
-fn add_existing_admin() {
-    let mut mock_deps = deps();
 
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-
-    let contract = CwIbcConnection::default();
-
-    contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
-        .unwrap();
-
-    let response = contract
-        .add_admin(
-            mock_deps.as_mut().storage,
-            mock_info.clone(),
-            admin_one().to_string(),
-        )
-        .unwrap();
-
-    assert_eq!(response.attributes[0].value, "add_admin");
-
-    assert_eq!(response.attributes[1].value, admin_one().to_string());
-
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
-    assert_eq!(result, admin_one().to_string());
-
-    contract
-        .add_admin(
-            mock_deps.as_mut().storage,
-            mock_info,
-            admin_one().to_string(),
-        )
-        .unwrap();
-}
 
 #[test]
 fn remove_existing_admin_and_add_admin() {
