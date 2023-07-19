@@ -220,7 +220,6 @@ fn test_for_update_client_execution_messages() {
         )
         .unwrap(),
         next_validators: vec![hex::decode("00b040bff300eee91f7665ac8dcf89eb0871015306").unwrap()],
-       
     };
 
     let signed_header: RawSignedHeader = RawSignedHeader {

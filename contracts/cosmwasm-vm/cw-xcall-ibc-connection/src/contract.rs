@@ -631,7 +631,11 @@ impl<'a> CwIbcConnection<'a> {
         let channel_id = source.channel_id.clone();
 
         let our_port = self.get_port(store)?;
-        debug_println!("[IBCConnection]: Check if ports match : {:?} vs {:?}", our_port, source.port_id);
+        debug_println!(
+            "[IBCConnection]: Check if ports match : {:?} vs {:?}",
+            our_port,
+            source.port_id
+        );
         if our_port != source.port_id {
             return Err(ContractError::InvalidPortId);
         }

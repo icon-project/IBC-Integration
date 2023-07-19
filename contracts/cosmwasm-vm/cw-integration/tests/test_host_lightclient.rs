@@ -15,10 +15,10 @@ use cw_multi_test::{App, AppResponse, Executor};
 use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 use setup::{
     init_ibc_core_contract, init_light_client, init_mock_dapp_multi_contract,
-    init_xcall_app_contract, init_xcall_ibc_connection_contract, setup_context, TestContext, PORT, COUNTERPARTY_NID,
+    init_xcall_app_contract, init_xcall_ibc_connection_contract, setup_context, TestContext,
+    COUNTERPARTY_NID, PORT,
 };
 use test_utils::{get_event, get_event_name, load_raw_payloads};
-
 
 fn setup_test(payload_file: &str) -> TestContext {
     let integration_data = load_raw_payloads(payload_file);
@@ -256,7 +256,10 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
         Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
         &cw_xcall_lib::xcall_msg::ExecuteMsg::SendCallMessage {
-            to: NetworkAddress::new(COUNTERPARTY_NID, "cx284306db853ba518220b7e553a710ddb12575605"),
+            to: NetworkAddress::new(
+                COUNTERPARTY_NID,
+                "cx284306db853ba518220b7e553a710ddb12575605",
+            ),
             sources: Some(vec![]),
             destinations: Some(vec![]),
             data,
