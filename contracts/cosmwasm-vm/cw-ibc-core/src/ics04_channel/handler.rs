@@ -841,14 +841,6 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     channel_end.clone(),
                 )?;
                 let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-
-                // let main_event = create_open_init_channel_event(
-                //     channel_id.as_str(),
-                //     port_id.as_str(),
-                //     channel_end.counterparty().port_id().as_str(),
-                //     channel_end.connection_hops()[0].as_str(),
-                //     channel_end.version().as_str(),
-                // );
                 let main_event=create_channel_event(
                     IbcEventType::OpenInitChannel, 
                     port_id.as_str(), 
@@ -925,20 +917,6 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     1.into(),
                 )?;
                 let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-
-                // let main_event = create_open_try_channel_event(
-                //     channel_id.as_str(),
-                //     port_id.as_str(),
-                //     channel_end.counterparty().port_id().as_str(),
-                //     channel_end
-                //         .counterparty()
-                //         .channel_id
-                //         .clone()
-                //         .unwrap()
-                //         .as_str(),
-                //     channel_end.connection_hops()[0].as_str(),
-                //     channel_end.version().as_str(),
-                // );
 
                 let main_event= create_channel_event(IbcEventType::OpenTryChannel, 
                     port_id.as_str(), channel_id.as_str(), &channel_end)?;
@@ -1066,14 +1044,6 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     &channel_id,
                     channel_end.clone(),
                 )?;
-
-                // let event = create_open_ack_channel_event(
-                //     port_id.as_str(),
-                //     channel_id.as_str(),
-                //     channel_end.counterparty().port_id().as_str(),
-                //     channel_end.counterparty().channel_id().unwrap().as_str(),
-                //     channel_end.connection_hops()[0].as_str(),
-                // );
                 let event= create_channel_event(IbcEventType::OpenAckChannel, 
                     port_id.as_str(), channel_id.as_str(), &channel_end)?;
                 Ok(Response::new()
@@ -1137,14 +1107,6 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     &channel_id,
                     channel_end.clone(),
                 )?;
-
-                // let event = create_open_confirm_channel_event(
-                //     port_id.as_str(),
-                //     channel_id.as_str(),
-                //     channel_end.counterparty().port_id().as_str(),
-                //     channel_end.counterparty().channel_id().unwrap().as_str(),
-                //     channel_end.connection_hops()[0].as_str(),
-                // );
                 let event= create_channel_event(IbcEventType::OpenConfirmChannel, 
                     port_id.as_str(), channel_id.as_str(), &channel_end)?;
                 Ok(Response::new().add_event(event))

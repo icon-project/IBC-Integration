@@ -1,3 +1,4 @@
+use debug_print::debug_println;
 use prost::DecodeError;
 
 use super::*;
@@ -190,6 +191,7 @@ impl<'a> CwIbcCoreContext<'a> {
             verify_channel_state,
             next_seq_recv_verification_result,
         )?;
+        debug_println!("Light Client Validation Passed");
 
         let port_id = packet.port_id_on_a.clone();
         // Getting the module address for on packet timeout call

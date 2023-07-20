@@ -76,12 +76,6 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
         self.store_connection(deps.storage, connection_identifier.clone(), connection_end)?;
 
-        // let event = create_open_init_event(
-        //     connection_identifier.as_str(),
-        //     client_id.as_str(),
-        //     message.counterparty.client_id().as_str(),
-        // );
-
         let event =create_connection_event(
             IbcEventType::OpenInitConnection, 
             &connection_identifier, 
@@ -277,12 +271,6 @@ impl<'a> CwIbcCoreContext<'a> {
         conn_end.set_version(version);
         conn_end.set_counterparty(counterparty.clone());
 
-        // let event = create_open_ack_event(
-        //     connection_id.clone(),
-        //     conn_end.client_id().clone(),
-        //     counterparty_conn_id,
-        //     counterparty.client_id().clone(),
-        // );
         let event =create_connection_event(
             IbcEventType::OpenAckConnection, 
             &connection_id, 
@@ -506,13 +494,6 @@ impl<'a> CwIbcCoreContext<'a> {
             counterparty_client_id
         );
 
-        // let event = create_open_try_event(
-        //     connection_id.clone(),
-        //     client_id.clone(),
-        //     counterparty_conn_id,
-        //     counterparty_client_id,
-        // );
-
         let event =create_connection_event(
             IbcEventType::OpenTryConnection, 
             &connection_id, 
@@ -656,13 +637,6 @@ impl<'a> CwIbcCoreContext<'a> {
             "[ConnOpenConfirmReply]: CounterParty ConnId {:?}",
             counter_conn_id
         );
-
-        // let event = create_open_confirm_event(
-        //     connection_id.clone(),
-        //     conn_end.client_id().clone(),
-        //     counter_conn_id,
-        //     counterparty.client_id().clone(),
-        // );
 
         let event =create_connection_event(
             IbcEventType::OpenConfirmConnection, 

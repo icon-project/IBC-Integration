@@ -2,7 +2,7 @@ use super::*;
 use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use cosmwasm_std::IbcPacketAckMsg;
 use cw_common::{
-    cw_types::{CwAcknowledgement, CwPacketAckMsg}, raw_types::{channel::RawPacket, to_raw_packet},
+    cw_types::{CwAcknowledgement, CwPacketAckMsg}, raw_types::to_raw_packet,
 };
 use debug_print::debug_println;
 
@@ -138,17 +138,12 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let consensus_state =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
-        // let ack_commitment = commitment::compute_ack_commitment();
         self.verify_connection_delay_passed(
             deps.storage,
             env,
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;
-
-        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-        //
-        // let funds = self.update_fee(info.funds.clone(), fee)?;
         let data = PacketData {
             message_info: cw_common::types::MessageInfo {
                 sender: info.sender,
@@ -246,120 +241,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
-    // pub fn acknowledgement_packet_validate_reply_from_light_client(
-    //     &self,
-    //     deps: DepsMut,
-    //     message: Reply,
-    // ) -> Result<Response, ContractError> {
-    //     match message.result {
-    //         cosmwasm_std::SubMsgResult::Ok(res) => {
-    //             match res.data {
-    //                 Some(res) => {
-    //                     debug_println!("inside ack validate reply ");
-    //                     let packet_data = from_binary_response::<PacketDataResponse>(&res)
-    //                         .map_err(|e| ContractError::IbcDecodeError {
-    //                             error: DecodeError::new(e.to_string()),
-    //                         })?;
-    //                     let _info = packet_data.message_info;
-    //                     let packet = Packet::from(packet_data.packet.clone());
-    //                     let acknowledgement = match packet_data.acknowledgement {
-    //                         Some(ack) => ack,
-    //                         None => {
-    //                             return Err(PacketError::PacketAcknowledgementNotFound {
-    //                                 sequence: packet.sequence,
-    //                             })
-    //                             .map_err(Into::<ContractError>::into)?;
-    //                         }
-    //                     };
-    //                     debug_println!("after matching ackowledgement ");
-
-    //                     let port_id = packet_data.packet.port_id_on_a.clone();
-    //                     // Getting the module address for on packet timeout call
-    //                     let contract_address =
-    //                         match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
-    //                             Ok(addr) => addr,
-    //                             Err(error) => return Err(error),
-    //                         };
-
-    //                     let src = CwEndPoint {
-    //                         port_id: packet_data.packet.port_id_on_a.to_string(),
-    //                         channel_id: packet_data.packet.chan_id_on_a.to_string(),
-    //                     };
-    //                     let dest = CwEndPoint {
-    //                         port_id: packet_data.packet.port_id_on_b.to_string(),
-    //                         channel_id: packet_data.packet.chan_id_on_b.to_string(),
-    //                     };
-    //                     let timeoutblock = match packet_data.packet.timeout_height_on_b {
-    //                         common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
-    //                             CwTimeoutBlock {
-    //                                 revision: 1,
-    //                                 height: 1,
-    //                             }
-    //                         }
-    //                         common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
-    //                             CwTimeoutBlock {
-    //                                 revision: x.revision_number(),
-    //                                 height: x.revision_height(),
-    //                             }
-    //                         }
-    //                     };
-    //                     let timestamp = packet_data.packet.timeout_timestamp_on_b.nanoseconds();
-    //                     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
-    //                     let timeout = CwTimeout::with_both(timeoutblock, ibctimestamp);
-
-    //                     let ibc_packet = CwPacket::new(
-    //                         packet.data,
-    //                         src,
-    //                         dest,
-    //                         packet_data.packet.seq_on_a.into(),
-    //                         timeout,
-    //                     );
-    //                     let address = Addr::unchecked(packet_data.signer.to_string());
-    //                     let ack: CwAcknowledgement =
-    //                         CwAcknowledgement::new(acknowledgement.as_bytes());
-    //                     let packet_ack_msg: CwPacketAckMsg =
-    //                         cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
-    //                     self.store_callback_data(
-    //                         deps.storage,
-    //                         VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-    //                         &packet_ack_msg,
-    //                     )?;
-    //                     let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketAck {
-    //                         msg: packet_ack_msg,
-    //                     };
-
-    //                     let create_client_message: CosmosMsg =
-    //                         CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-    //                             contract_addr: contract_address,
-    //                             msg: to_binary(&cosm_msg).unwrap(),
-    //                             funds: vec![],
-    //                         });
-    //                     debug_println!(
-    //                         "after creating client message {:?} ",
-    //                         create_client_message
-    //                     );
-
-    //                     let sub_msg: SubMsg = SubMsg::reply_on_success(
-    //                         create_client_message,
-    //                         VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-    //                     );
-
-    //                     Ok(Response::new()
-    //                         .add_attribute("action", "packet")
-    //                         .add_attribute("method", "packet_acknowledgement_module")
-    //                         .add_submessage(sub_msg))
-    //                 }
-    //                 None => Err(ChannelError::Other {
-    //                     description: "Data from module is Missing".to_string(),
-    //                 })
-    //                 .map_err(Into::<ContractError>::into)?,
-    //             }
-    //         }
-
-    //         cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
-    //     }
-    // }
-
     /// This function processes an acknowledgement packet from xcall and produce event for acknowledgement
     ///
     /// Arguments:
@@ -397,23 +278,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                 let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
 
-                let timeout_height = packet
-                    .timeout
-                    .block()
-                    .and_then(|b| Height::new(b.revision, b.height).ok())
-                    .map(|h| h.to_string())
-                    .unwrap_or("0-0".to_string());
-                // let event = create_ack_packet_event(
-                //     &packet.src.port_id,
-                //     &packet.src.channel_id,
-                //     &packet.sequence.to_string(),
-                //     &packet.dest.port_id,
-                //     &packet.dest.channel_id,
-                //     &timeout_height,
-                //     &packet.timeout.timestamp().unwrap().to_string(),
-                //     chan_end_on_a.ordering.as_str(),
-                //     conn_id_on_a.as_str(),
-                // );
+                
+            
                 let event = 
                 create_packet_event(IbcEventType::AckPacket, 
                     to_raw_packet(packet.clone()), 

@@ -35,7 +35,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if !authenticated {
             return Err(ContractError::Unauthorized {});
         }
-        if !!ack.is_empty() {
+        if  ack.is_empty() {
             return Err(ContractError::IbcPacketError {
                 error: cw_common::ibc_types::PacketError::InvalidAcknowledgement,
             });
@@ -66,8 +66,7 @@ impl<'a> CwIbcCoreContext<'a> {
             channel.ordering.as_str(),
             channel.connection_hops[0].as_str(),
             &ack,
-        )
-        .unwrap();
+        )?;
 
         Ok(Response::new().add_event(event))
     }

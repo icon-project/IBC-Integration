@@ -1,5 +1,5 @@
 
-use cw_common::raw_types::{channel::RawPacket, to_raw_packet};
+use cw_common::raw_types::to_raw_packet;
 use prost::DecodeError;
 
 use super::*;
@@ -96,18 +96,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
-        // let timestamp_of_b = consensus_state_of_b_on_a.timestamp();
-        // if let Expiry::Expired = msg
-        //     .packet
-        //     .timeout_timestamp_on_b
-        //     .check_expiry(&timestamp_of_b)
-        // {
-        //     return Err(PacketError::PacketTimeoutTimestampNotReached {
-        //         timeout_timestamp: msg.packet.timeout_timestamp_on_b,
-        //         chain_timestamp: timestamp_of_b,
-        //     })
-        //     .map_err(Into::<ContractError>::into);
-        // }
+        
 
         self.verify_connection_delay_passed(
             deps.storage,
@@ -115,9 +104,6 @@ impl<'a> CwIbcCoreContext<'a> {
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;
-        // let fee = self.calculate_fee(GAS_FOR_SUBMESSAGE_LIGHTCLIENT);
-        //
-        // let funds = self.update_fee(info.funds.clone(), fee)?;
 
         let data = PacketData {
             packet: msg.packet.clone(),
@@ -179,24 +165,6 @@ impl<'a> CwIbcCoreContext<'a> {
             next_seq_recv_verification_result,
         )?;
 
-        // let payload = cw_common::client_msg::ExecuteMsg::PacketTimeout {
-        //     client_id: client_id_on_a.to_string(),
-        //     next_seq_recv_verification_result,
-        // };
-        // let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-        //     contract_addr: light_client_address,
-        //     msg: to_binary(&payload).unwrap(),
-        //     funds: info.funds,
-        // });
-        // let sub_msg: SubMsg = SubMsg::reply_always(
-        //     create_client_message,
-        //     VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT,
-        // );
-
-        // Ok(Response::new()
-        //     .add_attribute("action", "Light client packet timeout call")
-        //     .add_submessage(sub_msg))
-
         let packet = msg.packet.clone();
         let port_id = packet.port_id_on_a.clone();
         // Getting the module address for on packet timeout call
@@ -251,92 +219,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
-    // pub fn timeout_packet_validate_reply_from_light_client(
-    //     &self,
-    //     deps: DepsMut,
-
-    //     message: Reply,
-    // ) -> Result<Response, ContractError> {
-    //     match message.result {
-    //         cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-    //             Some(res) => {
-    //                 let packet_data =
-    //                     from_binary_response::<PacketDataResponse>(&res).map_err(|e| {
-    //                         ContractError::IbcDecodeError {
-    //                             error: DecodeError::new(e.to_string()),
-    //                         }
-    //                     })?;
-    //                 let info = packet_data.message_info;
-    //                 let data = Packet::from(packet_data.packet.clone());
-    //                 let port_id = packet_data.packet.port_id_on_a.clone();
-    //                 // Getting the module address for on packet timeout call
-    //                 let contract_address =
-    //                     match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
-    //                         Ok(addr) => addr,
-    //                         Err(error) => return Err(error),
-    //                     };
-
-    //                 let src = CwEndPoint {
-    //                     port_id: packet_data.packet.port_id_on_a.to_string(),
-    //                     channel_id: packet_data.packet.chan_id_on_a.to_string(),
-    //                 };
-    //                 let dest = CwEndPoint {
-    //                     port_id: packet_data.packet.port_id_on_b.to_string(),
-    //                     channel_id: packet_data.packet.chan_id_on_b.to_string(),
-    //                 };
-    //                 let data = Binary::from(data.data);
-    //                 let timeoutblock = match packet_data.packet.timeout_height_on_b {
-    //                     common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
-    //                         CwTimeoutBlock {
-    //                             revision: 1,
-    //                             height: 1,
-    //                         }
-    //                     }
-    //                     common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
-    //                         CwTimeoutBlock {
-    //                             revision: x.revision_number(),
-    //                             height: x.revision_height(),
-    //                         }
-    //                     }
-    //                 };
-    //                 let timeout = CwTimeout::with_block(timeoutblock);
-    //                 let ibc_packet =
-    //                     CwPacket::new(data, src, dest, packet_data.packet.seq_on_a.into(), timeout);
-    //                 self.store_callback_data(
-    //                     deps.storage,
-    //                     VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
-    //                     &ibc_packet,
-    //                 )?;
-
-    //                 let address = Addr::unchecked(packet_data.signer.to_string());
-    //                 let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketTimeout {
-    //                     msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
-    //                 };
-    //                 let create_client_message: CosmosMsg =
-    //                     CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-    //                         contract_addr: contract_address,
-    //                         msg: to_binary(&cosm_msg).unwrap(),
-    //                         funds: info.funds,
-    //                     });
-    //                 let sub_msg: SubMsg = SubMsg::reply_on_success(
-    //                     create_client_message,
-    //                     VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
-    //                 );
-
-    //                 Ok(Response::new()
-    //                     .add_attribute("action", "packet")
-    //                     .add_attribute("method", "packet_timeout_module_validation")
-    //                     .add_submessage(sub_msg))
-    //             }
-    //             None => Err(ChannelError::Other {
-    //                 description: "Data from module is Missing".to_string(),
-    //             })
-    //             .map_err(Into::<ContractError>::into),
-    //         },
-
-    //         cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
-    //     }
-    // }
+    
 
     /// This function handles the execution of a timeout packet after successfull validation of
     /// light client and xcall.
@@ -403,30 +286,6 @@ impl<'a> CwIbcCoreContext<'a> {
                 };
 
                 let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
-                let timeout_timestamp: String = packet
-                    .timeout
-                    .timestamp()
-                    .map(|t| t.nanos().to_string())
-                    .unwrap_or("0".to_string());
-
-                let timeout_height = packet
-                    .timeout
-                    .block()
-                    .and_then(|b| Height::new(b.revision, b.height).ok())
-                    .map(|h| h.to_string())
-                    .unwrap_or("0-0".to_string());
-
-                // let event = create_packet_timeout_event(
-                //     &packet.src.port_id,
-                //     &packet.src.channel_id,
-                //     &packet.sequence.to_string(),
-                //     &packet.dest.port_id,
-                //     &packet.dest.channel_id,
-                //     &timeout_height,
-                //     &timeout_timestamp,
-                //     chan_end_on_a.ordering.as_str(),
-                //     conn_id_on_a.as_str(),
-                // );
 
                 let event= create_packet_event(IbcEventType::Timeout, 
                     to_raw_packet(packet.clone()), 
