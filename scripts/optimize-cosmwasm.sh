@@ -45,9 +45,9 @@ done
 
 # check all generated wasm files
 
-~/.cargo/bin/cosmwasm-check  artifacts/archway/cw_mock_dapp.wasm
-~/.cargo/bin/cosmwasm-check artifacts/archway/cw_mock_dapp_multi.wasm
-~/.cargo/bin/cosmwasm-check  artifacts/archway/cw_xcall.wasm
+cosmwasm-check  artifacts/archway/cw_mock_dapp.wasm
+cosmwasm-check artifacts/archway/cw_mock_dapp_multi.wasm
+cosmwasm-check  artifacts/archway/cw_xcall.wasm
 
 
 # validate size
@@ -55,7 +55,7 @@ echo "Check if size of wasm file exceeds $MAX_WASM_SIZE kilobytes..."
 for file in artifacts/archway/*.wasm
 do
 size=$(du -k "$file" | awk '{print $1}')
-if [[ $size -gt $MAX_WASM_SIZE ]]; then
+if [ $size -gt $MAX_WASM_SIZE ]; then
 echo "Error: $file : $size KB has exceeded maximum contract size limit of $MAX_WASM_SIZE KB."
 exit 1
 fi
