@@ -247,30 +247,22 @@ pub fn create_channel_event(
             COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
             channel.counterparty().port_id.as_str(),
         )
-        .add_attribute(CONN_ID_ATTRIBUTE_KEY, channel.connection_hops[0].as_str());
+        .add_attribute(CONN_ID_ATTRIBUTE_KEY, channel.connection_hops[0].as_str())
+        .add_attribute(VERSION_ATTRIBUTE_KEY, channel.version().to_string());
     match event_type {
-        IbcEventType::OpenInitChannel => {
-            event = event.add_attribute(VERSION_ATTRIBUTE_KEY, channel.version().to_string());
-            Ok(event)
-        }
+        IbcEventType::OpenInitChannel => Ok(event),
         IbcEventType::OpenTryChannel
         | IbcEventType::CloseInitChannel
-        | IbcEventType::CloseConfirmChannel => {
-            event = event
-                .add_attribute(VERSION_ATTRIBUTE_KEY, channel.version().to_string())
-                .add_attribute(
-                    COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
-                    channel.counterparty().channel_id().unwrap().to_string(),
-                );
-            Ok(event)
-        }
-        IbcEventType::OpenAckChannel | IbcEventType::OpenConfirmChannel => {
+        | IbcEventType::CloseConfirmChannel
+        | IbcEventType::OpenAckChannel
+        | IbcEventType::OpenConfirmChannel => {
             event = event.add_attribute(
                 COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
                 channel.counterparty().channel_id().unwrap().to_string(),
             );
             Ok(event)
         }
+
         _ => Err(ContractError::InvalidEventType {
             event: "Channel Event".to_string(),
             event_type: event_type.as_str().to_string(),
@@ -530,6 +522,8 @@ pub fn create_packet_event(
         .timeout_height
         .map(|h| format!("{}-{}", h.revision_number, h.revision_height))
         .unwrap_or("0-0".to_string());
+    let hex_data = hex::encode(&packet.data);
+
     let mut event = Event::new(event_type.as_str())
         .add_attribute(PKT_SEQ_ATTRIBUTE_KEY, packet.sequence.to_string())
         .add_attribute(PKT_SRC_PORT_ATTRIBUTE_KEY, packet.source_port.as_str())
@@ -548,14 +542,14 @@ pub fn create_packet_event(
         .add_attribute(
             PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
             packet.timeout_timestamp.to_string(),
-        );
+        )
+        .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data);
 
     match event_type {
-        IbcEventType::SendPacket | IbcEventType::ReceivePacket => {
-            let hex_data = hex::encode(&packet.data);
-            event = event.add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data);
-            Ok(event)
-        }
+        IbcEventType::SendPacket
+        | IbcEventType::ReceivePacket
+        | IbcEventType::AckPacket
+        | IbcEventType::Timeout => Ok(event),
         IbcEventType::WriteAck => {
             let hex_data = hex::encode(&packet.data);
             event = event
@@ -563,7 +557,6 @@ pub fn create_packet_event(
                 .add_attribute(PKT_DATA_HEX_ATTRIBUTE_KEY, hex_data);
             Ok(event)
         }
-        IbcEventType::AckPacket | IbcEventType::Timeout => Ok(event),
         _ => Err(ContractError::InvalidEventType {
             event: "Packet Event".to_string(),
             event_type: event_type.as_str().to_string(),

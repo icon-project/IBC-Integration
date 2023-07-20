@@ -592,8 +592,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &verify_packet_data.commitment_path,
                 &verify_packet_data.commitment,
+                &verify_packet_data.commitment_path,
             )
             .unwrap_or(false);
 
@@ -614,8 +614,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 0,
                 0,
                 &proofs_decoded.proofs,
-                &verify_packet_acknowledge.ack_path,
                 &verify_packet_acknowledge.ack,
+                &verify_packet_acknowledge.ack_path,
             )
             .unwrap_or(false);
 
