@@ -841,11 +841,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     channel_end.clone(),
                 )?;
                 let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-                let main_event=create_channel_event(
-                    IbcEventType::OpenInitChannel, 
-                    port_id.as_str(), 
-                    channel_id.as_str(), 
-                    &channel_end)?;
+                let main_event = create_channel_event(
+                    IbcEventType::OpenInitChannel,
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    &channel_end,
+                )?;
 
                 Ok(Response::new()
                     .add_event(channel_id_event)
@@ -918,10 +919,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 )?;
                 let channel_id_event = create_channel_id_generated_event(channel_id.clone());
 
-                let main_event= create_channel_event(IbcEventType::OpenTryChannel, 
-                    port_id.as_str(), channel_id.as_str(), &channel_end)?;
-
-
+                let main_event = create_channel_event(
+                    IbcEventType::OpenTryChannel,
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    &channel_end,
+                )?;
 
                 self.store_channel_commitment(deps.storage, &port_id, &channel_id, channel_end)?;
                 Ok(Response::new()
@@ -1044,8 +1047,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     &channel_id,
                     channel_end.clone(),
                 )?;
-                let event= create_channel_event(IbcEventType::OpenAckChannel, 
-                    port_id.as_str(), channel_id.as_str(), &channel_end)?;
+                let event = create_channel_event(
+                    IbcEventType::OpenAckChannel,
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    &channel_end,
+                )?;
                 Ok(Response::new()
                     .add_event(event)
                     .add_attribute("method", "execute_channel_open_ack"))
@@ -1107,8 +1114,12 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     &channel_id,
                     channel_end.clone(),
                 )?;
-                let event= create_channel_event(IbcEventType::OpenConfirmChannel, 
-                    port_id.as_str(), channel_id.as_str(), &channel_end)?;
+                let event = create_channel_event(
+                    IbcEventType::OpenConfirmChannel,
+                    port_id.as_str(),
+                    channel_id.as_str(),
+                    &channel_end,
+                )?;
                 Ok(Response::new().add_event(event))
             }
             cosmwasm_std::SubMsgResult::Err(error) => {

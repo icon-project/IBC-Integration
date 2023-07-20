@@ -1,4 +1,3 @@
-
 use cw_common::raw_types::to_raw_packet;
 use prost::DecodeError;
 
@@ -96,7 +95,6 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
-        
 
         self.verify_connection_delay_passed(
             deps.storage,
@@ -219,8 +217,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
-    
-
     /// This function handles the execution of a timeout packet after successfull validation of
     /// light client and xcall.
     ///
@@ -287,13 +283,13 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
 
-                let event= create_packet_event(IbcEventType::Timeout, 
-                    to_raw_packet(packet.clone()), 
-                    chan_end_on_a.ordering(), 
+                let event = create_packet_event(
+                    IbcEventType::Timeout,
+                    to_raw_packet(packet.clone()),
+                    chan_end_on_a.ordering(),
                     conn_id_on_a,
-                     None
+                    None,
                 )?;
-
 
                 Ok(Response::new()
                     .add_attribute("action", "packet")

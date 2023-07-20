@@ -3,7 +3,7 @@ use std::str::from_utf8;
 use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString};
 use debug_print::debug_println;
 
-use super::{*, event::create_connection_event};
+use super::{event::create_connection_event, *};
 
 impl<'a> CwIbcCoreContext<'a> {
     /// This method initializes a new connection between two clients in an IBC protocol implementation.
@@ -76,12 +76,13 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
         self.store_connection(deps.storage, connection_identifier.clone(), connection_end)?;
 
-        let event =create_connection_event(
-            IbcEventType::OpenInitConnection, 
-            &connection_identifier, 
+        let event = create_connection_event(
+            IbcEventType::OpenInitConnection,
+            &connection_identifier,
             &client_id,
             message.counterparty.client_id(),
-            None)?;
+            None,
+        )?;
 
         return Ok(Response::new()
             .add_event(event)
@@ -271,13 +272,13 @@ impl<'a> CwIbcCoreContext<'a> {
         conn_end.set_version(version);
         conn_end.set_counterparty(counterparty.clone());
 
-        let event =create_connection_event(
-            IbcEventType::OpenAckConnection, 
-            &connection_id, 
+        let event = create_connection_event(
+            IbcEventType::OpenAckConnection,
+            &connection_id,
             &conn_end.client_id().clone(),
             &counterparty.client_id(),
-            Some(counterparty_conn_id))?;
-      
+            Some(counterparty_conn_id),
+        )?;
 
         self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
             .unwrap();
@@ -494,13 +495,13 @@ impl<'a> CwIbcCoreContext<'a> {
             counterparty_client_id
         );
 
-        let event =create_connection_event(
-            IbcEventType::OpenTryConnection, 
-            &connection_id, 
+        let event = create_connection_event(
+            IbcEventType::OpenTryConnection,
+            &connection_id,
             &client_id,
             &counterparty_client_id,
-            counterparty_conn_id)?;
-      
+            counterparty_conn_id,
+        )?;
 
         self.store_connection_to_client(deps.storage, client_id, connection_id.clone())?;
         self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
@@ -638,12 +639,13 @@ impl<'a> CwIbcCoreContext<'a> {
             counter_conn_id
         );
 
-        let event =create_connection_event(
-            IbcEventType::OpenConfirmConnection, 
-            &connection_id, 
-            & conn_end.client_id(),
+        let event = create_connection_event(
+            IbcEventType::OpenConfirmConnection,
+            &connection_id,
+            &conn_end.client_id(),
             &counterparty.client_id(),
-            Some(counter_conn_id))?;
+            Some(counter_conn_id),
+        )?;
 
         self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
             .unwrap();

@@ -493,13 +493,14 @@ fn create_connection_open_init_event() {
     //     client_id.as_str(),
     //     counterparty_client_id.as_str(),
     // );
-    let event =create_connection_event(
-        IbcEventType::OpenInitConnection, 
-        &connection_id, 
+    let event = create_connection_event(
+        IbcEventType::OpenInitConnection,
+        &connection_id,
         &client_id,
         &counterparty_client_id,
-        None)
-        .unwrap();
+        None,
+    )
+    .unwrap();
     assert_eq!(IbcEventType::OpenInitConnection.as_str(), event.ty);
     assert_eq!("connection-10", event.attributes[0].value);
     assert_eq!("default-0", event.attributes[1].value);
@@ -518,12 +519,14 @@ fn create_connection_open_ack_event() {
     //     counterparty_connection_id,
     //     counterparty_client_id,
     // );
-    let event =create_connection_event(
-        IbcEventType::OpenAckConnection, 
-        &connection_id, 
+    let event = create_connection_event(
+        IbcEventType::OpenAckConnection,
+        &connection_id,
         &client_id,
         &counterparty_client_id,
-        Some(counterparty_connection_id)).unwrap();
+        Some(counterparty_connection_id),
+    )
+    .unwrap();
     assert_eq!(IbcEventType::OpenAckConnection.as_str(), event.ty);
     assert_eq!("connection-10", event.attributes[0].value);
     assert_eq!("default-0", event.attributes[1].value);
@@ -542,12 +545,14 @@ fn create_connection_open_try_event() {
     //     Some(counterparty_connection_id),
     //     counterparty_client_id,
     // );
-    let event =create_connection_event(
-        IbcEventType::OpenTryConnection, 
-        &connection_id, 
+    let event = create_connection_event(
+        IbcEventType::OpenTryConnection,
+        &connection_id,
         &client_id,
         &counterparty_client_id,
-        Some(counterparty_connection_id)).unwrap();
+        Some(counterparty_connection_id),
+    )
+    .unwrap();
     assert_eq!(IbcEventType::OpenTryConnection.as_str(), event.ty);
 }
 
@@ -563,13 +568,15 @@ fn create_conection_open_confirm_event() {
     //     counterparty_connection_id_on_a,
     //     counterparty_client_id_on_a,
     // );
-    let event =create_connection_event(
-        IbcEventType::OpenConfirmConnection, 
-        &connection_id_on_b, 
-        & client_id_on_b,
+    let event = create_connection_event(
+        IbcEventType::OpenConfirmConnection,
+        &connection_id_on_b,
+        &client_id_on_b,
         &counterparty_client_id_on_a,
-        Some(counterparty_connection_id_on_a)).unwrap();
-    
+        Some(counterparty_connection_id_on_a),
+    )
+    .unwrap();
+
     assert_eq!(IbcEventType::OpenConfirmConnection.as_str(), event.ty);
     assert_eq!("connection-10", event.attributes[0].value);
 }
@@ -591,13 +598,14 @@ fn connection_to_verify_correct_connection_id() {
     //     client_id.as_str(),
     //     counterparty_client_id.as_str(),
     // );
-    let event =create_connection_event(
-        IbcEventType::OpenInitConnection, 
-        &connection_id, 
+    let event = create_connection_event(
+        IbcEventType::OpenInitConnection,
+        &connection_id,
         &client_id,
         &counterparty_client_id,
-        None)
-        .unwrap();
+        None,
+    )
+    .unwrap();
     let attribute = event
         .attributes
         .iter()
@@ -616,13 +624,14 @@ fn connection_to_verify_correct_client_id() {
     //     client_id.as_str(),
     //     counterparty_client_id.as_str(),
     // );
-    let event =create_connection_event(
-        IbcEventType::OpenInitConnection, 
-        &connection_id, 
+    let event = create_connection_event(
+        IbcEventType::OpenInitConnection,
+        &connection_id,
         &client_id,
         &counterparty_client_id,
-        None)
-        .unwrap();
+        None,
+    )
+    .unwrap();
     let attribute = event
         .attributes
         .iter()
@@ -641,13 +650,14 @@ fn connection_to_verify_correct_counterparty_client_id() {
     //     client_id.as_str(),
     //     counterparty_client_id.as_str(),
     // );
-    let event =create_connection_event(
-        IbcEventType::OpenInitConnection, 
-        &connection_id, 
+    let event = create_connection_event(
+        IbcEventType::OpenInitConnection,
+        &connection_id,
         &client_id,
         &counterparty_client_id,
-        None)
-        .unwrap();
+        None,
+    )
+    .unwrap();
     let attribute = event
         .attributes
         .iter()
@@ -668,12 +678,14 @@ fn connection_to_verify_correct_counterparty_conn_id() {
     //     counterparty_conn_id,
     //     counterparty_client_id,
     // );
-    let event =create_connection_event(
-        IbcEventType::OpenAckConnection, 
-        &connection_id, 
+    let event = create_connection_event(
+        IbcEventType::OpenAckConnection,
+        &connection_id,
         &client_id,
         &counterparty_client_id,
-        Some(counterparty_conn_id)).unwrap();
+        Some(counterparty_conn_id),
+    )
+    .unwrap();
     let attribute = event
         .attributes
         .iter()

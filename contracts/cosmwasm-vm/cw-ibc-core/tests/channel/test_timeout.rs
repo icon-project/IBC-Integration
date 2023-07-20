@@ -1,7 +1,6 @@
 use cw_common::from_binary_response;
 use cw_ibc_core::{light_client::light_client::LightClient, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE};
 
-
 use super::*;
 
 #[test]

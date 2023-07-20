@@ -76,7 +76,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into)?;
         }
         debug_println!("packet height is greater than timeout height");
-       
 
         let client_id_on_b = conn_end_on_b.client_id();
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
@@ -107,7 +106,7 @@ impl<'a> CwIbcCoreContext<'a> {
             &msg.packet.chan_id_on_a,
             msg.packet.sequence,
         );
-       
+
         debug_println!("verify connection delay passed");
 
         let packet_data = PacketData::new(
@@ -217,8 +216,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
-    
-
     /// This function validates if a write acknowledgement exists for a given packet and returns an
     /// error if it already exists.
     ///
@@ -315,7 +312,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     }
                 };
 
-                
                 debug_println!("before packet already received ");
                 if packet_already_received {
                     return Ok(Response::new().add_attribute("message", "Packet already received"));
@@ -352,11 +348,12 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 debug_println!("timestamp: {:?}", timestamp);
 
-                let event_recieve_packet= create_packet_event(IbcEventType::ReceivePacket, 
-                    to_raw_packet(packet.clone()), 
-                    chan_end_on_b.ordering(), 
+                let event_recieve_packet = create_packet_event(
+                    IbcEventType::ReceivePacket,
+                    to_raw_packet(packet.clone()),
+                    chan_end_on_b.ordering(),
                     &chan_end_on_b.connection_hops[0],
-                     None
+                    None,
                 )?;
 
                 debug_println!("event recieve packet: {:?}", event_recieve_packet);

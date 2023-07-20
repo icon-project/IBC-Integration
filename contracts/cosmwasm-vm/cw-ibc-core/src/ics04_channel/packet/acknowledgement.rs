@@ -2,10 +2,10 @@ use super::*;
 use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use cosmwasm_std::IbcPacketAckMsg;
 use cw_common::{
-    cw_types::{CwAcknowledgement, CwPacketAckMsg}, raw_types::to_raw_packet,
+    cw_types::{CwAcknowledgement, CwPacketAckMsg},
+    raw_types::to_raw_packet,
 };
 use debug_print::debug_println;
-
 
 impl<'a> CwIbcCoreContext<'a> {
     /// This function validates an acknowledgement packet.
@@ -278,14 +278,13 @@ impl<'a> CwIbcCoreContext<'a> {
                     self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
                 let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
 
-                
-            
-                let event = 
-                create_packet_event(IbcEventType::AckPacket, 
-                    to_raw_packet(packet.clone()), 
-                    &chan_end_on_a.ordering, 
+                let event = create_packet_event(
+                    IbcEventType::AckPacket,
+                    to_raw_packet(packet.clone()),
+                    &chan_end_on_a.ordering,
                     conn_id_on_a,
-                     None)?;
+                    None,
+                )?;
                 if self
                     .get_packet_commitment(
                         deps.storage,
