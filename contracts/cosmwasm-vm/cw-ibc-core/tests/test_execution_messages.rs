@@ -25,7 +25,7 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::RawVersion;
 use cw_common::ProstMessage;
 
-use cw_ibc_core::ConnectionEnd;
+use cw_ibc_core::{ConnectionEnd, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_CONNECTION_OPENTRY};
 use cw_ibc_core::Height;
 
 use cw_ibc_core::light_client::light_client::LightClient;
@@ -112,7 +112,7 @@ fn test_for_create_client_execution_message() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+       id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -184,7 +184,7 @@ fn test_for_update_client_execution_messages() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+       id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -259,7 +259,7 @@ fn test_for_update_client_execution_messages() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 22,
+       id: EXECUTE_UPDATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -789,7 +789,7 @@ fn test_for_connection_open_try_fails() {
     let events = Event::new("open_try");
 
     let reply_msg = Reply {
-        id: 31,
+       id: EXECUTE_CONNECTION_OPENTRY,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![events],
             data: Some(mock_data_binary),

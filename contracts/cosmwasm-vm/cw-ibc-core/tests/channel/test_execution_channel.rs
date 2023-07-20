@@ -18,7 +18,7 @@ use cw_ibc_core::{
 use cw_ibc_core::{
     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
     EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-    VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+    VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT, EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT, EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT,
 };
 use prost::Message;
 
@@ -92,7 +92,7 @@ fn test_for_channel_open_init_execution_message() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 41,
+       id: EXECUTE_ON_CHANNEL_OPEN_INIT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -226,7 +226,7 @@ fn test_for_channel_open_try_execution_message() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 421,
+       id: EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -244,7 +244,7 @@ fn test_for_channel_open_try_execution_message() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 422,
+       id: EXECUTE_ON_CHANNEL_OPEN_TRY,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -401,7 +401,7 @@ fn test_for_channel_open_ack_execution() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 431,
+      id: EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -420,7 +420,7 @@ fn test_for_channel_open_ack_execution() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 432,
+       id: EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -577,7 +577,7 @@ fn test_for_channel_open_confirm() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 441,
+       id: EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -595,7 +595,7 @@ fn test_for_channel_open_confirm() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 442,
+       id: EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -865,7 +865,7 @@ fn test_for_channel_close_confirm() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 461,
+       id:EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -883,7 +883,7 @@ fn test_for_channel_close_confirm() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 462,
+       id: EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1412,7 +1412,7 @@ fn test_for_ack_execute() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 531,
+       id:VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1458,7 +1458,7 @@ fn test_for_ack_execute() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-        id: 532,
+       id:VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),

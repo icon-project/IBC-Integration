@@ -284,119 +284,119 @@ fn test_acknowledgement_packet_execute_fail() {
         .unwrap();
 }
 
-#[test]
-fn acknowledgement_packet_validate_reply_from_light_client() {
-    let contract = CwIbcCoreContext::default();
-    let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+// #[test]
+// fn acknowledgement_packet_validate_reply_from_light_client() {
+//     let contract = CwIbcCoreContext::default();
+//     let mut deps = deps();
+//     let info = create_mock_info("channel-creater", "umlg", 2000);
 
-    let height = 10;
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
-    let packet_repsone = PacketResponse {
-        seq_on_a: msg.packet.sequence,
-        port_id_on_a: msg.packet.port_id_on_a.clone(),
-        chan_id_on_a: msg.packet.chan_id_on_a,
-        port_id_on_b: msg.packet.port_id_on_b,
-        chan_id_on_b: msg.packet.chan_id_on_b,
-        data: msg.packet.data,
-        timeout_height_on_b: msg.packet.timeout_height_on_b,
-        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
-    };
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.sender,
-        funds: info.funds,
-    };
-    let packet_data = PacketDataResponse {
-        message_info,
-        packet: packet_repsone,
-        signer: msg.signer.clone(),
+//     let height = 10;
+//     let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
+//     let packet_repsone = PacketResponse {
+//         seq_on_a: msg.packet.sequence,
+//         port_id_on_a: msg.packet.port_id_on_a.clone(),
+//         chan_id_on_a: msg.packet.chan_id_on_a,
+//         port_id_on_b: msg.packet.port_id_on_b,
+//         chan_id_on_b: msg.packet.chan_id_on_b,
+//         data: msg.packet.data,
+//         timeout_height_on_b: msg.packet.timeout_height_on_b,
+//         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
+//     };
+//     let message_info = cw_common::types::MessageInfo {
+//         sender: info.sender,
+//         funds: info.funds,
+//     };
+//     let packet_data = PacketDataResponse {
+//         message_info,
+//         packet: packet_repsone,
+//         signer: msg.signer.clone(),
 
-        acknowledgement: Some(msg.acknowledgement.clone()),
-    };
+//         acknowledgement: Some(msg.acknowledgement.clone()),
+//     };
 
-    let data_bin = to_binary(&packet_data).unwrap();
-    let result = SubMsgResponse {
-        data: Some(data_bin),
-        events: vec![],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(result);
-    let reply_message = Reply { id: 0, result };
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_a;
+//     let data_bin = to_binary(&packet_data).unwrap();
+//     let result = SubMsgResponse {
+//         data: Some(data_bin),
+//         events: vec![],
+//     };
+//     let result: SubMsgResult = SubMsgResult::Ok(result);
+//     let reply_message = Reply { id: 0, result };
+//     let _module_id =
+//         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+//     let port_id = msg.packet.port_id_on_a;
 
-    let module = Addr::unchecked("contractaddress");
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
+//     let module = Addr::unchecked("contractaddress");
+//     contract
+//         .claim_capability(
+//             &mut deps.storage,
+//             port_id.as_bytes().to_vec(),
+//             module.to_string(),
+//         )
+//         .unwrap();
 
-    let res = contract
-        .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message);
-    println!("{res:?}");
-    assert!(res.is_ok());
-    assert_eq!(res.as_ref().unwrap().clone().messages[0].id, 532);
-}
+//     let res = contract
+//         .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message);
+//     println!("{res:?}");
+//     assert!(res.is_ok());
+//     assert_eq!(res.as_ref().unwrap().clone().messages[0].id, 532);
+// }
 
-#[test]
-#[should_panic(expected = "PacketAcknowledgementNotFound")]
-fn acknowledgement_packet_validate_reply_from_light_client_fail() {
-    let contract = CwIbcCoreContext::default();
-    let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+// #[test]
+// #[should_panic(expected = "PacketAcknowledgementNotFound")]
+// fn acknowledgement_packet_validate_reply_from_light_client_fail() {
+//     let contract = CwIbcCoreContext::default();
+//     let mut deps = deps();
+//     let info = create_mock_info("channel-creater", "umlg", 2000);
 
-    let height = 10;
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
-    let packet_repsone = PacketResponse {
-        seq_on_a: msg.packet.sequence,
-        port_id_on_a: msg.packet.port_id_on_a.clone(),
-        chan_id_on_a: msg.packet.chan_id_on_a,
-        port_id_on_b: msg.packet.port_id_on_b,
-        chan_id_on_b: msg.packet.chan_id_on_b,
-        data: msg.packet.data,
-        timeout_height_on_b: msg.packet.timeout_height_on_b,
-        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
-    };
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.sender,
-        funds: info.funds,
-    };
+//     let height = 10;
+//     let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
+//     let packet_repsone = PacketResponse {
+//         seq_on_a: msg.packet.sequence,
+//         port_id_on_a: msg.packet.port_id_on_a.clone(),
+//         chan_id_on_a: msg.packet.chan_id_on_a,
+//         port_id_on_b: msg.packet.port_id_on_b,
+//         chan_id_on_b: msg.packet.chan_id_on_b,
+//         data: msg.packet.data,
+//         timeout_height_on_b: msg.packet.timeout_height_on_b,
+//         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
+//     };
+//     let message_info = cw_common::types::MessageInfo {
+//         sender: info.sender,
+//         funds: info.funds,
+//     };
 
-    let packet_data = PacketDataResponse {
-        message_info,
-        packet: packet_repsone,
-        signer: msg.signer.clone(),
+//     let packet_data = PacketDataResponse {
+//         message_info,
+//         packet: packet_repsone,
+//         signer: msg.signer.clone(),
 
-        acknowledgement: None,
-    };
+//         acknowledgement: None,
+//     };
 
-    let data_bin = to_binary(&packet_data).unwrap();
-    let result = SubMsgResponse {
-        data: Some(data_bin),
-        events: vec![],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(result);
-    let reply_message = Reply { id: 0, result };
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_a;
+//     let data_bin = to_binary(&packet_data).unwrap();
+//     let result = SubMsgResponse {
+//         data: Some(data_bin),
+//         events: vec![],
+//     };
+//     let result: SubMsgResult = SubMsgResult::Ok(result);
+//     let reply_message = Reply { id: 0, result };
+//     let _module_id =
+//         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+//     let port_id = msg.packet.port_id_on_a;
 
-    let module = Addr::unchecked("contractaddress");
+//     let module = Addr::unchecked("contractaddress");
 
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-    contract
-        .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message)
-        .unwrap();
-}
+//     contract
+//         .claim_capability(
+//             &mut deps.storage,
+//             port_id.as_bytes().to_vec(),
+//             module.to_string(),
+//         )
+//         .unwrap();
+//     contract
+//         .acknowledgement_packet_validate_reply_from_light_client(deps.as_mut(), reply_message)
+//         .unwrap();
+// }
 
 #[test]
 fn test_acknowledgement_packet_validate_ordered() {

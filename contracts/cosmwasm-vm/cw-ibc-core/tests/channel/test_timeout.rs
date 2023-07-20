@@ -152,53 +152,53 @@ fn test_execute_timeout_packet_fails() {
         .unwrap();
 }
 
-#[test]
-fn test_timeout_packet_validate_reply_from_light_client() {
-    let proof_height = 50;
-    let timeout_height = proof_height;
-    let timeout_timestamp = 0;
-    let default_raw_msg =
-        get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
-    let msg = MsgTimeout::try_from(default_raw_msg).unwrap();
+// #[test]
+// fn test_timeout_packet_validate_reply_from_light_client() {
+//     let proof_height = 50;
+//     let timeout_height = proof_height;
+//     let timeout_timestamp = 0;
+//     let default_raw_msg =
+//         get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
+//     let msg = MsgTimeout::try_from(default_raw_msg).unwrap();
 
-    let contract = CwIbcCoreContext::default();
-    let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+//     let contract = CwIbcCoreContext::default();
+//     let mut deps = deps();
+//     let info = create_mock_info("channel-creater", "umlg", 2000);
 
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_a.clone();
+//     let _module_id =
+//         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+//     let port_id = msg.packet.port_id_on_a.clone();
 
-    let module = Addr::unchecked("contractaddress");
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
+//     let module = Addr::unchecked("contractaddress");
+//     contract
+//         .claim_capability(
+//             &mut deps.storage,
+//             port_id.as_bytes().to_vec(),
+//             module.to_string(),
+//         )
+//         .unwrap();
 
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.sender,
-        funds: info.funds,
-    };
-    let data = PacketData {
-        packet: msg.packet.clone(),
-        signer: msg.signer,
-        acknowledgement: None,
-        message_info,
-    };
-    let data_bin = to_binary(&data).unwrap();
-    let result = SubMsgResponse {
-        data: Some(data_bin),
-        events: vec![],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(result);
-    let message = Reply { id: 0, result };
+//     let message_info = cw_common::types::MessageInfo {
+//         sender: info.sender,
+//         funds: info.funds,
+//     };
+//     let data = PacketData {
+//         packet: msg.packet.clone(),
+//         signer: msg.signer,
+//         acknowledgement: None,
+//         message_info,
+//     };
+//     let data_bin = to_binary(&data).unwrap();
+//     let result = SubMsgResponse {
+//         data: Some(data_bin),
+//         events: vec![],
+//     };
+//     let result: SubMsgResult = SubMsgResult::Ok(result);
+//     let message = Reply { id: 0, result };
 
-    let res = contract.timeout_packet_validate_reply_from_light_client(deps.as_mut(), message);
-    debug_println!("{res:?}");
-}
+//     let res = contract.timeout_packet_validate_reply_from_light_client(deps.as_mut(), message);
+//     debug_println!("{res:?}");
+// }
 
 #[test]
 fn test_packet_data() {

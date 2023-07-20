@@ -173,158 +173,158 @@ fn test_receive_packet() {
     );
 }
 
-#[test]
-fn test_receive_packet_validate_reply_from_light_client() {
-    let contract = CwIbcCoreContext::default();
-    let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 200000000);
+// #[test]
+// fn test_receive_packet_validate_reply_from_light_client() {
+//     let contract = CwIbcCoreContext::default();
+//     let mut deps = deps();
+//     let info = create_mock_info("channel-creater", "umlg", 200000000);
 
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_b.clone();
+//     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+//     let packet = msg.packet.clone();
+//     let _module_id =
+//         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+//     let port_id = msg.packet.port_id_on_b.clone();
 
-    let module = Addr::unchecked("contractaddress");
+//     let module = Addr::unchecked("contractaddress");
 
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-    let packet_repsone = PacketResponse {
-        seq_on_a: msg.packet.sequence,
-        port_id_on_a: msg.packet.port_id_on_a.clone(),
-        chan_id_on_a: msg.packet.chan_id_on_a.clone(),
-        port_id_on_b: msg.packet.port_id_on_b,
-        chan_id_on_b: msg.packet.chan_id_on_b,
-        data: msg.packet.data,
-        timeout_height_on_b: msg.packet.timeout_height_on_b,
-        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
-    };
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.sender,
-        funds: info.funds,
-    };
+//     contract
+//         .claim_capability(
+//             &mut deps.storage,
+//             port_id.as_bytes().to_vec(),
+//             module.to_string(),
+//         )
+//         .unwrap();
+//     let packet_repsone = PacketResponse {
+//         seq_on_a: msg.packet.sequence,
+//         port_id_on_a: msg.packet.port_id_on_a.clone(),
+//         chan_id_on_a: msg.packet.chan_id_on_a.clone(),
+//         port_id_on_b: msg.packet.port_id_on_b,
+//         chan_id_on_b: msg.packet.chan_id_on_b,
+//         data: msg.packet.data,
+//         timeout_height_on_b: msg.packet.timeout_height_on_b,
+//         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
+//     };
+//     let message_info = cw_common::types::MessageInfo {
+//         sender: info.sender,
+//         funds: info.funds,
+//     };
 
-    let data = PacketDataResponse {
-        packet: packet_repsone,
-        signer: msg.signer,
-        acknowledgement: None,
-        message_info,
-    };
-    let data_bin = to_binary(&data).unwrap();
-    let result = SubMsgResponse {
-        data: Some(data_bin),
-        events: vec![],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(result);
-    let message = Reply { id: 0, result };
+//     let data = PacketDataResponse {
+//         packet: packet_repsone,
+//         signer: msg.signer,
+//         acknowledgement: None,
+//         message_info,
+//     };
+//     let data_bin = to_binary(&data).unwrap();
+//     let result = SubMsgResponse {
+//         data: Some(data_bin),
+//         events: vec![],
+//     };
+//     let result: SubMsgResult = SubMsgResult::Ok(result);
+//     let message = Reply { id: 0, result };
 
-    let chan_end_on_b = ChannelEnd::new(
-        State::Open,
-        Order::Unordered,
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
-        vec![IbcConnectionId::default()],
-        Version::new("ics20-1".to_string()),
-    );
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b,
-            chan_end_on_b,
-        )
-        .unwrap();
-    contract
-        .store_packet_receipt(
-            &mut deps.storage,
-            &msg.packet.port_id_on_a,
-            &msg.packet.chan_id_on_a,
-            msg.packet.sequence,
-            Receipt::Ok,
-        )
-        .unwrap();
+//     let chan_end_on_b = ChannelEnd::new(
+//         State::Open,
+//         Order::Unordered,
+//         Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+//         vec![IbcConnectionId::default()],
+//         Version::new("ics20-1".to_string()),
+//     );
+//     contract
+//         .store_channel_end(
+//             &mut deps.storage,
+//             packet.port_id_on_b.clone(),
+//             packet.chan_id_on_b,
+//             chan_end_on_b,
+//         )
+//         .unwrap();
+//     contract
+//         .store_packet_receipt(
+//             &mut deps.storage,
+//             &msg.packet.port_id_on_a,
+//             &msg.packet.chan_id_on_a,
+//             msg.packet.sequence,
+//             Receipt::Ok,
+//         )
+//         .unwrap();
 
-    let res = contract.receive_packet_validate_reply_from_light_client(deps.as_mut(), message);
-    assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 522)
-}
+//     let res = contract.receive_packet_validate_reply_from_light_client(deps.as_mut(), message);
+//     assert!(res.is_ok());
+//     assert_eq!(res.unwrap().messages[0].id, 522)
+// }
 
-#[test]
-fn test_receive_packet_validate_reply_from_light_client_success() {
-    let contract = CwIbcCoreContext::default();
-    let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
+// #[test]
+// fn test_receive_packet_validate_reply_from_light_client_success() {
+//     let contract = CwIbcCoreContext::default();
+//     let mut deps = deps();
+//     let info = create_mock_info("channel-creater", "umlg", 2000);
 
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_b.clone();
+//     let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+//     let packet = msg.packet.clone();
+//     let _module_id =
+//         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+//     let port_id = msg.packet.port_id_on_b.clone();
 
-    let module = Addr::unchecked("contractaddress");
+//     let module = Addr::unchecked("contractaddress");
 
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
+//     contract
+//         .claim_capability(
+//             &mut deps.storage,
+//             port_id.as_bytes().to_vec(),
+//             module.to_string(),
+//         )
+//         .unwrap();
 
-    let packet_repsone = PacketResponse {
-        seq_on_a: msg.packet.sequence,
-        port_id_on_a: msg.packet.port_id_on_a.clone(),
-        chan_id_on_a: msg.packet.chan_id_on_a.clone(),
-        port_id_on_b: msg.packet.port_id_on_b,
-        chan_id_on_b: msg.packet.chan_id_on_b,
-        data: msg.packet.data,
-        timeout_height_on_b: msg.packet.timeout_height_on_b,
-        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
-    };
+//     let packet_repsone = PacketResponse {
+//         seq_on_a: msg.packet.sequence,
+//         port_id_on_a: msg.packet.port_id_on_a.clone(),
+//         chan_id_on_a: msg.packet.chan_id_on_a.clone(),
+//         port_id_on_b: msg.packet.port_id_on_b,
+//         chan_id_on_b: msg.packet.chan_id_on_b,
+//         data: msg.packet.data,
+//         timeout_height_on_b: msg.packet.timeout_height_on_b,
+//         timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
+//     };
 
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.sender,
-        funds: info.funds,
-    };
+//     let message_info = cw_common::types::MessageInfo {
+//         sender: info.sender,
+//         funds: info.funds,
+//     };
 
-    let data = PacketDataResponse {
-        packet: packet_repsone,
-        signer: msg.signer,
-        acknowledgement: None,
-        message_info,
-    };
-    let data_bin = to_binary(&data).unwrap();
-    let result = SubMsgResponse {
-        data: Some(data_bin),
-        events: vec![],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(result);
-    let message = Reply { id: 0, result };
+//     let data = PacketDataResponse {
+//         packet: packet_repsone,
+//         signer: msg.signer,
+//         acknowledgement: None,
+//         message_info,
+//     };
+//     let data_bin = to_binary(&data).unwrap();
+//     let result = SubMsgResponse {
+//         data: Some(data_bin),
+//         events: vec![],
+//     };
+//     let result: SubMsgResult = SubMsgResult::Ok(result);
+//     let message = Reply { id: 0, result };
 
-    let chan_end_on_b = ChannelEnd::new(
-        State::Open,
-        Order::Unordered,
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
-        vec![IbcConnectionId::default()],
-        Version::new("ics20-1".to_string()),
-    );
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b,
-            chan_end_on_b,
-        )
-        .unwrap();
+//     let chan_end_on_b = ChannelEnd::new(
+//         State::Open,
+//         Order::Unordered,
+//         Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+//         vec![IbcConnectionId::default()],
+//         Version::new("ics20-1".to_string()),
+//     );
+//     contract
+//         .store_channel_end(
+//             &mut deps.storage,
+//             packet.port_id_on_b.clone(),
+//             packet.chan_id_on_b,
+//             chan_end_on_b,
+//         )
+//         .unwrap();
 
-    contract
-        .receive_packet_validate_reply_from_light_client(deps.as_mut(), message)
-        .unwrap();
-}
+//     contract
+//         .receive_packet_validate_reply_from_light_client(deps.as_mut(), message)
+//         .unwrap();
+// }
 
 #[test]
 fn execute_receive_packet() {

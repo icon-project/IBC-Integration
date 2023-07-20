@@ -35,83 +35,68 @@ pub fn channel_close_confirm_validate(
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-    /// This function executes a close confirmation after the validation from the light client and call the
-    /// xcall.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
-    /// contract. It is used to interact with the storage, API, and other modules.
-    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
-    /// contract to a light client. It is used to extract the data returned by the sub-message and
-    /// perform further actions based on it.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// contract execution and `ContractError` is an enum representing the possible errors that can
-    /// occur during contract execution.
-    pub fn execute_close_confirm_from_light_client_reply(
-        &self,
-        deps: DepsMut,
+   
+    // pub fn execute_close_confirm_from_light_client_reply(
+    //     &self,
+    //     deps: DepsMut,
 
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let response = from_binary_response::<LightClientResponse>(&res).unwrap();
-                    let info = response.message_info;
-                    let data = response.ibc_endpoint;
-                    let port_id =
-                        IbcPortId::from_str(&data.port_id).map_err(Into::<ContractError>::into)?;
-                    let channel_id = IbcChannelId::from_str(&data.channel_id)
-                        .map_err(Into::<ContractError>::into)?;
-                    let channel_end =
-                        self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-                    // Getting the module address for on channel open try call
-                    let contract_address =
-                        match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
-                            Ok(addr) => addr,
-                            Err(error) => return Err(error),
-                        };
+    //     message: Reply,
+    // ) -> Result<Response, ContractError> {
+    //     match message.result {
+    //         cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
+    //             Some(res) => {
+    //                 let response = from_binary_response::<LightClientResponse>(&res).unwrap();
+    //                 let info = response.message_info;
+    //                 let data = response.ibc_endpoint;
+    //                 let port_id =
+    //                     IbcPortId::from_str(&data.port_id).map_err(Into::<ContractError>::into)?;
+    //                 let channel_id = IbcChannelId::from_str(&data.channel_id)
+    //                     .map_err(Into::<ContractError>::into)?;
+    //                 let channel_end =
+    //                     self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+    //                 // Getting the module address for on channel open try call
+    //                 let contract_address =
+    //                     match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
+    //                         Ok(addr) => addr,
+    //                         Err(error) => return Err(error),
+    //                     };
 
-                    // Generate event for calling on channel open try in x-call
-                    let sub_message =
-                        on_chan_close_confirm_submessage(&channel_end, &port_id, &channel_id)?;
-                    self.store_callback_data(
-                        deps.storage,
-                        EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
-                        &sub_message.channel().endpoint,
-                    )?;
-                    let data =
-                        cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
-                    let data = to_binary(&data).map_err(Into::<ContractError>::into)?;
-                    let on_chan_close_confirm = create_channel_submesssage(
-                        contract_address,
-                        data,
-                        info.funds,
-                        EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
-                    );
+    //                 // Generate event for calling on channel open try in x-call
+    //                 let sub_message =
+    //                     on_chan_close_confirm_submessage(&channel_end, &port_id, &channel_id)?;
+    //                 self.store_callback_data(
+    //                     deps.storage,
+    //                     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
+    //                     &sub_message.channel().endpoint,
+    //                 )?;
+    //                 let data =
+    //                     cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
+    //                 let data = to_binary(&data).map_err(Into::<ContractError>::into)?;
+    //                 let on_chan_close_confirm = create_channel_submesssage(
+    //                     contract_address,
+    //                     data,
+    //                     info.funds,
+    //                     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
+    //                 );
 
-                    Ok(Response::new()
-                        .add_attribute("action", "channel")
-                        .add_attribute("method", "channel_close_confirm_module_validation")
-                        .add_submessage(on_chan_close_confirm))
-                }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
-            },
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ChannelError::VerifyChannelFailed(ClientError::Other {
-                    description: error,
-                }))
-                .map_err(Into::<ContractError>::into)
-            }
-        }
-    }
+    //                 Ok(Response::new()
+    //                     .add_attribute("action", "channel")
+    //                     .add_attribute("method", "channel_close_confirm_module_validation")
+    //                     .add_submessage(on_chan_close_confirm))
+    //             }
+    //             None => Err(ChannelError::Other {
+    //                 description: "Data from module is Missing".to_string(),
+    //             })
+    //             .map_err(Into::<ContractError>::into),
+    //         },
+    //         cosmwasm_std::SubMsgResult::Err(error) => {
+    //             Err(ChannelError::VerifyChannelFailed(ClientError::Other {
+    //                 description: error,
+    //             }))
+    //             .map_err(Into::<ContractError>::into)
+    //         }
+    //     }
+    // }
 }
 
 /// This function creates an IBC channel close confirmation sub message for calling xcall.

@@ -250,107 +250,93 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
-    /// This function validates a reply from a light client for a timeout packet in channel.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a mutable reference to the dependencies of the contract, which includes
-    /// access to the storage and other modules.
-    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message execution.
-    /// It is used to extract the data returned by the sub-message and perform further actions based on
-    /// it.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// contract execution and `ContractError` is an enum representing the possible errors that can occur
-    /// during contract execution.
-    pub fn timeout_packet_validate_reply_from_light_client(
-        &self,
-        deps: DepsMut,
+   
+    // pub fn timeout_packet_validate_reply_from_light_client(
+    //     &self,
+    //     deps: DepsMut,
 
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-                Some(res) => {
-                    let packet_data =
-                        from_binary_response::<PacketDataResponse>(&res).map_err(|e| {
-                            ContractError::IbcDecodeError {
-                                error: DecodeError::new(e.to_string()),
-                            }
-                        })?;
-                    let info = packet_data.message_info;
-                    let data = Packet::from(packet_data.packet.clone());
-                    let port_id = packet_data.packet.port_id_on_a.clone();
-                    // Getting the module address for on packet timeout call
-                    let contract_address =
-                        match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
-                            Ok(addr) => addr,
-                            Err(error) => return Err(error),
-                        };
+    //     message: Reply,
+    // ) -> Result<Response, ContractError> {
+    //     match message.result {
+    //         cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
+    //             Some(res) => {
+    //                 let packet_data =
+    //                     from_binary_response::<PacketDataResponse>(&res).map_err(|e| {
+    //                         ContractError::IbcDecodeError {
+    //                             error: DecodeError::new(e.to_string()),
+    //                         }
+    //                     })?;
+    //                 let info = packet_data.message_info;
+    //                 let data = Packet::from(packet_data.packet.clone());
+    //                 let port_id = packet_data.packet.port_id_on_a.clone();
+    //                 // Getting the module address for on packet timeout call
+    //                 let contract_address =
+    //                     match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
+    //                         Ok(addr) => addr,
+    //                         Err(error) => return Err(error),
+    //                     };
 
-                    let src = CwEndPoint {
-                        port_id: packet_data.packet.port_id_on_a.to_string(),
-                        channel_id: packet_data.packet.chan_id_on_a.to_string(),
-                    };
-                    let dest = CwEndPoint {
-                        port_id: packet_data.packet.port_id_on_b.to_string(),
-                        channel_id: packet_data.packet.chan_id_on_b.to_string(),
-                    };
-                    let data = Binary::from(data.data);
-                    let timeoutblock = match packet_data.packet.timeout_height_on_b {
-                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
-                            CwTimeoutBlock {
-                                revision: 1,
-                                height: 1,
-                            }
-                        }
-                        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
-                            CwTimeoutBlock {
-                                revision: x.revision_number(),
-                                height: x.revision_height(),
-                            }
-                        }
-                    };
-                    let timeout = CwTimeout::with_block(timeoutblock);
-                    let ibc_packet =
-                        CwPacket::new(data, src, dest, packet_data.packet.seq_on_a.into(), timeout);
-                    self.store_callback_data(
-                        deps.storage,
-                        VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
-                        &ibc_packet,
-                    )?;
+    //                 let src = CwEndPoint {
+    //                     port_id: packet_data.packet.port_id_on_a.to_string(),
+    //                     channel_id: packet_data.packet.chan_id_on_a.to_string(),
+    //                 };
+    //                 let dest = CwEndPoint {
+    //                     port_id: packet_data.packet.port_id_on_b.to_string(),
+    //                     channel_id: packet_data.packet.chan_id_on_b.to_string(),
+    //                 };
+    //                 let data = Binary::from(data.data);
+    //                 let timeoutblock = match packet_data.packet.timeout_height_on_b {
+    //                     common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => {
+    //                         CwTimeoutBlock {
+    //                             revision: 1,
+    //                             height: 1,
+    //                         }
+    //                     }
+    //                     common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => {
+    //                         CwTimeoutBlock {
+    //                             revision: x.revision_number(),
+    //                             height: x.revision_height(),
+    //                         }
+    //                     }
+    //                 };
+    //                 let timeout = CwTimeout::with_block(timeoutblock);
+    //                 let ibc_packet =
+    //                     CwPacket::new(data, src, dest, packet_data.packet.seq_on_a.into(), timeout);
+    //                 self.store_callback_data(
+    //                     deps.storage,
+    //                     VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
+    //                     &ibc_packet,
+    //                 )?;
 
-                    let address = Addr::unchecked(packet_data.signer.to_string());
-                    let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketTimeout {
-                        msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
-                    };
-                    let create_client_message: CosmosMsg =
-                        CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-                            contract_addr: contract_address,
-                            msg: to_binary(&cosm_msg).unwrap(),
-                            funds: info.funds,
-                        });
-                    let sub_msg: SubMsg = SubMsg::reply_on_success(
-                        create_client_message,
-                        VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
-                    );
+    //                 let address = Addr::unchecked(packet_data.signer.to_string());
+    //                 let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketTimeout {
+    //                     msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
+    //                 };
+    //                 let create_client_message: CosmosMsg =
+    //                     CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+    //                         contract_addr: contract_address,
+    //                         msg: to_binary(&cosm_msg).unwrap(),
+    //                         funds: info.funds,
+    //                     });
+    //                 let sub_msg: SubMsg = SubMsg::reply_on_success(
+    //                     create_client_message,
+    //                     VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
+    //                 );
 
-                    Ok(Response::new()
-                        .add_attribute("action", "packet")
-                        .add_attribute("method", "packet_timeout_module_validation")
-                        .add_submessage(sub_msg))
-                }
-                None => Err(ChannelError::Other {
-                    description: "Data from module is Missing".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
-            },
+    //                 Ok(Response::new()
+    //                     .add_attribute("action", "packet")
+    //                     .add_attribute("method", "packet_timeout_module_validation")
+    //                     .add_submessage(sub_msg))
+    //             }
+    //             None => Err(ChannelError::Other {
+    //                 description: "Data from module is Missing".to_string(),
+    //             })
+    //             .map_err(Into::<ContractError>::into),
+    //         },
 
-            cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
-        }
-    }
+    //         cosmwasm_std::SubMsgResult::Err(e) => Err(ContractError::IbcContextError { error: e }),
+    //     }
+    // }
 
     /// This function handles the execution of a timeout packet after successfull validation of
     /// light client and xcall.

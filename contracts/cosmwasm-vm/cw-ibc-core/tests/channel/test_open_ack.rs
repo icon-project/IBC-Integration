@@ -235,105 +235,105 @@ fn test_validate_open_ack_channel() {
     )
 }
 
-#[test]
-fn test_execute_open_ack_from_light_client() {
-    let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
-    let raw = get_dummy_raw_msg_chan_open_ack(10);
-    let msg = MsgChannelOpenAck::try_from(raw).unwrap();
-    let channel_id_on_b = ChannelId::new(0);
-    let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let connection_id = IbcConnectionId::new(5);
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        Some(connection_id.clone()),
-        ss.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    contract
-        .store_connection(deps.as_mut().storage, connection_id.clone(), conn_end)
-        .unwrap();
-    let counter_party = Counterparty::new(msg.port_id_on_a.clone(), Some(msg.chan_id_on_b.clone()));
-    let channel_end = ChannelEnd::new(
-        State::Init,
-        Order::Unordered,
-        counter_party,
-        vec![connection_id.clone()],
-        Version::from_str("xcall").unwrap(),
-    );
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+// #[test]
+// fn test_execute_open_ack_from_light_client() {
+//     let mut deps = deps();
+//     let contract = CwIbcCoreContext::default();
+//     let info = create_mock_info("channel-creater", "umlg", 2000);
+//     let raw = get_dummy_raw_msg_chan_open_ack(10);
+//     let msg = MsgChannelOpenAck::try_from(raw).unwrap();
+//     let channel_id_on_b = ChannelId::new(0);
+//     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+//         "hello".to_string().as_bytes().to_vec(),
+//     );
+//     let connection_id = IbcConnectionId::new(5);
+//     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
+//         IbcClientId::default(),
+//         Some(connection_id.clone()),
+//         ss.unwrap(),
+//     );
+//     let conn_end = ConnectionEnd::new(
+//         common::ibc::core::ics03_connection::connection::State::Open,
+//         IbcClientId::default(),
+//         counter_party,
+//         vec![common::ibc::core::ics03_connection::version::Version::default()],
+//         Duration::default(),
+//     );
+//     contract
+//         .store_connection(deps.as_mut().storage, connection_id.clone(), conn_end)
+//         .unwrap();
+//     let counter_party = Counterparty::new(msg.port_id_on_a.clone(), Some(msg.chan_id_on_b.clone()));
+//     let channel_end = ChannelEnd::new(
+//         State::Init,
+//         Order::Unordered,
+//         counter_party,
+//         vec![connection_id.clone()],
+//         Version::from_str("xcall").unwrap(),
+//     );
+//     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+//     let port_id = msg.port_id_on_a.clone();
 
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
+//     let module = Addr::unchecked("contractaddress");
+//     let _cx_module_id = module_id;
 
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
+//     contract
+//         .claim_capability(
+//             &mut deps.storage,
+//             port_id.as_bytes().to_vec(),
+//             module.to_string(),
+//         )
+//         .unwrap();
 
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.clone().sender,
-        funds: info.clone().funds,
-    };
+//     let message_info = cw_common::types::MessageInfo {
+//         sender: info.clone().sender,
+//         funds: info.clone().funds,
+//     };
 
-    let expected_data = LightClientResponse {
-        message_info,
-        ibc_endpoint: cosmwasm_std::IbcEndpoint {
-            port_id: msg.port_id_on_a.to_string(),
-            channel_id: channel_id_on_b.to_string(),
-        },
-    };
-    let response = SubMsgResponse {
-        data: Some(to_binary(&expected_data).unwrap()),
-        events: vec![Event::new("action").add_attribute("action", "channel open try execution")],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(response);
-    let reply = Reply {
-        id: EXECUTE_ON_CHANNEL_OPEN_TRY,
-        result,
-    };
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            msg.port_id_on_a.clone(),
-            channel_id_on_b.clone(),
-            channel_end.clone(),
-        )
-        .unwrap();
+//     let expected_data = LightClientResponse {
+//         message_info,
+//         ibc_endpoint: cosmwasm_std::IbcEndpoint {
+//             port_id: msg.port_id_on_a.to_string(),
+//             channel_id: channel_id_on_b.to_string(),
+//         },
+//     };
+//     let response = SubMsgResponse {
+//         data: Some(to_binary(&expected_data).unwrap()),
+//         events: vec![Event::new("action").add_attribute("action", "channel open try execution")],
+//     };
+//     let result: SubMsgResult = SubMsgResult::Ok(response);
+//     let reply = Reply {
+//         id: EXECUTE_ON_CHANNEL_OPEN_TRY,
+//         result,
+//     };
+//     contract
+//         .store_channel_end(
+//             &mut deps.storage,
+//             msg.port_id_on_a.clone(),
+//             channel_id_on_b.clone(),
+//             channel_end.clone(),
+//         )
+//         .unwrap();
 
-    let expected = on_chan_open_ack_submessage(
-        &channel_end,
-        &msg.port_id_on_a,
-        &channel_id_on_b,
-        &connection_id,
-    );
-    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect {
-        msg: expected.unwrap(),
-    };
-    let data = to_binary(&data).unwrap();
-    let on_chan_open_ack = create_channel_submesssage(
-        "contractaddress".to_string(),
-        data,
-        info.funds,
-        EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
-    );
-    let res = contract.execute_open_ack_from_light_client_reply(deps.as_mut(), reply);
-    assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0], on_chan_open_ack)
-}
+//     let expected = on_chan_open_ack_submessage(
+//         &channel_end,
+//         &msg.port_id_on_a,
+//         &channel_id_on_b,
+//         &connection_id,
+//     );
+//     let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect {
+//         msg: expected.unwrap(),
+//     };
+//     let data = to_binary(&data).unwrap();
+//     let on_chan_open_ack = create_channel_submesssage(
+//         "contractaddress".to_string(),
+//         data,
+//         info.funds,
+//         EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
+//     );
+//     let res = contract.execute_open_ack_from_light_client_reply(deps.as_mut(), reply);
+//     assert!(res.is_ok());
+//     assert_eq!(res.unwrap().messages[0], on_chan_open_ack)
+// }
 
 #[test]
 fn test_execute_open_ack_channel() {
