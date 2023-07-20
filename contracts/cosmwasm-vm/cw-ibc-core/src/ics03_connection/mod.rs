@@ -6,7 +6,7 @@ pub mod handler;
 use crate::context::CwIbcCoreContext;
 use crate::ics03_connection::event::create_open_ack_event;
 use crate::ics03_connection::event::create_open_confirm_event;
-use crate::ics03_connection::event::create_open_init_event;
+// use crate::ics03_connection::event::create_open_init_event;
 use crate::ics03_connection::event::create_open_try_event;
 use crate::ContractError;
 use common::ibc::core::ics24_host::identifier::{ClientId, ConnectionId};

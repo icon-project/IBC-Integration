@@ -138,10 +138,10 @@ pub fn create_open_confirm_event(
 
 pub fn create_connection_event(
     event_type: IbcEventType,
-    connection_id: ConnectionId,
-    client_id: ClientId,
+    connection_id: &ConnectionId,
+    client_id: &ClientId,
+    counterparty_client_id: &ClientId,
     counterparty_connection_id: Option<ConnectionId>,
-    counterparty_client_id: ClientId,
 ) -> Result<Event, ContractError> {
     let mut event = Event::new(event_type.as_str());
     event = event

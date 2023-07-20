@@ -238,7 +238,7 @@ pub fn create_channel_event(
     event_type: IbcEventType,
     port_id: &str,
     channel_id: &str,
-    channel: ChannelEnd,
+    channel: &ChannelEnd,
 ) -> Result<Event, ContractError> {
     let mut event = Event::new(event_type.as_str())
         .add_attribute(PORT_ID_ATTRIBUTE_KEY, port_id)
