@@ -29,10 +29,8 @@ use cw_common::raw_types::RawHeight;
 
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics03_connection::event::create_connection_event;
-use cw_ibc_core::ics03_connection::event::create_open_ack_event;
-use cw_ibc_core::ics03_connection::event::create_open_confirm_event;
+
 //use cw_ibc_core::ics03_connection::event::create_open_init_event;
-use cw_ibc_core::ics03_connection::event::create_open_try_event;
 
 use common::ibc::core::ics03_connection::connection::Counterparty;
 use common::ibc::core::ics03_connection::connection::State;

@@ -43,7 +43,6 @@ pub mod channel {
     };
 }
 
-use common::ibc::Height;
 pub use ibc_proto::google::protobuf::Any;
 pub use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 pub use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
@@ -61,7 +60,7 @@ pub fn to_raw_packet(packet: CwPacket) -> RawPacket {
         revision_height: b.height,
         revision_number: b.revision,
     });
-    return RawPacket {
+    RawPacket {
         sequence: packet.sequence,
         source_port: packet.src.port_id,
         source_channel: packet.src.channel_id,
@@ -70,5 +69,5 @@ pub fn to_raw_packet(packet: CwPacket) -> RawPacket {
         data: packet.data.0,
         timeout_height,
         timeout_timestamp: timestamp,
-    };
+    }
 }

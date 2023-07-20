@@ -1596,9 +1596,7 @@ fn success_on_getting_client_state() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
-    }
-    .try_into()
-    .unwrap();
+    };
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
@@ -1687,9 +1685,7 @@ fn sucess_on_misbehaviour_validate() {
         network_section_hash: vec![1, 2, 3],
         validators: vec!["hash".as_bytes().to_vec()],
         ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    };
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
@@ -1872,20 +1868,6 @@ fn success_on_execute_misbehaviour() {
 
     assert_eq!("client_misbehaviour", result.events[0].ty);
     assert_eq!(client_id.as_str(), result.events[0].attributes[0].value);
-}
-
-#[test]
-fn success_on_raw_from_consensus_state() {
-    let raw = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: "message_root".as_bytes().to_vec(),
-    };
-
-    let consenus_state: ConsensusState = raw.clone().try_into().unwrap();
-
-    let raw_message: common::icon::icon::lightclient::v1::ConsensusState =
-        consenus_state.try_into().unwrap();
-
-    assert_eq!(raw, raw_message)
 }
 
 #[test]

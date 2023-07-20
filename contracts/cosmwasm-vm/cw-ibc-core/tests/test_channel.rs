@@ -38,13 +38,9 @@ use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        create_ack_packet_event, create_channel_id_generated_event,
-        create_close_confirm_channel_event, create_close_init_channel_event,
-        create_open_ack_channel_event, create_open_confirm_channel_event,
-        create_open_init_channel_event, create_open_try_channel_event, create_packet_timeout_event,
-        create_send_packet_event, create_write_ack_event, MsgChannelCloseConfirm,
-        MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
-        MsgChannelOpenTry,
+        create_channel_id_generated_event, create_close_confirm_channel_event,
+        create_close_init_channel_event, MsgChannelCloseConfirm, MsgChannelCloseInit,
+        MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
     },
     ChannelEnd, ConnectionEnd, Sequence,
 };

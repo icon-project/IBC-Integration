@@ -93,16 +93,10 @@ impl<'a> CwIbcCoreContext<'a> {
         );
         debug_println!(
             "computed packet commitment  {:?}",
-            hex::encode(compouted_packet_commitment)
+            hex::encode(&compouted_packet_commitment)
         );
 
-        if commitment_on_a
-            != commitment::compute_packet_commitment(
-                &packet.data,
-                &packet.timeout_height_on_b,
-                &packet.timeout_timestamp_on_b,
-            )
-        {
+        if commitment_on_a != compouted_packet_commitment {
             return Err(PacketError::IncorrectPacketCommitment {
                 sequence: packet.sequence,
             })

@@ -276,7 +276,7 @@ impl<'a> CwIbcCoreContext<'a> {
             IbcEventType::OpenAckConnection,
             &connection_id,
             &conn_end.client_id().clone(),
-            &counterparty.client_id(),
+            counterparty.client_id(),
             Some(counterparty_conn_id),
         )?;
 
@@ -642,8 +642,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let event = create_connection_event(
             IbcEventType::OpenConfirmConnection,
             &connection_id,
-            &conn_end.client_id(),
-            &counterparty.client_id(),
+            conn_end.client_id(),
+            counterparty.client_id(),
             Some(counter_conn_id),
         )?;
 

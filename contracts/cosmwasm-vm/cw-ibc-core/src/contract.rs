@@ -279,8 +279,8 @@ impl<'a> CwIbcCoreContext<'a> {
             QueryMsg::GetConsensusState { client_id } => {
                 let res = self
                     .consensus_state_any(deps.storage, &IbcClientId::from_str(&client_id).unwrap())
-                    .map_err(|e| {
-                        debug_println!("{e:?}");
+                    .map_err(|_e| {
+                        debug_println!("{_e:?}");
                         ContractError::InvalidClientId { client_id }
                     })
                     .unwrap();
