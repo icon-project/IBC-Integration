@@ -2,7 +2,7 @@ use common::ibc::core::ics04_channel::{
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
-use cw_common::{from_binary_response, hex_string::HexString};
+use cw_common::{hex_string::HexString};
 use debug_print::debug_println;
 use prost::DecodeError;
 
@@ -225,7 +225,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
-   
     // pub fn receive_packet_validate_reply_from_light_client(
     //     &self,
     //     deps: DepsMut,

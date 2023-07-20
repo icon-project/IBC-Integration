@@ -1,4 +1,4 @@
-use cw_common::client_response::PacketResponse;
+
 use cw_ibc_core::{
     light_client::light_client::LightClient, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
 };

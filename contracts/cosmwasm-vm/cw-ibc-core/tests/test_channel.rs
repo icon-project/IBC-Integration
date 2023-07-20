@@ -29,7 +29,7 @@ use cw_common::raw_types::RawHeight;
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };
-use cw_ibc_core::ics04_channel::open_try::on_chan_open_try_submessage;
+
 use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY};
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{

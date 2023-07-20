@@ -1,4 +1,4 @@
-use cw_common::from_binary_response;
+
 use prost::DecodeError;
 
 use super::*;
@@ -250,7 +250,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_submessage(sub_msg))
     }
 
-   
     // pub fn timeout_packet_validate_reply_from_light_client(
     //     &self,
     //     deps: DepsMut,

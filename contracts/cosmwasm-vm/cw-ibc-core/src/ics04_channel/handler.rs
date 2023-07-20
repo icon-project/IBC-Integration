@@ -8,7 +8,7 @@ use self::{
     open_try::channel_open_try_msg_validate,
 };
 
-use cw_common::{commitment, from_binary_response, raw_types::channel::RawChannel};
+use cw_common::{commitment, raw_types::channel::RawChannel};
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;

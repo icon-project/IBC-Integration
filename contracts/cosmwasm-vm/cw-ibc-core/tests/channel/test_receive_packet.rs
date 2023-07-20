@@ -1,13 +1,13 @@
 use cosmwasm_std::Empty;
 use cosmwasm_std::IbcReceiveResponse;
-use cw_common::client_response::PacketResponse;
+
 use cw_common::client_response::XcallPacketResponseData;
 
 use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 use common::ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use common::ibc::core::ics04_channel::msgs::PacketMsg;
-use common::ibc::core::ics04_channel::packet::Receipt;
+
 use common::ibc::timestamp::Timestamp;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;

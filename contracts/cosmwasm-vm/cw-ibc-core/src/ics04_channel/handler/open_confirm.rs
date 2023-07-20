@@ -37,7 +37,6 @@ pub fn channel_open_confirm_validate(
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-    
     // pub fn execute_open_confirm_from_light_client_reply(
     //     &self,
     //     deps: DepsMut,

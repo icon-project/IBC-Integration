@@ -1,5 +1,5 @@
 use cosmwasm_std::IbcChannel;
-use cw_common::client_response::LightClientResponse;
+
 use cw_ibc_core::{
     ics04_channel::{
         open_confirm::{channel_open_confirm_validate, on_chan_open_confirm_submessage},

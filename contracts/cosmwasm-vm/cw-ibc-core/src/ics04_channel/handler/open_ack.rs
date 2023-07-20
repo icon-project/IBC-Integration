@@ -96,7 +96,6 @@ pub fn on_chan_open_ack_submessage(
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-    
     // pub fn execute_open_ack_from_light_client_reply(
     //     &self,
     //     deps: DepsMut,

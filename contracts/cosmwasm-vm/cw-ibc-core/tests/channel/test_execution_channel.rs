@@ -6,7 +6,6 @@ use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cw_common::raw_types::Protobuf;
 use cw_common::{
-    client_response::{LightClientResponse, PacketResponse},
     core_msg::ExecuteMsg as CoreExecuteMsg,
     hex_string::HexString,
 };
@@ -16,9 +15,9 @@ use cw_ibc_core::{
     EXECUTE_ON_CHANNEL_CLOSE_INIT,
 };
 use cw_ibc_core::{
-    EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
-    EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-    VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT, EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT, EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT,
+    EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
+    VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+    VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
 };
 use prost::Message;
 
@@ -92,7 +91,7 @@ fn test_for_channel_open_init_execution_message() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-       id: EXECUTE_ON_CHANNEL_OPEN_INIT,
+        id: EXECUTE_ON_CHANNEL_OPEN_INIT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -203,7 +202,7 @@ fn test_for_channel_open_try_execution_message() {
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
-        info.clone(),
+        info,
         CoreExecuteMsg::ChannelOpenTry {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
@@ -212,8 +211,6 @@ fn test_for_channel_open_try_execution_message() {
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY);
 
-   
-
     let mock_reponse_data = cosmwasm_std::IbcEndpoint {
         port_id: msg.port_id_on_a.to_string(),
         channel_id: ChannelId::default().to_string(),
@@ -221,7 +218,7 @@ fn test_for_channel_open_try_execution_message() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-       id: EXECUTE_ON_CHANNEL_OPEN_TRY,
+        id: EXECUTE_ON_CHANNEL_OPEN_TRY,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -352,7 +349,7 @@ fn test_for_channel_open_ack_execution() {
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
-        info.clone(),
+        info,
         CoreExecuteMsg::ChannelOpenAck {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
@@ -371,7 +368,7 @@ fn test_for_channel_open_ack_execution() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-       id: EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
+        id: EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -502,7 +499,7 @@ fn test_for_channel_open_confirm() {
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
-        info.clone(),
+        info,
         CoreExecuteMsg::ChannelOpenConfirm {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
@@ -521,7 +518,7 @@ fn test_for_channel_open_confirm() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-       id: EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
+        id: EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -763,7 +760,7 @@ fn test_for_channel_close_confirm() {
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
-        info.clone(),
+        info,
         CoreExecuteMsg::ChannelCloseConfirm {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
@@ -776,8 +773,6 @@ fn test_for_channel_close_confirm() {
         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE
     );
 
-    
-
     let mock_reponse_data = cosmwasm_std::IbcEndpoint {
         port_id: msg.port_id_on_b.to_string(),
         channel_id: ChannelId::default().to_string(),
@@ -785,7 +780,7 @@ fn test_for_channel_close_confirm() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-       id: EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
+        id: EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1047,7 +1042,7 @@ fn test_for_recieve_packet() {
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
-        info.clone(),
+        info,
         CoreExecuteMsg::ReceivePacket {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
@@ -1059,7 +1054,6 @@ fn test_for_recieve_packet() {
         VALIDATE_ON_PACKET_RECEIVE_ON_MODULE
     );
 
-    
     contract
         .store_packet_receipt(
             &mut deps.storage,
@@ -1239,7 +1233,7 @@ fn test_for_ack_execute() {
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
-        info.clone(),
+        info,
         CoreExecuteMsg::AcknowledgementPacket {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
@@ -1251,7 +1245,6 @@ fn test_for_ack_execute() {
         res.unwrap().messages[0].id,
         VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE
     );
-
 
     let src = IbcEndpoint {
         port_id: msg.packet.port_id_on_a.to_string(),
@@ -1287,7 +1280,7 @@ fn test_for_ack_execute() {
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
     let reply_message = Reply {
-       id:VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+        id: VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),

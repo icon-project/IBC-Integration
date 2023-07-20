@@ -84,7 +84,6 @@ pub fn on_chan_open_try_submessage(
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-   
     // pub fn execute_open_try_from_light_client(
     //     &self,
     //     deps: DepsMut,

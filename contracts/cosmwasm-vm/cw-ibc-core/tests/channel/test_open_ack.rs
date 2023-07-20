@@ -1,6 +1,6 @@
 use super::*;
 use cosmwasm_std::IbcChannel;
-use cw_common::client_response::LightClientResponse;
+
 use cw_ibc_core::{
     ics04_channel::{
         open_ack::{channel_open_ack_validate, on_chan_open_ack_submessage},
