@@ -560,12 +560,6 @@ fn create_conection_open_confirm_event() {
     let client_id_on_b = ClientId::default();
     let counterparty_connection_id_on_a = ConnectionId::new(2);
     let counterparty_client_id_on_a = ClientId::default();
-    // let event = create_open_confirm_event(
-    //     connection_id_on_b,
-    //     client_id_on_b,
-    //     counterparty_connection_id_on_a,
-    //     counterparty_client_id_on_a,
-    // );
     let event = create_connection_event(
         IbcEventType::OpenConfirmConnection,
         &connection_id_on_b,
@@ -591,11 +585,6 @@ fn connection_to_verify_correct_connection_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    // let event = create_open_init_event(
-    //     connection_id.as_str(),
-    //     client_id.as_str(),
-    //     counterparty_client_id.as_str(),
-    // );
     let event = create_connection_event(
         IbcEventType::OpenInitConnection,
         &connection_id,
@@ -617,11 +606,6 @@ fn connection_to_verify_correct_client_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    // let event = create_open_init_event(
-    //     connection_id.as_str(),
-    //     client_id.as_str(),
-    //     counterparty_client_id.as_str(),
-    // );
     let event = create_connection_event(
         IbcEventType::OpenInitConnection,
         &connection_id,
@@ -643,11 +627,6 @@ fn connection_to_verify_correct_counterparty_client_id() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    // let event = create_open_init_event(
-    //     connection_id.as_str(),
-    //     client_id.as_str(),
-    //     counterparty_client_id.as_str(),
-    // );
     let event = create_connection_event(
         IbcEventType::OpenInitConnection,
         &connection_id,
@@ -670,12 +649,6 @@ fn connection_to_verify_correct_counterparty_conn_id() {
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
     let counterparty_conn_id = ConnectionId::new(1);
-    // let event = create_open_ack_event(
-    //     connection_id,
-    //     client_id,
-    //     counterparty_conn_id,
-    //     counterparty_client_id,
-    // );
     let event = create_connection_event(
         IbcEventType::OpenAckConnection,
         &connection_id,

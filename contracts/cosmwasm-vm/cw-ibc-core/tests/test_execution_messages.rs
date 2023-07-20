@@ -14,8 +14,6 @@ use cosmwasm_std::ContractResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 use cosmwasm_std::{to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
-
-use cw_common::client_response::OpenTryResponse;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
@@ -772,29 +770,13 @@ fn test_for_connection_open_try_fails() {
         .unwrap();
     assert_eq!(response.attributes[0].value, "connection_open_try");
 
-    let conn_id = ConnectionId::new(1);
-    let client_id = ClientId::from_str("iconclient-1").unwrap();
-    let versions = vec![RawVersion {
-        identifier: "identifier".to_string(),
-        features: vec!["hello".to_string()],
-    }];
-    let mock_response_data = OpenTryResponse::new(
-        conn_id.as_str().to_owned(),
-        client_id.to_string(),
-        counterparty_client_id.to_string(),
-        "".to_string(),
-        counterparty_prefix.as_bytes().to_vec(),
-        to_vec(&versions).unwrap(),
-        23,
-    );
-    let mock_data_binary = to_binary(&mock_response_data).unwrap();
     let events = Event::new("open_try");
 
     let reply_msg = Reply {
         id: EXECUTE_CONNECTION_OPENTRY,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![events],
-            data: Some(mock_data_binary),
+            data: None,
         }),
     };
     contract.reply(deps.as_mut(), env, reply_msg).unwrap();

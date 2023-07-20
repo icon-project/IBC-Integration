@@ -5,11 +5,21 @@ fn test_packet_send() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let env = get_mock_env();
+    let timestamp_future = Timestamp::default();
+    let timeout_height_future = 10;
+   
+   
+    let mut packet: Packet =
+    get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
+        .try_into()
+        .unwrap();
+    packet.sequence = 1.into();
+    packet.data = vec![0];
 
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
         Order::default(),
-        Counterparty::new(IbcPortId::default(), Some(IbcChannelId::default())),
+        Counterparty::new(packet.port_id_on_b.clone(), Some(packet.chan_id_on_b.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -29,14 +39,7 @@ fn test_packet_send() {
         get_compatible_versions(),
         ZERO_DURATION,
     );
-    let timestamp_future = Timestamp::default();
-    let timeout_height_future = 10;
-    let mut packet: Packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
-            .try_into()
-            .unwrap();
-    packet.sequence = 1.into();
-    packet.data = vec![0];
+    
 
     contract
         .store_channel_end(
@@ -104,6 +107,7 @@ fn test_packet_send() {
         .unwrap();
 
     let res = contract.send_packet(deps.as_mut(), packet);
+    println!("{:?}",res);
     assert!(res.is_ok());
     let res = res.unwrap();
     assert_eq!(res.attributes[0].value, "send_packet");
@@ -134,11 +138,19 @@ fn test_packet_send_fail_misiing_sequense() {
     let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
+    let timestamp_future = Timestamp::default();
+    let timeout_height_future = 10;
+    let mut packet: Packet =
+        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
+            .try_into()
+            .unwrap();
+    packet.sequence = 1.into();
+    packet.data = vec![0];
 
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
         Order::default(),
-        Counterparty::new(IbcPortId::default(), Some(IbcChannelId::default())),
+        Counterparty::new(packet.port_id_on_b.clone(), Some(packet.chan_id_on_b.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -158,14 +170,7 @@ fn test_packet_send_fail_misiing_sequense() {
         get_compatible_versions(),
         ZERO_DURATION,
     );
-    let timestamp_future = Timestamp::default();
-    let timeout_height_future = 10;
-    let mut packet: Packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
-            .try_into()
-            .unwrap();
-    packet.sequence = 1.into();
-    packet.data = vec![0];
+   
 
     contract
         .store_channel_end(

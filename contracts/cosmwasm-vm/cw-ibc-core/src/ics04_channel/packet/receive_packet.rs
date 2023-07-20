@@ -164,7 +164,7 @@ impl<'a> CwIbcCoreContext<'a> {
             self.validate_write_acknowledgement(deps.storage, packet)?;
         };
 
-        let port_id = packet.port_id_on_a.clone();
+        let port_id = packet.port_id_on_b.clone();
         // Getting the module address for on packet timeout call
         let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
         {

@@ -66,35 +66,6 @@ pub trait ILightClient {
         client_id: &str,
         header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error>;
-
-    /**
-     * @dev verifyMembership is a generic proof verification method which verifies a proof of the existence of a value at a given CommitmentPath at the specified height.
-     * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
-     */
-    fn verify_membership(
-        &self,
-        client_id: &str,
-        height: u64,
-        delay_time_period: u64,
-        delay_block_period: u64,
-        proof: &Vec<MerkleNode>,
-        value: &[u8],
-        path: &[u8],
-    ) -> Result<bool, Self::Error>;
-
-    /**
-     * @dev verifyNonMembership is a generic proof verification method which verifies the absence of a given CommitmentPath at a specified height.
-     * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
-     */
-    fn verify_non_membership(
-        &self,
-        client_id: &str,
-        height: u64,
-        delay_time_period: u64,
-        delay_block_period: u64,
-        proof: &Vec<MerkleNode>,
-        path: &[u8],
-    ) -> Result<bool, Self::Error>;
 }
 
 pub trait IStoreReader {}

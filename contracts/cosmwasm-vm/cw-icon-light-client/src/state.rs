@@ -265,7 +265,7 @@ impl QueryHandler {
         height: u64,
         _delay_time_period: u64,
         _delay_block_period: u64,
-        proof: &Vec<MerkleNode>,
+        proof: &[MerkleNode],
         value: &[u8],
         path: &[u8],
     ) -> Result<bool, ContractError> {
@@ -335,7 +335,7 @@ impl QueryHandler {
         height: u64,
         delay_time_period: u64,
         delay_block_period: u64,
-        proof: &Vec<MerkleNode>,
+        proof: &[MerkleNode],
         path: &[u8],
     ) -> Result<bool, ContractError> {
         Self::verify_membership(
@@ -345,8 +345,8 @@ impl QueryHandler {
             delay_time_period,
             delay_block_period,
             proof,
-            path,
             &[],
+            path,
         )
     }
 }

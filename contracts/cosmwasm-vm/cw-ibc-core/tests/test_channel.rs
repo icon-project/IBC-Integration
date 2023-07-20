@@ -719,14 +719,6 @@ fn create_open_ack_channel_event_test() {
         connection_hops: vec![ConnectionId::default()],
         version: message.version_on_b.clone(),
     };
-    // let event = create_open_ack_channel_event(
-    //     message.port_id_on_a.as_str(),
-    //     message.chan_id_on_a.as_str(),
-    //     IbcPortId::default().as_str(),
-    //     message.chan_id_on_b.as_str(),
-    //     ConnectionId::default().as_str(),
-    // );
-
     let event = create_channel_event(
         IbcEventType::OpenAckChannel,
         message.port_id_on_a.as_str(),
@@ -757,14 +749,6 @@ fn create_open_confirm_channel_event_test() {
         version: Version::empty(),
     };
 
-    // let event = create_open_confirm_channel_event(
-    //     message.port_id_on_b.as_str(),
-    //     message.chan_id_on_b.as_str(),
-    //     PortId::default().as_str(),
-    //     ChannelId::default().as_str(),
-    //     ConnectionId::default().as_str(),
-    // );
-
     let event = create_channel_event(
         IbcEventType::OpenConfirmChannel,
         message.port_id_on_b.as_str(),
@@ -794,13 +778,6 @@ fn create_open_init_channel_event_test() {
         connection_hops: message.connection_hops_on_a.clone(),
         version: message.version_proposal.clone(),
     };
-    // let event = create_open_init_channel_event(
-    //     channel_id.as_ref(),
-    //     message.port_id_on_a.as_ref(),
-    //     message.port_id_on_a.as_ref(),
-    //     &message.connection_hops_on_a[0].to_string(),
-    //     &message.version_proposal.to_string(),
-    // );
     let event = create_channel_event(
         IbcEventType::OpenInitChannel,
         message.port_id_on_a.as_ref(),
@@ -831,15 +808,6 @@ fn create_open_try_channel_event_test() {
         connection_hops: message.connection_hops_on_b.clone(),
         version: message.version_supported_on_a.clone(),
     };
-    // let event = create_open_try_channel_event(
-    //     channel_id.as_str(),
-    //     message.port_id_on_b.as_str(),
-    //     message.port_id_on_a.as_str(),
-    //     message.chan_id_on_a.as_str(),
-    //     message.connection_hops_on_b[0].as_str(),
-    //     message.version_supported_on_a.as_str(),
-    // );
-
     let event = create_channel_event(
         IbcEventType::OpenTryChannel,
         message.port_id_on_b.as_str(),
@@ -881,9 +849,6 @@ fn test_create_send_packet_with_invalid_utf_ok() {
         data: vec![u8::MAX],
         ..raw
     };
-    // let msg = Packet::try_from(raw).unwrap();
-    // let _event =
-    //     create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
     let _event = create_packet_event(
         IbcEventType::SendPacket,
         raw,
@@ -920,12 +885,7 @@ fn test_create_write_ack_packet_event() {
 
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    // let event = create_write_ack_event(
-    //     ibc_packet_recv_message.packet,
-    //     Order::Unordered.as_str(),
-    //     IbcConnectionId::default().as_str(),
-    //     &[],
-    // );
+
     let event = create_packet_event(
         IbcEventType::WriteAck,
         to_raw_packet(ibc_packet_recv_message.packet),
@@ -939,14 +899,6 @@ fn test_create_write_ack_packet_event() {
 #[test]
 fn test_create_write_ack_packet_event_with_invalidutf8_ok() {
     let raw = get_dummy_raw_packet(15, 0);
-
-    // let raw = RawPacket {
-    //     data: vec![u8::MAX],
-    //     ..raw
-    // };
-    // let msg = Packet::try_from(raw).unwrap();
-    // let _event =
-    //     create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
     let _event = create_packet_event(
         IbcEventType::SendPacket,
         raw,
@@ -960,18 +912,6 @@ fn test_create_write_ack_packet_event_with_invalidutf8_ok() {
 #[test]
 fn test_create_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
-    // let packet = Packet::try_from(raw).unwrap();
-    // let event = create_ack_packet_event(
-    //     packet.port_id_on_a.as_str(),
-    //     packet.chan_id_on_a.as_str(),
-    //     &packet.sequence.to_string(),
-    //     packet.port_id_on_b.as_str(),
-    //     packet.chan_id_on_b.as_str(),
-    //     &packet.timeout_height_on_b.to_string(),
-    //     &packet.timeout_timestamp_on_b.to_string(),
-    //     Order::Ordered.as_str(),
-    //     IbcConnectionId::default().as_str(),
-    // );
     let event = create_packet_event(
         IbcEventType::AckPacket,
         raw,

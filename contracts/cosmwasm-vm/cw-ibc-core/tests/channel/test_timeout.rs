@@ -18,21 +18,14 @@ fn test_execute_timeout_packet() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let data = Binary::from(b"test-data".to_vec());
-    let src = IbcEndpoint {
-        channel_id: packet.chan_id_on_a.to_string(),
-        port_id: packet.port_id_on_a.to_string(),
-    };
-    let dest = IbcEndpoint {
-        channel_id: "channel-1".to_string(),
-        port_id: "port-1".to_string(),
-    };
+    let (src,dst)= get_dummy_endpoints();
     let timeout = IbcTimeoutBlock {
         revision: 6,
         height: 6,
     };
     let timeout = IbcTimeout::with_block(timeout);
     // Set up test input data
-    let data = IbcPacket::new(data, src, dest, 1, timeout);
+    let data = IbcPacket::new(data, src, dst, 1, timeout);
     contract
         .store_callback_data(
             deps.as_mut().storage,
@@ -82,7 +75,7 @@ fn test_execute_timeout_packet() {
     // Call the function being tested
     let res = contract.execute_timeout_packet(deps.as_mut(), message);
 
-    // Check that the function returns the expected result
+    println!("{:?}",res);
     assert!(res.is_ok());
     assert_eq!(res.unwrap().attributes[1].value, "execute_timeout_packet",)
 }
@@ -103,21 +96,14 @@ fn test_execute_timeout_packet_fails() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let data = Binary::from(b"test-data".to_vec());
-    let src = IbcEndpoint {
-        channel_id: packet.chan_id_on_a.to_string(),
-        port_id: packet.port_id_on_a.to_string(),
-    };
-    let dest = IbcEndpoint {
-        channel_id: "channel-1".to_string(),
-        port_id: "port-1".to_string(),
-    };
+    let (src,dst)= get_dummy_endpoints();
     let timeout = IbcTimeoutBlock {
         revision: 6,
         height: 6,
     };
     let timeout = IbcTimeout::with_block(timeout);
     // Set up test input data
-    let data = IbcPacket::new(data, src, dest, 1, timeout);
+    let data = IbcPacket::new(data, src, dst, 1, timeout);
     contract
         .store_callback_data(
             deps.as_mut().storage,
@@ -151,53 +137,7 @@ fn test_execute_timeout_packet_fails() {
         .unwrap();
 }
 
-// #[test]
-// fn test_timeout_packet_validate_reply_from_light_client() {
-//     let proof_height = 50;
-//     let timeout_height = proof_height;
-//     let timeout_timestamp = 0;
-//     let default_raw_msg =
-//         get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
-//     let msg = MsgTimeout::try_from(default_raw_msg).unwrap();
 
-//     let contract = CwIbcCoreContext::default();
-//     let mut deps = deps();
-//     let info = create_mock_info("channel-creater", "umlg", 2000);
-
-//     let _module_id =
-//         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-//     let port_id = msg.packet.port_id_on_a.clone();
-
-//     let module = Addr::unchecked("contractaddress");
-//     contract
-//         .claim_capability(
-//             &mut deps.storage,
-//             port_id.as_bytes().to_vec(),
-//             module.to_string(),
-//         )
-//         .unwrap();
-
-//     let message_info = cw_common::types::MessageInfo {
-//         sender: info.sender,
-//         funds: info.funds,
-//     };
-//     let data = PacketData {
-//         packet: msg.packet.clone(),
-//         signer: msg.signer,
-//         acknowledgement: None,
-//         message_info,
-//     };
-//     let data_bin = to_binary(&data).unwrap();
-//     let result = SubMsgResponse {
-//         data: Some(data_bin),
-//         events: vec![],
-//     };
-//     let result: SubMsgResult = SubMsgResult::Ok(result);
-//     let message = Reply { id: 0, result };
-
-//     let res = contract.timeout_packet_validate_reply_from_light_client(deps.as_mut(), message);
-//     debug_println!("{res:?}");
-// }
 
 #[test]
 fn test_packet_data() {
