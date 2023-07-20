@@ -406,7 +406,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let timeout_timestamp: String = packet
                     .timeout
                     .timestamp()
-                    .map(|t| t.to_string())
+                    .map(|t| t.nanos().to_string())
                     .unwrap_or("0".to_string());
 
                 let timeout_height = packet
