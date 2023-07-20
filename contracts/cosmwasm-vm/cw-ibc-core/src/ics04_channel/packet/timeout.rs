@@ -1,4 +1,5 @@
 
+use cw_common::raw_types::{channel::RawPacket, to_raw_packet};
 use prost::DecodeError;
 
 use super::*;
@@ -415,17 +416,25 @@ impl<'a> CwIbcCoreContext<'a> {
                     .map(|h| h.to_string())
                     .unwrap_or("0-0".to_string());
 
-                let event = create_packet_timeout_event(
-                    &packet.src.port_id,
-                    &packet.src.channel_id,
-                    &packet.sequence.to_string(),
-                    &packet.dest.port_id,
-                    &packet.dest.channel_id,
-                    &timeout_height,
-                    &timeout_timestamp,
-                    chan_end_on_a.ordering.as_str(),
-                    conn_id_on_a.as_str(),
-                );
+                // let event = create_packet_timeout_event(
+                //     &packet.src.port_id,
+                //     &packet.src.channel_id,
+                //     &packet.sequence.to_string(),
+                //     &packet.dest.port_id,
+                //     &packet.dest.channel_id,
+                //     &timeout_height,
+                //     &timeout_timestamp,
+                //     chan_end_on_a.ordering.as_str(),
+                //     conn_id_on_a.as_str(),
+                // );
+
+                let event= create_packet_event(IbcEventType::Timeout, 
+                    to_raw_packet(packet.clone()), 
+                    chan_end_on_a.ordering(), 
+                    conn_id_on_a,
+                     None
+                )?;
+
 
                 Ok(Response::new()
                     .add_attribute("action", "packet")

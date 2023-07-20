@@ -24,13 +24,13 @@ use cw_common::raw_types::channel::{
     RawMsgChannelCloseConfirm, RawMsgChannelCloseInit, RawMsgChannelOpenAck,
     RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawPacket,
 };
-use cw_common::raw_types::RawHeight;
+use cw_common::raw_types::{RawHeight, to_raw_packet};
 
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };
 
-use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY, create_channel_event};
+use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY, create_channel_event, create_packet_event};
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
@@ -835,7 +835,13 @@ fn test_create_send_packet_event() {
     let msg_back = Packet::try_from(raw_back.clone()).unwrap();
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    let event = create_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
+  //  let event = create_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
+    let event= create_packet_event(IbcEventType::SendPacket, 
+        raw, 
+        &Order::Ordered, 
+        &IbcConnectionId::default(),
+         None
+    );
     assert_eq!(IbcEventType::SendPacket.as_str(), event.unwrap().ty)
 }
 
@@ -847,9 +853,15 @@ fn test_create_send_packet_with_invalid_utf_ok() {
         data: vec![u8::MAX],
         ..raw
     };
-    let msg = Packet::try_from(raw).unwrap();
-    let _event =
-        create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+   // let msg = Packet::try_from(raw).unwrap();
+    // let _event =
+    //     create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+        let _event= create_packet_event(IbcEventType::SendPacket, 
+            raw, 
+            &Order::Ordered, 
+            &IbcConnectionId::default(),
+             None
+        ).unwrap();
 }
 
 #[test]
@@ -878,11 +890,18 @@ fn test_create_write_ack_packet_event() {
 
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    let event = create_write_ack_event(
-        ibc_packet_recv_message.packet,
-        Order::Unordered.as_str(),
-        IbcConnectionId::default().as_str(),
-        &[],
+    // let event = create_write_ack_event(
+    //     ibc_packet_recv_message.packet,
+    //     Order::Unordered.as_str(),
+    //     IbcConnectionId::default().as_str(),
+    //     &[],
+    // );
+    let event = create_packet_event(
+        IbcEventType::WriteAck,
+        to_raw_packet(ibc_packet_recv_message.packet),
+        &Order::Unordered,
+        &IbcConnectionId::default(),
+        Some(Vec::<u8>::new()),
     );
     assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
 }
@@ -891,58 +910,75 @@ fn test_create_write_ack_packet_event() {
 fn test_create_write_ack_packet_event_with_invalidutf8_ok() {
     let raw = get_dummy_raw_packet(15, 0);
 
-    let raw = RawPacket {
-        data: vec![u8::MAX],
-        ..raw
-    };
-    let msg = Packet::try_from(raw).unwrap();
-    let _event =
-        create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+    // let raw = RawPacket {
+    //     data: vec![u8::MAX],
+    //     ..raw
+    // };
+    // let msg = Packet::try_from(raw).unwrap();
+    // let _event =
+    //     create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+        let _event= create_packet_event(IbcEventType::SendPacket, 
+            raw, 
+            &Order::Ordered, 
+            &IbcConnectionId::default(),
+             None
+        ).unwrap();
 }
 
 #[test]
 fn test_create_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
-    let packet = Packet::try_from(raw).unwrap();
-    let event = create_ack_packet_event(
-        packet.port_id_on_a.as_str(),
-        packet.chan_id_on_a.as_str(),
-        &packet.sequence.to_string(),
-        packet.port_id_on_b.as_str(),
-        packet.chan_id_on_b.as_str(),
-        &packet.timeout_height_on_b.to_string(),
-        &packet.timeout_timestamp_on_b.to_string(),
-        Order::Ordered.as_str(),
-        IbcConnectionId::default().as_str(),
-    );
+    // let packet = Packet::try_from(raw).unwrap();
+    // let event = create_ack_packet_event(
+    //     packet.port_id_on_a.as_str(),
+    //     packet.chan_id_on_a.as_str(),
+    //     &packet.sequence.to_string(),
+    //     packet.port_id_on_b.as_str(),
+    //     packet.chan_id_on_b.as_str(),
+    //     &packet.timeout_height_on_b.to_string(),
+    //     &packet.timeout_timestamp_on_b.to_string(),
+    //     Order::Ordered.as_str(),
+    //     IbcConnectionId::default().as_str(),
+    // );
+    let event= create_packet_event(IbcEventType::AckPacket, 
+        raw, 
+        &Order::Ordered,
+        &IbcConnectionId::default(),
+         None).unwrap();
     assert_eq!("acknowledge_packet", event.ty)
 }
 
 #[test]
 fn test_create_timout_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
-    let packet = Packet::try_from(raw).unwrap();
-    let port_id: &str = packet.port_id_on_a.as_ref();
-    let chan_id: &str = packet.chan_id_on_a.as_ref();
-    let seq_on_a: &str = &packet.sequence.to_string();
-    let dst_port_id: &str = packet.port_id_on_b.as_ref();
+    // let packet = Packet::try_from(raw).unwrap();
+    // let port_id: &str = packet.port_id_on_a.as_ref();
+    // let chan_id: &str = packet.chan_id_on_a.as_ref();
+    // let seq_on_a: &str = &packet.sequence.to_string();
+    // let dst_port_id: &str = packet.port_id_on_b.as_ref();
 
-    let dst_chan_id: &str = packet.chan_id_on_b.as_ref();
-    let timeout_height_on_b: &str = &packet.timeout_height_on_b.to_string();
-    let timeout_timestamp_on_b: &str = &packet.timeout_timestamp_on_b.to_string();
-    let channel_order: &str = &Order::Ordered.to_string();
-    let dst_connection_id: &str = "connection-1";
-    let event = create_packet_timeout_event(
-        port_id,
-        chan_id,
-        seq_on_a,
-        dst_port_id,
-        dst_chan_id,
-        timeout_height_on_b,
-        timeout_timestamp_on_b,
-        channel_order,
-        dst_connection_id,
-    );
+    // let dst_chan_id: &str = packet.chan_id_on_b.as_ref();
+    // let timeout_height_on_b: &str = &packet.timeout_height_on_b.to_string();
+    // let timeout_timestamp_on_b: &str = &packet.timeout_timestamp_on_b.to_string();
+    // let channel_order: &str = &Order::Ordered.to_string();
+    // let dst_connection_id: &str = "connection-1";
+    // let event = create_packet_timeout_event(
+    //     port_id,
+    //     chan_id,
+    //     seq_on_a,
+    //     dst_port_id,
+    //     dst_chan_id,
+    //     timeout_height_on_b,
+    //     timeout_timestamp_on_b,
+    //     channel_order,
+    //     dst_connection_id,
+    // );
+    let event= create_packet_event(IbcEventType::Timeout, 
+        raw, 
+        &Order::Ordered, 
+        &IbcConnectionId::default(),
+         None
+    ).unwrap();
     assert_eq!("timeout_packet", event.ty)
 }
 

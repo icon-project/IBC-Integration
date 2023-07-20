@@ -2,7 +2,7 @@ use common::ibc::core::ics04_channel::{
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
-use cw_common::{hex_string::HexString};
+use cw_common::{hex_string::HexString, raw_types::to_raw_packet};
 use debug_print::debug_println;
 use prost::DecodeError;
 
@@ -478,18 +478,24 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 debug_println!("timestamp: {:?}", timestamp);
 
-                let event_recieve_packet = create_recieve_packet_event(
-                    &packet.data,
-                    &packet.src.port_id,
-                    &packet.src.channel_id,
-                    &packet.sequence.to_string(),
-                    &packet.dest.port_id,
-                    &packet.dest.channel_id,
-                    &self.timeout_height_to_str(packet.timeout.block().unwrap()),
-                    &timestamp,
-                    chan_end_on_b.ordering.as_str(),
-                    chan_end_on_b.connection_hops[0].as_str(),
-                );
+                // let event_recieve_packet = create_recieve_packet_event(
+                //     &packet.data,
+                //     &packet.src.port_id,
+                //     &packet.src.channel_id,
+                //     &packet.sequence.to_string(),
+                //     &packet.dest.port_id,
+                //     &packet.dest.channel_id,
+                //     &self.timeout_height_to_str(packet.timeout.block().unwrap()),
+                //     &timestamp,
+                //     chan_end_on_b.ordering.as_str(),
+                //     chan_end_on_b.connection_hops[0].as_str(),
+                // );
+                let event_recieve_packet= create_packet_event(IbcEventType::ReceivePacket, 
+                    to_raw_packet(packet.clone()), 
+                    chan_end_on_b.ordering(), 
+                    &chan_end_on_b.connection_hops[0],
+                     None
+                )?;
 
                 debug_println!("event recieve packet: {:?}", event_recieve_packet);
 
@@ -508,11 +514,19 @@ impl<'a> CwIbcCoreContext<'a> {
                         commitment::compute_ack_commitment(&Acknowledgement::from_bytes(&ack)),
                     )?;
 
-                    let write_ack_event = create_write_ack_event(
-                        packet,
-                        chan_end_on_b.ordering.as_str(),
-                        chan_end_on_b.connection_hops[0].as_str(),
-                        &ack,
+                    // let write_ack_event = create_write_ack_event(
+                    //     packet,
+                    //     chan_end_on_b.ordering.as_str(),
+                    //     chan_end_on_b.connection_hops[0].as_str(),
+                    //     &ack,
+                    // )?;
+
+                    let write_ack_event = create_packet_event(
+                        IbcEventType::WriteAck,
+                        to_raw_packet(packet),
+                        &chan_end_on_b.ordering,
+                        &chan_end_on_b.connection_hops[0],
+                        Some(ack),
                     )?;
 
                     res = res

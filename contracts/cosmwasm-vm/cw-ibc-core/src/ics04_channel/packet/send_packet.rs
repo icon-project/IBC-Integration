@@ -1,3 +1,4 @@
+use cw_common::raw_types::channel::RawPacket;
 use debug_print::debug_println;
 
 use super::*;
@@ -112,7 +113,13 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
         debug_println!(" packet commitment stored");
 
-        let event = create_send_packet_event(packet, chan_end_on_a.ordering(), conn_id_on_a)?;
+      //  let event = create_send_packet_event(packet, chan_end_on_a.ordering(), conn_id_on_a)?;
+        let event= create_packet_event(IbcEventType::SendPacket, 
+            RawPacket::from(packet.clone()), 
+            chan_end_on_a.ordering(), 
+            conn_id_on_a,
+             None
+        )?;
         Ok(Response::new()
             .add_attribute("action", "send_packet")
             .add_event(event))

@@ -523,7 +523,7 @@ pub fn create_packet_event(
     event_type: IbcEventType,
     packet: RawPacket,
     channel_order: &Order,
-    dst_connection_id: &IbcConnectionId,
+    connection_id: &IbcConnectionId,
     ack: Option<Vec<u8>>,
 ) -> Result<Event, ContractError> {
     let timeout_height = packet
@@ -543,7 +543,7 @@ pub fn create_packet_event(
             packet.destination_channel.as_str(),
         )
         .add_attribute(PKT_CHANNEL_ORDERING_ATTRIBUTE_KEY, channel_order.as_str())
-        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, dst_connection_id.as_str())
+        .add_attribute(PKT_CONNECTION_ID_ATTRIBUTE_KEY, connection_id.as_str())
         .add_attribute(PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY, timeout_height)
         .add_attribute(
             PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,

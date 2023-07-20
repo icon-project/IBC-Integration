@@ -2,7 +2,7 @@ use super::*;
 use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use cosmwasm_std::IbcPacketAckMsg;
 use cw_common::{
-    cw_types::{CwAcknowledgement, CwPacketAckMsg},
+    cw_types::{CwAcknowledgement, CwPacketAckMsg}, raw_types::{channel::RawPacket, to_raw_packet},
 };
 use debug_print::debug_println;
 
@@ -403,17 +403,23 @@ impl<'a> CwIbcCoreContext<'a> {
                     .and_then(|b| Height::new(b.revision, b.height).ok())
                     .map(|h| h.to_string())
                     .unwrap_or("0-0".to_string());
-                let event = create_ack_packet_event(
-                    &packet.src.port_id,
-                    &packet.src.channel_id,
-                    &packet.sequence.to_string(),
-                    &packet.dest.port_id,
-                    &packet.dest.channel_id,
-                    &timeout_height,
-                    &packet.timeout.timestamp().unwrap().to_string(),
-                    chan_end_on_a.ordering.as_str(),
-                    conn_id_on_a.as_str(),
-                );
+                // let event = create_ack_packet_event(
+                //     &packet.src.port_id,
+                //     &packet.src.channel_id,
+                //     &packet.sequence.to_string(),
+                //     &packet.dest.port_id,
+                //     &packet.dest.channel_id,
+                //     &timeout_height,
+                //     &packet.timeout.timestamp().unwrap().to_string(),
+                //     chan_end_on_a.ordering.as_str(),
+                //     conn_id_on_a.as_str(),
+                // );
+                let event = 
+                create_packet_event(IbcEventType::AckPacket, 
+                    to_raw_packet(packet.clone()), 
+                    &chan_end_on_a.ordering, 
+                    conn_id_on_a,
+                     None)?;
                 if self
                     .get_packet_commitment(
                         deps.storage,
