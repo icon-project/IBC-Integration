@@ -157,8 +157,10 @@ impl ILightClient for IconClient<'_> {
             });
         }
 
-        if (state.latest_height - btp_header.main_height) > state.trusting_period {
-            return Err(ContractError::UpdateBlockTooOld);
+        if btp_header.main_height < state.latest_height {
+            if (state.latest_height - btp_header.main_height) > state.trusting_period {
+                return Err(ContractError::UpdateBlockTooOld);
+            }
         }
 
         if state.network_id != btp_header.network_id {

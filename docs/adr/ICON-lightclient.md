@@ -260,8 +260,11 @@ function verifyHeader(blockUpdate: BlockUpdate) {
     
     // assert trusting period has not yet passed
     assert(header.mainHeight - header.trustedHeight  < clientState.trustingPeriod)
-   // assert update block is not too old
+    if header.mainHeight < clientState.latestHeight {
+    // assert update block is not too old
     assert(clientState.latestHeight - header.mainHeight < clientState.trustingPeriod)
+    }
+   
 
     currentProofContextHash=get_proof_context_hash(header.currentValidators)
 
