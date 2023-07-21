@@ -156,6 +156,10 @@ impl ILightClient for IconClient<'_> {
                 update_height: btp_header.main_height,
             });
         }
+       
+        if  (state.latest_height-btp_header.main_height) > state.trusting_period {
+            return Err(ContractError::UpdateBlockTooOld)
+        }
 
         if state.network_id != btp_header.network_id {
             return Err(ContractError::InvalidHeaderUpdate(

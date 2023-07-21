@@ -77,6 +77,9 @@ pub enum ContractError {
 
     #[error("UpdateBlockOlderThanTrustedHeight")]
     UpdateBlockOlderThanTrustedHeight,
+
+    #[error("UpdateBlockTooOld")]
+    UpdateBlockTooOld,
 }
 
 impl From<CwErrors> for ContractError {
