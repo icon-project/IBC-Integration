@@ -528,7 +528,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let raw_channel: RawChannel = channel_end.try_into().unwrap();
         let channel_end_commitment = raw_channel.encode_to_vec();
 
-        self.ibc_store().commitments_().save_raw(
+        self.ibc_store().save_commitment(
             store,
             channel_commitment_key,
             &keccak256(&channel_end_commitment).to_vec(),
@@ -568,8 +568,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let commitment_key = commitment::packet_commitment_key(port_id, channel_id, sequence);
         self.ibc_store()
-            .commitments_()
-            .save_raw(store, commitment_key, &commitment.into_vec())?;
+            .save_commitment(store, commitment_key, &commitment.into_vec())?;
 
         Ok(())
     }
@@ -604,8 +603,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let commitment_path = commitment::packet_commitment_path(port_id, channel_id, sequence);
         self.ibc_store()
-            .commitments_()
-            .remove(store, commitment_path);
+            .remove_commitment(store, commitment_path);
 
         Ok(())
     }
@@ -645,8 +643,7 @@ impl<'a> CwIbcCoreContext<'a> {
         };
         let commitment_bytes = keccak256(&ok.encode_to_vec()).to_vec();
         self.ibc_store()
-            .commitments_()
-            .save_raw(store, commitment_key, &commitment_bytes)?;
+            .save_commitment(store, commitment_key, &commitment_bytes)?;
 
         Ok(())
     }
@@ -687,8 +684,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let commitment_bytes = ack_commitment.into_vec();
 
         self.ibc_store()
-            .commitments_()
-            .save_raw(store, commitment_key, &commitment_bytes)?;
+            .save_commitment(store, commitment_key, &commitment_bytes)?;
 
         Ok(())
     }
@@ -737,8 +733,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let channel_end_bytes = self
             .ibc_store()
-            .commitments_()
-            .load_raw(store, channel_commitment_key)
+            .load_commitment(store, channel_commitment_key)
             .ok_or(ContractError::IbcDecodeError {
                 error: DecodeError::new("ChannelNotFound".to_string()),
             })?;
@@ -782,8 +777,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let commitment_path = commitment::packet_commitment_key(port_id, channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
-            .commitments_()
-            .load_raw(store, commitment_path)
+            .load_commitment(store, commitment_path)
             .ok_or(ContractError::IbcDecodeError {
                 error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;
@@ -821,7 +815,7 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
     ) -> Result<common::ibc::core::ics04_channel::packet::Receipt, ContractError> {
         let commitment_key = commitment::receipt_commitment_key(port_id, channel_id, sequence);
-        let commitment_end_bytes = self.ibc_store().commitments_().load_raw(store, commitment_key);
+        let commitment_end_bytes = self.ibc_store().load_commitment(store, commitment_key);
         match commitment_end_bytes {
             Some(bytes) => Ok(common::ibc::core::ics04_channel::packet::Receipt::Ok),
             None => Err(ContractError::IbcPacketError {
@@ -860,8 +854,7 @@ impl<'a> CwIbcCoreContext<'a> {
             commitment::acknowledgement_commitment_key(port_id, channel_id, sequence);
         let commitment_end_bytes = self
             .ibc_store()
-            .commitments_()
-            .load_raw(store, commitment_key)
+            .load_commitment(store, commitment_key)
             .ok_or(ContractError::IbcDecodeError {
                 error: DecodeError::new("PacketCommitmentNotFound".to_string()),
             })?;

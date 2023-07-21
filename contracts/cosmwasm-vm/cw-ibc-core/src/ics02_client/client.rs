@@ -421,8 +421,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Vec<u8>, ContractError> {
         let commitment = self
             .ibc_store()
-            .commitments_()
-            .load_raw(store, key)
+            .load_commitment(store, key)
             .ok_or(ContractError::InvalidCommitmentKey)?;
         Ok(commitment)
     }
@@ -626,8 +625,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .save(store, client_id.clone(), &client_state_any)?;
 
         self.ibc_store()
-            .commitments_()
-            .save_raw(store, client_key, &client_state_hash)?;
+            .save_commitment(store, client_key, &client_state_hash)?;
         self.store_last_processed_on(store, env, client_id)?;
 
         Ok(())
@@ -652,8 +650,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .save(store, client_id.clone(), &consensus_state_any)?;
 
         self.ibc_store()
-            .commitments_()
-            .save_raw(store, consensus_key, &consensus_state_hash)?;
+            .save_commitment(store, consensus_key, &consensus_state_hash)?;
 
         Ok(())
     }
@@ -674,27 +671,5 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(())
     }
 
-    //TODO : Implement Methods
-    // #[allow(dead_code)]
-    // #[allow(unused_variables)]
-    // fn store_update_time(
-    //     &mut self,
-    //     client_id: common::ibc::core::ics24_host::identifier::ClientId,
-    //     height: ibc::Height,
-    //     timestamp: ibc::timestamp::Timestamp,
-    // ) -> Result<(), ContractError> {
-    //     todo!()
-    // }
-
-    // //TODO : Implement Methods
-    // #[allow(dead_code)]
-    // #[allow(unused_variables)]
-    // fn store_update_height(
-    //     &mut self,
-    //     client_id: common::ibc::core::ics24_host::identifier::ClientId,
-    //     height: ibc::Height,
-    //     host_height: ibc::Height,
-    // ) -> Result<(), ContractError> {
-    //     todo!()
-    // }
+    
 }
