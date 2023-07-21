@@ -49,6 +49,7 @@ fn test_for_create_client_execution_message() {
 
     let consenus_state: RawConsensusState = RawConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -141,6 +142,7 @@ fn test_for_update_client_execution_messages() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -204,6 +206,8 @@ fn test_for_update_client_execution_messages() {
     let signed_header: RawSignedHeader = RawSignedHeader {
         header: Some(btp_header),
         signatures: vec![hex::decode("6c8b2bc2c3d31e34bd4ed9db6eff7d5dc647b13c58ae77d54e0b05141cb7a7995102587f1fa33fd56815463c6b78e100217c29ddca20fcace80510e3dab03a1600").unwrap()],
+        current_validators: vec![hex::decode("00b040bff300eee91f7665ac8dcf89eb0871015306").unwrap()],
+        trusted_height: 26,
     }
     .try_into()
     .unwrap();
@@ -333,6 +337,7 @@ fn test_for_connection_open_try() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3],
     }
     .try_into()
     .unwrap();
@@ -438,6 +443,7 @@ fn test_for_connection_open_ack() {
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3],
     }
     .try_into()
     .unwrap();
@@ -540,6 +546,7 @@ fn test_for_connection_open_confirm() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3],
     }
     .try_into()
     .unwrap();
@@ -651,6 +658,7 @@ fn test_for_connection_open_try_fails() {
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3],
     }
     .try_into()
     .unwrap();
@@ -736,6 +744,7 @@ fn test_connection_open_confirm_fails() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3],
     }
     .try_into()
     .unwrap();

@@ -263,6 +263,7 @@ fn test_timeout_packet_validate_to_light_client() {
     mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3],
     }
     .try_into()
     .unwrap();

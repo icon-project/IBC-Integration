@@ -361,6 +361,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -484,6 +485,7 @@ fn test_acknowledgement_packet_validate_unordered() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -586,6 +588,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();

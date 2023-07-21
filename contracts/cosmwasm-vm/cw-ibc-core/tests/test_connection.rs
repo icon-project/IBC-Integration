@@ -42,18 +42,10 @@ use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenT
 use common::ibc::core::ics03_connection::version::get_compatible_versions;
 use common::ibc::core::ics03_connection::version::Version;
 use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;
+use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::ibc::events::IbcEventType;
 use cw_common::ibc_types::IbcClientId;
 use cw_ibc_core::ConnectionEnd;
-// use ibc_proto::common::ibc::core::client::v1::Height;
-// use ibc_proto::common::ibc::core::connection::v1::Counterparty as RawCounterparty;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenConfirm;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
-// use ibc_proto::common::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
-use common::ibc::core::ics24_host::identifier::ConnectionId;
 use cw_ibc_core::light_client::light_client::LightClient;
 use prost::Message;
 use setup::*;
@@ -660,6 +652,7 @@ fn connection_open_ack_validate_fail() {
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -723,6 +716,7 @@ fn connection_open_ack_validate() {
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -860,6 +854,7 @@ fn connection_open_try_validate() {
     res_msg.client_id_on_b = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -923,6 +918,7 @@ fn open_try_validate_fails() {
     res_msg.client_id_on_b = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -975,6 +971,7 @@ fn connection_open_confirm_validate() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1062,6 +1059,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1503,6 +1501,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();

@@ -198,7 +198,9 @@ pub fn init_light_client(mut ctx: TestContext) -> TestContext {
         .instantiate_contract(
             light_client_code_id,
             ctx.sender.clone(),
-            &cw_common::client_msg::InstantiateMsg::default(),
+            &cw_common::client_msg::InstantiateMsg {
+                ibc_host: ctx.get_ibc_core(),
+            },
             &[],
             "LightClient",
             Some(ctx.sender.clone().to_string()),

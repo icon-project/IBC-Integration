@@ -10,6 +10,7 @@ use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
 use cw_common::hex_string::HexString;
 use cw_storage_plus::{Item, Map};
+use debug_print::debug_eprintln;
 use debug_print::debug_println;
 use prost::Message;
 
@@ -154,6 +155,22 @@ impl<'a> IContext for CwContext<'a> {
         height: u64,
     ) -> Result<u64, Self::Error> {
         QueryHandler::get_processed_blocknumber_at_height(self.storage, client_id, height)
+    }
+
+    fn ensure_ibc_host(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
+        let config = self.get_config()?;
+        if caller != config.ibc_host {
+            return Err(ContractError::Unauthorized {});
+        }
+        Ok(())
+    }
+    fn ensure_owner(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
+        let config = self.get_config()?;
+        debug_eprintln!("owner {:?} caller {}", config.owner, caller.to_string());
+        if caller != config.owner {
+            return Err(ContractError::Unauthorized {});
+        }
+        Ok(())
     }
 }
 
@@ -602,7 +619,7 @@ mod tests {
         let mut deps = mock_dependencies();
         let _info = mock_info("alice", &[]);
         // Store config
-        let config = Config::new(Addr::unchecked("owner"));
+        let config = Config::new(Addr::unchecked("owner"), Addr::unchecked("alice"));
         CONFIG.save(deps.as_mut().storage, &config).unwrap();
 
         // Retrieve config

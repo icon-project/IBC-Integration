@@ -37,7 +37,7 @@ use common::{
         signer::Signer,
         Height,
     },
-    icon::icon::lightclient::v1::ClientState,
+    icon::icon::lightclient::v1::{ClientState, ConsensusState},
 };
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
@@ -507,9 +507,16 @@ pub fn get_dummy_client_state() -> ClientState {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
         ..get_default_icon_client_state()
     };
     client_state
+}
+
+pub fn get_dummy_consensus_state()->ConsensusState{
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash:vec![1,2,3,4]
+    };
+    consenus_state
+
 }

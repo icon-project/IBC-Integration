@@ -1,9 +1,19 @@
 use crate::types::{VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData};
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Addr;
 
 #[cw_serde]
-#[derive(Default)]
-pub struct InstantiateMsg {}
+pub struct InstantiateMsg {
+    pub ibc_host: Addr,
+}
+
+impl Default for InstantiateMsg {
+    fn default() -> Self {
+        Self {
+            ibc_host: Addr::unchecked("ibc_host"),
+        }
+    }
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]
@@ -224,38 +234,3 @@ pub struct VerifyConnectionPayload {
     pub verify_client_consensus_state: VerifyClientConsensusState,
     // pub expected_response: T,
 }
-
-// impl TryFrom<LightClientPacketMessage> for PacketDataResponse {
-//     type Error = CwErrors;
-
-//     fn try_from(value: LightClientPacketMessage) -> Result<Self, Self::Error> {
-//         let res = match value {
-//             LightClientPacketMessage::VerifyNextSequenceRecv {
-//                 height: _,
-//                 prefix: _,
-//                 proof: _,
-//                 root: _,
-//                 seq_recv_path: _,
-//                 sequence: _,
-//                 packet_data,
-//             } => {
-//                 let packet_data: PacketData = from_slice(&packet_data)
-//                     .map_err(CwErrors::FailedToConvertToPacketDataResponse)?;
-//                 PacketDataResponse::from(packet_data)
-//             }
-//             LightClientPacketMessage::VerifyPacketReceiptAbsence {
-//                 height: _,
-//                 prefix: _,
-//                 proof: _,
-//                 root: _,
-//                 receipt_path: _,
-//                 packet_data,
-//             } => {
-//                 let packet_data: PacketData = from_slice(&packet_data)
-//                     .map_err(CwErrors::FailedToConvertToPacketDataResponse)?;
-//                 PacketDataResponse::from(packet_data)
-//             }
-//         };
-//         Ok(res)
-//     }
-//}
