@@ -26,8 +26,8 @@ if [ "$CUR_RUSTC_VERS" != "$RUSTC_VERS" ] || [ "$CUR_WASMOPT_VERS" != "$WASMOPT_
 fi
 
 mkdir -p artifacts/archway
-cargo fmt --all
 cargo clippy --fix --allow-dirty
+cargo fmt --all
 cargo clean
 
 rustup target add wasm32-unknown-unknown

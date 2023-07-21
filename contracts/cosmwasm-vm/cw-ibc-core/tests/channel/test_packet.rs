@@ -63,17 +63,11 @@ fn test_packet_send() {
         )
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
+    
+    let client_state = ClientState {
         latest_height: 10,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+        ..get_dummy_client_state()
+    };
 
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -188,17 +182,11 @@ fn test_packet_send_fail_misiing_sequense() {
         .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 10,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+   
+  let client_state = ClientState {
+    latest_height:10,
+    ..get_dummy_client_state()
+  };
 
     let client = client_state.to_any().encode_to_vec();
     contract

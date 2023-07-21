@@ -1,8 +1,4 @@
-use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
-
 use cw_common::raw_types::channel::RawPacket;
-use debug_print::debug_println;
-
 use super::*;
 
 pub const CHANNEL_ID_ATTRIBUTE_KEY: &str = "channel_id";

@@ -13,14 +13,14 @@ use common::utils::keccak256;
 use cosmwasm_std::ContractResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
-use cosmwasm_std::{to_binary, to_vec, Addr, Event, Reply, SubMsgResponse};
+use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcClientId;
 use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpdateClient};
 use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
-use cw_common::raw_types::RawVersion;
+
 use cw_common::ProstMessage;
 
 use cw_ibc_core::Height;
@@ -46,17 +46,7 @@ fn test_for_create_client_execution_message() {
     let mut contract = CwIbcCoreContext::default();
     let env = get_mock_env();
 
-    let client_state: RawClientState = RawClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: RawClientState = get_dummy_client_state();
 
     let consenus_state: RawConsensusState = RawConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -148,17 +138,7 @@ fn test_for_update_client_execution_messages() {
         .unwrap();
     assert_eq!(response.attributes[0].value, "register_client");
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -289,17 +269,7 @@ fn test_for_connection_open_init() {
     contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     contract
         .store_client_implementations(
@@ -358,17 +328,7 @@ fn test_for_connection_open_try() {
     contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let message = get_dummy_raw_msg_conn_open_try(10, 10);
 
@@ -482,17 +442,7 @@ fn test_for_connection_open_ack() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
@@ -594,17 +544,7 @@ fn test_for_connection_open_confirm() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -702,23 +642,13 @@ fn test_for_connection_open_try_fails() {
         )
         .unwrap();
     let mut contract = CwIbcCoreContext::new();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
-    let counterparty_prefix =
+    let client_state: ClientState = get_dummy_client_state();
+    let _counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
             "hello".as_bytes().to_vec(),
         )
         .unwrap();
-    let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
+    let _counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
@@ -810,17 +740,7 @@ fn test_connection_open_confirm_fails() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(

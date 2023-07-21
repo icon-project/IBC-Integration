@@ -1,10 +1,5 @@
-use crate::{
-    // client_response::PacketDataResponse,
-    errors::CwErrors,
-    types::{PacketData, VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData},
-};
+use crate::types::{VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData};
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::from_slice;
 
 #[cw_serde]
 #[derive(Default)]

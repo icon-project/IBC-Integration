@@ -1,6 +1,6 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
-use common::icon::icon::types::v1::MerkleNode;
+
 use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::Addr;
 use serde::Deserialize;

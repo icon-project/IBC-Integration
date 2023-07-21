@@ -410,17 +410,7 @@ fn connection_open_init() {
         .unwrap();
 
     let contract = CwIbcCoreContext::new();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     contract
         .store_client_implementations(
             deps.as_mut().storage,
@@ -486,11 +476,6 @@ fn create_connection_open_init_event() {
     let connection_id = ConnectionId::new(10);
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
-    // let event = create_open_init_event(
-    //     connection_id.as_str(),
-    //     client_id.as_str(),
-    //     counterparty_client_id.as_str(),
-    // );
     let event = create_connection_event(
         IbcEventType::OpenInitConnection,
         &connection_id,
@@ -511,12 +496,7 @@ fn create_connection_open_ack_event() {
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
     let counterparty_connection_id = ConnectionId::new(20);
-    // let event = create_open_ack_event(
-    //     connection_id,
-    //     client_id,
-    //     counterparty_connection_id,
-    //     counterparty_client_id,
-    // );
+    
     let event = create_connection_event(
         IbcEventType::OpenAckConnection,
         &connection_id,
@@ -537,12 +517,7 @@ fn create_connection_open_try_event() {
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
     let counterparty_connection_id = ConnectionId::new(20);
-    // let event = create_open_try_event(
-    //     connection_id,
-    //     client_id,
-    //     Some(counterparty_connection_id),
-    //     counterparty_client_id,
-    // );
+  
     let event = create_connection_event(
         IbcEventType::OpenTryConnection,
         &connection_id,
@@ -689,17 +664,7 @@ fn connection_open_ack_validate_fail() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
@@ -762,17 +727,7 @@ fn connection_open_ack_validate() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let light_client = LightClient::new("lightclient".to_string());
 
@@ -909,17 +864,7 @@ fn connection_open_try_validate() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
@@ -982,17 +927,7 @@ fn open_try_validate_fails() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_state_bytes = client_state.to_any().encode_to_vec();
 
@@ -1044,17 +979,7 @@ fn connection_open_confirm_validate() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -1141,17 +1066,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
             "hello".as_bytes().to_vec(),
@@ -1261,17 +1176,7 @@ fn connection_open_init_fails_of_clientstate() {
 
     let client_id = ClientId::default();
     let contract = CwIbcCoreContext::new();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_state_bytes = client_state.encode_to_vec();
     contract
@@ -1312,17 +1217,7 @@ fn connection_open_init_validate_invalid_client_id() {
         .unwrap();
     let client_id = ClientId::default();
     let contract = CwIbcCoreContext::new();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_state_bytes = client_state.encode_to_vec();
     contract
@@ -1502,17 +1397,7 @@ fn connection_open_init_fails() {
         .unwrap();
 
     let contract = CwIbcCoreContext::new();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let cl = client_state.encode_to_vec();
     contract
@@ -1549,17 +1434,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
         .unwrap();
 
     let client_id = IbcClientId::default();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
@@ -1632,17 +1507,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     }
     .try_into()
     .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let light_client = LightClient::new("lightclient".to_string());
     contract

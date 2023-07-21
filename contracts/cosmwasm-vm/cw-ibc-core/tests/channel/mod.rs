@@ -7,7 +7,7 @@ use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use common::ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
 use common::ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 use common::ibc::core::ics24_host::identifier::ClientId;
-use common::ibc::core::ics24_host::identifier::{ConnectionId, PortId};
+use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::ibc::timestamp::Timestamp;
 use common::ibc::timestamp::ZERO_DURATION;
 use cosmwasm_std::testing::mock_env;

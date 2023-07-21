@@ -347,17 +347,7 @@ fn check_for_create_client_message() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -395,17 +385,7 @@ fn check_for_create_client_message_response() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -478,17 +458,7 @@ fn check_for_client_state_from_storage() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -559,17 +529,7 @@ fn check_for_consensus_state_from_storage() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
@@ -646,17 +606,7 @@ fn fail_on_create_client_message_error_response() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -699,17 +649,7 @@ fn fails_on_create_client_message_without_proper_initialisation() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -743,17 +683,7 @@ fn check_for_update_client_message() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -809,17 +739,7 @@ fn check_for_update_client_message() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 3,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let update_client_message = IbcMsgUpdateClient {
         client_id: client_id.clone(),
@@ -879,17 +799,7 @@ fn fails_on_updating_non_existing_client() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let signer = Signer::from_str("new_signer").unwrap();
@@ -944,17 +854,12 @@ fn check_for_upgrade_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+   
+
+    let client_state=ClientState {
         trusting_period: 2000000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+        ..get_dummy_client_state()
+    };
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -989,17 +894,11 @@ fn check_for_upgrade_client() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 200000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    
+   let upgrade_client_state= ClientState {
+       trusting_period: 2000000000,
+       ..get_dummy_client_state()
+   };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
@@ -1051,17 +950,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -1158,17 +1047,11 @@ fn fails_on_upgrade_client_frozen_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 3,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+   
+   let client_state= ClientState {
+    frozen_height: 3,
+     ..get_dummy_client_state()
+   };
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -1262,17 +1145,11 @@ fn check_for_execute_upgrade_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2000000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    
+let client_state= ClientState {
+    trusting_period: 2000000000,
+    ..get_dummy_client_state()
+};
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -1307,17 +1184,11 @@ fn check_for_execute_upgrade_client() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 200000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    
+ let upgrade_client_state=ClientState {
+    trusting_period: 2000000000,
+    ..get_dummy_client_state()
+ };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
@@ -1391,17 +1262,10 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
-    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 200000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let upgrade_client_state: ClientState = ClientState {
+        trusting_period: 2000000000,
+        ..get_dummy_client_state()
+     };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
@@ -1582,17 +1446,7 @@ fn success_on_getting_client_state() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -1677,15 +1531,7 @@ fn sucess_on_misbehaviour_validate() {
         .init_client_counter(deps.as_mut().storage, 10)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    };
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
@@ -1738,17 +1584,11 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .init_client_counter(deps.as_mut().storage, 10)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 10,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+  
+let client_state =ClientState {
+    frozen_height: 10,
+    ..get_dummy_client_state()
+};
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
@@ -1832,17 +1672,7 @@ fn success_on_execute_misbehaviour() {
     let mut deps = deps();
     let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 10,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 

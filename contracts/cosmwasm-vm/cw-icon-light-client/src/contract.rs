@@ -12,13 +12,12 @@ use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_slice, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
-    Storage,
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Storage,
 };
 use cw2::set_contract_version;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::raw_types::Any;
-use cw_common::types::{PacketData, VerifyChannelState};
+use cw_common::types::VerifyChannelState;
 
 use crate::constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT};
 use crate::error::ContractError;

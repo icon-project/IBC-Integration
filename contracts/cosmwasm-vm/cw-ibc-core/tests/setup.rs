@@ -27,14 +27,14 @@ use cosmwasm_std::{
     OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
-use common::ibc::{
+use common::{ibc::{
     core::{
         ics03_connection::version::{get_compatible_versions, Version},
         ics24_host::identifier::{ChannelId, ConnectionId, PortId},
     },
     signer::Signer,
     Height,
-};
+}, icon::icon::lightclient::v1::ClientState, client_state::get_default_icon_client_state};
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
 use cw_common::raw_types::{
@@ -495,4 +495,18 @@ pub fn get_dummy_endpoints() -> (IbcEndpoint, IbcEndpoint) {
         channel_id: "channel-3".to_string(),
     };
     (src, dst)
+}
+
+pub fn get_dummy_client_state()->ClientState{
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        network_section_hash: vec![1, 2, 3],
+        validators: vec!["hash".as_bytes().to_vec()],
+        ..get_default_icon_client_state()
+    };
+    return client_state;
+
 }

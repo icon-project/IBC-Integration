@@ -348,17 +348,7 @@ fn test_acknowledgement_packet_validate_ordered() {
             packet_commitment,
         )
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
@@ -414,7 +404,6 @@ fn test_acknowledgement_packet_validate_ordered() {
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
-    //  assert_eq!(res.as_ref().unwrap().messages[0].id, 531)
 }
 
 #[test]
@@ -482,17 +471,7 @@ fn test_acknowledgement_packet_validate_unordered() {
             packet_commitment,
         )
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
@@ -594,17 +573,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
         )
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(

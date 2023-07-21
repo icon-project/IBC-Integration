@@ -151,17 +151,7 @@ fn test_for_channel_open_try_execution_message() {
     contract
         .store_connection(deps.as_mut().storage, conn_id, conn_end)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
@@ -297,17 +287,7 @@ fn test_for_channel_open_ack_execution() {
             channel_end,
         )
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
@@ -448,17 +428,7 @@ fn test_for_channel_open_confirm() {
             channel_end,
         )
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
@@ -709,17 +679,7 @@ fn test_for_channel_close_confirm() {
             channel_end,
         )
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
@@ -860,17 +820,11 @@ fn test_for_packet_send() {
         )
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 10,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+  
+   let client_state = ClientState {
+    latest_height: 10,
+    ..get_dummy_client_state()
+   };
 
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -982,17 +936,7 @@ fn test_for_recieve_packet() {
         .store_connection(&mut deps.storage, conn_id_on_b.clone(), conn_end_on_b)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 12,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -1167,17 +1111,7 @@ fn test_for_ack_execute() {
             packet_commitment,
         )
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
