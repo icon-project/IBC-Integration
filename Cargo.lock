@@ -547,13 +547,13 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=main#614b17e9022d81dd4777a47d3fc556c568ba95e1"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-storage#aeef3ebb10f3e092cef61413ffd7fac8056c0307"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-storage-plus 1.0.1",
+ "cw-storage-plus 1.1.0",
  "cw-xcall-lib",
  "cw2",
  "schemars 0.8.12",
@@ -565,13 +565,13 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp-multi"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=main#614b17e9022d81dd4777a47d3fc556c568ba95e1"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-storage#aeef3ebb10f3e092cef61413ffd7fac8056c0307"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-storage-plus 1.0.1",
+ "cw-storage-plus 1.1.0",
  "cw-xcall-lib",
  "cw2",
  "schemars 0.8.12",
@@ -656,14 +656,14 @@ dependencies = [
 [[package]]
 name = "cw-xcall"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=main#614b17e9022d81dd4777a47d3fc556c568ba95e1"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-storage#aeef3ebb10f3e092cef61413ffd7fac8056c0307"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
- "cw-storage-plus 1.0.1",
+ "cw-storage-plus 1.1.0",
  "cw-xcall-lib",
  "cw2",
  "debug_print",
@@ -697,14 +697,14 @@ dependencies = [
 [[package]]
 name = "cw-xcall-lib"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=main#614b17e9022d81dd4777a47d3fc556c568ba95e1"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-storage#aeef3ebb10f3e092cef61413ffd7fac8056c0307"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=main)",
- "cw-storage-plus 1.0.1",
+ "cw-storage-plus 1.1.0",
  "cw2",
  "debug_print",
  "schemars 0.8.12",

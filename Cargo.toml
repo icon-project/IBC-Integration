@@ -14,6 +14,10 @@ cosmwasm-storage = "1.2.2"
 cosmwasm-schema = "1.2.2"
 schemars = "0.8.12"
 cw-storage-plus = {git="https://github.com/icon-project/cw-storage-plus.git", branch="fix-raw"}
+cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-storage"}
+cw-xcall = {package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-storage"}
+cw-mock-dapp = { git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-storage" }
+cw-mock-dapp-multi = { git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-storage" }
 cw2 = "1.0.1"
 
 ibc-proto = { version = "0.26.0", default-features = false}
