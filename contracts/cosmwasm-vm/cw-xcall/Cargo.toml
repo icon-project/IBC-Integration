@@ -36,7 +36,7 @@ schemars = {workspace=true}
 serde = { workspace=true}
 thiserror = { workspace=true}
 common = { git = "https://github.com/icon-project/IBC-Integration.git",branch="main" }
-cw-common = { git = "https://github.com/icon-project/IBC-Integration.git",branch="main" }
+
 cw-xcall-lib = { path="../cw-xcall-lib" }
 debug_print={workspace=true}
 

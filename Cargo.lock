@@ -56,12 +56,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
-name = "bech32"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
-
-[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -301,27 +295,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-common"
-version = "0.1.0"
-source = "git+https://github.com/icon-project/IBC-Integration.git?branch=main#4dd548051114457baf6a0534b8c2cca74d56ee30"
-dependencies = [
- "bech32",
- "bytes",
- "common",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus 1.0.1",
- "hex",
- "hex-buffer-serde",
- "ibc-proto",
- "prost 0.11.9",
- "schemars 0.8.12",
- "serde",
- "serde-json-wasm 0.5.1",
- "serde_json",
-]
-
-[[package]]
 name = "cw-mock-dapp"
 version = "0.1.0"
 dependencies = [
@@ -426,7 +399,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
  "cw-storage-plus 1.1.0",
  "cw-xcall-lib",
  "cw2",
@@ -444,12 +416,10 @@ name = "cw-xcall-lib"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "common",
  "cosmwasm",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-common",
  "cw-storage-plus 1.1.0",
  "cw2",
  "debug_print",
@@ -797,16 +767,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-
-[[package]]
-name = "hex-buffer-serde"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7e84645a601cf4a58f40673d51c111d1b5f847b711559c076ebcb779606a6d0"
-dependencies = [
- "hex",
- "serde",
-]
 
 [[package]]
 name = "hex-literal"
