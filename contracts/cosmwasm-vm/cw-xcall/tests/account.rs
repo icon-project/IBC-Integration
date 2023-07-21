@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use common::rlp::{Encodable, self, Decodable};
+use common::rlp::{self, Decodable, Encodable};
 use cosmwasm_schema::cw_serde;
 use cw_storage_plus::KeyDeserialize;
 #[cw_serde]
