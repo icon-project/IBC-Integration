@@ -38,8 +38,7 @@ use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        create_channel_id_generated_event, create_close_confirm_channel_event,
-        create_close_init_channel_event, MsgChannelCloseConfirm, MsgChannelCloseInit,
+        create_channel_id_generated_event, MsgChannelCloseConfirm, MsgChannelCloseInit,
         MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
     },
     ChannelEnd, ConnectionEnd, Sequence,
@@ -963,11 +962,14 @@ pub fn test_create_close_init_channel_event() {
         connection_hops: vec![ConnectionId::default()],
         version: Version::default(),
     };
-    let event = create_close_init_channel_event(
+
+    let event = create_channel_event(
+        IbcEventType::CloseInitChannel,
         msg.port_id_on_a.as_str(),
         msg.chan_id_on_a.as_str(),
-        channel_end,
-    );
+        &channel_end,
+    )
+    .unwrap();
 
     assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
 }
@@ -984,11 +986,14 @@ pub fn test_create_close_confirm_channel_event() {
         connection_hops: vec![ConnectionId::default()],
         version: Version::default(),
     };
-    let event = create_close_confirm_channel_event(
+
+    let event = create_channel_event(
+        IbcEventType::CloseConfirmChannel,
         msg.port_id_on_b.as_str(),
         msg.chan_id_on_b.as_str(),
-        channel_end,
-    );
+        &channel_end,
+    )
+    .unwrap();
 
     assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }

@@ -1,11 +1,14 @@
 use super::*;
-use crate::{ics04_channel::create_write_ack_event, ChannelError::InvalidChannelState};
+use crate::ChannelError::InvalidChannelState;
 use common::{
     ibc::core::ics04_channel::{channel::State, commitment::AcknowledgementCommitment},
     utils::keccak256,
 };
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
-use cw_common::ibc_types::{IbcChannelId, IbcPortId, Sequence};
+use cw_common::{
+    ibc_types::{IbcChannelId, IbcPortId, Sequence},
+    raw_types::to_raw_packet,
+};
 use std::str::FromStr;
 
 use crate::{context::CwIbcCoreContext, ContractError};
@@ -61,11 +64,12 @@ impl<'a> CwIbcCoreContext<'a> {
             AcknowledgementCommitment::from(ack_commitment),
         )?;
 
-        let event = create_write_ack_event(
-            packet,
-            channel.ordering.as_str(),
-            channel.connection_hops[0].as_str(),
-            &ack,
+        let event = create_packet_event(
+            IbcEventType::WriteAck,
+            to_raw_packet(packet),
+            &channel.ordering,
+            &channel.connection_hops[0],
+            Some(ack),
         )?;
 
         Ok(Response::new().add_event(event))
