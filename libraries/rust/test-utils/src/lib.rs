@@ -56,6 +56,8 @@ pub struct TestSignedHeader {
     #[serde(rename(deserialize = "BTPHeader"))]
     pub btp_header: TestHeader,
     pub signature: Vec<String>,
+    pub trusted_height: u64,
+    pub current_validators: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -150,6 +152,12 @@ impl TryFrom<TestSignedHeader> for SignedHeader {
         Ok(SignedHeader {
             header: Some(btp_header),
             signatures,
+            current_validators: value
+                .current_validators
+                .into_iter()
+                .map(|v| hex::decode(v.replace("0x", "")).unwrap())
+                .collect(),
+            trusted_height: value.trusted_height,
         })
     }
 }

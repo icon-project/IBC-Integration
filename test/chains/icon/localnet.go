@@ -367,6 +367,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 		"start-btp-height":    0, // height + 1,
 		"btp-network-id":      btpNetworkId,
 		"btp-network-type-id": btpNetworkTypeId,
+		"block-interval":      2_000,
 	}
 
 	cfg := c.cfg

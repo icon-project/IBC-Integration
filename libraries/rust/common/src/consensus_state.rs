@@ -13,8 +13,14 @@ use crate::{
 };
 
 impl ConsensusState {
-    pub fn new(message_root: Vec<u8>) -> Result<Self, ClientError> {
-        Ok(Self { message_root })
+    pub fn new(
+        message_root: Vec<u8>,
+        next_proof_context_hash: Vec<u8>,
+    ) -> Result<Self, ClientError> {
+        Ok(Self {
+            message_root,
+            next_proof_context_hash,
+        })
     }
     pub fn message_root(&self) -> CommitmentRoot {
         CommitmentRoot::from(self.message_root.clone())

@@ -5,6 +5,7 @@ use prost::{DecodeError, Message};
 use crate::client_state::get_default_icon_client_state;
 use crate::constants::ICON_BTP_HEADER_TYPE_URL;
 use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use debug_print::debug_println;
 
 use crate::rlp::RlpStream;
 use crate::{
@@ -35,6 +36,10 @@ impl BtpHeader {
         ntsd.append(&self.get_network_type_section_hash().as_slice());
 
         let encoded = ntsd.as_raw().to_vec();
+        debug_println!(
+            "network type section decision rlp: {}",
+            hex::encode(&encoded)
+        );
         encoded
     }
 
@@ -52,6 +57,7 @@ impl BtpHeader {
         }
 
         let encoded = ns.as_raw().to_vec();
+        debug_println!("network section rlp: {}", hex::encode(&encoded));
         encoded
     }
 
@@ -70,6 +76,7 @@ impl BtpHeader {
         nts.append(&self.get_network_section_root().as_slice());
 
         let encoded = nts.as_raw().to_vec();
+        debug_println!("network type section rlp {}", hex::encode(&encoded));
         encoded
     }
 
@@ -87,10 +94,12 @@ impl BtpHeader {
     }
 
     pub fn get_network_section_root(&self) -> [u8; 32] {
-        calculate_root(
+        let root = calculate_root(
             self.get_network_section_hash(),
             &self.network_section_to_root,
-        )
+        );
+        debug_println!("network section root {}", hex::encode(root));
+        root
     }
 
     pub fn to_client_state(&self, trusting_period: u64, max_clock_drift: u64) -> ClientState {
@@ -99,8 +108,6 @@ impl BtpHeader {
             frozen_height: 0,
             max_clock_drift,
             latest_height: self.main_height,
-            network_section_hash: self.get_network_section_hash().to_vec(),
-            validators: self.next_validators.clone(),
             ..get_default_icon_client_state()
         }
     }
@@ -108,6 +115,7 @@ impl BtpHeader {
     pub fn to_consensus_state(&self) -> ConsensusState {
         ConsensusState {
             message_root: self.message_root.clone(),
+            next_proof_context_hash: self.next_proof_context_hash.clone(),
         }
     }
 }
