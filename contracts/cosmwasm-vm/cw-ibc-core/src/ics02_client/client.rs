@@ -421,9 +421,9 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Vec<u8>, ContractError> {
         let commitment = self
             .ibc_store()
-            .commitments()
-            .load(store, key)
-            .map_err(|_| ContractError::InvalidCommitmentKey)?;
+            .commitments_()
+            .load_raw(store, key)
+            .ok_or(ContractError::InvalidCommitmentKey)?;
         Ok(commitment)
     }
 
@@ -626,8 +626,8 @@ impl<'a> CwIbcCoreContext<'a> {
             .save(store, client_id.clone(), &client_state_any)?;
 
         self.ibc_store()
-            .commitments()
-            .save(store, client_key, &client_state_hash)?;
+            .commitments_()
+            .save_raw(store, client_key, &client_state_hash)?;
         self.store_last_processed_on(store, env, client_id)?;
 
         Ok(())
@@ -652,8 +652,8 @@ impl<'a> CwIbcCoreContext<'a> {
             .save(store, client_id.clone(), &consensus_state_any)?;
 
         self.ibc_store()
-            .commitments()
-            .save(store, consensus_key, &consensus_state_hash)?;
+            .commitments_()
+            .save_raw(store, consensus_key, &consensus_state_hash)?;
 
         Ok(())
     }

@@ -189,7 +189,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn capabilities(&self) -> &Map<'a, Vec<u8>, String> {
         &self.capabilities
     }
-    pub fn commitments(&self) -> &Map<'a, Vec<u8>, Vec<u8>> {
+    pub fn commitments_(&self) -> &Map<'a, Vec<u8>, Vec<u8>> {
         &self.commitments
     }
     pub fn expected_time_per_block(&self) -> &Item<'a, u64> {
