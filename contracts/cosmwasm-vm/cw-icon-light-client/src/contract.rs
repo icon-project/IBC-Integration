@@ -736,4 +736,112 @@ mod tests {
         let height_u64 = to_height_u64(height).unwrap();
         assert_eq!(height_u64, 1);
     }
+
+    #[test]
+    fn test_update_block_older_than_trusted_height() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, Some(100));
+
+        let mut signed_header: SignedHeader = get_test_signed_headers()[1].clone();
+        signed_header.trusted_height = 10;
+        let mut btp_header = signed_header.header.clone().unwrap();
+        btp_header.main_height = 9;
+        signed_header.header = Some(btp_header);
+
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id: client_id.clone(),
+            signed_header: signed_header.to_any().encode_to_vec(),
+        };
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
+
+        assert_eq!(
+            result,
+            Err(ContractError::UpdateBlockOlderThanTrustedHeight)
+        );
+    }
+
+    #[test]
+    fn test_invalid_proof_context_hash() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, Some(1000000));
+
+        let mut signed_header: SignedHeader = get_test_signed_headers()[1].clone();
+        signed_header.current_validators = vec![vec![22, 33, 44]];
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id: client_id.clone(),
+            signed_header: signed_header.to_any().encode_to_vec(),
+        };
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
+
+        assert_eq!(result, Err(ContractError::InvalidProofContextHash));
+    }
+    #[test]
+    fn test_update_block_too_old() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, Some(10));
+
+        let mut signed_header: SignedHeader = get_test_signed_headers()[1].clone();
+        signed_header.trusted_height = 8;
+        let mut btp_header = signed_header.header.clone().unwrap();
+        btp_header.main_height = 9;
+        signed_header.header = Some(btp_header);
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id: client_id.clone(),
+            signed_header: signed_header.to_any().encode_to_vec(),
+        };
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
+
+        assert_eq!(result, Err(ContractError::UpdateBlockTooOld));
+    }
+
+    #[test]
+    fn test_invalid_header_update() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, Some(1000000));
+
+        let mut signed_header: SignedHeader = get_test_signed_headers()[1].clone();
+        let mut btp_header = signed_header.header.clone().unwrap();
+        btp_header.network_id = 1122;
+        signed_header.header = Some(btp_header);
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id: client_id.clone(),
+            signed_header: signed_header.to_any().encode_to_vec(),
+        };
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
+
+        assert_eq!(
+            result,
+            Err(ContractError::InvalidHeaderUpdate(
+                "network id mismatch".to_string()
+            ))
+        );
+    }
 }

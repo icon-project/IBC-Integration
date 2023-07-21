@@ -139,17 +139,6 @@ impl ILightClient for IconClient<'_> {
             return Err(ContractError::UpdateBlockOlderThanTrustedHeight);
         }
 
-        let trusted_consensus_state = self
-            .context
-            .get_consensus_state(client_id, signed_header.trusted_height)?;
-
-        let current_proof_context_hash =
-            btp_header.get_next_proof_context_hash(&signed_header.current_validators);
-
-        if current_proof_context_hash != trusted_consensus_state.next_proof_context_hash {
-            return Err(ContractError::InvalidProofContextHash);
-        }
-
         if (btp_header.main_height - signed_header.trusted_height) > state.trusting_period {
             return Err(ContractError::TrustingPeriodElapsed {
                 trusted_height: signed_header.trusted_height,
@@ -167,6 +156,17 @@ impl ILightClient for IconClient<'_> {
             return Err(ContractError::InvalidHeaderUpdate(
                 "network id mismatch".to_string(),
             ));
+        }
+
+        let trusted_consensus_state = self
+            .context
+            .get_consensus_state(client_id, signed_header.trusted_height)?;
+
+        let current_proof_context_hash =
+            btp_header.get_next_proof_context_hash(&signed_header.current_validators);
+
+        if current_proof_context_hash != trusted_consensus_state.next_proof_context_hash {
+            return Err(ContractError::InvalidProofContextHash);
         }
 
         let _valid = self.check_block_proof(
