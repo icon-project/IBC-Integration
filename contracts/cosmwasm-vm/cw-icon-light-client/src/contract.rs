@@ -250,7 +250,6 @@ pub fn validate_next_seq_recv(
             root: _,
             seq_recv_path,
             sequence,
-            packet_data: _,
         } => {
             let proofs_decoded =
                 MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
@@ -273,7 +272,6 @@ pub fn validate_next_seq_recv(
             proof,
             root: _,
             receipt_path,
-            packet_data: _,
         } => {
             let proofs_decoded =
                 MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
@@ -756,7 +754,7 @@ mod tests {
         let info = mock_info("ibc_host", &[]);
 
         let msg = ExecuteMsg::UpdateClient {
-            client_id: client_id.clone(),
+            client_id: client_id,
             signed_header: signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info, msg);
@@ -782,7 +780,7 @@ mod tests {
         let info = mock_info("ibc_host", &[]);
 
         let msg = ExecuteMsg::UpdateClient {
-            client_id: client_id.clone(),
+            client_id: client_id,
             signed_header: signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info, msg);
@@ -807,7 +805,7 @@ mod tests {
         let info = mock_info("ibc_host", &[]);
 
         let msg = ExecuteMsg::UpdateClient {
-            client_id: client_id.clone(),
+            client_id: client_id,
             signed_header: signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info, msg);
@@ -832,7 +830,7 @@ mod tests {
         let info = mock_info("ibc_host", &[]);
 
         let msg = ExecuteMsg::UpdateClient {
-            client_id: client_id.clone(),
+            client_id: client_id,
             signed_header: signed_header.to_any().encode_to_vec(),
         };
         let result = execute(deps.as_mut(), mock_env(), info, msg);

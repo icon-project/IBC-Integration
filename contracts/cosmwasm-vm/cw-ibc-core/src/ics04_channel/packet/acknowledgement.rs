@@ -27,7 +27,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn acknowledgement_packet_validate(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
+        _info: MessageInfo,
         env: Env,
         msg: &MsgAcknowledgement,
     ) -> Result<Response, ContractError> {
@@ -138,15 +138,7 @@ impl<'a> CwIbcCoreContext<'a> {
             msg.proof_height_on_b,
             conn_end_on_a.clone(),
         )?;
-        let data = PacketData {
-            message_info: cw_common::types::MessageInfo {
-                sender: info.sender,
-                funds: vec![],
-            },
-            packet: msg.packet.clone(),
-            signer: msg.signer.clone(),
-            acknowledgement: Some(msg.acknowledgement.clone()),
-        };
+
         let ack_path_on_b = commitment::acknowledgement_commitment_path(
             &packet.port_id_on_b.clone(),
             &packet.chan_id_on_b,
@@ -160,7 +152,7 @@ impl<'a> CwIbcCoreContext<'a> {
             ack_path: ack_path_on_b,
             ack: msg.acknowledgement.clone().into(),
         };
-        let _packet_data = to_vec(&data)?;
+
         let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
 
         client.verify_packet_acknowledge(
@@ -213,7 +205,7 @@ impl<'a> CwIbcCoreContext<'a> {
             VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
             &packet_ack_msg,
         )?;
-        let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketAck {
+        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketAck {
             msg: packet_ack_msg,
         };
 

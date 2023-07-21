@@ -96,7 +96,7 @@ pub fn execute(
                 timeout,
             );
 
-            let message = cw_common::xcall_msg::ExecuteMsg::IbcPacketReceive {
+            let message = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketReceive {
                 msg: IbcPacketReceiveMsg::new(ibc_packet, info.sender.clone()),
             };
 
@@ -137,7 +137,7 @@ pub fn execute(
         }
         ExecuteMsg::IbcConfig { msg } => {
             let state = STATE.load(deps.as_ref().storage).unwrap();
-            let message = cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect { msg };
+            let message = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg };
 
             let message = WasmMsg::Execute {
                 contract_addr: state.xcall_address.into_string(),

@@ -45,17 +45,12 @@ pub enum QueryMsg {
     },
     #[returns(bool)]
     VerifyChannel {
-        // message_info: MessageInfo,
-        // endpoint: CwEndpoint,
         verify_channel_state: VerifyChannelState,
-        // add all props that we need on response
     },
     #[returns(bool)]
     VerifyOpenConfirm {
-        //  expected_response: OpenConfirmResponse,
         client_id: String,
         verify_connection_state: VerifyConnectionState,
-        // add all props that we need on response
     },
     #[returns(bool)]
     TimeoutOnCLose {
@@ -72,13 +67,11 @@ pub enum QueryMsg {
     VerifyPacketData {
         client_id: String,
         verify_packet_data: VerifyPacketData,
-        // packet_data: Vec<u8>,
     },
     #[returns(bool)]
     VerifyPacketAcknowledgement {
         client_id: String,
         verify_packet_acknowledge: VerifyPacketAcknowledgement,
-        //  packet_data: Vec<u8>,
     },
     #[returns(bool)]
     VerifyConnectionOpenTry(VerifyConnectionPayload),
@@ -99,7 +92,7 @@ pub enum LightClientPacketMessage {
         proof: Vec<u8>,
         root: Vec<u8>,
         receipt_path: Vec<u8>,
-        packet_data: Vec<u8>,
+        // packet_data: Vec<u8>,
     },
 
     VerifyNextSequenceRecv {
@@ -109,7 +102,7 @@ pub enum LightClientPacketMessage {
         root: Vec<u8>,
         seq_recv_path: Vec<u8>,
         sequence: u64,
-        packet_data: Vec<u8>,
+        //  packet_data: Vec<u8>,
     },
 }
 
@@ -232,5 +225,4 @@ pub struct VerifyConnectionPayload {
     pub verify_connection_state: VerifyConnectionState,
     pub verify_client_full_state: VerifyClientFullState,
     pub verify_client_consensus_state: VerifyClientConsensusState,
-    // pub expected_response: T,
 }

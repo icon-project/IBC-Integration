@@ -4,7 +4,6 @@ use common::ibc::core::ics04_channel::{
 };
 use cw_common::{hex_string::HexString, raw_types::to_raw_packet};
 use debug_print::debug_println;
-use prost::DecodeError;
 
 use super::*;
 
@@ -108,21 +107,6 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         debug_println!("verify connection delay passed");
-
-        let packet_data = PacketData::new(
-            packet.clone(),
-            msg.signer.clone(),
-            None,
-            cw_common::types::MessageInfo {
-                sender: info.sender,
-                funds: vec![],
-            },
-        );
-
-        debug_println!("new packet data made:");
-        let _packet_data = to_vec(&packet_data).map_err(|e| ContractError::IbcDecodeError {
-            error: DecodeError::new(e.to_string()),
-        })?;
         let verify_packet_data = VerifyPacketData {
             height: msg.proof_height_on_a.to_string(),
             prefix: conn_end_on_b.counterparty().prefix().clone().into_vec(),
@@ -199,7 +183,7 @@ impl<'a> CwIbcCoreContext<'a> {
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
             &ibc_packet,
         )?;
-        let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketReceive {
+        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketReceive {
             msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
         };
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {

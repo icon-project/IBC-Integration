@@ -1,4 +1,3 @@
-use cw_common::from_binary_response;
 use cw_ibc_core::{light_client::light_client::LightClient, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE};
 
 use super::*;
@@ -135,32 +134,6 @@ fn test_execute_timeout_packet_fails() {
     contract
         .execute_timeout_packet(deps.as_mut(), message)
         .unwrap();
-}
-
-#[test]
-fn test_packet_data() {
-    let proof_height = 50;
-    let timeout_height = proof_height;
-    let timeout_timestamp = 0;
-    let default_raw_msg =
-        get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
-    let info = create_mock_info("channel-creater", "umlg", 2000);
-    let msg = MsgTimeout::try_from(default_raw_msg).unwrap();
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.sender,
-        funds: info.funds,
-    };
-    let packet_data = PacketData {
-        packet: msg.packet.clone(),
-        signer: msg.signer.clone(),
-        acknowledgement: None,
-        message_info,
-    };
-    let bin = to_binary(&packet_data).unwrap();
-    let data = from_binary_response::<PacketData>(&bin);
-    let packet_date = data.unwrap().packet;
-
-    assert_eq!(packet_date, msg.packet);
 }
 
 #[test]

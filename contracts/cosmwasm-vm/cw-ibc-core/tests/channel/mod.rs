@@ -15,7 +15,6 @@ use cosmwasm_std::IbcAcknowledgement;
 use cosmwasm_std::{Binary, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
 use cw_common::commitment::compute_packet_commitment;
 use cw_common::ibc_types::IbcChannelId;
-use cw_common::types::PacketData;
 
 use cw_common::raw_types::RawHeight;
 

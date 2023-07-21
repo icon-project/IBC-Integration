@@ -1046,7 +1046,7 @@ fn test_validate_open_init_channel() {
 
     let channel_id_expect = ChannelId::new(0);
     let expected = on_chan_open_init_submessage(&msg, &channel_id_expect, &conn_id);
-    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
+    let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),

@@ -106,7 +106,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_OPEN_INIT,
             &sub_message.channel().endpoint,
         )?;
-        let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
+        let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_init = create_channel_submesssage(
             contract_address,
@@ -276,7 +276,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             &sub_message.channel().endpoint,
         )?;
 
-        let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
+        let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
 
         let data = to_binary(&data).map_err(ContractError::Std)?;
         debug_println!("after converting data to binary ");
@@ -368,10 +368,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let chan_end_path_on_b = commitment::channel_path(port_id_on_b, &message.chan_id_on_b);
         let vector = raw_expected_chan.encode_to_vec();
 
-        let _message_info = cw_common::types::MessageInfo {
-            sender: info.sender,
-            funds: vec![],
-        };
         let endpoint = CwEndPoint {
             port_id: message.port_id_on_a.clone().to_string(),
             channel_id: message.chan_id_on_a.clone().to_string(),
@@ -420,7 +416,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
             &sub_message.channel().endpoint,
         )?;
-        let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
+        let data =
+            cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_try = create_channel_submesssage(
             module_contract_address,
@@ -554,7 +551,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
             &sub_message.channel().endpoint,
         )?;
-        let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
+        let data =
+            cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_try = create_channel_submesssage(
             contract_address,
@@ -621,7 +619,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_CLOSE_INIT,
             &sub_message.channel().endpoint,
         )?;
-        let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
+        let data =
+            cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_close_init = create_channel_submesssage(
             contract_address,
@@ -757,7 +756,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
             &sub_message.channel().endpoint,
         )?;
-        let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
+        let data =
+            cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).map_err(Into::<ContractError>::into)?;
         let on_chan_close_confirm = create_channel_submesssage(
             contract_address,

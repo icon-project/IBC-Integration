@@ -1,5 +1,4 @@
 use debug_print::debug_println;
-use prost::DecodeError;
 
 use super::*;
 
@@ -132,20 +131,6 @@ impl<'a> CwIbcCoreContext<'a> {
             expected_counterparty_channel_end: vector.unwrap(),
             client_id: conn_end_on_a.client_id().to_string(),
         };
-
-        let data = PacketData {
-            packet: msg.packet.clone(),
-            signer: msg.signer.clone(),
-            acknowledgement: None,
-            message_info: cw_common::types::MessageInfo {
-                sender: info.sender.clone(),
-                funds: vec![],
-            },
-        };
-        let packet_data = to_vec(&data).map_err(|e| ContractError::IbcDecodeError {
-            error: DecodeError::new(e.to_string()),
-        })?;
-
         let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
             if msg.packet.sequence < msg.next_seq_recv_on_b {
                 return Err(PacketError::InvalidPacketSequence {
@@ -166,7 +151,6 @@ impl<'a> CwIbcCoreContext<'a> {
                 root: consensus_state_of_b_on_a.root().into_vec(),
                 seq_recv_path: seq_recv_path_on_b,
                 sequence: msg.packet.sequence.into(),
-                packet_data,
             }
         } else {
             let receipt_path_on_b = commitment::receipt_commitment_path(
@@ -180,7 +164,6 @@ impl<'a> CwIbcCoreContext<'a> {
                 proof: msg.proof_unreceived_on_b.clone().into(),
                 root: consensus_state_of_b_on_a.root().into_vec(),
                 receipt_path: receipt_path_on_b,
-                packet_data,
             }
         };
 
@@ -229,7 +212,7 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
 
         let address = Addr::unchecked(msg.signer.to_string());
-        let cosm_msg = cw_common::xcall_msg::ExecuteMsg::IbcPacketTimeout {
+        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketTimeout {
             msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
         };
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {

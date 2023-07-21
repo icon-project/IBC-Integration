@@ -61,7 +61,7 @@ impl<'a> CwIbcConnection<'a> {
         if info.sender != owner {
             return Err(ContractError::Unauthorized {});
         }
-        self.admin().save(store, &admin);
+        self.admin().save(store, &admin)?;
         Ok(Response::new()
             .add_attribute("method", "add_admin")
             .add_attribute("admin", admin.to_string()))
