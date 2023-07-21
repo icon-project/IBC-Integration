@@ -198,6 +198,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
+ "debug_print",
  "derive_more",
  "displaydoc",
  "dyn-clone",

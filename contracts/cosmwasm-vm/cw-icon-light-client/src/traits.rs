@@ -3,6 +3,7 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::MerkleNode;
 use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::Addr;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -20,11 +21,12 @@ pub struct ConsensusStateUpdate {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Config {
     pub owner: Addr,
+    pub ibc_host: Addr,
 }
 
 impl Config {
-    pub fn new(owner: Addr) -> Self {
-        Self { owner }
+    pub fn new(owner: Addr, ibc_host: Addr) -> Self {
+        Self { owner, ibc_host }
     }
 }
 
@@ -32,6 +34,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             owner: Addr::unchecked("test"),
+            ibc_host: Addr::unchecked("ibc_host"),
         }
     }
 }
@@ -44,6 +47,7 @@ pub trait ILightClient {
      */
     fn create_client(
         &mut self,
+        caller: Addr,
         client_id: &str,
         client_state: ClientState,
         consensus_state: ConsensusState,
@@ -63,6 +67,7 @@ pub trait ILightClient {
      */
     fn update_client(
         &mut self,
+        caller: Addr,
         client_id: &str,
         header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error>;
@@ -151,4 +156,7 @@ pub trait IContext {
         client_id: &str,
         height: u64,
     ) -> Result<u64, Self::Error>;
+
+    fn ensure_owner(&self, caller: Addr) -> Result<(), Self::Error>;
+    fn ensure_ibc_host(&self, caller: Addr) -> Result<(), Self::Error>;
 }

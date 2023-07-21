@@ -566,12 +566,24 @@ impl serde::Serialize for SignedHeader {
         if !self.signatures.is_empty() {
             len += 1;
         }
+        if !self.current_validators.is_empty() {
+            len += 1;
+        }
+        if self.trusted_height != 0 {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("icon.types.v1.SignedHeader", len)?;
         if let Some(v) = self.header.as_ref() {
             struct_ser.serialize_field("header", v)?;
         }
         if !self.signatures.is_empty() {
             struct_ser.serialize_field("signatures", &self.signatures.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
+        }
+        if !self.current_validators.is_empty() {
+            struct_ser.serialize_field("currentValidators", &self.current_validators.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
+        }
+        if self.trusted_height != 0 {
+            struct_ser.serialize_field("trusted_height", ToString::to_string(&self.trusted_height).as_str())?;
         }
         struct_ser.end()
     }
@@ -585,12 +597,17 @@ impl<'de> serde::Deserialize<'de> for SignedHeader {
         const FIELDS: &[&str] = &[
             "header",
             "signatures",
+            "currentValidators",
+            "trusted_height",
+            "trustedHeight",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
             Header,
             Signatures,
+            CurrentValidators,
+            TrustedHeight,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -614,6 +631,8 @@ impl<'de> serde::Deserialize<'de> for SignedHeader {
                         match value {
                             "header" => Ok(GeneratedField::Header),
                             "signatures" => Ok(GeneratedField::Signatures),
+                            "currentValidators" => Ok(GeneratedField::CurrentValidators),
+                            "trustedHeight" | "trusted_height" => Ok(GeneratedField::TrustedHeight),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -635,6 +654,8 @@ impl<'de> serde::Deserialize<'de> for SignedHeader {
             {
                 let mut header__ = None;
                 let mut signatures__ = None;
+                let mut current_validators__ = None;
+                let mut trusted_height__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::Header => {
@@ -652,11 +673,30 @@ impl<'de> serde::Deserialize<'de> for SignedHeader {
                                     .into_iter().map(|x| x.0).collect())
                             ;
                         }
+                        GeneratedField::CurrentValidators => {
+                            if current_validators__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("currentValidators"));
+                            }
+                            current_validators__ = 
+                                Some(map.next_value::<Vec<::pbjson::private::BytesDeserialize<_>>>()?
+                                    .into_iter().map(|x| x.0).collect())
+                            ;
+                        }
+                        GeneratedField::TrustedHeight => {
+                            if trusted_height__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("trustedHeight"));
+                            }
+                            trusted_height__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
                     }
                 }
                 Ok(SignedHeader {
                     header: header__,
                     signatures: signatures__.unwrap_or_default(),
+                    current_validators: current_validators__.unwrap_or_default(),
+                    trusted_height: trusted_height__.unwrap_or_default(),
                 })
             }
         }
