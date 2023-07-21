@@ -45,8 +45,8 @@ use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::ibc::events::IbcEventType;
 use cw_common::ibc_types::IbcClientId;
-use cw_ibc_core::ConnectionEnd;
 use cw_ibc_core::light_client::light_client::LightClient;
+use cw_ibc_core::ConnectionEnd;
 use prost::Message;
 use setup::*;
 

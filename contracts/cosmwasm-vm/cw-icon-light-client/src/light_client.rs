@@ -3,11 +3,11 @@ use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::lightclient::v1::{ClientState, TrustLevel};
-use common::icon::icon::types::v1::{BtpHeader, MerkleNode, SignedHeader};
+use common::icon::icon::types::v1::{BtpHeader, SignedHeader};
 use common::traits::AnyTypes;
-use common::utils::{calculate_root, keccak256};
+use common::utils::keccak256;
 use cosmwasm_std::Addr;
-use cw_common::hex_string::HexString;
+
 use debug_print::debug_println;
 use prost::Message;
 

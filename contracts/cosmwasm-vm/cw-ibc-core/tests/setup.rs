@@ -512,11 +512,10 @@ pub fn get_dummy_client_state() -> ClientState {
     client_state
 }
 
-pub fn get_dummy_consensus_state()->ConsensusState{
+pub fn get_dummy_consensus_state() -> ConsensusState {
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
-        next_proof_context_hash:vec![1,2,3,4]
+        next_proof_context_hash: vec![1, 2, 3, 4],
     };
     consenus_state
-
 }
