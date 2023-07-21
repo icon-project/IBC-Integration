@@ -1,6 +1,5 @@
 use std::{str::FromStr, time::Duration};
 
-use common::client_state::get_default_icon_client_state;
 use common::traits::AnyTypes;
 use cosmwasm_std::{
     to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,

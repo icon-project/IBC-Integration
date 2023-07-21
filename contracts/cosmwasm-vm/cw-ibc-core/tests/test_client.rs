@@ -854,9 +854,8 @@ fn check_for_upgrade_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-   
 
-    let client_state=ClientState {
+    let client_state = ClientState {
         trusting_period: 2000000000,
         ..get_dummy_client_state()
     };
@@ -894,11 +893,10 @@ fn check_for_upgrade_client() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    
-   let upgrade_client_state= ClientState {
-       trusting_period: 2000000000,
-       ..get_dummy_client_state()
-   };
+    let upgrade_client_state = ClientState {
+        trusting_period: 2000000000,
+        ..get_dummy_client_state()
+    };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
@@ -1047,11 +1045,11 @@ fn fails_on_upgrade_client_frozen_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-   
-   let client_state= ClientState {
-    frozen_height: 3,
-     ..get_dummy_client_state()
-   };
+
+    let client_state = ClientState {
+        frozen_height: 3,
+        ..get_dummy_client_state()
+    };
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -1145,11 +1143,11 @@ fn check_for_execute_upgrade_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    
-let client_state= ClientState {
-    trusting_period: 2000000000,
-    ..get_dummy_client_state()
-};
+
+    let client_state = ClientState {
+        trusting_period: 2000000000,
+        ..get_dummy_client_state()
+    };
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
@@ -1184,11 +1182,10 @@ let client_state= ClientState {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    
- let upgrade_client_state=ClientState {
-    trusting_period: 2000000000,
-    ..get_dummy_client_state()
- };
+    let upgrade_client_state = ClientState {
+        trusting_period: 2000000000,
+        ..get_dummy_client_state()
+    };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
@@ -1265,7 +1262,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     let upgrade_client_state: ClientState = ClientState {
         trusting_period: 2000000000,
         ..get_dummy_client_state()
-     };
+    };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
@@ -1584,11 +1581,10 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .init_client_counter(deps.as_mut().storage, 10)
         .unwrap();
 
-  
-let client_state =ClientState {
-    frozen_height: 10,
-    ..get_dummy_client_state()
-};
+    let client_state = ClientState {
+        frozen_height: 10,
+        ..get_dummy_client_state()
+    };
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 

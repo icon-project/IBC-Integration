@@ -820,11 +820,10 @@ fn test_for_packet_send() {
         )
         .unwrap();
 
-  
-   let client_state = ClientState {
-    latest_height: 10,
-    ..get_dummy_client_state()
-   };
+    let client_state = ClientState {
+        latest_height: 10,
+        ..get_dummy_client_state()
+    };
 
     let client = client_state.to_any().encode_to_vec();
     contract

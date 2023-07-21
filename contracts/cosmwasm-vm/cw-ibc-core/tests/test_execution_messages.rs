@@ -3,7 +3,6 @@ pub mod setup;
 use std::str::FromStr;
 use std::time::Duration;
 
-use common::client_state::get_default_icon_client_state;
 use common::ibc::core::ics24_host::identifier::ClientId;
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;

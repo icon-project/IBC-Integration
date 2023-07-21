@@ -3,7 +3,6 @@ use std::time::Duration;
 
 pub mod setup;
 
-use common::client_state::get_default_icon_client_state;
 use common::ibc::core::ics24_host::identifier::ClientId;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
@@ -496,7 +495,7 @@ fn create_connection_open_ack_event() {
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
     let counterparty_connection_id = ConnectionId::new(20);
-    
+
     let event = create_connection_event(
         IbcEventType::OpenAckConnection,
         &connection_id,
@@ -517,7 +516,7 @@ fn create_connection_open_try_event() {
     let client_id = ClientId::default();
     let counterparty_client_id = ClientId::default();
     let counterparty_connection_id = ConnectionId::new(20);
-  
+
     let event = create_connection_event(
         IbcEventType::OpenTryConnection,
         &connection_id,

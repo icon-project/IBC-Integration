@@ -27,14 +27,18 @@ use cosmwasm_std::{
     OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
-use common::{ibc::{
-    core::{
-        ics03_connection::version::{get_compatible_versions, Version},
-        ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+use common::{
+    client_state::get_default_icon_client_state,
+    ibc::{
+        core::{
+            ics03_connection::version::{get_compatible_versions, Version},
+            ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+        },
+        signer::Signer,
+        Height,
     },
-    signer::Signer,
-    Height,
-}, icon::icon::lightclient::v1::ClientState, client_state::get_default_icon_client_state};
+    icon::icon::lightclient::v1::ClientState,
+};
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
 use cw_common::raw_types::{
@@ -497,7 +501,7 @@ pub fn get_dummy_endpoints() -> (IbcEndpoint, IbcEndpoint) {
     (src, dst)
 }
 
-pub fn get_dummy_client_state()->ClientState{
+pub fn get_dummy_client_state() -> ClientState {
     let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 2,
         frozen_height: 0,
@@ -507,6 +511,5 @@ pub fn get_dummy_client_state()->ClientState{
         validators: vec!["hash".as_bytes().to_vec()],
         ..get_default_icon_client_state()
     };
-    return client_state;
-
+    client_state
 }

@@ -63,7 +63,6 @@ fn test_packet_send() {
         )
         .unwrap();
 
-    
     let client_state = ClientState {
         latest_height: 10,
         ..get_dummy_client_state()
@@ -182,11 +181,10 @@ fn test_packet_send_fail_misiing_sequense() {
         .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
         .unwrap();
 
-   
-  let client_state = ClientState {
-    latest_height:10,
-    ..get_dummy_client_state()
-  };
+    let client_state = ClientState {
+        latest_height: 10,
+        ..get_dummy_client_state()
+    };
 
     let client = client_state.to_any().encode_to_vec();
     contract

@@ -1,5 +1,5 @@
-use cw_common::raw_types::channel::RawPacket;
 use super::*;
+use cw_common::raw_types::channel::RawPacket;
 
 pub const CHANNEL_ID_ATTRIBUTE_KEY: &str = "channel_id";
 pub const PORT_ID_ATTRIBUTE_KEY: &str = "port_id";
