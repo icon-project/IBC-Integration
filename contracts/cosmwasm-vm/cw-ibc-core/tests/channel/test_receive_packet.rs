@@ -18,7 +18,7 @@ pub fn make_ack_success() -> Binary {
 }
 
 pub fn get_dummy_raw_packet_recv(timeout_height: u64, timeout_timestamp: u64) -> RawPacket {
-    let (src,dest)= get_dummy_endpoints();
+    let (src, dest) = get_dummy_endpoints();
     RawPacket {
         sequence: 1,
         source_port: src.port_id,
@@ -169,7 +169,6 @@ fn test_receive_packet() {
     );
 }
 
-
 #[test]
 fn execute_receive_packet() {
     let contract = CwIbcCoreContext::default();
@@ -180,7 +179,7 @@ fn execute_receive_packet() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let (src,dst)= get_dummy_endpoints();
+    let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
     contract
@@ -231,7 +230,7 @@ fn execute_receive_packet_ordered() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let (src,dst)= get_dummy_endpoints();
+    let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
     contract
@@ -299,7 +298,7 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let (src,dst)= get_dummy_endpoints();
+    let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
     contract

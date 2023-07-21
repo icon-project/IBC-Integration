@@ -1,5 +1,5 @@
 use crate::{
-   // client_response::PacketDataResponse,
+    // client_response::PacketDataResponse,
     errors::CwErrors,
     types::{PacketData, VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData},
 };
@@ -207,19 +207,18 @@ pub enum ExecuteMsg {
         client_id: String,
         signed_header: Vec<u8>,
     },
- 
+
     UpgradeClient {
         upgraded_client_state: Vec<u8>,
         upgraded_consensus_state: Vec<u8>,
         proof_upgrade_client: Vec<u8>,
         proof_upgrade_consensus_state: Vec<u8>,
     },
-   
+
     Misbehaviour {
         client_id: String,
         misbehaviour: Vec<u8>,
     },
-   
 }
 
 #[cw_serde]

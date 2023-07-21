@@ -23,8 +23,8 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, MessageInfo, OwnedDeps,
-    SystemResult, Timestamp, TransactionInfo, WasmQuery, IbcEndpoint,
+    to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
+    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
 use common::ibc::{
@@ -401,7 +401,7 @@ pub fn get_dummy_raw_msg_conn_open_confirm() -> RawMsgConnectionOpenConfirm {
 }
 
 pub fn get_dummy_raw_packet(timeout_height: u64, timeout_timestamp: u64) -> RawPacket {
-    let (src,dest)= get_dummy_endpoints();
+    let (src, dest) = get_dummy_endpoints();
     RawPacket {
         sequence: 1,
         source_port: src.port_id,
@@ -484,7 +484,7 @@ pub fn mock_lightclient_reply(deps: &mut OwnedDeps<MockStorage, MockApi, MockQue
     });
 }
 
-pub fn get_dummy_endpoints()->(IbcEndpoint,IbcEndpoint){
+pub fn get_dummy_endpoints() -> (IbcEndpoint, IbcEndpoint) {
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
         channel_id: "channel-1".to_string(),
@@ -494,5 +494,5 @@ pub fn get_dummy_endpoints()->(IbcEndpoint,IbcEndpoint){
         port_id: "their-port".to_string(),
         channel_id: "channel-3".to_string(),
     };
-    (src,dst)
+    (src, dst)
 }

@@ -139,7 +139,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let res =
         contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
-    print!("{:?}",res);
+    print!("{:?}", res);
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,

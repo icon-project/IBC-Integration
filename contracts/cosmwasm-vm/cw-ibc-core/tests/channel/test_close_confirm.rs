@@ -127,7 +127,7 @@ fn test_validate_close_confirm_channel() {
     let port_id = msg.port_id_on_b.clone();
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
-  
+
     contract
         .claim_capability(
             &mut deps.storage,

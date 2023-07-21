@@ -18,7 +18,7 @@ fn test_execute_timeout_packet() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let data = Binary::from(b"test-data".to_vec());
-    let (src,dst)= get_dummy_endpoints();
+    let (src, dst) = get_dummy_endpoints();
     let timeout = IbcTimeoutBlock {
         revision: 6,
         height: 6,
@@ -75,7 +75,7 @@ fn test_execute_timeout_packet() {
     // Call the function being tested
     let res = contract.execute_timeout_packet(deps.as_mut(), message);
 
-    println!("{:?}",res);
+    println!("{:?}", res);
     assert!(res.is_ok());
     assert_eq!(res.unwrap().attributes[1].value, "execute_timeout_packet",)
 }
@@ -96,7 +96,7 @@ fn test_execute_timeout_packet_fails() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let data = Binary::from(b"test-data".to_vec());
-    let (src,dst)= get_dummy_endpoints();
+    let (src, dst) = get_dummy_endpoints();
     let timeout = IbcTimeoutBlock {
         revision: 6,
         height: 6,
@@ -136,8 +136,6 @@ fn test_execute_timeout_packet_fails() {
         .execute_timeout_packet(deps.as_mut(), message)
         .unwrap();
 }
-
-
 
 #[test]
 fn test_packet_data() {

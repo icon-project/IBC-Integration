@@ -234,7 +234,6 @@ fn test_validate_open_confirm_channel() {
     )
 }
 
-
 #[test]
 fn test_execute_open_confirm_channel() {
     let mut deps = deps();

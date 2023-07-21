@@ -98,4 +98,3 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
         .validate_channel_open_try(deps.as_mut(), info, &msg)
         .unwrap();
 }
-

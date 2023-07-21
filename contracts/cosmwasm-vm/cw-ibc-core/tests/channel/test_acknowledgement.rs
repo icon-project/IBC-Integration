@@ -187,7 +187,7 @@ fn test_acknowledgement_packet_execute_ordered() {
         .unwrap();
 
     let res = contract.acknowledgement_packet_execute(deps.as_mut(), message);
-    println!("{:?}",res);
+    println!("{:?}", res);
     assert!(res.is_ok());
     assert_eq!(
         "execute_acknowledgement_packet",

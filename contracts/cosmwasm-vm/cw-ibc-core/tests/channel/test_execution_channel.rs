@@ -810,8 +810,10 @@ fn test_for_packet_send() {
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
         Order::default(),
-        Counterparty::new(IbcPortId::from_str(&raw.destination_port).unwrap(),
-        Some(IbcChannelId::from_str(&raw.destination_channel).unwrap())),
+        Counterparty::new(
+            IbcPortId::from_str(&raw.destination_port).unwrap(),
+            Some(IbcChannelId::from_str(&raw.destination_channel).unwrap()),
+        ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -831,8 +833,7 @@ fn test_for_packet_send() {
         get_compatible_versions(),
         ZERO_DURATION,
     );
-  
-    
+
     let packet: Packet =
         get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
             .try_into()
@@ -911,7 +912,7 @@ fn test_for_packet_send() {
             packet: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
-    println!("{:?},",res);
+    println!("{:?},", res);
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().attributes[0].value, "send_packet");
     assert_eq!(res.unwrap().events[0].ty, "send_packet")
@@ -1047,7 +1048,7 @@ fn test_for_recieve_packet() {
             msg: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
-     println!("{:?}",res);
+    println!("{:?}", res);
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,
@@ -1069,7 +1070,7 @@ fn test_for_recieve_packet() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let (src,dst)= get_dummy_endpoints();
+    let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
     contract
@@ -1090,7 +1091,7 @@ fn test_for_recieve_packet() {
         }),
     };
     let response = contract.reply(deps.as_mut(), env, reply_message);
-    println!("{:?}",response);
+    println!("{:?}", response);
     assert!(response.is_ok());
     assert_eq!(response.unwrap().events[0].ty, "recv_packet");
 }
