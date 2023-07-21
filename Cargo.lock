@@ -130,7 +130,7 @@ dependencies = [
  "bytes",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
+ "cw-storage-plus 1.0.1",
  "derive_more",
  "displaydoc",
  "dyn-clone",
@@ -310,7 +310,7 @@ dependencies = [
  "common",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
+ "cw-storage-plus 1.0.1",
  "hex",
  "hex-buffer-serde",
  "ibc-proto",
@@ -331,7 +331,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-multi-test",
- "cw-storage-plus",
+ "cw-storage-plus 1.1.0",
  "cw-xcall-lib",
  "cw2",
  "getrandom",
@@ -351,7 +351,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-multi-test",
- "cw-storage-plus",
+ "cw-storage-plus 1.1.0",
  "cw-xcall-lib",
  "cw2",
  "getrandom",
@@ -369,7 +369,7 @@ checksum = "2a18afd2e201221c6d72a57f0886ef2a22151bbc9e6db7af276fde8a91081042"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
- "cw-storage-plus",
+ "cw-storage-plus 1.0.1",
  "cw-utils",
  "derivative",
  "itertools",
@@ -385,6 +385,16 @@ name = "cw-storage-plus"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "053a5083c258acd68386734f428a5a171b29f7d733151ae83090c6fcc9417ffa"
+dependencies = [
+ "cosmwasm-std",
+ "schemars 0.8.12",
+ "serde",
+]
+
+[[package]]
+name = "cw-storage-plus"
+version = "1.1.0"
+source = "git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw#238b520c3e193226143eedb717a3ed76187d11de"
 dependencies = [
  "cosmwasm-std",
  "schemars 0.8.12",
@@ -417,7 +427,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-common",
- "cw-storage-plus",
+ "cw-storage-plus 1.1.0",
  "cw-xcall-lib",
  "cw2",
  "debug_print",
@@ -440,7 +450,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-common",
- "cw-storage-plus",
+ "cw-storage-plus 1.1.0",
  "cw2",
  "debug_print",
  "getrandom",
@@ -459,7 +469,7 @@ checksum = "8fb70cee2cf0b4a8ff7253e6bc6647107905e8eb37208f87d54f67810faa62f8"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
+ "cw-storage-plus 1.0.1",
  "schemars 0.8.12",
  "serde",
 ]
