@@ -79,14 +79,13 @@ impl<'a> CwCallService<'a> {
 
         let (response, event) = match msg.result {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let code = 0;
+                let code = CallServiceResponseType::CallServiceResponseSuccess.into();
 
                 let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseSuccess,
-                    "success",
                 );
-                let event = event_call_executed(req_id, code, message_response.message());
+                let event = event_call_executed(req_id, code, "success");
                 (message_response, event)
             }
             cosmwasm_std::SubMsgResult::Err(err) => {
@@ -95,7 +94,6 @@ impl<'a> CwCallService<'a> {
                 let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
                     code.clone(),
-                    &error_message,
                 );
                 let event = event_call_executed(req_id, code.into(), &error_message);
                 (message_response, event)

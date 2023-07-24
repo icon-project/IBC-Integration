@@ -166,26 +166,25 @@ public class CallServiceImpl implements CallService, FeeManage {
 
         NetworkAddress from = NetworkAddress.valueOf(req.getFrom());
         CSMessageResponse msgRes = null;
+        String msg = "";
+
         try {
             Address to = Address.fromString(req.getTo());
-            if (req.getProtocols().length == 0) {
-                Context.call(to, "handleCallMessage", req.getFrom(), _data);
-            } else {
-                Context.call(to, "handleCallMessage", req.getFrom(), _data, req.getProtocols());
-            }
-
-            msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.SUCCESS, "");
+            sendToDapp(to, req.getFrom(), _data, req.getProtocols());
+            msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.SUCCESS);
         } catch (UserRevertedException e) {
             int code = e.getCode();
-            String msg = "UserReverted(" + code + ")";
-            msgRes = new CSMessageResponse(req.getSn(), code == 0 ? CSMessageResponse.FAILURE : code, msg);
+            msg = "UserReverted(" + code + ")";
+            msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.FAILURE);
         } catch (IllegalArgumentException | RevertedException e) {
-            msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.FAILURE, e.toString());
+            msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.FAILURE);
+            msg = e.toString();
         } finally {
             if (msgRes == null) {
-                msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.FAILURE, "UnknownFailure");
+                msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.FAILURE);
+                msg = "UnknownFailure";
             }
-            CallExecuted(_reqId, msgRes.getCode(), msgRes.getMsg());
+            CallExecuted(_reqId, msgRes.getCode(), msg);
             // send response only when there was a rollback
             if (!req.needRollback()) {
                 return;
@@ -209,28 +208,10 @@ public class CallServiceImpl implements CallService, FeeManage {
         Context.require(req != null, "InvalidSerialNum");
         Context.require(req.enabled(), "RollbackNotEnabled");
 
-        CSMessageResponse msgRes = null;
-        try {
-            if (req.getProtocols().length == 0) {
-                Context.call(req.getFrom(), "handleCallMessage", getNetworkAddress(), req.getRollback());
-            } else {
-                Context.call(req.getFrom(), "handleCallMessage", getNetworkAddress(), req.getRollback(), req.getProtocols());
-            }
-            msgRes = new CSMessageResponse(_sn, CSMessageResponse.SUCCESS, "");
-        } catch (UserRevertedException e) {
-            int code = e.getCode();
-            String msg = "UserReverted(" + code + ")";
-            msgRes = new CSMessageResponse(_sn, code == 0 ? CSMessageResponse.FAILURE : code, msg);
-        } catch (IllegalArgumentException | RevertedException e) {
-            msgRes = new CSMessageResponse(_sn, CSMessageResponse.FAILURE, e.toString());
-        } finally {
-            if (msgRes == null) {
-                msgRes = new CSMessageResponse(_sn, CSMessageResponse.FAILURE, "UnknownFailure");
-            }
+        sendToDapp(req.getFrom(), getNetworkAddress(), req.getRollback(), req.getProtocols());
 
-            cleanupCallRequest(_sn);
-            RollbackExecuted(_sn, msgRes.getCode(), msgRes.getMsg());
-        }
+        cleanupCallRequest(_sn);
+        RollbackExecuted(_sn);
     }
 
     @External(readonly=true)
@@ -248,7 +229,7 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     @Override
     @EventLog(indexed=1)
-    public void ResponseMessage(BigInteger _sn, int _code, String _msg) {}
+    public void ResponseMessage(BigInteger _sn, int _code) {}
 
     @Override
     @EventLog(indexed=1)
@@ -256,7 +237,7 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     @Override
     @EventLog(indexed=1)
-    public void RollbackExecuted(BigInteger _sn, int _code, String _msg) {}
+    public void RollbackExecuted(BigInteger _sn) {}
 
     @Override
     @EventLog(indexed=3)
@@ -265,36 +246,37 @@ public class CallServiceImpl implements CallService, FeeManage {
     /* ========== Interfaces with BMC ========== */
     @External
     public void handleBTPMessage(String _from, String _svc, BigInteger _sn, byte[] _msg) {
-      handleMessage(_from, _sn, _msg);
+      handleMessage(_from, _msg);
     }
 
     @External
     public void handleBTPError(String _src, String _svc, BigInteger _sn, long _code, String _msg) {
-        handleError(_sn, _code, _msg);
+        handleError(_sn);
     }
     /* ========================================= */
 
 
+    @Override
     @External
-    public void handleMessage(String _from, BigInteger _sn, byte[] _msg) {
+    public void handleMessage(String _from, byte[] _msg) {
         CSMessage msg = CSMessage.fromBytes(_msg);
         switch (msg.getType()) {
             case CSMessage.REQUEST:
-                handleRequest(_from, _sn, msg.getData());
+                handleRequest(_from, msg.getData());
                 break;
             case CSMessage.RESPONSE:
-                handleResponse( _sn, msg.getData());
+                handleResponse(msg.getData());
                 break;
             default:
                 Context.revert("UnknownMsgType(" + msg.getType() + ")");
         }
     }
 
+    @Override
     @External
-    public void handleError(BigInteger _sn, long _code, String _msg) {
-        String errMsg = "Error{code=" + _code + ", msg=" + _msg + "}";
-        CSMessageResponse res = new CSMessageResponse(_sn, CSMessageResponse.ERROR, errMsg);
-        handleResponse(_sn, res.toBytes());
+    public void handleError(BigInteger _sn) {
+        CSMessageResponse res = new CSMessageResponse(_sn, CSMessageResponse.FAILURE);
+        handleResponse(res.toBytes());
     }
 
     private BigInteger sendMessage(Address _connection, BigInteger value, String netTo, int msgType, BigInteger sn, byte[] data) {
@@ -303,7 +285,15 @@ public class CallServiceImpl implements CallService, FeeManage {
         return connection.sendMessage(value, netTo, NAME, sn, msg.toBytes());
     }
 
-    private void handleRequest(String netFrom, BigInteger sn, byte[] data) {
+    private void sendToDapp(Address dapp, String from, byte[] data, String[] protocols) {
+        if (protocols.length == 0) {
+            Context.call(dapp, "handleCallMessage",from, data);
+        } else {
+            Context.call(dapp, "handleCallMessage",from, data, protocols);
+        }
+    }
+
+    private void handleRequest(String netFrom, byte[] data) {
         CSMessageRequest msgReq = CSMessageRequest.fromBytes(data);
         String[] protocols = msgReq.getProtocols();
         String from = msgReq.getFrom();
@@ -334,13 +324,13 @@ public class CallServiceImpl implements CallService, FeeManage {
         BigInteger reqId = getNextReqId();
 
         // emit event to notify the user
-        CallMessage(msgReq.getFrom(), to, msgReq.getSn(), reqId, msgReq.getData());
+        CallMessage(from, to, msgReq.getSn(), reqId, msgReq.getData());
 
         msgReq.hashData();
         proxyReqs.set(reqId, msgReq);
     }
 
-    private void handleResponse(BigInteger sn, byte[] data) {
+    private void handleResponse(byte[] data) {
         CSMessageResponse msgRes = CSMessageResponse.fromBytes(data);
         BigInteger resSn = msgRes.getSn();
         CallRequest req = requests.get(resSn);
@@ -371,15 +361,13 @@ public class CallServiceImpl implements CallService, FeeManage {
             Context.require(sourceAddress.equals(defaultConnection.get(req.getTo())));
         }
 
-        String errMsg = msgRes.getMsg();
-        ResponseMessage(resSn, msgRes.getCode(), errMsg != null ? errMsg : "");
+        ResponseMessage(resSn, msgRes.getCode());
         switch (msgRes.getCode()) {
             case CSMessageResponse.SUCCESS:
                 cleanupCallRequest(resSn);
                 successfulResponses.set(resSn, true);
                 break;
             case CSMessageResponse.FAILURE:
-            case CSMessageResponse.ERROR:
             default:
                 // emit rollback event
                 Context.require(req.getRollback() != null, "NoRollbackData");

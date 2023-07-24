@@ -49,6 +49,24 @@ public interface CallService {
                                 @Optional String[] sources,
                                 @Optional String[] destinations);
 
+   /**
+     * Handles incoming Messages.
+     *
+     * @param _from String ( Network id of source network )
+     * @param _msg Bytes ( serialized bytes of CallMessage )
+     */
+    @External
+    void handleMessage(String _from, byte[] _msg);
+
+    /**
+     * Handle the error on delivering the message.
+     *
+     * @param _sn Integer ( serial number of the original message )
+     */
+
+    @External
+    void handleError(BigInteger _sn);
+
     /**
      * Notifies that the requested call message has been sent.
      *
@@ -69,7 +87,7 @@ public interface CallService {
      * @param _msg The result message if any
      */
     @EventLog(indexed=1)
-    void ResponseMessage(BigInteger _sn, int _code, String _msg);
+    void ResponseMessage(BigInteger _sn, int _code);
 
     /**
      * Notifies the user that a rollback operation is required for the request '_sn'.
@@ -96,7 +114,7 @@ public interface CallService {
      * @param _msg The result message if any
      */
     @EventLog(indexed=1)
-    void RollbackExecuted(BigInteger _sn, int _code, String _msg);
+    void RollbackExecuted(BigInteger _sn);
 
     /*======== At the destination CALL_BSH ========*/
     /**

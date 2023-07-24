@@ -100,14 +100,8 @@ impl<'a> CwCallService<'a> {
                 let dests = destinations.unwrap_or(vec![]);
                 self.send_call_message(deps, info, env, to, data, rollback, sources, dests)
             }
-            ExecuteMsg::HandleMessage { msg, from, sn } => {
-                self.handle_message(deps, info, from, sn, msg)
-            }
-            ExecuteMsg::HandleError {
-                sn: _,
-                code: _,
-                msg: _,
-            } => {
+            ExecuteMsg::HandleMessage { msg, from } => self.handle_message(deps, info, from, msg),
+            ExecuteMsg::HandleError { sn: _ } => {
                 todo!()
             }
             ExecuteMsg::ExecuteCall { request_id, data } => {

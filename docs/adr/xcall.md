@@ -74,13 +74,11 @@ CallExecuted{
 #### ResponseMessage
 ResponseMessage is emitted for all two-way messages (i.e., _rollback is non-null), the xcall on the source chain receives a response message from the xcall on the destination chain and emits the following event regardless of its success or not.
  `_sn` The message id
- `_code` The execution result code (0: Success, -1: Unknown generic failure, >=1: User defined error code)
- `_msg` The result message
+ `_code` The execution result code (1: Success, 0: failure)
 ```javascript
 ResponseMessage{
     Integer _sn,
-    Integer _code,
-    String _msg
+    Integer _code
 }
 ```
 #### RollbackMessage
@@ -96,13 +94,9 @@ RollbackMessage {
 #### RollbackExecuted
 RollbackExecuted event is emitted when a message is executed·
  `_sn` The message id
- `_code` The execution result code (0: Success, -1: Unknown generic failure, >=1: User defined error code)
- `_msg` The result message
 ```javascript
 RollbackExecuted{
     Integer _sn,
-    Integer _code,
-    String _msg
 }
 ```
 
@@ -246,20 +240,18 @@ The sendMessage function is responsible for sending a message to a specified tar
 
 The behavior of sendMessage depends on the value of sn (sequence number). If sn is greater than 0, it indicates a new message that requires a response. In this case, both the sending fee and the response fee should be included. If sn is 0, it signifies a one-way message where no response is expected. If sn is less than 0, it implies that the message is a response to a previously received message. In this scenario, no fee is included in the sending message since it should have already been paid when the positive sn was sent.
 
-After handling the sn value, the sendMessage function triggers the handleMessage function on the targetNetwork. It passes targetNetwork, sn, and msg as arguments to handleMessage. The purpose of this function is to handle the incoming message on the specified targetNetwork's xCall contract.
+After handling the sn value, the sendMessage function triggers the handleMessage function on the targetNetwork. It passes targetNetwork and msg as arguments to handleMessage. The purpose of this function is to handle the incoming message on the specified targetNetwork's xCall contract.
 
-In case the message fails to be delivered for any reason, the code triggers the handleError function. It passes sn, errorCode, and errorMessage to the function. The responsibility of this function is to handle errors that occur during the message delivery process.
+In case the message fails to be delivered for any reason, the code triggers the handleError function. It passes the failed sn to the function. The responsibility of this function is to handle errors that occur during the message delivery process.
 
 The second external function, getFee(network, response), calculates and returns the fee required to send a message to the specified network and back. It takes into account the optional response parameter when determining the fee.
 
 In summary, this code snippet illustrates a specific behavior expected from a connection regarding message sending and error handling.
 ```javascript
 external function sendMessage(targetNetwork, svc, sn, msg)
-    if sn < 0:
-        sn = sn.negate()
-    On targetNetwork, trigger handleMessage(targetNetwork, sn, msg)
+    On targetNetwork, trigger handleMessage(targetNetwork, msg)
     if message fails to deliver:
-        trigger handleError(sn, errorCode, errorMessage)
+        trigger handleError(sn)
 ```
 ``` javascript
 external function getFee(network, response)
@@ -285,13 +277,11 @@ CSMessageRequest {
 ```
 ##### CSMessageResponse
 ```javascript
-int SUCCESS = 0;
-int FAILURE = -1;
-int ERROR = -2;
+int SUCCESS = 1;
+int FAILURE = 0;
 CSMessageResponse {
     BigInteger sn;
     int code;
-    String msg;
 }
 ```
 ##### CSMessage
@@ -406,14 +396,14 @@ payable external function sendCallMessage(String _to,
 #### Receiving messages
 `handleMessage` is the external function used by connections to deliver messages.
 ```javascript
-external function handleMessage(String _from, Integer _sn, bytes _msg) {
+external function handleMessage(String _from, bytes _msg) {
     msg = CSMessage.decode(_msg);
     switch (msg.type):
         case CSMessage.REQUEST:
-            handleRequest(_from, _sn, msg.data);
+            handleRequest(_from, msg.data);
             break;
         case CSMessage.RESPONSE:
-            handleResponse(_sn, msg.data);
+            handleResponse(msg.data);
             break;
         default:
             Context.revert("UnknownMsgType(" + msg.type + ")");
@@ -421,10 +411,9 @@ external function handleMessage(String _from, Integer _sn, bytes _msg) {
 ```
 `handleError` is the external function used by connections to report error messages..
 ```javascript
-external function handleError(BigInteger _sn, long _code, String _msg) {
-        String errMsg = "Error{code=" + _code + ", msg=" + _msg + "}";
-        CSMessageResponse res = CSMessageResponse(_sn, CSMessageResponse.ERROR, errMsg);
-        handleResponse(_sn, res.toBytes());
+external function handleError(BigInteger _sn) {
+        CSMessageResponse res = CSMessageResponse(_sn, CSMessageResponse.FAILURE);
+        handleResponse(res.toBytes());
 }
 ```
 
@@ -433,19 +422,19 @@ external function handleError(BigInteger _sn, long _code, String _msg) {
 ```javascript
 external function handleBTPMessage(String _from, _svc String, Integer _sn, bytes _msg) {
     // verify svc is as registered
-    handleMessage(_from, _sn, _msg)
+    handleMessage(_from, _msg)
 }
  ```
 `handleBTPError` Can be added to natively support the BTP protocol without a standalone connection.
 ```javascript
 external function handleBTPError(String _src, String _svc, BigInteger _sn, long _code, String _msg) {
     // verify svc is as registered
-    handleError(_sn, _code, _msg)
+    handleError(_sn)
 }
 ```
 
 ```javascript
-internal function handleRequest(String srcNet, Integer sn, bytes data) {
+internal function handleRequest(String srcNet, bytes data) {
     msgReq = CSMessageRequest.decode(data);
     from = NetworkAddress(msgReq.from);
     require(from.net() == srcNet);
@@ -473,7 +462,7 @@ internal function handleRequest(String srcNet, Integer sn, bytes data) {
 ```
 
 ```javascript
-internal function handleResponse(sn Integer, data bytes) {
+internal function handleResponse(data bytes) {
         response = CSMessageResponse.decode(data);
         resSn = response.sn;
         req = requests[resSn];
@@ -495,15 +484,13 @@ internal function handleResponse(sn Integer, data bytes) {
         else:
             require(source == defaultConnection[req.netTo]);
 
-        errMsg = response.getMsg();
-        emit ResponseMessage(resSn, response.getCode(), errMsg);
+        emit ResponseMessage(resSn, response.getCode());
         switch response.getCode():
             case CSMessageResponse.SUCCESS:
                 requests[resSn] = null;
                 successfulResponses[resSn] = 1;
                 break;
             case CSMessageResponse.FAILURE:
-            case CSMessageResponse.ERROR:
             default:
                 // emit rollback event
                 require(req.rollback != null, "NoRollbackData");
@@ -524,16 +511,18 @@ external function executeCall(Integer _reqId, byte[] data) {
         assert hash(data) == req.data
 
         from = NetworkAddress(req.from);
+        ErrorMessage = ""
         try:
             if req.protocols == []:
                 req.to->handleCallMessage(req.from, data);
             else:
                 req.to->handleCallMessage(req.from, data, req.protocols);
-            response = new CSMessageResponse(req.sn, CSMessageResponse.SUCCESS, "");
-        catch:
-            response = new CSMessageResponse(req.sn, CSMessageResponse.FAILURE, ErrorMessage);
+            response = new CSMessageResponse(req.sn, CSMessageResponse.SUCCESS);
+        catch err:
+            response = new CSMessageResponse(req.sn, CSMessageResponse.FAILURE);
+            ErrorMessage = err.message
 
-        emit CallExecuted(_reqId, response.code, response.msg);
+        emit CallExecuted(_reqId, response.code, response.msg, ErrorMessage);
 
         if req.needRollback():
             sn = req.sn.negate();
@@ -554,18 +543,12 @@ external function executeRollback(Integer _sn) {
     require(req.enabled, "RollbackNotEnabled");
     requests[_sn] = null;
 
-    response = null;
-    try:
-        if req.protocols == []:
-            req.from->handleCallMessage(getNetworkAddress(), req.rollback);
-        else:
-            req.from->handleCallMessage(getNetworkAddress(), req.rollback req.protocols);
+    if req.protocols == []:
+        req.from->handleCallMessage(getNetworkAddress(), req.rollback);
+    else:
+        req.from->handleCallMessage(getNetworkAddress(), req.rollback req.protocols);
 
-        response = new CSMessageResponse(req.sn, CSMessageResponse.SUCCESS, "");
-    catch:
-        response = new CSMessageResponse(req.sn, CSMessageResponse.FAILURE, ErrorMessage);
-
-     RollbackExecuted(_sn, response.code, response.msg);
+     RollbackExecuted(_sn);
 }
 
 ```
