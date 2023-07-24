@@ -1,8 +1,6 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 
-
-
 use common::utils::keccak256;
 use cosmwasm_std::Api;
 use cosmwasm_std::DepsMut;
@@ -181,7 +179,8 @@ mod tests {
 
     use common::{
         constants::{DEFAULT_NETWORK_TYPE_ID, DEFAULT_SRC_NETWORK_ID},
-        icon::icon::types::v1::SignedHeader, traits::AnyTypes,
+        icon::icon::types::v1::SignedHeader,
+        traits::AnyTypes,
     };
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockStorage},
@@ -190,7 +189,6 @@ mod tests {
     use cw_common::raw_types::Any;
     use hex_literal::hex;
     use prost::Message;
-    
 
     use test_utils::get_test_signed_headers;
 

@@ -535,7 +535,7 @@ pub fn get_dummy_connection() -> ConnectionEnd {
         Some(ConnectionId::default()),
         counter_prefix.unwrap(),
     );
-    
+
     ConnectionEnd::new(
         common::ibc::core::ics03_connection::connection::State::Open,
         IbcClientId::default(),
