@@ -32,8 +32,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let packet = &msg.packet;
         let chan_end_on_a = self.get_channel_end(
             deps.storage,
-            msg.packet.port_id_on_a.clone(),
-            msg.packet.chan_id_on_a.clone(),
+            &msg.packet.port_id_on_a.clone(),
+            &msg.packet.chan_id_on_a.clone(),
         )?;
         let counterparty = Counterparty::new(
             msg.packet.port_id_on_b.clone(),

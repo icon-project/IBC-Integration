@@ -15,6 +15,7 @@ pub mod msg;
 pub mod state;
 pub mod storage_keys;
 pub mod traits;
+pub mod conversions;
 pub use crate::error::ContractError;
 use gas_estimates::*;
 use ics04_channel::ics03_connection::msg::MigrateMsg;

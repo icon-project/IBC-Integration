@@ -70,7 +70,7 @@ fn test_add_channel() {
         channel_end.clone(),
     );
 
-    let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id);
+    let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, &port_id, &channel_id);
 
     assert_eq!(channel_end, retrived_channel_end.unwrap())
 }
@@ -1319,7 +1319,7 @@ fn test_get_channel() {
         channel_end.clone(),
     )
     .unwrap();
-    let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id);
+    let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, &port_id, &channel_id);
 
     assert_eq!(channel_end, retrived_channel_end.unwrap())
 }
@@ -1331,6 +1331,6 @@ fn test_get_channel_fail() {
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
     let mock_deps = deps();
-    ctx.get_channel_end(mock_deps.as_ref().storage, port_id, channel_id)
+    ctx.get_channel_end(mock_deps.as_ref().storage, &port_id, &channel_id)
         .unwrap();
 }

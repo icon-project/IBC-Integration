@@ -255,7 +255,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         debug_println!("after getting channel id {:?}", channel_id);
 
         let channel_end =
-            self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+            self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
         // Getting the module address for on channel open try call
         let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
         {
@@ -319,8 +319,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let mut chan_end_on_a = self.get_channel_end(
             deps.storage,
-            message.port_id_on_a.clone(),
-            message.chan_id_on_a.clone(),
+            &message.port_id_on_a.clone(),
+            &message.chan_id_on_a.clone(),
         )?;
         channel_open_ack_validate(message, &chan_end_on_a)?;
         let conn_end_on_a =
@@ -397,8 +397,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         )?;
         let port_id = IbcPortId::from_str(&endpoint.port_id).unwrap();
         let channel_id = IbcChannelId::from_str(&endpoint.channel_id).unwrap();
-        let channel_end =
-            self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+        let channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
         // Getting the module address for on channel open try call
         let module_contract_address =
             match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
@@ -458,8 +457,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let chan_end_on_b = self.get_channel_end(
             deps.storage,
-            message.port_id_on_b.clone(),
-            message.chan_id_on_b.clone(),
+            &message.port_id_on_b.clone(),
+            &message.chan_id_on_b.clone(),
         )?;
         channel_open_confirm_validate(message, &chan_end_on_b)?;
         let conn_end_on_b =
@@ -538,7 +537,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let port_id = IbcPortId::from_str(&endpoint.port_id).unwrap();
         let channel_id = IbcChannelId::from_str(&endpoint.channel_id).unwrap();
         let channel_end =
-            self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+            self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
         // Getting the module address for on channel open try call
         let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
         {
@@ -595,7 +594,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let port_id = message.port_id_on_a.clone();
         let channel_id = message.chan_id_on_a.clone();
-        let chan_end_on_a = self.get_channel_end(deps.storage, port_id, channel_id)?;
+        let chan_end_on_a = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
 
         channel_close_init_validate(&chan_end_on_a, message)?;
         let connection_id = chan_end_on_a.connection_hops()[0].clone();
@@ -662,8 +661,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let chan_end_on_b = self.get_channel_end(
             deps.storage,
-            message.port_id_on_b.clone(),
-            message.chan_id_on_b.clone(),
+            &message.port_id_on_b.clone(),
+            &message.chan_id_on_b.clone(),
         )?;
         channel_close_confirm_validate(message, &chan_end_on_b)?;
         let conn_end_on_b =
@@ -743,7 +742,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let channel_id =
             IbcChannelId::from_str(&endpoint.channel_id).map_err(Into::<ContractError>::into)?;
         let channel_end =
-            self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+            self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
         // Getting the module address for on channel open try call
         let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
         {
@@ -804,7 +803,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                 let mut channel_end =
-                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
 
                 if channel_end.state != State::Uninitialized {
                     return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
@@ -888,7 +887,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                 let mut channel_end =
-                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
 
                 if channel_end.state != State::Uninitialized {
                     return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
@@ -967,7 +966,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                 let mut channel_end =
-                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
 
                 channel_end.set_state(State::Closed); // State change
                 self.store_channel_end(
@@ -1028,7 +1027,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                 let mut channel_end =
-                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
                 if !channel_end.state_matches(&State::Init) {
                     return Err(ChannelError::InvalidChannelState {
                         channel_id,
@@ -1095,7 +1094,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                 let mut channel_end =
-                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
                 if !channel_end.state_matches(&State::TryOpen) {
                     return Err(ChannelError::InvalidChannelState {
                         channel_id,
@@ -1159,7 +1158,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                 let mut channel_end =
-                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
                 if channel_end.state_matches(&State::Closed) {
                     return Err(ChannelError::InvalidChannelState {
                         channel_id,

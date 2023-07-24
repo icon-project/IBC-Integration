@@ -181,10 +181,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
                     .map_err(|error| ContractError::IbcDecodeError { error })?;
 
-                let data: Packet = Packet::try_from(packet)
-                    .map_err(|error| ContractError::IbcPacketError { error })?;
+                // let data: Packet = Packet::try_from(packet)
+                //     .map_err(|error| ContractError::IbcPacketError { error })?;
 
-                self.send_packet(deps, data)
+                self.send_packet(deps, packet)
             }
             CoreExecuteMsg::ReceivePacket { msg } => {
                 let message: MsgRecvPacket =
@@ -306,10 +306,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 port_id,
                 channel_id,
             } => {
-                let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
+                let port_id = PortId::from_str(&port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let res = self
-                    .get_channel_end(deps.storage, _port_id, _channel_id)
+                    .get_channel_end(deps.storage, &port_id, &channel_id)
                     .unwrap();
                 let raw: RawChannel = res.into();
                 to_binary(&hex::encode(raw.encode_to_vec()))

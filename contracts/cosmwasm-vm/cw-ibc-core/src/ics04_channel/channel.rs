@@ -21,8 +21,8 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_channel_end(
         &self,
         store: &dyn Storage,
-        port_id: PortId,
-        channel_id: ChannelId,
+        port_id: &PortId,
+        channel_id: &ChannelId,
     ) -> Result<ChannelEnd, ContractError> {
         match self
             .ibc_store()
@@ -31,8 +31,8 @@ impl<'a> CwIbcCoreContext<'a> {
         {
             Some(request) => Ok(request),
             None => Err(ChannelError::ChannelNotFound {
-                port_id,
-                channel_id,
+                port_id: port_id.clone(),
+                channel_id: channel_id.clone(),
             })
             .map_err(Into::<ContractError>::into)?,
         }

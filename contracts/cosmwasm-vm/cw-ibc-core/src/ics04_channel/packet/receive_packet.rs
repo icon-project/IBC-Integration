@@ -35,8 +35,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let packet = &msg.packet.clone();
         let chan_end_on_b = self.get_channel_end(
             deps.storage,
-            msg.packet.port_id_on_b.clone(),
-            msg.packet.chan_id_on_b.clone(),
+            &msg.packet.port_id_on_b.clone(),
+            &msg.packet.chan_id_on_b.clone(),
         )?;
         if !chan_end_on_b.state_matches(&State::Open) {
             return Err(PacketError::InvalidChannelState {
@@ -121,8 +121,8 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let chan_end_on_b = self.get_channel_end(
             deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b.clone(),
+            &packet.port_id_on_b.clone(),
+            &packet.chan_id_on_b.clone(),
         )?;
 
         if chan_end_on_b.order_matches(&Order::Ordered) {
@@ -276,7 +276,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let port_id = IbcPortId::from_str(&port).unwrap();
 
                 let chan_end_on_b =
-                    self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
+                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
                 debug_println!("execute_receive_packet decoding of data successful");
                 let packet_already_received = match chan_end_on_b.ordering {
                     // Note: ibc-go doesn't make the check for `Order::None` channels
