@@ -1,4 +1,4 @@
-use crate::conversions::{to_ibc_channel, to_ibc_port_id};
+use crate::conversions::{to_ibc_channel, to_ibc_port_id, to_ibc_height};
 
 use super::*;
 pub mod open_init;
@@ -10,7 +10,7 @@ use self::{
     open_try::channel_open_try_msg_validate,
 };
 
-use cw_common::{commitment, raw_types::channel::{RawChannel, RawMsgChannelOpenInit}};
+use cw_common::{commitment, raw_types::channel::{RawChannel, RawMsgChannelOpenInit, RawMsgChannelOpenTry}};
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;
@@ -80,15 +80,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         debug_println!("contract address is : {:?} ", contract_address);
       
-        // Store the channel details
-        // let counter_party = Counterparty::new(message.port_id_on_b.clone(), None);
-        // let channel_end = ChannelEnd::new(
-        //     State::Uninitialized,
-        //     message.ordering,
-        //     counter_party,
-        //     message.connection_hops_on_a.clone(),
-        //     message.version_proposal.clone(),
-        // );
         let channel_end= ChannelEnd {
             state: State::Uninitialized,
             ..channel_end
@@ -142,68 +133,75 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelOpenTry,
+        message: &RawMsgChannelOpenTry,
     ) -> Result<Response, ContractError> {
-        if message.connection_hops_on_b.len() != 1 {
+
+        let channel= to_ibc_channel(message.channel.clone())?;
+        if channel.connection_hops.len() != 1 {
             return Err(ContractError::IbcChannelError {
                 error: ChannelError::InvalidConnectionHopsLength {
                     expected: 1,
-                    actual: message.connection_hops_on_b.len(),
+                    actual: channel.connection_hops.len(),
                 },
             });
         }
         debug_println!("Reached in channel open try");
-        let connection_id = message.connection_hops_on_b[0].clone();
+        let connection_id = channel.connection_hops[0].clone();
         let conn_end_on_b = self.connection_end(deps.storage, connection_id)?;
 
-        channel_open_try_msg_validate(message, &conn_end_on_b)?;
+        channel_open_try_msg_validate(&channel, &conn_end_on_b)?;
         debug_println!("channel open try msg validate ");
 
-        let counter = match self.channel_counter(deps.storage) {
-            Ok(counter) => counter,
-            Err(error) => return Err(error),
+        let counter = self.channel_counter(deps.storage)?;
+        let dest_channel = ChannelId::new(counter); // creating new channel_id
+        let dest_port= to_ibc_port_id(&message.port_id)?;
+
+        let source_port= channel.remote.port_id.clone();
+        let source_channel=channel.remote.channel_id.clone().unwrap();
+
+        // let counter_party = Counterparty::new(
+        //     message.port_id_on_a.clone(),
+        //     Some(message.chan_id_on_a.clone()),
+        // );
+
+        // let channel_end = ChannelEnd::new(
+        //     State::Uninitialized,
+        //     message.ordering,
+        //     counter_party,
+        //     message.connection_hops_on_b.clone(),
+        //     message.version_supported_on_a.clone(),
+        // );
+        let channel_end= ChannelEnd {
+            state: State::Uninitialized,
+            ..channel.clone()
         };
-        let channel_id_on_b = ChannelId::new(counter); // creating new channel_id
-
-        let counter_party = Counterparty::new(
-            message.port_id_on_a.clone(),
-            Some(message.chan_id_on_a.clone()),
-        );
-
-        let channel_end = ChannelEnd::new(
-            State::Uninitialized,
-            message.ordering,
-            counter_party,
-            message.connection_hops_on_b.clone(),
-            message.version_supported_on_a.clone(),
-        );
         debug_println!(
             "stoed: channel id: {:?}  portid :{:?} channel_end :{:?}",
-            channel_id_on_b,
-            message.port_id_on_b,
+            &dest_channel,
+            &dest_port,
             channel_end
         );
         self.store_channel_end(
             deps.storage,
-            message.port_id_on_b.clone(),
-            channel_id_on_b.clone(),
+            dest_port.clone(),
+            dest_channel.clone(),
             channel_end,
         )?;
-
+        let proof_height= to_ibc_height(message.proof_height.clone().unwrap())?;
         let client_id_on_b = conn_end_on_b.client_id();
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
         let consensus_state_of_a_on_b =
-            self.consensus_state(deps.storage, client_id_on_b, &message.proof_height_on_a)?;
+            self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
-        let port_id_on_a = message.port_id_on_a.clone();
-        let chan_id_on_a = message.chan_id_on_a.clone();
+        // let port_id_on_a = message.port_id_on_a.clone();
+        // let chan_id_on_a = message.chan_id_on_a.clone();
         let conn_id_on_a =
             conn_end_on_b
                 .counterparty()
                 .connection_id()
                 .ok_or(ContractError::IbcChannelError {
                     error: ChannelError::UndefinedConnectionCounterparty {
-                        connection_id: message.connection_hops_on_b[0].clone(),
+                        connection_id: channel.connection_hops[0].clone(),
                     },
                 })?;
 
@@ -218,24 +216,24 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         debug_println!("after frozen check");
         let expected_chan_end_on_a = ChannelEnd::new(
             State::Init,
-            message.ordering,
-            Counterparty::new(message.port_id_on_b.clone(), None),
+            channel.ordering().clone(),
+            Counterparty::new(dest_port.clone(), None),
             vec![conn_id_on_a.clone()],
-            message.version_supported_on_a.clone(),
+            channel.version().clone(),
         );
         let raw_expected_chan = RawChannel::try_from(expected_chan_end_on_a).unwrap();
-        let chan_end_path_on_a = commitment::channel_path(&port_id_on_a, &chan_id_on_a);
+        let chan_end_path_on_a = commitment::channel_path(&source_port, &source_channel);
         let vector = raw_expected_chan.encode_to_vec();
         debug_println!("after fee calculatation");
 
         let endpoint = CwEndPoint {
-            port_id: message.port_id_on_b.clone().to_string(),
-            channel_id: channel_id_on_b.to_string(),
+            port_id: dest_port.clone().to_string(),
+            channel_id: dest_channel.to_string(),
         };
         let verify_channel_state = VerifyChannelState {
-            proof_height: message.proof_height_on_a.to_string(),
+            proof_height: proof_height.to_string(),
             counterparty_prefix: prefix_on_a.clone().into_vec(),
-            proof: message.proof_chan_end_on_a.clone().into(),
+            proof: message.proof_init.clone().into(),
             root: consensus_state_of_a_on_b.clone().root().into_vec(),
             counterparty_chan_end_path: chan_end_path_on_a,
             expected_counterparty_channel_end: vector,

@@ -25,7 +25,7 @@ use cw_common::raw_types::channel::{
 };
 use cw_common::raw_types::{to_raw_packet, RawHeight};
 
-use cw_ibc_core::conversions::{to_ibc_port_id, to_ibc_channel};
+use cw_ibc_core::conversions::{to_ibc_port_id, to_ibc_channel, to_ibc_height};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };
@@ -1056,7 +1056,6 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-   // let mut msg = MsgChannelOpenInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -1073,9 +1072,7 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let conn_id = ConnectionId::new(5);
-    // msg.connection_hops_on_a = vec![conn_id.clone()];
-    // msg.version_proposal = Version::from_str("xcall-1").unwrap();
+    let conn_id = ConnectionId::new(0);
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id, conn_end)
@@ -1092,10 +1089,11 @@ fn test_validate_open_try_channel_fail_missing_connection_end() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let msg = MsgChannelOpenTry::try_from(raw).unwrap();
+  //  let msg = MsgChannelOpenTry::try_from(raw).unwrap();
+  let channel= to_ibc_channel(raw.channel.clone()).unwrap();
 
     contract
-        .validate_channel_open_try(deps.as_mut(), info, &msg)
+        .validate_channel_open_try(deps.as_mut(), info, &raw)
         .unwrap();
 }
 
@@ -1106,11 +1104,12 @@ fn test_validate_open_try_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
+   // let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+        let channel= to_ibc_channel(raw.channel.clone()).unwrap();
+    let port_id = channel.counterparty().port_id.clone();
 
     let light_client = LightClient::new("lightclient".to_string());
 
@@ -1139,8 +1138,8 @@ fn test_validate_open_try_channel() {
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_b = vec![conn_id.clone()];
+    let conn_id = ConnectionId::new(0);
+  //  msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id, conn_end)
@@ -1173,7 +1172,7 @@ fn test_validate_open_try_channel() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(raw.proof_height.clone().unwrap()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -1185,7 +1184,7 @@ fn test_validate_open_try_channel() {
         )
         .unwrap();
 
-    let res = contract.validate_channel_open_try(deps.as_mut(), info, &msg);
+    let res = contract.validate_channel_open_try(deps.as_mut(), info, &raw);
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY)
@@ -1198,7 +1197,7 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
+  //  let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -1215,15 +1214,15 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_b = vec![conn_id.clone()];
+    let conn_id = ConnectionId::new(0);
+ //   msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id, conn_end)
         .unwrap();
 
     contract
-        .validate_channel_open_try(deps.as_mut(), info, &msg)
+        .validate_channel_open_try(deps.as_mut(), info, &raw)
         .unwrap();
 }
 

@@ -416,19 +416,21 @@ pub fn test_on_chan_open_ack_submessage() {
 #[should_panic(expected = "InvalidVersionLengthConnection")]
 fn test_channel_open_try_validate_fail_invalid_connection_lenght() {
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let msg = MsgChannelOpenTry::try_from(raw).unwrap();
+   // let msg = MsgChannelOpenTry::try_from(raw).unwrap();
+   let channel= to_ibc_channel(raw.channel).unwrap();
     let mut connection_end = ConnectionEnd::default();
     connection_end.set_state(common::ibc::core::ics03_connection::connection::State::Open);
-    channel_open_try_msg_validate(&msg, &connection_end).unwrap();
+    channel_open_try_msg_validate(&channel, &connection_end).unwrap();
 }
 
 #[test]
 fn test_channel_open_try_validate() {
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let msg = MsgChannelOpenTry::try_from(raw).unwrap();
+   // let msg = MsgChannelOpenTry::try_from(raw).unwrap();
+    let channel= to_ibc_channel(raw.channel).unwrap();
     let mut connection_end = ConnectionEnd::default();
     connection_end.set_state(common::ibc::core::ics03_connection::connection::State::Open);
     connection_end.set_version(common::ibc::core::ics03_connection::version::Version::default());
-    let res = channel_open_try_msg_validate(&msg, &connection_end);
+    let res = channel_open_try_msg_validate(&channel, &connection_end);
     assert!(res.is_ok());
 }

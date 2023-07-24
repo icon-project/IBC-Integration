@@ -21,6 +21,8 @@ pub fn to_ibc_channel_id(channel_id: &str) -> Result<IbcChannelId, ContractError
 }
 
 pub fn to_ibc_height(height: RawHeight) -> Result<Height, ContractError> {
+
+
     let height =
         Height::try_from(height).map_err(|e| ContractError::IbcClientError { error: e })?;
     Ok(height)

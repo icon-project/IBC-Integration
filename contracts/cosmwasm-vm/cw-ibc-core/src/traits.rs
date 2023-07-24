@@ -1,5 +1,5 @@
 use common::ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
-use cw_common::raw_types::channel::RawMsgChannelOpenInit;
+use cw_common::raw_types::channel::{RawMsgChannelOpenInit, RawMsgChannelOpenTry};
 
 use super::*;
 
@@ -95,7 +95,7 @@ pub trait ValidateChannel {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelOpenTry,
+        message: &RawMsgChannelOpenTry,
     ) -> Result<Response, ContractError>;
 
     // channel_open_ack is called by the handshake-originating module to
