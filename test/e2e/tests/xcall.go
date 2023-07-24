@@ -38,12 +38,18 @@ func (x *XCallTestSuite) TestDemo() {
 }
 
 func (x *XCallTestSuite) TestOneWayMessage(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
-	msg := "Hello"
+	msg := "MessageTransferTestingWithoutRollback"
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
 	_, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, []byte(msg), nil)
 	x.Require().NoError(err)
 	ctx, err = chainB.ExecuteCall(ctx, reqId, data)
 	x.Require().NoError(err)
+
+	dataOutput, err := convertToPlainString(data)
+	x.Require().NoError(err)
+
+	assert.Equal(t, msg, dataOutput)
+	fmt.Println("Data Transfer Testing Without Rollback from " + chainA.(ibc.Chain).Config().ChainID + " to " + chainB.(ibc.Chain).Config().ChainID + " with data " + msg + " and Received:" + dataOutput + " PASSED")
 }
 
 func (x *XCallTestSuite) TestRollback(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
