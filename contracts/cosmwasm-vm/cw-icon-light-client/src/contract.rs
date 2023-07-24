@@ -3,6 +3,7 @@ use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cw_common::ibc_types::IbcHeight;
+
 use debug_print::debug_println;
 
 #[cfg(feature = "mock")]
@@ -44,11 +45,11 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|_e| ContractError::FailedToInitContract)?;
-    let config = Config::new(info.sender);
+    let config = Config::new(info.sender, msg.ibc_host);
     let mut context = CwContext::new(deps, _env);
     context.insert_config(&config)?;
     Ok(Response::default())
@@ -58,7 +59,7 @@ pub fn instantiate(
 pub fn execute(
     deps_mut: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     let mut context = CwContext::new(deps_mut, _env);
@@ -77,7 +78,8 @@ pub fn execute(
                 .map_err(ContractError::DecodeError)?;
             let consensus_state = ConsensusState::from_any(consensus_state_any.clone())
                 .map_err(ContractError::DecodeError)?;
-            let update = client.create_client(&client_id, client_state, consensus_state)?;
+            let update =
+                client.create_client(info.sender, &client_id, client_state, consensus_state)?;
 
             let mut response = Response::new()
                 .add_attribute(
@@ -110,7 +112,7 @@ pub fn execute(
         } => {
             let header_any = Any::decode(signed_header.as_slice()).unwrap();
             let header = SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
-            let update = client.update_client(&client_id, header)?;
+            let update = client.update_client(info.sender, &client_id, header)?;
             let response_data = to_binary(&UpdateClientResponse {
                 height: to_ibc_height(update.height).map(|h| h.to_string())?,
                 client_id,
@@ -246,12 +248,6 @@ pub fn execute(
             let client_valid =
                 validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
             println!(" is valid clientstate  {client_valid:?}");
-            // let consensus_valid = validate_consensus_state(
-            //     &state.client_id,
-            //     &client,
-            //     &state.verify_client_consensus_state,
-            // )?;
-            // println!("conseunsus_valid {:?}", consensus_valid);
 
             let connection_valid = validate_connection_state(
                 &state.client_id,
@@ -274,11 +270,6 @@ pub fn execute(
             )?;
             let client_valid =
                 validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            // let consensus_valid = validate_consensus_state(
-            //     &state.client_id,
-            //     &client,
-            //     &state.verify_client_consensus_state,
-            // )?;
 
             Ok(Response::new()
                 .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
@@ -548,13 +539,21 @@ pub fn get_light_client<'a>(
     return IconClient::new(context);
 }
 
+pub fn ensure_owner(deps: Deps, info: &MessageInfo) -> Result<(), ContractError> {
+    let config = QueryHandler::get_config(deps.storage)?;
+    if info.sender != config.owner {
+        return Err(ContractError::Unauthorized {});
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
 
     use common::icon::icon::types::v1::{BtpHeader, SignedHeader};
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
-        OwnedDeps, Response,
+        Addr, OwnedDeps, Response,
     };
     use cw2::get_contract_version;
     use cw_common::raw_types::Any;
@@ -575,7 +574,9 @@ mod tests {
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
-        let msg = InstantiateMsg::default();
+        let msg = InstantiateMsg {
+            ibc_host: Addr::unchecked("ibc_host"),
+        };
         let info = mock_info(SENDER, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
@@ -591,11 +592,13 @@ mod tests {
         let client_state = header.to_client_state(trusting_period.unwrap_or(1000000), 0);
         let consensus_state = header.to_consensus_state();
         let info = mock_info(SENDER, &[]);
+        instantiate(deps.as_mut(), mock_env(), info, InstantiateMsg::default()).unwrap();
         let msg = ExecuteMsg::CreateClient {
             client_id: client_id.to_string(),
             client_state: client_state.to_any().encode_to_vec(),
             consensus_state: consensus_state.to_any().encode_to_vec(),
         };
+        let info = mock_info("ibc_host", &[]);
 
         execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         deps
@@ -606,13 +609,14 @@ mod tests {
         let mut deps = mock_dependencies();
         let env = mock_env();
         let info = mock_info(SENDER, &[]);
+
         let msg = InstantiateMsg::default();
 
-        let res: Response = instantiate(deps.as_mut(), env, info.clone(), msg).unwrap();
+        let res: Response = instantiate(deps.as_mut(), env, info.clone(), msg.clone()).unwrap();
 
         assert_eq!(0, res.messages.len());
 
-        let config = Config::new(info.sender);
+        let config = Config::new(info.sender, msg.ibc_host);
 
         let stored_config = QueryHandler::get_config(deps.as_ref().storage).unwrap();
         assert_eq!(config, stored_config);
@@ -627,6 +631,11 @@ mod tests {
         let client_id = "test_client".to_string();
         let mut deps = setup();
         let info = mock_info(SENDER, &[]);
+        let env = mock_env();
+        let msg = InstantiateMsg::default();
+
+        let _res: Response = instantiate(deps.as_mut(), env, info, msg).unwrap();
+
         let start_header = &get_test_headers()[0];
         let client_state = start_header.to_client_state(1000000, 0);
         let consensus_state = start_header.to_consensus_state();
@@ -637,6 +646,8 @@ mod tests {
             client_state: client_state_any.encode_to_vec(),
             consensus_state: consensus_state_any.encode_to_vec(),
         };
+
+        let info = mock_info("ibc_host", &[]);
 
         let result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
 
@@ -669,6 +680,11 @@ mod tests {
 
         let signed_header = &get_test_signed_headers()[1];
         let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
             signed_header: signed_header.to_any().encode_to_vec(),
@@ -679,30 +695,9 @@ mod tests {
         assert_eq!(
             result,
             Err(ContractError::TrustingPeriodElapsed {
-                saved_height: stored_client_state.latest_height,
+                trusted_height: stored_client_state.latest_height,
                 update_height: signed_header.header.clone().unwrap().main_height
             })
-        );
-    }
-
-    #[test]
-    fn test_execute_update_client_with_non_consecutive_header() {
-        let start_header = &get_test_headers()[0];
-        let client_id = "test_client".to_string();
-        let mut deps = init_client(&client_id, start_header, None);
-
-        let random_signed_header = &get_test_signed_headers()[2];
-        let info = mock_info(SENDER, &[]);
-        let msg = ExecuteMsg::UpdateClient {
-            client_id,
-            signed_header: random_signed_header.to_any().encode_to_vec(),
-        };
-        let result = execute(deps.as_mut(), mock_env(), info, msg);
-        assert_eq!(
-            result,
-            Err(ContractError::InvalidHeaderUpdate(
-                "network section mismatch".to_string()
-            ))
         );
     }
 
@@ -716,6 +711,11 @@ mod tests {
         let header_any: Any = signed_header.to_any();
         let block_height = signed_header.header.clone().unwrap().main_height;
         let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg {
+            ibc_host: Addr::unchecked(SENDER),
+        };
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
         let msg = ExecuteMsg::UpdateClient {
             client_id: client_id.clone(),
             signed_header: header_any.encode_to_vec(),
@@ -730,16 +730,6 @@ mod tests {
                 .unwrap();
 
         assert_eq!(updated_client_state.latest_height, block_height);
-
-        assert_eq!(
-            updated_client_state.network_section_hash,
-            signed_header
-                .header
-                .clone()
-                .unwrap()
-                .get_network_section_hash()
-                .to_vec()
-        );
 
         assert_eq!(
             consensus_state.message_root,

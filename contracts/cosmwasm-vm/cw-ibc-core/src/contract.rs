@@ -730,6 +730,7 @@ mod tests {
             "0x7702db70e830e07b4ff46313456fc86d677c7eeca0c011d7e7dcdd48d5aacfe2".to_string();
         let consensus_state = RawConsensusState {
             message_root: commitment_root.encode_to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         };
 
         let height = Height::new(123, 456).unwrap();

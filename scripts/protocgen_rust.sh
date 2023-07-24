@@ -11,7 +11,7 @@ source "$HOME/.cargo/env"
 
 rm -rf rustup_init.sh
 
-apk --no-cache --update add build-base
+#apk --no-cache --update add build-base
 
 cargo install protoc-gen-prost protoc-gen-prost-crate protoc-gen-prost-serde 
 

@@ -64,8 +64,7 @@ fn test_packet_send() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 10,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -83,6 +82,7 @@ fn test_packet_send() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -185,8 +185,7 @@ fn test_packet_send_fail_misiing_sequense() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 10,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -204,6 +203,7 @@ fn test_packet_send_fail_misiing_sequense() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();

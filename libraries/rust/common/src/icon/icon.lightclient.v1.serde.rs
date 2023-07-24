@@ -110,12 +110,6 @@ impl serde::Serialize for ClientState {
         if self.latest_height != 0 {
             len += 1;
         }
-        if !self.network_section_hash.is_empty() {
-            len += 1;
-        }
-        if !self.validators.is_empty() {
-            len += 1;
-        }
         if !self.src_network_id.is_empty() {
             len += 1;
         }
@@ -137,12 +131,6 @@ impl serde::Serialize for ClientState {
         }
         if self.latest_height != 0 {
             struct_ser.serialize_field("latest_height", ToString::to_string(&self.latest_height).as_str())?;
-        }
-        if !self.network_section_hash.is_empty() {
-            struct_ser.serialize_field("network_section_hash", pbjson::private::base64::encode(&self.network_section_hash).as_str())?;
-        }
-        if !self.validators.is_empty() {
-            struct_ser.serialize_field("validators", &self.validators.iter().map(pbjson::private::base64::encode).collect::<Vec<_>>())?;
         }
         if !self.src_network_id.is_empty() {
             struct_ser.serialize_field("src_network_id", &self.src_network_id)?;
@@ -171,9 +159,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
             "maxClockDrift",
             "latest_height",
             "latestHeight",
-            "network_section_hash",
-            "networkSectionHash",
-            "validators",
             "src_network_id",
             "srcNetworkId",
             "network_id",
@@ -188,8 +173,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
             FrozenHeight,
             MaxClockDrift,
             LatestHeight,
-            NetworkSectionHash,
-            Validators,
             SrcNetworkId,
             NetworkId,
             NetworkTypeId,
@@ -218,8 +201,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
                             "frozenHeight" | "frozen_height" => Ok(GeneratedField::FrozenHeight),
                             "maxClockDrift" | "max_clock_drift" => Ok(GeneratedField::MaxClockDrift),
                             "latestHeight" | "latest_height" => Ok(GeneratedField::LatestHeight),
-                            "networkSectionHash" | "network_section_hash" => Ok(GeneratedField::NetworkSectionHash),
-                            "validators" => Ok(GeneratedField::Validators),
                             "srcNetworkId" | "src_network_id" => Ok(GeneratedField::SrcNetworkId),
                             "networkId" | "network_id" => Ok(GeneratedField::NetworkId),
                             "networkTypeId" | "network_type_id" => Ok(GeneratedField::NetworkTypeId),
@@ -246,8 +227,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
                 let mut frozen_height__ = None;
                 let mut max_clock_drift__ = None;
                 let mut latest_height__ = None;
-                let mut network_section_hash__ = None;
-                let mut validators__ = None;
                 let mut src_network_id__ = None;
                 let mut network_id__ = None;
                 let mut network_type_id__ = None;
@@ -285,23 +264,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
                                 Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
-                        GeneratedField::NetworkSectionHash => {
-                            if network_section_hash__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("networkSectionHash"));
-                            }
-                            network_section_hash__ = 
-                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
-                        }
-                        GeneratedField::Validators => {
-                            if validators__.is_some() {
-                                return Err(serde::de::Error::duplicate_field("validators"));
-                            }
-                            validators__ = 
-                                Some(map.next_value::<Vec<::pbjson::private::BytesDeserialize<_>>>()?
-                                    .into_iter().map(|x| x.0).collect())
-                            ;
-                        }
                         GeneratedField::SrcNetworkId => {
                             if src_network_id__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("srcNetworkId"));
@@ -331,8 +293,6 @@ impl<'de> serde::Deserialize<'de> for ClientState {
                     frozen_height: frozen_height__.unwrap_or_default(),
                     max_clock_drift: max_clock_drift__.unwrap_or_default(),
                     latest_height: latest_height__.unwrap_or_default(),
-                    network_section_hash: network_section_hash__.unwrap_or_default(),
-                    validators: validators__.unwrap_or_default(),
                     src_network_id: src_network_id__.unwrap_or_default(),
                     network_id: network_id__.unwrap_or_default(),
                     network_type_id: network_type_id__.unwrap_or_default(),
@@ -353,9 +313,15 @@ impl serde::Serialize for ConsensusState {
         if !self.message_root.is_empty() {
             len += 1;
         }
+        if !self.next_proof_context_hash.is_empty() {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.ConsensusState", len)?;
         if !self.message_root.is_empty() {
             struct_ser.serialize_field("message_root", pbjson::private::base64::encode(&self.message_root).as_str())?;
+        }
+        if !self.next_proof_context_hash.is_empty() {
+            struct_ser.serialize_field("next_proof_context_hash", pbjson::private::base64::encode(&self.next_proof_context_hash).as_str())?;
         }
         struct_ser.end()
     }
@@ -369,11 +335,14 @@ impl<'de> serde::Deserialize<'de> for ConsensusState {
         const FIELDS: &[&str] = &[
             "message_root",
             "messageRoot",
+            "next_proof_context_hash",
+            "nextProofContextHash",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
             MessageRoot,
+            NextProofContextHash,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -396,6 +365,7 @@ impl<'de> serde::Deserialize<'de> for ConsensusState {
                     {
                         match value {
                             "messageRoot" | "message_root" => Ok(GeneratedField::MessageRoot),
+                            "nextProofContextHash" | "next_proof_context_hash" => Ok(GeneratedField::NextProofContextHash),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -416,6 +386,7 @@ impl<'de> serde::Deserialize<'de> for ConsensusState {
                     V: serde::de::MapAccess<'de>,
             {
                 let mut message_root__ = None;
+                let mut next_proof_context_hash__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::MessageRoot => {
@@ -426,10 +397,19 @@ impl<'de> serde::Deserialize<'de> for ConsensusState {
                                 Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
                             ;
                         }
+                        GeneratedField::NextProofContextHash => {
+                            if next_proof_context_hash__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("nextProofContextHash"));
+                            }
+                            next_proof_context_hash__ = 
+                                Some(map.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
+                        }
                     }
                 }
                 Ok(ConsensusState {
                     message_root: message_root__.unwrap_or_default(),
+                    next_proof_context_hash: next_proof_context_hash__.unwrap_or_default(),
                 })
             }
         }
@@ -562,5 +542,117 @@ impl<'de> serde::Deserialize<'de> for Misbehaviour {
             }
         }
         deserializer.deserialize_struct("icon.lightclient.v1.Misbehaviour", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for TrustLevel {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if self.numerator != 0 {
+            len += 1;
+        }
+        if self.denominator != 0 {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("icon.lightclient.v1.TrustLevel", len)?;
+        if self.numerator != 0 {
+            struct_ser.serialize_field("numerator", ToString::to_string(&self.numerator).as_str())?;
+        }
+        if self.denominator != 0 {
+            struct_ser.serialize_field("denominator", ToString::to_string(&self.denominator).as_str())?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for TrustLevel {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "numerator",
+            "denominator",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            Numerator,
+            Denominator,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "numerator" => Ok(GeneratedField::Numerator),
+                            "denominator" => Ok(GeneratedField::Denominator),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = TrustLevel;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct icon.lightclient.v1.TrustLevel")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<TrustLevel, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut numerator__ = None;
+                let mut denominator__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::Numerator => {
+                            if numerator__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("numerator"));
+                            }
+                            numerator__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::Denominator => {
+                            if denominator__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("denominator"));
+                            }
+                            denominator__ = 
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                    }
+                }
+                Ok(TrustLevel {
+                    numerator: numerator__.unwrap_or_default(),
+                    denominator: denominator__.unwrap_or_default(),
+                })
+            }
+        }
+        deserializer.deserialize_struct("icon.lightclient.v1.TrustLevel", FIELDS, GeneratedVisitor)
     }
 }
