@@ -6,6 +6,9 @@ use common::ibc::core::ics04_channel::msgs::PacketMsg;
 use common::ibc::timestamp::Timestamp;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
+use cw_ibc_core::conversions::to_ibc_channel_id;
+use cw_ibc_core::conversions::to_ibc_height;
+use cw_ibc_core::conversions::to_ibc_port_id;
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 
@@ -54,12 +57,19 @@ fn test_receive_packet() {
     let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
+    let msg = get_dummy_raw_msg_recv_packet(12);
+    let packet = msg.packet.clone().unwrap();
+
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
     let chan_end_on_b = ChannelEnd::new(
         State::Open,
         Order::default(),
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+        Counterparty::new(src_port.clone(), Some(src_channel.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -82,8 +92,8 @@ fn test_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b.clone(),
+            dst_port.clone(),
+            dst_channel.clone(),
             chan_end_on_b.clone(),
         )
         .unwrap();
@@ -111,13 +121,13 @@ fn test_receive_packet() {
     .try_into()
     .unwrap();
 
-    let height = msg.proof_height_on_a;
+    let proof_height= to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
-            height,
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
@@ -133,7 +143,7 @@ fn test_receive_packet() {
     contract
         .bind_port(
             &mut deps.storage,
-            &packet.port_id_on_b,
+            &dst_port,
             "moduleaddress".to_string(),
         )
         .unwrap();
@@ -146,8 +156,8 @@ fn test_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b,
+            dst_port.clone(),
+            dst_channel.clone(),
             chan_end_on_b.clone(),
         )
         .unwrap();
@@ -336,7 +346,7 @@ fn test_receive_packet_fail_missing_channel() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let msg = get_dummy_raw_msg_recv_packet(12);
     let env = get_mock_env();
 
     contract

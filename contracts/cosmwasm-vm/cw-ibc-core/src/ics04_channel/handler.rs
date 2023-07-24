@@ -1,3 +1,5 @@
+use crate::conversions::{to_ibc_channel, to_ibc_port_id};
+
 use super::*;
 pub mod open_init;
 pub mod open_try;
@@ -8,7 +10,7 @@ use self::{
     open_try::channel_open_try_msg_validate,
 };
 
-use cw_common::{commitment, raw_types::channel::RawChannel};
+use cw_common::{commitment, raw_types::channel::{RawChannel, RawMsgChannelOpenInit}};
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;
@@ -47,62 +49,59 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelOpenInit,
+        message: &RawMsgChannelOpenInit,
     ) -> Result<cosmwasm_std::Response, ContractError> {
         // connection hops should be 1
         debug_println!(
             "inside validate channel open init: input parameter: {:?}",
             message
         );
+        let channel_end= to_ibc_channel(message.channel.clone())?;
+        let src_port= to_ibc_port_id(&message.port_id)?;
 
-        if message.connection_hops_on_a.len() != 1 {
+
+        if channel_end.connection_hops.len() != 1 {
             return Err(ChannelError::InvalidConnectionHopsLength {
                 expected: 1,
-                actual: message.connection_hops_on_a.len(),
+                actual: channel_end.connection_hops.len(),
             })
             .map_err(Into::<ContractError>::into)?;
         }
-        let connection_id = message.connection_hops_on_a[0].clone();
+        let connection_id = channel_end.connection_hops[0].clone();
         // An IBC connection running on the local (host) chain should exist.
         let conn_end_on_a = self.connection_end(deps.storage, connection_id.clone())?;
-        channel_open_init_msg_validate(message, conn_end_on_a)?;
-        let counter = match self.channel_counter(deps.storage) {
-            Ok(counter) => counter,
-            Err(error) => return Err(error),
-        };
-        let channel_id_on_a = ChannelId::new(counter); // creating new channel_id
-        let contract_address = match self.lookup_modules(
+        channel_open_init_msg_validate(&channel_end, conn_end_on_a)?;
+        let counter =  self.channel_counter(deps.storage)?;
+        let src_channel = ChannelId::new(counter); // creating new channel_id
+        let contract_address =  self.lookup_modules(
             deps.storage,
-            message.port_id_on_a.clone().as_bytes().to_vec(),
-        ) {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
+            message.port_id.clone().as_bytes().to_vec(),
+        )?;
 
         debug_println!("contract address is : {:?} ", contract_address);
-        // let module_id = cw_common::ibc_types::IbcModuleId::from_str(module_id.as_str());
-        // let contract_address = match self.get_route(deps.storage, ) {
-        //     Ok(addr) => addr,
-        //     Err(error) => return Err(error),
-        // };
+      
         // Store the channel details
-        let counter_party = Counterparty::new(message.port_id_on_b.clone(), None);
-        let channel_end = ChannelEnd::new(
-            State::Uninitialized,
-            message.ordering,
-            counter_party,
-            message.connection_hops_on_a.clone(),
-            message.version_proposal.clone(),
-        );
+        // let counter_party = Counterparty::new(message.port_id_on_b.clone(), None);
+        // let channel_end = ChannelEnd::new(
+        //     State::Uninitialized,
+        //     message.ordering,
+        //     counter_party,
+        //     message.connection_hops_on_a.clone(),
+        //     message.version_proposal.clone(),
+        // );
+        let channel_end= ChannelEnd {
+            state: State::Uninitialized,
+            ..channel_end
+        };
         self.store_channel_end(
             deps.storage,
-            message.port_id_on_a.clone(),
-            channel_id_on_a.clone(),
-            channel_end,
+            src_port.clone(),
+            src_channel.clone(),
+            channel_end.clone(),
         )?;
 
         // Generate event for calling on channel open init in x-call
-        let sub_message = on_chan_open_init_submessage(message, &channel_id_on_a, &connection_id);
+        let sub_message = on_chan_open_init_submessage(&channel_end, &src_port,&src_channel, &connection_id);
         self.store_callback_data(
             deps.storage,
             EXECUTE_ON_CHANNEL_OPEN_INIT,

@@ -1,4 +1,4 @@
-use cw_ibc_core::conversions::{to_ibc_port, to_ibc_channel};
+use cw_ibc_core::conversions::{to_ibc_port_id, to_ibc_channel_id,};
 
 use super::*;
 
@@ -15,11 +15,11 @@ fn test_packet_send() {
             ;
     packet.sequence = 1;
     packet.data = vec![0];
-    let src_port = to_ibc_port(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel(&packet.source_channel).unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
-    let dst_port = to_ibc_port(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel(&packet.destination_channel).unwrap();
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
 
 
 
@@ -27,8 +27,8 @@ fn test_packet_send() {
         State::TryOpen,
         Order::default(),
         Counterparty::new(
-            to_ibc_port(&packet.destination_port).unwrap(),
-            Some(to_ibc_channel(&packet.destination_channel).unwrap()),
+            to_ibc_port_id(&packet.destination_port).unwrap(),
+            Some(to_ibc_channel_id(&packet.destination_channel).unwrap()),
         ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
@@ -147,11 +147,11 @@ fn test_packet_send_fail_misiing_sequense() {
     packet.sequence = 1;
     packet.data = vec![0];
 
-    let src_port = to_ibc_port(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel(&packet.source_channel).unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
-    let dst_port = to_ibc_port(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel(&packet.destination_channel).unwrap();
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
 
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,

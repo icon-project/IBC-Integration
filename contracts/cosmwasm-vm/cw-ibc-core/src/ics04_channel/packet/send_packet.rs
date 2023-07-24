@@ -5,7 +5,7 @@ use cw_common::{
 };
 use debug_print::debug_println;
 
-use crate::conversions::{to_ibc_port, to_ibc_channel, to_ibc_timestamp, to_ibc_timeout_height};
+use crate::conversions::{to_ibc_port_id, to_ibc_channel_id, to_ibc_timestamp, to_ibc_timeout_height};
 
 use super::*;
 
@@ -28,11 +28,11 @@ impl<'a> CwIbcCoreContext<'a> {
     /// message and `ContractError` is an enum representing the possible errors that can occur during
     /// the execution of the function.
     pub fn send_packet(&self, deps: DepsMut, packet: RawPacket) -> Result<Response, ContractError> {
-        let src_port = to_ibc_port(&packet.source_port)?;
-        let src_channel = to_ibc_channel(&packet.source_channel)?;
+        let src_port = to_ibc_port_id(&packet.source_port)?;
+        let src_channel = to_ibc_channel_id(&packet.source_channel)?;
 
-        let dst_port = to_ibc_port(&packet.destination_port)?;
-        let dst_channel = to_ibc_channel(&packet.destination_channel)?;
+        let dst_port = to_ibc_port_id(&packet.destination_port)?;
+        let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
 
         let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
         debug_println!("fetched channel_end");

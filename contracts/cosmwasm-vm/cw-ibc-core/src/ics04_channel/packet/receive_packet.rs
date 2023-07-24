@@ -2,8 +2,10 @@ use common::ibc::core::ics04_channel::{
     msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
     packet::Receipt,
 };
-use cw_common::{hex_string::HexString, raw_types::to_raw_packet};
+use cw_common::{hex_string::HexString, raw_types::{to_raw_packet, channel::{RawMessageRecvPacket, RawPacket}}};
 use debug_print::debug_println;
+
+use crate::conversions::{to_ibc_port_id, to_ibc_channel_id, to_ibc_timeout_height, to_ibc_height, to_ibc_timestamp};
 
 use super::*;
 
@@ -30,31 +32,37 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         info: MessageInfo,
         env: Env,
-        msg: &MsgRecvPacket,
+        msg: &RawMessageRecvPacket,
     ) -> Result<Response, ContractError> {
-        let packet = &msg.packet.clone();
+        let packet = &msg.packet.clone().unwrap();
+        let src_port = to_ibc_port_id(&packet.source_port)?;
+        let src_channel = to_ibc_channel_id(&packet.source_channel)?;
+
+        let dst_port = to_ibc_port_id(&packet.destination_port)?;
+        let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
+
         let chan_end_on_b = self.get_channel_end(
             deps.storage,
-            &msg.packet.port_id_on_b.clone(),
-            &msg.packet.chan_id_on_b.clone(),
+            &dst_port,
+            &dst_channel,
         )?;
         if !chan_end_on_b.state_matches(&State::Open) {
             return Err(PacketError::InvalidChannelState {
-                channel_id: msg.packet.chan_id_on_a.clone(),
+                channel_id: dst_channel.clone(),
                 state: chan_end_on_b.state,
             })
             .map_err(Into::<ContractError>::into)?;
         }
         debug_println!("validate recevie packet state_matched");
         let counterparty = Counterparty::new(
-            msg.packet.port_id_on_a.clone(),
-            Some(msg.packet.chan_id_on_a.clone()),
+            src_port.clone(),
+            Some(src_channel.clone()),
         );
 
         if !chan_end_on_b.counterparty_matches(&counterparty) {
             return Err(PacketError::InvalidPacketCounterparty {
-                port_id: msg.packet.port_id_on_a.clone(),
-                channel_id: msg.packet.chan_id_on_a.clone(),
+                port_id: src_port.clone(),
+                channel_id: src_channel.clone(),
             })
             .map_err(Into::<ContractError>::into)?;
         }
@@ -67,10 +75,12 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into)?;
         }
         let latest_height = self.host_height(&env)?;
-        if msg.packet.timeout_height_on_b.has_expired(latest_height) {
+        let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
+
+        if packet_timeout_height.has_expired(latest_height) {
             return Err(PacketError::LowPacketHeight {
                 chain_height: latest_height,
-                timeout_height: msg.packet.timeout_height_on_b,
+                timeout_height: packet_timeout_height.clone(),
             })
             .map_err(Into::<ContractError>::into)?;
         }
@@ -87,30 +97,35 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         debug_println!("client state created ",);
 
+        let proof_height= to_ibc_height(msg.proof_height.clone().unwrap())?;
+
         let consensus_state_of_a_on_b =
-            self.consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)?;
+            self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;
+        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
+
         let expected_commitment_on_a = commitment::compute_packet_commitment_bytes(
-            &msg.packet.data,
-            &msg.packet.timeout_height_on_b,
-            &msg.packet.timeout_timestamp_on_b,
+            &packet.data,
+            &packet_timeout_height,
+            &packet_timestamp,
         );
         debug_println!("packet is -> {:?}", msg.packet);
         debug_println!(
             "packet.data is -> {:?}",
-            HexString::from_bytes(&msg.packet.data)
+            HexString::from_bytes(&packet.data)
         );
-        debug_println!("expected commitement created {:?}", msg.packet.sequence);
+        debug_println!("expected commitement created {:?}", packet.sequence);
+
         let commitment_path_on_a = commitment::packet_commitment_path(
-            &msg.packet.port_id_on_a,
-            &msg.packet.chan_id_on_a,
-            msg.packet.sequence,
+            &src_port,
+            &src_channel,
+            Sequence::from(packet.sequence),
         );
 
         debug_println!("verify connection delay passed");
         let verify_packet_data = VerifyPacketData {
-            height: msg.proof_height_on_a.to_string(),
+            height: proof_height.to_string(),
             prefix: conn_end_on_b.counterparty().prefix().clone().into_vec(),
-            proof: msg.proof_commitment_on_a.clone().into(),
+            proof: msg.proof_commitment.clone().into(),
             root: consensus_state_of_a_on_b.root().into_vec(),
             commitment_path: commitment_path_on_a,
             commitment: expected_commitment_on_a.into_vec(),
@@ -118,28 +133,23 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let client = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
         client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id_on_b)?;
-
-        let chan_end_on_b = self.get_channel_end(
-            deps.storage,
-            &packet.port_id_on_b.clone(),
-            &packet.chan_id_on_b.clone(),
-        )?;
-
+         let packet_sequence=Sequence::from(packet.sequence);
+       
         if chan_end_on_b.order_matches(&Order::Ordered) {
             let next_seq_recv = self.get_next_sequence_recv(
                 deps.storage,
-                packet.port_id_on_b.clone(),
-                packet.chan_id_on_b.clone(),
+                dst_port.clone(),
+                dst_channel.clone(),
             )?;
-            if packet.sequence > next_seq_recv {
+            if packet_sequence > next_seq_recv {
                 return Err(PacketError::InvalidPacketSequence {
-                    given_sequence: packet.sequence,
+                    given_sequence: packet_sequence,
                     next_sequence: next_seq_recv,
                 })
                 .map_err(Into::<ContractError>::into)?;
             }
 
-            if packet.sequence == next_seq_recv {
+            if packet_sequence == next_seq_recv {
                 // Case where the recvPacket is successful and an
                 // acknowledgement will be written (not a no-op)
                 self.validate_write_acknowledgement(deps.storage, packet)?;
@@ -148,7 +158,7 @@ impl<'a> CwIbcCoreContext<'a> {
             self.validate_write_acknowledgement(deps.storage, packet)?;
         };
 
-        let port_id = packet.port_id_on_b.clone();
+        let port_id = packet.destination_port.clone();
         // Getting the module address for on packet timeout call
         let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
         {
@@ -157,15 +167,15 @@ impl<'a> CwIbcCoreContext<'a> {
         };
 
         let src = CwEndPoint {
-            port_id: packet.port_id_on_a.to_string(),
-            channel_id: packet.chan_id_on_a.to_string(),
+            port_id: packet.source_port.to_string(),
+            channel_id: packet.source_channel.to_string(),
         };
         let dest = CwEndPoint {
-            port_id: packet.port_id_on_b.to_string(),
-            channel_id: packet.chan_id_on_b.to_string(),
+            port_id: packet.destination_port.to_string(),
+            channel_id: packet.destination_channel.to_string(),
         };
         let data = Binary::from(packet.data.clone());
-        let timeoutblock = match packet.timeout_height_on_b {
+        let timeoutblock = match packet_timeout_height {
             common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
                 revision: 1,
                 height: 1,
@@ -218,20 +228,21 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn validate_write_acknowledgement(
         &self,
         store: &mut dyn Storage,
-        packet: &Packet,
+        packet: &RawPacket,
     ) -> Result<(), ContractError> {
+        let packet_sequence=Sequence::from(packet.sequence);
         if self
             .get_packet_acknowledgement(
                 store,
-                &packet.port_id_on_b.clone(),
-                &packet.chan_id_on_b.clone(),
-                packet.sequence,
+                &to_ibc_port_id(&packet.destination_port)?,
+                &to_ibc_channel_id(&packet.destination_channel)?,
+                Sequence::from(packet.sequence),
             )
             .is_ok()
         {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::AcknowledgementExists {
-                    sequence: packet.sequence,
+                    sequence: packet_sequence,
                 },
             });
         }

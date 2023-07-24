@@ -147,6 +147,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ChannelOpenInit { msg } => {
                 let message: MsgChannelOpenInit =
                     Self::from_raw::<RawMsgChannelOpenInit, MsgChannelOpenInit>(&msg)?;
+                let message = Self::raw_from_hex::<RawMsgChannelOpenInit>(&msg)?;
                 debug_println!("[IBCCore] Channel Open Init Called");
                 self.validate_channel_open_init(deps, info, &message)
             }
@@ -189,6 +190,8 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ReceivePacket { msg } => {
                 let message: MsgRecvPacket =
                     Self::from_raw::<RawMessageRecvPacket, MsgRecvPacket>(&msg)?;
+                    let message= Self::raw_from_hex::<RawMessageRecvPacket>(&msg)?;
+                    
                 self.validate_receive_packet(deps, info, env, &message)
             }
             CoreExecuteMsg::AcknowledgementPacket { msg } => {
@@ -586,14 +589,21 @@ impl<'a> CwIbcCoreContext<'a> {
     where
         <T as TryFrom<R>>::Error: std::fmt::Debug,
     {
-        let bytes = hex_str.to_bytes()?;
-        let raw = <R as Message>::decode(bytes.as_slice())
-            .map_err(|error| ContractError::IbcDecodeError { error })?;
+        let raw = Self::raw_from_hex::<R>(hex_str)?;
         let message = T::try_from(raw).map_err(|error| {
             let err = format!("Failed to convert to ibc type with error {error:?}");
             ContractError::IbcRawConversionError { error: err }
         })?;
         Ok(message)
+    }
+
+
+    pub fn raw_from_hex<R: Message + std::default::Default + Clone>(hex_str:&HexString)->Result<R, ContractError>{
+        let bytes = hex_str.to_bytes()?;
+        let raw = <R as Message>::decode(bytes.as_slice())
+            .map_err(|error| ContractError::IbcDecodeError { error })?;
+        Ok(raw)
+
     }
 
     /// The function converts a hexadecimal string to a Signer object and returns an error if the
