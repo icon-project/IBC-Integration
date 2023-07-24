@@ -23,7 +23,7 @@ pub fn ensure_channel_state(
     channel_end: &ChannelEnd,
     state: &State,
 ) -> Result<(), ContractError> {
-    if !channel_end.state_matches(&state) {
+    if !channel_end.state_matches(state) {
         return Err(ContractError::IbcChannelError {
             error: ChannelError::InvalidChannelState {
                 channel_id: channel_id.clone(),

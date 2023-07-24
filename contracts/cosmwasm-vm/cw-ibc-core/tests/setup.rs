@@ -24,7 +24,7 @@ use cosmwasm_std::{
         MOCK_CONTRACT_ADDR,
     },
     to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
-    OwnedDeps, Storage, SystemResult, Timestamp, TransactionInfo, WasmQuery,
+    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
 use common::{
@@ -38,7 +38,6 @@ use common::{
         Height,
     },
     icon::icon::lightclient::v1::{ClientState, ConsensusState},
-    traits::AnyTypes,
 };
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
@@ -536,12 +535,12 @@ pub fn get_dummy_connection() -> ConnectionEnd {
         Some(ConnectionId::default()),
         counter_prefix.unwrap(),
     );
-    let conn_end = ConnectionEnd::new(
+    
+    ConnectionEnd::new(
         common::ibc::core::ics03_connection::connection::State::Open,
         IbcClientId::default(),
         counter_party,
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
-    );
-    conn_end
+    )
 }
