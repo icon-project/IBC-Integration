@@ -34,6 +34,7 @@ impl<'a> IconClient<'a> {
         let trust_level: &TrustLevel = &TRUST_LEVEL;
         let decision = header
             .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
+        
         debug_println!(
             "network type section decision hash {}",
             hex::encode(decision)
@@ -46,6 +47,7 @@ impl<'a> IconClient<'a> {
             let signer = self
                 .context
                 .recover_icon_signer(decision.as_slice(), signature);
+
             if let Some(val) = signer {
                 if validators_map.contains_key(&val) {
                     votes += 1;

@@ -22,6 +22,8 @@ pub mod close_confirm;
 pub use close_confirm::*;
 use cosmwasm_std::IbcEndpoint;
 use prost::Message;
+pub mod validate_channel;
+use validate_channel::*;
 
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     /// This function validates a channel open initialization message and generates an event for calling
@@ -107,7 +109,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             &sub_message.channel().endpoint,
         )?;
         let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
-        let data = to_binary(&data).unwrap();
+        let data = to_binary(&data).map_err(ContractError::Std)?;
         let on_chan_open_init = create_channel_submesssage(
             contract_address,
             data,

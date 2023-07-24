@@ -170,10 +170,11 @@ impl<'a> CwIbcCoreContext<'a> {
         if !(conn_end_on_a.state_matches(&State::Init)
             && conn_end_on_a.versions().contains(&msg.version))
         {
-            return Err(ConnectionError::ConnectionMismatch {
-                connection_id: msg.conn_id_on_a,
-            })
-            .map_err(Into::<ContractError>::into);
+            return Err(ContractError::IbcConnectionError {
+                error: ConnectionError::ConnectionMismatch {
+                    connection_id: msg.conn_id_on_a,
+                },
+            });
         }
 
         debug_println!("[ConnOpenAck]: State Matched");
@@ -183,10 +184,11 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let consensus_state_of_b_on_a = self
             .consensus_state(deps.storage, client_id_on_a, &msg.proofs_height_on_b)
-            .map_err(|_| ConnectionError::Other {
-                description: "failed to fetch consensus state".to_string(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            .map_err(|_| ContractError::IbcConnectionError {
+                error: ConnectionError::Other {
+                    description: "failed to fetch consensus state".to_string(),
+                },
+            })?;
         let prefix_on_a = self.commitment_prefix(deps.as_ref(), &env);
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
         let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
@@ -280,12 +282,10 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(counterparty_conn_id),
         )?;
 
-        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
-            .unwrap();
+        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())?;
         debug_println!("[ConnOpenAckReply]: Connection Stored");
 
-        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)
-            .unwrap();
+        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)?;
 
         Ok(Response::new()
             .add_attribute("method", "execute_connection_open_ack")
@@ -322,18 +322,21 @@ impl<'a> CwIbcCoreContext<'a> {
         //TODO validate
 
         self.validate_self_client(message.client_state_of_b_on_a.clone())?;
-        let host_height = self
-            .host_height(&env)
-            .map_err(|_| ConnectionError::Other {
-                description: "failed to get host height".to_string(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+        let host_height =
+            self.host_height(&env)
+                .map_err(|_| ContractError::IbcConnectionError {
+                    error: ConnectionError::Other {
+                        description: "failed to get host height".to_string(),
+                    },
+                })?;
+
         if message.consensus_height_of_b_on_a > host_height {
-            return Err(ConnectionError::InvalidConsensusHeight {
-                target_height: message.consensus_height_of_b_on_a,
-                current_height: host_height,
-            })
-            .map_err(Into::<ContractError>::into);
+            return Err(ContractError::IbcConnectionError {
+                error: ConnectionError::InvalidConsensusHeight {
+                    target_height: message.consensus_height_of_b_on_a,
+                    current_height: host_height,
+                },
+            });
         }
         let prefix_on_a = message.counterparty.prefix().clone();
         let prefix_on_b = self.commitment_prefix(deps.as_ref(), &env);
@@ -367,10 +370,11 @@ impl<'a> CwIbcCoreContext<'a> {
                 &message.client_id_on_b,
                 &message.proofs_height_on_a,
             )
-            .map_err(|_| ConnectionError::Other {
-                description: "failed to fetch consensus state".to_string(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            .map_err(|_| ContractError::IbcConnectionError {
+                error: ConnectionError::Other {
+                    description: "failed to fetch consensus state".to_string(),
+                },
+            })?;
 
         let connection_path =
             commitment::connection_path(&message.counterparty.connection_id.clone().unwrap());
@@ -504,11 +508,9 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
 
         self.store_connection_to_client(deps.storage, client_id, connection_id.clone())?;
-        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
-            .unwrap();
+        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())?;
 
-        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)
-            .unwrap();
+        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)?;
 
         Ok(Response::new()
             .add_attribute("method", "execute_connection_open_try")
@@ -543,11 +545,13 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_id_on_b = conn_end_on_b.client_id();
         let client_id_on_a = conn_end_on_b.counterparty().client_id();
         debug_println!("");
+
         if !conn_end_on_b.state_matches(&State::TryOpen) {
-            return Err(ConnectionError::ConnectionMismatch {
-                connection_id: msg.conn_id_on_b,
-            })
-            .map_err(Into::<ContractError>::into);
+            return Err(ContractError::IbcConnectionError {
+                error: ConnectionError::ConnectionMismatch {
+                    connection_id: msg.conn_id_on_b,
+                },
+            });
         }
 
         debug_println!("Connection State Matched");
@@ -557,10 +561,11 @@ impl<'a> CwIbcCoreContext<'a> {
         debug_println!("[ConnOpenConfirm]: Consensus State Path Decoded");
         let consensus_state_of_a_on_b = self
             .consensus_state(deps.storage, client_id_on_b, &msg.proof_height_on_a)
-            .map_err(|_| ConnectionError::Other {
-                description: "failed to fetch consensus state".to_string(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            .map_err(|_| ContractError::IbcConnectionError {
+                error: ConnectionError::Other {
+                    description: "failed to fetch consensus state".to_string(),
+                },
+            })?;
         debug_println!("Consensus State Decoded");
 
         let prefix_on_a = conn_end_on_b.counterparty().prefix();
@@ -610,8 +615,9 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         if !conn_end.state_matches(&State::TryOpen) {
-            return Err(ConnectionError::ConnectionMismatch { connection_id })
-                .map_err(Into::<ContractError>::into);
+            return Err(ContractError::IbcConnectionError {
+                error: ConnectionError::ConnectionMismatch { connection_id },
+            });
         }
         debug_println!("[ConnOpenConfirmReply]: Stored Connection State Matched");
         let counter_party_client_id = client_id_on_a.clone();
@@ -647,12 +653,10 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(counter_conn_id),
         )?;
 
-        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())
-            .unwrap();
+        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())?;
         debug_println!("[ConnOpenConfirmReply]: Connection Stored");
 
-        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)
-            .unwrap();
+        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)?;
 
         debug_println!("[ConnOpenConfirmReply]: Commitment Stored Stored");
 

@@ -229,10 +229,11 @@ impl<'a> CwIbcCoreContext<'a> {
             )
             .is_ok()
         {
-            return Err(PacketError::AcknowledgementExists {
-                sequence: packet.sequence,
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::AcknowledgementExists {
+                    sequence: packet.sequence,
+                },
+            });
         }
         Ok(())
     }

@@ -275,7 +275,9 @@ fn test_channel_close_init_validate() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidChannelState")]
+#[should_panic(
+    expected = "IbcChannelError { error: ChannelClosed { channel_id: ChannelId(\"channel-0\") } }"
+)]
 fn test_channel_close_init_validate_fail() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw).unwrap();

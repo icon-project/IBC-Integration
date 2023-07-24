@@ -313,20 +313,9 @@ fn test_acknowledgement_packet_validate_ordered() {
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
-    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let conn_end_on_a = ConnectionEnd::new(
-        ConnectionState::Open,
-        ClientId::default(),
-        ConnectionCounterparty::new(
-            ClientId::default(),
-            Some(ConnectionId::default()),
-            conn_prefix.unwrap(),
-        ),
-        get_compatible_versions(),
-        ZERO_DURATION,
-    );
+
+    let conn_end_on_a = get_dummy_connection();
+
     contract
         .store_connection(
             &mut deps.storage,
@@ -359,12 +348,7 @@ fn test_acknowledgement_packet_validate_ordered() {
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
+    let consenus_state: ConsensusState = get_dummy_consensus_state();
     let height = msg.proof_height_on_b;
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
@@ -437,20 +421,7 @@ fn test_acknowledgement_packet_validate_unordered() {
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
-    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let conn_end_on_a = ConnectionEnd::new(
-        ConnectionState::Open,
-        ClientId::default(),
-        ConnectionCounterparty::new(
-            ClientId::default(),
-            Some(ConnectionId::default()),
-            conn_prefix.unwrap(),
-        ),
-        get_compatible_versions(),
-        ZERO_DURATION,
-    );
+    let conn_end_on_a = get_dummy_connection();
     contract
         .store_connection(
             &mut deps.storage,
@@ -483,12 +454,7 @@ fn test_acknowledgement_packet_validate_unordered() {
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
+    let consenus_state: ConsensusState = get_dummy_consensus_state();
     let height = msg.proof_height_on_b;
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
@@ -553,20 +519,8 @@ fn test_acknowledgement_packet_validate_without_commitment() {
             chan_end_on_a_ordered.clone(),
         )
         .unwrap();
-    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let conn_end_on_a = ConnectionEnd::new(
-        ConnectionState::Open,
-        ClientId::default(),
-        ConnectionCounterparty::new(
-            ClientId::default(),
-            Some(ConnectionId::default()),
-            conn_prefix.unwrap(),
-        ),
-        get_compatible_versions(),
-        ZERO_DURATION,
-    );
+
+    let conn_end_on_a = get_dummy_connection();
     contract
         .store_connection(
             &mut deps.storage,
@@ -586,12 +540,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
+    let consenus_state: ConsensusState = get_dummy_consensus_state();
     let height = msg.proof_height_on_b;
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract

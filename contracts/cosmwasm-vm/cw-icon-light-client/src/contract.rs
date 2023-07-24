@@ -8,6 +8,7 @@ use debug_print::debug_println;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
+use crate::query_handler::QueryHandler;
 use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
 
 #[cfg(not(feature = "library"))]
@@ -23,7 +24,7 @@ use cw_common::types::VerifyChannelState;
 use crate::constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT};
 use crate::error::ContractError;
 use crate::light_client::IconClient;
-use crate::state::{CwContext, QueryHandler};
+use crate::state::CwContext;
 use crate::traits::{Config, IContext, ILightClient};
 use cw_common::client_msg::{
     ExecuteMsg, InstantiateMsg, LightClientPacketMessage, QueryMsg, VerifyClientConsensusState,
@@ -554,7 +555,7 @@ mod tests {
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
         contract::to_height_u64,
-        state::QueryHandler,
+        query_handler::QueryHandler,
         ContractError,
     };
     use common::traits::AnyTypes;

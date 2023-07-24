@@ -20,21 +20,8 @@ pub fn channel_open_ack_validate(
     message: &MsgChannelOpenAck,
     chan_end_on_a: &ChannelEnd,
 ) -> Result<(), ContractError> {
-    if !chan_end_on_a.state_matches(&State::Init) {
-        return Err(ChannelError::InvalidChannelState {
-            channel_id: message.chan_id_on_a.clone(),
-            state: chan_end_on_a.state,
-        })
-        .map_err(Into::<ContractError>::into);
-    }
-
-    if chan_end_on_a.connection_hops().len() != 1 {
-        return Err(ChannelError::InvalidConnectionHopsLength {
-            expected: 1,
-            actual: chan_end_on_a.connection_hops().len(),
-        })
-        .map_err(Into::<ContractError>::into);
-    }
+    ensure_channel_state(&message.chan_id_on_a, chan_end_on_a, &State::Init)?;
+    validate_connection_length(chan_end_on_a)?;
 
     Ok(())
 }
@@ -75,10 +62,11 @@ pub fn on_chan_open_ack_submessage(
         Order::Unordered => cosmwasm_std::IbcOrder::Unordered,
         Order::Ordered => cosmwasm_std::IbcOrder::Ordered,
         Order::None => {
-            return Err(ChannelError::UnknownOrderType {
-                type_id: "None".to_string(),
-            })
-            .map_err(Into::<ContractError>::into)
+            return Err(ContractError::IbcChannelError {
+                error: ChannelError::UnknownOrderType {
+                    type_id: "None".to_string(),
+                },
+            });
         }
     };
     let ibc_channel = cosmwasm_std::IbcChannel::new(
@@ -93,70 +81,4 @@ pub fn on_chan_open_ack_submessage(
         counterparty_version: channel_end.version.to_string(),
     };
     Ok(data)
-}
-
-impl<'a> CwIbcCoreContext<'a> {
-    // pub fn execute_open_ack_from_light_client_reply(
-    //     &self,
-    //     deps: DepsMut,
-
-    //     message: Reply,
-    // ) -> Result<Response, ContractError> {
-    //     match message.result {
-    //         cosmwasm_std::SubMsgResult::Ok(res) => match res.data {
-    //             Some(res) => {
-    //                 let response = from_binary_response::<LightClientResponse>(&res).unwrap();
-    //                 let info = response.message_info;
-    //                 let data = response.ibc_endpoint;
-    //                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-    //                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-    //                 let channel_end =
-    //                     self.get_channel_end(deps.storage, port_id.clone(), channel_id.clone())?;
-    //                 // Getting the module address for on channel open try call
-    //                 let contract_address =
-    //                     match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec()) {
-    //                         Ok(addr) => addr,
-    //                         Err(error) => return Err(error),
-    //                     };
-
-    //                 // Generate event for calling on channel open try in x-call
-    //                 let sub_message = on_chan_open_ack_submessage(
-    //                     &channel_end,
-    //                     &port_id,
-    //                     &channel_id,
-    //                     &channel_end.connection_hops[0].clone(),
-    //                 )?;
-    //                 self.store_callback_data(
-    //                     deps.storage,
-    //                     EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
-    //                     &sub_message.channel().endpoint,
-    //                 )?;
-    //                 let data =
-    //                     cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
-    //                 let data = to_binary(&data).unwrap();
-    //                 let on_chan_open_try = create_channel_submesssage(
-    //                     contract_address,
-    //                     data,
-    //                     info.funds,
-    //                     EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
-    //                 );
-
-    //                 Ok(Response::new()
-    //                     .add_attribute("action", "channel")
-    //                     .add_attribute("method", "channel_open_init_module_validation")
-    //                     .add_submessage(on_chan_open_try))
-    //             }
-    //             None => Err(ChannelError::Other {
-    //                 description: "Data from module is Missing".to_string(),
-    //             })
-    //             .map_err(Into::<ContractError>::into),
-    //         },
-    //         cosmwasm_std::SubMsgResult::Err(error) => {
-    //             Err(ChannelError::VerifyChannelFailed(ClientError::Other {
-    //                 description: error,
-    //             }))
-    //             .map_err(Into::<ContractError>::into)
-    //         }
-    //     }
-    // }
 }

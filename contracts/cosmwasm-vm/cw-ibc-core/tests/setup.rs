@@ -24,7 +24,7 @@ use cosmwasm_std::{
         MOCK_CONTRACT_ADDR,
     },
     to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
-    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
+    OwnedDeps, Storage, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
 use common::{
@@ -38,6 +38,7 @@ use common::{
         Height,
     },
     icon::icon::lightclient::v1::{ClientState, ConsensusState},
+    traits::AnyTypes,
 };
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
@@ -518,4 +519,29 @@ pub fn get_dummy_consensus_state() -> ConsensusState {
         next_proof_context_hash: vec![1, 2, 3, 4],
     };
     consenus_state
+}
+use cw_common::ibc_types::IbcClientId;
+use cw_ibc_core::ConnectionEnd;
+
+use std::time::Duration;
+pub fn get_dummy_connection() -> ConnectionEnd {
+    let counter_prefix: Result<
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix,
+        common::ibc::core::ics23_commitment::error::CommitmentError,
+    > = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+        "hello".to_string().as_bytes().to_vec(),
+    );
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
+        ClientId::default(),
+        Some(ConnectionId::default()),
+        counter_prefix.unwrap(),
+    );
+    let conn_end = ConnectionEnd::new(
+        common::ibc::core::ics03_connection::connection::State::Open,
+        IbcClientId::default(),
+        counter_party,
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
+        Duration::default(),
+    );
+    conn_end
 }

@@ -45,7 +45,7 @@ impl LightClient {
         let msg = to_binary(&cw_common::client_msg::QueryMsg::VerifyConnectionOpenAck(
             payload,
         ))
-        .unwrap();
+        .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
         self.to_validation_result(result, "verify connection open ack")
@@ -59,7 +59,7 @@ impl LightClient {
         let msg = to_binary(&cw_common::client_msg::QueryMsg::VerifyConnectionOpenTry(
             payload,
         ))
-        .unwrap();
+        .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
         self.to_validation_result(result, "verify connection open try")
@@ -75,7 +75,7 @@ impl LightClient {
             client_id: client_id.to_string(),
             verify_connection_state,
         })
-        .unwrap();
+        .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
         self.to_validation_result(result, "verify connection open confirm")
@@ -93,7 +93,7 @@ impl LightClient {
                 verify_packet_acknowledge,
             },
         )
-        .unwrap();
+        .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
         self.to_validation_result(result, "verify packet ack")
@@ -109,7 +109,7 @@ impl LightClient {
             client_id: client_id.to_string(),
             verify_packet_data,
         })
-        .unwrap();
+        .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
         self.to_validation_result(result, "verify packet data")
@@ -127,7 +127,7 @@ impl LightClient {
             verify_channel_state,
             next_seq_recv_verification_result,
         })
-        .unwrap();
+        .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
         self.to_validation_result(result, "verify timeout on close")
@@ -144,7 +144,7 @@ impl LightClient {
             client_id: client_id.to_string(),
             next_seq_recv_verification_result,
         })
-        .unwrap();
+        .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
         self.to_validation_result(result, "verify timeout on close")
@@ -159,7 +159,7 @@ impl LightClient {
         let msg = to_binary(&cw_common::client_msg::QueryMsg::VerifyChannel {
             verify_channel_state,
         })
-        .unwrap();
+        .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
         self.to_validation_result(result, "verify timeout on close")
@@ -177,7 +177,7 @@ impl LightClient {
         let query_message = cw_common::client_msg::QueryMsg::GetClientState {
             client_id: client_id.as_str().to_string(),
         };
-        let msg = to_binary(&query_message).unwrap();
+        let msg = to_binary(&query_message).map_err(ContractError::Std)?;
 
         let query = build_smart_query(self.address.clone(), msg);
 

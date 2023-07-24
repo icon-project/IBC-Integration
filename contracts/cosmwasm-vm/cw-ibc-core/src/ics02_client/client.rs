@@ -116,19 +116,12 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<IbcClientType, ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_types()
-            .may_load(store, client_id.clone())
-        {
-            Ok(result) => match result {
-                Some(client_type) => Ok(client_type),
-                None => Err(ContractError::InvalidClientId {
-                    client_id: client_id.as_str().to_string(),
-                }),
-            },
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .load(store, client_id.clone())
+            .map_err(|_e| ContractError::InvalidClientId {
+                client_id: client_id.as_str().to_string(),
+            })
     }
 
     /// This method retrieves a client from a registry and returns it as a string, or returns an error
@@ -151,19 +144,12 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_type: IbcClientType,
     ) -> Result<String, ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_registry()
-            .may_load(store, client_type.clone())
-        {
-            Ok(result) => match result {
-                Some(client) => Ok(client),
-                None => Err(ContractError::InvalidClientType {
-                    client_type: client_type.as_str().to_string(),
-                }),
-            },
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .load(store, client_type.clone())
+            .map_err(|_e| ContractError::InvalidClientType {
+                client_type: client_type.as_str().to_string(),
+            })
     }
 
     /// This method retrieves client implementations from a storage based on a given client ID.
@@ -187,19 +173,12 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<LightClient, ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_implementations()
-            .may_load(store, client_id.clone())
-        {
-            Ok(result) => match result {
-                Some(client) => Ok(client),
-                None => Err(ContractError::InvalidClientId {
-                    client_id: client_id.as_str().to_string(),
-                }),
-            },
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .load(store, client_id.clone())
+            .map_err(|_e| ContractError::InvalidClientId {
+                client_id: client_id.as_str().to_string(),
+            })
     }
 
     /// This method stores the client type for a given client ID in a storage object.
@@ -227,14 +206,10 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: ClientId,
         client_type: IbcClientType,
     ) -> Result<(), ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_types()
             .save(store, client_id, &client_type)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .map_err(ContractError::Std)
     }
 
     /// This method stores a client into a registry
@@ -261,14 +236,10 @@ impl<'a> CwIbcCoreContext<'a> {
         client_type: IbcClientType,
         client: String,
     ) -> Result<(), ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_registry()
             .save(store, client_type, &client)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .map_err(ContractError::Std)
     }
     /// This method stores client implementations in a storage using a client ID and returns an error if
     /// there is one.
@@ -293,14 +264,10 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: ClientId,
         client: LightClient,
     ) -> Result<(), ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_implementations()
             .save(store, client_id, &client)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .map_err(ContractError::Std)
     }
     /// The method checks if a client is already registered in the store and returns
     /// an error if it already exists.

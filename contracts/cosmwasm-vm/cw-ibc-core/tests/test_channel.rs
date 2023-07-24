@@ -1019,21 +1019,7 @@ fn test_validate_open_init_channel() {
         )
         .unwrap();
 
-    let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        None,
-        ss.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
+    let conn_end = get_dummy_connection();
     let conn_id = ConnectionId::new(5);
     msg.connection_hops_on_a = vec![conn_id.clone()];
     msg.version_proposal = Version::from_str("xcall-1").unwrap();

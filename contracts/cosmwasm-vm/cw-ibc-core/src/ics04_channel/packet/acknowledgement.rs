@@ -39,10 +39,11 @@ impl<'a> CwIbcCoreContext<'a> {
             packet.chan_id_on_a.clone(),
         )?;
         if !chan_end_on_a.state_matches(&State::Open) {
-            return Err(PacketError::ChannelClosed {
-                channel_id: packet.chan_id_on_a.clone(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::ChannelClosed {
+                    channel_id: packet.chan_id_on_a.clone(),
+                },
+            });
         }
         debug_println!("chan end on a  state matched  ");
 
@@ -51,21 +52,23 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(packet.chan_id_on_b.clone()),
         );
         if !chan_end_on_a.counterparty_matches(&counterparty) {
-            return Err(PacketError::InvalidPacketCounterparty {
-                port_id: packet.port_id_on_b.clone(),
-                channel_id: packet.chan_id_on_b.clone(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::InvalidPacketCounterparty {
+                    port_id: packet.port_id_on_b.clone(),
+                    channel_id: packet.chan_id_on_b.clone(),
+                },
+            });
         }
         debug_println!("counterparty matched");
 
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a.clone())?;
         if !conn_end_on_a.state_matches(&ConnectionState::Open) {
-            return Err(PacketError::ConnectionNotOpen {
-                connection_id: chan_end_on_a.connection_hops()[0].clone(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::ConnectionNotOpen {
+                    connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                },
+            });
         }
         let commitment_on_a = match self.get_packet_commitment(
             deps.storage,
@@ -97,10 +100,11 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         if commitment_on_a != compouted_packet_commitment {
-            return Err(PacketError::IncorrectPacketCommitment {
-                sequence: packet.sequence,
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::IncorrectPacketCommitment {
+                    sequence: packet.sequence,
+                },
+            });
         }
 
         debug_println!("packet commitment matched");
@@ -112,11 +116,12 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet.chan_id_on_a.clone(),
             )?;
             if packet.sequence != next_seq_ack {
-                return Err(PacketError::InvalidPacketSequence {
-                    given_sequence: packet.sequence,
-                    next_sequence: next_seq_ack,
-                })
-                .map_err(Into::<ContractError>::into)?;
+                return Err(ContractError::IbcPacketError {
+                    error: PacketError::InvalidPacketSequence {
+                        given_sequence: packet.sequence,
+                        next_sequence: next_seq_ack,
+                    },
+                });
             }
         }
         debug_println!("packet seq matched");
@@ -125,10 +130,11 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state_on_a = self.client_state(deps.storage, client_id_on_a)?;
         // The client must not be frozen.
         if client_state_on_a.is_frozen() {
-            return Err(PacketError::FrozenClient {
-                client_id: client_id_on_a.clone(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::FrozenClient {
+                    client_id: client_id_on_a.clone(),
+                },
+            });
         }
         let consensus_state =
             self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
