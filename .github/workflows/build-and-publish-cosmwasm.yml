@@ -1,0 +1,60 @@
+name: Compile and publish Cosmwasm contracts to the GitHub Package Registry
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - contracts/cosmwasm-vm/**
+      - libraries/common/rust/**
+      - .github/workflows/deploy-cosmwasm-contracts.yml
+jobs:
+  Build:
+    name: Build Cosmasm Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.69.0
+          target: wasm32-unknown-unknown
+          override: true
+          profile: minimal
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Compile WASM
+        run: |
+          rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          make optimize-cosmwasm
+
+      - name: Check WASM Size
+        run: |
+          max_size=800 
+          echo "Check if size of wasm file exceeds $max_size kilobytes..."
+          for file in artifacts/*.wasm
+          do 
+          size=$(du -k "$file" | awk '{print $1}')
+          if [[ $size -gt $max_size ]]; then
+          echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
+          exit 1
+          fi
+          echo "$file : $size KB"
+          done
+          echo "The size of all contracts is well within the 800 KB limit."
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: cosmwasm-contracts
+          path: artifacts
+

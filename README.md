@@ -4,10 +4,10 @@
 | [Java](./contracts/javascore)       | [![Java Cov][java-cov-badge]][java-cov-link]   |
 | [Rust](./contracts/cosmwasm-vm)     | [![Rust Cov][rust-cov-badge]][rust-cov-link]   |
 
-[java-cov-link]: https://app.codecov.io/gh/icon-project/IBC-Integration/tree/main/contracts/javascore
-[rust-cov-link]: https://app.codecov.io/gh/icon-project/IBC-Integration/tree/main/contracts/cosmwasm-vm
-[java-cov-badge]: https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom&flag=java
-[rust-cov-badge]: https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom&flag=rust
+[java-cov-link]: https://app.codecov.io/gh/icon-project/xCall/tree/main/contracts/javascore
+[rust-cov-link]: https://app.codecov.io/gh/icon-project/xCall/tree/main/contracts/cosmwasm-vm
+[java-cov-badge]: https://codecov.io/gh/icon-project/xCall/branch/main/graph/badge.svg?token=KWDB59JITE&flag=java
+[rust-cov-badge]: https://codecov.io/gh/icon-project/xCall/branch/main/graph/badge.svg?token=KWDB59JITE&flag=rust
 
 # XCall
 

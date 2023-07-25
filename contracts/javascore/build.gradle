@@ -85,3 +85,17 @@ gradle.taskGraph.whenReady { taskGraph ->
         }
     }
 }
+
+task collectJars(type: Copy) {
+    from subprojects.jar
+    into "$buildDir/output-jars"
+}
+
+task zipOutputJars(type: Zip) {
+    dependsOn collectJars
+    from "$buildDir/output-jars"
+    archiveFileName = "${rootProject.name}-output-jars.zip"
+    destinationDirectory = file("$buildDir")
+}
+
+

@@ -54,6 +54,11 @@ deployJar {
 }
 
 
+jar {
+    archiveFileName = "${project.name}-${project.version}-optimized.jar"
+}
+
+
 task integrationTest(type: Test) {
     useJUnitPlatform()
 
