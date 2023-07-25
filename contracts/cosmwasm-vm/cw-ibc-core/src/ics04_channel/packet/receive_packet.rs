@@ -134,7 +134,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let packet_sequence = Sequence::from(packet.sequence);
 
         if chan_end_on_b.order_matches(&Order::Ordered) {
-            let next_seq_recv = self.get_next_sequence_recv(deps.storage, &dst_port, &dst_channel)?;
+            let next_seq_recv =
+                self.get_next_sequence_recv(deps.storage, &dst_port, &dst_channel)?;
             if packet_sequence > next_seq_recv {
                 return Err(PacketError::InvalidPacketSequence {
                     given_sequence: packet_sequence,
@@ -289,11 +290,8 @@ impl<'a> CwIbcCoreContext<'a> {
                         .get_packet_receipt(deps.storage, &port_id, &channel_id, seq.into())
                         .is_ok(),
                     Order::Ordered => {
-                        let next_seq_recv = self.get_next_sequence_recv(
-                            deps.storage,
-                            &port_id,
-                            &channel_id,
-                        )?;
+                        let next_seq_recv =
+                            self.get_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
 
                         // the seq_on_a number has already been incremented, so
                         // another relayer already relayed the packet
@@ -320,11 +318,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         )?;
                     }
                     Order::Ordered => {
-                        self.increase_next_sequence_recv(
-                            deps.storage,
-                            &port_id,
-                            &channel_id,
-                        )?;
+                        self.increase_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
                     }
                     _ => {}
                 }

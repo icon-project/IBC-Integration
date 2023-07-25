@@ -1,5 +1,7 @@
 use cw_ibc_core::{
-    light_client::light_client::LightClient, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+    conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp},
+    light_client::light_client::LightClient,
+    VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
 };
 
 use super::*;
@@ -69,9 +71,9 @@ fn test_acknowledgement_packet_execute() {
     contract
         .store_channel_end(
             &mut deps.storage,
-           & msg.packet.port_id_on_a.clone(),
-           & msg.packet.chan_id_on_a.clone(),
-           & chan_end_on_a_ordered,
+            &msg.packet.port_id_on_a.clone(),
+            &msg.packet.chan_id_on_a.clone(),
+            &chan_end_on_a_ordered,
         )
         .unwrap();
     let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
@@ -160,9 +162,9 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-          & msg.packet.port_id_on_a.clone(),
-          & msg.packet.chan_id_on_a.clone(),
-          & chan_end_on_a_ordered,
+            &msg.packet.port_id_on_a.clone(),
+            &msg.packet.chan_id_on_a.clone(),
+            &chan_end_on_a_ordered,
         )
         .unwrap();
     let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
@@ -180,9 +182,9 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_next_sequence_ack(
             &mut deps.storage,
-           &msg.packet.port_id_on_a.clone(),
-           &msg.packet.chan_id_on_a,
-           &1.into(),
+            &msg.packet.port_id_on_a.clone(),
+            &msg.packet.chan_id_on_a,
+            &1.into(),
         )
         .unwrap();
 
@@ -261,9 +263,9 @@ fn test_acknowledgement_packet_execute_fail() {
     contract
         .store_channel_end(
             &mut deps.storage,
-          & msg.packet.port_id_on_a.clone(),
-          & msg.packet.chan_id_on_a.clone(),
-          & chan_end_on_a_ordered,
+            &msg.packet.port_id_on_a.clone(),
+            &msg.packet.chan_id_on_a.clone(),
+            &chan_end_on_a_ordered,
         )
         .unwrap();
     let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
@@ -292,25 +294,32 @@ fn test_acknowledgement_packet_validate_ordered() {
     let env = get_mock_env();
 
     let height = 10;
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
-    let packet = msg.packet.clone();
+    let msg = get_dummy_raw_msg_acknowledgement(height);
+    let packet = msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
+    let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+    let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+    let packet_sequence = Sequence::from(packet.sequence);
+    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     //Store channel, connection and packet commitment
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(
-            packet.port_id_on_b.clone(),
-            Some(packet.chan_id_on_b.clone()),
-        ),
+        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-         & packet.port_id_on_a.clone(),
-         & packet.chan_id_on_a.clone(),
-         & chan_end_on_a_ordered.clone(),
+            &src_port,
+            &src_channel,
+            &chan_end_on_a_ordered,
         )
         .unwrap();
 
@@ -323,17 +332,14 @@ fn test_acknowledgement_packet_validate_ordered() {
             conn_end_on_a,
         )
         .unwrap();
-    let packet_commitment = compute_packet_commitment(
-        &msg.packet.data,
-        &msg.packet.timeout_height_on_b,
-        &msg.packet.timeout_timestamp_on_b,
-    );
+    let packet_commitment =
+        compute_packet_commitment(&packet.data, &packet_timeout_height, &packet_timestamp);
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_b,
-            &packet.chan_id_on_b,
-            packet.sequence,
+            &dst_port,
+            &dst_channel,
+            packet_sequence,
             packet_commitment,
         )
         .unwrap();
@@ -349,13 +355,13 @@ fn test_acknowledgement_packet_validate_ordered() {
         )
         .unwrap();
     let consenus_state: ConsensusState = get_dummy_consensus_state();
-    let height = msg.proof_height_on_b;
+    // let height = msg.proof_height_on_b;
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
-            height,
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
@@ -365,12 +371,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
         .unwrap();
     contract
-        .store_next_sequence_ack(
-            &mut deps.storage,
-          &  packet.port_id_on_b.clone(),
-          &  packet.chan_id_on_b,
-          &  1.into(),
-        )
+        .store_next_sequence_ack(&mut deps.storage, &dst_port, &dst_channel, &1.into())
         .unwrap();
     contract
         .ibc_store()
@@ -379,11 +380,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         .unwrap();
     mock_lightclient_reply(&mut deps);
     contract
-        .bind_port(
-            &mut deps.storage,
-            &packet.port_id_on_b,
-            "moduleaddress".to_string(),
-        )
+        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
         .unwrap();
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
@@ -400,25 +397,33 @@ fn test_acknowledgement_packet_validate_unordered() {
     env.block.height = 100;
 
     let height = 10;
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
-    let packet = msg.packet.clone();
+    let msg = get_dummy_raw_msg_acknowledgement(height);
+    let packet = msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
+    let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+    let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+    let packet_sequence = Sequence::from(packet.sequence);
+    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+
     //Store channel, connection and packet commitment
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Unordered,
-        Counterparty::new(
-            packet.port_id_on_b.clone(),
-            Some(packet.chan_id_on_b.clone()),
-        ),
+        Counterparty::new(dst_port.clone(), Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-          & packet.port_id_on_a.clone(),
-          & packet.chan_id_on_a.clone(),
-          & chan_end_on_a_ordered.clone(),
+            &src_port.clone(),
+            &src_channel.clone(),
+            &chan_end_on_a_ordered,
         )
         .unwrap();
     let conn_end_on_a = get_dummy_connection();
@@ -429,17 +434,14 @@ fn test_acknowledgement_packet_validate_unordered() {
             conn_end_on_a,
         )
         .unwrap();
-    let packet_commitment = compute_packet_commitment(
-        &msg.packet.data,
-        &msg.packet.timeout_height_on_b,
-        &msg.packet.timeout_timestamp_on_b,
-    );
+    let packet_commitment =
+        compute_packet_commitment(&packet.data, &packet_timeout_height, &packet_timestamp);
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a,
-            &packet.chan_id_on_a,
-            packet.sequence,
+            &src_port,
+            &src_channel,
+            packet_sequence,
             packet_commitment,
         )
         .unwrap();
@@ -455,13 +457,13 @@ fn test_acknowledgement_packet_validate_unordered() {
         )
         .unwrap();
     let consenus_state: ConsensusState = get_dummy_consensus_state();
-    let height = msg.proof_height_on_b;
+
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
-            height,
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
@@ -479,11 +481,7 @@ fn test_acknowledgement_packet_validate_unordered() {
         .unwrap();
     mock_lightclient_reply(&mut deps);
     contract
-        .bind_port(
-            &mut deps.storage,
-            &packet.port_id_on_b,
-            "moduleaddress".to_string(),
-        )
+        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
         .unwrap();
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
@@ -498,25 +496,32 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     let env = get_mock_env();
 
     let height = 10;
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
-    let packet = msg.packet.clone();
+    let msg = get_dummy_raw_msg_acknowledgement(height);
+    let packet = msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
+    let _packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+    let _packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+    let _packet_sequence = Sequence::from(packet.sequence);
+    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     //Store channel, connection and packet commitment
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Unordered,
-        Counterparty::new(
-            packet.port_id_on_b.clone(),
-            Some(packet.chan_id_on_b.clone()),
-        ),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-           &packet.port_id_on_a.clone(),
-           &packet.chan_id_on_a,
-           &chan_end_on_a_ordered.clone(),
+            &src_port,
+            &src_channel,
+            &chan_end_on_a_ordered,
         )
         .unwrap();
 
@@ -541,13 +546,13 @@ fn test_acknowledgement_packet_validate_without_commitment() {
         )
         .unwrap();
     let consenus_state: ConsensusState = get_dummy_consensus_state();
-    let height = msg.proof_height_on_b;
+    // let height = msg.proof_height_on_b;
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
-            height,
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
@@ -575,7 +580,7 @@ fn test_acknowledgement_packet_validate_fail_missing_channel() {
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let height = 10;
     let env = get_mock_env();
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
+    let msg = get_dummy_raw_msg_acknowledgement(height);
 
     contract
         .acknowledgement_packet_validate(deps.as_mut(), info, env, &msg)

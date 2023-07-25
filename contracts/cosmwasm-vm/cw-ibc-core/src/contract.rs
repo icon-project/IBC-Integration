@@ -187,8 +187,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_receive_packet(deps, info, env, &message)
             }
             CoreExecuteMsg::AcknowledgementPacket { msg } => {
-                let message: MsgAcknowledgement =
+                let _message: MsgAcknowledgement =
                     Self::from_raw::<RawMessageAcknowledgement, MsgAcknowledgement>(&msg)?;
+                let message = Self::raw_from_hex::<RawMessageAcknowledgement>(&msg)?;
                 self.acknowledgement_packet_validate(deps, info, env, &message)
             }
             CoreExecuteMsg::TimeoutPacket { msg } => {

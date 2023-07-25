@@ -35,7 +35,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
             &mut deps.storage,
             &packet.port_id_on_a.clone(),
             &packet.chan_id_on_a.clone(),
-            &chan_end_on_a_ordered.clone(),
+            &chan_end_on_a_ordered,
         )
         .unwrap();
     let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(

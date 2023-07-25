@@ -236,12 +236,7 @@ fn test_execute_close_confirm_channel() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            &port_id,
-            &channel_id,
-            &channel_end,
-        )
+        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     contract
         .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, &channel_end)
@@ -294,12 +289,7 @@ fn test_execute_close_confirm_channel_fail_invalid_state() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            &port_id,
-            &channel_id,
-            &channel_end,
-        )
+        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     contract
         .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, &channel_end)

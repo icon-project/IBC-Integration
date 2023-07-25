@@ -49,9 +49,9 @@ fn test_packet_send() {
     contract
         .store_channel_end(
             &mut deps.storage,
-           & src_port.clone(),
-           & src_channel.clone(),
-           & chan_end_on_a.clone(),
+            &src_port.clone(),
+            &src_channel.clone(),
+            &chan_end_on_a,
         )
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
@@ -59,7 +59,12 @@ fn test_packet_send() {
         .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
         .unwrap();
     contract
-        .store_next_sequence_send(&mut deps.storage, &src_port, &src_channel,&Sequence::from(1))
+        .store_next_sequence_send(
+            &mut deps.storage,
+            &src_port,
+            &src_channel,
+            &Sequence::from(1),
+        )
         .unwrap();
 
     let client_state = ClientState {
@@ -167,12 +172,7 @@ fn test_packet_send_fail_misiing_sequense() {
     );
 
     contract
-        .store_channel_end(
-            &mut deps.storage,
-          & src_port,
-          & src_channel,
-          & chan_end_on_a.clone(),
-        )
+        .store_channel_end(&mut deps.storage, &src_port, &src_channel, &chan_end_on_a)
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract

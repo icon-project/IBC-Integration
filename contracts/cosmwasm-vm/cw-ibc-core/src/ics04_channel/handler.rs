@@ -88,12 +88,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             state: State::Uninitialized,
             ..channel_end
         };
-        self.store_channel_end(
-            deps.storage,
-            &src_port,
-            &src_channel,
-            &channel_end,
-        )?;
+        self.store_channel_end(deps.storage, &src_port, &src_channel, &channel_end)?;
 
         // Generate event for calling on channel open init in x-call
         let sub_message =
@@ -173,12 +168,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             &dest_port,
             &channel_end
         );
-        self.store_channel_end(
-            deps.storage,
-            &dest_port,
-            &dest_channel,
-            &channel_end,
-        )?;
+        self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
         let proof_height = to_ibc_height(message.proof_height.clone().unwrap())?;
         let client_id_on_b = connection_end.client_id();
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
@@ -354,12 +344,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         channel_end.set_version(version);
         channel_end.set_counterparty_channel_id(dst_channel);
 
-        self.store_channel_end(
-            deps.storage,
-           &src_port,
-           &src_channel,
-           &channel_end,
-        )?;
+        self.store_channel_end(deps.storage, &src_port, &src_channel, &channel_end)?;
 
         let module_contract_address =
             self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
@@ -733,38 +718,28 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
                 }
                 channel_end.state = State::Init;
-                self.store_channel_end(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
+                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
                 let _sequence = self.increase_channel_sequence(deps.storage)?;
                 self.store_next_sequence_send(
                     deps.storage,
                     &port_id,
                     &channel_id,
-                    &Sequence::from(1)
+                    &Sequence::from(1),
                 )?;
                 self.store_next_sequence_recv(
                     deps.storage,
                     &port_id,
                     &channel_id,
-                    &Sequence::from(1)
+                    &Sequence::from(1),
                 )?;
                 self.store_next_sequence_ack(
                     deps.storage,
                     &port_id,
                     &channel_id,
-                    &Sequence::from(1)
+                    &Sequence::from(1),
                 )?;
 
-                self.store_channel_commitment(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
+                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
                 let channel_id_event = create_channel_id_generated_event(channel_id.clone());
                 let main_event = create_channel_event(
                     IbcEventType::OpenInitChannel,
@@ -816,12 +791,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
                 }
                 channel_end.state = State::TryOpen;
-                self.store_channel_end(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
+                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
                 let _sequence = self.increase_channel_sequence(deps.storage)?;
                 self.store_next_sequence_send(
                     deps.storage,
@@ -891,19 +861,9 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
 
                 channel_end.set_state(State::Closed); // State change
-                self.store_channel_end(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
+                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
 
-                self.store_channel_commitment(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
+                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
 
                 let event = create_channel_event(
                     IbcEventType::CloseInitChannel,
@@ -957,18 +917,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     .map_err(|e| e.into());
                 }
                 channel_end.set_state(State::Open); // State Change
-                self.store_channel_end(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
-                self.store_channel_commitment(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
+                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
+                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
                 let event = create_channel_event(
                     IbcEventType::OpenAckChannel,
                     port_id.as_str(),
@@ -1023,18 +973,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     .map_err(|e| e.into());
                 }
                 channel_end.set_state(State::Open); // State Change
-                self.store_channel_end(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
-                self.store_channel_commitment(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
+                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
+                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
                 let event = create_channel_event(
                     IbcEventType::OpenConfirmChannel,
                     port_id.as_str(),
@@ -1086,18 +1026,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     .map_err(|e| e.into());
                 }
                 channel_end.set_state(State::Closed); // State Change
-                self.store_channel_end(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
-                self.store_channel_commitment(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &channel_end,
-                )?;
+                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
+                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
                 let event = create_channel_event(
                     IbcEventType::CloseConfirmChannel,
                     port_id.as_str(),

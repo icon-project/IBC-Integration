@@ -74,12 +74,7 @@ fn test_validate_close_init_channel() {
     };
 
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            &port_id,
-            &channel_id,
-            &channel_end,
-        )
+        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
 
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
@@ -173,12 +168,7 @@ fn test_execute_close_init_channel() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            &port_id,
-            &channel_id,
-            &channel_end,
-        )
+        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     contract
         .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, &channel_end)
