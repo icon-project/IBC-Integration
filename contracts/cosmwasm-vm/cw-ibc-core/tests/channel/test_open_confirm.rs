@@ -1,8 +1,11 @@
 use cosmwasm_std::IbcChannel;
-use cw_common::client_response::LightClientResponse;
-use cw_ibc_core::ics04_channel::{
-    open_confirm::{channel_open_confirm_validate, on_chan_open_confirm_submessage},
-    EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
+
+use cw_ibc_core::{
+    ics04_channel::{
+        open_confirm::{channel_open_confirm_validate, on_chan_open_confirm_submessage},
+        EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
+    },
+    light_client::light_client::LightClient,
 };
 
 use super::*;
@@ -58,15 +61,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
             channel_end,
         )
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -119,20 +114,18 @@ fn test_validate_open_confirm_channel() {
     let raw = get_dummy_raw_msg_chan_open_confirm(10);
     let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+
     let port_id = msg.port_id_on_b.clone();
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
-    // contract
-    //     .add_route(&mut deps.storage, cx_module_id, &module)
-    //     .unwrap();
+    let light_client = LightClient::new("lightclient".to_string());
+
     contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
+        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
         .unwrap();
+
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -175,16 +168,7 @@ fn test_validate_open_confirm_channel() {
         )
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -226,102 +210,10 @@ fn test_validate_open_confirm_channel() {
     let res = contract.validate_channel_open_confirm(deps.as_mut(), info, &msg);
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 441)
-}
-
-#[test]
-fn test_execute_open_confirm_from_light_client() {
-    let mut deps = deps();
-    let contract = CwIbcCoreContext::default();
-    let info = create_mock_info("channel-creater", "umlg", 20000000);
-    let raw = get_dummy_raw_msg_chan_open_confirm(10);
-    let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
-    let channel_id_on_b = ChannelId::new(0);
-    let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let connection_id = IbcConnectionId::new(5);
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        Some(connection_id.clone()),
-        ss.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    contract
-        .store_connection(deps.as_mut().storage, connection_id.clone(), conn_end)
-        .unwrap();
-    let counter_party = Counterparty::new(msg.port_id_on_b.clone(), Some(msg.chan_id_on_b.clone()));
-    let channel_end = ChannelEnd::new(
-        State::TryOpen,
-        Order::Unordered,
-        counter_party,
-        vec![connection_id],
-        Version::from_str("xcall").unwrap(),
-    );
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_b.clone();
-
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
-
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.clone().sender,
-        funds: info.clone().funds,
-    };
-    let expected_data = LightClientResponse {
-        message_info,
-        ibc_endpoint: cosmwasm_std::IbcEndpoint {
-            port_id: msg.port_id_on_b.to_string(),
-            channel_id: channel_id_on_b.to_string(),
-        },
-    };
-    let response = SubMsgResponse {
-        data: Some(to_binary(&expected_data).unwrap()),
-        events: vec![Event::new("action").add_attribute("action", "channel open try execution")],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(response);
-    let reply = Reply {
-        id: EXECUTE_ON_CHANNEL_OPEN_TRY,
-        result,
-    };
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            msg.port_id_on_b.clone(),
-            channel_id_on_b.clone(),
-            channel_end.clone(),
-        )
-        .unwrap();
-
-    let expected =
-        on_chan_open_confirm_submessage(&channel_end, &msg.port_id_on_b, &channel_id_on_b);
-    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelConnect {
-        msg: expected.unwrap(),
-    };
-    let data = to_binary(&data).unwrap();
-    let on_chan_open_confirm = create_channel_submesssage(
-        "contractaddress".to_string(),
-        data,
-        info.funds,
-        EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
-    );
-    let res = contract.execute_open_confirm_from_light_client_reply(deps.as_mut(), reply);
-    assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0], on_chan_open_confirm)
+    assert_eq!(
+        res.unwrap().messages[0].id,
+        EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE
+    )
 }
 
 #[test]

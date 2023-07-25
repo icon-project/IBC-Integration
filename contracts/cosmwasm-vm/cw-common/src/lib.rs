@@ -1,7 +1,6 @@
 pub mod client_msg;
 pub mod client_response;
 pub mod commitment;
-pub mod constants;
 pub mod core_msg;
 pub mod cw_types;
 pub mod errors;
@@ -11,9 +10,6 @@ pub mod query_helpers;
 pub mod raw_types;
 pub mod types;
 pub mod xcall_connection_msg;
-pub mod xcall_msg;
-pub mod xcall_payloads;
-pub mod xcall_types;
 
 use bech32::FromBase32;
 use cosmwasm_std::{from_binary, Addr, Binary, Deps, StdError};

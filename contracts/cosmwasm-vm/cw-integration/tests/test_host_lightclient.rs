@@ -269,22 +269,6 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
     )
 }
 
-fn call_xcall_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppResponse, AppError> {
-    // TODO
-    let timeout_height: u64 = 540;
-    ctx.app.execute_contract(
-        Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
-        ctx.get_xcall_app(),
-        &cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
-            to: "eth".to_string(),
-            data,
-            timeout_height,
-            rollback: None,
-        },
-        &[],
-    )
-}
-
 pub fn call_acknowledge_packet(ctx: &mut TestContext) -> Result<AppResponse, AppError> {
     let payload = ctx.get_test_data(&TestSteps::AcknowledgementPacket);
     let msg = HexString::from_str(&payload.message).unwrap();
