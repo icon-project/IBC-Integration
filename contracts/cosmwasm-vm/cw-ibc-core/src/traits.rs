@@ -1,5 +1,5 @@
 use common::ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
-use cw_common::raw_types::channel::{RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawMsgChannelOpenAck, RawMsgChannelOpenConfirm};
+use cw_common::raw_types::channel::{RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawMsgChannelOpenAck, RawMsgChannelOpenConfirm, RawMsgChannelCloseInit};
 
 use super::*;
 
@@ -122,7 +122,7 @@ pub trait ValidateChannel {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelCloseInit,
+        message: &RawMsgChannelCloseInit,
     ) -> Result<Response, ContractError>;
 
     // channel_close_confirm is called by the counterparty module to close their

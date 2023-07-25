@@ -169,7 +169,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             CoreExecuteMsg::ChannelCloseInit { msg } => {
                 let message = Self::from_raw::<RawMsgChannelCloseInit, MsgChannelCloseInit>(&msg)?;
-
+                let message:RawMsgChannelCloseInit=Self::raw_from_hex(&msg)?;
                 self.validate_channel_close_init(deps, info, &message)
             }
             CoreExecuteMsg::ChannelCloseConfirm { msg } => {

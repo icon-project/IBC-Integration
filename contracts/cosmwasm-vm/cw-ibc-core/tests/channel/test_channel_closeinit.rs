@@ -1,7 +1,7 @@
 use super::*;
-use cw_ibc_core::ics04_channel::close_init::{
+use cw_ibc_core::{ics04_channel::close_init::{
     channel_close_init_validate, on_chan_close_init_submessage,
-};
+}, conversions::to_ibc_channel_id};
 
 use std::{str::FromStr, time::Duration};
 
@@ -23,12 +23,13 @@ fn test_validate_close_init_channel() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+   // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
     let module = Addr::unchecked("contractaddress");
 
     contract
@@ -60,8 +61,6 @@ fn test_validate_close_init_channel() {
         .store_connection(deps.as_mut().storage, connection_id.clone(), conn_end)
         .unwrap();
 
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a.clone();
 
     let channel_end = ChannelEnd {
         state: State::Open,
@@ -75,11 +74,11 @@ fn test_validate_close_init_channel() {
     };
 
     contract
-        .store_channel_end(&mut deps.storage, port_id, channel_id, channel_end.clone())
+        .store_channel_end(&mut deps.storage, port_id.clone(), channel_id.clone(), channel_end.clone())
         .unwrap();
 
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
-    let expected = on_chan_close_init_submessage(&msg, &channel_end, &connection_id);
+    let expected = on_chan_close_init_submessage(&port_id,&channel_id, &channel_end, &connection_id);
     contract
         .store_callback_data(
             deps.as_mut().storage,
@@ -107,11 +106,12 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
@@ -125,8 +125,8 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
         .unwrap();
     let connection_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
@@ -254,22 +254,22 @@ fn test_execute_close_init_channel_fail() {
 
 #[test]
 fn test_channel_close_init_validate() {
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+   // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let connection_id = ConnectionId::new(5);
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id,
-            channel_id: Some(channel_id),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![connection_id],
         version: Version::new("xcall".to_string()),
     };
-    let channel_close_init_validate = channel_close_init_validate(&channel_end, &msg);
+    let channel_close_init_validate = channel_close_init_validate(&channel_id,&channel_end);
 
     assert!(channel_close_init_validate.is_ok())
 }
@@ -289,12 +289,12 @@ fn test_channel_close_init_validate_fail() {
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id,
-            channel_id: Some(channel_id),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![connection_id],
         version: Version::new("xcall".to_string()),
     };
-    channel_close_init_validate(&channel_end, &msg).unwrap();
+    channel_close_init_validate(&channel_id,&channel_end).unwrap();
 }
 
 #[test]
@@ -308,14 +308,14 @@ fn test_on_chan_close_init_submessage() {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id,
-            channel_id: Some(channel_id),
+            port_id:port_id.clone(),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![connection_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     let channel_close_init_validate =
-        on_chan_close_init_submessage(&msg, &channel_end, &connection_id);
+        on_chan_close_init_submessage(&port_id, &channel_id,&channel_end, &connection_id);
 
     assert_eq!("xcall", channel_close_init_validate.channel().version);
     assert_eq!(

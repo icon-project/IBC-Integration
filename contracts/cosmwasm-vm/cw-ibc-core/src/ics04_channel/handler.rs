@@ -11,7 +11,7 @@ use self::{
 };
 
 use common::ibc::core::ics04_channel::Version;
-use cw_common::{commitment, raw_types::channel::{RawChannel, RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawMsgChannelOpenAck, RawMsgChannelOpenConfirm}};
+use cw_common::{commitment, raw_types::channel::{RawChannel, RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawMsgChannelOpenAck, RawMsgChannelOpenConfirm, RawMsgChannelCloseInit}};
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;
@@ -600,13 +600,13 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelCloseInit,
+        message: &RawMsgChannelCloseInit,
     ) -> Result<Response, ContractError> {
-        let port_id = message.port_id_on_a.clone();
-        let channel_id = message.chan_id_on_a.clone();
-        let chan_end_on_a = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
+        let src_port = to_ibc_port_id(&message.port_id)?;
+        let src_channel = to_ibc_channel_id(&message.channel_id)?;
+        let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
 
-        channel_close_init_validate(&chan_end_on_a, message)?;
+        channel_close_init_validate(&src_channel,&chan_end_on_a, )?;
         let connection_id = chan_end_on_a.connection_hops()[0].clone();
         let conn_end_on_a = self.connection_end(deps.storage, connection_id.clone())?;
 
@@ -618,13 +618,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
 
-        let contract_address =
-            match self.lookup_modules(deps.storage, message.port_id_on_a.as_bytes().to_vec()) {
-                Ok(addr) => addr,
-                Err(error) => return Err(error),
-            };
+        let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
-        let sub_message = on_chan_close_init_submessage(message, &chan_end_on_a, &connection_id);
+        let sub_message = on_chan_close_init_submessage(&src_port,&src_channel, &chan_end_on_a, &connection_id);
         self.store_callback_data(
             deps.storage,
             EXECUTE_ON_CHANNEL_CLOSE_INIT,
