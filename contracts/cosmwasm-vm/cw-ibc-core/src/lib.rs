@@ -2,6 +2,7 @@
 pub mod constants;
 pub mod context;
 pub mod contract;
+pub mod conversions;
 mod error;
 pub mod gas_estimates;
 pub mod ics02_client;
@@ -15,7 +16,6 @@ pub mod msg;
 pub mod state;
 pub mod storage_keys;
 pub mod traits;
-pub mod conversions;
 pub use crate::error::ContractError;
 use gas_estimates::*;
 use ics04_channel::ics03_connection::msg::MigrateMsg;
@@ -27,7 +27,7 @@ use common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionO
 use common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
 use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
-use common::ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
+
 use common::ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
 use common::ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 pub use common::ibc::core::ics04_channel::msgs::{
@@ -38,7 +38,7 @@ pub use common::ibc::core::ics04_channel::msgs::{
 use common::ibc::core::ics05_port::error::PortError;
 use common::ibc::core::ics24_host::error::ValidationError;
 use common::ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
-use common::ibc::{core::ics04_channel::packet::Packet, signer::Signer};
+use common::ibc::signer::Signer;
 pub use common::ibc::{
     core::{
         ics02_client::{

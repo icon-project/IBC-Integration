@@ -1,5 +1,8 @@
 use common::ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
-use cw_common::raw_types::channel::{RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawMsgChannelOpenAck, RawMsgChannelOpenConfirm, RawMsgChannelCloseInit, RawMsgChannelCloseConfirm};
+use cw_common::raw_types::channel::{
+    RawMsgChannelCloseConfirm, RawMsgChannelCloseInit, RawMsgChannelOpenAck,
+    RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry,
+};
 
 use super::*;
 

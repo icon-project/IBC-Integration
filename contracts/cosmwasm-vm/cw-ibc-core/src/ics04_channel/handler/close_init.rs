@@ -37,12 +37,11 @@ pub fn channel_close_init_validate(
 /// state of a channel. It contains information such as the channel's state, ordering, and version.
 /// * `connection_id`: The ID of the connection associated with the channel being closed.
 pub fn on_chan_close_init_submessage(
-    port_id:&PortId,
-    channel_id:&ChannelId,
+    port_id: &PortId,
+    channel_id: &ChannelId,
     channel_end: &ChannelEnd,
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelCloseMsg {
-
     let endpoint = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),

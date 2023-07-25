@@ -1,4 +1,4 @@
-use cw_ibc_core::conversions::{to_ibc_port_id, to_ibc_channel_id,};
+use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_port_id};
 
 use super::*;
 
@@ -10,18 +10,14 @@ fn test_packet_send() {
     let timestamp_future = Timestamp::default();
     let timeout_height_future = 10;
 
-    let mut packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
-            ;
+    let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
     packet.sequence = 1;
     packet.data = vec![0];
     let src_port = to_ibc_port_id(&packet.source_port).unwrap();
     let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
-
-
+    let _dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let _dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
 
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
@@ -63,12 +59,7 @@ fn test_packet_send() {
         .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
         .unwrap();
     contract
-        .store_next_sequence_send(
-            &mut deps.storage,
-            src_port.clone(),
-            src_channel.clone(),
-            1.into(),
-        )
+        .store_next_sequence_send(&mut deps.storage, src_port, src_channel, 1.into())
         .unwrap();
 
     let client_state = ClientState {
@@ -124,9 +115,8 @@ fn test_packet_send_fail_channel_not_found() {
     let mut deps = deps();
     let timestamp_future = Timestamp::default();
     let timeout_height_future = 10;
-    let mut packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
-           
+    let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
+
     packet.sequence = 1;
     packet.data = vec![0];
     contract.send_packet(deps.as_mut(), packet).unwrap();
@@ -142,8 +132,7 @@ fn test_packet_send_fail_misiing_sequense() {
     let mut deps = deps();
     let timestamp_future = Timestamp::default();
     let timeout_height_future = 10;
-    let mut packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
+    let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
     packet.sequence = 1;
     packet.data = vec![0];
 
@@ -156,10 +145,7 @@ fn test_packet_send_fail_misiing_sequense() {
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
         Order::default(),
-        Counterparty::new(
-            dst_port.clone(),
-            Some(dst_channel.clone()),
-        ),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -183,8 +169,8 @@ fn test_packet_send_fail_misiing_sequense() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            src_port.clone(),
-            src_channel.clone(),
+            src_port,
+            src_channel,
             chan_end_on_a.clone(),
         )
         .unwrap();

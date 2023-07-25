@@ -266,8 +266,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let packet = reply.original_packet;
                 let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
                 let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
-                let chan_end_on_a =
-                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
+                let chan_end_on_a = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
                 let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
 
                 let event = create_packet_event(

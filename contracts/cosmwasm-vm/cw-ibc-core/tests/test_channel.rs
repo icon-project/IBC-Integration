@@ -25,7 +25,7 @@ use cw_common::raw_types::channel::{
 };
 use cw_common::raw_types::{to_raw_packet, RawHeight};
 
-use cw_ibc_core::conversions::{to_ibc_port_id, to_ibc_channel, to_ibc_height};
+use cw_ibc_core::conversions::{to_ibc_channel, to_ibc_height, to_ibc_port_id};
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };
@@ -71,7 +71,8 @@ fn test_add_channel() {
         channel_end.clone(),
     );
 
-    let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, &port_id, &channel_id);
+    let retrived_channel_end =
+        ctx.get_channel_end(mock_deps.as_ref().storage, &port_id, &channel_id);
 
     assert_eq!(channel_end, retrived_channel_end.unwrap())
 }
@@ -944,7 +945,7 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-   // let msg = MsgChannelOpenInit::try_from(raw).unwrap();
+    // let msg = MsgChannelOpenInit::try_from(raw).unwrap();
 
     contract
         .validate_channel_open_init(deps.as_mut(), info, &raw)
@@ -1004,7 +1005,7 @@ fn test_validate_open_init_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-   
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let src_channel = ChannelId::new(0);
@@ -1013,8 +1014,7 @@ fn test_validate_open_init_channel() {
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
 
-    let  channel_end= to_ibc_channel(raw.channel.clone()).unwrap();
-
+    let channel_end = to_ibc_channel(raw.channel.clone()).unwrap();
 
     contract
         .claim_capability(
@@ -1033,8 +1033,7 @@ fn test_validate_open_init_channel() {
 
     let res = contract.validate_channel_open_init(deps.as_mut(), info.clone(), &raw);
 
-   
-    let expected = on_chan_open_init_submessage(&channel_end, &src_port_id, &src_channel,&conn_id);
+    let expected = on_chan_open_init_submessage(&channel_end, &src_port_id, &src_channel, &conn_id);
     let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
@@ -1043,7 +1042,7 @@ fn test_validate_open_init_channel() {
         info.funds,
         EXECUTE_ON_CHANNEL_OPEN_INIT,
     );
-    println!("{:?}",res);
+    println!("{:?}", res);
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_init)
@@ -1089,8 +1088,8 @@ fn test_validate_open_try_channel_fail_missing_connection_end() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-  //  let msg = MsgChannelOpenTry::try_from(raw).unwrap();
-  let channel= to_ibc_channel(raw.channel.clone()).unwrap();
+    //  let msg = MsgChannelOpenTry::try_from(raw).unwrap();
+    let _channel = to_ibc_channel(raw.channel.clone()).unwrap();
 
     contract
         .validate_channel_open_try(deps.as_mut(), info, &raw)
@@ -1104,11 +1103,11 @@ fn test_validate_open_try_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-   // let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
+    // let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-        let channel= to_ibc_channel(raw.channel.clone()).unwrap();
+    let channel = to_ibc_channel(raw.channel.clone()).unwrap();
     let port_id = channel.counterparty().port_id.clone();
 
     let light_client = LightClient::new("lightclient".to_string());
@@ -1139,7 +1138,7 @@ fn test_validate_open_try_channel() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(0);
-  //  msg.connection_hops_on_b = vec![conn_id.clone()];
+    //  msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id, conn_end)
@@ -1197,7 +1196,7 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-  //  let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
+    //  let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -1215,7 +1214,7 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(0);
- //   msg.connection_hops_on_b = vec![conn_id.clone()];
+    //   msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id, conn_end)
@@ -1322,7 +1321,8 @@ fn test_get_channel() {
         channel_end.clone(),
     )
     .unwrap();
-    let retrived_channel_end = ctx.get_channel_end(mock_deps.as_ref().storage, &port_id, &channel_id);
+    let retrived_channel_end =
+        ctx.get_channel_end(mock_deps.as_ref().storage, &port_id, &channel_id);
 
     assert_eq!(channel_end, retrived_channel_end.unwrap())
 }

@@ -1,11 +1,9 @@
-use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
-use cw_common::{
-    ibc_types::IbcTimestamp,
-    raw_types::{channel::RawPacket, RawHeight},
-};
+use cw_common::raw_types::channel::RawPacket;
 use debug_print::debug_println;
 
-use crate::conversions::{to_ibc_port_id, to_ibc_channel_id, to_ibc_timestamp, to_ibc_timeout_height};
+use crate::conversions::{
+    to_ibc_channel_id, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
+};
 
 use super::*;
 
@@ -39,7 +37,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if chan_end_on_a.state_matches(&State::Closed) {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::ChannelClosed {
-                    channel_id: src_channel.clone(),
+                    channel_id: src_channel,
                 },
             });
         }
@@ -49,8 +47,8 @@ impl<'a> CwIbcCoreContext<'a> {
         if !chan_end_on_a.counterparty_matches(&counterparty) {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketCounterparty {
-                    port_id: dst_port.clone(),
-                    channel_id: dst_channel.clone(),
+                    port_id: dst_port,
+                    channel_id: dst_channel,
                 },
             });
         }
@@ -74,7 +72,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::LowPacketHeight {
                     chain_height: latest_height_on_a,
-                    timeout_height: packet_timeout_height.clone(),
+                    timeout_height: packet_timeout_height,
                 },
             });
         }
@@ -108,8 +106,8 @@ impl<'a> CwIbcCoreContext<'a> {
         self.increase_next_sequence_send(deps.storage, src_port.clone(), src_channel.clone())?;
         self.store_packet_commitment(
             deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             packet.sequence.into(),
             commitment::compute_packet_commitment(
                 &packet.data,
@@ -121,7 +119,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let event = create_packet_event(
             IbcEventType::SendPacket,
-            RawPacket::from(packet),
+            packet,
             chan_end_on_a.ordering(),
             conn_id_on_a,
             None,

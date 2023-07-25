@@ -69,7 +69,7 @@ fn test_receive_packet() {
     let chan_end_on_b = ChannelEnd::new(
         State::Open,
         Order::default(),
-        Counterparty::new(src_port.clone(), Some(src_channel.clone())),
+        Counterparty::new(src_port, Some(src_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -121,7 +121,7 @@ fn test_receive_packet() {
     .try_into()
     .unwrap();
 
-    let proof_height= to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -141,11 +141,7 @@ fn test_receive_packet() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(
-            &mut deps.storage,
-            &dst_port,
-            "moduleaddress".to_string(),
-        )
+        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
         .unwrap();
 
     contract
@@ -157,7 +153,7 @@ fn test_receive_packet() {
         .store_channel_end(
             &mut deps.storage,
             dst_port.clone(),
-            dst_channel.clone(),
+            dst_channel,
             chan_end_on_b.clone(),
         )
         .unwrap();

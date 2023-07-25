@@ -1,11 +1,12 @@
 use cosmwasm_std::IbcChannel;
 
 use cw_ibc_core::{
+    conversions::to_ibc_channel_id,
     ics04_channel::{
         channel_close_confirm_validate, on_chan_close_confirm_submessage,
         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
     },
-    light_client::light_client::LightClient, conversions::to_ibc_channel_id,
+    light_client::light_client::LightClient,
 };
 
 use super::*;
@@ -18,10 +19,10 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_close_confirm(10);
-   // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
 
     let committment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -55,12 +56,7 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            port_id.clone(),
-            channel_id.clone(),
-            channel_end,
-        )
+        .store_channel_end(&mut deps.storage, port_id, channel_id, channel_end)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
 
@@ -117,7 +113,7 @@ fn test_validate_close_confirm_channel() {
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
 
@@ -161,12 +157,7 @@ fn test_validate_close_confirm_channel() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            port_id,
-            channel_id.clone(),
-            channel_end,
-        )
+        .store_channel_end(&mut deps.storage, port_id, channel_id, channel_end)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
@@ -343,10 +334,10 @@ fn test_execute_close_confirm_channel_fail_invalid_state() {
 #[test]
 pub fn test_channel_close_confirm_validate() {
     let msg = get_dummy_raw_msg_chan_close_confirm(10);
-   // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let conn_id = ConnectionId::new(5);
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
@@ -403,10 +394,10 @@ pub fn test_on_chan_close_confirm_submessage() {
 #[should_panic(expected = "ChannelClosed")]
 pub fn test_channel_close_confirm_validate_fail() {
     let msg = get_dummy_raw_msg_chan_close_confirm(10);
-   // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let conn_id = ConnectionId::new(5);
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Closed,
         ordering: Order::Unordered,
@@ -424,9 +415,9 @@ pub fn test_channel_close_confirm_validate_fail() {
 #[should_panic(expected = "InvalidConnectionHopsLength")]
 pub fn test_channel_close_confirm_validate_fail_connection_hops() {
     let msg = get_dummy_raw_msg_chan_close_confirm(10);
-  //  let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
-  let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-  let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
+    //  let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,

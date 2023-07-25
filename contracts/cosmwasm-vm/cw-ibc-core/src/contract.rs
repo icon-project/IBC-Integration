@@ -151,27 +151,27 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             CoreExecuteMsg::ChannelOpenTry { msg } => {
                 debug_println!("[IBCCore] Channel Open Try Called");
-                let message:RawMsgChannelOpenTry=Self::raw_from_hex(&msg)?;
+                let message: RawMsgChannelOpenTry = Self::raw_from_hex(&msg)?;
                 self.validate_channel_open_try(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenAck { msg } => {
                 debug_println!("[IBCCore] Channel Open Ack Called");
-                    let message:RawMsgChannelOpenAck=Self::raw_from_hex(&msg)?;
+                let message: RawMsgChannelOpenAck = Self::raw_from_hex(&msg)?;
                 self.validate_channel_open_ack(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenConfirm { msg } => {
                 debug_println!("[IBCCore] Channel Open Confirm Called");
-                    let message:RawMsgChannelOpenConfirm=Self::raw_from_hex(&msg)?;
+                let message: RawMsgChannelOpenConfirm = Self::raw_from_hex(&msg)?;
                 self.validate_channel_open_confirm(deps, info, &message)
             }
             CoreExecuteMsg::ChannelCloseInit { msg } => {
                 debug_println!("[IBCCore] Channel Close Init Called");
-                let message:RawMsgChannelCloseInit=Self::raw_from_hex(&msg)?;
+                let message: RawMsgChannelCloseInit = Self::raw_from_hex(&msg)?;
                 self.validate_channel_close_init(deps, info, &message)
             }
             CoreExecuteMsg::ChannelCloseConfirm { msg } => {
                 debug_println!("[IBCCore] Channel Close Confirm Called");
-                    let message:RawMsgChannelCloseConfirm=Self::raw_from_hex(&msg)?;
+                let message: RawMsgChannelCloseConfirm = Self::raw_from_hex(&msg)?;
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             CoreExecuteMsg::SendPacket { packet } => {
@@ -179,14 +179,11 @@ impl<'a> CwIbcCoreContext<'a> {
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
                     .map_err(|error| ContractError::IbcDecodeError { error })?;
 
-              
-
                 self.send_packet(deps, packet)
             }
             CoreExecuteMsg::ReceivePacket { msg } => {
-                
-                    let message= Self::raw_from_hex::<RawMessageRecvPacket>(&msg)?;
-                    
+                let message = Self::raw_from_hex::<RawMessageRecvPacket>(&msg)?;
+
                 self.validate_receive_packet(deps, info, env, &message)
             }
             CoreExecuteMsg::AcknowledgementPacket { msg } => {
@@ -592,13 +589,13 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(message)
     }
 
-
-    pub fn raw_from_hex<R: Message + std::default::Default + Clone>(hex_str:&HexString)->Result<R, ContractError>{
+    pub fn raw_from_hex<R: Message + std::default::Default + Clone>(
+        hex_str: &HexString,
+    ) -> Result<R, ContractError> {
         let bytes = hex_str.to_bytes()?;
         let raw = <R as Message>::decode(bytes.as_slice())
             .map_err(|error| ContractError::IbcDecodeError { error })?;
         Ok(raw)
-
     }
 
     /// The function converts a hexadecimal string to a Signer object and returns an error if the

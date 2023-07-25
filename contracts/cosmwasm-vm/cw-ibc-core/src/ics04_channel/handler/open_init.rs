@@ -16,17 +16,21 @@ pub fn on_chan_open_init_submessage(
     channel_id: &ChannelId,
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
-   
     let channel_id = channel_id;
     let counter_party_port_id = channel.remote.port_id();
-    let counter_party_channel = channel.remote.channel_id.as_ref().map(|e|e.to_string()).unwrap_or("".to_string());
+    let counter_party_channel = channel
+        .remote
+        .channel_id
+        .as_ref()
+        .map(|e| e.to_string())
+        .unwrap_or("".to_string());
     let endpoint = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),
     };
     let counter_party = cosmwasm_std::IbcEndpoint {
         port_id: counter_party_port_id.to_string(),
-        channel_id: counter_party_channel.to_string(),
+        channel_id: counter_party_channel,
     };
     let ibc_channel = cosmwasm_std::IbcChannel::new(
         endpoint,

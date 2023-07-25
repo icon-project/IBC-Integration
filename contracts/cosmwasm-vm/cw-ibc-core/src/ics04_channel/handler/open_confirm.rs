@@ -18,7 +18,7 @@ pub fn channel_open_confirm_validate(
     channel_id: &ChannelId,
     chan_end_on_b: &ChannelEnd,
 ) -> Result<(), ContractError> {
-    ensure_channel_state(&channel_id, chan_end_on_b, &State::TryOpen)?;
+    ensure_channel_state(channel_id, chan_end_on_b, &State::TryOpen)?;
 
     validate_connection_length(chan_end_on_b)?;
 

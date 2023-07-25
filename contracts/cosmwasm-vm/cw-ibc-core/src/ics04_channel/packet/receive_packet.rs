@@ -1,11 +1,16 @@
-use common::ibc::core::ics04_channel::{
-    msgs::{acknowledgement::Acknowledgement, recv_packet::MsgRecvPacket},
-    packet::Receipt,
+use common::ibc::core::ics04_channel::{msgs::acknowledgement::Acknowledgement, packet::Receipt};
+use cw_common::{
+    hex_string::HexString,
+    raw_types::{
+        channel::{RawMessageRecvPacket, RawPacket},
+        to_raw_packet,
+    },
 };
-use cw_common::{hex_string::HexString, raw_types::{to_raw_packet, channel::{RawMessageRecvPacket, RawPacket}}};
 use debug_print::debug_println;
 
-use crate::conversions::{to_ibc_port_id, to_ibc_channel_id, to_ibc_timeout_height, to_ibc_height, to_ibc_timestamp};
+use crate::conversions::{
+    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
+};
 
 use super::*;
 
@@ -41,28 +46,21 @@ impl<'a> CwIbcCoreContext<'a> {
         let dst_port = to_ibc_port_id(&packet.destination_port)?;
         let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
 
-        let chan_end_on_b = self.get_channel_end(
-            deps.storage,
-            &dst_port,
-            &dst_channel,
-        )?;
+        let chan_end_on_b = self.get_channel_end(deps.storage, &dst_port, &dst_channel)?;
         if !chan_end_on_b.state_matches(&State::Open) {
             return Err(PacketError::InvalidChannelState {
-                channel_id: dst_channel.clone(),
+                channel_id: dst_channel,
                 state: chan_end_on_b.state,
             })
             .map_err(Into::<ContractError>::into)?;
         }
         debug_println!("validate recevie packet state_matched");
-        let counterparty = Counterparty::new(
-            src_port.clone(),
-            Some(src_channel.clone()),
-        );
+        let counterparty = Counterparty::new(src_port.clone(), Some(src_channel.clone()));
 
         if !chan_end_on_b.counterparty_matches(&counterparty) {
             return Err(PacketError::InvalidPacketCounterparty {
-                port_id: src_port.clone(),
-                channel_id: src_channel.clone(),
+                port_id: src_port,
+                channel_id: src_channel,
             })
             .map_err(Into::<ContractError>::into)?;
         }
@@ -80,7 +78,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if packet_timeout_height.has_expired(latest_height) {
             return Err(PacketError::LowPacketHeight {
                 chain_height: latest_height,
-                timeout_height: packet_timeout_height.clone(),
+                timeout_height: packet_timeout_height,
             })
             .map_err(Into::<ContractError>::into)?;
         }
@@ -97,7 +95,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         debug_println!("client state created ",);
 
-        let proof_height= to_ibc_height(msg.proof_height.clone().unwrap())?;
+        let proof_height = to_ibc_height(msg.proof_height.clone().unwrap())?;
 
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;
@@ -125,7 +123,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_packet_data = VerifyPacketData {
             height: proof_height.to_string(),
             prefix: conn_end_on_b.counterparty().prefix().clone().into_vec(),
-            proof: msg.proof_commitment.clone().into(),
+            proof: msg.proof_commitment.clone(),
             root: consensus_state_of_a_on_b.root().into_vec(),
             commitment_path: commitment_path_on_a,
             commitment: expected_commitment_on_a.into_vec(),
@@ -133,14 +131,10 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let client = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
         client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id_on_b)?;
-         let packet_sequence=Sequence::from(packet.sequence);
-       
+        let packet_sequence = Sequence::from(packet.sequence);
+
         if chan_end_on_b.order_matches(&Order::Ordered) {
-            let next_seq_recv = self.get_next_sequence_recv(
-                deps.storage,
-                dst_port.clone(),
-                dst_channel.clone(),
-            )?;
+            let next_seq_recv = self.get_next_sequence_recv(deps.storage, dst_port, dst_channel)?;
             if packet_sequence > next_seq_recv {
                 return Err(PacketError::InvalidPacketSequence {
                     given_sequence: packet_sequence,
@@ -186,7 +180,7 @@ impl<'a> CwIbcCoreContext<'a> {
             },
         };
         let timeout = CwTimeout::with_block(timeoutblock);
-        let ibc_packet = CwPacket::new(data, src, dest, packet.sequence.into(), timeout);
+        let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
         let address = Addr::unchecked(msg.signer.to_string());
         self.store_callback_data(
             deps.storage,
@@ -230,7 +224,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &mut dyn Storage,
         packet: &RawPacket,
     ) -> Result<(), ContractError> {
-        let packet_sequence=Sequence::from(packet.sequence);
+        let packet_sequence = Sequence::from(packet.sequence);
         if self
             .get_packet_acknowledgement(
                 store,
@@ -286,8 +280,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     IbcChannelId::from_str(&chan).map_err(Into::<ContractError>::into)?;
                 let port_id = IbcPortId::from_str(&port).unwrap();
 
-                let chan_end_on_b =
-                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
+                let chan_end_on_b = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
                 debug_println!("execute_receive_packet decoding of data successful");
                 let packet_already_received = match chan_end_on_b.ordering {
                     // Note: ibc-go doesn't make the check for `Order::None` channels

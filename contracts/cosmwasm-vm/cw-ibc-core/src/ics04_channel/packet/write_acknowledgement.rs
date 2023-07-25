@@ -44,11 +44,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        let channel = self.get_channel_end(
-            deps.as_ref().storage,
-            &ibc_port.clone(),
-            &ibc_channel.clone(),
-        )?;
+        let channel = self.get_channel_end(deps.as_ref().storage, &ibc_port, &ibc_channel)?;
         if channel.state != State::Open {
             return Err(ContractError::IbcChannelError {
                 error: InvalidChannelState {

@@ -30,8 +30,8 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let chan_end_on_a = self.get_channel_end(
             deps.storage,
-            &msg.packet.port_id_on_a.clone(),
-            &msg.packet.chan_id_on_a.clone(),
+            &msg.packet.port_id_on_a,
+            &msg.packet.chan_id_on_a,
         )?;
         if !chan_end_on_a.state_matches(&State::Open) {
             return Err(ContractError::IbcPacketError {
@@ -231,8 +231,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 )?;
                 let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
                 let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
-                let chan_end_on_a =
-                    self.get_channel_end(deps.storage, &port_id.clone(), &channel_id.clone())?;
+                let chan_end_on_a = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
                 if self
                     .get_packet_commitment(
                         deps.storage,

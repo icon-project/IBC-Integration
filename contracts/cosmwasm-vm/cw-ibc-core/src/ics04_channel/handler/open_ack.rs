@@ -17,7 +17,7 @@ use super::*;
 /// `Err(ContractError)` value indicating that the validation failed with a specific `ContractError`
 /// type.
 pub fn channel_open_ack_validate(
-    channel_id:&IbcChannelId,
+    channel_id: &IbcChannelId,
     channel: &ChannelEnd,
 ) -> Result<(), ContractError> {
     ensure_channel_state(channel_id, channel, &State::Init)?;

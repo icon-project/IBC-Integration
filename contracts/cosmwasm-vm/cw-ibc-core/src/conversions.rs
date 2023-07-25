@@ -2,8 +2,8 @@ use std::str::FromStr;
 
 use common::ibc::{core::ics04_channel::timeout::TimeoutHeight, Height};
 use cw_common::{
-    ibc_types::{IbcChannelId, IbcPortId, IbcTimestamp, ChannelEnd, ChannelError, ClientError},
-    raw_types::{channel::{RawPacket, RawChannel}, RawHeight},
+    ibc_types::{ChannelEnd, ChannelError, IbcChannelId, IbcPortId, IbcTimestamp},
+    raw_types::{channel::RawChannel, RawHeight},
 };
 
 use crate::ContractError;
@@ -21,8 +21,6 @@ pub fn to_ibc_channel_id(channel_id: &str) -> Result<IbcChannelId, ContractError
 }
 
 pub fn to_ibc_height(height: RawHeight) -> Result<Height, ContractError> {
-
-
     let height =
         Height::try_from(height).map_err(|e| ContractError::IbcClientError { error: e })?;
     Ok(height)
@@ -42,14 +40,10 @@ pub fn to_ibc_timestamp(nanoseconds: u64) -> Result<IbcTimestamp, ContractError>
     Ok(time_stamp)
 }
 
-
-pub fn to_ibc_channel(channel:Option<RawChannel>)->Result<ChannelEnd,ContractError>{
-  let chan=  match channel {
-     Some(chan)=>{
-         ChannelEnd::try_from(chan)
-     },
-     None=>Err(ChannelError::MissingChannel)
-   };
-   return chan.map_err(|e|ContractError::IbcChannelError { error: e })
-
+pub fn to_ibc_channel(channel: Option<RawChannel>) -> Result<ChannelEnd, ContractError> {
+    let chan = match channel {
+        Some(chan) => ChannelEnd::try_from(chan),
+        None => Err(ChannelError::MissingChannel),
+    };
+    chan.map_err(|e| ContractError::IbcChannelError { error: e })
 }

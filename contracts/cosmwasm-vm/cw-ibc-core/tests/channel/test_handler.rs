@@ -10,11 +10,11 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-   // let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
+    // let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let channel= to_ibc_channel(raw.channel.clone()).unwrap();
-    let port_id = channel.remote.port_id.clone();
+    let channel = to_ibc_channel(raw.channel.clone()).unwrap();
+    let port_id = channel.remote.port_id;
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
@@ -43,7 +43,7 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(0);
-    
+
     let contract = CwIbcCoreContext::new();
     contract
         .store_connection(deps.as_mut().storage, conn_id, conn_end)

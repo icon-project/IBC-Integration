@@ -1,11 +1,12 @@
 use cosmwasm_std::IbcChannel;
 
 use cw_ibc_core::{
+    conversions::to_ibc_channel_id,
     ics04_channel::{
         open_confirm::{channel_open_confirm_validate, on_chan_open_confirm_submessage},
         EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
     },
-    light_client::light_client::LightClient, conversions::to_ibc_channel_id,
+    light_client::light_client::LightClient,
 };
 
 use super::*;
@@ -18,10 +19,10 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-   // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+    // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let dest_port=to_ibc_port_id(&msg.port_id).unwrap();
-    let dest_channel=to_ibc_channel_id(&msg.channel_id).unwrap();
+    let dest_port = to_ibc_port_id(&msg.port_id).unwrap();
+    let dest_channel = to_ibc_channel_id(&msg.channel_id).unwrap();
 
     let committment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -55,12 +56,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            dest_port,
-            dest_channel,
-            channel_end,
-        )
+        .store_channel_end(&mut deps.storage, dest_port, dest_channel, channel_end)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
 
@@ -113,11 +109,11 @@ fn test_validate_open_confirm_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-   // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+    // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
 
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
@@ -162,12 +158,7 @@ fn test_validate_open_confirm_channel() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            port_id,
-            channel_id.clone(),
-            channel_end,
-        )
+        .store_channel_end(&mut deps.storage, port_id, channel_id, channel_end)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
@@ -337,10 +328,10 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
 #[test]
 pub fn test_channel_open_confirm_validate() {
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-   // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+    // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
     let conn_id = ConnectionId::new(5);
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::TryOpen,
         ordering: Order::Unordered,
