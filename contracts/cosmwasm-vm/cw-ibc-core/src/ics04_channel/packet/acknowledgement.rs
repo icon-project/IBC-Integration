@@ -112,8 +112,8 @@ impl<'a> CwIbcCoreContext<'a> {
         if let Order::Ordered = chan_end_on_a.ordering {
             let next_seq_ack = self.get_next_sequence_ack(
                 deps.storage,
-                packet.port_id_on_a.clone(),
-                packet.chan_id_on_a.clone(),
+                &packet.port_id_on_a,
+                &packet.chan_id_on_a,
             )?;
             if packet.sequence != next_seq_ack {
                 return Err(ContractError::IbcPacketError {
@@ -300,7 +300,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 if let Order::Ordered = chan_end_on_a.ordering {
                     // Note: in validation, we verified that `msg.packet.sequence == nextSeqRecv`
                     // (where `nextSeqRecv` is the value in the store)
-                    self.increase_next_sequence_ack(deps.storage, port_id, channel_id)?;
+                    self.increase_next_sequence_ack(deps.storage, &port_id, &channel_id)?;
                 }
                 Ok(Response::new()
                     .add_attribute("action", "packet")

@@ -76,9 +76,9 @@ fn test_validate_close_init_channel() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id.clone(),
-            channel_id.clone(),
-            channel_end.clone(),
+            &port_id,
+            &channel_id,
+            &channel_end,
         )
         .unwrap();
 
@@ -144,7 +144,7 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(&mut deps.storage, port_id, channel_id, channel_end)
+        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
 
     contract
@@ -175,13 +175,13 @@ fn test_execute_close_init_channel() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id.clone(),
-            channel_id.clone(),
-            channel_end.clone(),
+            &port_id,
+            &channel_id,
+            &channel_end,
         )
         .unwrap();
     contract
-        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, channel_end)
+        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),

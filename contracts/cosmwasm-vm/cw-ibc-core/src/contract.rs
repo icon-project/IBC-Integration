@@ -313,10 +313,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 port_id,
                 channel_id,
             } => {
-                let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
+                let port_id = PortId::from_str(&port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let res = self
-                    .get_next_sequence_send(deps.storage, _port_id, _channel_id)
+                    .get_next_sequence_send(deps.storage, &port_id, &channel_id)
                     .unwrap();
                 to_binary(&res)
             }
@@ -324,10 +324,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 port_id,
                 channel_id,
             } => {
-                let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
+                let port_id = PortId::from_str(&port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let res = self
-                    .get_next_sequence_recv(deps.storage, _port_id, _channel_id)
+                    .get_next_sequence_recv(deps.storage, &port_id, &channel_id)
                     .unwrap();
                 let sequence: u64 = res.into();
                 to_binary(&sequence)
@@ -336,10 +336,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 port_id,
                 channel_id,
             } => {
-                let _port_id = PortId::from_str(&port_id).unwrap();
-                let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
+                let port_id = PortId::from_str(&port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let res = self
-                    .get_next_sequence_ack(deps.storage, _port_id, _channel_id)
+                    .get_next_sequence_ack(deps.storage, &port_id, &channel_id)
                     .unwrap();
                 to_binary(&res)
             }

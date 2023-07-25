@@ -255,9 +255,9 @@ impl<'a> CwIbcCoreContext<'a> {
                         chan_end_on_a.state = State::Closed;
                         self.store_channel_end(
                             deps.storage,
-                            port_id,
-                            channel_id,
-                            chan_end_on_a.clone(),
+                            &port_id,
+                            &channel_id,
+                            &chan_end_on_a,
                         )?;
 
                         chan_end_on_a

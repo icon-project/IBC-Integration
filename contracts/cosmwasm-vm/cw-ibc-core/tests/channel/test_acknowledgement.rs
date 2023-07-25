@@ -69,9 +69,9 @@ fn test_acknowledgement_packet_execute() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            msg.packet.port_id_on_a.clone(),
-            msg.packet.chan_id_on_a.clone(),
-            chan_end_on_a_ordered,
+           & msg.packet.port_id_on_a.clone(),
+           & msg.packet.chan_id_on_a.clone(),
+           & chan_end_on_a_ordered,
         )
         .unwrap();
     let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
@@ -160,9 +160,9 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            msg.packet.port_id_on_a.clone(),
-            msg.packet.chan_id_on_a.clone(),
-            chan_end_on_a_ordered,
+          & msg.packet.port_id_on_a.clone(),
+          & msg.packet.chan_id_on_a.clone(),
+          & chan_end_on_a_ordered,
         )
         .unwrap();
     let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
@@ -180,9 +180,9 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_next_sequence_ack(
             &mut deps.storage,
-            msg.packet.port_id_on_a.clone(),
-            msg.packet.chan_id_on_a,
-            1.into(),
+           &msg.packet.port_id_on_a.clone(),
+           &msg.packet.chan_id_on_a,
+           &1.into(),
         )
         .unwrap();
 
@@ -261,9 +261,9 @@ fn test_acknowledgement_packet_execute_fail() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            msg.packet.port_id_on_a.clone(),
-            msg.packet.chan_id_on_a.clone(),
-            chan_end_on_a_ordered,
+          & msg.packet.port_id_on_a.clone(),
+          & msg.packet.chan_id_on_a.clone(),
+          & chan_end_on_a_ordered,
         )
         .unwrap();
     let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
@@ -308,9 +308,9 @@ fn test_acknowledgement_packet_validate_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            chan_end_on_a_ordered.clone(),
+         & packet.port_id_on_a.clone(),
+         & packet.chan_id_on_a.clone(),
+         & chan_end_on_a_ordered.clone(),
         )
         .unwrap();
 
@@ -367,9 +367,9 @@ fn test_acknowledgement_packet_validate_ordered() {
     contract
         .store_next_sequence_ack(
             &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b,
-            1.into(),
+          &  packet.port_id_on_b.clone(),
+          &  packet.chan_id_on_b,
+          &  1.into(),
         )
         .unwrap();
     contract
@@ -416,9 +416,9 @@ fn test_acknowledgement_packet_validate_unordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            chan_end_on_a_ordered.clone(),
+          & packet.port_id_on_a.clone(),
+          & packet.chan_id_on_a.clone(),
+          & chan_end_on_a_ordered.clone(),
         )
         .unwrap();
     let conn_end_on_a = get_dummy_connection();
@@ -514,9 +514,9 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a,
-            chan_end_on_a_ordered.clone(),
+           &packet.port_id_on_a.clone(),
+           &packet.chan_id_on_a,
+           &chan_end_on_a_ordered.clone(),
         )
         .unwrap();
 

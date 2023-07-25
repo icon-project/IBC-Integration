@@ -6,6 +6,7 @@ use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cw_common::raw_types::Protobuf;
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
+use cw_ibc_core::conversions::to_ibc_channel_id;
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
@@ -283,9 +284,9 @@ fn test_for_channel_open_ack_execution() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id,
-            msg.chan_id_on_a.clone(),
-            channel_end,
+            &port_id,
+            &msg.chan_id_on_a.clone(),
+            &channel_end,
         )
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
@@ -425,9 +426,9 @@ fn test_for_channel_open_confirm() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id,
-            msg.chan_id_on_b.clone(),
-            channel_end,
+            &port_id,
+            &msg.chan_id_on_b.clone(),
+            &channel_end,
         )
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
@@ -568,9 +569,9 @@ fn test_for_channel_close_init() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id.clone(),
-            channel_id.clone(),
-            channel_end.clone(),
+            &port_id,
+            &channel_id,
+            &channel_end,
         )
         .unwrap();
 
@@ -631,11 +632,12 @@ fn test_for_channel_close_confirm() {
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
-    let raw = get_dummy_raw_msg_chan_close_confirm(10);
-    let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_confirm(10);
+    //let msg = MsgChannelCloseConfirm::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
 
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
         .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
@@ -670,7 +672,7 @@ fn test_for_channel_close_confirm() {
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id: port_id.clone(),
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
@@ -678,9 +680,9 @@ fn test_for_channel_close_confirm() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id,
-            msg.chan_id_on_b.clone(),
-            channel_end,
+            &port_id,
+            &channel_id,
+            &channel_end,
         )
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
@@ -708,7 +710,7 @@ fn test_for_channel_close_confirm() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -724,7 +726,7 @@ fn test_for_channel_close_confirm() {
         env.clone(),
         info,
         CoreExecuteMsg::ChannelCloseConfirm {
-            msg: HexString::from_bytes(&raw.encode_to_vec()),
+            msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
     println!("{:?}", res);
@@ -736,8 +738,8 @@ fn test_for_channel_close_confirm() {
     );
 
     let mock_reponse_data = cosmwasm_std::IbcEndpoint {
-        port_id: msg.port_id_on_b.to_string(),
-        channel_id: ChannelId::default().to_string(),
+        port_id: port_id.to_string(),
+        channel_id: channel_id.to_string()
     };
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
@@ -799,17 +801,17 @@ fn test_for_packet_send() {
         ZERO_DURATION,
     );
 
-    let packet: Packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
-            .try_into()
-            .unwrap();
+    let packet =
+        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
+        let src_port=to_ibc_port_id(&packet.source_port).unwrap();
+        let src_channel= to_ibc_channel_id(&packet.source_channel).unwrap();
 
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            chan_end_on_a.clone(),
+            &src_port,
+            &src_channel,
+            &chan_end_on_a,
         )
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
@@ -819,9 +821,9 @@ fn test_for_packet_send() {
     contract
         .store_next_sequence_send(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a,
-            1.into(),
+           &src_port.clone(),
+           &src_channel,
+           & 1.into(),
         )
         .unwrap();
 
@@ -888,15 +890,20 @@ fn test_for_recieve_packet() {
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
-    let raw = get_dummy_raw_msg_recv_packet(12);
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
+    let msg = get_dummy_raw_msg_recv_packet(12);
+  //  let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let packet = msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
         .bind_port(
             &mut deps.storage,
-            &packet.port_id_on_b,
+            &dst_port,
             "moduleaddress".to_string(),
         )
         .unwrap();
@@ -908,7 +915,7 @@ fn test_for_recieve_packet() {
     let chan_end_on_b = ChannelEnd::new(
         State::Open,
         Order::default(),
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a.clone())),
+        Counterparty::new(src_port.clone(), Some(src_channel.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -931,9 +938,9 @@ fn test_for_recieve_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b.clone(),
-            chan_end_on_b.clone(),
+            &dst_port,
+            &dst_channel,
+            &chan_end_on_b,
         )
         .unwrap();
     let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
@@ -960,7 +967,7 @@ fn test_for_recieve_packet() {
     .try_into()
     .unwrap();
 
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -984,9 +991,9 @@ fn test_for_recieve_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b.clone(),
-            chan_end_on_b.clone(),
+            &dst_port,
+            &dst_channel,
+            &chan_end_on_b,
         )
         .unwrap();
 
@@ -995,7 +1002,7 @@ fn test_for_recieve_packet() {
         env.clone(),
         info,
         CoreExecuteMsg::ReceivePacket {
-            msg: HexString::from_bytes(&raw.encode_to_vec()),
+            msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
     println!("{:?}", res);
@@ -1008,9 +1015,9 @@ fn test_for_recieve_packet() {
     contract
         .store_packet_receipt(
             &mut deps.storage,
-            &msg.packet.port_id_on_b,
-            &msg.packet.chan_id_on_b,
-            msg.packet.sequence,
+            &dst_port,
+            &dst_channel,
+            Sequence::from(packet.sequence),
             Receipt::Ok,
         )
         .unwrap();
@@ -1077,9 +1084,9 @@ fn test_for_ack_execute() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            chan_end_on_a_ordered.clone(),
+            &packet.port_id_on_a.clone(),
+            &packet.chan_id_on_a.clone(),
+            &chan_end_on_a_ordered.clone(),
         )
         .unwrap();
     let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(

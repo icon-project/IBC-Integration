@@ -54,9 +54,9 @@ fn test_execute_timeout_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            chan_end_on_a_ordered,
+           & packet.port_id_on_a.clone(),
+           & packet.chan_id_on_a.clone(),
+           & chan_end_on_a_ordered,
         )
         .unwrap();
     let commitment = common::ibc::core::ics04_channel::commitment::PacketCommitment::from(
@@ -163,9 +163,9 @@ fn test_timeout_packet_validate_to_light_client() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            chan_end_on_a_ordered.clone(),
+          & packet.port_id_on_a.clone(),
+          & packet.chan_id_on_a.clone(),
+          & chan_end_on_a_ordered.clone(),
         )
         .unwrap();
     let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(

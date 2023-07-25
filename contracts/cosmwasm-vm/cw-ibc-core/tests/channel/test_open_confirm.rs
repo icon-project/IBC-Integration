@@ -56,7 +56,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(&mut deps.storage, dest_port, dest_channel, channel_end)
+        .store_channel_end(&mut deps.storage, &dest_port, &dest_channel, &channel_end)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
 
@@ -158,7 +158,7 @@ fn test_validate_open_confirm_channel() {
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(&mut deps.storage, port_id, channel_id, channel_end)
+        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
@@ -232,13 +232,13 @@ fn test_execute_open_confirm_channel() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id.clone(),
-            channel_id.clone(),
-            channel_end.clone(),
+            &port_id.clone(),
+            &channel_id.clone(),
+            &channel_end.clone(),
         )
         .unwrap();
     contract
-        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, channel_end)
+        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
@@ -290,13 +290,13 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id.clone(),
-            channel_id.clone(),
-            channel_end.clone(),
+            &port_id.clone(),
+            &channel_id.clone(),
+            &channel_end.clone(),
         )
         .unwrap();
     contract
-        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, channel_end)
+        .store_channel_commitment(deps.as_mut().storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),

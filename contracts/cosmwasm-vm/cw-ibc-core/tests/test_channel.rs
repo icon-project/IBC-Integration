@@ -66,9 +66,9 @@ fn test_add_channel() {
 
     let _storing = ctx.store_channel_end(
         mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-        channel_end.clone(),
+        &port_id.clone(),
+        &channel_id.clone(),
+        &channel_end.clone(),
     );
 
     let retrived_channel_end =
@@ -109,11 +109,11 @@ fn test_channel_sequence_send() {
 
     let _store = ctx.store_next_sequence_send(
         mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-        sequence,
+       &port_id.clone(),
+       &channel_id.clone(),
+       &sequence,
     );
-    let result = ctx.get_next_sequence_send(mock_deps.as_ref().storage, port_id, channel_id);
+    let result = ctx.get_next_sequence_send(mock_deps.as_ref().storage, &port_id, &channel_id);
 
     assert_eq!(sequence, result.unwrap())
 }
@@ -127,20 +127,20 @@ fn test_channel_sequence_send_increment() {
     let channel_id = ChannelId::default();
     let _store = ctx.store_next_sequence_send(
         mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-        sequence,
+        &port_id.clone(),
+        &channel_id.clone(),
+        &sequence,
     );
     let result = ctx.get_next_sequence_send(
         mock_deps.as_ref().storage,
-        port_id.clone(),
-        channel_id.clone(),
+        &port_id.clone(),
+        &channel_id.clone(),
     );
 
     assert_eq!(sequence, result.unwrap());
 
     let incremented_result =
-        ctx.increase_next_sequence_send(mock_deps.as_mut().storage, port_id, channel_id);
+        ctx.increase_next_sequence_send(mock_deps.as_mut().storage, &port_id, &channel_id);
     assert_eq!(Sequence::from(1), incremented_result.unwrap());
 }
 
@@ -153,20 +153,20 @@ fn test_channel_sequence_recv_increment() {
     let channel_id = ChannelId::default();
     let _store = ctx.store_next_sequence_recv(
         mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-        sequence,
+       &port_id.clone(),
+       &channel_id.clone(),
+       &sequence,
     );
     let result = ctx.get_next_sequence_recv(
         mock_deps.as_ref().storage,
-        port_id.clone(),
-        channel_id.clone(),
+        &port_id.clone(),
+        &channel_id.clone(),
     );
 
     assert_eq!(sequence, result.unwrap());
 
     let incremented_result =
-        ctx.increase_next_sequence_recv(mock_deps.as_mut().storage, port_id, channel_id);
+        ctx.increase_next_sequence_recv(mock_deps.as_mut().storage, &port_id, &channel_id);
     assert_eq!(Sequence::from(1), incremented_result.unwrap());
 }
 
@@ -179,20 +179,20 @@ fn test_channel_sequence_ack_increment() {
     let channel_id = ChannelId::default();
     let _store = ctx.store_next_sequence_ack(
         mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-        sequence,
+        &port_id.clone(),
+        &channel_id.clone(),
+        &sequence,
     );
     let result = ctx.get_next_sequence_ack(
         mock_deps.as_ref().storage,
-        port_id.clone(),
-        channel_id.clone(),
+        &port_id.clone(),
+        &channel_id.clone(),
     );
 
     assert_eq!(sequence, result.unwrap());
 
     let incremented_result =
-        ctx.increase_next_sequence_ack(mock_deps.as_mut().storage, port_id, channel_id);
+        ctx.increase_next_sequence_ack(mock_deps.as_mut().storage, &port_id, &channel_id);
     assert_eq!(Sequence::from(1), incremented_result.unwrap());
 }
 
@@ -203,7 +203,7 @@ fn test_channel_sequence_ack_fail() {
     let mut mock_deps = deps();
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
-    ctx.increase_next_sequence_ack(mock_deps.as_mut().storage, port_id, channel_id)
+    ctx.increase_next_sequence_ack(mock_deps.as_mut().storage, &port_id, &channel_id)
         .unwrap();
 }
 
@@ -214,7 +214,7 @@ fn test_channel_sequence_send_fail() {
     let mut mock_deps = deps();
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
-    ctx.increase_next_sequence_send(mock_deps.as_mut().storage, port_id, channel_id)
+    ctx.increase_next_sequence_send(mock_deps.as_mut().storage, &port_id, &channel_id)
         .unwrap();
 }
 
@@ -225,7 +225,7 @@ fn test_channel_sequence_recv_fail() {
     let mut mock_deps = deps();
     let port_id = PortId::default();
     let channel_id = ChannelId::default();
-    ctx.increase_next_sequence_recv(mock_deps.as_mut().storage, port_id, channel_id)
+    ctx.increase_next_sequence_recv(mock_deps.as_mut().storage, &port_id, &channel_id)
         .unwrap();
 }
 
@@ -1267,9 +1267,9 @@ fn test_execute_open_try_channel() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            msg.port_id_on_b.clone(),
-            channel_id_on_b.clone(),
-            channel_end,
+           & msg.port_id_on_b.clone(),
+           & channel_id_on_b.clone(),
+           & channel_end,
         )
         .unwrap();
 
@@ -1316,9 +1316,9 @@ fn test_get_channel() {
     let mut mock_deps = deps();
     ctx.store_channel_end(
         mock_deps.as_mut().storage,
-        port_id.clone(),
-        channel_id.clone(),
-        channel_end.clone(),
+       & port_id.clone(),
+       & channel_id.clone(),
+       & channel_end.clone(),
     )
     .unwrap();
     let retrived_channel_end =

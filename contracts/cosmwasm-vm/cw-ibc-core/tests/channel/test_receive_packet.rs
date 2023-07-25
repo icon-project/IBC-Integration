@@ -92,9 +92,9 @@ fn test_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            dst_port.clone(),
-            dst_channel.clone(),
-            chan_end_on_b.clone(),
+           &dst_port.clone(),
+           &dst_channel.clone(),
+           &chan_end_on_b.clone(),
         )
         .unwrap();
     let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
@@ -152,9 +152,9 @@ fn test_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            dst_port.clone(),
-            dst_channel,
-            chan_end_on_b.clone(),
+            &dst_port.clone(),
+            &dst_channel,
+            &chan_end_on_b.clone(),
         )
         .unwrap();
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
@@ -207,9 +207,9 @@ fn execute_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            chan_end_on_b,
+           & IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+           & IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+           & chan_end_on_b,
         )
         .unwrap();
 
@@ -258,25 +258,25 @@ fn execute_receive_packet_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            chan_end_on_b,
+          &  IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+          &  IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+          &  chan_end_on_b,
         )
         .unwrap();
     contract
         .store_next_sequence_recv(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            1.into(),
+          & IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+          & IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+          &Sequence::from(1),
         )
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
     let seq = contract.get_next_sequence_recv(
         &deps.storage,
-        IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-        IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+       & IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+       & IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
     );
     assert!(res.is_ok());
     assert_eq!(res.unwrap().events[0].ty, "recv_packet");
@@ -326,9 +326,9 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            chan_end_on_b,
+          & IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+          & IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+          & chan_end_on_b,
         )
         .unwrap();
     contract

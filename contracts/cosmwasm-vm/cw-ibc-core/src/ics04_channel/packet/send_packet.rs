@@ -89,7 +89,7 @@ impl<'a> CwIbcCoreContext<'a> {
         debug_println!(" timestamp check pass");
 
         let next_seq_send_on_a =
-            self.get_next_sequence_send(deps.storage, src_port.clone(), src_channel.clone())?;
+            self.get_next_sequence_send(deps.storage, &src_port, &src_channel)?;
         debug_println!(" fetched next seq send {:?}", next_seq_send_on_a);
 
         if Sequence::from(packet.sequence) != next_seq_send_on_a {
@@ -103,7 +103,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         debug_println!(" packet seq and next seq matched");
 
-        self.increase_next_sequence_send(deps.storage, src_port.clone(), src_channel.clone())?;
+        self.increase_next_sequence_send(deps.storage, &src_port, &src_channel)?;
         self.store_packet_commitment(
             deps.storage,
             &src_port,

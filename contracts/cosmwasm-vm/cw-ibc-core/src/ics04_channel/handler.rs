@@ -90,9 +90,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         };
         self.store_channel_end(
             deps.storage,
-            src_port.clone(),
-            src_channel.clone(),
-            channel_end.clone(),
+            &src_port,
+            &src_channel,
+            &channel_end,
         )?;
 
         // Generate event for calling on channel open init in x-call
@@ -171,13 +171,13 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             "stoed: channel id: {:?}  portid :{:?} channel_end :{:?}",
             &dest_channel,
             &dest_port,
-            channel_end
+            &channel_end
         );
         self.store_channel_end(
             deps.storage,
-            dest_port.clone(),
-            dest_channel.clone(),
-            channel_end.clone(),
+            &dest_port,
+            &dest_channel,
+            &channel_end,
         )?;
         let proof_height = to_ibc_height(message.proof_height.clone().unwrap())?;
         let client_id_on_b = connection_end.client_id();
@@ -356,9 +356,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         self.store_channel_end(
             deps.storage,
-            src_port.clone(),
-            src_channel.clone(),
-            channel_end.clone(),
+           &src_port,
+           &src_channel,
+           &channel_end,
         )?;
 
         let module_contract_address =
@@ -735,35 +735,35 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.state = State::Init;
                 self.store_channel_end(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    channel_end.clone(),
+                    &port_id,
+                    &channel_id,
+                    &channel_end,
                 )?;
                 let _sequence = self.increase_channel_sequence(deps.storage)?;
                 self.store_next_sequence_send(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    1.into(),
+                    &port_id,
+                    &channel_id,
+                    &Sequence::from(1)
                 )?;
                 self.store_next_sequence_recv(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    1.into(),
+                    &port_id,
+                    &channel_id,
+                    &Sequence::from(1)
                 )?;
                 self.store_next_sequence_ack(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    1.into(),
+                    &port_id,
+                    &channel_id,
+                    &Sequence::from(1)
                 )?;
 
                 self.store_channel_commitment(
                     deps.storage,
                     &port_id,
                     &channel_id,
-                    channel_end.clone(),
+                    &channel_end,
                 )?;
                 let channel_id_event = create_channel_id_generated_event(channel_id.clone());
                 let main_event = create_channel_event(
@@ -818,28 +818,28 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.state = State::TryOpen;
                 self.store_channel_end(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    channel_end.clone(),
+                    &port_id,
+                    &channel_id,
+                    &channel_end,
                 )?;
                 let _sequence = self.increase_channel_sequence(deps.storage)?;
                 self.store_next_sequence_send(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    1.into(),
+                    &port_id,
+                    &channel_id,
+                    &Sequence::from(1),
                 )?;
                 self.store_next_sequence_recv(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    1.into(),
+                    &port_id,
+                    &channel_id,
+                    &Sequence::from(1),
                 )?;
                 self.store_next_sequence_ack(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    1.into(),
+                    &port_id,
+                    &channel_id,
+                    &Sequence::from(1),
                 )?;
                 let channel_id_event = create_channel_id_generated_event(channel_id.clone());
 
@@ -850,7 +850,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     &channel_end,
                 )?;
 
-                self.store_channel_commitment(deps.storage, &port_id, &channel_id, channel_end)?;
+                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
                 Ok(Response::new()
                     .add_event(channel_id_event)
                     .add_event(main_event))
@@ -893,16 +893,16 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.set_state(State::Closed); // State change
                 self.store_channel_end(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    channel_end.clone(),
+                    &port_id,
+                    &channel_id,
+                    &channel_end,
                 )?;
 
                 self.store_channel_commitment(
                     deps.storage,
                     &port_id,
                     &channel_id,
-                    channel_end.clone(),
+                    &channel_end,
                 )?;
 
                 let event = create_channel_event(
@@ -959,15 +959,15 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.set_state(State::Open); // State Change
                 self.store_channel_end(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    channel_end.clone(),
+                    &port_id,
+                    &channel_id,
+                    &channel_end,
                 )?;
                 self.store_channel_commitment(
                     deps.storage,
                     &port_id,
                     &channel_id,
-                    channel_end.clone(),
+                    &channel_end,
                 )?;
                 let event = create_channel_event(
                     IbcEventType::OpenAckChannel,
@@ -1025,15 +1025,15 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.set_state(State::Open); // State Change
                 self.store_channel_end(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    channel_end.clone(),
+                    &port_id,
+                    &channel_id,
+                    &channel_end,
                 )?;
                 self.store_channel_commitment(
                     deps.storage,
                     &port_id,
                     &channel_id,
-                    channel_end.clone(),
+                    &channel_end,
                 )?;
                 let event = create_channel_event(
                     IbcEventType::OpenConfirmChannel,
@@ -1088,15 +1088,15 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.set_state(State::Closed); // State Change
                 self.store_channel_end(
                     deps.storage,
-                    port_id.clone(),
-                    channel_id.clone(),
-                    channel_end.clone(),
+                    &port_id,
+                    &channel_id,
+                    &channel_end,
                 )?;
                 self.store_channel_commitment(
                     deps.storage,
                     &port_id,
                     &channel_id,
-                    channel_end.clone(),
+                    &channel_end,
                 )?;
                 let event = create_channel_event(
                     IbcEventType::CloseConfirmChannel,
