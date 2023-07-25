@@ -164,6 +164,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ChannelOpenConfirm { msg } => {
                 let message: MsgChannelOpenConfirm =
                     Self::from_raw::<RawMsgChannelOpenConfirm, MsgChannelOpenConfirm>(&msg)?;
+                    let message:RawMsgChannelOpenConfirm=Self::raw_from_hex(&msg)?;
                 self.validate_channel_open_confirm(deps, info, &message)
             }
             CoreExecuteMsg::ChannelCloseInit { msg } => {

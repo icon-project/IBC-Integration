@@ -5,7 +5,7 @@ use cw_ibc_core::{
         open_confirm::{channel_open_confirm_validate, on_chan_open_confirm_submessage},
         EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
     },
-    light_client::light_client::LightClient,
+    light_client::light_client::LightClient, conversions::to_ibc_channel_id,
 };
 
 use super::*;
@@ -17,10 +17,11 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
-    let raw = get_dummy_raw_msg_chan_open_confirm(10);
-    let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_open_confirm(10);
+   // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let port_id = msg.port_id_on_b.clone();
+    let dest_port=to_ibc_port_id(&msg.port_id).unwrap();
+    let dest_channel=to_ibc_channel_id(&msg.channel_id).unwrap();
 
     let committment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -47,8 +48,8 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
         state: State::TryOpen,
         ordering: Order::Unordered,
         remote: Counterparty {
-            port_id: port_id.clone(),
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            port_id: dest_port.clone(),
+            channel_id: Some(dest_channel.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
@@ -56,8 +57,8 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id,
-            msg.chan_id_on_b.clone(),
+            dest_port,
+            dest_channel,
             channel_end,
         )
         .unwrap();
@@ -88,7 +89,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -111,11 +112,12 @@ fn test_validate_open_confirm_channel() {
     let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
-    let raw = get_dummy_raw_msg_chan_open_confirm(10);
-    let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_open_confirm(10);
+   // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
 
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
@@ -154,7 +156,7 @@ fn test_validate_open_confirm_channel() {
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id: port_id.clone(),
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
@@ -163,7 +165,7 @@ fn test_validate_open_confirm_channel() {
         .store_channel_end(
             &mut deps.storage,
             port_id,
-            msg.chan_id_on_b.clone(),
+            channel_id.clone(),
             channel_end,
         )
         .unwrap();
@@ -195,7 +197,7 @@ fn test_validate_open_confirm_channel() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
 
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
@@ -334,21 +336,22 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
 
 #[test]
 pub fn test_channel_open_confirm_validate() {
-    let raw = get_dummy_raw_msg_chan_open_confirm(10);
-    let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_open_confirm(10);
+   // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
     let conn_id = ConnectionId::new(5);
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id=to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::TryOpen,
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id,
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
     };
-    let res = channel_open_confirm_validate(&msg, &channel_end);
+    let res = channel_open_confirm_validate(&channel_id, &channel_end);
 
     assert!(res.is_ok())
 }
