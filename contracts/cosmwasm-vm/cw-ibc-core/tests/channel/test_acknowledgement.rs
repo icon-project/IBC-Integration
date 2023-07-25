@@ -457,7 +457,6 @@ fn test_acknowledgement_packet_validate_unordered() {
         )
         .unwrap();
     let consenus_state: ConsensusState = get_dummy_consensus_state();
-
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
