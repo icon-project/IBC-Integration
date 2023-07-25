@@ -101,9 +101,7 @@ impl<'a> CwCallService<'a> {
                 self.send_call_message(deps, info, env, to, data, rollback, sources, dests)
             }
             ExecuteMsg::HandleMessage { msg, from } => self.handle_message(deps, info, from, msg),
-            ExecuteMsg::HandleError { sn: _ } => {
-                todo!()
-            }
+            ExecuteMsg::HandleError { sn } => self.handle_error(deps, info, sn),
             ExecuteMsg::ExecuteCall { request_id, data } => {
                 self.execute_call(deps, info, request_id, data)
             }

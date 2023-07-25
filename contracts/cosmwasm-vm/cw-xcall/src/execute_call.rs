@@ -91,10 +91,8 @@ impl<'a> CwCallService<'a> {
             cosmwasm_std::SubMsgResult::Err(err) => {
                 let code = CallServiceResponseType::CallServiceResponseFailure;
                 let error_message = format!("CallService Reverted : {err}");
-                let message_response = CallServiceMessageResponse::new(
-                    request.sequence_no(),
-                    code.clone(),
-                );
+                let message_response =
+                    CallServiceMessageResponse::new(request.sequence_no(), code.clone());
                 let event = event_call_executed(req_id, code.into(), &error_message);
                 (message_response, event)
             }

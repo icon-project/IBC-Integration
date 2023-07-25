@@ -50,7 +50,7 @@ impl CallServiceMessageResponse {
         &mut self,
         sequence_no: u128,
         response_code: CallServiceResponseType,
-        message: &str,
+        _message: &str,
     ) {
         self.sequence_no.clone_from(&sequence_no);
         self.response_code = response_code;
@@ -121,18 +121,14 @@ mod tests {
 
     #[test]
     fn test_cs_message_response_encoding() {
-        let cs_response = CallServiceMessageResponse::new(
-            1,
-            CallServiceResponseType::CallServiceResponseSuccess,
-        );
+        let cs_response =
+            CallServiceMessageResponse::new(1, CallServiceResponseType::CallServiceResponseSuccess);
         let encoded = rlp::encode(&cs_response);
 
         assert_eq!("c20101", hex::encode(encoded));
 
-        let cs_response = CallServiceMessageResponse::new(
-            2,
-            CallServiceResponseType::CallServiceResponseFailure,
-        );
+        let cs_response =
+            CallServiceMessageResponse::new(2, CallServiceResponseType::CallServiceResponseFailure);
         let encoded = rlp::encode(&cs_response);
 
         assert_eq!("c20200", hex::encode(encoded));
