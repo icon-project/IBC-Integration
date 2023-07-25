@@ -175,7 +175,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ChannelCloseConfirm { msg } => {
                 let message: MsgChannelCloseConfirm =
                     Self::from_raw::<RawMsgChannelCloseConfirm, MsgChannelCloseConfirm>(&msg)?;
-
+                    let message:RawMsgChannelCloseConfirm=Self::raw_from_hex(&msg)?;
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             CoreExecuteMsg::SendPacket { packet } => {

@@ -5,7 +5,7 @@ use cw_ibc_core::{
         channel_close_confirm_validate, on_chan_close_confirm_submessage,
         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
     },
-    light_client::light_client::LightClient,
+    light_client::light_client::LightClient, conversions::to_ibc_channel_id,
 };
 
 use super::*;
@@ -17,10 +17,11 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
     let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
-    let raw = get_dummy_raw_msg_chan_close_confirm(10);
-    let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_confirm(10);
+   // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
 
     let committment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -48,7 +49,7 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id: port_id.clone(),
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
@@ -56,8 +57,8 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            port_id,
-            msg.chan_id_on_b.clone(),
+            port_id.clone(),
+            channel_id.clone(),
             channel_end,
         )
         .unwrap();
@@ -88,7 +89,7 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -111,11 +112,12 @@ fn test_validate_close_confirm_channel() {
     let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 200000000);
-    let raw = get_dummy_raw_msg_chan_close_confirm(10);
-    let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_confirm(10);
+    //let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
 
@@ -153,7 +155,7 @@ fn test_validate_close_confirm_channel() {
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id: port_id.clone(),
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
@@ -162,7 +164,7 @@ fn test_validate_close_confirm_channel() {
         .store_channel_end(
             &mut deps.storage,
             port_id,
-            msg.chan_id_on_b.clone(),
+            channel_id.clone(),
             channel_end,
         )
         .unwrap();
@@ -194,7 +196,7 @@ fn test_validate_close_confirm_channel() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -340,21 +342,22 @@ fn test_execute_close_confirm_channel_fail_invalid_state() {
 
 #[test]
 pub fn test_channel_close_confirm_validate() {
-    let raw = get_dummy_raw_msg_chan_close_confirm(10);
-    let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_confirm(10);
+   // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let conn_id = ConnectionId::new(5);
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id,
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
     };
-    let res = channel_close_confirm_validate(&msg, &channel_end);
+    let res = channel_close_confirm_validate(&channel_id, &channel_end);
 
     assert!(res.is_ok())
 }
@@ -399,38 +402,40 @@ pub fn test_on_chan_close_confirm_submessage() {
 #[test]
 #[should_panic(expected = "ChannelClosed")]
 pub fn test_channel_close_confirm_validate_fail() {
-    let raw = get_dummy_raw_msg_chan_close_confirm(10);
-    let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_confirm(10);
+   // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let conn_id = ConnectionId::new(5);
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Closed,
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id,
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
     };
-    channel_close_confirm_validate(&msg, &channel_end).unwrap();
+    channel_close_confirm_validate(&channel_id, &channel_end).unwrap();
 }
 
 #[test]
 #[should_panic(expected = "InvalidConnectionHopsLength")]
 pub fn test_channel_close_confirm_validate_fail_connection_hops() {
-    let raw = get_dummy_raw_msg_chan_close_confirm(10);
-    let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
-    let port_id = msg.port_id_on_b.clone();
+    let msg = get_dummy_raw_msg_chan_close_confirm(10);
+  //  let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+  let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+  let channel_id= to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id,
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![],
         version: Version::new("xcall".to_string()),
     };
-    channel_close_confirm_validate(&msg, &channel_end).unwrap();
+    channel_close_confirm_validate(&channel_id, &channel_end).unwrap();
 }
