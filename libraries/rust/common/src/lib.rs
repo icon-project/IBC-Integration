@@ -62,7 +62,6 @@ impl<'a> PrimaryKey<'a> for ClientId {
 
 impl KeyDeserialize for ClientId {
     type Output = ClientId;
-    
 
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
         let result = String::from_utf8(value)
@@ -113,7 +112,7 @@ impl<'a> PrimaryKey<'a> for ModuleId {
 
 impl KeyDeserialize for ModuleId {
     type Output = ModuleId;
-    
+
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
         let result = String::from_utf8(value)
             .map_err(StdError::invalid_utf8)
@@ -147,7 +146,6 @@ impl KeyDeserialize for PortId {
 }
 
 impl<'a> Prefixer<'a> for PortId {
-    
     fn prefix(&self) -> Vec<Key> {
         vec![Key::Ref(self.as_bytes())]
     }
@@ -173,7 +171,6 @@ impl<'a> Prefixer<'a> for ConnectionId {
 
 impl KeyDeserialize for ConnectionId {
     type Output = ConnectionId;
-    
 
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
         let result = String::from_utf8(value)

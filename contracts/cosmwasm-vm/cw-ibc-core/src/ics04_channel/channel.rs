@@ -531,7 +531,7 @@ impl<'a> CwIbcCoreContext<'a> {
         self.ibc_store().save_commitment(
             store,
             channel_commitment_key,
-            &keccak256(&channel_end_commitment).to_vec(),
+            keccak256(&channel_end_commitment).as_ref(),
         )?;
 
         Ok(())
@@ -602,8 +602,7 @@ impl<'a> CwIbcCoreContext<'a> {
         sequence: Sequence,
     ) -> Result<(), ContractError> {
         let commitment_path = commitment::packet_commitment_path(port_id, channel_id, sequence);
-        self.ibc_store()
-            .remove_commitment(store, commitment_path);
+        self.ibc_store().remove_commitment(store, commitment_path);
 
         Ok(())
     }
