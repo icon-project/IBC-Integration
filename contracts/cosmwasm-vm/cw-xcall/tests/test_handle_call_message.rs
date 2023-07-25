@@ -137,7 +137,43 @@ fn test_successful_reply_message() {
 }
 
 #[test]
-fn test_failed_reply_message() {
+fn test_failed_reply_message_rollback() {
+    let mut mock_deps = deps();
+
+    let env = mock_env();
+
+    let msg = Reply {
+        id: EXECUTE_CALL_ID,
+        result: SubMsgResult::Err("error message".into()),
+    };
+
+    let contract = CwCallService::default();
+
+    let request_id = 123456;
+    let proxy_requests = CallServiceMessageRequest::new(
+        NetworkAddress::new("nid", "mockaddress"),
+        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
+        123,
+        true,
+        vec![],
+        vec!["88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7".to_string()],
+    );
+    contract
+        .store_proxy_request(mock_deps.as_mut().storage, request_id, &proxy_requests)
+        .unwrap();
+
+    contract
+        .store_execute_request_id(mock_deps.as_mut().storage, request_id)
+        .unwrap();
+
+    let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
+
+    assert_eq!(response.events[0].attributes[1].value, "0".to_string());
+}
+
+#[test]
+#[should_panic(expected = "Std(GenericErr { msg: \"CallService Reverted : error message\" })")]
+fn test_failed_reply_message_oneway() {
     let mut mock_deps = deps();
 
     let env = mock_env();
@@ -166,9 +202,7 @@ fn test_failed_reply_message() {
         .store_execute_request_id(mock_deps.as_mut().storage, request_id)
         .unwrap();
 
-    let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
-
-    assert_eq!(response.events[0].attributes[1].value, "0".to_string());
+    let _ = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
 }
 
 #[test]

@@ -165,11 +165,17 @@ public class CallServiceImpl implements CallService, FeeManage {
         Context.require(Arrays.equals(getDataHash(_data), req.getData()), "DataHashMismatch");
 
         NetworkAddress from = NetworkAddress.valueOf(req.getFrom());
+        Address to = Address.fromString(req.getTo());
+
+        if (!req.needRollback()) {
+            sendToDapp(to, req.getFrom(), _data, req.getProtocols());
+            CallExecuted(_reqId, CSMessageResponse.SUCCESS, "");
+            return;
+        }
+
         CSMessageResponse msgRes = null;
         String msg = "";
-
         try {
-            Address to = Address.fromString(req.getTo());
             sendToDapp(to, req.getFrom(), _data, req.getProtocols());
             msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.SUCCESS);
         } catch (UserRevertedException e) {
@@ -184,12 +190,8 @@ public class CallServiceImpl implements CallService, FeeManage {
                 msgRes = new CSMessageResponse(req.getSn(), CSMessageResponse.FAILURE);
                 msg = "UnknownFailure";
             }
-            CallExecuted(_reqId, msgRes.getCode(), msg);
-            // send response only when there was a rollback
-            if (!req.needRollback()) {
-                return;
-            }
 
+            CallExecuted(_reqId, msgRes.getCode(), msg);
             BigInteger sn = req.getSn().negate();
             if (req.getProtocols().length == 0) {
                 sendMessage(defaultConnection.get(from.net()), BigInteger.ZERO, from.net(), CSMessage.RESPONSE, sn, msgRes.toBytes());
