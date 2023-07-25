@@ -86,19 +86,19 @@ use super::*;
 ///
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, IbcClientType, String>,
-    client_types: Map<'a, IbcClientId, IbcClientType>,
-    client_states: Map<'a, IbcClientId, Vec<u8>>,
-    consensus_states: Map<'a, IbcClientId, Vec<u8>>,
-    client_implementations: Map<'a, IbcClientId, LightClient>,
-    next_sequence_send: Map<'a, (PortId, ChannelId), Sequence>,
-    next_sequence_recv: Map<'a, (PortId, ChannelId), Sequence>,
-    next_sequence_ack: Map<'a, (PortId, ChannelId), Sequence>,
+    client_types: Map<'a,  IbcClientId, IbcClientType>,
+    client_states: Map<'a,  IbcClientId, Vec<u8>>,
+    consensus_states: Map<'a,  IbcClientId, Vec<u8>>,
+    client_implementations: Map<'a,  IbcClientId, LightClient>,
+    next_sequence_send: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
+    next_sequence_recv: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
+    next_sequence_ack: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
     next_client_sequence: Item<'a, u64>,
     next_connection_sequence: Item<'a, u64>,
     next_channel_sequence: Item<'a, u64>,
     client_connections: Map<'a, IbcClientId, IbcConnectionId>,
     connections: Map<'a, IbcConnectionId, Vec<u8>>,
-    channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
+    channels: Map<'a, (&'a PortId, &'a ChannelId), ChannelEnd>,
     port_to_module: Map<'a, PortId, IbcModuleId>,
     /// Stores address based on the capability names
     capabilities: Map<'a, Vec<u8>, String>,
@@ -154,14 +154,14 @@ impl<'a> CwIbcStore<'a> {
     pub fn client_implementations(&self) -> &Map<'a, ClientId, LightClient> {
         &self.client_implementations
     }
-    pub fn next_sequence_send(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
+    pub fn next_sequence_send(&self) -> &Map<'a, (&'a PortId, &'a ChannelId), Sequence> {
         &self.next_sequence_send
     }
-    pub fn next_sequence_recv(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
+    pub fn next_sequence_recv(&self) -> &Map<'a, (&'a PortId, &'a ChannelId), Sequence> {
         &self.next_sequence_recv
     }
 
-    pub fn next_sequence_ack(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
+    pub fn next_sequence_ack(&self) -> &Map<'a, (&'a PortId, &'a ChannelId), Sequence> {
         &self.next_sequence_ack
     }
 
@@ -180,7 +180,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn client_connections(&self) -> &Map<'a, ClientId, ConnectionId> {
         &self.client_connections
     }
-    pub fn channels(&self) -> &Map<'a, (PortId, ChannelId), ChannelEnd> {
+    pub fn channels(&self) -> &Map<'a, (&'a PortId, &'a ChannelId), ChannelEnd> {
         &self.channels
     }
     pub fn port_to_module(&self) -> &Map<'a, PortId, IbcModuleId> {

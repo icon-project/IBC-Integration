@@ -27,7 +27,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match self
             .ibc_store()
             .channels()
-            .may_load(store, (port_id.clone(), channel_id.clone()))?
+            .may_load(store, (port_id, channel_id))?
         {
             Some(request) => Ok(request),
             None => Err(ChannelError::ChannelNotFound {
@@ -69,7 +69,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self.ibc_store().channels().save(
             store,
-            (port_id.clone(), channel_id.clone()),
+            (port_id, channel_id),
             channel_end,
         ) {
             Ok(_) => Ok(()),
@@ -162,7 +162,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match self
             .ibc_store()
             .next_sequence_send()
-            .load(store, (port_id.clone(), channel_id.clone()))
+            .load(store, (port_id, channel_id))
         {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
@@ -198,7 +198,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self.ibc_store().next_sequence_send().save(
             store,
-            (port_id.clone(), channel_id.clone()),
+            (port_id, channel_id),
             sequence,
         ) {
             Ok(_) => Ok(()),
@@ -229,7 +229,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Sequence, ContractError> {
         let sequence = self.ibc_store().next_sequence_send().update(
             store,
-            (port_id.clone(), channel_id.clone()),
+            (port_id, channel_id),
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
@@ -273,7 +273,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match self
             .ibc_store()
             .next_sequence_recv()
-            .load(store, (port_id.clone(), channel_id.clone()))
+            .load(store, (port_id, channel_id))
         {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
@@ -310,7 +310,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self.ibc_store().next_sequence_recv().save(
             store,
-            (port_id.clone(), channel_id.clone()),
+            (port_id, channel_id),
             sequence,
         ) {
             Ok(_) => Ok(()),
@@ -341,7 +341,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Sequence, ContractError> {
         let sequence = self.ibc_store().next_sequence_recv().update(
             store,
-            (port_id.clone(), channel_id.clone()),
+            (port_id, channel_id),
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
@@ -388,7 +388,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match self
             .ibc_store()
             .next_sequence_ack()
-            .load(store, (port_id.clone(), channel_id.clone()))
+            .load(store, (port_id, channel_id))
         {
             Ok(sequence) => Ok(sequence),
             Err(error) => Err(ContractError::Std(error)),
@@ -426,7 +426,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         match self.ibc_store().next_sequence_ack().save(
             store,
-            (port_id.clone(), channel_id.clone()),
+            (port_id, channel_id),
             sequence,
         ) {
             Ok(_) => Ok(()),
@@ -458,7 +458,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Sequence, ContractError> {
         let sequence = self.ibc_store().next_sequence_ack().update(
             store,
-            (port_id.clone(), channel_id.clone()),
+            (port_id, channel_id),
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
