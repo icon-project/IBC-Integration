@@ -17,11 +17,11 @@ use super::*;
 /// `Err(ContractError)` value indicating that the validation failed with a specific `ContractError`
 /// type.
 pub fn channel_open_ack_validate(
-    message: &MsgChannelOpenAck,
-    chan_end_on_a: &ChannelEnd,
+    channel_id:&IbcChannelId,
+    channel: &ChannelEnd,
 ) -> Result<(), ContractError> {
-    ensure_channel_state(&message.chan_id_on_a, chan_end_on_a, &State::Init)?;
-    validate_connection_length(chan_end_on_a)?;
+    ensure_channel_state(channel_id, channel, &State::Init)?;
+    validate_connection_length(channel)?;
 
     Ok(())
 }

@@ -158,6 +158,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ChannelOpenAck { msg } => {
                 let message: MsgChannelOpenAck =
                     Self::from_raw::<RawMsgChannelOpenAck, MsgChannelOpenAck>(&msg)?;
+                    let message:RawMsgChannelOpenAck=Self::raw_from_hex(&msg)?;
                 self.validate_channel_open_ack(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenConfirm { msg } => {
