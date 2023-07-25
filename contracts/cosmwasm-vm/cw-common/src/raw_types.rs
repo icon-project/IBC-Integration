@@ -49,3 +49,25 @@ pub use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 pub use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
 pub use ibc_proto::ics23::CommitmentProof as RawCommitmentProof;
 pub use ibc_proto::protobuf::Protobuf;
+
+use self::channel::RawPacket;
+use crate::cw_types::CwPacket;
+
+pub fn to_raw_packet(packet: CwPacket) -> RawPacket {
+    let timestamp = packet.timeout.timestamp().map(|t| t.nanos()).unwrap_or(0);
+
+    let timeout_height = packet.timeout.block().map(|b| RawHeight {
+        revision_height: b.height,
+        revision_number: b.revision,
+    });
+    RawPacket {
+        sequence: packet.sequence,
+        source_port: packet.src.port_id,
+        source_channel: packet.src.channel_id,
+        destination_port: packet.dest.port_id,
+        destination_channel: packet.dest.channel_id,
+        data: packet.data.0,
+        timeout_height,
+        timeout_timestamp: timestamp,
+    }
+}

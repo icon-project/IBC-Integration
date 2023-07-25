@@ -570,6 +570,7 @@ dependencies = [
  "cosmwasm-storage",
  "cw-common",
  "cw-storage-plus 1.1.0",
+ "cw-xcall",
  "cw2",
  "getrandom",
  "hex",

@@ -88,7 +88,7 @@ fn test_validate_close_init_channel() {
         )
         .unwrap();
 
-    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelClose { msg: expected };
+    let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
@@ -275,7 +275,9 @@ fn test_channel_close_init_validate() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidChannelState")]
+#[should_panic(
+    expected = "IbcChannelError { error: ChannelClosed { channel_id: ChannelId(\"channel-0\") } }"
+)]
 fn test_channel_close_init_validate_fail() {
     let raw = get_dummy_raw_msg_chan_close_init();
     let msg = MsgChannelCloseInit::try_from(raw).unwrap();

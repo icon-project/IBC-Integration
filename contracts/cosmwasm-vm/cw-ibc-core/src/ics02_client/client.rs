@@ -8,6 +8,7 @@ use prost::DecodeError;
 use prost::Message;
 
 use crate::ics24_host::LastProcessedOn;
+use crate::light_client::light_client::LightClient;
 
 use super::*;
 
@@ -115,19 +116,12 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: ClientId,
     ) -> Result<IbcClientType, ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_types()
-            .may_load(store, client_id.clone())
-        {
-            Ok(result) => match result {
-                Some(client_type) => Ok(client_type),
-                None => Err(ContractError::InvalidClientId {
-                    client_id: client_id.as_str().to_string(),
-                }),
-            },
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .load(store, client_id.clone())
+            .map_err(|_e| ContractError::InvalidClientId {
+                client_id: client_id.as_str().to_string(),
+            })
     }
 
     /// This method retrieves a client from a registry and returns it as a string, or returns an error
@@ -150,19 +144,12 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_type: IbcClientType,
     ) -> Result<String, ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_registry()
-            .may_load(store, client_type.clone())
-        {
-            Ok(result) => match result {
-                Some(client) => Ok(client),
-                None => Err(ContractError::InvalidClientType {
-                    client_type: client_type.as_str().to_string(),
-                }),
-            },
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .load(store, client_type.clone())
+            .map_err(|_e| ContractError::InvalidClientType {
+                client_type: client_type.as_str().to_string(),
+            })
     }
 
     /// This method retrieves client implementations from a storage based on a given client ID.
@@ -185,20 +172,13 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &dyn Storage,
         client_id: ClientId,
-    ) -> Result<String, ContractError> {
-        match self
-            .ibc_store()
+    ) -> Result<LightClient, ContractError> {
+        self.ibc_store()
             .client_implementations()
-            .may_load(store, client_id.clone())
-        {
-            Ok(result) => match result {
-                Some(client) => Ok(client),
-                None => Err(ContractError::InvalidClientId {
-                    client_id: client_id.as_str().to_string(),
-                }),
-            },
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .load(store, client_id.clone())
+            .map_err(|_e| ContractError::InvalidClientId {
+                client_id: client_id.as_str().to_string(),
+            })
     }
 
     /// This method stores the client type for a given client ID in a storage object.
@@ -226,14 +206,10 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: ClientId,
         client_type: IbcClientType,
     ) -> Result<(), ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_types()
             .save(store, client_id, &client_type)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .map_err(ContractError::Std)
     }
 
     /// This method stores a client into a registry
@@ -260,14 +236,10 @@ impl<'a> CwIbcCoreContext<'a> {
         client_type: IbcClientType,
         client: String,
     ) -> Result<(), ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_registry()
             .save(store, client_type, &client)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .map_err(ContractError::Std)
     }
     /// This method stores client implementations in a storage using a client ID and returns an error if
     /// there is one.
@@ -290,16 +262,12 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &mut dyn Storage,
         client_id: ClientId,
-        client: String,
+        client: LightClient,
     ) -> Result<(), ContractError> {
-        match self
-            .ibc_store()
+        self.ibc_store()
             .client_implementations()
             .save(store, client_id, &client)
-        {
-            Ok(_) => Ok(()),
-            Err(error) => Err(ContractError::Std(error)),
-        }
+            .map_err(ContractError::Std)
     }
     /// The method checks if a client is already registered in the store and returns
     /// an error if it already exists.
@@ -358,14 +326,16 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &dyn Storage,
         client_id: ClientId,
-    ) -> Result<String, ContractError> {
-        let client = self.get_client_implementations(store, client_id.clone())?;
+    ) -> Result<LightClient, ContractError> {
+        let client = self
+            .get_client_implementations(store, client_id.clone())
+            .ok();
 
-        if client.is_empty() {
+        if client.is_none() {
             return Err(ClientError::ClientNotFound { client_id })
                 .map_err(Into::<ContractError>::into);
         }
-        Ok(client)
+        Ok(client.unwrap())
     }
 
     /// This method retrieves the client state from storage using the client ID.
@@ -523,29 +493,6 @@ impl<'a> CwIbcCoreContext<'a> {
             Any::decode(consensus_state_data.as_slice()).map_err(Into::<ContractError>::into)?;
         Ok(consensus_state_any)
     }
-
-    // fn next_consensus_state(
-    //     &self,
-    //     client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-    //     height: &ibc::Height,
-    // ) -> Result<
-    //     Option<Box<dyn common::ibc::core::ics02_client::consensus_state::ConsensusState>>,
-    //     ContractError,
-    // > {
-    //     todo!()
-    // }
-
-    // fn prev_consensus_state(
-    //     &self,
-    //     client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-    //     height: &ibc::Height,
-    // ) -> Result<
-    //     Option<Box<dyn common::ibc::core::ics02_client::consensus_state::ConsensusState>>,
-    //     ContractError,
-    // > {
-    //     todo!()
-    // }
-
     pub fn host_height(&self, env: &Env) -> Result<common::ibc::Height, ContractError> {
         let height = env.block.height;
         let height = common::ibc::Height::new(0, height).map_err(Into::<ContractError>::into)?;
@@ -560,14 +507,6 @@ impl<'a> CwIbcCoreContext<'a> {
         IbcTimestamp::from_nanoseconds(current_timestamp.nanos())
             .map_err(|_e| ContractError::FailedConversion)
     }
-
-    // pub fn host_consensus_state(
-    //     &self,
-    //     height: &ibc::Height,
-    // ) -> Result<Box<dyn common::ibc::core::ics02_client::consensus_state::ConsensusState>, ContractError>
-    // {
-    //     todo!()
-    // }
 
     pub fn validate_self_client(
         &self,
@@ -670,6 +609,4 @@ impl<'a> CwIbcCoreContext<'a> {
             .save(store, client_id.clone(), &last_processed)?;
         Ok(())
     }
-
-    
 }

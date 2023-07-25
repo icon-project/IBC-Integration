@@ -1,4 +1,4 @@
-use crate::ics24_host::LastProcessedOn;
+use crate::{ics24_host::LastProcessedOn, light_client::light_client::LightClient};
 use cosmwasm_std::Order;
 
 use super::*;
@@ -89,7 +89,7 @@ pub struct CwIbcStore<'a> {
     client_types: Map<'a, IbcClientId, IbcClientType>,
     client_states: Map<'a, IbcClientId, Vec<u8>>,
     consensus_states: Map<'a, IbcClientId, Vec<u8>>,
-    client_implementations: Map<'a, IbcClientId, String>,
+    client_implementations: Map<'a, IbcClientId, LightClient>,
     next_sequence_send: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_recv: Map<'a, (PortId, ChannelId), Sequence>,
     next_sequence_ack: Map<'a, (PortId, ChannelId), Sequence>,
@@ -151,7 +151,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn client_types(&self) -> &Map<'a, ClientId, IbcClientType> {
         &self.client_types
     }
-    pub fn client_implementations(&self) -> &Map<'a, ClientId, String> {
+    pub fn client_implementations(&self) -> &Map<'a, ClientId, LightClient> {
         &self.client_implementations
     }
     pub fn next_sequence_send(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
