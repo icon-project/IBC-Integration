@@ -1,4 +1,8 @@
-use cw_ibc_core::{light_client::light_client::LightClient, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE};
+use cw_ibc_core::{
+    conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp},
+    light_client::light_client::LightClient,
+    VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
+};
 
 use super::*;
 
@@ -146,25 +150,33 @@ fn test_timeout_packet_validate_to_light_client() {
     let proof_height = 50;
     let timeout_height = proof_height - 1;
     let timeout_timestamp = 0;
-    let default_raw_msg =
-        get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
-    let msg = MsgTimeout::try_from(default_raw_msg).unwrap();
-    let packet = msg.packet.clone();
+    let msg = get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
+    // let msg = MsgTimeout::try_from(default_raw_msg).unwrap();
+    let packet = &msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
+    let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+    let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+    let packet_sequence = Sequence::from(packet.sequence);
+    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+    let next_sequence_recv = Sequence::from(msg.next_sequence_recv);
+
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(
-            packet.port_id_on_b.clone(),
-            Some(packet.chan_id_on_b.clone()),
-        ),
+        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-            &packet.port_id_on_a.clone(),
-            &packet.chan_id_on_a.clone(),
+            &src_port.clone(),
+            &src_channel.clone(),
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -190,18 +202,15 @@ fn test_timeout_packet_validate_to_light_client() {
             conn_end_on_a,
         )
         .unwrap();
-    let packet_commitment = compute_packet_commitment(
-        &msg.packet.data,
-        &msg.packet.timeout_height_on_b,
-        &msg.packet.timeout_timestamp_on_b,
-    );
+    let packet_commitment =
+        compute_packet_commitment(&packet.data, &packet_timeout_height, &packet_timestamp);
 
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a,
-            &packet.chan_id_on_a,
-            packet.sequence,
+            &src_port,
+            &src_channel,
+            packet_sequence,
             packet_commitment,
         )
         .unwrap();
@@ -223,11 +232,7 @@ fn test_timeout_packet_validate_to_light_client() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(
-            &mut deps.storage,
-            &packet.port_id_on_a,
-            "moduleaddress".to_string(),
-        )
+        .bind_port(&mut deps.storage, &src_port, "moduleaddress".to_string())
         .unwrap();
 
     contract
@@ -240,13 +245,13 @@ fn test_timeout_packet_validate_to_light_client() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_b;
+    // let height = msg.proof_height_on_b;
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
-            height,
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )

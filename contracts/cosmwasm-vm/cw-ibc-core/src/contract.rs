@@ -145,8 +145,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.connection_open_confirm(deps, env, info, message)
             }
             CoreExecuteMsg::ChannelOpenInit { msg } => {
-                let message = Self::raw_from_hex::<RawMsgChannelOpenInit>(&msg)?;
                 debug_println!("[IBCCore] Channel Open Init Called");
+                let message = Self::raw_from_hex::<RawMsgChannelOpenInit>(&msg)?;
+                
                 self.validate_channel_open_init(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenTry { msg } => {
@@ -175,6 +176,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.validate_channel_close_confirm(deps, info, &message)
             }
             CoreExecuteMsg::SendPacket { packet } => {
+                debug_println!("[IBCCore] Send Packet Called");
                 let packet_bytes = packet.to_bytes().map_err(Into::<ContractError>::into)?;
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
                     .map_err(|error| ContractError::IbcDecodeError { error })?;
@@ -182,18 +184,19 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.send_packet(deps, packet)
             }
             CoreExecuteMsg::ReceivePacket { msg } => {
+                debug_println!("[IBCCore] Receive Packet Called");
                 let message = Self::raw_from_hex::<RawMessageRecvPacket>(&msg)?;
 
                 self.validate_receive_packet(deps, info, env, &message)
             }
             CoreExecuteMsg::AcknowledgementPacket { msg } => {
-                let _message: MsgAcknowledgement =
-                    Self::from_raw::<RawMessageAcknowledgement, MsgAcknowledgement>(&msg)?;
+                debug_println!("[IBCCore] Acknowledgement Packet Called");
                 let message = Self::raw_from_hex::<RawMessageAcknowledgement>(&msg)?;
                 self.acknowledgement_packet_validate(deps, info, env, &message)
             }
             CoreExecuteMsg::TimeoutPacket { msg } => {
-                let message: MsgTimeout = Self::from_raw::<RawMessageTimeout, MsgTimeout>(&msg)?;
+                debug_println!("[IBCCore] Timeout Packet Called");
+                let message = Self::raw_from_hex::<RawMessageTimeout>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
                     env,
@@ -202,8 +205,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 )
             }
             CoreExecuteMsg::TimeoutOnClose { msg } => {
-                let message: MsgTimeoutOnClose =
-                    Self::from_raw::<RawMessageTimeoutOnclose, MsgTimeoutOnClose>(&msg)?;
+                debug_println!("[IBCCore] Timeout On Close Called");
+                let message = Self::raw_from_hex::<RawMessageTimeoutOnclose>(&msg)?;
                 self.timeout_packet_validate(
                     deps,
                     env,
@@ -212,6 +215,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 )
             }
             CoreExecuteMsg::BindPort { port_id, address } => {
+                debug_println!("[IBCCore] Bind Port Called");
                 let port_id = IbcPortId::from_str(&port_id).map_err(|error| {
                     ContractError::IbcDecodeError {
                         error: DecodeError::new(error.to_string()),
@@ -230,6 +234,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 packet,
                 acknowledgement,
             } => {
+                debug_println!("[IBCCore] Write Acknowledgement Called");
                 let ack = acknowledgement.to_bytes()?;
                 self.write_acknowledgement(deps, info, packet, ack)
             }
