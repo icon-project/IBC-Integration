@@ -23,16 +23,21 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
+    to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
+    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
-use common::ibc::{
-    core::{
-        ics03_connection::version::{get_compatible_versions, Version},
-        ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+use common::{
+    client_state::get_default_icon_client_state,
+    ibc::{
+        core::{
+            ics03_connection::version::{get_compatible_versions, Version},
+            ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+        },
+        signer::Signer,
+        Height,
     },
-    signer::Signer,
-    Height,
+    icon::icon::lightclient::v1::{ClientState, ConsensusState},
 };
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
@@ -400,12 +405,13 @@ pub fn get_dummy_raw_msg_conn_open_confirm() -> RawMsgConnectionOpenConfirm {
 }
 
 pub fn get_dummy_raw_packet(timeout_height: u64, timeout_timestamp: u64) -> RawPacket {
+    let (src, dest) = get_dummy_endpoints();
     RawPacket {
         sequence: 1,
-        source_port: PortId::default().to_string(),
-        source_channel: ChannelId::default().to_string(),
-        destination_port: PortId::default().to_string(),
-        destination_channel: ChannelId::default().to_string(),
+        source_port: src.port_id,
+        source_channel: src.channel_id,
+        destination_port: dest.port_id,
+        destination_channel: dest.channel_id,
         data: vec![0],
         timeout_height: Some(RawHeight {
             revision_number: 0,
@@ -470,4 +476,71 @@ pub fn get_mock_env() -> Env {
     let mut env = mock_env();
     env.contract.address = Addr::unchecked("archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl");
     env
+}
+
+pub fn mock_lightclient_reply(deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>) {
+    deps.querier.update_wasm(|r| match r {
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg: _,
+        } => SystemResult::Ok(ContractResult::Ok(to_binary(&true).unwrap())),
+        _ => todo!(),
+    });
+}
+
+pub fn get_dummy_endpoints() -> (IbcEndpoint, IbcEndpoint) {
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+    (src, dst)
+}
+
+pub fn get_dummy_client_state() -> ClientState {
+    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+        trusting_period: 2,
+        frozen_height: 0,
+        max_clock_drift: 5,
+        latest_height: 100,
+        ..get_default_icon_client_state()
+    };
+    client_state
+}
+
+pub fn get_dummy_consensus_state() -> ConsensusState {
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
+    };
+    consenus_state
+}
+use cw_common::ibc_types::IbcClientId;
+use cw_ibc_core::ConnectionEnd;
+
+use std::time::Duration;
+pub fn get_dummy_connection() -> ConnectionEnd {
+    let counter_prefix: Result<
+        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix,
+        common::ibc::core::ics23_commitment::error::CommitmentError,
+    > = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
+        "hello".to_string().as_bytes().to_vec(),
+    );
+    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
+        ClientId::default(),
+        Some(ConnectionId::default()),
+        counter_prefix.unwrap(),
+    );
+
+    ConnectionEnd::new(
+        common::ibc::core::ics03_connection::connection::State::Open,
+        IbcClientId::default(),
+        counter_party,
+        vec![common::ibc::core::ics03_connection::version::Version::default()],
+        Duration::default(),
+    )
 }

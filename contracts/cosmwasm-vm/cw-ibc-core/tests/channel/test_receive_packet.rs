@@ -1,16 +1,12 @@
-use cosmwasm_std::Empty;
-use cosmwasm_std::IbcReceiveResponse;
-use cw_common::client_response::PacketResponse;
-use cw_common::client_response::XcallPacketResponseData;
-
 use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 use common::ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use common::ibc::core::ics04_channel::msgs::PacketMsg;
-use common::ibc::core::ics04_channel::packet::Receipt;
+
 use common::ibc::timestamp::Timestamp;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
+use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 
 use super::*;
@@ -22,12 +18,13 @@ pub fn make_ack_success() -> Binary {
 }
 
 pub fn get_dummy_raw_packet_recv(timeout_height: u64, timeout_timestamp: u64) -> RawPacket {
+    let (src, dest) = get_dummy_endpoints();
     RawPacket {
         sequence: 1,
-        source_port: PortId::default().to_string(),
-        source_channel: ChannelId::default().to_string(),
-        destination_port: PortId::default().to_string(),
-        destination_channel: ChannelId::default().to_string(),
+        source_port: src.port_id,
+        source_channel: src.channel_id,
+        destination_port: dest.port_id,
+        destination_channel: dest.channel_id,
         data: vec![0],
         timeout_height: Some(RawHeight {
             revision_number: 12,
@@ -95,17 +92,7 @@ fn test_receive_packet() {
         .store_connection(&mut deps.storage, conn_id_on_b.clone(), conn_end_on_b)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 12,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -119,6 +106,7 @@ fn test_receive_packet() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -140,14 +128,21 @@ fn test_receive_packet() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
-    let light_client = Addr::unchecked("lightclient");
+    let light_client = LightClient::new("lightclient".to_string());
+
     contract
-        .store_client_implementations(
+        .bind_port(
             &mut deps.storage,
-            IbcClientId::default(),
-            light_client.to_string(),
+            &packet.port_id_on_b,
+            "moduleaddress".to_string(),
         )
         .unwrap();
+
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
+
     contract
         .store_channel_end(
             &mut deps.storage,
@@ -157,162 +152,12 @@ fn test_receive_packet() {
         )
         .unwrap();
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
-
+    println!("{:?}", res);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 521);
-}
-
-#[test]
-fn test_receive_packet_validate_reply_from_light_client() {
-    let contract = CwIbcCoreContext::default();
-    let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 200000000);
-
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_b.clone();
-
-    let module = Addr::unchecked("contractaddress");
-
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-    let packet_repsone = PacketResponse {
-        seq_on_a: msg.packet.sequence,
-        port_id_on_a: msg.packet.port_id_on_a.clone(),
-        chan_id_on_a: msg.packet.chan_id_on_a.clone(),
-        port_id_on_b: msg.packet.port_id_on_b,
-        chan_id_on_b: msg.packet.chan_id_on_b,
-        data: msg.packet.data,
-        timeout_height_on_b: msg.packet.timeout_height_on_b,
-        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
-    };
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.sender,
-        funds: info.funds,
-    };
-
-    let data = PacketDataResponse {
-        packet: packet_repsone,
-        signer: msg.signer,
-        acknowledgement: None,
-        message_info,
-    };
-    let data_bin = to_binary(&data).unwrap();
-    let result = SubMsgResponse {
-        data: Some(data_bin),
-        events: vec![],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(result);
-    let message = Reply { id: 0, result };
-
-    let chan_end_on_b = ChannelEnd::new(
-        State::Open,
-        Order::Unordered,
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
-        vec![IbcConnectionId::default()],
-        Version::new("ics20-1".to_string()),
+    assert_eq!(
+        res.unwrap().messages[0].id,
+        VALIDATE_ON_PACKET_RECEIVE_ON_MODULE
     );
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b,
-            chan_end_on_b,
-        )
-        .unwrap();
-    contract
-        .store_packet_receipt(
-            &mut deps.storage,
-            &msg.packet.port_id_on_a,
-            &msg.packet.chan_id_on_a,
-            msg.packet.sequence,
-            Receipt::Ok,
-        )
-        .unwrap();
-
-    let res = contract.receive_packet_validate_reply_from_light_client(deps.as_mut(), message);
-    assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 522)
-}
-
-#[test]
-fn test_receive_packet_validate_reply_from_light_client_success() {
-    let contract = CwIbcCoreContext::default();
-    let mut deps = deps();
-    let info = create_mock_info("channel-creater", "umlg", 2000);
-
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.packet.port_id_on_b.clone();
-
-    let module = Addr::unchecked("contractaddress");
-
-    contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-
-    let packet_repsone = PacketResponse {
-        seq_on_a: msg.packet.sequence,
-        port_id_on_a: msg.packet.port_id_on_a.clone(),
-        chan_id_on_a: msg.packet.chan_id_on_a.clone(),
-        port_id_on_b: msg.packet.port_id_on_b,
-        chan_id_on_b: msg.packet.chan_id_on_b,
-        data: msg.packet.data,
-        timeout_height_on_b: msg.packet.timeout_height_on_b,
-        timeout_timestamp_on_b: msg.packet.timeout_timestamp_on_b,
-    };
-
-    let message_info = cw_common::types::MessageInfo {
-        sender: info.sender,
-        funds: info.funds,
-    };
-
-    let data = PacketDataResponse {
-        packet: packet_repsone,
-        signer: msg.signer,
-        acknowledgement: None,
-        message_info,
-    };
-    let data_bin = to_binary(&data).unwrap();
-    let result = SubMsgResponse {
-        data: Some(data_bin),
-        events: vec![],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(result);
-    let message = Reply { id: 0, result };
-
-    let chan_end_on_b = ChannelEnd::new(
-        State::Open,
-        Order::Unordered,
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
-        vec![IbcConnectionId::default()],
-        Version::new("ics20-1".to_string()),
-    );
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b,
-            chan_end_on_b,
-        )
-        .unwrap();
-
-    contract
-        .receive_packet_validate_reply_from_light_client(deps.as_mut(), message)
-        .unwrap();
 }
 
 #[test]
@@ -325,15 +170,7 @@ fn execute_receive_packet() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let dst = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let src = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
+    let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
     contract
@@ -344,18 +181,8 @@ fn execute_receive_packet() {
         )
         .unwrap();
 
-    let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
-    let event = Event::new("test");
-    let acknowledgement = XcallPacketResponseData {
-        packet: packet.clone(),
-        acknowledgement: make_ack_success().to_vec(),
-    };
-    let ack = ack.add_event(event);
-    let ack_data_bin = to_binary(&acknowledgement).unwrap();
-    let ack = ack.set_ack(ack_data_bin);
-    let data_bin = to_binary(&ack).unwrap();
     let result = SubMsgResponse {
-        data: Some(data_bin),
+        data: None,
         events: vec![],
     };
     let result: SubMsgResult = SubMsgResult::Ok(result);
@@ -394,15 +221,7 @@ fn execute_receive_packet_ordered() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let dst = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let src = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
+    let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
     contract
@@ -413,19 +232,8 @@ fn execute_receive_packet_ordered() {
         )
         .unwrap();
 
-    let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
-    let event = Event::new("test");
-    let acknowledgement = XcallPacketResponseData {
-        packet: packet.clone(),
-        acknowledgement: make_ack_success().to_vec(),
-    };
-    let ack = ack.add_event(event);
-    let ack_data_bin = to_binary(&acknowledgement).unwrap();
-    let ack = ack.set_ack(ack_data_bin);
-    let data_bin = to_binary(&ack).unwrap();
-
     let result = SubMsgResponse {
-        data: Some(data_bin),
+        data: None,
         events: vec![],
     };
     let result: SubMsgResult = SubMsgResult::Ok(result);
@@ -481,15 +289,7 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
         height: 10,
     };
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let dst = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-
-    let src = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
+    let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
     contract
@@ -500,19 +300,8 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
         )
         .unwrap();
 
-    let ack: IbcReceiveResponse<Empty> = IbcReceiveResponse::default();
-    let event = Event::new("test");
-    let acknowledgement = XcallPacketResponseData {
-        packet: packet.clone(),
-        acknowledgement: make_ack_success().to_vec(),
-    };
-    let ack = ack.add_event(event);
-    let ack_data_bin = to_binary(&acknowledgement).unwrap();
-    let ack = ack.set_ack(ack_data_bin);
-    let data_bin = to_binary(&ack).unwrap();
-
     let result = SubMsgResponse {
-        data: Some(data_bin),
+        data: None,
         events: vec![],
     };
     let result: SubMsgResult = SubMsgResult::Ok(result);

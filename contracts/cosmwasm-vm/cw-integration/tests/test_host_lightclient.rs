@@ -16,6 +16,7 @@ use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 use setup::{
     init_ibc_core_contract, init_light_client, init_mock_dapp_multi_contract,
     init_xcall_app_contract, init_xcall_ibc_connection_contract, setup_context, TestContext,
+    COUNTERPARTY_NID, PORT,
 };
 use test_utils::{get_event, get_event_name, load_raw_payloads};
 
@@ -28,8 +29,8 @@ fn setup_test(payload_file: &str) -> TestContext {
 }
 
 pub fn setup_xcall_multi_contracts(mut ctx: TestContext) -> TestContext {
-    ctx = init_light_client(ctx);
     ctx = init_ibc_core_contract(ctx);
+    ctx = init_light_client(ctx);
     ctx = init_xcall_app_contract(ctx);
     ctx = init_xcall_ibc_connection_contract(ctx);
     ctx = init_mock_dapp_multi_contract(ctx);
@@ -41,7 +42,7 @@ pub fn call_multi_dapp_send_message(ctx: &mut TestContext) -> Result<AppResponse
         ctx.sender.clone(),
         ctx.get_dapp(),
         &cw_mock_dapp_multi::msg::ExecuteMsg::SendCallMessage {
-            to: NetworkAddress::new("icon", "someaddress"),
+            to: NetworkAddress::new(COUNTERPARTY_NID, "someaddress"),
             data: vec![72, 101, 108, 108, 111],
             rollback: None,
         },
@@ -56,7 +57,7 @@ pub fn call_multi_dapp_add_connection(ctx: &mut TestContext) -> Result<AppRespon
         &cw_mock_dapp_multi::msg::ExecuteMsg::AddConnection {
             src_endpoint: ctx.get_xcall_ibc_connection().to_string(),
             dest_endpoint: "cx00000".to_string(),
-            network_id: "icon".to_string(),
+            network_id: COUNTERPARTY_NID.to_string(),
         },
         &[],
     )
@@ -255,26 +256,13 @@ fn call_xcall_app_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppRes
         Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
         ctx.get_xcall_app(),
         &cw_xcall_lib::xcall_msg::ExecuteMsg::SendCallMessage {
-            to: NetworkAddress::new("eth", "contractmock"),
+            to: NetworkAddress::new(
+                COUNTERPARTY_NID,
+                "cx284306db853ba518220b7e553a710ddb12575605",
+            ),
             sources: Some(vec![]),
             destinations: Some(vec![]),
             data,
-            rollback: None,
-        },
-        &[],
-    )
-}
-
-fn call_xcall_message(ctx: &mut TestContext, data: Vec<u8>) -> Result<AppResponse, AppError> {
-    // TODO
-    let timeout_height: u64 = 540;
-    ctx.app.execute_contract(
-        Addr::unchecked(ctx.caller.as_ref().cloned().unwrap()),
-        ctx.get_xcall_app(),
-        &cw_common::xcall_msg::ExecuteMsg::SendCallMessage {
-            to: "eth".to_string(),
-            data,
-            timeout_height,
             rollback: None,
         },
         &[],
@@ -340,7 +328,7 @@ pub fn call_configure_connection(
         ctx.get_xcall_ibc_connection(),
         &cw_common::xcall_connection_msg::ExecuteMsg::ConfigureConnection {
             connection_id,
-            counterparty_port_id: "mock".to_string(),
+            counterparty_port_id: PORT.to_string(),
             counterparty_nid: NetId::from(nid),
             client_id,
             timeout_height: 10,
@@ -426,15 +414,6 @@ fn test_packet_send() {
     println!("{result:?}");
     assert!(result.is_ok());
     println!("Packet Send Ok {:?}", &result);
-
-    // // timeout_packet
-    // let result = call_timeout_packet(&mut ctx);
-    // assert!(result.is_ok());
-    // println!("Packet timeout Ok {:?}", &result);
-
-    let result = call_acknowledge_packet(&mut ctx);
-    assert!(result.is_ok());
-    println!("Packet Acknowledge Ok {:?}", &result);
 }
 
 pub fn get_client_id(res: &AppResponse) -> String {
@@ -453,7 +432,7 @@ pub fn get_connection_id(res: &AppResponse, event: IbcEventType) -> String {
 #[test]
 fn test_icon_to_arcway_handshake() -> TestContext {
     let mut ctx = setup_test("icon_to_archway_raw.json");
-    let port_name = "mock";
+    let port_name = PORT;
     let module_address = ctx.get_xcall_ibc_connection().to_string();
     call_bind_port(&mut ctx, port_name.clone(), &module_address).unwrap();
     call_register_client_type(&mut ctx).unwrap();
@@ -481,7 +460,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     // now need to setup connection configuration for multi call
 
     let connection_id = get_connection_id(&result.unwrap(), IbcEventType::OpenConfirmConnection);
-    let nid = "icon".to_string();
+    let nid = "0x3.icon".to_string();
 
     let result = call_configure_connection(&mut ctx, connection_id, nid.clone(), client_id);
 
@@ -509,7 +488,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
 fn test_archway_to_icon_handshake() -> TestContext {
     // complete handshake
     let mut ctx = setup_test("archway_to_icon_raw.json");
-    let port_name = "mock";
+    let port_name = PORT;
     let module_address = ctx.get_xcall_ibc_connection().to_string();
     call_bind_port(&mut ctx, port_name.clone(), &module_address).unwrap();
     call_register_client_type(&mut ctx).unwrap();
@@ -535,11 +514,16 @@ fn test_archway_to_icon_handshake() -> TestContext {
     println!("Conn Open ack Ok {:?}", &result);
 
     let connection_id = get_connection_id(&result.unwrap(), IbcEventType::OpenAckConnection);
-    let nid = "icon".to_string();
+    let nid = COUNTERPARTY_NID.to_string();
 
-    let result = call_configure_connection(&mut ctx, connection_id, nid, client_id);
+    let result = call_configure_connection(&mut ctx, connection_id, nid.clone(), client_id);
     assert!(result.is_ok());
     println!("Configure Connection Ok {:?}", &result);
+
+    let result = call_set_default_connection(&mut ctx, nid);
+
+    assert!(result.is_ok());
+    println!("Set Default Connection Ok {:?}", &result);
 
     let result = call_channel_open_init(&mut ctx);
     println!("{result:?}");

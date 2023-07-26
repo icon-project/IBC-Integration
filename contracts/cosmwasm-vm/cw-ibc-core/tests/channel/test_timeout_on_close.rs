@@ -1,3 +1,5 @@
+use cw_ibc_core::{light_client::light_client::LightClient, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE};
+
 use super::*;
 
 #[test]
@@ -74,17 +76,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
         )
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -96,17 +88,25 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let client_type = IbcClientType::new("iconclient".to_string());
+    let _client_type = IbcClientType::new("iconclient".to_string());
+
+    let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .store_client_into_registry(
+        .bind_port(
             &mut deps.storage,
-            client_type,
-            "contractaddress".to_string(),
+            &packet.port_id_on_a,
+            "moduleaddress".to_string(),
         )
         .unwrap();
+
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3],
     }
     .try_into()
     .unwrap();
@@ -130,6 +130,10 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
 
     let res =
         contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
+    print!("{:?}", res);
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 541)
+    assert_eq!(
+        res.unwrap().messages[0].id,
+        VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE
+    )
 }

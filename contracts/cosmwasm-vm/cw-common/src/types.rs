@@ -1,15 +1,11 @@
-use crate::ibc_types::IbcPacket;
-use common::ibc::{
-    core::ics04_channel::msgs::{
-        acknowledgement::Acknowledgement, timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose,
-    },
-    signer::Signer,
+use common::ibc::core::ics04_channel::msgs::{
+    timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose,
 };
 use common::rlp::{self, Decodable, Encodable};
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_schema::serde::{Deserialize, Serialize};
-use cosmwasm_std::{Addr, Binary, Coin};
+use cosmwasm_std::Binary;
 use cw_storage_plus::KeyDeserialize;
 use std::fmt::Display;
 
@@ -36,29 +32,6 @@ pub struct VerifyPacketData {
     pub commitment_path: Vec<u8>,
     // commitment bytes
     pub commitment: Vec<u8>,
-}
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PacketData {
-    pub message_info: MessageInfo,
-    pub packet: IbcPacket,
-    pub signer: Signer,
-    pub acknowledgement: Option<Acknowledgement>,
-}
-
-impl PacketData {
-    pub fn new(
-        packet: IbcPacket,
-        signer: Signer,
-        acknowledgement: Option<Acknowledgement>,
-        message_info: MessageInfo,
-    ) -> Self {
-        Self {
-            message_info,
-            packet,
-            signer,
-            acknowledgement,
-        }
-    }
 }
 
 #[cw_serde]
@@ -136,10 +109,4 @@ impl Address {
 pub enum Ack {
     Result(Binary),
     Error(String),
-}
-
-#[cw_serde]
-pub struct MessageInfo {
-    pub sender: Addr,
-    pub funds: Vec<Coin>,
 }

@@ -20,6 +20,7 @@ use cw_common::raw_types::Any;
 use common::ibc::core::ics02_client::client_type::ClientType;
 use common::ibc::core::ics24_host::identifier::ClientId;
 use common::ibc::mock::header::MockHeader;
+use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::events::{
@@ -29,6 +30,7 @@ use cw_ibc_core::{
     traits::IbcClient,
     MsgUpgradeClient,
 };
+use cw_ibc_core::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT};
 use debug_print::debug_println;
 use prost::Message;
 use setup::*;
@@ -76,7 +78,7 @@ fn store_client_implement_success() {
 
     let client_id = ClientId::new(client_type, 1).unwrap();
 
-    let light_client_address = "light-client".to_string();
+    let light_client_address = LightClient::new("light-client".to_string());
 
     contract
         .store_client_implementations(
@@ -345,20 +347,11 @@ fn check_for_create_client_message() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -393,20 +386,11 @@ fn check_for_create_client_message_response() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -446,7 +430,7 @@ fn check_for_create_client_message_response() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -476,20 +460,11 @@ fn check_for_client_state_from_storage() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -526,7 +501,7 @@ fn check_for_client_state_from_storage() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -557,20 +532,11 @@ fn check_for_consensus_state_from_storage() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -607,7 +573,7 @@ fn check_for_consensus_state_from_storage() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -644,20 +610,11 @@ fn fail_on_create_client_message_error_response() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -681,7 +638,7 @@ fn fail_on_create_client_message_error_response() {
     assert_eq!(response.attributes[0].value, "create_client");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Err("invalid_response".to_string()),
     };
 
@@ -697,20 +654,11 @@ fn fails_on_create_client_message_without_proper_initialisation() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -741,20 +689,11 @@ fn check_for_update_client_message() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -794,7 +733,7 @@ fn check_for_update_client_message() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -807,17 +746,7 @@ fn check_for_update_client_message() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 3,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let update_client_message = IbcMsgUpdateClient {
         client_id: client_id.clone(),
@@ -845,7 +774,7 @@ fn check_for_update_client_message() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 22,
+        id: EXECUTE_UPDATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -869,23 +798,15 @@ fn check_for_update_client_message() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidClientId { client_id: \"iconclient-0\" }")]
+#[should_panic(
+    expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"iconclient-0\") } }"
+)]
 fn fails_on_updating_non_existing_client() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let signer = Signer::from_str("new_signer").unwrap();
@@ -907,7 +828,7 @@ fn fails_on_error_ressponse() {
     let contract = CwIbcCoreContext::default();
 
     let reply_message = Reply {
-        id: 22,
+        id: EXECUTE_UPDATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Err("response_error".to_string()),
     };
     contract
@@ -940,20 +861,15 @@ fn check_for_upgrade_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+
+    let client_state = ClientState {
         trusting_period: 2000000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+        ..get_dummy_client_state()
+    };
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -972,7 +888,7 @@ fn check_for_upgrade_client() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -985,21 +901,15 @@ fn check_for_upgrade_client() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 200000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let upgrade_client_state = ClientState {
+        trusting_period: 2000000000,
+        ..get_dummy_client_state()
+    };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1047,20 +957,11 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1079,7 +980,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1097,8 +998,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1107,6 +1007,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1154,20 +1055,15 @@ fn fails_on_upgrade_client_frozen_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
+
+    let client_state = ClientState {
         frozen_height: 3,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+        ..get_dummy_client_state()
+    };
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1186,7 +1082,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1204,8 +1100,7 @@ fn fails_on_upgrade_client_frozen_client() {
         frozen_height: 0,
         max_clock_drift: 5,
         latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
+
         ..get_default_icon_client_state()
     }
     .try_into()
@@ -1214,6 +1109,7 @@ fn fails_on_upgrade_client_frozen_client() {
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1258,20 +1154,15 @@ fn check_for_execute_upgrade_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+
+    let client_state = ClientState {
         trusting_period: 2000000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+        ..get_dummy_client_state()
+    };
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "message_root".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1290,7 +1181,7 @@ fn check_for_execute_upgrade_client() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1303,21 +1194,15 @@ fn check_for_execute_upgrade_client() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 200000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let upgrade_client_state = ClientState {
+        trusting_period: 2000000000,
+        ..get_dummy_client_state()
+    };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1350,7 +1235,7 @@ fn check_for_execute_upgrade_client() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 23,
+        id: EXECUTE_UPGRADE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1387,21 +1272,15 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
-    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 200000000,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 8],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let upgrade_client_state: ClientState = ClientState {
+        trusting_period: 2000000000,
+        ..get_dummy_client_state()
+    };
 
     let upgrade_consenus_state: ConsensusState =
         common::icon::icon::lightclient::v1::ConsensusState {
             message_root: "message_root_new".as_bytes().to_vec(),
+            next_proof_context_hash: vec![1, 2, 3, 4],
         }
         .try_into()
         .unwrap();
@@ -1420,7 +1299,7 @@ fn fails_on_invalid_client_identifier_on_execute_upgrade_client() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 23,
+        id: EXECUTE_UPGRADE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1452,7 +1331,7 @@ fn fails_on_unknown_response_on_execute_upgrade_client() {
         .unwrap();
 
     let reply_message = Reply {
-        id: 23,
+        id: EXECUTE_UPGRADE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Err("UnknownResponse".to_string()),
     };
 
@@ -1485,7 +1364,7 @@ fn fails_on_null_response_data_on_execute_upgrade_client() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 23,
+        id: EXECUTE_UPGRADE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: None,
@@ -1536,7 +1415,7 @@ fn sucess_on_getting_client() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
 
-    let client_address = "newclientaddress".to_string();
+    let client_address = LightClient::new("newclientaddress".to_string());
 
     contract
         .store_client_implementations(
@@ -1554,37 +1433,14 @@ fn sucess_on_getting_client() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidClientId { client_id: \"new_client_type-0\" }")]
-fn fails_on_getting_client_invalid_client() {
-    let mock_deps = deps();
-    let contract = CwIbcCoreContext::default();
-    let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type, 0).unwrap();
-
-    contract
-        .get_client(mock_deps.as_ref().storage, client_id)
-        .unwrap();
-}
-
-#[test]
 #[should_panic(
     expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"new_client_type-0\") } }"
 )]
 fn fails_on_getting_client_empty_client() {
-    let mut mock_deps = deps();
+    let mock_deps = deps();
     let contract = CwIbcCoreContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 0).unwrap();
-
-    let client_address = "".to_string();
-
-    contract
-        .store_client_implementations(
-            mock_deps.as_mut().storage,
-            client_id.clone(),
-            client_address,
-        )
-        .unwrap();
 
     contract
         .get_client(mock_deps.as_ref().storage, client_id)
@@ -1601,23 +1457,9 @@ fn success_on_getting_client_state() {
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: "message_root".as_bytes().to_vec(),
-    }
-    .try_into()
-    .unwrap();
+    let consenus_state: ConsensusState = get_dummy_consensus_state();
 
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
@@ -1651,7 +1493,7 @@ fn success_on_getting_client_state() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 21,
+        id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(mock_data_binary),
@@ -1698,17 +1540,7 @@ fn sucess_on_misbehaviour_validate() {
         .init_client_counter(deps.as_mut().storage, 10)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
@@ -1716,7 +1548,7 @@ fn sucess_on_misbehaviour_validate() {
         .store_client_implementations(
             deps.as_mut().storage,
             client_id.clone(),
-            "clientaddress".to_string(),
+            LightClient::new("clientaddress".to_string()),
         )
         .unwrap();
 
@@ -1761,17 +1593,10 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .init_client_counter(deps.as_mut().storage, 10)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
+    let client_state = ClientState {
         frozen_height: 10,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+        ..get_dummy_client_state()
+    };
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
@@ -1779,7 +1604,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .store_client_implementations(
             deps.as_mut().storage,
             client_id.clone(),
-            "clientaddress".to_string(),
+            LightClient::new("clientaddress".to_string()),
         )
         .unwrap();
 
@@ -1822,7 +1647,7 @@ fn fails_on_empty_response_misbehaviour() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 23,
+        id: EXECUTE_UPGRADE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: None,
@@ -1841,7 +1666,7 @@ fn fails_on_error_response_misbehaviour() {
     let contract = CwIbcCoreContext::default();
 
     let reply_message = Reply {
-        id: 23,
+        id: EXECUTE_UPGRADE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Err("UnkownError".to_string()),
     };
 
@@ -1855,17 +1680,7 @@ fn success_on_execute_misbehaviour() {
     let mut deps = deps();
     let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 10,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client_id = ClientId::from_str("iconlightclient-10").unwrap();
 
@@ -1878,7 +1693,7 @@ fn success_on_execute_misbehaviour() {
     let event = Event::new("empty");
 
     let reply_message = Reply {
-        id: 23,
+        id: EXECUTE_UPGRADE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
             data: Some(to_binary(&response_message_data).unwrap()),
@@ -1891,20 +1706,6 @@ fn success_on_execute_misbehaviour() {
 
     assert_eq!("client_misbehaviour", result.events[0].ty);
     assert_eq!(client_id.as_str(), result.events[0].attributes[0].value);
-}
-
-#[test]
-fn success_on_raw_from_consensus_state() {
-    let raw = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: "message_root".as_bytes().to_vec(),
-    };
-
-    let consenus_state: ConsensusState = raw.clone().try_into().unwrap();
-
-    let raw_message: common::icon::icon::lightclient::v1::ConsensusState =
-        consenus_state.try_into().unwrap();
-
-    assert_eq!(raw, raw_message)
 }
 
 #[test]

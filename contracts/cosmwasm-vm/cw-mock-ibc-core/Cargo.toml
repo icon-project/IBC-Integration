@@ -50,6 +50,7 @@ thiserror = { workspace=true}
 cw-common = { path="../cw-common" }
 common = { path="../../../libraries/rust/common", default-features = false }
 hex={workspace=true}
+cw-xcall={package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="main"}
 
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}

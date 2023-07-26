@@ -39,4 +39,4 @@ pub use packet::*;
 
 use common::ibc::timestamp::Expiry;
 use cw_common::cw_types::{CwEndPoint, CwPacket, CwTimeout, CwTimeoutBlock};
-use cw_common::{client_response::*, types::*};
+use cw_common::types::*;

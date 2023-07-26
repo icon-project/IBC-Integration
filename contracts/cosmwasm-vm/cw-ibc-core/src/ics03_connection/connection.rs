@@ -287,12 +287,14 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let connection_commit_key = commitment::connection_commitment_key(&connection_id);
 
-        let connection_end_bytes = connection_end
-            .encode_vec()
-            .map_err(|error| ConnectionError::Other {
-                description: error.to_string(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+        let connection_end_bytes =
+            connection_end
+                .encode_vec()
+                .map_err(|error| ContractError::IbcConnectionError {
+                    error: ConnectionError::Other {
+                        description: error.to_string(),
+                    },
+                })?;
 
         let commitment_bytes = keccak256(&connection_end_bytes).to_vec();
 
@@ -310,7 +312,6 @@ impl<'a> CwIbcCoreContext<'a> {
 impl<'a> CwIbcCoreContext<'a> {
     pub fn commitment_prefix(&self, deps: Deps, env: &Env) -> CommitmentPrefix {
         let address = self.get_self_address(deps, env);
-
         let prefix = get_address_storage_prefix(&address, StorageKey::Commitments.as_str());
         CommitmentPrefix::try_from(prefix).unwrap_or_default() //TODO
     }
@@ -325,22 +326,22 @@ impl<'a> CwIbcCoreContext<'a> {
         addr
     }
 
-    fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {
-        todo!()
-    }
+    // fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {
+    //     todo!()
+    // }
 
-    fn host_oldest_height(&self) -> Result<common::ibc::Height, ContractError> {
-        todo!()
-    }
+    // fn host_oldest_height(&self) -> Result<common::ibc::Height, ContractError> {
+    //     todo!()
+    // }
 
-    fn client_consensus_state(
-        &self,
-        client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-        height: &common::ibc::Height,
-    ) -> Result<
-        Option<Box<dyn common::ibc::core::ics02_client::consensus_state::ConsensusState>>,
-        ContractError,
-    > {
-        todo!()
-    }
+    // fn client_consensus_state(
+    //     &self,
+    //     client_id: &common::ibc::core::ics24_host::identifier::ClientId,
+    //     height: &common::ibc::Height,
+    // ) -> Result<
+    //     Option<Box<dyn common::ibc::core::ics02_client::consensus_state::ConsensusState>>,
+    //     ContractError,
+    // > {
+    //     todo!()
+    // }
 }

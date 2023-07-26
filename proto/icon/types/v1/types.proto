@@ -33,6 +33,8 @@ enum SignedMsgType {
 message SignedHeader {
     BTPHeader       header        =   1;
     repeated  bytes signatures    =   2;
+    repeated    bytes currentValidators = 3;
+    uint64      trusted_height   = 4;
 }
 
 message BTPHeader{
@@ -45,7 +47,8 @@ message BTPHeader{
 	bytes       prev_network_section_hash   = 7; 
     uint64      message_count   = 8;
     bytes       message_root    = 9;
-    repeated    bytes nextValidators = 10; 
+    repeated    bytes nextValidators = 10;
+    
 }
 
 message  MerkleNode {

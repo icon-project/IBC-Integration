@@ -1,24 +1,28 @@
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
-use common::traits::AnyTypes;
+
 use common::utils::keccak256;
 use cosmwasm_std::Api;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
+
 use cw_storage_plus::{Item, Map};
+use debug_print::debug_eprintln;
+
 use prost::Message;
 
+use crate::query_handler::QueryHandler;
 use crate::traits::Config;
 use crate::traits::IContext;
 use crate::ContractError;
 type ClientId = String;
-const CLIENT_STATES: Map<String, Vec<u8>> = Map::new("CLIENT_STATES");
-const CONSENSUS_STATES: Map<(ClientId, u64), Vec<u8>> = Map::new("CONSENSUS_STATES");
-const PROCESSED_TIMES: Map<(ClientId, u64), u64> = Map::new("PROCESSED_TIMES");
-const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS");
+pub const CLIENT_STATES: Map<String, Vec<u8>> = Map::new("CLIENT_STATES");
+pub const CONSENSUS_STATES: Map<(ClientId, u64), Vec<u8>> = Map::new("CONSENSUS_STATES");
+pub const PROCESSED_TIMES: Map<(ClientId, u64), u64> = Map::new("PROCESSED_TIMES");
+pub const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS");
 
-const CONFIG: Item<Config> = Item::new("CONFIG");
+pub const CONFIG: Item<Config> = Item::new("CONFIG");
 
 pub struct CwContext<'a> {
     pub storage: &'a mut dyn Storage,
@@ -151,104 +155,21 @@ impl<'a> IContext for CwContext<'a> {
     ) -> Result<u64, Self::Error> {
         QueryHandler::get_processed_blocknumber_at_height(self.storage, client_id, height)
     }
-}
 
-pub struct QueryHandler {}
-
-impl QueryHandler {
-    pub fn get_consensus_state(
-        storage: &dyn Storage,
-        client_id: &str,
-        height: u64,
-    ) -> Result<ConsensusState, ContractError> {
-        let data = CONSENSUS_STATES
-            .load(storage, (client_id.to_string(), height))
-            .map_err(|_e| ContractError::ConsensusStateNotFound {
-                height,
-                client_id: client_id.to_string(),
-            })?;
-        let state = ConsensusState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
-        Ok(state)
+    fn ensure_ibc_host(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
+        let config = self.get_config()?;
+        if caller != config.ibc_host {
+            return Err(ContractError::Unauthorized {});
+        }
+        Ok(())
     }
-
-    pub fn get_timestamp_at_height(
-        storage: &dyn Storage,
-        client_id: &str,
-        height: u64,
-    ) -> Result<u64, ContractError> {
-        PROCESSED_TIMES
-            .load(storage, (client_id.to_string(), height))
-            .map_err(|_e| ContractError::TimestampNotFound {
-                height,
-                client_id: client_id.to_string(),
-            })
-    }
-
-    pub fn get_client_state(
-        storage: &dyn Storage,
-        client_id: &str,
-    ) -> Result<ClientState, ContractError> {
-        let data = CLIENT_STATES
-            .load(storage, client_id.to_string())
-            .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
-        let state = ClientState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
-        Ok(state)
-    }
-
-    pub fn get_config(storage: &dyn Storage) -> Result<Config, ContractError> {
-        CONFIG
-            .load(storage)
-            .map_err(|_e| ContractError::ConfigNotFound)
-    }
-
-    pub fn get_client_state_any(
-        storage: &dyn Storage,
-        client_id: &str,
-    ) -> Result<Vec<u8>, ContractError> {
-        let state = Self::get_client_state(storage, client_id)?;
-        let any_state = state.to_any();
-        Ok(any_state.encode_to_vec())
-    }
-
-    pub fn get_consensus_state_any(
-        storage: &dyn Storage,
-        client_id: &str,
-        height: u64,
-    ) -> Result<Vec<u8>, ContractError> {
-        let state = Self::get_consensus_state(storage, client_id, height)?;
-        let any_state = state.to_any();
-        Ok(any_state.encode_to_vec())
-    }
-
-    pub fn get_latest_height(storage: &dyn Storage, client_id: &str) -> Result<u64, ContractError> {
-        let state = Self::get_client_state(storage, client_id)?;
-
-        Ok(state.latest_height)
-    }
-
-    pub fn get_processed_time_at_height(
-        storage: &dyn Storage,
-        client_id: &str,
-        height: u64,
-    ) -> Result<u64, ContractError> {
-        PROCESSED_TIMES
-            .load(storage, (client_id.to_string(), height))
-            .map_err(|_e| ContractError::ProcessedTimeNotFound {
-                client_id: client_id.to_string(),
-                height,
-            })
-    }
-    pub fn get_processed_blocknumber_at_height(
-        storage: &dyn Storage,
-        client_id: &str,
-        height: u64,
-    ) -> Result<u64, ContractError> {
-        PROCESSED_HEIGHTS
-            .load(storage, (client_id.to_string(), height))
-            .map_err(|_e| ContractError::ProcessedHeightNotFound {
-                client_id: client_id.to_string(),
-                height,
-            })
+    fn ensure_owner(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
+        let config = self.get_config()?;
+        debug_eprintln!("owner {:?} caller {}", config.owner, caller.to_string());
+        if caller != config.owner {
+            return Err(ContractError::Unauthorized {});
+        }
+        Ok(())
     }
 }
 
@@ -259,6 +180,7 @@ mod tests {
     use common::{
         constants::{DEFAULT_NETWORK_TYPE_ID, DEFAULT_SRC_NETWORK_ID},
         icon::icon::types::v1::SignedHeader,
+        traits::AnyTypes,
     };
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockStorage},
@@ -503,7 +425,7 @@ mod tests {
         let mut deps = mock_dependencies();
         let _info = mock_info("alice", &[]);
         // Store config
-        let config = Config::new(Addr::unchecked("owner"));
+        let config = Config::new(Addr::unchecked("owner"), Addr::unchecked("alice"));
         CONFIG.save(deps.as_mut().storage, &config).unwrap();
 
         // Retrieve config

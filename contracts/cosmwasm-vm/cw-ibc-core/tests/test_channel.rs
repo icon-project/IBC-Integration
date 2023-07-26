@@ -1,6 +1,5 @@
 use std::{str::FromStr, time::Duration};
 
-use common::client_state::get_default_icon_client_state;
 use common::traits::AnyTypes;
 use cosmwasm_std::{
     to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
@@ -24,23 +23,22 @@ use cw_common::raw_types::channel::{
     RawMsgChannelCloseConfirm, RawMsgChannelCloseInit, RawMsgChannelOpenAck,
     RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry, RawPacket,
 };
-use cw_common::raw_types::RawHeight;
+use cw_common::raw_types::{to_raw_packet, RawHeight};
 
 use cw_ibc_core::ics04_channel::open_init::{
     create_channel_submesssage, on_chan_open_init_submessage,
 };
-use cw_ibc_core::ics04_channel::open_try::on_chan_open_try_submessage;
-use cw_ibc_core::ics04_channel::{EXECUTE_ON_CHANNEL_OPEN_INIT, EXECUTE_ON_CHANNEL_OPEN_TRY};
+
+use cw_ibc_core::ics04_channel::{
+    create_channel_event, create_packet_event, EXECUTE_ON_CHANNEL_OPEN_INIT,
+    EXECUTE_ON_CHANNEL_OPEN_TRY,
+};
+use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics04_channel::{
-        create_ack_packet_event, create_channel_id_generated_event,
-        create_close_confirm_channel_event, create_close_init_channel_event,
-        create_open_ack_channel_event, create_open_confirm_channel_event,
-        create_open_init_channel_event, create_open_try_channel_event, create_packet_timeout_event,
-        create_send_packet_event, create_write_ack_event, MsgChannelCloseConfirm,
-        MsgChannelCloseInit, MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit,
-        MsgChannelOpenTry,
+        create_channel_id_generated_event, MsgChannelCloseConfirm, MsgChannelCloseInit,
+        MsgChannelOpenAck, MsgChannelOpenConfirm, MsgChannelOpenInit, MsgChannelOpenTry,
     },
     ChannelEnd, ConnectionEnd, Sequence,
 };
@@ -709,13 +707,23 @@ fn create_open_ack_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
     let message = MsgChannelOpenAck::try_from(default_raw_msg).unwrap();
-    let event = create_open_ack_channel_event(
+    let channel_end = ChannelEnd {
+        state: State::Open,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: IbcPortId::default(),
+            channel_id: Some(message.chan_id_on_b),
+        },
+        connection_hops: vec![ConnectionId::default()],
+        version: message.version_on_b.clone(),
+    };
+    let event = create_channel_event(
+        IbcEventType::OpenAckChannel,
         message.port_id_on_a.as_str(),
         message.chan_id_on_a.as_str(),
-        IbcPortId::default().as_str(),
-        message.chan_id_on_b.as_str(),
-        ConnectionId::default().as_str(),
-    );
+        &channel_end,
+    )
+    .unwrap();
 
     assert_eq!(IbcEventType::OpenAckChannel.as_str(), event.ty);
     assert_eq!("channel-0", event.attributes[1].value);
@@ -728,13 +736,24 @@ fn create_open_confirm_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_confirm(proof_height);
     let message = MsgChannelOpenConfirm::try_from(default_raw_msg).unwrap();
-    let event = create_open_confirm_channel_event(
+    let channel_end = ChannelEnd {
+        state: State::Open,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: IbcPortId::default(),
+            channel_id: Some(ChannelId::default()),
+        },
+        connection_hops: vec![ConnectionId::default()],
+        version: Version::empty(),
+    };
+
+    let event = create_channel_event(
+        IbcEventType::OpenConfirmChannel,
         message.port_id_on_b.as_str(),
         message.chan_id_on_b.as_str(),
-        PortId::default().as_str(),
-        ChannelId::default().as_str(),
-        ConnectionId::default().as_str(),
-    );
+        &channel_end,
+    )
+    .unwrap();
 
     assert_eq!(IbcEventType::OpenConfirmChannel.as_str(), event.ty);
     assert_eq!("channel-0", event.attributes[1].value);
@@ -747,13 +766,23 @@ fn create_open_init_channel_event_test() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_init(Some(10));
     let message = MsgChannelOpenInit::try_from(default_raw_msg).unwrap();
     let channel_id = ChannelId::new(10);
-    let event = create_open_init_channel_event(
-        channel_id.as_ref(),
+    let channel_end = ChannelEnd {
+        state: State::Init,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: message.port_id_on_b,
+            channel_id: None,
+        },
+        connection_hops: message.connection_hops_on_a.clone(),
+        version: message.version_proposal.clone(),
+    };
+    let event = create_channel_event(
+        IbcEventType::OpenInitChannel,
         message.port_id_on_a.as_ref(),
-        message.port_id_on_a.as_ref(),
-        &message.connection_hops_on_a[0].to_string(),
-        &message.version_proposal.to_string(),
-    );
+        channel_id.as_str(),
+        &channel_end,
+    )
+    .unwrap();
 
     assert_eq!(IbcEventType::OpenInitChannel.as_str(), event.ty);
     assert_eq!("channel-10", event.attributes[1].value);
@@ -766,14 +795,24 @@ fn create_open_try_channel_event_test() {
     let default_raw_msg = get_dummy_raw_msg_chan_open_try(10);
     let message = MsgChannelOpenTry::try_from(default_raw_msg).unwrap();
     let channel_id = ChannelId::new(11);
-    let event = create_open_try_channel_event(
-        channel_id.as_str(),
+
+    let channel_end = ChannelEnd {
+        state: State::TryOpen,
+        ordering: Order::Unordered,
+        remote: Counterparty {
+            port_id: message.port_id_on_a,
+            channel_id: Some(message.chan_id_on_a),
+        },
+        connection_hops: message.connection_hops_on_b.clone(),
+        version: message.version_supported_on_a.clone(),
+    };
+    let event = create_channel_event(
+        IbcEventType::OpenTryChannel,
         message.port_id_on_b.as_str(),
-        message.port_id_on_a.as_str(),
-        message.chan_id_on_a.as_str(),
-        message.connection_hops_on_b[0].as_str(),
-        message.version_supported_on_a.as_str(),
-    );
+        channel_id.as_str(),
+        &channel_end,
+    )
+    .unwrap();
 
     assert_eq!(IbcEventType::OpenTryChannel.as_str(), event.ty);
     assert_eq!("counterparty_port_id", event.attributes[2].key);
@@ -789,7 +828,14 @@ fn test_create_send_packet_event() {
     let msg_back = Packet::try_from(raw_back.clone()).unwrap();
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    let event = create_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
+    //  let event = create_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
+    let event = create_packet_event(
+        IbcEventType::SendPacket,
+        raw,
+        &Order::Ordered,
+        &IbcConnectionId::default(),
+        None,
+    );
     assert_eq!(IbcEventType::SendPacket.as_str(), event.unwrap().ty)
 }
 
@@ -801,9 +847,14 @@ fn test_create_send_packet_with_invalid_utf_ok() {
         data: vec![u8::MAX],
         ..raw
     };
-    let msg = Packet::try_from(raw).unwrap();
-    let _event =
-        create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+    let _event = create_packet_event(
+        IbcEventType::SendPacket,
+        raw,
+        &Order::Ordered,
+        &IbcConnectionId::default(),
+        None,
+    )
+    .unwrap();
 }
 
 #[test]
@@ -832,11 +883,13 @@ fn test_create_write_ack_packet_event() {
 
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
-    let event = create_write_ack_event(
-        ibc_packet_recv_message.packet,
-        Order::Unordered.as_str(),
-        IbcConnectionId::default().as_str(),
-        &[],
+
+    let event = create_packet_event(
+        IbcEventType::WriteAck,
+        to_raw_packet(ibc_packet_recv_message.packet),
+        &Order::Unordered,
+        &IbcConnectionId::default(),
+        Some(Vec::<u8>::new()),
     );
     assert_eq!(IbcEventType::WriteAck.as_str(), event.unwrap().ty)
 }
@@ -844,59 +897,42 @@ fn test_create_write_ack_packet_event() {
 #[test]
 fn test_create_write_ack_packet_event_with_invalidutf8_ok() {
     let raw = get_dummy_raw_packet(15, 0);
-
-    let raw = RawPacket {
-        data: vec![u8::MAX],
-        ..raw
-    };
-    let msg = Packet::try_from(raw).unwrap();
-    let _event =
-        create_send_packet_event(msg, &Order::Ordered, &IbcConnectionId::default()).unwrap();
+    let _event = create_packet_event(
+        IbcEventType::SendPacket,
+        raw,
+        &Order::Ordered,
+        &IbcConnectionId::default(),
+        None,
+    )
+    .unwrap();
 }
 
 #[test]
 fn test_create_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
-    let packet = Packet::try_from(raw).unwrap();
-    let event = create_ack_packet_event(
-        packet.port_id_on_a.as_str(),
-        packet.chan_id_on_a.as_str(),
-        &packet.sequence.to_string(),
-        packet.port_id_on_b.as_str(),
-        packet.chan_id_on_b.as_str(),
-        &packet.timeout_height_on_b.to_string(),
-        &packet.timeout_timestamp_on_b.to_string(),
-        Order::Ordered.as_str(),
-        IbcConnectionId::default().as_str(),
-    );
+    let event = create_packet_event(
+        IbcEventType::AckPacket,
+        raw,
+        &Order::Ordered,
+        &IbcConnectionId::default(),
+        None,
+    )
+    .unwrap();
     assert_eq!("acknowledge_packet", event.ty)
 }
 
 #[test]
 fn test_create_timout_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
-    let packet = Packet::try_from(raw).unwrap();
-    let port_id: &str = packet.port_id_on_a.as_ref();
-    let chan_id: &str = packet.chan_id_on_a.as_ref();
-    let seq_on_a: &str = &packet.sequence.to_string();
-    let dst_port_id: &str = packet.port_id_on_b.as_ref();
 
-    let dst_chan_id: &str = packet.chan_id_on_b.as_ref();
-    let timeout_height_on_b: &str = &packet.timeout_height_on_b.to_string();
-    let timeout_timestamp_on_b: &str = &packet.timeout_timestamp_on_b.to_string();
-    let channel_order: &str = &Order::Ordered.to_string();
-    let dst_connection_id: &str = "connection-1";
-    let event = create_packet_timeout_event(
-        port_id,
-        chan_id,
-        seq_on_a,
-        dst_port_id,
-        dst_chan_id,
-        timeout_height_on_b,
-        timeout_timestamp_on_b,
-        channel_order,
-        dst_connection_id,
-    );
+    let event = create_packet_event(
+        IbcEventType::Timeout,
+        raw,
+        &Order::Ordered,
+        &IbcConnectionId::default(),
+        None,
+    )
+    .unwrap();
     assert_eq!("timeout_packet", event.ty)
 }
 
@@ -925,11 +961,14 @@ pub fn test_create_close_init_channel_event() {
         connection_hops: vec![ConnectionId::default()],
         version: Version::default(),
     };
-    let event = create_close_init_channel_event(
+
+    let event = create_channel_event(
+        IbcEventType::CloseInitChannel,
         msg.port_id_on_a.as_str(),
         msg.chan_id_on_a.as_str(),
-        channel_end,
-    );
+        &channel_end,
+    )
+    .unwrap();
 
     assert_eq!(event.ty, IbcEventType::CloseInitChannel.as_str())
 }
@@ -946,11 +985,14 @@ pub fn test_create_close_confirm_channel_event() {
         connection_hops: vec![ConnectionId::default()],
         version: Version::default(),
     };
-    let event = create_close_confirm_channel_event(
+
+    let event = create_channel_event(
+        IbcEventType::CloseConfirmChannel,
         msg.port_id_on_b.as_str(),
         msg.chan_id_on_b.as_str(),
-        channel_end,
-    );
+        &channel_end,
+    )
+    .unwrap();
 
     assert_eq!(event.ty, IbcEventType::CloseConfirmChannel.as_str())
 }
@@ -977,21 +1019,7 @@ fn test_validate_open_init_channel() {
         )
         .unwrap();
 
-    let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        None,
-        ss.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
+    let conn_end = get_dummy_connection();
     let conn_id = ConnectionId::new(5);
     msg.connection_hops_on_a = vec![conn_id.clone()];
     msg.version_proposal = Version::from_str("xcall-1").unwrap();
@@ -1004,7 +1032,7 @@ fn test_validate_open_init_channel() {
 
     let channel_id_expect = ChannelId::new(0);
     let expected = on_chan_open_init_submessage(&msg, &channel_id_expect, &conn_id);
-    let data = cw_common::xcall_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
+    let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
@@ -1076,19 +1104,20 @@ fn test_validate_open_try_channel() {
     let raw = get_dummy_raw_msg_chan_open_try(10);
     let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
+    let _module_id =
+        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = msg.port_id_on_a.clone();
 
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
+    let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
+        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
         .unwrap();
+
+    contract
+        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .unwrap();
+    mock_lightclient_reply(&mut deps);
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -1113,17 +1142,7 @@ fn test_validate_open_try_channel() {
         .store_connection(deps.as_mut().storage, conn_id, conn_end)
         .unwrap();
 
-    let client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
-        trusting_period: 2,
-        frozen_height: 0,
-        max_clock_drift: 5,
-        latest_height: 100,
-        network_section_hash: vec![1, 2, 3],
-        validators: vec!["hash".as_bytes().to_vec()],
-        ..get_default_icon_client_state()
-    }
-    .try_into()
-    .unwrap();
+    let client_state: ClientState = get_dummy_client_state();
 
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -1146,6 +1165,7 @@ fn test_validate_open_try_channel() {
         .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
     }
     .try_into()
     .unwrap();
@@ -1164,7 +1184,7 @@ fn test_validate_open_try_channel() {
     let res = contract.validate_channel_open_try(deps.as_mut(), info, &msg);
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().messages[0].id, 421)
+    assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY)
 }
 
 #[test]
