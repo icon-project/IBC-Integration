@@ -85,7 +85,7 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
     }
     .try_into()
     .unwrap();
-    let height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+    let height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -187,7 +187,7 @@ fn test_validate_close_confirm_channel() {
     }
     .try_into()
     .unwrap();
-    let height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+    let height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(

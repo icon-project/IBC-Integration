@@ -45,7 +45,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
         let packet_sequence = Sequence::from(packet.sequence);
-        let proof_height = to_ibc_height(msg.proof_height.clone().unwrap())?;
+        let proof_height = to_ibc_height(msg.proof_height.clone())?;
 
         let next_sequence_recv = Sequence::from(msg.next_sequence_recv);
 

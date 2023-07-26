@@ -169,7 +169,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             &channel_end
         );
         self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
-        let proof_height = to_ibc_height(message.proof_height.clone().unwrap())?;
+        let proof_height = to_ibc_height(message.proof_height.clone())?;
         let client_id_on_b = connection_end.client_id();
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
         let consensus_state_of_a_on_b =
@@ -295,7 +295,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
 
-        let proof_height = to_ibc_height(message.proof_height.clone().unwrap())?;
+        let proof_height = to_ibc_height(message.proof_height.clone())?;
 
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &proof_height)?;
@@ -425,7 +425,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let client_id_on_b = connection_end.client_id();
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
-        let proof_height = to_ibc_height(message.proof_height.clone().unwrap())?;
+        let proof_height = to_ibc_height(message.proof_height.clone())?;
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;
         let prefix_on_a = connection_end.counterparty().prefix();
@@ -611,7 +611,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let client_id_on_b = connection_end.client_id();
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
-        let proof_height = to_ibc_height(message.proof_height.clone().unwrap())?;
+        let proof_height = to_ibc_height(message.proof_height.clone())?;
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;
         let prefix_on_a = connection_end.counterparty().prefix();

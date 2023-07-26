@@ -91,7 +91,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
         let packet_sequence = Sequence::from(packet.sequence);
-        let proof_height = to_ibc_height(msg.proof_height.clone().unwrap())?;
+        let proof_height = to_ibc_height(msg.proof_height.clone())?;
 
         debug_println!(
             "from packet the timeout height is :{:?}",

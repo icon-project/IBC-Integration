@@ -95,7 +95,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         debug_println!("client state created ",);
 
-        let proof_height = to_ibc_height(msg.proof_height.clone().unwrap())?;
+        let proof_height = to_ibc_height(msg.proof_height.clone())?;
 
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;

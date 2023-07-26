@@ -121,7 +121,7 @@ fn test_receive_packet() {
     .try_into()
     .unwrap();
 
-    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(

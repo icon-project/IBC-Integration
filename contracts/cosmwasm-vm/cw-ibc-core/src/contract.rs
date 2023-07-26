@@ -124,15 +124,14 @@ impl<'a> CwIbcCoreContext<'a> {
                 unimplemented!()
             }
             CoreExecuteMsg::ConnectionOpenInit { msg } => {
-                // let message=msg.try_inner::<RawMsgConnectionOpenInit>()?;
-                let message: MsgConnectionOpenInit =
-                    Self::from_raw::<RawMsgConnectionOpenInit, MsgConnectionOpenInit>(&msg)?;
-                    let message: RawMsgConnectionOpenInit = Self::raw_from_hex(&msg)?;
+                debug_println!("[IBCCore] Connection Open Init Called");
+                let message: RawMsgConnectionOpenInit = Self::raw_from_hex(&msg)?;
                 self.connection_open_init(deps, message)
             }
             CoreExecuteMsg::ConnectionOpenTry { msg } => {
                 let message: MsgConnectionOpenTry =
                     Self::from_raw::<RawMsgConnectionOpenTry, MsgConnectionOpenTry>(&msg)?;
+                    let message: RawMsgConnectionOpenTry = Self::raw_from_hex(&msg)?;
                 self.connection_open_try(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenAck { msg } => {

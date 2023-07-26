@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use common::ibc::{core::{ics04_channel::timeout::TimeoutHeight, ics03_connection::{connection::Counterparty, error::ConnectionError}}, Height};
+use common::ibc::{core::{ics04_channel::timeout::TimeoutHeight, ics03_connection::{connection::Counterparty, error::ConnectionError}}, Height, self};
 use cw_common::{
     ibc_types::{ChannelEnd, ChannelError, IbcChannelId, IbcPortId, IbcTimestamp, IbcClientId},
     raw_types::{channel::{RawChannel}, RawHeight, RawVersion},
@@ -21,10 +21,13 @@ pub fn to_ibc_channel_id(channel_id: &str) -> Result<IbcChannelId, ContractError
     Ok(channel_id)
 }
 
-pub fn to_ibc_height(height: RawHeight) -> Result<Height, ContractError> {
+pub fn to_ibc_height(height: Option<RawHeight>) -> Result<Height, ContractError> {
+   if let Some(height) =height {
     let height =
-        Height::try_from(height).map_err(|e| ContractError::IbcClientError { error: e })?;
-    Ok(height)
+    Height::try_from(height).map_err(|e| ContractError::IbcClientError { error: e })?;
+     return Ok(height)
+   }
+   Err(ContractError::InvalidHeight)
 }
 
 pub fn to_ibc_timeout_height(height: Option<RawHeight>) -> Result<TimeoutHeight, ContractError> {
@@ -75,4 +78,11 @@ pub fn to_ibc_counterparty(counterparty:Option<RawCounterparty>)->Result<Counter
         return Ok(ibc_counterparty);
     }
     return Err(ContractError::IbcConnectionError { error: ConnectionError::MissingCounterparty })
+}
+
+pub fn to_ibc_versions(versions:Vec<RawVersion>)->Result<Vec<Version>,ContractError>{
+    let ibc_versions= versions.into_iter().map(|v|{
+        Version::try_from(v)
+    }).collect::<Result<Vec<Version>,ConnectionError>>().map_err(|e|ContractError::IbcConnectionError { error: e })?;
+    Ok(ibc_versions)
 }

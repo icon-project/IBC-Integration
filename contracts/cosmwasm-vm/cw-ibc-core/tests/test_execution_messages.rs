@@ -23,6 +23,7 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::ProstMessage;
 
 use cw_ibc_core::Height;
+use cw_ibc_core::conversions::to_ibc_height;
 use cw_ibc_core::{
     ConnectionEnd, EXECUTE_CONNECTION_OPENTRY, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT,
 };
@@ -351,6 +352,7 @@ fn test_for_connection_open_try() {
         .unwrap();
 
     let cl = client_state.to_any().encode_to_vec();
+    let proof_height=to_ibc_height(message.proof_height.clone()).unwrap();
 
     contract
         .store_client_state(
@@ -368,11 +370,7 @@ fn test_for_connection_open_try() {
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::from_str(&message.client_id).unwrap(),
-            Height::new(
-                message.proof_height.clone().unwrap().revision_number,
-                message.proof_height.clone().unwrap().revision_height,
-            )
-            .unwrap(),
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )

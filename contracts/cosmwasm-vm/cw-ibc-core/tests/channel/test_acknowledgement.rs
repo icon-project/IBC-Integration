@@ -305,7 +305,7 @@ fn test_acknowledgement_packet_validate_ordered() {
     let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
     let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
     let packet_sequence = Sequence::from(packet.sequence);
-    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     //Store channel, connection and packet commitment
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
@@ -408,7 +408,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
     let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
     let packet_sequence = Sequence::from(packet.sequence);
-    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
 
     //Store channel, connection and packet commitment
     let chan_end_on_a_ordered = ChannelEnd::new(
@@ -506,7 +506,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     let _packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
     let _packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
     let _packet_sequence = Sequence::from(packet.sequence);
-    let proof_height = to_ibc_height(msg.proof_height.clone().unwrap()).unwrap();
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     //Store channel, connection and packet commitment
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
