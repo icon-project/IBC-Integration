@@ -189,7 +189,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn capabilities(&self) -> &Map<'a, Vec<u8>, String> {
         &self.capabilities
     }
-    pub fn commitments(&self) -> &Map<'a, Vec<u8>, Vec<u8>> {
+    pub fn get_commitments(&self) -> &Map<'a, Vec<u8>, Vec<u8>> {
         &self.commitments
     }
     pub fn expected_time_per_block(&self) -> &Item<'a, u64> {
@@ -224,5 +224,22 @@ impl<'a> CwIbcStore<'a> {
             debug_print::debug_println!("Removing Key {:?}", k);
             store.remove(&k);
         }
+    }
+
+    pub fn save_commitment(
+        &self,
+        store: &mut dyn Storage,
+        key: Vec<u8>,
+        data: &[u8],
+    ) -> StdResult<()> {
+        return self.get_commitments().save_raw(store, key, data);
+    }
+
+    pub fn load_commitment(&self, store: &dyn Storage, key: Vec<u8>) -> Option<Vec<u8>> {
+        return self.get_commitments().load_raw(store, key);
+    }
+
+    pub fn remove_commitment(&self, store: &mut dyn Storage, key: Vec<u8>) {
+        return self.get_commitments().remove(store, key);
     }
 }

@@ -299,8 +299,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let commitment_bytes = keccak256(&connection_end_bytes).to_vec();
 
         self.ibc_store()
-            .commitments()
-            .save(store, connection_commit_key, &commitment_bytes)?;
+            .save_commitment(store, connection_commit_key, &commitment_bytes)?;
 
         Ok(())
     }

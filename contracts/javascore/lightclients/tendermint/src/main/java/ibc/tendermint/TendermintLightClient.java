@@ -204,7 +204,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
             byte[] path,
             byte[] value) {
 
-        value = ByteUtil.convertBytesToStringBytes(IBCCommitment.keccak256(value));
+        value = IBCCommitment.keccak256(value);
         path = ByteUtil.join(prefix, StringUtil.bytesToHex(IBCCommitment.keccak256(path)).getBytes());
 
         Height height = Height.decode(heightBytes);
