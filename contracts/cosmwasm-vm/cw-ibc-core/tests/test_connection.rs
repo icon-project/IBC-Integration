@@ -60,7 +60,7 @@ fn test_set_connection() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, &conn_id.clone(), &conn_end.clone())
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
     let result = contract
         .connection_end(deps.as_ref().storage, &conn_id)
@@ -86,7 +86,7 @@ fn test_get_connection() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, &conn_id.clone(), &conn_end.clone())
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
     let result = contract
         .connection_end(deps.as_ref().storage, &conn_id)
@@ -120,7 +120,7 @@ fn test_client_connection() {
     let contract = CwIbcCoreContext::new();
 
     contract
-        .store_connection_to_client(deps.as_mut().storage, &client_id.clone(), &conn_id.clone())
+        .store_connection_to_client(deps.as_mut().storage, &client_id, &conn_id)
         .unwrap();
 
     let result = contract
@@ -1449,7 +1449,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage,& client_id.clone(), light_client)
+        .store_client_implementations(&mut deps.storage, &client_id.clone(), light_client)
         .unwrap();
 
     let counterparty_prefix =

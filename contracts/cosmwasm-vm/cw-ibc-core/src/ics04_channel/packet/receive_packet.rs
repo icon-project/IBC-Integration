@@ -65,7 +65,7 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into)?;
         }
         let connection_id = &channel_end.connection_hops()[0];
-        let conn_end_on_b = self.connection_end(deps.storage, &connection_id)?;
+        let conn_end_on_b = self.connection_end(deps.storage, connection_id)?;
         if !conn_end_on_b.state_matches(&ConnectionState::Open) {
             return Err(PacketError::ConnectionNotOpen {
                 connection_id: channel_end.connection_hops()[0].clone(),
@@ -129,7 +129,7 @@ impl<'a> CwIbcCoreContext<'a> {
             commitment: expected_commitment_on_a.into_vec(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, &client_id_on_b)?;
+        let client = self.get_client(deps.as_ref().storage, client_id_on_b)?;
         client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id_on_b)?;
         let packet_sequence = Sequence::from(packet.sequence);
 

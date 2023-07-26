@@ -78,16 +78,8 @@ impl<'a> CwIbcCoreContext<'a> {
             delay_period,
         );
 
-        self.update_connection_commitment(
-            deps.storage,
-            &connection_identifier,
-            &connection_end,
-        )?;
-        self.store_connection_to_client(
-            deps.storage,
-            &client_id,
-            &connection_identifier,
-        )?;
+        self.update_connection_commitment(deps.storage, &connection_identifier, &connection_end)?;
+        self.store_connection_to_client(deps.storage, &client_id, &connection_identifier)?;
         self.store_connection(deps.storage, &connection_identifier, &connection_end)?;
 
         let event = create_connection_event(
@@ -214,7 +206,7 @@ impl<'a> CwIbcCoreContext<'a> {
             })?;
         let prefix_on_a = self.commitment_prefix(deps.as_ref(), &env);
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
-        let client = self.get_client(deps.as_ref().storage, &client_id_on_a)?;
+        let client = self.get_client(deps.as_ref().storage, client_id_on_a)?;
 
         let expected_conn_end_on_b: ConnectionEnd = ConnectionEnd::new(
             State::TryOpen,
@@ -591,7 +583,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let counterparty_prefix = connection_end.counterparty().prefix();
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
 
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_client(deps.as_ref().storage, client_id)?;
 
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Open,

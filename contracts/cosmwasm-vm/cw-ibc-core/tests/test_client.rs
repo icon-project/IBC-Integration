@@ -83,7 +83,7 @@ fn store_client_implement_success() {
     contract
         .store_client_implementations(
             mock.as_mut().storage,
-            &  client_id.clone(),
+            &client_id,
             light_client_address.clone(),
         )
         .unwrap();
@@ -260,14 +260,10 @@ fn store_client_type_sucess() {
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
 
     contract
-        .store_client_type(
-            deps.as_mut().storage,
-            & client_id.clone(),
-            client_type.clone(),
-        )
+        .store_client_type(deps.as_mut().storage, &client_id, client_type.clone())
         .unwrap();
     let result = contract
-        .get_client_type(deps.as_ref().storage,& client_id)
+        .get_client_type(deps.as_ref().storage, &client_id)
         .unwrap();
 
     assert_eq!(client_type, result)
@@ -1420,7 +1416,7 @@ fn sucess_on_getting_client() {
     contract
         .store_client_implementations(
             mock_deps.as_mut().storage,
-            &client_id.clone(),
+            &client_id,
             client_address.clone(),
         )
         .unwrap();
@@ -1547,7 +1543,7 @@ fn sucess_on_misbehaviour_validate() {
     contract
         .store_client_implementations(
             deps.as_mut().storage,
-            &client_id.clone(),
+            &client_id,
             LightClient::new("clientaddress".to_string()),
         )
         .unwrap();
@@ -1603,7 +1599,7 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
     contract
         .store_client_implementations(
             deps.as_mut().storage,
-            &client_id.clone(),
+            &client_id,
             LightClient::new("clientaddress".to_string()),
         )
         .unwrap();

@@ -44,7 +44,7 @@ fn test_validate_open_ack_channel_fail_missing_counterparty() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, &conn_id.clone(), &conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let channel_end = ChannelEnd {
@@ -149,7 +149,7 @@ fn test_validate_open_ack_channel() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, &conn_id.clone(), &conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let channel_end = ChannelEnd {

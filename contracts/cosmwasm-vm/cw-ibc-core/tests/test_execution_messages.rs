@@ -22,7 +22,7 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 
 use cw_common::ProstMessage;
 
-use cw_ibc_core::conversions::{to_ibc_height, to_ibc_connection_id};
+use cw_ibc_core::conversions::{to_ibc_connection_id, to_ibc_height};
 use cw_ibc_core::{
     ConnectionEnd, EXECUTE_CONNECTION_OPENTRY, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT,
 };
@@ -431,8 +431,8 @@ fn test_for_connection_open_ack() {
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
 
-   let connection_id=to_ibc_connection_id(&message.connection_id).unwrap();
-   let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
+    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
@@ -469,11 +469,7 @@ fn test_for_connection_open_ack() {
         Duration::default(),
     );
     contract
-        .store_connection(
-            &mut deps.storage,
-            &connection_id,
-            &conn_end,
-        )
+        .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
 
     let client_state_bytes = client_state.encode_to_vec();
@@ -532,8 +528,8 @@ fn test_for_connection_open_confirm() {
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
-    let connection_id= to_ibc_connection_id(&message.connection_id).unwrap();
-    let proof_height=to_ibc_height(message.proof_height.clone()).unwrap();
+    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
@@ -564,11 +560,7 @@ fn test_for_connection_open_confirm() {
     );
     let _conn_id = ConnectionId::new(1);
     contract
-        .store_connection(
-            &mut deps.storage,
-            &connection_id,
-           & conn_end.clone(),
-        )
+        .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
 
     let light_client = LightClient::new("lightclient".to_string());
@@ -762,7 +754,7 @@ fn test_connection_open_confirm_fails() {
     );
     let conn_id = ConnectionId::new(1);
     contract
-        .store_connection(&mut deps.storage, &conn_id, &conn_end.clone())
+        .store_connection(&mut deps.storage, &conn_id, &conn_end)
         .unwrap();
 
     let light_client = LightClient::new("lightclient".to_string());

@@ -87,7 +87,7 @@ use super::*;
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, IbcClientType, String>,
     client_types: Map<'a, &'a IbcClientId, IbcClientType>,
-    client_states: Map<'a, &'a  IbcClientId, Vec<u8>>,
+    client_states: Map<'a, &'a IbcClientId, Vec<u8>>,
     consensus_states: Map<'a, &'a IbcClientId, Vec<u8>>,
     client_implementations: Map<'a, &'a IbcClientId, LightClient>,
     next_sequence_send: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
@@ -97,7 +97,7 @@ pub struct CwIbcStore<'a> {
     next_connection_sequence: Item<'a, u64>,
     next_channel_sequence: Item<'a, u64>,
     client_connections: Map<'a, &'a IbcClientId, IbcConnectionId>,
-    connections: Map<'a, &'a  IbcConnectionId, Vec<u8>>,
+    connections: Map<'a, &'a IbcConnectionId, Vec<u8>>,
     channels: Map<'a, (&'a PortId, &'a ChannelId), ChannelEnd>,
     port_to_module: Map<'a, PortId, IbcModuleId>,
     /// Stores address based on the capability names

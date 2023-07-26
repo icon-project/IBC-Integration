@@ -233,7 +233,7 @@ impl KeyDeserialize for ConnectionId {
     }
 }
 
-impl<'a> PrimaryKey<'a> for &ConnectionId{
+impl<'a> PrimaryKey<'a> for &ConnectionId {
     type Prefix = ();
 
     type SubPrefix = ();

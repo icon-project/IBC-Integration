@@ -94,7 +94,7 @@ impl<'a> CwIbcCoreContext<'a> {
         match self
             .ibc_store()
             .client_connections()
-            .save(store, client_id, &conn_id)
+            .save(store, client_id, conn_id)
         {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),

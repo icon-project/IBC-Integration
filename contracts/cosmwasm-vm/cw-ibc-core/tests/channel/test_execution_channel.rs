@@ -790,7 +790,7 @@ fn test_for_packet_send() {
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, &conn_id_on_a, &conn_end_on_a)
+        .store_connection(&mut deps.storage, conn_id_on_a, &conn_end_on_a)
         .unwrap();
     contract
         .store_next_sequence_send(
