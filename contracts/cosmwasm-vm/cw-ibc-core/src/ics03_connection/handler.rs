@@ -45,7 +45,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.client_state(deps.storage, &client_id)?;
 
-        let client = self.get_client(deps.as_ref().storage, client_id.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &client_id)?;
 
         let response: Vec<u8> = client.get_client_state(deps.as_ref(), &client_id)?;
 
@@ -80,15 +80,15 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.update_connection_commitment(
             deps.storage,
-            connection_identifier.clone(),
-            connection_end.clone(),
+            &connection_identifier,
+            &connection_end,
         )?;
         self.store_connection_to_client(
             deps.storage,
-            client_id.clone(),
-            connection_identifier.clone(),
+            &client_id,
+            &connection_identifier,
         )?;
-        self.store_connection(deps.storage, connection_identifier.clone(), connection_end)?;
+        self.store_connection(deps.storage, &connection_identifier, &connection_end)?;
 
         let event = create_connection_event(
             IbcEventType::OpenInitConnection,
@@ -188,7 +188,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.validate_self_client(message_client_state.clone())?;
         debug_println!("[ConnOpenAck]: Self Client Valid");
-        let conn_end_on_a = self.connection_end(deps.storage, connection_id.clone())?;
+        let conn_end_on_a = self.connection_end(deps.storage, &connection_id)?;
         let client_id_on_a = conn_end_on_a.client_id();
         let counterparty_client_id = conn_end_on_a.counterparty().client_id();
 
@@ -214,7 +214,7 @@ impl<'a> CwIbcCoreContext<'a> {
             })?;
         let prefix_on_a = self.commitment_prefix(deps.as_ref(), &env);
         let prefix_on_b = conn_end_on_a.counterparty().prefix();
-        let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &client_id_on_a)?;
 
         let expected_conn_end_on_b: ConnectionEnd = ConnectionEnd::new(
             State::TryOpen,
@@ -270,7 +270,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         client.verify_connection_open_ack(deps.as_ref(), payload)?;
 
-        let mut conn_end = self.connection_end(deps.storage, connection_id.clone())?;
+        let mut conn_end = self.connection_end(deps.storage, &connection_id)?;
 
         if !conn_end.state_matches(&State::Init) {
             return Err(ConnectionError::ConnectionMismatch { connection_id })
@@ -298,10 +298,10 @@ impl<'a> CwIbcCoreContext<'a> {
             Some(counter_connection_id),
         )?;
 
-        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())?;
+        self.store_connection(deps.storage, &connection_id, &conn_end)?;
         debug_println!("[ConnOpenAckReply]: Connection Stored");
 
-        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)?;
+        self.update_connection_commitment(deps.storage, &connection_id, &conn_end)?;
 
         Ok(Response::new()
             .add_attribute("method", "execute_connection_open_ack")
@@ -373,7 +373,7 @@ impl<'a> CwIbcCoreContext<'a> {
             from_utf8(&prefix_on_b.clone().into_vec()).unwrap()
         );
 
-        let client = self.get_client(deps.as_ref().storage, message_client_id.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &message_client_id)?;
 
         // no idea what is this  is this suppose to be like this ?????
         let client_consensus_state_path_on_b =
@@ -515,10 +515,10 @@ impl<'a> CwIbcCoreContext<'a> {
             counterparty_conn_id,
         )?;
 
-        self.store_connection_to_client(deps.storage, message_client_id, connection_id.clone())?;
-        self.store_connection(deps.storage, connection_id.clone(), conn_end.clone())?;
+        self.store_connection_to_client(deps.storage, &message_client_id, &connection_id)?;
+        self.store_connection(deps.storage, &connection_id, &conn_end)?;
 
-        self.update_connection_commitment(deps.storage, connection_id.clone(), conn_end)?;
+        self.update_connection_commitment(deps.storage, &connection_id, &conn_end)?;
 
         Ok(Response::new()
             .add_attribute("method", "execute_connection_open_try")
@@ -551,7 +551,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = to_ibc_connection_id(&msg.connection_id)?;
 
         let proof_height = to_ibc_height(msg.proof_height.clone())?;
-        let mut connection_end = self.connection_end(deps.storage, connection_id.clone())?;
+        let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
         let counterparty = connection_end.counterparty().clone();
         debug_println!("[ConnOpenConfirm]: Our Connection {:?}", connection_end);
         let client_id = connection_end.client_id();
@@ -591,7 +591,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let counterparty_prefix = connection_end.counterparty().prefix();
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
 
-        let client = self.get_client(deps.as_ref().storage, client_id.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &client_id)?;
 
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Open,
@@ -626,10 +626,10 @@ impl<'a> CwIbcCoreContext<'a> {
             counterparty_conn_id,
         )?;
 
-        self.store_connection(deps.storage, connection_id.clone(), connection_end.clone())?;
+        self.store_connection(deps.storage, &connection_id, &connection_end)?;
         debug_println!("[ConnOpenConfirmReply]: Connection Stored");
 
-        self.update_connection_commitment(deps.storage, connection_id.clone(), connection_end)?;
+        self.update_connection_commitment(deps.storage, &connection_id, &connection_end)?;
 
         debug_println!("[ConnOpenConfirmReply]: Commitment Stored Stored");
 

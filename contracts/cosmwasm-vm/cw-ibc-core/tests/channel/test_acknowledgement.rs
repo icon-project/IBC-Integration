@@ -328,8 +328,8 @@ fn test_acknowledgement_packet_validate_ordered() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone(),
-            conn_end_on_a,
+            &chan_end_on_a_ordered.connection_hops()[0],
+            &conn_end_on_a,
         )
         .unwrap();
     let packet_commitment =
@@ -368,7 +368,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     contract
         .store_next_sequence_ack(&mut deps.storage, &dst_port, &dst_channel, &1.into())
@@ -430,8 +430,8 @@ fn test_acknowledgement_packet_validate_unordered() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone(),
-            conn_end_on_a,
+            &chan_end_on_a_ordered.connection_hops()[0].clone(),
+            &conn_end_on_a,
         )
         .unwrap();
     let packet_commitment =
@@ -470,7 +470,7 @@ fn test_acknowledgement_packet_validate_unordered() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
 
     contract
@@ -528,8 +528,8 @@ fn test_acknowledgement_packet_validate_without_commitment() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone(),
-            conn_end_on_a,
+            &chan_end_on_a_ordered.connection_hops()[0].clone(),
+            &conn_end_on_a,
         )
         .unwrap();
 
@@ -558,7 +558,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     contract
         .ibc_store()

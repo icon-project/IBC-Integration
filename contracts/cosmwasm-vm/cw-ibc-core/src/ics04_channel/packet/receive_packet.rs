@@ -46,29 +46,29 @@ impl<'a> CwIbcCoreContext<'a> {
         let dst_port = to_ibc_port_id(&packet.destination_port)?;
         let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
 
-        let chan_end_on_b = self.get_channel_end(deps.storage, &dst_port, &dst_channel)?;
-        if !chan_end_on_b.state_matches(&State::Open) {
+        let channel_end = self.get_channel_end(deps.storage, &dst_port, &dst_channel)?;
+        if !channel_end.state_matches(&State::Open) {
             return Err(PacketError::InvalidChannelState {
                 channel_id: dst_channel,
-                state: chan_end_on_b.state,
+                state: channel_end.state,
             })
             .map_err(Into::<ContractError>::into)?;
         }
         debug_println!("validate recevie packet state_matched");
         let counterparty = Counterparty::new(src_port.clone(), Some(src_channel.clone()));
 
-        if !chan_end_on_b.counterparty_matches(&counterparty) {
+        if !channel_end.counterparty_matches(&counterparty) {
             return Err(PacketError::InvalidPacketCounterparty {
                 port_id: src_port,
                 channel_id: src_channel,
             })
             .map_err(Into::<ContractError>::into)?;
         }
-        let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
-        let conn_end_on_b = self.connection_end(deps.storage, conn_id_on_b.clone())?;
+        let connection_id = &channel_end.connection_hops()[0];
+        let conn_end_on_b = self.connection_end(deps.storage, &connection_id)?;
         if !conn_end_on_b.state_matches(&ConnectionState::Open) {
             return Err(PacketError::ConnectionNotOpen {
-                connection_id: chan_end_on_b.connection_hops()[0].clone(),
+                connection_id: channel_end.connection_hops()[0].clone(),
             })
             .map_err(Into::<ContractError>::into)?;
         }
@@ -129,11 +129,11 @@ impl<'a> CwIbcCoreContext<'a> {
             commitment: expected_commitment_on_a.into_vec(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_b.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &client_id_on_b)?;
         client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id_on_b)?;
         let packet_sequence = Sequence::from(packet.sequence);
 
-        if chan_end_on_b.order_matches(&Order::Ordered) {
+        if channel_end.order_matches(&Order::Ordered) {
             let next_seq_recv =
                 self.get_next_sequence_recv(deps.storage, &dst_port, &dst_channel)?;
             if packet_sequence > next_seq_recv {

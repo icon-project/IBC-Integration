@@ -65,7 +65,7 @@ impl<'a> CwIbcCoreContext<'a> {
         debug_println!("counterparty matched");
 
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
-        let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a.clone())?;
+        let conn_end_on_a = self.connection_end(deps.storage, &conn_id_on_a)?;
         if !conn_end_on_a.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::ConnectionNotOpen {
@@ -159,7 +159,7 @@ impl<'a> CwIbcCoreContext<'a> {
             ack: msg.acknowledgement.clone(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &client_id_on_a)?;
 
         client.verify_packet_acknowledge(
             deps.as_ref(),

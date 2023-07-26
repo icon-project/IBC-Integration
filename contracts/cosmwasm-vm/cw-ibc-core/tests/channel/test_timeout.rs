@@ -198,8 +198,8 @@ fn test_timeout_packet_validate_to_light_client() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone(),
-            conn_end_on_a,
+            &chan_end_on_a_ordered.connection_hops()[0].clone(),
+            &conn_end_on_a,
         )
         .unwrap();
     let packet_commitment =
@@ -236,7 +236,7 @@ fn test_timeout_packet_validate_to_light_client() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {

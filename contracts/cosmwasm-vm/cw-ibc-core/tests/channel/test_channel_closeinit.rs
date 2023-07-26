@@ -59,7 +59,7 @@ fn test_validate_close_init_channel() {
     let connection_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, connection_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &connection_id.clone(), &conn_end)
         .unwrap();
 
     let channel_end = ChannelEnd {

@@ -42,7 +42,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id.clone(), &conn_end)
         .unwrap();
 
     let channel_end = ChannelEnd {
@@ -121,7 +121,7 @@ fn test_validate_open_confirm_channel() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
@@ -144,7 +144,7 @@ fn test_validate_open_confirm_channel() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id.clone(), &conn_end)
         .unwrap();
 
     let channel_end = ChannelEnd {

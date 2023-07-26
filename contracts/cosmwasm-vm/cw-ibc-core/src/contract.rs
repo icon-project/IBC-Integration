@@ -263,7 +263,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetClientType { client_id } => {
                 let res = self
-                    .get_client_type(deps.storage, ClientId::from_str(&client_id).unwrap())
+                    .get_client_type(deps.storage, &ClientId::from_str(&client_id).unwrap())
                     .map_err(|_| ContractError::InvalidClientId { client_id })
                     .unwrap();
                 to_binary(&res)
@@ -272,7 +272,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let res = self
                     .get_client_implementations(
                         deps.storage,
-                        ClientId::from_str(&client_id).unwrap(),
+                        &ClientId::from_str(&client_id).unwrap(),
                     )
                     .map_err(|_| ContractError::InvalidClientId { client_id })
                     .unwrap();
@@ -299,8 +299,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 to_binary(&hex::encode(res.encode_to_vec()))
             }
             QueryMsg::GetConnection { connection_id } => {
-                let _connection_id = ConnectionId::from_str(&connection_id).unwrap();
-                let res = self.get_connection(deps.storage, _connection_id).unwrap();
+                let connection_id = ConnectionId::from_str(&connection_id).unwrap();
+                let res = self.get_connection(deps.storage, &connection_id).unwrap();
                 let connection_end = ConnectionEnd::decode_vec(res.as_slice()).unwrap();
                 let raw_connection_end: RawConnectionEnd = connection_end.into();
                 to_binary(&hex::encode(raw_connection_end.encode_to_vec()))
@@ -446,7 +446,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let client = self
                     .get_client_implementations(
                         deps.storage,
-                        IbcClientId::from_str(&client_id).unwrap(),
+                        &IbcClientId::from_str(&client_id).unwrap(),
                     )
                     .unwrap();
                 let query = build_smart_query(client.get_address(), msg);

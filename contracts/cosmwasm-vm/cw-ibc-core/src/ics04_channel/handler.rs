@@ -75,7 +75,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         }
         let connection_id = channel_end.connection_hops[0].clone();
         // An IBC connection running on the local (host) chain should exist.
-        let connection_end = self.connection_end(deps.storage, connection_id.clone())?;
+        let connection_end = self.connection_end(deps.storage, &connection_id)?;
         channel_open_init_msg_validate(&channel_end, connection_end)?;
         let counter = self.channel_counter(deps.storage)?;
         let src_channel = ChannelId::new(counter); // creating new channel_id
@@ -146,7 +146,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         }
         debug_println!("Reached in channel open try");
         let connection_id = channel.connection_hops[0].clone();
-        let connection_end = self.connection_end(deps.storage, connection_id)?;
+        let connection_end = self.connection_end(deps.storage, &connection_id)?;
 
         channel_open_try_msg_validate(&channel, &connection_end)?;
         debug_println!("channel open try msg validate ");
@@ -215,7 +215,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         };
         let client_id = connection_end.client_id().clone();
 
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
@@ -283,7 +283,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         channel_open_ack_validate(&src_channel, &channel_end)?;
         let connection_end =
-            self.connection_end(deps.storage, channel_end.connection_hops()[0].clone())?;
+            self.connection_end(deps.storage, &channel_end.connection_hops()[0])?;
         if !connection_end.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcChannelError {
                 error: ChannelError::ConnectionNotOpen {
@@ -338,7 +338,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             client_id: connection_end.client_id().to_string(),
         };
         let client_id = connection_end.client_id().clone();
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         channel_end.set_version(version);
@@ -413,7 +413,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 })?;
         channel_open_confirm_validate(&dest_channel, &channel_end)?;
         let connection_end =
-            self.connection_end(deps.storage, channel_end.connection_hops()[0].clone())?;
+            self.connection_end(deps.storage, &channel_end.connection_hops()[0])?;
 
         if !connection_end.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcChannelError {
@@ -469,7 +469,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let client_id = connection_end.client_id().clone();
 
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         // Getting the module address for on channel open try call
@@ -528,7 +528,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         channel_close_init_validate(&src_channel, &channel_end)?;
         let connection_id = channel_end.connection_hops()[0].clone();
-        let connection_end = self.connection_end(deps.storage, connection_id.clone())?;
+        let connection_end = self.connection_end(deps.storage, &connection_id)?;
 
         if !connection_end.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcChannelError {
@@ -600,7 +600,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 })?;
         channel_close_confirm_validate(&dest_channel, &channel_end)?;
         let connection_end =
-            self.connection_end(deps.storage, channel_end.connection_hops()[0].clone())?;
+            self.connection_end(deps.storage, &channel_end.connection_hops()[0])?;
         if !connection_end.state_matches(&ConnectionState::Open) {
             return Err(ContractError::IbcChannelError {
                 error: ChannelError::ConnectionNotOpen {
@@ -653,7 +653,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         };
 
         let client_id = connection_end.client_id().clone();
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         // Getting the module address for on channel open try call

@@ -68,7 +68,7 @@ fn test_for_channel_open_init_execution_message() {
     msg.connection_hops_on_a = vec![conn_id.clone()];
     msg.version_proposal = Version::from_str("xcall-1").unwrap();
     contract
-        .store_connection(deps.as_mut().storage, conn_id, conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
     let res = contract.execute(
         deps.as_mut(),
@@ -127,7 +127,7 @@ fn test_for_channel_open_try_execution_message() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
@@ -150,7 +150,7 @@ fn test_for_channel_open_try_execution_message() {
     let conn_id = ConnectionId::new(0);
     msg.connection_hops_on_b = vec![conn_id.clone()];
     contract
-        .store_connection(deps.as_mut().storage, conn_id, conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
@@ -247,7 +247,7 @@ fn test_for_channel_open_ack_execution() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
@@ -269,7 +269,7 @@ fn test_for_channel_open_ack_execution() {
     );
     let conn_id = ConnectionId::default();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
     let channel_end = ChannelEnd {
         state: State::Init,
@@ -399,13 +399,13 @@ fn test_for_channel_open_confirm() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
     let conn_id = ConnectionId::new(0);
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let channel_end = ChannelEnd {
@@ -541,7 +541,7 @@ fn test_for_channel_close_init() {
     );
     let connection_id = ConnectionId::default();
     contract
-        .store_connection(deps.as_mut().storage, connection_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &connection_id, &conn_end)
         .unwrap();
     let channel_id = msg.chan_id_on_a.clone();
     let port_id = msg.port_id_on_a.clone();
@@ -629,7 +629,7 @@ fn test_for_channel_close_confirm() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -650,7 +650,7 @@ fn test_for_channel_close_confirm() {
     );
     let conn_id = ConnectionId::new(5);
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
@@ -790,7 +790,7 @@ fn test_for_packet_send() {
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
+        .store_connection(&mut deps.storage, &conn_id_on_a, &conn_end_on_a)
         .unwrap();
     contract
         .store_next_sequence_send(
@@ -879,7 +879,7 @@ fn test_for_recieve_packet() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
     let chan_end_on_b = ChannelEnd::new(
@@ -910,7 +910,7 @@ fn test_for_recieve_packet() {
         .unwrap();
     let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, conn_id_on_b.clone(), conn_end_on_b)
+        .store_connection(&mut deps.storage, &conn_id_on_b.clone(), &conn_end_on_b)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
@@ -951,7 +951,7 @@ fn test_for_recieve_packet() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     contract
         .store_channel_end(&mut deps.storage, &dst_port, &dst_channel, &chan_end_on_b)
@@ -1066,8 +1066,8 @@ fn test_for_ack_execute() {
     contract
         .store_connection(
             &mut deps.storage,
-            chan_end_on_a_ordered.connection_hops()[0].clone(),
-            conn_end_on_a,
+            &chan_end_on_a_ordered.connection_hops()[0].clone(),
+            &conn_end_on_a,
         )
         .unwrap();
     let packet_commitment = compute_packet_commitment(
@@ -1128,7 +1128,7 @@ fn test_for_ack_execute() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 

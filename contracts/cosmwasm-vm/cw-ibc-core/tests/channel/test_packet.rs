@@ -56,7 +56,7 @@ fn test_packet_send() {
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
+        .store_connection(&mut deps.storage, &conn_id_on_a.clone(), &conn_end_on_a)
         .unwrap();
     contract
         .store_next_sequence_send(
@@ -176,7 +176,7 @@ fn test_packet_send_fail_misiing_sequense() {
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
+        .store_connection(&mut deps.storage, &conn_id_on_a.clone(), &conn_end_on_a)
         .unwrap();
 
     let client_state = ClientState {

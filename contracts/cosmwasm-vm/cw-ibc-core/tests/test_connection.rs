@@ -60,10 +60,10 @@ fn test_set_connection() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .store_connection(deps.as_mut().storage, &conn_id.clone(), &conn_end.clone())
         .unwrap();
     let result = contract
-        .connection_end(deps.as_ref().storage, conn_id)
+        .connection_end(deps.as_ref().storage, &conn_id)
         .unwrap();
 
     assert_eq!(conn_end, result)
@@ -86,10 +86,10 @@ fn test_get_connection() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end.clone())
+        .store_connection(deps.as_mut().storage, &conn_id.clone(), &conn_end.clone())
         .unwrap();
     let result = contract
-        .connection_end(deps.as_ref().storage, conn_id)
+        .connection_end(deps.as_ref().storage, &conn_id)
         .unwrap();
 
     assert_eq!(conn_end, result)
@@ -120,11 +120,11 @@ fn test_client_connection() {
     let contract = CwIbcCoreContext::new();
 
     contract
-        .store_connection_to_client(deps.as_mut().storage, client_id.clone(), conn_id.clone())
+        .store_connection_to_client(deps.as_mut().storage, &client_id.clone(), &conn_id.clone())
         .unwrap();
 
     let result = contract
-        .client_connection(deps.as_ref().storage, client_id)
+        .client_connection(deps.as_ref().storage, &client_id)
         .unwrap();
 
     assert_eq!(conn_id, result)
@@ -139,7 +139,7 @@ fn test_get_connection_fail() {
     let contract = CwIbcCoreContext::new();
 
     contract
-        .connection_end(deps.as_ref().storage, conn_id)
+        .connection_end(deps.as_ref().storage, &conn_id)
         .unwrap();
 }
 
@@ -150,7 +150,7 @@ fn test_set_connection_fail() {
     let conn_id = ConnectionId::new(0);
     let contract = CwIbcCoreContext::new();
     contract
-        .connection_end(deps.as_ref().storage, conn_id)
+        .connection_end(deps.as_ref().storage, &conn_id)
         .unwrap();
 }
 
@@ -173,7 +173,7 @@ fn test_client_connection_fail() {
     let contract = CwIbcCoreContext::new();
 
     contract
-        .client_connection(deps.as_ref().storage, client_id)
+        .client_connection(deps.as_ref().storage, &client_id)
         .unwrap();
 }
 
@@ -403,7 +403,7 @@ fn connection_open_init() {
     contract
         .store_client_implementations(
             deps.as_mut().storage,
-            ClientId::from_str("iconclient-0").unwrap(),
+            &ClientId::from_str("iconclient-0").unwrap(),
             LightClient::new("lightclientaddress".to_string()),
         )
         .unwrap();
@@ -651,7 +651,7 @@ fn connection_open_ack_validate_fail() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
+        .store_client_implementations(&mut deps.storage, &client_id.clone(), light_client)
         .unwrap();
 
     let client_state_bytes_any = client_state.encode_to_vec();
@@ -712,7 +712,7 @@ fn connection_open_ack_validate() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
@@ -736,7 +736,7 @@ fn connection_open_ack_validate() {
         Duration::default(),
     );
     contract
-        .store_connection(&mut deps.storage, connection_id, conn_end.clone())
+        .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
 
     let client_state_bytes = client_state.encode_to_vec();
@@ -840,7 +840,7 @@ fn connection_open_try_validate() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
@@ -970,12 +970,12 @@ fn connection_open_confirm_validate() {
         Duration::default(),
     );
     contract
-        .store_connection(&mut deps.storage, connection_id, conn_end.clone())
+        .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
@@ -1049,12 +1049,12 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         Duration::default(),
     );
     contract
-        .store_connection(&mut deps.storage, connection_id, conn_end)
+        .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
+        .store_client_implementations(&mut deps.storage, &client_id.clone(), light_client)
         .unwrap();
 
     let cl = client_state.to_any().encode_to_vec();
@@ -1196,7 +1196,7 @@ fn query_get_connection_fails() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .connection_end(deps.as_ref().storage, conn_id)
+        .connection_end(deps.as_ref().storage, &conn_id)
         .unwrap();
 }
 
@@ -1207,7 +1207,7 @@ fn test_update_connection_commitment() {
     let conn_end = ConnectionEnd::default();
 
     let contract = CwIbcCoreContext::new();
-    let res = contract.update_connection_commitment(&mut deps.storage, conn_id, conn_end);
+    let res = contract.update_connection_commitment(&mut deps.storage, &conn_id, &conn_end);
     assert!(res.is_ok())
 }
 
@@ -1230,12 +1230,12 @@ fn test_check_connection() {
     let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
     contract
-        .connection_end(deps.as_ref().storage, conn_id)
+        .connection_end(deps.as_ref().storage, &conn_id)
         .unwrap();
-    let res = contract.check_for_connection(&mut deps.storage, client_id);
+    let res = contract.check_for_connection(&mut deps.storage, &client_id);
     assert!(res.is_ok());
 }
 
@@ -1378,7 +1378,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
+        .store_client_implementations(&mut deps.storage, &client_id.clone(), light_client)
         .unwrap();
 
     let counterparty_prefix =
@@ -1401,7 +1401,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
         Duration::default(),
     );
     contract
-        .store_connection(&mut deps.storage, connection_id, conn_end)
+        .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
 
     let client_state_bytes = client_state.encode_to_vec();
@@ -1449,7 +1449,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(&mut deps.storage, client_id.clone(), light_client)
+        .store_client_implementations(&mut deps.storage,& client_id.clone(), light_client)
         .unwrap();
 
     let counterparty_prefix =
@@ -1472,7 +1472,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         Duration::default(),
     );
     contract
-        .store_connection(&mut deps.storage, connection_id, conn_end.clone())
+        .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
 
     let client_state_bytes = client_state.encode_to_vec();

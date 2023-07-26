@@ -24,8 +24,8 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_connection(
         &self,
         store: &mut dyn Storage,
-        conn_id: ConnectionId,
-        conn_end: ConnectionEnd,
+        conn_id: &ConnectionId,
+        conn_end: &ConnectionEnd,
     ) -> Result<(), ContractError> {
         let data = conn_end
             .encode_vec()
@@ -57,7 +57,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_end(
         &self,
         store: &dyn Storage,
-        conn_id: ConnectionId,
+        conn_id: &ConnectionId,
     ) -> Result<ConnectionEnd, ContractError> {
         let data = self.ibc_store().connections().load(store, conn_id)?;
 
@@ -88,8 +88,8 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_connection_to_client(
         &self,
         store: &mut dyn Storage,
-        client_id: ClientId,
-        conn_id: ConnectionId,
+        client_id: &ClientId,
+        conn_id: &ConnectionId,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -119,7 +119,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn client_connection(
         &self,
         store: &dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
     ) -> Result<ConnectionId, ContractError> {
         self.ibc_store()
             .client_connections()
@@ -247,7 +247,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn check_for_connection(
         &self,
         store: &dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -282,10 +282,10 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn update_connection_commitment(
         &self,
         store: &mut dyn Storage,
-        connection_id: ConnectionId,
-        connection_end: ConnectionEnd,
+        connection_id: &ConnectionId,
+        connection_end: &ConnectionEnd,
     ) -> Result<(), ContractError> {
-        let connection_commit_key = commitment::connection_commitment_key(&connection_id);
+        let connection_commit_key = commitment::connection_commitment_key(connection_id);
 
         let connection_end_bytes =
             connection_end

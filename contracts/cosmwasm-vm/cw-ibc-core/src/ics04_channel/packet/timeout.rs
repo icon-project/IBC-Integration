@@ -63,7 +63,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let conn_id_on_a = chan_end_on_a.connection_hops()[0].clone();
-        let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
+        let conn_end_on_a = self.connection_end(deps.storage, &conn_id_on_a)?;
 
         let commitment_on_a = match self.get_packet_commitment(
             deps.storage,
@@ -147,7 +147,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
             };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &client_id_on_a)?;
         client.verify_timeout(
             deps.as_ref(),
             client_id_on_a,

@@ -1000,7 +1000,7 @@ fn test_validate_open_init_channel() {
     let conn_id = ConnectionId::new(0);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id.clone(), conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let res = contract.validate_channel_open_init(deps.as_mut(), info.clone(), &raw);
@@ -1046,7 +1046,7 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
     let conn_id = ConnectionId::new(0);
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id, conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let res = contract.validate_channel_open_init(deps.as_mut(), info, &raw);
@@ -1089,7 +1089,7 @@ fn test_validate_open_try_channel() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
@@ -1113,7 +1113,7 @@ fn test_validate_open_try_channel() {
     //  msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id, conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
@@ -1189,7 +1189,7 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
     //   msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id, conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     contract
@@ -1224,7 +1224,7 @@ fn test_execute_open_try_channel() {
     msg.connection_hops_on_b = vec![conn_id.clone()];
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id, conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let counter_party = Counterparty::new(msg.port_id_on_a.clone(), Some(msg.chan_id_on_a.clone()));

@@ -46,7 +46,7 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
 
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id, conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();

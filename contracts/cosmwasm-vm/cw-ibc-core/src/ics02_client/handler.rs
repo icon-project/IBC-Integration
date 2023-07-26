@@ -89,7 +89,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let client_id = message.client_id.clone();
 
-        let client = self.get_client(deps.as_ref().storage, client_id.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &client_id)?;
 
         let sub_msg: SubMsg = client.update_client(&client_id, &message.header)?;
         debug_println!(
@@ -171,7 +171,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let client_id = message.client_id;
 
-        let client = self.get_client(deps.storage, client_id.clone())?;
+        let client = self.get_client(deps.storage, &client_id)?;
 
         let wasm_msg: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: client.get_address(),
@@ -276,11 +276,11 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                     let light_client_address =
                         self.get_client_from_registry(deps.as_ref().storage, client_type.clone())?;
 
-                    self.store_client_type(deps.storage, client_id.clone(), client_type.clone())?;
+                    self.store_client_type(deps.storage, &client_id, client_type.clone())?;
 
                     self.store_client_implementations(
                         deps.storage,
-                        client_id.clone(),
+                        &client_id,
                         LightClient::new(light_client_address),
                     )?;
 
@@ -484,7 +484,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into);
         }
-        let client = self.get_client(deps.as_ref().storage, client_id.clone())?;
+        let client = self.get_client(deps.as_ref().storage, &client_id)?;
 
         let clinet_message = LightClientMessage::Misbehaviour {
             client_id: client_id.to_string(),

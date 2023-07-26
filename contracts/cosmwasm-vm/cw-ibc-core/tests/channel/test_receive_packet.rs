@@ -99,7 +99,7 @@ fn test_receive_packet() {
         .unwrap();
     let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, conn_id_on_b.clone(), conn_end_on_b)
+        .store_connection(&mut deps.storage, &conn_id_on_b.clone(), &conn_end_on_b)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
@@ -145,7 +145,7 @@ fn test_receive_packet() {
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
