@@ -46,32 +46,6 @@ impl AnyTypes for SignedHeader {
     }
 }
 
-impl<'a> PrimaryKey<'a> for ClientId {
-    type Prefix = ();
-
-    type SubPrefix = ();
-
-    type Suffix = Self;
-
-    type SuperSuffix = Self;
-
-    fn key(&self) -> Vec<Key> {
-        vec![Key::Ref(self.as_bytes())]
-    }
-}
-
-impl KeyDeserialize for ClientId {
-    type Output = ClientId;
-
-    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
-        let result = String::from_utf8(value)
-            .map_err(StdError::invalid_utf8)
-            .unwrap();
-        let client_id = ClientId::from_str(&result).unwrap();
-        Ok(client_id)
-    }
-}
-
 impl<'a> PrimaryKey<'a> for &ClientId {
     type Prefix = ();
 
@@ -148,35 +122,6 @@ impl KeyDeserialize for ModuleId {
     }
 }
 
-impl<'a> PrimaryKey<'a> for PortId {
-    type Prefix = ();
-    type SubPrefix = ();
-    type Suffix = Self;
-    type SuperSuffix = Self;
-
-    fn key(&self) -> Vec<Key> {
-        vec![Key::Ref(self.as_bytes())]
-    }
-}
-
-impl KeyDeserialize for PortId {
-    type Output = PortId;
-
-    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
-        let result = String::from_utf8(value)
-            .map_err(StdError::invalid_utf8)
-            .unwrap();
-        let port_id = PortId::from_str(&result).unwrap();
-        Ok(port_id)
-    }
-}
-
-impl<'a> Prefixer<'a> for PortId {
-    fn prefix(&self) -> Vec<Key> {
-        vec![Key::Ref(self.as_bytes())]
-    }
-}
-
 impl<'a> PrimaryKey<'a> for &PortId {
     type Prefix = ();
     type SubPrefix = ();
@@ -202,36 +147,6 @@ impl KeyDeserialize for &PortId {
 impl<'a> Prefixer<'a> for &PortId {
     fn prefix(&self) -> Vec<Key> {
         vec![Key::Ref(self.as_bytes())]
-    }
-}
-
-impl<'a> PrimaryKey<'a> for ConnectionId {
-    type Prefix = ();
-
-    type SubPrefix = ();
-
-    type Suffix = ();
-
-    type SuperSuffix = ();
-    fn key(&self) -> Vec<Key> {
-        vec![Key::Ref(self.as_str().as_bytes())]
-    }
-}
-impl<'a> Prefixer<'a> for ConnectionId {
-    fn prefix(&self) -> Vec<Key> {
-        vec![Key::Ref(self.as_bytes())]
-    }
-}
-
-impl KeyDeserialize for ConnectionId {
-    type Output = ConnectionId;
-
-    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
-        let result = String::from_utf8(value)
-            .map_err(StdError::invalid_utf8)
-            .unwrap();
-        let connection_id = ConnectionId::from_str(&result).unwrap();
-        Ok(connection_id)
     }
 }
 
@@ -262,28 +177,6 @@ impl KeyDeserialize for &ConnectionId {
             .unwrap();
         let connection_id = ConnectionId::from_str(&result).unwrap();
         Ok(connection_id)
-    }
-}
-
-impl<'a> PrimaryKey<'a> for ChannelId {
-    type Prefix = ();
-    type SubPrefix = ();
-    type Suffix = ();
-    type SuperSuffix = ();
-
-    fn key(&self) -> Vec<Key> {
-        vec![Key::Ref(self.as_bytes())]
-    }
-}
-
-impl KeyDeserialize for ChannelId {
-    type Output = ChannelId;
-    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
-        let result = String::from_utf8(value)
-            .map_err(StdError::invalid_utf8)
-            .unwrap();
-        let chan_id = ChannelId::from_str(&result).unwrap();
-        Ok(chan_id)
     }
 }
 

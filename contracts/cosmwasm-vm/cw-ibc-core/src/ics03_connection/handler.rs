@@ -434,7 +434,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.store_connection_to_client(deps.storage, &client_id, &connection_id)?;
         self.store_connection(deps.storage, &connection_id, &conn_end)?;
-
         self.update_connection_commitment(deps.storage, &connection_id, &conn_end)?;
 
         Ok(Response::new()

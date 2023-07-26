@@ -13,10 +13,10 @@ fn test_store_module_by_port() {
     let module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let port_id = PortId::default();
-    ctx.store_module_by_port(&mut deps.storage, port_id.clone(), module_id.clone())
+    ctx.store_module_by_port(&mut deps.storage, &port_id.clone(), module_id.clone())
         .unwrap();
 
-    let result = ctx.lookup_module_by_port(&mut deps.storage, port_id);
+    let result = ctx.lookup_module_by_port(&mut deps.storage, &port_id);
     assert_eq!(result.unwrap(), module_id);
 }
 
@@ -29,7 +29,7 @@ fn test_store_module_by_port_fail() {
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let port_id = PortId::default();
 
-    let result = ctx.lookup_module_by_port(&mut deps.storage, port_id);
+    let result = ctx.lookup_module_by_port(&mut deps.storage, &port_id);
     assert_eq!(result.unwrap(), module_id);
 }
 
@@ -76,7 +76,7 @@ fn test_lookup_module_channel() {
     let module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let msg = MsgChannelOpenInit::try_from(get_dummy_raw_msg_chan_open_init(None)).unwrap();
-    ctx.store_module_by_port(&mut deps.storage, msg.port_id_on_a.clone(), module_id)
+    ctx.store_module_by_port(&mut deps.storage, &msg.port_id_on_a, module_id)
         .unwrap();
     let channel_msg = ChannelMsg::OpenInit(msg);
     let res = ctx.lookup_module_channel(&mut deps.storage, &channel_msg);
