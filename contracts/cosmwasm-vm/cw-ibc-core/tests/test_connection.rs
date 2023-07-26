@@ -395,7 +395,7 @@ fn connection_open_init() {
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
-    let client_id=to_ibc_client_id(&res_msg.client_id).unwrap();
+    let client_id = to_ibc_client_id(&res_msg.client_id).unwrap();
 
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
@@ -449,7 +449,7 @@ fn test_validate_open_init_connection_fail() {
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
-    
+
     contract
         .connection_open_init(deps.as_mut(), message)
         .unwrap();
@@ -839,8 +839,7 @@ fn connection_open_try_validate() {
 
     let message = get_dummy_raw_msg_conn_open_try(10, 10);
 
-    
-   // res_msg.client_id_on_b = IbcClientId::default();
+    // res_msg.client_id_on_b = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
         next_proof_context_hash: vec![1, 2, 3, 4],
@@ -856,8 +855,8 @@ fn connection_open_try_validate() {
     mock_lightclient_reply(&mut deps);
 
     let cl = client_state.to_any().encode_to_vec();
-    let message_client_id= to_ibc_client_id(&message.client_id).unwrap();
-    let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
+    let message_client_id = to_ibc_client_id(&message.client_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     contract
         .store_client_state(
@@ -901,8 +900,6 @@ fn open_try_validate_fails() {
 
     let message = get_dummy_raw_msg_conn_open_try(10, 10);
 
-    
- 
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
         next_proof_context_hash: vec![1, 2, 3, 4],
@@ -912,8 +909,8 @@ fn open_try_validate_fails() {
     let client_state: ClientState = get_dummy_client_state();
 
     let client_state_bytes = client_state.to_any().encode_to_vec();
-    let message_client_id= to_ibc_client_id(&message.client_id).unwrap();
-    let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
+    let message_client_id = to_ibc_client_id(&message.client_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     contract
         .store_client_state(
@@ -1121,9 +1118,9 @@ fn connection_check_open_init_validate_fails() {
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
-   let client_id=to_ibc_client_id(&message.client_id).unwrap();
-   
-   let contract = CwIbcCoreContext::new();
+    let client_id = to_ibc_client_id(&message.client_id).unwrap();
+
+    let contract = CwIbcCoreContext::new();
 
     contract
         .client_state(&mut deps.storage, &client_id)
@@ -1148,8 +1145,6 @@ fn connection_open_init_fails_of_clientstate() {
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
-
-   
 
     let client_id = ClientId::default();
     let contract = CwIbcCoreContext::new();
@@ -1187,9 +1182,9 @@ fn connection_open_init_validate_invalid_client_id() {
         signer: get_dummy_bech32_account(),
     };
     let seq_on_a: u64 = 24;
-    
+
     let client_id = ClientId::default();
-    let client_on_a= to_ibc_client_id(&message.client_id).unwrap();
+    let client_on_a = to_ibc_client_id(&message.client_id).unwrap();
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
 
@@ -1364,11 +1359,9 @@ fn connection_open_init_fails() {
         signer: get_dummy_bech32_account(),
     };
 
-   
-
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
-    let client_id= to_ibc_client_id(&message.client_id).unwrap();
+    let client_id = to_ibc_client_id(&message.client_id).unwrap();
     let cl = client_state.encode_to_vec();
     contract
         .store_client_state(

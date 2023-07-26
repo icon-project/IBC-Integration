@@ -35,7 +35,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );

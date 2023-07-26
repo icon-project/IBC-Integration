@@ -1,10 +1,15 @@
 use std::{str::from_utf8, time::Duration};
 
-use common::icon::icon::lightclient::v1::ClientState;
-use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString, raw_types::connection::{RawMsgConnectionOpenInit, RawMsgConnectionOpenTry}};
+use cw_common::{
+    client_msg::VerifyConnectionPayload,
+    hex_string::HexString,
+    raw_types::connection::{RawMsgConnectionOpenInit, RawMsgConnectionOpenTry},
+};
 use debug_print::debug_println;
 
-use crate::conversions::{to_ibc_client_id, to_ibc_version, to_ibc_counterparty, to_ibc_height, to_ibc_versions};
+use crate::conversions::{
+    to_ibc_client_id, to_ibc_counterparty, to_ibc_height, to_ibc_version, to_ibc_versions,
+};
 
 use super::{event::create_connection_event, *};
 
@@ -40,20 +45,14 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let response: Vec<u8> = client.get_client_state(deps.as_ref(), &client_id)?;
 
-        let delay_period=Duration::from_nanos(message.delay_period);
-        let ibc_version= to_ibc_version(message.version)?;
-        let ibc_counterparty= to_ibc_counterparty(message.counterparty)?;
-
-        
+        let delay_period = Duration::from_nanos(message.delay_period);
+        let ibc_version = to_ibc_version(message.version)?;
+        let ibc_counterparty = to_ibc_counterparty(message.counterparty)?;
 
         if response.is_empty() {
-            return Err(ClientError::ClientNotFound {
-                client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            return Err(ClientError::ClientNotFound { client_id })
+                .map_err(Into::<ContractError>::into);
         }
-
-       
 
         let versions = match ibc_version {
             Some(version) => {
@@ -330,16 +329,19 @@ impl<'a> CwIbcCoreContext<'a> {
         env: Env,
         message: RawMsgConnectionOpenTry,
     ) -> Result<Response, ContractError> {
-        
-        let message_client_state= message.client_state.ok_or(ContractError::IbcConnectionError { error: ConnectionError::MissingClientState })?;
-        let message_client_id= to_ibc_client_id(&message.client_id)?;
-        let message_consensus_height= to_ibc_height(message.consensus_height)?;
-        let proof_height= to_ibc_height(message.proof_height)?;
-        let ibc_counterparty= to_ibc_counterparty(message.counterparty)?;
-        let message_versions= to_ibc_versions(message.counterparty_versions)?;
-        let message_delay_period= Duration::from_nanos(message.delay_period);
+        let message_client_state =
+            message
+                .client_state
+                .ok_or(ContractError::IbcConnectionError {
+                    error: ConnectionError::MissingClientState,
+                })?;
+        let message_client_id = to_ibc_client_id(&message.client_id)?;
+        let message_consensus_height = to_ibc_height(message.consensus_height)?;
+        let proof_height = to_ibc_height(message.proof_height)?;
+        let ibc_counterparty = to_ibc_counterparty(message.counterparty)?;
+        let message_versions = to_ibc_versions(message.counterparty_versions)?;
+        let message_delay_period = Duration::from_nanos(message.delay_period);
         self.validate_self_client(message_client_state.clone())?;
-
 
         let host_height =
             self.host_height(&env)
@@ -359,7 +361,6 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let prefix_on_a = ibc_counterparty.prefix().clone();
         let prefix_on_b = self.commitment_prefix(deps.as_ref(), &env);
-      
 
         debug_println!(
             "prefix_on_b is {:?}",
@@ -369,10 +370,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_client(deps.as_ref().storage, message_client_id.clone())?;
 
         // no idea what is this  is this suppose to be like this ?????
-        let client_consensus_state_path_on_b = commitment::consensus_state_path(
-            &message_client_id,
-            &message_consensus_height,
-        );
+        let client_consensus_state_path_on_b =
+            commitment::consensus_state_path(&message_client_id, &message_consensus_height);
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Init,
             ibc_counterparty.client_id().clone(),
@@ -384,11 +383,7 @@ impl<'a> CwIbcCoreContext<'a> {
         debug_println!("expected_connection_end {:?}", expected_conn_end_on_a);
 
         let consensus_state_of_a_on_b = self
-            .consensus_state(
-                deps.storage,
-                &message_client_id,
-                &proof_height,
-            )
+            .consensus_state(deps.storage, &message_client_id, &proof_height)
             .map_err(|_| ContractError::IbcConnectionError {
                 error: ConnectionError::Other {
                     description: "failed to fetch consensus state".to_string(),
@@ -414,7 +409,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_connection_state = VerifyConnectionState::new(
             proof_height.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
-            message.proof_init.into(),
+            message.proof_init,
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
             expected_conn_end_on_a.encode_vec().unwrap().to_vec(),
@@ -428,21 +423,19 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state_path = commitment::client_state_path(ibc_counterparty.client_id());
         debug_println!(
             "[ConnOpenTry]: the clientstate value is  {:?}",
-            message_client_state.value.clone()
+            message_client_state.value
         );
         let verify_client_full_state = VerifyClientFullState::new(
             proof_height.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
-            message.proof_client.into(),
+            message.proof_client,
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             client_state_path,
-            message_client_state.value.clone().to_vec(),
+            message_client_state.value.to_vec(),
         );
 
-        let consensus_state_path_on_a = commitment::consensus_state_path(
-            &message_client_id,
-            &message_consensus_height,
-        );
+        let consensus_state_path_on_a =
+            commitment::consensus_state_path(&message_client_id, &message_consensus_height);
         let verify_client_consensus_state = VerifyClientConsensusState::new(
             proof_height.to_string(),
             to_vec(&prefix_on_a).map_err(ContractError::Std)?,
@@ -468,7 +461,7 @@ impl<'a> CwIbcCoreContext<'a> {
             &counter_party_client_id
         );
 
-        let counterparty_conn_id =ibc_counterparty.connection_id().cloned();
+        let counterparty_conn_id = ibc_counterparty.connection_id().cloned();
 
         debug_println!(
             "[ConnOpenTryReply]: counterparty conn id  {:?}",
@@ -488,12 +481,9 @@ impl<'a> CwIbcCoreContext<'a> {
             counterparty_prefix,
         );
 
-        let version: Vec<Version> = message_versions.clone();
+        let version: Vec<Version> = message_versions;
 
         debug_println!("[ConnOpenTryReply]: version decode{:?}", version);
-
-
-        
 
         debug_println!("[ConnOpenTryReply]: client id is{:?}", message_client_id);
 
@@ -510,8 +500,6 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         debug_println!("[ConnOpenTryReply]: conn end{:?}", conn_end);
-
-     
 
         let event = create_connection_event(
             IbcEventType::OpenTryConnection,

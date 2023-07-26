@@ -24,12 +24,9 @@ use crate::state::CwIbcStore;
 use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
 use common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 use common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
-use common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
-use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
-use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 
-use common::ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
-use common::ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
+use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
+
 pub use common::ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
     chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,

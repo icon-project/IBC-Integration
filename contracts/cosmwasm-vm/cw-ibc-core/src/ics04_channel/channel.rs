@@ -67,11 +67,11 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         channel_end: &ChannelEnd,
     ) -> Result<(), ContractError> {
-        match self.ibc_store().channels().save(
-            store,
-            (port_id, channel_id),
-            channel_end,
-        ) {
+        match self
+            .ibc_store()
+            .channels()
+            .save(store, (port_id, channel_id), channel_end)
+        {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -196,11 +196,11 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: &Sequence,
     ) -> Result<(), ContractError> {
-        match self.ibc_store().next_sequence_send().save(
-            store,
-            (port_id, channel_id),
-            sequence,
-        ) {
+        match self
+            .ibc_store()
+            .next_sequence_send()
+            .save(store, (port_id, channel_id), sequence)
+        {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -308,11 +308,11 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: &Sequence,
     ) -> Result<(), ContractError> {
-        match self.ibc_store().next_sequence_recv().save(
-            store,
-            (port_id, channel_id),
-            sequence,
-        ) {
+        match self
+            .ibc_store()
+            .next_sequence_recv()
+            .save(store, (port_id, channel_id), sequence)
+        {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }
@@ -424,11 +424,11 @@ impl<'a> CwIbcCoreContext<'a> {
         channel_id: &ChannelId,
         sequence: &Sequence,
     ) -> Result<(), ContractError> {
-        match self.ibc_store().next_sequence_ack().save(
-            store,
-            (port_id, channel_id),
-            sequence,
-        ) {
+        match self
+            .ibc_store()
+            .next_sequence_ack()
+            .save(store, (port_id, channel_id), sequence)
+        {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
         }

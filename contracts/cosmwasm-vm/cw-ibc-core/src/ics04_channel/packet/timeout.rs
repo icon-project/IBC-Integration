@@ -49,7 +49,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if !chan_end_on_a.state_matches(&State::Open) {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::ChannelClosed {
-                    channel_id: src_channel.clone(),
+                    channel_id: src_channel,
                 },
             });
         }
@@ -57,7 +57,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if !chan_end_on_a.counterparty_matches(&counterparty) {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketCounterparty {
-                    port_id: dst_port.clone(),
+                    port_id: dst_port,
                     channel_id: dst_channel,
                 },
             });
@@ -93,7 +93,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let client_id_on_a = conn_end_on_a.client_id();
-        let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        let _client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
 
         if !packet_timeout_height.has_expired(proof_height) {
             return Err(ContractError::IbcPacketError {
@@ -124,12 +124,12 @@ impl<'a> CwIbcCoreContext<'a> {
                     });
                 }
                 let seq_recv_path_on_b =
-                    commitment::next_seq_recv_commitment_path(&&dst_port, &dst_channel);
+                    commitment::next_seq_recv_commitment_path(&dst_port, &dst_channel);
 
                 LightClientPacketMessage::VerifyNextSequenceRecv {
                     height: proof_height.to_string(),
                     prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                    proof: msg.proof_unreceived.clone().into(),
+                    proof: msg.proof_unreceived.clone(),
                     root: consensus_state_of_b_on_a.root().into_vec(),
                     seq_recv_path: seq_recv_path_on_b,
                     sequence: packet_sequence.into(),
@@ -141,7 +141,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 LightClientPacketMessage::VerifyPacketReceiptAbsence {
                     height: proof_height.to_string(),
                     prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                    proof: msg.proof_unreceived.clone().into(),
+                    proof: msg.proof_unreceived.clone(),
                     root: consensus_state_of_b_on_a.root().into_vec(),
                     receipt_path: receipt_path_on_b,
                 }
@@ -177,14 +177,14 @@ impl<'a> CwIbcCoreContext<'a> {
             },
         };
         let timeout = CwTimeout::with_block(timeoutblock);
-        let ibc_packet = CwPacket::new(data, src, dest, packet.sequence.into(), timeout);
+        let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
         self.store_callback_data(
             deps.storage,
             VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
             &ibc_packet,
         )?;
 
-        let address = Addr::unchecked(msg.signer.to_string());
+        let address = Addr::unchecked(msg.signer);
         let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketTimeout {
             msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
         };

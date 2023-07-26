@@ -129,9 +129,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.connection_open_init(deps, message)
             }
             CoreExecuteMsg::ConnectionOpenTry { msg } => {
-                let message: MsgConnectionOpenTry =
+                let _message: MsgConnectionOpenTry =
                     Self::from_raw::<RawMsgConnectionOpenTry, MsgConnectionOpenTry>(&msg)?;
-                    let message: RawMsgConnectionOpenTry = Self::raw_from_hex(&msg)?;
+                let message: RawMsgConnectionOpenTry = Self::raw_from_hex(&msg)?;
                 self.connection_open_try(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenAck { msg } => {
@@ -147,7 +147,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ChannelOpenInit { msg } => {
                 debug_println!("[IBCCore] Channel Open Init Called");
                 let message = Self::raw_from_hex::<RawMsgChannelOpenInit>(&msg)?;
-                
+
                 self.validate_channel_open_init(deps, info, &message)
             }
             CoreExecuteMsg::ChannelOpenTry { msg } => {

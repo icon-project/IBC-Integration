@@ -86,10 +86,10 @@ use super::*;
 ///
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, IbcClientType, String>,
-    client_types: Map<'a,  IbcClientId, IbcClientType>,
-    client_states: Map<'a,  IbcClientId, Vec<u8>>,
-    consensus_states: Map<'a,  IbcClientId, Vec<u8>>,
-    client_implementations: Map<'a,  IbcClientId, LightClient>,
+    client_types: Map<'a, IbcClientId, IbcClientType>,
+    client_states: Map<'a, IbcClientId, Vec<u8>>,
+    consensus_states: Map<'a, IbcClientId, Vec<u8>>,
+    client_implementations: Map<'a, IbcClientId, LightClient>,
     next_sequence_send: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
     next_sequence_recv: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
     next_sequence_ack: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,

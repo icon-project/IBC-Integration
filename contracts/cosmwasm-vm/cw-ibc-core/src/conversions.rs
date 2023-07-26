@@ -1,13 +1,19 @@
 use std::str::FromStr;
 
-use common::ibc::{core::{ics04_channel::timeout::TimeoutHeight, ics03_connection::{connection::Counterparty, error::ConnectionError}}, Height, self};
-use cw_common::{
-    ibc_types::{ChannelEnd, ChannelError, IbcChannelId, IbcPortId, IbcTimestamp, IbcClientId},
-    raw_types::{channel::{RawChannel}, RawHeight, RawVersion},
-};
-use common::ibc::core::ics03_connection::version::Version;
-use cw_common::raw_types::connection::RawCounterparty;
 use crate::ContractError;
+use common::ibc::core::ics03_connection::version::Version;
+use common::ibc::{
+    core::{
+        ics03_connection::{connection::Counterparty, error::ConnectionError},
+        ics04_channel::timeout::TimeoutHeight,
+    },
+    Height,
+};
+use cw_common::raw_types::connection::RawCounterparty;
+use cw_common::{
+    ibc_types::{ChannelEnd, ChannelError, IbcChannelId, IbcClientId, IbcPortId, IbcTimestamp},
+    raw_types::{channel::RawChannel, RawHeight, RawVersion},
+};
 
 pub fn to_ibc_port_id(port_id: &str) -> Result<IbcPortId, ContractError> {
     let port_id =
@@ -22,12 +28,12 @@ pub fn to_ibc_channel_id(channel_id: &str) -> Result<IbcChannelId, ContractError
 }
 
 pub fn to_ibc_height(height: Option<RawHeight>) -> Result<Height, ContractError> {
-   if let Some(height) =height {
-    let height =
-    Height::try_from(height).map_err(|e| ContractError::IbcClientError { error: e })?;
-     return Ok(height)
-   }
-   Err(ContractError::InvalidHeight)
+    if let Some(height) = height {
+        let height =
+            Height::try_from(height).map_err(|e| ContractError::IbcClientError { error: e })?;
+        return Ok(height);
+    }
+    Err(ContractError::InvalidHeight)
 }
 
 pub fn to_ibc_timeout_height(height: Option<RawHeight>) -> Result<TimeoutHeight, ContractError> {
@@ -52,37 +58,39 @@ pub fn to_ibc_channel(channel: Option<RawChannel>) -> Result<ChannelEnd, Contrac
     chan.map_err(|e| ContractError::IbcChannelError { error: e })
 }
 
-pub fn to_ibc_client_id(client_id:&str)->Result<IbcClientId,ContractError>{
-    let client_id= IbcClientId::from_str(client_id).map_err(|e|{
-        ContractError::IbcValidationError { error: e }
-    })?;
+pub fn to_ibc_client_id(client_id: &str) -> Result<IbcClientId, ContractError> {
+    let client_id = IbcClientId::from_str(client_id)
+        .map_err(|e| ContractError::IbcValidationError { error: e })?;
     Ok(client_id)
 }
 
-pub fn to_ibc_version(version:Option<RawVersion>)->Result<Option<Version>,ContractError>{
-
+pub fn to_ibc_version(version: Option<RawVersion>) -> Result<Option<Version>, ContractError> {
     if let Some(version) = version {
-        let ibc_version= Version::try_from(version).map_err(|e|ContractError::IbcConnectionError { error: e })?;
+        let ibc_version = Version::try_from(version)
+            .map_err(|e| ContractError::IbcConnectionError { error: e })?;
         return Ok(Some(ibc_version));
     }
-   Ok(None)
- 
+    Ok(None)
 }
 
-pub fn to_ibc_counterparty(counterparty:Option<RawCounterparty>)->Result<Counterparty,ContractError>{
-    if let Some(cp)= counterparty {
-        let ibc_counterparty= Counterparty::try_from(cp).map_err(|e|{
-            ContractError::IbcConnectionError { error: e }
-
-        })?;
+pub fn to_ibc_counterparty(
+    counterparty: Option<RawCounterparty>,
+) -> Result<Counterparty, ContractError> {
+    if let Some(cp) = counterparty {
+        let ibc_counterparty = Counterparty::try_from(cp)
+            .map_err(|e| ContractError::IbcConnectionError { error: e })?;
         return Ok(ibc_counterparty);
     }
-    return Err(ContractError::IbcConnectionError { error: ConnectionError::MissingCounterparty })
+    Err(ContractError::IbcConnectionError {
+        error: ConnectionError::MissingCounterparty,
+    })
 }
 
-pub fn to_ibc_versions(versions:Vec<RawVersion>)->Result<Vec<Version>,ContractError>{
-    let ibc_versions= versions.into_iter().map(|v|{
-        Version::try_from(v)
-    }).collect::<Result<Vec<Version>,ConnectionError>>().map_err(|e|ContractError::IbcConnectionError { error: e })?;
+pub fn to_ibc_versions(versions: Vec<RawVersion>) -> Result<Vec<Version>, ContractError> {
+    let ibc_versions = versions
+        .into_iter()
+        .map(|v| Version::try_from(v))
+        .collect::<Result<Vec<Version>, ConnectionError>>()
+        .map_err(|e| ContractError::IbcConnectionError { error: e })?;
     Ok(ibc_versions)
 }

@@ -163,12 +163,12 @@ fn test_timeout_packet_validate_to_light_client() {
     let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
     let packet_sequence = Sequence::from(packet.sequence);
     let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    let next_sequence_recv = Sequence::from(msg.next_sequence_recv);
+    let _next_sequence_recv = Sequence::from(msg.next_sequence_recv);
 
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );

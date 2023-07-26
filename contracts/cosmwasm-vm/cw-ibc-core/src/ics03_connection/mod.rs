@@ -19,7 +19,7 @@ pub use super::*;
 use common::ibc::core::ics03_connection::connection::ConnectionEnd;
 use common::ibc::core::ics03_connection::error::ConnectionError;
 use common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
-use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
+
 pub use common::ibc::core::ics03_connection::{
     connection::{Counterparty, State},
     msgs::{conn_open_confirm::MsgConnectionOpenConfirm, conn_open_init::MsgConnectionOpenInit},

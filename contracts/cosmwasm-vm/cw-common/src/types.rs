@@ -1,6 +1,3 @@
-use common::ibc::core::ics04_channel::msgs::{
-    timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose,
-};
 use common::rlp::{self, Decodable, Encodable};
 
 use cosmwasm_schema::cw_serde;
