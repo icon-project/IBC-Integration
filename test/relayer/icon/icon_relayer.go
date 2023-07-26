@@ -257,7 +257,7 @@ func (commander) UpdateClients(pathName, homeDir string) []string {
 func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string) ([]byte, error) {
 
 	switch chainType := cfg.Type; chainType {
-	case "cosmos", "archway":
+	case "cosmos", "wasm":
 		cosmosRelayerChainConfig := rly.ChainConfigToCosmosRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
 		coinType, err := strconv.Atoi(cfg.CoinType)
 		archRelayerChainConfig := &ArchRelayerChainConfig{
