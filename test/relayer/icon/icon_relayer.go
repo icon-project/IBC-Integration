@@ -56,7 +56,7 @@ type ICONRelayerChainConfigValue struct {
 	Password          string `json:"password"`
 	IconNetworkID     int    `json:"icon-network-id"`
 	BtpNetworkID      int    `json:"btp-network-id"`
-	StartBtpHeight    int    `json:"start-btp-height"`
+	StartHeight       int    `json:"start-height"`
 	BTPNetworkTypeID  int    `json:"btp-network-type-id"`
 	IBCHandlerAddress string `json:"ibc-handler-address"`
 	BlockInterval     int    `json:"block-interval"`
@@ -67,6 +67,7 @@ type ArchRelayerChainConfigValue struct {
 	KeyDir            string `json:"key-directory"`
 	MinGasAmount      int    `json:"min-gas-amount"`
 	CoinType          int    `json:"coin-type"`
+	StartHeight       int    `json:"start-height"`
 	IBCHandlerAddress string `json:"ibc-handler-address"`
 }
 
@@ -108,7 +109,7 @@ func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, r
 			Password:          "gochain",
 			IconNetworkID:     3,
 			BtpNetworkID:      chainConfig.ConfigFileOverrides["btp-network-id"].(int),
-			StartBtpHeight:    chainConfig.ConfigFileOverrides["start-btp-height"].(int),
+			StartHeight:       chainConfig.ConfigFileOverrides["start-height"].(int),
 			BTPNetworkTypeID:  chainConfig.ConfigFileOverrides["btp-network-type-id"].(int),
 			IBCHandlerAddress: chainConfig.ConfigFileOverrides["ibc-handler-address"].(string),
 			BlockInterval:     chainConfig.ConfigFileOverrides["block-interval"].(int),
@@ -265,6 +266,7 @@ func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName
 				KeyDir:                        "/home/relayer/.relayer/keys/" + cfg.ChainID,
 				MinGasAmount:                  1000000,
 				CoinType:                      coinType,
+				StartHeight:                   cfg.ConfigFileOverrides["start-height"].(int),
 				IBCHandlerAddress:             cfg.ConfigFileOverrides["ibc-handler-address"].(string),
 			},
 		}
