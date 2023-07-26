@@ -54,7 +54,7 @@ func (x *XCallTestSuite) TestOneWayMessage(ctx context.Context, t *testing.T, ch
 
 func (x *XCallTestSuite) TestRollback(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
 	msg := "MessageTransferTestingWithRollback"
-	rollback := "rollback data"
+	rollback := "RollbackDataTesting"
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
 	sn, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, []byte(msg), []byte(rollback))
 	x.Require().NoError(err)
