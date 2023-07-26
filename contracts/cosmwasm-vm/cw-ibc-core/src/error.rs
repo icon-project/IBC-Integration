@@ -68,6 +68,12 @@ pub enum ContractError {
     IbcRawConversionError { error: String },
     #[error("FailedConversion")]
     FailedConversion,
+
+    #[error("Light Client Validation failed for {0}")]
+    LightClientValidationFailed(String),
+
+    #[error("Invalid EventType in {event} {event_type}")]
+    InvalidEventType { event: String, event_type: String },
 }
 
 impl From<FromHexError> for ContractError {

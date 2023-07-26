@@ -273,14 +273,14 @@ impl<'a> CwIbcCoreContext<'a> {
                     )
                     .map_err(|_| ContractError::InvalidClientId { client_id })
                     .unwrap();
-                let addr = Addr::unchecked(res);
+                let addr = Addr::unchecked(res.get_address());
                 to_binary(&addr)
             }
             QueryMsg::GetConsensusState { client_id } => {
                 let res = self
                     .consensus_state_any(deps.storage, &IbcClientId::from_str(&client_id).unwrap())
-                    .map_err(|e| {
-                        debug_println!("{e:?}");
+                    .map_err(|_e| {
+                        debug_println!("{_e:?}");
                         ContractError::InvalidClientId { client_id }
                     })
                     .unwrap();
@@ -440,13 +440,13 @@ impl<'a> CwIbcCoreContext<'a> {
                 let msg = to_binary(&cw_common::client_msg::QueryMsg::GetLatestHeight {
                     client_id: client_id.clone(),
                 })?;
-                let client_address = self
+                let client = self
                     .get_client_implementations(
                         deps.storage,
                         IbcClientId::from_str(&client_id).unwrap(),
                     )
                     .unwrap();
-                let query = build_smart_query(client_address, msg);
+                let query = build_smart_query(client.get_address(), msg);
                 let height: u64 = deps.querier.query(&query).unwrap();
 
                 to_binary(&height)
@@ -481,43 +481,43 @@ impl<'a> CwIbcCoreContext<'a> {
             EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
-            EXECUTE_CONNECTION_OPENTRY => self.execute_connection_open_try(deps, message),
-            EXECUTE_CONNECTION_OPENACK => self.execute_connection_open_ack(deps, message),
-            EXECUTE_CONNECTION_OPENCONFIRM => self.execute_connection_openconfirm(deps, message),
+            // EXECUTE_CONNECTION_OPENTRY => self.execute_connection_open_try(deps, message),
+            // EXECUTE_CONNECTION_OPENACK => self.execute_connection_open_ack(deps, message),
+            // EXECUTE_CONNECTION_OPENCONFIRM => self.execute_connection_openconfirm(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_INIT => self.execute_channel_open_init(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_TRY => self.execute_channel_open_try(deps, message),
-            EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT => {
-                self.execute_open_try_from_light_client(deps, message)
-            }
-            EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT => {
-                self.execute_open_ack_from_light_client_reply(deps, message)
-            }
+            // EXECUTE_ON_CHANNEL_OPEN_TRY_ON_LIGHT_CLIENT => {
+            //     self.execute_open_try_from_light_client(deps, message)
+            // }
+            // EXECUTE_ON_CHANNEL_OPEN_ACK_ON_LIGHT_CLIENT => {
+            //     self.execute_open_ack_from_light_client_reply(deps, message)
+            // }
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE => self.execute_channel_open_ack(deps, message),
-            EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT => {
-                self.execute_open_confirm_from_light_client_reply(deps, message)
-            }
+            // EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_LIGHT_CLIENT => {
+            //     self.execute_open_confirm_from_light_client_reply(deps, message)
+            // }
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE => {
                 self.execute_channel_open_confirm(deps, message)
             }
             EXECUTE_ON_CHANNEL_CLOSE_INIT => self.execute_channel_close_init(deps, message),
-            EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT => {
-                self.execute_close_confirm_from_light_client_reply(deps, message)
-            }
+            // EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_LIGHT_CLIENT => {
+            //     self.execute_close_confirm_from_light_client_reply(deps, message)
+            // }
             EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE => {
                 self.execute_channel_close_confirm(deps, message)
             }
 
-            VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT => {
-                self.timeout_packet_validate_reply_from_light_client(deps, message)
-            }
+            // VALIDATE_ON_PACKET_TIMEOUT_ON_LIGHT_CLIENT => {
+            //     self.timeout_packet_validate_reply_from_light_client(deps, message)
+            // }
             VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE => self.execute_timeout_packet(deps, message),
-            VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT => {
-                self.receive_packet_validate_reply_from_light_client(deps, message)
-            }
+            // VALIDATE_ON_PACKET_RECEIVE_ON_LIGHT_CLIENT => {
+            //     self.receive_packet_validate_reply_from_light_client(deps, message)
+            // }
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE => self.execute_receive_packet(deps, message),
-            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT => {
-                self.acknowledgement_packet_validate_reply_from_light_client(deps, message)
-            }
+            // VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_LIGHT_CLIENT => {
+            //     self.acknowledgement_packet_validate_reply_from_light_client(deps, message)
+            // }
             VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE => {
                 self.acknowledgement_packet_execute(deps, message)
             }
@@ -592,8 +592,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
         Ok(updated_coins)
     }
-
-    pub fn test_func() {}
 
     /// This function converts a hexadecimal string to a Rust type that implements the Message trait and
     /// can be converted to another type using the TryFrom trait.

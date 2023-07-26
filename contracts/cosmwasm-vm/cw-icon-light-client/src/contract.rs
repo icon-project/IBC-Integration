@@ -8,27 +8,23 @@ use debug_print::debug_println;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
+use crate::query_handler::QueryHandler;
 use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_slice, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Storage,
 };
 use cw2::set_contract_version;
-use cw_common::client_response::{
-    CreateClientResponse, LightClientResponse, PacketDataResponse, UpdateClientResponse,
-};
+use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::raw_types::Any;
-use cw_common::types::{PacketData, VerifyChannelState};
+use cw_common::types::VerifyChannelState;
 
-use crate::constants::{
-    CLIENT_STATE_HASH, CLIENT_STATE_VALID, CONNECTION_STATE_VALID, CONSENSUS_STATE_HASH, HEIGHT,
-    MEMBERSHIP, NON_MEMBERSHIP,
-};
+use crate::constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT};
 use crate::error::ContractError;
 use crate::light_client::IconClient;
-use crate::state::{CwContext, QueryHandler};
+use crate::state::CwContext;
 use crate::traits::{Config, IContext, ILightClient};
 use cw_common::client_msg::{
     ExecuteMsg, InstantiateMsg, LightClientPacketMessage, QueryMsg, VerifyClientConsensusState,
@@ -138,194 +134,6 @@ pub fn execute(
                 .add_attribute(HEIGHT, update.height.to_string())
                 .set_data(response_data))
         }
-        ExecuteMsg::VerifyMembership {
-            client_id,
-            message_bytes,
-            proofs,
-            path,
-            height,
-            delay_time_period,
-            delay_block_period,
-        } => {
-            let proofs_decoded =
-                MerkleProofs::decode(proofs.as_slice()).map_err(ContractError::DecodeError)?;
-            let result = client.verify_membership(
-                &client_id,
-                height,
-                delay_time_period,
-                delay_block_period,
-                &proofs_decoded.proofs,
-                &message_bytes,
-                &path,
-            )?;
-            Ok(Response::new().add_attribute(MEMBERSHIP, result.to_string()))
-        }
-        ExecuteMsg::VerifyNonMembership {
-            client_id,
-
-            proofs,
-            path,
-            height,
-            delay_time_period,
-            delay_block_period,
-        } => {
-            let proofs_decoded =
-                MerkleProofs::decode(proofs.as_slice()).map_err(ContractError::DecodeError)?;
-            let result = client.verify_non_membership(
-                &client_id,
-                height,
-                delay_time_period,
-                delay_block_period,
-                &proofs_decoded.proofs,
-                &path,
-            )?;
-            Ok(Response::new().add_attribute(NON_MEMBERSHIP, result.to_string()))
-        }
-        ExecuteMsg::VerifyPacketData {
-            client_id,
-            verify_packet_data,
-            packet_data,
-        } => {
-            let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
-                .map_err(ContractError::DecodeError)?;
-            let height = to_height_u64(&verify_packet_data.height)?;
-            let result = client.verify_membership(
-                &client_id,
-                height,
-                0,
-                0,
-                &proofs_decoded.proofs,
-                &verify_packet_data.commitment_path,
-                &verify_packet_data.commitment,
-            )?;
-            let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
-            let data =
-                to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
-
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, result.to_string())
-                .set_data(data))
-        }
-        ExecuteMsg::VerifyPacketAcknowledgement {
-            client_id,
-            verify_packet_acknowledge,
-            packet_data,
-        } => {
-            let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
-                .map_err(ContractError::DecodeError)?;
-            let height = to_height_u64(&verify_packet_acknowledge.height)?;
-            let result = client.verify_membership(
-                &client_id,
-                height,
-                0,
-                0,
-                &proofs_decoded.proofs,
-                &verify_packet_acknowledge.ack_path,
-                &verify_packet_acknowledge.ack,
-            )?;
-            let packet_data: PacketData = from_slice(&packet_data).map_err(ContractError::Std)?;
-            let data =
-                to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
-
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, result.to_string())
-                .set_data(data))
-        }
-        ExecuteMsg::VerifyOpenConfirm {
-            client_id,
-            verify_connection_state,
-            expected_response,
-        } => {
-            let result = validate_connection_state(&client_id, &client, &verify_connection_state)?;
-            let data = to_binary(&expected_response).map_err(ContractError::Std)?;
-
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, result.to_string())
-                .set_data(data))
-        }
-        ExecuteMsg::VerifyConnectionOpenTry(state) => {
-            println!("checking all the valid state ");
-            let client_valid =
-                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-            println!(" is valid clientstate  {client_valid:?}");
-
-            let connection_valid = validate_connection_state(
-                &state.client_id,
-                &client,
-                &state.verify_connection_state,
-            )?;
-            println!("is  valid connection state {connection_valid:?}");
-
-            Ok(Response::new()
-                .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
-                .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
-                // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
-                .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
-        }
-        ExecuteMsg::VerifyConnectionOpenAck(state) => {
-            let connection_valid = validate_connection_state(
-                &state.client_id,
-                &client,
-                &state.verify_connection_state,
-            )?;
-            let client_valid =
-                validate_client_state(&state.client_id, &client, &state.verify_client_full_state)?;
-
-            Ok(Response::new()
-                .add_attribute(CLIENT_STATE_VALID, client_valid.to_string())
-                .add_attribute(CONNECTION_STATE_VALID, connection_valid.to_string())
-                // .add_attribute(CONSENSUS_STATE_VALID, consensus_valid.to_string())
-                .set_data(to_binary(&state.expected_response).map_err(ContractError::Std)?))
-        }
-
-        ExecuteMsg::VerifyChannel {
-            verify_channel_state,
-            message_info,
-            endpoint,
-        } => {
-            // fix once we receive client id
-            let result = validate_channel_state(
-                &verify_channel_state.client_id,
-                &client,
-                &verify_channel_state,
-            )?;
-
-            let data = to_binary(&LightClientResponse {
-                message_info,
-                ibc_endpoint: endpoint,
-            })
-            .map_err(ContractError::Std)?;
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, result.to_string())
-                .set_data(data))
-        }
-        ExecuteMsg::PacketTimeout {
-            client_id,
-            next_seq_recv_verification_result,
-        } => {
-            // let is_channel_valid =
-            //     validate_channel_state(&client_id, &client, &verify_channel_state)?;
-            let _sequence_valid =
-                validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
-            let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
-
-            Ok(Response::new().set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
-        }
-        ExecuteMsg::TimeoutOnCLose {
-            client_id,
-            verify_channel_state,
-            next_seq_recv_verification_result,
-        } => {
-            let is_channel_valid =
-                validate_channel_state(&client_id, &client, &verify_channel_state)?;
-            let _sequence_valid =
-                validate_next_seq_recv(&client, &client_id, &next_seq_recv_verification_result)?;
-            let packet_res: PacketDataResponse = next_seq_recv_verification_result.try_into()?;
-
-            Ok(Response::new()
-                .add_attribute(MEMBERSHIP, is_channel_valid.to_string())
-                .set_data(to_binary(&packet_res).map_err(ContractError::Std)?))
-        }
         ExecuteMsg::Misbehaviour {
             client_id: _,
             misbehaviour: _,
@@ -346,88 +154,92 @@ pub fn execute(
 
 pub fn validate_channel_state(
     client_id: &str,
-    client: &IconClient,
+    storage: &dyn Storage,
     state: &VerifyChannelState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded =
         MerkleProofs::decode(state.proof.as_slice()).map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
-    let result = client.verify_membership(
+    let result = QueryHandler::verify_membership(
+        storage,
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.counterparty_chan_end_path,
         &state.expected_counterparty_channel_end,
+        &state.counterparty_chan_end_path,
     )?;
     Ok(result)
 }
 
 pub fn validate_connection_state(
     client_id: &str,
-    client: &IconClient,
+    storage: &dyn Storage,
     state: &VerifyConnectionState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded =
         MerkleProofs::decode(state.proof.as_slice()).map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
 
-    let result = client.verify_membership(
+    let result = QueryHandler::verify_membership(
+        storage,
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.counterparty_conn_end_path,
         &state.expected_counterparty_connection_end,
+        &state.counterparty_conn_end_path,
     )?;
     Ok(result)
 }
 
 pub fn validate_client_state(
     client_id: &str,
-    client: &IconClient,
+    storage: &dyn Storage,
     state: &VerifyClientFullState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
         .map_err(ContractError::DecodeError)?;
     println!("starting validating client state");
     let height = to_height_u64(&state.proof_height)?;
-    let result = client.verify_membership(
+    let result = QueryHandler::verify_membership(
+        storage,
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.client_state_path,
         &state.expected_client_state,
+        &state.client_state_path,
     )?;
     Ok(result)
 }
 
 pub fn validate_consensus_state(
     client_id: &str,
-    client: &IconClient,
+    storage: &dyn Storage,
     state: &VerifyClientConsensusState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.consensus_state_proof.as_slice())
         .map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
-    let result = client.verify_membership(
+    let result = QueryHandler::verify_membership(
+        storage,
         client_id,
         height,
         0,
         0,
         &proofs_decoded.proofs,
-        &state.conesenus_state_path,
         &state.expected_conesenus_state,
+        &state.conesenus_state_path,
     )?;
     Ok(result)
 }
 
 pub fn validate_next_seq_recv(
-    client: &IconClient,
+    storage: &dyn Storage,
     client_id: &str,
     state: &LightClientPacketMessage,
 ) -> Result<bool, ContractError> {
@@ -439,20 +251,20 @@ pub fn validate_next_seq_recv(
             root: _,
             seq_recv_path,
             sequence,
-            packet_data: _,
         } => {
             let proofs_decoded =
                 MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
             let height = to_height_u64(height)?;
 
-            client.verify_membership(
+            QueryHandler::verify_membership(
+                storage,
                 client_id,
                 height,
                 0,
                 0,
                 &proofs_decoded.proofs,
-                seq_recv_path,
                 sequence.to_be_bytes().as_ref(),
+                seq_recv_path,
             )?
         }
         LightClientPacketMessage::VerifyPacketReceiptAbsence {
@@ -461,13 +273,13 @@ pub fn validate_next_seq_recv(
             proof,
             root: _,
             receipt_path,
-            packet_data: _,
         } => {
             let proofs_decoded =
                 MerkleProofs::decode(proof.as_slice()).map_err(ContractError::DecodeError)?;
             let height = to_height_u64(height)?;
 
-            client.verify_non_membership(
+            QueryHandler::verify_non_membership(
+                storage,
                 client_id,
                 height,
                 0,
@@ -499,11 +311,11 @@ pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
     Ok(any)
 }
 
-pub fn to_packet_response(packet_data: &[u8]) -> Result<Binary, ContractError> {
-    let packet_data: PacketData = from_slice(packet_data).map_err(ContractError::Std)?;
-    let data = to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
-    Ok(data)
-}
+// pub fn to_packet_response(packet_data: &[u8]) -> Result<Binary, ContractError> {
+//     let packet_data: PacketData = from_slice(packet_data).map_err(ContractError::Std)?;
+//     let data = to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
+//     Ok(data)
+// }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -518,6 +330,187 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
         QueryMsg::GetLatestHeight { client_id } => {
             to_binary(&QueryHandler::get_latest_height(deps.storage, &client_id).unwrap())
+        }
+        QueryMsg::VerifyMembership {
+            client_id,
+            message_bytes,
+            proofs,
+            path,
+            height,
+            delay_time_period,
+            delay_block_period,
+        } => {
+            let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
+                .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
+            let result = QueryHandler::verify_membership(
+                deps.storage,
+                &client_id,
+                height,
+                delay_time_period,
+                delay_block_period,
+                &proofs_decoded.proofs,
+                &message_bytes,
+                &path,
+            )
+            .unwrap_or(false);
+            to_binary(&result)
+        }
+        QueryMsg::VerifyNonMembership {
+            client_id,
+
+            proofs,
+            path,
+            height,
+            delay_time_period,
+            delay_block_period,
+        } => {
+            let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
+                .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
+            let result = QueryHandler::verify_non_membership(
+                deps.storage,
+                &client_id,
+                height,
+                delay_time_period,
+                delay_block_period,
+                &proofs_decoded.proofs,
+                &path,
+            )
+            .unwrap_or(false);
+            to_binary(&result)
+        }
+        QueryMsg::VerifyPacketData {
+            client_id,
+            verify_packet_data,
+            // packet_data,
+        } => {
+            let proofs_decoded = MerkleProofs::decode(verify_packet_data.proof.as_slice())
+                .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
+            let height = to_height_u64(&verify_packet_data.height).unwrap();
+            let result = QueryHandler::verify_membership(
+                deps.storage,
+                &client_id,
+                height,
+                0,
+                0,
+                &proofs_decoded.proofs,
+                &verify_packet_data.commitment,
+                &verify_packet_data.commitment_path,
+            )
+            .unwrap_or(false);
+
+            to_binary(&result)
+        }
+        QueryMsg::VerifyPacketAcknowledgement {
+            client_id,
+            verify_packet_acknowledge,
+            // packet_data,
+        } => {
+            let proofs_decoded = MerkleProofs::decode(verify_packet_acknowledge.proof.as_slice())
+                .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
+            let height = to_height_u64(&verify_packet_acknowledge.height).unwrap();
+            let result = QueryHandler::verify_membership(
+                deps.storage,
+                &client_id,
+                height,
+                0,
+                0,
+                &proofs_decoded.proofs,
+                &verify_packet_acknowledge.ack,
+                &verify_packet_acknowledge.ack_path,
+            )
+            .unwrap_or(false);
+
+            to_binary(&result)
+        }
+        QueryMsg::VerifyOpenConfirm {
+            client_id,
+            verify_connection_state,
+            //  expected_response,
+        } => {
+            let result =
+                validate_connection_state(&client_id, deps.storage, &verify_connection_state)
+                    .unwrap_or(false);
+            to_binary(&result)
+        }
+        QueryMsg::VerifyConnectionOpenTry(state) => {
+            println!("checking all the valid state ");
+            let client_valid = validate_client_state(
+                &state.client_id,
+                deps.storage,
+                &state.verify_client_full_state,
+            )
+            .unwrap_or(false);
+            println!(" is valid clientstate  {client_valid:?}");
+
+            let connection_valid = validate_connection_state(
+                &state.client_id,
+                deps.storage,
+                &state.verify_connection_state,
+            )
+            .unwrap_or(false);
+            to_binary(&(client_valid && connection_valid))
+        }
+        QueryMsg::VerifyConnectionOpenAck(state) => {
+            let connection_valid = validate_connection_state(
+                &state.client_id,
+                deps.storage,
+                &state.verify_connection_state,
+            )
+            .unwrap();
+            let client_valid = validate_client_state(
+                &state.client_id,
+                deps.storage,
+                &state.verify_client_full_state,
+            )
+            .unwrap();
+
+            to_binary(&(client_valid && connection_valid))
+        }
+
+        QueryMsg::VerifyChannel {
+            verify_channel_state,
+            // message_info,
+            // endpoint,
+        } => {
+            // fix once we receive client id
+            let result = validate_channel_state(
+                &verify_channel_state.client_id,
+                deps.storage,
+                &verify_channel_state,
+            )
+            .unwrap();
+
+            to_binary(&result)
+        }
+        QueryMsg::PacketTimeout {
+            client_id,
+            next_seq_recv_verification_result,
+        } => {
+            // let is_channel_valid =
+            //     validate_channel_state(&client_id, &client, &verify_channel_state)?;
+            let _sequence_valid = validate_next_seq_recv(
+                deps.storage,
+                &client_id,
+                &next_seq_recv_verification_result,
+            )
+            .unwrap();
+            to_binary(&_sequence_valid)
+        }
+        QueryMsg::TimeoutOnCLose {
+            client_id,
+            verify_channel_state,
+            next_seq_recv_verification_result,
+        } => {
+            let is_channel_valid =
+                validate_channel_state(&client_id, deps.storage, &verify_channel_state).unwrap();
+            let _sequence_valid = validate_next_seq_recv(
+                deps.storage,
+                &client_id,
+                &next_seq_recv_verification_result,
+            )
+            .unwrap();
+
+            to_binary(&(is_channel_valid && _sequence_valid))
         }
     }
 }
@@ -562,7 +555,7 @@ mod tests {
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
         contract::to_height_u64,
-        state::QueryHandler,
+        query_handler::QueryHandler,
         ContractError,
     };
     use common::traits::AnyTypes;
@@ -611,7 +604,6 @@ mod tests {
         let info = mock_info(SENDER, &[]);
 
         let msg = InstantiateMsg::default();
-
         let res: Response = instantiate(deps.as_mut(), env, info.clone(), msg.clone()).unwrap();
 
         assert_eq!(0, res.messages.len());
@@ -742,5 +734,113 @@ mod tests {
         let height = "1-1";
         let height_u64 = to_height_u64(height).unwrap();
         assert_eq!(height_u64, 1);
+    }
+
+    #[test]
+    fn test_update_block_older_than_trusted_height() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, Some(100));
+
+        let mut signed_header: SignedHeader = get_test_signed_headers()[1].clone();
+        signed_header.trusted_height = 10;
+        let mut btp_header = signed_header.header.clone().unwrap();
+        btp_header.main_height = 9;
+        signed_header.header = Some(btp_header);
+
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id,
+            signed_header: signed_header.to_any().encode_to_vec(),
+        };
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
+
+        assert_eq!(
+            result,
+            Err(ContractError::UpdateBlockOlderThanTrustedHeight)
+        );
+    }
+
+    #[test]
+    fn test_invalid_proof_context_hash() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, Some(1000000));
+
+        let mut signed_header: SignedHeader = get_test_signed_headers()[1].clone();
+        signed_header.current_validators = vec![vec![22, 33, 44]];
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id,
+            signed_header: signed_header.to_any().encode_to_vec(),
+        };
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
+
+        assert_eq!(result, Err(ContractError::InvalidProofContextHash));
+    }
+    #[test]
+    fn test_update_block_too_old() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, Some(10));
+
+        let mut signed_header: SignedHeader = get_test_signed_headers()[1].clone();
+        signed_header.trusted_height = 8;
+        let mut btp_header = signed_header.header.clone().unwrap();
+        btp_header.main_height = 9;
+        signed_header.header = Some(btp_header);
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id,
+            signed_header: signed_header.to_any().encode_to_vec(),
+        };
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
+
+        assert_eq!(result, Err(ContractError::UpdateBlockTooOld));
+    }
+
+    #[test]
+    fn test_invalid_header_update() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, Some(1000000));
+
+        let mut signed_header: SignedHeader = get_test_signed_headers()[1].clone();
+        let mut btp_header = signed_header.header.clone().unwrap();
+        btp_header.network_id = 1122;
+        signed_header.header = Some(btp_header);
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg::default();
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let info = mock_info("ibc_host", &[]);
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id,
+            signed_header: signed_header.to_any().encode_to_vec(),
+        };
+        let result = execute(deps.as_mut(), mock_env(), info, msg);
+
+        assert_eq!(
+            result,
+            Err(ContractError::InvalidHeaderUpdate(
+                "network id mismatch".to_string()
+            ))
+        );
     }
 }

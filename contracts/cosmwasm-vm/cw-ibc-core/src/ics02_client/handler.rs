@@ -1,4 +1,7 @@
-use crate::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR};
+use crate::{
+    light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT, EXECUTE_UPGRADE_CLIENT,
+    MISBEHAVIOUR,
+};
 
 use super::{events::client_misbehaviour_event, *};
 use common::constants::ICON_CLIENT_TYPE;
@@ -81,24 +84,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     fn update_client(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
+        _info: MessageInfo,
         message: IbcMsgUpdateClient,
     ) -> Result<Response, ContractError> {
         let client_id = message.client_id.clone();
 
-        let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
+        let client = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
-        let exec_message = LightClientMessage::UpdateClient {
-            client_id: client_id.as_str().to_string(),
-            signed_header: message.header.encode_to_vec(),
-        };
-
-        let client_update_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: client_address,
-            msg: to_binary(&exec_message).map_err(ContractError::Std)?,
-            funds: info.funds,
-        });
-        let sub_msg: SubMsg = SubMsg::reply_always(client_update_message, EXECUTE_UPDATE_CLIENT);
+        let sub_msg: SubMsg = client.update_client(&client_id, &message.header)?;
         debug_println!(
             "Called Update Client On Lightclient for client id:{}",
             &message.client_id
@@ -178,10 +171,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let client_id = message.client_id;
 
-        let client_address = self.get_client(deps.storage, client_id.clone())?;
+        let client = self.get_client(deps.storage, client_id.clone())?;
 
         let wasm_msg: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: client_address,
+            contract_addr: client.get_address(),
             msg: to_binary(&wasm_exec_message).map_err(ContractError::Std)?,
             funds: info.funds,
         });
@@ -288,7 +281,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                     self.store_client_implementations(
                         deps.storage,
                         client_id.clone(),
-                        light_client_address,
+                        LightClient::new(light_client_address),
                     )?;
 
                     self.store_client_state(
@@ -491,7 +484,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into);
         }
-        let client_address = self.get_client(deps.as_ref().storage, client_id.clone())?;
+        let client = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
         let clinet_message = LightClientMessage::Misbehaviour {
             client_id: client_id.to_string(),
@@ -499,7 +492,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         };
 
         let wasm_exec_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
-            contract_addr: client_address,
+            contract_addr: client.get_address(),
             msg: to_binary(&clinet_message)?,
             funds: info.funds,
         });

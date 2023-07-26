@@ -19,22 +19,10 @@ pub fn channel_close_init_validate(
     message: &MsgChannelCloseInit,
 ) -> Result<(), ContractError> {
     // Validate that the channel end is in a state where it can be closed.
-    if chan_end_on_a.state_matches(&State::Closed) {
-        return Err(ChannelError::InvalidChannelState {
-            channel_id: message.chan_id_on_a.clone(),
-            state: chan_end_on_a.state,
-        })
-        .map_err(Into::<ContractError>::into);
-    }
+    ensure_channel_not_closed(&message.chan_id_on_a, chan_end_on_a)?;
 
     // An OPEN IBC connection running on the local (host) chain should exist.
-    if chan_end_on_a.connection_hops().len() != 1 {
-        return Err(ChannelError::InvalidConnectionHopsLength {
-            expected: 1,
-            actual: chan_end_on_a.connection_hops().len(),
-        })
-        .map_err(Into::<ContractError>::into);
-    }
+    validate_connection_length(chan_end_on_a)?;
 
     Ok(())
 }
