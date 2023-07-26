@@ -129,20 +129,17 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.connection_open_init(deps, message)
             }
             CoreExecuteMsg::ConnectionOpenTry { msg } => {
-                let _message: MsgConnectionOpenTry =
-                    Self::from_raw::<RawMsgConnectionOpenTry, MsgConnectionOpenTry>(&msg)?;
+                debug_println!("[IBCCore] Connection Open Try Called");
                 let message: RawMsgConnectionOpenTry = Self::raw_from_hex(&msg)?;
                 self.connection_open_try(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenAck { msg } => {
-                let _message: MsgConnectionOpenAck =
-                    Self::from_raw::<RawMsgConnectionOpenAck, MsgConnectionOpenAck>(&msg)?;
+                debug_println!("[IBCCore] Connection Open Ack Called");
                 let message: RawMsgConnectionOpenAck = Self::raw_from_hex(&msg)?;
                 self.connection_open_ack(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenConfirm { msg } => {
-                let _message: MsgConnectionOpenConfirm =
-                    Self::from_raw::<RawMsgConnectionOpenConfirm, MsgConnectionOpenConfirm>(&msg)?;
+                debug_println!("[IBCCore] Connection Open Confirm Called");
                 let message: RawMsgConnectionOpenConfirm = Self::raw_from_hex(&msg)?;
                 self.connection_open_confirm(deps, env, info, message)
             }

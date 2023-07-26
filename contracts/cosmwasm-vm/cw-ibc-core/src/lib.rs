@@ -22,10 +22,6 @@ use ics04_channel::ics03_connection::msg::MigrateMsg;
 
 use crate::state::CwIbcStore;
 use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
-use common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
-use common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
-
-use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 
 pub use common::ibc::core::ics04_channel::msgs::{
     chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
