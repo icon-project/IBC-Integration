@@ -69,6 +69,7 @@ type ArchRelayerChainConfigValue struct {
 	CoinType          int    `json:"coin-type"`
 	StartHeight       int    `json:"start-height"`
 	IBCHandlerAddress string `json:"ibc-handler-address"`
+	BlockInterval     int    `json:"block-interval"`
 }
 
 type ICONRelayerChainConfig struct {
@@ -268,6 +269,7 @@ func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName
 				CoinType:                      coinType,
 				StartHeight:                   cfg.ConfigFileOverrides["start-height"].(int),
 				IBCHandlerAddress:             cfg.ConfigFileOverrides["ibc-handler-address"].(string),
+				BlockInterval:                 cfg.ConfigFileOverrides["block-interval"].(int),
 			},
 		}
 

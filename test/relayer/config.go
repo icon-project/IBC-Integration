@@ -13,5 +13,6 @@ type iconConfig struct {
 		BtpNetworkID      int    `json:"btp-network-id"`
 		StartHeight       int    `json:"start-height"`
 		IbcHandlerAddress string `json:"ibc-handler-address"`
+		BlockInterval     int    `json:"block-interval"`
 	} `json:"value"`
 }
