@@ -192,7 +192,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
 
-        
         let client = self.get_client(deps.as_ref().storage, client_id)?;
 
         let expected_connection_end: ConnectionEnd = ConnectionEnd::new(
@@ -313,7 +312,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let counterparty = to_ibc_counterparty(message.counterparty)?;
         let counterparty_prefix = counterparty.prefix().clone();
         let counterparty_client_id = counterparty.client_id().clone();
-        let counterparty_connection_id = counterparty.connection_id.clone();
+        let counterparty_connection_id = counterparty.connection_id;
 
         let message_versions = to_ibc_versions(message.counterparty_versions)?;
         let message_delay_period = Duration::from_nanos(message.delay_period);

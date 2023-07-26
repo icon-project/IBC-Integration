@@ -13,8 +13,8 @@ pub fn ensure_consensus_height_valid(
     if consensus_height > host_height {
         return Err(ContractError::IbcConnectionError {
             error: ConnectionError::InvalidConsensusHeight {
-                target_height: consensus_height.clone(),
-                current_height: host_height.clone(),
+                target_height: *consensus_height,
+                current_height: *host_height,
             },
         });
     }
