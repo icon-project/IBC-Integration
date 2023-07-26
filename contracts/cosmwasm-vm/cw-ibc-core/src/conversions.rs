@@ -11,7 +11,7 @@ use common::ibc::{
 };
 use cw_common::raw_types::connection::RawCounterparty;
 use cw_common::{
-    ibc_types::{ChannelEnd, ChannelError, IbcChannelId, IbcClientId, IbcPortId, IbcTimestamp},
+    ibc_types::{ChannelEnd, ChannelError, IbcChannelId, IbcClientId, IbcPortId, IbcTimestamp,IbcConnectionId},
     raw_types::{channel::RawChannel, RawHeight, RawVersion},
 };
 
@@ -64,13 +64,13 @@ pub fn to_ibc_client_id(client_id: &str) -> Result<IbcClientId, ContractError> {
     Ok(client_id)
 }
 
-pub fn to_ibc_version(version: Option<RawVersion>) -> Result<Option<Version>, ContractError> {
+pub fn to_ibc_version(version: Option<RawVersion>) -> Result<Version, ContractError> {
     if let Some(version) = version {
         let ibc_version = Version::try_from(version)
             .map_err(|e| ContractError::IbcConnectionError { error: e })?;
-        return Ok(Some(ibc_version));
+        return Ok(ibc_version);
     }
-    Ok(None)
+    return Err(ContractError::IbcConnectionError { error: ConnectionError::EmptyVersions })
 }
 
 pub fn to_ibc_counterparty(
@@ -93,4 +93,8 @@ pub fn to_ibc_versions(versions: Vec<RawVersion>) -> Result<Vec<Version>, Contra
         .collect::<Result<Vec<Version>, ConnectionError>>()
         .map_err(|e| ContractError::IbcConnectionError { error: e })?;
     Ok(ibc_versions)
+}
+
+pub fn to_ibc_connection_id(connection_id:&str)->Result<IbcConnectionId,ContractError>{
+    return IbcConnectionId::from_str(connection_id).map_err(|e|ContractError::IbcValidationError { error:e });
 }

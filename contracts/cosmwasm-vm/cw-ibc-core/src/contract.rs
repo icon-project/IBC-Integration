@@ -137,11 +137,13 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::ConnectionOpenAck { msg } => {
                 let message: MsgConnectionOpenAck =
                     Self::from_raw::<RawMsgConnectionOpenAck, MsgConnectionOpenAck>(&msg)?;
+                    let message: RawMsgConnectionOpenAck = Self::raw_from_hex(&msg)?;
                 self.connection_open_ack(deps, info, env, message)
             }
             CoreExecuteMsg::ConnectionOpenConfirm { msg } => {
                 let message: MsgConnectionOpenConfirm =
                     Self::from_raw::<RawMsgConnectionOpenConfirm, MsgConnectionOpenConfirm>(&msg)?;
+                    let message: RawMsgConnectionOpenConfirm = Self::raw_from_hex(&msg)?;
                 self.connection_open_confirm(deps, env, info, message)
             }
             CoreExecuteMsg::ChannelOpenInit { msg } => {
