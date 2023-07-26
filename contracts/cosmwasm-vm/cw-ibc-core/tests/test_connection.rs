@@ -27,6 +27,7 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenTry;
 use cw_common::raw_types::RawHeight;
 
 use cw_ibc_core::context::CwIbcCoreContext;
+use cw_ibc_core::conversions::to_ibc_client_id;
 use cw_ibc_core::ics03_connection::event::create_connection_event;
 
 //use cw_ibc_core::ics03_connection::event::create_open_init_event;
@@ -386,19 +387,14 @@ fn connection_open_confirm_invalid_proof_height_zero() {
 fn connection_open_init() {
     let mut deps = deps();
 
-    let message = RawMsgConnectionOpenInit {
+    let res_msg = RawMsgConnectionOpenInit {
         client_id: "iconclient-0".to_string(),
         counterparty: Some(get_dummy_raw_counterparty(None)),
         version: None,
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
-
-    let res_msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
-            message,
-        )
-        .unwrap();
+    let client_id=to_ibc_client_id(&res_msg.client_id).unwrap();
 
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
@@ -423,13 +419,13 @@ fn connection_open_init() {
         .store_client_state(
             &mut deps.storage,
             &get_mock_env(),
-            &res_msg.client_id_on_a,
+            &client_id,
             cl,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     contract
-        .client_state(&mut deps.storage, &res_msg.client_id_on_a)
+        .client_state(&mut deps.storage, &client_id)
         .unwrap();
     contract
         .connection_next_sequence_init(&mut deps.storage, u64::default())
@@ -452,13 +448,9 @@ fn test_validate_open_init_connection_fail() {
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
-    let res_msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
-            message,
-        )
-        .unwrap();
+    
     contract
-        .connection_open_init(deps.as_mut(), res_msg)
+        .connection_open_init(deps.as_mut(), message)
         .unwrap();
 }
 
@@ -1132,24 +1124,19 @@ fn connection_check_open_init_validate_fails() {
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     };
-
-    let res_msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
-            message,
-        )
-        .unwrap();
-
-    let contract = CwIbcCoreContext::new();
+   let client_id=to_ibc_client_id(&message.client_id).unwrap();
+   
+   let contract = CwIbcCoreContext::new();
 
     contract
-        .client_state(&mut deps.storage, &res_msg.client_id_on_a)
+        .client_state(&mut deps.storage, &client_id)
         .unwrap();
     contract
         .connection_next_sequence_init(&mut deps.storage, u64::default())
         .unwrap();
 
     contract
-        .connection_open_init(deps.as_mut(), res_msg)
+        .connection_open_init(deps.as_mut(), message)
         .unwrap();
 }
 
@@ -1165,11 +1152,7 @@ fn connection_open_init_fails_of_clientstate() {
         signer: get_dummy_bech32_account(),
     };
 
-    let res_msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
-            message,
-        )
-        .unwrap();
+   
 
     let client_id = ClientId::default();
     let contract = CwIbcCoreContext::new();
@@ -1190,7 +1173,7 @@ fn connection_open_init_fails_of_clientstate() {
         .connection_next_sequence_init(&mut deps.storage, u64::default())
         .unwrap();
 
-    let res = contract.connection_open_init(deps.as_mut(), res_msg);
+    let res = contract.connection_open_init(deps.as_mut(), message);
     assert!(res.is_err());
 }
 
@@ -1207,12 +1190,9 @@ fn connection_open_init_validate_invalid_client_id() {
         signer: get_dummy_bech32_account(),
     };
     let seq_on_a: u64 = 24;
-    let res_msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
-            message,
-        )
-        .unwrap();
+    
     let client_id = ClientId::default();
+    let client_on_a= to_ibc_client_id(&message.client_id).unwrap();
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
 
@@ -1221,7 +1201,7 @@ fn connection_open_init_validate_invalid_client_id() {
         .store_client_state(
             &mut deps.storage,
             &get_mock_env(),
-            &res_msg.client_id_on_a,
+            &client_on_a,
             client_state_bytes,
             client_state.get_keccak_hash().to_vec(),
         )
@@ -1233,7 +1213,7 @@ fn connection_open_init_validate_invalid_client_id() {
         .connection_next_sequence_init(&mut deps.storage, seq_on_a)
         .unwrap();
     contract
-        .connection_open_init(deps.as_mut(), res_msg)
+        .connection_open_init(deps.as_mut(), message)
         .unwrap();
 }
 
@@ -1387,27 +1367,23 @@ fn connection_open_init_fails() {
         signer: get_dummy_bech32_account(),
     };
 
-    let res_msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit::try_from(
-            message,
-        )
-        .unwrap();
+   
 
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
-
+    let client_id= to_ibc_client_id(&message.client_id).unwrap();
     let cl = client_state.encode_to_vec();
     contract
         .store_client_state(
             &mut deps.storage,
             &get_mock_env(),
-            &res_msg.client_id_on_a,
+            &client_id,
             cl,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
     contract
-        .connection_open_init(deps.as_mut(), res_msg)
+        .connection_open_init(deps.as_mut(), message)
         .unwrap();
 }
 

@@ -1,11 +1,12 @@
 use std::str::FromStr;
 
-use common::ibc::{core::ics04_channel::timeout::TimeoutHeight, Height};
+use common::ibc::{core::{ics04_channel::timeout::TimeoutHeight, ics03_connection::{connection::Counterparty, error::ConnectionError}}, Height};
 use cw_common::{
-    ibc_types::{ChannelEnd, ChannelError, IbcChannelId, IbcPortId, IbcTimestamp},
-    raw_types::{channel::RawChannel, RawHeight},
+    ibc_types::{ChannelEnd, ChannelError, IbcChannelId, IbcPortId, IbcTimestamp, IbcClientId},
+    raw_types::{channel::{RawChannel}, RawHeight, RawVersion},
 };
-
+use common::ibc::core::ics03_connection::version::Version;
+use cw_common::raw_types::connection::RawCounterparty;
 use crate::ContractError;
 
 pub fn to_ibc_port_id(port_id: &str) -> Result<IbcPortId, ContractError> {
@@ -46,4 +47,32 @@ pub fn to_ibc_channel(channel: Option<RawChannel>) -> Result<ChannelEnd, Contrac
         None => Err(ChannelError::MissingChannel),
     };
     chan.map_err(|e| ContractError::IbcChannelError { error: e })
+}
+
+pub fn to_ibc_client_id(client_id:&str)->Result<IbcClientId,ContractError>{
+    let client_id= IbcClientId::from_str(client_id).map_err(|e|{
+        ContractError::IbcValidationError { error: e }
+    })?;
+    Ok(client_id)
+}
+
+pub fn to_ibc_version(version:Option<RawVersion>)->Result<Option<Version>,ContractError>{
+
+    if let Some(version) = version {
+        let ibc_version= Version::try_from(version).map_err(|e|ContractError::IbcConnectionError { error: e })?;
+        return Ok(Some(ibc_version));
+    }
+   Ok(None)
+ 
+}
+
+pub fn to_ibc_counterparty(counterparty:Option<RawCounterparty>)->Result<Counterparty,ContractError>{
+    if let Some(cp)= counterparty {
+        let ibc_counterparty= Counterparty::try_from(cp).map_err(|e|{
+            ContractError::IbcConnectionError { error: e }
+
+        })?;
+        return Ok(ibc_counterparty);
+    }
+    return Err(ContractError::IbcConnectionError { error: ConnectionError::MissingCounterparty })
 }

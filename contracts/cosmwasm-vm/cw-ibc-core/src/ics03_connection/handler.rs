@@ -1,7 +1,9 @@
-use std::str::from_utf8;
+use std::{str::from_utf8, time::Duration};
 
-use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString};
+use cw_common::{client_msg::VerifyConnectionPayload, hex_string::HexString, raw_types::connection::RawMsgConnectionOpenInit};
 use debug_print::debug_println;
+
+use crate::conversions::{to_ibc_client_id, to_ibc_version, to_ibc_counterparty};
 
 use super::{event::create_connection_event, *};
 
@@ -25,26 +27,34 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_open_init(
         &self,
         deps: DepsMut,
-        message: MsgConnectionOpenInit,
+        message: RawMsgConnectionOpenInit,
     ) -> Result<Response, ContractError> {
-        let client_id = message.client_id_on_a.clone();
+        let client_id = to_ibc_client_id(&message.client_id)?;
 
         let connection_identifier = self.generate_connection_idenfier(deps.storage)?;
 
-        self.client_state(deps.storage, &message.client_id_on_a)?;
+        self.client_state(deps.storage, &client_id)?;
 
         let client = self.get_client(deps.as_ref().storage, client_id.clone())?;
 
         let response: Vec<u8> = client.get_client_state(deps.as_ref(), &client_id)?;
 
+        let delay_period=Duration::from_nanos(message.delay_period);
+        let ibc_version= to_ibc_version(message.version)?;
+        let ibc_counterparty= to_ibc_counterparty(message.counterparty)?;
+
+        
+
         if response.is_empty() {
             return Err(ClientError::ClientNotFound {
-                client_id: message.client_id_on_a,
+                client_id: client_id.clone(),
             })
             .map_err(Into::<ContractError>::into);
         }
 
-        let versions = match message.version {
+       
+
+        let versions = match ibc_version {
             Some(version) => {
                 if self.get_compatible_versions().contains(&version) {
                     vec![version]
@@ -58,10 +68,10 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let connection_end: ConnectionEnd = ConnectionEnd::new(
             State::Init,
-            message.client_id_on_a,
-            message.counterparty.clone(),
+            client_id.clone(),
+            ibc_counterparty.clone(),
             versions,
-            message.delay_period,
+            delay_period,
         );
 
         self.update_connection_commitment(
@@ -80,7 +90,7 @@ impl<'a> CwIbcCoreContext<'a> {
             IbcEventType::OpenInitConnection,
             &connection_identifier,
             &client_id,
-            message.counterparty.client_id(),
+            ibc_counterparty.client_id(),
             None,
         )?;
 

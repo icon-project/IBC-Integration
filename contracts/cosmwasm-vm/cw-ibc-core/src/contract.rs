@@ -127,6 +127,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 // let message=msg.try_inner::<RawMsgConnectionOpenInit>()?;
                 let message: MsgConnectionOpenInit =
                     Self::from_raw::<RawMsgConnectionOpenInit, MsgConnectionOpenInit>(&msg)?;
+                    let message: RawMsgConnectionOpenInit = Self::raw_from_hex(&msg)?;
                 self.connection_open_init(deps, message)
             }
             CoreExecuteMsg::ConnectionOpenTry { msg } => {
