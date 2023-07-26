@@ -1,7 +1,8 @@
 use cw_common::raw_types::{channel::RawMessageTimeout, to_raw_packet};
 
 use crate::conversions::{
-    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
+    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
+    to_ibc_timestamp,
 };
 
 use super::*;
@@ -166,16 +167,7 @@ impl<'a> CwIbcCoreContext<'a> {
             channel_id: dst_channel.to_string(),
         };
         let data = Binary::from(packet.data.clone());
-        let timeoutblock = match packet_timeout_height {
-            common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
-                revision: 1,
-                height: 1,
-            },
-            common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
-                revision: x.revision_number(),
-                height: x.revision_height(),
-            },
-        };
+        let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timeout = CwTimeout::with_block(timeoutblock);
         let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
         self.store_callback_data(

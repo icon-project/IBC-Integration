@@ -9,7 +9,8 @@ use cw_common::{
 use debug_print::debug_println;
 
 use crate::conversions::{
-    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
+    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
+    to_ibc_timestamp,
 };
 
 use super::*;
@@ -170,16 +171,7 @@ impl<'a> CwIbcCoreContext<'a> {
             channel_id: packet.destination_channel.to_string(),
         };
         let data = Binary::from(packet.data.clone());
-        let timeoutblock = match packet_timeout_height {
-            common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
-                revision: 1,
-                height: 1,
-            },
-            common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
-                revision: x.revision_number(),
-                height: x.revision_height(),
-            },
-        };
+        let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timeout = CwTimeout::with_block(timeoutblock);
         let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
         let address = Addr::unchecked(msg.signer.to_string());
@@ -323,13 +315,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     _ => {}
                 }
                 debug_println!("before after channel ordering check");
-
-                let timestamp = match packet.timeout.timestamp() {
-                    Some(t) => t.to_string(),
-                    None => 0.to_string(),
-                };
-
-                debug_println!("timestamp: {:?}", timestamp);
 
                 let event_recieve_packet = create_packet_event(
                     IbcEventType::ReceivePacket,

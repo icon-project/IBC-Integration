@@ -9,6 +9,7 @@ use common::ibc::{
     },
     Height,
 };
+use cosmwasm_std::IbcTimeoutBlock;
 use cw_common::raw_types::connection::RawCounterparty;
 use cw_common::{
     ibc_types::{
@@ -103,4 +104,17 @@ pub fn to_ibc_versions(versions: Vec<RawVersion>) -> Result<Vec<Version>, Contra
 pub fn to_ibc_connection_id(connection_id: &str) -> Result<IbcConnectionId, ContractError> {
     IbcConnectionId::from_str(connection_id)
         .map_err(|e| ContractError::IbcValidationError { error: e })
+}
+
+pub fn to_ibc_timeout_block(packet_timeout_height: &TimeoutHeight) -> IbcTimeoutBlock {
+    match packet_timeout_height {
+        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
+            revision: 1,
+            height: 1,
+        },
+        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
+            revision: x.revision_number(),
+            height: x.revision_height(),
+        },
+    }
 }

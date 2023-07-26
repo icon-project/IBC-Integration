@@ -1,5 +1,6 @@
 use crate::conversions::{
-    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
+    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
+    to_ibc_timestamp,
 };
 
 use super::*;
@@ -183,16 +184,7 @@ impl<'a> CwIbcCoreContext<'a> {
             port_id: dst_port.to_string(),
             channel_id: dst_channel.to_string(),
         };
-        let timeoutblock = match packet_timeout_height {
-            common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
-                revision: 1,
-                height: 1,
-            },
-            common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
-                revision: x.revision_number(),
-                height: x.revision_height(),
-            },
-        };
+        let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timestamp = packet_timestamp.nanoseconds();
         let cw_timestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
         let timeout = CwTimeout::with_both(timeoutblock, cw_timestamp);

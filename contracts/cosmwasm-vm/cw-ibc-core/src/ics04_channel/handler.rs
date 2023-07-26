@@ -965,13 +965,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                 let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
-                if !channel_end.state_matches(&State::TryOpen) {
-                    return Err(ChannelError::InvalidChannelState {
-                        channel_id,
-                        state: channel_end.state,
-                    })
-                    .map_err(|e| e.into());
-                }
+                ensure_channel_state(&channel_id, &channel_end, &State::TryOpen)?;
                 channel_end.set_state(State::Open); // State Change
                 self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
                 self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
