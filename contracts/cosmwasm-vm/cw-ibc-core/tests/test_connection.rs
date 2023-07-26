@@ -637,8 +637,8 @@ fn connection_open_ack_validate_fail() {
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
 
-    let connection_id= to_ibc_connection_id(&message.connection_id).unwrap();
-    let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
+    let _connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
@@ -697,9 +697,8 @@ fn connection_open_ack_validate() {
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
-let connection_id= to_ibc_connection_id(&message.connection_id).unwrap();
-let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
-    
+    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
@@ -737,11 +736,7 @@ let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
         Duration::default(),
     );
     contract
-        .store_connection(
-            &mut deps.storage,
-            connection_id.clone(),
-            conn_end.clone(),
-        )
+        .store_connection(&mut deps.storage, connection_id, conn_end.clone())
         .unwrap();
 
     let client_state_bytes = client_state.encode_to_vec();
@@ -944,10 +939,9 @@ fn connection_open_confirm_validate() {
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
-    let connection_id= to_ibc_connection_id(&message.connection_id).unwrap();
-    let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
+    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
-   
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
         next_proof_context_hash: vec![1, 2, 3, 4],
@@ -976,11 +970,7 @@ fn connection_open_confirm_validate() {
         Duration::default(),
     );
     contract
-        .store_connection(
-            &mut deps.storage,
-            connection_id.clone(),
-            conn_end.clone(),
-        )
+        .store_connection(&mut deps.storage, connection_id, conn_end.clone())
         .unwrap();
 
     let light_client = LightClient::new("lightclient".to_string());
@@ -1029,8 +1019,8 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
-    let connection_id= to_ibc_connection_id(&message.connection_id).unwrap();
-    let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
+    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
@@ -1059,7 +1049,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
         Duration::default(),
     );
     contract
-        .store_connection(&mut deps.storage, connection_id.clone(), conn_end)
+        .store_connection(&mut deps.storage, connection_id, conn_end)
         .unwrap();
 
     let light_client = LightClient::new("lightclient".to_string());
@@ -1380,8 +1370,8 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
 
-    let connection_id= to_ibc_connection_id(&message.connection_id).unwrap();
-let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
+    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let _proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     let client_id = IbcClientId::default();
     let client_state: ClientState = get_dummy_client_state();
@@ -1411,7 +1401,7 @@ let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
         Duration::default(),
     );
     contract
-        .store_connection(&mut deps.storage, connection_id.clone(), conn_end)
+        .store_connection(&mut deps.storage, connection_id, conn_end)
         .unwrap();
 
     let client_state_bytes = client_state.encode_to_vec();
@@ -1445,8 +1435,8 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
 
-    let connection_id= to_ibc_connection_id(&message.connection_id).unwrap();
-    let proof_height= to_ibc_height(message.proof_height.clone()).unwrap();
+    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
     let client_id = IbcClientId::default();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
@@ -1482,11 +1472,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
         Duration::default(),
     );
     contract
-        .store_connection(
-            &mut deps.storage,
-            connection_id.clone(),
-            conn_end.clone(),
-        )
+        .store_connection(&mut deps.storage, connection_id, conn_end.clone())
         .unwrap();
 
     let client_state_bytes = client_state.encode_to_vec();

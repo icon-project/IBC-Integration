@@ -3,12 +3,16 @@ use std::{str::from_utf8, time::Duration};
 use cw_common::{
     client_msg::VerifyConnectionPayload,
     hex_string::HexString,
-    raw_types::connection::{RawMsgConnectionOpenInit, RawMsgConnectionOpenTry, RawMsgConnectionOpenAck, RawMsgConnectionOpenConfirm},
+    raw_types::connection::{
+        RawMsgConnectionOpenAck, RawMsgConnectionOpenConfirm, RawMsgConnectionOpenInit,
+        RawMsgConnectionOpenTry,
+    },
 };
 use debug_print::debug_println;
 
 use crate::conversions::{
-    to_ibc_client_id, to_ibc_counterparty, to_ibc_height, to_ibc_version, to_ibc_versions, to_ibc_connection_id,
+    to_ibc_client_id, to_ibc_connection_id, to_ibc_counterparty, to_ibc_height, to_ibc_version,
+    to_ibc_versions,
 };
 
 use super::{event::create_connection_event, *};
@@ -155,19 +159,16 @@ impl<'a> CwIbcCoreContext<'a> {
         msg: RawMsgConnectionOpenAck,
     ) -> Result<Response, ContractError> {
         debug_println!("[ConnOpenAck]: Connection Open Ack");
-        let message_client_state =
-        msg
-                .client_state
-                .ok_or(ContractError::IbcConnectionError {
-                    error: ConnectionError::MissingClientState,
-                })?;
-       
+        let message_client_state = msg.client_state.ok_or(ContractError::IbcConnectionError {
+            error: ConnectionError::MissingClientState,
+        })?;
+
         let message_consensus_height = to_ibc_height(msg.consensus_height)?;
         let proof_height = to_ibc_height(msg.proof_height)?;
-        let connection_id= to_ibc_connection_id(&msg.connection_id)?;
-        let counter_connection_id= to_ibc_connection_id(&msg.counterparty_connection_id)?;
-        let message_version= to_ibc_version(msg.version)?;
-       
+        let connection_id = to_ibc_connection_id(&msg.connection_id)?;
+        let counter_connection_id = to_ibc_connection_id(&msg.counterparty_connection_id)?;
+        let message_version = to_ibc_version(msg.version)?;
+
         let host_height = self
             .host_height(&env)
             .map_err(|_| ConnectionError::Other {
@@ -195,9 +196,7 @@ impl<'a> CwIbcCoreContext<'a> {
             && conn_end_on_a.versions().contains(&message_version))
         {
             return Err(ContractError::IbcConnectionError {
-                error: ConnectionError::ConnectionMismatch {
-                    connection_id: connection_id.clone(),
-                },
+                error: ConnectionError::ConnectionMismatch { connection_id },
             });
         }
 
@@ -236,7 +235,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_connection_state = VerifyConnectionState::new(
             proof_height.to_string(),
             to_vec(&prefix_on_b)?,
-            msg.proof_try.into(),
+            msg.proof_try,
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             connection_path,
             expected_conn_end_on_b.encode_vec().unwrap(),
@@ -246,10 +245,10 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_client_full_state = VerifyClientFullState::new(
             proof_height.to_string(),
             to_vec(&prefix_on_b)?,
-            msg.proof_client.into(),
+            msg.proof_client,
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             client_state_path,
-            message_client_state.value.clone(),
+            message_client_state.value,
         );
 
         let consensus_state_path_on_b =
@@ -257,7 +256,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_client_consensus_state = VerifyClientConsensusState::new(
             proof_height.to_string(),
             to_vec(&prefix_on_b)?,
-            msg.proof_consensus.into(),
+            msg.proof_consensus,
             consensus_state_of_b_on_a.root().as_bytes().to_vec(),
             consensus_state_path_on_b,
             client_cons_state_path_on_a.clone().as_bytes(),
@@ -271,8 +270,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
         client.verify_connection_open_ack(deps.as_ref(), payload)?;
 
-      
-
         let mut conn_end = self.connection_end(deps.storage, connection_id.clone())?;
 
         if !conn_end.state_matches(&State::Init) {
@@ -280,9 +277,6 @@ impl<'a> CwIbcCoreContext<'a> {
                 .map_err(Into::<ContractError>::into);
         }
         debug_println!("[ConnOpenAckReply]: Conn end state matches");
-      
-
-      
 
         let counterparty_prefix = prefix_on_b.clone();
 
@@ -554,9 +548,9 @@ impl<'a> CwIbcCoreContext<'a> {
         msg: RawMsgConnectionOpenConfirm,
     ) -> Result<Response, ContractError> {
         debug_println!("[ConnOpenConfirm]: Connection Open Confirm");
-        let connection_id=to_ibc_connection_id(&msg.connection_id)?;
-        
-        let proof_height= to_ibc_height(msg.proof_height.clone())?;
+        let connection_id = to_ibc_connection_id(&msg.connection_id)?;
+
+        let proof_height = to_ibc_height(msg.proof_height.clone())?;
         let mut connection_end = self.connection_end(deps.storage, connection_id.clone())?;
         let counterparty = connection_end.counterparty().clone();
         debug_println!("[ConnOpenConfirm]: Our Connection {:?}", connection_end);
@@ -575,9 +569,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         if !connection_end.state_matches(&State::TryOpen) {
             return Err(ContractError::IbcConnectionError {
-                error: ConnectionError::ConnectionMismatch {
-                    connection_id: connection_id,
-                },
+                error: ConnectionError::ConnectionMismatch { connection_id },
             });
         }
 
@@ -604,11 +596,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let expected_conn_end_on_a = ConnectionEnd::new(
             State::Open,
             counterparty_client_id.clone(),
-            Counterparty::new(
-                client_id.clone(),
-                Some(connection_id.clone()),
-                prefix.clone(),
-            ),
+            Counterparty::new(client_id.clone(), Some(connection_id.clone()), prefix),
             connection_end.versions().to_vec(),
             connection_end.delay_period(),
         );
@@ -618,28 +606,17 @@ impl<'a> CwIbcCoreContext<'a> {
         let verify_connection_state = VerifyConnectionState::new(
             proof_height.to_string(),
             to_vec(&counterparty_prefix).map_err(ContractError::Std)?,
-            msg.proof_ack.into(),
+            msg.proof_ack,
             consensus_state_of_a_on_b.root().as_bytes().to_vec(),
             connection_path,
             expected_conn_end_on_a.encode_vec().unwrap(),
         );
 
         debug_println!("Verify Connection State {:?}", verify_connection_state);
-        client.verify_connection_open_confirm(
-            deps.as_ref(),
-            verify_connection_state,
-            client_id,
-        )?;
+        client.verify_connection_open_confirm(deps.as_ref(), verify_connection_state, client_id)?;
 
-       
-       
-       
-        
-       
         debug_println!("[ConnOpenConfirmReply]: CounterParty  {:?}", counterparty);
         connection_end.set_state(State::Open);
-
-       
 
         let event = create_connection_event(
             IbcEventType::OpenConfirmConnection,
