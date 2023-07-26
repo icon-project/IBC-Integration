@@ -23,8 +23,8 @@ prost = { workspace=true}
 serde-json-wasm = {workspace=true}
 bytes = { workspace=true }
 bech32="0.9.1"
-cw-xcall={package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="main"}
-cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="main"}
+cw-xcall-lib={workspace=true}
+cw-xcall = {workspace=true}
 
 [dev-dependencies]
 getrandom = {version = "0.2.9", default-features = false, features = ["custom"]}

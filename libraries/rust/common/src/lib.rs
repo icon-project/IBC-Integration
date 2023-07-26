@@ -112,6 +112,7 @@ impl<'a> PrimaryKey<'a> for ModuleId {
 
 impl KeyDeserialize for ModuleId {
     type Output = ModuleId;
+
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
         let result = String::from_utf8(value)
             .map_err(StdError::invalid_utf8)
@@ -134,6 +135,7 @@ impl<'a> PrimaryKey<'a> for PortId {
 
 impl KeyDeserialize for PortId {
     type Output = PortId;
+
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
         let result = String::from_utf8(value)
             .map_err(StdError::invalid_utf8)
