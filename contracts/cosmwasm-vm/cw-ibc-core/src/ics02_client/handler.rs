@@ -1,12 +1,18 @@
 use crate::{
-    light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT, EXECUTE_UPGRADE_CLIENT,
-    MISBEHAVIOUR,
+    conversions::to_ibc_client_id, light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT,
+    EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR,
 };
 
 use super::{events::client_misbehaviour_event, *};
 use common::constants::ICON_CLIENT_TYPE;
 use cosmwasm_std::Env;
-use cw_common::{client_msg::ExecuteMsg as LightClientMessage, from_binary_response};
+use cw_common::{
+    client_msg::ExecuteMsg as LightClientMessage,
+    from_binary_response,
+    raw_types::client::{
+        RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
+    },
+};
 use debug_print::debug_println;
 use prost::{DecodeError, Message};
 
@@ -34,7 +40,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: IbcMsgCreateClient,
+        message: RawMsgCreateClient,
     ) -> Result<Response, ContractError> {
         let client_counter = self.client_counter(deps.as_ref().storage)?;
 
@@ -44,11 +50,19 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
+        let client_state = message.client_state.ok_or(ContractError::IbcClientError {
+            error: ClientError::MissingRawClientState,
+        })?;
+        let consensus_state = message
+            .consensus_state
+            .ok_or(ContractError::IbcClientError {
+                error: ClientError::MissingRawConsensusState,
+            })?;
 
         let create_client_message = LightClientMessage::CreateClient {
             client_id: client_id.to_string(),
-            client_state: message.client_state.encode_to_vec(),
-            consensus_state: message.consensus_state.encode_to_vec(),
+            client_state: client_state.encode_to_vec(),
+            consensus_state: consensus_state.encode_to_vec(),
         };
 
         let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -85,13 +99,16 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         _info: MessageInfo,
-        message: IbcMsgUpdateClient,
+        message: RawMsgUpdateClient,
     ) -> Result<Response, ContractError> {
-        let client_id = message.client_id.clone();
+        let client_id = to_ibc_client_id(&message.client_id)?;
+        let header = message.header.ok_or(ContractError::IbcClientError {
+            error: ClientError::MissingRawHeader,
+        })?;
 
         let client = self.get_client(deps.as_ref().storage, &client_id)?;
 
-        let sub_msg: SubMsg = client.update_client(&client_id, &message.header)?;
+        let sub_msg: SubMsg = client.update_client(&client_id, &header)?;
         debug_println!(
             "Called Update Client On Lightclient for client id:{}",
             &message.client_id
@@ -123,21 +140,31 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         deps: DepsMut,
         info: MessageInfo,
         env: Env,
-        message: IbcMsgUpgradeClient,
+        message: RawMsgUpgradeClient,
     ) -> Result<Response, ContractError> {
-        let old_client_state = self.client_state(deps.as_ref().storage, &message.client_id)?;
+        let client_id = to_ibc_client_id(&message.client_id)?;
+        let old_client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+
+        let new_client_state = message.client_state.ok_or(ContractError::IbcClientError {
+            error: ClientError::MissingRawClientState,
+        })?;
+        let new_consensus_state = message
+            .consensus_state
+            .ok_or(ContractError::IbcClientError {
+                error: ClientError::MissingRawConsensusState,
+            })?;
 
         //Check Client Frozen
         if old_client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
-                client_id: message.client_id,
+                client_id: client_id.clone(),
             })
             .map_err(Into::<ContractError>::into);
         }
 
         let old_consensus_state = self.consensus_state(
             deps.as_ref().storage,
-            &message.client_id,
+            &client_id,
             &old_client_state.latest_height(),
         )?;
 
@@ -161,15 +188,13 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         // Validate the upgraded client state and consensus state and verify proofs against the root
 
         let wasm_exec_message = LightClientMessage::UpgradeClient {
-            upgraded_client_state: message.client_state.value,
-            upgraded_consensus_state: message.consensus_state.value,
+            upgraded_client_state: new_client_state.value,
+            upgraded_consensus_state: new_consensus_state.value,
             proof_upgrade_client: to_vec(&message.proof_upgrade_client)
                 .map_err(ContractError::Std)?,
             proof_upgrade_consensus_state: to_vec(&message.proof_upgrade_consensus_state)
                 .map_err(ContractError::Std)?,
         };
-
-        let client_id = message.client_id;
 
         let client = self.get_client(deps.storage, &client_id)?;
 
@@ -472,9 +497,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: MsgSubmitMisbehaviour,
+        message: RawMsgSubmitMisbehaviour,
     ) -> Result<Response, ContractError> {
-        let client_id = message.client_id;
+        let client_id = to_ibc_client_id(&message.client_id)?;
 
         let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
 

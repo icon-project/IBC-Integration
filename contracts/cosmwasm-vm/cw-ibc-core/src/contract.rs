@@ -101,20 +101,18 @@ impl<'a> CwIbcCoreContext<'a> {
                 client_type,
                 client_address,
             } => {
-                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender)?;
                 let client_type = IbcClientType::new(client_type);
                 self.register_client(deps, client_type, client_address)
             }
             CoreExecuteMsg::CreateClient { msg } => {
-                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let message: IbcMsgCreateClient =
-                    Self::from_raw::<RawMsgCreateClient, IbcMsgCreateClient>(&msg)?;
+                debug_println!("[IBCCore] CreateClient Called");
+                let message: RawMsgCreateClient = Self::raw_from_hex(&msg)?;
                 self.create_client(deps, info, message)
             }
             CoreExecuteMsg::UpdateClient { msg } => {
-                // self.check_sender_is_owner(deps.as_ref().storage, info.sender.clone())?;
-                let message: IbcMsgUpdateClient =
-                    Self::from_raw::<RawMsgUpdateClient, IbcMsgUpdateClient>(&msg)?;
+                debug_println!("[IBCCore] UpdateClient Called");
+                let message: RawMsgUpdateClient = Self::raw_from_hex(&msg)?;
                 self.update_client(deps, info, message)
             }
             CoreExecuteMsg::UpgradeClient {} => {

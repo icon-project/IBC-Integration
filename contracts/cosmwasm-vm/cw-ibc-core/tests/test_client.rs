@@ -3,6 +3,7 @@ pub mod setup;
 use std::str::FromStr;
 
 use common::client_state::{get_default_icon_client_state, IClientState};
+
 use common::ibc::{
     core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour, signer::Signer, Height,
 };
@@ -14,7 +15,9 @@ use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
 use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
-use cw_common::raw_types::client::{RawMsgCreateClient, RawMsgUpgradeClient};
+use cw_common::raw_types::client::{
+    RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
+};
 use cw_common::raw_types::Any;
 
 use common::ibc::core::ics02_client::client_type::ClientType;
@@ -360,8 +363,11 @@ fn check_for_create_client_message() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message =
-        IbcMsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
+    let create_client_message = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: signer.to_string(),
+    };
 
     let response = contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -399,11 +405,11 @@ fn check_for_create_client_message_response() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = IbcMsgCreateClient::new(
-        client_state.clone().into(),
-        consenus_state.clone().into(),
-        signer,
-    );
+    let create_client_message = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: signer.to_string(),
+    };
 
     let response = contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -473,11 +479,11 @@ fn check_for_client_state_from_storage() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = IbcMsgCreateClient::new(
-        client_state.clone().into(),
-        consenus_state.clone().into(),
-        signer,
-    );
+    let create_client_message = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: signer.to_string(),
+    };
 
     contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -545,11 +551,11 @@ fn check_for_consensus_state_from_storage() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = IbcMsgCreateClient::new(
-        client_state.clone().into(),
-        consenus_state.clone().into(),
-        signer,
-    );
+    let create_client_message = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: signer.to_string(),
+    };
 
     contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -623,8 +629,11 @@ fn fail_on_create_client_message_error_response() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message =
-        IbcMsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
+    let create_client_message = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: signer.to_string(),
+    };
 
     let response = contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -667,8 +676,11 @@ fn fails_on_create_client_message_without_proper_initialisation() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message =
-        IbcMsgCreateClient::new(client_state.into(), consenus_state.into(), signer);
+    let create_client_message = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: signer.to_string(),
+    };
 
     contract
         .create_client(deps.as_mut(), info, create_client_message)
@@ -702,11 +714,11 @@ fn check_for_update_client_message() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = IbcMsgCreateClient::new(
-        client_state.clone().into(),
-        consenus_state.clone().into(),
-        signer.clone(),
-    );
+    let create_client_message = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: signer.to_string(),
+    };
 
     let response = contract
         .create_client(deps.as_mut(), info.clone(), create_client_message)
@@ -744,10 +756,10 @@ fn check_for_update_client_message() {
 
     let client_state: ClientState = get_dummy_client_state();
 
-    let update_client_message = IbcMsgUpdateClient {
-        client_id: client_id.clone(),
-        header: client_state.clone().into(),
-        signer,
+    let update_client_message = RawMsgUpdateClient {
+        client_id: client_id.to_string(),
+        header: Some(client_state.to_any()),
+        signer: signer.to_string(),
     };
 
     let result = contract
@@ -806,10 +818,10 @@ fn fails_on_updating_non_existing_client() {
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let signer = Signer::from_str("new_signer").unwrap();
-    let update_client_message = IbcMsgUpdateClient {
-        client_id,
-        header: client_state.into(),
-        signer,
+    let update_client_message = RawMsgUpdateClient {
+        client_id: client_id.to_string(),
+        header: Some(client_state.to_any()),
+        signer: signer.to_string(),
     };
 
     contract
@@ -900,24 +912,23 @@ fn check_for_upgrade_client() {
     let upgrade_client_state = ClientState {
         trusting_period: 2000000000,
         ..get_dummy_client_state()
-    };
+    }
+    .to_any();
 
-    let upgrade_consenus_state: ConsensusState =
-        common::icon::icon::lightclient::v1::ConsensusState {
-            message_root: "message_root_new".as_bytes().to_vec(),
-            next_proof_context_hash: vec![1, 2, 3, 4],
-        }
-        .try_into()
-        .unwrap();
+    let upgrade_consenus_state: Any = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root_new".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
+    }
+    .to_any();
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let upgrdade_client_message = MsgUpgradeClient {
-        client_id,
+    let upgrdade_client_message = RawMsgUpgradeClient {
+        client_id: client_id.to_string(),
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
-        proof_upgrade_client: get_dummy_merkle_proof(),
-        proof_upgrade_consensus_state: get_dummy_merkle_proof(),
-        signer,
+        proof_upgrade_client: get_dummy_merkle_proof().encode_to_vec(),
+        proof_upgrade_consensus_state: get_dummy_merkle_proof().encode_to_vec(),
+        signer: signer.to_string(),
     };
 
     let result = contract
@@ -989,7 +1000,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+    let upgrade_client_state: Any = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 200000000,
         frozen_height: 0,
         max_clock_drift: 5,
@@ -997,25 +1008,21 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
 
         ..get_default_icon_client_state()
     }
-    .try_into()
-    .unwrap();
-
-    let upgrade_consenus_state: ConsensusState =
-        common::icon::icon::lightclient::v1::ConsensusState {
-            message_root: "message_root_new".as_bytes().to_vec(),
-            next_proof_context_hash: vec![1, 2, 3, 4],
-        }
-        .try_into()
-        .unwrap();
+    .to_any();
+    let upgrade_consenus_state: Any = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root_new".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
+    }
+    .to_any();
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let upgrdade_client_message = MsgUpgradeClient {
-        client_id,
+    let upgrdade_client_message = RawMsgUpgradeClient {
+        client_id: client_id.to_string(),
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
-        proof_upgrade_client: get_dummy_merkle_proof(),
-        proof_upgrade_consensus_state: get_dummy_merkle_proof(),
-        signer,
+        proof_upgrade_client: get_dummy_merkle_proof().encode_to_vec(),
+        proof_upgrade_consensus_state: get_dummy_merkle_proof().encode_to_vec(),
+        signer: signer.to_string(),
     };
 
     contract
@@ -1091,7 +1098,7 @@ fn fails_on_upgrade_client_frozen_client() {
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let upgrade_client_state: ClientState = common::icon::icon::lightclient::v1::ClientState {
+    let upgrade_client_state: Any = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 200000000,
         frozen_height: 0,
         max_clock_drift: 5,
@@ -1099,25 +1106,22 @@ fn fails_on_upgrade_client_frozen_client() {
 
         ..get_default_icon_client_state()
     }
-    .try_into()
-    .unwrap();
+    .to_any();
 
-    let upgrade_consenus_state: ConsensusState =
-        common::icon::icon::lightclient::v1::ConsensusState {
-            message_root: "message_root_new".as_bytes().to_vec(),
-            next_proof_context_hash: vec![1, 2, 3, 4],
-        }
-        .try_into()
-        .unwrap();
+    let upgrade_consenus_state: Any = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root_new".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
+    }
+    .to_any();
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let upgrdade_client_message = MsgUpgradeClient {
-        client_id,
+    let upgrdade_client_message = RawMsgUpgradeClient {
+        client_id: client_id.to_string(),
         client_state: upgrade_client_state.into(),
         consensus_state: upgrade_consenus_state.into(),
-        proof_upgrade_client: get_dummy_merkle_proof(),
-        proof_upgrade_consensus_state: get_dummy_merkle_proof(),
-        signer,
+        proof_upgrade_client: get_dummy_merkle_proof().encode_to_vec(),
+        proof_upgrade_consensus_state: get_dummy_merkle_proof().encode_to_vec(),
+        signer: signer.to_string(),
     };
 
     contract
@@ -1193,24 +1197,23 @@ fn check_for_execute_upgrade_client() {
     let upgrade_client_state = ClientState {
         trusting_period: 2000000000,
         ..get_dummy_client_state()
-    };
+    }
+    .to_any();
 
-    let upgrade_consenus_state: ConsensusState =
-        common::icon::icon::lightclient::v1::ConsensusState {
-            message_root: "message_root_new".as_bytes().to_vec(),
-            next_proof_context_hash: vec![1, 2, 3, 4],
-        }
-        .try_into()
-        .unwrap();
+    let upgrade_consenus_state: Any = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: "message_root_new".as_bytes().to_vec(),
+        next_proof_context_hash: vec![1, 2, 3, 4],
+    }
+    .to_any();
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let upgrdade_client_message = MsgUpgradeClient {
-        client_id: client_id.clone(),
+    let upgrdade_client_message = RawMsgUpgradeClient {
+        client_id: client_id.to_string(),
         client_state: upgrade_client_state.clone().into(),
         consensus_state: upgrade_consenus_state.clone().into(),
-        proof_upgrade_client: get_dummy_merkle_proof(),
-        proof_upgrade_consensus_state: get_dummy_merkle_proof(),
-        signer,
+        proof_upgrade_client: get_dummy_merkle_proof().encode_to_vec(),
+        proof_upgrade_consensus_state: get_dummy_merkle_proof().encode_to_vec(),
+        signer: signer.to_string(),
     };
 
     contract
@@ -1218,9 +1221,9 @@ fn check_for_execute_upgrade_client() {
         .unwrap();
 
     let upgrade_client_response = UpgradeClientResponse::new(
-        upgrade_client_state.get_keccak_hash().to_vec(),
+        keccak256(&upgrade_client_state.value).to_vec(),
         upgrade_client_state.encode_to_vec(),
-        upgrade_consenus_state.get_keccak_hash().to_vec(),
+        keccak256(&upgrade_consenus_state.value).to_vec(),
         upgrade_consenus_state.encode_to_vec(),
         client_id.to_string(),
         "0-100".to_string(),
@@ -1465,12 +1468,11 @@ fn success_on_getting_client_state() {
 
     let signer = Signer::from_str("new_signer").unwrap();
 
-    let create_client_message = IbcMsgCreateClient::new(
-        client_state.clone().into(),
-        consenus_state.clone().into(),
-        signer,
-    );
-
+    let create_client_message = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: signer.to_string(),
+    };
     contract
         .create_client(deps.as_mut(), info, create_client_message)
         .unwrap();
@@ -1565,11 +1567,12 @@ fn sucess_on_misbehaviour_validate() {
         header1: mock_header,
         header2: mock_header,
     };
+    let misbehaviour: Any = misbehaviour.into();
 
-    let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id,
-        misbehaviour: misbehaviour.into(),
-        signer: get_dummy_account_id(),
+    let misbehaviour_message = RawMsgSubmitMisbehaviour {
+        client_id: client_id.to_string(),
+        misbehaviour: Some(misbehaviour),
+        signer: get_dummy_account_id().to_string(),
     };
 
     let result = contract.misbehaviour(deps.as_mut(), info, misbehaviour_message);
@@ -1616,16 +1619,17 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
     let height = mock_height(10, 15).unwrap();
     let mock_header = MockHeader::new(height);
 
-    let misbehaviour = common::ibc::mock::misbehaviour::Misbehaviour {
+    let misbehaviour: Any = common::ibc::mock::misbehaviour::Misbehaviour {
         client_id: to_mock_client_id(&client_id),
         header1: mock_header,
         header2: mock_header,
-    };
+    }
+    .into();
 
-    let misbehaviour_message = MsgSubmitMisbehaviour {
-        client_id,
+    let misbehaviour_message = RawMsgSubmitMisbehaviour {
+        client_id: client_id.to_string(),
         misbehaviour: misbehaviour.into(),
-        signer: get_dummy_account_id(),
+        signer: get_dummy_account_id().to_string(),
     };
 
     contract

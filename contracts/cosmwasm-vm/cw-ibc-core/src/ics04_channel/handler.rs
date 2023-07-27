@@ -334,7 +334,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             client_id: client_id.to_string(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_client(deps.as_ref().storage, client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         channel_end.set_version(version);

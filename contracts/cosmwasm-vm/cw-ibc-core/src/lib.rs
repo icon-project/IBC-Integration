@@ -60,9 +60,7 @@ use cosmwasm_std::{
 #[allow(unused_imports)]
 use cw2::set_contract_version;
 use cw_common::client_msg::LightClientPacketMessage;
-use cw_common::ibc_types::{
-    IbcChannelId, IbcClientId, IbcConnectionId, IbcMsgCreateClient, IbcMsgUpdateClient, IbcPortId,
-};
+use cw_common::ibc_types::{IbcChannelId, IbcClientId, IbcConnectionId, IbcPortId};
 use cw_storage_plus::{Item, Map};
 
 pub use cw_common::commitment::*;

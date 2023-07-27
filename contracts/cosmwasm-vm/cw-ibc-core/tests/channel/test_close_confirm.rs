@@ -268,7 +268,9 @@ fn test_execute_close_confirm_channel() {
 }
 
 #[test]
-#[should_panic(expected = "InvalidChannelState")]
+#[should_panic(
+    expected = "IbcChannelError { error: ChannelClosed { channel_id: ChannelId(\"channel-0\") } }"
+)]
 fn test_execute_close_confirm_channel_fail_invalid_state() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();

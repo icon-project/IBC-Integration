@@ -1,7 +1,11 @@
-use common::ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
-use cw_common::raw_types::channel::{
-    RawMsgChannelCloseConfirm, RawMsgChannelCloseInit, RawMsgChannelOpenAck,
-    RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry,
+use cw_common::raw_types::{
+    channel::{
+        RawMsgChannelCloseConfirm, RawMsgChannelCloseInit, RawMsgChannelOpenAck,
+        RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry,
+    },
+    client::{
+        RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
+    },
 };
 
 use super::*;
@@ -16,7 +20,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: IbcMsgCreateClient,
+        message: RawMsgCreateClient,
     ) -> Result<Response, ContractError>;
 
     fn execute_create_client_reply(
@@ -29,7 +33,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: IbcMsgUpdateClient,
+        message: RawMsgUpdateClient,
     ) -> Result<Response, ContractError>;
     fn execute_update_client_reply(
         &self,
@@ -42,7 +46,7 @@ pub trait IbcClient {
         deps: DepsMut,
         info: MessageInfo,
         env: Env,
-        message: MsgUpgradeClient,
+        message: RawMsgUpgradeClient,
     ) -> Result<Response, ContractError>;
     fn execute_upgrade_client_reply(
         &self,
@@ -66,7 +70,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: MsgSubmitMisbehaviour,
+        message: RawMsgSubmitMisbehaviour,
     ) -> Result<Response, ContractError>;
 
     fn execute_misbehaviour_reply(
