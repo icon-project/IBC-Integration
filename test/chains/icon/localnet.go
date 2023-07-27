@@ -466,6 +466,25 @@ func getSn(tx icontypes.TransactionResult) string {
 	return ""
 }
 
+func getReqId(tx icontypes.TransactionResult) string {
+	for _, log := range tx.EventLogs {
+		if string(log.Indexed[0]) == "CallExecuted(int,int,str)" {
+			reqId, _ := strconv.ParseInt(log.Indexed[1], 0, 64)
+			return strconv.FormatInt(reqId, 10)
+		}
+	}
+	return ""
+}
+
+func getMessageReceived(tx icontypes.TransactionResult) string {
+	for _, log := range tx.EventLogs {
+		if string(log.Indexed[0]) == "MessageReceived(str,bytes)" {
+			return log.Data[1]
+		}
+	}
+	return ""
+}
+
 func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error) {
 	// TODO: send fees
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
@@ -476,8 +495,18 @@ func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, k
 	return sn, reqId, destData, err
 }
 
-func (c *IconLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeCall", `{"_reqId":"`+reqId+`","_data":"`+data+`"}`)
+func (c *IconLocalnet) ExecuteCall(ctx context.Context, targetChain chains.Chain, reqId, data string) (context.Context, string, error) {
+	height, _ := targetChain.(ibc.Chain).Height(ctx)
+	params := `{"_reqId":"` + reqId + `","_data":"` + data + `"}`
+	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeCall", params)
+	fmt.Println(ctx.Value("txResult"))
+	_reqId := getReqId(ctx.Value("txResult").(icontypes.TransactionResult))
+	_code, _msg, err := targetChain.FindCallExecuted(ctx, int64(height), _reqId)
+	fmt.Println("Code: " + _code)
+	fmt.Println("Msg: " + _msg)
+	_data := getMessageReceived(ctx.Value("txResult").(icontypes.TransactionResult))
+	return ctx, _data, err
+
 }
 
 func (c *IconLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
@@ -502,9 +531,32 @@ func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, f
 	return reqId, data, nil
 }
 
+func (c *IconLocalnet) FindCallExecuted(ctx context.Context, startHeight int64, reqID string) (string, string, error) {
+	index := []*string{&reqID}
+	event, err := c.FindEvent(ctx, startHeight, "xcall", "CallExecuted(int,int,str)", index)
+	fmt.Println("CallExecuted Events: ", event)
+	if err != nil {
+		return "", "", err
+	}
+
+	intHeight, _ := event.Height.Int()
+	block, _ := c.getFullNode().Client.GetBlockByHeight(&icontypes.BlockHeightParam{Height: icontypes.NewHexInt(int64(intHeight - 1))})
+	i, _ := event.Index.Int()
+	tx := block.NormalTransactions[i]
+	trResult, _ := c.getFullNode().TransactionResult(ctx, string(tx.TxHash))
+	eventIndex, _ := event.Events[0].Int()
+	_code, _ := strconv.ParseInt(trResult.EventLogs[eventIndex].Data[0], 0, 64)
+	msg := trResult.EventLogs[eventIndex].Data[1]
+	fmt.Println("Code: " + strconv.FormatInt(_code, 10))
+	fmt.Println("Msg: " + msg)
+	return strconv.FormatInt(_code, 10), msg, nil
+}
+
 func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, string, error) {
 	index := []*string{&sn}
 	event, err := c.FindEvent(ctx, startHeight, "xcall", "ResponseMessage(int,int,str)", index)
+	fmt.Println("CallResponse event: ", event)
+
 	if err != nil {
 		return "", "", err
 	}
@@ -519,6 +571,26 @@ func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, 
 	msg := trResult.EventLogs[eventIndex].Data[1]
 
 	return strconv.FormatInt(code, 10), msg, nil
+}
+
+func (c *IconLocalnet) FindRollbackMessage(ctx context.Context, startHeight int64, sn string) (string, string, error) {
+	index := []*string{&sn}
+	event, err := c.FindEvent(ctx, startHeight, "xcall", "RollbackMessage(int)", index)
+	fmt.Println("Rollbackmessage event: ", event)
+	if err != nil {
+		return "", "", err
+	}
+
+	intHeight, _ := event.Height.Int()
+	block, _ := c.getFullNode().Client.GetBlockByHeight(&icontypes.BlockHeightParam{Height: icontypes.NewHexInt(int64(intHeight - 1))})
+	i, _ := event.Index.Int()
+	tx := block.NormalTransactions[i]
+	trResult, _ := c.getFullNode().TransactionResult(ctx, string(tx.TxHash))
+	eventIndex, _ := event.Events[0].Int()
+	_sn := trResult.EventLogs[eventIndex].Data[0]
+	_msg := trResult.EventLogs[eventIndex].Data[1]
+
+	return _sn, _msg, nil
 }
 
 func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, signature string, index []*string) (*icontypes.EventNotification, error) {

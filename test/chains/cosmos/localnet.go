@@ -206,11 +206,44 @@ func (c *CosmosLocalnet) findSn(tx *TxResul) string {
 	return ""
 }
 
-func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
+func (c *CosmosLocalnet) findReqId(tx *TxResul) string {
+	// find better way to parse events
+	for _, event := range tx.Events {
+		fmt.Println("Archway events: ", event)
+		if event.Type == "wasm-CallExecuted" {
+			for _, attribute := range event.Attributes {
+				keyName, _ := base64.StdEncoding.DecodeString(attribute.Key)
+				if string(keyName) == "reqId" {
+					reqId, _ := base64.StdEncoding.DecodeString(attribute.Value)
+					fmt.Println("REQID: ", string(reqId))
+					return string(reqId)
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, targetChain chains.Chain, reqId, data string) (context.Context, string, error) {
+	height, _ := targetChain.(ibc.Chain).Height(ctx)
+	fmt.Println("ArchwayHeight: ", height, chains.FaucetAccountKeyName)
+	params := `{"_reqId":"` + reqId + `","_data":"` + data + `"}`
+	fmt.Println("Params: ", params)
+	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", params)
+	tx := ctx.Value("txResult").(*TxResul)
+	_reqId := c.findReqId(tx)
+	fmt.Println("ReqId: ", _reqId)
+	fmt.Println("Error: ", err)
+
+	_code, _msg, err := c.FindCallExecuted(ctx, int64(height), _reqId)
+	fmt.Println("Code: " + _code)
+	fmt.Println("Msg: " + _msg)
+	return ctx, _msg, err
+
 }
 
 func (c *CosmosLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
+
 	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
 }
 
@@ -229,6 +262,16 @@ func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64,
 
 }
 
+func (c *CosmosLocalnet) FindCallExecuted(ctx context.Context, startHeight int64, reqId string) (string, string, error) {
+	index := fmt.Sprintf("wasm-CallExecuted.reqId CONTAINS '%s'", reqId)
+	event, err := c.FindEvent(ctx, startHeight, "xcall", index)
+	if err != nil {
+		return "", "", err
+	}
+
+	return event.Events["wasm-CallExecuted.code"][0], event.Events["wasm-CallExecuted.msg"][0], nil
+}
+
 func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, string, error) {
 	index := fmt.Sprintf("wasm-ResponseMessage.sn CONTAINS '%s'", sn)
 	event, err := c.FindEvent(ctx, startHeight, "xcall", index)
@@ -237,6 +280,18 @@ func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight int64
 	}
 
 	return event.Events["wasm-ResponseMessage.code"][0], event.Events["wasm-ResponseMessage.msg"][0], nil
+}
+
+func (c *CosmosLocalnet) FindRollbackMessage(ctx context.Context, startHeight int64, sn string) (string, string, error) {
+	index := fmt.Sprintf("wasm-RollbackMessage.sn CONTAINS '%s'", sn)
+	event, err := c.FindEvent(ctx, startHeight, "xcall", index)
+	fmt.Printf("\n\nPrinting Rollback Message EventLogs: %v\n", event)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	return event.Events["wasm-RollbackMessage.sn"][0], event.Events["wasm-RollbackMessage.msg"][0], nil
 }
 
 func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, index string) (*ctypes.ResultEvent, error) {
@@ -258,10 +313,12 @@ func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight int64, contr
 		fmt.Sprintf("wasm._contract_address = '%s'", c.IBCAddresses[contract]),
 		fmt.Sprintf(index),
 	}, " AND ")
+	fmt.Println("Query is: ", query)
 	channel, err := client.Subscribe(ctx, "wasm-client", query)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	select {
 	case event := <-channel:
 		cancel()
