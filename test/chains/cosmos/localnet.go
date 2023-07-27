@@ -75,6 +75,8 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 	c.IBCAddresses = contracts.ContractAddress
 	overrides := map[string]any{
 		"ibc-handler-address": ibcAddress,
+		"start-height":        0,
+		"block-interval":      6000,
 	}
 
 	cfg := c.cfg
