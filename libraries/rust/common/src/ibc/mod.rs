@@ -12,7 +12,7 @@ pub mod dynamic_typing;
 pub mod events;
 pub mod signer;
 pub mod timestamp;
-pub mod tx_msg;
+//pub mod tx_msg;
 pub mod utils;
 
 /// Re-export of ICS 002 Height domain type

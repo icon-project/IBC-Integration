@@ -1,5 +1,5 @@
 use cw_ibc_core::{
-    conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp},
+    conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp, to_ibc_timeout_block},
     light_client::light_client::LightClient,
     VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
 };
@@ -11,36 +11,37 @@ fn test_acknowledgement_packet_execute() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let height = 50;
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
+    let msg = get_dummy_raw_msg_acknowledgement(height);
+    let packet = msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+    let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+    let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+    let packet_sequence = Sequence::from(packet.sequence);
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let src = IbcEndpoint {
-        port_id: msg.packet.port_id_on_a.to_string(),
-        channel_id: msg.packet.chan_id_on_a.to_string(),
+        port_id: src_port.to_string(),
+        channel_id: src_channel.to_string(),
     };
     let dest = IbcEndpoint {
-        port_id: msg.packet.port_id_on_b.to_string(),
-        channel_id: msg.packet.chan_id_on_b.to_string(),
+        port_id: dst_port.to_string(),
+        channel_id: dst_channel.to_string(),
     };
-    let timeoutblock = match msg.packet.timeout_height_on_b {
-        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
-            revision: 1,
-            height: 1,
-        },
-        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
-            revision: x.revision_number(),
-            height: x.revision_height(),
-        },
-    };
-    let timestamp = msg.packet.timeout_timestamp_on_b.nanoseconds();
+    let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
+    let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
     let ibc_packet = IbcPacket::new(
-        msg.packet.data,
+        packet.data,
         src,
         dest,
-        msg.packet.sequence.into(),
+        packet.sequence.into(),
         timeout,
     );
-    let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
+    let ack = IbcAcknowledgement::new(msg.acknowledgement);
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
     contract
@@ -62,8 +63,8 @@ fn test_acknowledgement_packet_execute() {
         State::Open,
         Order::Unordered,
         Counterparty::new(
-            msg.packet.port_id_on_b.clone(),
-            Some(msg.packet.chan_id_on_b.clone()),
+            dst_port.clone(),
+            Some(dst_channel.clone()),
         ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
@@ -71,8 +72,8 @@ fn test_acknowledgement_packet_execute() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            &msg.packet.port_id_on_a.clone(),
-            &msg.packet.chan_id_on_a.clone(),
+            &src_port.clone(),
+            &src_channel.clone(),
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -82,9 +83,9 @@ fn test_acknowledgement_packet_execute() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &msg.packet.port_id_on_a,
-            &msg.packet.chan_id_on_a,
-            msg.packet.sequence,
+            &src_port.clone(),
+            &src_channel.clone(),
+            packet.sequence.into(),
             commitment,
         )
         .unwrap();
@@ -102,36 +103,37 @@ fn test_acknowledgement_packet_execute_ordered() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let height = 50;
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
+    let msg = get_dummy_raw_msg_acknowledgement(height);
+    let packet = msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+    let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+    let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+    let packet_sequence = Sequence::from(packet.sequence);
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let src = IbcEndpoint {
-        port_id: msg.packet.port_id_on_a.to_string(),
-        channel_id: msg.packet.chan_id_on_a.to_string(),
+        port_id: src_port.to_string(),
+        channel_id: src_channel.to_string(),
     };
     let dest = IbcEndpoint {
-        port_id: msg.packet.port_id_on_b.to_string(),
-        channel_id: msg.packet.chan_id_on_b.to_string(),
+        port_id: dst_port.to_string(),
+        channel_id: dst_channel.to_string(),
     };
-    let timeoutblock = match msg.packet.timeout_height_on_b {
-        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
-            revision: 1,
-            height: 1,
-        },
-        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
-            revision: x.revision_number(),
-            height: x.revision_height(),
-        },
-    };
-    let timestamp = msg.packet.timeout_timestamp_on_b.nanoseconds();
+    let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
+    let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
     let ibc_packet = IbcPacket::new(
-        msg.packet.data,
+        packet.data,
         src,
         dest,
-        msg.packet.sequence.into(),
+        packet.sequence.into(),
         timeout,
     );
-    let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
+    let ack = IbcAcknowledgement::new(msg.acknowledgement);
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
     contract
@@ -153,8 +155,8 @@ fn test_acknowledgement_packet_execute_ordered() {
         State::Open,
         Order::Ordered,
         Counterparty::new(
-            msg.packet.port_id_on_b.clone(),
-            Some(msg.packet.chan_id_on_b.clone()),
+            dst_port.clone(),
+            Some(dst_channel.clone()),
         ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
@@ -162,8 +164,8 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            &msg.packet.port_id_on_a.clone(),
-            &msg.packet.chan_id_on_a.clone(),
+            &src_port.clone(),
+            &src_channel.clone(),
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -173,17 +175,17 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &msg.packet.port_id_on_a,
-            &msg.packet.chan_id_on_a,
-            msg.packet.sequence,
+            &src_port.clone(),
+            &src_channel.clone(),
+            packet.sequence.into(),
             commitment,
         )
         .unwrap();
     contract
         .store_next_sequence_ack(
             &mut deps.storage,
-            &msg.packet.port_id_on_a.clone(),
-            &msg.packet.chan_id_on_a,
+            &src_port.clone(),
+            &src_channel.clone(),
             &1.into(),
         )
         .unwrap();
@@ -203,36 +205,37 @@ fn test_acknowledgement_packet_execute_fail() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let height = 50;
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
+    let msg = get_dummy_raw_msg_acknowledgement(height);
+    let packet = msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+    let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+    let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+    let packet_sequence = Sequence::from(packet.sequence);
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let src = IbcEndpoint {
-        port_id: msg.packet.port_id_on_a.to_string(),
-        channel_id: msg.packet.chan_id_on_a.to_string(),
+        port_id: src_port.to_string(),
+        channel_id: src_channel.to_string(),
     };
     let dest = IbcEndpoint {
-        port_id: msg.packet.port_id_on_b.to_string(),
-        channel_id: msg.packet.chan_id_on_b.to_string(),
+        port_id: dst_port.to_string(),
+        channel_id: dst_channel.to_string(),
     };
-    let timeoutblock = match msg.packet.timeout_height_on_b {
-        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
-            revision: 1,
-            height: 1,
-        },
-        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
-            revision: x.revision_number(),
-            height: x.revision_height(),
-        },
-    };
-    let timestamp = msg.packet.timeout_timestamp_on_b.nanoseconds();
+    let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
+    let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
     let ibc_packet = IbcPacket::new(
-        msg.packet.data,
+        packet.data,
         src,
         dest,
-        msg.packet.sequence.into(),
+        packet.sequence.into(),
         timeout,
     );
-    let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
+    let ack = IbcAcknowledgement::new(msg.acknowledgement);
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
     contract
@@ -254,8 +257,8 @@ fn test_acknowledgement_packet_execute_fail() {
         State::Open,
         Order::Ordered,
         Counterparty::new(
-            msg.packet.port_id_on_b.clone(),
-            Some(msg.packet.chan_id_on_b.clone()),
+            dst_port.clone(),
+            Some(dst_channel.clone()),
         ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
@@ -263,8 +266,8 @@ fn test_acknowledgement_packet_execute_fail() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            &msg.packet.port_id_on_a.clone(),
-            &msg.packet.chan_id_on_a.clone(),
+            &src_port.clone(),
+            &src_channel.clone(),
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -274,9 +277,9 @@ fn test_acknowledgement_packet_execute_fail() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &msg.packet.port_id_on_a,
-            &msg.packet.chan_id_on_a,
-            msg.packet.sequence,
+            &src_port.clone(),
+            &src_channel.clone(),
+            packet.sequence.into(),
             commitment,
         )
         .unwrap();

@@ -5,7 +5,7 @@ use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
-use cw_ibc_core::conversions::to_ibc_channel_id;
+use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp, to_ibc_timeout_block};
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
@@ -1034,16 +1034,37 @@ fn test_for_ack_execute() {
 
     let height = 50;
     let raw = get_dummy_raw_msg_acknowledgement(height);
-    let msg = MsgAcknowledgement::try_from(get_dummy_raw_msg_acknowledgement(height)).unwrap();
+    let msg = get_dummy_raw_msg_acknowledgement(height);
 
-    let packet = msg.packet.clone();
+    let packet = msg.packet.clone().unwrap();
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+    let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+    let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+    let packet_sequence = Sequence::from(packet.sequence);
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
+    let src = IbcEndpoint {
+        port_id: src_port.to_string(),
+        channel_id: src_channel.to_string(),
+    };
+    let dest = IbcEndpoint {
+        port_id: dst_port.to_string(),
+        channel_id: dst_channel.to_string(),
+    };
+    let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
+    let timestamp = packet_timestamp.nanoseconds();
+    let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
+    let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
     //Store channel, connection and packet commitment
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Unordered,
         Counterparty::new(
-            packet.port_id_on_b.clone(),
-            Some(packet.chan_id_on_b.clone()),
+            dst_port.clone(),
+            Some(dst_channel.clone()),
         ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
@@ -1051,8 +1072,8 @@ fn test_for_ack_execute() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            &packet.port_id_on_a.clone(),
-            &packet.chan_id_on_a.clone(),
+            &src_port.clone(),
+            &src_channel.clone(),
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -1078,16 +1099,16 @@ fn test_for_ack_execute() {
         )
         .unwrap();
     let packet_commitment = compute_packet_commitment(
-        &msg.packet.data,
-        &msg.packet.timeout_height_on_b,
-        &msg.packet.timeout_timestamp_on_b,
+        &packet.data,
+        &packet_timeout_height,
+        &packet_timestamp,
     );
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a,
-            &packet.chan_id_on_a,
-            packet.sequence,
+            &src_port.clone(),
+            &src_channel.clone(),
+            packet.sequence.into(),
             packet_commitment,
         )
         .unwrap();
@@ -1108,13 +1129,13 @@ fn test_for_ack_execute() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_b;
+    
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
-            height,
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
@@ -1129,7 +1150,7 @@ fn test_for_ack_execute() {
     contract
         .bind_port(
             &mut deps.storage,
-            &packet.port_id_on_b,
+            &dst_port,
             "moduleaddress".to_string(),
         )
         .unwrap();
@@ -1156,34 +1177,25 @@ fn test_for_ack_execute() {
     );
 
     let src = IbcEndpoint {
-        port_id: msg.packet.port_id_on_a.to_string(),
-        channel_id: msg.packet.chan_id_on_a.to_string(),
+        port_id: src_port.to_string(),
+        channel_id: src_channel.to_string(),
     };
     let dest = IbcEndpoint {
-        port_id: msg.packet.port_id_on_b.to_string(),
-        channel_id: msg.packet.chan_id_on_b.to_string(),
+        port_id: dst_port.to_string(),
+        channel_id: dst_channel.to_string(),
     };
-    let timeoutblock = match msg.packet.timeout_height_on_b {
-        common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => IbcTimeoutBlock {
-            revision: 1,
-            height: 1,
-        },
-        common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => IbcTimeoutBlock {
-            revision: x.revision_number(),
-            height: x.revision_height(),
-        },
-    };
-    let timestamp = msg.packet.timeout_timestamp_on_b.nanoseconds();
+    let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
+    let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
     let ibc_packet = IbcPacket::new(
-        msg.packet.data,
+        packet.data,
         src,
         dest,
-        msg.packet.sequence.into(),
+        packet.sequence.into(),
         timeout,
     );
-    let ack = IbcAcknowledgement::new(msg.acknowledgement.as_bytes());
+    let ack = IbcAcknowledgement::new(msg.acknowledgement);
     let address = Addr::unchecked(msg.signer.to_string());
     let mock_reponse_data = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();

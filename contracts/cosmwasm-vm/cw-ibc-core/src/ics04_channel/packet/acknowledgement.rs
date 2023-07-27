@@ -43,6 +43,10 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let dst_port = to_ibc_port_id(&packet.destination_port)?;
         let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
+        let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
+        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
+        let packet_sequence = Sequence::from(packet.sequence);
+        let proof_height = to_ibc_height(msg.proof_height.clone())?;
         // let packet = &msg.packet;
         let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
         if !chan_end_on_a.state_matches(&State::Open) {
@@ -89,10 +93,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(_) => return Ok(Response::new()),
         };
         debug_println!("Commitment on a {:?}", hex::encode(commitment_on_a.clone()));
-        let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
-        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
-        let packet_sequence = Sequence::from(packet.sequence);
-        let proof_height = to_ibc_height(msg.proof_height.clone())?;
+       
 
         debug_println!(
             "from packet the timeout height is :{:?}",

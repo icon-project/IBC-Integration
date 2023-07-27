@@ -3,7 +3,6 @@ pub use super::*;
 use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 use common::ibc::core::ics03_connection::version::get_compatible_versions;
-use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use common::ibc::core::ics24_host::identifier::ClientId;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::ibc::timestamp::Timestamp;

@@ -12,10 +12,6 @@ use crate::ibc::events::IbcEventType;
 use crate::ibc::prelude::*;
 use crate::ibc::timestamp::Timestamp;
 
-use self::packet_attributes::{
-    ChannelOrderingAttribute, DstChannelIdAttribute, DstPortIdAttribute, SequenceAttribute,
-    SrcChannelIdAttribute, SrcPortIdAttribute, TimeoutHeightAttribute, TimeoutTimestampAttribute,
-};
 
 use super::channel::Order;
 // use super::msgs::acknowledgement::Acknowledgement;
@@ -818,84 +814,84 @@ use super::timeout::TimeoutHeight;
 //     }
 // }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TimeoutPacket {
-    timeout_height: TimeoutHeightAttribute,
-    timeout_timestamp: TimeoutTimestampAttribute,
-    sequence: SequenceAttribute,
-    src_port_id: SrcPortIdAttribute,
-    src_channel_id: SrcChannelIdAttribute,
-    dst_port_id: DstPortIdAttribute,
-    dst_channel_id: DstChannelIdAttribute,
-    channel_ordering: ChannelOrderingAttribute,
-}
+// #[derive(Clone, Debug, PartialEq, Eq)]
+// pub struct TimeoutPacket {
+//     timeout_height: TimeoutHeightAttribute,
+//     timeout_timestamp: TimeoutTimestampAttribute,
+//     sequence: SequenceAttribute,
+//     src_port_id: SrcPortIdAttribute,
+//     src_channel_id: SrcChannelIdAttribute,
+//     dst_port_id: DstPortIdAttribute,
+//     dst_channel_id: DstChannelIdAttribute,
+//     channel_ordering: ChannelOrderingAttribute,
+// }
 
-impl TimeoutPacket {
-    pub fn new(packet: Packet, channel_ordering: Order) -> Self {
-        Self {
-            timeout_height: packet.timeout_height_on_b.into(),
-            timeout_timestamp: packet.timeout_timestamp_on_b.into(),
-            sequence: packet.sequence.into(),
-            src_port_id: packet.port_id_on_a.into(),
-            src_channel_id: packet.chan_id_on_a.into(),
-            dst_port_id: packet.port_id_on_b.into(),
-            dst_channel_id: packet.chan_id_on_b.into(),
-            channel_ordering: channel_ordering.into(),
-        }
-    }
+// impl TimeoutPacket {
+//     pub fn new(packet: Packet, channel_ordering: Order) -> Self {
+//         Self {
+//             timeout_height: packet.timeout_height_on_b.into(),
+//             timeout_timestamp: packet.timeout_timestamp_on_b.into(),
+//             sequence: packet.sequence.into(),
+//             src_port_id: packet.port_id_on_a.into(),
+//             src_channel_id: packet.chan_id_on_a.into(),
+//             dst_port_id: packet.port_id_on_b.into(),
+//             dst_channel_id: packet.chan_id_on_b.into(),
+//             channel_ordering: channel_ordering.into(),
+//         }
+//     }
 
-    pub fn timeout_height(&self) -> &TimeoutHeight {
-        &self.timeout_height.timeout_height
-    }
+//     pub fn timeout_height(&self) -> &TimeoutHeight {
+//         &self.timeout_height.timeout_height
+//     }
 
-    pub fn timeout_timestamp(&self) -> &Timestamp {
-        &self.timeout_timestamp.timeout_timestamp
-    }
+//     pub fn timeout_timestamp(&self) -> &Timestamp {
+//         &self.timeout_timestamp.timeout_timestamp
+//     }
 
-    pub fn sequence(&self) -> &Sequence {
-        &self.sequence.sequence
-    }
+//     pub fn sequence(&self) -> &Sequence {
+//         &self.sequence.sequence
+//     }
 
-    pub fn src_port_id(&self) -> &PortId {
-        &self.src_port_id.src_port_id
-    }
+//     pub fn src_port_id(&self) -> &PortId {
+//         &self.src_port_id.src_port_id
+//     }
 
-    pub fn src_channel_id(&self) -> &ChannelId {
-        &self.src_channel_id.src_channel_id
-    }
+//     pub fn src_channel_id(&self) -> &ChannelId {
+//         &self.src_channel_id.src_channel_id
+//     }
 
-    pub fn dst_port_id(&self) -> &PortId {
-        &self.dst_port_id.dst_port_id
-    }
+//     pub fn dst_port_id(&self) -> &PortId {
+//         &self.dst_port_id.dst_port_id
+//     }
 
-    pub fn dst_channel_id(&self) -> &ChannelId {
-        &self.dst_channel_id.dst_channel_id
-    }
+//     pub fn dst_channel_id(&self) -> &ChannelId {
+//         &self.dst_channel_id.dst_channel_id
+//     }
 
-    pub fn channel_ordering(&self) -> &Order {
-        &self.channel_ordering.order
-    }
-}
+//     pub fn channel_ordering(&self) -> &Order {
+//         &self.channel_ordering.order
+//     }
+// }
 
-impl TryFrom<TimeoutPacket> for abci::Event {
-    type Error = ChannelError;
+// impl TryFrom<TimeoutPacket> for abci::Event {
+//     type Error = ChannelError;
 
-    fn try_from(v: TimeoutPacket) -> Result<Self, Self::Error> {
-        Ok(abci::Event {
-            kind: IbcEventType::Timeout.as_str().to_owned(),
-            attributes: vec![
-                v.timeout_height.into(),
-                v.timeout_timestamp.into(),
-                v.sequence.into(),
-                v.src_port_id.into(),
-                v.src_channel_id.into(),
-                v.dst_port_id.into(),
-                v.dst_channel_id.into(),
-                v.channel_ordering.into(),
-            ],
-        })
-    }
-}
+//     fn try_from(v: TimeoutPacket) -> Result<Self, Self::Error> {
+//         Ok(abci::Event {
+//             kind: IbcEventType::Timeout.as_str().to_owned(),
+//             attributes: vec![
+//                 v.timeout_height.into(),
+//                 v.timeout_timestamp.into(),
+//                 v.sequence.into(),
+//                 v.src_port_id.into(),
+//                 v.src_channel_id.into(),
+//                 v.dst_port_id.into(),
+//                 v.dst_channel_id.into(),
+//                 v.channel_ordering.into(),
+//             ],
+//         })
+//     }
+// }
 
 // #[cfg(test)]
 // mod tests {

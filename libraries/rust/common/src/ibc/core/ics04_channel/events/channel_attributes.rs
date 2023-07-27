@@ -17,82 +17,82 @@ pub(super) const COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY: &str = "counterparty_cha
 const COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY: &str = "counterparty_port_id";
 const VERSION_ATTRIBUTE_KEY: &str = "version";
 
-#[derive(Clone, Debug, From, PartialEq, Eq)]
-pub struct PortIdAttribute {
-    pub port_id: PortId,
-}
+// #[derive(Clone, Debug, From, PartialEq, Eq)]
+// pub struct PortIdAttribute {
+//     pub port_id: PortId,
+// }
 
-impl From<PortIdAttribute> for abci::EventAttribute {
-    fn from(attr: PortIdAttribute) -> Self {
-        (PORT_ID_ATTRIBUTE_KEY, attr.port_id.as_str()).into()
-    }
-}
+// impl From<PortIdAttribute> for abci::EventAttribute {
+//     fn from(attr: PortIdAttribute) -> Self {
+//         (PORT_ID_ATTRIBUTE_KEY, attr.port_id.as_str()).into()
+//     }
+// }
 
-#[derive(Clone, Debug, From, PartialEq, Eq)]
-pub struct ChannelIdAttribute {
-    pub channel_id: ChannelId,
-}
+// #[derive(Clone, Debug, From, PartialEq, Eq)]
+// pub struct ChannelIdAttribute {
+//     pub channel_id: ChannelId,
+// }
 
-impl From<ChannelIdAttribute> for abci::EventAttribute {
-    fn from(attr: ChannelIdAttribute) -> Self {
-        (CHANNEL_ID_ATTRIBUTE_KEY, attr.channel_id.as_str()).into()
-    }
-}
+// impl From<ChannelIdAttribute> for abci::EventAttribute {
+//     fn from(attr: ChannelIdAttribute) -> Self {
+//         (CHANNEL_ID_ATTRIBUTE_KEY, attr.channel_id.as_str()).into()
+//     }
+// }
 
-#[derive(Clone, Debug, From, PartialEq, Eq)]
-pub struct CounterpartyPortIdAttribute {
-    pub counterparty_port_id: PortId,
-}
+// #[derive(Clone, Debug, From, PartialEq, Eq)]
+// pub struct CounterpartyPortIdAttribute {
+//     pub counterparty_port_id: PortId,
+// }
 
-impl From<CounterpartyPortIdAttribute> for abci::EventAttribute {
-    fn from(attr: CounterpartyPortIdAttribute) -> Self {
-        (
-            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
-            attr.counterparty_port_id.as_str(),
-        )
-            .into()
-    }
-}
+// impl From<CounterpartyPortIdAttribute> for abci::EventAttribute {
+//     fn from(attr: CounterpartyPortIdAttribute) -> Self {
+//         (
+//             COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
+//             attr.counterparty_port_id.as_str(),
+//         )
+//             .into()
+//     }
+// }
 
-#[derive(Clone, Debug, From, PartialEq, Eq)]
-pub struct CounterpartyChannelIdAttribute {
-    pub counterparty_channel_id: ChannelId,
-}
+// #[derive(Clone, Debug, From, PartialEq, Eq)]
+// pub struct CounterpartyChannelIdAttribute {
+//     pub counterparty_channel_id: ChannelId,
+// }
 
-impl From<CounterpartyChannelIdAttribute> for abci::EventAttribute {
-    fn from(attr: CounterpartyChannelIdAttribute) -> Self {
-        (
-            COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
-            attr.counterparty_channel_id.as_str(),
-        )
-            .into()
-    }
-}
+// impl From<CounterpartyChannelIdAttribute> for abci::EventAttribute {
+//     fn from(attr: CounterpartyChannelIdAttribute) -> Self {
+//         (
+//             COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY,
+//             attr.counterparty_channel_id.as_str(),
+//         )
+//             .into()
+//     }
+// }
 
-impl AsRef<ChannelId> for CounterpartyChannelIdAttribute {
-    fn as_ref(&self) -> &ChannelId {
-        &self.counterparty_channel_id
-    }
-}
+// impl AsRef<ChannelId> for CounterpartyChannelIdAttribute {
+//     fn as_ref(&self) -> &ChannelId {
+//         &self.counterparty_channel_id
+//     }
+// }
 
-#[derive(Clone, Debug, From, PartialEq, Eq)]
-pub struct ConnectionIdAttribute {
-    pub connection_id: ConnectionId,
-}
+// #[derive(Clone, Debug, From, PartialEq, Eq)]
+// pub struct ConnectionIdAttribute {
+//     pub connection_id: ConnectionId,
+// }
 
-impl From<ConnectionIdAttribute> for abci::EventAttribute {
-    fn from(attr: ConnectionIdAttribute) -> Self {
-        (CONNECTION_ID_ATTRIBUTE_KEY, attr.connection_id.as_str()).into()
-    }
-}
+// impl From<ConnectionIdAttribute> for abci::EventAttribute {
+//     fn from(attr: ConnectionIdAttribute) -> Self {
+//         (CONNECTION_ID_ATTRIBUTE_KEY, attr.connection_id.as_str()).into()
+//     }
+// }
 
-#[derive(Clone, Debug, From, PartialEq, Eq)]
-pub struct VersionAttribute {
-    pub version: Version,
-}
+// #[derive(Clone, Debug, From, PartialEq, Eq)]
+// pub struct VersionAttribute {
+//     pub version: Version,
+// }
 
-impl From<VersionAttribute> for abci::EventAttribute {
-    fn from(attr: VersionAttribute) -> Self {
-        (VERSION_ATTRIBUTE_KEY, attr.version.as_str()).into()
-    }
-}
+// impl From<VersionAttribute> for abci::EventAttribute {
+//     fn from(attr: VersionAttribute) -> Self {
+//         (VERSION_ATTRIBUTE_KEY, attr.version.as_str()).into()
+//     }
+// }
