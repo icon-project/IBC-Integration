@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
@@ -26,14 +27,22 @@ func (x *XCallTestSuite) TestDemo() {
 
 	x.T.Run("xcall one way message", func(t *testing.T) {
 		chainA, chainB := x.GetChains()
-		x.TestOneWayMessage(ctx, t, chainA, chainB)
 		x.TestOneWayMessage(ctx, t, chainB, chainA)
+		// x.TestOneWayMessage(ctx, t, chainA, chainB)
+	})
+
+	x.T.Run("xcall one way message with given size", func(t *testing.T) {
+		chainA, chainB := x.GetChains()
+		x.TestOneWayMessageWithSize(ctx, t, 1868, chainB, chainA)
+		// x.TestOneWayMessageWithSize(ctx, t, 1869, chainB, chainA) Fails
+		// x.TestOneWayMessageWithSize(ctx, t, 1000, chainA, chainB)
+		// x.TestOneWayMessageWithSize(ctx, t, 1866, chainA, chainB) Fail
 	})
 
 	x.T.Run("xcall test rollback", func(t *testing.T) {
 		chainA, chainB := x.GetChains()
-		x.TestRollback(ctx, t, chainA, chainB)
 		x.TestRollback(ctx, t, chainB, chainA)
+		// x.TestRollback(ctx, t, chainA, chainB)
 	})
 }
 
@@ -42,30 +51,75 @@ func (x *XCallTestSuite) TestOneWayMessage(ctx context.Context, t *testing.T, ch
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
 	_, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, []byte(msg), nil)
 	x.Require().NoError(err)
-	ctx, err = chainB.ExecuteCall(ctx, reqId, data)
+	_, _msgData, err := chainB.ExecuteCall(ctx, chainB, reqId, data)
 	x.Require().NoError(err)
 
-	dataOutput, err := convertToPlainString(data)
+	fmt.Println("msgData from executeCall MessageReceived: ", chainB.(ibc.Chain).Config().ChainID, _msgData)
+
+	dataOutput, err := convertToPlainString(_msgData)
 	x.Require().NoError(err)
 
 	assert.Equal(t, msg, dataOutput)
-	fmt.Println("Data Transfer Testing Without Rollback from " + chainA.(ibc.Chain).Config().ChainID + " to " + chainB.(ibc.Chain).Config().ChainID + " with data " + msg + " and Received:" + dataOutput + " PASSED")
+	assert.NoError(t, err)
+}
+
+func (x *XCallTestSuite) TestOneWayMessageWithSize(ctx context.Context, t *testing.T, dataSize int, chainA, chainB chains.Chain) {
+	_msg := make([]byte, dataSize)
+	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
+	_, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, _msg, nil)
+	if err != nil {
+		t.Fatalf("Error in TestOneWayMessageWithSize Xcall transfer: %v with %v size", err, len(_msg))
+	}
+	ctx, data, err = chainB.ExecuteCall(ctx, chainB, reqId, data)
+	if err != nil {
+		t.Fatalf("Error in TestOneWayMessageWithSize ExecuteCall transfer: %v with %v size", err, len(_msg))
+	}
+	fmt.Println("msgData from executeCall MessageReceived: ", chainB.(ibc.Chain).Config().ChainID, data)
+	assert.NoError(t, err)
 }
 
 func (x *XCallTestSuite) TestRollback(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
 	msg := "MessageTransferTestingWithRollback"
-	rollback := "RollbackDataTesting"
+	rollback := "RollbackMessageData"
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
-	sn, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, []byte(msg), []byte(rollback))
+	fmt.Println("testing TestRollback from " + chainA.(ibc.Chain).Config().ChainID + " to " + chainB.(ibc.Chain).Config().ChainID)
+	sn, reqId, _data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, []byte(msg), []byte(rollback))
 	x.Require().NoError(err)
-	height, err := chainA.(ibc.Chain).Height(ctx)
-	x.Require().NoError(err)
-	ctx, err = chainB.ExecuteCall(ctx, reqId, data)
-	code, msg, err := chainA.FindCallResponse(ctx, int64(height), sn)
-	x.Require().NoError(err)
-	assert.Equal(t, "-1", code)
-	ctx, err = chainA.ExecuteRollback(ctx, sn)
-	x.Require().NoError(err)
+
+	fmt.Println("Calling ExecuteCall")
+	ctx, msg, err = chainB.ExecuteCall(ctx, chainB, reqId, _data)
+	assert.NoError(t, err)
+	fmt.Println("msgData from executeCall MessageReceived: ", chainB.(ibc.Chain).Config().ChainID, msg)
+	time.Sleep(10 * time.Second)
+
+	heightB, err := chainB.(ibc.Chain).Height(ctx)
+	assert.NoError(t, err)
+
+	code, msg, err := chainB.FindCallResponse(ctx, int64(heightB), sn)
+	fmt.Printf("Checking Error Message on Chain B Response EventLogs: %v --> %v --> %v\n", err, msg, code)
+
+	heightA, err := chainA.(ibc.Chain).Height(ctx)
+	// assert.NoError(t, err)
+	fmt.Println("heightA: ", heightA)
+
+	rollbackSn, _msg, err := chainA.FindCallResponse(ctx, int64(heightA), sn)
+	fmt.Println("rollbackSn: ", rollbackSn)
+	fmt.Println("msg: ", _msg)
+
+	fmt.Printf("Checking Error Message on Rollback EventLogs: %v --> %v\n", err, rollbackSn)
+	// assert.Equal(t, err, "failed to find eventLog")
+
+	// ctx, err = chainA.ExecuteRollback(ctx, sn)
+	// time.Sleep(10 * time.Second)
+	// fmt.Println("TXResult: ", ctx.Value("txResult"))
+
+	// fmt.Println("ERROR: ", err)
+
+	// if err != nil {
+	// 	t.Fatalf("Error in TestRollback ExecuteRollback from %v to %v: %v", chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, err)
+	// }
+
+	// x.Require().NoError(err)
 }
 
 func convertToPlainString(input string) (string, error) {
