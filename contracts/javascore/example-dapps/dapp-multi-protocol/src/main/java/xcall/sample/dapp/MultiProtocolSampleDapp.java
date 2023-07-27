@@ -17,7 +17,6 @@
 package xcall.sample.dapp;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import score.Address;
 import score.ArrayDB;
@@ -62,7 +61,7 @@ public class MultiProtocolSampleDapp implements CallServiceReceiver {
 
     public String[] toArray(ArrayDB<String> db) {
         int size = db.size();
-        String[] arr =  new String[size];
+        String[] arr = new String[size];
         for (int i = 0; i < size; i++) {
             arr[i] = db.get(i);
         }
@@ -77,8 +76,8 @@ public class MultiProtocolSampleDapp implements CallServiceReceiver {
     }
 
     private BigInteger _sendCallMessage(BigInteger value, String to, byte[] data, byte[] rollback) {
-            String net = NetworkAddress.valueOf(to).net();
-            return Context.call(BigInteger.class, value, this.callSvc, "sendCallMessage", to, data, rollback, getSources(net), getDestinations(net));
+        String net = NetworkAddress.valueOf(to).net();
+        return Context.call(BigInteger.class, value, this.callSvc, "sendCallMessage", to, data, rollback, getSources(net), getDestinations(net));
     }
 
     @External
@@ -90,7 +89,7 @@ public class MultiProtocolSampleDapp implements CallServiceReceiver {
         if (rollbackAddress.equals(_from)) {
             return;
         } else {
-            Context.require(Arrays.equals(protocols, getSources(from.net())), "invalid protocols");
+            Context.require(equals(protocols, getSources(from.net())), "invalid protocols");
 
             Context.require(!new String(_data).equals("rollback"), "failed");
             // normal message delivery
@@ -98,6 +97,26 @@ public class MultiProtocolSampleDapp implements CallServiceReceiver {
         }
     }
 
+
     @EventLog
-    public void MessageReceived(String _from, byte[] _data) {}
+    public void MessageReceived(String _from, byte[] _data) {
+    }
+
+    public static <T> boolean equals(T[] a, T[] b) {
+        if (a == b)
+            return true;
+        if (a == null || b == null)
+            return false;
+
+        int length = a.length;
+        if (b.length != length)
+            return false;
+
+        for (int i = 0; i < length; i++) {
+            if (!a[i].equals(b[i]))
+                return false;
+        }
+
+        return true;
+    }
 }
