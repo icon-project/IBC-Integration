@@ -14,7 +14,7 @@ use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
-use cw_common::ibc_types::{IbcMsgCreateClient, IbcMsgUpdateClient};
+
 use cw_common::raw_types::client::{
     RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
 };
@@ -159,24 +159,6 @@ fn test_create_client_event() {
 }
 
 #[test]
-fn check_for_update_client_event() {
-    let raw_message = get_dummy_raw_msg_update_client_message();
-    let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message).unwrap();
-    let height = Height::new(15, 10).unwrap();
-    let client_type = ClientType::new("new_client_type".to_string());
-    let result = update_client_event(client_type, height, vec![height], &message.client_id);
-
-    assert_eq!("update_client", result.ty);
-}
-
-#[test]
-fn check_for_raw_message_to_update_client_message() {
-    let raw_message = get_dummy_raw_msg_update_client_message();
-    let message: IbcMsgUpdateClient = IbcMsgUpdateClient::try_from(raw_message.clone()).unwrap();
-    assert_eq!(raw_message, message.into())
-}
-
-#[test]
 fn check_for_raw_message_to_updgrade_client() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type, 10).unwrap();
@@ -285,44 +267,6 @@ fn fail_to_query_client_type() {
     contract
         .get_client_type(deps.as_ref().storage, &client_id)
         .unwrap();
-}
-
-#[test]
-fn check_for_raw_message_create_client_deserialize() {
-    let raw_message = get_dummy_raw_msg_create_client();
-    let height = mock_height(10, 15).unwrap();
-    let mock_header = MockHeader::new(height);
-    let mock_client_state = MockClientState::new(mock_header);
-    let mock_consenus_state = MockConsensusState::new(mock_header);
-    let actual_message = IbcMsgCreateClient {
-        client_state: mock_client_state.into(),
-        consensus_state: mock_consenus_state.into(),
-        signer: get_dummy_account_id(),
-    };
-
-    let create_client_message: IbcMsgCreateClient =
-        IbcMsgCreateClient::try_from(raw_message).unwrap();
-
-    assert_eq!(create_client_message, actual_message)
-}
-
-#[test]
-fn check_for_create_client_message_into_raw_message() {
-    let height = mock_height(10, 15).unwrap();
-    let mock_header = MockHeader::new(height);
-    let mock_client_state = MockClientState::new(mock_header);
-    let mock_consenus_state = MockConsensusState::new(mock_header);
-    let actual_message = IbcMsgCreateClient {
-        client_state: mock_client_state.into(),
-        consensus_state: mock_consenus_state.into(),
-        signer: get_dummy_account_id(),
-    };
-
-    let raw_message: RawMsgCreateClient = RawMsgCreateClient::try_from(actual_message).unwrap();
-    debug_println!("{raw_message:?}");
-    debug_println!("{:?}", get_dummy_raw_msg_create_client());
-
-    assert_eq!(raw_message, get_dummy_raw_msg_create_client())
 }
 
 #[test]

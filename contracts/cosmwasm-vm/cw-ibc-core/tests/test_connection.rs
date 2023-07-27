@@ -17,11 +17,8 @@ use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 
 use cw_common::get_address_storage_prefix;
-use cw_common::ibc_types::IbcMsgConnectionOpenConfirm;
-use cw_common::ibc_types::IbcMsgConnectionOpenInit;
 use cw_common::raw_types::connection::RawCounterpartyConnection;
 use cw_common::raw_types::connection::RawMsgConnectionOpenAck;
-use cw_common::raw_types::connection::RawMsgConnectionOpenConfirm;
 use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::raw_types::connection::RawMsgConnectionOpenTry;
 use cw_common::raw_types::RawHeight;
@@ -177,15 +174,7 @@ fn test_client_connection_fail() {
         .unwrap();
 }
 
-#[test]
-pub fn test_to_and_from_connection_open_init() {
-    let raw = get_dummy_raw_msg_conn_open_init();
-    let msg = IbcMsgConnectionOpenInit::try_from(raw.clone()).unwrap();
-    let raw_back = RawMsgConnectionOpenInit::from(msg.clone());
-    let msg_back = IbcMsgConnectionOpenInit::try_from(raw_back.clone()).unwrap();
-    assert_eq!(raw, raw_back);
-    assert_eq!(msg, msg_back);
-}
+
 #[test]
 fn test_to_and_from_connection_open_try() {
     let raw = get_dummy_raw_msg_conn_open_try(10, 34);
@@ -205,53 +194,6 @@ fn test_to_and_from_connection_open_ack() {
     assert_eq!(raw, raw_back);
     assert_eq!(msg, msg_back);
 }
-
-#[test]
-fn test_to_and_from_connection_open_confirm() {
-    let raw = get_dummy_raw_msg_conn_open_confirm();
-    let msg = IbcMsgConnectionOpenConfirm::try_from(raw.clone()).unwrap();
-    let raw_back = RawMsgConnectionOpenConfirm::from(msg.clone());
-    let msg_back = IbcMsgConnectionOpenConfirm::try_from(raw_back.clone()).unwrap();
-    assert_eq!(raw, raw_back);
-    assert_eq!(msg, msg_back);
-}
-
-#[test]
-fn connection_open_init_from_raw_valid_parameter() {
-    let default_raw_init_msg = get_dummy_raw_msg_conn_open_init();
-    let res_msg = IbcMsgConnectionOpenInit::try_from(default_raw_init_msg);
-    assert!(res_msg.is_ok())
-}
-
-#[test]
-fn connection_invalid_client_id_parameter() {
-    let default_raw_init_msg: RawMsgConnectionOpenInit = RawMsgConnectionOpenInit {
-        client_id: "client".to_string(),
-        counterparty: Some(get_dummy_raw_counterparty(None)),
-        version: None,
-        delay_period: 0,
-        signer: get_dummy_bech32_account(),
-    };
-    let res_msg = IbcMsgConnectionOpenInit::try_from(default_raw_init_msg);
-    assert!(res_msg.is_err())
-}
-
-#[test]
-fn connection_open_init_invalid_destination_connection_id() {
-    let default_raw_init_msg = get_dummy_raw_msg_conn_open_init;
-    let default_raw_init_msg = RawMsgConnectionOpenInit {
-        counterparty: Some(RawCounterpartyConnection {
-            connection_id: "abcdefghijksdffjssdkflweldflsfladfsfwjkrekcmmsdfsdfjflddmnopqrstu"
-                .to_string(),
-            ..get_dummy_raw_counterparty(None)
-        }),
-        ..default_raw_init_msg()
-    };
-
-    let res_msg = IbcMsgConnectionOpenInit::try_from(default_raw_init_msg);
-    assert!(res_msg.is_err())
-}
-
 #[test]
 fn connection_open_try_from_raw_valid_parameter() {
     let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
@@ -353,37 +295,7 @@ fn connection_open_ack_invalid_consensus_height_and_height_is_0() {
     assert!(res_msg.is_err())
 }
 
-#[test]
-fn connection_open_confirm_with_valid_parameter() {
-    let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
-    let res_msg = IbcMsgConnectionOpenConfirm::try_from(default_raw_confirm_msg);
-    assert!(res_msg.is_ok())
-}
 
-#[test]
-fn connection_open_confirm_invalid_connection_id_non_alpha() {
-    let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
-    let confirm_msg = RawMsgConnectionOpenConfirm {
-        connection_id: "con0000007".to_string(),
-        ..default_raw_confirm_msg
-    };
-    let res_msg = IbcMsgConnectionOpenConfirm::try_from(confirm_msg);
-    assert!(res_msg.is_ok())
-}
-
-#[test]
-fn connection_open_confirm_invalid_proof_height_zero() {
-    let default_raw_confirm_msg = get_dummy_raw_msg_conn_open_confirm();
-    let confirm_msg = RawMsgConnectionOpenConfirm {
-        proof_height: Some(RawHeight {
-            revision_number: 1,
-            revision_height: 0,
-        }),
-        ..default_raw_confirm_msg
-    };
-    let res_msg = IbcMsgConnectionOpenConfirm::try_from(confirm_msg);
-    assert!(res_msg.is_err())
-}
 
 #[test]
 fn connection_open_init() {
