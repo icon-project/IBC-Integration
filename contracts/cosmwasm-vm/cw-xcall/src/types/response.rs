@@ -46,12 +46,7 @@ impl CallServiceMessageResponse {
         &self.response_code
     }
 
-    pub fn set_fields(
-        &mut self,
-        sequence_no: u128,
-        response_code: CallServiceResponseType,
-        _message: &str,
-    ) {
+    pub fn set_fields(&mut self, sequence_no: u128, response_code: CallServiceResponseType) {
         self.sequence_no.clone_from(&sequence_no);
         self.response_code = response_code;
     }

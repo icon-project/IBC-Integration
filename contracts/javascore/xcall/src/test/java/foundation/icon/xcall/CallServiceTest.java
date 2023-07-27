@@ -34,6 +34,7 @@ import foundation.icon.xcall.DefaultCallServiceReceiver;
 import foundation.icon.xcall.Connection;
 import foundation.icon.xcall.NetworkAddress;
 import foundation.icon.ee.types.Address;
+import score.RevertedException;
 import score.UserRevertedException;
 import xcall.icon.test.MockContract;
 
@@ -287,7 +288,20 @@ public class CallServiceTest extends TestBase {
     }
 
     @Test
-    public void executeCall_failedExecution() {
+    public void executeCall_failedExecution_oneway() {
+        // Arrange
+        byte[] data = "test".getBytes();
+        CSMessageRequest request = new CSMessageRequest(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, false, data, new String[]{baseConnection.getAddress().toString()});
+        CSMessage msg = new CSMessage(CSMessage.REQUEST, request.toBytes());
+        xcall.invoke(baseConnection.account, "handleBTPMessage", ethNid, "xcall", BigInteger.ZERO, msg.toBytes());
+        // Act
+        doThrow(new UserRevertedException()).when(dapp.mock).handleCallMessage(ethDapp.toString(), data, new String[]{baseConnection.getAddress().toString()});
+        // Assert
+        assertThrows(RevertedException.class, () ->xcall.invoke(user, "executeCall", BigInteger.ONE, data));
+    }
+
+    @Test
+    public void executeCall_failedExecution_rollback() {
         // Arrange
         byte[] data = "test".getBytes();
         CSMessageRequest request = new CSMessageRequest(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, true, data, new String[]{baseConnection.getAddress().toString()});
