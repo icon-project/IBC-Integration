@@ -4,7 +4,6 @@ use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ac
 use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
-use cw_common::raw_types::Protobuf;
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
 use cw_ibc_core::conversions::to_ibc_channel_id;
 use cw_ibc_core::light_client::light_client::LightClient;
@@ -31,13 +30,15 @@ fn test_for_channel_open_init_execution_message() {
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
-    let message_raw = get_dummy_raw_msg_chan_open_init(None);
-    let mut msg = MsgChannelOpenInit::try_from(message_raw.clone()).unwrap();
+    let msg = get_dummy_raw_msg_chan_open_init(None);
+    // let mut msg = MsgChannelOpenInit::try_from(message_raw.clone()).unwrap();
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel = to_ibc_channel(msg.channel.clone()).unwrap();
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
@@ -64,18 +65,20 @@ fn test_for_channel_open_init_execution_message() {
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let conn_id = msg.connection_hops_on_a[0].clone();
-    msg.connection_hops_on_a = vec![conn_id.clone()];
-    msg.version_proposal = Version::from_str("xcall-1").unwrap();
+
     contract
-        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
+        .store_connection(
+            deps.as_mut().storage,
+            &channel.connection_hops[0],
+            &conn_end,
+        )
         .unwrap();
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
         info,
         CoreExecuteMsg::ChannelOpenInit {
-            msg: HexString::from_bytes(&message_raw.encode_to_vec()),
+            msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
 
@@ -83,7 +86,7 @@ fn test_for_channel_open_init_execution_message() {
     assert_eq!(res.unwrap().messages[0].id, 41);
 
     let mock_reponse_data = cosmwasm_std::IbcEndpoint {
-        port_id: msg.port_id_on_a.to_string(),
+        port_id: port_id.to_string(),
         channel_id: ChannelId::default().to_string(),
     };
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -112,14 +115,15 @@ fn test_for_channel_open_try_execution_message() {
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
-    let raw = get_dummy_raw_msg_chan_open_try(10);
-    let mut msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+    let msg = get_dummy_raw_msg_chan_open_try(10);
+    // let mut msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let _channel = to_ibc_channel(msg.channel.clone()).unwrap();
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
@@ -148,7 +152,7 @@ fn test_for_channel_open_try_execution_message() {
         Duration::default(),
     );
     let conn_id = ConnectionId::new(0);
-    msg.connection_hops_on_b = vec![conn_id.clone()];
+
     contract
         .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
@@ -177,7 +181,7 @@ fn test_for_channel_open_try_execution_message() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -193,7 +197,7 @@ fn test_for_channel_open_try_execution_message() {
         env.clone(),
         info,
         CoreExecuteMsg::ChannelOpenTry {
-            msg: HexString::from_bytes(&raw.encode_to_vec()),
+            msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
 
@@ -201,7 +205,7 @@ fn test_for_channel_open_try_execution_message() {
     assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY);
 
     let mock_reponse_data = cosmwasm_std::IbcEndpoint {
-        port_id: msg.port_id_on_a.to_string(),
+        port_id: port_id.to_string(),
         channel_id: ChannelId::default().to_string(),
     };
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -235,11 +239,13 @@ fn test_for_channel_open_ack_execution() {
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
-    let raw = get_dummy_raw_msg_chan_open_ack(10);
-    let msg = MsgChannelOpenAck::try_from(raw.clone()).unwrap();
+    let msg = get_dummy_raw_msg_chan_open_ack(10);
+    //let msg = MsgChannelOpenAck::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
 
-    let port_id = msg.port_id_on_a.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let counter_channel_id = to_ibc_channel_id(&msg.counterparty_channel_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
@@ -276,13 +282,13 @@ fn test_for_channel_open_ack_execution() {
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id: port_id.clone(),
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(counter_channel_id),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(&mut deps.storage, &port_id, &msg.chan_id_on_a, &channel_end)
+        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
@@ -309,7 +315,7 @@ fn test_for_channel_open_ack_execution() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_b;
+    let height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -326,7 +332,7 @@ fn test_for_channel_open_ack_execution() {
         env.clone(),
         info,
         CoreExecuteMsg::ChannelOpenAck {
-            msg: HexString::from_bytes(&raw.encode_to_vec()),
+            msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
 
@@ -337,7 +343,7 @@ fn test_for_channel_open_ack_execution() {
     );
 
     let mock_reponse_data = cosmwasm_std::IbcEndpoint {
-        port_id: msg.port_id_on_a.to_string(),
+        port_id: port_id.to_string(),
         channel_id: ChannelId::default().to_string(),
     };
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -371,8 +377,8 @@ fn test_for_channel_open_confirm() {
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
-    let raw = get_dummy_raw_msg_chan_open_confirm(10);
-    let msg = MsgChannelOpenConfirm::try_from(raw.clone()).unwrap();
+    let msg = get_dummy_raw_msg_chan_open_confirm(10);
+    // let msg = MsgChannelOpenConfirm::try_from(raw.clone()).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let committment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -391,7 +397,8 @@ fn test_for_channel_open_confirm() {
         Duration::default(),
     );
 
-    let port_id = msg.port_id_on_b.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
@@ -413,13 +420,13 @@ fn test_for_channel_open_confirm() {
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id: port_id.clone(),
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id],
         version: Version::new("xcall".to_string()),
     };
     contract
-        .store_channel_end(&mut deps.storage, &port_id, &msg.chan_id_on_b, &channel_end)
+        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
@@ -446,7 +453,7 @@ fn test_for_channel_open_confirm() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -462,7 +469,7 @@ fn test_for_channel_open_confirm() {
         env.clone(),
         info,
         CoreExecuteMsg::ChannelOpenConfirm {
-            msg: HexString::from_bytes(&raw.encode_to_vec()),
+            msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
 
@@ -473,7 +480,7 @@ fn test_for_channel_open_confirm() {
     );
 
     let mock_reponse_data = cosmwasm_std::IbcEndpoint {
-        port_id: msg.port_id_on_b.to_string(),
+        port_id: port_id.to_string(),
         channel_id: ChannelId::default().to_string(),
     };
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
@@ -506,13 +513,13 @@ fn test_for_channel_close_init() {
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
@@ -543,8 +550,8 @@ fn test_for_channel_close_init() {
     contract
         .store_connection(deps.as_mut().storage, &connection_id, &conn_end)
         .unwrap();
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a.clone();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
@@ -576,7 +583,7 @@ fn test_for_channel_close_init() {
         env.clone(),
         info,
         CoreExecuteMsg::ChannelCloseInit {
-            msg: HexString::from_bytes(&msg.encode_vec().unwrap()),
+            msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
 

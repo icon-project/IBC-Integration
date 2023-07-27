@@ -4,9 +4,7 @@ use std::str::FromStr;
 
 use common::client_state::{get_default_icon_client_state, IClientState};
 
-use common::ibc::{
-    core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour, signer::Signer, Height,
-};
+use common::ibc::{signer::Signer, Height};
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use common::utils::keccak256;
@@ -28,13 +26,12 @@ use cw_ibc_core::{
     context::CwIbcCoreContext,
     ics02_client::events::{
         client_misbehaviour_event, create_client_event, generated_client_id_event,
-        update_client_event, upgrade_client_event,
+        upgrade_client_event,
     },
     traits::IbcClient,
-    MsgUpgradeClient,
 };
 use cw_ibc_core::{EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT};
-use debug_print::debug_println;
+
 use prost::Message;
 use setup::*;
 
@@ -159,34 +156,6 @@ fn test_create_client_event() {
 }
 
 #[test]
-fn check_for_raw_message_to_updgrade_client() {
-    let client_type = ClientType::new("new_client_type".to_string());
-    let client_id = ClientId::new(client_type, 10).unwrap();
-    let signer = get_dummy_account_id();
-
-    let height = mock_height(1, 1).unwrap();
-
-    let client_state = MockClientState::new(MockHeader::new(height));
-    let consensus_state = MockConsensusState::new(MockHeader::new(height));
-
-    let proof = get_dummy_merkle_proof();
-
-    let msg = MsgUpgradeClient {
-        client_id,
-        client_state: client_state.into(),
-        consensus_state: consensus_state.into(),
-        proof_upgrade_client: proof.clone(),
-        proof_upgrade_consensus_state: proof,
-        signer,
-    };
-
-    let raw_message: RawMsgUpgradeClient = RawMsgUpgradeClient::try_from(msg.clone()).unwrap();
-
-    let upgrade_message_from_raw_message = MsgUpgradeClient::try_from(raw_message).unwrap();
-
-    assert_eq!(upgrade_message_from_raw_message, msg);
-}
-#[test]
 fn test_upgrade_client_event() {
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
@@ -195,21 +164,21 @@ fn test_upgrade_client_event() {
     let height = Height::new(1, 1).unwrap();
     let mock_height = to_mock_height(height);
 
-    let client_state = MockClientState::new(MockHeader::new(mock_height));
-    let consensus_state = MockConsensusState::new(MockHeader::new(mock_height));
+    let client_state: Any = MockClientState::new(MockHeader::new(mock_height)).into();
+    let consensus_state: Any = MockConsensusState::new(MockHeader::new(mock_height)).into();
 
     let proof = get_dummy_merkle_proof();
 
-    let msg = MsgUpgradeClient {
-        client_id,
-        client_state: client_state.into(),
-        consensus_state: consensus_state.into(),
-        proof_upgrade_client: proof.clone(),
-        proof_upgrade_consensus_state: proof,
-        signer,
+    let _msg = RawMsgUpgradeClient {
+        client_id: client_id.to_string(),
+        client_state: Some(client_state),
+        consensus_state: Some(consensus_state),
+        proof_upgrade_client: proof.encode_to_vec(),
+        proof_upgrade_consensus_state: proof.encode_to_vec(),
+        signer: signer.to_string(),
     };
 
-    let event = upgrade_client_event(client_type, height, msg.client_id);
+    let event = upgrade_client_event(client_type, height, client_id);
 
     assert_eq!("upgrade_client", event.ty);
 
@@ -218,16 +187,6 @@ fn test_upgrade_client_event() {
 
 #[test]
 fn create_misbehaviour_event_test() {
-    use cw_common::raw_types::client::RawMsgSubmitMisbehaviour;
-    let raw_message = get_dummy_raw_msg_client_mishbehaviour();
-    let misbehaviour: MsgSubmitMisbehaviour =
-        MsgSubmitMisbehaviour::try_from(raw_message.clone()).unwrap();
-
-    let raw_message_from_mb: RawMsgSubmitMisbehaviour =
-        RawMsgSubmitMisbehaviour::try_from(misbehaviour).unwrap();
-
-    assert_eq!(raw_message, raw_message_from_mb);
-
     let client_type = ClientType::new("new_client_type".to_string());
     let client_id = ClientId::new(client_type.clone(), 10).unwrap();
 

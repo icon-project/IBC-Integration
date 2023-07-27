@@ -1,8 +1,7 @@
 use crate::{
     ibc::core::{
         ics04_channel::{
-            channel::Order, error::ChannelError, msgs::acknowledgement::Acknowledgement,
-            packet::Sequence, timeout::TimeoutHeight,
+            channel::Order, error::ChannelError, packet::Sequence, timeout::TimeoutHeight,
         },
         ics24_host::identifier::{ChannelId, ConnectionId, PortId},
     },
@@ -166,33 +165,33 @@ impl From<PacketConnectionIdAttribute> for abci::EventAttribute {
     }
 }
 
-#[derive(Clone, Debug, From, PartialEq, Eq)]
-pub struct AcknowledgementAttribute {
-    pub acknowledgement: Acknowledgement,
-}
+// #[derive(Clone, Debug, From, PartialEq, Eq)]
+// pub struct AcknowledgementAttribute {
+//     pub acknowledgement: Acknowledgement,
+// }
 
-impl TryFrom<AcknowledgementAttribute> for Vec<abci::EventAttribute> {
-    type Error = ChannelError;
+// impl TryFrom<AcknowledgementAttribute> for Vec<abci::EventAttribute> {
+//     type Error = ChannelError;
 
-    fn try_from(attr: AcknowledgementAttribute) -> Result<Self, Self::Error> {
-        let tags = vec![
-            (
-                PKT_ACK_ATTRIBUTE_KEY,
-                // Note: this attribute forces us to assume that Packet data
-                // is valid UTF-8, even though the standard doesn't require
-                // it. It has been deprecated in ibc-go. It will be removed
-                // in the future.
-                str::from_utf8(attr.acknowledgement.as_bytes())
-                    .map_err(|_| ChannelError::NonUtf8PacketData)?,
-            )
-                .into(),
-            (
-                PKT_ACK_HEX_ATTRIBUTE_KEY,
-                String::from_utf8(hex::encode(attr.acknowledgement)).unwrap(),
-            )
-                .into(),
-        ];
+//     fn try_from(attr: AcknowledgementAttribute) -> Result<Self, Self::Error> {
+//         let tags = vec![
+//             (
+//                 PKT_ACK_ATTRIBUTE_KEY,
+//                 // Note: this attribute forces us to assume that Packet data
+//                 // is valid UTF-8, even though the standard doesn't require
+//                 // it. It has been deprecated in ibc-go. It will be removed
+//                 // in the future.
+//                 str::from_utf8(attr.acknowledgement.as_bytes())
+//                     .map_err(|_| ChannelError::NonUtf8PacketData)?,
+//             )
+//                 .into(),
+//             (
+//                 PKT_ACK_HEX_ATTRIBUTE_KEY,
+//                 String::from_utf8(hex::encode(attr.acknowledgement)).unwrap(),
+//             )
+//                 .into(),
+//         ];
 
-        Ok(tags)
-    }
-}
+//         Ok(tags)
+//     }
+// }

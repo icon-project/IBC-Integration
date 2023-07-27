@@ -1,7 +1,5 @@
 use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
-use common::ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
-use common::ibc::core::ics04_channel::msgs::PacketMsg;
 
 use common::ibc::timestamp::Timestamp;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
@@ -356,30 +354,16 @@ fn test_lookup_module_packet() {
     let ctx = CwIbcCoreContext::default();
     let module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let msg = get_dummy_raw_msg_recv_packet(12);
+    let port_id = to_ibc_port_id(&msg.packet.unwrap().source_port).unwrap();
     ctx.claim_capability(
         &mut deps.storage,
-        msg.packet.port_id_on_a.as_bytes().to_vec(),
+        port_id.as_bytes().to_vec(),
         module_id.to_string(),
     )
     .unwrap();
-    let res = ctx.lookup_modules(
-        &mut deps.storage,
-        msg.packet.port_id_on_a.to_string().as_bytes().to_vec(),
-    );
+    let res = ctx.lookup_modules(&mut deps.storage, port_id.to_string().as_bytes().to_vec());
 
     assert!(res.is_ok());
     assert_eq!("contractaddress", res.unwrap())
-}
-
-#[test]
-#[should_panic(expected = "UnknownPort")]
-fn test_lookup_module_packet_fail() {
-    let mut deps = deps();
-    let ctx = CwIbcCoreContext::default();
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let channel_msg = PacketMsg::Recv(msg);
-
-    ctx.lookup_module_packet(&mut deps.storage, &channel_msg)
-        .unwrap();
 }

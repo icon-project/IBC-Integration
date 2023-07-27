@@ -15,9 +15,7 @@ use cw_common::ibc_types::IbcClientId;
 
 use cw_ibc_core::ics04_channel::open_init::create_channel_submesssage;
 use cw_ibc_core::ics04_channel::EXECUTE_ON_CHANNEL_CLOSE_INIT;
-use cw_ibc_core::{
-    context::CwIbcCoreContext, ics04_channel::MsgChannelCloseInit, ChannelEnd, ConnectionEnd,
-};
+use cw_ibc_core::{ChannelEnd, ConnectionEnd};
 
 #[test]
 fn test_validate_close_init_channel() {
@@ -151,12 +149,12 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
 fn test_execute_close_init_channel() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+    //  let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let connection_id = ConnectionId::new(5);
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a;
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
@@ -203,11 +201,12 @@ fn test_execute_close_init_channel() {
 fn test_execute_close_init_channel_fail() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+    //  let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+    let _channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
@@ -219,8 +218,8 @@ fn test_execute_close_init_channel_fail() {
             module.to_string(),
         )
         .unwrap();
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a;
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let expected_data = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),
@@ -275,11 +274,11 @@ fn test_channel_close_init_validate() {
     expected = "IbcChannelError { error: ChannelClosed { channel_id: ChannelId(\"channel-0\") } }"
 )]
 fn test_channel_close_init_validate_fail() {
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let connection_id = ConnectionId::new(5);
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a;
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Closed,
         ordering: Order::Unordered,
@@ -295,11 +294,11 @@ fn test_channel_close_init_validate_fail() {
 
 #[test]
 fn test_on_chan_close_init_submessage() {
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let connection_id = ConnectionId::new(5);
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a;
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,

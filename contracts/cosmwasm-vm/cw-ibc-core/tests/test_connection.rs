@@ -17,11 +17,8 @@ use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 
 use cw_common::get_address_storage_prefix;
-use cw_common::raw_types::connection::RawCounterpartyConnection;
-use cw_common::raw_types::connection::RawMsgConnectionOpenAck;
+
 use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
-use cw_common::raw_types::connection::RawMsgConnectionOpenTry;
-use cw_common::raw_types::RawHeight;
 
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::conversions::to_ibc_client_id;
@@ -37,8 +34,6 @@ use common::ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
 use common::ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 use common::ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
 use common::ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
-use common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
-use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use common::ibc::core::ics03_connection::version::get_compatible_versions;
 use common::ibc::core::ics03_connection::version::Version;
 use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;
@@ -174,58 +169,6 @@ fn test_client_connection_fail() {
         .unwrap();
 }
 
-
-#[test]
-fn test_to_and_from_connection_open_try() {
-    let raw = get_dummy_raw_msg_conn_open_try(10, 34);
-    let msg = MsgConnectionOpenTry::try_from(raw.clone()).unwrap();
-    let raw_back = RawMsgConnectionOpenTry::from(msg.clone());
-    let msg_back = MsgConnectionOpenTry::try_from(raw_back.clone()).unwrap();
-    assert_eq!(raw, raw_back);
-    assert_eq!(msg, msg_back);
-}
-
-#[test]
-fn test_to_and_from_connection_open_ack() {
-    let raw = get_dummy_raw_msg_conn_open_ack(10, 34);
-    let msg = MsgConnectionOpenAck::try_from(raw.clone()).unwrap();
-    let raw_back = RawMsgConnectionOpenAck::from(msg.clone());
-    let msg_back = MsgConnectionOpenAck::try_from(raw_back.clone()).unwrap();
-    assert_eq!(raw, raw_back);
-    assert_eq!(msg, msg_back);
-}
-#[test]
-fn connection_open_try_from_raw_valid_parameter() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let res_msg = MsgConnectionOpenTry::try_from(default_raw_try_msg);
-    assert!(res_msg.is_ok())
-}
-
-#[test]
-fn connection_open_try_destination_client_id_with_lower_case_and_special_characters() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let try_msg = RawMsgConnectionOpenTry {
-        counterparty: Some(RawCounterpartyConnection {
-            client_id: "ClientId_".to_string(),
-            ..get_dummy_raw_counterparty(Some(0))
-        }),
-        ..default_raw_try_msg
-    };
-    let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(res_msg.is_ok())
-}
-
-#[test]
-fn connection_open_try_invalid_client_id_name_too_short() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let try_msg = RawMsgConnectionOpenTry {
-        client_id: "client".to_string(),
-        ..default_raw_try_msg
-    };
-    let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(res_msg.is_err())
-}
-
 #[test]
 fn test_commitment_prefix() {
     let contract = CwIbcCoreContext::new();
@@ -238,64 +181,6 @@ fn test_commitment_prefix() {
     let result = contract.commitment_prefix(mock_dependencies().as_ref(), &env);
     assert_eq!(result, expected);
 }
-#[test]
-fn connection_open_ack_from_raw_valid_parameter() {
-    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
-    let res_msg = MsgConnectionOpenAck::try_from(default_raw_ack_msg);
-    assert!(res_msg.is_ok())
-}
-
-#[test]
-fn connection_open_ack_invalid_connection_id() {
-    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
-    let ack_msg = RawMsgConnectionOpenAck {
-        connection_id: "con007".to_string(),
-        ..default_raw_ack_msg
-    };
-    let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert!(res_msg.is_err())
-}
-
-#[test]
-fn connection_open_ack_invalid_version() {
-    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
-    let ack_msg = RawMsgConnectionOpenAck {
-        version: None,
-        ..default_raw_ack_msg
-    };
-    let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert!(res_msg.is_err())
-}
-
-#[test]
-fn connection_open_ack_invalid_proof_height_zero() {
-    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
-    let ack_msg = RawMsgConnectionOpenAck {
-        proof_height: Some(RawHeight {
-            revision_number: 1,
-            revision_height: 0,
-        }),
-        ..default_raw_ack_msg
-    };
-    let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert!(res_msg.is_err())
-}
-
-#[test]
-fn connection_open_ack_invalid_consensus_height_and_height_is_0() {
-    let default_raw_ack_msg = get_dummy_raw_msg_conn_open_ack(5, 5);
-    let ack_msg = RawMsgConnectionOpenAck {
-        consensus_height: Some(RawHeight {
-            revision_number: 1,
-            revision_height: 0,
-        }),
-        ..default_raw_ack_msg
-    };
-    let res_msg = MsgConnectionOpenAck::try_from(ack_msg);
-    assert!(res_msg.is_err())
-}
-
-
 
 #[test]
 fn connection_open_init() {
@@ -1160,82 +1045,6 @@ fn test_connection_seq_on_a_fails_without_initialising() {
     contract
         .increase_connection_counter(store.as_mut().storage)
         .unwrap();
-}
-
-#[test]
-fn connection_open_try_invalid_client_id_name_too_long() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let try_msg = RawMsgConnectionOpenTry {
-        client_id: "abcdasdfasdfsdfasfdwefwfsdfsfsfasfwewvxcvdvwgadvaadsefghijklmnopqrstu"
-            .to_string(),
-        ..default_raw_try_msg
-    };
-    let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(res_msg.is_err())
-}
-
-#[test]
-fn connection_open_try_with_valid_client_id_with_special_chars() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let try_msg = RawMsgConnectionOpenTry {
-        counterparty: Some(RawCounterpartyConnection {
-            client_id: "ClientId_".to_string(),
-            ..get_dummy_raw_counterparty(Some(0))
-        }),
-        ..default_raw_try_msg
-    };
-    let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(res_msg.is_ok())
-}
-
-#[test]
-fn connection_open_try_empty_counterparty_versions() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let try_msg = RawMsgConnectionOpenTry {
-        counterparty_versions: Vec::new(),
-        ..default_raw_try_msg
-    };
-    let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(res_msg.is_err())
-}
-
-#[test]
-fn connection_open_try_invalid_proof_height_zero() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let try_msg = RawMsgConnectionOpenTry {
-        proof_height: Some(RawHeight {
-            revision_number: 1,
-            revision_height: 0,
-        }),
-        ..default_raw_try_msg
-    };
-    let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(res_msg.is_err())
-}
-
-#[test]
-fn connection_open_try_invalid_consensus_height_zero() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let try_msg = RawMsgConnectionOpenTry {
-        consensus_height: Some(RawHeight {
-            revision_number: 1,
-            revision_height: 0,
-        }),
-        ..default_raw_try_msg
-    };
-    let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(res_msg.is_err())
-}
-
-#[test]
-fn connection_open_try_empty_proof() {
-    let default_raw_try_msg = get_dummy_raw_msg_conn_open_try(1, 3);
-    let try_msg = RawMsgConnectionOpenTry {
-        proof_init: b"".to_vec(),
-        ..default_raw_try_msg
-    };
-    let res_msg = MsgConnectionOpenTry::try_from(try_msg);
-    assert!(res_msg.is_ok())
 }
 
 #[test]

@@ -1,13 +1,10 @@
-
 pub use common::ibc::core::ics04_channel::packet::Packet as IbcPacket;
 pub use common::ibc::core::ics05_port::error::PortError as IbcPortError;
 pub use common::ibc::core::ics24_host::error::ValidationError as IbcValidationError;
 pub use common::ibc::{
     core::{
         ics02_client::{
-            client_type::ClientType as IbcClientType,
-            error::ClientError as IbcClientError,
-          
+            client_type::ClientType as IbcClientType, error::ClientError as IbcClientError,
         },
         ics03_connection::connection::ConnectionEnd as IbcConnectionEnd,
         ics04_channel::{
@@ -24,7 +21,6 @@ pub use common::ibc::{
     Height as IbcHeight,
 };
 
-pub use common::ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
 pub use common::ibc::core::{
     context::ContextError,
     ics02_client::{

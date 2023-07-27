@@ -3,7 +3,7 @@ use common::ibc::core::ics24_host::identifier::PortId;
 use common::utils::keccak256;
 use cw_common::commitment;
 use cw_common::ibc_types::IbcChannelId;
-use cw_ibc_core::{context::CwIbcCoreContext, ics04_channel::ChannelMsg, MsgChannelOpenInit};
+use cw_ibc_core::context::CwIbcCoreContext;
 use setup::*;
 use std::str::{from_utf8, FromStr};
 #[test]
@@ -67,33 +67,6 @@ fn check_for_port_id() {
     let port_id = PortId::from_str("xcall");
 
     assert!(port_id.is_ok())
-}
-
-#[test]
-fn test_lookup_module_channel() {
-    let mut deps = deps();
-    let ctx = CwIbcCoreContext::default();
-    let module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
-    let msg = MsgChannelOpenInit::try_from(get_dummy_raw_msg_chan_open_init(None)).unwrap();
-    ctx.store_module_by_port(&mut deps.storage, &msg.port_id_on_a, module_id)
-        .unwrap();
-    let channel_msg = ChannelMsg::OpenInit(msg);
-    let res = ctx.lookup_module_channel(&mut deps.storage, &channel_msg);
-
-    assert!(res.is_ok());
-    assert_eq!("contractaddress", res.unwrap().to_string())
-}
-
-#[test]
-#[should_panic(expected = "UnknownPort")]
-fn test_lookup_module_channel_fail() {
-    let mut deps = deps();
-    let ctx = CwIbcCoreContext::default();
-    let msg = MsgChannelOpenInit::try_from(get_dummy_raw_msg_chan_open_init(None)).unwrap();
-    let channel_msg = ChannelMsg::OpenInit(msg);
-    ctx.lookup_module_channel(&mut deps.storage, &channel_msg)
-        .unwrap();
 }
 
 #[test]

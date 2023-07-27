@@ -22,7 +22,7 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 
 use cw_common::ProstMessage;
 
-use cw_ibc_core::conversions::{to_ibc_connection_id, to_ibc_height};
+use cw_ibc_core::conversions::{to_ibc_client_id, to_ibc_connection_id, to_ibc_height};
 use cw_ibc_core::{
     ConnectionEnd, EXECUTE_CONNECTION_OPENTRY, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT,
 };
@@ -625,11 +625,9 @@ fn test_for_connection_open_try_fails() {
     let info = create_mock_info("alice", "umlg", 4000);
     let env = get_mock_env();
     let message = get_dummy_raw_msg_conn_open_try(10, 10);
-    let res_msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry::try_from(
-            message.clone(),
-        )
-        .unwrap();
+    let client_id = to_ibc_client_id(&message.client_id).unwrap();
+    let peoof_height = to_ibc_height(message.proof_height.clone()).unwrap();
+
     let mut contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
     let _counterparty_prefix =
@@ -647,11 +645,7 @@ fn test_for_connection_open_try_fails() {
     .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            &mut deps.storage,
-            &res_msg.client_id_on_b.clone(),
-            light_client,
-        )
+        .store_client_implementations(&mut deps.storage, &client_id.clone(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
     let cl = client_state.to_any().encode_to_vec();
@@ -660,7 +654,7 @@ fn test_for_connection_open_try_fails() {
         .store_client_state(
             &mut deps.storage,
             &get_mock_env(),
-            &res_msg.client_id_on_b,
+            &client_id,
             cl,
             client_state.get_keccak_hash().to_vec(),
         )
@@ -671,8 +665,8 @@ fn test_for_connection_open_try_fails() {
     contract
         .store_consensus_state(
             &mut deps.storage,
-            &res_msg.client_id_on_b,
-            res_msg.proofs_height_on_a,
+            &client_id,
+            peoof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
@@ -719,12 +713,9 @@ fn test_connection_open_confirm_fails() {
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
+    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
+    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
 
-    let res_msg =
-        common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm::try_from(
-            message.clone(),
-        )
-        .unwrap();
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: "helloconnectionmessage".as_bytes().to_vec(),
         next_proof_context_hash: vec![1, 2, 3],
@@ -741,7 +732,7 @@ fn test_connection_open_confirm_fails() {
     let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
         counterparty_client_id,
-        res_msg.conn_id_on_b.clone().into(),
+        connection_id.into(),
         counterparty_prefix,
     );
 
@@ -784,7 +775,7 @@ fn test_connection_open_confirm_fails() {
         .store_consensus_state(
             &mut deps.storage,
             &conn_end.client_id().clone(),
-            res_msg.proof_height_on_a,
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )

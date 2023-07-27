@@ -21,7 +21,6 @@ use common::ibc::core::ics03_connection::error::ConnectionError;
 
 pub use common::ibc::core::ics03_connection::{
     connection::{Counterparty, State},
-    msgs::{conn_open_confirm::MsgConnectionOpenConfirm, conn_open_init::MsgConnectionOpenInit},
     version::Version,
 };
 use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;

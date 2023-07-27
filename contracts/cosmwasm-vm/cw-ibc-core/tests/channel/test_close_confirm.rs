@@ -219,12 +219,12 @@ fn test_validate_close_confirm_channel() {
 fn test_execute_close_confirm_channel() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+    //let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let connection_id = ConnectionId::new(5);
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a;
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::TryOpen,
         ordering: Order::Unordered,
@@ -274,12 +274,12 @@ fn test_execute_close_confirm_channel() {
 fn test_execute_close_confirm_channel_fail_invalid_state() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let raw = get_dummy_raw_msg_chan_close_init();
-    let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_init();
+    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let connection_id = ConnectionId::new(5);
-    let channel_id = msg.chan_id_on_a.clone();
-    let port_id = msg.port_id_on_a;
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Closed,
         ordering: Order::Unordered,
@@ -346,29 +346,30 @@ pub fn test_channel_close_confirm_validate() {
 }
 #[test]
 pub fn test_on_chan_close_confirm_submessage() {
-    let raw = get_dummy_raw_msg_chan_close_confirm(10);
-    let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
+    let msg = get_dummy_raw_msg_chan_close_confirm(10);
+    // let msg = MsgChannelCloseConfirm::try_from(raw).unwrap();
     let conn_id = ConnectionId::new(5);
-    let port_id = msg.port_id_on_b.clone();
+    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_end = ChannelEnd {
         state: State::Open,
         ordering: Order::Unordered,
         remote: Counterparty {
             port_id: port_id.clone(),
-            channel_id: Some(msg.chan_id_on_b.clone()),
+            channel_id: Some(channel_id.clone()),
         },
         connection_hops: vec![conn_id.clone()],
         version: Version::new("xcall".to_string()),
     };
     let endpoint = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
-        channel_id: msg.chan_id_on_b.to_string(),
+        channel_id: channel_id.to_string(),
     };
     let counter_party = cosmwasm_std::IbcEndpoint {
         port_id: channel_end.remote.port_id.to_string(),
         channel_id: channel_end.clone().remote.channel_id.unwrap().to_string(),
     };
-    let res = on_chan_close_confirm_submessage(&channel_end, &port_id, &msg.chan_id_on_b);
+    let res = on_chan_close_confirm_submessage(&channel_end, &port_id, &channel_id);
     let expected = cosmwasm_std::IbcChannelCloseMsg::CloseConfirm {
         channel: IbcChannel::new(
             endpoint,

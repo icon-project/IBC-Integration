@@ -10,13 +10,8 @@ use super::*;
 fn test_execute_timeout_packet() {
     let height = 2;
     let timeout_timestamp = 5;
-    let msg = MsgTimeoutOnClose::try_from(get_dummy_raw_msg_timeout_on_close(
-        height,
-        timeout_timestamp,
-    ))
-    .unwrap();
+    let msg = get_dummy_raw_msg_timeout_on_close(height, timeout_timestamp);
 
-    let packet = msg.packet;
     // Set up test environment
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
@@ -44,22 +39,22 @@ fn test_execute_timeout_packet() {
     };
     let result: SubMsgResult = SubMsgResult::Ok(result);
     let message = Reply { id: 0, result };
+    let packet = msg.packet.unwrap();
+    let port_id = to_ibc_port_id(&packet.source_port).unwrap();
+    let channel_id = to_ibc_channel_id(&packet.source_channel).unwrap();
 
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(
-            packet.port_id_on_b.clone(),
-            Some(packet.chan_id_on_b.clone()),
-        ),
+        Counterparty::new(port_id.clone(), Some(channel_id.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-            &packet.port_id_on_a.clone(),
-            &packet.chan_id_on_a.clone(),
+            &port_id.clone(),
+            &channel_id.clone(),
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -69,9 +64,9 @@ fn test_execute_timeout_packet() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a,
-            &packet.chan_id_on_a,
-            packet.sequence,
+            &port_id,
+            &channel_id,
+            Sequence::from(packet.sequence),
             commitment,
         )
         .unwrap();
@@ -88,11 +83,10 @@ fn test_execute_timeout_packet() {
 fn test_execute_timeout_packet_fails() {
     let height = 2;
     let timeout_timestamp = 5;
-    let msg = MsgTimeoutOnClose::try_from(get_dummy_raw_msg_timeout_on_close(
-        height,
-        timeout_timestamp,
-    ))
-    .unwrap();
+    let msg = get_dummy_raw_msg_timeout_on_close(height, timeout_timestamp);
+    let packet = msg.packet.clone().unwrap();
+    let port_id = to_ibc_port_id(&packet.source_port).unwrap();
+    let channel_id = to_ibc_channel_id(&packet.source_channel).unwrap();
 
     let packet = msg.packet;
     // Set up test environment
@@ -129,9 +123,9 @@ fn test_execute_timeout_packet_fails() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &packet.port_id_on_a,
-            &packet.chan_id_on_a,
-            packet.sequence,
+            &port_id,
+            &channel_id,
+            Sequence::from(packet.unwrap().sequence),
             commitment,
         )
         .unwrap();
