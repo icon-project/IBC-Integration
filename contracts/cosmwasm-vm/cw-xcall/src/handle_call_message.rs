@@ -183,4 +183,17 @@ impl<'a> CwCallService<'a> {
         let default_conn = self.get_default_connection(store, src_net)?;
         Ok(source.clone() == default_conn)
     }
+
+    pub fn handle_error(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        sn: u128,
+    ) -> Result<Response, ContractError> {
+        let msg = CallServiceMessageResponse::new(
+            sn,
+            CallServiceResponseType::CallServiceResponseFailure,
+        );
+        self.handle_response(deps, info, &rlp::encode(&msg))
+    }
 }

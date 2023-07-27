@@ -39,6 +39,7 @@ common ={ git = "https://github.com/icon-project/IBC-Integration.git",branch="ma
 cw-xcall-lib = { path="../cw-xcall-lib" }
 serde-json-wasm = {workspace=true}
 
+
 [dev-dependencies]
 cosmwasm = "0.7.2"
 cw-multi-test = "0.16.2"

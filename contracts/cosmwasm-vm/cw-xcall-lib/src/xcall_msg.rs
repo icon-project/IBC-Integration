@@ -28,7 +28,7 @@ pub enum ExecuteMsg {
     },
 
     HandleError {
-        sn: i64,
+        sn: u128,
     },
 
     ExecuteCall {
