@@ -26,7 +26,7 @@ chains:
     version: '3'
     environment: local
     chain_config:
-      type: archway
+      type: wasm
       name: archway
       chain_id: archway-1
       image:
