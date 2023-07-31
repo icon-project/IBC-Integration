@@ -251,7 +251,8 @@ func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight int64, contr
 		log.Fatal(err)
 	}
 	defer client.Stop()
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 	query := strings.Join([]string{"tm.event = 'Tx'",
 		fmt.Sprintf("tx.height >= %d ", startHeight),
 		fmt.Sprintf("message.module = 'wasm'"),
@@ -262,12 +263,11 @@ func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight int64, contr
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	select {
 	case event := <-channel:
-		cancel()
 		return &event, nil
-	case <-time.After(20 * time.Second):
-		cancel()
+	case <-ctx.Done():
 		return nil, fmt.Errorf("failed to find eventLog")
 	}
 }
@@ -316,7 +316,7 @@ func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, met
 
 func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	txHash, err := c.getFullNode().ExecTx(ctx, keyName,
-		"wasm", "execute", contractAddress, `{"`+methodName+`":`+param+`}`)
+		"wasm", "execute", contractAddress, `{"`+methodName+`":`+param+`}`, "--gas", "auto")
 	tx, err := c.getTransaction(txHash)
 	ctx = context.WithValue(ctx, "txResult", tx)
 	return ctx, err
