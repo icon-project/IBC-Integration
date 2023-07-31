@@ -2,13 +2,14 @@ package cosmos
 
 import (
 	"context"
+	"time"
+
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-	"time"
 
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/icon-project/icon-bridge/common/codec"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 type CosmosLocalnet struct {
