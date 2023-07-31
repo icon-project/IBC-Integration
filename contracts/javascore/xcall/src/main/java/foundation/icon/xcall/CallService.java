@@ -17,6 +17,7 @@
 package foundation.icon.xcall;
 
 import foundation.icon.score.client.ScoreClient;
+import foundation.icon.score.client.ScoreInterface;
 import score.Address;
 import score.annotation.EventLog;
 import score.annotation.External;
@@ -26,11 +27,12 @@ import score.annotation.Payable;
 import java.math.BigInteger;
 
 @ScoreClient
+@ScoreInterface
 public interface CallService {
     /**
      * The name of CallService.
      */
-    String NAME = "xcall";
+    String NAME = "xcall-multi";
 
     /*======== At the source CALL_BSH ========*/
     /**
@@ -73,7 +75,6 @@ public interface CallService {
      * @param _from The chain-specific address of the caller
      * @param _to The BTP address of the callee on the destination chain
      * @param _sn The serial number of the request
-     * @param _nsn The network serial number of the BTP message
      */
     @EventLog(indexed=3)
     void CallMessageSent(Address _from, String _to, BigInteger _sn);
@@ -84,7 +85,6 @@ public interface CallService {
      * @param _sn The serial number of the previous request
      * @param _code The response code
      *              (0: Success, -1: Unknown generic failure, >=1: User defined error code)
-     * @param _msg The result message if any
      */
     @EventLog(indexed=1)
     void ResponseMessage(BigInteger _sn, int _code);
@@ -109,9 +109,6 @@ public interface CallService {
      * Notifies that the rollback has been executed.
      *
      * @param _sn The serial number for the rollback
-     * @param _code The execution result code
-     *              (0: Success, -1: Unknown generic failure, >=1: User defined error code)
-     * @param _msg The result message if any
      */
     @EventLog(indexed=1)
     void RollbackExecuted(BigInteger _sn);

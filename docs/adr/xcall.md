@@ -11,7 +11,7 @@ xCall is a standard interface to make calls between different blockchain network
 ## Prerequisites
 ### Network Addresses
 XCall uses network address to refer to different addresses across many networks. A "network address" consists of a network and an account section. A network address is represented as a string with "networkId" and "account" separated by /.
-A networkId is a unique id of a network and there can't be two networks with the same id connection to the same xCall network.
+A networkId is a unique id of a network and there can't be two networks with the same id connected to the same xCall network.
 
 ### Connections
 XCall is designed to utilize a wide range of bridging protocols that facilitate data transfer, known as connections. These connections can be selected by users and dApps, ensuring a permissionless protocol. However, this places a responsibility on the dApps to verify that they exclusively accept messages from trusted protocols. Users can also opt to use the default connections set up by the xCall admin and in this case does not need to manage connections at all.
@@ -28,7 +28,7 @@ The default connections are specified by and admin and can be changed at any tim
  *
  * @param _to The network address of the callee on the destination chain
  * @param _data The calldata specific to the target contract
- * @param _rollback (Optional) The data for restoring the caller state when an error occurred
+ * @param _rollback (Optional) Data used to specify error handling of a two-way messages
  * @param sources  (Optional) The contracts that will be used to send the message
  * @param destinations (Optional) The addresses of the contracts that xcall will expect the message from.
  *
@@ -59,10 +59,9 @@ CallMessage {
 }
 ```
 #### CallExecuted
-CallExecuted event is emitted when a message is executed·
-
+CallExecuted event is emitted when a message is executed
  `_reqId` The message id
- `_code` The execution result code (0: Success, -1: Unknown generic failure, >=1: User defined error code)
+ `_code` The execution result code (1: Success, 0: failure)
  `_msg` Error message
 ```javascript
 CallExecuted{
@@ -92,7 +91,7 @@ RollbackMessage {
 
 
 #### RollbackExecuted
-RollbackExecuted event is emitted when a message is executed·
+RollbackExecuted event is emitted when a rollback message is executed.
  `_sn` The message id
 ```javascript
 RollbackExecuted{
@@ -120,8 +119,7 @@ CallMessageSent{
 #### Execution
 
 The user on the destination chain recognizes the call request and invokes the following method on xcall with the given _reqId and _data.
-To minimize the gas cost, the calldata payload delivered from the source chain are exported to event, `_data` field,
-instead of storing it in the state db.
+To minimize the gas cost, the calldata payload delivered from the source chain are exported to event, `_data` field, instead of storing it in the state db. In case of a two-way message rollback will be triggered in case of failure.
 The `_data` payload should be repopulated by the user (or client) when calling the following `executeCall` method.
 Then `xcall` compares it with the saved hash value to validate its integrity.
 
@@ -134,6 +132,7 @@ Then `xcall` compares it with the saved hash value to validate its integrity.
  */
 external executeCall(BigInteger _reqId, byte[] _data);
 ```
+
 The user on the source chain recognizes the rollback situation and invokes the following method on xcall with the given _sn.
 Note that the executeRollback can be called only when the original call request has responded with a failure.
 It should be reverted when there is no failure response with the call request.
@@ -148,7 +147,7 @@ external executeRollback(BigInteger _sn);
 
 #### Handling
 
-When the user calls executeCall or executeRollback method, the xcall invokes the following predefined method in the target DApp with the calldata associated in _reqId. If only using default protocols implementing only the two parameter version is preferred
+When the user calls executeCall or executeRollback method, the xcall invokes the following predefined method in the target DApp with the calldata associated in _reqId. If only using default protocols implementing only the two parameter version is preferred.
 ```javascript
 /**
  * Handles the call message received from the source chain.
@@ -161,9 +160,10 @@ When the user calls executeCall or executeRollback method, the xcall invokes the
 external handleCallMessage(String _from, byte[] _data);
 external handleCallMessage(String _from, byte[] _data, @Optional String[] _protocols);
 ```
+In case of rollback the _from will be the network address of the xCall contract. A rollback can only be delivered by the same protocols used to send the message, so the _protocols will be the protocols used to send the message. So they can be assumed to be safe as long as all messages sent have been done using trusted protocols.
 
 #### Success verification
-If rollback was specified and the call was successful, that success can be verified
+If rollback was specified and the call was successful, the success can be verified.
 
 
 ```javascript
@@ -192,7 +192,7 @@ Sending a message through xCall has 2 types of fees. One for using the protocol 
  * @param sources The protocols used to send the message is omitted default protocol is used.
  * @return The total fee of sending the message
  */
-external readonly  getFee(String _net,
+external readonly getFee(String _net,
                           boolean _rollback
                           @Optional String[] sources) returns Integer;
 ```
@@ -205,26 +205,6 @@ external readonly  getFee(String _net,
  */
 external readonly getProtocolFee() Returns Integer;
 ```
-
-### Error Handling
-**TODO: This section is not finished**
-Since one way messages are standalone not much happens if they are dropped or lost but when using multi protocol with rollbacks there are a few cases where extra handling is needed
-
-##### Partial delivery: Message is dropped by one or more protocol but delivered by others.
-**Mitigation**: If message is a one way message the recommended approach would be to disallow messages from the non working protocol and then safely be able to resend message without worrying about double spending.
-If message requires rollback start a timed rollback which will rollback the message after x days via the protocols that delivered the message. Once rollbacked use forced rollback to try a rollback without waiting for all protocols.
-
-##### Dropped package: Message is dropped by all connections.
-**Mitigation**: All protocols involved should be removed as trusted in your dapp. Then with new connections it would be safe to resend the message. If the original message required rollback it has to be solved through other means, like governance or similar.
-
-##### Partial failure: Message fails to be delivered and trigger rollbacks via one or more protocols but delivered by others.
-**Mitigation**: Sames a partial delivery but a forced rollback should not be needed since all protocols will rollback
-
-##### Partial failure delivery: Message rollback is dropped by one or more protocols but delivered by others.
-**Mitigation**: Once removing the non working protocol you can try force rollback with the protocols that has delivered the rollback.
-
-##### Dropped failure delivery: Rollback is dropped by all connections:
-**Mitigation**: All protocols involved should be removed as trusted in your dapp. After that it has to be solved through other means, like governance or similar.
 
 
 ### Security Considerations
@@ -240,9 +220,9 @@ The sendMessage function is responsible for sending a message to a specified tar
 
 The behavior of sendMessage depends on the value of sn (sequence number). If sn is greater than 0, it indicates a new message that requires a response. In this case, both the sending fee and the response fee should be included. If sn is 0, it signifies a one-way message where no response is expected. If sn is less than 0, it implies that the message is a response to a previously received message. In this scenario, no fee is included in the sending message since it should have already been paid when the positive sn was sent.
 
-After handling the sn value, the sendMessage function triggers the handleMessage function on the targetNetwork. It passes targetNetwork and msg as arguments to handleMessage. The purpose of this function is to handle the incoming message on the specified targetNetwork's xCall contract.
+After handling the sn value, the sendMessage function triggers the handleMessage function on the targetNetwork. It passes targetNetwork and msg as arguments to handleMessage on xCall.
 
-In case the message fails to be delivered for any reason, the code triggers the handleError function. It passes the failed sn to the function. The responsibility of this function is to handle errors that occur during the message delivery process.
+In case the message fails to be delivered for any reason, the connection triggers the handleError function. It passes the failed sn to the function. The responsibility of this function is to handle errors that occur during the message delivery process.
 
 The second external function, getFee(network, response), calculates and returns the fee required to send a message to the specified network and back. It takes into account the optional response parameter when determining the fee.
 
@@ -310,7 +290,7 @@ CallRequest {
 ```
 MAX_DATA_SIZE: <size>
 MAX_ROLLBACK_SIZE: <size>
-NID: <chains networkId>
+NID: <networkId>
 
 sn: <current send message sequence>
 reqId: <current incoming message sequence>
@@ -347,7 +327,7 @@ function init(String networkId) {
 `_data`: The data to be sent to the `_to` contract.
 `_rollback`: The data to be returned to the caller in case of failure.
 `sources`: A set of addresses representing the connections to be used when sending the message. These connections are also used to verify potential rollbacks
-`destination`: The addresses that the target contract should wait for messages from before considering the it complete.
+`destination`: The addresses that the target contract should wait for messages from before considering it complete.
 
 ```javascript
 payable external function sendCallMessage(String _to,
@@ -377,11 +357,11 @@ payable external function sendCallMessage(String _to,
     if sources == []:
         src = defaultConnection[dst.net()]
         fee = src->getFee(dst.net(), needResponse)
-        src->sendMessage(fee, dst.net(), "xcall", sendSn, msg)
+        src->sendMessage(fee, dst.net(), "xcall-multi", sendSn, msg)
     else:
         for src in sources:
             fee = src->getFee(dst.net(), needResponse)
-            src->sendMessage(fee, dst.net(), "xcall", sendSn, msg)
+            src->sendMessage(fee, dst.net(), "xcall-multi", sendSn, msg)
 
 
     remaningBalance = getBalance();
@@ -501,7 +481,7 @@ internal function handleResponse(data bytes) {
 ```
 
 #### Message Execution
-
+If a two-message the function should allow the call to fail and send a new message to rollback the message. While if a one way message fails re-execution should be allowed.
 ```javascript
 external function executeCall(Integer _reqId, byte[] data) {
         req = proxyReqs[_reqId];
@@ -529,10 +509,10 @@ external function executeCall(Integer _reqId, byte[] data) {
             msg = CSMessage(CSMessage.RESPONSE, response.toBytes());
             if req.protocols == []:
                 protocol = defaultConnection[from.net()]
-                protocol->sendMessage(from.net(), "xcall", sn, msg.toBytes())
+                protocol->sendMessage(from.net(), "xcall-multi", sn, msg.toBytes())
             else:
-                for (String protocol : req.protocols)):
-                    protocol->sendMessage(from.net(), "xcall", sn, msg.toBytes())
+                for (String protocol : req.protocols):
+                    protocol->sendMessage(from.net(), "xcall-multi", sn, msg.toBytes())
     }
 
 ```
@@ -546,7 +526,7 @@ external function executeRollback(Integer _sn) {
     if req.protocols == []:
         req.from->handleCallMessage(getNetworkAddress(), req.rollback);
     else:
-        req.from->handleCallMessage(getNetworkAddress(), req.rollback req.protocols);
+        req.from->handleCallMessage(getNetworkAddress(), req.rollback,  req.protocols);
 
      RollbackExecuted(_sn);
 }
@@ -615,6 +595,35 @@ external readonly function  verifySuccess(Integer sn) returns boolean {
     return successfulResponses[sn];
 }
 ```
+
+## Differences from IIP52 xCall
+Multi protocol xCall is based on the inital spec defined in [IIP52](https://github.com/icon-project/IIPs/blob/master/IIPS/iip-52.md).
+* Two new optional parameters in sendCallMessage, `_sources` and `destinations`.
+    These parameters can be specified to choose the protocols to deliver the xCall message. If for example a dapp wanted to use BTP they would specify the address of BMC as the source and the address of BMC on destination chain as destinations.
+
+* Rollback guarantees.
+    In IIP52 xCall rollback execution can only be tried once before removed which can cause loss of data in case of failure. In xCall multi protocol it can be retired until successful.
+
+* Two-way message success verification.
+    For all two way messages a response has to be relayed back since the fee has already been paid. This means the in most cases a response with the result success is being relayed back. In xCall multi protocol we store this success receipt so it can verified by dapps.
+
+* BTP address has been replaced completely by Network Address.
+    A BTP address is a Network Address as defined here with a "btp://" prefix. A Network Address in IIP52 refers to the Network Id in this document which might cause some confusion.
+
+* The source of truth for a Network Id is now in xCall and not BMC.
+
+* `_nsn` is removed from CallMessageSent event.
+
+* Error messages are no longer relayed across chains in a response.
+
+* `_msg` has been removed from ResponseMessage event.
+    This is dues to the removal of relaying of error messages.
+
+* A message can now only be success or failure (1 or 0).
+    In IIP52 a message can have many different error codes but was not used by dapps and same behavior is not necessarily supported by all chains.
+
+* MaxDataSize is defined on the whole payload rather than only user data
+    This change was necessary to limit the size of the `_sources` and `destinations` parameters.
 
 ### Error Handling
 ...
