@@ -1,5 +1,5 @@
 use common::utils::keccak256;
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Reply, Response, StdError, SubMsg};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Reply, Response, SubMsg};
 
 use crate::{
     error::ContractError,
@@ -39,20 +39,22 @@ impl<'a> CwCallService<'a> {
         request_id: u128,
         data: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        let request = self.get_proxy_request(deps.storage, request_id).unwrap();
+        let proxy_requests = self.get_proxy_request(deps.storage, request_id).unwrap();
+
         let data_hash = keccak256(&data).to_vec();
-        if data_hash != request.data().unwrap().to_vec() {
+        if data_hash != proxy_requests.data().unwrap().to_vec() {
             return Err(ContractError::DataMismatch);
         }
 
-        self.ensure_request_not_null(request_id, &request).unwrap();
+        self.ensure_request_not_null(request_id, &proxy_requests)
+            .unwrap();
 
         let sub_msg = self.call_dapp_handle_message(
             info,
-            request.to().clone(),
-            request.from().clone(),
+            proxy_requests.to().clone(),
+            proxy_requests.from().clone(),
             data,
-            request.protocols().clone(),
+            proxy_requests.protocols().clone(),
             EXECUTE_CALL_ID,
         )?;
 
@@ -75,28 +77,26 @@ impl<'a> CwCallService<'a> {
         let request = self.get_proxy_request(deps.storage, req_id)?;
         self.remove_proxy_request(deps.storage, req_id);
 
-        let (response, error_message) = match msg.result {
+        let (response, event) = match msg.result {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
+                let code = CallServiceResponseType::CallServiceResponseSuccess.into();
+
                 let message_response = CallServiceMessageResponse::new(
                     request.sequence_no(),
                     CallServiceResponseType::CallServiceResponseSuccess,
                 );
-                (message_response, "success".to_string())
+                let event = event_call_executed(req_id, code, "success");
+                (message_response, event)
             }
             cosmwasm_std::SubMsgResult::Err(err) => {
+                let code = CallServiceResponseType::CallServiceResponseFailure;
                 let error_message = format!("CallService Reverted : {err}");
-                let message_response = CallServiceMessageResponse::new(
-                    request.sequence_no(),
-                    CallServiceResponseType::CallServiceResponseFailure,
-                );
-                (message_response, error_message)
+                let message_response =
+                    CallServiceMessageResponse::new(request.sequence_no(), code.clone());
+                let event = event_call_executed(req_id, code.into(), &error_message);
+                (message_response, event)
             }
         };
-        let event = event_call_executed(
-            req_id,
-            response.response_code().clone().into(),
-            &error_message,
-        );
         let mut submsgs: Vec<SubMsg> = vec![];
         let sn: i64 = -(request.sequence_no() as i64);
         if request.rollback() {
@@ -111,10 +111,6 @@ impl<'a> CwCallService<'a> {
                 .iter()
                 .map(|to| self.call_connection_send_message(to, vec![], from.nid(), sn, &message))
                 .collect::<Result<Vec<SubMsg>, ContractError>>()?;
-        } else if *response.response_code() == CallServiceResponseType::CallServiceResponseFailure {
-            return Err(ContractError::Std(StdError::GenericErr {
-                msg: (error_message),
-            }));
         }
 
         Ok(Response::new()

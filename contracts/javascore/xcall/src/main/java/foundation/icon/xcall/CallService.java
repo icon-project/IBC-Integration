@@ -17,7 +17,6 @@
 package foundation.icon.xcall;
 
 import foundation.icon.score.client.ScoreClient;
-import foundation.icon.score.client.ScoreInterface;
 import score.Address;
 import score.annotation.EventLog;
 import score.annotation.External;
@@ -27,7 +26,6 @@ import score.annotation.Payable;
 import java.math.BigInteger;
 
 @ScoreClient
-@ScoreInterface
 public interface CallService {
     /**
      * The name of CallService.

@@ -28,7 +28,7 @@ The default connections are specified by and admin and can be changed at any tim
  *
  * @param _to The network address of the callee on the destination chain
  * @param _data The calldata specific to the target contract
- * @param _rollback (Optional) Data used to specify error handling of a two-way messages
+ * @param _rollback (Optional) The data for restoring the caller state when an error occurred
  * @param sources  (Optional) The contracts that will be used to send the message
  * @param destinations (Optional) The addresses of the contracts that xcall will expect the message from.
  *
@@ -59,7 +59,8 @@ CallMessage {
 }
 ```
 #### CallExecuted
-CallExecuted event is emitted when a message is executed. For one way message error is always empty
+CallExecuted event is emitted when a message is executed·
+
  `_reqId` The message id
  `_code` The execution result code (0: Success, -1: Unknown generic failure, >=1: User defined error code)
  `_msg` Error message
@@ -91,7 +92,7 @@ RollbackMessage {
 
 
 #### RollbackExecuted
-RollbackExecuted event is emitted when a rollback message is executed.
+RollbackExecuted event is emitted when a message is executed·
  `_sn` The message id
 ```javascript
 RollbackExecuted{
@@ -119,7 +120,8 @@ CallMessageSent{
 #### Execution
 
 The user on the destination chain recognizes the call request and invokes the following method on xcall with the given _reqId and _data.
-To minimize the gas cost, the calldata payload delivered from the source chain are exported to event, `_data` field, instead of storing it in the state db. In case of a two-way message rollback will be triggered in case of failure.
+To minimize the gas cost, the calldata payload delivered from the source chain are exported to event, `_data` field,
+instead of storing it in the state db.
 The `_data` payload should be repopulated by the user (or client) when calling the following `executeCall` method.
 Then `xcall` compares it with the saved hash value to validate its integrity.
 
@@ -161,7 +163,7 @@ external handleCallMessage(String _from, byte[] _data, @Optional String[] _proto
 ```
 
 #### Success verification
-If rollback was specified and the call was successful, the success can be verified,
+If rollback was specified and the call was successful, that success can be verified
 
 
 ```javascript
@@ -190,7 +192,7 @@ Sending a message through xCall has 2 types of fees. One for using the protocol 
  * @param sources The protocols used to send the message is omitted default protocol is used.
  * @return The total fee of sending the message
  */
-external readonly getFee(String _net,
+external readonly  getFee(String _net,
                           boolean _rollback
                           @Optional String[] sources) returns Integer;
 ```
@@ -499,7 +501,7 @@ internal function handleResponse(data bytes) {
 ```
 
 #### Message Execution
-If a two-message the function should allow the call to fail and send a new message to rollback the message. While if a one way message fails re-execution should be allowed.
+
 ```javascript
 external function executeCall(Integer _reqId, byte[] data) {
         req = proxyReqs[_reqId];
@@ -509,26 +511,20 @@ external function executeCall(Integer _reqId, byte[] data) {
         assert hash(data) == req.data
 
         from = NetworkAddress(req.from);
-        if !req.needRollback():
-             if req.protocols == []:
+        ErrorMessage = ""
+        try:
+            if req.protocols == []:
                 req.to->handleCallMessage(req.from, data);
             else:
                 req.to->handleCallMessage(req.from, data, req.protocols);
-            emit CallExecuted(_reqId, CSMessageResponse.SUCCESS, "");
-        else:
+            response = new CSMessageResponse(req.sn, CSMessageResponse.SUCCESS);
+        catch err:
+            response = new CSMessageResponse(req.sn, CSMessageResponse.FAILURE);
+            ErrorMessage = err.message
 
-            ErrorMessage = ""
-            try:
-                 if req.protocols == []:
-                    req.to->handleCallMessage(req.from, data);
-                else:
-                    req.to->handleCallMessage(req.from, data, req.protocols);
-                response = new CSMessageResponse(req.sn, CSMessageResponse.SUCCESS);
-            catch err:
-                response = new CSMessageResponse(req.sn, CSMessageResponse.FAILURE);
-                ErrorMessage = err.message
+        emit CallExecuted(_reqId, response.code, response.msg, ErrorMessage);
 
-            emit CallExecuted(_reqId, response.code, ErrorMessage);
+        if req.needRollback():
             sn = req.sn.negate();
             msg = CSMessage(CSMessage.RESPONSE, response.toBytes());
             if req.protocols == []:

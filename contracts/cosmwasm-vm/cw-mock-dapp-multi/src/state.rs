@@ -11,6 +11,7 @@ pub struct Connection {
 pub struct CwMockService<'a> {
     sequence: Item<'a, u64>,
     xcall_address: Item<'a, String>,
+    rollback: Map<'a, u64, Vec<u8>>,
     connections: Map<'a, String, Vec<Connection>>,
 }
 
@@ -25,6 +26,7 @@ impl<'a> CwMockService<'a> {
         Self {
             sequence: Item::new(StorageKey::SequenceNo.as_str()),
             xcall_address: Item::new(StorageKey::Address.as_str()),
+            rollback: Map::new(StorageKey::RollBack.as_str()),
             connections: Map::new(StorageKey::Connections.as_str()),
         }
     }
@@ -35,6 +37,10 @@ impl<'a> CwMockService<'a> {
 
     pub fn xcall_address(&self) -> &Item<'a, String> {
         &self.xcall_address
+    }
+
+    pub fn roll_back(&self) -> &Map<'a, u64, Vec<u8>> {
+        &self.rollback
     }
 
     pub fn connections(&self) -> &Map<'a, String, Vec<Connection>> {

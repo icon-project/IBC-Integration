@@ -17,11 +17,11 @@
 package xcall.sample.dapp;
 
 import java.math.BigInteger;
-
 import score.Address;
-import score.ArrayDB;
-import score.BranchDB;
 import score.Context;
+import score.DictDB;
+import score.UserRevertedException;
+import score.VarDB;
 import score.annotation.EventLog;
 import score.annotation.External;
 import score.annotation.Optional;
@@ -31,8 +31,10 @@ import foundation.icon.xcall.NetworkAddress;
 
 public class MultiProtocolSampleDapp implements CallServiceReceiver {
     private final Address callSvc;
-    private final BranchDB<String, ArrayDB<String>> sources = Context.newBranchDB("source", String.class);
-    private final BranchDB<String, ArrayDB<String>> destinations = Context.newBranchDB("destination", String.class);
+    private final VarDB<BigInteger> id = Context.newVarDB("id", BigInteger.class);
+    private final DictDB<BigInteger, RollbackData> rollbacks = Context.newDictDB("rollbacks", RollbackData.class);
+    private final DictDB<String, String> source = Context.newDictDB("source", String.class);
+    private final DictDB<String, String> destination = Context.newDictDB("destination", String.class);
 
     public MultiProtocolSampleDapp(Address _callService) {
         this.callSvc = _callService;
@@ -42,81 +44,73 @@ public class MultiProtocolSampleDapp implements CallServiceReceiver {
         Context.require(Context.getCaller().equals(this.callSvc), "onlyCallService");
     }
 
+    private BigInteger getNextId() {
+        BigInteger _id = this.id.getOrDefault(BigInteger.ZERO);
+        _id = _id.add(BigInteger.ONE);
+        this.id.set(_id);
+        return _id;
+    }
+
     @External
     public void addConnection(String nid, String source, String destination) {
-        this.sources.at(nid).add(source);
-        this.destinations.at(nid).add(destination);
-    }
-
-    @External(readonly = true)
-    public String[] getSources(String nid) {
-        return toArray(this.sources.at(nid));
-    }
-
-    @External(readonly = true)
-    public String[] getDestinations(String nid) {
-        return toArray(this.destinations.at(nid));
-    }
-
-
-    public String[] toArray(ArrayDB<String> db) {
-        int size = db.size();
-        String[] arr = new String[size];
-        for (int i = 0; i < size; i++) {
-            arr[i] = db.get(i);
-        }
-
-        return arr;
+        this.source.set(nid, source);
+        this.destination.set(nid, destination);
     }
 
     @Payable
     @External
     public void sendMessage(String _to, byte[] _data, @Optional byte[] _rollback) {
-        _sendCallMessage(Context.getValue(), _to, _data, _rollback);
+        if (_rollback != null) {
+            // The code below is not actually necessary because the _rollback data is stored on the xCall side,
+            // but in this example, it is needed for testing to compare the _rollback data later.
+            var id = getNextId();
+            Context.println("DAppProxy: store rollback data with id=" + id);
+            RollbackData rbData = new RollbackData(id, _rollback);
+            var ssn = _sendCallMessage(Context.getValue(), _to, _data, rbData.toBytes());
+            rbData.setSvcSn(ssn);
+            rollbacks.set(id, rbData);
+        } else {
+            // This is for one-way message
+            _sendCallMessage(Context.getValue(), _to, _data, null);
+        }
     }
 
     private BigInteger _sendCallMessage(BigInteger value, String to, byte[] data, byte[] rollback) {
-        String net = NetworkAddress.valueOf(to).net();
-        return Context.call(BigInteger.class, value, this.callSvc, "sendCallMessage", to, data, rollback, getSources(net), getDestinations(net));
+        try {
+            String net = NetworkAddress.valueOf(to).net();
+            return Context.call(BigInteger.class, value, this.callSvc, "sendCallMessage", to, data, rollback, new String[]{source.get(net)}, new String[]{destination.get(net)});
+        } catch (UserRevertedException e) {
+            // propagate the error code to the caller
+            Context.revert(e.getCode(), "UserReverted");
+            return BigInteger.ZERO; // call flow does not reach here, but make compiler happy
+        }
     }
 
     @External
     public void handleCallMessage(String _from, byte[] _data, String[] protocols) {
         onlyCallService();
-        NetworkAddress from = NetworkAddress.parse(_from);
         String rollbackAddress = Context.call(String.class, this.callSvc, "getNetworkAddress");
         Context.println("handleCallMessage: from=" + _from + ", data=" + new String(_data));
         if (rollbackAddress.equals(_from)) {
-            return;
+            // handle rollback data here
+            // In this example, just compare it with the stored one.
+            RollbackData received = RollbackData.fromBytes(_data);
+            var id = received.getId();
+            RollbackData stored = rollbacks.get(id);
+            Context.require(stored != null, "invalid received id");
+            Context.require(received.equals(stored), "rollbackData mismatch");
+            rollbacks.set(id, null); // cleanup
+            RollbackDataReceived(_from, stored.getSvcSn(), received.getRollback());
         } else {
-            Context.require(equals(protocols, getSources(from.net())), "invalid protocols");
-
             Context.require(!new String(_data).equals("rollback"), "failed");
             // normal message delivery
             MessageReceived(_from, _data);
         }
     }
 
+    @EventLog
+    public void MessageReceived(String _from, byte[] _data) {}
 
     @EventLog
-    public void MessageReceived(String _from, byte[] _data) {
-    }
-
-    public static <T> boolean equals(T[] a, T[] b) {
-        if (a == b)
-            return true;
-        if (a == null || b == null)
-            return false;
-
-        int length = a.length;
-        if (b.length != length)
-            return false;
-
-        for (int i = 0; i < length; i++) {
-            if (!a[i].equals(b[i]))
-                return false;
-        }
-
-        return true;
-    }
+    public void RollbackDataReceived(String _from, BigInteger _ssn, byte[] _rollback) {}
 }

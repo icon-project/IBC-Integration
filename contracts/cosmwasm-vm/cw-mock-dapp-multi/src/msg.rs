@@ -13,6 +13,15 @@ pub enum ExecuteMsg {
         data: Vec<u8>,
         protocols: Vec<String>,
     },
+    XCallMessage {
+        data: Vec<u8>,
+    },
+    SuccessCall {},
+    FailureCall {},
+    TestCall {
+        success_addr: String,
+        fail_addr: String,
+    },
     AddConnection {
         src_endpoint: String,
         dest_endpoint: String,
