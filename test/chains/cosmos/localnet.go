@@ -15,8 +15,8 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 
 	"go.uber.org/zap"
 )
@@ -45,7 +45,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 		return nil, err
 	}
 
-	ibcAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, ibcCodeId, "{}", true)
+	ibcAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, ibcCodeId, "{}", true, c.GetCommonArgs()...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 	}
 
 	// Parameters here will be empty in the future
-	clientAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, clientCodeId, `{"ibc_host":"`+ibcAddress+`"}`, true)
+	clientAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, clientCodeId, `{"ibc_host":"`+ibcAddress+`"}`, true, c.GetCommonArgs()...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 	}
 	fmt.Println(contracts.ContractAddress)
 
-	err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"register_client":{"client_type":"iconclient", "client_address":"`+clientAddress+`"}}`)
+	_, err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"register_client":{"client_type":"iconclient", "client_address":"`+clientAddress+`"}}`)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 		return err
 	}
 
-	xCallAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, xCallCodeId, `{"network_id": "`+c.Config().ChainID+`", "denom":"`+denom+`"}`, true)
+	xCallAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, xCallCodeId, `{"network_id": "`+c.Config().ChainID+`", "denom":"`+denom+`"}`, true, c.GetCommonArgs()...)
 	if err != nil {
 		return err
 	}
@@ -107,12 +107,12 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 		return err
 	}
 
-	connectionAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, connectionCodeId, `{"port_id":"`+portId+`","xcall_address":"`+xCallAddress+`", "denom":"`+denom+`", "ibc_host":"`+ibcAddress+`"}`, true)
+	connectionAddress, err := c.CosmosChain.InstantiateContract(ctx, keyName, connectionCodeId, `{"port_id":"`+portId+`","xcall_address":"`+xCallAddress+`", "denom":"`+denom+`", "ibc_host":"`+ibcAddress+`"}`, true, c.GetCommonArgs()...)
 	if err != nil {
 		return err
 	}
 
-	err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"bind_port":{"port_id":"`+portId+`", "address":"`+connectionAddress+`"}}`)
+	_, err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"bind_port":{"port_id":"`+portId+`", "address":"`+connectionAddress+`"}}`)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (c *CosmosLocalnet) DeployXCallMockApp(ctx context.Context, connection chai
 		return err
 	}
 
-	dappAddress, err := c.CosmosChain.InstantiateContract(ctx, connection.KeyName, dappCodeId, `{"address":"`+xcall+`"}`, true)
+	dappAddress, err := c.CosmosChain.InstantiateContract(ctx, connection.KeyName, dappCodeId, `{"address":"`+xcall+`"}`, true, c.GetCommonArgs()...)
 	if err != nil {
 		return err
 	}
@@ -290,7 +290,7 @@ func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (co
 	if initMessage == "runtime" {
 		initMessage = c.getInitParams(ctx, contractName)
 	}
-	address, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, codeId, initMessage, true)
+	address, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, codeId, initMessage, true, c.GetCommonArgs()...)
 	if err != nil {
 		return nil, err
 	}
@@ -367,4 +367,8 @@ func (c *CosmosLocalnet) BuildWallets(ctx context.Context, keyName string) error
 	// Build Wallet and fund user
 	_, _, err := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
 	return err
+}
+
+func (c *CosmosLocalnet) GetCommonArgs() []string {
+	return []string{"--gas", "auto"}
 }
