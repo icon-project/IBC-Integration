@@ -51,6 +51,10 @@ optimizedJar {
     }
 }
 
+jar {
+    archiveFileName = "${project.name}-${project.version}-optimized.jar"
+}
+
 deployJar {
     endpoints {
         berlin {
