@@ -92,14 +92,15 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
-task collectJars(type: Copy) {
-    from subprojects.jar
-    into "$buildDir/output-jars"
+task zipOutputJars(type: Zip) {
+    description = 'Zips all jar output from subprojects'
+    baseName = 'output-jars'
+    destinationDir = file("$buildDir/zipped-jars")
+    
+    // Add each subproject's JAR file to the ZIP task
+    from subprojects.collect { it.tasks.named('jar', AbstractArchiveTask.class) }
+
+    // Include all JAR files in the root project's build directory
+    from jar
 }
 
-task zipOutputJars(type: Zip) {
-    dependsOn collectJars
-    from "$buildDir/output-jars"
-    archiveFileName = "javascore-contracts.zip"
-    destinationDirectory = file("$buildDir")
-}
