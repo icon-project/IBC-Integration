@@ -51,6 +51,7 @@ optimizedJar {
     }
 }
 
+
 deployJar {
     endpoints {
         berlin {
