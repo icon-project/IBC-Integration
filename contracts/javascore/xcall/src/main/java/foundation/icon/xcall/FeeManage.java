@@ -17,7 +17,6 @@
 package foundation.icon.xcall;
 
 import foundation.icon.score.client.ScoreClient;
-import score.Address;
 import score.annotation.External;
 import score.annotation.Optional;
 

@@ -70,33 +70,15 @@ impl<'a> CwMockService<'a> {
 
     pub fn handle_call_message(
         &self,
-        deps: DepsMut,
         info: MessageInfo,
         from: NetworkAddress,
         data: Vec<u8>,
         _protocols: Vec<String>,
     ) -> Result<Response, ContractError> {
         if info.sender == from.account() {
-            let recieved_rollback =
-                serde_json_wasm::from_slice::<RollbackData>(&data).map_err(|e| {
-                    ContractError::DecodeError {
-                        error: e.to_string(),
-                    }
-                })?;
-            let seq = recieved_rollback.id;
-            let rollback_store = self
-                .roll_back()
-                .load(deps.storage, seq)
-                .map_err(|_e| ContractError::MisiingRollBack { sequence: seq })?;
-            if rollback_store != recieved_rollback.rollback {
-                return Err(ContractError::RollBackMismatch { sequence: seq });
-            }
-            self.roll_back().remove(deps.storage, seq);
-
             Ok(Response::new()
                 .add_attribute("action", "RollbackDataReceived")
-                .add_attribute("from", from.to_string())
-                .add_attribute("sequence", seq.to_string()))
+                .add_attribute("from", from.to_string()))
         } else {
             let msg_data = from_utf8(&data).map_err(|e| ContractError::DecodeError {
                 error: e.to_string(),

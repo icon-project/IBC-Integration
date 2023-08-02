@@ -107,7 +107,6 @@ fn test_handle_message() {
     ctx.instantiate(deps.as_mut(), env, info.clone(), msg)
         .unwrap();
     let res = ctx.handle_call_message(
-        deps.as_mut(),
         info,
         NetworkAddress::from_str("netid/xcall").unwrap(),
         "helloError".as_bytes().to_vec(),
@@ -132,7 +131,6 @@ fn test_handle_message_fail_revert() {
     ctx.instantiate(deps.as_mut(), env, info.clone(), msg)
         .unwrap();
     ctx.handle_call_message(
-        deps.as_mut(),
         info,
         NetworkAddress::from_str("netid/xcall").unwrap(),
         "rollback".as_bytes().to_vec(),
@@ -156,16 +154,11 @@ fn test_handle_message_pass_true() {
     ctx.instantiate(deps.as_mut(), env, info.clone(), msg)
         .unwrap();
 
-    ctx.roll_back()
-        .save(&mut deps.storage, 1, &vec![1, 2, 3])
-        .unwrap();
-
     let rollback_data = RollbackData {
         id: 1,
         rollback: vec![1, 2, 3],
     };
     let res = ctx.handle_call_message(
-        deps.as_mut(),
         info,
         NetworkAddress::from_str("netid/hugobyte").unwrap(),
         to_vec(&rollback_data).unwrap(),
@@ -174,34 +167,4 @@ fn test_handle_message_pass_true() {
     assert!(res.is_ok());
     println!("{:?}", res);
     assert_eq!(res.unwrap().attributes[0].value, "RollbackDataReceived")
-}
-
-#[test]
-#[should_panic(expected = "MisiingRollBack")]
-fn test_handle_message_fail_true() {
-    let mut deps = deps();
-    let ctx = CwMockService::default();
-    let info = create_mock_info("hugobyte", "umlg", 2000);
-    let env = mock_env();
-
-    ctx.init_sequence(&mut deps.storage, u64::default())
-        .unwrap();
-    let msg = InstantiateMsg {
-        address: "xcall-address".to_string(),
-    };
-    ctx.instantiate(deps.as_mut(), env, info.clone(), msg)
-        .unwrap();
-
-    let rollback_data = RollbackData {
-        id: 1,
-        rollback: vec![1, 2, 3],
-    };
-    ctx.handle_call_message(
-        deps.as_mut(),
-        info,
-        NetworkAddress::from_str("netid/hugobyte").unwrap(),
-        to_vec(&rollback_data).unwrap(),
-        vec![],
-    )
-    .unwrap();
 }

@@ -15,7 +15,7 @@ use super::*;
 ///
 /// This code returns an instance of the `Event` struct with attributes `request_id`, `code`, and `msg`
 /// added to it. The event represents the execution of a call.
-pub fn event_call_executed(request_id: u128, code: i8, msg: &str) -> Event {
+pub fn event_call_executed(request_id: u128, code: u8, msg: &str) -> Event {
     Event::new("CallExecuted")
         .add_attribute("reqId", request_id.to_string())
         .add_attribute("code", code.to_string())
@@ -48,27 +48,17 @@ pub fn event_xcall_message_sent(from: String, destination: String, sn: u128) -> 
         .add_attribute("sn", sn.to_string())
 }
 
-/// The function creates an event object for a rollback execution with sequence number, code, and
-/// message attributes.
+/// The function creates an event object for a rollback execution with sequence number
 ///
 /// Arguments:
 ///
 /// * `sequence_no`: The sequence number of the rollback request that was executed.
-/// * `code`: The `code` parameter is an integer value that represents the status code of the rollback
-/// execution. It could be used to indicate whether the rollback was successful or not, or to provide
-/// more specific information about the reason for the rollback.
-/// * `msg`: The `msg` parameter is a string that represents a message or description of the event that
-/// occurred during the rollback execution. It is used to provide additional information about the event
-/// to the user or other parts of the system.
 ///
 /// Returns:
 ///
-/// A new `Event` object with attributes "request_id", "code", and "msg" added to it.
-pub fn event_rollback_executed(sequence_no: u128, code: i8, msg: &str) -> Event {
-    Event::new("RollbackExecuted")
-        .add_attribute("sn", sequence_no.to_string())
-        .add_attribute("code", code.to_string())
-        .add_attribute("msg", msg.to_string())
+/// A new `Event` object with attributes "sequence_no" added to it.
+pub fn event_rollback_executed(sequence_no: u128) -> Event {
+    Event::new("RollbackExecuted").add_attribute("sn", sequence_no.to_string())
 }
 
 /// The function creates a new event with attributes for a call message in Rust.
@@ -130,15 +120,12 @@ pub fn event_rollback_message(sequence_no: u128) -> Event {
 /// * `response_code`: The `response_code` parameter is an integer value representing the response code
 /// of an event. It is of type `i8`, which means it can hold values from -128 to 127. The response code
 /// is typically used to indicate the status or outcome of an operation or request.
-/// * `message`: The `message` parameter is a string that represents the message to be included in the
-/// response event. It can be any text that provides additional information about the response.
 ///
 /// Returns:
 ///
-/// A new `Event` object with the attributes `sequence_no`, `response_code`, and `message` added to it.
-pub fn event_response_message(sequence_no: u128, response_code: i8, message: &str) -> Event {
+/// A new `Event` object with the attributes `sequence_no` and `response_code` added to it.
+pub fn event_response_message(sequence_no: u128, response_code: u8) -> Event {
     Event::new("ResponseMessage")
         .add_attribute("sn", sequence_no.to_string())
         .add_attribute("code", response_code.to_string())
-        .add_attribute("msg", message.to_string())
 }

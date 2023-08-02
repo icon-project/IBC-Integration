@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 
 use cw_xcall::{
-    state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID},
+    state::{CwCallService, EXECUTE_CALL_ID},
     types::{call_request::CallRequest, request::CallServiceMessageRequest},
 };
 use cw_xcall_lib::network_address::NetworkAddress;
@@ -133,7 +133,7 @@ fn test_successful_reply_message() {
 
     let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
 
-    assert_eq!(response.events[0].attributes[1].value, 0.to_string());
+    assert_eq!(response.events[0].attributes[1].value, 1.to_string());
 }
 
 #[test]
@@ -168,46 +168,7 @@ fn test_failed_reply_message() {
 
     let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
 
-    assert_eq!(response.events[0].attributes[1].value, "-1".to_string());
-}
-
-#[test]
-fn check_for_rollback_in_response() {
-    let mut mock_deps = deps();
-
-    let env = mock_env();
-
-    let msg = Reply {
-        id: EXECUTE_ROLLBACK_ID,
-        result: SubMsgResult::Ok(SubMsgResponse {
-            events: vec![],
-            data: None,
-        }),
-    };
-
-    let contract = CwCallService::default();
-
-    let seq_id = 123456;
-
-    let request = CallRequest::new(
-        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
-        NetworkAddress::new("nid", "mockaddress"),
-        vec![],
-        vec![1, 2, 3],
-        true,
-    );
-
-    contract
-        .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
-        .unwrap();
-
-    contract
-        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
-        .unwrap();
-
-    let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
-
-    assert_eq!("0", response.events[0].attributes[1].value)
+    assert_eq!(response.events[0].attributes[1].value, "0".to_string());
 }
 
 #[test]
@@ -220,42 +181,6 @@ fn test_invalid_sequence_no() {
     contract
         .get_proxy_request(deps.as_ref().storage, 123456)
         .unwrap();
-}
-
-#[test]
-fn check_for_rollback_response_failure() {
-    let mut mock_deps = deps();
-
-    let env = mock_env();
-
-    let msg = Reply {
-        id: EXECUTE_ROLLBACK_ID,
-        result: SubMsgResult::Err("error message".into()),
-    };
-
-    let contract = CwCallService::default();
-
-    let seq_id = 123456;
-
-    let request = CallRequest::new(
-        Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f126e4"),
-        NetworkAddress::new("nid", "mockaddress"),
-        vec![],
-        vec![],
-        false,
-    );
-
-    contract
-        .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
-        .unwrap();
-
-    contract
-        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
-        .unwrap();
-
-    let response = contract.reply(mock_deps.as_mut(), env, msg).unwrap();
-
-    assert_eq!("-1", response.events[0].attributes[1].value)
 }
 
 #[test]
@@ -315,6 +240,7 @@ fn execute_rollback_success() {
         }
         _ => todo!(),
     }
+    assert_eq!(seq_id.to_string(), response.events[0].attributes[0].value)
 }
 
 #[test]

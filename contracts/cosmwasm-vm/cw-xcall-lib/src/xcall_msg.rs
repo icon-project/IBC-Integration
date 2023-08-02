@@ -24,14 +24,11 @@ pub enum ExecuteMsg {
     },
     HandleMessage {
         from: NetId,
-        sn: Option<i64>,
         msg: Vec<u8>,
     },
 
     HandleError {
-        sn: i64,
-        code: i64,
-        msg: String,
+        sn: u128,
     },
     ExecuteCall {
         request_id: u128,

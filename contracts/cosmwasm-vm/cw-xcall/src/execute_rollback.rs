@@ -1,12 +1,12 @@
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::MessageInfo;
+use cosmwasm_std::SubMsgResult;
 use cosmwasm_std::{Deps, Env, Reply, Response};
-use schemars::_serde_json::to_string;
 
 use crate::error::ContractError;
 use crate::events::event_rollback_executed;
 use crate::state::{CwCallService, EXECUTE_ROLLBACK_ID};
-use crate::types::response::{CallServiceMessageResponse, CallServiceResponseType};
+use crate::types::LOG_PREFIX;
 
 impl<'a> CwCallService<'a> {
     /// This function executes a rollback operation for a previously made call request.
@@ -34,6 +34,7 @@ impl<'a> CwCallService<'a> {
         sequence_no: u128,
     ) -> Result<Response, ContractError> {
         let call_request = self.get_call_request(deps.storage, sequence_no)?;
+        self.cleanup_request(deps.storage, sequence_no);
 
         self.ensure_call_request_not_null(sequence_no, &call_request)
             .unwrap();
@@ -50,11 +51,13 @@ impl<'a> CwCallService<'a> {
             call_request.protocols().clone(),
             EXECUTE_ROLLBACK_ID,
         )?;
-        self.store_execute_rollback_id(deps.storage, sequence_no)?;
+
+        let event = event_rollback_executed(sequence_no);
 
         Ok(Response::new()
             .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_call")
+            .add_attribute("method", "execute_rollback")
+            .add_event(event)
             .add_submessage(sub_msg))
     }
 
@@ -77,36 +80,27 @@ impl<'a> CwCallService<'a> {
     /// during contract execution.
     pub fn execute_rollback_reply(
         &self,
-        deps: Deps,
+        _deps: Deps,
         msg: Reply,
     ) -> Result<Response, ContractError> {
-        let sn = self.get_execute_rollback_id(deps.storage)?;
-
-        let response = match msg.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => CallServiceMessageResponse::new(
-                sn,
-                CallServiceResponseType::CallServiceResponseSuccess,
-                "",
-            ),
-            cosmwasm_std::SubMsgResult::Err(err) => {
-                let error_message = format!("CallService Reverted : {err}");
-                CallServiceMessageResponse::new(
-                    sn,
-                    CallServiceResponseType::CallServiceResponseFailure,
-                    &error_message,
-                )
+        match msg.result {
+            SubMsgResult::Ok(res) => {
+                println!("{LOG_PREFIX} Rollback Success");
+                println!("{:?}", res);
+                Ok(Response::new()
+                    .add_attribute("action", "reply")
+                    .add_attribute("method", "execute_rollback"))
             }
-        };
-
-        let event = event_rollback_executed(
-            sn,
-            (response.response_code().clone()).into(),
-            &to_string(response.message()).unwrap(),
-        );
-
-        Ok(Response::new()
-            .add_attribute("action", "call_message")
-            .add_attribute("method", "execute_rollback")
-            .add_event(event))
+            SubMsgResult::Err(error) => {
+                println!(
+                    "{} Execute Rollback Failed with error {}",
+                    LOG_PREFIX, &error
+                );
+                Err(ContractError::ReplyError {
+                    code: msg.id,
+                    msg: error,
+                })
+            }
+        }
     }
 }
