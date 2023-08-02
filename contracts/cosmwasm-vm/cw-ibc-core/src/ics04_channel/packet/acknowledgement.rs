@@ -47,7 +47,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
         let packet_sequence = Sequence::from(packet.sequence);
         let proof_height = to_ibc_height(msg.proof_height.clone())?;
-        // let packet = &msg.packet;
+
         let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
         if !chan_end_on_a.state_matches(&State::Open) {
             return Err(ContractError::IbcPacketError {
@@ -168,11 +168,9 @@ impl<'a> CwIbcCoreContext<'a> {
             client_id_on_a,
         )?;
 
-        // let packet = msg.packet.clone();
         let acknowledgement = msg.acknowledgement.clone();
         debug_println!("after matching ackowledgement ");
 
-        // let port_id = dst_port.clone();
         // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, dst_port.as_bytes().to_vec())?;
 

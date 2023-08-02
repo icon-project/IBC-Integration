@@ -33,7 +33,7 @@ fn test_for_channel_open_init_execution_message() {
     assert_eq!(response.attributes[0].value, "instantiate");
 
     let msg = get_dummy_raw_msg_chan_open_init(None);
-    // let mut msg = MsgChannelOpenInit::try_from(message_raw.clone()).unwrap();
+
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
@@ -118,7 +118,7 @@ fn test_for_channel_open_try_execution_message() {
     assert_eq!(response.attributes[0].value, "instantiate");
 
     let msg = get_dummy_raw_msg_chan_open_try(10);
-    // let mut msg = MsgChannelOpenTry::try_from(raw.clone()).unwrap();
+
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
@@ -380,7 +380,7 @@ fn test_for_channel_open_confirm() {
     assert_eq!(response.attributes[0].value, "instantiate");
 
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-    // let msg = MsgChannelOpenConfirm::try_from(raw.clone()).unwrap();
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let committment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -516,7 +516,7 @@ fn test_for_channel_close_init() {
     assert_eq!(response.attributes[0].value, "instantiate");
 
     let msg = get_dummy_raw_msg_chan_close_init();
-    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();

@@ -1,8 +1,5 @@
 use cw_ibc_core::{
-    conversions::{
-        to_ibc_channel_id, to_ibc_packet, to_ibc_timeout_block, to_ibc_timeout_height,
-        to_ibc_timestamp,
-    },
+    conversions::{to_ibc_channel_id, to_ibc_packet, to_ibc_timeout_height, to_ibc_timestamp},
     light_client::light_client::LightClient,
     VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
 };
@@ -283,7 +280,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         )
         .unwrap();
     let consenus_state: ConsensusState = get_dummy_consensus_state();
-    // let height = msg.proof_height_on_b;
+
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -473,7 +470,7 @@ fn test_acknowledgement_packet_validate_without_commitment() {
         )
         .unwrap();
     let consenus_state: ConsensusState = get_dummy_consensus_state();
-    // let height = msg.proof_height_on_b;
+
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(

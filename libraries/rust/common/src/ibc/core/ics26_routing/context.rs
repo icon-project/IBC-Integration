@@ -45,4 +45,3 @@ impl Borrow<str> for ModuleId {
         self.0.as_str()
     }
 }
-

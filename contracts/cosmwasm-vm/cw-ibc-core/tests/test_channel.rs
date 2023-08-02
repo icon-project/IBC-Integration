@@ -207,7 +207,7 @@ fn create_channel_id_event_test() {
 fn create_open_ack_channel_event_test() {
     let proof_height = 10;
     let default_raw_msg = get_dummy_raw_msg_chan_open_ack(proof_height);
-    // let message = MsgChannelOpenAck::try_from(default_raw_msg).unwrap();
+
     let version = Version::from_str(&default_raw_msg.counterparty_version).unwrap();
     let dest_channel = to_ibc_channel_id(&default_raw_msg.counterparty_channel_id).unwrap();
     let port_id = to_ibc_port_id(&default_raw_msg.port_id).unwrap();
@@ -447,7 +447,6 @@ fn test_validate_open_init_channel_fail_missing_connection_end() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-    // let msg = MsgChannelOpenInit::try_from(raw).unwrap();
 
     contract
         .validate_channel_open_init(deps.as_mut(), info, &raw)
@@ -605,7 +604,7 @@ fn test_validate_open_try_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    // let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
@@ -698,7 +697,6 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    //  let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -738,7 +736,6 @@ fn test_execute_open_try_channel() {
     let counter_port_id = channel.remote.port_id.clone();
     let counter_channel_id = channel.remote.channel_id.clone();
 
-    // let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
 
     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(

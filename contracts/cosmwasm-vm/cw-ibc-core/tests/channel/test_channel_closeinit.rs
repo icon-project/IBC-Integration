@@ -23,7 +23,7 @@ fn test_validate_close_init_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_close_init();
-    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let _module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
@@ -106,7 +106,6 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_close_init();
-    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
@@ -250,7 +249,7 @@ fn test_execute_close_init_channel_fail() {
 #[test]
 fn test_channel_close_init_validate() {
     let msg = get_dummy_raw_msg_chan_close_init();
-    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+
     let connection_id = ConnectionId::new(5);
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
@@ -275,7 +274,7 @@ fn test_channel_close_init_validate() {
 )]
 fn test_channel_close_init_validate_fail() {
     let msg = get_dummy_raw_msg_chan_close_init();
-    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+
     let connection_id = ConnectionId::new(5);
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
@@ -295,7 +294,7 @@ fn test_channel_close_init_validate_fail() {
 #[test]
 fn test_on_chan_close_init_submessage() {
     let msg = get_dummy_raw_msg_chan_close_init();
-    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+
     let connection_id = ConnectionId::new(5);
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();

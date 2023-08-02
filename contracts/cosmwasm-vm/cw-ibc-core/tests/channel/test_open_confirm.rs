@@ -19,7 +19,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-    // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let dest_port = to_ibc_port_id(&msg.port_id).unwrap();
     let dest_channel = to_ibc_channel_id(&msg.channel_id).unwrap();
@@ -109,7 +109,7 @@ fn test_validate_open_confirm_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-    // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
 
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
@@ -214,7 +214,7 @@ fn test_execute_open_confirm_channel() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let msg = get_dummy_raw_msg_chan_close_init();
-    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let connection_id = ConnectionId::new(5);
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
@@ -267,7 +267,7 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let msg = get_dummy_raw_msg_chan_close_init();
-    // let msg = MsgChannelCloseInit::try_from(raw).unwrap();
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let connection_id = ConnectionId::new(5);
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
@@ -318,7 +318,7 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
 #[test]
 pub fn test_channel_open_confirm_validate() {
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-    // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+
     let conn_id = ConnectionId::new(5);
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
@@ -339,7 +339,7 @@ pub fn test_channel_open_confirm_validate() {
 #[test]
 pub fn test_on_chan_open_confirm_submessage() {
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-    // let msg = MsgChannelOpenConfirm::try_from(raw).unwrap();
+
     let conn_id = ConnectionId::new(5);
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();

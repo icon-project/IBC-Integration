@@ -145,7 +145,7 @@ fn test_timeout_packet_validate_to_light_client() {
     let timeout_height = proof_height - 1;
     let timeout_timestamp = 0;
     let msg = get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
-    // let msg = MsgTimeout::try_from(default_raw_msg).unwrap();
+
     let packet = &msg.packet.clone().unwrap();
     let src_port = to_ibc_port_id(&packet.source_port).unwrap();
     let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
@@ -239,7 +239,7 @@ fn test_timeout_packet_validate_to_light_client() {
     }
     .try_into()
     .unwrap();
-    // let height = msg.proof_height_on_b;
+
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(

@@ -179,7 +179,6 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
         debug_println!("Light Client Validation Passed");
 
-        // let port_id = packet.src_port.clone();
         // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
