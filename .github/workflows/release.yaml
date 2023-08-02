@@ -17,12 +17,9 @@ jobs:
       - name: Build Javascore Contracts
         working-directory: contracts/javascore
         run: |
-          echo $PWD
-          git status
-          ./gradlew clean
-          ./gradlew build 
+          ./gradlew clean build
           ./gradlew optimizedJar
-          ./gradlew zipOutputJars
+          ./gradlew zipOutputOptimizedJars
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
