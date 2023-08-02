@@ -1,10 +1,8 @@
----
-name: Release
+name: Pre-release
 on:
-  push:
-    branches:
-      - 459-create-release-workflow-for-contracts_2
-
+  create:
+    tags:
+      - 'v*.*.*-alpha.*'
 permissions:
   contents: write
   packages: write
@@ -85,10 +83,10 @@ jobs:
           path: cosmwasm-contracts
 
       - name: Unzip Javascore Artifacts
-        run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts
+        run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts && rm -rf javascore-contracts/javascore-contracts.zip
 
       - name: Unzip Cosmwasm Artifacts
-        run: unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts
+        run: unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts && rm -rf cosmwasm-contracts/cosmwasm-contracts.zip
 
 
       - name: List of files
@@ -99,33 +97,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          tag_name: v0.1.0-alpha.9
-          release_name: Prerelease v0.1.0-alpha.9
+          # tag_name: v0.1.0-alpha.9
+          release_name: Prerelease ${{ env.GITHUB_REF }}
           draft: false
           prerelease: true
 
-      # - name: Upload Javascore Artifacts as Pre-release Assets
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: ./javascore-contracts/
-      #     asset_name: javascore-contracts
-      #     asset_content_type: application/octet-stream
-
-      # - name: Upload Cosmwasm Artifacts as Pre-release Assets
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: ./cosmwasm-contracts/
-      #     asset_name: cosmwasm-contracts
-      #     asset_content_type: application/octet-stream
       - name: Upload Javascore contracts to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./javascore-contracts/*
           # tag: ${{ github.ref }}
-          tag: v0.1.0-alpha.9
+          tag: ${{ env.GITHUB_REF }}
           overwrite: true
           file_glob: true
 
@@ -135,6 +118,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./cosmwasm-contracts/*
           # tag: ${{ github.ref }}
-          tag: v0.1.0-alpha.9
+          tag: ${{ env.GITHUB_REF }}
           overwrite: true
           file_glob: true
