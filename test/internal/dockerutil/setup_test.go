@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
-	"github.com/icon-project/ibc-integration/test/internal/mocktesting"
-
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/errdefs"
+	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
+	"github.com/icon-project/ibc-integration/test/internal/mocktesting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,7 +51,7 @@ func TestDockerSetup_KeepVolumes(t *testing.T) {
 			mt.Simulate(func() {
 				cli, _ := dockerutil.DockerSetup(mt)
 
-				v, err := cli.VolumeCreate(ctx, volumetypes.VolumeCreateBody{
+				v, err := cli.VolumeCreate(ctx, volumetypes.CreateOptions{
 					Labels: map[string]string{dockerutil.CleanupLabel: mt.Name()},
 				})
 				require.NoError(t, err)

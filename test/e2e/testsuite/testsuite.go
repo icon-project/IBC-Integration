@@ -309,8 +309,11 @@ func buildChain(log *zap.Logger, testName string, cfg testconfig.Chain) (chains.
 	switch cfg.ChainConfig.Type {
 	case "icon":
 		return icon.NewIconLocalnet(testName, log, cfg.ChainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystoreFile, cfg.KeystorePassword, cfg.Contracts), nil
-	case "cosmos", "archway":
-		return cosmos.NewCosmosLocalnet(testName, log, cfg.ChainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystorePassword, cfg.Contracts)
+	case "cosmos", "wasm":
+		enc := cosmos.DefaultEncoding()
+		ibcChainConfig := cfg.ChainConfig.GetIBCChainConfig()
+		ibcChainConfig.EncodingConfig = &enc
+		return cosmos.NewCosmosLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystorePassword, cfg.Contracts)
 	default:
 		return nil, fmt.Errorf("unexpected error, unknown chain type: %s for chain: %s", cfg.ChainConfig.Type, cfg.Name)
 	}
