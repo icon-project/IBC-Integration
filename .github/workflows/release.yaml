@@ -99,8 +99,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          tag_name: v0.1.0-alpha.8
-          release_name: Prerelease v0.1.0-alpha.8
+          tag_name: v0.1.0-alpha.9
+          release_name: Prerelease v0.1.0-alpha.9
           draft: false
           prerelease: true
 
@@ -119,11 +119,22 @@ jobs:
       #     asset_path: ./cosmwasm-contracts/
       #     asset_name: cosmwasm-contracts
       #     asset_content_type: application/octet-stream
-      - name: Upload binaries to release
+      - name: Upload Javascore contracts to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./javascore-contracts/*
           # tag: ${{ github.ref }}
+          tag: v0.1.0-alpha.9
+          overwrite: true
+          file_glob: true
+
+      - name: Upload Cosmwasm contracts to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./cosmwasm-contracts/*
+          # tag: ${{ github.ref }}
+          tag: v0.1.0-alpha.9
           overwrite: true
           file_glob: true
