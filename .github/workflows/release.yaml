@@ -65,10 +65,17 @@ jobs:
         run: |
           echo «::set-output name=date::$(date +'%Y-%m-%d')»
           echo «::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)»
-      - name: Download artifacts
+      - name: Download Javascore Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: ibc-integration-artifacts
+          name: javascore-contracts
+          path: javascore-contracts
+
+      - name: Download Cosmwasm Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: cosmwasm-contracts
+          path: cosmwasm-contracts
       - name: List of files
         run: ls
       - name: Create Release
@@ -83,4 +90,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: pre-release-artifacts
-          path: ibc-integration-artifacts.zip
+          path: .
