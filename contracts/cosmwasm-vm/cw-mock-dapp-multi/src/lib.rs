@@ -8,7 +8,7 @@ pub mod types;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     entry_point, to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response,
-    StdError, StdResult, Storage, SubMsg, WasmMsg,
+    StdError, StdResult, Storage, WasmMsg,
 };
 
 pub use contract::*;
@@ -50,54 +50,7 @@ pub fn execute(
             from,
             data,
             protocols,
-        } => call_service.handle_call_message(deps, info, from, data, protocols),
-        ExecuteMsg::XCallMessage { data } => Ok(Response::new()
-            .add_attribute("action", "success execute call")
-            .set_data(data)),
-        ExecuteMsg::SuccessCall {} => {
-            let resukt = call_service.increment_sequence(deps.storage)?;
-            Ok(Response::new().add_attribute("sequence", resukt.to_string()))
-        }
-        ExecuteMsg::FailureCall {} => Err(ContractError::ModuleAddressNotFound),
-        ExecuteMsg::TestCall {
-            success_addr,
-            fail_addr,
-        } => {
-            let success = ExecuteMsg::SuccessCall {};
-            let fail = ExecuteMsg::FailureCall {};
-            let success_wasm = CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: success_addr,
-                msg: to_binary(&success).map_err(ContractError::Std)?,
-                funds: info.funds.clone(),
-            });
-            let fail_wasm = CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: fail_addr,
-                msg: to_binary(&fail).map_err(ContractError::Std)?,
-                funds: info.funds,
-            });
-            let submessages = vec![
-                SubMsg {
-                    msg: success_wasm.clone(),
-                    gas_limit: None,
-                    id: 2,
-                    reply_on: cosmwasm_std::ReplyOn::Never,
-                },
-                SubMsg {
-                    msg: fail_wasm,
-                    gas_limit: None,
-                    id: 6,
-                    reply_on: cosmwasm_std::ReplyOn::Never,
-                },
-                SubMsg {
-                    msg: success_wasm,
-                    gas_limit: None,
-                    id: 2,
-                    reply_on: cosmwasm_std::ReplyOn::Never,
-                },
-            ];
-
-            Ok(Response::new().add_submessages(submessages))
-        }
+        } => call_service.handle_call_message(info, from, data, protocols),
         ExecuteMsg::AddConnection {
             src_endpoint,
             dest_endpoint,

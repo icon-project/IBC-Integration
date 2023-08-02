@@ -24,18 +24,15 @@ import score.ObjectWriter;
 import java.math.BigInteger;
 
 public class CSMessageResponse {
-    public static final int SUCCESS = 0;
-    public static final int FAILURE = -1;
-    public static final int ERROR = -2;
+    public static final int SUCCESS = 1;
+    public static final int FAILURE = 0;
 
     private final BigInteger sn;
     private final int code;
-    private final String msg;
 
-    public CSMessageResponse(BigInteger sn, int code, String msg) {
+    public CSMessageResponse(BigInteger sn, int code) {
         this.sn = sn;
         this.code = code;
-        this.msg = msg;
     }
 
     public BigInteger getSn() {
@@ -46,15 +43,10 @@ public class CSMessageResponse {
         return code;
     }
 
-    public String getMsg() {
-        return msg;
-    }
-
     public static void writeObject(ObjectWriter w, CSMessageResponse m) {
-        w.beginList(3);
+        w.beginList(2);
         w.write(m.sn);
         w.write(m.code);
-        w.writeNullable(m.msg);
         w.end();
     }
 
@@ -62,8 +54,7 @@ public class CSMessageResponse {
         r.beginList();
         CSMessageResponse m = new CSMessageResponse(
                 r.readBigInteger(),
-                r.readInt(),
-                r.readNullable(String.class)
+                r.readInt()
         );
         r.end();
         return m;

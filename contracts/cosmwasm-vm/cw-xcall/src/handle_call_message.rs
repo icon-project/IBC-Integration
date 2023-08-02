@@ -9,17 +9,16 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         info: MessageInfo,
         from: NetId,
-        sn: Option<i64>,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         let call_service_message: CallServiceMessage = CallServiceMessage::try_from(message)?;
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {
-                self.handle_request(deps, info, from, sn, call_service_message.payload())
+                self.handle_request(deps, info, from, call_service_message.payload())
             }
             CallServiceMessageType::CallServiceResponse => {
-                self.handle_response(deps, info, sn, call_service_message.payload())
+                self.handle_response(deps, info, call_service_message.payload())
             }
         }
     }
@@ -29,7 +28,6 @@ impl<'a> CwCallService<'a> {
         deps: DepsMut,
         info: MessageInfo,
         src_net: NetId,
-        _sn: Option<i64>,
         data: &[u8],
     ) -> Result<Response, ContractError> {
         let request: CallServiceMessageRequest = rlp::decode(data).unwrap();
@@ -90,7 +88,6 @@ impl<'a> CwCallService<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        _sn: Option<i64>,
         data: &[u8],
     ) -> Result<Response, ContractError> {
         let message: CallServiceMessageResponse = rlp::decode(data).unwrap();
@@ -130,7 +127,6 @@ impl<'a> CwCallService<'a> {
         let response_event = event_response_message(
             response_sequence_no,
             (message.response_code().clone()).into(),
-            message.message(),
         );
 
         match message.response_code() {
@@ -186,5 +182,18 @@ impl<'a> CwCallService<'a> {
         }
         let default_conn = self.get_default_connection(store, src_net)?;
         Ok(source.clone() == default_conn)
+    }
+
+    pub fn handle_error(
+        &self,
+        deps: DepsMut,
+        info: MessageInfo,
+        sn: u128,
+    ) -> Result<Response, ContractError> {
+        let msg = CallServiceMessageResponse::new(
+            sn,
+            CallServiceResponseType::CallServiceResponseFailure,
+        );
+        self.handle_response(deps, info, &rlp::encode(&msg))
     }
 }

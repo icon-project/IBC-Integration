@@ -17,6 +17,7 @@
 package foundation.icon.xcall;
 
 import foundation.icon.score.client.ScoreClient;
+import foundation.icon.score.client.ScoreInterface;
 import score.Address;
 import score.annotation.EventLog;
 import score.annotation.External;
@@ -26,11 +27,12 @@ import score.annotation.Payable;
 import java.math.BigInteger;
 
 @ScoreClient
+@ScoreInterface
 public interface CallService {
     /**
      * The name of CallService.
      */
-    String NAME = "xcall";
+    String NAME = "xcall-multi";
 
     /*======== At the source CALL_BSH ========*/
     /**
@@ -49,13 +51,30 @@ public interface CallService {
                                 @Optional String[] sources,
                                 @Optional String[] destinations);
 
+   /**
+     * Handles incoming Messages.
+     *
+     * @param _from String ( Network id of source network )
+     * @param _msg Bytes ( serialized bytes of CallMessage )
+     */
+    @External
+    void handleMessage(String _from, byte[] _msg);
+
+    /**
+     * Handle the error on delivering the message.
+     *
+     * @param _sn Integer ( serial number of the original message )
+     */
+
+    @External
+    void handleError(BigInteger _sn);
+
     /**
      * Notifies that the requested call message has been sent.
      *
      * @param _from The chain-specific address of the caller
      * @param _to The BTP address of the callee on the destination chain
      * @param _sn The serial number of the request
-     * @param _nsn The network serial number of the BTP message
      */
     @EventLog(indexed=3)
     void CallMessageSent(Address _from, String _to, BigInteger _sn);
@@ -66,10 +85,9 @@ public interface CallService {
      * @param _sn The serial number of the previous request
      * @param _code The response code
      *              (0: Success, -1: Unknown generic failure, >=1: User defined error code)
-     * @param _msg The result message if any
      */
     @EventLog(indexed=1)
-    void ResponseMessage(BigInteger _sn, int _code, String _msg);
+    void ResponseMessage(BigInteger _sn, int _code);
 
     /**
      * Notifies the user that a rollback operation is required for the request '_sn'.
@@ -91,12 +109,9 @@ public interface CallService {
      * Notifies that the rollback has been executed.
      *
      * @param _sn The serial number for the rollback
-     * @param _code The execution result code
-     *              (0: Success, -1: Unknown generic failure, >=1: User defined error code)
-     * @param _msg The result message if any
      */
     @EventLog(indexed=1)
-    void RollbackExecuted(BigInteger _sn, int _code, String _msg);
+    void RollbackExecuted(BigInteger _sn);
 
     /*======== At the destination CALL_BSH ========*/
     /**
