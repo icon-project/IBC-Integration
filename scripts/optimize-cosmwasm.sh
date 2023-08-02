@@ -54,7 +54,7 @@ cosmwasm-check artifacts/archway/cw_xcall_ibc_connection.wasm
 
 # Update version
 get_version() {
-    local cargo_toml="$1/Cargo.toml"
+    local cargo_toml="contracts/cosmwasm-vm/$1/Cargo.toml"
     grep -m 1 "version" "$cargo_toml" | awk -F '"' '{print $2}'
 }
 

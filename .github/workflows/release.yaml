@@ -101,7 +101,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Prerelease ${{ env.GITHUB_REF }}
+          release_name: Prerelease ${{ github.ref }}
           body: |
             ${{ steps.Changelog.outputs.changelog }}
           draft: false
