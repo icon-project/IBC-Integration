@@ -81,10 +81,7 @@ impl<'a> CwCallService<'a> {
                 self.ensure_admin(deps.storage, info.sender)?;
                 self.set_admin(deps.storage, validated_address)
             }
-            ExecuteMsg::SetProtocolFee { value } => {
-                self.set_protocol_fee(deps, info, value).unwrap();
-                Ok(Response::new())
-            }
+            ExecuteMsg::SetProtocolFee { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, &info, address)
             }
