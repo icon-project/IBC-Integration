@@ -1027,7 +1027,7 @@ fn test_for_call_service_request_from_rlp_bytes() {
 
 #[test]
 fn test_for_call_service_response_from_rlp_bytes() {
-    let hex_decode_rlp_data = hex::decode("c90181fe8568656c6c6f").unwrap();
+    let hex_decode_rlp_data = hex::decode("c20100").unwrap();
     let cs_response_message = CallServiceMessageResponse::try_from(&hex_decode_rlp_data).unwrap();
 
     let expected_data = CallServiceMessageResponse::new(
