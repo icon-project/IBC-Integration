@@ -104,18 +104,26 @@ jobs:
           draft: false
           prerelease: true
 
-      - name: Upload Javascore Artifacts as Pre-release Assets
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./javascore-contracts/
-          asset_name: javascore-contracts
-          asset_content_type: application/octet-stream
+      # - name: Upload Javascore Artifacts as Pre-release Assets
+      #   uses: actions/upload-release-asset@v1
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: ./javascore-contracts/
+      #     asset_name: javascore-contracts
+      #     asset_content_type: application/octet-stream
 
-      - name: Upload Cosmwasm Artifacts as Pre-release Assets
-        uses: actions/upload-release-asset@v1
+      # - name: Upload Cosmwasm Artifacts as Pre-release Assets
+      #   uses: actions/upload-release-asset@v1
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: ./cosmwasm-contracts/
+      #     asset_name: cosmwasm-contracts
+      #     asset_content_type: application/octet-stream
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./cosmwasm-contracts/
-          asset_name: cosmwasm-contracts
-          asset_content_type: application/octet-stream
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./javascore-contracts/*
+          # tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
