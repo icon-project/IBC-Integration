@@ -9,7 +9,9 @@ use common::ibc::{
     },
     Height,
 };
-use cosmwasm_std::IbcTimeoutBlock;
+use cosmwasm_std::{IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
+use cw_common::ibc_types::Sequence;
+use cw_common::raw_types::channel::RawPacket;
 use cw_common::raw_types::connection::RawCounterparty;
 use cw_common::{
     ibc_types::{
@@ -117,4 +119,24 @@ pub fn to_ibc_timeout_block(packet_timeout_height: &TimeoutHeight) -> IbcTimeout
             height: x.revision_height(),
         },
     }
+}
+
+pub fn to_ibc_packet(packet: RawPacket) -> Result<IbcPacket, ContractError> {
+    let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
+    let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
+    let _packet_sequence = Sequence::from(packet.sequence);
+    let src = IbcEndpoint {
+        port_id: packet.source_port.to_string(),
+        channel_id: packet.source_channel.to_string(),
+    };
+    let dest = IbcEndpoint {
+        port_id: packet.destination_port.to_string(),
+        channel_id: packet.destination_channel.to_string(),
+    };
+    let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
+    let timestamp = packet_timestamp.nanoseconds();
+    let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
+    let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence, timeout);
+    Ok(ibc_packet)
 }

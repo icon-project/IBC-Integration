@@ -26,3 +26,5 @@ pub mod test_packet;
 pub mod test_receive_packet;
 pub mod test_timeout;
 pub mod test_timeout_on_close;
+
+pub mod test_write_acknowledgement;
