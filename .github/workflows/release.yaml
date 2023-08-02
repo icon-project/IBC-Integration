@@ -86,7 +86,10 @@ jobs:
         run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts
 
       - name: Unzip Cosmwasm Artifacts
-        run: unzip cosmwasm-contracts/artifacts.zip -d cosmwasm-contracts
+        run: |
+          ls
+          ls cosmwasm-contracts
+          unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts
 
 
       - name: List of files
@@ -97,8 +100,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v0.1.0-alpha.2
-          release_name: Prerelease v0.1.0-alpha.2
+          tag_name: v0.1.0-alpha.3
+          release_name: Prerelease v0.1.0-alpha.3
           draft: false
           prerelease: true
 
