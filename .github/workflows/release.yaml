@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - "v*.*.*-alpha.*"
+      - 459-create-release-workflow-for-contracts_2
 
 permissions:
   contents: write
