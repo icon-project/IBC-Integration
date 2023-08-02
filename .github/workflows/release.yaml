@@ -1,6 +1,6 @@
 name: Pre-release
 on:
-  create:
+  push:
     tags:
       - 'v*.*.*-alpha.*'
 permissions:
@@ -88,17 +88,22 @@ jobs:
       - name: Unzip Cosmwasm Artifacts
         run: unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts && rm -rf cosmwasm-contracts/cosmwasm-contracts.zip
 
+      - name: Changelog
+        uses: scottbrenner/generate-changelog-action@master
+        id: Changelog
+        env:
+          REPO: ${{ github.repository }}
 
-      - name: List of files
-        run: ls
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          # tag_name: v0.1.0-alpha.9
+          tag_name: ${{ github.ref }}
           release_name: Prerelease ${{ env.GITHUB_REF }}
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
           draft: false
           prerelease: true
 
