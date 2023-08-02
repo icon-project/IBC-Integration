@@ -1,4 +1,4 @@
-use cw_xcall_lib::network_address::NetId;
+use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 
 use super::*;
 #[cw_serde]
@@ -27,4 +27,6 @@ pub enum QueryMsg {
     VerifySuccess { sn: u128 },
     #[returns(String)]
     GetDefaultConnection { nid: NetId },
+    #[returns(u128)]
+    GetFee{ nid:NetId, rollback:bool, sources:Option<Vec<String>>}
 }

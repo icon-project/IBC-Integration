@@ -33,7 +33,6 @@ pub enum ExecuteMsg {
         code: i64,
         msg: String,
     },
-
     ExecuteCall {
         request_id: u128,
         data: Vec<u8>,

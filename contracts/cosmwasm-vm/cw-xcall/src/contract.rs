@@ -103,11 +103,7 @@ impl<'a> CwCallService<'a> {
             ExecuteMsg::HandleMessage { msg, from, sn } => {
                 self.handle_message(deps, info, from, sn, msg)
             }
-            ExecuteMsg::HandleError {
-                sn: _,
-                code: _,
-                msg: _,
-            } => {
+            ExecuteMsg::HandleError { sn: _ ,code: _,msg: _} => {
                 todo!()
             }
             ExecuteMsg::ExecuteCall { request_id, data } => {
@@ -162,6 +158,9 @@ impl<'a> CwCallService<'a> {
             }
             QueryMsg::GetDefaultConnection { nid } => {
                 to_binary(&self.get_default_connection(deps.storage, nid).unwrap())
+            },
+            QueryMsg::GetFee { nid, rollback, sources }=>{
+                to_binary(&self.get_fee(deps, nid, rollback, sources.unwrap_or(vec![])).unwrap())
             }
         }
     }
