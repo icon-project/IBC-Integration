@@ -37,22 +37,25 @@ impl<'a> CwCallService<'a> {
         Ok(Response::new().add_attribute("method", "set_protocolfee"))
     }
 
-
-    pub fn get_fee(&self, deps: Deps,nid:NetId,rollback:bool,sources:Vec<String>)->Result<u128,ContractError>{
-        let protocol_fee= self.get_protocol_fee(deps.storage);
-        let mut sources=sources;
-        if sources.is_empty(){
-            let conn=self.get_default_connection(deps.storage, nid.clone())?;
-            sources=vec![conn.to_string()];
+    pub fn get_fee(
+        &self,
+        deps: Deps,
+        nid: NetId,
+        rollback: bool,
+        sources: Vec<String>,
+    ) -> Result<u128, ContractError> {
+        let protocol_fee = self.get_protocol_fee(deps.storage);
+        let mut sources = sources;
+        if sources.is_empty() {
+            let conn = self.get_default_connection(deps.storage, nid.clone())?;
+            sources = vec![conn.to_string()];
         }
-        let conn_fees=sources.into_iter().map(|s|{
-            return self.query_connection_fee(deps, nid.clone(), rollback, &s)
-        }).collect::<Result<Vec<u128>,ContractError>>()?;
-        let conn_total:u128=conn_fees.iter().sum();
+        let conn_fees = sources
+            .into_iter()
+            .map(|s| self.query_connection_fee(deps, nid.clone(), rollback, &s))
+            .collect::<Result<Vec<u128>, ContractError>>()?;
+        let conn_total: u128 = conn_fees.iter().sum();
 
-        Ok(protocol_fee+conn_total)
-
+        Ok(protocol_fee + conn_total)
     }
-
-    
 }
