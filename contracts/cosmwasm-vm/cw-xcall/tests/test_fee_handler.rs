@@ -1,10 +1,13 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_info},
-    Addr, Coin,
+    Addr, Coin, WasmQuery, SystemResult, ContractResult, to_binary,
 };
 use cw_xcall::state::CwCallService;
 pub mod account;
 use account::*;
+use cw_xcall_lib::network_address::NetId;
 
 #[test]
 fn set_protocol_fee_handler() {
@@ -120,4 +123,33 @@ fn get_protocol_fee() {
         .unwrap();
     let result = contract.get_protocol_fee(deps.as_ref().storage);
     assert_eq!("123", result.to_string());
+}
+
+
+#[test]
+fn get_fee() {
+    let mut deps = mock_dependencies();
+    let value = 123;
+    let contract = CwCallService::new();
+
+    contract
+        .set_admin(
+            deps.as_mut().storage,
+            Addr::unchecked(admin_one().to_string()),
+        )
+        .unwrap();
+    let info = mock_info(&admin_one().to_string(), &[Coin::new(1000, "ucosm")]);
+    contract
+        .set_protocol_fee(deps.as_mut(), info.clone(), value)
+        .unwrap();
+    contract.set_default_connection(deps.as_mut(), info, NetId::from_str("icon").unwrap(), Addr::unchecked("connectionaddress")).unwrap();
+    deps.querier.update_wasm(|r| match r {
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg: _,
+        } => SystemResult::Ok(ContractResult::Ok(to_binary(&100_u128).unwrap())),
+        _ => todo!(),
+    });
+    let result = contract.get_fee(deps.as_ref(),NetId::from_str("icon").unwrap(),true,vec![]).unwrap();
+    assert_eq!("223", result.to_string());
 }
