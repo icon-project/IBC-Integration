@@ -173,10 +173,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         );
         self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
         let proof_height = to_ibc_height(message.proof_height.clone())?;
-        let client_id_on_b = connection_end.client_id();
-        let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
-        let consensus_state_of_a_on_b =
-            self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;
+        let client_id = connection_end.client_id();
+        let client_state = self.client_state(deps.storage, client_id)?;
+        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
         let prefix_on_a = connection_end.counterparty().prefix();
 
         let conn_id_on_a = connection_end.counterparty().connection_id().ok_or(
@@ -187,10 +186,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             },
         )?;
 
-        if client_state_of_a_on_b.is_frozen() {
+        if client_state.is_frozen() {
             return Err(ContractError::IbcChannelError {
                 error: ChannelError::FrozenClient {
-                    client_id: client_id_on_b.clone(),
+                    client_id: client_id.clone(),
                 },
             });
         }
@@ -211,7 +210,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             proof_height: proof_height.to_string(),
             counterparty_prefix: prefix_on_a.clone().into_vec(),
             proof: message.proof_init.clone(),
-            root: consensus_state_of_a_on_b.clone().root().into_vec(),
+            root: consensus_state.clone().root().into_vec(),
             counterparty_chan_end_path: chan_end_path_on_a,
             expected_counterparty_channel_end: vector,
             client_id: connection_end.client_id().to_string(),
