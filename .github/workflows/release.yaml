@@ -52,12 +52,13 @@ jobs:
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu     
           bash ./scripts/optimize-cosmwasm.sh
+          zip -r cosmwasm-contracts.zip cosmwasm-contracts/archway
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: cosmwasm-contracts
-          path: artifacts
+          path: cosmwasm-contracts.zip
   release:
     name: Release and Publish
     runs-on: ubuntu-latest
@@ -86,10 +87,7 @@ jobs:
         run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts
 
       - name: Unzip Cosmwasm Artifacts
-        run: |
-          ls
-          ls cosmwasm-contracts
-          unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts
+        run: unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts
 
 
       - name: List of files
@@ -100,8 +98,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v0.1.0-alpha.3
-          release_name: Prerelease v0.1.0-alpha.3
+          tag_name: v0.1.0-alpha.4
+          release_name: Prerelease v0.1.0-alpha.4
           draft: false
           prerelease: true
 
