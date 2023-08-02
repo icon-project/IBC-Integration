@@ -82,6 +82,13 @@ jobs:
           name: cosmwasm-contracts
           path: cosmwasm-contracts
 
+      - name: Unzip Javascore Artifacts
+        run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts
+
+      - name: Unzip Cosmwasm Artifacts
+        run: unzip cosmwasm-contracts/artifacts.zip -d cosmwasm-contracts
+
+
       - name: List of files
         run: ls
       - name: Create Release
@@ -90,12 +97,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v0.1.0-alpha.1
-          release_name: Prerelease v0.1.0-alpha.1
+          tag_name: v0.1.0-alpha.2
+          release_name: Prerelease v0.1.0-alpha.2
           draft: false
           prerelease: true
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+
+      - name: Upload Javascore Artifacts as Pre-release Assets
+        uses: actions/upload-release-asset@v1
         with:
-          name: pre-release-artifacts
-          path: .
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: javascore-contracts
+          asset_name: javascore-contracts
+          asset_content_type: application/zip
+
+      - name: Upload Cosmwasm Artifacts as Pre-release Assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: cosmwasm-contracts
+          asset_name: cosmwasm-contracts
+          asset_content_type: application/zip
