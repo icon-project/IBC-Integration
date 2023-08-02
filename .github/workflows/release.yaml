@@ -99,8 +99,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          tag_name: v0.1.0-alpha.6
-          release_name: Prerelease v0.1.0-alpha.6
+          tag_name: v0.1.0-alpha.7
+          release_name: Prerelease v0.1.0-alpha.7
           draft: false
           prerelease: true
 
@@ -108,14 +108,14 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: javascore-contracts
+          asset_path: ./javascore-contracts/
           asset_name: javascore-contracts
-          asset_content_type: application/zip
+          asset_content_type: application/octet-stream
 
       - name: Upload Cosmwasm Artifacts as Pre-release Assets
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: cosmwasm-contracts
+          asset_path: ./cosmwasm-contracts/
           asset_name: cosmwasm-contracts
-          asset_content_type: application/zip
+          asset_content_type: application/octet-stream
