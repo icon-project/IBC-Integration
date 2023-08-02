@@ -92,15 +92,35 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
-task zipOutputJars(type: Zip) {
-    description = 'Zips all jar output from subprojects'
-    baseName = 'output-jars'
-    destinationDir = file("$buildDir/zipped-jars")
-    
-    // Add each subproject's JAR file to the ZIP task
-    from subprojects.collect { it.tasks.named('jar', AbstractArchiveTask.class) }
-
-    // Include all JAR files in the root project's build directory
-    from jar
+task printOptimizedJarOutputFiles {
+    doLast {
+        subprojects.each { subproject ->
+            def optimizedJarOutputFiles = subproject.tasks.optimizedJar.outputs.files
+            println "Optimized JAR files for subproject '${subproject.name}':"
+            optimizedJarOutputFiles.each { file ->
+                println "  ${file}"
+            }
+        }
+    }
 }
+
+task collectOptimizedJars(type: Copy) {
+    from subprojects.collect { subproject ->
+        subproject.fileTree('build/libs') {
+            include '**/*-optimized.jar'
+        }
+    }
+    into "$buildDir/output-jars"
+}
+
+task zipOutputOptimizedJars(type: Zip) {
+    dependsOn collectOptimizedJars
+    from("$buildDir/output-jars") {
+        include '**/*-optimized.jar'
+    }
+    archiveFileName = "javascore-contracts.zip"
+    destinationDirectory = file("$buildDir")
+}
+
+
 
