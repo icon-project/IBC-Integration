@@ -10,7 +10,6 @@ pub use channel::*;
 pub use handler::*;
 
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
-use common::ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 pub use common::ibc::core::ics04_channel::channel::Counterparty;
 use common::ibc::core::ics04_channel::channel::Order;
 pub use common::ibc::core::ics04_channel::channel::State;

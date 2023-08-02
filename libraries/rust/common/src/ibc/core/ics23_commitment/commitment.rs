@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 
 use super::merkle::MerkleProof;
 
+// use super::merkle::MerkleProof;
+
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CommitmentRoot {
     #[cfg_attr(

@@ -25,14 +25,8 @@ pub use common::ibc::core::ics03_connection::{
 };
 use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 pub use common::ibc::core::ics24_host::identifier::ConnectionId as IbcConnectionId;
+use common::ibc::events::IbcEventType;
 use common::ibc::Height;
-use common::ibc::{
-    core::ics03_connection::events::{
-        CLIENT_ID_ATTRIBUTE_KEY, CONN_ID_ATTRIBUTE_KEY, COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,
-        COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY,
-    },
-    events::IbcEventType,
-};
 
 use cw_common::commitment;
 use cw_common::raw_types::Protobuf;

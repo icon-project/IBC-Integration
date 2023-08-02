@@ -1,15 +1,8 @@
 use crate::ibc::prelude::*;
 
 use derive_more::Into;
-use ibc_proto::ibc::core::channel::v1::MsgAcknowledgement as RawMsgAcknowledgement;
-use ibc_proto::protobuf::Protobuf;
 
 use crate::ibc::core::ics04_channel::error::PacketError;
-use crate::ibc::core::ics04_channel::packet::Packet;
-use crate::ibc::core::ics23_commitment::commitment::CommitmentProofBytes;
-use crate::ibc::signer::Signer;
-
-use crate::ibc::Height;
 
 pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgAcknowledgement";
 
@@ -44,7 +37,3 @@ impl TryFrom<Vec<u8>> for Acknowledgement {
         }
     }
 }
-
-
-
-

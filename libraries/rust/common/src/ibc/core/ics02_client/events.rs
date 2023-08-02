@@ -13,4 +13,3 @@ pub const CONSENSUS_HEIGHTS_ATTRIBUTE_KEY: &str = "consensus_heights";
 
 /// The content of the `key` field for the header in update client event.
 pub const HEADER_ATTRIBUTE_KEY: &str = "header";
-

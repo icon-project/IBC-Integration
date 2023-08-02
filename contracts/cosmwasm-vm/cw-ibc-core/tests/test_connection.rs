@@ -25,15 +25,15 @@ use cw_ibc_core::conversions::to_ibc_client_id;
 use cw_ibc_core::conversions::to_ibc_connection_id;
 use cw_ibc_core::conversions::to_ibc_height;
 use cw_ibc_core::ics03_connection::event::create_connection_event;
+use cw_ibc_core::ics03_connection::event::CLIENT_ID_ATTRIBUTE_KEY;
+use cw_ibc_core::ics03_connection::event::CONN_ID_ATTRIBUTE_KEY;
+use cw_ibc_core::ics03_connection::event::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
+use cw_ibc_core::ics03_connection::event::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
 
 //use cw_ibc_core::ics03_connection::event::create_open_init_event;
 
 use common::ibc::core::ics03_connection::connection::Counterparty;
 use common::ibc::core::ics03_connection::connection::State;
-use common::ibc::core::ics03_connection::events::CLIENT_ID_ATTRIBUTE_KEY;
-use common::ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
-use common::ibc::core::ics03_connection::events::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
-use common::ibc::core::ics03_connection::events::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
 use common::ibc::core::ics03_connection::version::get_compatible_versions;
 use common::ibc::core::ics03_connection::version::Version;
 use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;

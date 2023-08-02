@@ -1,5 +1,7 @@
 use cw_ibc_core::{
-    conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp, to_ibc_timeout_block},
+    conversions::{
+        to_ibc_channel_id, to_ibc_timeout_block, to_ibc_timeout_height, to_ibc_timestamp,
+    },
     light_client::light_client::LightClient,
     VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
 };
@@ -34,13 +36,7 @@ fn test_acknowledgement_packet_execute() {
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(
-        packet.data,
-        src,
-        dest,
-        packet.sequence.into(),
-        timeout,
-    );
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
     let ack = IbcAcknowledgement::new(msg.acknowledgement);
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
@@ -62,10 +58,7 @@ fn test_acknowledgement_packet_execute() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Unordered,
-        Counterparty::new(
-            dst_port.clone(),
-            Some(dst_channel.clone()),
-        ),
+        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -126,13 +119,7 @@ fn test_acknowledgement_packet_execute_ordered() {
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(
-        packet.data,
-        src,
-        dest,
-        packet.sequence.into(),
-        timeout,
-    );
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
     let ack = IbcAcknowledgement::new(msg.acknowledgement);
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
@@ -154,10 +141,7 @@ fn test_acknowledgement_packet_execute_ordered() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(
-            dst_port.clone(),
-            Some(dst_channel.clone()),
-        ),
+        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -228,13 +212,7 @@ fn test_acknowledgement_packet_execute_fail() {
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(
-        packet.data,
-        src,
-        dest,
-        packet.sequence.into(),
-        timeout,
-    );
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
     let ack = IbcAcknowledgement::new(msg.acknowledgement);
     let address = Addr::unchecked(msg.signer.to_string());
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
@@ -256,10 +234,7 @@ fn test_acknowledgement_packet_execute_fail() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(
-            dst_port.clone(),
-            Some(dst_channel.clone()),
-        ),
+        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );

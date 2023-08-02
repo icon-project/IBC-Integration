@@ -93,7 +93,6 @@ impl<'a> CwIbcCoreContext<'a> {
             Err(_) => return Ok(Response::new()),
         };
         debug_println!("Commitment on a {:?}", hex::encode(commitment_on_a.clone()));
-       
 
         debug_println!(
             "from packet the timeout height is :{:?}",

@@ -5,7 +5,9 @@ use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
-use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp, to_ibc_timeout_block};
+use cw_ibc_core::conversions::{
+    to_ibc_channel_id, to_ibc_timeout_block, to_ibc_timeout_height, to_ibc_timestamp,
+};
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
     ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
@@ -1062,10 +1064,7 @@ fn test_for_ack_execute() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Unordered,
-        Counterparty::new(
-            dst_port.clone(),
-            Some(dst_channel.clone()),
-        ),
+        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -1098,11 +1097,8 @@ fn test_for_ack_execute() {
             &conn_end_on_a,
         )
         .unwrap();
-    let packet_commitment = compute_packet_commitment(
-        &packet.data,
-        &packet_timeout_height,
-        &packet_timestamp,
-    );
+    let packet_commitment =
+        compute_packet_commitment(&packet.data, &packet_timeout_height, &packet_timestamp);
     contract
         .store_packet_commitment(
             &mut deps.storage,
@@ -1129,7 +1125,7 @@ fn test_for_ack_execute() {
     }
     .try_into()
     .unwrap();
-    
+
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -1148,11 +1144,7 @@ fn test_for_ack_execute() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .bind_port(
-            &mut deps.storage,
-            &dst_port,
-            "moduleaddress".to_string(),
-        )
+        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
         .unwrap();
 
     contract
@@ -1188,13 +1180,7 @@ fn test_for_ack_execute() {
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(
-        packet.data,
-        src,
-        dest,
-        packet.sequence.into(),
-        timeout,
-    );
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
     let ack = IbcAcknowledgement::new(msg.acknowledgement);
     let address = Addr::unchecked(msg.signer.to_string());
     let mock_reponse_data = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
