@@ -539,11 +539,7 @@ impl<'a> CwIbcConnection<'a> {
         let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
         let nid = channel_config.counterparty_nid;
 
-        let sn = self.get_outgoing_packet_sn(deps.as_ref().storage, &channel, seq)?;
-        self.remove_outgoing_packet_sn(deps.storage, &channel, seq);
-
-        let submsg =
-            self.call_xcall_handle_message(deps.storage, &nid, acknowledgement.data.0, Some(sn))?;
+        let submsg = self.call_xcall_handle_message(deps.storage, &nid, acknowledgement.data.0)?;
 
         let bank_msg = self.settle_unclaimed_ack_fee(
             deps.storage,
@@ -581,12 +577,14 @@ impl<'a> CwIbcConnection<'a> {
         let channel_id = packet.src.channel_id.clone();
         let channel_config = self.get_channel_config(deps.as_ref().storage, &channel_id)?;
         let nid = channel_config.counterparty_nid;
-        let sn = self.get_outgoing_packet_sn(deps.storage, &channel_id, packet.sequence)?;
-
         let n_message: Message = rlp::decode(&packet.data).unwrap();
-        self.remove_outgoing_packet_sn(deps.storage, &channel_id, packet.sequence);
+
+        let Some(sn) = n_message.sn.0 else {
+            return  Ok(Response::new())
+        };
+
         self.add_unclaimed_ack_fees(deps.storage, &nid, packet.sequence, n_message.fee)?;
-        let submsg = self.call_xcall_handle_error(deps.storage, sn, -1, "Timeout".to_string())?;
+        let submsg = self.call_xcall_handle_error(deps.storage, sn)?;
         let bank_msg = self.settle_unclaimed_ack_fee(
             deps.storage,
             nid.as_str(),

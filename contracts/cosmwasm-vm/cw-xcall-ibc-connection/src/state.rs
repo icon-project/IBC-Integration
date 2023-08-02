@@ -413,37 +413,4 @@ impl<'a> CwIbcConnection<'a> {
             .save(store, (channel_id.to_owned(), sn), &packet)
             .map_err(ContractError::Std)
     }
-
-    pub fn get_outgoing_packet_sn(
-        &self,
-        store: &dyn Storage,
-        channel_id: &str,
-        sequence: u64,
-    ) -> Result<i64, ContractError> {
-        self.outgoing_packets
-            .load(store, (channel_id.to_owned(), sequence))
-            .map_err(ContractError::Std)
-    }
-
-    pub fn remove_outgoing_packet_sn(
-        &self,
-        store: &mut dyn Storage,
-        channel_id: &str,
-        sequence: u64,
-    ) {
-        self.outgoing_packets
-            .remove(store, (channel_id.to_owned(), sequence))
-    }
-
-    pub fn store_outgoing_packet_sn(
-        &self,
-        store: &mut dyn Storage,
-        channel_id: &str,
-        sequence: u64,
-        sn: i64,
-    ) -> Result<(), ContractError> {
-        self.outgoing_packets
-            .save(store, (channel_id.to_owned(), sequence), &sn)
-            .map_err(ContractError::Std)
-    }
 }

@@ -549,9 +549,6 @@ fn sucess_on_ack_packet() {
         .unwrap();
     let channel = src.channel_id.clone();
     contract
-        .store_outgoing_packet_sn(mock_deps.as_mut().storage, &channel, 0, 1)
-        .unwrap();
-    contract
         .set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcall-host"))
         .unwrap();
 
@@ -825,7 +822,6 @@ fn test_ack_success_on_call_response() {
     let data = cw_xcall::types::response::CallServiceMessageResponse::new(
         0,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
-        "Success",
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -898,7 +894,6 @@ fn test_ack_failure_on_call_response() {
     let data = CallServiceMessageResponse::new(
         0,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
-        "Success",
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -951,7 +946,6 @@ fn test_handle_response() {
     let data = CallServiceMessageResponse::new(
         0,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
-        "Success",
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
@@ -1038,8 +1032,7 @@ fn test_for_call_service_response_from_rlp_bytes() {
 
     let expected_data = CallServiceMessageResponse::new(
         1,
-        cw_xcall::types::response::CallServiceResponseType::CallServiceError,
-        "hello",
+        cw_xcall::types::response::CallServiceResponseType::CallServiceResponseFailure,
     );
 
     assert_eq!(expected_data, cs_response_message)
