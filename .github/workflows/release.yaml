@@ -99,8 +99,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          tag_name: v0.1.0-alpha.7
-          release_name: Prerelease v0.1.0-alpha.7
+          tag_name: v0.1.0-alpha.8
+          release_name: Prerelease v0.1.0-alpha.8
           draft: false
           prerelease: true
 
