@@ -22,8 +22,8 @@ fn test_acknowledgement_packet_execute() {
     let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
     let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
     let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
-    let packet_sequence = Sequence::from(packet.sequence);
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
+    let _packet_sequence = Sequence::from(packet.sequence);
+    let _proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let src = IbcEndpoint {
         port_id: src_port.to_string(),
         channel_id: src_channel.to_string(),
@@ -36,9 +36,9 @@ fn test_acknowledgement_packet_execute() {
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence, timeout);
     let ack = IbcAcknowledgement::new(msg.acknowledgement);
-    let address = Addr::unchecked(msg.signer.to_string());
+    let address = Addr::unchecked(msg.signer);
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
     contract
         .store_callback_data(
@@ -58,15 +58,15 @@ fn test_acknowledgement_packet_execute() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Unordered,
-        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -76,8 +76,8 @@ fn test_acknowledgement_packet_execute() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             packet.sequence.into(),
             commitment,
         )
@@ -105,8 +105,8 @@ fn test_acknowledgement_packet_execute_ordered() {
     let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
     let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
     let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
-    let packet_sequence = Sequence::from(packet.sequence);
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
+    let _packet_sequence = Sequence::from(packet.sequence);
+    let _proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let src = IbcEndpoint {
         port_id: src_port.to_string(),
         channel_id: src_channel.to_string(),
@@ -119,9 +119,9 @@ fn test_acknowledgement_packet_execute_ordered() {
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence, timeout);
     let ack = IbcAcknowledgement::new(msg.acknowledgement);
-    let address = Addr::unchecked(msg.signer.to_string());
+    let address = Addr::unchecked(msg.signer);
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
     contract
         .store_callback_data(
@@ -141,15 +141,15 @@ fn test_acknowledgement_packet_execute_ordered() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -159,19 +159,14 @@ fn test_acknowledgement_packet_execute_ordered() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             packet.sequence.into(),
             commitment,
         )
         .unwrap();
     contract
-        .store_next_sequence_ack(
-            &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
-            &1.into(),
-        )
+        .store_next_sequence_ack(&mut deps.storage, &src_port, &src_channel, &1.into())
         .unwrap();
 
     let res = contract.acknowledgement_packet_execute(deps.as_mut(), message);
@@ -198,8 +193,8 @@ fn test_acknowledgement_packet_execute_fail() {
     let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
     let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
     let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
-    let packet_sequence = Sequence::from(packet.sequence);
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
+    let _packet_sequence = Sequence::from(packet.sequence);
+    let _proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let src = IbcEndpoint {
         port_id: src_port.to_string(),
         channel_id: src_channel.to_string(),
@@ -212,9 +207,9 @@ fn test_acknowledgement_packet_execute_fail() {
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence, timeout);
     let ack = IbcAcknowledgement::new(msg.acknowledgement);
-    let address = Addr::unchecked(msg.signer.to_string());
+    let address = Addr::unchecked(msg.signer);
     let cosm_msg = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
     contract
         .store_callback_data(
@@ -234,15 +229,15 @@ fn test_acknowledgement_packet_execute_fail() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
     contract
         .store_channel_end(
             &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -252,8 +247,8 @@ fn test_acknowledgement_packet_execute_fail() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             packet.sequence.into(),
             commitment,
         )

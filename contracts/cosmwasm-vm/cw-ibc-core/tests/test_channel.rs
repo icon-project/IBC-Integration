@@ -12,7 +12,6 @@ use common::ibc::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId}
 use common::ibc::{
     core::ics04_channel::{
         channel::{Counterparty, Order, State},
-        packet::Packet,
         Version,
     },
     events::IbcEventType,
@@ -337,11 +336,7 @@ fn create_open_try_channel_event_test() {
 #[test]
 fn test_create_send_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
-    let msg = Packet::try_from(raw.clone()).unwrap();
-    let raw_back = RawPacket::from(msg.clone());
-    let msg_back = Packet::try_from(raw_back.clone()).unwrap();
-    assert_eq!(raw, raw_back);
-    assert_eq!(msg, msg_back);
+
     //  let event = create_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
     let event = create_packet_event(
         IbcEventType::SendPacket,
@@ -373,10 +368,8 @@ fn test_create_send_packet_with_invalid_utf_ok() {
 
 #[test]
 fn test_create_write_ack_packet_event() {
-    let raw = get_dummy_raw_packet(15, 0);
-    let msg = Packet::try_from(raw.clone()).unwrap();
-    let raw_back = RawPacket::from(msg.clone());
-    let msg_back = Packet::try_from(raw_back.clone()).unwrap();
+    let _raw = get_dummy_raw_packet(15, 0);
+
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
         height: 10,
@@ -394,9 +387,6 @@ fn test_create_write_ack_packet_event() {
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
     let ibc_packet_recv_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relayer"));
-
-    assert_eq!(raw, raw_back);
-    assert_eq!(msg, msg_back);
 
     let event = create_packet_event(
         IbcEventType::WriteAck,

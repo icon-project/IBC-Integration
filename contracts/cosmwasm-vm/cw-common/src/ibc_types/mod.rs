@@ -1,4 +1,3 @@
-pub use common::ibc::core::ics04_channel::packet::Packet as IbcPacket;
 pub use common::ibc::core::ics05_port::error::PortError as IbcPortError;
 pub use common::ibc::core::ics24_host::error::ValidationError as IbcValidationError;
 pub use common::ibc::{

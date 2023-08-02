@@ -2,14 +2,9 @@ use crate::ibc::prelude::*;
 
 use core::str::FromStr;
 
-use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use serde::{Deserialize, Serialize};
 
-use super::timeout::TimeoutHeight;
-use crate::ibc::core::ics04_channel::error::{ChannelError, PacketError};
-use crate::ibc::core::ics24_host::identifier::{ChannelId, PortId};
-use crate::ibc::timestamp::{Expiry::Expired, Timestamp};
-use crate::ibc::Height;
+use crate::ibc::core::ics04_channel::error::ChannelError;
 
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

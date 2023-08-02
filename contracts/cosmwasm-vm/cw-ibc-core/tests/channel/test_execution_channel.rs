@@ -1046,20 +1046,20 @@ fn test_for_ack_execute() {
     let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
     let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
     let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
-    let packet_sequence = Sequence::from(packet.sequence);
+    let _packet_sequence = Sequence::from(packet.sequence);
     let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    let src = IbcEndpoint {
+    let _src = IbcEndpoint {
         port_id: src_port.to_string(),
         channel_id: src_channel.to_string(),
     };
-    let dest = IbcEndpoint {
+    let _dest = IbcEndpoint {
         port_id: dst_port.to_string(),
         channel_id: dst_channel.to_string(),
     };
     let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
-    let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
+    let _timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
     //Store channel, connection and packet commitment
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
@@ -1071,8 +1071,8 @@ fn test_for_ack_execute() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             &chan_end_on_a_ordered,
         )
         .unwrap();
@@ -1102,8 +1102,8 @@ fn test_for_ack_execute() {
     contract
         .store_packet_commitment(
             &mut deps.storage,
-            &src_port.clone(),
-            &src_channel.clone(),
+            &src_port,
+            &src_channel,
             packet.sequence.into(),
             packet_commitment,
         )
@@ -1180,9 +1180,9 @@ fn test_for_ack_execute() {
     let timestamp = packet_timestamp.nanoseconds();
     let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
     let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence.into(), timeout);
+    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence, timeout);
     let ack = IbcAcknowledgement::new(msg.acknowledgement);
-    let address = Addr::unchecked(msg.signer.to_string());
+    let address = Addr::unchecked(msg.signer);
     let mock_reponse_data = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
     let event = Event::new("empty");
