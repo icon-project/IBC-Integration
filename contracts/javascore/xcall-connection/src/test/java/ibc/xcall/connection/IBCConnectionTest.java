@@ -86,7 +86,7 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
         connection.getAccount().addBalance("ICX", ackFee);
         connection.invoke(ibc.account, "onAcknowledgementPacket", packetCaptor.getValue(), ack, relayer.getAddress());
         // Assert
-        verify(xcall.mock).handleMessage(defaultCounterpartyNid, sn, ack);
+        verify(xcall.mock).handleMessage(defaultCounterpartyNid, ack);
 
         latestHeight.setRevisionHeight(latestHeight.getRevisionHeight().add(defaultTimeoutHeight));
         Packet packet = Packet.decode(packetCaptor.getValue());
@@ -170,7 +170,7 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
         connection.invoke(ibc.account, "onAcknowledgementPacket", packet2.encode(), "ack".getBytes(), relayer.getAddress());
 
         // Assert
-        verify(xcall.mock).handleMessage(counterpartyNid2, sn2, "ack".getBytes());
+        verify(xcall.mock).handleMessage(counterpartyNid2, "ack".getBytes());
         assertEquals(ackFee2, relayer.getBalance());
     }
 
@@ -194,7 +194,7 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
         connection.invoke(ibc.account, "onTimeoutPacket", packetCaptor.getValue(), relayer.getAddress());
 
         // Assert
-        verify(xcall.mock).handleError( sn, -1, "Timeout");
+        verify(xcall.mock).handleError( sn );
         assertEquals(ackFee.add(packetFee), relayer.getBalance());
     }
 
@@ -220,7 +220,7 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
 
 
         // Assert
-        verify(xcall.mock).handleMessage(defaultCounterpartyNid, sn, data);
+        verify(xcall.mock).handleMessage(defaultCounterpartyNid, data);
     }
 
     @Test
