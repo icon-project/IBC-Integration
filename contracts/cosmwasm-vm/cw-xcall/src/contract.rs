@@ -4,7 +4,7 @@ use crate::types::{config::Config, LOG_PREFIX};
 
 use super::*;
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw-xcall-multi";
+const CONTRACT_NAME: &str = "crates.io:cw-xcall";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 impl<'a> CwCallService<'a> {
@@ -196,6 +196,17 @@ impl<'a> CwCallService<'a> {
                 msg: "Unknown".to_string(),
             }),
         }
+    }
+
+    pub fn migrate(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        _msg: MigrateMsg,
+    ) -> Result<Response, ContractError> {
+        set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
+            .map_err(ContractError::Std)?;
+        Ok(Response::default().add_attribute("migrate", "successful"))
     }
 }
 
