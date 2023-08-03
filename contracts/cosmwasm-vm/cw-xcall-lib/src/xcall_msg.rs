@@ -30,7 +30,6 @@ pub enum ExecuteMsg {
     HandleError {
         sn: u128,
     },
-
     ExecuteCall {
         request_id: u128,
         data: Vec<u8>,

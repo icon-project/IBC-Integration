@@ -27,4 +27,10 @@ pub enum QueryMsg {
     VerifySuccess { sn: u128 },
     #[returns(String)]
     GetDefaultConnection { nid: NetId },
+    #[returns(u128)]
+    GetFee {
+        nid: NetId,
+        rollback: bool,
+        sources: Option<Vec<String>>,
+    },
 }

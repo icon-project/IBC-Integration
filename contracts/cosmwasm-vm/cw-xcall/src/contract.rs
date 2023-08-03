@@ -81,10 +81,7 @@ impl<'a> CwCallService<'a> {
                 self.ensure_admin(deps.storage, info.sender)?;
                 self.set_admin(deps.storage, validated_address)
             }
-            ExecuteMsg::SetProtocolFee { value } => {
-                self.set_protocol_fee(deps, info, value).unwrap();
-                Ok(Response::new())
-            }
+            ExecuteMsg::SetProtocolFee { value } => self.set_protocol_fee(deps, info, value),
             ExecuteMsg::SetProtocolFeeHandler { address } => {
                 self.set_protocol_feehandler(deps, &info, address)
             }
@@ -155,6 +152,15 @@ impl<'a> CwCallService<'a> {
             QueryMsg::GetDefaultConnection { nid } => {
                 to_binary(&self.get_default_connection(deps.storage, nid).unwrap())
             }
+            QueryMsg::GetFee {
+                nid,
+                rollback,
+                sources,
+            } => to_binary(
+                &self
+                    .get_fee(deps, nid, rollback, sources.unwrap_or(vec![]))
+                    .unwrap(),
+            ),
         }
     }
     /// This function handles different types of reply messages and calls corresponding functions based on
