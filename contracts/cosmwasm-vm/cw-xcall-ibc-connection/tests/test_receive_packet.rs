@@ -93,7 +93,6 @@ fn test_receive_packet_for_call_message_response() {
     let data = CallServiceMessageResponse::new(
         1,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
-        "",
     );
 
     let message: CallServiceMessage = data.try_into().unwrap();
