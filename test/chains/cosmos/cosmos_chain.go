@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/icon-project/ibc-integration/test/chains"
+	chains "github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
@@ -18,7 +18,8 @@ func NewCosmosChain(t *testing.T, ctx context.Context, environment string, chain
 	switch environment {
 	case "local", "localnet":
 		client, network := interchaintest.DockerSetup(t)
-		localchain, _ := NewCosmosLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes, keyPassword, contractPaths)
+		var localchain chains.Chain
+		localchain, _ = NewCosmosLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(&localchain), chains.DefaultNumValidators, chains.DefaultNumFullNodes, keyPassword, contractPaths)
 		ic := interchaintest.NewInterchain().
 			AddChain(localchain.(ibc.Chain))
 		// Log location
