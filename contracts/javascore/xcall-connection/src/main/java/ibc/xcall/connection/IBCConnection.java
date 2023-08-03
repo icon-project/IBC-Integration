@@ -50,7 +50,6 @@ public class IBCConnection {
     protected final DictDB<String, String> destinationChannel = Context.newDictDB("destinationPort", String.class);
 
     protected final BranchDB<String, DictDB<BigInteger, byte[]>> incomingPackets = Context.newBranchDB("incomingPackets", byte[].class);
-    protected final BranchDB<String, DictDB<BigInteger, BigInteger>> outgoingPackets = Context.newBranchDB("outgoingPackets", BigInteger.class);
 
     protected final DictDB<String, BigInteger> sendPacketFee = Context.newDictDB("sendPacketFee", BigInteger.class);
     protected final DictDB<String, BigInteger> ackFee = Context.newDictDB("ackFee", BigInteger.class);
@@ -127,9 +126,6 @@ public class IBCConnection {
         }
 
         Context.require(packetFee.add(_ackFee).compareTo(getValue()) >= 0, "Fee is not sufficient");
-        if (!_sn.equals(BigInteger.ZERO)) {
-            outgoingPackets.at(channel).set(seqNum, _sn);
-        }
 
         Message msg = new Message(_sn, packetFee, _msg);
         Packet pct = new Packet();
@@ -166,9 +162,7 @@ public class IBCConnection {
             incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), calldata);
         }
 
-
-
-        Context.call(xCall.get(), "handleMessage", nid, msg.getSn(), msg.getData());
+        Context.call(xCall.get(), "handleMessage", nid, msg.getData());
         return new byte[0];
     }
 
@@ -177,17 +171,14 @@ public class IBCConnection {
         onlyIBCHandler();
 
         Packet packet = Packet.decode(calldata);
-        BigInteger sn = outgoingPackets.at(packet.getSourceChannel()).get(packet.getSequence());
-        outgoingPackets.at(packet.getSourceChannel()).set(packet.getSequence(), null);
         String nid = networkIds.get(packet.getSourceChannel());
 
         Context.require(nid != null, "Channel is not configured");
-        Context.require(sn != null, "Packet with this sn does not exist");
 
         Context.transfer(relayer, unclaimedAckFees.at(nid).get(packet.getSequence()));
         unclaimedAckFees.at(nid).set(packet.getSequence(), null);
 
-        Context.call(xCall.get(), "handleMessage", nid, sn, acknowledgement);
+        Context.call(xCall.get(), "handleMessage", nid, acknowledgement);
     }
 
     @External
@@ -195,17 +186,18 @@ public class IBCConnection {
         onlyIBCHandler();
         Packet packet = Packet.decode(calldata);
         Message msg = Message.fromBytes(packet.getData());
-        BigInteger sn = outgoingPackets.at(packet.getSourceChannel()).get(packet.getSequence());
-        outgoingPackets.at(packet.getSourceChannel()).set(packet.getSequence(), null);
+        BigInteger sn = msg.getSn();
         String nid = networkIds.get(packet.getSourceChannel());
 
-        Context.require(sn != null, "Packet with this sn does not exist");
+        if (sn == null) {
+            return;
+        }
 
         BigInteger fee = msg.getFee();
-        fee = fee.add(unclaimedAckFees.at(nid).get(packet.getSequence()));
+        fee = fee.add(unclaimedAckFees.at(nid).getOrDefault(packet.getSequence(), BigInteger.ZERO));
         unclaimedAckFees.at(nid).set(packet.getSequence(), null);
 
-        Context.call(xCall.get(), "handleError", sn, -1, "Timeout");
+        Context.call(xCall.get(), "handleError", sn);
         Context.transfer(relayer, fee);
     }
 

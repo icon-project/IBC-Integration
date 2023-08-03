@@ -29,7 +29,7 @@ type Chain interface {
 	ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error)
 	ExecuteRollback(ctx context.Context, sn string) (context.Context, error)
 	FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, string, error)
-	FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, string, error)
+	FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, error)
 	OverrideConfig(key string, value any)
 	GetIBCAddress(key string) string
 	DeployXCallMockApp(ctx context.Context, connection XCallConnection) error

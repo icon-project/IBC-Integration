@@ -229,14 +229,14 @@ func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64,
 
 }
 
-func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, string, error) {
+func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, error) {
 	index := fmt.Sprintf("wasm-ResponseMessage.sn CONTAINS '%s'", sn)
 	event, err := c.FindEvent(ctx, startHeight, "xcall", index)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
-	return event.Events["wasm-ResponseMessage.code"][0], event.Events["wasm-ResponseMessage.msg"][0], nil
+	return event.Events["wasm-ResponseMessage.code"][0], nil
 }
 
 func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, index string) (*ctypes.ResultEvent, error) {
@@ -317,6 +317,9 @@ func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, met
 func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	txHash, err := c.getFullNode().ExecTx(ctx, keyName,
 		"wasm", "execute", contractAddress, `{"`+methodName+`":`+param+`}`, "--gas", "auto")
+	if err != nil || txHash == "" {
+		return nil, err
+	}
 	tx, err := c.getTransaction(txHash)
 	ctx = context.WithValue(ctx, "txResult", tx)
 	return ctx, err
