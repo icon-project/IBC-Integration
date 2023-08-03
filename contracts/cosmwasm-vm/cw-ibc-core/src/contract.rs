@@ -530,6 +530,21 @@ impl<'a> CwIbcCoreContext<'a> {
         //  Ok(Response::new())
     }
 
+    pub fn migrate(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        msg: MigrateMsg,
+    ) -> Result<Response, ContractError> {
+        if msg.clear_store {
+            let store = CwIbcStore::default();
+            store.clear_storage(deps.storage);
+        }
+        set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
+            .map_err(ContractError::Std)?;
+        Ok(Response::default().add_attribute("migrate", "successful"))
+    }
+
     /// This function calculates the fee for a given expected gas amount and gas price.
     ///
     /// Arguments:
