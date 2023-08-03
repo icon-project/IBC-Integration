@@ -667,12 +667,15 @@ mod tests {
     use std::str::FromStr;
 
     use crate::context::CwIbcCoreContext;
+    use crate::contract::{CONTRACT_NAME, CONTRACT_VERSION};
     use common::ibc::core::ics02_client::height::Height;
     use common::{
         constants::ICON_CONSENSUS_STATE_TYPE_URL,
         icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
     };
 
+    use crate::msg::MigrateMsg;
+    use cw2::{get_contract_version, ContractVersion};
     use cw_common::ibc_types::IbcClientType;
     use debug_print::debug_println;
     use prost::Message;
@@ -769,5 +772,22 @@ mod tests {
             ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
             result_decoded.type_url
         );
+    }
+
+    #[test]
+    fn test_migrate() {
+        let mut mock_deps = mock_dependencies();
+        let env = mock_env();
+
+        let contract = CwIbcCoreContext::default();
+        let result = contract.migrate(mock_deps.as_mut(), env, MigrateMsg { clear_store: false });
+        assert!(result.is_ok());
+        let expected = ContractVersion {
+            contract: CONTRACT_NAME.to_string(),
+            version: CONTRACT_VERSION.to_string(),
+        };
+        let version = get_contract_version(&mock_deps.storage).unwrap();
+        println!("{version:?}");
+        assert_eq!(expected, version);
     }
 }
