@@ -53,7 +53,7 @@ func (x *XCallTestSuite) TestOneWayMessage(ctx context.Context, t *testing.T, ch
 }
 
 func (x *XCallTestSuite) TestRollback(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
-	msg := "MessageTransferTestingWithRollback"
+	msg := "rollback"
 	rollback := "RollbackDataTesting"
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
 	sn, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, []byte(msg), []byte(rollback))
@@ -61,9 +61,9 @@ func (x *XCallTestSuite) TestRollback(ctx context.Context, t *testing.T, chainA,
 	height, err := chainA.(ibc.Chain).Height(ctx)
 	x.Require().NoError(err)
 	ctx, err = chainB.ExecuteCall(ctx, reqId, data)
-	code, msg, err := chainA.FindCallResponse(ctx, int64(height), sn)
+	code, err := chainA.FindCallResponse(ctx, int64(height), sn)
 	x.Require().NoError(err)
-	assert.Equal(t, "-1", code)
+	assert.Equal(t, "0", code)
 	ctx, err = chainA.ExecuteRollback(ctx, sn)
 	x.Require().NoError(err)
 }
