@@ -1,3 +1,11 @@
+# End-to-End Testing Setup and Demo
+
+## Prerequisites
+
+To run the demo, the following software needs to be installed.
+
+* Docker compose \[[download](https://docs.docker.com/compose/install/)\]
+
 #### Setting up the Environment
 
 1. Build the `ibc-relayer` image:

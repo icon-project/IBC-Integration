@@ -76,4 +76,4 @@ go test -v ./test/integration --args -config=<path to config.json>
 
 ### End-to-End Testing for the System
 
-[End to End Testing Setup](./docs/e2e_test.md)
+[End to End Testing Setup](./docs/e2e_test_setup.md)
