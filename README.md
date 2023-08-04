@@ -26,11 +26,11 @@ Additional information on how IBC works can be found [here](https://ibc.cosmos.n
 ## About <a name = "about"> </a>
 
 ## Installation <a name = "installation"> </a>
-This project uses git submodules. Use the following command to clone the repository. 
+This project uses git submodules. Use the following command to clone this repository including the required submodules. 
 ```sh
 git clone --recurse-submodules https://github.com/icon-project/IBC-Integration
 ```
-To update submodules, run the following command,
+Or To update submodules, run the following command,
 ```
 git submodule init
 git submodule update --remote
@@ -75,7 +75,48 @@ go test -v ./test/integration --args -config=<path to config.json>
 
 
 ### E2E Testing
+1. Build `ibc-relayer` image
+   ```
+   $ git clone https://github.com/icon-project/ibc-relay/
+   
+   $ cd ibc-relay/
+   $ make install
+    ```
+2. Build an `goloop` image
+    ```
+   $ git clone https://github.com/icon-project/goloop/
+   
+   $ cd goloop/ 
+   $ make goloop-icon-image
+    ```
+3. Build an `archway` image
+    ```
+   $ git clone https://github.com/archway-network/archway/
+   
+   $ cd archway
+   $ make install
+   ```
+4. Build an `icon` image
+    ```
+   $ git clone https://github.com/icon-project/goloop.git
+   
+   $ cd goloop
+   $ make gochain-icon-image
+   ``` 
+   <br/>
+5. <b>Update the `icon` and `archway` docker image name on `/test/e2e/e2e-config.yaml`</b>
+<br/>
+<br>
 
-```
-go test -v ./test/e2e --args -config=<path to config.json>
-```
+6. Build builder image
+    ```
+    make build-builder-img
+    ```
+7. Optimize contracts
+    ```
+    make optimize-build
+    ```
+8. Run e2e tests
+    ```
+    go test -v ./test/e2e
+    ```
