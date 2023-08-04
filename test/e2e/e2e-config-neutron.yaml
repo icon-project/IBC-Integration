@@ -22,7 +22,7 @@ chains:
       connection: "$BASE_PATH/artifacts/icon/xcall-connection-0.1.0-optimized.jar"
       dapp: "$BASE_PATH/artifacts/icon/dapp-multi-protocol-0.1.0-optimized.jar"
 
-  - name: archway
+  - name: neutron
     version: '3'
     environment: local
     chain_config:
