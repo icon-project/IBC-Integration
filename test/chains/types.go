@@ -48,3 +48,8 @@ type Admins struct {
 type AdminKey string
 
 var Response interface{}
+
+type MinimumGasPriceEntity struct {
+	Denom  string `json:"denom"`
+	Amount string `json:"amount"`
+}

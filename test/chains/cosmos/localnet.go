@@ -36,6 +36,18 @@ func NewCosmosLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainCo
 	}, nil
 }
 
+func (c *CosmosLocalnet) PreGenesis() error {
+	ctx := context.TODO()
+	chainNodes := c.Nodes()
+	for _, cn := range chainNodes {
+		if _, _, err := cn.ExecBin(ctx, "add-consumer-section"); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Context, error) {
 	var contracts chains.ContractKey
 	time.Sleep(4 * time.Second)
