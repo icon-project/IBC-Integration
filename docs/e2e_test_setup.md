@@ -1,11 +1,10 @@
-## End-to-End Testing for the System
+# End-to-End Testing Setup and Demo
 
-#### Config Setup
+## Prerequisites
 
-Config supports expanding with any available runtime OS environment variables,
-e.g. ${HOME}, ${USER}, ${PWD}, ${BASE_PATH}
+To run the demo, the following software needs to be installed.
 
-`$BASE_PATH` environment variable is also available which points to the root of the project.
+* Docker compose \[[download](https://docs.docker.com/compose/install/)\]
 
 #### Setting up the Environment
 
@@ -97,4 +96,4 @@ Update the image name and versions of Archway/Neutron in `e2e-config.yaml` or `e
    ```bash
    go test -v ./test/e2e
    ```
-
+   

@@ -26,11 +26,11 @@ Additional information on how IBC works can be found [here](https://ibc.cosmos.n
 ## About <a name = "about"> </a>
 
 ## Installation <a name = "installation"> </a>
-This project uses git submodules. Use the following command to clone the repository. 
+This project uses git submodules. Use the following command to clone this repository including the required submodules. 
 ```sh
 git clone --recurse-submodules https://github.com/icon-project/IBC-Integration
 ```
-To update submodules, run the following command,
+Or To update submodules, run the following command,
 ```
 git submodule init
 git submodule update --remote
@@ -52,18 +52,18 @@ Terminologies used in this project.
 - Archway
 
 ### Project Structure
-| Directory | Description |
-|:----------|:------------|
-| [/contracts/cosmwasm-vm](./contracts/cosmwasm-vm) | Includes contracts for cosmwasm based chains |
-| [/contracts/evm](./contracts/evm) | Includes contracts for evm based chains |
-| [/contracts/javascore](./contracts/javascore) | Includes contracts for ICON chain |
-| [/docs](./docs) | Documentation |
-| [/libraries/rust](./libraries/rust) | Common rust libraries used across multiple integrations |
-| [/proto](./proto) | Proto files used for IBC |
-| [/resources](./resources) | Static resources in project. For example images, bin files, etc |
-| [/scripts](./scripts) | Scripts to automate task in project, for example build scripts, deploy scripts. |
-| [/test](./test) | Test Framework and Test Suite including e2e test and functional test |
-| [/utils](./utils) | Utilities used for build, setup, CI/CD |
+| Directory | Description                                                                   |
+|:----------|:------------------------------------------------------------------------------|
+| [/contracts/cosmwasm-vm](./contracts/cosmwasm-vm) | Includes contracts for cosmwasm based chains                                  |
+| [/contracts/evm](./contracts/evm) | Includes contracts for evm based chains                                       |
+| [/contracts/javascore](./contracts/javascore) | Includes contracts for ICON chain                                             |
+| [/docs](./docs) | Documentation                                                                 |
+| [/libraries/rust](./libraries/rust) | Common rust libraries used across multiple integrations                       |
+| [/proto](./proto) | Proto files used for IBC                                                      |
+| [/resources](./resources) | Static resources in project. For example images, bin files, etc               |
+| [/scripts](./scripts) | Scripts to automate task in project, for example build scripts, deploy scripts|
+| [/test](./test) | Test Framework and Test Suite including e2e test and functional test          |
+| [/utils](./utils) | Utilities used for build, setup, CI/CD                                        |
 
 ## Testing <a name = "testing"> </a>
 
@@ -74,8 +74,6 @@ go test -v ./test/integration --args -config=<path to config.json>
 ```
 
 
-### E2E Testing
+### End-to-End Testing for the System
 
-```
-go test -v ./test/e2e --args -config=<path to config.json>
-```
+[End to End Testing Setup](./docs/e2e_test_setup.md)
