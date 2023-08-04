@@ -199,6 +199,10 @@ func (s *E2ETestSuite) generatePathName() string {
 	return path
 }
 
+func (s *E2ETestSuite) getLastPath() string {
+	return s.GetPathName(s.pathNameIndex - 1)
+}
+
 // GetPathName returns the name of a path at a specific index. This can be used in tests
 // when the path name is required.
 func (s *E2ETestSuite) GetPathName(idx int64) string {

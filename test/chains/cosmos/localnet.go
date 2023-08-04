@@ -387,3 +387,15 @@ func (c *CosmosLocalnet) BuildWallets(ctx context.Context, keyName string) error
 func (c *CosmosLocalnet) GetCommonArgs() []string {
 	return []string{"--gas", "auto"}
 }
+
+func (c *CosmosLocalnet) GetClientState(ctx context.Context, clientID string) (context.Context, error) {
+	// wait for a few blocks after executing before querying
+	time.Sleep(2 * time.Second)
+
+	data := `{"get_client_state":{"client_id":` + clientID + `}}`
+
+	chains.Response = ""
+	err := c.CosmosChain.QueryContract(ctx, clientID, data, &chains.Response)
+	fmt.Printf("Response is : %s \n", chains.Response)
+	return ctx, err
+}

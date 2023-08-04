@@ -658,3 +658,12 @@ func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
 	}
 	return c.SendFunds(ctx, "gochain", amount)
 }
+
+func (c *IconLocalnet) GetClientState(ctx context.Context, clientID string) (context.Context, error) {
+	params := fmt.Sprintf(`clientId=%s`, clientID)
+	ctx, err := c.QueryContract(ctx, c.IBCAddresses["ibc"], "getClientState", params)
+	if err != nil {
+		return nil, err
+	}
+	return ctx, err
+}
