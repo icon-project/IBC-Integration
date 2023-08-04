@@ -400,6 +400,10 @@ func (c *IconLocalnet) SetupXCall(ctx context.Context, portId string, keyName st
 	return nil
 }
 
+func (c *IconLocalnet) PreGenesis() error {
+	panic("unimplemented")
+}
+
 func (c *IconLocalnet) DeployXCallMockApp(ctx context.Context, connection chains.XCallConnection) error {
 	xcall := c.IBCAddresses["xcall"]
 	params := `{"_callService":"` + xcall + `"}`

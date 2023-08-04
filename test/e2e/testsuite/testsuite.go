@@ -306,14 +306,20 @@ func (s *E2ETestSuite) createChains(chainOptions testconfig.ChainOptions) (chain
 }
 
 func buildChain(log *zap.Logger, testName string, cfg testconfig.Chain) (chains.Chain, error) {
+	var (
+		chain chains.Chain
+		err   error
+	)
+	ibcChainConfig := cfg.ChainConfig.GetIBCChainConfig(&chain)
 	switch cfg.ChainConfig.Type {
 	case "icon":
-		return icon.NewIconLocalnet(testName, log, cfg.ChainConfig.GetIBCChainConfig(), chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystoreFile, cfg.KeystorePassword, cfg.Contracts), nil
+		chain = icon.NewIconLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystoreFile, cfg.KeystorePassword, cfg.Contracts)
+		return chain, nil
 	case "cosmos", "wasm":
 		enc := cosmos.DefaultEncoding()
-		ibcChainConfig := cfg.ChainConfig.GetIBCChainConfig()
 		ibcChainConfig.EncodingConfig = &enc
-		return cosmos.NewCosmosLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystorePassword, cfg.Contracts)
+		chain, err = cosmos.NewCosmosLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystorePassword, cfg.Contracts)
+		return chain, err
 	default:
 		return nil, fmt.Errorf("unexpected error, unknown chain type: %s for chain: %s", cfg.ChainConfig.Type, cfg.Name)
 	}

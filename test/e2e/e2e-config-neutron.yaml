@@ -1,0 +1,56 @@
+chains:
+  - name: icon
+    version: '3'
+    environment: local
+    nid: '3'
+    keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
+    keystore_password: gochain
+    chain_config:
+      type: icon
+      name: goloop1
+      chain_id: icon1
+      bech32_prefix: hx
+      bin: "/goloop/bin/goloop"
+      image:
+        repository: goloop/gochain-icon
+        version: latest
+        uid_gid: ''
+    contracts:
+      ibc: "$BASE_PATH/artifacts/icon/ibc-0.1.0-optimized.jar"
+      client: "$BASE_PATH/artifacts/icon/tendermint-0.1.0-optimized.jar"
+      xcall: "$BASE_PATH/artifacts/icon/xcall-0.1.0-optimized.jar"
+      connection: "$BASE_PATH/artifacts/icon/xcall-connection-0.1.0-optimized.jar"
+      dapp: "$BASE_PATH/artifacts/icon/dapp-multi-protocol-0.1.0-optimized.jar"
+
+  - name: neutron
+    version: '3'
+    environment: local
+    chain_config:
+      type: wasm
+      name: neutron
+      chain_id: neutron-1
+      skip_gen_tx: true
+      image:
+        repository: neutron-node
+        version: latest
+        uid_gid: ''
+      bin: neutrond
+      bech32_prefix: neutron
+      denom: utron
+      coin_type: 118
+      gas_prices: 0.001utron
+      gas_adjustment: 1.3
+      trusting_period: 508h
+      no_host_mount: false
+    nid: '3'
+    keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
+    keystore_password: gochain
+    contracts:
+      ibc: "$BASE_PATH/artifacts/archway/cw_ibc_core.wasm"
+      client: "$BASE_PATH/artifacts/archway/cw_icon_light_client.wasm"
+      xcall: "$BASE_PATH/artifacts/archway/cw_xcall.wasm"
+      connection: "$BASE_PATH/artifacts/archway/cw_xcall_ibc_connection.wasm"
+      dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
+relayer:
+  image: relayer
+  tag: latest

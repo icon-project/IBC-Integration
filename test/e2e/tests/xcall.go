@@ -24,15 +24,23 @@ func (x *XCallTestSuite) TestDemo() {
 	x.SetupXCall(ctx, portId)
 	x.DeployMockApp(ctx, portId)
 
-	x.T.Run("xcall one way message", func(t *testing.T) {
+	x.T.Run("xcall one way message chainA-chainB", func(t *testing.T) {
 		chainA, chainB := x.GetChains()
 		x.TestOneWayMessage(ctx, t, chainA, chainB)
+	})
+
+	x.T.Run("xcall one way message chainB-chainA", func(t *testing.T) {
+		chainA, chainB := x.GetChains()
 		x.TestOneWayMessage(ctx, t, chainB, chainA)
 	})
 
-	x.T.Run("xcall test rollback", func(t *testing.T) {
+	x.T.Run("xcall test rollback chainA-chainB", func(t *testing.T) {
 		chainA, chainB := x.GetChains()
 		x.TestRollback(ctx, t, chainA, chainB)
+	})
+
+	x.T.Run("xcall test rollback chainB-chainA", func(t *testing.T) {
+		chainA, chainB := x.GetChains()
 		x.TestRollback(ctx, t, chainB, chainA)
 	})
 }
