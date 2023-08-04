@@ -74,49 +74,96 @@ go test -v ./test/integration --args -config=<path to config.json>
 ```
 
 
-### E2E Testing
-1. Build `ibc-relayer` image
-   ```
-   $ git clone https://github.com/icon-project/ibc-relay/
-   
-   $ cd ibc-relay/
-   $ make install
-    ```
-2. Build an `goloop` image
-    ```
-   $ git clone https://github.com/icon-project/goloop/
-   
-   $ cd goloop/ 
-   $ make goloop-icon-image
-    ```
-3. Build an `archway` image
-    ```
-   $ git clone https://github.com/archway-network/archway/
-   
-   $ cd archway
-   $ make install
-   ```
-4. Build an `icon` image
-    ```
-   $ git clone https://github.com/icon-project/goloop.git
-   
-   $ cd goloop
-   $ make gochain-icon-image
-   ``` 
-   <br/>
-5. <b>Update the `icon` and `archway` docker image name on `/test/e2e/e2e-config.yaml`</b>
-<br/>
-<br>
+### End-to-End Testing for the System
 
-6. Build builder image
-    ```
-    make build-builder-img
-    ```
-7. Optimize contracts
-    ```
-    make optimize-build
-    ```
-8. Run e2e tests
-    ```
-    go test -v ./test/e2e
-    ```
+#### Setting up the Environment
+
+1. Build the `ibc-relayer` image:
+
+   ```bash
+   $ git clone https://github.com/icon-project/ibc-relay/
+   $ cd ibc-relay/
+   $ docker build -t relayer .
+   ```
+
+2. Build the builder image for bundling contracts:
+
+   ```bash
+   make build-builder-img
+   ```
+
+3. Optimize contracts:
+
+   Before starting to bundle contracts, update all submodules:
+
+   ```bash
+   git submodule init
+   git submodule update --remote
+   ```
+
+   Start bundling Icon and Rust contracts:
+
+   ```bash
+   make optimize-build
+   ```
+
+#### Additional Steps for Apple Silicon
+
+**Build an `icon-chain` image**
+
+```bash
+git clone https://github.com/icon-project/goloop.git
+cd goloop
+make gochain-icon-image
+``` 
+
+**Build a `goloop` image**
+
+```bash
+git clone https://github.com/icon-project/goloop/
+cd goloop/ 
+make goloop-icon-image
+```
+
+**Build an `archway` or `neutron` image**
+
+> For Archway:
+
+```bash
+git clone https://github.com/archway-network/archway/
+cd archway
+docker build -f Dockerfile.deprecated -t archway .
+```
+
+> For Neutron:
+
+```bash
+git clone https://github.com/neutron-org/neutron.git
+cd neutron
+make build-docker-image
+```
+
+Update the image name and versions of Archway/Neutron in `e2e-config.yaml` or `e2e-config-neutron.yaml`.
+
+#### Running the End-to-End Tests
+
+1. Export the following system variables:
+
+    - `E2E_CONFIG_PATH`: Absolute path to the config file (`e2e-config.yaml` for Archway or `e2e-config-neutron.yaml` for Neutron).
+    - `GOLOOP_IMAGE_ENV`: Goloop image name.
+    - `GOLOOP_IMAGE_TAG_ENV`: Goloop image version.
+
+   Example:
+
+   ```bash
+   export E2E_CONFIG_PATH=/home/User/IBC-integration/e2e-config.yaml
+   export GOLOOP_IMAGE_ENV=goloop
+   export GOLOOP_IMAGE_TAG_ENV=latest
+   ```
+
+2. Run the End-to-End Tests:
+
+   ```bash
+   go test -v ./test/e2e
+   ```
+   
