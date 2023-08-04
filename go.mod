@@ -18,6 +18,7 @@ require (
 	github.com/gogo/protobuf v1.3.3
 	github.com/gorilla/websocket v1.5.0
 	github.com/icon-project/icon-bridge v0.0.11
+	github.com/icza/dyno v0.0.0-20220812133438-f0b6f8a18845
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
 	github.com/spf13/viper v1.16.0
 	github.com/strangelove-ventures/interchaintest/v7 v7.0.0-20230721183422-fb937bb0e165
@@ -141,7 +142,6 @@ require (
 	github.com/huandu/skiplist v1.2.0 // indirect
 	github.com/hugobyte/keygen v0.1.0 // indirect
 	github.com/icon-project/goloop v1.2.11 // indirect
-	github.com/icza/dyno v0.0.0-20220812133438-f0b6f8a18845 // indirect
 	github.com/improbable-eng/grpc-web v0.15.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ipfs/go-cid v0.2.0 // indirect

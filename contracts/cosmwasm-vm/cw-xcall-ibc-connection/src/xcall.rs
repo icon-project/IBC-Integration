@@ -12,12 +12,10 @@ impl<'a> CwIbcConnection<'a> {
         store: &dyn Storage,
         nid: &NetId,
         msg: Vec<u8>,
-        sn: Option<i64>,
     ) -> Result<SubMsg, ContractError> {
         let xcall_host = self.get_xcall_host(store)?;
         let xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleMessage {
             from: nid.clone(),
-            sn,
             msg,
         };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -33,11 +31,11 @@ impl<'a> CwIbcConnection<'a> {
         &self,
         store: &dyn Storage,
         sn: i64,
-        code: i64,
-        msg: String,
     ) -> Result<SubMsg, ContractError> {
         let xcall_host = self.get_xcall_host(store)?;
-        let xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleError { sn, code, msg };
+        let xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleError {
+            sn: sn.try_into().unwrap(),
+        };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: xcall_host.to_string(),
             msg: to_binary(&xcall_msg).unwrap(),
@@ -62,17 +60,16 @@ mod tests {
         let connection = CwIbcConnection::default();
         let store = deps.as_mut().storage;
         let msg = vec![1, 2, 3];
-        let sn = Some(42);
         connection
             .set_xcall_host(store, Addr::unchecked("xcall-address"))
             .unwrap();
         let nid = NetId::from("nid".to_string());
-        let res = connection.call_xcall_handle_message(store, &nid, msg.clone(), sn);
+        let res = connection.call_xcall_handle_message(store, &nid, msg.clone());
         assert!(res.is_ok());
 
         let expected_xcall_host = connection.get_xcall_host(store).unwrap().to_string();
         let expected_xcall_msg =
-            cw_xcall_lib::xcall_msg::ExecuteMsg::HandleMessage { msg, sn, from: nid };
+            cw_xcall_lib::xcall_msg::ExecuteMsg::HandleMessage { msg, from: nid };
         let expected_call_message = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: expected_xcall_host,
             msg: to_binary(&expected_xcall_msg).unwrap(),
@@ -93,14 +90,13 @@ mod tests {
             .unwrap();
         let store = deps.storage;
         let sn = 42;
-        let code = 500;
-        let msg = "error message".to_string();
-
-        let res = connection.call_xcall_handle_error(&store, sn, code, msg.clone());
+        let res = connection.call_xcall_handle_error(&store, sn);
         assert!(res.is_ok());
 
         let expected_xcall_host = connection.get_xcall_host(&store).unwrap().to_string();
-        let expected_xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleError { sn, code, msg };
+        let expected_xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleError {
+            sn: sn.try_into().unwrap(),
+        };
         let expected_call_message = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: expected_xcall_host,
             msg: to_binary(&expected_xcall_msg).unwrap(),

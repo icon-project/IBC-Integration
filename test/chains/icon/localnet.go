@@ -400,6 +400,10 @@ func (c *IconLocalnet) SetupXCall(ctx context.Context, portId string, keyName st
 	return nil
 }
 
+func (c *IconLocalnet) PreGenesis() error {
+	panic("unimplemented")
+}
+
 func (c *IconLocalnet) DeployXCallMockApp(ctx context.Context, connection chains.XCallConnection) error {
 	xcall := c.IBCAddresses["xcall"]
 	params := `{"_callService":"` + xcall + `"}`
@@ -502,11 +506,11 @@ func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, f
 	return reqId, data, nil
 }
 
-func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, string, error) {
+func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, error) {
 	index := []*string{&sn}
-	event, err := c.FindEvent(ctx, startHeight, "xcall", "ResponseMessage(int,int,str)", index)
+	event, err := c.FindEvent(ctx, startHeight, "xcall", "ResponseMessage(int,int)", index)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	intHeight, _ := event.Height.Int()
@@ -516,9 +520,8 @@ func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, 
 	trResult, _ := c.getFullNode().TransactionResult(ctx, string(tx.TxHash))
 	eventIndex, _ := event.Events[0].Int()
 	code, _ := strconv.ParseInt(trResult.EventLogs[eventIndex].Data[0], 0, 64)
-	msg := trResult.EventLogs[eventIndex].Data[1]
 
-	return strconv.FormatInt(code, 10), msg, nil
+	return strconv.FormatInt(code, 10), nil
 }
 
 func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, signature string, index []*string) (*icontypes.EventNotification, error) {

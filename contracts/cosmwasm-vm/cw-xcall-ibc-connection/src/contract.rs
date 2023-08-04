@@ -539,11 +539,7 @@ impl<'a> CwIbcConnection<'a> {
         let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
         let nid = channel_config.counterparty_nid;
 
-        let sn = self.get_outgoing_packet_sn(deps.as_ref().storage, &channel, seq)?;
-        self.remove_outgoing_packet_sn(deps.storage, &channel, seq);
-
-        let submsg =
-            self.call_xcall_handle_message(deps.storage, &nid, acknowledgement.data.0, Some(sn))?;
+        let submsg = self.call_xcall_handle_message(deps.storage, &nid, acknowledgement.data.0)?;
 
         let bank_msg = self.settle_unclaimed_ack_fee(
             deps.storage,
@@ -578,15 +574,19 @@ impl<'a> CwIbcConnection<'a> {
         msg: CwPacketTimeoutMsg,
     ) -> Result<Response, ContractError> {
         let packet = msg.packet;
+
+        let n_message: Message = rlp::decode(&packet.data).unwrap();
+
+        if n_message.sn.is_none() {
+            return Ok(Response::new());
+        }
+
         let channel_id = packet.src.channel_id.clone();
         let channel_config = self.get_channel_config(deps.as_ref().storage, &channel_id)?;
         let nid = channel_config.counterparty_nid;
-        let sn = self.get_outgoing_packet_sn(deps.storage, &channel_id, packet.sequence)?;
 
-        let n_message: Message = rlp::decode(&packet.data).unwrap();
-        self.remove_outgoing_packet_sn(deps.storage, &channel_id, packet.sequence);
         self.add_unclaimed_ack_fees(deps.storage, &nid, packet.sequence, n_message.fee)?;
-        let submsg = self.call_xcall_handle_error(deps.storage, sn, -1, "Timeout".to_string())?;
+        let submsg = self.call_xcall_handle_error(deps.storage, n_message.sn.0.unwrap())?;
         let bank_msg = self.settle_unclaimed_ack_fee(
             deps.storage,
             nid.as_str(),
@@ -708,10 +708,10 @@ impl<'a> CwIbcConnection<'a> {
     ) -> RawPacket {
         let packet = RawPacket {
             sequence: sequence_no,
-            source_port: ibc_config.src_endpoint().clone().port_id,
-            source_channel: ibc_config.src_endpoint().clone().channel_id,
-            destination_port: ibc_config.dst_endpoint().clone().port_id,
-            destination_channel: ibc_config.dst_endpoint().clone().channel_id,
+            source_port: ibc_config.src_endpoint().port_id.clone(),
+            source_channel: ibc_config.src_endpoint().channel_id.clone(),
+            destination_port: ibc_config.dst_endpoint().port_id.clone(),
+            destination_channel: ibc_config.dst_endpoint().channel_id.clone(),
             data: rlp::encode(&data).to_vec(),
             timeout_height: Some(timeout_height.into()),
             timeout_timestamp: 0,

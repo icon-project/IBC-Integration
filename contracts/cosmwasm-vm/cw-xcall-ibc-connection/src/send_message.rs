@@ -39,14 +39,6 @@ impl<'a> CwIbcConnection<'a> {
             )?;
         }
 
-        if sn != 0 {
-            self.store_outgoing_packet_sn(
-                deps.storage,
-                &ibc_config.src_endpoint().channel_id,
-                sequence_number_host,
-                sn,
-            )?;
-        }
         let timeout_height =
             self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
         let msg = Message {
