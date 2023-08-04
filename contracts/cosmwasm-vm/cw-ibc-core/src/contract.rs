@@ -287,6 +287,14 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 to_binary(&hex::encode(res.encode_to_vec()))
             }
+            QueryMsg::GetConsensusStateByHeight { client_id, height } => {
+                let client_val = IbcClientId::from_str(&client_id).unwrap();
+                let client = self.get_client(deps.storage, client_val.clone()).unwrap();
+                let res = client
+                    .get_consensus_state(deps, &client_val, height)
+                    .unwrap();
+                to_binary(&hex::encode(res))
+            }
             QueryMsg::GetClientState { client_id } => {
                 let res = self
                     .client_state_any(deps.storage, &IbcClientId::from_str(&client_id).unwrap())

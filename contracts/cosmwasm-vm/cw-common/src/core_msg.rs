@@ -188,4 +188,6 @@ pub enum QueryMsg {
 
     #[returns(u64)]
     GetLatestHeight { client_id: String },
+    #[returns(String)]
+    GetConsensusStateByHeight { client_id: String, height: u64 },
 }
