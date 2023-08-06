@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	interchaintest "github.com/icon-project/ibc-integration/test"
+	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/e2e/relayer"
 	"github.com/icon-project/ibc-integration/test/e2e/testconfig"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
@@ -83,21 +84,20 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context, channelOpts ...func(*ib
 				}
 			}
 		})
-		// wait for relayer to start.
 		s.Require().NoError(test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)), "failed to wait for blocks")
 	}
 	s.relayer = r
 	return r, r.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName)
 }
 
-func (s *E2ETestSuite) CreateClient(ctx context.Context) (context.Context, error) {
+func (s *E2ETestSuite) CreateClient(ctx context.Context) error {
 	eRep := s.GetRelayerExecReporter()
 	pathName := s.GetPathName(s.pathNameIndex - 1)
-	if err := s.relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{TrustingPeriod: "100000m"}); err != nil {
-		return nil, err
-	}
-	chainA, _ := s.GetChains()
-	return chainA.GetClientState(ctx, `07-tendermint-0`)
+	return s.relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{TrustingPeriod: "100000m"})
+}
+
+func (s *E2ETestSuite) GetClientState(ctx context.Context, chain chains.Chain, clientSuffix int) (context.Context, error) {
+	return chain.GetClientState(ctx, clientSuffix)
 }
 
 func (s *E2ETestSuite) CreateConnection(ctx context.Context, commands []string) ibc.RelayerExecResult {

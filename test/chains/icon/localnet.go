@@ -659,9 +659,13 @@ func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
 	return c.SendFunds(ctx, "gochain", amount)
 }
 
-func (c *IconLocalnet) GetClientState(ctx context.Context, clientID string) (context.Context, error) {
-	params := fmt.Sprintf(`clientId=%s`, clientID)
-	ctx, err := c.QueryContract(ctx, c.IBCAddresses["ibc"], "getClientState", params)
+func (c *IconLocalnet) GetClientName(suffix int) string {
+	return fmt.Sprintf("07-tendermint-%d", suffix)
+}
+
+func (c *IconLocalnet) GetClientState(ctx context.Context, clientSuffix int) (context.Context, error) {
+	params := fmt.Sprintf(`clientId=%s`, c.GetClientName(clientSuffix))
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getClientState", params)
 	if err != nil {
 		return nil, err
 	}

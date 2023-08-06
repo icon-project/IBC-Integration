@@ -388,14 +388,18 @@ func (c *CosmosLocalnet) GetCommonArgs() []string {
 	return []string{"--gas", "auto"}
 }
 
-func (c *CosmosLocalnet) GetClientState(ctx context.Context, clientID string) (context.Context, error) {
-	// wait for a few blocks after executing before querying
-	time.Sleep(2 * time.Second)
+func (c *CosmosLocalnet) GetClientName(suffix int) string {
+	return fmt.Sprintf("iconclient-%d", suffix)
+}
 
-	data := `{"get_client_state":{"client_id":` + clientID + `}}`
-
+func (c *CosmosLocalnet) GetClientState(ctx context.Context, clientSuffix int) (context.Context, error) {
+	var data = map[string]interface{}{
+		"get_client_state": map[string]interface{}{
+			"client_id": c.GetClientName(clientSuffix),
+		},
+	}
 	chains.Response = ""
-	err := c.CosmosChain.QueryContract(ctx, clientID, data, &chains.Response)
+	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &chains.Response)
 	fmt.Printf("Response is : %s \n", chains.Response)
 	return ctx, err
 }

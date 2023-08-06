@@ -2,10 +2,8 @@ package tests
 
 import (
 	"context"
-	"fmt"
-	"testing"
-
 	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
+	"testing"
 )
 
 type RelayerTestSuite struct {
@@ -14,7 +12,11 @@ type RelayerTestSuite struct {
 }
 
 func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
-	clients, err := r.CreateClient(ctx)
-	r.Require().NoError(err)
-	fmt.Println("Clients created", clients)
+	r.Require().NoError(r.CreateClient(ctx))
+	chainA, chainB := r.GetChains()
+	res, err := r.GetClientState(ctx, chainA, 0)
+	r.Require().NoError(err, res)
+	res, err = r.GetClientState(ctx, chainB, 0)
+	r.Require().NoError(err, res)
+	r.Require().NoError(r.CreateClient(ctx))
 }
