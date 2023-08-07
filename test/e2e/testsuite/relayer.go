@@ -94,7 +94,7 @@ func (s *E2ETestSuite) GetClientState(ctx context.Context, chain chains.Chain, c
 	return chain.GetClientState(ctx, clientSuffix)
 }
 
-func (s *E2ETestSuite) GetClientSequence(ctx context.Context, chain chains.Chain) (interface{}, error) {
+func (s *E2ETestSuite) GetClientSequence(ctx context.Context, chain chains.Chain) (int, error) {
 	return chain.GetClientsCount(ctx)
 }
 
@@ -104,12 +104,11 @@ func (s *E2ETestSuite) CreateConnection(ctx context.Context) error {
 	return s.relayer.CreateConnections(ctx, eRep, pathName)
 }
 
-func (s *E2ETestSuite) SinglePacketFlow(ctx context.Context) {
+func (s *E2ETestSuite) SinglePacketFlow(ctx context.Context, chain chains.Chain) {
+
 }
 
-func (s *E2ETestSuite) MultiplePacketFlow(ctx context.Context) ibc.RelayerExecResult {
-	var commands []string
-	return s.ExecRelay(ctx, commands)
+func (s *E2ETestSuite) MultiplePacketFlow(ctx context.Context, chain chains.Chain) {
 }
 
 func (s *E2ETestSuite) PacketNotSentFromIconAndArchway(ctx context.Context) ibc.RelayerExecResult {

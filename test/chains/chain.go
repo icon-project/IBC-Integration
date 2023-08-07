@@ -34,7 +34,7 @@ type Chain interface {
 	PreGenesis() error
 	GetClientState(context.Context, int) (context.Context, error)
 	GetClientName(int) string
-	GetClientsCount(context.Context) (interface{}, error)
+	GetClientsCount(context.Context) (int, error)
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {
