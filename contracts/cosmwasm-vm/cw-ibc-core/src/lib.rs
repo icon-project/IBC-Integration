@@ -136,10 +136,8 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
-    if msg.clear_store {
-        let store = CwIbcStore::default();
-        store.clear_storage(deps.storage);
-    }
-    Ok(Response::default().add_attribute("migrate", "successful"))
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    let call_service = CwIbcCoreContext::default();
+
+    call_service.migrate(deps, env, msg)
 }
