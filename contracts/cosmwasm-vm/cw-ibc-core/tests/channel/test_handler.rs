@@ -1,3 +1,5 @@
+use cw_ibc_core::conversions::to_ibc_height;
+
 use super::*;
 
 #[test]
@@ -8,10 +10,11 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let mut msg = MsgChannelOpenTry::try_from(raw).unwrap();
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
     let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = msg.port_id_on_a.clone();
+    let channel = to_ibc_channel(raw.channel.clone()).unwrap();
+    let port_id = channel.remote.port_id;
 
     let module = Addr::unchecked("contractaddress");
     let _cx_module_id = module_id;
@@ -39,11 +42,11 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
         vec![common::ibc::core::ics03_connection::version::Version::default()],
         Duration::default(),
     );
-    let conn_id = ConnectionId::new(5);
-    msg.connection_hops_on_b = vec![conn_id.clone()];
+    let conn_id = ConnectionId::new(0);
+
     let contract = CwIbcCoreContext::new();
     contract
-        .store_connection(deps.as_mut().storage, conn_id, conn_end)
+        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
@@ -73,7 +76,7 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
     }
     .try_into()
     .unwrap();
-    let height = msg.proof_height_on_a;
+    let height = to_ibc_height(raw.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -86,6 +89,6 @@ fn test_validate_open_try_channel_fail_missing_counterparty() {
         .unwrap();
 
     contract
-        .validate_channel_open_try(deps.as_mut(), info, &msg)
+        .validate_channel_open_try(deps.as_mut(), info, &raw)
         .unwrap();
 }

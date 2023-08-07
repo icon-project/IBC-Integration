@@ -114,11 +114,11 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_client_type(
         &self,
         store: &dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
     ) -> Result<IbcClientType, ContractError> {
         self.ibc_store()
             .client_types()
-            .load(store, client_id.clone())
+            .load(store, client_id)
             .map_err(|_e| ContractError::InvalidClientId {
                 client_id: client_id.as_str().to_string(),
             })
@@ -171,11 +171,11 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_client_implementations(
         &self,
         store: &dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
     ) -> Result<LightClient, ContractError> {
         self.ibc_store()
             .client_implementations()
-            .load(store, client_id.clone())
+            .load(store, client_id)
             .map_err(|_e| ContractError::InvalidClientId {
                 client_id: client_id.as_str().to_string(),
             })
@@ -203,7 +203,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_client_type(
         &self,
         store: &mut dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
         client_type: IbcClientType,
     ) -> Result<(), ContractError> {
         self.ibc_store()
@@ -261,7 +261,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_client_implementations(
         &self,
         store: &mut dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
         client: LightClient,
     ) -> Result<(), ContractError> {
         self.ibc_store()
@@ -325,15 +325,15 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_client(
         &self,
         store: &dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
     ) -> Result<LightClient, ContractError> {
-        let client = self
-            .get_client_implementations(store, client_id.clone())
-            .ok();
+        let client = self.get_client_implementations(store, client_id).ok();
 
         if client.is_none() {
-            return Err(ClientError::ClientNotFound { client_id })
-                .map_err(Into::<ContractError>::into);
+            return Err(ClientError::ClientNotFound {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
         }
         Ok(client.unwrap())
     }
@@ -356,12 +356,12 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_client_state(
         &self,
         store: &dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
     ) -> Result<Vec<u8>, ContractError> {
         let client_state = self
             .ibc_store()
             .client_states()
-            .load(store, client_id.clone())
+            .load(store, client_id)
             .map_err(|_| ContractError::IbcDecodeError {
                 error: DecodeError::new("NotFound ClientId(".to_owned() + client_id.as_str() + ")"),
             })?;
@@ -414,7 +414,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn get_connection(
         &self,
         store: &dyn Storage,
-        connection_id: ConnectionId,
+        connection_id: &ConnectionId,
     ) -> Result<Vec<u8>, ContractError> {
         let _connection_id = connection_id.clone();
         let connection = self
@@ -452,10 +452,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Any, ContractError> {
         let client_key = commitment::client_state_commitment_key(client_id);
 
-        let client_state_any_data = self
-            .ibc_store()
-            .client_states()
-            .load(store, client_id.clone())?;
+        let client_state_any_data = self.ibc_store().client_states().load(store, client_id)?;
         let client_state_any =
             Any::decode(client_state_any_data.as_slice()).map_err(Into::<ContractError>::into)?;
         Ok(client_state_any)
@@ -485,10 +482,7 @@ impl<'a> CwIbcCoreContext<'a> {
         store: &dyn Storage,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let consensus_state_data = self
-            .ibc_store()
-            .consensus_states()
-            .load(store, client_id.clone())?;
+        let consensus_state_data = self.ibc_store().consensus_states().load(store, client_id)?;
         let consensus_state_any =
             Any::decode(consensus_state_data.as_slice()).map_err(Into::<ContractError>::into)?;
         Ok(consensus_state_any)
@@ -540,7 +534,7 @@ impl<'a> CwIbcCoreContext<'a> {
         return self
             .ibc_store()
             .last_processed_on()
-            .load(store, client_id.clone())
+            .load(store, client_id)
             .map_err(Into::<ContractError>::into);
     }
 
@@ -561,7 +555,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_key = commitment::client_state_commitment_key(client_id);
         self.ibc_store()
             .client_states()
-            .save(store, client_id.clone(), &client_state_any)?;
+            .save(store, client_id, &client_state_any)?;
 
         self.ibc_store()
             .save_commitment(store, client_key, &client_state_hash)?;
@@ -586,7 +580,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         self.ibc_store()
             .consensus_states()
-            .save(store, client_id.clone(), &consensus_state_any)?;
+            .save(store, client_id, &consensus_state_any)?;
 
         self.ibc_store()
             .save_commitment(store, consensus_key, &consensus_state_hash)?;
@@ -606,7 +600,7 @@ impl<'a> CwIbcCoreContext<'a> {
         };
         self.ibc_store()
             .last_processed_on()
-            .save(store, client_id.clone(), &last_processed)?;
+            .save(store, client_id, &last_processed)?;
         Ok(())
     }
 }

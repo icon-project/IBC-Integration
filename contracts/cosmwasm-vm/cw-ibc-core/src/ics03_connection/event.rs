@@ -1,4 +1,8 @@
 use super::*;
+pub const CONN_ID_ATTRIBUTE_KEY: &str = "connection_id";
+pub const CLIENT_ID_ATTRIBUTE_KEY: &str = "client_id";
+pub const COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY: &str = "counterparty_connection_id";
+pub const COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY: &str = "counterparty_client_id";
 
 pub fn create_connection_event(
     event_type: IbcEventType,

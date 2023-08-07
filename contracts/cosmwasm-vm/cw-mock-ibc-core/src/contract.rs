@@ -1,3 +1,4 @@
+use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -6,8 +7,7 @@ use cosmwasm_std::{
     SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
-
-use cw_common::ibc_types::IbcPacket as Packet;
+use cw_common::ibc_types::IbcHeight;
 use cw_common::raw_types::channel::RawPacket;
 use cw_common::ProstMessage;
 
@@ -66,33 +66,35 @@ pub fn execute(
 
             let message: RawPacket = ProstMessage::decode(data.as_slice()).unwrap();
 
-            let packet_data = Packet::try_from(message).unwrap();
+            //let packet_data = Packet::try_from(message).unwrap();
 
             if state.owner != info.sender {
                 return Err(ContractError::Unauthorized {});
             }
             let src_endpoint = IbcEndpoint {
-                port_id: packet_data.port_id_on_a.to_string(),
-                channel_id: packet_data.chan_id_on_a.to_string(),
+                port_id: message.source_port.to_string(),
+                channel_id: message.source_channel.to_string(),
             };
 
             let dst_endpoint = IbcEndpoint {
-                port_id: packet_data.port_id_on_b.to_string(),
-                channel_id: packet_data.chan_id_on_b.to_string(),
+                port_id: message.destination_port.to_string(),
+                channel_id: message.destination_channel.to_string(),
             };
+            let timeout_height: TimeoutHeight =
+                TimeoutHeight::from(IbcHeight::try_from(message.timeout_height.unwrap()).unwrap());
             let timeout = IbcTimeout::with_both(
                 IbcTimeoutBlock {
-                    revision: packet_data.timeout_height_on_b.commitment_revision_number(),
-                    height: packet_data.timeout_height_on_b.commitment_revision_height(),
+                    revision: timeout_height.commitment_revision_number(),
+                    height: timeout_height.commitment_revision_height(),
                 },
-                Timestamp::from_nanos(packet_data.timeout_timestamp_on_b.nanoseconds()),
+                Timestamp::from_nanos(message.timeout_timestamp),
             );
 
             let ibc_packet = IbcPacket::new(
-                packet_data.data,
+                message.data,
                 src_endpoint,
                 dst_endpoint,
-                packet_data.sequence.into(),
+                message.sequence,
                 timeout,
             );
 
