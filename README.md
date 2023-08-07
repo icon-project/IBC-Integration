@@ -1,9 +1,3 @@
-[![Project Status: Initial Release](https://img.shields.io/badge/repo%20status-active-green.svg?style=flat-square)](https://www.repostatus.org/#active)
-[![License: Apache-2.0](https://img.shields.io/github/license/icon-project/IBC-Integration.svg?style=flat-square)](https://github.com/icon-project/IBC-Integration/blob/main/LICENSE)
-[![Lines Of Code](https://img.shields.io/tokei/lines/github/icon-project/IBC-Integration?style=flat-square)](https://github.com/icon-project/IBC-Integration)
-[![Version](https://img.shields.io/github/tag/icon-project/IBC-Integration.svg?style=flat-square)](https://github.com/icon-project/IBC-Integration)
-
-
 | Language                            | Code Coverage                                  |
 | ----------------------------------- | ---------------------------------------------- |
 | [Java](./contracts/javascore)       | [![Java Cov][java-cov-badge]][java-cov-link]   |
