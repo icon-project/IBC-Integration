@@ -74,6 +74,9 @@ pub enum ContractError {
 
     #[error("Invalid EventType in {event} {event_type}")]
     InvalidEventType { event: String, event_type: String },
+
+    #[error("InvalidHeight")]
+    InvalidHeight,
 }
 
 impl From<FromHexError> for ContractError {

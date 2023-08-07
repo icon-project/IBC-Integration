@@ -1,6 +1,3 @@
-use common::ibc::core::ics04_channel::msgs::{
-    timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose,
-};
 use common::rlp::{self, Decodable, Encodable};
 
 use cosmwasm_schema::cw_serde;
@@ -45,10 +42,11 @@ pub struct VerifyPacketAcknowledgement {
     // commitment byte
     pub ack: Vec<u8>,
 }
-
+use crate::raw_types::channel::RawMessageTimeout;
+use crate::raw_types::channel::RawMessageTimeoutOnclose;
 pub enum TimeoutMsgType {
-    Timeout(MsgTimeout),
-    TimeoutOnClose(MsgTimeoutOnClose),
+    Timeout(RawMessageTimeout),
+    TimeoutOnClose(RawMessageTimeoutOnclose),
 }
 
 #[cw_serde]

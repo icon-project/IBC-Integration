@@ -15,12 +15,12 @@ use super::*;
 /// `Err(ContractError)` value indicating that the validation failed with a specific `ContractError`
 /// type.
 pub fn channel_open_try_msg_validate(
-    message: &MsgChannelOpenTry,
+    channel: &ChannelEnd,
     conn_end_on_b: &ConnectionEnd,
 ) -> Result<(), ContractError> {
     if !conn_end_on_b.state_matches(&ConnectionState::Open) {
         return Err(ChannelError::ConnectionNotOpen {
-            connection_id: message.connection_hops_on_b[0].clone(),
+            connection_id: channel.connection_hops[0].clone(),
         })
         .map_err(Into::<ContractError>::into);
     };
@@ -33,7 +33,7 @@ pub fn channel_open_try_msg_validate(
         }
     };
 
-    let channel_feature = message.ordering.to_string();
+    let channel_feature = channel.ordering.to_string();
     if !conn_version.is_supported_feature(channel_feature) {
         return Err(ChannelError::ChannelFeatureNotSupportedByConnection)
             .map_err(Into::<ContractError>::into);

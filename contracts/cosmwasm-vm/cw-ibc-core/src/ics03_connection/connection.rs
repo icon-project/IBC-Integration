@@ -24,8 +24,8 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_connection(
         &self,
         store: &mut dyn Storage,
-        conn_id: ConnectionId,
-        conn_end: ConnectionEnd,
+        conn_id: &ConnectionId,
+        conn_end: &ConnectionEnd,
     ) -> Result<(), ContractError> {
         let data = conn_end
             .encode_vec()
@@ -57,7 +57,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn connection_end(
         &self,
         store: &dyn Storage,
-        conn_id: ConnectionId,
+        conn_id: &ConnectionId,
     ) -> Result<ConnectionEnd, ContractError> {
         let data = self.ibc_store().connections().load(store, conn_id)?;
 
@@ -88,13 +88,13 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_connection_to_client(
         &self,
         store: &mut dyn Storage,
-        client_id: ClientId,
-        conn_id: ConnectionId,
+        client_id: &ClientId,
+        conn_id: &ConnectionId,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
             .client_connections()
-            .save(store, client_id, &conn_id)
+            .save(store, client_id, conn_id)
         {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
@@ -119,7 +119,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn client_connection(
         &self,
         store: &dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
     ) -> Result<ConnectionId, ContractError> {
         self.ibc_store()
             .client_connections()
@@ -247,7 +247,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn check_for_connection(
         &self,
         store: &dyn Storage,
-        client_id: ClientId,
+        client_id: &ClientId,
     ) -> Result<(), ContractError> {
         match self
             .ibc_store()
@@ -282,10 +282,10 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn update_connection_commitment(
         &self,
         store: &mut dyn Storage,
-        connection_id: ConnectionId,
-        connection_end: ConnectionEnd,
+        connection_id: &ConnectionId,
+        connection_end: &ConnectionEnd,
     ) -> Result<(), ContractError> {
-        let connection_commit_key = commitment::connection_commitment_key(&connection_id);
+        let connection_commit_key = commitment::connection_commitment_key(connection_id);
 
         let connection_end_bytes =
             connection_end
@@ -324,23 +324,4 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         addr
     }
-
-    // fn host_current_height(&self) -> Result<common::ibc::Height, ContractError> {
-    //     todo!()
-    // }
-
-    // fn host_oldest_height(&self) -> Result<common::ibc::Height, ContractError> {
-    //     todo!()
-    // }
-
-    // fn client_consensus_state(
-    //     &self,
-    //     client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-    //     height: &common::ibc::Height,
-    // ) -> Result<
-    //     Option<Box<dyn common::ibc::core::ics02_client::consensus_state::ConsensusState>>,
-    //     ContractError,
-    // > {
-    //     todo!()
-    // }
 }
