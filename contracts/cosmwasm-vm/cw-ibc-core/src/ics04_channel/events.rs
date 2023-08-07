@@ -1,3 +1,5 @@
+use crate::ics03_connection::event::CONN_ID_ATTRIBUTE_KEY;
+
 use super::*;
 use cw_common::raw_types::channel::RawPacket;
 

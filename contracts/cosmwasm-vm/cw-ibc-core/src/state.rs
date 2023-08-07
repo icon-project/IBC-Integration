@@ -86,20 +86,20 @@ use super::*;
 ///
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, IbcClientType, String>,
-    client_types: Map<'a, IbcClientId, IbcClientType>,
-    client_states: Map<'a, IbcClientId, Vec<u8>>,
-    consensus_states: Map<'a, IbcClientId, Vec<u8>>,
-    client_implementations: Map<'a, IbcClientId, LightClient>,
-    next_sequence_send: Map<'a, (PortId, ChannelId), Sequence>,
-    next_sequence_recv: Map<'a, (PortId, ChannelId), Sequence>,
-    next_sequence_ack: Map<'a, (PortId, ChannelId), Sequence>,
+    client_types: Map<'a, &'a IbcClientId, IbcClientType>,
+    client_states: Map<'a, &'a IbcClientId, Vec<u8>>,
+    consensus_states: Map<'a, &'a IbcClientId, Vec<u8>>,
+    client_implementations: Map<'a, &'a IbcClientId, LightClient>,
+    next_sequence_send: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
+    next_sequence_recv: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
+    next_sequence_ack: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
     next_client_sequence: Item<'a, u64>,
     next_connection_sequence: Item<'a, u64>,
     next_channel_sequence: Item<'a, u64>,
-    client_connections: Map<'a, IbcClientId, IbcConnectionId>,
-    connections: Map<'a, IbcConnectionId, Vec<u8>>,
-    channels: Map<'a, (PortId, ChannelId), ChannelEnd>,
-    port_to_module: Map<'a, PortId, IbcModuleId>,
+    client_connections: Map<'a, &'a IbcClientId, IbcConnectionId>,
+    connections: Map<'a, &'a IbcConnectionId, Vec<u8>>,
+    channels: Map<'a, (&'a PortId, &'a ChannelId), ChannelEnd>,
+    port_to_module: Map<'a, &'a PortId, IbcModuleId>,
     /// Stores address based on the capability names
     capabilities: Map<'a, Vec<u8>, String>,
     /// store commitments based on keys (PacketCommitment,AckCommitment,Connection,Channel,Client)
@@ -108,7 +108,7 @@ pub struct CwIbcStore<'a> {
     expected_time_per_block: Item<'a, u64>,
     /// Stores packet receipts based on PortId,ChannelId and sequence
     packet_receipts: Map<'a, (String, String, u64), u64>,
-    last_processed_on: Map<'a, IbcClientId, LastProcessedOn>,
+    last_processed_on: Map<'a, &'a IbcClientId, LastProcessedOn>,
     // Stores data by replyid to be used later on reply from cross contract call
     callback_data: Map<'a, u64, Vec<u8>>,
 }
@@ -148,20 +148,20 @@ impl<'a> CwIbcStore<'a> {
     pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
         &self.client_registry
     }
-    pub fn client_types(&self) -> &Map<'a, ClientId, IbcClientType> {
+    pub fn client_types(&self) -> &Map<'a, &'a ClientId, IbcClientType> {
         &self.client_types
     }
-    pub fn client_implementations(&self) -> &Map<'a, ClientId, LightClient> {
+    pub fn client_implementations(&self) -> &Map<'a, &'a ClientId, LightClient> {
         &self.client_implementations
     }
-    pub fn next_sequence_send(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
+    pub fn next_sequence_send(&self) -> &Map<'a, (&'a PortId, &'a ChannelId), Sequence> {
         &self.next_sequence_send
     }
-    pub fn next_sequence_recv(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
+    pub fn next_sequence_recv(&self) -> &Map<'a, (&'a PortId, &'a ChannelId), Sequence> {
         &self.next_sequence_recv
     }
 
-    pub fn next_sequence_ack(&self) -> &Map<'a, (PortId, ChannelId), Sequence> {
+    pub fn next_sequence_ack(&self) -> &Map<'a, (&'a PortId, &'a ChannelId), Sequence> {
         &self.next_sequence_ack
     }
 
@@ -174,16 +174,16 @@ impl<'a> CwIbcStore<'a> {
     pub fn next_channel_sequence(&self) -> &Item<'a, u64> {
         &self.next_channel_sequence
     }
-    pub fn connections(&self) -> &Map<'a, ConnectionId, Vec<u8>> {
+    pub fn connections(&self) -> &Map<'a, &'a ConnectionId, Vec<u8>> {
         &self.connections
     }
-    pub fn client_connections(&self) -> &Map<'a, ClientId, ConnectionId> {
+    pub fn client_connections(&self) -> &Map<'a, &'a ClientId, ConnectionId> {
         &self.client_connections
     }
-    pub fn channels(&self) -> &Map<'a, (PortId, ChannelId), ChannelEnd> {
+    pub fn channels(&self) -> &Map<'a, (&'a PortId, &'a ChannelId), ChannelEnd> {
         &self.channels
     }
-    pub fn port_to_module(&self) -> &Map<'a, PortId, IbcModuleId> {
+    pub fn port_to_module(&self) -> &Map<'a, &'a PortId, IbcModuleId> {
         &self.port_to_module
     }
     pub fn capabilities(&self) -> &Map<'a, Vec<u8>, String> {
@@ -199,15 +199,15 @@ impl<'a> CwIbcStore<'a> {
         &self.packet_receipts
     }
 
-    pub fn last_processed_on(&self) -> &Map<'a, IbcClientId, LastProcessedOn> {
+    pub fn last_processed_on(&self) -> &Map<'a, &'a IbcClientId, LastProcessedOn> {
         &self.last_processed_on
     }
 
-    pub fn client_states(&self) -> &Map<'a, IbcClientId, Vec<u8>> {
+    pub fn client_states(&self) -> &Map<'a, &'a IbcClientId, Vec<u8>> {
         &self.client_states
     }
 
-    pub fn consensus_states(&self) -> &Map<'a, IbcClientId, Vec<u8>> {
+    pub fn consensus_states(&self) -> &Map<'a, &'a IbcClientId, Vec<u8>> {
         &self.consensus_states
     }
 

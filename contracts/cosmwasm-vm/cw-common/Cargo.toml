@@ -25,7 +25,6 @@ serde-json-wasm = {workspace=true}
 bytes = { workspace=true }
 bech32="0.9.1"
 cw-xcall-lib={workspace=true}
-cw-xcall = {workspace=true}
 
 [dev-dependencies]
 getrandom = {version = "0.2.9", default-features = false, features = ["custom"]}

@@ -1,3 +1,5 @@
+use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_port_id};
+
 use super::*;
 
 #[test]
@@ -8,19 +10,21 @@ fn test_packet_send() {
     let timestamp_future = Timestamp::default();
     let timeout_height_future = 10;
 
-    let mut packet: Packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
-            .try_into()
-            .unwrap();
-    packet.sequence = 1.into();
+    let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
+    packet.sequence = 1;
     packet.data = vec![0];
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let _dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let _dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
 
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
         Order::default(),
         Counterparty::new(
-            packet.port_id_on_b.clone(),
-            Some(packet.chan_id_on_b.clone()),
+            to_ibc_port_id(&packet.destination_port).unwrap(),
+            Some(to_ibc_channel_id(&packet.destination_channel).unwrap()),
         ),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
@@ -45,21 +49,21 @@ fn test_packet_send() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            chan_end_on_a.clone(),
+            &src_port.clone(),
+            &src_channel.clone(),
+            &chan_end_on_a,
         )
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
+        .store_connection(&mut deps.storage, &conn_id_on_a.clone(), &conn_end_on_a)
         .unwrap();
     contract
         .store_next_sequence_send(
             &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            1.into(),
+            &src_port,
+            &src_channel,
+            &Sequence::from(1),
         )
         .unwrap();
 
@@ -116,11 +120,9 @@ fn test_packet_send_fail_channel_not_found() {
     let mut deps = deps();
     let timestamp_future = Timestamp::default();
     let timeout_height_future = 10;
-    let mut packet: Packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
-            .try_into()
-            .unwrap();
-    packet.sequence = 1.into();
+    let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
+
+    packet.sequence = 1;
     packet.data = vec![0];
     contract.send_packet(deps.as_mut(), packet).unwrap();
 }
@@ -135,20 +137,20 @@ fn test_packet_send_fail_misiing_sequense() {
     let mut deps = deps();
     let timestamp_future = Timestamp::default();
     let timeout_height_future = 10;
-    let mut packet: Packet =
-        get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds())
-            .try_into()
-            .unwrap();
-    packet.sequence = 1.into();
+    let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
+    packet.sequence = 1;
     packet.data = vec![0];
+
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
 
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
         Order::default(),
-        Counterparty::new(
-            packet.port_id_on_b.clone(),
-            Some(packet.chan_id_on_b.clone()),
-        ),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -170,16 +172,11 @@ fn test_packet_send_fail_misiing_sequense() {
     );
 
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            packet.port_id_on_a.clone(),
-            packet.chan_id_on_a.clone(),
-            chan_end_on_a.clone(),
-        )
+        .store_channel_end(&mut deps.storage, &src_port, &src_channel, &chan_end_on_a)
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, conn_id_on_a.clone(), conn_end_on_a)
+        .store_connection(&mut deps.storage, &conn_id_on_a.clone(), &conn_end_on_a)
         .unwrap();
 
     let client_state = ClientState {

@@ -1,6 +1,4 @@
 use super::*;
-use common::ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
-use common::ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 
 pub mod timeout;
 pub use timeout::*;

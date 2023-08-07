@@ -1,4 +1,12 @@
-use common::ibc::core::ics02_client::msgs::misbehaviour::MsgSubmitMisbehaviour;
+use cw_common::raw_types::{
+    channel::{
+        RawMsgChannelCloseConfirm, RawMsgChannelCloseInit, RawMsgChannelOpenAck,
+        RawMsgChannelOpenConfirm, RawMsgChannelOpenInit, RawMsgChannelOpenTry,
+    },
+    client::{
+        RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
+    },
+};
 
 use super::*;
 
@@ -12,7 +20,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: IbcMsgCreateClient,
+        message: RawMsgCreateClient,
     ) -> Result<Response, ContractError>;
 
     fn execute_create_client_reply(
@@ -25,7 +33,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: IbcMsgUpdateClient,
+        message: RawMsgUpdateClient,
     ) -> Result<Response, ContractError>;
     fn execute_update_client_reply(
         &self,
@@ -38,7 +46,7 @@ pub trait IbcClient {
         deps: DepsMut,
         info: MessageInfo,
         env: Env,
-        message: MsgUpgradeClient,
+        message: RawMsgUpgradeClient,
     ) -> Result<Response, ContractError>;
     fn execute_upgrade_client_reply(
         &self,
@@ -62,7 +70,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: MsgSubmitMisbehaviour,
+        message: RawMsgSubmitMisbehaviour,
     ) -> Result<Response, ContractError>;
 
     fn execute_misbehaviour_reply(
@@ -86,7 +94,7 @@ pub trait ValidateChannel {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelOpenInit,
+        message: &RawMsgChannelOpenInit,
     ) -> Result<Response, ContractError>;
 
     // channel_open_try is called by a module to accept the first step of a channel opening handshake initiated by a module on another chain.
@@ -94,7 +102,7 @@ pub trait ValidateChannel {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelOpenTry,
+        message: &RawMsgChannelOpenTry,
     ) -> Result<Response, ContractError>;
 
     // channel_open_ack is called by the handshake-originating module to
@@ -103,7 +111,7 @@ pub trait ValidateChannel {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelOpenAck,
+        message: &RawMsgChannelOpenAck,
     ) -> Result<Response, ContractError>;
 
     // channel_open_confirm is called by the counterparty module to close their
@@ -112,7 +120,7 @@ pub trait ValidateChannel {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelOpenConfirm,
+        message: &RawMsgChannelOpenConfirm,
     ) -> Result<Response, ContractError>;
 
     // channel_close_init is called by either module to close their end of the
@@ -121,7 +129,7 @@ pub trait ValidateChannel {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelCloseInit,
+        message: &RawMsgChannelCloseInit,
     ) -> Result<Response, ContractError>;
 
     // channel_close_confirm is called by the counterparty module to close their
@@ -130,7 +138,7 @@ pub trait ValidateChannel {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        message: &MsgChannelCloseConfirm,
+        message: &RawMsgChannelCloseConfirm,
     ) -> Result<Response, ContractError>;
 }
 
