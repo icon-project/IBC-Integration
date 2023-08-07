@@ -9,6 +9,7 @@ import (
 	"github.com/icon-project/ibc-integration/test/e2e/testconfig"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
+	"time"
 )
 
 var (
@@ -16,18 +17,11 @@ var (
 	channelName = "ICON-ARCHWAY"
 )
 
-func (s *E2ETestSuite) SetupRelayer(ctx context.Context, channelOpts ...func(*ibc.CreateChannelOptions)) (ibc.Relayer, error) {
+func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 	config := testconfig.New()
 	chainA, chainB := s.GetChains()
 	r := relayer.New(s.T(), config.RelayerConfig, s.logger, s.DockerClient, s.network)
-
 	pathName := s.generatePathName()
-
-	channelOptions := ibc.DefaultChannelOpts()
-	for _, opt := range channelOpts {
-		opt(&channelOptions)
-	}
-
 	ic := interchaintest.NewInterchain().
 		AddChain(chainA.(ibc.Chain)).
 		AddChain(chainB.(ibc.Chain)).
@@ -100,8 +94,14 @@ func (s *E2ETestSuite) GetClientState(ctx context.Context, chain chains.Chain, c
 	return chain.GetClientState(ctx, clientSuffix)
 }
 
-func (s *E2ETestSuite) CreateConnection(ctx context.Context, commands []string) ibc.RelayerExecResult {
-	return s.ExecRelay(ctx, commands)
+func (s *E2ETestSuite) GetClientSequence(ctx context.Context, chain chains.Chain) (interface{}, error) {
+	return chain.GetClientsCount(ctx)
+}
+
+func (s *E2ETestSuite) CreateConnection(ctx context.Context) error {
+	pathName := s.GetPathName(s.pathNameIndex - 1)
+	eRep := s.GetRelayerExecReporter()
+	return s.relayer.CreateConnections(ctx, eRep, pathName)
 }
 
 func (s *E2ETestSuite) SinglePacketFlow(ctx context.Context) {
@@ -132,9 +132,16 @@ func (s *E2ETestSuite) NotResponding(ctx context.Context) ibc.RelayerExecResult 
 	return s.ExecTxRelay(ctx, commands...)
 }
 
-func (s *E2ETestSuite) CrashAndRecover(ctx context.Context) ibc.RelayerExecResult {
-	var commands []string
-	return s.ExecTxRelay(ctx, commands...)
+func (s *E2ETestSuite) CrashAndRecover(ctx context.Context) (time.Duration, error) {
+	startTime := time.Now()
+	eRep := s.GetRelayerExecReporter()
+	if err := s.relayer.StopRelayer(ctx, eRep); err != nil {
+		return 0, err
+	}
+	if err := s.relayer.StartRelayer(ctx, eRep); err != nil {
+		return 0, err
+	}
+	return time.Since(startTime), nil
 }
 
 func (s *E2ETestSuite) ClaimFee(ctx context.Context) ibc.RelayerExecResult {

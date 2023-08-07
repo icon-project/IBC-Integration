@@ -32,8 +32,9 @@ type Chain interface {
 	GetIBCAddress(key string) string
 	DeployXCallMockApp(ctx context.Context, connection XCallConnection) error
 	PreGenesis() error
-	GetClientState(ctx context.Context, clientSuffix int) (context.Context, error)
+	GetClientState(context.Context, int) (context.Context, error)
 	GetClientName(int) string
+	GetClientsCount(context.Context) (interface{}, error)
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {

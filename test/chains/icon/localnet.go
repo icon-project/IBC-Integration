@@ -671,3 +671,12 @@ func (c *IconLocalnet) GetClientState(ctx context.Context, clientSuffix int) (co
 	}
 	return ctx, err
 }
+
+// GetClientsCount returns the next sequence number for the client
+func (c *IconLocalnet) GetClientsCount(ctx context.Context) (interface{}, error) {
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextClientSequence", "")
+	if err != nil {
+		return nil, err
+	}
+	return chains.Response, nil
+}

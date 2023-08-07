@@ -30,7 +30,7 @@ chains:
       name: archway
       chain_id: archway-1
       image:
-        repository: debendraoli/archwayd
+        repository: archwaynetwork/archwayd
         version: latest
         uid_gid: ""
       bin: archwayd

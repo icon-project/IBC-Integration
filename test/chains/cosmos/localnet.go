@@ -403,3 +403,12 @@ func (c *CosmosLocalnet) GetClientState(ctx context.Context, clientSuffix int) (
 	fmt.Printf("Response is : %s \n", chains.Response)
 	return ctx, err
 }
+
+// GetClientsCount returns the next sequence number for the client
+func (c *CosmosLocalnet) GetClientsCount(ctx context.Context) (interface{}, error) {
+	var data = map[string]interface{}{"get_next_client_sequence": map[string]interface{}{"": ""}}
+	chains.Response = ""
+	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &chains.Response)
+	fmt.Printf("Response is : %s \n", chains.Response)
+	return chains.Response, err
+}
