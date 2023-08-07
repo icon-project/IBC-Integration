@@ -1,5 +1,8 @@
+use std::marker::PhantomData;
+
 use crate::{ics24_host::LastProcessedOn, light_client::light_client::LightClient};
 use cosmwasm_std::Order;
+use cw_storage_plus::Bound;
 
 use super::*;
 
@@ -111,6 +114,7 @@ pub struct CwIbcStore<'a> {
     last_processed_on: Map<'a, IbcClientId, LastProcessedOn>,
     // Stores data by replyid to be used later on reply from cross contract call
     callback_data: Map<'a, u64, Vec<u8>>,
+    sent_packets: Map<'a, (PortId, ChannelId, u64), u64>,
 }
 
 impl<'a> Default for CwIbcStore<'a> {
@@ -143,6 +147,7 @@ impl<'a> CwIbcStore<'a> {
             client_states: Map::new(StorageKey::ClientStates.as_str()),
             consensus_states: Map::new(StorageKey::ConsensusStates.as_str()),
             callback_data: Map::new(StorageKey::CallbackData.as_str()),
+            sent_packets: Map::new(StorageKey::SentPackets.as_str()),
         }
     }
     pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
@@ -214,6 +219,9 @@ impl<'a> CwIbcStore<'a> {
     pub fn callback_data(&self) -> &Map<'a, u64, Vec<u8>> {
         &self.callback_data
     }
+    pub fn sent_packets(&self) -> &Map<'a, (PortId, ChannelId, u64), u64> {
+        &self.sent_packets
+    }
 
     pub fn clear_storage(&self, store: &mut dyn Storage) {
         let keys: Vec<_> = store
@@ -224,6 +232,73 @@ impl<'a> CwIbcStore<'a> {
             debug_print::debug_println!("Removing Key {:?}", k);
             store.remove(&k);
         }
+    }
+
+    pub fn save_sent_packet(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+        seq: u64,
+        height: u64,
+    ) -> Result<(), ContractError> {
+        self.sent_packets()
+            .save(store, (port_id, channel_id, seq), &height)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn get_packet_heights(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+        start_seq: u64,
+        end_seq: u64,
+    ) -> Result<Vec<(u64,u64)>, ContractError> {
+        let min_key = (port_id.clone(), channel_id.clone(), start_seq);
+        let max_key = (port_id, channel_id, end_seq);
+        let min_bound = Bound::Inclusive::<(PortId, ChannelId, u64)>((min_key, PhantomData));
+        let max_bound = Bound::Inclusive::<(PortId, ChannelId, u64)>((max_key, PhantomData));
+
+        let result = self
+            .sent_packets()
+            .range(store, Some(min_bound), Some(max_bound), Order::Ascending)
+            .filter_map(|p| {
+                return p.ok().map(|r| {
+                    if r.1 == 0 {
+                        return None;
+                    }
+                    return Some((r.0.2,r.1));
+                });
+            })
+            .filter(|f| f.is_some())
+            .map(Option::unwrap)
+            .collect::<Vec<(u64, u64)>>();
+
+
+        return Ok(result);
+    }
+
+    pub fn get_missing_receipts(
+        &self,
+        store: &mut dyn Storage,
+        port_id: PortId,
+        channel_id: ChannelId,
+        start_seq: u64,
+        end_seq: u64,
+    ) -> Result<Vec<u64>, ContractError> {
+        let mut missing: Vec<u64> = Vec::new();
+        for i in start_seq..end_seq {
+            let exists = self
+                .packet_receipts()
+                .load(store, (port_id.to_string(), channel_id.to_string(), i))
+                .is_ok();
+            if exists == false {
+                missing.push(i)
+            }
+        }
+
+        Ok(missing)
     }
 
     pub fn save_commitment(
