@@ -105,12 +105,18 @@ fn test_packet_send() {
         )
         .unwrap();
 
-    let res = contract.send_packet(deps.as_mut(), packet);
+
+    let res = contract.send_packet(deps.as_mut(), &mock_env(), packet);
     println!("{:?}", res);
     assert!(res.is_ok());
     let res = res.unwrap();
     assert_eq!(res.attributes[0].value, "send_packet");
-    assert_eq!(res.events[0].ty, IbcEventType::SendPacket.as_str())
+    assert_eq!(res.events[0].ty, IbcEventType::SendPacket.as_str());
+
+    let packet_heights= contract.ibc_store().get_packet_heights(deps.as_ref().storage, &src_port, &src_channel, 0, 10).unwrap();
+    println!("{packet_heights:?}");
+    assert_eq!(packet_heights,vec![(1,12345)]);
+    
 }
 
 #[test]
@@ -124,7 +130,9 @@ fn test_packet_send_fail_channel_not_found() {
 
     packet.sequence = 1;
     packet.data = vec![0];
-    contract.send_packet(deps.as_mut(), packet).unwrap();
+    contract
+        .send_packet(deps.as_mut(), &mock_env(), packet)
+        .unwrap();
 }
 
 #[test]
@@ -217,5 +225,7 @@ fn test_packet_send_fail_misiing_sequense() {
         )
         .unwrap();
 
-    contract.send_packet(deps.as_mut(), packet).unwrap();
+    contract
+        .send_packet(deps.as_mut(), &mock_env(), packet)
+        .unwrap();
 }

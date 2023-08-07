@@ -110,11 +110,11 @@ pub struct CwIbcStore<'a> {
     /// Stores block duration
     expected_time_per_block: Item<'a, u64>,
     /// Stores packet receipts based on PortId,ChannelId and sequence
-    packet_receipts: Map<'a, (String, String, u64), u64>,
+    packet_receipts: Map<'a, (&'a PortId, &'a ChannelId, u64), u64>,
     last_processed_on: Map<'a, &'a IbcClientId, LastProcessedOn>,
     // Stores data by replyid to be used later on reply from cross contract call
     callback_data: Map<'a, u64, Vec<u8>>,
-    sent_packets: Map<'a, (PortId, ChannelId, u64), u64>,
+    sent_packets: Map<'a, (&'a PortId, &'a ChannelId, u64), u64>,
 }
 
 impl<'a> Default for CwIbcStore<'a> {
@@ -200,7 +200,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn expected_time_per_block(&self) -> &Item<'a, u64> {
         &self.expected_time_per_block
     }
-    pub fn packet_receipts(&self) -> &Map<'a, (String, String, u64), u64> {
+    pub fn packet_receipts(&self) -> &Map<'a, (&'a PortId, &'a ChannelId, u64), u64> {
         &self.packet_receipts
     }
 
@@ -219,7 +219,7 @@ impl<'a> CwIbcStore<'a> {
     pub fn callback_data(&self) -> &Map<'a, u64, Vec<u8>> {
         &self.callback_data
     }
-    pub fn sent_packets(&self) -> &Map<'a, (PortId, ChannelId, u64), u64> {
+    pub fn sent_packets(&self) -> &Map<'a, (&'a PortId, &'a ChannelId, u64), u64> {
         &self.sent_packets
     }
 
@@ -234,11 +234,11 @@ impl<'a> CwIbcStore<'a> {
         }
     }
 
-    pub fn save_sent_packet(
+    pub fn store_sent_packet(
         &self,
         store: &mut dyn Storage,
-        port_id: PortId,
-        channel_id: ChannelId,
+        port_id: &PortId,
+        channel_id: &ChannelId,
         seq: u64,
         height: u64,
     ) -> Result<(), ContractError> {
@@ -249,16 +249,16 @@ impl<'a> CwIbcStore<'a> {
 
     pub fn get_packet_heights(
         &self,
-        store: &mut dyn Storage,
-        port_id: PortId,
-        channel_id: ChannelId,
+        store: &dyn Storage,
+        port_id: &PortId,
+        channel_id: &ChannelId,
         start_seq: u64,
         end_seq: u64,
-    ) -> Result<Vec<(u64,u64)>, ContractError> {
-        let min_key = (port_id.clone(), channel_id.clone(), start_seq);
+    ) -> Result<Vec<(u64, u64)>, ContractError> {
+        let min_key = (port_id, channel_id, start_seq);
         let max_key = (port_id, channel_id, end_seq);
-        let min_bound = Bound::Inclusive::<(PortId, ChannelId, u64)>((min_key, PhantomData));
-        let max_bound = Bound::Inclusive::<(PortId, ChannelId, u64)>((max_key, PhantomData));
+        let min_bound = Bound::Inclusive::<(&PortId, &ChannelId, u64)>((min_key, PhantomData));
+        let max_bound = Bound::Inclusive::<(&PortId, &ChannelId, u64)>((max_key, PhantomData));
 
         let result = self
             .sent_packets()
@@ -268,22 +268,21 @@ impl<'a> CwIbcStore<'a> {
                     if r.1 == 0 {
                         return None;
                     }
-                    return Some((r.0.2,r.1));
+                    return Some((r.0 .2, r.1));
                 });
             })
             .filter(|f| f.is_some())
             .map(Option::unwrap)
             .collect::<Vec<(u64, u64)>>();
 
-
         return Ok(result);
     }
 
-    pub fn get_missing_receipts(
+    pub fn get_missing_packet_receipts(
         &self,
-        store: &mut dyn Storage,
-        port_id: PortId,
-        channel_id: ChannelId,
+        store: &dyn Storage,
+        port_id: &PortId,
+        channel_id: &ChannelId,
         start_seq: u64,
         end_seq: u64,
     ) -> Result<Vec<u64>, ContractError> {
@@ -291,7 +290,7 @@ impl<'a> CwIbcStore<'a> {
         for i in start_seq..end_seq {
             let exists = self
                 .packet_receipts()
-                .load(store, (port_id.to_string(), channel_id.to_string(), i))
+                .load(store, (port_id, channel_id, i))
                 .is_ok();
             if exists == false {
                 missing.push(i)

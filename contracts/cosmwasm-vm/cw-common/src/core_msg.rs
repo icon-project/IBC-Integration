@@ -190,4 +190,18 @@ pub enum QueryMsg {
     GetLatestHeight { client_id: String },
     #[returns(String)]
     GetConsensusStateByHeight { client_id: String, height: u64 },
+    #[returns(Vec<(u64,u64)>)]
+    GetPacketHeights {
+        port_id: String,
+        channel_id: String,
+        start_sequence: u64,
+        end_sequence: u64,
+    },
+    #[returns(Vec<u64>)]
+    GetMissingPacketReceipts {
+        port_id: String,
+        channel_id: String,
+        start_sequence: u64,
+        end_sequence: u64,
+    },
 }
