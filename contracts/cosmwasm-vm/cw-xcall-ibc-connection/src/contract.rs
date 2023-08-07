@@ -253,6 +253,17 @@ impl<'a> CwIbcConnection<'a> {
             }),
         }
     }
+
+    pub fn migrate(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        _msg: MigrateMsg,
+    ) -> Result<Response, ContractError> {
+        set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
+            .map_err(ContractError::Std)?;
+        Ok(Response::default().add_attribute("migrate", "successful"))
+    }
 }
 
 impl<'a> CwIbcConnection<'a> {

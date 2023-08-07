@@ -6,7 +6,7 @@ To run the demo, the following software needs to be installed.
 
 * Docker compose \[[download](https://docs.docker.com/compose/install/)\]
 
-#### Setting up the Environment
+### Setting up the Environment
 
 1. Build the `ibc-relayer` image:
 
@@ -37,45 +37,45 @@ To run the demo, the following software needs to be installed.
    make optimize-build
    ```
 
-#### Additional Steps for Apple Silicon
+### Additional steps for Apple Silicon 
 
-**Build an `icon-chain` image**
+* Build an `icon-chain` image
+   
+   ```bash
+   git clone https://github.com/icon-project/goloop.git
+   cd goloop
+   make gochain-icon-image
+   ``` 
+   
+* Build a `goloop` image
+   
+   ```bash
+   git clone https://github.com/icon-project/goloop/
+   cd goloop/ 
+   make goloop-icon-image
+   ```
+   
+* Build an `archway` or `neutron` image
 
-```bash
-git clone https://github.com/icon-project/goloop.git
-cd goloop
-make gochain-icon-image
-``` 
+   **For Archway:**
+   
+   ```bash
+   git clone https://github.com/archway-network/archway/
+   cd archway
+   docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
+   ```
+   
+   **For Neutron:**
+   
+   ```bash
+   git clone https://github.com/neutron-org/neutron.git
+   cd neutron
+   make build-docker-image
+   ```
 
-**Build a `goloop` image**
+ℹ️ Change the image name and version of Archway/Neutron in `e2e-config.yaml` or `e2e-config-neutron.yaml`.
 
-```bash
-git clone https://github.com/icon-project/goloop/
-cd goloop/ 
-make goloop-icon-image
-```
-
-**Build an `archway` or `neutron` image**
-
-> For Archway:
-
-```bash
-git clone https://github.com/archway-network/archway/
-cd archway
-docker build -f Dockerfile.deprecated -t archway .
-```
-
-> For Neutron:
-
-```bash
-git clone https://github.com/neutron-org/neutron.git
-cd neutron
-make build-docker-image
-```
-
-Update the image name and versions of Archway/Neutron in `e2e-config.yaml` or `e2e-config-neutron.yaml`.
-
-#### Running the End-to-End Tests
+### Running the End-to-End Tests
 
 1. Export the following system variables:
 
