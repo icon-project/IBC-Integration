@@ -191,4 +191,21 @@ impl LightClient {
             false => Err(ContractError::LightClientValidationFailed(msg.to_string())),
         }
     }
+    pub fn get_consensus_state(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+        height: u64,
+    ) -> Result<Vec<u8>, ContractError> {
+        let query_message = cw_common::client_msg::QueryMsg::GetConsensusState {
+            client_id: client_id.as_str().to_string(),
+            height,
+        };
+        let msg = to_binary(&query_message).map_err(ContractError::Std)?;
+
+        let query = build_smart_query(self.address.clone(), msg);
+
+        let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
+        Ok(response)
+    }
 }
