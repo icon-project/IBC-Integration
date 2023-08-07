@@ -31,7 +31,7 @@ chains:
       chain_id: neutron-1
       skip_gen_tx: true
       image:
-        repository: neutron-node
+        repository: neutronorg/neutron
         version: latest
         uid_gid: ''
       bin: neutrond
