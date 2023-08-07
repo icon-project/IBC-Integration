@@ -105,7 +105,6 @@ fn test_packet_send() {
         )
         .unwrap();
 
-
     let res = contract.send_packet(deps.as_mut(), &mock_env(), packet);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -113,10 +112,12 @@ fn test_packet_send() {
     assert_eq!(res.attributes[0].value, "send_packet");
     assert_eq!(res.events[0].ty, IbcEventType::SendPacket.as_str());
 
-    let packet_heights= contract.ibc_store().get_packet_heights(deps.as_ref().storage, &src_port, &src_channel, 0, 10).unwrap();
+    let packet_heights = contract
+        .ibc_store()
+        .get_packet_heights(deps.as_ref().storage, &src_port, &src_channel, 0, 10)
+        .unwrap();
     println!("{packet_heights:?}");
-    assert_eq!(packet_heights,vec![(1,12345)]);
-    
+    assert_eq!(packet_heights, vec![(1, 12345)]);
 }
 
 #[test]

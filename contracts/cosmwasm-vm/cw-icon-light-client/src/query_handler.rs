@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::{
     state::{CLIENT_STATES, CONFIG, CONSENSUS_STATES, PROCESSED_HEIGHTS, PROCESSED_TIMES},
     traits::Config,
@@ -11,8 +13,9 @@ use common::{
     traits::AnyTypes,
     utils::{calculate_root, keccak256},
 };
-use cosmwasm_std::Storage;
+use cosmwasm_std::{Order, StdResult, Storage};
 use cw_common::hex_string::HexString;
+use cw_storage_plus::Bound;
 use debug_print::debug_println;
 use prost::Message;
 
@@ -207,5 +210,50 @@ impl QueryHandler {
             &[],
             path,
         )
+    }
+
+    pub fn get_previous_consensus(
+        storage: &dyn Storage,
+        height: u64,
+        client_id: String,
+    ) -> Result<Vec<u64>, ContractError> {
+        let key = (client_id, height);
+        let bound = Bound::Exclusive::<(String, u64)>((key, PhantomData));
+
+        let result = CONSENSUS_STATES
+            .range(storage, None, Some(bound), Order::Descending)
+            .take(1)
+            .collect::<StdResult<Vec<((String, u64), Vec<u8>)>>>()
+            .map_err(ContractError::Std)?;
+
+        let keys = result.into_iter().map(|t| t.0 .1).collect::<Vec<u64>>();
+        Ok(keys)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use cosmwasm_std::testing::MockStorage;
+
+    use crate::state::CONSENSUS_STATES;
+
+    use super::QueryHandler;
+
+    #[test]
+    fn test_previous_consensus() {
+        let mut store = MockStorage::new();
+        CONSENSUS_STATES
+            .save(&mut store, ("test".to_string(), 100), &vec![1, 2, 4, 5])
+            .unwrap();
+        CONSENSUS_STATES
+            .save(&mut store, ("test".to_string(), 80), &vec![1, 2, 4, 5])
+            .unwrap();
+        CONSENSUS_STATES
+            .save(&mut store, ("test".to_string(), 70), &vec![1, 2, 4, 5])
+            .unwrap();
+
+        let result = QueryHandler::get_previous_consensus(&store, 110, "test".to_string()).unwrap();
+
+        println!("{result:?}");
     }
 }

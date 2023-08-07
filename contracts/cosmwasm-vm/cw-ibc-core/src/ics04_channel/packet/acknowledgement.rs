@@ -284,8 +284,14 @@ impl<'a> CwIbcCoreContext<'a> {
                     packet.sequence.into(),
                 )?;
                 // reset height to zero once packet is ack
-                self.ibc_store().store_sent_packet(deps.storage, &port_id, &channel_id, packet.sequence, 0)?;
-                
+                self.ibc_store().store_sent_packet(
+                    deps.storage,
+                    &port_id,
+                    &channel_id,
+                    packet.sequence,
+                    0,
+                )?;
+
                 if let Order::Ordered = chan_end_on_a.ordering {
                     // Note: in validation, we verified that `msg.packet.sequence == nextSeqRecv`
                     // (where `nextSeqRecv` is the value in the store)

@@ -264,18 +264,17 @@ impl<'a> CwIbcStore<'a> {
             .sent_packets()
             .range(store, Some(min_bound), Some(max_bound), Order::Ascending)
             .filter_map(|p| {
-                return p.ok().map(|r| {
+                p.ok().map(|r| {
                     if r.1 == 0 {
                         return None;
                     }
-                    return Some((r.0 .2, r.1));
-                });
+                    Some((r.0 .2, r.1))
+                })
             })
-            .filter(|f| f.is_some())
-            .map(Option::unwrap)
+            .flatten()
             .collect::<Vec<(u64, u64)>>();
 
-        return Ok(result);
+        Ok(result)
     }
 
     pub fn get_missing_packet_receipts(
@@ -292,7 +291,7 @@ impl<'a> CwIbcStore<'a> {
                 .packet_receipts()
                 .load(store, (port_id, channel_id, i))
                 .is_ok();
-            if exists == false {
+            if !exists {
                 missing.push(i)
             }
         }
