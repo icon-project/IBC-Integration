@@ -6,6 +6,7 @@ use cosmwasm_std::{coins, BankMsg, IbcChannel};
 use cw_common::raw_types::channel::RawPacket;
 use cw_xcall_lib::network_address::NetId;
 use debug_print::debug_println;
+use cw_common::cw_println;
 
 use crate::{
     state::{
@@ -140,12 +141,12 @@ impl<'a> CwIbcConnection<'a> {
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
-                Ok(self.on_channel_open(deps.storage, msg)?)
+                Ok(self.on_channel_open(deps, msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelConnect { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
-                Ok(self.on_channel_connect(deps.storage, msg)?)
+                Ok(self.on_channel_connect(deps, msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelClose { msg } => {
@@ -413,23 +414,23 @@ impl<'a> CwIbcConnection<'a> {
     /// function.
     pub fn on_channel_open(
         &mut self,
-        store: &mut dyn Storage,
+        deps: DepsMut,
         msg: CwChannelOpenMsg,
     ) -> Result<Response, ContractError> {
-        debug_println!("[IbcConnection]: Called On channel open");
+        cw_println!(deps,"[IbcConnection]: Called On channel open");
         println!("{msg:?}");
 
         let channel = msg.channel();
         let ibc_endpoint = channel.endpoint.clone();
 
         check_order(&channel.order)?;
-        debug_println!("[IbcConnection]: check order pass");
+        cw_println!(deps,"[IbcConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
         }
-        debug_println!("[IbcConnection]: check version pass");
-        self.setup_channel(store, channel.clone())?;
+        cw_println!(deps,"[IbcConnection]: check version pass");
+        self.setup_channel(deps, channel.clone())?;
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())
@@ -454,21 +455,21 @@ impl<'a> CwIbcConnection<'a> {
     /// that may occur during the execution of the function.
     pub fn on_channel_connect(
         &mut self,
-        store: &mut dyn Storage,
+        deps: DepsMut,
         msg: CwChannelConnectMsg,
     ) -> Result<Response, ContractError> {
         let channel = msg.channel();
-        debug_println!("[IBCConnection]: channel connect called");
+        cw_println!(deps,"[IBCConnection]: channel connect called");
 
         check_order(&channel.order)?;
-        debug_println!("[IBCConnection]: check order pass");
+        cw_println!(deps,"[IBCConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
         }
 
-        debug_println!("[IBCConnection]: check version passed");
-        self.setup_channel(store, channel.clone())?;
+        cw_println!(deps,"[IBCConnection]: check version passed");
+        self.setup_channel(deps, channel.clone())?;
 
         Ok(Response::new()
             .set_data(to_binary(&channel.endpoint.clone()).unwrap())
@@ -634,15 +635,15 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn setup_channel(
         &mut self,
-        store: &mut dyn Storage,
+        deps:DepsMut,
         channel: IbcChannel,
     ) -> Result<(), ContractError> {
         let source = channel.endpoint.clone();
         let destination = channel.counterparty_endpoint.clone();
         let channel_id = source.channel_id.clone();
 
-        let our_port = self.get_port(store)?;
-        debug_println!(
+        let our_port = self.get_port(deps.storage)?;
+        cw_println!(deps,
             "[IBCConnection]: Check if ports match : {:?} vs {:?}",
             our_port,
             source.port_id
@@ -651,15 +652,15 @@ impl<'a> CwIbcConnection<'a> {
             return Err(ContractError::InvalidPortId);
         }
 
-        let nid = self.get_counterparty_nid(store, &channel.connection_id, &destination.port_id)?;
-        let connection_config = self.get_connection_config(store, &channel.connection_id)?;
+        let nid = self.get_counterparty_nid(deps.storage, &channel.connection_id, &destination.port_id)?;
+        let connection_config = self.get_connection_config(deps.storage, &channel.connection_id)?;
         let ibc_config = IbcConfig::new(source, destination);
-        debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
+        cw_println!(deps,"[IBCConnection]: save ibc config is {:?}", ibc_config);
 
-        self.store_ibc_config(store, &nid, &ibc_config)?;
+        self.store_ibc_config(deps.storage, &nid, &ibc_config)?;
 
         self.store_channel_config(
-            store,
+            deps.storage,
             &channel_id,
             &ChannelConfig {
                 timeout_height: connection_config.timeout_height,
@@ -668,7 +669,7 @@ impl<'a> CwIbcConnection<'a> {
             },
         )?;
 
-        debug_println!("[IBCConnection]: Channel Config Stored");
+        cw_println!(deps,"[IBCConnection]: Channel Config Stored");
 
         Ok(())
     }

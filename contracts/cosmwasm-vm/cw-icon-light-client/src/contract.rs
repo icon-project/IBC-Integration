@@ -10,6 +10,7 @@ use debug_print::debug_println;
 use crate::mock_client::MockClient;
 use crate::query_handler::QueryHandler;
 use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
+use cw_common::cw_println;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -58,14 +59,15 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let mut context = CwContext::new(deps_mut, _env);
-    let mut client = IconClient::new(&mut context);
+    
     match msg {
         ExecuteMsg::CreateClient {
             client_id,
             client_state,
             consensus_state,
         } => {
+            let mut context = CwContext::new(deps_mut, _env);
+            let mut client = IconClient::new(context);
             let client_state_any =
                 Any::decode(client_state.as_slice()).map_err(ContractError::DecodeError)?;
             let consensus_state_any =
@@ -98,7 +100,7 @@ pub fn execute(
             );
 
             response.data = to_binary(&client_response).ok();
-            debug_println!("[CreateClient]: create client called with id {}", client_id);
+            
 
             Ok(response)
         }
@@ -106,6 +108,8 @@ pub fn execute(
             client_id,
             signed_header,
         } => {
+            let mut context = CwContext::new(deps_mut, _env);
+            let mut client = IconClient::new(context);
             let header_any = Any::decode(signed_header.as_slice()).unwrap();
             let header = SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
             let update = client.update_client(info.sender, &client_id, header)?;
@@ -154,14 +158,14 @@ pub fn execute(
 
 pub fn validate_channel_state(
     client_id: &str,
-    storage: &dyn Storage,
+    deps: Deps,
     state: &VerifyChannelState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded =
         MerkleProofs::decode(state.proof.as_slice()).map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
     let result = QueryHandler::verify_membership(
-        storage,
+        deps,
         client_id,
         height,
         0,
@@ -175,7 +179,7 @@ pub fn validate_channel_state(
 
 pub fn validate_connection_state(
     client_id: &str,
-    storage: &dyn Storage,
+    deps: Deps,
     state: &VerifyConnectionState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded =
@@ -183,7 +187,7 @@ pub fn validate_connection_state(
     let height = to_height_u64(&state.proof_height)?;
 
     let result = QueryHandler::verify_membership(
-        storage,
+        deps,
         client_id,
         height,
         0,
@@ -197,7 +201,7 @@ pub fn validate_connection_state(
 
 pub fn validate_client_state(
     client_id: &str,
-    storage: &dyn Storage,
+    deps: Deps,
     state: &VerifyClientFullState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.client_state_proof.as_slice())
@@ -205,7 +209,7 @@ pub fn validate_client_state(
     println!("starting validating client state");
     let height = to_height_u64(&state.proof_height)?;
     let result = QueryHandler::verify_membership(
-        storage,
+        deps,
         client_id,
         height,
         0,
@@ -219,14 +223,14 @@ pub fn validate_client_state(
 
 pub fn validate_consensus_state(
     client_id: &str,
-    storage: &dyn Storage,
+    deps: Deps,
     state: &VerifyClientConsensusState,
 ) -> Result<bool, ContractError> {
     let proofs_decoded = MerkleProofs::decode(state.consensus_state_proof.as_slice())
         .map_err(ContractError::DecodeError)?;
     let height = to_height_u64(&state.proof_height)?;
     let result = QueryHandler::verify_membership(
-        storage,
+        deps,
         client_id,
         height,
         0,
@@ -239,7 +243,7 @@ pub fn validate_consensus_state(
 }
 
 pub fn validate_next_seq_recv(
-    storage: &dyn Storage,
+    deps: Deps,
     client_id: &str,
     state: &LightClientPacketMessage,
 ) -> Result<bool, ContractError> {
@@ -257,7 +261,7 @@ pub fn validate_next_seq_recv(
             let height = to_height_u64(height)?;
 
             QueryHandler::verify_membership(
-                storage,
+                deps,
                 client_id,
                 height,
                 0,
@@ -279,7 +283,7 @@ pub fn validate_next_seq_recv(
             let height = to_height_u64(height)?;
 
             QueryHandler::verify_non_membership(
-                storage,
+                deps,
                 client_id,
                 height,
                 0,
@@ -343,7 +347,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
                 .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
             let result = QueryHandler::verify_membership(
-                deps.storage,
+                deps,
                 &client_id,
                 height,
                 delay_time_period,
@@ -367,7 +371,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             let proofs_decoded = MerkleProofs::decode(proofs.as_slice())
                 .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
             let result = QueryHandler::verify_non_membership(
-                deps.storage,
+                deps,
                 &client_id,
                 height,
                 delay_time_period,
@@ -387,7 +391,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
             let height = to_height_u64(&verify_packet_data.height).unwrap();
             let result = QueryHandler::verify_membership(
-                deps.storage,
+                deps,
                 &client_id,
                 height,
                 0,
@@ -409,7 +413,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 .map_err(|e| StdError::GenericErr { msg: e.to_string() })?;
             let height = to_height_u64(&verify_packet_acknowledge.height).unwrap();
             let result = QueryHandler::verify_membership(
-                deps.storage,
+                deps,
                 &client_id,
                 height,
                 0,
@@ -428,7 +432,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             //  expected_response,
         } => {
             let result =
-                validate_connection_state(&client_id, deps.storage, &verify_connection_state)
+                validate_connection_state(&client_id, deps, &verify_connection_state)
                     .unwrap_or(false);
             to_binary(&result)
         }
@@ -436,7 +440,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             println!("checking all the valid state ");
             let client_valid = validate_client_state(
                 &state.client_id,
-                deps.storage,
+                deps,
                 &state.verify_client_full_state,
             )
             .unwrap_or(false);
@@ -444,7 +448,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
             let connection_valid = validate_connection_state(
                 &state.client_id,
-                deps.storage,
+                deps,
                 &state.verify_connection_state,
             )
             .unwrap_or(false);
@@ -453,13 +457,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::VerifyConnectionOpenAck(state) => {
             let connection_valid = validate_connection_state(
                 &state.client_id,
-                deps.storage,
+                deps,
                 &state.verify_connection_state,
             )
             .unwrap();
             let client_valid = validate_client_state(
                 &state.client_id,
-                deps.storage,
+                deps,
                 &state.verify_client_full_state,
             )
             .unwrap();
@@ -475,7 +479,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             // fix once we receive client id
             let result = validate_channel_state(
                 &verify_channel_state.client_id,
-                deps.storage,
+                deps,
                 &verify_channel_state,
             )
             .unwrap();
@@ -487,7 +491,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             next_seq_recv_verification_result,
         } => {
             let _sequence_valid = validate_next_seq_recv(
-                deps.storage,
+                deps,
                 &client_id,
                 &next_seq_recv_verification_result,
             )
@@ -500,9 +504,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             next_seq_recv_verification_result,
         } => {
             let is_channel_valid =
-                validate_channel_state(&client_id, deps.storage, &verify_channel_state).unwrap();
+                validate_channel_state(&client_id, deps, &verify_channel_state).unwrap();
             let _sequence_valid = validate_next_seq_recv(
-                deps.storage,
+                deps,
                 &client_id,
                 &next_seq_recv_verification_result,
             )
@@ -524,7 +528,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 }
 
 pub fn get_light_client<'a>(
-    context: &'a mut CwContext<'_>,
+    context: CwContext<'a>,
 ) -> impl ILightClient<Error = ContractError> + 'a {
     #[cfg(feature = "mock")]
     return MockClient::new(context);

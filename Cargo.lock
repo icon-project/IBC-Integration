@@ -429,6 +429,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-xcall-lib",
+ "debug_print",
  "getrandom",
  "hex",
  "hex-buffer-serde",

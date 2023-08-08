@@ -5,6 +5,7 @@ use crate::conversions::{
     to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
     to_ibc_timestamp,
 };
+use cw_common::cw_println;
 
 use super::*;
 
@@ -177,7 +178,7 @@ impl<'a> CwIbcCoreContext<'a> {
             verify_channel_state,
             next_seq_recv_verification_result,
         )?;
-        debug_println!("Light Client Validation Passed");
+        cw_println!(deps,"Light Client Validation Passed");
 
         // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;

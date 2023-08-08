@@ -1,4 +1,5 @@
 use crate::constants::TRUST_LEVEL;
+use crate::state::CwContext;
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
 use common::icon::icon::lightclient::v1::ConsensusState;
@@ -6,17 +7,16 @@ use common::icon::icon::lightclient::v1::{ClientState, TrustLevel};
 use common::icon::icon::types::v1::{BtpHeader, SignedHeader};
 use common::traits::AnyTypes;
 use common::utils::keccak256;
-use cosmwasm_std::Addr;
-
-use debug_print::debug_println;
+use cosmwasm_std::{Addr};
+use cw_common::cw_println;
 use prost::Message;
 
 pub struct IconClient<'a> {
-    context: &'a mut dyn IContext<Error = crate::ContractError>,
+    context: CwContext<'a>,
 }
 
 impl<'a> IconClient<'a> {
-    pub fn new(context: &'a mut dyn IContext<Error = crate::ContractError>) -> Self {
+    pub fn new(context:  CwContext<'a>) -> Self {
         Self { context }
     }
     pub fn has_quorum_of(n_validators: u64, votes: u64, trust_level: &TrustLevel) -> bool {
@@ -35,7 +35,7 @@ impl<'a> IconClient<'a> {
         let decision = header
             .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
 
-        debug_println!(
+        cw_println!(self.context,
             "network type section decision hash {}",
             hex::encode(decision)
         );
@@ -59,7 +59,7 @@ impl<'a> IconClient<'a> {
             }
         }
         if !Self::has_quorum_of(num_validators, votes, trust_level) {
-            debug_println!("Insuffcient Quorom detected");
+            cw_println!(self.context,"Insuffcient Quorom detected");
             return Err(ContractError::InSuffcientQuorum);
         }
         Ok(true)
@@ -116,6 +116,7 @@ impl ILightClient for IconClient<'_> {
             client_state.latest_height,
             consensus_state.clone(),
         )?;
+        cw_println!(self.context,"[CreateClient]: create client called with id {}", client_id);
 
         Ok(ConsensusStateUpdate {
             consensus_state_commitment: consensus_state.get_keccak_hash(),

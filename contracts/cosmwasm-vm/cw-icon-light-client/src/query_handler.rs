@@ -11,9 +11,10 @@ use common::{
     traits::AnyTypes,
     utils::{calculate_root, keccak256},
 };
-use cosmwasm_std::Storage;
+use cosmwasm_std::{Storage, Deps};
 use cw_common::hex_string::HexString;
 use debug_print::debug_println;
+use cw_common::cw_println;
 use prost::Message;
 
 pub struct QueryHandler {}
@@ -119,7 +120,7 @@ impl QueryHandler {
      * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
      */
     pub fn verify_membership(
-        storage: &dyn Storage,
+        deps:Deps,
         client_id: &str,
         height: u64,
         _delay_time_period: u64,
@@ -128,18 +129,18 @@ impl QueryHandler {
         value: &[u8],
         path: &[u8],
     ) -> Result<bool, ContractError> {
-        debug_println!(
+        cw_println!(deps,
             "[LightClient]: Path Bytes  {:?}",
             HexString::from_bytes(path)
         );
-        debug_println!(
+        cw_println!(deps,
             "[LightClient]: Value Bytes  {:?}",
             HexString::from_bytes(value)
         );
         let path = keccak256(path).to_vec();
-        debug_println!("[LightClient]: client id is: {:?}", client_id);
+        cw_println!(deps,"[LightClient]: client id is: {:?}", client_id);
 
-        let state = Self::get_client_state(storage, client_id)?;
+        let state = Self::get_client_state(deps.storage, client_id)?;
 
         if state.frozen_height != 0 && height > state.frozen_height {
             return Err(ContractError::ClientStateFrozen(state.frozen_height));
@@ -153,27 +154,27 @@ impl QueryHandler {
         // let _ =
         //     self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
         let consensus_state: ConsensusState =
-            Self::get_consensus_state(storage, client_id, height)?;
-        debug_println!(
+            Self::get_consensus_state(deps.storage, client_id, height)?;
+        cw_println!(deps,
             "[LightClient]: Path Hash {:?}",
             HexString::from_bytes(&path)
         );
-        debug_println!(
+        cw_println!(deps,
             "[LightClient]: Value Hash {:?}",
             HexString::from_bytes(&value_hash)
         );
         let leaf = keccak256(&[path, value_hash].concat());
-        debug_println!(
+        cw_println!(deps,
             "[LightClient]: Leaf Value {:?}",
             HexString::from_bytes(&leaf)
         );
 
         let message_root = calculate_root(leaf, proof);
-        debug_println!(
+        cw_println!(deps,
             "[LightClient]: Stored Message Root {:?} ",
             hex::encode(consensus_state.message_root.clone())
         );
-        debug_println!(
+        cw_println!(deps,
             "[LightClient]: Calculated Message Root : {:?}",
             HexString::from_bytes(&message_root)
         );
@@ -189,7 +190,7 @@ impl QueryHandler {
      * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
      */
     pub fn verify_non_membership(
-        storage: &dyn Storage,
+        deps: Deps,
         client_id: &str,
         height: u64,
         delay_time_period: u64,
@@ -198,7 +199,7 @@ impl QueryHandler {
         path: &[u8],
     ) -> Result<bool, ContractError> {
         Self::verify_membership(
-            storage,
+            deps,
             client_id,
             height,
             delay_time_period,

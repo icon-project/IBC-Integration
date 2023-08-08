@@ -4,6 +4,8 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::Addr;
 
+use cosmwasm_std::Deps;
+use cosmwasm_std::DepsMut;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -78,6 +80,7 @@ pub trait IContext {
     type Error;
 
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error>;
+   
     fn insert_client_state(
         &mut self,
         client_id: &str,
