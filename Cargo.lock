@@ -581,6 +581,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-mock-ibc-dapp"
+version = "0.1.0"
+dependencies = [
+ "common 0.1.0",
+ "cosmwasm",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-common",
+ "cw-storage-plus 1.1.0",
+ "cw2",
+ "debug_print",
+ "getrandom",
+ "hex",
+ "schemars 0.8.12",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cw-multi-test"
 version = "0.16.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
