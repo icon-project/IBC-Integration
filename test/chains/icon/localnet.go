@@ -21,6 +21,8 @@ import (
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 
+	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
@@ -635,7 +637,7 @@ func (c *IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error
 }
 
 // QueryContract implements chains.Chain
-func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
+func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName string, params string) (context.Context, error) {
 	time.Sleep(2 * time.Second)
 
 	// get query msg
@@ -686,4 +688,41 @@ func (c *IconLocalnet) GetClientsCount(ctx context.Context) (int, error) {
 	n := new(big.Int)
 	n.SetString(res, 0)
 	return int(n.Int64()), nil
+}
+
+// GetClientConsensusState returns the next sequence number for the client
+func (c *IconLocalnet) GetConnectionState(ctx context.Context, clientSuffix int) (*conntypes.ConnectionEnd, error) {
+	params := fmt.Sprintf(`connectionId=connection-%d`, clientSuffix)
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getConnection", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var connStr types.HexBytes
+
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+		return nil, err
+	}
+
+	var conn = new(conntypes.ConnectionEnd)
+
+	if _, err := chains.HexBytesToProtoUnmarshal(connStr, conn); err != nil {
+		return nil, err
+	}
+
+	return conn, err
+}
+
+// GetNextConnectionSequence returns the next sequence number for the client
+func (c *IconLocalnet) GetNextConnectionSequence(ctx context.Context) (int, error) {
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextConnectionSequence", "")
+	if err != nil {
+		return 0, err
+	}
+	var seq types.HexBytes
+
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &seq); err != nil {
+		return 0, err
+	}
+	return 0, nil
 }

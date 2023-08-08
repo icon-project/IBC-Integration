@@ -3,13 +3,16 @@ package testsuite
 import (
 	"context"
 	"fmt"
+	"time"
+
+	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/e2e/relayer"
 	"github.com/icon-project/ibc-integration/test/e2e/testconfig"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
-	"time"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -104,11 +107,31 @@ func (s *E2ETestSuite) CreateConnection(ctx context.Context) error {
 	return s.relayer.CreateConnections(ctx, eRep, pathName)
 }
 
-func (s *E2ETestSuite) SinglePacketFlow(ctx context.Context, chain chains.Chain) {
-
+// GetConnectionState returns the client state for the given chain
+func (s *E2ETestSuite) GetConnectionState(ctx context.Context, chain chains.Chain, suffix int) (*conntypes.ConnectionEnd, error) {
+	return chain.GetConnectionState(ctx, suffix)
 }
 
-func (s *E2ETestSuite) MultiplePacketFlow(ctx context.Context, chain chains.Chain) {
+func (s *E2ETestSuite) PacketFlow(ctx context.Context, chain chains.Chain, messages ...string) {
+	var wg errgroup.Group
+
+	for _, msg := range messages {
+		msg := fmt.Sprintf(`{"msg": "%s"}`, msg)
+		wg.Go(func() error {
+			ctx, err := chain.ExecuteContract(ctx, chain.GetIBCAddress("ibc"), User, "sendPacket", msg)
+			if err != nil {
+				return fmt.Errorf("failed to execute contract: %s", err)
+			}
+			if err := test.WaitForBlocks(ctx, 10, chain.(ibc.Chain)); err != nil {
+				return fmt.Errorf("failed to wait for blocks: %s", err)
+			}
+			return nil
+		})
+	}
+
+	if err := wg.Wait(); err != nil {
+		s.Require().NoError(err, "failed to send packets")
+	}
 }
 
 func (s *E2ETestSuite) PacketNotSentFromIconAndArchway(ctx context.Context) ibc.RelayerExecResult {
@@ -134,12 +157,15 @@ func (s *E2ETestSuite) NotResponding(ctx context.Context) ibc.RelayerExecResult 
 func (s *E2ETestSuite) CrashAndRecover(ctx context.Context) (time.Duration, error) {
 	startTime := time.Now()
 	eRep := s.GetRelayerExecReporter()
+	s.logger.Info("crashing relayer")
 	if err := s.relayer.StopRelayer(ctx, eRep); err != nil {
 		return 0, err
 	}
+	s.logger.Info("waiting for relayer to restart")
 	if err := s.relayer.StartRelayer(ctx, eRep); err != nil {
 		return 0, err
 	}
+	s.logger.Info("relayer restarted")
 	return time.Since(startTime), nil
 }
 

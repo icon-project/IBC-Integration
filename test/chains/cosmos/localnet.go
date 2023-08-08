@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
+	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
+	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
@@ -400,7 +402,6 @@ func (c *CosmosLocalnet) GetClientState(ctx context.Context, clientSuffix int) (
 	}
 	chains.Response = ""
 	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &chains.Response)
-	fmt.Printf("Response is : %s \n", chains.Response)
 	return ctx, err
 }
 
@@ -409,6 +410,40 @@ func (c *CosmosLocalnet) GetClientsCount(ctx context.Context) (int, error) {
 	var data = map[string]interface{}{"get_next_client_sequence": map[string]interface{}{}}
 	chains.Response = ""
 	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &chains.Response)
-	fmt.Printf("Response is : %s \n", chains.Response)
 	return int(chains.Response.(map[string]interface{})["data"].(float64)), err
+}
+
+// GetConnectionState returns the next sequence number for the client
+func (c *CosmosLocalnet) GetConnectionState(ctx context.Context, connectionPrefix int) (*conntypes.ConnectionEnd, error) {
+	var data = map[string]interface{}{
+		"get_connection": map[string]interface{}{
+			"connection_id": fmt.Sprintf("connection-%d", connectionPrefix),
+		},
+	}
+	var res map[string]interface{}
+	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &res)
+
+	var connStr types.HexBytes
+
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+		return nil, err
+	}
+
+	var conn = new(conntypes.ConnectionEnd)
+
+	if _, err := chains.HexBytesToProtoUnmarshal(connStr, conn); err != nil {
+		return nil, err
+	}
+
+	return conn, err
+}
+
+// GetNextConnectionSequence returns the next sequence number for the client
+func (c *CosmosLocalnet) GetNextConnectionSequence(ctx context.Context) (int, error) {
+	var data = map[string]interface{}{
+		"get_next_connection_sequence": map[string]interface{}{},
+	}
+	var res map[string]interface{}
+	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &res)
+	return res["data"].(int), err
 }
