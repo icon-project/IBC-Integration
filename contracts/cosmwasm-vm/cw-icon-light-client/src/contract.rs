@@ -486,8 +486,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             client_id,
             next_seq_recv_verification_result,
         } => {
-            // let is_channel_valid =
-            //     validate_channel_state(&client_id, &client, &verify_channel_state)?;
             let _sequence_valid = validate_next_seq_recv(
                 deps.storage,
                 &client_id,
@@ -519,7 +517,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 pub struct MigrateMsg {}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
+        .map_err(ContractError::Std)?;
     Ok(Response::default().add_attribute("migrate", "successful"))
 }
 

@@ -11,27 +11,32 @@ use super::*;
 /// * `channel_id`: The unique identifier of the channel being opened.
 /// * `connection_id`: The ID of the connection associated with the channel being opened.
 pub fn on_chan_open_init_submessage(
-    msg: &MsgChannelOpenInit,
+    channel: &ChannelEnd,
+    port_id: &PortId,
     channel_id: &ChannelId,
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
-    let port_id = msg.port_id_on_a.clone();
     let channel_id = channel_id;
-    let counter_party_port_id = msg.port_id_on_b.clone();
-    let counter_party_channel = IbcChannelId::default();
+    let counter_party_port_id = channel.remote.port_id();
+    let counter_party_channel = channel
+        .remote
+        .channel_id
+        .as_ref()
+        .map(|e| e.to_string())
+        .unwrap_or("".to_string());
     let endpoint = cosmwasm_std::IbcEndpoint {
         port_id: port_id.to_string(),
         channel_id: channel_id.to_string(),
     };
     let counter_party = cosmwasm_std::IbcEndpoint {
         port_id: counter_party_port_id.to_string(),
-        channel_id: counter_party_channel.to_string(),
+        channel_id: counter_party_channel,
     };
     let ibc_channel = cosmwasm_std::IbcChannel::new(
         endpoint,
         counter_party,
-        msg.ordering.to_ibc_order().unwrap(),
-        msg.version_proposal.to_string(),
+        channel.ordering.to_ibc_order().unwrap(),
+        channel.version.to_string(),
         connection_id.to_string(),
     );
     cosmwasm_std::IbcChannelOpenMsg::OpenInit {
@@ -94,7 +99,7 @@ pub fn create_channel_submesssage(
 /// `Err` value with a `ContractError` type indicating that the validation failed with a specific error
 /// message.
 pub fn channel_open_init_msg_validate(
-    message: &MsgChannelOpenInit,
+    channel: &ChannelEnd,
     conn_end_on_a: ConnectionEnd,
 ) -> Result<(), ContractError> {
     let conn_version = match conn_end_on_a.versions() {
@@ -105,7 +110,7 @@ pub fn channel_open_init_msg_validate(
             });
         }
     };
-    let channel_feature = message.ordering.to_string();
+    let channel_feature = channel.ordering.to_string();
     // channel version should be valid
     if !conn_version.is_supported_feature(channel_feature) {
         return Err(ContractError::IbcChannelError {

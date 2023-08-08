@@ -1,15 +1,14 @@
 use super::*;
-use crate::ChannelError::InvalidChannelState;
+use crate::{
+    conversions::{to_ibc_channel_id, to_ibc_port_id},
+    ChannelError::InvalidChannelState,
+};
 use common::{
     ibc::core::ics04_channel::{channel::State, commitment::AcknowledgementCommitment},
     utils::keccak256,
 };
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
-use cw_common::{
-    ibc_types::{IbcChannelId, IbcPortId, Sequence},
-    raw_types::to_raw_packet,
-};
-use std::str::FromStr;
+use cw_common::{ibc_types::Sequence, raw_types::to_raw_packet};
 
 use crate::{context::CwIbcCoreContext, ContractError};
 
@@ -21,20 +20,12 @@ impl<'a> CwIbcCoreContext<'a> {
         packet: CwPacket,
         ack: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        let dest_port = &packet.dest.port_id;
-        let dest_channel = &packet.dest.channel_id;
-
-        let ibc_port = IbcPortId::from_str(dest_port)
-            .map_err(|e| ContractError::IbcValidationError { error: e })?;
-        let ibc_channel = IbcChannelId::from_str(dest_channel)
-            .map_err(|e| ContractError::IbcValidationError { error: e })?;
+        let ibc_port = to_ibc_port_id(&packet.dest.port_id)?;
+        let ibc_channel = to_ibc_channel_id(&packet.dest.channel_id)?;
         let seq = packet.sequence;
 
-        let authenticated = self.authenticate_capability(
-            deps.as_ref().storage,
-            info,
-            dest_port.as_bytes().to_vec(),
-        );
+        let authenticated =
+            self.authenticate_capability(deps.as_ref().storage, info, ibc_port.as_bytes().to_vec());
         if !authenticated {
             return Err(ContractError::Unauthorized {});
         }
@@ -44,8 +35,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        let channel =
-            self.get_channel_end(deps.as_ref().storage, ibc_port.clone(), ibc_channel.clone())?;
+        let channel = self.get_channel_end(deps.as_ref().storage, &ibc_port, &ibc_channel)?;
         if channel.state != State::Open {
             return Err(ContractError::IbcChannelError {
                 error: InvalidChannelState {
