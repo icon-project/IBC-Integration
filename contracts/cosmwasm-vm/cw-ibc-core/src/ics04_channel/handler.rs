@@ -24,7 +24,7 @@ use cw_common::{
 pub mod close_init;
 use close_init::*;
 pub mod open_ack;
-use debug_print::debug_println;
+
 use handler::open_try::on_chan_open_try_submessage;
 use open_ack::*;
 pub mod open_confirm;
@@ -35,8 +35,8 @@ pub use close_confirm::*;
 use cosmwasm_std::IbcEndpoint;
 use prost::Message;
 pub mod validate_channel;
-use validate_channel::*;
 use cw_common::cw_println;
+use validate_channel::*;
 
 impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     /// This function validates a channel open initialization message and generates an event for calling
@@ -63,7 +63,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         message: &RawMsgChannelOpenInit,
     ) -> Result<cosmwasm_std::Response, ContractError> {
         // connection hops should be 1
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "inside validate channel open init: input parameter: {:?}",
             message
         );
@@ -86,7 +87,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let contract_address =
             self.lookup_modules(deps.storage, message.port_id.clone().as_bytes().to_vec())?;
 
-        cw_println!(deps,"contract address is : {:?} ", contract_address);
+        cw_println!(deps, "contract address is : {:?} ", contract_address);
 
         let channel_end = ChannelEnd {
             state: State::Uninitialized,
@@ -148,12 +149,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 },
             });
         }
-        cw_println!(deps,"Reached in channel open try");
+        cw_println!(deps, "Reached in channel open try");
         let connection_id = channel.connection_hops[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
 
         channel_open_try_msg_validate(&channel, &connection_end)?;
-        cw_println!(deps,"channel open try msg validate ");
+        cw_println!(deps, "channel open try msg validate ");
 
         let counter = self.channel_counter(deps.storage)?;
         let dest_channel = ChannelId::new(counter); // creating new channel_id
@@ -166,7 +167,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             state: State::Uninitialized,
             ..channel.clone()
         };
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "stoed: channel id: {:?}  portid :{:?} channel_end :{:?}",
             &dest_channel,
             &dest_port,
@@ -195,7 +197,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
 
-        cw_println!(deps,"after frozen check");
+        cw_println!(deps, "after frozen check");
         let expected_channel_end = ChannelEnd::new(
             State::Init,
             *channel.ordering(),
@@ -222,7 +224,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
-        cw_println!(deps,"contract addres is  {:?}", contract_address);
+        cw_println!(deps, "contract addres is  {:?}", contract_address);
 
         // Generate event for calling on channel open try in x-call
         let sub_message = on_chan_open_try_submessage(
@@ -241,7 +243,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
 
         let data = to_binary(&data).map_err(ContractError::Std)?;
-        cw_println!(deps,"after converting data to binary ");
+        cw_println!(deps, "after converting data to binary ");
 
         let on_chan_open_try = create_channel_submesssage(
             contract_address,
@@ -750,7 +752,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        cw_println!(deps,"reached execute_channelopenTry");
+        cw_println!(deps, "reached execute_channelopenTry");
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let data: IbcEndpoint =

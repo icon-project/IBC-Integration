@@ -1,6 +1,6 @@
 use crate::{ics24_host::LastProcessedOn, light_client::light_client::LightClient};
 use cosmwasm_std::Order;
-use cw_common::cw_println;
+
 use debug_print::debug_println;
 
 use super::*;

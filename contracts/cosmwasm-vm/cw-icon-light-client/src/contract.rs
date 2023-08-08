@@ -4,18 +4,15 @@ use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cw_common::ibc_types::IbcHeight;
 
-use debug_print::debug_println;
-
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
 use crate::query_handler::QueryHandler;
 use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
-use cw_common::cw_println;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Storage,
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
 use cw2::set_contract_version;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
@@ -59,14 +56,13 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    
     match msg {
         ExecuteMsg::CreateClient {
             client_id,
             client_state,
             consensus_state,
         } => {
-            let mut context = CwContext::new(deps_mut, _env);
+            let context = CwContext::new(deps_mut, _env);
             let mut client = IconClient::new(context);
             let client_state_any =
                 Any::decode(client_state.as_slice()).map_err(ContractError::DecodeError)?;
@@ -100,7 +96,6 @@ pub fn execute(
             );
 
             response.data = to_binary(&client_response).ok();
-            
 
             Ok(response)
         }
@@ -108,7 +103,7 @@ pub fn execute(
             client_id,
             signed_header,
         } => {
-            let mut context = CwContext::new(deps_mut, _env);
+            let context = CwContext::new(deps_mut, _env);
             let mut client = IconClient::new(context);
             let header_any = Any::decode(signed_header.as_slice()).unwrap();
             let header = SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
@@ -431,42 +426,29 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             verify_connection_state,
             //  expected_response,
         } => {
-            let result =
-                validate_connection_state(&client_id, deps, &verify_connection_state)
-                    .unwrap_or(false);
+            let result = validate_connection_state(&client_id, deps, &verify_connection_state)
+                .unwrap_or(false);
             to_binary(&result)
         }
         QueryMsg::VerifyConnectionOpenTry(state) => {
             println!("checking all the valid state ");
-            let client_valid = validate_client_state(
-                &state.client_id,
-                deps,
-                &state.verify_client_full_state,
-            )
-            .unwrap_or(false);
+            let client_valid =
+                validate_client_state(&state.client_id, deps, &state.verify_client_full_state)
+                    .unwrap_or(false);
             println!(" is valid clientstate  {client_valid:?}");
 
-            let connection_valid = validate_connection_state(
-                &state.client_id,
-                deps,
-                &state.verify_connection_state,
-            )
-            .unwrap_or(false);
+            let connection_valid =
+                validate_connection_state(&state.client_id, deps, &state.verify_connection_state)
+                    .unwrap_or(false);
             to_binary(&(client_valid && connection_valid))
         }
         QueryMsg::VerifyConnectionOpenAck(state) => {
-            let connection_valid = validate_connection_state(
-                &state.client_id,
-                deps,
-                &state.verify_connection_state,
-            )
-            .unwrap();
-            let client_valid = validate_client_state(
-                &state.client_id,
-                deps,
-                &state.verify_client_full_state,
-            )
-            .unwrap();
+            let connection_valid =
+                validate_connection_state(&state.client_id, deps, &state.verify_connection_state)
+                    .unwrap();
+            let client_valid =
+                validate_client_state(&state.client_id, deps, &state.verify_client_full_state)
+                    .unwrap();
 
             to_binary(&(client_valid && connection_valid))
         }
@@ -490,12 +472,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             client_id,
             next_seq_recv_verification_result,
         } => {
-            let _sequence_valid = validate_next_seq_recv(
-                deps,
-                &client_id,
-                &next_seq_recv_verification_result,
-            )
-            .unwrap();
+            let _sequence_valid =
+                validate_next_seq_recv(deps, &client_id, &next_seq_recv_verification_result)
+                    .unwrap();
             to_binary(&_sequence_valid)
         }
         QueryMsg::TimeoutOnCLose {
@@ -505,12 +484,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         } => {
             let is_channel_valid =
                 validate_channel_state(&client_id, deps, &verify_channel_state).unwrap();
-            let _sequence_valid = validate_next_seq_recv(
-                deps,
-                &client_id,
-                &next_seq_recv_verification_result,
-            )
-            .unwrap();
+            let _sequence_valid =
+                validate_next_seq_recv(deps, &client_id, &next_seq_recv_verification_result)
+                    .unwrap();
 
             to_binary(&(is_channel_valid && _sequence_valid))
         }
@@ -527,9 +503,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     Ok(Response::default().add_attribute("migrate", "successful"))
 }
 
-pub fn get_light_client<'a>(
-    context: CwContext<'a>,
-) -> impl ILightClient<Error = ContractError> + 'a {
+pub fn get_light_client(context: CwContext<'_>) -> impl ILightClient<Error = ContractError> + '_ {
     #[cfg(feature = "mock")]
     return MockClient::new(context);
     #[cfg(not(feature = "mock"))]

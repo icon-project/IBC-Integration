@@ -13,9 +13,9 @@ use cw_common::{
         RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
     },
 };
-use debug_print::debug_println;
-use prost::{DecodeError, Message};
+
 use cw_common::cw_println;
+use prost::{DecodeError, Message};
 
 impl<'a> IbcClient for CwIbcCoreContext<'a> {
     /// This method creates a new client and sends a message to a light client contract.
@@ -110,7 +110,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let client = self.get_client(deps.as_ref().storage, &client_id)?;
 
         let sub_msg: SubMsg = client.update_client(&client_id, &header)?;
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "Called Update Client On Lightclient for client id:{}",
             &message.client_id
         );
@@ -291,7 +292,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
-                    cw_println!(deps,"{:?}", &data);
+                    cw_println!(deps, "{:?}", &data);
                     let callback_data: CreateClientResponse =
                         from_binary_response(&data).map_err(ContractError::Std)?;
 
@@ -366,7 +367,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let update_client_response: UpdateClientResponse = from_binary_response(&data)?;
-                    cw_println!(deps,"Received Client Update Callback with data");
+                    cw_println!(deps, "Received Client Update Callback with data");
                     let client_id = update_client_response
                         .client_id()
                         .map_err(ContractError::from)?;

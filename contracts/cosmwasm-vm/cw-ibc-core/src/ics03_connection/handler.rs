@@ -8,7 +8,6 @@ use cw_common::{
         RawMsgConnectionOpenTry,
     },
 };
-use debug_print::debug_println;
 
 use crate::{
     conversions::{
@@ -154,7 +153,7 @@ impl<'a> CwIbcCoreContext<'a> {
         env: Env,
         msg: RawMsgConnectionOpenAck,
     ) -> Result<Response, ContractError> {
-        cw_println!(deps,"[ConnOpenAck]: Connection Open Ack");
+        cw_println!(deps, "[ConnOpenAck]: Connection Open Ack");
         let message_client_state = msg.client_state.ok_or(ContractError::IbcConnectionError {
             error: ConnectionError::MissingClientState,
         })?;
@@ -164,13 +163,13 @@ impl<'a> CwIbcCoreContext<'a> {
         let message_version = to_ibc_version(msg.version)?;
 
         let host_height = self.host_height(&env)?;
-        cw_println!(deps,"[ConnOpenAck]: Host Height {:?}", host_height);
+        cw_println!(deps, "[ConnOpenAck]: Host Height {:?}", host_height);
 
         ensure_consensus_height_valid(&host_height, &consensus_height)?;
-        cw_println!(deps,"[ConnOpenAck]:Consensus Height Valid");
+        cw_println!(deps, "[ConnOpenAck]:Consensus Height Valid");
 
         self.validate_self_client(message_client_state.clone())?;
-        cw_println!(deps,"[ConnOpenAck]: Self Client Valid");
+        cw_println!(deps, "[ConnOpenAck]: Self Client Valid");
 
         let connection_id = to_ibc_connection_id(&msg.connection_id)?;
         let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
@@ -189,7 +188,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        cw_println!(deps,"[ConnOpenAck]: State Matched");
+        cw_println!(deps, "[ConnOpenAck]: State Matched");
 
         let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
 
@@ -202,7 +201,8 @@ impl<'a> CwIbcCoreContext<'a> {
             vec![message_version.clone()],
             connection_end.delay_period(),
         );
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "[ConnOpenAck]: Expected conn end {:?}",
             expected_connection_end
         );
@@ -264,7 +264,7 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
 
         self.store_connection(deps.storage, &connection_id, &connection_end)?;
-        cw_println!(deps,"[ConnOpenAckReply]: Connection Stored");
+        cw_println!(deps, "[ConnOpenAckReply]: Connection Stored");
 
         self.update_connection_commitment(deps.storage, &connection_id, &connection_end)?;
 
@@ -325,7 +325,8 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
 
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "prefix_on_b is {:?}",
             from_utf8(&prefix.clone().into_vec()).unwrap()
         );
@@ -340,19 +341,22 @@ impl<'a> CwIbcCoreContext<'a> {
             message_delay_period,
         );
 
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "[ConnOpenTry]: expected counterpart connection_end:{:?}",
             HexString::from_bytes(&expected_connection_end.encode_vec().unwrap())
         );
 
         let consensus_state = self.consensus_state(deps.storage, &client_id, &proof_height)?;
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "[ConnOpenTry]: root: {:?} ",
             HexString::from_bytes(consensus_state.root().as_bytes())
         );
         let counterparty_connection_path =
             commitment::connection_path(&counterparty_connection_id.clone().unwrap());
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "[ConnOpenTry]: connkey: {:?}",
             HexString::from_bytes(&counterparty_connection_path)
         );
@@ -367,12 +371,14 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         // this is verifying tendermint client state and shouldn't have icon-client as an argument
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "[ConnOpenTry]: payload client state path {:?}",
             &counterparty_client_id
         );
         let client_state_path = commitment::client_state_path(&counterparty_client_id);
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "[ConnOpenTry]: the clientstate value is  {:?}",
             message_client_state.value
         );
@@ -413,7 +419,11 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let connection_id = self.generate_connection_idenfier(deps.storage)?;
 
-        cw_println!(deps,"[ConnOpenTryReply]: connection id is{:?}", connection_id);
+        cw_println!(
+            deps,
+            "[ConnOpenTryReply]: connection id is{:?}",
+            connection_id
+        );
 
         let conn_end = ConnectionEnd::new(
             State::TryOpen,
@@ -423,7 +433,7 @@ impl<'a> CwIbcCoreContext<'a> {
             message_delay_period,
         );
 
-        cw_println!(deps,"[ConnOpenTryReply]: conn end{:?}", conn_end);
+        cw_println!(deps, "[ConnOpenTryReply]: conn end{:?}", conn_end);
 
         let event = create_connection_event(
             IbcEventType::OpenTryConnection,
@@ -464,7 +474,7 @@ impl<'a> CwIbcCoreContext<'a> {
         _info: MessageInfo,
         msg: RawMsgConnectionOpenConfirm,
     ) -> Result<Response, ContractError> {
-        cw_println!(deps,"[ConnOpenConfirm]: Connection Open Confirm");
+        cw_println!(deps, "[ConnOpenConfirm]: Connection Open Confirm");
 
         let proof_height = to_ibc_height(msg.proof_height.clone())?;
 
@@ -472,21 +482,25 @@ impl<'a> CwIbcCoreContext<'a> {
         let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
-        cw_println!(deps,"[ConnOpenConfirm]: Our Connection {:?}", connection_end);
+        cw_println!(
+            deps,
+            "[ConnOpenConfirm]: Our Connection {:?}",
+            connection_end
+        );
 
         let counterparty = connection_end.counterparty().clone();
         let counterparty_client_id = counterparty.client_id();
         let counterparty_prefix = counterparty.prefix();
         let counterparty_conn_id = counterparty.connection_id().cloned();
-        cw_println!(deps,"[ConnOpenConfirm]: CounterParty  {:?}", &counterparty);
+        cw_println!(deps, "[ConnOpenConfirm]: CounterParty  {:?}", &counterparty);
 
         ensure_connection_state(&connection_id, &connection_end, &State::TryOpen)?;
 
-        cw_println!(deps,"Connection State Matched");
+        cw_println!(deps, "Connection State Matched");
 
         let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
 
-        cw_println!(deps,"Consensus State Decoded");
+        cw_println!(deps, "Consensus State Decoded");
 
         let client = self.get_client(deps.as_ref().storage, client_id)?;
 
@@ -499,7 +513,8 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         let connection_path = commitment::connection_path(counterparty.connection_id().unwrap());
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "[ConnOpenConfirm]: CounterParty Conn Path  {:?}",
             hex::encode(&connection_path)
         );
@@ -513,10 +528,18 @@ impl<'a> CwIbcCoreContext<'a> {
             expected_connection_end.encode_vec().unwrap(),
         );
 
-        cw_println!(deps,"Verify Connection State {:?}", verify_connection_state);
+        cw_println!(
+            deps,
+            "Verify Connection State {:?}",
+            verify_connection_state
+        );
         client.verify_connection_open_confirm(deps.as_ref(), verify_connection_state, client_id)?;
 
-        cw_println!(deps,"[ConnOpenConfirmReply]: CounterParty  {:?}", counterparty);
+        cw_println!(
+            deps,
+            "[ConnOpenConfirmReply]: CounterParty  {:?}",
+            counterparty
+        );
         connection_end.set_state(State::Open);
 
         let event = create_connection_event(
@@ -528,11 +551,11 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
 
         self.store_connection(deps.storage, &connection_id, &connection_end)?;
-        cw_println!(deps,"[ConnOpenConfirmReply]: Connection Stored");
+        cw_println!(deps, "[ConnOpenConfirmReply]: Connection Stored");
 
         self.update_connection_commitment(deps.storage, &connection_id, &connection_end)?;
 
-        cw_println!(deps,"[ConnOpenConfirmReply]: Commitment Stored Stored");
+        cw_println!(deps, "[ConnOpenConfirmReply]: Commitment Stored Stored");
 
         Ok(Response::new()
             .add_attribute("method", "execute_connection_open_confirm")

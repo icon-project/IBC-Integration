@@ -5,7 +5,7 @@ use cosmwasm_std::{to_binary, CosmosMsg, Deps, DepsMut, MessageInfo, Storage, Su
 use cw_common::cw_types::CwPacket;
 use cw_common::query_helpers::build_smart_query;
 use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
-use debug_print::debug_println;
+
 use cw_common::cw_println;
 
 use crate::{
@@ -62,7 +62,7 @@ impl<'a> CwIbcConnection<'a> {
             gas_limit: None,
             reply_on: cosmwasm_std::ReplyOn::Always,
         };
-        cw_println!(deps,"{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
+        cw_println!(deps, "{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
         Ok(submessage)
     }
 

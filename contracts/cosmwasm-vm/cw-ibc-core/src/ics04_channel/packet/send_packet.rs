@@ -1,5 +1,4 @@
 use cw_common::raw_types::channel::RawPacket;
-use debug_print::debug_println;
 
 use crate::conversions::{
     to_ibc_channel_id, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
@@ -34,7 +33,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
 
         let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
-        cw_println!(deps,"fetched channel_end");
+        cw_println!(deps, "fetched channel_end");
         if chan_end_on_a.state_matches(&State::Closed) {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::ChannelClosed {
@@ -42,7 +41,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        cw_println!(deps," channel_end matched");
+        cw_println!(deps, " channel_end matched");
 
         let counterparty = Counterparty::new(dst_port.clone(), Some(dst_channel.clone()));
         if !chan_end_on_a.counterparty_matches(&counterparty) {
@@ -53,7 +52,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        cw_println!(deps," counterparty_matched");
+        cw_println!(deps, " counterparty_matched");
 
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
@@ -78,7 +77,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        cw_println!(deps," check pass: packet exipred");
+        cw_println!(deps, " check pass: packet exipred");
 
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &latest_height_on_a)?;
@@ -87,11 +86,11 @@ impl<'a> CwIbcCoreContext<'a> {
         if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {
             return Err(PacketError::LowPacketTimestamp).map_err(Into::<ContractError>::into);
         }
-        cw_println!(deps," timestamp check pass");
+        cw_println!(deps, " timestamp check pass");
 
         let next_seq_send_on_a =
             self.get_next_sequence_send(deps.storage, &src_port, &src_channel)?;
-        cw_println!(deps," fetched next seq send {:?}", next_seq_send_on_a);
+        cw_println!(deps, " fetched next seq send {:?}", next_seq_send_on_a);
 
         if Sequence::from(packet.sequence) != next_seq_send_on_a {
             return Err(ContractError::IbcPacketError {
@@ -102,7 +101,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        cw_println!(deps," packet seq and next seq matched");
+        cw_println!(deps, " packet seq and next seq matched");
 
         self.increase_next_sequence_send(deps.storage, &src_port, &src_channel)?;
         self.store_packet_commitment(
@@ -116,7 +115,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 &packet_timestamp,
             ),
         )?;
-        cw_println!(deps," packet commitment stored");
+        cw_println!(deps, " packet commitment stored");
 
         let event = create_packet_event(
             IbcEventType::SendPacket,

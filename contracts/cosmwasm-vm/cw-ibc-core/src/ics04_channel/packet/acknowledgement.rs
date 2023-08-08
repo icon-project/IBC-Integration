@@ -10,7 +10,7 @@ use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
     raw_types::{channel::RawMessageAcknowledgement, to_raw_packet},
 };
-use debug_print::debug_println;
+
 use cw_common::cw_println;
 
 impl<'a> CwIbcCoreContext<'a> {
@@ -37,7 +37,7 @@ impl<'a> CwIbcCoreContext<'a> {
         env: Env,
         msg: &RawMessageAcknowledgement,
     ) -> Result<Response, ContractError> {
-        cw_println!(deps,"inside acknowledge packet validate ");
+        cw_println!(deps, "inside acknowledge packet validate ");
         let packet = msg.packet.clone().unwrap();
         let src_port = to_ibc_port_id(&packet.source_port)?;
         let src_channel = to_ibc_channel_id(&packet.source_channel)?;
@@ -57,7 +57,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        cw_println!(deps,"chan end on a  state matched  ");
+        cw_println!(deps, "chan end on a  state matched  ");
 
         let counterparty = Counterparty::new(dst_port.clone(), Some(dst_channel.clone()));
         if !chan_end_on_a.counterparty_matches(&counterparty) {
@@ -68,7 +68,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        cw_println!(deps,"counterparty matched");
+        cw_println!(deps, "counterparty matched");
 
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
@@ -93,9 +93,14 @@ impl<'a> CwIbcCoreContext<'a> {
             // prevent an entire relay transaction from failing and consuming unnecessary fees.
             Err(_) => return Ok(Response::new()),
         };
-        cw_println!(deps,"Commitment on a {:?}", hex::encode(commitment_on_a.clone()));
+        cw_println!(
+            deps,
+            "Commitment on a {:?}",
+            hex::encode(commitment_on_a.clone())
+        );
 
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "from packet the timeout height is :{:?}",
             packet_timeout_height
         );
@@ -104,7 +109,8 @@ impl<'a> CwIbcCoreContext<'a> {
             &packet_timeout_height,
             &packet_timestamp,
         );
-        cw_println!(deps,
+        cw_println!(
+            deps,
             "computed packet commitment  {:?}",
             hex::encode(&compouted_packet_commitment)
         );
@@ -117,7 +123,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        cw_println!(deps,"packet commitment matched");
+        cw_println!(deps, "packet commitment matched");
 
         if let Order::Ordered = chan_end_on_a.ordering {
             let next_seq_ack = self.get_next_sequence_ack(deps.storage, &src_port, &src_channel)?;
@@ -130,7 +136,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 });
             }
         }
-        cw_println!(deps,"packet seq matched");
+        cw_println!(deps, "packet seq matched");
 
         let client_id_on_a = conn_end_on_a.client_id();
         let client_state_on_a = self.client_state(deps.storage, client_id_on_a)?;
@@ -170,7 +176,7 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
 
         let acknowledgement = msg.acknowledgement.clone();
-        cw_println!(deps,"after matching ackowledgement ");
+        cw_println!(deps, "after matching ackowledgement ");
 
         // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, dst_port.as_bytes().to_vec())?;
@@ -207,7 +213,11 @@ impl<'a> CwIbcCoreContext<'a> {
             msg: to_binary(&cosm_msg).unwrap(),
             funds: vec![],
         });
-        cw_println!(deps,"after creating client message {:?} ", create_client_message);
+        cw_println!(
+            deps,
+            "after creating client message {:?} ",
+            create_client_message
+        );
 
         let sub_msg: SubMsg = SubMsg::reply_on_success(
             create_client_message,
@@ -239,16 +249,16 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError> {
-        cw_println!(deps,"replying from ack module {:?}", message);
+        cw_println!(deps, "replying from ack module {:?}", message);
         match message.result {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
-                cw_println!(deps,"receiving reply from packet ack ");
+                cw_println!(deps, "receiving reply from packet ack ");
 
                 let reply: IbcPacketAckMsg = self.get_callback_data(
                     deps.as_ref().storage,
                     VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
                 )?;
-                cw_println!(deps,"received ack message from module ");
+                cw_println!(deps, "received ack message from module ");
 
                 let packet = reply.original_packet;
                 let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
@@ -275,7 +285,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     return Ok(Response::new());
                 }
 
-                cw_println!(deps," after getting packet commitment ");
+                cw_println!(deps, " after getting packet commitment ");
 
                 // TODO: check ack_commitment returned from module
                 self.delete_packet_commitment(
@@ -295,7 +305,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_event(event))
             }
             cosmwasm_std::SubMsgResult::Err(e) => {
-                cw_println!(deps,"error from module ack reply");
+                cw_println!(deps, "error from module ack reply");
                 Err(PacketError::Other(e)).map_err(Into::<ContractError>::into)?
             }
         }

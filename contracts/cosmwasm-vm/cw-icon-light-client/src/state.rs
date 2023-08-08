@@ -3,7 +3,7 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 
 use common::utils::keccak256;
 use cosmwasm_std::Api;
-use cosmwasm_std::Deps;
+
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
@@ -46,8 +46,6 @@ impl<'a> IContext for CwContext<'a> {
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error> {
         QueryHandler::get_client_state(self.storage, client_id)
     }
-
-   
 
     fn insert_client_state(
         &mut self,
