@@ -162,7 +162,7 @@ impl LightClient {
         .map_err(ContractError::Std)?;
         let query = build_smart_query(self.address.clone(), msg);
         let result: bool = deps.querier.query(&query).unwrap_or(false);
-        self.to_validation_result(result, "verify timeout on close")
+        self.to_validation_result(result, "verify channel state")
     }
 
     pub fn get_address(&self) -> String {
