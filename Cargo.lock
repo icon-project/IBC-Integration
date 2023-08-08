@@ -511,6 +511,7 @@ dependencies = [
  "cw-mock-dapp",
  "cw-mock-dapp-multi",
  "cw-mock-ibc-core",
+ "cw-mock-ibc-dapp",
  "cw-multi-test",
  "cw-storage-plus 1.1.0",
  "cw-xcall",
@@ -572,6 +573,26 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw-xcall",
  "cw2",
+ "getrandom",
+ "hex",
+ "schemars 0.8.12",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-mock-ibc-dapp"
+version = "0.1.0"
+dependencies = [
+ "common 0.1.0",
+ "cosmwasm",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-common",
+ "cw-storage-plus 1.1.0",
+ "cw2",
+ "debug_print",
  "getrandom",
  "hex",
  "schemars 0.8.12",
