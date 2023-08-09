@@ -6,6 +6,8 @@ import (
 	"time"
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/e2e/relayer"
@@ -101,6 +103,19 @@ func (s *E2ETestSuite) GetClientSequence(ctx context.Context, chain chains.Chain
 	return chain.GetClientsCount(ctx)
 }
 
+func (s *E2ETestSuite) GetChannels(ctx context.Context, chainID string) ([]ibc.ChannelOutput, error) {
+	eRep := s.GetRelayerExecReporter()
+	return s.relayer.GetChannels(ctx, eRep, chainID)
+}
+
+func (s *E2ETestSuite) GetChannel(ctx context.Context, chain chains.Chain, channelSuffix int, portID string) (*chantypes.Channel, error) {
+	return chain.GetChannel(ctx, channelSuffix, portID)
+}
+
+func (s *E2ETestSuite) GetChannelSequence(ctx context.Context, chain chains.Chain) (int, error) {
+	return chain.GetNextChannelSequence(ctx)
+}
+
 func (s *E2ETestSuite) CreateConnection(ctx context.Context) error {
 	pathName := s.GetPathName(s.pathNameIndex - 1)
 	eRep := s.GetRelayerExecReporter()
@@ -143,6 +158,7 @@ func (s *E2ETestSuite) PacketNotSentFromIconAndArchway(ctx context.Context) ibc.
 	return s.ExecTxRelay(ctx, commands...)
 }
 
+// Task_
 func (s *E2ETestSuite) ConnectionFailedToEstablish(ctx context.Context) ibc.RelayerExecResult {
 	var commands []string
 	return s.ExecTxRelay(ctx, commands...)

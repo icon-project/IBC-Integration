@@ -15,6 +15,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	icontypes "github.com/icon-project/ibc-integration/libraries/go/common/icon"
 	"github.com/icon-project/ibc-integration/test/chains"
@@ -473,6 +474,48 @@ func (c *CosmosLocalnet) GetConnectionState(ctx context.Context, connectionPrefi
 func (c *CosmosLocalnet) GetNextConnectionSequence(ctx context.Context) (int, error) {
 	var data = map[string]interface{}{
 		"get_next_connection_sequence": map[string]interface{}{},
+	}
+	var res map[string]interface{}
+	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &res)
+	count := res["data"].(float64)
+	return int(count), err
+}
+
+// GetConnectionState returns the next sequence number for the client
+func (c *CosmosLocalnet) GetChannel(ctx context.Context, connectionPrefix int, portID string) (*chantypes.Channel, error) {
+	var query = map[string]interface{}{
+		"get_channel": map[string]interface{}{
+			"channel_id": fmt.Sprintf("channel-%d", connectionPrefix),
+			"port_id":    portID,
+		},
+	}
+	var res map[string]interface{}
+
+	if err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), query, &res); err != nil {
+		return nil, err
+	}
+
+	data := res["data"].(string)
+
+	hexDecoded, err := hex.DecodeString(data)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var channel = new(chantypes.Channel)
+
+	if err := proto.Unmarshal(hexDecoded, channel); err != nil {
+		return nil, err
+	}
+
+	return channel, nil
+}
+
+// GetNextConnectionSequence returns the next sequence number for the client
+func (c *CosmosLocalnet) GetNextChannelSequence(ctx context.Context) (int, error) {
+	var data = map[string]interface{}{
+		"get_next_channel_sequence": map[string]interface{}{},
 	}
 	var res map[string]interface{}
 	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &res)

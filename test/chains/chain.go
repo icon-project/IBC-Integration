@@ -11,6 +11,8 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/gogoproto/proto"
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 )
@@ -46,6 +48,8 @@ type Chain interface {
 	GetClientsCount(context.Context) (int, error)
 	GetConnectionState(context.Context, int) (*conntypes.ConnectionEnd, error)
 	GetNextConnectionSequence(context.Context) (int, error)
+	GetChannel(context.Context, int, string) (*chantypes.Channel, error)
+	GetNextChannelSequence(context.Context) (int, error)
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {

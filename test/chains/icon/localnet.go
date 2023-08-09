@@ -23,6 +23,8 @@ import (
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
 	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 
@@ -670,8 +672,7 @@ func (c *IconLocalnet) GetClientName(suffix int) string {
 
 func (c *IconLocalnet) GetClientState(ctx context.Context, clientSuffix int) (any, error) {
 	params := fmt.Sprintf(`clientId=%s`, c.GetClientName(clientSuffix))
-	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getClientState", params)
-	if err != nil {
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getClientState", params); err != nil {
 		return nil, err
 	}
 
@@ -727,6 +728,39 @@ func (c *IconLocalnet) GetConnectionState(ctx context.Context, clientSuffix int)
 // GetNextConnectionSequence returns the next sequence number for the client
 func (c *IconLocalnet) GetNextConnectionSequence(ctx context.Context) (int, error) {
 	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextConnectionSequence", ""); err != nil {
+		return 0, err
+	}
+	var res string
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &res); err != nil {
+		return 0, err
+	}
+	n := new(big.Int)
+	n.SetString(res, 0)
+	return int(n.Int64()), nil
+}
+
+func (c *IconLocalnet) GetChannel(ctx context.Context, channelSuffix int, portID string) (*chantypes.Channel, error) {
+	params := fmt.Sprintf(`portId=%s,channelId=channel-%d`, portID, channelSuffix)
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getChannel", params); err != nil {
+		return nil, err
+	}
+
+	var connStr types.HexBytes
+
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+		return nil, err
+	}
+
+	var channel = new(chantypes.Channel)
+	if _, err := chains.HexBytesToProtoUnmarshal(connStr, channel); err != nil {
+		return nil, err
+	}
+	return channel, nil
+}
+
+// GetNextChannelSequence returns the next sequence number for the client
+func (c *IconLocalnet) GetNextChannelSequence(ctx context.Context) (int, error) {
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextChannelSequence", ""); err != nil {
 		return 0, err
 	}
 	var res string

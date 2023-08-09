@@ -51,6 +51,19 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
 		portID := "transfer"
 		r.SetupXCall(ctx, portID)
 		r.DeployMockApp(ctx, portID)
+		res, err := r.GetChannel(ctx, chainA, 0, portID)
+		r.Require().NoError(err)
+		t.Log(res)
+		res, err = r.GetChannel(ctx, chainB, 0, portID)
+		r.Require().NoError(err)
+		t.Log(res)
+
+		seq, err = r.GetChannelSequence(ctx, chainA)
+		r.Require().NoError(err)
+		r.Require().Equal(1, seq)
+		seq, err = r.GetChannelSequence(ctx, chainB)
+		r.Require().NoError(err)
+		r.Require().Equal(1, seq)
 	})
 
 	r.T.Run("test crash and recover", func(t *testing.T) {
