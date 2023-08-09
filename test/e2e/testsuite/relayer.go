@@ -93,7 +93,7 @@ func (s *E2ETestSuite) CreateClient(ctx context.Context) error {
 	return s.relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{TrustingPeriod: "100000m"})
 }
 
-func (s *E2ETestSuite) GetClientState(ctx context.Context, chain chains.Chain, clientSuffix int) (context.Context, error) {
+func (s *E2ETestSuite) GetClientState(ctx context.Context, chain chains.Chain, clientSuffix int) (any, error) {
 	return chain.GetClientState(ctx, clientSuffix)
 }
 
@@ -112,18 +112,22 @@ func (s *E2ETestSuite) GetConnectionState(ctx context.Context, chain chains.Chai
 	return chain.GetConnectionState(ctx, suffix)
 }
 
-func (s *E2ETestSuite) PacketFlow(ctx context.Context, chain chains.Chain, messages ...string) {
+// GetConnectionState returns the client state for the given chain
+func (s *E2ETestSuite) GetNextConnectionSequence(ctx context.Context, chain chains.Chain) (int, error) {
+	return chain.GetNextConnectionSequence(ctx)
+}
+
+// Configure
+
+func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, dst chains.Chain, messages ...string) {
 	var wg errgroup.Group
 
 	for _, msg := range messages {
 		msg := fmt.Sprintf(`{"msg": "%s"}`, msg)
 		wg.Go(func() error {
-			ctx, err := chain.ExecuteContract(ctx, chain.GetIBCAddress("ibc"), User, "sendPacket", msg)
+			_, err := src.ExecuteContract(ctx, dst.GetIBCAddress("ibc"), User, "sendPacket", msg)
 			if err != nil {
 				return fmt.Errorf("failed to execute contract: %s", err)
-			}
-			if err := test.WaitForBlocks(ctx, 10, chain.(ibc.Chain)); err != nil {
-				return fmt.Errorf("failed to wait for blocks: %s", err)
 			}
 			return nil
 		})
@@ -166,6 +170,9 @@ func (s *E2ETestSuite) CrashAndRecover(ctx context.Context) (time.Duration, erro
 		return 0, err
 	}
 	s.logger.Info("relayer restarted")
+	// wait for relayer to start.
+	chainA, chainB := s.GetChains()
+	s.Require().NoError(test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)), "failed to wait for blocks")
 	return time.Since(startTime), nil
 }
 

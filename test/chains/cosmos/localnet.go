@@ -3,6 +3,7 @@ package cosmos
 import (
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,10 +11,15 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
+	"github.com/cosmos/gogoproto/proto"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+
+	icontypes "github.com/icon-project/ibc-integration/libraries/go/common/icon"
 	"github.com/icon-project/ibc-integration/test/chains"
+	"github.com/icon-project/ibc-integration/test/chains/icon"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
-	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
@@ -394,48 +400,73 @@ func (c *CosmosLocalnet) GetClientName(suffix int) string {
 	return fmt.Sprintf("iconclient-%d", suffix)
 }
 
-func (c *CosmosLocalnet) GetClientState(ctx context.Context, clientSuffix int) (context.Context, error) {
-	var data = map[string]interface{}{
+func (c *CosmosLocalnet) GetClientState(ctx context.Context, clientSuffix int) (any, error) {
+	var query = map[string]interface{}{
 		"get_client_state": map[string]interface{}{
 			"client_id": c.GetClientName(clientSuffix),
 		},
 	}
-	chains.Response = ""
-	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &chains.Response)
-	return ctx, err
+	var res map[string]interface{}
+	if err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), query, &res); err != nil {
+		return nil, err
+	}
+	var data = res["data"].(string)
+
+	hexDecoded, err := hex.DecodeString(data)
+
+	if err != nil {
+		return nil, err
+	}
+
+	cdc := icon.MakeCodec()
+	clientState, err := clienttypes.UnmarshalClientState(cdc, hexDecoded)
+	if err != nil {
+		return nil, err
+	}
+	return clientState.(*icontypes.ClientState), nil
 }
 
 // GetClientsCount returns the next sequence number for the client
 func (c *CosmosLocalnet) GetClientsCount(ctx context.Context) (int, error) {
-	var data = map[string]interface{}{"get_next_client_sequence": map[string]interface{}{}}
-	chains.Response = ""
-	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &chains.Response)
-	return int(chains.Response.(map[string]interface{})["data"].(float64)), err
+	var query = map[string]interface{}{"get_next_client_sequence": map[string]interface{}{}}
+
+	var res map[string]interface{}
+
+	if err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), query, &res); err != nil {
+		return 0, err
+	}
+	var data = res["data"].(float64)
+	return int(data), nil
 }
 
 // GetConnectionState returns the next sequence number for the client
 func (c *CosmosLocalnet) GetConnectionState(ctx context.Context, connectionPrefix int) (*conntypes.ConnectionEnd, error) {
-	var data = map[string]interface{}{
+	var query = map[string]interface{}{
 		"get_connection": map[string]interface{}{
 			"connection_id": fmt.Sprintf("connection-%d", connectionPrefix),
 		},
 	}
 	var res map[string]interface{}
-	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &res)
 
-	var connStr types.HexBytes
+	if err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), query, &res); err != nil {
+		return nil, err
+	}
 
-	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+	data := res["data"].(string)
+
+	hexDecoded, err := hex.DecodeString(data)
+
+	if err != nil {
 		return nil, err
 	}
 
 	var conn = new(conntypes.ConnectionEnd)
 
-	if _, err := chains.HexBytesToProtoUnmarshal(connStr, conn); err != nil {
+	if err := proto.Unmarshal(hexDecoded, conn); err != nil {
 		return nil, err
 	}
 
-	return conn, err
+	return conn, nil
 }
 
 // GetNextConnectionSequence returns the next sequence number for the client
@@ -445,5 +476,6 @@ func (c *CosmosLocalnet) GetNextConnectionSequence(ctx context.Context) (int, er
 	}
 	var res map[string]interface{}
 	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &res)
-	return res["data"].(int), err
+	count := res["data"].(float64)
+	return int(count), err
 }

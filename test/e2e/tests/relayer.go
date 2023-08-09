@@ -2,8 +2,9 @@ package tests
 
 import (
 	"context"
-	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
 	"testing"
+
+	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
 )
 
 type RelayerTestSuite struct {
@@ -16,9 +17,11 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
 		r.Require().NoError(r.CreateClient(ctx))
 		chainA, chainB := r.GetChains()
 		res, err := r.GetClientState(ctx, chainA, 0)
-		r.Require().NoError(err, res)
+		t.Log(res)
+		r.Require().NoError(err)
 		res, err = r.GetClientState(ctx, chainB, 0)
-		r.Require().NoError(err, res)
+		t.Log(res)
+		r.Require().NoError(err)
 		count, err := r.GetClientSequence(ctx, chainA)
 		r.Require().NoError(err)
 		r.Require().Equal(1, count)
@@ -30,12 +33,24 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
 	r.T.Run("test connection", func(t *testing.T) {
 		r.Require().NoError(r.CreateConnection(ctx))
 		chainA, chainB := r.GetChains()
-		seq, err := r.GetConnectionState(ctx, chainA, 0)
+		stateA, err := r.GetConnectionState(ctx, chainA, 0)
+		t.Log(stateA)
 		r.Require().NoError(err)
-		t.Log(seq)
-		seq, err = r.GetConnectionState(ctx, chainB, 0)
+		r.Require().Equal(stateA.GetState(), int32(3))
+		stateB, err := r.GetConnectionState(ctx, chainB, 0)
+		t.Log(stateB)
 		r.Require().NoError(err)
-		t.Log(seq)
+		r.Require().Equal(stateB.GetState(), int32(3))
+
+		seq, err := r.GetNextConnectionSequence(ctx, chainA)
+		r.Require().NoError(err)
+		r.Require().Equal(1, seq)
+		seq, err = r.GetNextConnectionSequence(ctx, chainB)
+		r.Require().NoError(err)
+		r.Require().Equal(1, seq)
+		portID := "transfer"
+		r.SetupXCall(ctx, portID)
+		r.DeployMockApp(ctx, portID)
 	})
 
 	r.T.Run("test crash and recover", func(t *testing.T) {

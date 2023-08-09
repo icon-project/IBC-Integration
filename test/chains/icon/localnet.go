@@ -17,6 +17,7 @@ import (
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/gorilla/websocket"
+	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
@@ -24,6 +25,7 @@ import (
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
+
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
 	// "github.com/strangelove-ventures/interchaintest/v7/testutil"
@@ -666,19 +668,29 @@ func (c *IconLocalnet) GetClientName(suffix int) string {
 	return fmt.Sprintf("07-tendermint-%d", suffix)
 }
 
-func (c *IconLocalnet) GetClientState(ctx context.Context, clientSuffix int) (context.Context, error) {
+func (c *IconLocalnet) GetClientState(ctx context.Context, clientSuffix int) (any, error) {
 	params := fmt.Sprintf(`clientId=%s`, c.GetClientName(clientSuffix))
 	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getClientState", params)
 	if err != nil {
 		return nil, err
 	}
-	return ctx, err
+
+	var connStr types.HexBytes
+
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+		return nil, err
+	}
+
+	var conn = new(tendermint.ClientState)
+	if _, err := chains.HexBytesToProtoUnmarshal(connStr, conn); err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
 
 // GetClientsCount returns the next sequence number for the client
 func (c *IconLocalnet) GetClientsCount(ctx context.Context) (int, error) {
-	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextClientSequence", "")
-	if err != nil {
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextClientSequence", ""); err != nil {
 		return 0, err
 	}
 	var res string
@@ -693,8 +705,7 @@ func (c *IconLocalnet) GetClientsCount(ctx context.Context) (int, error) {
 // GetClientConsensusState returns the next sequence number for the client
 func (c *IconLocalnet) GetConnectionState(ctx context.Context, clientSuffix int) (*conntypes.ConnectionEnd, error) {
 	params := fmt.Sprintf(`connectionId=connection-%d`, clientSuffix)
-	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getConnection", params)
-	if err != nil {
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getConnection", params); err != nil {
 		return nil, err
 	}
 
@@ -710,19 +721,19 @@ func (c *IconLocalnet) GetConnectionState(ctx context.Context, clientSuffix int)
 		return nil, err
 	}
 
-	return conn, err
+	return conn, nil
 }
 
 // GetNextConnectionSequence returns the next sequence number for the client
 func (c *IconLocalnet) GetNextConnectionSequence(ctx context.Context) (int, error) {
-	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextConnectionSequence", "")
-	if err != nil {
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextConnectionSequence", ""); err != nil {
 		return 0, err
 	}
-	var seq types.HexBytes
-
-	if err := json.Unmarshal([]byte(chains.Response.(string)), &seq); err != nil {
+	var res string
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &res); err != nil {
 		return 0, err
 	}
-	return 0, nil
+	n := new(big.Int)
+	n.SetString(res, 0)
+	return int(n.Int64()), nil
 }

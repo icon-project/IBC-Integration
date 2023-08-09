@@ -3,9 +3,12 @@ package chains
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"os"
+	"strings"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/gogoproto/proto"
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
@@ -38,7 +41,7 @@ type Chain interface {
 	GetIBCAddress(key string) string
 	DeployXCallMockApp(ctx context.Context, connection XCallConnection) error
 	PreGenesis() error
-	GetClientState(context.Context, int) (context.Context, error)
+	GetClientState(context.Context, int) (any, error)
 	GetClientName(int) string
 	GetClientsCount(context.Context) (int, error)
 	GetConnectionState(context.Context, int) (*conntypes.ConnectionEnd, error)
@@ -67,5 +70,10 @@ func HexBytesToProtoUnmarshal(encoded types.HexBytes, v proto.Message) ([]byte, 
 
 	}
 	return inputBytes, nil
+}
 
+func ProcessContractResponse(p *wasmtypes.QuerySmartContractStateResponse) ([]byte, error) {
+	data := string(p.Data.Bytes())
+	trimmedData := strings.ReplaceAll(data, `"`, "")
+	return hex.DecodeString(trimmedData)
 }
