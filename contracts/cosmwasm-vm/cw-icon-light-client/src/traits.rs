@@ -78,6 +78,7 @@ pub trait IContext {
     type Error;
 
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error>;
+
     fn insert_client_state(
         &mut self,
         client_id: &str,

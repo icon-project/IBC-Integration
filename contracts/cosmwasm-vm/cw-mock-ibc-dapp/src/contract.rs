@@ -2,27 +2,18 @@ use common::{
     ibc::Height,
     rlp::{self},
 };
-use cosmwasm_std::{coins, BankMsg, IbcChannel};
+use cosmwasm_std::IbcChannel;
 use cw_common::raw_types::channel::RawPacket;
-use cw_xcall_lib::network_address::NetId;
+use debug_print::debug_println;
 
-use cw_common::cw_println;
-
-use crate::{
-    state::{
-        HOST_SEND_MESSAGE_REPLY_ID, HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID,
-        XCALL_HANDLE_ERROR_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID,
-    },
-    types::{
-        channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
-        message::Message, LOG_PREFIX,
-    },
+use crate::types::{
+    config::Config, dapp_msg::ExecuteMsg, dapp_msg::QueryMsg, message::Message, LOG_PREFIX,
 };
 
 use super::*;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw-xcall-ibc-connection";
+const CONTRACT_NAME: &str = "crates.io:cw-mock-ibc-dapp";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 impl<'a> CwIbcConnection<'a> {
@@ -99,54 +90,24 @@ impl<'a> CwIbcConnection<'a> {
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
             }
-            ExecuteMsg::SendMessage { to, sn, msg } => {
-                println!("{LOG_PREFIX} Received Payload From XCall App");
-                // return Ok(Response::new());
-                self.send_message(deps, info, env, to, sn, msg)
-            }
-            ExecuteMsg::SetXCallHost { address } => {
-                self.ensure_owner(deps.as_ref().storage, &info)?;
-                let validated_address =
-                    CwIbcConnection::validate_address(deps.api, address.as_str())?;
-                self.set_xcall_host(deps.storage, validated_address)?;
-                Ok(Response::new())
-            }
-            ExecuteMsg::ConfigureConnection {
-                connection_id,
-                counterparty_port_id,
-                counterparty_nid,
-                client_id,
+            ExecuteMsg::SendMessage {
+                msg,
                 timeout_height,
             } => {
-                self.ensure_owner(deps.as_ref().storage, &info)?;
-                self.configure_connection(
-                    deps.storage,
-                    connection_id,
-                    counterparty_port_id,
-                    counterparty_nid,
-                    client_id,
-                    timeout_height,
-                )?;
-                Ok(Response::new())
+                println!("{LOG_PREFIX} Received Payload From XCall App");
+                // return Ok(Response::new());
+                self.send_message(deps, info, env, msg, timeout_height)
             }
-            ExecuteMsg::ClaimFees { nid, address } => {
-                let fee_msg = self.claim_fees(deps, info, nid, address)?;
-                Ok(Response::new().add_submessage(fee_msg))
-            }
-            ExecuteMsg::SetFees {
-                nid,
-                packet_fee,
-                ack_fee,
-            } => self.set_fee(deps.storage, nid, packet_fee, ack_fee),
+
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
-                Ok(self.on_channel_open(deps, msg)?)
+                Ok(self.on_channel_open(deps.storage, msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelConnect { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
-                Ok(self.on_channel_connect(deps, msg)?)
+                Ok(self.on_channel_connect(deps.storage, msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelClose { msg } => {
@@ -204,20 +165,6 @@ impl<'a> CwIbcConnection<'a> {
                     kind: error.to_string(),
                 }),
             },
-            QueryMsg::GetTimeoutHeight { channel_id } => {
-                let config = self.get_channel_config(deps.storage, &channel_id).unwrap();
-                to_binary(&config.timeout_height)
-            }
-            QueryMsg::GetFee { nid, response } => {
-                let fees = self.get_network_fees(deps.storage, nid);
-                if response {
-                    return to_binary(&(fees.send_packet_fee + fees.ack_fee));
-                }
-                to_binary(&(fees.send_packet_fee))
-            }
-            QueryMsg::GetUnclaimedFee { nid, relayer } => {
-                to_binary(&self.get_unclaimed_fee(deps.storage, nid, relayer))
-            }
         }
     }
     /// This function handles different types of reply messages and calls corresponding functions based on
@@ -241,18 +188,11 @@ impl<'a> CwIbcConnection<'a> {
     /// `ContractError` is an error type that can be returned if there is an error in processing the
     /// message.
 
-    pub fn reply(&self, deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-        match msg.id {
-            ACK_FAILURE_ID => self.reply_ack_on_error(msg),
-            XCALL_HANDLE_MESSAGE_REPLY_ID => self.xcall_handle_message_reply(deps, msg),
-            XCALL_HANDLE_ERROR_REPLY_ID => self.xcall_handle_error_reply(deps, msg),
-            HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID => self.host_write_acknowledgement_reply(deps, msg),
-            HOST_SEND_MESSAGE_REPLY_ID => self.host_send_message_reply(deps, msg),
-            _ => Err(ContractError::ReplyError {
-                code: msg.id,
-                msg: "Unknown".to_string(),
-            }),
-        }
+    pub fn reply(&self, _deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+        Err(ContractError::ReplyError {
+            code: msg.id,
+            msg: "Unknown".to_string(),
+        })
     }
 
     pub fn migrate(
@@ -293,15 +233,14 @@ impl<'a> CwIbcConnection<'a> {
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
         let owner = info.sender.as_str().to_string();
-
         self.add_owner(store, owner.clone())?;
         self.add_admin(store, info, owner)?;
         // self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
-        self.set_xcall_host(store, msg.xcall_address)?;
-        let config = Config {
+        let config: Config = Config {
             port_id: msg.port_id,
             denom: msg.denom,
+            order: msg.order,
         };
         self.store_config(store, &config)?;
 
@@ -309,74 +248,6 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("action", "instantiate")
             .add_attribute("method", "init")
             .add_attribute("ibc_host", msg.ibc_host))
-    }
-
-    fn xcall_handle_message_reply(
-        &self,
-        _deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        println!("{LOG_PREFIX} Reply From Forward XCall");
-        match message.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()
-                .add_attribute("action", "call_message")
-                .add_attribute("method", "xcall_handle_message_reply")),
-            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
-                code: message.id,
-                msg: error,
-            }),
-        }
-    }
-
-    fn xcall_handle_error_reply(
-        &self,
-        _deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        println!("{LOG_PREFIX} Reply From Forward XCall");
-        match message.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()
-                .add_attribute("action", "call_message")
-                .add_attribute("method", "xcall_handle_error_reply")),
-            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
-                code: message.id,
-                msg: error,
-            }),
-        }
-    }
-
-    fn host_send_message_reply(
-        &self,
-        _deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        println!("{LOG_PREFIX} Reply From Forward Host");
-        match message.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()
-                .add_attribute("action", "call_message")
-                .add_attribute("method", "reply_forward_host")),
-            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
-                code: message.id,
-                msg: error,
-            }),
-        }
-    }
-
-    fn host_write_acknowledgement_reply(
-        &self,
-        _deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        println!("{LOG_PREFIX} Reply From Write Acknowledgement Host");
-        match message.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()
-                .add_attribute("action", "call_message")
-                .add_attribute("method", "reply_write_acknowledgement")),
-            SubMsgResult::Err(error) => Err(ContractError::ReplyError {
-                code: message.id,
-                msg: error,
-            }),
-        }
     }
 
     #[cfg(feature = "native_ibc")]
@@ -394,7 +265,7 @@ impl<'a> CwIbcConnection<'a> {
     fn reply_ack_on_error(&self, reply: Reply) -> Result<Response, ContractError> {
         match reply.result {
             SubMsgResult::Ok(_) => Ok(Response::new()),
-            SubMsgResult::Err(err) => Ok(Response::new().set_data(make_ack_fail(err))),
+            SubMsgResult::Err(_err) => Ok(Response::new()),
         }
     }
     /// This function handles the opening of an IBC channel and returns a response with relevant
@@ -414,23 +285,26 @@ impl<'a> CwIbcConnection<'a> {
     /// function.
     pub fn on_channel_open(
         &mut self,
-        deps: DepsMut,
+        store: &mut dyn Storage,
         msg: CwChannelOpenMsg,
     ) -> Result<Response, ContractError> {
-        cw_println!(deps, "[IbcConnection]: Called On channel open");
+        debug_println!("this is inside on channel open of mock ibc dapp ");
+        debug_println!("[IbcConnection]: Called On channel open");
         println!("{msg:?}");
+
+        let config = self.get_config(store)?;
 
         let channel = msg.channel();
         let ibc_endpoint = channel.endpoint.clone();
 
-        check_order(&channel.order)?;
-        cw_println!(deps, "[IbcConnection]: check order pass");
+        check_order(&config.order, &channel.order)?;
+        debug_println!("[IbcConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
         }
-        cw_println!(deps, "[IbcConnection]: check version pass");
-        self.setup_channel(deps, channel.clone())?;
+        debug_println!("[IbcConnection]: check version pass");
+        self.setup_channel(store, channel.clone())?;
 
         Ok(Response::new()
             .set_data(to_binary(&ibc_endpoint).unwrap())
@@ -455,21 +329,23 @@ impl<'a> CwIbcConnection<'a> {
     /// that may occur during the execution of the function.
     pub fn on_channel_connect(
         &mut self,
-        deps: DepsMut,
+        store: &mut dyn Storage,
         msg: CwChannelConnectMsg,
     ) -> Result<Response, ContractError> {
         let channel = msg.channel();
-        cw_println!(deps, "[IBCConnection]: channel connect called");
+        debug_println!("[IBCConnection]: channel connect called");
 
-        check_order(&channel.order)?;
-        cw_println!(deps, "[IBCConnection]: check order pass");
+        let config = self.get_config(store)?;
+
+        check_order(&config.order, &channel.order)?;
+        debug_println!("[IBCConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
         }
 
-        cw_println!(deps, "[IBCConnection]: check version passed");
-        self.setup_channel(deps, channel.clone())?;
+        debug_println!("[IBCConnection]: check version passed");
+        self.setup_channel(store, channel.clone())?;
 
         Ok(Response::new()
             .set_data(to_binary(&channel.endpoint.clone()).unwrap())
@@ -519,8 +395,8 @@ impl<'a> CwIbcConnection<'a> {
         match self.do_packet_receive(deps, msg.packet, msg.relayer) {
             Ok(ibc_response) => Ok(Response::new()
                 .add_attributes(ibc_response.attributes.clone())
-                .add_submessages(ibc_response.messages)
-                .add_events(ibc_response.events)),
+                .add_events(ibc_response.events)
+                .set_data(Binary::from(vec![1]))),
             Err(error) => Err(error),
         }
     }
@@ -541,28 +417,15 @@ impl<'a> CwIbcConnection<'a> {
     /// occur during the execution of the function.
     pub fn on_packet_ack(
         &self,
-        deps: DepsMut,
+        _deps: DepsMut,
         ack: CwPacketAckMsg,
     ) -> Result<Response, ContractError> {
         let packet = ack.original_packet;
-        let acknowledgement = ack.acknowledgement;
-        let channel = packet.src.channel_id.clone();
-        let seq = packet.sequence;
-        let channel_config = self.get_channel_config(deps.as_ref().storage, &channel)?;
-        let nid = channel_config.counterparty_nid;
+        let _acknowledgement = ack.acknowledgement;
+        let _channel = packet.src.channel_id.clone();
+        let _seq = packet.sequence;
 
-        let submsg = self.call_xcall_handle_message(deps.storage, &nid, acknowledgement.data.0)?;
-
-        let bank_msg = self.settle_unclaimed_ack_fee(
-            deps.storage,
-            nid.as_str(),
-            seq,
-            ack.relayer.to_string(),
-        )?;
-
-        Ok(Response::new()
-            .add_messages(bank_msg)
-            .add_submessage(submsg))
+        Ok(Response::new())
     }
     /// This function handles a timeout event for an IBC packet and sends a reply message with an error
     /// code.
@@ -582,7 +445,7 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn on_packet_timeout(
         &self,
-        deps: DepsMut,
+        _deps: DepsMut,
         msg: CwPacketTimeoutMsg,
     ) -> Result<Response, ContractError> {
         let packet = msg.packet;
@@ -593,58 +456,20 @@ impl<'a> CwIbcConnection<'a> {
             return Ok(Response::new());
         }
 
-        let channel_id = packet.src.channel_id.clone();
-        let channel_config = self.get_channel_config(deps.as_ref().storage, &channel_id)?;
-        let nid = channel_config.counterparty_nid;
-
-        self.add_unclaimed_ack_fees(deps.storage, &nid, packet.sequence, n_message.fee)?;
-        let submsg = self.call_xcall_handle_error(deps.storage, n_message.sn.0.unwrap())?;
-        let bank_msg = self.settle_unclaimed_ack_fee(
-            deps.storage,
-            nid.as_str(),
-            packet.sequence,
-            msg.relayer.to_string(),
-        )?;
-
-        Ok(Response::new()
-            .add_messages(bank_msg)
-            .add_submessage(submsg))
-    }
-
-    pub fn settle_unclaimed_ack_fee(
-        &self,
-        store: &mut dyn Storage,
-        nid: &str,
-        seq: u64,
-        relayer: String,
-    ) -> Result<Vec<BankMsg>, ContractError> {
-        let ack_fee = self.get_unclaimed_ack_fee(store, nid, seq);
-        if ack_fee == 0 {
-            return Ok(vec![]);
-        }
-        self.reset_unclaimed_ack_fees(store, nid, seq)?;
-        let denom = self.get_denom(store)?;
-
-        let msg = BankMsg::Send {
-            to_address: relayer,
-            amount: coins(ack_fee, denom),
-        };
-
-        Ok(vec![msg])
+        Ok(Response::new())
     }
 
     pub fn setup_channel(
         &mut self,
-        deps: DepsMut,
+        store: &mut dyn Storage,
         channel: IbcChannel,
     ) -> Result<(), ContractError> {
         let source = channel.endpoint.clone();
-        let destination = channel.counterparty_endpoint.clone();
-        let channel_id = source.channel_id.clone();
+        let destination = channel.counterparty_endpoint;
+        let _channel_id = source.channel_id.clone();
 
-        let our_port = self.get_port(deps.storage)?;
-        cw_println!(
-            deps,
+        let our_port = self.get_port(store)?;
+        debug_println!(
             "[IBCConnection]: Check if ports match : {:?} vs {:?}",
             our_port,
             source.port_id
@@ -653,62 +478,12 @@ impl<'a> CwIbcConnection<'a> {
             return Err(ContractError::InvalidPortId);
         }
 
-        let nid =
-            self.get_counterparty_nid(deps.storage, &channel.connection_id, &destination.port_id)?;
-        let connection_config = self.get_connection_config(deps.storage, &channel.connection_id)?;
         let ibc_config = IbcConfig::new(source, destination);
-        cw_println!(deps, "[IBCConnection]: save ibc config is {:?}", ibc_config);
+        debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
 
-        self.store_ibc_config(deps.storage, &nid, &ibc_config)?;
+        self.store_ibc_config(store, &ibc_config)?;
 
-        self.store_channel_config(
-            deps.storage,
-            &channel_id,
-            &ChannelConfig {
-                timeout_height: connection_config.timeout_height,
-                client_id: connection_config.client_id,
-                counterparty_nid: nid,
-            },
-        )?;
-
-        cw_println!(deps, "[IBCConnection]: Channel Config Stored");
-
-        Ok(())
-    }
-
-    pub fn configure_connection(
-        &self,
-        store: &mut dyn Storage,
-        connection_id: String,
-        counterparty_port_id: String,
-        counterparty_nid: NetId,
-        client_id: String,
-        timeout_height: u64,
-    ) -> Result<(), ContractError> {
-        if self
-            .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
-            .is_ok()
-        {
-            return Err(ContractError::ConnectionAlreadyConfigured {
-                connection_id,
-                port_id: counterparty_port_id,
-            });
-        }
-        self.store_counterparty_nid(
-            store,
-            &connection_id,
-            &counterparty_port_id,
-            &counterparty_nid,
-        )?;
-
-        self.store_connection_config(
-            store,
-            &connection_id,
-            &ConnectionConfig {
-                timeout_height,
-                client_id,
-            },
-        )?;
+        debug_println!("[IBCConnection]: Channel Config Stored");
 
         Ok(())
     }
