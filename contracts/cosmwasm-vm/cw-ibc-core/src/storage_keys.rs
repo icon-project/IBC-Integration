@@ -31,6 +31,7 @@ pub enum StorageKey {
     ClientStates,
     ConsensusStates,
     CallbackData,
+    SentPackets,
 }
 
 impl StorageKey {
@@ -60,6 +61,7 @@ impl StorageKey {
             StorageKey::ClientStates => "client_states",
             StorageKey::ConsensusStates => "consensus_states",
             StorageKey::CallbackData => "callback_data",
+            StorageKey::SentPackets => "sent_packets",
         }
     }
 }
