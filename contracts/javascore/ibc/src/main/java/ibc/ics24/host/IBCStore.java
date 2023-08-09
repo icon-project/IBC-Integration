@@ -8,9 +8,11 @@ import ibc.ics05.port.ModuleManager;
 import score.*;
 import score.annotation.External;
 import scorex.util.ArrayList;
+import scorex.util.HashMap;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String COMMITMENTS = "commitments";
@@ -23,6 +25,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String NEXT_SEQUENCE_RECEIVES = "nextSequenceReceives";
     private static final String NEXT_SEQUENCE_ACKNOWLEDGEMENTS = "nextSequenceAcknowledgements";
     private static final String PACKET_RECEIPTS = "packetReceipts";
+    private static final String PACKET_HEIGHTS= "packetHeights";
     private static final String CAPABILITIES = "capabilities";
     private static final String PORT_IDS = "portIds";
     private static final String EXPECTED_TIME_PER_BLOCK = "expectedTimePerBlock";
@@ -56,6 +59,8 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
             .newBranchDB(NEXT_SEQUENCE_ACKNOWLEDGEMENTS, BigInteger.class);
     public static final BranchDB<String, BranchDB<String, DictDB<BigInteger, Boolean>>> packetReceipts = Context
             .newBranchDB(PACKET_RECEIPTS, Boolean.class);
+    public static final BranchDB<String, BranchDB<String, DictDB<BigInteger, Long>>> packetHeights = Context
+            .newBranchDB(PACKET_HEIGHTS, BigInteger.class);
 
     public static final DictDB<byte[],Address> capabilities = Context.newDictDB(CAPABILITIES, Address.class);
     public static final ArrayDB<String> portIds = Context.newArrayDB(PORT_IDS, String.class);
@@ -178,6 +183,21 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     }
 
     @External(readonly = true)
+    public Map<BigInteger, Long> getPacketHeights(String portId, String channelId, int startSequence, int endSequence) {
+        DictDB<BigInteger, Long> packets = packetHeights.at(portId).at(channelId);
+        Map<BigInteger, Long> heights = new HashMap<>();
+        for (int i = startSequence; i <= endSequence; i++) {
+            BigInteger sequence = BigInteger.valueOf(i);
+            Long height = packets.get(sequence);
+            if (height != null){
+                heights.put(sequence, height);
+            }
+        }
+
+        return heights;
+    }
+
+    @External(readonly = true)
     public byte[] getPacketAcknowledgementCommitment(String portId, String channelId, BigInteger sequence) {
         byte[] key = IBCCommitment.packetAcknowledgementCommitmentKey(portId, channelId, sequence);
         return commitments.get(key);
@@ -186,6 +206,20 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     @External(readonly = true)
     public boolean hasPacketReceipt(String portId, String channelId, BigInteger sequence) {
         return packetReceipts.at(portId).at(channelId).getOrDefault(sequence, false);
+    }
+
+    @External(readonly = true)
+    public List<Integer> getMissingPacketReceipts(String portId, String channelId, int startSequence, int endSequence) {
+        DictDB<BigInteger, Boolean> receipts = packetReceipts.at(portId).at(channelId);
+        List<Integer> missingReceipts = new ArrayList<>();
+        for (int i = startSequence; i <= endSequence; i++) {
+            BigInteger sequence = BigInteger.valueOf(i);
+            if (!receipts.getOrDefault(sequence, false)) {
+                missingReceipts.add(i);
+            }
+        }
+
+        return missingReceipts;
     }
 
     @External(readonly = true)

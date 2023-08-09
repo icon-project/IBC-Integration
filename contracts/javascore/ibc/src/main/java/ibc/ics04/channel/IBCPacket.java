@@ -60,6 +60,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] packetCommitment = createPacketCommitment(packet);
         commitments.set(packetCommitmentKey, packetCommitment);
+        packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(), Context.getBlockHeight());
 
         sendBTPMessage(connection.getClientId(),
                 ByteUtil.join(packetCommitmentKey, packetCommitment));
@@ -193,6 +194,8 @@ public class IBCPacket extends IBCChannelHandshake {
         }
 
         commitments.set(packetCommitmentKey, null);
+        packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(), null);
+
     }
 
     public void _requestTimeout(MsgRequestTimeoutPacket msg) {
@@ -339,6 +342,8 @@ public class IBCPacket extends IBCChannelHandshake {
         }
 
         commitments.set(packetCommitmentKey, null);
+        packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(), Context.getBlockHeight());
+
     }
 
     /* Verification functions */

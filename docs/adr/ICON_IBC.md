@@ -51,7 +51,4 @@ To achieve this we send only the key part as a message. Which can then be proven
 
 Since BTP blocks includes no timestamp there will be no way for the counterparty to getTimestampByHeight and it will therefore be impossible to timeout packets by timestamp. To prevent this Java IBC requires all packets to specify a timeout height.
 
-
-
-
-
+To allow relay to efficiently query what packets have been sent we have added an additional queryable store containing each packet sequences mapped to the block height on which they are sent. This store is also pruned along with commitments after acknowledgements or timeouts.
