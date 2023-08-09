@@ -27,7 +27,7 @@ impl<'a> CwIbcConnection<'a> {
         _packet: CwPacket,
         _relayer: Addr,
     ) -> Result<CwReceiveResponse, ContractError> {
-        debug_println!("[IBCConnection]: forwarding to xcall");
+        debug_println!("[MockDapp]: Packet Received");
 
         Ok(CwReceiveResponse::new())
     }
