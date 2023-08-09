@@ -643,6 +643,10 @@ impl<'a> CwIbcCoreContext<'a> {
         let commitment_bytes = keccak256(&ok.encode_to_vec()).to_vec();
         self.ibc_store()
             .save_commitment(store, commitment_key, &commitment_bytes)?;
+        let seq: u64 = sequence.into();
+        self.ibc_store()
+            .packet_receipts()
+            .save(store, (port_id, channel_id, seq), &seq)?;
 
         Ok(())
     }
