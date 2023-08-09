@@ -1,6 +1,8 @@
 package ibc.icon.interfaces;
 
 import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
 
 import foundation.icon.score.client.ScoreClient;
 import score.Address;
@@ -66,10 +68,16 @@ public interface IIBCHost {
     byte[] getPacketCommitment(String portId, String channelId, BigInteger sequence);
 
     @External(readonly = true)
+    Map<String, Long> getPacketHeights(String portId, String channelId, int startSequence, int endSequence);
+
+    @External(readonly = true)
     byte[] getPacketAcknowledgementCommitment(String portId, String channelId, BigInteger sequence);
 
     @External(readonly = true)
     boolean hasPacketReceipt(String portId, String channelId, BigInteger sequence);
+
+    @External(readonly = true)
+    List<Integer> getMissingPacketReceipts(String portId, String channelId, int startSequence, int endSequence);
 
     @External(readonly = true)
     int getBTPNetworkId(String clientId);

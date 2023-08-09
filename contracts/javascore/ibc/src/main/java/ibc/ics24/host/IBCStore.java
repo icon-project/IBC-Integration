@@ -60,7 +60,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     public static final BranchDB<String, BranchDB<String, DictDB<BigInteger, Boolean>>> packetReceipts = Context
             .newBranchDB(PACKET_RECEIPTS, Boolean.class);
     public static final BranchDB<String, BranchDB<String, DictDB<BigInteger, Long>>> packetHeights = Context
-            .newBranchDB(PACKET_HEIGHTS, BigInteger.class);
+            .newBranchDB(PACKET_HEIGHTS, Long.class);
 
     public static final DictDB<byte[],Address> capabilities = Context.newDictDB(CAPABILITIES, Address.class);
     public static final ArrayDB<String> portIds = Context.newArrayDB(PORT_IDS, String.class);
@@ -183,14 +183,14 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     }
 
     @External(readonly = true)
-    public Map<BigInteger, Long> getPacketHeights(String portId, String channelId, int startSequence, int endSequence) {
+    public Map<String, Long> getPacketHeights(String portId, String channelId, int startSequence, int endSequence) {
         DictDB<BigInteger, Long> packets = packetHeights.at(portId).at(channelId);
-        Map<BigInteger, Long> heights = new HashMap<>();
+        Map<String, Long> heights = new HashMap<>();
         for (int i = startSequence; i <= endSequence; i++) {
             BigInteger sequence = BigInteger.valueOf(i);
             Long height = packets.get(sequence);
             if (height != null){
-                heights.put(sequence, height);
+                heights.put(sequence.toString(), height);
             }
         }
 

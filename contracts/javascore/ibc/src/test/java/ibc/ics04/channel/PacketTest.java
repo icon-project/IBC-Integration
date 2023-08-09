@@ -283,9 +283,9 @@ public class PacketTest extends TestBase {
         verify(packetSpy).sendBTPMessage(clientId, ByteUtil.join(key2, expectedCommitment));
         assertEquals(BigInteger.valueOf(3),
                 packet.call("getNextSequenceSend", basePacket.getSourcePort(), basePacket.getSourceChannel()));
-        Map<BigInteger, Long> heights =  (Map<BigInteger, Long>)packet.call("getPacketHeights",basePacket.getSourcePort(), basePacket.getSourceChannel(), 0, 10);
-        assertNotNull(heights.get(BigInteger.ONE));
-        assertNotNull(heights.get(BigInteger.TWO));
+        Map<String, Long> heights =  (Map<String, Long>)packet.call("getPacketHeights",basePacket.getSourcePort(), basePacket.getSourceChannel(), 0, 10);
+        assertNotNull(heights.get("1"));
+        assertNotNull(heights.get("2"));
         assertEquals(heights.size(), 2);
     }
 
