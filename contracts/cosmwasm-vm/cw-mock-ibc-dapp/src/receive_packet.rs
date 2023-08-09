@@ -23,11 +23,12 @@ impl<'a> CwIbcConnection<'a> {
     /// a `Result` object with either an `IbcReceiveResponse` or a `ContractError`.
     pub fn do_packet_receive(
         &self,
-        _deps: DepsMut,
-        _packet: CwPacket,
+        deps: DepsMut,
+        packet: CwPacket,
         _relayer: Addr,
     ) -> Result<CwReceiveResponse, ContractError> {
         debug_println!("[MockDapp]: Packet Received");
+        self.store_received_packet(deps.storage, packet.sequence, packet)?;
 
         Ok(CwReceiveResponse::new())
     }
