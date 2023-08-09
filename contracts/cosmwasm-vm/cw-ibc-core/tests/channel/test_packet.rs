@@ -117,7 +117,8 @@ fn test_packet_send() {
         .get_packet_heights(deps.as_ref().storage, &src_port, &src_channel, 0, 10)
         .unwrap();
     println!("{packet_heights:?}");
-    assert_eq!(packet_heights, vec![(1, 12345)]);
+    let height= packet_heights.get(&1).cloned().unwrap();
+    assert_eq!(height,12345);
 }
 
 #[test]

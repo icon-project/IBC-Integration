@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use crate::{ics24_host::LastProcessedOn, light_client::light_client::LightClient};
 use cosmwasm_std::Order;
 use cw_storage_plus::Bound;
+use std::collections::HashMap;
 
 use debug_print::debug_println;
 
@@ -256,13 +257,13 @@ impl<'a> CwIbcStore<'a> {
         channel_id: &ChannelId,
         start_seq: u64,
         end_seq: u64,
-    ) -> Result<Vec<(u64, u64)>, ContractError> {
+    ) -> Result<HashMap<u64, u64>, ContractError> {
         let min_key = (port_id, channel_id, start_seq);
         let max_key = (port_id, channel_id, end_seq);
         let min_bound = Bound::Inclusive::<(&PortId, &ChannelId, u64)>((min_key, PhantomData));
         let max_bound = Bound::Inclusive::<(&PortId, &ChannelId, u64)>((max_key, PhantomData));
 
-        let result = self
+        let result:HashMap<u64, u64> = self
             .sent_packets()
             .range(store, Some(min_bound), Some(max_bound), Order::Ascending)
             .filter_map(|p| {
@@ -274,7 +275,7 @@ impl<'a> CwIbcStore<'a> {
                 })
             })
             .flatten()
-            .collect::<Vec<(u64, u64)>>();
+            .collect();
 
         Ok(result)
     }
