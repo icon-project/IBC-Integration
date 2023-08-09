@@ -126,6 +126,10 @@ impl<'a> CwIbcConnection<'a> {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_packet_timeout(deps, msg)?)
             }
+            ExecuteMsg::IbcWriteAcknowledgement { seq } => {
+                let packet = self.get_received_packet(deps.as_ref().storage, seq)?;
+                return self.write_acknowledgement(deps.storage, packet);
+            }
         }
     }
 

@@ -31,4 +31,13 @@ impl<'a> CwIbcConnection<'a> {
 
         Ok(CwReceiveResponse::new())
     }
+
+    pub fn write_acknowledgement(
+        &self,
+        store: &mut dyn Storage,
+        packet: CwPacket,
+    ) -> Result<Response, ContractError> {
+        let submsg = self.call_host_write_acknowledgement(store, packet, b"ack".to_vec())?;
+        Ok(Response::new().add_submessage(submsg))
+    }
 }

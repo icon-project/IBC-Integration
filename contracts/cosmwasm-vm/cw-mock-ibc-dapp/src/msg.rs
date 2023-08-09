@@ -54,6 +54,10 @@ pub enum ExecuteMsg {
     IbcPacketTimeout {
         msg: CwPacketTimeoutMsg,
     },
+    #[cfg(not(feature = "native_ibc"))]
+    IbcWriteAcknowledgement {
+        seq: u64,
+    },
 }
 
 #[cw_serde]

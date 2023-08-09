@@ -36,15 +36,4 @@ impl<'a> CwIbcConnection<'a> {
             .add_submessage(submessage)
             .add_attribute("method", "send_message"))
     }
-
-    fn write_acknowledgement(
-        &self,
-        _store: &mut dyn Storage,
-        config: &IbcConfig,
-        _msg: Vec<u8>,
-        _sn: i64,
-    ) -> Result<Response, ContractError> {
-        let _channel_id = config.src_endpoint().channel_id.clone();
-        Ok(Response::new())
-    }
 }
