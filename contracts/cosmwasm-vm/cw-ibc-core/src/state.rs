@@ -263,7 +263,7 @@ impl<'a> CwIbcStore<'a> {
         let min_bound = Bound::Inclusive::<(&PortId, &ChannelId, u64)>((min_key, PhantomData));
         let max_bound = Bound::Inclusive::<(&PortId, &ChannelId, u64)>((max_key, PhantomData));
 
-        let result:HashMap<u64, u64> = self
+        let result: HashMap<u64, u64> = self
             .sent_packets()
             .range(store, Some(min_bound), Some(max_bound), Order::Ascending)
             .filter_map(|p| {
