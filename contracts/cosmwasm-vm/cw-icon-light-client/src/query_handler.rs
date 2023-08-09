@@ -13,10 +13,10 @@ use common::{
     traits::AnyTypes,
     utils::{calculate_root, keccak256},
 };
-use cosmwasm_std::{Order, StdResult, Storage, Deps};
-use cw_common::{hex_string::HexString, cw_println};
+use cosmwasm_std::{Deps, Order, StdResult, Storage};
+use cw_common::{cw_println, hex_string::HexString};
 use cw_storage_plus::Bound;
-use debug_print::debug_println;
+
 use prost::Message;
 
 pub struct QueryHandler {}

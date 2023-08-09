@@ -120,7 +120,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 &packet_timestamp,
             ),
         )?;
-        cw_println!(" packet commitment stored");
+        cw_println!(deps, " packet commitment stored");
         let height = env.block.height;
         self.ibc_store().store_sent_packet(
             deps.storage,

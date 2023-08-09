@@ -202,7 +202,7 @@ impl KeyDeserialize for &ChannelId {
     }
 }
 
-impl<'a> Prefixer<'a> for ChannelId {
+impl<'a> Prefixer<'a> for &ChannelId {
     fn prefix(&self) -> Vec<Key> {
         vec![Key::Ref(self.as_bytes())]
     }
