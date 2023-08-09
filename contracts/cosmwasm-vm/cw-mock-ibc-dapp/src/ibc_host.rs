@@ -1,12 +1,10 @@
 use crate::state::IbcConfig;
 use crate::types::LOG_PREFIX;
-use common::ibc::Height;
 use cosmwasm_std::{to_binary, CosmosMsg, Deps, DepsMut, MessageInfo, Storage, SubMsg, WasmMsg};
 use cw_common::cw_types::CwPacket;
 use cw_common::query_helpers::build_smart_query;
 use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
-
-use cw_common::cw_println;
+use debug_print::debug_println;
 
 use crate::{
     error::ContractError,
@@ -36,7 +34,7 @@ impl<'a> CwIbcConnection<'a> {
             id: HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID,
             msg: cosm_msg,
             gas_limit: None,
-            reply_on: cosmwasm_std::ReplyOn::Always,
+            reply_on: cosmwasm_std::ReplyOn::Never,
         };
 
         Ok(submessage)
@@ -60,27 +58,10 @@ impl<'a> CwIbcConnection<'a> {
                 funds: info.funds,
             }),
             gas_limit: None,
-            reply_on: cosmwasm_std::ReplyOn::Always,
+            reply_on: cosmwasm_std::ReplyOn::Never,
         };
-        cw_println!(deps, "{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
+        debug_println!("{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
         Ok(submessage)
-    }
-
-    pub fn query_timeout_height(
-        &self,
-        deps: Deps,
-        channel_id: &str,
-    ) -> Result<Height, ContractError> {
-        let channel_config = self.get_channel_config(deps.storage, channel_id)?;
-        let ibc_host = self.get_ibc_host(deps.storage)?;
-        let message = to_binary(&cw_common::core_msg::QueryMsg::GetLatestHeight {
-            client_id: channel_config.client_id,
-        })
-        .unwrap();
-        let query = build_smart_query(ibc_host.to_string(), message);
-        let latest_height: u64 = deps.querier.query(&query).map_err(ContractError::Std)?;
-        let timeout_height = latest_height + channel_config.timeout_height;
-        Ok(Height::new(0, timeout_height).unwrap())
     }
 
     pub fn query_host_sequence_no(
@@ -123,9 +104,6 @@ mod tests {
         let connection = CwIbcConnection::default();
         let store = deps.as_mut().storage;
         connection
-            .set_xcall_host(store, Addr::unchecked("xcall-address"))
-            .unwrap();
-        connection
             .set_ibc_host(store, Addr::unchecked("ibc-host"))
             .unwrap();
         let env = mock_env();
@@ -154,7 +132,7 @@ mod tests {
                 funds: vec![coin(100, "ATOM")],
             }),
             gas_limit: None,
-            reply_on: cosmwasm_std::ReplyOn::Always,
+            reply_on: cosmwasm_std::ReplyOn::Never,
         };
         assert_eq!(res.unwrap(), expected_sub_msg);
     }

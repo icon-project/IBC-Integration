@@ -4,6 +4,8 @@ use crate::{ics24_host::LastProcessedOn, light_client::light_client::LightClient
 use cosmwasm_std::Order;
 use cw_storage_plus::Bound;
 
+use debug_print::debug_println;
+
 use super::*;
 
 /// The `CwIbcStore` struct stores various data related to the Inter-Blockchain Communication (IBC).
@@ -229,7 +231,7 @@ impl<'a> CwIbcStore<'a> {
             .map(|(k, _)| k)
             .collect();
         for k in keys {
-            debug_print::debug_println!("Removing Key {:?}", k);
+            debug_println!("Removing Key {:?}", k);
             store.remove(&k);
         }
     }
