@@ -15,11 +15,11 @@ use super::*;
 /// the `Err` variant containing a `ContractError` with a specific error message if the validation
 /// fails.
 pub fn channel_close_init_validate(
+    channel_id: &ChannelId,
     chan_end_on_a: &ChannelEnd,
-    message: &MsgChannelCloseInit,
 ) -> Result<(), ContractError> {
     // Validate that the channel end is in a state where it can be closed.
-    ensure_channel_not_closed(&message.chan_id_on_a, chan_end_on_a)?;
+    ensure_channel_not_closed(channel_id, chan_end_on_a)?;
 
     // An OPEN IBC connection running on the local (host) chain should exist.
     validate_connection_length(chan_end_on_a)?;
@@ -37,13 +37,14 @@ pub fn channel_close_init_validate(
 /// state of a channel. It contains information such as the channel's state, ordering, and version.
 /// * `connection_id`: The ID of the connection associated with the channel being closed.
 pub fn on_chan_close_init_submessage(
-    msg: &MsgChannelCloseInit,
+    port_id: &PortId,
+    channel_id: &ChannelId,
     channel_end: &ChannelEnd,
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelCloseMsg {
     let endpoint = cosmwasm_std::IbcEndpoint {
-        port_id: msg.port_id_on_a.clone().to_string(),
-        channel_id: msg.chan_id_on_a.clone().to_string(),
+        port_id: port_id.to_string(),
+        channel_id: channel_id.to_string(),
     };
     let counter_party = cosmwasm_std::IbcEndpoint {
         port_id: channel_end.counterparty().port_id().to_string(),

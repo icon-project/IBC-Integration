@@ -15,10 +15,10 @@ use super::*;
 /// a `Result` type with the `Ok` variant containing an empty tuple `()` and the `Err` variant
 /// containing a `ContractError` type.
 pub fn channel_open_confirm_validate(
-    message: &MsgChannelOpenConfirm,
+    channel_id: &ChannelId,
     chan_end_on_b: &ChannelEnd,
 ) -> Result<(), ContractError> {
-    ensure_channel_state(&message.chan_id_on_b, chan_end_on_b, &State::TryOpen)?;
+    ensure_channel_state(channel_id, chan_end_on_b, &State::TryOpen)?;
 
     validate_connection_length(chan_end_on_b)?;
 
