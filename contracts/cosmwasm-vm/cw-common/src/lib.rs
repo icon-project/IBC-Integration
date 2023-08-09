@@ -9,6 +9,7 @@ pub mod ibc_types;
 pub mod query_helpers;
 pub mod raw_types;
 pub mod types;
+pub mod utils;
 pub mod xcall_connection_msg;
 
 use bech32::FromBase32;

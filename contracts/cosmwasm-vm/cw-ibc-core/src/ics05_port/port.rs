@@ -20,17 +20,15 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn lookup_module_by_port(
         &self,
         store: &mut dyn Storage,
-        port_id: PortId,
+        port_id: &PortId,
     ) -> Result<ModuleId, ContractError> {
-        match self
-            .ibc_store()
-            .port_to_module()
-            .may_load(store, port_id.clone())
-        {
+        match self.ibc_store().port_to_module().may_load(store, port_id) {
             Ok(result) => match result {
                 Some(port_id) => Ok(port_id),
                 None => Err(ContractError::IbcPortError {
-                    error: PortError::UnknownPort { port_id },
+                    error: PortError::UnknownPort {
+                        port_id: port_id.clone(),
+                    },
                 }),
             },
             Err(error) => Err(ContractError::Std(error)),
@@ -57,7 +55,7 @@ impl<'a> CwIbcCoreContext<'a> {
     pub fn store_module_by_port(
         &self,
         store: &mut dyn Storage,
-        port_id: PortId,
+        port_id: &PortId,
         module_id: ModuleId,
     ) -> Result<(), ContractError> {
         Ok(self
@@ -78,22 +76,22 @@ impl<'a> CwIbcCoreContext<'a> {
     /// Returns:
     ///
     /// a `Result` with either a `ModuleId` or a `ContractError`.
-    pub fn lookup_module_channel(
-        &self,
-        store: &mut dyn Storage,
-        msg: &ChannelMsg,
-    ) -> Result<ModuleId, ContractError> {
-        let port_id = match msg {
-            ChannelMsg::OpenInit(msg) => &msg.port_id_on_a,
-            ChannelMsg::OpenTry(msg) => &msg.port_id_on_b,
-            ChannelMsg::OpenAck(msg) => &msg.port_id_on_a,
-            ChannelMsg::OpenConfirm(msg) => &msg.port_id_on_b,
-            ChannelMsg::CloseInit(msg) => &msg.port_id_on_a,
-            ChannelMsg::CloseConfirm(msg) => &msg.port_id_on_b,
-        };
-        let module_id = self.lookup_module_by_port(store, port_id.clone())?;
-        Ok(module_id)
-    }
+    // pub fn lookup_module_channel(
+    //     &self,
+    //     store: &mut dyn Storage,
+    //     msg: &ChannelMsg,
+    // ) -> Result<ModuleId, ContractError> {
+    //     let port_id = match msg {
+    //         ChannelMsg::OpenInit(msg) => &msg.port_id_on_a,
+    //         ChannelMsg::OpenTry(msg) => &msg.port_id_on_b,
+    //         ChannelMsg::OpenAck(msg) => &msg.port_id_on_a,
+    //         ChannelMsg::OpenConfirm(msg) => &msg.port_id_on_b,
+    //         ChannelMsg::CloseInit(msg) => &msg.port_id_on_a,
+    //         ChannelMsg::CloseConfirm(msg) => &msg.port_id_on_b,
+    //     };
+    //     let module_id = self.lookup_module_by_port(store, port_id)?;
+    //     Ok(module_id)
+    // }
 
     /// This function looks up a module ID based on a packet message and a storage object.
     ///
@@ -109,20 +107,20 @@ impl<'a> CwIbcCoreContext<'a> {
     /// Returns:
     ///
     /// a `Result` containing either a `ModuleId` or a `ContractError`.
-    pub fn lookup_module_packet(
-        &self,
-        store: &mut dyn Storage,
-        msg: &PacketMsg,
-    ) -> Result<ModuleId, ContractError> {
-        let port_id = match msg {
-            PacketMsg::Recv(msg) => &msg.packet.port_id_on_b,
-            PacketMsg::Ack(msg) => &msg.packet.port_id_on_a,
-            PacketMsg::Timeout(msg) => &msg.packet.port_id_on_a,
-            PacketMsg::TimeoutOnClose(msg) => &msg.packet.port_id_on_a,
-        };
-        let module_id = self.lookup_module_by_port(store, port_id.clone())?;
-        Ok(module_id)
-    }
+    // pub fn lookup_module_packet(
+    //     &self,
+    //     store: &mut dyn Storage,
+    //     msg: &PacketMsg,
+    // ) -> Result<ModuleId, ContractError> {
+    //     let port_id = match msg {
+    //         PacketMsg::Recv(msg) => &msg.packet.port_id_on_b,
+    //         PacketMsg::Ack(msg) => &msg.packet.port_id_on_a,
+    //         PacketMsg::Timeout(msg) => &msg.packet.port_id_on_a,
+    //         PacketMsg::TimeoutOnClose(msg) => &msg.packet.port_id_on_a,
+    //     };
+    //     let module_id = self.lookup_module_by_port(store, &port_id.clone())?;
+    //     Ok(module_id)
+    // }
 
     /// This function binds a port to a given address and returns a response with relevant attributes.
     ///
@@ -150,12 +148,8 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         self.claim_capability(store, port_id.as_str().as_bytes().to_vec(), address.clone())?;
 
-        self.store_module_by_port(
-            store,
-            port_id.clone(),
-            ModuleId::from_str(&address).unwrap(),
-        )
-        .unwrap();
+        self.store_module_by_port(store, port_id, ModuleId::from_str(&address).unwrap())
+            .unwrap();
         Ok(Response::new()
             .add_attribute("method", "bind_port")
             .add_attribute("port_id", port_id.as_str())

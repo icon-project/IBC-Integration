@@ -1,4 +1,10 @@
-use debug_print::debug_println;
+use cw_common::raw_types::channel::RawMessageTimeoutOnclose;
+
+use crate::conversions::{
+    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
+    to_ibc_timestamp,
+};
+use cw_common::cw_println;
 
 use super::*;
 
@@ -27,33 +33,40 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: DepsMut,
         info: MessageInfo,
         env: Env,
-        msg: MsgTimeoutOnClose,
+        msg: RawMessageTimeoutOnclose,
     ) -> Result<Response, ContractError> {
-        let packet = &msg.packet;
-        let chan_end_on_a = self.get_channel_end(
-            deps.storage,
-            msg.packet.port_id_on_a.clone(),
-            msg.packet.chan_id_on_a.clone(),
-        )?;
-        let counterparty = Counterparty::new(
-            msg.packet.port_id_on_b.clone(),
-            Some(msg.packet.chan_id_on_b.clone()),
-        );
-        if !chan_end_on_a.counterparty_matches(&counterparty) {
+        let packet = &msg.packet.clone().unwrap();
+        let src_port = to_ibc_port_id(&packet.source_port)?;
+        let src_channel = to_ibc_channel_id(&packet.source_channel)?;
+
+        let dst_port = to_ibc_port_id(&packet.destination_port)?;
+        let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
+
+        let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
+        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
+
+        let packet_sequence = Sequence::from(packet.sequence);
+        let proof_height = to_ibc_height(msg.proof_height.clone())?;
+
+        let next_sequence_recv = Sequence::from(msg.next_sequence_recv);
+
+        let channel_end = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
+        let counterparty = Counterparty::new(dst_port.clone(), Some(dst_channel.clone()));
+        if !channel_end.counterparty_matches(&counterparty) {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidPacketCounterparty {
-                    port_id: msg.packet.port_id_on_b.clone(),
-                    channel_id: msg.packet.chan_id_on_b,
+                    port_id: dst_port,
+                    channel_id: dst_channel,
                 },
             });
         }
-        let conn_id_on_a = chan_end_on_a.connection_hops()[0].clone();
-        let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
+        let conn_id_on_a = channel_end.connection_hops()[0].clone();
+        let connection_end = self.connection_end(deps.storage, &conn_id_on_a)?;
         let commitment_on_a = match self.get_packet_commitment(
             deps.storage,
-            &msg.packet.port_id_on_a.clone(),
-            &msg.packet.chan_id_on_a.clone(),
-            msg.packet.sequence,
+            &src_port,
+            &src_channel,
+            packet_sequence,
         ) {
             Ok(commitment_on_a) => commitment_on_a,
 
@@ -65,155 +78,129 @@ impl<'a> CwIbcCoreContext<'a> {
         };
 
         let expected_commitment_on_a = commitment::compute_packet_commitment(
-            &msg.packet.data,
-            &msg.packet.timeout_height_on_b,
-            &msg.packet.timeout_timestamp_on_b,
+            &packet.data,
+            &packet_timeout_height,
+            &packet_timestamp,
         );
         if commitment_on_a != expected_commitment_on_a {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::IncorrectPacketCommitment {
-                    sequence: msg.packet.sequence,
+                    sequence: packet_sequence,
                 },
             });
         }
-        let client_id_on_a = conn_end_on_a.client_id();
-        let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        let client_id = connection_end.client_id();
+        let client_state_of_b_on_a = self.client_state(deps.storage, client_id)?;
 
         if client_state_of_b_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::FrozenClient {
-                    client_id: client_id_on_a.clone(),
+                    client_id: client_id.clone(),
                 },
             });
         }
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id_on_a, &msg.proof_height_on_b)?;
-        let prefix_on_b = conn_end_on_a.counterparty().prefix();
-        let port_id_on_b = chan_end_on_a.counterparty().port_id.clone();
-        let chan_id_on_b =
-            chan_end_on_a
-                .counterparty()
-                .channel_id()
-                .ok_or(ContractError::IbcPacketError {
-                    error: PacketError::Channel(ChannelError::InvalidCounterpartyChannelId),
-                })?;
+            self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let prefix_on_b = connection_end.counterparty().prefix();
         let conn_id_on_b =
-            conn_end_on_a
+            connection_end
                 .counterparty()
                 .connection_id()
                 .ok_or(ContractError::IbcPacketError {
                     error: PacketError::UndefinedConnectionCounterparty {
-                        connection_id: chan_end_on_a.connection_hops()[0].clone(),
+                        connection_id: channel_end.connection_hops()[0].clone(),
                     },
                 })?;
         let expected_conn_hops_on_b = vec![conn_id_on_b.clone()];
-        let expected_counterparty = Counterparty::new(
-            packet.port_id_on_a.clone(),
-            Some(packet.chan_id_on_a.clone()),
-        );
+        let expected_counterparty = Counterparty::new(src_port.clone(), Some(src_channel.clone()));
         let expected_chan_end_on_b = ChannelEnd::new(
             State::Closed,
-            *chan_end_on_a.ordering(),
+            *channel_end.ordering(),
             expected_counterparty,
             expected_conn_hops_on_b,
-            chan_end_on_a.version().clone(),
+            channel_end.version().clone(),
         );
-        let chan_end_path_on_b = commitment::channel_path(&port_id_on_b, chan_id_on_b);
+        let chan_end_path_on_b = commitment::channel_path(&dst_port, &dst_channel);
         let vector = to_vec(&expected_chan_end_on_b);
 
         self.verify_connection_delay_passed(
             deps.storage,
             env,
-            msg.proof_height_on_b,
-            conn_end_on_a.clone(),
+            proof_height,
+            connection_end.clone(),
         )?;
         let verify_channel_state = VerifyChannelState {
-            proof_height: msg.proof_height_on_b.to_string(),
+            proof_height: proof_height.to_string(),
             counterparty_prefix: prefix_on_b.clone().into_vec(),
-            proof: msg.proof_unreceived_on_b.clone().into(),
+            proof: msg.proof_close.clone(),
             root: consensus_state_of_b_on_a.clone().root().into_vec(),
             counterparty_chan_end_path: chan_end_path_on_b,
             expected_counterparty_channel_end: vector.unwrap(),
-            client_id: conn_end_on_a.client_id().to_string(),
+            client_id: connection_end.client_id().to_string(),
         };
-        let next_seq_recv_verification_result = if chan_end_on_a.order_matches(&Order::Ordered) {
-            if msg.packet.sequence < msg.next_seq_recv_on_b {
+        let next_seq_recv_verification_result = if channel_end.order_matches(&Order::Ordered) {
+            if packet_sequence < next_sequence_recv {
                 return Err(ContractError::IbcPacketError {
                     error: PacketError::InvalidPacketSequence {
-                        given_sequence: msg.packet.sequence,
-                        next_sequence: msg.next_seq_recv_on_b,
+                        given_sequence: packet_sequence,
+                        next_sequence: next_sequence_recv,
                     },
                 });
             }
-            let seq_recv_path_on_b = commitment::next_seq_recv_commitment_path(
-                &msg.packet.port_id_on_b.clone(),
-                &msg.packet.chan_id_on_b.clone(),
-            );
+            let seq_recv_path_on_b =
+                commitment::next_seq_recv_commitment_path(&dst_port, &dst_channel);
 
             LightClientPacketMessage::VerifyNextSequenceRecv {
-                height: msg.proof_height_on_b.to_string(),
-                prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                proof: msg.proof_unreceived_on_b.clone().into(),
+                height: proof_height.to_string(),
+                prefix: connection_end.counterparty().prefix().clone().into_vec(),
+                proof: msg.proof_unreceived.clone(),
                 root: consensus_state_of_b_on_a.root().into_vec(),
                 seq_recv_path: seq_recv_path_on_b,
-                sequence: msg.packet.sequence.into(),
+                sequence: packet_sequence.into(),
             }
         } else {
-            let receipt_path_on_b = commitment::receipt_commitment_path(
-                &msg.packet.port_id_on_b,
-                &msg.packet.chan_id_on_b,
-                msg.packet.sequence,
-            );
+            let receipt_path_on_b =
+                commitment::receipt_commitment_path(&dst_port, &dst_channel, packet_sequence);
             LightClientPacketMessage::VerifyPacketReceiptAbsence {
-                height: msg.proof_height_on_b.to_string(),
-                prefix: conn_end_on_a.counterparty().prefix().clone().into_vec(),
-                proof: msg.proof_unreceived_on_b.clone().into(),
+                height: proof_height.to_string(),
+                prefix: connection_end.counterparty().prefix().clone().into_vec(),
+                proof: msg.proof_unreceived.clone(),
                 root: consensus_state_of_b_on_a.root().into_vec(),
                 receipt_path: receipt_path_on_b,
             }
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_a.clone())?;
+        let client = self.get_client(deps.as_ref().storage, client_id)?;
         client.verify_timeout_on_close(
             deps.as_ref(),
-            client_id_on_a,
+            client_id,
             verify_channel_state,
             next_seq_recv_verification_result,
         )?;
-        debug_println!("Light Client Validation Passed");
+        cw_println!(deps, "Light Client Validation Passed");
 
-        let port_id = packet.port_id_on_a.clone();
         // Getting the module address for on packet timeout call
-        let contract_address = self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())?;
+        let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
         let src = CwEndPoint {
-            port_id: packet.port_id_on_a.to_string(),
-            channel_id: packet.chan_id_on_a.to_string(),
+            port_id: src_port.to_string(),
+            channel_id: src_channel.to_string(),
         };
         let dest = CwEndPoint {
-            port_id: packet.port_id_on_b.to_string(),
-            channel_id: packet.chan_id_on_b.to_string(),
+            port_id: dst_port.to_string(),
+            channel_id: dst_channel.to_string(),
         };
         let data = Binary::from(packet.data.clone());
-        let timeoutblock = match packet.timeout_height_on_b {
-            common::ibc::core::ics04_channel::timeout::TimeoutHeight::Never => CwTimeoutBlock {
-                revision: 1,
-                height: 1,
-            },
-            common::ibc::core::ics04_channel::timeout::TimeoutHeight::At(x) => CwTimeoutBlock {
-                revision: x.revision_number(),
-                height: x.revision_height(),
-            },
-        };
+        let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timeout = CwTimeout::with_block(timeoutblock);
-        let ibc_packet = CwPacket::new(data, src, dest, packet.sequence.into(), timeout);
+        let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
         self.store_callback_data(
             deps.storage,
             VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
             &ibc_packet,
         )?;
 
-        let address = Addr::unchecked(msg.signer.to_string());
+        let address = Addr::unchecked(msg.signer);
         let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketTimeout {
             msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
         };

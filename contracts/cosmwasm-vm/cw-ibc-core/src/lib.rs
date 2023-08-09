@@ -2,6 +2,7 @@
 pub mod constants;
 pub mod context;
 pub mod contract;
+pub mod conversions;
 mod error;
 pub mod gas_estimates;
 pub mod ics02_client;
@@ -15,35 +16,21 @@ pub mod msg;
 pub mod state;
 pub mod storage_keys;
 pub mod traits;
+pub mod validations;
 pub use crate::error::ContractError;
 use gas_estimates::*;
 use ics04_channel::ics03_connection::msg::MigrateMsg;
 
 use crate::state::CwIbcStore;
 use crate::{ics26_routing::router::CwIbcRouter, storage_keys::StorageKey};
-use common::ibc::core::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
-use common::ibc::core::ics03_connection::msgs::conn_open_confirm::MsgConnectionOpenConfirm;
-use common::ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
-use common::ibc::core::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
-use common::ibc::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
-use common::ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
-use common::ibc::core::ics04_channel::msgs::timeout::MsgTimeout;
-use common::ibc::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
-pub use common::ibc::core::ics04_channel::msgs::{
-    chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
-    chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
-    chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry,
-};
+
 use common::ibc::core::ics05_port::error::PortError;
 use common::ibc::core::ics24_host::error::ValidationError;
 use common::ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
-use common::ibc::{core::ics04_channel::packet::Packet, signer::Signer};
+use common::ibc::signer::Signer;
 pub use common::ibc::{
     core::{
-        ics02_client::{
-            client_type::ClientType as IbcClientType, error::ClientError,
-            msgs::upgrade_client::MsgUpgradeClient,
-        },
+        ics02_client::{client_type::ClientType as IbcClientType, error::ClientError},
         ics03_connection::connection::ConnectionEnd,
         ics04_channel::{
             channel::ChannelEnd,
@@ -65,9 +52,7 @@ use cosmwasm_std::{
 #[allow(unused_imports)]
 use cw2::set_contract_version;
 use cw_common::client_msg::LightClientPacketMessage;
-use cw_common::ibc_types::{
-    IbcChannelId, IbcClientId, IbcConnectionId, IbcMsgCreateClient, IbcMsgUpdateClient, IbcPortId,
-};
+use cw_common::ibc_types::{IbcChannelId, IbcClientId, IbcConnectionId, IbcPortId};
 use cw_storage_plus::{Item, Map};
 
 pub use cw_common::commitment::*;
@@ -136,10 +121,8 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
-    if msg.clear_store {
-        let store = CwIbcStore::default();
-        store.clear_storage(deps.storage);
-    }
-    Ok(Response::default().add_attribute("migrate", "successful"))
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    let call_service = CwIbcCoreContext::default();
+
+    call_service.migrate(deps, env, msg)
 }

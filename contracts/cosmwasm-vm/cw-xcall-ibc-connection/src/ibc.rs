@@ -1,4 +1,4 @@
-use debug_print::debug_println;
+use cw_common::cw_println;
 
 use super::*;
 
@@ -34,7 +34,7 @@ pub fn ibc_channel_open(
     msg: CwChannelOpenMsg,
 ) -> Result<CwChannelOpenResponse, ContractError> {
     let mut service = CwIbcConnection::default();
-    let _res = service.on_channel_open(deps.storage, msg)?;
+    let _res = service.on_channel_open(deps, msg)?;
 
     Ok(Some(Cw3ChannelOpenResponse {
         version: IBC_VERSION.to_string(),
@@ -64,7 +64,7 @@ pub fn ibc_channel_connect(
     msg: CwChannelConnectMsg,
 ) -> Result<CwBasicResponse, ContractError> {
     let mut service = CwIbcConnection::default();
-    let res = service.on_channel_connect(deps.storage, msg)?;
+    let res = service.on_channel_connect(deps, msg)?;
     Ok(CwBasicResponse::new()
         .add_attributes(res.attributes)
         .add_events(res.events))
@@ -129,7 +129,7 @@ pub fn ibc_packet_receive(
 ) -> Result<CwReceiveResponse, Never> {
     let call_service = CwIbcConnection::default();
     let _channel = msg.packet.dest.channel_id.clone();
-    debug_println!("[IBCConnection]: Packet Received");
+    cw_println!(deps, "[IBCConnection]: Packet Received");
     let result = call_service.do_packet_receive(deps, msg.packet, msg.relayer);
 
     match result {
