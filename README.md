@@ -111,6 +111,16 @@ Run following command on root directory to build the rust contracts. The built w
 ```
 ./scripts/optimize-cosmwasm.sh
 ```
+To build the java contracts run following command.
+```
+make optimize-jar
+```
+To build all contracts we can run following commands.
+```
+make build-builder-img
+make optimize-build
+
+```
 ## Build <a name = "deploy"> </a>
 
 For deployment and demo follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
