@@ -2,9 +2,8 @@ package tests
 
 import (
 	"context"
+	"github.com/icon-project/ibc-integration/test/testsuite"
 	"testing"
-
-	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
 )
 
 type RelayerTestSuite struct {
