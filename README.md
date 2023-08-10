@@ -43,6 +43,8 @@ defined [here](https://github.com/icon-project/IIPs/blob/master/IIPS/iip-52.md)
     - [Getting Started  ](#getting-started--)
         - [Prerequisite](#prerequiste)
         - [Running the tests](#testing)
+        - [Build](#build)
+        - [Deploy](#deploy)
 
 ## About <a name = "about"> </a>
 
@@ -103,3 +105,12 @@ go test -v ./test/integration --args -config=<path to config.json>
 ### End-to-End Testing for the System
 
 [End-to-End Testing Setup](./docs/e2e_test_setup.md)
+
+## Build <a name = "build"> </a>
+Run following command on root directory to build the rust contracts. The built wasm files will be available in the artifacts directory in the root.
+```
+./scripts/optimize-cosmwasm.sh
+```
+## Build <a name = "deploy"> </a>
+
+For deployment and demo follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
