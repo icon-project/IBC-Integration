@@ -1,11 +1,12 @@
 use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
-use common::ibc::core::ics04_channel::msgs::recv_packet::MsgRecvPacket;
-use common::ibc::core::ics04_channel::msgs::PacketMsg;
 
 use common::ibc::timestamp::Timestamp;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
+use cw_ibc_core::conversions::to_ibc_channel_id;
+use cw_ibc_core::conversions::to_ibc_height;
+use cw_ibc_core::conversions::to_ibc_port_id;
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 
@@ -54,12 +55,19 @@ fn test_receive_packet() {
     let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone();
+    let msg = get_dummy_raw_msg_recv_packet(12);
+    let packet = msg.packet.clone().unwrap();
+
+    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
     let chan_end_on_b = ChannelEnd::new(
         State::Open,
         Order::default(),
-        Counterparty::new(packet.port_id_on_a, Some(packet.chan_id_on_a)),
+        Counterparty::new(src_port, Some(src_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );
@@ -82,14 +90,14 @@ fn test_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b.clone(),
-            chan_end_on_b.clone(),
+            &dst_port.clone(),
+            &dst_channel.clone(),
+            &chan_end_on_b,
         )
         .unwrap();
     let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
     contract
-        .store_connection(&mut deps.storage, conn_id_on_b.clone(), conn_end_on_b)
+        .store_connection(&mut deps.storage, &conn_id_on_b.clone(), &conn_end_on_b)
         .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
@@ -111,13 +119,13 @@ fn test_receive_packet() {
     .try_into()
     .unwrap();
 
-    let height = msg.proof_height_on_a;
+    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
             &mut deps.storage,
             &IbcClientId::default(),
-            height,
+            proof_height,
             consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
@@ -131,24 +139,20 @@ fn test_receive_packet() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(
-            &mut deps.storage,
-            &packet.port_id_on_b,
-            "moduleaddress".to_string(),
-        )
+        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
         .unwrap();
 
     contract
-        .store_client_implementations(&mut deps.storage, IbcClientId::default(), light_client)
+        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
     mock_lightclient_reply(&mut deps);
 
     contract
         .store_channel_end(
             &mut deps.storage,
-            packet.port_id_on_b.clone(),
-            packet.chan_id_on_b,
-            chan_end_on_b.clone(),
+            &dst_port.clone(),
+            &dst_channel,
+            &chan_end_on_b.clone(),
         )
         .unwrap();
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
@@ -201,13 +205,25 @@ fn execute_receive_packet() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            chan_end_on_b,
+            &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+            &chan_end_on_b,
         )
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
+    let missing_receipts = contract
+        .ibc_store()
+        .get_missing_packet_receipts(
+            deps.as_ref().storage,
+            &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+            0,
+            10,
+        )
+        .unwrap();
+    println!("{missing_receipts:?}");
+    assert!(!missing_receipts.contains(&packet.sequence));
 
     assert_eq!(res.unwrap().events[0].ty, "recv_packet")
 }
@@ -252,25 +268,25 @@ fn execute_receive_packet_ordered() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            chan_end_on_b,
+            &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+            &chan_end_on_b,
         )
         .unwrap();
     contract
         .store_next_sequence_recv(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            1.into(),
+            &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+            &Sequence::from(1),
         )
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
     let seq = contract.get_next_sequence_recv(
         &deps.storage,
-        IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-        IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+        &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+        &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
     );
     assert!(res.is_ok());
     assert_eq!(res.unwrap().events[0].ty, "recv_packet");
@@ -320,9 +336,9 @@ fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
     contract
         .store_channel_end(
             &mut deps.storage,
-            IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            chan_end_on_b,
+            &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+            &chan_end_on_b,
         )
         .unwrap();
     contract
@@ -336,7 +352,7 @@ fn test_receive_packet_fail_missing_channel() {
     let contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let info = create_mock_info("channel-creater", "umlg", 2000);
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let msg = get_dummy_raw_msg_recv_packet(12);
     let env = get_mock_env();
 
     contract
@@ -350,30 +366,16 @@ fn test_lookup_module_packet() {
     let ctx = CwIbcCoreContext::default();
     let module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
+    let msg = get_dummy_raw_msg_recv_packet(12);
+    let port_id = to_ibc_port_id(&msg.packet.unwrap().source_port).unwrap();
     ctx.claim_capability(
         &mut deps.storage,
-        msg.packet.port_id_on_a.as_bytes().to_vec(),
+        port_id.as_bytes().to_vec(),
         module_id.to_string(),
     )
     .unwrap();
-    let res = ctx.lookup_modules(
-        &mut deps.storage,
-        msg.packet.port_id_on_a.to_string().as_bytes().to_vec(),
-    );
+    let res = ctx.lookup_modules(&mut deps.storage, port_id.to_string().as_bytes().to_vec());
 
     assert!(res.is_ok());
     assert_eq!("contractaddress", res.unwrap())
-}
-
-#[test]
-#[should_panic(expected = "UnknownPort")]
-fn test_lookup_module_packet_fail() {
-    let mut deps = deps();
-    let ctx = CwIbcCoreContext::default();
-    let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let channel_msg = PacketMsg::Recv(msg);
-
-    ctx.lookup_module_packet(&mut deps.storage, &channel_msg)
-        .unwrap();
 }

@@ -10,18 +10,12 @@ pub use channel::*;
 pub use handler::*;
 
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
-use common::ibc::core::ics03_connection::events::CONN_ID_ATTRIBUTE_KEY;
 pub use common::ibc::core::ics04_channel::channel::Counterparty;
 use common::ibc::core::ics04_channel::channel::Order;
 pub use common::ibc::core::ics04_channel::channel::State;
 use common::ibc::core::ics04_channel::error::{ChannelError, PacketError};
-pub use common::ibc::core::ics04_channel::events::*;
-pub use common::ibc::core::ics04_channel::msgs::{
-    chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
-    chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
-    chan_open_init::MsgChannelOpenInit, chan_open_try::MsgChannelOpenTry, ChannelMsg,
-};
-use common::ibc::core::ics04_channel::packet::Packet;
+//pub use common::ibc::core::ics04_channel::events::*;
+
 use common::ibc::events::IbcEventType;
 use cosmwasm_std::Event;
 use cosmwasm_std::Reply;

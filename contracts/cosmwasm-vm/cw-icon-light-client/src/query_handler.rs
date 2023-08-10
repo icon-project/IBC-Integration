@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::{
     state::{CLIENT_STATES, CONFIG, CONSENSUS_STATES, PROCESSED_HEIGHTS, PROCESSED_TIMES},
     traits::Config,
@@ -11,9 +13,10 @@ use common::{
     traits::AnyTypes,
     utils::{calculate_root, keccak256},
 };
-use cosmwasm_std::Storage;
-use cw_common::hex_string::HexString;
-use debug_print::debug_println;
+use cosmwasm_std::{Deps, Order, StdResult, Storage};
+use cw_common::{cw_println, hex_string::HexString};
+use cw_storage_plus::Bound;
+
 use prost::Message;
 
 pub struct QueryHandler {}
@@ -119,7 +122,7 @@ impl QueryHandler {
      * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
      */
     pub fn verify_membership(
-        storage: &dyn Storage,
+        deps: Deps,
         client_id: &str,
         height: u64,
         _delay_time_period: u64,
@@ -128,18 +131,20 @@ impl QueryHandler {
         value: &[u8],
         path: &[u8],
     ) -> Result<bool, ContractError> {
-        debug_println!(
+        cw_println!(
+            deps,
             "[LightClient]: Path Bytes  {:?}",
             HexString::from_bytes(path)
         );
-        debug_println!(
+        cw_println!(
+            deps,
             "[LightClient]: Value Bytes  {:?}",
             HexString::from_bytes(value)
         );
         let path = keccak256(path).to_vec();
-        debug_println!("[LightClient]: client id is: {:?}", client_id);
+        cw_println!(deps, "[LightClient]: client id is: {:?}", client_id);
 
-        let state = Self::get_client_state(storage, client_id)?;
+        let state = Self::get_client_state(deps.storage, client_id)?;
 
         if state.frozen_height != 0 && height > state.frozen_height {
             return Err(ContractError::ClientStateFrozen(state.frozen_height));
@@ -153,27 +158,32 @@ impl QueryHandler {
         // let _ =
         //     self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
         let consensus_state: ConsensusState =
-            Self::get_consensus_state(storage, client_id, height)?;
-        debug_println!(
+            Self::get_consensus_state(deps.storage, client_id, height)?;
+        cw_println!(
+            deps,
             "[LightClient]: Path Hash {:?}",
             HexString::from_bytes(&path)
         );
-        debug_println!(
+        cw_println!(
+            deps,
             "[LightClient]: Value Hash {:?}",
             HexString::from_bytes(&value_hash)
         );
         let leaf = keccak256(&[path, value_hash].concat());
-        debug_println!(
+        cw_println!(
+            deps,
             "[LightClient]: Leaf Value {:?}",
             HexString::from_bytes(&leaf)
         );
 
         let message_root = calculate_root(leaf, proof);
-        debug_println!(
+        cw_println!(
+            deps,
             "[LightClient]: Stored Message Root {:?} ",
             hex::encode(consensus_state.message_root.clone())
         );
-        debug_println!(
+        cw_println!(
+            deps,
             "[LightClient]: Calculated Message Root : {:?}",
             HexString::from_bytes(&message_root)
         );
@@ -189,7 +199,7 @@ impl QueryHandler {
      * The caller is expected to construct the full CommitmentPath from a CommitmentPrefix and a standardized path (as defined in ICS 24).
      */
     pub fn verify_non_membership(
-        storage: &dyn Storage,
+        deps: Deps,
         client_id: &str,
         height: u64,
         delay_time_period: u64,
@@ -198,7 +208,7 @@ impl QueryHandler {
         path: &[u8],
     ) -> Result<bool, ContractError> {
         Self::verify_membership(
-            storage,
+            deps,
             client_id,
             height,
             delay_time_period,
@@ -207,5 +217,50 @@ impl QueryHandler {
             &[],
             path,
         )
+    }
+
+    pub fn get_previous_consensus(
+        storage: &dyn Storage,
+        height: u64,
+        client_id: String,
+    ) -> Result<Vec<u64>, ContractError> {
+        let key = (client_id, height);
+        let bound = Bound::Exclusive::<(String, u64)>((key, PhantomData));
+
+        let result = CONSENSUS_STATES
+            .range(storage, None, Some(bound), Order::Descending)
+            .take(1)
+            .collect::<StdResult<Vec<((String, u64), Vec<u8>)>>>()
+            .map_err(ContractError::Std)?;
+
+        let keys = result.into_iter().map(|t| t.0 .1).collect::<Vec<u64>>();
+        Ok(keys)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use cosmwasm_std::testing::MockStorage;
+
+    use crate::state::CONSENSUS_STATES;
+
+    use super::QueryHandler;
+
+    #[test]
+    fn test_previous_consensus() {
+        let mut store = MockStorage::new();
+        CONSENSUS_STATES
+            .save(&mut store, ("test".to_string(), 100), &vec![1, 2, 4, 5])
+            .unwrap();
+        CONSENSUS_STATES
+            .save(&mut store, ("test".to_string(), 80), &vec![1, 2, 4, 5])
+            .unwrap();
+        CONSENSUS_STATES
+            .save(&mut store, ("test".to_string(), 70), &vec![1, 2, 4, 5])
+            .unwrap();
+
+        let result = QueryHandler::get_previous_consensus(&store, 110, "test".to_string()).unwrap();
+
+        println!("{result:?}");
     }
 }

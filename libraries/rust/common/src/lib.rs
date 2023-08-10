@@ -46,7 +46,7 @@ impl AnyTypes for SignedHeader {
     }
 }
 
-impl<'a> PrimaryKey<'a> for ClientId {
+impl<'a> PrimaryKey<'a> for &ClientId {
     type Prefix = ();
 
     type SubPrefix = ();
@@ -60,7 +60,7 @@ impl<'a> PrimaryKey<'a> for ClientId {
     }
 }
 
-impl KeyDeserialize for ClientId {
+impl KeyDeserialize for &ClientId {
     type Output = ClientId;
 
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
@@ -122,7 +122,7 @@ impl KeyDeserialize for ModuleId {
     }
 }
 
-impl<'a> PrimaryKey<'a> for PortId {
+impl<'a> PrimaryKey<'a> for &PortId {
     type Prefix = ();
     type SubPrefix = ();
     type Suffix = Self;
@@ -133,9 +133,8 @@ impl<'a> PrimaryKey<'a> for PortId {
     }
 }
 
-impl KeyDeserialize for PortId {
+impl KeyDeserialize for &PortId {
     type Output = PortId;
-
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
         let result = String::from_utf8(value)
             .map_err(StdError::invalid_utf8)
@@ -145,13 +144,13 @@ impl KeyDeserialize for PortId {
     }
 }
 
-impl<'a> Prefixer<'a> for PortId {
+impl<'a> Prefixer<'a> for &PortId {
     fn prefix(&self) -> Vec<Key> {
         vec![Key::Ref(self.as_bytes())]
     }
 }
 
-impl<'a> PrimaryKey<'a> for ConnectionId {
+impl<'a> PrimaryKey<'a> for &ConnectionId {
     type Prefix = ();
 
     type SubPrefix = ();
@@ -163,13 +162,13 @@ impl<'a> PrimaryKey<'a> for ConnectionId {
         vec![Key::Ref(self.as_str().as_bytes())]
     }
 }
-impl<'a> Prefixer<'a> for ConnectionId {
+impl<'a> Prefixer<'a> for &ConnectionId {
     fn prefix(&self) -> Vec<Key> {
         vec![Key::Ref(self.as_bytes())]
     }
 }
 
-impl KeyDeserialize for ConnectionId {
+impl KeyDeserialize for &ConnectionId {
     type Output = ConnectionId;
 
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
@@ -181,7 +180,7 @@ impl KeyDeserialize for ConnectionId {
     }
 }
 
-impl<'a> PrimaryKey<'a> for ChannelId {
+impl<'a> PrimaryKey<'a> for &ChannelId {
     type Prefix = ();
     type SubPrefix = ();
     type Suffix = ();
@@ -192,7 +191,7 @@ impl<'a> PrimaryKey<'a> for ChannelId {
     }
 }
 
-impl KeyDeserialize for ChannelId {
+impl KeyDeserialize for &ChannelId {
     type Output = ChannelId;
     fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
         let result = String::from_utf8(value)
@@ -200,6 +199,12 @@ impl KeyDeserialize for ChannelId {
             .unwrap();
         let chan_id = ChannelId::from_str(&result).unwrap();
         Ok(chan_id)
+    }
+}
+
+impl<'a> Prefixer<'a> for &ChannelId {
+    fn prefix(&self) -> Vec<Key> {
+        vec![Key::Ref(self.as_bytes())]
     }
 }
 

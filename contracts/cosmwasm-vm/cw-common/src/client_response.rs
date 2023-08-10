@@ -1,6 +1,5 @@
 use crate::ibc_types::{IbcClientId, IbcClientType};
 use crate::{errors::CwErrors, ibc_types::IbcHeight};
-pub use common::ibc::core::ics04_channel::packet::Packet;
 
 use cosmwasm_schema::cw_serde;
 

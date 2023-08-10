@@ -9,28 +9,19 @@ import score.annotation.External;
 public interface ICallservice {
 
     /**
-     * Handles BTP Messages from other blockchains.
-     * Accepts messages only from BMC.
-     * If it fails, then BMC will generate a BTP Message that includes error information, then delivered to the source.
+     * Handles Messages from other blockchains.
      *
      * @param _from String ( Network Address of source network )
-     * @param _svc String ( name of the service )
-     * @param _sn Integer ( serial number of the message )
      * @param _msg Bytes ( serialized bytes of ServiceMessage )
      */
     @External
-    void handleMessage(String _from, BigInteger _sn, byte[] _msg);
+    void handleMessage(String _from, byte[] _msg);
 
     /**
      * Handle the error on delivering the message.
-     * Accept the error only from the BMC.
      *
-     * @param _src String ( Network Address of BMC that generated the error )
-     * @param _svc String ( name of the service )
      * @param _sn Integer ( serial number of the original message )
-     * @param _code Integer ( code of the error )
-     * @param _msg String ( message of the error )
      */
     @External
-    void handleError( BigInteger _sn, long _code, String _msg);
+    void handleError(BigInteger _sn);
 }

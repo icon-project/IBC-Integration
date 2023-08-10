@@ -400,6 +400,10 @@ func (c *IconLocalnet) SetupXCall(ctx context.Context, portId string, keyName st
 	return nil
 }
 
+func (c *IconLocalnet) PreGenesis() error {
+	panic("unimplemented")
+}
+
 func (c *IconLocalnet) DeployXCallMockApp(ctx context.Context, connection chains.XCallConnection) error {
 	xcall := c.IBCAddresses["xcall"]
 	params := `{"_callService":"` + xcall + `"}`
@@ -450,7 +454,10 @@ func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyN
 		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `", "_rollback":"` + hex.EncodeToString(rollback) + `"}`
 	}
 
-	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
+	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
+	if err != nil {
+		return "", "", "", err
+	}
 	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
 	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	return sn, reqId, destData, err
@@ -502,11 +509,11 @@ func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, f
 	return reqId, data, nil
 }
 
-func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, string, error) {
+func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, error) {
 	index := []*string{&sn}
-	event, err := c.FindEvent(ctx, startHeight, "xcall", "ResponseMessage(int,int,str)", index)
+	event, err := c.FindEvent(ctx, startHeight, "xcall", "ResponseMessage(int,int)", index)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	intHeight, _ := event.Height.Int()
@@ -516,9 +523,8 @@ func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, 
 	trResult, _ := c.getFullNode().TransactionResult(ctx, string(tx.TxHash))
 	eventIndex, _ := event.Events[0].Int()
 	code, _ := strconv.ParseInt(trResult.EventLogs[eventIndex].Data[0], 0, 64)
-	msg := trResult.EventLogs[eventIndex].Data[1]
 
-	return strconv.FormatInt(code, 10), msg, nil
+	return strconv.FormatInt(code, 10), nil
 }
 
 func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, signature string, index []*string) (*icontypes.EventNotification, error) {
@@ -608,11 +614,16 @@ func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, key
 	fmt.Printf("Transaction Hash: %s\n", hash)
 
 	// wait for few blocks to finish
-	time.Sleep(2 * time.Second)
+	time.Sleep(4 * time.Second)
 	trResult, _ := c.getFullNode().TransactionResult(ctx, hash)
+	fmt.Println("Status: ", trResult.Status)
+	fmt.Println("Error: ", err)
 	if trResult.Status == "0x1" {
 		return context.WithValue(ctx, "txResult", trResult), nil
 	} else {
+		fmt.Println("MEssageValue: ", trResult.Failure.MessageValue)
+		fmt.Println("CodeValue: ", trResult.Failure.CodeValue)
+
 		return ctx, fmt.Errorf("%s", trResult.Failure.MessageValue)
 	}
 

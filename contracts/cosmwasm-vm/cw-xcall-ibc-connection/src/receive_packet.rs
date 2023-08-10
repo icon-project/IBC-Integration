@@ -5,8 +5,8 @@ use crate::types::message::Message;
 
 use common::rlp;
 use cosmwasm_std::{coins, BankMsg, DepsMut};
+use cw_common::cw_println;
 
-use debug_print::debug_println;
 impl<'a> CwIbcConnection<'a> {
     /// This function receives packet data, decodes it, and then handles either a request or a response
     /// based on the message type.
@@ -52,10 +52,9 @@ impl<'a> CwIbcConnection<'a> {
                 self.store_incoming_packet(deps.storage, &channel, sn, packet)?;
             }
         }
-        debug_println!("[IBCConnection]: forwarding to xcall");
+        cw_println!(deps, "[IBCConnection]: forwarding to xcall");
         let data = n_message.data;
-        let xcall_submessage =
-            self.call_xcall_handle_message(deps.storage, &nid, data, n_message.sn.0)?;
+        let xcall_submessage = self.call_xcall_handle_message(deps.storage, &nid, data)?;
 
         Ok(CwReceiveResponse::new().add_submessage(xcall_submessage))
     }
