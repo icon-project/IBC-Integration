@@ -1,10 +1,11 @@
 # global owners: used as fallback if nobody owns the code
+@pragyanshrestha-ibriz @redlarva @ibrizsabin
 
 # cosmwasm contracts
-/contracts/cosmwasm-vm @redlarva @ibrizsabin 
+/contracts/cosmwasm-vm @redlarva @ibrizsabin @nightowl121 @AntonAndell
 
 # javascore
-/contracts/javascore @redlarva @ibrizsabin
+/contracts/javascore @redlarva @ibrizsabin @AntonAndell @nightowl121
 
 # tests
-/test  @redlarva @ibrizsabin 
+/test  @redlarva @ibrizsabin @AntonAndell @nightowl121 @sdpisreddevil
