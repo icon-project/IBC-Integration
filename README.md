@@ -42,10 +42,10 @@ defined [here](https://github.com/icon-project/IIPs/blob/master/IIPS/iip-52.md)
     - [Installation  ](#installation--)
     - [Getting Started  ](#getting-started--)
         - [Prerequisite](#prerequiste)
-        - [Running the tests](#testing)
         - [Build](#build)
+        - [Running the tests](#testing)
         - [Deploy](#deploy)
-    - [Build IBC Dapp  ](#build-ibc-dapp--)
+    - [Developing IBC Dapp  ](#developing-ibc-dapp--)
     - [Contributing  ](#contributing--)
     - [License  ](#license--)
     - [Contact  ](#contact--)
@@ -101,17 +101,7 @@ Make sure you have following installed on your machine to build the contracts or
 | [/test](./test)                                   | Test Framework and Test Suite including e2e test and functional test           |
 | [/utils](./utils)                                 | Utilities used for build, setup, CI/CD                                         |
 
-## Testing <a name = "testing"> </a>
 
-### Integration Testing
-
-```
-go test -v ./test/integration --args -config=<path to config.json>
-```
-
-### End-to-End Testing for the System
-
-[End-to-End Testing Setup](./docs/e2e_test_setup.md)
 
 ## Build <a name = "build"> </a>
 Run following command on root directory to build the rust contracts. The built wasm files will be available in the artifacts directory in the root.
@@ -128,11 +118,23 @@ make build-builder-img
 make optimize-build
 
 ```
+## Testing <a name = "testing"> </a>
+
+### Integration Testing
+
+```
+go test -v ./test/integration --args -config=<path to config.json>
+```
+
+### End-to-End Testing for the System
+
+[End-to-End Testing Setup](./docs/e2e_test_setup.md)
+
 ## Deploy <a name = "deploy"> </a>
 
 For deployment and usage follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
 
-## Build IBC Dapp <a name = "build-ibc-dapp"> </a>
+## Developing IBC Dapp <a name = "developing-ibc-dapp"> </a>
 To build dapp that is compatible with our smart contract based IBC Host you can follow the docs provided in mock ibc dapp samples.
 Sample for cosmwasm contract  [here](./contracts/cosmwasm-vm/cw-mock-ibc-dapp/README.md).
 Sample for icon contract  [here](./contracts/javascore/modules/mockapp/src/main/java/ibc/mockapp/MockApp.java)
