@@ -2,10 +2,10 @@ package e2e_test
 
 import (
 	"context"
+	"github.com/icon-project/ibc-integration/test/testsuite"
 	"testing"
 
 	"github.com/icon-project/ibc-integration/test/e2e/tests"
-	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -21,24 +21,14 @@ func (s *E2ETest) TestE2E_all() {
 	t := s.T()
 	ctx := context.TODO()
 
-	// t.Run("test xcall", func(t *testing.T) {
-	//	rly := s.SetupChainsAndRelayer(ctx)
-	//	s.StartRelayer(rly)
-	// 	xcall := tests.XCallTestSuite{
-	// 		E2ETestSuite: &s.E2ETestSuite,
-	// 		T:            t,
-	// 	}
-	// 	xcall.TestDemo()
-	// })
-
-	t.Run("test relayer", func(t *testing.T) {
-		rly, err := s.SetupRelayer(ctx)
-		s.Require().NoError(err)
+	t.Run("test xcall", func(t *testing.T) {
+		rly := s.SetupChainsAndRelayer(ctx)
 		s.StartRelayer(rly)
-		relayer := tests.RelayerTestSuite{
+		xcall := tests.XCallTestSuite{
 			E2ETestSuite: &s.E2ETestSuite,
 			T:            t,
 		}
-		relayer.TestRelayer(ctx)
+		xcall.TestDemo()
 	})
+
 }
