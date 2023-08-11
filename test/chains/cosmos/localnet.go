@@ -144,9 +144,7 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 func (c *CosmosLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	temp := c.GetClientName(0)
 	params := `{"connection_id":"` + connection.ConnectionId + `","counterparty_port_id":"` + connection.CounterPartyPortId + `","counterparty_nid":"` + connection.CounterpartyNid + `","client_id":"` + temp + `","timeout_height":100}`
-	_, err := c.ExecuteContract(context.Background(), c.IBCAddresses["connection"], connection.KeyName, "configure_connection", params)
-
-	return ctx, err
+	return c.ExecuteContract(ctx, c.IBCAddresses["connection"], connection.KeyName, "configure_connection", params)
 }
 
 func (c *CosmosLocalnet) GetIBCAddress(key string) string {
@@ -183,7 +181,7 @@ func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, ke
 	rollbackArray := strings.Join(strings.Fields(fmt.Sprintf("%d", rollback)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s, "rollback":%s}`, _to, dataArray, rollbackArray)
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
-	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], chains.FaucetAccountKeyName, "send_call_message", params)
+	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["dapp"], chains.FaucetAccountKeyName, "send_call_message", params)
 	if err != nil {
 		return "", "", "", err
 	}
@@ -226,7 +224,7 @@ func (c *CosmosLocalnet) findSn(tx *TxResul) string {
 }
 
 func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
+	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
 }
 
 func (c *CosmosLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {

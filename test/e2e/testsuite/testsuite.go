@@ -71,6 +71,7 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) {
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
 		CounterPartyPortId: portId,
+		TimeoutHeight:      "100",
 	})
 	s.Require().NoError(err)
 	ctx, err = chainB.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
@@ -79,6 +80,7 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) {
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
 		CounterPartyPortId: portId,
+		TimeoutHeight:      "100",
 	})
 	s.Require().NoError(err)
 	err = s.relayer.CreateChannel(ctx, s.GetRelayerExecReporter(), s.GetPathName(s.pathNameIndex-1), ibc.CreateChannelOptions{

@@ -438,30 +438,23 @@ func (c *IconLocalnet) GetIBCAddress(key string) string {
 func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	temp := "07-tendermint-0"
 	params := `{"connectionId":"` + connection.ConnectionId + `","counterpartyPortId":"` + connection.CounterPartyPortId + `","counterpartyNid":"` + connection.CounterpartyNid + `","clientId":"` + temp + `","timeoutHeight":"100"}`
-	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["connection"], connection.KeyName, "configureConnection", params)
+	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["connection"], connection.KeyName, "configureConnection", params)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	params = `{"nid":"` + connection.CounterpartyNid + `","connection":"` + c.IBCAddresses["connection"] + `"}`
-	ctx, err = c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], connection.KeyName, "setDefaultConnection", params)
-	if err != nil {
-		panic(err)
-	}
-
-	return ctx, nil
+	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], connection.KeyName, "setDefaultConnection", params)
 }
 
 func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, string, error) {
 	// TODO: send fees
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
-	var params string
-	if rollback == nil {
-		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
-	} else {
+	var params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
+	if rollback != nil {
 		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `", "_rollback":"` + hex.EncodeToString(rollback) + `"}`
 	}
 
-	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
+	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["dapp"], keyName, "sendMessage", params)
 	if err != nil {
 		return "", "", "", err
 	}
@@ -491,11 +484,11 @@ func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, k
 }
 
 func (c *IconLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeCall", `{"_reqId":"`+reqId+`","_data":"`+data+`"}`)
+	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], "gochain", "executeCall", `{"_reqId":"`+reqId+`","_data":"`+data+`"}`)
 }
 
 func (c *IconLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], "gochain", "executeRollback", `{"_sn":"`+sn+`"}`)
+	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], "gochain", "executeRollback", `{"_sn":"`+sn+`"}`)
 }
 
 func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, string, error) {

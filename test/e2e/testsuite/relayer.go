@@ -134,22 +134,23 @@ func (s *E2ETestSuite) GetNextConnectionSequence(ctx context.Context, chain chai
 
 // Configure
 
-func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, targetChain chains.Chain, msg string) (string, error) {
-	dst := targetChain.(ibc.Chain).Config().ChainID + "/" + targetChain.GetIBCAddress("dapp")
-	_, reqID, data, err := src.XCall(context.Background(), targetChain, User, dst, []byte(msg), nil)
+func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, target chains.Chain, msg string) (string, string, error) {
+	dst := target.(ibc.Chain).Config().ChainID + "/" + target.GetIBCAddress("dapp")
+	_, reqID, data, err := src.XCall(ctx, target, User, dst, []byte(msg), nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to execute contract: %s", err)
+		return "", "", fmt.Errorf("failed to execute contract: %s", err)
 	}
-	ctx, err = targetChain.ExecuteCall(ctx, reqID, fmt.Sprint(data))
+	return reqID, data, nil
+}
+
+func (s *E2ETestSuite) QueryPacketCommitment(ctx context.Context, targetChain chains.Chain, reqID, data string) (string, error) {
+	_, err := targetChain.ExecuteCall(ctx, reqID, data)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute contract: %s", err)
 	}
 	return data, nil
 }
 
-func (s *E2ETestSuite) PacketNotSentFromIconAndArchway(ctx context.Context) {}
-
-// Task_
 func (s *E2ETestSuite) ConnectionFailedToEstablish(ctx context.Context) {}
 
 func (s *E2ETestSuite) InvalidPacket(ctx context.Context) {}
@@ -159,6 +160,11 @@ func (s *E2ETestSuite) NotResponding(ctx context.Context) {}
 // Crash Node
 func (s *E2ETestSuite) CrashNode(ctx context.Context, chain chains.Chain) error {
 	return chain.PauseNode(ctx)
+}
+
+// Resume Node
+func (s *E2ETestSuite) ResumeNode(ctx context.Context, chain chains.Chain) error {
+	return chain.UnpauseNode(ctx)
 }
 
 func (s *E2ETestSuite) Crash(ctx context.Context) (time.Time, error) {
@@ -183,15 +189,22 @@ func (s *E2ETestSuite) Recover(ctx context.Context, crashedAt time.Time) (time.D
 // Ping checks if the relayer is running
 func (s *E2ETestSuite) Ping(ctx context.Context) (string, error) {
 	chainA, chainB := s.GetChains()
-	res, err := s.PacketFlow(ctx, chainA, chainB, "ping")
+	reqID, data, err := s.PacketFlow(ctx, chainA, chainB, "ping")
 	if err != nil {
 		return "", err
 	}
-	result, err := s.ConvertToPlainString(res)
+	_, err = s.QueryPacketCommitment(ctx, chainB, reqID, data)
+	res, err := s.ConvertToPlainString(data)
 	if err != nil {
 		return "", err
 	}
-	res, err = s.PacketFlow(ctx, chainA, chainB, result)
+
+	reqID, data, err = s.PacketFlow(ctx, chainB, chainA, res)
+	if err != nil {
+		return "", err
+	}
+	_, err = s.QueryPacketCommitment(ctx, chainB, reqID, data)
+	res, err = s.ConvertToPlainString(data)
 	if err != nil {
 		return "", err
 	}

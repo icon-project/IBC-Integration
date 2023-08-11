@@ -18,6 +18,7 @@ type XCallConnection struct {
 	PortId                 string
 	CounterPartyPortId     string
 	CounterPartyConnection string
+	TimeoutHeight          string
 }
 
 type LastBlock struct{}
