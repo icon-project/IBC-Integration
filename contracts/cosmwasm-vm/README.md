@@ -10,18 +10,15 @@ This Repo contains the smart contracts for ICON-IBC in rust.
 |cosmwasm-std    |Contract Development| [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)       |
 |cosmwasm-storage|Contract Development| [![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage)
 
-| Specification      |  Crates.io                    | Coverage                   |
-|---------------     |-------------------------------|----------------------------|
-| cw-ibc-core        |[![ibc on crates.io](https://img.shields.io/crates/v/ibc.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
-|cw-icon-light-client|[![ibc on crates.io](https://img.shields.io/crates/v/ibc.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
-| cw-xcall           |[![ibc on crates.io](https://img.shields.io/crates/v/ibc.svg)](https://crates.io/crates/ibc)| [![codecov](https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom)](https://codecov.io/gh/icon-project/IBC-Integration)|
 
 ### Prerequiste
 
 - To install Rust in Linux/Mac,
 
-First, [install rustup](https://rustup.rs/). Once installed, make sure you have the wasm32 target:
-  
+First, [install rustup](https://rustup.rs/). Once installed, make sure you have the wasm32 target:  
+Rust version : 1.69.0    
+Binaryen : [110](https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERS}/binaryen-version_${BINARYEN_VERS}-x86_64-linux.tar.gz)
+
 ```shell
 rustup default stable
 cargo version
@@ -33,9 +30,25 @@ rustup target add wasm32-unknown-unknown
 ```
 
 For windows,
-Download and run, [rustup-init.exe](https://static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe)
+Download and run, [rustup-init.exe](https://static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe)  
+
+You can also execute the `./scripts/optimize-cosmwasm.sh`  script, which handles installing the necessary toolchain dependencies, building, and optimizing the contracts to their correct versions.
 
 ### Build Contracts
+
+1. Using docker build  
+```
+make optimize-cosmwasm    # The final artifacts will reside within the `./artifacts/archway` directory.
+```
+
+
+
+2. Using build script
+```
+sh ./script/optimize-cosmwasm.sh
+```
+
+3. Building manually
 
 - Execute the following command to compile the contract
   
@@ -48,6 +61,8 @@ Download and run, [rustup-init.exe](https://static.rust-lang.org/rustup/dist/i68
   ```
   RUSTFLAGS='-C link-arg=-s' cargo wasm
   ```
+
+### Deploy Contracts
 
 - Deploy the contract on testnet
   
@@ -101,10 +116,6 @@ contract checks passed.
 
 ### Contracts
 
-#### [cw-xCall](./cw-xcall/src) :
-
-The xCall contract in Inter-Blockchain Communication (IBC) protocol facilitate cross-chain communication and token transfers between different blockchain networks. This is designed to act as a gateway between two blockchains, allowing them to securely communicates with each other and transfer assets.
-
 #### [cw-ibc-core](./cw-ibc-core/src/) :
 
 IBC-Core is the reference implementation of the Inter-Blockchain Communication (IBC) protocol, which is a standardized protocol for enabling communication and interoperability between independent blockchain networks.
@@ -136,6 +147,9 @@ IBC-Core is the reference implementation of the Inter-Blockchain Communication (
 #### [cw-icon-light-client](./cw-icon-light-client/src/) :
 
 The icon-light-client in IBC enables blockchain networks to communicate with each other without having to trust each other. This is achieved by using the cryptographic proofs to verify that transactions are valid and have been executed correctly.
+
+#### [cw-xcall-ibc-connection](./cw-xcall-ibc-connection/src/) :
+
 
 ### Unit Testing
 
