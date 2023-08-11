@@ -15,6 +15,8 @@ type RelayerTestSuite struct {
 }
 
 func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
+	chainA, chainB := r.GetChains()
+
 	r.T.Run("test client state", func(t *testing.T) {
 		r.Require().NoError(r.CreateClient(ctx))
 		chainA, chainB := r.GetChains()
@@ -75,7 +77,6 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
 	})
 
 	r.T.Run("crash nodes", func(t *testing.T) {
-		// chainA, chainB := r.GetChains()
 		// // crash chainA
 		// r.Require().NoError(r.CrashNode(ctx, chainA))
 		// // send packet from chainB to chainA crashed node and check if it is received
@@ -91,13 +92,15 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
 	})
 
 	r.T.Run("test crash and recover relay", func(t *testing.T) {
-
-		chainA, chainB := r.GetChains()
-
 		var eg errgroup.Group
 
-		r.Require().NoError(r.CrashNode(ctx, chainA))
-		r.Require().NoError(r.CrashNode(ctx, chainB))
+		eg.Go(func() error {
+			return r.CrashNode(ctx, chainA)
+		})
+		eg.Go(func() error {
+			return r.CrashNode(ctx, chainB)
+		})
+		r.Require().NoError(eg.Wait())
 
 		// send packet from chainA to chainB crashed node and check if it is received
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
