@@ -7,6 +7,7 @@ pub enum StorageKey {
     IbcConfig,
     IbcHost,
     Config,
+    ReceivedPackets,
 }
 
 impl StorageKey {
@@ -17,6 +18,7 @@ impl StorageKey {
             StorageKey::Admin => "admin",
             StorageKey::IbcConfig => "ibcconfig",
             StorageKey::IbcHost => "ibc_host",
+            StorageKey::ReceivedPackets => "received_packets",
         }
     }
 }

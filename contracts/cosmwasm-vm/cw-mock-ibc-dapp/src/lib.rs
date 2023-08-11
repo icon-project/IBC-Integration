@@ -36,8 +36,8 @@ use cw_common::cw_types::{
 };
 
 use cw_storage_plus::Item;
+use msg::{ExecuteMsg, QueryMsg};
 use thiserror::Error;
-use types::dapp_msg::{ExecuteMsg, QueryMsg};
 
 /// This function instantiates a contract using the CwIbcConnection.
 ///
