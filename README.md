@@ -51,7 +51,7 @@ defined [here](https://github.com/icon-project/IIPs/blob/master/IIPS/iip-52.md)
     - [Contact  ](#contact--)
 
 ## About <a name = "about"> </a>
-Relayer for these contracts deviates slightly from official cosmos relayer due to the fact that ICON uses BTP Blocks as storage for messages and also on cosmwasm side the ibc host is deployed as contracts rather than the native ibc host module of cosmos chain. Relayer for ibc-icon can be found [here](https://github.com/icon-project). 
+Relayer for these contracts deviates slightly from official cosmos relayer due to the fact that ICON uses BTP Blocks as storage for messages and also on cosmwasm side the ibc host is deployed as contracts rather than the native ibc host module of cosmos chain. Relayer for ibc-icon can be found [here](https://github.com/icon-project/ibc-relay). 
 The deviation from cosmos relayer is documented [here](https://github.com/icon-project/ibc-relay/blob/main/docs/deviations_from_ibc.md).
 
 
