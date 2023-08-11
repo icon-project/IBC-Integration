@@ -23,12 +23,22 @@ impl<'a> CwIbcConnection<'a> {
     /// a `Result` object with either an `IbcReceiveResponse` or a `ContractError`.
     pub fn do_packet_receive(
         &self,
-        _deps: DepsMut,
-        _packet: CwPacket,
+        deps: DepsMut,
+        packet: CwPacket,
         _relayer: Addr,
     ) -> Result<CwReceiveResponse, ContractError> {
-        debug_println!("[IBCConnection]: forwarding to xcall");
+        debug_println!("[MockDapp]: Packet Received");
+        self.store_received_packet(deps.storage, packet.sequence, packet)?;
 
         Ok(CwReceiveResponse::new())
+    }
+
+    pub fn write_acknowledgement(
+        &self,
+        store: &mut dyn Storage,
+        packet: CwPacket,
+    ) -> Result<Response, ContractError> {
+        let submsg = self.call_host_write_acknowledgement(store, packet, b"ack".to_vec())?;
+        Ok(Response::new().add_submessage(submsg))
     }
 }
