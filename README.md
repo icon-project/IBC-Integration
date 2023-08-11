@@ -42,9 +42,18 @@ defined [here](https://github.com/icon-project/IIPs/blob/master/IIPS/iip-52.md)
     - [Installation  ](#installation--)
     - [Getting Started  ](#getting-started--)
         - [Prerequisite](#prerequiste)
+        - [Build](#build)
         - [Running the tests](#testing)
+        - [Deploy](#deploy)
+    - [Developing IBC Dapp  ](#developing-ibc-dapp--)
+    - [Contributing  ](#contributing--)
+    - [License  ](#license--)
+    - [Contact  ](#contact--)
 
 ## About <a name = "about"> </a>
+Relayer for these contracts deviates slightly from official cosmos relayer due to the fact that ICON uses BTP Blocks as storage for messages and also on cosmwasm side the ibc host is deployed as contracts rather than the native ibc host module of cosmos chain. Relayer for ibc-icon can be found [here](https://github.com/icon-project/ibc-relay). 
+The deviation from cosmos relayer is documented [here](https://github.com/icon-project/ibc-relay/blob/main/docs/deviations_from_ibc.md).
+
 
 ## Installation <a name = "installation"> </a>
 
@@ -62,15 +71,15 @@ git submodule update --remote
 ```
 
 ## Getting Started <a name = "getting_started"> </a>
+Make sure you have following installed on your machine to build the contracts or you can use docker. 
 
-Terminologies used in this project.
+### Prerequisites
 
-- [ibc packet](./docs/terminologies/ibc_terminologies.md)
-- [ibc message](./docs/terminologies/ibc_terminologies.md)
-- [openInit](./docs/terminologies/ibc_terminologies.md)
-- [openTry](./docs/terminologies/ibc_terminologies.md)
-- [openAck](./docs/terminologies/ibc_terminologies.md)
-- [openConfirm](./docs/terminologies/ibc_terminologies.md)
+- Go (at least version 1.20)
+- Rust (version 1.68)
+- Wasm-Opt (version 110)
+- Java (JDK 11)
+- Docker (for running tests)
 
 ### Available Integrations
 
@@ -92,14 +101,108 @@ Terminologies used in this project.
 | [/test](./test)                                   | Test Framework and Test Suite including e2e test and functional test           |
 | [/utils](./utils)                                 | Utilities used for build, setup, CI/CD                                         |
 
+
+
+## Build <a name = "build"> </a>
+Run following command on root directory to build the rust contracts. The built wasm files will be available in the artifacts directory in the root.
+```
+./scripts/optimize-cosmwasm.sh
+```
+To build the java contracts run following command.
+```
+make optimize-jar
+```
+To build all contracts using docker follow steps below
+Step1: Update git submodules:
+```
+git submodule init
+git submodule update --remote
+```
+Step2: Run following commands to build the builder image and compile contracts.
+```
+make build-builder-img
+make optimize-build
+
+```
 ## Testing <a name = "testing"> </a>
-
-### Integration Testing
-
-```
-go test -v ./test/integration --args -config=<path to config.json>
-```
 
 ### End-to-End Testing for the System
 
 [End-to-End Testing Setup](./docs/e2e_test_setup.md)
+
+## Deploy <a name = "deploy"> </a>
+
+For deployment and usage follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
+
+## Developing IBC Dapp <a name = "developing-ibc-dapp"> </a>
+To build dapp that is compatible with our smart contract based IBC Host you can follow the docs provided in mock ibc dapp samples.
+Sample for cosmwasm contract  [here](./contracts/cosmwasm-vm/cw-mock-ibc-dapp/README.md).
+Sample for icon contract  [here](./contracts/javascore/modules/mockapp/src/main/java/ibc/mockapp/MockApp.java)
+
+## Contributing <a name = "contributing"> </a>
+
+We highly value community contributions and appreciate your interest in improving the IBC Integration for ICON Project. This section outlines the steps you should follow to contribute effectively.
+
+### Bug Reports and Feature Requests
+
+If you encounter a bug or have an idea for a new feature, please follow these steps:
+
+#### Bug Reports
+
+1. Before submitting a bug report, search the [existing issues](https://github.com/icon-project/IBC-Integration/issues) to see if the bug has already been reported. If you find a similar issue, you can add relevant details in the comments.
+
+2. If the bug hasn't been reported yet, [open a new issue](https://github.com/icon-project/IBC-Integration/issues/new/choose) with a clear and descriptive title. Provide as much detail as possible, including:
+   - A clear description of the bug and its impact.
+   - Steps to reproduce the bug.
+   - Your environment details (OS, ICON node version, etc.).
+   - Any relevant error messages or logs.
+
+3. Assign appropriate labels to the issue, such as "bug" and any other relevant tags.
+
+#### Feature Requests
+
+1. Before submitting a feature request, again, check the [existing issues](https://github.com/icon-project/IBC-Integration/issues) to ensure that the feature hasn't already been requested. If you find a similar request, you can add your insights in the comments.
+
+2. To submit a new feature request, [open a new issue](https://github.com/icon-project/IBC-Integration/issues/new/choose) and select the "Feature Request" template. Provide a clear and comprehensive description of the feature you're proposing, including:
+   - The problem the feature aims to solve.
+   - How the feature would work.
+   - Any potential benefits or use cases.
+
+3. Assign appropriate labels to the issue, such as "enhancement" or "feature request," and any other relevant tags.
+
+### Pull Requests
+
+If you're interested in contributing code to the project, follow these steps to submit a pull request (PR):
+
+1. **Fork the Repository:** Click the "Fork" button at the top of the [repository page](https://github.com/icon-project/IBC-Integration) to create your own fork of the project. This will allow you to work on your changes in your own copy of the repository.
+
+2. **Create a Branch:** Create a new branch in your forked repository that will contain your changes. Naming the branch according to the changes you're making is a good practice (e.g., `feature/new-feature` or `bugfix/fix-issue-123`).
+
+3. **Make Changes:** Make your changes in the new branch. Follow the project's coding standards, and write clear and concise commit messages.
+
+4. **Test Your Changes:** If applicable, ensure that your changes work as intended and do not introduce new bugs. If tests exist in the project, make sure to run them.
+
+5. **Open a Pull Request:** When you're ready to submit your changes, [open a new pull request](https://github.com/icon-project/IBC-Integration/compare) from your branch to the `main` branch of the main repository. Provide a detailed description of your changes, including the problem you're solving, your solution, and any relevant context.
+
+6. **Review and Iteration:** Your pull request will be reviewed by the project maintainers. Be prepared to address any feedback or changes requested by the reviewers. Collaboration and constructive discussion are key.
+
+7. **Merge:** Once your pull request passes the review process and meets the project's standards, it will be merged into the `main` branch.
+
+### Code of Conduct
+
+Contributors are expected to adhere to the project's [Code of Conduct](CODE_OF_CONDUCT.md) at all times. This ensures a respectful and inclusive environment for all contributors and participants.
+
+We appreciate your dedication to contributing to the IBC Integration for ICON Project. Your efforts help improve the project's quality and expand its capabilities. Thank you for being a part of our community!
+
+
+## License <a name = "license"> </a>
+
+This project is licensed under the [Apache 2.0](LICENSE).
+
+## Contact <a name = "contact"> </a>
+
+If you need assistance, have questions, or want to collaborate on this project, feel free to contact the team at our [community chat](https://discord.com/invite/7a75Hf3cFm).
+
+---
+
+Thank you for your interest in the IBC Integration for ICON Project. We look forward to your contributions and the positive impact they will bring to the ICON blockchain and its interoperability capabilities!
