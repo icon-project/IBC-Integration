@@ -86,8 +86,6 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 		"ibc":    ibcAddress,
 		"client": clientAddress,
 	}
-	fmt.Println(contracts.ContractAddress)
-
 	_, err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"register_client":{"client_type":"iconclient", "client_address":"`+clientAddress+`"}}`)
 	if err != nil {
 		return nil, err
@@ -144,7 +142,7 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 }
 
 func (c *CosmosLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
-	temp := "iconclient-0"
+	temp := c.GetClientName(0)
 	params := `{"connection_id":"` + connection.ConnectionId + `","counterparty_port_id":"` + connection.CounterPartyPortId + `","counterparty_nid":"` + connection.CounterpartyNid + `","client_id":"` + temp + `","timeout_height":100}`
 	_, err := c.ExecuteContract(context.Background(), c.IBCAddresses["connection"], connection.KeyName, "configure_connection", params)
 
@@ -521,4 +519,20 @@ func (c *CosmosLocalnet) GetNextChannelSequence(ctx context.Context) (int, error
 	err := c.CosmosChain.QueryContract(ctx, c.GetIBCAddress("ibc"), data, &res)
 	count := res["data"].(float64)
 	return int(count), err
+}
+
+// Pause Node
+func (c *CosmosLocalnet) PauseNode(ctx context.Context) error {
+	for _, node := range c.Nodes() {
+		return node.Client.Stop()
+	}
+	return nil
+}
+
+// Pause Node
+func (c *CosmosLocalnet) UnpauseNode(ctx context.Context) error {
+	for _, node := range c.Nodes() {
+		return node.Client.Start()
+	}
+	return nil
 }

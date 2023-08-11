@@ -1,3 +1,9 @@
+// Package testsuite provides a suite of end-to-end tests for the IBC relayer.
+// This file contains the implementation of the E2ETestSuite struct and its methods.
+// The E2ETestSuite struct provides methods for setting up the relayer, creating clients, connections, and channels,
+// and executing packet flows between chains.
+// It also provides methods for retrieving client, connection, and channel states and sequences.
+// All methods in this file use the relayer package to interact with the relayer and the interchaintest package to build and manage interchain networks.
 package testsuite
 
 import (
@@ -14,12 +20,6 @@ import (
 	"github.com/icon-project/ibc-integration/test/e2e/testconfig"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
-	"golang.org/x/sync/errgroup"
-)
-
-var (
-	rlyArgs     = []string{"--log-format", "json", "--debug", "--json"}
-	channelName = "ICON-ARCHWAY"
 )
 
 func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
@@ -134,53 +134,42 @@ func (s *E2ETestSuite) GetNextConnectionSequence(ctx context.Context, chain chai
 
 // Configure
 
-func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, dst chains.Chain, messages ...string) {
-	var wg errgroup.Group
-
-	for _, msg := range messages {
-		msg := fmt.Sprintf(`{"msg": "%s"}`, msg)
-		wg.Go(func() error {
-			_, err := src.ExecuteContract(ctx, dst.GetIBCAddress("ibc"), User, "sendPacket", msg)
-			if err != nil {
-				return fmt.Errorf("failed to execute contract: %s", err)
-			}
-			return nil
-		})
+func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, targetChain chains.Chain, msg string) (string, error) {
+	dst := targetChain.(ibc.Chain).Config().ChainID + "/" + targetChain.GetIBCAddress("dapp")
+	_, reqID, data, err := src.XCall(context.Background(), targetChain, User, dst, []byte(msg), nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute contract: %s", err)
 	}
-
-	if err := wg.Wait(); err != nil {
-		s.Require().NoError(err, "failed to send packets")
+	ctx, err = targetChain.ExecuteCall(ctx, reqID, fmt.Sprint(data))
+	if err != nil {
+		return "", fmt.Errorf("failed to execute contract: %s", err)
 	}
+	return data, nil
 }
 
-func (s *E2ETestSuite) PacketNotSentFromIconAndArchway(ctx context.Context) ibc.RelayerExecResult {
-	var commands []string
-	return s.ExecTxRelay(ctx, commands...)
-}
+func (s *E2ETestSuite) PacketNotSentFromIconAndArchway(ctx context.Context) {}
 
 // Task_
-func (s *E2ETestSuite) ConnectionFailedToEstablish(ctx context.Context) ibc.RelayerExecResult {
-	var commands []string
-	return s.ExecTxRelay(ctx, commands...)
+func (s *E2ETestSuite) ConnectionFailedToEstablish(ctx context.Context) {}
+
+func (s *E2ETestSuite) InvalidPacket(ctx context.Context) {}
+
+func (s *E2ETestSuite) NotResponding(ctx context.Context) {}
+
+// Crash Node
+func (s *E2ETestSuite) CrashNode(ctx context.Context, chain chains.Chain) error {
+	return chain.PauseNode(ctx)
 }
 
-func (s *E2ETestSuite) InvalidPacket(ctx context.Context) ibc.RelayerExecResult {
-	var commands []string
-	return s.ExecTxRelay(ctx, commands...)
-}
-
-func (s *E2ETestSuite) NotResponding(ctx context.Context) ibc.RelayerExecResult {
-	var commands []string
-	return s.ExecTxRelay(ctx, commands...)
-}
-
-func (s *E2ETestSuite) CrashAndRecover(ctx context.Context) (time.Duration, error) {
-	startTime := time.Now()
+func (s *E2ETestSuite) Crash(ctx context.Context) (time.Time, error) {
 	eRep := s.GetRelayerExecReporter()
 	s.logger.Info("crashing relayer")
-	if err := s.relayer.StopRelayer(ctx, eRep); err != nil {
-		return 0, err
-	}
+	return time.Now(), s.relayer.StopRelayer(ctx, eRep)
+}
+
+// Recover recover relay
+func (s *E2ETestSuite) Recover(ctx context.Context, crashedAt time.Time) (time.Duration, error) {
+	eRep := s.GetRelayerExecReporter()
 	s.logger.Info("waiting for relayer to restart")
 	if err := s.relayer.StartRelayer(ctx, eRep); err != nil {
 		return 0, err
@@ -188,28 +177,26 @@ func (s *E2ETestSuite) CrashAndRecover(ctx context.Context) (time.Duration, erro
 	s.logger.Info("relayer restarted")
 	// wait for relayer to start.
 	chainA, chainB := s.GetChains()
-	s.Require().NoError(test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)), "failed to wait for blocks")
-	return time.Since(startTime), nil
+	return time.Since(crashedAt), test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain))
 }
 
-func (s *E2ETestSuite) ClaimFee(ctx context.Context) ibc.RelayerExecResult {
-	var commands []string
-	return s.ExecTxRelay(ctx, commands...)
-}
-
-func (s *E2ETestSuite) ExecRelay(ctx context.Context, args []string) ibc.RelayerExecResult {
-	reporter := s.GetRelayerExecReporter()
-	rly := append([]string{"rly"}, args...)
-	return s.relayer.Exec(ctx, reporter, append(rly, rlyArgs...), nil)
-}
-
-func (s *E2ETestSuite) ExecTxRelay(ctx context.Context, args ...string) ibc.RelayerExecResult {
-	tx := []string{"tx", channelName}
-	return s.ExecRelay(ctx, append(tx, args...))
-}
-
-// ExecQueryRelay exec query relay
-func (s *E2ETestSuite) ExecQueryRelay(ctx context.Context, args ...string) ibc.RelayerExecResult {
-	query := []string{"query", channelName}
-	return s.ExecRelay(ctx, append(query, args...))
+// Ping checks if the relayer is running
+func (s *E2ETestSuite) Ping(ctx context.Context) (string, error) {
+	chainA, chainB := s.GetChains()
+	res, err := s.PacketFlow(ctx, chainA, chainB, "ping")
+	if err != nil {
+		return "", err
+	}
+	result, err := s.ConvertToPlainString(res)
+	if err != nil {
+		return "", err
+	}
+	res, err = s.PacketFlow(ctx, chainA, chainB, result)
+	if err != nil {
+		return "", err
+	}
+	if res != "ping" {
+		return "", fmt.Errorf("unexpected response: %s", res)
+	}
+	return "pong", nil
 }

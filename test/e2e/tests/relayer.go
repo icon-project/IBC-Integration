@@ -66,9 +66,29 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
 		r.Require().Equal(1, seq)
 	})
 
-	r.T.Run("test crash and recover", func(t *testing.T) {
-		duration, err := r.CrashAndRecover(ctx)
+	r.T.Run("test packet flow", func(t *testing.T) {
+		chainA, chainB := r.GetChains()
+		r.PacketFlow(ctx, chainA, chainB, "test")
+	})
+
+	r.T.Run("crash nodes", func(t *testing.T) {
+		chainA, chainB := r.GetChains()
+		r.Require().NoError(r.CrashNode(ctx, chainA))
+		r.Require().NoError(r.CrashNode(ctx, chainB))
+	})
+
+	r.T.Run("test crash and recover relay", func(t *testing.T) {
+		crashedAt, err := r.Crash(ctx)
 		r.Require().NoError(err)
-		t.Logf("recover took: %v", duration)
+		t.Logf("crash took: %v", crashedAt)
+		pong, err := r.Ping(context.Background())
+		r.Require().Error(err)
+		r.Require().NotEqual("pong", pong)
+		staredAt, err := r.Recover(ctx, crashedAt)
+		r.Require().NoError(err)
+		t.Logf("recover took: %v", staredAt)
+		pong, err = r.Ping(context.Background())
+		r.Require().NoError(err)
+		r.Require().Equal("pong", pong)
 	})
 }

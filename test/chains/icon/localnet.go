@@ -461,7 +461,10 @@ func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyN
 		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `", "_rollback":"` + hex.EncodeToString(rollback) + `"}`
 	}
 
-	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
+	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
+	if err != nil {
+		return "", "", "", err
+	}
 	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
 	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	return sn, reqId, destData, err
@@ -770,4 +773,14 @@ func (c *IconLocalnet) GetNextChannelSequence(ctx context.Context) (int, error) 
 	n := new(big.Int)
 	n.SetString(res, 0)
 	return int(n.Int64()), nil
+}
+
+// PauseNode
+func (c *IconLocalnet) PauseNode(ctx context.Context) error {
+	return c.getFullNode().DockerClient.ContainerPause(ctx, c.getFullNode().ContainerID)
+}
+
+// PauseNode
+func (c *IconLocalnet) UnpauseNode(ctx context.Context) error {
+	return c.getFullNode().DockerClient.ContainerUnpause(ctx, c.getFullNode().ContainerID)
 }

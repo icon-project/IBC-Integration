@@ -3,6 +3,7 @@ package testsuite
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains/cosmos"
@@ -334,4 +335,29 @@ func buildChain(log *zap.Logger, testName string, cfg testconfig.Chain) (chains.
 func (s *E2ETestSuite) GetRelayerExecReporter() *testreporter.RelayerExecReporter {
 	rep := testreporter.NewNopReporter()
 	return rep.RelayerExecReporter(s.T())
+}
+
+func (s *E2ETestSuite) ConvertToPlainString(input string) (string, error) {
+	var plainString []byte
+	if strings.HasPrefix(input, "[") && strings.HasSuffix(input, "]") {
+		input = input[1 : len(input)-1]
+		for _, part := range strings.Split(input, ", ") {
+			value, err := strconv.Atoi(part)
+			if err != nil {
+				return "", err
+			}
+			plainString = append(plainString, byte(value))
+		}
+		return string(plainString), nil
+	} else if strings.HasPrefix(input, "0x") {
+		input = input[2:]
+		for i := 0; i < len(input); i += 2 {
+			value, err := strconv.ParseUint(input[i:i+2], 16, 8)
+			if err != nil {
+				return "", err
+			}
+			plainString = append(plainString, byte(value))
+		}
+	}
+	return "", fmt.Errorf("invalid input length")
 }

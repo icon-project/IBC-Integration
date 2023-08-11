@@ -50,6 +50,8 @@ type Chain interface {
 	GetNextConnectionSequence(context.Context) (int, error)
 	GetChannel(context.Context, int, string) (*chantypes.Channel, error)
 	GetNextChannelSequence(context.Context) (int, error)
+	PauseNode(context.Context) error
+	UnpauseNode(context.Context) error
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {
