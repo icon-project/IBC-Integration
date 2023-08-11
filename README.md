@@ -112,7 +112,13 @@ To build the java contracts run following command.
 ```
 make optimize-jar
 ```
-To build all contracts using docker we can run following commands.
+To build all contracts using docker follow steps below
+Step1: Update git submodules:
+```
+git submodule init
+git submodule update --remote
+```
+Step2: Run following commands to build the builder image and compile contracts.
 ```
 make build-builder-img
 make optimize-build
@@ -197,7 +203,7 @@ We appreciate your dedication to contributing to the IBC Integration for ICON Pr
 
 ## License <a name = "license"> </a>
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Apache 2.0](LICENSE).
 
 ## Contact <a name = "contact"> </a>
 
