@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/icon-project/ibc-integration/test/testsuite"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/stretchr/testify/assert"
 )
