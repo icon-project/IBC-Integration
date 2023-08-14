@@ -6,3 +6,6 @@ scripts:
 
 test:
   - 'test/**'
+
+documentation:
+- '**/*.md'
