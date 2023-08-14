@@ -1,5 +1,8 @@
 [workspace]
 members = [
+    "contracts/cosmwasm-vm/cw-mock-ibc-connection",
+    "contracts/cosmwasm-vm/cw-mock-ibc-core",
+    "contracts/cosmwasm-vm/cw-common",
     "contracts/cosmwasm-vm/*",
     "libraries/rust/common",
 ]
