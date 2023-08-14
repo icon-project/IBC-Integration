@@ -33,7 +33,7 @@ type Chain interface {
 	SetupIBC(ctx context.Context, keyName string) (context.Context, error)
 	SetupXCall(ctx context.Context, portId, keyName string) error
 	ConfigureBaseConnection(ctx context.Context, connection XCallConnection) (context.Context, error)
-	XCall(ctx context.Context, targetChain Chain, keyName, _to string, data, rollback []byte) (string, string, string, error)
+	XCall(ctx context.Context, targetChain Chain, keyName, _to string, data, rollback []byte) (*XCallResponse, error)
 	EOAXCall(ctx context.Context, targetChain Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error)
 	ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error)
 	ExecuteRollback(ctx context.Context, sn string) (context.Context, error)
@@ -52,6 +52,12 @@ type Chain interface {
 	GetNextChannelSequence(context.Context) (int, error)
 	PauseNode(context.Context) error
 	UnpauseNode(context.Context) error
+}
+
+type XCallResponse struct {
+	SerialNo  string
+	RequestID string
+	Data      string
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {

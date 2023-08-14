@@ -2,11 +2,13 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
-	"golang.org/x/sync/errgroup"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
 type RelayerTestSuite struct {
@@ -14,9 +16,8 @@ type RelayerTestSuite struct {
 	T *testing.T
 }
 
-func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
-	chainA, chainB := r.GetChains()
-
+func (r *RelayerTestSuite) TestRelayer() {
+	ctx := context.TODO()
 	r.T.Run("test client state", func(t *testing.T) {
 		r.Require().NoError(r.CreateClient(ctx))
 		chainA, chainB := r.GetChains()
@@ -53,8 +54,8 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
 		r.Require().NoError(err)
 		r.Require().Equal(1, seq)
 		portID := "transfer"
-		r.SetupXCall(ctx, portID)
-		r.DeployMockApp(ctx, portID)
+		r.Require().NoError(r.SetupXCall(ctx, portID))
+		r.Require().NoError(r.DeployMockApp(ctx, portID))
 		res, err := r.GetChannel(ctx, chainA, 0, portID)
 		r.Require().NoError(err)
 		t.Log(res)
@@ -68,84 +69,66 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context) {
 		seq, err = r.GetChannelSequence(ctx, chainB)
 		r.Require().NoError(err)
 		r.Require().Equal(1, seq)
+		r.Require().NoError(r.Ping(context.Background()))
 	})
 
 	r.T.Run("test single relay packet flow", func(t *testing.T) {
-		pong, err := r.Ping(context.Background())
-		r.Require().NoError(err)
-		r.Require().Equal("pong", pong)
+		r.Require().NoError(r.Ping(context.Background()))
 	})
 
-	r.T.Run("crash nodes", func(t *testing.T) {
-		// // crash chainA
-		// r.Require().NoError(r.CrashNode(ctx, chainA))
-		// // send packet from chainB to chainA crashed node and check if it is received
-		// ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		// defer cancel()
-		// res, err := r.PacketFlow(ctx, chainB, chainA, "crash-chainA")
-		// r.Require().Errorf(err, "crashed node should not receive packet")
-		// // recover crashed node
-		// r.Require().NoError(r.ResumeNode(ctx, chainA))
-		// res, err := r.Ping(context.Background())
-		// r.Require().NoError(err)
-		// r.Require().Equal("pong", res)
+	r.T.Run("Crash chainA and relay", func(t *testing.T) {
+		chainA, chainB := r.GetChains()
+		r.Require().NoError(r.CrashTest(context.Background(), chainA, chainB))
+		r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA))
 	})
+}
 
-	r.T.Run("test crash and recover relay", func(t *testing.T) {
-		var eg errgroup.Group
+func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.Chain) error {
+	// crash Chain
+	if err := r.CrashNode(ctx, chainB); err != nil {
+		return err
+	}
 
-		eg.Go(func() error {
-			return r.CrashNode(ctx, chainA)
-		})
-		eg.Go(func() error {
-			return r.CrashNode(ctx, chainB)
-		})
-		r.Require().NoError(eg.Wait())
+	// send packet from chainA to chainB crashed node and check if it is received
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var msg string = chainA.(ibc.Chain).Config().ChainID
+	res, err := r.PacketFlow(ctx, chainA, chainB, msg)
+	if err != nil {
+		return err
+	}
 
-		// send packet from chainA to chainB crashed node and check if it is received
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		commitmenIdA, chainAdata, err := r.PacketFlow(ctx, chainA, chainB, "crash-chainA")
-		r.Require().NoError(err)
+	// crash relayer
+	crashedAt, err := r.Crash(ctx)
+	if err != nil {
+		return err
+	}
+	r.T.Logf("crash took: %v", crashedAt)
 
-		// send packet from chainB to chainA crashed node and check if it is received
-		commitmenIdB, chainBdata, err := r.PacketFlow(ctx, chainB, chainA, "crash-chainA")
-		r.Require().NoError(err)
+	// recover chainB
+	if err := r.ResumeNode(ctx, chainB); err != nil {
+		return err
+	}
 
-		// crash relayer
-		crashedAt, err := r.Crash(ctx)
-		r.Require().NoError(err)
-		t.Logf("crash took: %v", crashedAt)
+	// recover relayer now
+	recoverdDurarion, err := r.Recover(ctx, crashedAt)
+	if err != nil {
+		return err
+	}
+	r.T.Logf("probably recovered, took: %v", recoverdDurarion)
 
-		// recover chainA
-		eg.Go(func() error {
-			return r.ResumeNode(ctx, chainA)
-		})
-		// recover chainB
-		eg.Go(func() error {
-			return r.ResumeNode(ctx, chainB)
-		})
-		r.Require().NoError(eg.Wait())
+	// check if packet was received in a recovered state
+	if err := r.QueryPacketCommitment(ctx, chainB, res.RequestID, res.Data); err != nil {
+		return err
+	}
+	if msg != res.Data {
+		return fmt.Errorf("expected packet data to be %s but got %s", msg, res.Data)
+	}
 
-		// recover relayer now
-		recoverdDurarion, err := r.Recover(ctx, crashedAt)
-		r.Require().NoError(err)
-		t.Logf("probably recovered, took: %v", recoverdDurarion)
-
-		// check if packet was received in a recovered state
-		chainAres, err := r.QueryPacketCommitment(ctx, chainB, commitmenIdA, chainAdata)
-		r.Require().NoError(err)
-		r.Require().Equal("crash-chainA", chainAres)
-
-		// check if packet was received in a recovered state
-		chainBres, err := r.QueryPacketCommitment(ctx, chainA, commitmenIdB, chainBdata)
-		r.Require().NoError(err)
-		r.Require().Equal("crash-chainB", chainBres)
-
-		// check if relay is working with ping pong to cross chain
-		pong, err := r.Ping(context.Background())
-		r.Require().Error(err)
-		r.Require().NotEqual("pong", pong)
-		t.Log("relay recovered")
-	})
+	// check if relay is working as expected with ping pong to cross chain
+	if err := r.Ping(context.Background()); err != nil {
+		return err
+	}
+	r.T.Log("relay recovered successfully")
+	return nil
 }

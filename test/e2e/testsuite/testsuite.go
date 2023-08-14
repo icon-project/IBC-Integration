@@ -33,17 +33,27 @@ const (
 type E2ETestSuite struct {
 	suite.Suite
 	relayer ibc.Relayer
+	cfg     *testconfig.TestConfig
 	//grpcClients    map[string]GRPCClients
 	paths          map[string]path
 	relayers       relayer.RelayerMap
 	logger         *zap.Logger
 	DockerClient   *dockerclient.Client
 	network        string
-	startRelayerFn func(relayer ibc.Relayer)
+	startRelayerFn func(relayer ibc.Relayer) error
 
 	// pathNameIndex is the latest index to be used for generating paths
 	pathNameIndex int64
 	pathNames     []string
+}
+
+func (s *E2ETestSuite) SetCfg() error {
+	tc, err := testconfig.New()
+	if err != nil {
+		return err
+	}
+	s.cfg = tc
+	return nil
 }
 
 // path is a pairing of two chains which will be used in a test.
@@ -59,37 +69,39 @@ func newPath(chainA, chainB chains.Chain) path {
 	}
 }
 
-func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) {
+func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
 	chainA, chainB := s.GetChains()
-	var err error
-	s.Require().NoError(chainA.SetupXCall(ctx, portId, Owner))
-	s.Require().NoError(chainB.SetupXCall(ctx, portId, Owner))
+	if err := chainA.SetupXCall(ctx, portId, Owner); err != nil {
+		return err
+	}
+	if err := chainB.SetupXCall(ctx, portId, Owner); err != nil {
+		return err
+	}
 
-	ctx, err = chainA.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
+	if _, err := chainA.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
 		KeyName:            Owner,
 		CounterpartyNid:    chainB.(ibc.Chain).Config().ChainID,
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
 		CounterPartyPortId: portId,
-		TimeoutHeight:      "100",
-	})
-	s.Require().NoError(err)
-	ctx, err = chainB.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
+	}); err != nil {
+		return err
+	}
+	if _, err := chainB.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
 		KeyName:            Owner,
 		CounterpartyNid:    chainA.(ibc.Chain).Config().ChainID,
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
 		CounterPartyPortId: portId,
-		TimeoutHeight:      "100",
-	})
-	s.Require().NoError(err)
-	err = s.relayer.CreateChannel(ctx, s.GetRelayerExecReporter(), s.GetPathName(s.pathNameIndex-1), ibc.CreateChannelOptions{
+	}); err != nil {
+		return err
+	}
+	return s.relayer.CreateChannel(ctx, s.GetRelayerExecReporter(), s.GetPathName(s.pathNameIndex-1), ibc.CreateChannelOptions{
 		SourcePortName: portId,
 		DestPortName:   portId,
 		Order:          ibc.Unordered,
 		Version:        "ics20-1",
 	})
-	s.Require().NoError(err)
 }
 
 // SetupChainsAndRelayer create two chains, a relayer, establishes a connection and creates a channel
@@ -97,9 +109,8 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) {
 // with E2ETestSuite.StartRelayer if needed.
 // This should be called at the start of every test, unless fine grained control is required.
 func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ...func(*ibc.CreateChannelOptions)) ibc.Relayer {
-	config := testconfig.New()
 	chainA, chainB := s.GetChains()
-	r := relayer.New(s.T(), config.RelayerConfig, s.logger, s.DockerClient, s.network)
+	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
 
 	pathName := s.generatePathName()
 
@@ -133,8 +144,7 @@ func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ..
 
 	s.Require().NoError(chainA.BuildWallets(ctx, User))
 	s.Require().NoError(chainB.BuildWallets(ctx, User))
-	var err error
-	ctx, err = chainA.SetupIBC(ctx, Owner)
+	ctx, err := chainA.SetupIBC(ctx, Owner)
 	if err != nil {
 		panic(err)
 	}
@@ -154,9 +164,10 @@ func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ..
 
 	s.Require().NoError(r.CreateConnections(ctx, eRep, pathName))
 
-	s.startRelayerFn = func(relayer ibc.Relayer) {
-		err := relayer.StartRelayer(ctx, eRep, pathName)
-		s.Require().NoError(err, fmt.Sprintf("failed to start relayer: %s", err))
+	s.startRelayerFn = func(relayer ibc.Relayer) error {
+		if err := relayer.StartRelayer(ctx, eRep, pathName); err != nil {
+			return fmt.Errorf("failed to start relayer: %s", err)
+		}
 		s.T().Cleanup(func() {
 			if !s.T().Failed() {
 				if err := relayer.StopRelayer(ctx, eRep); err != nil {
@@ -164,35 +175,38 @@ func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ..
 				}
 			}
 		})
-		// wait for relayer to start.
-		s.Require().NoError(test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)), "failed to wait for blocks")
+		if err := test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)); err != nil {
+			return fmt.Errorf("failed to wait for blocks: %s", err)
+		}
+		return nil
 	}
-
 	s.relayer = r
 	return r
 }
 
-func (s *E2ETestSuite) DeployMockApp(ctx context.Context, port string) {
+func (s *E2ETestSuite) DeployMockApp(ctx context.Context, port string) error {
 	chainA, chainB := s.GetChains()
-	var err error
-	err = chainA.DeployXCallMockApp(ctx, chains.XCallConnection{
+	if err := chainA.DeployXCallMockApp(ctx, chains.XCallConnection{
 		KeyName:                Owner,
 		CounterpartyNid:        chainB.(ibc.Chain).Config().ChainID,
 		ConnectionId:           "connection-0", //TODO
 		PortId:                 port,
 		CounterPartyPortId:     port,
 		CounterPartyConnection: chainB.GetIBCAddress("connection"),
-	})
-	s.Require().NoError(err)
-	err = chainB.DeployXCallMockApp(ctx, chains.XCallConnection{
+	}); err != nil {
+		return err
+	}
+	if err := chainB.DeployXCallMockApp(ctx, chains.XCallConnection{
 		KeyName:                Owner,
 		CounterpartyNid:        chainA.(ibc.Chain).Config().ChainID,
 		ConnectionId:           "connection-0", //TODO
 		PortId:                 port,
 		CounterPartyPortId:     port,
 		CounterPartyConnection: chainA.GetIBCAddress("connection"),
-	})
-	s.Require().NoError(err)
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // generatePathName generates the path name using the test suites name
@@ -245,9 +259,10 @@ func (s *E2ETestSuite) GetChains(chainOpts ...testconfig.ChainOptionConfiguratio
 		return path.chainA, path.chainB
 	}
 
-	chainOptions := testconfig.DefaultChainOptions()
+	chainOptions, err := testconfig.DefaultChainOptions()
+	s.Require().NoError(err)
 	for _, opt := range chainOpts {
-		opt(&chainOptions)
+		opt(chainOptions)
 	}
 
 	chainA, chainB := s.createChains(chainOptions)
@@ -272,12 +287,11 @@ func (s *E2ETestSuite) GetRelayerWallets(relayer ibc.Relayer) (ibc.Wallet, ibc.W
 }
 
 // StartRelayer starts the given relayer.
-func (s *E2ETestSuite) StartRelayer(relayer ibc.Relayer) {
+func (s *E2ETestSuite) StartRelayer(relayer ibc.Relayer) error {
 	if s.startRelayerFn == nil {
-		panic("cannot start relayer before it is created!")
+		return fmt.Errorf("cannot start relayer before it is created: %v", relayer)
 	}
-
-	s.startRelayerFn(relayer)
+	return s.startRelayerFn(relayer)
 }
 
 // StopRelayer stops the given relayer.
@@ -288,7 +302,7 @@ func (s *E2ETestSuite) StopRelayer(ctx context.Context, relayer ibc.Relayer) {
 
 // createChains creates two separate chains in docker containers.
 // test and can be retrieved with GetChains.
-func (s *E2ETestSuite) createChains(chainOptions testconfig.ChainOptions) (chains.Chain, chains.Chain) {
+func (s *E2ETestSuite) createChains(chainOptions *testconfig.ChainOptions) (chains.Chain, chains.Chain) {
 	client, network := interchaintest.DockerSetup(s.T())
 	t := s.T()
 
@@ -298,9 +312,9 @@ func (s *E2ETestSuite) createChains(chainOptions testconfig.ChainOptions) (chain
 
 	logger := zaptest.NewLogger(t)
 
-	chainA, _ := buildChain(logger, t.Name(), *chainOptions.ChainAConfig)
+	chainA, _ := buildChain(logger, t.Name(), chainOptions.ChainAConfig)
 
-	chainB, _ := buildChain(logger, t.Name(), *chainOptions.ChainBConfig)
+	chainB, _ := buildChain(logger, t.Name(), chainOptions.ChainBConfig)
 
 	// this is intentionally called after the interchaintest.DockerSetup function. The above function registers a
 	// cleanup task which deletes all containers. By registering a cleanup function afterwards, it is executed first
@@ -312,7 +326,7 @@ func (s *E2ETestSuite) createChains(chainOptions testconfig.ChainOptions) (chain
 	return chainA, chainB
 }
 
-func buildChain(log *zap.Logger, testName string, cfg testconfig.Chain) (chains.Chain, error) {
+func buildChain(log *zap.Logger, testName string, cfg *testconfig.Chain) (chains.Chain, error) {
 	var (
 		chain chains.Chain
 		err   error

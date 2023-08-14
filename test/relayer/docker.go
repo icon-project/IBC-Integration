@@ -67,9 +67,8 @@ func NewDockerRelayer(ctx context.Context, log *zap.Logger, testName string, cli
 		testName: testName,
 
 		wallets: map[string]ibc.Wallet{},
+		homeDir: defaultRlyHomeDirectory,
 	}
-
-	r.homeDir = defaultRlyHomeDirectory
 
 	for _, opt := range options {
 		switch o := opt.(type) {

@@ -13,19 +13,18 @@ import (
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"golang.org/x/sync/errgroup"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/e2e/relayer"
-	"github.com/icon-project/ibc-integration/test/e2e/testconfig"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 )
 
 func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
-	config := testconfig.New()
 	chainA, chainB := s.GetChains()
-	r := relayer.New(s.T(), config.RelayerConfig, s.logger, s.DockerClient, s.network)
+	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
 	pathName := s.generatePathName()
 	ic := interchaintest.NewInterchain().
 		AddChain(chainA.(ibc.Chain)).
@@ -49,16 +48,22 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 	if err := ic.BuildChains(ctx, eRep, buildOptions); err != nil {
 		return nil, err
 	}
-	if err := chainA.BuildWallets(ctx, Owner); err != nil {
+	var eg errgroup.Group
+
+	var buildWallet = func(ctx context.Context, user string, chain chains.Chain) func() error {
+		return func() error {
+			return chain.BuildWallets(ctx, Owner)
+		}
+	}
+
+	eg.Go(buildWallet(ctx, Owner, chainA))
+	eg.Go(buildWallet(ctx, Owner, chainB))
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
-	if err := chainB.BuildWallets(ctx, Owner); err != nil {
-		return nil, err
-	}
-	if err := chainA.BuildWallets(ctx, User); err != nil {
-		return nil, err
-	}
-	if err := chainB.BuildWallets(ctx, User); err != nil {
+	eg.Go(buildWallet(ctx, User, chainA))
+	eg.Go(buildWallet(ctx, User, chainB))
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
 	var err error
@@ -73,9 +78,10 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 	if err := ic.BuildRelayer(ctx, eRep, buildOptions); err != nil {
 		return nil, err
 	}
-	s.startRelayerFn = func(relayer ibc.Relayer) {
-		err := relayer.StartRelayer(ctx, eRep, pathName)
-		s.Require().NoError(err, fmt.Sprintf("failed to start relayer: %s", err))
+	s.startRelayerFn = func(relayer ibc.Relayer) error {
+		if err := relayer.StartRelayer(ctx, eRep, pathName); err != nil {
+			return fmt.Errorf("failed to start relayer: %s", err)
+		}
 		s.T().Cleanup(func() {
 			if !s.T().Failed() {
 				if err := relayer.StopRelayer(ctx, eRep); err != nil {
@@ -83,7 +89,10 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 				}
 			}
 		})
-		s.Require().NoError(test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)), "failed to wait for blocks")
+		if err := test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)); err != nil {
+			return fmt.Errorf("failed to wait for blocks: %v", err)
+		}
+		return nil
 	}
 	s.relayer = r
 	return r, r.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName)
@@ -134,26 +143,21 @@ func (s *E2ETestSuite) GetNextConnectionSequence(ctx context.Context, chain chai
 
 // Configure
 
-func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, target chains.Chain, msg string) (string, string, error) {
+func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, target chains.Chain, msg string) (*chains.XCallResponse, error) {
 	dst := target.(ibc.Chain).Config().ChainID + "/" + target.GetIBCAddress("dapp")
-	_, reqID, data, err := src.XCall(ctx, target, User, dst, []byte(msg), nil)
+	res, err := src.XCall(ctx, target, User, dst, []byte(msg), nil)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to execute contract: %s", err)
+		return nil, fmt.Errorf("failed to execute contract: %s", err)
 	}
-	return reqID, data, nil
+	return res, nil
 }
 
-func (s *E2ETestSuite) QueryPacketCommitment(ctx context.Context, targetChain chains.Chain, reqID, data string) (string, error) {
+func (s *E2ETestSuite) QueryPacketCommitment(ctx context.Context, targetChain chains.Chain, reqID, data string) error {
 	_, err := targetChain.ExecuteCall(ctx, reqID, data)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute contract: %s", err)
-	}
-	return data, nil
+	return err
 }
 
 func (s *E2ETestSuite) ConnectionFailedToEstablish(ctx context.Context) {}
-
-func (s *E2ETestSuite) InvalidPacket(ctx context.Context) {}
 
 func (s *E2ETestSuite) NotResponding(ctx context.Context) {}
 
@@ -187,29 +191,36 @@ func (s *E2ETestSuite) Recover(ctx context.Context, crashedAt time.Time) (time.D
 }
 
 // Ping checks if the relayer is running
-func (s *E2ETestSuite) Ping(ctx context.Context) (string, error) {
+func (s *E2ETestSuite) Ping(ctx context.Context) error {
 	chainA, chainB := s.GetChains()
-	reqID, data, err := s.PacketFlow(ctx, chainA, chainB, "ping")
+	var msg = "ping"
+	res, err := s.PacketFlow(ctx, chainA, chainB, msg)
 	if err != nil {
-		return "", err
+		return err
 	}
-	_, err = s.QueryPacketCommitment(ctx, chainB, reqID, data)
-	res, err := s.ConvertToPlainString(data)
+	if err := s.QueryPacketCommitment(ctx, chainB, res.RequestID, res.Data); err != nil {
+		return err
+	}
+	data, err := s.ConvertToPlainString(res.Data)
 	if err != nil {
-		return "", err
+		return err
 	}
-
-	reqID, data, err = s.PacketFlow(ctx, chainB, chainA, res)
+	if data != msg {
+		return fmt.Errorf("failed to ping from %s to %s", chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID)
+	}
+	res, err = s.PacketFlow(ctx, chainB, chainA, data)
 	if err != nil {
-		return "", err
+		return err
 	}
-	_, err = s.QueryPacketCommitment(ctx, chainB, reqID, data)
-	res, err = s.ConvertToPlainString(data)
+	if err := s.QueryPacketCommitment(ctx, chainA, res.RequestID, res.Data); err != nil {
+		return err
+	}
+	data, err = s.ConvertToPlainString(res.Data)
 	if err != nil {
-		return "", err
+		return err
 	}
-	if res != "ping" {
-		return "", fmt.Errorf("unexpected response: %s", res)
+	if data != msg {
+		return fmt.Errorf("failed to ping from %s to %s", chainB.(ibc.Chain).Config().ChainID, chainA.(ibc.Chain).Config().ChainID)
 	}
-	return "pong", nil
+	return nil
 }

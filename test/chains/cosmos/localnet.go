@@ -13,6 +13,7 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/cosmos/gogoproto/proto"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	"golang.org/x/sync/errgroup"
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -105,7 +106,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), chains.ContractKey{
 		ContractAddress: contracts.ContractAddress,
 		ContractOwner:   contracts.ContractOwner,
-	}), err
+	}), nil
 }
 
 func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName string) error {
@@ -176,20 +177,23 @@ func (c *CosmosLocalnet) DeployXCallMockApp(ctx context.Context, connection chai
 	return nil
 }
 
-func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, string, error) {
+func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (*chains.XCallResponse, error) {
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	rollbackArray := strings.Join(strings.Fields(fmt.Sprintf("%d", rollback)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s, "rollback":%s}`, _to, dataArray, rollbackArray)
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["dapp"], chains.FaucetAccountKeyName, "send_call_message", params)
 	if err != nil {
-		return "", "", "", err
+		return nil, err
 	}
 
 	tx := ctx.Value("txResult").(*TxResul)
 	sn := c.findSn(tx)
 	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
-	return sn, reqId, destData, err
+	if err != nil {
+		return nil, err
+	}
+	return &chains.XCallResponse{SerialNo: sn, RequestID: reqId, Data: destData}, err
 }
 
 func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error) {
@@ -338,8 +342,10 @@ func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, k
 		return nil, err
 	}
 	tx, err := c.getTransaction(txHash)
-	ctx = context.WithValue(ctx, "txResult", tx)
-	return ctx, err
+	if err != nil {
+		return nil, err
+	}
+	return context.WithValue(ctx, "txResult", tx), nil
 }
 
 func (c *CosmosLocalnet) getTransaction(txHash string) (*TxResul, error) {
@@ -452,7 +458,6 @@ func (c *CosmosLocalnet) GetConnectionState(ctx context.Context, connectionPrefi
 	data := res["data"].(string)
 
 	hexDecoded, err := hex.DecodeString(data)
-
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +482,7 @@ func (c *CosmosLocalnet) GetNextConnectionSequence(ctx context.Context) (int, er
 	return int(count), err
 }
 
-// GetConnectionState returns the next sequence number for the client
+// GetChannel returns the next sequence number for the client
 func (c *CosmosLocalnet) GetChannel(ctx context.Context, connectionPrefix int, portID string) (*chantypes.Channel, error) {
 	var query = map[string]interface{}{
 		"get_channel": map[string]interface{}{
@@ -501,14 +506,10 @@ func (c *CosmosLocalnet) GetChannel(ctx context.Context, connectionPrefix int, p
 
 	var channel = new(chantypes.Channel)
 
-	if err := proto.Unmarshal(hexDecoded, channel); err != nil {
-		return nil, err
-	}
-
-	return channel, nil
+	return channel, proto.Unmarshal(hexDecoded, channel)
 }
 
-// GetNextConnectionSequence returns the next sequence number for the client
+// GetNextChannelSequence returns the next sequence number for the client
 func (c *CosmosLocalnet) GetNextChannelSequence(ctx context.Context) (int, error) {
 	var data = map[string]interface{}{
 		"get_next_channel_sequence": map[string]interface{}{},
@@ -519,18 +520,28 @@ func (c *CosmosLocalnet) GetNextChannelSequence(ctx context.Context) (int, error
 	return int(count), err
 }
 
-// Pause Node
+// PauseNode halts a node
 func (c *CosmosLocalnet) PauseNode(ctx context.Context) error {
+	var eg errgroup.Group
 	for _, node := range c.Nodes() {
-		return node.Client.Stop()
+		eg.Go(func(node *cosmos.ChainNode) func() error {
+			return func() error {
+				return node.Client.Stop()
+			}
+		}(node))
 	}
-	return nil
+	return eg.Wait()
 }
 
-// Pause Node
+// UnpauseNode restarts a node
 func (c *CosmosLocalnet) UnpauseNode(ctx context.Context) error {
+	var eg errgroup.Group
 	for _, node := range c.Nodes() {
-		return node.Client.Start()
+		eg.Go(func(node *cosmos.ChainNode) func() error {
+			return func() error {
+				return node.Client.Start()
+			}
+		}(node))
 	}
-	return nil
+	return eg.Wait()
 }

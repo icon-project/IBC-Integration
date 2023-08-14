@@ -20,10 +20,10 @@ type E2ETest struct {
 func (s *E2ETest) TestE2E_all() {
 	t := s.T()
 	ctx := context.TODO()
-
+	s.Require().NoError(s.SetCfg())
 	// t.Run("test xcall", func(t *testing.T) {
-	//	rly := s.SetupChainsAndRelayer(ctx)
-	//	s.StartRelayer(rly)
+	// 	rly := s.SetupChainsAndRelayer(ctx)
+	// 	s.Require().NoError(s.StartRelayer(rly))
 	// 	xcall := tests.XCallTestSuite{
 	// 		E2ETestSuite: &s.E2ETestSuite,
 	// 		T:            t,
@@ -34,11 +34,11 @@ func (s *E2ETest) TestE2E_all() {
 	t.Run("test relayer", func(t *testing.T) {
 		rly, err := s.SetupRelayer(ctx)
 		s.Require().NoError(err)
-		s.StartRelayer(rly)
+		s.Require().NoError(s.StartRelayer(rly))
 		relayer := tests.RelayerTestSuite{
 			E2ETestSuite: &s.E2ETestSuite,
 			T:            t,
 		}
-		relayer.TestRelayer(ctx)
+		relayer.TestRelayer()
 	})
 }

@@ -364,8 +364,8 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	params = `{"networkTypeName":"eth", "name":"testNetwork", "owner":"` + ibcAddress + `"}`
 	ctx, _ = c.ExecuteContract(ctx, "cx0000000000000000000000000000000000000001", "gochain", "openBTPNetwork", params)
 	//height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
-	id := ctx.Value("txResult").(icontypes.TransactionResult).EventLogs[1].Indexed[2]
-	typeId := ctx.Value("txResult").(icontypes.TransactionResult).EventLogs[1].Indexed[1]
+	id := ctx.Value("txResult").(*icontypes.TransactionResult).EventLogs[1].Indexed[2]
+	typeId := ctx.Value("txResult").(*icontypes.TransactionResult).EventLogs[1].Indexed[1]
 	btpNetworkId, _ := icontypes.HexInt(id).Int()
 	btpNetworkTypeId, _ := icontypes.HexInt(typeId).Int()
 
@@ -400,11 +400,10 @@ func (c *IconLocalnet) SetupXCall(ctx context.Context, portId string, keyName st
 		panic(err)
 	}
 
-	c.ExecuteContract(context.Background(), ibcAddress, "gochain", "bindPort", `{"portId":"`+portId+`", "moduleAddress":"`+connection+`"}`)
-
+	ctx, err = c.ExecuteContract(context.Background(), ibcAddress, "gochain", "bindPort", `{"portId":"`+portId+`", "moduleAddress":"`+connection+`"}`)
 	c.IBCAddresses["xcall"] = xcall
 	c.IBCAddresses["connection"] = connection
-	return nil
+	return err
 }
 
 func (c *IconLocalnet) PreGenesis() error {
@@ -446,24 +445,30 @@ func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection c
 	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], connection.KeyName, "setDefaultConnection", params)
 }
 
-func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (string, string, string, error) {
+func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (*chains.XCallResponse, error) {
 	// TODO: send fees
-	height, _ := targetChain.(ibc.Chain).Height(ctx)
+	height, err := targetChain.(ibc.Chain).Height(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
 	if rollback != nil {
 		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `", "_rollback":"` + hex.EncodeToString(rollback) + `"}`
 	}
 
-	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["dapp"], keyName, "sendMessage", params)
+	ctx, err = c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
 	if err != nil {
-		return "", "", "", err
+		return nil, err
 	}
-	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
+	sn := getSn(ctx.Value("txResult").(*icontypes.TransactionResult))
 	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
-	return sn, reqId, destData, err
+	if err != nil {
+		return nil, err
+	}
+	return &chains.XCallResponse{SerialNo: sn, RequestID: reqId, Data: destData}, nil
 }
 
-func getSn(tx icontypes.TransactionResult) string {
+func getSn(tx *icontypes.TransactionResult) string {
 	for _, log := range tx.EventLogs {
 		if string(log.Indexed[0]) == "CallMessageSent(Address,str,int)" {
 			sn, _ := strconv.ParseInt(log.Indexed[3], 0, 64)
@@ -478,7 +483,7 @@ func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, k
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	params := `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
 	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], keyName, "sendCallMessage", params)
-	sn := getSn(ctx.Value("txResult").(icontypes.TransactionResult))
+	sn := getSn(ctx.Value("txResult").(*icontypes.TransactionResult))
 	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	return sn, reqId, destData, err
 }
@@ -602,26 +607,27 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 }
 
 // ExecuteContract implements chains.Chain
-func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
+func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName string, param string) (context.Context, error) {
 	// Check if keystore is alreadry available for given keyName
 	c.CheckForKeyStore(ctx, keyName)
 
 	ctx, execMethodName, params := c.GetExecuteParam(ctx, methodName, param)
 	hash, err := c.getFullNode().ExecuteContract(ctx, contractAddress, execMethodName, c.keystorePath, params)
 	if err != nil {
-		return ctx, err
+		return nil, err
 	}
 	fmt.Printf("Transaction Hash: %s\n", hash)
 
 	// wait for few blocks to finish
 	time.Sleep(2 * time.Second)
-	trResult, _ := c.getFullNode().TransactionResult(ctx, hash)
+	trResult, err := c.getFullNode().TransactionResult(ctx, hash)
+	if err != nil {
+		return nil, err
+	}
 	if trResult.Status == "0x1" {
 		return context.WithValue(ctx, "txResult", trResult), nil
-	} else {
-		return ctx, fmt.Errorf("%s", trResult.Failure.MessageValue)
 	}
-
+	return ctx, fmt.Errorf("%s", trResult.Failure.MessageValue)
 }
 
 // GetBlockByHeight implements chains.Chain
@@ -643,10 +649,11 @@ func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, metho
 	// get query msg
 	queryMsg := c.GetQueryParam(methodName)
 	output, err := c.getFullNode().QueryContract(ctx, contractAddress, queryMsg, params)
-
-	chains.Response = output
+	if err != nil {
+		return nil, err
+	}
 	fmt.Printf("Response is : %s \n", output)
-	return ctx, err
+	return context.WithValue(ctx, "txResult", output), nil
 }
 
 func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
@@ -668,13 +675,14 @@ func (c *IconLocalnet) GetClientName(suffix int) string {
 
 func (c *IconLocalnet) GetClientState(ctx context.Context, clientSuffix int) (any, error) {
 	params := fmt.Sprintf(`clientId=%s`, c.GetClientName(clientSuffix))
-	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getClientState", params); err != nil {
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getClientState", params)
+	if err != nil {
 		return nil, err
 	}
 
 	var connStr types.HexBytes
 
-	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+	if err := json.Unmarshal(ctx.Value("txResult").([]byte), &connStr); err != nil {
 		return nil, err
 	}
 
@@ -687,11 +695,12 @@ func (c *IconLocalnet) GetClientState(ctx context.Context, clientSuffix int) (an
 
 // GetClientsCount returns the next sequence number for the client
 func (c *IconLocalnet) GetClientsCount(ctx context.Context) (int, error) {
-	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextClientSequence", ""); err != nil {
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextClientSequence", "")
+	if err != nil {
 		return 0, err
 	}
 	var res string
-	if err := json.Unmarshal([]byte(chains.Response.(string)), &res); err != nil {
+	if err := json.Unmarshal(ctx.Value("txResult").([]byte), &res); err != nil {
 		return 0, err
 	}
 	n := new(big.Int)
@@ -699,16 +708,17 @@ func (c *IconLocalnet) GetClientsCount(ctx context.Context) (int, error) {
 	return int(n.Int64()), nil
 }
 
-// GetClientConsensusState returns the next sequence number for the client
+// GetConnectionState returns the next sequence number for the client
 func (c *IconLocalnet) GetConnectionState(ctx context.Context, clientSuffix int) (*conntypes.ConnectionEnd, error) {
 	params := fmt.Sprintf(`connectionId=connection-%d`, clientSuffix)
-	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getConnection", params); err != nil {
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getConnection", params)
+	if err != nil {
 		return nil, err
 	}
 
 	var connStr types.HexBytes
 
-	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+	if err := json.Unmarshal(ctx.Value("txResult").([]byte), &connStr); err != nil {
 		return nil, err
 	}
 
@@ -723,11 +733,12 @@ func (c *IconLocalnet) GetConnectionState(ctx context.Context, clientSuffix int)
 
 // GetNextConnectionSequence returns the next sequence number for the client
 func (c *IconLocalnet) GetNextConnectionSequence(ctx context.Context) (int, error) {
-	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextConnectionSequence", ""); err != nil {
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextConnectionSequence", "")
+	if err != nil {
 		return 0, err
 	}
 	var res string
-	if err := json.Unmarshal([]byte(chains.Response.(string)), &res); err != nil {
+	if err := json.Unmarshal(ctx.Value("txResult").([]byte), &res); err != nil {
 		return 0, err
 	}
 	n := new(big.Int)
@@ -737,13 +748,14 @@ func (c *IconLocalnet) GetNextConnectionSequence(ctx context.Context) (int, erro
 
 func (c *IconLocalnet) GetChannel(ctx context.Context, channelSuffix int, portID string) (*chantypes.Channel, error) {
 	params := fmt.Sprintf(`portId=%s,channelId=channel-%d`, portID, channelSuffix)
-	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getChannel", params); err != nil {
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getChannel", params)
+	if err != nil {
 		return nil, err
 	}
 
 	var connStr types.HexBytes
 
-	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+	if err := json.Unmarshal(ctx.Value("txResult").([]byte), &connStr); err != nil {
 		return nil, err
 	}
 
@@ -756,11 +768,12 @@ func (c *IconLocalnet) GetChannel(ctx context.Context, channelSuffix int, portID
 
 // GetNextChannelSequence returns the next sequence number for the client
 func (c *IconLocalnet) GetNextChannelSequence(ctx context.Context) (int, error) {
-	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextChannelSequence", ""); err != nil {
+	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextChannelSequence", "")
+	if err != nil {
 		return 0, err
 	}
 	var res string
-	if err := json.Unmarshal([]byte(chains.Response.(string)), &res); err != nil {
+	if err := json.Unmarshal(ctx.Value("txResult").([]byte), &res); err != nil {
 		return 0, err
 	}
 	n := new(big.Int)
@@ -768,12 +781,12 @@ func (c *IconLocalnet) GetNextChannelSequence(ctx context.Context) (int, error) 
 	return int(n.Int64()), nil
 }
 
-// PauseNode
+// PauseNode pauses the node
 func (c *IconLocalnet) PauseNode(ctx context.Context) error {
 	return c.getFullNode().DockerClient.ContainerPause(ctx, c.getFullNode().ContainerID)
 }
 
-// PauseNode
+// UnpauseNode starts the paused node
 func (c *IconLocalnet) UnpauseNode(ctx context.Context) error {
 	return c.getFullNode().DockerClient.ContainerUnpause(ctx, c.getFullNode().ContainerID)
 }
