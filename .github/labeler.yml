@@ -1,8 +1,8 @@
 workflows:
-  - '.github/workflows/**/*'
+  - '.github/workflows/*'
 
 scripts:
-  - 'scripts/**/*'
+  - 'scripts/*'
 
-homebrew:
-  - '.github/workflows/brew.yml'
+test:
+  - 'test/**'
