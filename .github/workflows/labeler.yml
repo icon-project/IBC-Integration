@@ -21,6 +21,6 @@ jobs:
         with:
           dot: true
           pr-number: |
-          1
-          2
-          3
+           1
+           2
+           3
