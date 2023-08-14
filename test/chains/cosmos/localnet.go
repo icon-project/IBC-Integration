@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -189,7 +188,7 @@ func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, ke
 
 	tx := ctx.Value("txResult").(*TxResul)
 	sn := c.findSn(tx)
-	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	reqId, destData, err := targetChain.FindCallMessage(context.Background(), int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	if err != nil {
 		return nil, err
 	}
@@ -264,25 +263,25 @@ func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight int64, contr
 	endpoint := c.GetHostRPCAddress()
 	client, err := rpchttp.New(endpoint, "/websocket")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	err = client.Start()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer client.Stop()
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 16*time.Second)
 	defer cancel()
 	query := strings.Join([]string{"tm.event = 'Tx'",
 		fmt.Sprintf("tx.height >= %d ", startHeight),
-		fmt.Sprintf("message.module = 'wasm'"),
+		"message.module = 'wasm'",
 		fmt.Sprintf("wasm._contract_address = '%s'", c.IBCAddresses[contract]),
-		fmt.Sprintf(index),
+		index,
 	}, " AND ")
 	channel, err := client.Subscribe(ctx, "wasm-client", query)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	select {

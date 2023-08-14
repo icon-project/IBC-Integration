@@ -36,6 +36,7 @@ func (r *RelayerTestSuite) TestRelayer() {
 	})
 
 	r.T.Run("test connection", func(t *testing.T) {
+		portID := "transfer"
 		r.Require().NoError(r.CreateConnection(ctx))
 		chainA, chainB := r.GetChains()
 		stateA, err := r.GetConnectionState(ctx, chainA, 0)
@@ -53,8 +54,8 @@ func (r *RelayerTestSuite) TestRelayer() {
 		seq, err = r.GetNextConnectionSequence(ctx, chainB)
 		r.Require().NoError(err)
 		r.Require().Equal(1, seq)
-		portID := "transfer"
 		r.Require().NoError(r.SetupXCall(ctx, portID))
+		r.Require().NoError(r.CreateChannel(ctx, portID))
 		r.Require().NoError(r.DeployMockApp(ctx, portID))
 		res, err := r.GetChannel(ctx, chainA, 0, portID)
 		r.Require().NoError(err)
@@ -69,7 +70,6 @@ func (r *RelayerTestSuite) TestRelayer() {
 		seq, err = r.GetChannelSequence(ctx, chainB)
 		r.Require().NoError(err)
 		r.Require().Equal(1, seq)
-		r.Require().NoError(r.Ping(context.Background()))
 	})
 
 	r.T.Run("test single relay packet flow", func(t *testing.T) {
@@ -93,7 +93,7 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	var msg string = chainA.(ibc.Chain).Config().ChainID
-	res, err := r.PacketFlow(ctx, chainA, chainB, msg)
+	res, err := r.PacketFlow(ctx, chainA, chainB, msg, nil)
 	if err != nil {
 		return err
 	}

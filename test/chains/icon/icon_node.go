@@ -366,11 +366,7 @@ func (in *IconNode) CreateKey(ctx context.Context, password string) error {
 }
 
 func (in *IconNode) ExecuteContract(ctx context.Context, scoreAddress, methodName, keyStorePath, params string) (string, error) {
-	hash, err := in.ExecCallTx(ctx, scoreAddress, methodName, keyStorePath, params)
-	if err != nil {
-		return "", err
-	}
-	return hash, nil
+	return in.ExecCallTx(ctx, scoreAddress, methodName, keyStorePath, params)
 }
 
 func (in *IconNode) ExecCallTx(ctx context.Context, scoreAddress, methodName, keystorePath, params string) (string, error) {

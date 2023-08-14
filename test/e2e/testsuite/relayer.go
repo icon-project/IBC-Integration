@@ -13,7 +13,6 @@ import (
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"golang.org/x/sync/errgroup"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
@@ -48,31 +47,24 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 	if err := ic.BuildChains(ctx, eRep, buildOptions); err != nil {
 		return nil, err
 	}
-	var eg errgroup.Group
 
-	var buildWallet = func(ctx context.Context, user string, chain chains.Chain) func() error {
-		return func() error {
-			return chain.BuildWallets(ctx, Owner)
-		}
-	}
-
-	eg.Go(buildWallet(ctx, Owner, chainA))
-	eg.Go(buildWallet(ctx, Owner, chainB))
-	if err := eg.Wait(); err != nil {
+	if err := chainA.BuildWallets(ctx, Owner); err != nil {
 		return nil, err
 	}
-	eg.Go(buildWallet(ctx, User, chainA))
-	eg.Go(buildWallet(ctx, User, chainB))
-	if err := eg.Wait(); err != nil {
+	if err := chainB.BuildWallets(ctx, Owner); err != nil {
+		return nil, err
+	}
+	if err := chainA.BuildWallets(ctx, User); err != nil {
+		return nil, err
+	}
+	if err := chainB.BuildWallets(ctx, User); err != nil {
 		return nil, err
 	}
 	var err error
-	ctx, err = chainA.SetupIBC(ctx, Owner)
-	if err != nil {
+	if _, err := chainA.SetupIBC(ctx, Owner); err != nil {
 		return nil, err
 	}
-	ctx, err = chainB.SetupIBC(ctx, Owner)
-	if err != nil {
+	if _, err = chainB.SetupIBC(ctx, Owner); err != nil {
 		return nil, err
 	}
 	if err := ic.BuildRelayer(ctx, eRep, buildOptions); err != nil {
@@ -110,6 +102,18 @@ func (s *E2ETestSuite) GetClientState(ctx context.Context, chain chains.Chain, c
 
 func (s *E2ETestSuite) GetClientSequence(ctx context.Context, chain chains.Chain) (int, error) {
 	return chain.GetClientsCount(ctx)
+}
+
+func (s *E2ETestSuite) CreateChannel(ctx context.Context, portID string) error {
+	eRep := s.GetRelayerExecReporter()
+	pathName := s.GetPathName(s.pathNameIndex - 1)
+	channelOptions := ibc.CreateChannelOptions{
+		SourcePortName: portID,
+		DestPortName:   portID,
+		Order:          ibc.Unordered,
+		Version:        "ics20-1",
+	}
+	return s.relayer.CreateChannel(ctx, eRep, pathName, channelOptions)
 }
 
 func (s *E2ETestSuite) GetChannels(ctx context.Context, chainID string) ([]ibc.ChannelOutput, error) {

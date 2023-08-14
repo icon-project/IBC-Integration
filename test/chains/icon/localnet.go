@@ -618,16 +618,18 @@ func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, key
 	}
 	fmt.Printf("Transaction Hash: %s\n", hash)
 
-	// wait for few blocks to finish
-	time.Sleep(2 * time.Second)
-	trResult, err := c.getFullNode().TransactionResult(ctx, hash)
+	txHashByte, err := hex.DecodeString(strings.TrimPrefix(hash, "0x"))
+	if err != nil {
+		return nil, fmt.Errorf("error when executing contract %v ", err)
+	}
+	_, res, err := c.getFullNode().Client.WaitForResults(ctx, &icontypes.TransactionHashParam{Hash: types.NewHexBytes(txHashByte)})
 	if err != nil {
 		return nil, err
 	}
-	if trResult.Status == "0x1" {
-		return context.WithValue(ctx, "txResult", trResult), nil
+	if res.Status == "0x1" {
+		return context.WithValue(ctx, "txResult", res), nil
 	}
-	return ctx, fmt.Errorf("%s", trResult.Failure.MessageValue)
+	return ctx, fmt.Errorf("%s", res.Failure.MessageValue)
 }
 
 // GetBlockByHeight implements chains.Chain

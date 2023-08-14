@@ -96,12 +96,7 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
 	}); err != nil {
 		return err
 	}
-	return s.relayer.CreateChannel(ctx, s.GetRelayerExecReporter(), s.GetPathName(s.pathNameIndex-1), ibc.CreateChannelOptions{
-		SourcePortName: portId,
-		DestPortName:   portId,
-		Order:          ibc.Unordered,
-		Version:        "ics20-1",
-	})
+	return nil
 }
 
 // SetupChainsAndRelayer create two chains, a relayer, establishes a connection and creates a channel
