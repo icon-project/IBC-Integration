@@ -1,0 +1,143 @@
+name: Deploy cosmwasm contracts to Contestine testnet
+
+on:
+  push:
+    branches:
+      - "main"
+    # paths:
+      # - '.github/workflows/testnet-deploy-wasm.yml'
+
+jobs:
+  deploy-contracts-testnet:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      # Install and setup go
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19
+
+      # setup gopath
+      - name: Set PATH
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          fingerprint: "C787AB518A0C08B7AE1E1ADA2809A1A84E32159A"
+          trust_level: 5
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.69.0
+          target: wasm32-unknown-unknown
+          override: true
+          profile: minimal
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      # - name: Download and Install archwayd
+      #   working-directory: contracts/cosmwasm-vm/archway
+      #   run: make install
+
+      # - name: Retrieve the secret and decode it to a file
+
+      # - name: Install stable toolchain
+      #   uses: actions-rs/toolchain@v1
+      #   with:
+      #     toolchain: 1.69.0
+      #     target: wasm32-unknown-unknown
+      #     override: true
+      #     profile: minimal
+
+      # - name: Cache Rust dependencies
+      #   uses: Swatinem/rust-cache@v2
+
+      - name: Download and Install archwayd
+        run: |
+          sudo curl -L -o /usr/local/bin/archwayd https://github.com/archway-network/archway/releases/download/v1.0.1/archwayd_linux_amd64
+          sudo chmod +x /usr/local/bin/archwayd
+
+       - name: Retrieve the secret and decode it to a file
+        working-directory: contracts/javascore
+        env:
+          CONSTANTINE_TESTNET_KEY: ${{ secrets.CONSTANTINE_TESTNET_KEY }}
+          CONSTANTINE_PASSPHRASE: ${{ secrets.CONSTANTINE_PASSPHRASE }}
+        run: |
+          pass init C787AB518A0C08B7AE1E1ADA2809A1A84E32159A
+          echo $CONSTANTINE_TESTNET_KEY | base64 -d > temp.key
+          gpgconf --kill gpg-agent
+          echo "$CONSTANTINE_PASSPHRASE" | /home/runner/go/bin/archwayd keys import constantine3Wallet temp.key --keyring-backend test
+          archwayd keys list
+
+      - name: Compile WASM
+        run: |
+          rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          bash ./optimize_build.sh
+
+      - name: Check WASM Size
+        run: |
+          max_size=800 
+          echo "Check if size of wasm file exceeds $max_size kilobytes..."
+          for file in artifacts/*.wasm
+          do 
+          size=$(du -k "$file" | awk '{print $1}')
+          if [[ $size -gt $max_size ]]; then
+          echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
+          exit 1
+          fi
+          echo "$file : $size KB"
+          done
+          echo "The size of all contracts is well within the 800 KB limit."
+
+      - name: Deploy WASM
+        # run: |
+          # archwayd keys list
+          # archwayd query bank balances archway1z6r0f8r735mfrtrd4uv6x9f77tc6dsqzxtj7j4 --node https://rpc.constantine.archway.tech:443
+          # bash -x scripts/deploy_cosmwasm.sh testnet
+          # echo $CONSTANTINE_TESTNET_KEY | base64 -d > key.json
+          # echo "CONSTANTINE_PASSPHRASE" | archwayd keys import constantine3_wallet key.json
+          # archwayd keys list
+
+      # - name: Compile WASM
+      #   run: |
+      #     rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
+      #     rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
+      #     bash ./optimize_build.sh
+
+      # - name: Check WASM Size
+      #   run: |
+      #     max_size=800 
+      #     echo "Check if size of wasm file exceeds $max_size kilobytes..."
+      #     for file in artifacts/*.wasm
+      #     do 
+      #     size=$(du -k "$file" | awk '{print $1}')
+      #     if [[ $size -gt $max_size ]]; then
+      #     echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
+      #     exit 1
+      #     fi
+      #     echo "$file : $size KB"
+      #     done
+      #     echo "The size of all contracts is well within the 800 KB limit."
+
+      # - name: Deploy WASM
+      #   run: |
+      #     container=$(docker ps --format '{{.Names}}')
+      #     rm -rf artifacts/cw_common.wasm
+      #     cp -r {artifacts,scripts/deploy_cosmwasm.sh} contracts/cosmwasm-vm/archway/contracts
+      #     docker ps -a
+      #     docker exec $container chmod +x /contracts/deploy_cosmwasm.sh
+      #     docker exec $container /contracts/deploy_cosmwasm.sh
+        run: bash -x scripts/deploy_cosmwasm.sh
