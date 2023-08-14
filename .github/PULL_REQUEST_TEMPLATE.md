@@ -23,5 +23,6 @@ version: <log entry>
 - [ ] I have run the unit tests
 - [ ] I only have one commit (if not, squash them into one commit).
 - [ ] I have a descriptive commit message that adheres to the [commit message guidelines](https://github.com/icon-project/community/blob/main/guidelines/technical/software-development-guidelines.md#commit-messages)
+- [ ] I have added version bump label on PR.
 
 > Please review the [CONTRIBUTING.md](/CONTRIBUTING.md) file for detailed contributing guidelines.
