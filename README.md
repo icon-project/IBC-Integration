@@ -34,7 +34,7 @@ interconnected dapps.
 Additional information on how IBC works can be found [here](https://ibc.cosmos.network/). and xCall spec is
 defined [here](https://github.com/icon-project/IIPs/blob/master/IIPS/iip-52.md)
 
-# Table of Contents
+# Table of Contents.
 
 - [IBC INTEGRATION](#ibc-integration)
 - [Table of Content](#table-of-content)
