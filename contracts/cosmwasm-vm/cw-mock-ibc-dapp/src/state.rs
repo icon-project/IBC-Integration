@@ -198,19 +198,17 @@ impl<'a> CwIbcConnection<'a> {
         seq: u64,
         packet: CwPacket,
     ) -> Result<(), ContractError> {
-        return self
-            .received_packets
+        self.received_packets
             .save(store, seq, &packet)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
     pub fn get_received_packet(
         &self,
         store: &dyn Storage,
         seq: u64,
     ) -> Result<CwPacket, ContractError> {
-        return self
-            .received_packets
+        self.received_packets
             .load(store, seq)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 }
