@@ -9,8 +9,9 @@ All other deviations can be found [here]().
 ## Changes
 The major changes in Icon LightClient Implementation includes:
 
-- createClient
-- updateClient
+- [createClient](#createclient)
+- [updateClient](#updateclient)
+- [verifyNonMembership](#verifynonmembership)
 
 ## createClient
 The IBC Tendermint LightClient sets the *type, clientState, consensusState, blockTimestamp* and *blockHeight* while creating client.
@@ -18,8 +19,15 @@ The IBC Tendermint LightClient sets the *type, clientState, consensusState, bloc
 Our Implementation sets just the *clientState, consensusState* and *blockHeight*.
 
 ## updateClient
-While updating client, the headers are verfied for adjacent and non-adjacent updates by verifying whether the block headers are adjacent or not in IBC Tendermint LightClient.
+In case of IBC Tendermint LightClient, while updating client, the headers are verfied for adjacent or non-adjacent updates.
 
-In our ICON LightClient implementation, we are not using the actual block headers, but the BTP headers where we just verify if the incoming BTP header height is always greater than the previous one. Then we store a mapping of BTP block height and actual block height as well as BTP block height and actual block timestamp.
+In our ICON LightClient relay can update non-adjacent blocks provided that it is within the trusting period and can provide a previous trusted height.It can also update older blocks upto certain time limit from latest updated height in clientstate.
+
+Similarly, in our ICON LightClient implementation, we are not using the actual block headers, but the BTP headers where we just verify if the incoming BTP header height is always greater than the previous one. Then we store a mapping of BTP block height and actual block height as well as BTP block height and actual block timestamp.
 
 In IBC Tendermint LightClient, the update is based on block height but in our ICON LightClient, the update is based on BTP block height and epoch.
+
+## verifyNonMembership
+Both IBC Tendermint Lightclient and ICON LightClient uses MerkelProof for verifying membership and non-membership.
+
+In IBC Tendermint Lightclient, the verifyNonMembership verifies the absence of key. But in case of ICON LightClient, we need to verify that the value of key is empty.
