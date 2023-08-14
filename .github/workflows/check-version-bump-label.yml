@@ -6,7 +6,7 @@ jobs:
   require-version-bump-label:
     runs-on: ubuntu-latest
     steps:
-      - uses: mheap/github-action-required-labels@v2
+      - uses: mheap/github-action-required-labels@v5
         with:
           mode: exactly
           count: 1
