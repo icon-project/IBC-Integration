@@ -20,7 +20,4 @@ jobs:
       - uses: actions/labeler@v4
         with:
           dot: true
-          pr-number: |
-           1
-           2
-           3
+          pr-number: 572
