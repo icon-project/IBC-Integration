@@ -36,10 +36,10 @@ You can also execute the `./scripts/optimize-cosmwasm.sh`  script, which handles
 
 ### Build Contracts
 
-1. Using docker build  
-```
-make optimize-cosmwasm    # The final artifacts will reside within the `./artifacts/archway` directory.
-```
+**1. Docker Build Process**
+
+To initiate the build process using Docker, it is essential to have the "contract-builder" image. To generate this Docker image, execute the subsequent command:
+
 
 
 
