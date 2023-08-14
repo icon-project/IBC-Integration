@@ -158,6 +158,7 @@ The icon-light-client in IBC enables blockchain networks to communicate with eac
 
 #### [cw-xcall-ibc-connection](./cw-xcall-ibc-connection/src/) :
 
+This contract abstracts away ibc specific implementation from xcall. It bridges ibc host with xcall.
 
 ### Unit Testing
 
