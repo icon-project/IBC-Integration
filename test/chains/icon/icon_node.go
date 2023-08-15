@@ -345,9 +345,9 @@ func (in *IconNode) QueryContract(ctx context.Context, scoreAddress, methodName,
 
 	out, _, err := in.ExecBin(ctx, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", uri)
 	if err != nil {
-		return out, err
+		return nil, err
 	}
-	return out, err
+	return out, nil
 }
 
 func (in *IconNode) CreateKey(ctx context.Context, password string) error {

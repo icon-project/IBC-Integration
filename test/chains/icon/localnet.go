@@ -445,27 +445,42 @@ func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection c
 	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], connection.KeyName, "setDefaultConnection", params)
 }
 
-func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (*chains.XCallResponse, error) {
+func (c *IconLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string, data, rollback []byte) (context.Context, error) {
 	// TODO: send fees
-	height, err := targetChain.(ibc.Chain).Height(ctx)
-	if err != nil {
-		return nil, err
-	}
 	var params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
 	if rollback != nil {
 		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `", "_rollback":"` + hex.EncodeToString(rollback) + `"}`
 	}
 
-	ctx, err = c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
+	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
 	if err != nil {
 		return nil, err
 	}
+	res := ctx.Value("txResult").(*icontypes.TransactionResult)
+	return context.WithValue(ctx, "txResult", res), nil
+}
+
+// FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
+func (c *IconLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height int64, to string) (*chains.XCallResponse, error) {
 	sn := getSn(ctx.Value("txResult").(*icontypes.TransactionResult))
-	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	reqId, destData, err := target.FindCallMessage(ctx, height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
 	if err != nil {
 		return nil, err
 	}
 	return &chains.XCallResponse{SerialNo: sn, RequestID: reqId, Data: destData}, nil
+}
+
+func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, to string, data, rollback []byte) (*chains.XCallResponse, error) {
+	height, err := targetChain.(ibc.Chain).Height(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: send fees
+	ctx, err = c.SendPacketXCall(ctx, keyName, to, data, rollback)
+	if err != nil {
+		return nil, err
+	}
+	return c.FindTargetXCallMessage(ctx, targetChain, int64(height), strings.Split(to, "/")[1])
 }
 
 func getSn(tx *icontypes.TransactionResult) string {

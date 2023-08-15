@@ -32,7 +32,9 @@ type Chain interface {
 	BuildWallets(ctx context.Context, keyName string) error
 	SetupIBC(ctx context.Context, keyName string) (context.Context, error)
 	SetupXCall(ctx context.Context, portId, keyName string) error
+	FindTargetXCallMessage(ctx context.Context, target Chain, height int64, to string) (*XCallResponse, error)
 	ConfigureBaseConnection(ctx context.Context, connection XCallConnection) (context.Context, error)
+	SendPacketXCall(ctx context.Context, keyName, _to string, data, rollback []byte) (context.Context, error)
 	XCall(ctx context.Context, targetChain Chain, keyName, _to string, data, rollback []byte) (*XCallResponse, error)
 	EOAXCall(ctx context.Context, targetChain Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error)
 	ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error)
@@ -52,12 +54,6 @@ type Chain interface {
 	GetNextChannelSequence(context.Context) (int, error)
 	PauseNode(context.Context) error
 	UnpauseNode(context.Context) error
-}
-
-type XCallResponse struct {
-	SerialNo  string
-	RequestID string
-	Data      string
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {

@@ -12,7 +12,6 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/cosmos/gogoproto/proto"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	"golang.org/x/sync/errgroup"
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -176,23 +175,39 @@ func (c *CosmosLocalnet) DeployXCallMockApp(ctx context.Context, connection chai
 	return nil
 }
 
-func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (*chains.XCallResponse, error) {
+func (c *CosmosLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string, data, rollback []byte) (context.Context, error) {
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	rollbackArray := strings.Join(strings.Fields(fmt.Sprintf("%d", rollback)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s, "rollback":%s}`, _to, dataArray, rollbackArray)
-	height, _ := targetChain.(ibc.Chain).Height(ctx)
 	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["dapp"], chains.FaucetAccountKeyName, "send_call_message", params)
 	if err != nil {
 		return nil, err
 	}
+	tx := ctx.Value("txResult").(*TxResul)
+	return context.WithValue(ctx, "txResult", tx), nil
+}
 
+// FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
+func (c *CosmosLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height int64, to string) (*chains.XCallResponse, error) {
 	tx := ctx.Value("txResult").(*TxResul)
 	sn := c.findSn(tx)
-	reqId, destData, err := targetChain.FindCallMessage(context.Background(), int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	reqId, destData, err := target.FindCallMessage(context.Background(), int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
 	if err != nil {
 		return nil, err
 	}
-	return &chains.XCallResponse{SerialNo: sn, RequestID: reqId, Data: destData}, err
+	return &chains.XCallResponse{SerialNo: sn, RequestID: reqId, Data: destData}, nil
+}
+
+func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (*chains.XCallResponse, error) {
+	height, err := targetChain.(ibc.Chain).Height(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx, err = c.SendPacketXCall(ctx, keyName, _to, data, rollback)
+	if err != nil {
+		return nil, err
+	}
+	return c.FindTargetXCallMessage(ctx, targetChain, int64(height), strings.Split(_to, "/")[1])
 }
 
 func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error) {
@@ -521,26 +536,10 @@ func (c *CosmosLocalnet) GetNextChannelSequence(ctx context.Context) (int, error
 
 // PauseNode halts a node
 func (c *CosmosLocalnet) PauseNode(ctx context.Context) error {
-	var eg errgroup.Group
-	for _, node := range c.Nodes() {
-		eg.Go(func(node *cosmos.ChainNode) func() error {
-			return func() error {
-				return node.Client.Stop()
-			}
-		}(node))
-	}
-	return eg.Wait()
+	return c.getFullNode().Client.Stop()
 }
 
 // UnpauseNode restarts a node
 func (c *CosmosLocalnet) UnpauseNode(ctx context.Context) error {
-	var eg errgroup.Group
-	for _, node := range c.Nodes() {
-		eg.Go(func(node *cosmos.ChainNode) func() error {
-			return func() error {
-				return node.Client.Start()
-			}
-		}(node))
-	}
-	return eg.Wait()
+	return c.getFullNode().Client.Start()
 }

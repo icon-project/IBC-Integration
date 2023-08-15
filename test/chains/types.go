@@ -21,6 +21,12 @@ type XCallConnection struct {
 	TimeoutHeight          string
 }
 
+type XCallResponse struct {
+	SerialNo  string
+	RequestID string
+	Data      string
+}
+
 type LastBlock struct{}
 
 type ContractName struct {
