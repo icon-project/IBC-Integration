@@ -24,9 +24,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: check pr pr-number
-        run: echo ${{ steps.pr.outputs.pull_request_number }}
+        run: echo ${{ github.event.number }}
 
       - uses: actions/labeler@v4
         with:
           dot: true
-          pr-number: ${{ steps.pr.outputs.pull_request_number }}
+          pr-number: ${{ github.event.number }}
