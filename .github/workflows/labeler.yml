@@ -17,11 +17,16 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - name: Get Pull Request Number
-        id: pr
-        run: echo "::set-output name=pull_request_number::$(gh pr view --json number -q .number || echo "")"
+      - uses: jwalton/gh-find-current-pr@v1
+        id: findPr
+        with:
+          # Can be "open", "closed", or "all".  Defaults to "open".
+          state: open
+      # This will echo "Your PR is 7", or be skipped if there is no current PR.
+      - run: echo "PR Number is ${PR}"
+        if: success() && steps.findPr.outputs.number
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.findPr.outputs.pr }}
 
       - name: check pr pr-number
         run: echo ${{ github.event.number }}
@@ -29,4 +34,4 @@ jobs:
       - uses: actions/labeler@v4
         with:
           dot: true
-          pr-number: ${{ github.event.number }}
+          pr-number: $PR
