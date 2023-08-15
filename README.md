@@ -8,7 +8,6 @@
 | [Java](./contracts/javascore)   | [![Java Cov][java-cov-badge]][java-cov-link] | [![Java Test][java-test-badge]][java-test-link] |
 | [Rust](./contracts/cosmwasm-vm) | [![Rust Cov][rust-cov-badge]][rust-cov-link] | [![Rust Test][rust-test-badge]][rust-test-link] |
 
-
 [java-cov-link]: https://app.codecov.io/gh/icon-project/IBC-Integration/tree/main/contracts/javascore
 
 [rust-cov-link]: https://app.codecov.io/gh/icon-project/IBC-Integration/tree/main/contracts/cosmwasm-vm
