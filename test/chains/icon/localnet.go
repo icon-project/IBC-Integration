@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/big"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,11 +17,17 @@ import (
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/gorilla/websocket"
+	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 
+	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
+
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
 	// "github.com/strangelove-ventures/interchaintest/v7/testutil"
@@ -642,7 +649,7 @@ func (c *IconLocalnet) GetLastBlock(ctx context.Context) (context.Context, error
 }
 
 // QueryContract implements chains.Chain
-func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error) {
+func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, methodName string, params string) (context.Context, error) {
 	time.Sleep(2 * time.Second)
 
 	// get query msg
@@ -665,4 +672,110 @@ func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
 		Amount:  10000,
 	}
 	return c.SendFunds(ctx, "gochain", amount)
+}
+
+func (c *IconLocalnet) GetClientName(suffix int) string {
+	return fmt.Sprintf("07-tendermint-%d", suffix)
+}
+
+func (c *IconLocalnet) GetClientState(ctx context.Context, clientSuffix int) (any, error) {
+	params := fmt.Sprintf(`clientId=%s`, c.GetClientName(clientSuffix))
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getClientState", params); err != nil {
+		return nil, err
+	}
+
+	var connStr types.HexBytes
+
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+		return nil, err
+	}
+
+	var conn = new(tendermint.ClientState)
+	if _, err := chains.HexBytesToProtoUnmarshal(connStr, conn); err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
+// GetClientsCount returns the next sequence number for the client
+func (c *IconLocalnet) GetClientsCount(ctx context.Context) (int, error) {
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextClientSequence", ""); err != nil {
+		return 0, err
+	}
+	var res string
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &res); err != nil {
+		return 0, err
+	}
+	n := new(big.Int)
+	n.SetString(res, 0)
+	return int(n.Int64()), nil
+}
+
+// GetClientConsensusState returns the next sequence number for the client
+func (c *IconLocalnet) GetConnectionState(ctx context.Context, clientSuffix int) (*conntypes.ConnectionEnd, error) {
+	params := fmt.Sprintf(`connectionId=connection-%d`, clientSuffix)
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getConnection", params); err != nil {
+		return nil, err
+	}
+
+	var connStr types.HexBytes
+
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+		return nil, err
+	}
+
+	var conn = new(conntypes.ConnectionEnd)
+
+	if _, err := chains.HexBytesToProtoUnmarshal(connStr, conn); err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+// GetNextConnectionSequence returns the next sequence number for the client
+func (c *IconLocalnet) GetNextConnectionSequence(ctx context.Context) (int, error) {
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextConnectionSequence", ""); err != nil {
+		return 0, err
+	}
+	var res string
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &res); err != nil {
+		return 0, err
+	}
+	n := new(big.Int)
+	n.SetString(res, 0)
+	return int(n.Int64()), nil
+}
+
+func (c *IconLocalnet) GetChannel(ctx context.Context, channelSuffix int, portID string) (*chantypes.Channel, error) {
+	params := fmt.Sprintf(`portId=%s,channelId=channel-%d`, portID, channelSuffix)
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getChannel", params); err != nil {
+		return nil, err
+	}
+
+	var connStr types.HexBytes
+
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &connStr); err != nil {
+		return nil, err
+	}
+
+	var channel = new(chantypes.Channel)
+	if _, err := chains.HexBytesToProtoUnmarshal(connStr, channel); err != nil {
+		return nil, err
+	}
+	return channel, nil
+}
+
+// GetNextChannelSequence returns the next sequence number for the client
+func (c *IconLocalnet) GetNextChannelSequence(ctx context.Context) (int, error) {
+	if _, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), "getNextChannelSequence", ""); err != nil {
+		return 0, err
+	}
+	var res string
+	if err := json.Unmarshal([]byte(chains.Response.(string)), &res); err != nil {
+		return 0, err
+	}
+	n := new(big.Int)
+	n.SetString(res, 0)
+	return int(n.Int64()), nil
 }

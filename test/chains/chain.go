@@ -1,9 +1,20 @@
 package chains
 
 import (
+	"bytes"
 	"context"
-	"github.com/icon-project/ibc-integration/test/internal/blockdb"
+	"encoding/hex"
+	"fmt"
 	"os"
+	"strings"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/gogoproto/proto"
+	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/icon-project/ibc-integration/test/internal/blockdb"
+	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 )
 
 const (
@@ -32,6 +43,13 @@ type Chain interface {
 	GetIBCAddress(key string) string
 	DeployXCallMockApp(ctx context.Context, connection XCallConnection) error
 	PreGenesis() error
+	GetClientState(context.Context, int) (any, error)
+	GetClientName(int) string
+	GetClientsCount(context.Context) (int, error)
+	GetConnectionState(context.Context, int) (*conntypes.ConnectionEnd, error)
+	GetNextConnectionSequence(context.Context) (int, error)
+	GetChannel(context.Context, int, string) (*chantypes.Channel, error)
+	GetNextChannelSequence(context.Context) (int, error)
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {
@@ -39,4 +57,27 @@ func GetEnvOrDefault(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func HexBytesToProtoUnmarshal(encoded types.HexBytes, v proto.Message) ([]byte, error) {
+	inputBytes, err := encoded.Value()
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling HexByte: %s", err)
+	}
+
+	if bytes.Equal(inputBytes, make([]byte, 0)) {
+		return nil, fmt.Errorf("encoded hexbyte is empty: %s", inputBytes)
+	}
+
+	if err := proto.Unmarshal(inputBytes, v); err != nil {
+		return nil, err
+
+	}
+	return inputBytes, nil
+}
+
+func ProcessContractResponse(p *wasmtypes.QuerySmartContractStateResponse) ([]byte, error) {
+	data := string(p.Data.Bytes())
+	trimmedData := strings.ReplaceAll(data, `"`, "")
+	return hex.DecodeString(trimmedData)
 }
