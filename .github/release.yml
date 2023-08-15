@@ -3,24 +3,24 @@
 changelog:
   exclude:
     labels:
-      - ignore-for-release
-    authors:
-      - octocat
+      - cicd
+      - scripts
+      - test
   categories:
     - title: Breaking Changes 🛠
       labels:
-        - Semver-Major
+        - Major
         - breaking-change
-    - title: Exciting New Features 🎉
+    - title: New Features 🎉
       labels:
-        - Semver-Minor
+        - Minor
         - enhancement
-        - feat
+        - Feature
+
     - title: Bug Fixes 🎉
       labels:
-        - Semver-Patch
-        - fixes
-        - fix
+        - Patch
+        - bug
     - title: Other Changes
       labels:
         - "*"
