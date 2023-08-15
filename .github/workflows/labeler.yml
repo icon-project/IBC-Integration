@@ -11,12 +11,19 @@ on:
       - edited
       - synchronize
 jobs:
-  triage:
+  auto-label:
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read, write
     runs-on: ubuntu-latest
     steps:
+      - name: Get Pull Request Number
+        id: pr
+        run: echo "::set-output name=pull_request_number::$(gh pr view --json number -q .number || echo "")"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/labeler@v4
         with:
           dot: true
+          pr-number: ${{ steps.pr.outputs.pull_request_number }}
