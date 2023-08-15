@@ -1,6 +1,7 @@
 package interchaintest
 
 import (
+	"context"
 	"testing"
 
 	"github.com/docker/docker/client"
@@ -23,6 +24,14 @@ type RelayerFactory interface {
 	// Tests for any unsupported features will be skipped rather than failed.
 	Capabilities() map[relayer.Capability]bool
 }
+
+type Relayer interface {
+	ibc.Relayer
+	RestartRelayerContainer(context.Context) error
+	StopRelayerContainer(context.Context, ibc.RelayerExecReporter) error
+}
+
+var _ Relayer = (*relayer.DockerRelayer)(nil)
 
 // builtinRelayerFactory is the built-in relayer factory that understands
 // how to start the cosmos relayer in a docker container.

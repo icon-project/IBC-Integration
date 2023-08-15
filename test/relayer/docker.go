@@ -386,7 +386,7 @@ func (r *DockerRelayer) StartRelayer(ctx context.Context, rep ibc.RelayerExecRep
 	return r.containerLifecycle.StartContainer(ctx)
 }
 
-func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecReporter) error {
+func (r *DockerRelayer) stopRelayer(ctx context.Context, rep ibc.RelayerExecReporter) error {
 	if r.containerLifecycle == nil {
 		return nil
 	}
@@ -449,14 +449,42 @@ func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecRepo
 		zap.String("container_id", containerID),
 		zap.String("container", c.Name),
 	)
+	return nil
+}
 
+// CleanUp cleans up the relayer's home directory and any containers that were
+func (r *DockerRelayer) cleanUp(ctx context.Context) error {
+	if r.containerLifecycle != nil {
+		return fmt.Errorf("tried to clean up relayer without stopping first")
+	}
 	if err := r.containerLifecycle.RemoveContainer(ctx); err != nil {
 		return err
 	}
-
 	r.containerLifecycle = nil
-
 	return nil
+}
+
+func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecReporter) error {
+	if err := r.stopRelayer(ctx, rep); err != nil {
+		return err
+	}
+	return r.cleanUp(ctx)
+}
+
+// RestartRelayer restarts the relayer with the same paths as before.
+func (r *DockerRelayer) StopRelayerContainer(ctx context.Context, rep ibc.RelayerExecReporter) error {
+	if r.containerLifecycle == nil {
+		return fmt.Errorf("tried to restart relayer without starting first")
+	}
+	return r.stopRelayer(ctx, rep)
+}
+
+// RestartRelayer restarts the relayer with the same paths as before.
+func (r *DockerRelayer) RestartRelayerContainer(ctx context.Context) error {
+	if r.containerLifecycle == nil {
+		return fmt.Errorf("tried to restart relayer without starting first")
+	}
+	return r.containerLifecycle.StartContainer(ctx)
 }
 
 func (r *DockerRelayer) containerImage() ibc.DockerImage {
