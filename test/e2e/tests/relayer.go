@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
@@ -18,8 +17,7 @@ type RelayerTestSuite struct {
 
 func (r *RelayerTestSuite) TestRelayer() {
 	ctx := context.TODO()
-	r.T.Run("test client state", func(t *testing.T) {
-		r.Require().NoError(r.CreateClient(ctx))
+	r.T.Run("client state", func(t *testing.T) {
 		chainA, chainB := r.GetChains()
 		res, err := r.GetClientState(ctx, chainA, 0)
 		t.Log(res)
@@ -35,9 +33,8 @@ func (r *RelayerTestSuite) TestRelayer() {
 		r.Require().Equal(1, count)
 	})
 
-	r.T.Run("test connection", func(t *testing.T) {
+	r.T.Run("connection", func(t *testing.T) {
 		portID := "transfer"
-		r.Require().NoError(r.CreateConnection(ctx))
 		chainA, chainB := r.GetChains()
 		stateA, err := r.GetConnectionState(ctx, chainA, 0)
 		t.Log(stateA)
@@ -47,7 +44,6 @@ func (r *RelayerTestSuite) TestRelayer() {
 		t.Log(stateB)
 		r.Require().NoError(err)
 		r.Require().Equal(stateB.GetState(), int32(3))
-
 		seq, err := r.GetNextConnectionSequence(ctx, chainA)
 		r.Require().NoError(err)
 		r.Require().Equal(1, seq)
@@ -72,28 +68,37 @@ func (r *RelayerTestSuite) TestRelayer() {
 		r.Require().Equal(1, seq)
 	})
 
-	r.T.Run("test single relay packet flow", func(t *testing.T) {
+	r.T.Run("single relay packet flow", func(t *testing.T) {
 		r.Require().NoError(r.Ping(context.Background()))
 	})
 
-	r.T.Run("Crash chainA and relay", func(t *testing.T) {
+	r.T.Run("unordered packet test", func(t *testing.T) {
+
+	})
+
+	r.T.Run("crash and recover relay", func(t *testing.T) {
 		chainA, chainB := r.GetChains()
-		r.Require().NoError(r.CrashTest(context.Background(), chainA, chainB))
+		r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA))
 		r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA))
 	})
 }
 
 func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.Chain) error {
-	// crash Chain
+
+	// Get current height before crash
+	height, err := chainB.(ibc.Chain).Height(ctx)
+	if err != nil {
+		return err
+	}
+
+	// crash Node
 	if err := r.CrashNode(ctx, chainB); err != nil {
 		return err
 	}
 
 	// send packet from chainA to chainB crashed node and check if it is received
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	var msg string = chainA.(ibc.Chain).Config().ChainID
-	res, err := r.PacketFlow(ctx, chainA, chainB, msg, nil)
+	var msg = chainA.(ibc.Chain).Config().ChainID
+	xcall, err := r.SendPacket(context.Background(), chainA, chainB, msg)
 	if err != nil {
 		return err
 	}
@@ -103,25 +108,33 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 	if err != nil {
 		return err
 	}
-	r.T.Logf("crash took: %v", crashedAt)
+	r.T.Logf("crash at: %v", crashedAt)
 
 	// recover chainB
 	if err := r.ResumeNode(ctx, chainB); err != nil {
 		return err
 	}
-
 	// recover relayer now
 	recoverdDurarion, err := r.Recover(ctx, crashedAt)
 	if err != nil {
 		return err
 	}
-	r.T.Logf("probably recovered, took: %v", recoverdDurarion)
+
+	// check if packet was sent in a recovered state
+	res, err := r.FindPacketSent(xcall, chainA, chainB, int64(height))
+	if err != nil {
+		return err
+	}
 
 	// check if packet was received in a recovered state
 	if err := r.QueryPacketCommitment(ctx, chainB, res.RequestID, res.Data); err != nil {
 		return err
 	}
-	if msg != res.Data {
+	data, err := r.ConvertToPlainString(res.Data)
+	if err != nil {
+		return err
+	}
+	if msg != data {
 		return fmt.Errorf("expected packet data to be %s but got %s", msg, res.Data)
 	}
 
@@ -129,6 +142,6 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 	if err := r.Ping(context.Background()); err != nil {
 		return err
 	}
-	r.T.Log("relay recovered successfully")
+	r.T.Logf("relay recovered. crashed: %v, recovered: %v", crashedAt, crashedAt.Add(recoverdDurarion))
 	return nil
 }

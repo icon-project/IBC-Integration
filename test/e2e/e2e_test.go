@@ -34,6 +34,8 @@ func (s *E2ETest) TestE2E_all() {
 	t.Run("test relayer", func(t *testing.T) {
 		rly, err := s.SetupRelayer(ctx)
 		s.Require().NoError(err)
+		s.Require().NoError(s.CreateClient(ctx))
+		s.Require().NoError(s.CreateConnection(ctx))
 		s.Require().NoError(s.StartRelayer(rly))
 		relayer := tests.RelayerTestSuite{
 			E2ETestSuite: &s.E2ETestSuite,

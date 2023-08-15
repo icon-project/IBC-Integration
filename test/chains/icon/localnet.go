@@ -463,7 +463,7 @@ func (c *IconLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string,
 // FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
 func (c *IconLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height int64, to string) (*chains.XCallResponse, error) {
 	sn := getSn(ctx.Value("txResult").(*icontypes.TransactionResult))
-	reqId, destData, err := target.FindCallMessage(ctx, height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
+	reqId, destData, err := target.FindCallMessage(context.Background(), height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +522,7 @@ func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, f
 	block, _ := c.getFullNode().Client.GetBlockByHeight(&icontypes.BlockHeightParam{Height: icontypes.NewHexInt(int64(intHeight - 1))})
 	i, _ := event.Index.Int()
 	tx := block.NormalTransactions[i]
-	trResult, _ := c.getFullNode().TransactionResult(ctx, string(tx.TxHash))
+	trResult, _ := c.getFullNode().TransactionResult(context.WithoutCancel(ctx), string(tx.TxHash))
 	eventIndex, _ := event.Events[0].Int()
 	reqId := trResult.EventLogs[eventIndex].Data[0]
 	data := trResult.EventLogs[eventIndex].Data[1]
@@ -553,13 +553,18 @@ func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight int64, contrac
 		Signature: signature,
 		Indexed:   index,
 	}
-	socketContext, cancel := context.WithCancel(context.Background())
-	req := icontypes.EventRequest{
+
+	// Create a context with a timeout of 20 seconds.
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+
+	// Create an event request with the given filter and start height.
+	req := &icontypes.EventRequest{
 		EventFilter: filter,
 		Height:      icontypes.NewHexInt(startHeight),
 	}
 	channel := make(chan *icontypes.EventNotification)
-	response := func(conn *websocket.Conn, v *icontypes.EventNotification) error {
+	response := func(_ *websocket.Conn, v *icontypes.EventNotification) error {
 		channel <- v
 		return nil
 	}
@@ -570,16 +575,14 @@ func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight int64, contrac
 				log.Printf("Recovered: %v", err)
 			}
 		}()
-		c.getFullNode().Client.MonitorEvent(socketContext, &req, response, errRespose)
+		c.getFullNode().Client.MonitorEvent(ctx, req, response, errRespose)
 	}()
 
 	select {
 	case v := <-channel:
-		cancel()
 		return v, nil
-	case <-time.After(20 * time.Second):
-		cancel()
-		return nil, fmt.Errorf("failed to find eventLog")
+	case <-ctx.Done():
+		return nil, fmt.Errorf("failed to find eventLog: %v", ctx.Err())
 	}
 }
 

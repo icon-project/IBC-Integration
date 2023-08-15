@@ -369,6 +369,7 @@ func (s *E2ETestSuite) ConvertToPlainString(input string) (string, error) {
 			}
 			plainString = append(plainString, byte(value))
 		}
+		return string(plainString), nil
 	}
 	return "", fmt.Errorf("invalid input length")
 }
