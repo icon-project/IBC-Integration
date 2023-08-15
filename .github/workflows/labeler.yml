@@ -23,6 +23,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: check pr pr-number
+        run: echo ${{ steps.pr.outputs.pull_request_number }}
+
       - uses: actions/labeler@v4
         with:
           dot: true
