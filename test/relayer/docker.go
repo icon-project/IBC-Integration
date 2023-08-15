@@ -472,9 +472,12 @@ func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecRepo
 }
 
 // RestartRelayer restarts the relayer with the same paths as before.
-func (r *DockerRelayer) StopRelayerContainer(ctx context.Context, rep ibc.RelayerExecReporter) error {
+func (r *DockerRelayer) StopRelayerContainer(ctx context.Context, rep ibc.RelayerExecReporter, chainID string, height int64) error {
 	if r.containerLifecycle == nil {
 		return fmt.Errorf("tried to restart relayer without starting first")
+	}
+	if err := r.WriteFileToHomeDir(ctx, fmt.Sprintf(".relayer/%s/latest_height", chainID), []byte(fmt.Sprintf("%d", height))); err != nil {
+		return err
 	}
 	return r.stopRelayer(ctx, rep)
 }
