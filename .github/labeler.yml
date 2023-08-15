@@ -1,4 +1,4 @@
-workflows:
+cicd:
   - '.github/workflows/*'
 
 scripts:

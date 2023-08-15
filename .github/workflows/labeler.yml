@@ -1,15 +1,15 @@
 name: Pull Request Labeler 
 on:
-  push:
-    branches:
-      - "**"
-    # paths:
-    #   - ".github/workflows/labeler.yml"
-  # pull_request_target:
-  #   types:
-  #     - opened
-  #     - edited
-  #     - synchronize
+  # push:
+  #   branches:
+  #     - "**"
+  #   # paths:
+  #   #   - ".github/workflows/labeler.yml"
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
 jobs:
   triage:
     permissions:
@@ -20,9 +20,3 @@ jobs:
       - uses: actions/labeler@v4
         with:
           dot: true
-          pr-number: |
-            572
-            621
-            626
-            618
-            624
