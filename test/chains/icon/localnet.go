@@ -436,7 +436,7 @@ func (c *IconLocalnet) GetIBCAddress(key string) string {
 
 func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	temp := "07-tendermint-0"
-	params := `{"connectionId":"` + connection.ConnectionId + `","counterpartyPortId":"` + connection.CounterPartyPortId + `","counterpartyNid":"` + connection.CounterpartyNid + `","clientId":"` + temp + `","timeoutHeight":"100"}`
+	params := `{"connectionId":"` + connection.ConnectionId + `","counterpartyPortId":"` + connection.CounterPartyPortId + `","counterpartyNid":"` + connection.CounterpartyNid + `","clientId":"` + temp + `","timeoutHeight":"1000"}`
 	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["connection"], connection.KeyName, "configureConnection", params)
 	if err != nil {
 		return nil, err
@@ -451,18 +451,36 @@ func (c *IconLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string,
 	if rollback != nil {
 		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `", "_rollback":"` + hex.EncodeToString(rollback) + `"}`
 	}
-
-	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["dapp"], keyName, "sendMessage", params)
+	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["dapp"], keyName, "sendMessage", params)
 	if err != nil {
 		return nil, err
 	}
-	res := ctx.Value("txResult").(*icontypes.TransactionResult)
-	return context.WithValue(ctx, "txResult", res), nil
+	txn := ctx.Value("txResult").(*icontypes.TransactionResult)
+	return context.WithValue(ctx, "sn", getSn(txn)), nil
+}
+
+// GetPacketReceipt returns the receipt of the packet sent to the target chain
+func (c *IconLocalnet) GetPacketReceipt(ctx context.Context, channelID, portID string) (*chains.XCallResponse, error) {
+	sn := ctx.Value("sn").(string)
+	hash, err := c.getFullNode().ExecuteContract(context.Background(), c.IBCAddresses["dapp"], "packetReceipts", c.keystorePath, `portId=`+portID+`,sequence=`+sn+`,channelId=`+channelID)
+	if err != nil {
+		return nil, err
+	}
+	txHashByte, err := hex.DecodeString(strings.TrimPrefix(hash, "0x"))
+	if err != nil {
+		return nil, fmt.Errorf("error when decoding tx hash: %v ", err)
+	}
+	_, res, err := c.getFullNode().Client.WaitForResults(ctx, &icontypes.TransactionHashParam{Hash: types.NewHexBytes(txHashByte)})
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("try: %+v\n", res)
+	return &chains.XCallResponse{SerialNo: sn, RequestID: "", Data: ""}, nil
 }
 
 // FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
 func (c *IconLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height int64, to string) (*chains.XCallResponse, error) {
-	sn := getSn(ctx.Value("txResult").(*icontypes.TransactionResult))
+	sn := ctx.Value("sn").(string)
 	reqId, destData, err := target.FindCallMessage(context.Background(), height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
 	if err != nil {
 		return nil, err
@@ -569,20 +587,22 @@ func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight int64, contrac
 		return nil
 	}
 	errRespose := func(conn *websocket.Conn, err error) {}
-	go func() {
+	go func(ctx context.Context, req *icontypes.EventRequest, response func(*websocket.Conn, *icontypes.EventNotification) error, errRespose func(*websocket.Conn, error)) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("Recovered: %v", err)
 			}
 		}()
-		c.getFullNode().Client.MonitorEvent(ctx, req, response, errRespose)
-	}()
+		if err := c.getFullNode().Client.MonitorEvent(ctx, req, response, errRespose); err != nil {
+			log.Printf("MonitorEvent error: %v", err)
+		}
+	}(ctx, req, response, errRespose)
 
 	select {
 	case v := <-channel:
 		return v, nil
 	case <-ctx.Done():
-		return nil, fmt.Errorf("failed to find eventLog: %v", ctx.Err())
+		return nil, fmt.Errorf("failed to find eventLog: %s", ctx.Err())
 	}
 }
 
@@ -625,7 +645,7 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 }
 
 // ExecuteContract implements chains.Chain
-func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName string, param string) (context.Context, error) {
+func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	// Check if keystore is alreadry available for given keyName
 	c.CheckForKeyStore(ctx, keyName)
 

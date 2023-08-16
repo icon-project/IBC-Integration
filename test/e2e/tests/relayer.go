@@ -17,6 +17,7 @@ type RelayerTestSuite struct {
 
 func (r *RelayerTestSuite) TestRelayer() {
 	ctx := context.TODO()
+	portID := "transfer"
 	r.T.Run("client state", func(t *testing.T) {
 		chainA, chainB := r.GetChains()
 		res, err := r.GetClientState(ctx, chainA, 0)
@@ -34,7 +35,6 @@ func (r *RelayerTestSuite) TestRelayer() {
 	})
 
 	r.T.Run("connection", func(t *testing.T) {
-		portID := "transfer"
 		chainA, chainB := r.GetChains()
 		stateA, err := r.GetConnectionState(ctx, chainA, 0)
 		t.Log(stateA)
@@ -78,12 +78,12 @@ func (r *RelayerTestSuite) TestRelayer() {
 
 	r.T.Run("crash and recover relay", func(t *testing.T) {
 		chainA, chainB := r.GetChains()
-		r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA))
-		r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA))
+		r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA, portID))
+		r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA, portID))
 	})
 }
 
-func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.Chain) error {
+func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.Chain, portID string) error {
 
 	// Get current height before crash
 	height, err := chainB.(ibc.Chain).Height(ctx)
@@ -92,7 +92,7 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 	}
 
 	// crash Node
-	if err := r.CrashNode(ctx, chainB); err != nil {
+	if err := r.CrashNode(context.Background(), chainB); err != nil {
 		return err
 	}
 
@@ -103,14 +103,14 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 		return err
 	}
 
-	// crash relayer
-	crashedAt, err := r.Crash(ctx)
+	// crash relayer and write block height information for crashed node to file
+	crashedAt, err := r.Crash(ctx, chainB.(ibc.Chain).Config().ChainID, height)
 	if err != nil {
 		return err
 	}
 	r.T.Logf("crash at: %v", crashedAt)
 
-	// recover chainB
+	// recover crashed node now
 	if err := r.ResumeNode(ctx, chainB); err != nil {
 		return err
 	}
@@ -121,7 +121,11 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 	}
 
 	// check if packet was sent in a recovered state
-	res, err := r.FindPacketSent(xcall, chainA, chainB, int64(height))
+	channel, err := r.GetChannel(ctx, chainB, 0, portID)
+	if err != nil {
+		return err
+	}
+	res, err := r.GetPacketReceipt(xcall, chainB, channel.Counterparty.ChannelId, portID)
 	if err != nil {
 		return err
 	}
@@ -142,6 +146,6 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 	if err := r.Ping(context.Background()); err != nil {
 		return err
 	}
-	r.T.Logf("relay recovered. crashed: %v, recovered: %v", crashedAt, crashedAt.Add(recoverdDurarion))
+	r.T.Logf("relay recovered, crashed: %v, recovered: %v", crashedAt, crashedAt.Add(recoverdDurarion))
 	return nil
 }

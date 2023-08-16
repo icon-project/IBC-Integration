@@ -24,14 +24,13 @@ var correcrRequestID = `{"execute_call":{"request_id":"1"}}`
 var nullRequestID = `{"execute_call":{"request_id":""}}`
 var correcrSequenceID = `{"execute_rollback":{"sequence_no":"1"}}`
 
-func (c *CosmosLocalnet) GetQueryParam(method string) Query {
-	var queryMsg Query
+func (c *CosmosLocalnet) GetQueryParam(method, params string) any {
 	if strings.Contains(method, "admin") {
-		queryMsg = Query{GetAdmin: &GetAdmin{}}
+		return Query{GetAdmin: &GetAdmin{}}
 	} else if strings.Contains(method, "fee") {
-		queryMsg = Query{GetProtocolFee: &GetProtocolFee{}}
+		return Query{GetProtocolFee: &GetProtocolFee{}}
 	}
-	return queryMsg
+	return params
 }
 
 func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodName, param string) (context.Context, string, error) {

@@ -28,7 +28,7 @@ type RelayerFactory interface {
 type Relayer interface {
 	ibc.Relayer
 	RestartRelayerContainer(context.Context) error
-	StopRelayerContainer(context.Context, ibc.RelayerExecReporter, string, int64) error
+	StopRelayerContainer(context.Context, ibc.RelayerExecReporter, string, uint64) error
 }
 
 var _ Relayer = (*relayer.DockerRelayer)(nil)

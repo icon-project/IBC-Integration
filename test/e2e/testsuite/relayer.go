@@ -185,6 +185,15 @@ func (s *E2ETestSuite) FindPacketSent(ctx context.Context, src, target chains.Ch
 	return res, nil
 }
 
+// GetPacketReceipt queries the packet receipt on the target chain
+func (s *E2ETestSuite) GetPacketReceipt(ctx context.Context, chain chains.Chain, channelID, portID string) (*chains.XCallResponse, error) {
+	res, err := chain.GetPacketReceipt(ctx, channelID, portID)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (s *E2ETestSuite) QueryPacketCommitment(ctx context.Context, targetChain chains.Chain, reqID, data string) error {
 	_, err := targetChain.ExecuteCall(ctx, reqID, data)
 	return err
@@ -200,10 +209,10 @@ func (s *E2ETestSuite) ResumeNode(ctx context.Context, chain chains.Chain) error
 	return chain.UnpauseNode(ctx)
 }
 
-func (s *E2ETestSuite) Crash(ctx context.Context) (time.Time, error) {
+func (s *E2ETestSuite) Crash(ctx context.Context, chainID string, height uint64) (time.Time, error) {
 	eRep := s.GetRelayerExecReporter()
 	s.logger.Info("crashing relayer")
-	return time.Now(), s.relayer.(interchaintest.Relayer).StopRelayerContainer(ctx, eRep)
+	return time.Now(), s.relayer.(interchaintest.Relayer).StopRelayerContainer(ctx, eRep, chainID, height)
 }
 
 // Recover recover relay

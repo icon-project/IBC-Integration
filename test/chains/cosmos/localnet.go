@@ -142,7 +142,7 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 
 func (c *CosmosLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	temp := c.GetClientName(0)
-	params := `{"connection_id":"` + connection.ConnectionId + `","counterparty_port_id":"` + connection.CounterPartyPortId + `","counterparty_nid":"` + connection.CounterpartyNid + `","client_id":"` + temp + `","timeout_height":100}`
+	params := `{"connection_id":"` + connection.ConnectionId + `","counterparty_port_id":"` + connection.CounterPartyPortId + `","counterparty_nid":"` + connection.CounterpartyNid + `","client_id":"` + temp + `","timeout_height":1000}`
 	return c.ExecuteContract(ctx, c.IBCAddresses["connection"], connection.KeyName, "configure_connection", params)
 }
 
@@ -184,13 +184,12 @@ func (c *CosmosLocalnet) SendPacketXCall(ctx context.Context, keyName, _to strin
 		return nil, err
 	}
 	tx := ctx.Value("txResult").(*TxResul)
-	return context.WithValue(ctx, "txResult", tx), nil
+	return context.WithValue(ctx, "sn", c.findSn(tx)), nil
 }
 
 // FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
 func (c *CosmosLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height int64, to string) (*chains.XCallResponse, error) {
-	tx := ctx.Value("txResult").(*TxResul)
-	sn := c.findSn(tx)
+	sn := ctx.Value("sn").(string)
 	reqId, destData, err := target.FindCallMessage(context.Background(), int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
 	if err != nil {
 		return nil, err
@@ -241,6 +240,17 @@ func (c *CosmosLocalnet) findSn(tx *TxResul) string {
 	return ""
 }
 
+// GetPacketReceipt returns the receipt of the packet sent to the target chain
+func (c *CosmosLocalnet) GetPacketReceipt(ctx context.Context, channelID, portID string) (*chains.XCallResponse, error) {
+	sn := ctx.Value("sn").(string)
+	ctx, err := c.QueryContract(ctx, c.IBCAddresses["xcall"], "get_packet_receipts", `{"sequence":`+sn+`,"port_id":"`+portID+`",channel_id":"`+channelID+`"}`)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(ctx.Value("txResult"))
+	return &chains.XCallResponse{SerialNo: sn, RequestID: "reqId", Data: ""}, nil
+}
+
 func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
 	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
 }
@@ -259,9 +269,7 @@ func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64,
 	if err != nil {
 		return "", "", err
 	}
-
 	return event.Events["wasm-CallMessage.reqId"][0], event.Events["wasm-CallMessage.data"][0], nil
-
 }
 
 func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, error) {
@@ -342,11 +350,13 @@ func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, met
 	time.Sleep(2 * time.Second)
 
 	// get query msg
-	queryMsg := c.GetQueryParam(methodName)
+	queryMsg := c.GetQueryParam(methodName, params)
 	chains.Response = ""
-	err := c.CosmosChain.QueryContract(ctx, contractAddress, queryMsg, &chains.Response)
+	if err := c.CosmosChain.QueryContract(ctx, contractAddress, queryMsg, &chains.Response); err == nil {
+		return ctx, err
+	}
 	fmt.Printf("Response is : %s \n", chains.Response)
-	return ctx, err
+	return context.WithValue(ctx, "txResult", chains.Response), nil
 }
 
 func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
