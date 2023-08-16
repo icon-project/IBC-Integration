@@ -1,8 +1,6 @@
 [workspace]
-members = [
-    "contracts/cosmwasm-vm/*",
-    "libraries/rust/common",
-]
+members = ["contracts/cosmwasm-vm/*", "libraries/rust/common"]
+exclude = ["contracts/cosmwasm-vm/archway"]
 
 [workspace.package]
 authors = ["Icon Foundation<foo@icon.foundation>"]
