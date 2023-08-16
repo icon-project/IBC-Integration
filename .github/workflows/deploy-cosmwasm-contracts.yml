@@ -1,19 +1,19 @@
 name: Cosmwasm Contracts Test Deployment
 on:
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "contracts/cosmwasm-vm/**"
+      - "libraries/common/rust/**"
+      - ".github/workflows/deploy-cosmwasm-contracts.yml"
   push:
     branches:
       - main
-      - fix/use-complete-packet-data-for-write-ack
-  # pull_request:
-  #   branches:
-  #     - main
-  #   paths:
-      - contracts/cosmwasm-vm/**
-      - libraries/common/rust/**
-      - .github/workflows/deploy-cosmwasm-contracts.yml
+
 jobs:
   Build:
-    name: Build & Deploy Cosmasm Contracts
+    name: Build & Deploy Cosmwasm Contracts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -38,8 +38,8 @@ jobs:
           override: true
           profile: minimal
 
-      # - name: Cache Rust dependencies
-      #   uses: Swatinem/rust-cache@v2
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Compile WASM
         run: |

@@ -1,11 +1,11 @@
 [submodule "contracts/javascore/gochain-btp"]
 	path = contracts/javascore/gochain-btp
 	url = https://github.com/izyak/gochain-btp.git
-
-[submodule "contracts/cosmwasm-vm/archway"]
-	path = contracts/cosmwasm-vm/archway
-	url = https://github.com/archway-network/archway.git
     
 [submodule "xCall"]
 	path = xCall
 	url = https://github.com/icon-project/xCall.git
+
+[submodule "contracts/cosmwasm-vm/archway"]
+	path = contracts/cosmwasm-vm/archway
+	url = https://github.com/archway-network/archway.git
