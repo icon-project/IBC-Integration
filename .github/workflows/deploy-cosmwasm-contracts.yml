@@ -45,6 +45,7 @@ jobs:
         run: |
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          make build-builder-img
           make optimize-cosmwasm
 
       - name: Check WASM Size
