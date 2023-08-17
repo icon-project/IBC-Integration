@@ -32,9 +32,9 @@ xCall, a standard for generic cross-chain messaging along with IBC provides dyna
 interconnected dapps.
 
 Additional information on how IBC works can be found [here](https://ibc.cosmos.network/). and xCall spec is
-defined [here](https://github.com/icon-project/IIPs/blob/master/IIPS/iip-52.md)
+defined [here](https://github.com/icon-project/xCall/blob/main/docs/adr/xcall.md)
 
-# Table of Content
+# Table of Contents.
 
 - [IBC INTEGRATION](#ibc-integration)
 - [Table of Content](#table-of-content)
