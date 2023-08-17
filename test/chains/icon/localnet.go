@@ -1,6 +1,7 @@
 package icon
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -460,26 +461,22 @@ func (c *IconLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string,
 }
 
 // GetPacketReceipt returns the receipt of the packet sent to the target chain
-func (c *IconLocalnet) GetPacketReceipt(ctx context.Context, channelID, portID string) (*chains.XCallResponse, error) {
+func (c *IconLocalnet) GetPacketReceipt(ctx context.Context, channelID, portID string) error {
 	sn := ctx.Value("sn").(string)
-	hash, err := c.getFullNode().ExecuteContract(context.Background(), c.IBCAddresses["dapp"], "packetReceipts", c.keystorePath, `portId=`+portID+`,sequence=`+sn+`,channelId=`+channelID)
+	params := `{"params":{"channelId":"` + channelID + `","portId":"` + portID + `","sequence":"` + sn + `"}}`
+	ctx, err := c.QueryContract(ctx, c.IBCAddresses["ibc"], "getPacketReceipt", params)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	txHashByte, err := hex.DecodeString(strings.TrimPrefix(hash, "0x"))
-	if err != nil {
-		return nil, fmt.Errorf("error when decoding tx hash: %v ", err)
+	val := ctx.Value("txResult").([]byte)
+	if !bytes.Equal(val, []byte(icontypes.ResultStatusSuccess)) {
+		return fmt.Errorf("packet not received: %s", val)
 	}
-	_, res, err := c.getFullNode().Client.WaitForResults(ctx, &icontypes.TransactionHashParam{Hash: types.NewHexBytes(txHashByte)})
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("try: %+v\n", res)
-	return &chains.XCallResponse{SerialNo: sn, RequestID: "", Data: ""}, nil
+	return nil
 }
 
 // FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
-func (c *IconLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height int64, to string) (*chains.XCallResponse, error) {
+func (c *IconLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height uint64, to string) (*chains.XCallResponse, error) {
 	sn := ctx.Value("sn").(string)
 	reqId, destData, err := target.FindCallMessage(context.Background(), height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
 	if err != nil {
@@ -498,7 +495,7 @@ func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyN
 	if err != nil {
 		return nil, err
 	}
-	return c.FindTargetXCallMessage(ctx, targetChain, int64(height), strings.Split(to, "/")[1])
+	return c.FindTargetXCallMessage(ctx, targetChain, height, strings.Split(to, "/")[1])
 }
 
 func getSn(tx *icontypes.TransactionResult) string {
@@ -517,7 +514,7 @@ func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, k
 	params := `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `"}`
 	ctx, _ = c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], keyName, "sendCallMessage", params)
 	sn := getSn(ctx.Value("txResult").(*icontypes.TransactionResult))
-	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	reqId, destData, err := targetChain.FindCallMessage(ctx, height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	return sn, reqId, destData, err
 }
 
@@ -529,7 +526,7 @@ func (c *IconLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.
 	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], "gochain", "executeRollback", `{"_sn":"`+sn+`"}`)
 }
 
-func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, string, error) {
+func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight uint64, from, to, sn string) (string, string, error) {
 	index := []*string{&from, &to, &sn}
 	event, err := c.FindEvent(ctx, startHeight, "xcall", "CallMessage(str,str,int,int,bytes)", index)
 	if err != nil {
@@ -547,7 +544,7 @@ func (c *IconLocalnet) FindCallMessage(ctx context.Context, startHeight int64, f
 	return reqId, data, nil
 }
 
-func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, error) {
+func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight uint64, sn string) (string, error) {
 	index := []*string{&sn}
 	event, err := c.FindEvent(ctx, startHeight, "xcall", "ResponseMessage(int,int)", index)
 	if err != nil {
@@ -565,21 +562,21 @@ func (c *IconLocalnet) FindCallResponse(ctx context.Context, startHeight int64, 
 	return strconv.FormatInt(code, 10), nil
 }
 
-func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, signature string, index []*string) (*icontypes.EventNotification, error) {
+func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight uint64, contract, signature string, index []*string) (*icontypes.EventNotification, error) {
 	filter := icontypes.EventFilter{
 		Addr:      icontypes.Address(c.IBCAddresses[contract]),
 		Signature: signature,
 		Indexed:   index,
 	}
 
-	// Create a context with a timeout of 20 seconds.
-	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	// Create a context with a timeout of 16 seconds.
+	ctx, cancel := context.WithTimeout(ctx, 16*time.Second)
 	defer cancel()
 
 	// Create an event request with the given filter and start height.
 	req := &icontypes.EventRequest{
 		EventFilter: filter,
-		Height:      icontypes.NewHexInt(startHeight),
+		Height:      icontypes.NewHexInt(int64(startHeight)),
 	}
 	channel := make(chan *icontypes.EventNotification)
 	response := func(_ *websocket.Conn, v *icontypes.EventNotification) error {

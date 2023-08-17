@@ -72,6 +72,10 @@ func (r *RelayerTestSuite) TestRelayer() {
 		r.Require().NoError(r.Ping(context.Background()))
 	})
 
+	r.T.Run("multi relay packet flow", func(t *testing.T) {
+		r.Require().NoError(r.Ping(context.Background()))
+	})
+
 	r.T.Run("unordered packet test", func(t *testing.T) {
 
 	})
@@ -84,68 +88,53 @@ func (r *RelayerTestSuite) TestRelayer() {
 }
 
 func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.Chain, portID string) error {
-
-	// Get current height before crash
-	height, err := chainB.(ibc.Chain).Height(ctx)
-	if err != nil {
-		return err
-	}
-
-	// crash Node
-	if err := r.CrashNode(context.Background(), chainB); err != nil {
-		return err
-	}
-
-	// send packet from chainA to chainB crashed node and check if it is received
-	var msg = chainA.(ibc.Chain).Config().ChainID
-	xcall, err := r.SendPacket(context.Background(), chainA, chainB, msg)
-	if err != nil {
-		return err
-	}
-
 	// crash relayer and write block height information for crashed node to file
-	crashedAt, err := r.Crash(ctx, chainB.(ibc.Chain).Config().ChainID, height)
+	callbackA := r.WriteBlockHeight(ctx, chainA)
+	callbackB := r.WriteBlockHeight(ctx, chainB)
+	crashedAt, err := r.Crash(ctx, callbackA, callbackB)
 	if err != nil {
 		return err
 	}
-	r.T.Logf("crash at: %v", crashedAt)
-
-	// recover crashed node now
-	if err := r.ResumeNode(ctx, chainB); err != nil {
+	r.T.Logf("crashed at: %s", crashedAt)
+	currentHeight, err := chainB.(ibc.Chain).Height(ctx)
+	if err != nil {
+		return err
+	}
+	// send packet from chainA to chainB crashed node and check if it is received
+	var msg = chainB.(ibc.Chain).Config().ChainID
+	xcall, err := r.SendPacket(ctx, chainA, chainB, msg)
+	if err != nil {
 		return err
 	}
 	// recover relayer now
-	recoverdDurarion, err := r.Recover(ctx, crashedAt)
+	recoveredAt, err := r.Recover(ctx, chainA.(ibc.Chain), currentHeight)
 	if err != nil {
 		return err
 	}
-
+	r.T.Logf("fully recovered at: %s", recoveredAt)
 	// check if packet was sent in a recovered state
-	channel, err := r.GetChannel(ctx, chainB, 0, portID)
+	res, err := r.FindPacketSent(xcall, chainA, chainB, currentHeight)
 	if err != nil {
 		return err
 	}
-	res, err := r.GetPacketReceipt(xcall, chainB, channel.Counterparty.ChannelId, portID)
+	msg, err = r.ConvertToPlainString(res.Data)
 	if err != nil {
 		return err
 	}
-
-	// check if packet was received in a recovered state
-	if err := r.QueryPacketCommitment(ctx, chainB, res.RequestID, res.Data); err != nil {
-		return err
+	if res.Data != msg {
+		return fmt.Errorf("invalid packet: %s", msg)
 	}
-	data, err := r.ConvertToPlainString(res.Data)
+	channel, err := r.GetChannel(ctx, chainA, 0, portID)
 	if err != nil {
 		return err
 	}
-	if msg != data {
-		return fmt.Errorf("expected packet data to be %s but got %s", msg, res.Data)
+	if err := r.GetPacketReceipt(xcall, chainB, channel.Counterparty.ChannelId, channel.Counterparty.PortId); err != nil {
+		return err
 	}
-
 	// check if relay is working as expected with ping pong to cross chain
-	if err := r.Ping(context.Background()); err != nil {
+	if err := r.Ping(ctx); err != nil {
 		return err
 	}
-	r.T.Logf("relay recovered, crashed: %v, recovered: %v", crashedAt, crashedAt.Add(recoverdDurarion))
+	r.T.Logf("relay recovered successfully")
 	return nil
 }

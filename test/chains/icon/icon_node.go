@@ -335,15 +335,15 @@ func (tn *IconNode) WriteFile(ctx context.Context, content []byte, relPath strin
 
 func (in *IconNode) QueryContract(ctx context.Context, scoreAddress, methodName, params string) ([]byte, error) {
 	uri := fmt.Sprintf("http://%s:9080/api/v3", in.Name())
+	var args = []string{"rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", uri}
 	if params != "" {
-		out, _, err := in.ExecBin(ctx, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--param", params, "--uri", uri)
-		if err != nil {
-			return out, err
+		var paramName = "--param"
+		if strings.HasPrefix(params, "{") && strings.HasSuffix(params, "}") {
+			paramName = "--raw"
 		}
-		return out, nil
+		args = append(args, paramName, params)
 	}
-
-	out, _, err := in.ExecBin(ctx, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", uri)
+	out, _, err := in.ExecBin(ctx, args...)
 	if err != nil {
 		return nil, err
 	}

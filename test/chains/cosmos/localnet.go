@@ -1,6 +1,7 @@
 package cosmos
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/hex"
@@ -188,25 +189,25 @@ func (c *CosmosLocalnet) SendPacketXCall(ctx context.Context, keyName, _to strin
 }
 
 // FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
-func (c *CosmosLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height int64, to string) (*chains.XCallResponse, error) {
+func (c *CosmosLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height uint64, to string) (*chains.XCallResponse, error) {
 	sn := ctx.Value("sn").(string)
-	reqId, destData, err := target.FindCallMessage(context.Background(), int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
+	reqId, destData, err := target.FindCallMessage(context.Background(), height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], to, sn)
 	if err != nil {
 		return nil, err
 	}
 	return &chains.XCallResponse{SerialNo: sn, RequestID: reqId, Data: destData}, nil
 }
 
-func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data, rollback []byte) (*chains.XCallResponse, error) {
+func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyName, to string, data, rollback []byte) (*chains.XCallResponse, error) {
 	height, err := targetChain.(ibc.Chain).Height(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ctx, err = c.SendPacketXCall(ctx, keyName, _to, data, rollback)
+	ctx, err = c.SendPacketXCall(ctx, keyName, to, data, rollback)
 	if err != nil {
 		return nil, err
 	}
-	return c.FindTargetXCallMessage(ctx, targetChain, int64(height), strings.Split(_to, "/")[1])
+	return c.FindTargetXCallMessage(ctx, targetChain, height, strings.Split(to, "/")[1])
 }
 
 func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error) {
@@ -220,7 +221,7 @@ func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain,
 
 	tx := ctx.Value("txResult").(*TxResul)
 	sn := c.findSn(tx)
-	reqId, destData, err := targetChain.FindCallMessage(ctx, int64(height), c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
+	reqId, destData, err := targetChain.FindCallMessage(ctx, height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	return sn, reqId, destData, err
 }
 
@@ -241,14 +242,21 @@ func (c *CosmosLocalnet) findSn(tx *TxResul) string {
 }
 
 // GetPacketReceipt returns the receipt of the packet sent to the target chain
-func (c *CosmosLocalnet) GetPacketReceipt(ctx context.Context, channelID, portID string) (*chains.XCallResponse, error) {
+func (c *CosmosLocalnet) GetPacketReceipt(ctx context.Context, channelID, portID string) error {
 	sn := ctx.Value("sn").(string)
-	ctx, err := c.QueryContract(ctx, c.IBCAddresses["xcall"], "get_packet_receipts", `{"sequence":`+sn+`,"port_id":"`+portID+`",channel_id":"`+channelID+`"}`)
+	ctx, err := c.QueryContract(ctx, c.IBCAddresses["ibc"], "get_packet_receipt", `{"sequence":`+sn+`,"port_id":"`+portID+`",channel_id":"`+channelID+`"}`)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	fmt.Println(ctx.Value("txResult"))
-	return &chains.XCallResponse{SerialNo: sn, RequestID: "reqId", Data: ""}, nil
+	var data = ctx.Value("txResult").(string)
+	hexDecoded, err := hex.DecodeString(data)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(hexDecoded, []byte("0x1")) {
+		return fmt.Errorf("packet not received: %s", data)
+	}
+	return nil
 }
 
 func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
@@ -259,7 +267,7 @@ func (c *CosmosLocalnet) ExecuteRollback(ctx context.Context, sn string) (contex
 	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
 }
 
-func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64, from, to, sn string) (string, string, error) {
+func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight uint64, from, to, sn string) (string, string, error) {
 	index := strings.Join([]string{
 		fmt.Sprintf("wasm-CallMessage.from CONTAINS '%s'", from),
 		fmt.Sprintf("wasm-CallMessage.to CONTAINS '%s'", to),
@@ -272,7 +280,7 @@ func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight int64,
 	return event.Events["wasm-CallMessage.reqId"][0], event.Events["wasm-CallMessage.data"][0], nil
 }
 
-func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight int64, sn string) (string, error) {
+func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight uint64, sn string) (string, error) {
 	index := fmt.Sprintf("wasm-ResponseMessage.sn CONTAINS '%s'", sn)
 	event, err := c.FindEvent(ctx, startHeight, "xcall", index)
 	if err != nil {
@@ -282,7 +290,7 @@ func (c *CosmosLocalnet) FindCallResponse(ctx context.Context, startHeight int64
 	return event.Events["wasm-ResponseMessage.code"][0], nil
 }
 
-func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight int64, contract, index string) (*ctypes.ResultEvent, error) {
+func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight uint64, contract, index string) (*ctypes.ResultEvent, error) {
 	endpoint := c.GetHostRPCAddress()
 	client, err := rpchttp.New(endpoint, "/websocket")
 	if err != nil {
@@ -356,7 +364,7 @@ func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, met
 		return ctx, err
 	}
 	fmt.Printf("Response is : %s \n", chains.Response)
-	return context.WithValue(ctx, "txResult", chains.Response), nil
+	return context.WithValue(ctx, "txResult", chains.Response.(map[string]interface{})["data"]), nil
 }
 
 func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {

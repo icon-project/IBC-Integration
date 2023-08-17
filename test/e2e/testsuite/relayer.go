@@ -13,6 +13,7 @@ import (
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"golang.org/x/sync/errgroup"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
@@ -177,7 +178,7 @@ func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain,
 }
 
 // QueryPacketCommitmentTarget queries the packet commitment on the target chain
-func (s *E2ETestSuite) FindPacketSent(ctx context.Context, src, target chains.Chain, startHeight int64) (*chains.XCallResponse, error) {
+func (s *E2ETestSuite) FindPacketSent(ctx context.Context, src, target chains.Chain, startHeight uint64) (*chains.XCallResponse, error) {
 	res, err := src.FindTargetXCallMessage(ctx, target, startHeight, target.GetIBCAddress("dapp"))
 	if err != nil {
 		return nil, err
@@ -186,12 +187,8 @@ func (s *E2ETestSuite) FindPacketSent(ctx context.Context, src, target chains.Ch
 }
 
 // GetPacketReceipt queries the packet receipt on the target chain
-func (s *E2ETestSuite) GetPacketReceipt(ctx context.Context, chain chains.Chain, channelID, portID string) (*chains.XCallResponse, error) {
-	res, err := chain.GetPacketReceipt(ctx, channelID, portID)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+func (s *E2ETestSuite) GetPacketReceipt(ctx context.Context, chain chains.Chain, channelID, portID string) error {
+	return chain.GetPacketReceipt(ctx, channelID, portID)
 }
 
 func (s *E2ETestSuite) QueryPacketCommitment(ctx context.Context, targetChain chains.Chain, reqID, data string) error {
@@ -209,22 +206,56 @@ func (s *E2ETestSuite) ResumeNode(ctx context.Context, chain chains.Chain) error
 	return chain.UnpauseNode(ctx)
 }
 
-func (s *E2ETestSuite) Crash(ctx context.Context, chainID string, height uint64) (time.Time, error) {
+func (s *E2ETestSuite) Crash(ctx context.Context, callbacks ...func() error) (time.Time, error) {
 	eRep := s.GetRelayerExecReporter()
 	s.logger.Info("crashing relayer")
-	return time.Now(), s.relayer.(interchaintest.Relayer).StopRelayerContainer(ctx, eRep, chainID, height)
+	now := time.Now()
+	if err := s.relayer.(interchaintest.Relayer).StopRelayerContainer(ctx, eRep); err != nil {
+		return now, err
+	}
+
+	if len(callbacks) > 0 {
+		var eg errgroup.Group
+		for _, cb := range callbacks {
+			eg.Go(cb)
+		}
+		if err := eg.Wait(); err != nil {
+			return now, err
+		}
+	}
+	return now, nil
 }
 
-// Recover recover relay
-func (s *E2ETestSuite) Recover(ctx context.Context, crashedAt time.Time) (time.Duration, error) {
+// WriteBlockHeight writes the block height to the given file.
+func (s *E2ETestSuite) WriteBlockHeight(ctx context.Context, chain chains.Chain) func() error {
+	return func() error {
+		height, err := chain.(ibc.Chain).Height(ctx)
+		if err != nil {
+			return err
+		}
+		chanID := chain.(ibc.Chain).Config().ChainID
+		return s.relayer.(interchaintest.Relayer).WriteBlockHeight(ctx, chanID, height)
+	}
+}
+
+// Recover recovers a relay and waits for the relay to catch up to the current height of the stopped chains.
+// This is because relay needs to sync with the counterchain network when it was on crashed state.
+func (s *E2ETestSuite) Recover(ctx context.Context, chain ibc.Chain, stoppedHeight uint64) (time.Time, error) {
 	s.logger.Info("waiting for relayer to restart")
 	if err := s.relayer.(interchaintest.Relayer).RestartRelayerContainer(ctx); err != nil {
-		return 0, err
+		return time.Time{}, err
+	}
+	now := time.Now()
+	currentHeight, err := chain.Height(ctx)
+	if err != nil {
+		return now, err
+	}
+	// Wait for the relayer to catch up to the current height of the stopped chain.
+	if err := test.WaitForBlocks(ctx, int(currentHeight-stoppedHeight), chain); err != nil {
+		return now, err
 	}
 	s.logger.Info("relayer restarted")
-	// wait for relayer to start.
-	chainA, chainB := s.GetChains()
-	return time.Since(crashedAt), test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain))
+	return now, nil
 }
 
 // Ping checks if the relayer is running
