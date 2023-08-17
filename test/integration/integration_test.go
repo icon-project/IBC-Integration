@@ -1,30 +1,34 @@
-package integration_test
+package int_test
 
 import (
-	"flag"
-	"fmt"
-	"os"
+	"context"
+	"github.com/icon-project/ibc-integration/test/integration/tests"
+	"github.com/icon-project/ibc-integration/test/testsuite"
 	"testing"
 
-	"github.com/spf13/viper"
+	"github.com/stretchr/testify/suite"
 )
 
+func TestIntegrationSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTest))
+}
 
-func TestMain(m *testing.M) {
-	var config string
-	flag.StringVar(&config, "config", "", "path to config file")
-	flag.Parse()
-	
-	if config == "" {
-		fmt.Println("Config not provided")
-		os.Exit(1)
-	}
+type IntegrationTest struct {
+	testsuite.E2ETestSuite
+}
 
-	viper.SetConfigFile(config)
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error reading config file: %s\n", err)
-		os.Exit(1)
-	}
+func (s *IntegrationTest) TestE2E_all() {
+	t := s.T()
+	ctx := context.TODO()
 
-	os.Exit(m.Run())
+	t.Run("test relayer", func(t *testing.T) {
+		ctx, rly, err := s.SetupRelayer(ctx)
+		s.Require().NoError(err)
+		s.StartRelayer(rly)
+		relayer := tests.RelayerTestSuite{
+			E2ETestSuite: &s.E2ETestSuite,
+			T:            t,
+		}
+		relayer.TestRelayer(ctx)
+	})
 }

@@ -178,7 +178,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
                     .map_err(|error| ContractError::IbcDecodeError { error })?;
 
-                self.send_packet(deps, packet)
+                self.send_packet(deps, &env, packet)
             }
             CoreExecuteMsg::ReceivePacket { msg } => {
                 cw_println!(deps, "[IBCCore] Receive Packet Called");
@@ -456,6 +456,47 @@ impl<'a> CwIbcCoreContext<'a> {
                 let height: u64 = deps.querier.query(&query).unwrap();
 
                 to_binary(&height)
+            }
+            QueryMsg::GetPacketHeights {
+                port_id,
+                channel_id,
+                start_sequence,
+                end_sequence,
+            } => {
+                let port_id = IbcPortId::from_str(&port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&channel_id).unwrap();
+                let heights = self
+                    .ibc_store()
+                    .get_packet_heights(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        start_sequence,
+                        end_sequence,
+                    )
+                    .unwrap();
+                to_binary(&heights)
+            }
+
+            QueryMsg::GetMissingPacketReceipts {
+                port_id,
+                channel_id,
+                start_sequence,
+                end_sequence,
+            } => {
+                let port_id = IbcPortId::from_str(&port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&channel_id).unwrap();
+                let missing = self
+                    .ibc_store()
+                    .get_missing_packet_receipts(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        start_sequence,
+                        end_sequence,
+                    )
+                    .unwrap();
+                to_binary(&missing)
             }
         }
     }

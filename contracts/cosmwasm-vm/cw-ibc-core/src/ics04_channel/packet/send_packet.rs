@@ -25,7 +25,12 @@ impl<'a> CwIbcCoreContext<'a> {
     /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
     /// message and `ContractError` is an enum representing the possible errors that can occur during
     /// the execution of the function.
-    pub fn send_packet(&self, deps: DepsMut, packet: RawPacket) -> Result<Response, ContractError> {
+    pub fn send_packet(
+        &self,
+        deps: DepsMut,
+        env: &Env,
+        packet: RawPacket,
+    ) -> Result<Response, ContractError> {
         let src_port = to_ibc_port_id(&packet.source_port)?;
         let src_channel = to_ibc_channel_id(&packet.source_channel)?;
 
@@ -116,6 +121,14 @@ impl<'a> CwIbcCoreContext<'a> {
             ),
         )?;
         cw_println!(deps, " packet commitment stored");
+        let height = env.block.height;
+        self.ibc_store().store_sent_packet(
+            deps.storage,
+            &src_port,
+            &src_channel,
+            packet.sequence,
+            height,
+        )?;
 
         let event = create_packet_event(
             IbcEventType::SendPacket,

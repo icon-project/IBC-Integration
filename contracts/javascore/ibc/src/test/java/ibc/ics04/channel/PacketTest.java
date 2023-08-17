@@ -3,6 +3,7 @@ package ibc.ics04.channel;
 import static ibc.ics04.channel.IBCPacket.createPacketCommitmentBytes;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 import ibc.icon.score.util.Proto;
 import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
@@ -249,6 +251,7 @@ public class PacketTest extends TestBase {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void sendPacket() {
         // Arrange
         Height latestHeight = new Height();
@@ -280,6 +283,10 @@ public class PacketTest extends TestBase {
         verify(packetSpy).sendBTPMessage(clientId, ByteUtil.join(key2, expectedCommitment));
         assertEquals(BigInteger.valueOf(3),
                 packet.call("getNextSequenceSend", basePacket.getSourcePort(), basePacket.getSourceChannel()));
+        Map<String, Long> heights =  (Map<String, Long>)packet.call("getPacketHeights",basePacket.getSourcePort(), basePacket.getSourceChannel(), 0, 10);
+        assertNotNull(heights.get("1"));
+        assertNotNull(heights.get("2"));
+        assertEquals(heights.size(), 2);
     }
 
     @Test
@@ -386,6 +393,7 @@ public class PacketTest extends TestBase {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void recvPacket_outOfOrder_UnOrdered() {
         // Arrange
         baseChannel.setOrdering(Channel.Order.ORDER_UNORDERED);
@@ -410,6 +418,10 @@ public class PacketTest extends TestBase {
                 BigInteger.ZERO, proof, prefix.getKeyPrefix(), commitmentPath1, commitmentBytes);
         verify(lightClient.mock).verifyMembership(clientId, proofHeight.encode(), baseConnection.getDelayPeriod(),
                 BigInteger.ZERO, proof, prefix.getKeyPrefix(), commitmentPath2, commitmentBytes);
+        List<Integer> receipts =  (List<Integer>)packet.call("getMissingPacketReceipts",basePacket.getSourcePort(), basePacket.getSourceChannel(), 1, 4);
+        assertEquals(receipts.get(0), 3);
+        assertEquals(receipts.get(1), 4);
+        assertEquals(receipts.size(), 2);
     }
 
     @Test
