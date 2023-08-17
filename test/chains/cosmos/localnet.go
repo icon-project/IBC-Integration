@@ -364,7 +364,7 @@ func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, met
 		return ctx, err
 	}
 	fmt.Printf("Response is : %s \n", chains.Response)
-	return context.WithValue(ctx, "txResult", chains.Response.(map[string]interface{})["data"]), nil
+	return context.WithValue(ctx, "txResult", chains.Response.(string)), nil
 }
 
 func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
