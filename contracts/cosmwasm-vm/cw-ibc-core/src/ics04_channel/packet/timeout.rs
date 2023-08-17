@@ -240,6 +240,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     &channel_id,
                     packet.sequence.into(),
                 )?;
+                self.clear_callback_data(deps.storage, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE);
                 let chan_end_on_a = {
                     if let Order::Ordered = chan_end_on_a.ordering {
                         let mut chan_end_on_a = chan_end_on_a;

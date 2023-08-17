@@ -117,7 +117,11 @@ fn test_validate_open_confirm_channel() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &port_id,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract

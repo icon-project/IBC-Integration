@@ -75,14 +75,26 @@ impl<'a> CwIbcCoreContext<'a> {
         data: &T,
     ) -> Result<(), ContractError>
     where
-        T: Serialize + ?Sized,
+        T: DeserializeOwned + Serialize + ?Sized,
     {
+        if self.has_callback_data(store, id) {
+            return Err(ContractError::CallAlreadyInProgress);
+        }
+
         let bytes = to_vec(data).map_err(ContractError::Std)?;
         return self
             .cw_ibc_store
             .callback_data()
             .save(store, id, &bytes)
             .map_err(ContractError::Std);
+    }
+
+    pub fn has_callback_data(&self, store: &dyn Storage, id: u64) -> bool {
+        return self.ibc_store().callback_data().load(store, id).is_ok();
+    }
+
+    pub fn clear_callback_data(&self, store: &mut dyn Storage, id: u64) {
+        return self.ibc_store().callback_data().remove(store, id);
     }
 
     pub fn get_callback_data<T: DeserializeOwned>(

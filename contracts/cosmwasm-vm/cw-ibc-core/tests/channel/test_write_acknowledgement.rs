@@ -109,7 +109,11 @@ pub fn setup_test(
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &dst_port,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract

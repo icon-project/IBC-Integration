@@ -129,7 +129,11 @@ fn test_for_channel_open_try_execution_message() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &port_id,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract
@@ -251,7 +255,11 @@ fn test_for_channel_open_ack_execution() {
 
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &port_id,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract
@@ -404,7 +412,11 @@ fn test_for_channel_open_confirm() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &port_id,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract
@@ -634,7 +646,11 @@ fn test_for_channel_close_confirm() {
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &port_id,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract
@@ -884,7 +900,11 @@ fn test_for_recieve_packet() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &dst_port,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract
@@ -1144,7 +1164,11 @@ fn test_for_ack_execute() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &dst_port,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract

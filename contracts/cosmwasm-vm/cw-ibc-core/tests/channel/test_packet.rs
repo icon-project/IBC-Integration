@@ -1,3 +1,4 @@
+use cosmwasm_std::testing::mock_info;
 use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_port_id};
 
 use super::*;
@@ -104,8 +105,11 @@ fn test_packet_send() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-
-    let res = contract.send_packet(deps.as_mut(), &mock_env(), packet);
+    let info = mock_info("moduleaddress", &vec![]);
+    contract
+        .bind_port(deps.as_mut().storage, &src_port, info.sender.clone())
+        .unwrap();
+    let res = contract.send_packet(deps.as_mut(), &mock_env(), info, packet);
     println!("{:?}", res);
     assert!(res.is_ok());
     let res = res.unwrap();
@@ -132,8 +136,16 @@ fn test_packet_send_fail_channel_not_found() {
 
     packet.sequence = 1;
     packet.data = vec![0];
+    let info = mock_info("moduleaddress", &vec![]);
     contract
-        .send_packet(deps.as_mut(), &mock_env(), packet)
+        .bind_port(
+            deps.as_mut().storage,
+            &to_ibc_port_id(&packet.source_port).unwrap(),
+            info.sender.clone(),
+        )
+        .unwrap();
+    contract
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
 
@@ -226,8 +238,15 @@ fn test_packet_send_fail_misiing_sequense() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-
+    let info = mock_info("moduleaddress", &vec![]);
     contract
-        .send_packet(deps.as_mut(), &mock_env(), packet)
+        .bind_port(
+            deps.as_mut().storage,
+            &to_ibc_port_id(&packet.source_port).unwrap(),
+            info.sender.clone(),
+        )
+        .unwrap();
+    contract
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }

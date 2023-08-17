@@ -1,6 +1,7 @@
 pub mod setup;
 use common::ibc::core::ics24_host::identifier::PortId;
 use common::utils::keccak256;
+use cosmwasm_std::Addr;
 use cw_common::commitment;
 use cw_common::ibc_types::IbcChannelId;
 use cw_ibc_core::context::CwIbcCoreContext;
@@ -78,7 +79,7 @@ fn test_bind_port() {
     let res = ctx.bind_port(
         &mut deps.storage,
         &PortId::default(),
-        "ContractAddress".to_string(),
+        Addr::unchecked("ContractAddress"),
     );
     assert!(res.is_ok());
     let expected = ctx.get_capability(&mut deps.storage, path);

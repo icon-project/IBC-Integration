@@ -714,6 +714,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 )?;
 
                 self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_INIT);
                 let channel_id_event = create_channel_id_generated_event(channel_id.clone());
                 let main_event = create_channel_event(
                     IbcEventType::OpenInitChannel,
@@ -795,6 +796,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 )?;
 
                 self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_TRY);
                 Ok(Response::new()
                     .add_event(channel_id_event)
                     .add_event(main_event))
@@ -838,7 +840,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
 
                 self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
-
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_CLOSE_INIT);
                 let event = create_channel_event(
                     IbcEventType::CloseInitChannel,
                     port_id.as_str(),
@@ -888,7 +890,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.set_state(State::Open); // State Change
                 self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
                 self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
-
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE);
                 let event = create_channel_event(
                     IbcEventType::OpenAckChannel,
                     port_id.as_str(),
@@ -940,6 +942,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.set_state(State::Open); // State Change
                 self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
                 self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE);
                 let event = create_channel_event(
                     IbcEventType::OpenConfirmChannel,
                     port_id.as_str(),
@@ -987,6 +990,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                 channel_end.set_state(State::Closed); // State Change
                 self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
                 self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE);
                 let event = create_channel_event(
                     IbcEventType::CloseConfirmChannel,
                     port_id.as_str(),

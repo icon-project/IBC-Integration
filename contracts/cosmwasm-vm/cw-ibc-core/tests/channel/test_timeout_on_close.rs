@@ -99,7 +99,11 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
     let light_client = LightClient::new("lightclient".to_string());
 
     contract
-        .bind_port(&mut deps.storage, &src_port, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &src_port,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     contract

@@ -144,11 +144,16 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         store: &mut dyn Storage,
         port_id: &IbcPortId,
-        address: String,
+        address: Addr,
     ) -> Result<Response, ContractError> {
-        self.claim_capability(store, port_id.as_str().as_bytes().to_vec(), address.clone())?;
+        let addr_string = address.to_string();
+        self.claim_capability(
+            store,
+            port_id.as_str().as_bytes().to_vec(),
+            addr_string.clone(),
+        )?;
 
-        self.store_module_by_port(store, port_id, ModuleId::from_str(&address).unwrap())
+        self.store_module_by_port(store, port_id, ModuleId::from_str(&addr_string).unwrap())
             .unwrap();
         Ok(Response::new()
             .add_attribute("method", "bind_port")

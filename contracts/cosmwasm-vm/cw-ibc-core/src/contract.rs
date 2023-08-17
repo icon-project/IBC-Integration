@@ -178,7 +178,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
                     .map_err(|error| ContractError::IbcDecodeError { error })?;
 
-                self.send_packet(deps, &env, packet)
+                self.send_packet(deps, &env, info, packet)
             }
             CoreExecuteMsg::ReceivePacket { msg } => {
                 cw_println!(deps, "[IBCCore] Receive Packet Called");
@@ -218,7 +218,7 @@ impl<'a> CwIbcCoreContext<'a> {
                         error: DecodeError::new(error.to_string()),
                     }
                 })?;
-                let checked_address = to_checked_address(deps.as_ref(), &address).to_string();
+                let checked_address = to_checked_address(deps.as_ref(), &address);
                 self.bind_port(deps.storage, &port_id, checked_address)
             }
             CoreExecuteMsg::SetExpectedTimePerBlock { block_time } => {

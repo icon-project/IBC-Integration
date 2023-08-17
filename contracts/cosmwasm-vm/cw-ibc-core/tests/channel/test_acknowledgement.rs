@@ -305,7 +305,11 @@ fn test_acknowledgement_packet_validate_ordered() {
         .unwrap();
     mock_lightclient_reply(&mut deps);
     contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &dst_port,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
@@ -405,7 +409,11 @@ fn test_acknowledgement_packet_validate_unordered() {
         .unwrap();
     mock_lightclient_reply(&mut deps);
     contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
+        .bind_port(
+            &mut deps.storage,
+            &dst_port,
+            Addr::unchecked("moduleaddress"),
+        )
         .unwrap();
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);

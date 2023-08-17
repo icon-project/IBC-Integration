@@ -191,7 +191,7 @@ impl<'a> CwIbcCoreContext<'a> {
             funds: info.funds,
         });
         let sub_msg: SubMsg =
-            SubMsg::reply_always(create_client_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
+            SubMsg::reply_on_success(create_client_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
         Ok(Response::new()
             .add_attribute("action", "channel")
@@ -268,6 +268,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     deps.as_ref().storage,
                     VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
                 )?;
+                self.clear_callback_data(deps.storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
                 let port = packet.dest.port_id.clone();
                 let chan = packet.dest.channel_id.clone();
                 let seq = packet.sequence;
