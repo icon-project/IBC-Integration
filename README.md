@@ -136,7 +136,7 @@ make optimize-build
 
 ### End-to-End Testing for the System
 
-[End-to-End Testing Setup](./docs/e2e_test_setup.md)
+[End-to-End Testing Setup](./docs/e2e-integration-test-setup.md)
 
 ## Deploy <a name = "deploy"> </a>
 

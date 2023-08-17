@@ -3,6 +3,7 @@ package testsuite
 import (
 	"context"
 	"fmt"
+	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"strconv"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
@@ -66,6 +67,80 @@ func newPath(chainA, chainB chains.Chain) path {
 		chainA: chainA,
 		chainB: chainB,
 	}
+}
+
+// SetupRelayer sets up the relayer, creates interchain networks, builds chains, and starts the relayer.
+// It returns a Relayer interface and an error if any.
+func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (context.Context, ibc.Relayer, error) {
+	chainA, chainB := s.GetChains()
+	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
+	pathName := s.generatePathName()
+	ic := interchaintest.NewInterchain().
+		AddChain(chainA.(ibc.Chain)).
+		AddChain(chainB.(ibc.Chain)).
+		AddRelayer(r, "r").
+		AddLink(interchaintest.InterchainLink{
+			Chain1:  chainA.(ibc.Chain),
+			Chain2:  chainB.(ibc.Chain),
+			Relayer: r,
+			Path:    pathName,
+		})
+
+	eRep := s.GetRelayerExecReporter()
+	buildOptions := interchaintest.InterchainBuildOptions{
+		TestName:          s.T().Name(),
+		Client:            s.DockerClient,
+		NetworkID:         s.network,
+		BlockDatabaseFile: interchaintest.DefaultBlockDatabaseFilepath(),
+		SkipPathCreation:  true,
+	}
+	if err := ic.BuildChains(ctx, eRep, buildOptions); err != nil {
+		return nil, nil, err
+	}
+
+	if err := chainA.BuildWallets(ctx, Owner); err != nil {
+		return nil, nil, err
+	}
+	if err := chainB.BuildWallets(ctx, Owner); err != nil {
+		return nil, nil, err
+	}
+	if err := chainA.BuildWallets(ctx, User); err != nil {
+		return nil, nil, err
+	}
+	if err := chainB.BuildWallets(ctx, User); err != nil {
+		return nil, nil, err
+	}
+	var err error
+	if _, err := chainA.SetupIBC(ctx, Owner); err != nil {
+		return nil, nil, err
+	}
+	if _, err = chainB.SetupIBC(ctx, Owner); err != nil {
+		return nil, nil, err
+	}
+	if err := ic.BuildRelayer(ctx, eRep, buildOptions); err != nil {
+		return nil, nil, err
+	}
+	s.startRelayerFn = func(relayer ibc.Relayer) error {
+		if err := relayer.StartRelayer(ctx, eRep, pathName); err != nil {
+			return fmt.Errorf("failed to start relayer: %s", err)
+		}
+		s.T().Cleanup(func() {
+			if !s.T().Failed() {
+				if err := relayer.StopRelayer(ctx, eRep); err != nil {
+					s.T().Logf("error stopping relayer: %v", err)
+				}
+			}
+		})
+		if err := test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)); err != nil {
+			return fmt.Errorf("failed to wait for blocks: %v", err)
+		}
+		return nil
+	}
+	s.relayer = r
+	err = r.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName)
+	return context.WithValue(ctx, "relayer-response", map[string]string{
+		"pathName": pathName,
+	}), r, err
 }
 
 func (s *E2ETestSuite) DeployMockApp(ctx context.Context, port string) error {
