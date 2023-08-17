@@ -212,6 +212,18 @@ fn execute_receive_packet() {
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
+    let missing_receipts = contract
+        .ibc_store()
+        .get_missing_packet_receipts(
+            deps.as_ref().storage,
+            &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
+            &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
+            0,
+            10,
+        )
+        .unwrap();
+    println!("{missing_receipts:?}");
+    assert!(!missing_receipts.contains(&packet.sequence));
 
     assert_eq!(res.unwrap().events[0].ty, "recv_packet")
 }

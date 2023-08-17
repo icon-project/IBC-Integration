@@ -9,13 +9,13 @@ import (
 	"path/filepath"
 
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/icon-project/ibc-integration/test/e2e/relayer"
+	"github.com/icon-project/ibc-integration/test/testsuite/relayer"
 	"github.com/spf13/viper"
 )
 
 const (
-	E2EConfigFilePathEnv  = "E2E_CONFIG_PATH"
-	defaultConfigFileName = "e2e-config.yaml"
+	TestConfigFilePathEnv = "TEST_CONFIG_PATH"
+	defaultConfigFileName = "sample-config-archway.yaml"
 )
 
 type Chain struct {
@@ -95,8 +95,8 @@ func fromFile() (*TestConfig, error) {
 
 // getConfigFilePath returns the absolute path where the e2e config file should be.
 func getConfigFilePath(srcPath string) string {
-	if absoluteConfigPath := os.Getenv(E2EConfigFilePathEnv); absoluteConfigPath != "" {
+	if absoluteConfigPath := os.Getenv(TestConfigFilePathEnv); absoluteConfigPath != "" {
 		return absoluteConfigPath
 	}
-	return path.Join(srcPath, "test", "e2e", defaultConfigFileName)
+	return path.Join(srcPath, "test", "testsuite", defaultConfigFileName)
 }

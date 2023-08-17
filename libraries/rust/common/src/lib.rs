@@ -202,6 +202,12 @@ impl KeyDeserialize for &ChannelId {
     }
 }
 
+impl<'a> Prefixer<'a> for &ChannelId {
+    fn prefix(&self) -> Vec<Key> {
+        vec![Key::Ref(self.as_bytes())]
+    }
+}
+
 impl From<ClientId> for ClientType {
     fn from(value: ClientId) -> Self {
         let data: Vec<&str> = value.as_str().split('-').collect();

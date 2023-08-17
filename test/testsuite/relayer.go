@@ -17,7 +17,7 @@ import (
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/icon-project/ibc-integration/test/e2e/relayer"
+	"github.com/icon-project/ibc-integration/test/testsuite/relayer"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 )

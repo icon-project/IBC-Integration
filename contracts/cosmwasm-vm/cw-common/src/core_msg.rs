@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
+use std::collections::HashMap;
 
 use crate::cw_types::CwPacket;
 use crate::hex_string::HexString;
@@ -190,4 +191,18 @@ pub enum QueryMsg {
     GetLatestHeight { client_id: String },
     #[returns(String)]
     GetConsensusStateByHeight { client_id: String, height: u64 },
+    #[returns(HashMap<u64,u64>)]
+    GetPacketHeights {
+        port_id: String,
+        channel_id: String,
+        start_sequence: u64,
+        end_sequence: u64,
+    },
+    #[returns(Vec<u64>)]
+    GetMissingPacketReceipts {
+        port_id: String,
+        channel_id: String,
+        start_sequence: u64,
+        end_sequence: u64,
+    },
 }

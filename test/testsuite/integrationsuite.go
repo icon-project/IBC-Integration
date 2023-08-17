@@ -1,4 +1,4 @@
-package tests
+package testsuite
 
 import (
 	"context"
@@ -6,12 +6,11 @@ import (
 	"testing"
 
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
 type RelayerTestSuite struct {
-	*testsuite.E2ETestSuite
+	*E2ETestSuite
 	T *testing.T
 }
 

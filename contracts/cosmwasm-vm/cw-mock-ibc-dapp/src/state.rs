@@ -1,3 +1,5 @@
+use cw_storage_plus::Map;
+
 use crate::types::config::Config;
 
 use super::*;
@@ -112,6 +114,7 @@ pub struct CwIbcConnection<'a> {
     admin: Item<'a, String>,
     ibc_config: Item<'a, IbcConfig>,
     ibc_host: Item<'a, Addr>,
+    received_packets: Map<'a, u64, CwPacket>,
 }
 
 impl<'a> Default for CwIbcConnection<'a> {
@@ -128,6 +131,7 @@ impl<'a> CwIbcConnection<'a> {
             admin: Item::new(StorageKey::Admin.as_str()),
             ibc_config: Item::new(StorageKey::IbcConfig.as_str()),
             ibc_host: Item::new(StorageKey::IbcHost.as_str()),
+            received_packets: Map::new(StorageKey::ReceivedPackets.as_str()),
         }
     }
 
@@ -186,5 +190,25 @@ impl<'a> CwIbcConnection<'a> {
     pub fn get_port(&self, store: &dyn Storage) -> Result<String, ContractError> {
         let config = self.get_config(store)?;
         Ok(config.port_id)
+    }
+
+    pub fn store_received_packet(
+        &self,
+        store: &mut dyn Storage,
+        seq: u64,
+        packet: CwPacket,
+    ) -> Result<(), ContractError> {
+        self.received_packets
+            .save(store, seq, &packet)
+            .map_err(ContractError::Std)
+    }
+    pub fn get_received_packet(
+        &self,
+        store: &dyn Storage,
+        seq: u64,
+    ) -> Result<CwPacket, ContractError> {
+        self.received_packets
+            .load(store, seq)
+            .map_err(ContractError::Std)
     }
 }

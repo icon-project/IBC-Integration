@@ -8,8 +8,8 @@ import (
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains/cosmos"
 	"github.com/icon-project/ibc-integration/test/chains/icon"
-	"github.com/icon-project/ibc-integration/test/e2e/relayer"
-	"github.com/icon-project/ibc-integration/test/e2e/testconfig"
+	"github.com/icon-project/ibc-integration/test/testsuite/relayer"
+	"github.com/icon-project/ibc-integration/test/testsuite/testconfig"
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 
 	"strings"
@@ -99,6 +99,10 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
 	return nil
 }
 
+// SetupChainsAndRelayer create two chains, a relayer, establishes a connection and creates a channel
+// using the given channel options. The relayer returned by this function has not yet started. It should be started
+// with E2ETestSuite.StartRelayer if needed.
+// This should be called at the start of every test, unless fine grained control is required.
 // SetupChainsAndRelayer create two chains, a relayer, establishes a connection and creates a channel
 // using the given channel options. The relayer returned by this function has not yet started. It should be started
 // with E2ETestSuite.StartRelayer if needed.

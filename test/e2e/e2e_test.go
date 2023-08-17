@@ -4,8 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/icon-project/ibc-integration/test/e2e/tests"
-	"github.com/icon-project/ibc-integration/test/e2e/testsuite"
+	"github.com/icon-project/ibc-integration/test/testsuite"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -37,7 +36,7 @@ func (s *E2ETest) TestE2E_all() {
 		s.Require().NoError(s.CreateClient(ctx))
 		s.Require().NoError(s.CreateConnection(ctx))
 		s.Require().NoError(s.StartRelayer(rly))
-		relayer := tests.RelayerTestSuite{
+		relayer := testsuite.RelayerTestSuite{
 			E2ETestSuite: &s.E2ETestSuite,
 			T:            t,
 		}
