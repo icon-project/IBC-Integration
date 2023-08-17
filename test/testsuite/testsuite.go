@@ -10,7 +10,6 @@ import (
 	"github.com/icon-project/ibc-integration/test/chains/icon"
 	"github.com/icon-project/ibc-integration/test/testsuite/relayer"
 	"github.com/icon-project/ibc-integration/test/testsuite/testconfig"
-	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 
 	"strings"
 
@@ -67,120 +66,6 @@ func newPath(chainA, chainB chains.Chain) path {
 		chainA: chainA,
 		chainB: chainB,
 	}
-}
-
-func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
-	chainA, chainB := s.GetChains()
-	if err := chainA.SetupXCall(ctx, portId, Owner); err != nil {
-		return err
-	}
-	if err := chainB.SetupXCall(ctx, portId, Owner); err != nil {
-		return err
-	}
-
-	if _, err := chainA.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
-		KeyName:            Owner,
-		CounterpartyNid:    chainB.(ibc.Chain).Config().ChainID,
-		ConnectionId:       "connection-0", //TODO
-		PortId:             portId,
-		CounterPartyPortId: portId,
-	}); err != nil {
-		return err
-	}
-	if _, err := chainB.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
-		KeyName:            Owner,
-		CounterpartyNid:    chainA.(ibc.Chain).Config().ChainID,
-		ConnectionId:       "connection-0", //TODO
-		PortId:             portId,
-		CounterPartyPortId: portId,
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-
-// SetupChainsAndRelayer create two chains, a relayer, establishes a connection and creates a channel
-// using the given channel options. The relayer returned by this function has not yet started. It should be started
-// with E2ETestSuite.StartRelayer if needed.
-// This should be called at the start of every test, unless fine grained control is required.
-// SetupChainsAndRelayer create two chains, a relayer, establishes a connection and creates a channel
-// using the given channel options. The relayer returned by this function has not yet started. It should be started
-// with E2ETestSuite.StartRelayer if needed.
-// This should be called at the start of every test, unless fine grained control is required.
-func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ...func(*ibc.CreateChannelOptions)) ibc.Relayer {
-	chainA, chainB := s.GetChains()
-	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
-
-	pathName := s.generatePathName()
-
-	channelOptions := ibc.DefaultChannelOpts()
-	for _, opt := range channelOpts {
-		opt(&channelOptions)
-	}
-
-	ic := interchaintest.NewInterchain().
-		AddChain(chainA.(ibc.Chain)).
-		AddChain(chainB.(ibc.Chain)).
-		AddRelayer(r, "r").
-		AddLink(interchaintest.InterchainLink{
-			Chain1:  chainA.(ibc.Chain),
-			Chain2:  chainB.(ibc.Chain),
-			Relayer: r,
-			Path:    pathName,
-		})
-
-	eRep := s.GetRelayerExecReporter()
-	buildOptions := interchaintest.InterchainBuildOptions{
-		TestName:          s.T().Name(),
-		Client:            s.DockerClient,
-		NetworkID:         s.network,
-		BlockDatabaseFile: interchaintest.DefaultBlockDatabaseFilepath(),
-		SkipPathCreation:  true,
-	}
-	s.Require().NoError(ic.BuildChains(ctx, eRep, buildOptions))
-	s.Require().NoError(chainA.BuildWallets(ctx, Owner))
-	s.Require().NoError(chainB.BuildWallets(ctx, Owner))
-
-	s.Require().NoError(chainA.BuildWallets(ctx, User))
-	s.Require().NoError(chainB.BuildWallets(ctx, User))
-	ctx, err := chainA.SetupIBC(ctx, Owner)
-	if err != nil {
-		panic(err)
-	}
-	//contracts1 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-	ctx, err = chainB.SetupIBC(ctx, Owner)
-	if err != nil {
-		panic(err)
-	}
-	//contracts2 := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-
-	// Start the Relay
-	s.Require().NoError(ic.BuildRelayer(ctx, eRep, buildOptions))
-	s.Require().NoError(r.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName))
-	s.Require().NoError(r.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{
-		TrustingPeriod: "100000m",
-	}))
-
-	s.Require().NoError(r.CreateConnections(ctx, eRep, pathName))
-
-	s.startRelayerFn = func(relayer ibc.Relayer) error {
-		if err := relayer.StartRelayer(ctx, eRep, pathName); err != nil {
-			return fmt.Errorf("failed to start relayer: %s", err)
-		}
-		s.T().Cleanup(func() {
-			if !s.T().Failed() {
-				if err := relayer.StopRelayer(ctx, eRep); err != nil {
-					s.T().Logf("error stopping relayer: %v", err)
-				}
-			}
-		})
-		if err := test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)); err != nil {
-			return fmt.Errorf("failed to wait for blocks: %s", err)
-		}
-		return nil
-	}
-	s.relayer = r
-	return r
 }
 
 func (s *E2ETestSuite) DeployMockApp(ctx context.Context, port string) error {
