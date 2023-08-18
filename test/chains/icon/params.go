@@ -2,6 +2,7 @@ package icon
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"strings"
@@ -9,17 +10,18 @@ import (
 	"github.com/icon-project/ibc-integration/test/chains"
 )
 
-func (c *IconLocalnet) GetExecuteParam(ctx context.Context, methodName, params string) (context.Context, string, string) {
-	if strings.Contains(methodName, "set_admin") {
-		return c.SetAdminParams(ctx, methodName, params)
-	} else if strings.Contains(methodName, "update_admin") {
-		// TODO: update admin method is not found
-		return c.UpdateAdminParams(ctx, "update_admin", params)
-	} else if strings.Contains(methodName, "remove_admin") {
-		// TODO: remove admin method is not found
-		return ctx, "remove_admin", "_address='hjsdbjd'"
+func (c *IconLocalnet) getExecuteParam(ctx context.Context, methodName string, params map[string]interface{}) (string, string) {
+	if strings.Contains(methodName, chains.BindPort) {
+		_params, _ := json.Marshal(map[string]interface{}{
+			"portId":        params["port_id"],
+			"moduleAddress": params["address"],
+		})
+		return "bindPort", string(_params)
 	}
-	return ctx, methodName, params
+
+	_params, _ := json.Marshal(params)
+
+	return methodName, string(_params)
 }
 
 func (c *IconLocalnet) GetQueryParam(methodName string) string {
@@ -27,6 +29,17 @@ func (c *IconLocalnet) GetQueryParam(methodName string) string {
 		return "admin"
 	}
 	return methodName
+}
+
+func (c *IconLocalnet) getInitParams(ctx context.Context, contractName string, initMsg map[string]interface{}) string {
+	if contractName == "mockdapp" {
+		updatedInit, _ := json.Marshal(map[string]string{
+			"ibcHandler": initMsg["ibc_host"].(string),
+		})
+		fmt.Printf("Init msg for Dapp is : %s", string(updatedInit))
+		return string(updatedInit)
+	}
+	return ""
 }
 
 func (c *IconLocalnet) SetAdminParams(ctx context.Context, methodaName, keyName string) (context.Context, string, string) {
