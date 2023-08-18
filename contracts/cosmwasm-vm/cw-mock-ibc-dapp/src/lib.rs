@@ -13,7 +13,7 @@ pub mod state;
 pub mod types;
 
 use crate::{
-    check::{check_order, check_version},
+    check::check_version,
     error::ContractError,
     ibc::IBC_VERSION,
     msg::InstantiateMsg,

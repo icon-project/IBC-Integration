@@ -1,6 +1,6 @@
 use super::*;
 use cosmwasm_schema::QueryResponses;
-use cw_common::cw_types::CwOrder;
+// use cw_common::cw_types::CwOrder;
 
 /// This is a Rust struct representing a message to instantiate a contract with timeout height and IBC
 /// host address.
@@ -13,9 +13,6 @@ use cw_common::cw_types::CwOrder;
 #[cw_serde]
 pub struct InstantiateMsg {
     pub ibc_host: Addr,
-    pub port_id: String,
-    pub denom: String,
-    pub order: CwOrder,
 }
 
 #[cw_serde]
