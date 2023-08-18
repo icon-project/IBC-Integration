@@ -235,30 +235,21 @@ func (s *E2ETestSuite) WriteBlockHeight(ctx context.Context, chain chains.Chain)
 			return err
 		}
 		chanID := chain.(ibc.Chain).Config().ChainID
-		// put a buffer of 2 to make sure the relayer has time to catch up
-		return s.relayer.(interchaintest.Relayer).WriteBlockHeight(ctx, chanID, height-2)
+		return s.relayer.(interchaintest.Relayer).WriteBlockHeight(ctx, chanID, height-1)
 	}
 }
 
 // Recover recovers a relay and waits for the relay to catch up to the current height of the stopped chains.
 // This is because relay needs to sync with the counterchain network when it was on crashed state.
-func (s *E2ETestSuite) Recover(ctx context.Context, chain ibc.Chain, stoppedHeight uint64) (uint64, error) {
+func (s *E2ETestSuite) Recover(ctx context.Context, waitDuration time.Duration) error {
 	s.logger.Info("waiting for relayer to restart")
 	now := time.Now()
 	if err := s.relayer.(interchaintest.Relayer).RestartRelayerContainer(ctx); err != nil {
-		return 0, err
+		return err
 	}
-	// currentHeight, err := chain.Height(ctx)
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// blockDiff := currentHeight - stoppedHeight
-	// Wait for the relayer to catch up to the current height of the stopped chain.
-	if err := test.WaitForBlocks(ctx, 20, chain); err != nil {
-		return 0, err
-	}
+	time.Sleep(waitDuration)
 	s.logger.Info("relayer restarted", zap.Duration("elapsed", time.Since(now)))
-	return chain.Height(ctx)
+	return nil
 }
 
 // Ping checks if the relayer is running

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/testsuite"
@@ -164,15 +165,13 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 		return err
 	}
 	// recover relayer now
-	recoveredHeight, err := r.Recover(ctx, chainB.(ibc.Chain), crashedHeight+10)
-	if err != nil {
+	if err := r.Recover(ctx, time.Second*100); err != nil {
 		return err
 	}
-	r.T.Logf("recovered at height %d", recoveredHeight)
 	// check if packet was sent in a recovered state
 	res, err := r.FindPacketSent(xcall, chainA, chainB, crashedHeight)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s packet not found: %w", msg, err)
 	}
 	data, err := r.ConvertToPlainString(res.Data)
 	if err != nil {
