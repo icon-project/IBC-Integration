@@ -14,26 +14,34 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
 	if err := chainB.SetupXCall(ctx, portId, Owner); err != nil {
 		return err
 	}
-
-	if _, err := chainA.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
+	var err error
+	_, err = chainA.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
 		KeyName:            Owner,
 		CounterpartyNid:    chainB.(ibc.Chain).Config().ChainID,
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
 		CounterPartyPortId: portId,
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
-	if _, err := chainB.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
+	_, err = chainB.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
 		KeyName:            Owner,
 		CounterpartyNid:    chainA.(ibc.Chain).Config().ChainID,
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
 		CounterPartyPortId: portId,
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
-	return nil
+	err = s.relayer.CreateChannel(ctx, s.GetRelayerExecReporter(), s.GetPathName(s.pathNameIndex-1), ibc.CreateChannelOptions{
+		SourcePortName: portId,
+		DestPortName:   portId,
+		Order:          ibc.Unordered,
+		Version:        "ics20-1",
+	})
+	return err
 }
 
 // SetupChainsAndRelayer create two chains, a relayer, establishes a connection and creates a channel
@@ -41,7 +49,7 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
 // with E2ETestSuite.StartRelayer if needed.
 // This should be called at the start of every test, unless fine grained control is required.
 func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ...func(*ibc.CreateChannelOptions)) ibc.Relayer {
-	relayer, err := s.SetupRelayer(ctx)
+	ctx, relayer, err := s.SetupRelayer(ctx)
 	s.Require().NoError(err, "Error while configuring relayer")
 	eRep := s.GetRelayerExecReporter()
 	response := ctx.Value("relayer-response").(map[string]string)

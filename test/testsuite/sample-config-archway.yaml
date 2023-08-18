@@ -30,7 +30,7 @@ chains:
       name: archway
       chain_id: archway-1
       image:
-        repository: archwaynetwork/archwayd
+        repository: archwayd
         version: latest
         uid_gid: ""
       bin: archwayd
@@ -52,4 +52,4 @@ chains:
       dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
 relayer:
   image: relayer
-  tag: latest
+  tag: alpha

@@ -20,15 +20,17 @@ type IntegrationTest struct {
 func (s *IntegrationTest) TestE2E_all() {
 	t := s.T()
 	ctx := context.TODO()
-
+	s.Require().NoError(s.SetCfg())
 	t.Run("test relayer", func(t *testing.T) {
 		ctx, rly, err := s.SetupRelayer(ctx)
 		s.Require().NoError(err)
-		s.StartRelayer(rly)
+		s.Require().NoError(s.CreateClient(ctx))
+		s.Require().NoError(s.CreateConnection(ctx))
+		s.Require().NoError(s.StartRelayer(rly))
 		relayer := tests.RelayerTestSuite{
 			E2ETestSuite: &s.E2ETestSuite,
 			T:            t,
 		}
-		relayer.TestRelayer(ctx)
+		relayer.TestRelayer()
 	})
 }
