@@ -301,6 +301,7 @@ pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) 
         build_smart_query(contract_address.to_string(), to_binary(&query).unwrap());
 
     let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
+
     println!("balances {balance:?}");
     let res: String = from_binary(&balance).unwrap();
     res

@@ -1,4 +1,8 @@
-use cw_common::raw_types::{channel::RawMessageTimeout, to_raw_packet};
+use cw_common::{
+    cw_println,
+    raw_types::{channel::RawMessageTimeout, to_raw_packet},
+    to_checked_address,
+};
 
 use crate::conversions::{
     to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
@@ -41,7 +45,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
 
         let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
-        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
+        let packet_timeout_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
         let packet_sequence = Sequence::from(packet.sequence);
         let proof_height = to_ibc_height(msg.proof_height.clone())?;
         let next_sequence_recv = Sequence::from(msg.next_sequence_recv);
@@ -84,7 +88,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let expected_commitment_on_a = commitment::compute_packet_commitment(
             &packet.data,
             &packet_timeout_height,
-            &packet_timestamp,
+            &packet_timeout_timestamp,
         );
         if commitment_on_a != expected_commitment_on_a {
             return Err(ContractError::IbcPacketError {
@@ -104,6 +108,25 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
+
+        let client = self.get_client(deps.storage, client_id_on_a)?;
+        let timestamp_at_height = client.get_timestamp_by_height(
+            deps.as_ref(),
+            client_id_on_a,
+            proof_height.revision_height(),
+        )?;
+        if timestamp_at_height != 0 {
+            let chain_timestamp = to_ibc_timestamp(timestamp_at_height)?;
+            if let Expiry::NotExpired = chain_timestamp.check_expiry(&packet_timeout_timestamp) {
+                return Err(PacketError::PacketTimeoutTimestampNotReached {
+                    timeout_timestamp: packet_timeout_timestamp,
+                    chain_timestamp: chain_timestamp,
+                })
+                .map_err(Into::<ContractError>::into);
+            }
+            cw_println!(deps, " timestamp check pass");
+        }
+
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &proof_height)?;
 
@@ -148,7 +171,6 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
             };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_a)?;
         client.verify_timeout(
             deps.as_ref(),
             client_id_on_a,
@@ -176,7 +198,7 @@ impl<'a> CwIbcCoreContext<'a> {
             &ibc_packet,
         )?;
 
-        let address = Addr::unchecked(msg.signer);
+        let address = to_checked_address(deps.as_ref(), &msg.signer);
         let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketTimeout {
             msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
         };

@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use super::*;
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
 
+use common::ibc::core::ics02_client::height::Height;
 use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
@@ -779,6 +782,60 @@ fn test_for_packet_send() {
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
+    let client_state = ClientState {
+        latest_height: 10,
+        ..get_dummy_client_state()
+    };
+
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
+    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
+        message_root: vec![1, 2, 3, 4],
+        next_proof_context_hash: vec![1, 2, 3, 4],
+    }
+    .try_into()
+    .unwrap();
+    let height: Height = RawHeight {
+        revision_number: 0,
+        revision_height: 10,
+    }
+    .try_into()
+    .unwrap();
+
+    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    contract
+        .store_consensus_state(
+            &mut deps.storage,
+            &IbcClientId::default(),
+            height.clone(),
+            consenus_state_any,
+            consenus_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
+    let light_client = LightClient::new("lightclient".to_string());
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            light_client.clone(),
+        )
+        .unwrap();
+
+    let timestamp_query = light_client
+        .get_timestamp_by_height_query(&IbcClientId::default(), height.revision_height())
+        .unwrap();
+    let mut mocks = HashMap::<Binary, Binary>::new();
+    mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
+    mock_lightclient_query(mocks, &mut deps);
+
     let chan_end_on_a = ChannelEnd::new(
         State::TryOpen,
         Order::default(),
@@ -811,6 +868,10 @@ fn test_for_packet_send() {
     let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
     contract
+        .bind_port(deps.as_mut().storage, &src_port, info.sender.clone())
+        .unwrap();
+
+    contract
         .store_channel_end(&mut deps.storage, &src_port, &src_channel, &chan_end_on_a)
         .unwrap();
     let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
@@ -823,44 +884,6 @@ fn test_for_packet_send() {
             &src_port.clone(),
             &src_channel,
             &1.into(),
-        )
-        .unwrap();
-
-    let client_state = ClientState {
-        latest_height: 10,
-        ..get_dummy_client_state()
-    };
-
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
-    let height = RawHeight {
-        revision_number: 0,
-        revision_height: 10,
-    }
-    .try_into()
-    .unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            height,
-            consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
 
@@ -1019,13 +1042,13 @@ fn test_for_recieve_packet() {
     let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
-    contract
-        .store_callback_data(
-            deps.as_mut().storage,
-            VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
-            &packet,
-        )
-        .unwrap();
+    // contract
+    //     .store_callback_data(
+    //         deps.as_mut().storage,
+    //         VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
+    //         &packet,
+    //     )
+    //     .unwrap();
 
     let mock_data_binary = to_binary(&make_ack_success().to_vec()).unwrap();
     let event = Event::new("empty");

@@ -1,6 +1,6 @@
 use crate::{ContractError, EXECUTE_UPDATE_CLIENT};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, CosmosMsg, Deps, SubMsg};
+use cosmwasm_std::{to_binary, Binary, CosmosMsg, Deps, SubMsg};
 use cw_common::client_msg::{LightClientPacketMessage, VerifyConnectionState};
 
 use cw_common::ibc_types::IbcClientId;
@@ -207,6 +207,33 @@ impl LightClient {
         let query = build_smart_query(self.address.clone(), msg);
 
         let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
+        Ok(response)
+    }
+
+    pub fn get_timestamp_by_height_query(
+        &self,
+
+        client_id: &IbcClientId,
+        height: u64,
+    ) -> Result<Binary, ContractError> {
+        let query_message = cw_common::client_msg::QueryMsg::GetTimestampByHeight {
+            client_id: client_id.as_str().to_string(),
+            height,
+        };
+        let msg = to_binary(&query_message).map_err(ContractError::Std)?;
+        Ok(msg)
+    }
+
+    pub fn get_timestamp_by_height(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+        height: u64,
+    ) -> Result<u64, ContractError> {
+        let msg = self.get_timestamp_by_height_query(client_id, height)?;
+        let query = build_smart_query(self.address.clone(), msg);
+
+        let response: u64 = deps.querier.query(&query).map_err(ContractError::Std)?;
         Ok(response)
     }
 }

@@ -41,6 +41,7 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(lt(latestHeight, packet.getTimeoutHeight()),
                 "receiving chain block height >= packet timeout height");
         BigInteger latestTimestamp = client.getTimestampAtHeight(connection.getClientId(), latestHeightRaw);
+        
         Context.require(latestTimestamp != null, "consensusState not found");
         Context.require(packet.getTimeoutTimestamp().equals(BigInteger.ZERO),
                 "Timeout timestamps are not available, use timeout height instead");

@@ -1,10 +1,12 @@
 use common::ibc::core::ics04_channel::{msgs::acknowledgement::Acknowledgement, packet::Receipt};
+use cosmwasm_std::PageRequest;
 use cw_common::{
     hex_string::HexString,
     raw_types::{
         channel::{RawMessageRecvPacket, RawPacket},
         to_raw_packet,
     },
+    to_checked_address,
 };
 
 use cw_common::cw_println;
@@ -74,17 +76,51 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
-        let latest_height = self.host_height(&env)?;
+        let current_host_height = self.host_height(&env)?;
+        let current_host_timestamp = self.host_timestamp(&env)?;
         let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
+        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
-        if packet_timeout_height.has_expired(latest_height) {
+        if let Expiry::Expired = packet_timestamp.check_expiry(&current_host_timestamp) {
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::LowPacketTimestamp,
+            });
+        }
+
+        if packet_timeout_height.has_expired(current_host_height) {
             return Err(PacketError::LowPacketHeight {
-                chain_height: latest_height,
+                chain_height: current_host_height,
                 timeout_height: packet_timeout_height,
             })
             .map_err(Into::<ContractError>::into)?;
         }
         cw_println!(deps, "packet height is greater than timeout height");
+
+        let packet_already_received = match channel_end.ordering {
+            // Note: ibc-go doesn't make the check for `Order::None` channels
+            Order::None => false,
+            Order::Unordered => self
+                .get_packet_receipt(
+                    deps.storage,
+                    &dst_port,
+                    &dst_channel,
+                    packet.sequence.into(),
+                )
+                .is_ok(),
+            Order::Ordered => {
+                let next_seq_recv =
+                    self.get_next_sequence_recv(deps.storage, &dst_port, &dst_channel)?;
+
+                // the seq_on_a number has already been incremented, so
+                // another relayer already relayed the packet
+                packet.sequence < Into::<u64>::into(next_seq_recv)
+            }
+        };
+
+        cw_println!(deps, "before packet already received ");
+        if packet_already_received {
+            return Ok(Response::new().add_attribute("message", "Packet already received"));
+        }
 
         let client_id_on_b = conn_end_on_b.client_id();
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
@@ -101,7 +137,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;
-        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
         let expected_commitment_on_a = commitment::compute_packet_commitment_bytes(
             &packet.data,
@@ -176,12 +211,13 @@ impl<'a> CwIbcCoreContext<'a> {
         let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timeout = CwTimeout::with_block(timeoutblock);
         let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
-        let address = Addr::unchecked(msg.signer.to_string());
+        let address = to_checked_address(deps.as_ref(), &msg.signer);
         self.store_callback_data(
             deps.storage,
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
             &ibc_packet,
         )?;
+
         let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketReceive {
             msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
         };
@@ -278,26 +314,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 let chan_end_on_b = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
                 cw_println!(deps, "execute_receive_packet decoding of data successful");
-                let packet_already_received = match chan_end_on_b.ordering {
-                    // Note: ibc-go doesn't make the check for `Order::None` channels
-                    Order::None => false,
-                    Order::Unordered => self
-                        .get_packet_receipt(deps.storage, &port_id, &channel_id, seq.into())
-                        .is_ok(),
-                    Order::Ordered => {
-                        let next_seq_recv =
-                            self.get_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
-
-                        // the seq_on_a number has already been incremented, so
-                        // another relayer already relayed the packet
-                        seq < Into::<u64>::into(next_seq_recv)
-                    }
-                };
-
-                cw_println!(deps, "before packet already received ");
-                if packet_already_received {
-                    return Ok(Response::new().add_attribute("message", "Packet already received"));
-                }
 
                 cw_println!(deps, "before channel ordering check");
 

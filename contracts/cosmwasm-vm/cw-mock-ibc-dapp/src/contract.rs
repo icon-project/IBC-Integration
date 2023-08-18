@@ -128,7 +128,7 @@ impl<'a> CwIbcConnection<'a> {
             }
             ExecuteMsg::IbcWriteAcknowledgement { seq } => {
                 let packet = self.get_received_packet(deps.as_ref().storage, seq)?;
-                return self.write_acknowledgement(deps.storage, packet);
+                self.write_acknowledgement(deps.storage, packet)
             }
         }
     }

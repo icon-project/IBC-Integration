@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 pub fn mock_height(
     number: u64,
@@ -23,8 +23,8 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
-    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
+    to_binary, Addr, Binary, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint,
+    MessageInfo, OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
 use common::{
@@ -39,7 +39,6 @@ use common::{
     },
     icon::icon::lightclient::v1::{ClientState, ConsensusState},
 };
-use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
 use cw_common::raw_types::{
     client::{
@@ -47,6 +46,7 @@ use cw_common::raw_types::{
     },
     RawCommitmentProof, RawHeight, RawMerkleProof,
 };
+use cw_common::{client_msg::QueryMsg, raw_types::channel::*};
 
 use common::ibc::core::ics02_client::client_type::ClientType;
 use common::ibc::core::ics24_host::identifier::ClientId;
@@ -484,6 +484,19 @@ pub fn mock_lightclient_reply(deps: &mut OwnedDeps<MockStorage, MockApi, MockQue
             contract_addr: _,
             msg: _,
         } => SystemResult::Ok(ContractResult::Ok(to_binary(&true).unwrap())),
+        _ => todo!(),
+    });
+}
+
+pub fn mock_lightclient_query(
+    mocks: HashMap<Binary, Binary>,
+    deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>,
+) {
+    deps.querier.update_wasm(move |r| match r {
+        WasmQuery::Smart { contract_addr, msg } => {
+            let res = mocks.get(msg).unwrap().clone();
+            SystemResult::Ok(ContractResult::Ok(res))
+        }
         _ => todo!(),
     });
 }

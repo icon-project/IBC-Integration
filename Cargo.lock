@@ -103,6 +103,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bnum"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "845141a4fade3f790628b7daaaa298a25b204fb28907eb54febe5142db6ce653"
+
+[[package]]
 name = "borsh"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -281,9 +287,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.2.6"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41c0e41be7e6c7d7ab3c61cdc32fcfaa14f948491a401cbc1c74bb33b6f4b851"
+checksum = "51dd316b3061747d6f57c1c4a131a5ba2f9446601a9276d05a4d25ab2ce0a7e0"
 dependencies = [
  "digest 0.10.7",
  "ed25519-zebra",
@@ -294,9 +300,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.2.6"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a7ee2798c92c00dd17bebb4210f81d5f647e5e92d847959b7977e0fd29a3500"
+checksum = "03b14230c6942a301afb96f601af97ae09966601bd1007067a2c7fe8ffcfe303"
 dependencies = [
  "syn 1.0.109",
 ]
@@ -327,11 +333,12 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.2.6"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92d5fdfd112b070055f068fad079d490117c8e905a588b92a5a7c9276d029930"
+checksum = "c27a06f0f6c35b178563c6b1044245b3f750c4a66d9f6d2b942a6b29ad77d3ae"
 dependencies = [
  "base64 0.13.1",
+ "bnum",
  "cosmwasm-crypto",
  "cosmwasm-derive",
  "derivative",
@@ -342,7 +349,6 @@ dependencies = [
  "serde-json-wasm 0.5.1",
  "sha2 0.10.6",
  "thiserror",
- "uint",
 ]
 
 [[package]]

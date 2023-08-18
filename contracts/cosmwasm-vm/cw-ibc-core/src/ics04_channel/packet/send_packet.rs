@@ -1,4 +1,4 @@
-use cw_common::raw_types::channel::RawPacket;
+use cw_common::{ibc_types::IbcTimestamp, raw_types::channel::RawPacket};
 
 use crate::conversions::{
     to_ibc_channel_id, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
@@ -69,6 +69,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
         let client_id_on_a = conn_end_on_a.client_id();
+
         let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
         if client_state_of_b_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {
@@ -93,12 +94,22 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let consensus_state_of_b_on_a =
             self.consensus_state(deps.storage, client_id_on_a, &latest_height_on_a)?;
-        let latest_timestamp = consensus_state_of_b_on_a.timestamp();
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
-        if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {
-            return Err(PacketError::LowPacketTimestamp).map_err(Into::<ContractError>::into);
+
+        // validate if timestamp has timedout already
+        let client = self.get_client(deps.storage, client_id_on_a)?;
+        let timestamp_at_height = client.get_timestamp_by_height(
+            deps.as_ref(),
+            client_id_on_a,
+            latest_height_on_a.revision_height(),
+        )?;
+        if timestamp_at_height != 0 {
+            let chain_timestamp = to_ibc_timestamp(timestamp_at_height)?;
+            if let Expiry::Expired = chain_timestamp.check_expiry(&packet_timestamp) {
+                return Err(PacketError::LowPacketTimestamp).map_err(Into::<ContractError>::into);
+            }
+            cw_println!(deps, " timestamp check pass");
         }
-        cw_println!(deps, " timestamp check pass");
 
         let next_seq_send_on_a =
             self.get_next_sequence_send(deps.storage, &src_port, &src_channel)?;

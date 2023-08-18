@@ -105,7 +105,7 @@ fn test_packet_send() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let info = mock_info("moduleaddress", &vec![]);
+    let info = mock_info("moduleaddress", &[]);
     contract
         .bind_port(deps.as_mut().storage, &src_port, info.sender.clone())
         .unwrap();
@@ -136,7 +136,7 @@ fn test_packet_send_fail_channel_not_found() {
 
     packet.sequence = 1;
     packet.data = vec![0];
-    let info = mock_info("moduleaddress", &vec![]);
+    let info = mock_info("moduleaddress", &[]);
     contract
         .bind_port(
             deps.as_mut().storage,
@@ -238,7 +238,7 @@ fn test_packet_send_fail_misiing_sequense() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let info = mock_info("moduleaddress", &vec![]);
+    let info = mock_info("moduleaddress", &[]);
     contract
         .bind_port(
             deps.as_mut().storage,
