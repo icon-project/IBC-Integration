@@ -86,7 +86,7 @@ func (c *CosmosLocalnet) SetupIBC(ctx context.Context, keyName string) (context.
 		"ibc":    ibcAddress,
 		"client": clientAddress,
 	}
-	_, err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"register_client":{"client_type":"iconclient", "client_address":"`+clientAddress+`"}}`)
+	_, err = c.executeContract(context.Background(), ibcAddress, keyName, "register_client", `{"client_type":"iconclient", "client_address":"`+clientAddress+`"}`)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,9 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 		return err
 	}
 
-	_, err = c.CosmosChain.ExecuteContract(context.Background(), keyName, ibcAddress, `{"bind_port":{"port_id":"`+portId+`", "address":"`+connectionAddress+`"}}`)
+	_, err = c.ExecuteContract(context.Background(), ibcAddress, keyName, chains.BindPort, map[string]interface{}{
+		"port_id": portId, "address": connectionAddress,
+	})
 	if err != nil {
 		return err
 	}
@@ -144,7 +146,7 @@ func (c *CosmosLocalnet) SetupXCall(ctx context.Context, portId string, keyName 
 func (c *CosmosLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
 	temp := c.GetClientName(0)
 	params := `{"connection_id":"` + connection.ConnectionId + `","counterparty_port_id":"` + connection.CounterPartyPortId + `","counterparty_nid":"` + connection.CounterpartyNid + `","client_id":"` + temp + `","timeout_height":1000}`
-	return c.ExecuteContract(ctx, c.IBCAddresses["connection"], connection.KeyName, "configure_connection", params)
+	return c.executeContract(ctx, c.IBCAddresses["connection"], connection.KeyName, "configure_connection", params)
 }
 
 func (c *CosmosLocalnet) GetIBCAddress(key string) string {
@@ -167,7 +169,7 @@ func (c *CosmosLocalnet) DeployXCallMockApp(ctx context.Context, connection chai
 		return err
 	}
 
-	_, err = c.ExecuteContract(context.Background(), dappAddress, connection.KeyName, "add_connection", `{"src_endpoint":"`+c.IBCAddresses["connection"]+`", "dest_endpoint":"`+connection.CounterPartyConnection+`","network_id":"`+connection.CounterpartyNid+`"}`)
+	_, err = c.executeContract(context.Background(), dappAddress, connection.KeyName, "add_connection", `{"src_endpoint":"`+c.IBCAddresses["connection"]+`", "dest_endpoint":"`+connection.CounterPartyConnection+`","network_id":"`+connection.CounterpartyNid+`"}`)
 	if err != nil {
 		return err
 	}
@@ -180,7 +182,7 @@ func (c *CosmosLocalnet) SendPacketXCall(ctx context.Context, keyName, _to strin
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	rollbackArray := strings.Join(strings.Fields(fmt.Sprintf("%d", rollback)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s, "rollback":%s}`, _to, dataArray, rollbackArray)
-	ctx, err := c.ExecuteContract(ctx, c.IBCAddresses["dapp"], chains.FaucetAccountKeyName, "send_call_message", params)
+	ctx, err := c.executeContract(ctx, c.IBCAddresses["dapp"], chains.FaucetAccountKeyName, "send_call_message", params)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +216,7 @@ func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain,
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s}`, _to, dataArray)
 	height, _ := targetChain.(ibc.Chain).Height(ctx)
-	ctx, err := c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], keyName, "send_call_message", params)
+	ctx, err := c.executeContract(context.Background(), c.IBCAddresses["xcall"], keyName, "send_call_message", params)
 	if err != nil {
 		return "", "", "", err
 	}
@@ -260,11 +262,11 @@ func (c *CosmosLocalnet) GetPacketReceipt(ctx context.Context, channelID, portID
 }
 
 func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
-	return c.ExecuteContract(ctx, c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
+	return c.executeContract(ctx, c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
 }
 
 func (c *CosmosLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
-	return c.ExecuteContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
+	return c.executeContract(context.Background(), c.IBCAddresses["xcall"], chains.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
 }
 
 func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight uint64, from, to, sn string) (string, string, error) {
@@ -325,30 +327,25 @@ func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight uint64, cont
 
 func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// Fund user to deploy contract
-	contractOwner, ownerAddr, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
+	contractOwner, _, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
 
 	// Get Contract Name from context
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
+	initMsg := ctx.Value(chains.InitMessageKey("init-msg")).(chains.InitMessage)
+
 	contractName := strings.ToLower(ctxValue.ContractName)
 	codeId, err := c.CosmosChain.StoreContract(ctx, contractOwner, c.filepath[contractName])
 	if err != nil {
 		return ctx, err
 	}
 
-	// Get Init Message from context
-	ctxVal := ctx.Value(chains.InitMessage{}).(chains.InitMessage)
-	initMessage := ctxVal.InitMsg
-	if initMessage == "runtime" {
-		initMessage = c.getInitParams(ctx, contractName)
-	}
+	initMessage := c.getInitParams(ctx, contractName, initMsg.Message)
 	address, err := c.CosmosChain.InstantiateContract(ctx, contractOwner, codeId, initMessage, true, c.GetCommonArgs()...)
 	if err != nil {
 		return nil, err
 	}
 
 	c.IBCAddresses[contractName] = address
-	contracts.ContractAddress[contractName] = address
-	contracts.ContractOwner[keyName] = ownerAddr
 
 	return context.WithValue(ctx, chains.Mykey("Contract Names"), contracts), err
 }
@@ -367,7 +364,7 @@ func (c *CosmosLocalnet) QueryContract(ctx context.Context, contractAddress, met
 	return context.WithValue(ctx, "txResult", chains.Response.(map[string]interface{})["data"]), nil
 }
 
-func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
+func (c *CosmosLocalnet) executeContract(ctx context.Context, contractAddress, keyName, methodName, param string) (context.Context, error) {
 	txHash, err := c.getFullNode().ExecTx(ctx, keyName,
 		"wasm", "execute", contractAddress, `{"`+methodName+`":`+param+`}`, "--gas", "auto")
 	if err != nil || txHash == "" {
@@ -378,6 +375,11 @@ func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, k
 		return nil, err
 	}
 	return context.WithValue(ctx, "txResult", tx), nil
+}
+
+func (c *CosmosLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName string, params map[string]interface{}) (context.Context, error) {
+	execMethodName, execParams := c.getExecuteParam(ctx, methodName, params)
+	return c.executeContract(ctx, contractAddress, keyName, execMethodName, execParams)
 }
 
 func (c *CosmosLocalnet) getTransaction(txHash string) (*TxResul, error) {

@@ -49,15 +49,20 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
 // with E2ETestSuite.StartRelayer if needed.
 // This should be called at the start of every test, unless fine grained control is required.
 func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ...func(*ibc.CreateChannelOptions)) ibc.Relayer {
-	ctx, relayer, err := s.SetupRelayer(ctx)
-	s.Require().NoError(err, "Error while configuring relayer")
+	relayer, err := s.SetupRelayer(ctx)
+	s.Require().NoErrorf(err, "Error while configuring relayer %v", err)
 	eRep := s.GetRelayerExecReporter()
-	response := ctx.Value("relayer-response").(map[string]string)
-	var pathName = response["pathName"]
-	s.Require().NoError(relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{
+
+	pathName := s.GeneratePathName()
+	chainA, chainB := s.GetChains()
+
+	s.Require().NoErrorf(relayer.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName), "Error on generating path, %v", err)
+	err = relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{
 		TrustingPeriod: "100000m",
-	}))
+	})
+	s.Require().NoErrorf(err, "Error while creating client relayer : %s, %v", pathName, err)
 
 	s.Require().NoError(relayer.CreateConnections(ctx, eRep, pathName))
+	s.Require().NoError(s.StartRelayer(relayer, pathName))
 	return relayer
 }

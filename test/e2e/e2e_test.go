@@ -22,8 +22,7 @@ func (s *E2ETest) TestE2E_all() {
 	ctx := context.TODO()
 	s.Require().NoError(s.SetCfg())
 	t.Run("test xcall", func(t *testing.T) {
-		rly := s.SetupChainsAndRelayer(ctx)
-		s.Require().NoError(s.StartRelayer(rly))
+		_ = s.SetupChainsAndRelayer(ctx)
 		xcall := tests.XCallTestSuite{
 			E2ETestSuite: &s.E2ETestSuite,
 			T:            t,

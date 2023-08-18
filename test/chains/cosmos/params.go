@@ -33,33 +33,9 @@ func (c *CosmosLocalnet) GetQueryParam(method, params string) any {
 	return params
 }
 
-func (c *CosmosLocalnet) GetExecuteParam(ctx context.Context, methodName, param string) (context.Context, string, error) {
-	if strings.Contains(methodName, "set_admin") {
-		return c.SetAdminParams(ctx, param)
-	} else if strings.Contains(methodName, "update_admin") {
-		return c.UpdateAdminParams(ctx, param)
-	} else if strings.Contains(methodName, "remove_admin") {
-		originalJSON := `{"remove_admin":{}}`
-		return ctx, string(originalJSON), nil
-	} else if strings.Contains(methodName, "ibc_config") {
-		packetData := ibcConfigSetup
-		return ctx, string(packetData), nil
-	} else if strings.Contains(methodName, "ibc_packet_receive") {
-		packetData := c.getExecuteCallParam(ctx)
-		return ctx, string(packetData), nil
-	} else if strings.Contains(methodName, "send_call_message") {
-		return ctx, sendCallData(ctx, param), nil
-	} else if strings.Contains(methodName, "execute_call") {
-		return ctx, executeCallData(param), nil
-	} else if strings.Contains(methodName, "execute_rollback") {
-		return ctx, correcrSequenceID, nil
-	} else if strings.Contains(methodName, "register_xcall") {
-		ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-		xcallAddr := ctxValue.ContractAddress["xcall"]
-		registerData := fmt.Sprintf(`{"register_xcall":{"address":"%s"}}`, xcallAddr)
-		return ctx, registerData, nil
-	}
-	return ctx, "", nil
+func (c *CosmosLocalnet) getExecuteParam(ctx context.Context, methodName string, params map[string]interface{}) (string, string) {
+	_params, _ := json.Marshal(params)
+	return methodName, string(_params)
 }
 
 func sendCallData(ctx context.Context, param string) string {
@@ -203,25 +179,9 @@ func (c *CosmosLocalnet) UpdateAdminParams(ctx context.Context, keyName string) 
 	}
 }
 
-func (c *CosmosLocalnet) getInitParams(ctx context.Context, contractName string) string {
-	var xcallInit XcallInit
-	var DappInit DappInit
-	if contractName == "xcall" {
-		originalJSON := `{"timeout_height":45, "ibc_host":""}`
-		json.Unmarshal([]byte(originalJSON), &xcallInit)
-		ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-		coreAddr := ctxValue.ContractAddress["ibccore"]
-		xcallInit.IbcHost = coreAddr
-		updatedInit, _ := json.Marshal(xcallInit)
-		fmt.Printf("Init msg for xCall is : %s", string(updatedInit))
-		return string(updatedInit)
-	} else if contractName == "dapp" {
-		originalJSON := `{"address":""}`
-		json.Unmarshal([]byte(originalJSON), &DappInit)
-		ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
-		xcallAddr := ctxValue.ContractAddress["xcall"]
-		DappInit.Address = xcallAddr
-		updatedInit, _ := json.Marshal(DappInit)
+func (c *CosmosLocalnet) getInitParams(ctx context.Context, contractName string, initMsg map[string]interface{}) string {
+	if contractName == "mockdapp" {
+		updatedInit, _ := json.Marshal(initMsg)
 		fmt.Printf("Init msg for Dapp is : %s", string(updatedInit))
 		return string(updatedInit)
 	}

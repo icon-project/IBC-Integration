@@ -21,6 +21,49 @@ import (
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 )
 
+func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string, order ibc.Order) error {
+	chainA, chainB := s.GetChains()
+	ctx = context.WithValue(ctx, chains.ContractName{}, chains.ContractName{ContractName: "mockdapp"})
+	ibcHostChainA := chainA.GetIBCAddress("ibc")
+	ctx = context.WithValue(ctx, chains.InitMessageKey("init-msg"), chains.InitMessage{
+		Message: map[string]interface{}{
+			"ibc_host": ibcHostChainA,
+		},
+	})
+	var err error
+	ctx, err = chainA.DeployContract(ctx, Owner)
+	if err != nil {
+		return err
+	}
+
+	ctx, err = chainA.ExecuteContract(ctx, ibcHostChainA, Owner, chains.BindPort, map[string]interface{}{
+		"port_id": portId,
+		"address": chainA.GetIBCAddress("mockdapp"),
+	})
+
+	if err != nil {
+		return err
+	}
+	ibcHostChainB := chainB.GetIBCAddress("ibc")
+	ctx = context.WithValue(ctx, chains.InitMessageKey("init-msg"), chains.InitMessage{
+		Message: map[string]interface{}{
+			"ibc_host": ibcHostChainB,
+		},
+	})
+	ctx, err = chainB.DeployContract(ctx, Owner)
+
+	if err != nil {
+		return err
+	}
+
+	ctx, err = chainB.ExecuteContract(ctx, ibcHostChainB, Owner, chains.BindPort, map[string]interface{}{
+		"port_id": portId,
+		"address": chainB.GetIBCAddress("mockdapp"),
+	})
+
+	return err
+}
+
 // CreateClient creates a client on the interchain network.
 func (s *E2ETestSuite) CreateClient(ctx context.Context) error {
 	eRep := s.GetRelayerExecReporter()
@@ -39,13 +82,12 @@ func (s *E2ETestSuite) GetClientSequence(ctx context.Context, chain chains.Chain
 }
 
 // CreateChannel creates a channel on the interchain network.
-func (s *E2ETestSuite) CreateChannel(ctx context.Context, portID string) error {
+func (s *E2ETestSuite) CreateChannel(ctx context.Context, pathName, portID string, order ibc.Order) error {
 	eRep := s.GetRelayerExecReporter()
-	pathName := s.GetPathName(s.pathNameIndex - 1)
 	channelOptions := ibc.CreateChannelOptions{
 		SourcePortName: portID,
 		DestPortName:   portID,
-		Order:          ibc.Unordered,
+		Order:          order,
 		Version:        "ics20-1",
 	}
 	return s.relayer.CreateChannel(ctx, eRep, pathName, channelOptions)

@@ -34,8 +34,10 @@ type ContractName struct {
 }
 
 type InitMessage struct {
-	InitMsg string
+	Message map[string]interface{}
 }
+
+type InitMessageKey string
 
 type Param struct {
 	Data string

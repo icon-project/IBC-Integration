@@ -21,6 +21,7 @@ chains:
       xcall: "$BASE_PATH/artifacts/icon/xcall-0.1.0-optimized.jar"
       connection: "$BASE_PATH/artifacts/icon/xcall-connection-0.1.0-optimized.jar"
       dapp: "$BASE_PATH/artifacts/icon/dapp-multi-protocol-0.1.0-optimized.jar"
+      mockdapp: "$BASE_PATH/artifacts/icon/mockapp-0.1.0-optimized.jar"
 
   - name: archway
     version: "3"
@@ -50,6 +51,7 @@ chains:
       xcall: "$BASE_PATH/artifacts/archway/cw_xcall.wasm"
       connection: "$BASE_PATH/artifacts/archway/cw_xcall_ibc_connection.wasm"
       dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
+      mockdapp: "$BASE_PATH/artifacts/archway/cw_mock_ibc_dapp.wasm"
 relayer:
   image: relayer
   tag: alpha

@@ -22,7 +22,7 @@ func (x *XCallTestSuite) TestDemo() {
 	portId := "transfer"
 	ctx := context.TODO()
 	x.SetupXCall(ctx, portId)
-	x.DeployMockApp(ctx, portId)
+	x.DeployXCallMockApp(ctx, portId)
 
 	x.T.Run("xcall one way message chainA-chainB", func(t *testing.T) {
 		chainA, chainB := x.GetChains()
