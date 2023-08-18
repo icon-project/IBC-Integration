@@ -143,7 +143,6 @@ impl<'a> CwIbcConnection<'a> {
         &self.admin
     }
 
-
     pub fn get_ibc_config(&self, store: &dyn Storage) -> Result<IbcConfig, ContractError> {
         self.ibc_config.load(store).map_err(ContractError::Std)
     }
