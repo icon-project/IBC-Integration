@@ -27,8 +27,9 @@ use cw_ibc_core::{
     ConnectionEnd, EXECUTE_CONNECTION_OPENTRY, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT,
 };
 
+use cw_common::core_msg::InstantiateMsg;
+use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::light_client::light_client::LightClient;
-use cw_ibc_core::{context::CwIbcCoreContext, msg::InstantiateMsg};
 
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::icon::icon::lightclient::v1::ClientState as RawClientState;

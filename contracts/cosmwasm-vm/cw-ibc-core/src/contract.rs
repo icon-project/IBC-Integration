@@ -222,6 +222,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.bind_port(deps.storage, &port_id, checked_address)
             }
             CoreExecuteMsg::SetExpectedTimePerBlock { block_time } => {
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender)?;
                 self.set_expected_time_per_block(deps.storage, block_time)?;
                 Ok(Response::new()
                     .add_attribute("method", "set_expected_time_per_block")
