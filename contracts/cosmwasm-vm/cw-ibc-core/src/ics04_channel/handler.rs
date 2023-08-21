@@ -81,6 +81,16 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let connection_id = channel_end.connection_hops[0].clone();
         // An IBC connection running on the local (host) chain should exist.
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
+        let client_id= connection_end.client_id();
+        let client_state= self.client_state(deps.as_ref().storage, &client_id)?;
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
+
         channel_open_init_msg_validate(&channel_end, connection_end)?;
         let counter = self.channel_counter(deps.storage)?;
         let src_channel = ChannelId::new(counter); // creating new channel_id
@@ -152,6 +162,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         cw_println!(deps, "Reached in channel open try");
         let connection_id = channel.connection_hops[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
+
 
         channel_open_try_msg_validate(&channel, &connection_end)?;
         cw_println!(deps, "channel open try msg validate ");
@@ -516,6 +527,19 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         channel_close_init_validate(&src_channel, &channel_end)?;
         let connection_id = channel_end.connection_hops()[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
+        let client_id= connection_end.client_id();
+        let client_state= self.client_state(deps.as_ref().storage, &client_id)?;
+
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
+
+
+
 
         ensure_connection_state(&connection_id, &connection_end, &ConnectionState::Open)?;
 

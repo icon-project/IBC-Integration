@@ -36,6 +36,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
 
         let channel = self.get_channel_end(deps.as_ref().storage, &ibc_port, &ibc_channel)?;
+
         if channel.state != State::Open {
             return Err(ContractError::IbcChannelError {
                 error: InvalidChannelState {
@@ -43,6 +44,19 @@ impl<'a> CwIbcCoreContext<'a> {
                     state: channel.state,
                 },
             });
+        }
+
+        let connection_id = channel.connection_hops()[0].clone();
+        let connection_end = self.connection_end(deps.storage, &connection_id)?;
+        let client_id=connection_end.client_id();
+        let client_state= self.client_state(deps.as_ref().storage, &client_id)?;
+
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
         }
 
         let ack_commitment = keccak256(&ack).to_vec();

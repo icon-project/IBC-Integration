@@ -109,6 +109,15 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         })?;
 
         let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client_state= self.client_state(deps.as_ref().storage, &client_id)?;
+
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
 
         let sub_msg: SubMsg = client.update_client(&client_id, &header)?;
         cw_println!(
