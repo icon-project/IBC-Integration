@@ -160,7 +160,7 @@ type TxResul struct {
 			Value string `json:"value"`
 			Index bool   `json:"index"`
 		} `json:"attributes"`
-	} `json:"Events"`
+	} `json:"events"`
 }
 
 type CallServiceMessageType int64

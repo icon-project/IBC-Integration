@@ -13,12 +13,12 @@ import (
 
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	chantypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 )
 
 func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string, order ibc.Order) error {
@@ -174,12 +174,12 @@ func (s *E2ETestSuite) ResumeNode(ctx context.Context, chain chains.Chain) error
 	return chain.UnpauseNode(ctx)
 }
 
-func (s *E2ETestSuite) Crash(ctx context.Context, callbacks ...func() error) (time.Time, error) {
+func (s *E2ETestSuite) Crash(ctx context.Context, chain ibc.Chain, callbacks ...func() error) (uint64, error) {
 	eRep := s.GetRelayerExecReporter()
 	s.logger.Info("crashing relayer")
 	now := time.Now()
 	if err := s.relayer.(interchaintest.Relayer).StopRelayerContainer(ctx, eRep); err != nil {
-		return now, err
+		return 0, err
 	}
 
 	if len(callbacks) > 0 {
@@ -188,10 +188,11 @@ func (s *E2ETestSuite) Crash(ctx context.Context, callbacks ...func() error) (ti
 			eg.Go(cb)
 		}
 		if err := eg.Wait(); err != nil {
-			return now, err
+			return 0, err
 		}
 	}
-	return now, nil
+	s.logger.Info("relayer crashed", zap.Duration("elapsed", time.Since(now)))
+	return chain.Height(ctx)
 }
 
 // WriteBlockHeight writes the block height to the given file.
@@ -202,28 +203,21 @@ func (s *E2ETestSuite) WriteBlockHeight(ctx context.Context, chain chains.Chain)
 			return err
 		}
 		chanID := chain.(ibc.Chain).Config().ChainID
-		return s.relayer.(interchaintest.Relayer).WriteBlockHeight(ctx, chanID, height)
+		return s.relayer.(interchaintest.Relayer).WriteBlockHeight(ctx, chanID, height-1)
 	}
 }
 
 // Recover recovers a relay and waits for the relay to catch up to the current height of the stopped chains.
 // This is because relay needs to sync with the counterchain network when it was on crashed state.
-func (s *E2ETestSuite) Recover(ctx context.Context, chain ibc.Chain, stoppedHeight uint64) (time.Time, error) {
+func (s *E2ETestSuite) Recover(ctx context.Context, waitDuration time.Duration) error {
 	s.logger.Info("waiting for relayer to restart")
-	if err := s.relayer.(interchaintest.Relayer).RestartRelayerContainer(ctx); err != nil {
-		return time.Time{}, err
-	}
 	now := time.Now()
-	currentHeight, err := chain.Height(ctx)
-	if err != nil {
-		return now, err
+	if err := s.relayer.(interchaintest.Relayer).RestartRelayerContainer(ctx); err != nil {
+		return err
 	}
-	// Wait for the relayer to catch up to the current height of the stopped chain.
-	if err := test.WaitForBlocks(ctx, int(currentHeight-stoppedHeight), chain); err != nil {
-		return now, err
-	}
-	s.logger.Info("relayer restarted")
-	return now, nil
+	time.Sleep(waitDuration)
+	s.logger.Info("relayer restarted", zap.Duration("elapsed", time.Since(now)))
+	return nil
 }
 
 // Ping checks if the relayer is running

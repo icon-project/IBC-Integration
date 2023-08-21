@@ -33,20 +33,8 @@ func (c *IconLocalnet) getExecuteParam(ctx context.Context, methodName string, p
 
 func (c *IconLocalnet) GetQueryParam(method string, params map[string]interface{}) Query {
 	var query Query
-	//sequence, _ := strconv.Atoi(params["sequence"].(string))
 	switch method {
 	case chains.HasPacketReceipt:
-		//_params := []string{
-		//	fmt.Sprintf("portId=%v", params["port_id"]),
-		//	fmt.Sprintf(`channelId=%v`, params["channel_id"]),
-		//	fmt.Sprintf(`sequence=%v`, sequence),
-		//}
-
-		//params := fmt.Sprintf(`portId=%s,channelId=channel-%d`, portID, channelSuffix)
-		//query = Query{
-		//	"getPacketReceipt",
-		//	strings.Join(_params, ","),
-		//}
 		query = Query{
 			"hasPacketReceipt",
 			Value{map[string]interface{}{

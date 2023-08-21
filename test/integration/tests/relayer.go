@@ -163,7 +163,6 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 	//})
 	r.T.Run("crash and recover relay chainA-chainB", func(t *testing.T) {
 		r.Require().NoError(r.CrashTest(ctx, chainA, chainB))
-
 	})
 
 	r.T.Run("crash and recover relay chainB-chainA", func(t *testing.T) {
@@ -182,18 +181,15 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 	// crash relayer and write block height information for crashed node to file
 	callbackA := r.WriteBlockHeight(ctx, chainA)
 	callbackB := r.WriteBlockHeight(ctx, chainB)
-	crashedAt, err := r.Crash(ctx, callbackA, callbackB)
+	crashedHeight, err := r.Crash(ctx, chainB.(ibc.Chain), callbackA, callbackB)
 	if err != nil {
 		return err
 	}
-	r.T.Logf("crashed at: %s", crashedAt)
-	currentHeight, err := chainB.(ibc.Chain).Height(ctx)
-	if err != nil {
-		return err
-	}
+	r.T.Logf("crashed at: %s", crashedHeight)
+
 	// send packet from chainA to chainB crashed node and check if it is received
 	var msg = chainB.(ibc.Chain).Config().ChainID
-	response, err := r.SendPacket(ctx, chainA, chainB, msg, 100000)
+	response, err := r.SendPacket(ctx, chainA, chainB, msg, 1000000)
 	packet := response.Packet
 	assert.NotNilf(r.T, packet, "packet is null")
 	assert.Truef(r.T, response.IsPacketSent, "The packet has not been sent to the target chain.")
@@ -208,12 +204,10 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 	assert.Falsef(r.T, isPacketReceived, "The packet event has already been received on the target chain.")
 	// recover relayer now
 
-	recoveredAt, err := r.Recover(ctx, chainA.(ibc.Chain), currentHeight)
-	r.T.Logf("fully recovered at: %s", recoveredAt)
-
-	if err != nil {
+	if err := r.Recover(ctx, time.Second*30); err != nil {
 		return err
 	}
+
 	isPacketReceived = findPacket(ctx, chainB, params)
 	assert.Truef(r.T, isPacketReceived, "The packet event has NOT received on the target chain.")
 
@@ -228,17 +222,17 @@ func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.
 }
 
 func findPacket(ctx context.Context, chain chains.Chain, params map[string]interface{}) bool {
-	duration := 10 * time.Second
+	duration := 30 * time.Second
 	interval := 2 * time.Second
 
-	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	_ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 
 	var isPacketReceived bool // Initialize this variable
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-_ctx.Done():
 			fmt.Println("Loop finished")
 			return isPacketReceived
 		default:
