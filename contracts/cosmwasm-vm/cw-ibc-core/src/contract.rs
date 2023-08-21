@@ -103,6 +103,7 @@ impl<'a> CwIbcCoreContext<'a> {
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender)?;
                 let client_type = IbcClientType::new(client_type);
+                let client_address = to_checked_address(deps.as_ref(), &client_address.to_string());
                 self.register_client(deps, client_type, client_address)
             }
             CoreExecuteMsg::CreateClient { msg } => {
