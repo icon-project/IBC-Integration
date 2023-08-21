@@ -44,7 +44,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|_e| ContractError::FailedToInitContract)?;
-    let ibc_host = to_checked_address(deps.as_ref(), &msg.ibc_host.to_string());
+    let ibc_host = to_checked_address(deps.as_ref(), msg.ibc_host.as_ref());
     let config = Config::new(info.sender, ibc_host);
     let mut context = CwContext::new(deps, _env);
     context.insert_config(&config)?;
