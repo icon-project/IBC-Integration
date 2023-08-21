@@ -74,17 +74,28 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
-        let latest_height = self.host_height(&env)?;
+        let current_host_height = self.host_height(&env)?;
+        let current_host_timestamp = self.host_timestamp(&env)?;
         let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
 
-        if packet_timeout_height.has_expired(latest_height) {
+        if packet_timeout_height.has_expired(current_host_height) {
             return Err(PacketError::LowPacketHeight {
-                chain_height: latest_height,
+                chain_height: current_host_height,
                 timeout_height: packet_timeout_height,
             })
             .map_err(Into::<ContractError>::into)?;
         }
         cw_println!(deps, "packet height is greater than timeout height");
+
+        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
+
+        if let Expiry::Expired = packet_timestamp.check_expiry(&current_host_timestamp) {
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::LowPacketTimestamp,
+            });
+        }
+
+        cw_println!(deps, "packet height is greater than timeout timestamp");
 
         let client_id_on_b = conn_end_on_b.client_id();
         let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;

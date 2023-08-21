@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, collections::HashMap};
 
 pub fn mock_height(
     number: u64,
@@ -24,7 +24,7 @@ use cosmwasm_std::{
         MOCK_CONTRACT_ADDR,
     },
     to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
-    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
+    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery, Binary,
 };
 
 use common::{
@@ -476,6 +476,24 @@ pub fn get_mock_env() -> Env {
     let mut env = mock_env();
     env.contract.address = Addr::unchecked("archway19d4lkjwk2wnf4fzraw4gwspvevlqa9kwu2nasl");
     env
+}
+
+pub fn mock_lightclient_query(
+    mocks: HashMap<Binary, Binary>,
+    deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>,
+) {
+    deps.querier.update_wasm(move |r| match r {
+        WasmQuery::Smart { contract_addr, msg } => {
+            if mocks.get(msg).is_some(){
+                let res= mocks.get(msg).unwrap().clone();
+                SystemResult::Ok(ContractResult::Ok(res))
+            }else {
+                SystemResult::Ok(ContractResult::Ok(to_binary(&true).unwrap()))
+            }
+            
+        }
+        _ => todo!(),
+    });
 }
 
 pub fn mock_lightclient_reply(deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>) {

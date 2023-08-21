@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_port_id};
 
 use super::*;
@@ -104,6 +106,21 @@ fn test_packet_send() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
+    let light_client = LightClient::new("lightclient".to_string());
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            light_client.clone(),
+        )
+        .unwrap();
+
+    let timestamp_query = light_client
+        .get_timestamp_by_height_query(&IbcClientId::default(), height.revision_height())
+        .unwrap();
+    let mut mocks = HashMap::<Binary, Binary>::new();
+    mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
+    mock_lightclient_query(mocks, &mut deps);
 
     let res = contract.send_packet(deps.as_mut(), &mock_env(), packet);
     println!("{:?}", res);
@@ -226,6 +243,21 @@ fn test_packet_send_fail_misiing_sequense() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
+    let light_client = LightClient::new("lightclient".to_string());
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            light_client.clone(),
+        )
+        .unwrap();
+
+    let timestamp_query = light_client
+        .get_timestamp_by_height_query(&IbcClientId::default(), height.revision_height())
+        .unwrap();
+    let mut mocks = HashMap::<Binary, Binary>::new();
+    mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
+    mock_lightclient_query(mocks, &mut deps);
 
     contract
         .send_packet(deps.as_mut(), &mock_env(), packet)

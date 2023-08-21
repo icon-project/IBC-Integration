@@ -82,17 +82,22 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        cw_println!(deps, " check pass: packet exipred");
+        cw_println!(deps, " check pass: packet height expired");
 
-        let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id_on_a, &latest_height_on_a)?;
-        let latest_timestamp = consensus_state_of_b_on_a.timestamp();
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
-        if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {
-            return Err(PacketError::LowPacketTimestamp).map_err(Into::<ContractError>::into);
+        let client = self.get_client(deps.storage, client_id_on_a)?;
+        let timestamp_at_height = client.get_timestamp_by_height(
+            deps.as_ref(),
+            client_id_on_a,
+            latest_height_on_a.revision_height(),
+        )?;
+        if timestamp_at_height != 0 {
+            let chain_timestamp = to_ibc_timestamp(timestamp_at_height)?;
+            if let Expiry::Expired = chain_timestamp.check_expiry(&packet_timestamp) {
+                return Err(PacketError::LowPacketTimestamp).map_err(Into::<ContractError>::into);
+            }
+            cw_println!(deps, " timestamp check pass");
         }
-        cw_println!(deps, " timestamp check pass");
-
         let next_seq_send_on_a =
             self.get_next_sequence_send(deps.storage, &src_port, &src_channel)?;
         cw_println!(deps, " fetched next seq send {:?}", next_seq_send_on_a);

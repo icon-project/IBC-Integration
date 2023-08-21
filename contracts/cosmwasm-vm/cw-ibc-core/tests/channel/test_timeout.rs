@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use common::ibc::Height;
 use cw_ibc_core::{
     conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp},
     light_client::light_client::LightClient,
@@ -223,16 +225,24 @@ fn test_timeout_packet_validate_to_light_client() {
         .unwrap();
     let _client_type = IbcClientType::new("iconclient".to_string());
 
+    
     let light_client = LightClient::new("lightclient".to_string());
+    contract
+    .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client.clone())
+    .unwrap();
+    let timestamp_query = light_client
+        .get_timestamp_by_height_query(&IbcClientId::default(), proof_height.revision_height())
+        .unwrap();
+    let mut mocks = HashMap::<Binary, Binary>::new();
+    mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
+    mock_lightclient_query(mocks, &mut deps);
 
     contract
         .bind_port(&mut deps.storage, &src_port, "moduleaddress".to_string())
         .unwrap();
 
-    contract
-        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
-        .unwrap();
-    mock_lightclient_reply(&mut deps);
+   
+   // mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
         next_proof_context_hash: vec![1, 2, 3],
@@ -256,9 +266,18 @@ fn test_timeout_packet_validate_to_light_client() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
+    let light_client = LightClient::new("lightclient".to_string());
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            light_client.clone(),
+        )
+        .unwrap();
+    
 
     let res = contract.timeout_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
-
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,
