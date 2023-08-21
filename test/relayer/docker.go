@@ -67,9 +67,8 @@ func NewDockerRelayer(ctx context.Context, log *zap.Logger, testName string, cli
 		testName: testName,
 
 		wallets: map[string]ibc.Wallet{},
+		homeDir: defaultRlyHomeDirectory,
 	}
-
-	r.homeDir = defaultRlyHomeDirectory
 
 	for _, opt := range options {
 		switch o := opt.(type) {
@@ -387,9 +386,9 @@ func (r *DockerRelayer) StartRelayer(ctx context.Context, rep ibc.RelayerExecRep
 	return r.containerLifecycle.StartContainer(ctx)
 }
 
-func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecReporter) error {
+func (r *DockerRelayer) stopRelayer(ctx context.Context, rep ibc.RelayerExecReporter) error {
 	if r.containerLifecycle == nil {
-		return nil
+		return fmt.Errorf("tried to stop relayer again without starting first")
 	}
 	if err := r.containerLifecycle.StopContainer(ctx); err != nil {
 		return err
@@ -423,15 +422,17 @@ func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecRepo
 		return fmt.Errorf("StopRelayer: inspecting container: %w", err)
 	}
 
-	startedAt, err := time.Parse(c.State.StartedAt, time.RFC3339Nano)
+	startedAt, err := time.Parse(c.State.StartedAt, time.RFC3339)
 	if err != nil {
 		r.log.Info("Failed to parse container StartedAt", zap.Error(err))
 		startedAt = time.Unix(0, 0)
 	}
 
-	finishedAt, err := time.Parse(c.State.FinishedAt, time.RFC3339Nano)
+	var finishedAt time.Time
+
+	finishedAt, err = time.Parse(c.State.FinishedAt, time.RFC3339)
 	if err != nil {
-		r.log.Info("Failed to parse container FinishedAt", zap.Error(err))
+		err = fmt.Errorf("failed to parse container FinishedAt: %w", err)
 		finishedAt = time.Now().UTC()
 	}
 
@@ -442,22 +443,49 @@ func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecRepo
 		c.State.ExitCode,
 		startedAt,
 		finishedAt,
-		nil,
+		err,
 	)
+	return nil
+}
 
-	r.log.Debug(
-		fmt.Sprintf("Stopped docker container\nstdout:\n%s\nstderr:\n%s", stdout, stderr),
-		zap.String("container_id", containerID),
-		zap.String("container", c.Name),
-	)
-
+// CleanUp cleans up the relayer's home directory and any containers that were
+func (r *DockerRelayer) cleanUp(ctx context.Context) error {
+	if r.containerLifecycle != nil {
+		return fmt.Errorf("tried to clean up relayer without stopping first")
+	}
 	if err := r.containerLifecycle.RemoveContainer(ctx); err != nil {
 		return err
 	}
-
 	r.containerLifecycle = nil
-
 	return nil
+}
+
+func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecReporter) error {
+	if err := r.stopRelayer(ctx, rep); err != nil {
+		return err
+	}
+	return r.cleanUp(ctx)
+}
+
+// RestartRelayer restarts the relayer with the same paths as before.
+func (r *DockerRelayer) StopRelayerContainer(ctx context.Context, rep ibc.RelayerExecReporter) error {
+	if r.containerLifecycle == nil {
+		return fmt.Errorf("tried to restart relayer without starting first")
+	}
+	return r.stopRelayer(ctx, rep)
+}
+
+// WriteBlockHeight writes the block height to the relayer's home directory.
+func (r *DockerRelayer) WriteBlockHeight(ctx context.Context, chainID string, height uint64) error {
+	return r.WriteFileToHomeDir(ctx, fmt.Sprintf(".relayer/%s/latest_height", chainID), []byte(fmt.Sprintf("%d", height)))
+}
+
+// RestartRelayer restarts the relayer with the same paths as before.
+func (r *DockerRelayer) RestartRelayerContainer(ctx context.Context) error {
+	if r.containerLifecycle == nil {
+		return fmt.Errorf("tried to restart relayer without starting first")
+	}
+	return r.containerLifecycle.StartContainer(ctx)
 }
 
 func (r *DockerRelayer) containerImage() ibc.DockerImage {

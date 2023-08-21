@@ -39,12 +39,7 @@ func NewICONRelayer(log *zap.Logger, testName string, cli *client.Client, networ
 	if err != nil {
 		panic(err) // TODO: return
 	}
-
-	r := &ICONRelayer{
-		DockerRelayer: dr,
-	}
-
-	return r
+	return &ICONRelayer{DockerRelayer: dr}
 }
 
 type ICONRelayerChainConfigValue struct {

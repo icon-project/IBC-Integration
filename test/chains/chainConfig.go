@@ -21,6 +21,7 @@ type ChainConfig struct {
 	GasAdjustment  float64     `mapstructure:"gas_adjustment"`
 	TrustingPeriod string      `mapstructure:"trusting_period"`
 	NoHostMount    bool        `mapstructure:"no_host_mount"`
+	BlockInterval  int         `mapstructure:"block_interval"`
 }
 
 type DockerImage struct {

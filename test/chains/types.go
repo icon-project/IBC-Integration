@@ -18,6 +18,13 @@ type XCallConnection struct {
 	PortId                 string
 	CounterPartyPortId     string
 	CounterPartyConnection string
+	TimeoutHeight          string
+}
+
+type XCallResponse struct {
+	SerialNo  string
+	RequestID string
+	Data      string
 }
 
 type LastBlock struct{}
@@ -27,8 +34,10 @@ type ContractName struct {
 }
 
 type InitMessage struct {
-	InitMsg string
+	Message map[string]interface{}
 }
+
+type InitMessageKey string
 
 type Param struct {
 	Data string

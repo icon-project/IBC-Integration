@@ -143,19 +143,6 @@ impl<'a> CwIbcConnection<'a> {
         &self.admin
     }
 
-    pub fn get_config(&self, store: &dyn Storage) -> Result<Config, ContractError> {
-        self.config.load(store).map_err(ContractError::Std)
-    }
-
-    pub fn store_config(
-        &self,
-        store: &mut dyn Storage,
-
-        config: &Config,
-    ) -> Result<(), ContractError> {
-        self.config.save(store, config).map_err(ContractError::Std)
-    }
-
     pub fn get_ibc_config(&self, store: &dyn Storage) -> Result<IbcConfig, ContractError> {
         self.ibc_config.load(store).map_err(ContractError::Std)
     }
@@ -180,16 +167,6 @@ impl<'a> CwIbcConnection<'a> {
     }
     pub fn get_ibc_host(&self, store: &dyn Storage) -> Result<Addr, ContractError> {
         self.ibc_host.load(store).map_err(ContractError::Std)
-    }
-
-    pub fn get_denom(&self, store: &dyn Storage) -> Result<String, ContractError> {
-        let config = self.get_config(store)?;
-        Ok(config.denom)
-    }
-
-    pub fn get_port(&self, store: &dyn Storage) -> Result<String, ContractError> {
-        let config = self.get_config(store)?;
-        Ok(config.port_id)
     }
 
     pub fn store_received_packet(
