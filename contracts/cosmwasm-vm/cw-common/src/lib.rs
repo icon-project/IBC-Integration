@@ -10,7 +10,7 @@ pub mod query_helpers;
 pub mod raw_types;
 pub mod types;
 pub mod utils;
-pub mod xcall_connection_msg;
+pub mod ibc_dapp_msg;
 
 use bech32::FromBase32;
 use cosmwasm_std::{from_binary, Addr, Binary, Deps, StdError};

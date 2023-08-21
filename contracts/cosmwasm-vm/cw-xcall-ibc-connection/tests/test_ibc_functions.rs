@@ -25,7 +25,7 @@ use account::admin_one;
 use account::alice;
 
 use cosmwasm_std::from_binary;
-use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
+use cw_common::ibc_dapp_msg::{ExecuteMsg, QueryMsg};
 
 use cw_xcall::types::message::CallServiceMessage;
 use cw_xcall::types::request::CallServiceMessageRequest;
@@ -74,7 +74,7 @@ fn fails_on_open_channel_open_init_ordered_channel() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn success_on_open_channel_open_init_unordered_channel() {
-    use cw_common::xcall_connection_msg::ExecuteMsg;
+    use cw_common::ibc_dapp_msg::ExecuteMsg;
     use cw_xcall_ibc_connection::{state::CwIbcConnection, types::config::Config};
 
     let mut deps = deps();
@@ -141,7 +141,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
 #[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"ics20-1\" }")]
 fn fails_on_open_channel_open_try_invalid_version() {
-    use cw_common::xcall_connection_msg::ExecuteMsg;
+    use cw_common::ibc_dapp_msg::ExecuteMsg;
     use cw_xcall_ibc_connection::state::CwIbcConnection;
 
     let mut deps = deps();
@@ -591,7 +591,7 @@ fn test_entry_point() {
         },
     )
     .unwrap();
-    let msg = cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
+    let msg = cw_common::ibc_dapp_msg::ExecuteMsg::SetAdmin {
         address: admin_one().to_string(),
     };
 

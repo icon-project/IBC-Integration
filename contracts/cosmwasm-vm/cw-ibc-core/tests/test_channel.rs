@@ -535,7 +535,7 @@ fn test_validate_open_init_channel() {
     let res = contract.validate_channel_open_init(deps.as_mut(), info.clone(), &raw);
 
     let expected = on_chan_open_init_submessage(&channel_end, &src_port_id, &src_channel, &conn_id);
-    let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
+    let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),

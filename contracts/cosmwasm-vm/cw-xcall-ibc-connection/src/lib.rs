@@ -39,7 +39,7 @@ use cw_common::cw_types::{
     CwPacketReceiveMsg, CwPacketTimeoutMsg, CwReceiveResponse,
 };
 
-use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
+use cw_common::ibc_dapp_msg::{ExecuteMsg, QueryMsg};
 use cw_storage_plus::Item;
 use thiserror::Error;
 
