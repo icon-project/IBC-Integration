@@ -981,16 +981,6 @@ fn test_for_recieve_packet() {
         VALIDATE_ON_PACKET_RECEIVE_ON_MODULE
     );
 
-    contract
-        .store_packet_receipt(
-            &mut deps.storage,
-            &dst_port,
-            &dst_channel,
-            Sequence::from(packet.sequence),
-            Receipt::Ok,
-        )
-        .unwrap();
-
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
         height: 10,
