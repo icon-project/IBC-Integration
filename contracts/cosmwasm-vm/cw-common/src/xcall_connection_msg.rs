@@ -2,7 +2,7 @@ use crate::cw_types::{
     CwChannelCloseMsg, CwChannelConnectMsg, CwChannelOpenMsg, CwPacketAckMsg, CwPacketReceiveMsg,
     CwPacketTimeoutMsg,
 };
-use crate::ibc_dapp_msg;
+
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cw_xcall_lib::network_address::NetId;
 
