@@ -34,26 +34,26 @@ interconnected dapps.
 Additional information on how IBC works can be found [here](https://ibc.cosmos.network/). and xCall spec is
 defined [here](https://github.com/icon-project/xCall/blob/main/docs/adr/xcall.md)
 
-# Table of Contents.
+# Table of Contents
 
 - [IBC INTEGRATION](#ibc-integration)
 - [Table of Content](#table-of-content)
-    - [About  ](#about--)
-    - [Installation  ](#installation--)
-    - [Getting Started  ](#getting-started--)
-        - [Prerequisite](#prerequiste)
-        - [Build](#build)
-        - [Running the tests](#testing)
-        - [Deploy](#deploy)
-    - [Developing IBC Dapp  ](#developing-ibc-dapp--)
-    - [Contributing  ](#contributing--)
-    - [License  ](#license--)
-    - [Contact  ](#contact--)
+  - [About](#about--)
+  - [Installation](#installation--)
+  - [Getting Started](#getting-started--)
+    - [Prerequisite](#prerequiste)
+    - [Build](#build)
+    - [Running the tests](#testing)
+    - [Deploy](#deploy)
+  - [Developing IBC Dapp](#developing-ibc-dapp--)
+  - [Contributing](#contributing--)
+  - [License](#license--)
+  - [Contact](#contact--)
 
 ## About <a name = "about"> </a>
-Relayer for these contracts deviates slightly from official cosmos relayer due to the fact that ICON uses BTP Blocks as storage for messages and also on cosmwasm side the ibc host is deployed as contracts rather than the native ibc host module of cosmos chain. Relayer for ibc-icon can be found [here](https://github.com/icon-project/ibc-relay). 
-The deviation from cosmos relayer is documented [here](https://github.com/icon-project/ibc-relay/blob/main/docs/deviations_from_ibc.md).
 
+Relayer for these contracts deviates slightly from official cosmos relayer due to the fact that ICON uses BTP Blocks as storage for messages and also on cosmwasm side the ibc host is deployed as contracts rather than the native ibc host module of cosmos chain. Relayer for ibc-icon can be found [here](https://github.com/icon-project/ibc-relay).
+The deviation from cosmos relayer is documented [here](https://github.com/icon-project/ibc-relay/blob/main/docs/deviations_from_ibc.md).
 
 ## Installation <a name = "installation"> </a>
 
@@ -71,7 +71,8 @@ git submodule update --remote
 ```
 
 ## Getting Started <a name = "getting_started"> </a>
-Make sure you have following installed on your machine to build the contracts or you can use docker. 
+
+Make sure you have following installed on your machine to build the contracts or you can use docker.
 
 ### Prerequisites
 
@@ -101,40 +102,48 @@ Make sure you have following installed on your machine to build the contracts or
 | [/test](./test)                                   | Test Framework and Test Suite including e2e test and functional test           |
 | [/utils](./utils)                                 | Utilities used for build, setup, CI/CD                                         |
 
-
-
 ## Build <a name = "build"> </a>
+
 Run following command on root directory to build the rust contracts. The built wasm files will be available in the artifacts directory in the root.
+
 ```
 ./scripts/optimize-cosmwasm.sh
 ```
+
 To build the java contracts run following command.
+
 ```
 make optimize-jar
 ```
+
 To build all contracts using docker follow steps below
 Step1: Update git submodules:
+
 ```
 git submodule init
 git submodule update --remote
 ```
+
 Step2: Run following commands to build the builder image and compile contracts.
+
 ```
 make build-builder-img
 make optimize-build
 
 ```
+
 ## Testing <a name = "testing"> </a>
 
 ### End-to-End Testing for the System
 
-[End-to-End Testing Setup](./docs/e2e_test_setup.md)
+[End-to-End Testing Setup](./docs/e2e-integration-test-setup.md)
 
 ## Deploy <a name = "deploy"> </a>
 
 For deployment and usage follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
 
 ## Developing IBC Dapp <a name = "developing-ibc-dapp"> </a>
+
 To build dapp that is compatible with our smart contract based IBC Host you can follow the docs provided in mock ibc dapp samples.
 Sample for cosmwasm contract  [here](./contracts/cosmwasm-vm/cw-mock-ibc-dapp/README.md).
 Sample for icon contract  [here](./contracts/javascore/modules/mockapp/src/main/java/ibc/mockapp/MockApp.java)
@@ -193,7 +202,6 @@ If you're interested in contributing code to the project, follow these steps to 
 Contributors are expected to adhere to the project's [Code of Conduct](CODE_OF_CONDUCT.md) at all times. This ensures a respectful and inclusive environment for all contributors and participants.
 
 We appreciate your dedication to contributing to the IBC Integration for ICON Project. Your efforts help improve the project's quality and expand its capabilities. Thank you for being a part of our community!
-
 
 ## License <a name = "license"> </a>
 

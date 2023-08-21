@@ -91,9 +91,12 @@ To run the demo, the following software needs to be installed.
    export GOLOOP_IMAGE_TAG_ENV=latest
    ```
 
-2. Run the End-to-End Tests:
-
-   ```bash
-   go test -v ./test/e2e
-   ```
-   
+2. Run the Tests:
+   - for e2e test
+       ```bash
+         go test -v ./test/e2e 
+       ```
+   - for integration test
+       ```bash
+         go test -v ./test/integration 
+       ```
