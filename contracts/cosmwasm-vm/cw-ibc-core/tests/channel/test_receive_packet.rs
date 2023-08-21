@@ -157,17 +157,17 @@ fn test_receive_packet() {
         .unwrap();
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     let missing_receipts = contract
-    .ibc_store()
-    .get_missing_packet_receipts(
-        deps.as_ref().storage,
-        &IbcPortId::from_str(&packet.destination_port).unwrap(),
-        &IbcChannelId::from_str(&packet.destination_channel).unwrap(),
-        0,
-        10,
-    )
-    .unwrap();
-println!("{missing_receipts:?}");
-assert!(!missing_receipts.contains(&packet.sequence));
+        .ibc_store()
+        .get_missing_packet_receipts(
+            deps.as_ref().storage,
+            &IbcPortId::from_str(&packet.destination_port).unwrap(),
+            &IbcChannelId::from_str(&packet.destination_channel).unwrap(),
+            0,
+            10,
+        )
+        .unwrap();
+    println!("{missing_receipts:?}");
+    assert!(!missing_receipts.contains(&packet.sequence));
     println!("{:?}", res);
     assert!(res.is_ok());
     assert_eq!(
@@ -222,12 +222,9 @@ fn execute_receive_packet() {
             &chan_end_on_b,
         )
         .unwrap();
-   
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
-   assert!(res.is_ok());
-
-  
+    assert!(res.is_ok());
 }
 
 #[test]
@@ -285,9 +282,8 @@ fn execute_receive_packet_ordered() {
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
-    
+
     assert!(res.is_ok());
-  
 }
 
 #[test]

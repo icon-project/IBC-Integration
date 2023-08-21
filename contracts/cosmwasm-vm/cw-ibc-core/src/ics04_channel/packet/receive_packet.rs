@@ -51,8 +51,8 @@ impl<'a> CwIbcCoreContext<'a> {
         let packet_sequence = Sequence::from(packet.sequence);
 
         let channel_end = self.get_channel_end(deps.storage, &dst_port, &dst_channel)?;
-        ensure_channel_state(&dst_channel,&channel_end,&State::Open)?;
-        
+        ensure_channel_state(&dst_channel, &channel_end, &State::Open)?;
+
         cw_println!(deps, "validate recevie packet state_matched");
         let counterparty = Counterparty::new(src_port.clone(), Some(src_channel.clone()));
 
@@ -151,12 +151,7 @@ impl<'a> CwIbcCoreContext<'a> {
             // Note: ibc-go doesn't make the check for `Order::None` channels
             Order::None => false,
             Order::Unordered => self
-                .get_packet_receipt(
-                    deps.storage,
-                    &dst_port,
-                    &dst_channel,
-                    packet_sequence.into(),
-                )
+                .get_packet_receipt(deps.storage, &dst_port, &dst_channel, packet_sequence)
                 .is_ok(),
             Order::Ordered => {
                 let next_seq_recv =
@@ -232,7 +227,7 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
 
         cw_println!(deps, "event recieve packet: {:?}", event_recieve_packet);
-        
+
         let sub_msg: SubMsg =
             SubMsg::reply_always(receive_packet_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
