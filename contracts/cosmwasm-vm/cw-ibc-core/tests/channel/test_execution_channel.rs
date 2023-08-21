@@ -761,9 +761,6 @@ fn test_for_packet_send() {
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
 
-       
-      
-
     assert_eq!(response.attributes[0].value, "instantiate");
 
     let chan_end_on_a = ChannelEnd::new(
@@ -851,12 +848,12 @@ fn test_for_packet_send() {
         )
         .unwrap();
     contract
-    .bind_port(
-        &mut deps.storage,
-        &IbcPortId::from_str(&packet.source_port).unwrap(),
-        Addr::unchecked("moduleaddress").to_string(),
-    )
-    .unwrap();
+        .bind_port(
+            &mut deps.storage,
+            &IbcPortId::from_str(&packet.source_port).unwrap(),
+            Addr::unchecked("moduleaddress").to_string(),
+        )
+        .unwrap();
 
     let res = contract.execute(
         deps.as_mut(),

@@ -105,16 +105,16 @@ fn test_packet_send() {
         )
         .unwrap();
 
-    let info=create_mock_info("moduleaddress", "test", 100);
+    let info = create_mock_info("moduleaddress", "test", 100);
     contract
-    .bind_port(
-        &mut deps.storage,
-        &IbcPortId::from_str(&packet.source_port).unwrap(),
-        Addr::unchecked("moduleaddress").to_string(),
-    )
-    .unwrap();
+        .bind_port(
+            &mut deps.storage,
+            &IbcPortId::from_str(&packet.source_port).unwrap(),
+            Addr::unchecked("moduleaddress").to_string(),
+        )
+        .unwrap();
 
-    let res = contract.send_packet(deps.as_mut(), &mock_env(),info, packet);
+    let res = contract.send_packet(deps.as_mut(), &mock_env(), info, packet);
     println!("{:?}", res);
     assert!(res.is_ok());
     let res = res.unwrap();
@@ -141,16 +141,16 @@ fn test_packet_send_fail_channel_not_found() {
 
     packet.sequence = 1;
     packet.data = vec![0];
-    let info=create_mock_info("moduleaddress", "test", 100);
+    let info = create_mock_info("moduleaddress", "test", 100);
     contract
-    .bind_port(
-        &mut deps.storage,
-        &IbcPortId::from_str(&packet.source_port).unwrap(),
-        Addr::unchecked("moduleaddress").to_string(),
-    )
-    .unwrap();
+        .bind_port(
+            &mut deps.storage,
+            &IbcPortId::from_str(&packet.source_port).unwrap(),
+            Addr::unchecked("moduleaddress").to_string(),
+        )
+        .unwrap();
     contract
-        .send_packet(deps.as_mut(), &mock_env(), info,packet)
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
 
@@ -243,16 +243,16 @@ fn test_packet_send_fail_misiing_sequense() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let info=create_mock_info("moduleaddress", "test", 100);
+    let info = create_mock_info("moduleaddress", "test", 100);
     contract
-    .bind_port(
-        &mut deps.storage,
-        &IbcPortId::from_str(&packet.source_port).unwrap(),
-        Addr::unchecked("moduleaddress").to_string(),
-    )
-    .unwrap();
+        .bind_port(
+            &mut deps.storage,
+            &IbcPortId::from_str(&packet.source_port).unwrap(),
+            Addr::unchecked("moduleaddress").to_string(),
+        )
+        .unwrap();
 
     contract
-        .send_packet(deps.as_mut(), &mock_env(), info,packet)
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
