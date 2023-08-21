@@ -141,9 +141,9 @@ impl ILightClient for IconClient<'_> {
         let btp_header = signed_header.header.clone().unwrap();
 
         let mut state = self.context.get_client_state(client_id)?;
-        
-        if state.frozen_height >0 {
-            return Err(ContractError::ClientStateFrozen(state.frozen_height))
+
+        if state.frozen_height > 0 {
+            return Err(ContractError::ClientStateFrozen(state.frozen_height));
         }
 
         if signed_header.trusted_height > btp_header.main_height {

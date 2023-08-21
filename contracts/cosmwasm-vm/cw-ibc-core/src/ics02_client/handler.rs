@@ -109,8 +109,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         })?;
 
         let client = self.get_client(deps.as_ref().storage, &client_id)?;
-        let client_state= self.client_state(deps.as_ref().storage, &client_id)?;
-
+        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {

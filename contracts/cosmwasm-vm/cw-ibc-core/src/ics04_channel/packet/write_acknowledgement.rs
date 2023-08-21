@@ -48,9 +48,8 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let connection_id = channel.connection_hops()[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
-        let client_id=connection_end.client_id();
-        let client_state= self.client_state(deps.as_ref().storage, &client_id)?;
-
+        let client_id = connection_end.client_id();
+        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
