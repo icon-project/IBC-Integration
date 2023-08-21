@@ -29,7 +29,7 @@ fn test_for_channel_open_init_execution_message() {
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-    let client_state=get_dummy_client_state();
+    let client_state = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(
@@ -523,8 +523,8 @@ fn test_for_channel_close_init() {
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-   
-    let client_state=get_dummy_client_state();
+
+    let client_state = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
         .store_client_state(

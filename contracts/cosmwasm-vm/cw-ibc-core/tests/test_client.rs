@@ -629,8 +629,8 @@ fn check_for_update_client_message() {
     assert_eq!(response.messages[0].id, 21);
 
     assert_eq!(response.attributes[0].value, "create_client");
-     let client_state_any=client_state.to_any();
-     let consensus_state_any=consenus_state.to_any();
+    let client_state_any = client_state.to_any();
+    let consensus_state_any = consenus_state.to_any();
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-25".to_string(),

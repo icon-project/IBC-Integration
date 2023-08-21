@@ -182,7 +182,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = to_ibc_connection_id(&msg.connection_id)?;
         let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
@@ -506,7 +506,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = to_ibc_connection_id(&msg.connection_id)?;
         let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {

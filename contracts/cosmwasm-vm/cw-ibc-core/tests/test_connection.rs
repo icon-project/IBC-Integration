@@ -535,7 +535,7 @@ fn connection_open_ack_validate() {
     contract
         .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
-    let client_state_any=client_state.to_any();
+    let client_state_any = client_state.to_any();
     let client_state_bytes = client_state_any.encode_to_vec();
 
     contract
@@ -561,7 +561,7 @@ fn connection_open_ack_validate() {
         .unwrap();
 
     let res = contract.connection_open_ack(deps.as_mut(), info, env, message);
-    println!("{:?}",res);
+    println!("{:?}", res);
     assert!(res.is_ok())
 }
 
@@ -1125,7 +1125,7 @@ fn connection_open_ack_validate_fails_of_consensus_state() {
     contract
         .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
-    let client_state_any= client_state.to_any();
+    let client_state_any = client_state.to_any();
     let client_state_bytes = client_state_any.encode_to_vec();
 
     contract
@@ -1196,7 +1196,7 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     contract
         .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
-    let client_state_any=client_state.to_any();
+    let client_state_any = client_state.to_any();
     let client_state_bytes = client_state_any.encode_to_vec();
 
     contract

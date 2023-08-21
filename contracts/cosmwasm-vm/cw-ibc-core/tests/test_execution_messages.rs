@@ -150,8 +150,8 @@ fn test_for_update_client_execution_messages() {
     contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-    let client_state_any=client_state.to_any();
-    let consensus_state_any=consenus_state.to_any();
+    let client_state_any = client_state.to_any();
+    let consensus_state_any = consenus_state.to_any();
     let mock_reponse_data = CreateClientResponse::new(
         "iconclient".to_string(),
         "10-15".to_string(),
@@ -472,7 +472,7 @@ fn test_for_connection_open_ack() {
     contract
         .store_connection(&mut deps.storage, &connection_id, &conn_end)
         .unwrap();
-    let client_state_any=client_state.to_any();
+    let client_state_any = client_state.to_any();
     let client_state_bytes = client_state_any.encode_to_vec();
 
     contract
