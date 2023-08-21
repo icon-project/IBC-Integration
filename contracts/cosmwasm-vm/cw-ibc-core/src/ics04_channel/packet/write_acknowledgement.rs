@@ -1,8 +1,5 @@
 use super::*;
-use crate::{
-    conversions::{to_ibc_channel_id, to_ibc_port_id},
-    ChannelError::InvalidChannelState,
-};
+use crate::conversions::{to_ibc_channel_id, to_ibc_port_id};
 use common::{
     ibc::core::ics04_channel::{channel::State, commitment::AcknowledgementCommitment},
     utils::keccak256,

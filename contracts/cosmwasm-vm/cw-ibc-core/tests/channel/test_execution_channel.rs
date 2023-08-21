@@ -1,7 +1,6 @@
 use super::*;
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
 
-use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
