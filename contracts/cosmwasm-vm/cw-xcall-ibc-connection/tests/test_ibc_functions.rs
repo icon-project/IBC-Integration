@@ -25,8 +25,7 @@ use account::admin_one;
 use account::alice;
 
 use cosmwasm_std::from_binary;
-use cw_common::ibc_dapp_msg::{ExecuteMsg, QueryMsg};
-
+use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 use cw_xcall::types::message::CallServiceMessage;
 use cw_xcall::types::request::CallServiceMessageRequest;
 use cw_xcall_ibc_connection::state::CwIbcConnection;
@@ -51,17 +50,18 @@ fn fails_on_open_channel_open_init_ordered_channel() {
         channel_id: "channel-3".to_string(),
     };
 
-    let execute_msg = ExecuteMsg::IbcChannelOpen {
-        msg: OpenInit {
-            channel: IbcChannel::new(
-                src,
-                dst,
-                cosmwasm_std::IbcOrder::Ordered,
-                "xcall-1",
-                "newconnection",
-            ),
-        },
-    };
+    let execute_msg =
+        ExecuteMsg::IbcChannelOpen {
+            msg: OpenInit {
+                channel: IbcChannel::new(
+                    src,
+                    dst,
+                    cosmwasm_std::IbcOrder::Ordered,
+                    "xcall-1",
+                    "newconnection",
+                ),
+            },
+        };
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
@@ -74,7 +74,7 @@ fn fails_on_open_channel_open_init_ordered_channel() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn success_on_open_channel_open_init_unordered_channel() {
-    use cw_common::ibc_dapp_msg::ExecuteMsg;
+   
     use cw_xcall_ibc_connection::{state::CwIbcConnection, types::config::Config};
 
     let mut deps = deps();
@@ -105,17 +105,18 @@ fn success_on_open_channel_open_init_unordered_channel() {
 
     let connection_id = "newconnection".to_string();
 
-    let execute_msg = ExecuteMsg::IbcChannelOpen {
-        msg: OpenInit {
-            channel: IbcChannel::new(
-                src,
-                dst.clone(),
-                cosmwasm_std::IbcOrder::Unordered,
-                "ics20-1",
-                &connection_id,
-            ),
-        },
-    };
+    let execute_msg =
+        ExecuteMsg::IbcChannelOpen {
+            msg: OpenInit {
+                channel: IbcChannel::new(
+                    src,
+                    dst.clone(),
+                    cosmwasm_std::IbcOrder::Unordered,
+                    "ics20-1",
+                    &connection_id,
+                ),
+            },
+        };
 
     contract
         .configure_connection(
@@ -141,7 +142,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
 #[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"ics20-1\" }")]
 fn fails_on_open_channel_open_try_invalid_version() {
-    use cw_common::ibc_dapp_msg::ExecuteMsg;
+   
     use cw_xcall_ibc_connection::state::CwIbcConnection;
 
     let mut deps = deps();
@@ -160,18 +161,18 @@ fn fails_on_open_channel_open_try_invalid_version() {
         channel_id: "channel-3".to_string(),
     };
 
-    let execute_msg = ExecuteMsg::IbcChannelOpen {
-        msg: OpenTry {
-            channel: IbcChannel::new(
-                src,
-                dst,
-                cosmwasm_std::IbcOrder::Unordered,
-                "xcall-1",
-                "newconnection",
-            ),
-            counterparty_version: "xyz".to_owned(),
-        },
-    };
+    let execute_msg =ExecuteMsg::IbcChannelOpen {
+            msg: OpenTry {
+                channel: IbcChannel::new(
+                    src,
+                    dst,
+                    cosmwasm_std::IbcOrder::Unordered,
+                    "xcall-1",
+                    "newconnection",
+                ),
+                counterparty_version: "xyz".to_owned(),
+            },
+        };
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
@@ -203,18 +204,19 @@ fn sucess_on_open_channel_open_try_valid_version() {
         channel_id: "channel-3".to_string(),
     };
 
-    let execute_message = ExecuteMsg::IbcChannelOpen {
-        msg: OpenTry {
-            channel: IbcChannel::new(
-                src.clone(),
-                dst.clone(),
-                cosmwasm_std::IbcOrder::Unordered,
-                "ics20-1",
-                "newconnection",
-            ),
-            counterparty_version: "ics20-1".to_owned(),
-        },
-    };
+    let execute_message =
+        ExecuteMsg::IbcChannelOpen {
+            msg: OpenTry {
+                channel: IbcChannel::new(
+                    src.clone(),
+                    dst.clone(),
+                    cosmwasm_std::IbcOrder::Unordered,
+                    "ics20-1",
+                    "newconnection",
+                ),
+                counterparty_version: "ics20-1".to_owned(),
+            },
+        };
     contract
         .configure_connection(
             deps.as_mut().storage,
@@ -270,18 +272,19 @@ fn sucess_on_ibc_channel_connect() {
         channel_id: "channel-3".to_string(),
     };
     let connection_id = "newconnection";
-    let execute_message = ExecuteMsg::IbcChannelConnect {
-        msg: OpenAck {
-            channel: IbcChannel::new(
-                src.clone(),
-                dst.clone(),
-                cosmwasm_std::IbcOrder::Unordered,
-                "ics20-1",
-                connection_id,
-            ),
-            counterparty_version: "ics20-1".to_owned(),
-        },
-    };
+    let execute_message =
+        ExecuteMsg::IbcChannelConnect {
+            msg: OpenAck {
+                channel: IbcChannel::new(
+                    src.clone(),
+                    dst.clone(),
+                    cosmwasm_std::IbcOrder::Unordered,
+                    "ics20-1",
+                    connection_id,
+                ),
+                counterparty_version: "ics20-1".to_owned(),
+            },
+        };
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
@@ -337,18 +340,19 @@ fn fails_on_ibc_channel_connect_unordered_channel() {
         channel_id: "channel-3".to_string(),
     };
 
-    let execute_message = ExecuteMsg::IbcChannelConnect {
-        msg: OpenAck {
-            channel: IbcChannel::new(
-                src,
-                dst,
-                cosmwasm_std::IbcOrder::Ordered,
-                "xcall-1",
-                "newconnection",
-            ),
-            counterparty_version: "xcall-1".to_owned(),
-        },
-    };
+    let execute_message =
+        ExecuteMsg::IbcChannelConnect {
+            msg: OpenAck {
+                channel: IbcChannel::new(
+                    src,
+                    dst,
+                    cosmwasm_std::IbcOrder::Ordered,
+                    "xcall-1",
+                    "newconnection",
+                ),
+                counterparty_version: "xcall-1".to_owned(),
+            },
+        };
     contract
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
@@ -381,18 +385,19 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
 
-    let execute_message = ExecuteMsg::IbcChannelConnect {
-        msg: OpenAck {
-            channel: IbcChannel::new(
-                src,
-                dst,
-                cosmwasm_std::IbcOrder::Unordered,
-                "xcall-1",
-                "newconnection",
-            ),
-            counterparty_version: "xyz-1".to_owned(),
-        },
-    };
+    let execute_message =
+        ExecuteMsg::IbcChannelConnect {
+            msg: OpenAck {
+                channel: IbcChannel::new(
+                    src,
+                    dst,
+                    cosmwasm_std::IbcOrder::Unordered,
+                    "xcall-1",
+                    "newconnection",
+                ),
+                counterparty_version: "xyz-1".to_owned(),
+            },
+        };
 
     contract
         .execute(deps.as_mut(), mock_env, mock_info, execute_message)
@@ -458,9 +463,10 @@ fn sucess_receive_packet_for_call_message_request() {
     let packet = IbcPacket::new(message_data, src, dst.clone(), 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
-    let execute_message = ExecuteMsg::IbcPacketReceive {
-        msg: packet_message,
-    };
+    let execute_message =
+        ExecuteMsg::IbcPacketReceive {
+            msg: packet_message,
+        };
     contract
         .set_ibc_host(
             mock_deps.as_mut().storage,
@@ -566,7 +572,10 @@ fn sucess_on_ack_packet() {
 
     let ack_packet = IbcPacketAckMsg::new(ack, packet, Addr::unchecked("relayer"));
 
-    let execute_message = ExecuteMsg::IbcPacketAck { msg: ack_packet };
+    let execute_message =
+        ExecuteMsg::IbcPacketAck {
+            msg: ack_packet,
+        };
 
     let result = contract.execute(mock_deps.as_mut(), mock_env, mock_info, execute_message);
     assert!(result.is_ok());
@@ -591,7 +600,7 @@ fn test_entry_point() {
         },
     )
     .unwrap();
-    let msg = cw_common::ibc_dapp_msg::ExecuteMsg::SetAdmin {
+    let msg = cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
         address: admin_one().to_string(),
     };
 
@@ -649,9 +658,10 @@ fn fails_receive_packet_for_call_message_request() {
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
     let packet_message = IbcPacketReceiveMsg::new(packet, Addr::unchecked("relay"));
 
-    let execute_message = ExecuteMsg::IbcPacketReceive {
-        msg: packet_message,
-    };
+    let execute_message =
+        ExecuteMsg::IbcPacketReceive {
+            msg: packet_message,
+        };
 
     contract
         .execute(mock_deps.as_mut(), mock_env, mock_info, execute_message)
@@ -678,17 +688,18 @@ fn fails_on_open_channel_open_init_unauthorized() {
         channel_id: "channel-3".to_string(),
     };
 
-    let execute_msg = ExecuteMsg::IbcChannelOpen {
-        msg: OpenInit {
-            channel: IbcChannel::new(
-                src,
-                dst,
-                cosmwasm_std::IbcOrder::Unordered,
-                "xcall-1",
-                "newconnection",
-            ),
-        },
-    };
+    let execute_msg =
+        ExecuteMsg::IbcChannelOpen {
+            msg: OpenInit {
+                channel: IbcChannel::new(
+                    src,
+                    dst,
+                    cosmwasm_std::IbcOrder::Unordered,
+                    "xcall-1",
+                    "newconnection",
+                ),
+            },
+        };
     contract
         .execute(deps.as_mut(), mock_env, mock_info, execute_msg)
         .unwrap();
@@ -999,8 +1010,7 @@ fn test_handle_response() {
         mock_info,
         ExecuteMsg::IbcPacketReceive {
             msg: packet_message,
-        },
-    );
+        });
 
     println!("{:?}", res);
 

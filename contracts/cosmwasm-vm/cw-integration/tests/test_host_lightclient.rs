@@ -310,7 +310,7 @@ pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppErro
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_xcall_ibc_connection(),
-        &cw_common::ibc_dapp_msg::ExecuteMsg::SetXCallHost {
+        &cw_common::xcall_connection_msg::ExecuteMsg::SetXCallHost {
             address: ctx.get_xcall_app().to_string(),
         },
         &[],
@@ -326,7 +326,7 @@ pub fn call_configure_connection(
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_xcall_ibc_connection(),
-        &cw_common::ibc_dapp_msg::ExecuteMsg::ConfigureConnection {
+        &cw_common::xcall_connection_msg::ExecuteMsg::ConfigureConnection {
             connection_id,
             counterparty_port_id: PORT.to_string(),
             counterparty_nid: NetId::from(nid),
@@ -473,6 +473,8 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     println!("Set Default Connection Ok {:?}", &result);
 
     let result = call_channel_open_try(&mut ctx);
+
+    println!("{:?}", result);
 
     assert!(result.is_ok());
     println!("Channel Open Try Ok{:?}", &result);

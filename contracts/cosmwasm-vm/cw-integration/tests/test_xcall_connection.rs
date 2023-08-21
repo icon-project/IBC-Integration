@@ -55,7 +55,7 @@ pub fn call_set_xcall_host(ctx: &mut TestContext) -> Result<AppResponse, AppErro
     ctx.app.execute_contract(
         ctx.sender.clone(),
         ctx.get_xcall_ibc_connection(),
-        &cw_common::ibc_dapp_msg::ExecuteMsg::SetXCallHost {
+        &cw_common::xcall_connection_msg::ExecuteMsg::SetXCallHost {
             address: ctx.get_xcall_app().to_string(),
         },
         &[],
