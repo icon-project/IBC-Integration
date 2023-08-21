@@ -178,7 +178,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let packet: RawPacket = Message::decode(packet_bytes.as_slice())
                     .map_err(|error| ContractError::IbcDecodeError { error })?;
 
-                self.send_packet(deps, &env, packet)
+                self.send_packet(deps, &env,info, packet)
             }
             CoreExecuteMsg::ReceivePacket { msg } => {
                 cw_println!(deps, "[IBCCore] Receive Packet Called");

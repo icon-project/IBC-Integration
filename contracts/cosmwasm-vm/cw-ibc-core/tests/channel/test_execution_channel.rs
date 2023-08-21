@@ -751,7 +751,7 @@ fn test_for_channel_close_confirm() {
 #[test]
 fn test_for_packet_send() {
     let mut deps = deps();
-    let info = create_mock_info("alice", "umlg", 20000000);
+    let info = create_mock_info("moduleaddress", "umlg", 20000000);
     let mut contract = CwIbcCoreContext::default();
     let env = get_mock_env();
     let timestamp_future = Timestamp::default();
@@ -760,6 +760,9 @@ fn test_for_packet_send() {
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
+
+       
+      
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
@@ -847,6 +850,13 @@ fn test_for_packet_send() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
+    contract
+    .bind_port(
+        &mut deps.storage,
+        &IbcPortId::from_str(&packet.source_port).unwrap(),
+        Addr::unchecked("moduleaddress").to_string(),
+    )
+    .unwrap();
 
     let res = contract.execute(
         deps.as_mut(),
