@@ -32,13 +32,14 @@ func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string, order i
 	})
 	var err error
 	ctx, err = chainA.DeployContract(ctx, Owner)
+
 	if err != nil {
 		return err
 	}
 
 	ctx, err = chainA.ExecuteContract(ctx, ibcHostChainA, Owner, chains.BindPort, map[string]interface{}{
 		"port_id": portId,
-		"address": chainA.GetIBCAddress("mockdapp"),
+		"address": chainA.GetIBCAddress(GetAppKey(ctx, "mockdapp")),
 	})
 
 	if err != nil {
@@ -58,7 +59,7 @@ func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string, order i
 
 	ctx, err = chainB.ExecuteContract(ctx, ibcHostChainB, Owner, chains.BindPort, map[string]interface{}{
 		"port_id": portId,
-		"address": chainB.GetIBCAddress("mockdapp"),
+		"address": chainB.GetIBCAddress(GetAppKey(ctx, "mockdapp")),
 	})
 
 	return err
@@ -128,7 +129,8 @@ func (s *E2ETestSuite) GetNextConnectionSequence(ctx context.Context, chain chai
 
 // Configure
 func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, target chains.Chain, msg string) (*chains.XCallResponse, error) {
-	dst := target.(ibc.Chain).Config().ChainID + "/" + target.GetIBCAddress("dapp")
+	key := GetAppKey(ctx, "mockdapp")
+	dst := target.(ibc.Chain).Config().ChainID + "/" + target.GetIBCAddress(key)
 	res, err := src.XCall(ctx, target, User, dst, []byte(msg), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute contract: %s", err)
@@ -137,28 +139,24 @@ func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, target chains.Chain,
 }
 
 // SendPacket sends a packet from src to dst
-func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain, msg string) (context.Context, error) {
-	// Send packet
-	dst := target.(ibc.Chain).Config().ChainID + "/" + target.GetIBCAddress("dapp")
-	ctx, err := src.SendPacketXCall(ctx, User, dst, []byte(msg), nil)
-	if err != nil {
-		return nil, err
+func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain, msg string, timeout uint64) (*chains.PacketTransferResponse, error) {
+
+	height, _ := src.(ibc.Chain).Height(ctx)
+	params := map[string]interface{}{
+		"msg":            chains.BufferArray(msg),
+		"timeout_height": height + timeout,
 	}
-	return ctx, nil
+	return src.SendPacketMockDApp(ctx, target, User, params)
 }
 
 // QueryPacketCommitmentTarget queries the packet commitment on the target chain
-func (s *E2ETestSuite) FindPacketSent(ctx context.Context, src, target chains.Chain, startHeight uint64) (*chains.XCallResponse, error) {
-	res, err := src.FindTargetXCallMessage(ctx, target, startHeight, target.GetIBCAddress("dapp"))
+func (s *E2ETestSuite) FindPacketOnTargetChain(ctx context.Context, src, target chains.Chain, startHeight uint64) (*chains.XCallResponse, error) {
+	key := GetAppKey(ctx, "mockdapp")
+	res, err := src.FindTargetXCallMessage(ctx, target, startHeight, target.GetIBCAddress(key))
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
-}
-
-// GetPacketReceipt queries the packet receipt on the target chain
-func (s *E2ETestSuite) GetPacketReceipt(ctx context.Context, chain chains.Chain, channelID, portID string) error {
-	return chain.GetPacketReceipt(ctx, channelID, portID)
 }
 
 func (s *E2ETestSuite) QueryPacketCommitment(ctx context.Context, targetChain chains.Chain, reqID, data string) error {
@@ -261,4 +259,9 @@ func (s *E2ETestSuite) Ping(ctx context.Context) error {
 		return fmt.Errorf("failed to ping from %s to %s", chainB.(ibc.Chain).Config().ChainID, chainA.(ibc.Chain).Config().ChainID)
 	}
 	return nil
+}
+
+func GetAppKey(ctx context.Context, contract string) string {
+	testcase := ctx.Value("testcase").(string)
+	return fmt.Sprintf("%s-%s", contract, testcase)
 }

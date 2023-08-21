@@ -24,7 +24,7 @@ const (
 
 type Chain interface {
 	DeployContract(ctx context.Context, keyName string) (context.Context, error)
-	QueryContract(ctx context.Context, contractAddress, methodName, params string) (context.Context, error)
+	QueryContract(ctx context.Context, contractAddress, methodName string, params map[string]interface{}) (context.Context, error)
 	ExecuteContract(ctx context.Context, contractAddress, keyName, methodName string, param map[string]interface{}) (context.Context, error)
 	GetLastBlock(ctx context.Context) (context.Context, error)
 	GetBlockByHeight(ctx context.Context) (context.Context, error)
@@ -35,8 +35,9 @@ type Chain interface {
 	FindTargetXCallMessage(ctx context.Context, target Chain, height uint64, to string) (*XCallResponse, error)
 	ConfigureBaseConnection(ctx context.Context, connection XCallConnection) (context.Context, error)
 	SendPacketXCall(ctx context.Context, keyName, _to string, data, rollback []byte) (context.Context, error)
-	GetPacketReceipt(context.Context, string, string) error
+	IsPacketReceived(ctx context.Context, params map[string]interface{}) bool
 	XCall(ctx context.Context, targetChain Chain, keyName, _to string, data, rollback []byte) (*XCallResponse, error)
+	CheckForTimeout(ctx context.Context, params map[string]interface{}, listener EventListener) (context.Context, error)
 	EOAXCall(ctx context.Context, targetChain Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error)
 	ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error)
 	ExecuteRollback(ctx context.Context, sn string) (context.Context, error)
@@ -55,6 +56,10 @@ type Chain interface {
 	GetNextChannelSequence(context.Context) (int, error)
 	PauseNode(context.Context) error
 	UnpauseNode(context.Context) error
+	InitEventListener(ctx context.Context, contract string) EventListener
+
+	//integration test specific
+	SendPacketMockDApp(ctx context.Context, targetChain Chain, keyName string, params map[string]interface{}) (*PacketTransferResponse, error)
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {
@@ -64,21 +69,29 @@ func GetEnvOrDefault(key, defaultValue string) string {
 	return defaultValue
 }
 
-func HexBytesToProtoUnmarshal(encoded types.HexBytes, v proto.Message) ([]byte, error) {
+func HexBytesToProtoUnmarshal(encoded types.HexBytes, v proto.Message) error {
 	inputBytes, err := encoded.Value()
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling HexByte: %s", err)
+		return fmt.Errorf("error unmarshalling HexByte: %s", err)
 	}
 
 	if bytes.Equal(inputBytes, make([]byte, 0)) {
-		return nil, fmt.Errorf("encoded hexbyte is empty: %s", inputBytes)
+		return fmt.Errorf("encoded hexbyte is empty: %s", inputBytes)
 	}
 
 	if err := proto.Unmarshal(inputBytes, v); err != nil {
-		return nil, err
+		return err
 
 	}
-	return inputBytes, nil
+	return nil
+}
+
+func ProtoMarshalToHexBytes(v proto.Message) (string, error) {
+	value, err := proto.Marshal(v)
+	if err != nil {
+		return "", fmt.Errorf("error marshalling proto.Message: %s", err)
+	}
+	return fmt.Sprintf("0x%s", hex.EncodeToString(value)), nil
 }
 
 func ProcessContractResponse(p *wasmtypes.QuerySmartContractStateResponse) ([]byte, error) {
