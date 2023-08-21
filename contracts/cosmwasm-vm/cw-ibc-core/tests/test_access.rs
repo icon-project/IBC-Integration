@@ -12,7 +12,7 @@ pub fn only_owner_can_set_expected_time_per_block() {
     let info = create_mock_info("sender", "test", 0);
     let mut contract = CwIbcCoreContext::default();
     let init_msg = InstantiateMsg {};
-    let init = contract
+    let _init = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), init_msg)
         .unwrap();
     let set_msg = cw_common::core_msg::ExecuteMsg::SetExpectedTimePerBlock { block_time: 10 };
