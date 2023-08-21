@@ -1,4 +1,4 @@
-use std::{str::FromStr, collections::HashMap};
+use std::{collections::HashMap, str::FromStr};
 
 pub fn mock_height(
     number: u64,
@@ -23,8 +23,8 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
-    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery, Binary,
+    to_binary, Addr, Binary, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint,
+    MessageInfo, OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
 use common::{
@@ -483,14 +483,16 @@ pub fn mock_lightclient_query(
     deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>,
 ) {
     deps.querier.update_wasm(move |r| match r {
-        WasmQuery::Smart { contract_addr, msg } => {
-            if mocks.get(msg).is_some(){
-                let res= mocks.get(msg).unwrap().clone();
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg,
+        } => {
+            if mocks.get(msg).is_some() {
+                let res = mocks.get(msg).unwrap().clone();
                 SystemResult::Ok(ContractResult::Ok(res))
-            }else {
+            } else {
                 SystemResult::Ok(ContractResult::Ok(to_binary(&true).unwrap()))
             }
-            
         }
         _ => todo!(),
     });

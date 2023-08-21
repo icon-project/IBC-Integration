@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use common::ibc::Height;
+
 use cw_ibc_core::{
     conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp},
     light_client::light_client::LightClient,
@@ -225,11 +225,14 @@ fn test_timeout_packet_validate_to_light_client() {
         .unwrap();
     let _client_type = IbcClientType::new("iconclient".to_string());
 
-    
     let light_client = LightClient::new("lightclient".to_string());
     contract
-    .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client.clone())
-    .unwrap();
+        .store_client_implementations(
+            &mut deps.storage,
+            &IbcClientId::default(),
+            light_client.clone(),
+        )
+        .unwrap();
     let timestamp_query = light_client
         .get_timestamp_by_height_query(&IbcClientId::default(), proof_height.revision_height())
         .unwrap();
@@ -241,8 +244,7 @@ fn test_timeout_packet_validate_to_light_client() {
         .bind_port(&mut deps.storage, &src_port, "moduleaddress".to_string())
         .unwrap();
 
-   
-   // mock_lightclient_reply(&mut deps);
+    // mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
         next_proof_context_hash: vec![1, 2, 3],
@@ -268,13 +270,8 @@ fn test_timeout_packet_validate_to_light_client() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .store_client_implementations(
-            deps.as_mut().storage,
-            &IbcClientId::default(),
-            light_client.clone(),
-        )
+        .store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), light_client)
         .unwrap();
-    
 
     let res = contract.timeout_packet_validate_to_light_client(deps.as_mut(), info, env, msg);
     println!("{res:?}");

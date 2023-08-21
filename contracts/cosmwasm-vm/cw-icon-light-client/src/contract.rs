@@ -495,7 +495,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 QueryHandler::get_previous_consensus(deps.storage, height, client_id).unwrap();
             to_binary(&res)
         }
-        QueryMsg::GetTimestampByHeight { client_id, height } => to_binary(&0_u64),
+        QueryMsg::GetTimestampByHeight {
+            client_id: _,
+            height: _,
+        } => to_binary(&0_u64),
     }
 }
 

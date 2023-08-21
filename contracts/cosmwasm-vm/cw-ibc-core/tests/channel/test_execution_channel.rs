@@ -850,21 +850,21 @@ fn test_for_packet_send() {
         )
         .unwrap();
 
-        let light_client = LightClient::new("lightclient".to_string());
-        contract
-            .store_client_implementations(
-                deps.as_mut().storage,
-                &IbcClientId::default(),
-                light_client.clone(),
-            )
-            .unwrap();
-    
-        let timestamp_query = light_client
-            .get_timestamp_by_height_query(&IbcClientId::default(), height.revision_height())
-            .unwrap();
-        let mut mocks = HashMap::<Binary, Binary>::new();
-        mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
-        mock_lightclient_query(mocks, &mut deps);
+    let light_client = LightClient::new("lightclient".to_string());
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            light_client.clone(),
+        )
+        .unwrap();
+
+    let timestamp_query = light_client
+        .get_timestamp_by_height_query(&IbcClientId::default(), height.revision_height())
+        .unwrap();
+    let mut mocks = HashMap::<Binary, Binary>::new();
+    mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
+    mock_lightclient_query(mocks, &mut deps);
 
     let res = contract.execute(
         deps.as_mut(),

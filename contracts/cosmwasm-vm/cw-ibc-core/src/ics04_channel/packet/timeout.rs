@@ -118,7 +118,7 @@ impl<'a> CwIbcCoreContext<'a> {
             if let Expiry::NotExpired = chain_timestamp.check_expiry(&packet_timeout_timestamp) {
                 return Err(PacketError::PacketTimeoutTimestampNotReached {
                     timeout_timestamp: packet_timeout_timestamp,
-                    chain_timestamp: chain_timestamp,
+                    chain_timestamp,
                 })
                 .map_err(Into::<ContractError>::into);
             }
