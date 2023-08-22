@@ -127,20 +127,8 @@ func (s *E2ETestSuite) GetNextConnectionSequence(ctx context.Context, chain chai
 	return chain.GetNextConnectionSequence(ctx)
 }
 
-// Configure
-func (s *E2ETestSuite) PacketFlow(ctx context.Context, src, target chains.Chain, msg string) (*chains.XCallResponse, error) {
-	key := GetAppKey(ctx, "mockdapp")
-	dst := target.(ibc.Chain).Config().ChainID + "/" + target.GetIBCAddress(key)
-	res, err := src.XCall(ctx, target, User, dst, []byte(msg), nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute contract: %s", err)
-	}
-	return res, nil
-}
-
 // SendPacket sends a packet from src to dst
-func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain, msg string, timeout uint64) (*chains.PacketTransferResponse, error) {
-
+func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain, msg string, timeout uint64) (chains.PacketTransferResponse, error) {
 	height, _ := src.(ibc.Chain).Height(ctx)
 	params := map[string]interface{}{
 		"msg":            chains.BufferArray(msg),
@@ -149,22 +137,7 @@ func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain,
 	return src.SendPacketMockDApp(ctx, target, User, params)
 }
 
-// QueryPacketCommitmentTarget queries the packet commitment on the target chain
-func (s *E2ETestSuite) FindPacketOnTargetChain(ctx context.Context, src, target chains.Chain, startHeight uint64) (*chains.XCallResponse, error) {
-	key := GetAppKey(ctx, "mockdapp")
-	res, err := src.FindTargetXCallMessage(ctx, target, startHeight, target.GetIBCAddress(key))
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-func (s *E2ETestSuite) QueryPacketCommitment(ctx context.Context, targetChain chains.Chain, reqID, data string) error {
-	_, err := targetChain.ExecuteCall(ctx, reqID, data)
-	return err
-}
-
-// Crash Node
+// CrashRelayer Node
 func (s *E2ETestSuite) CrashNode(ctx context.Context, chain chains.Chain) error {
 	return chain.PauseNode(ctx)
 }
@@ -174,7 +147,7 @@ func (s *E2ETestSuite) ResumeNode(ctx context.Context, chain chains.Chain) error
 	return chain.UnpauseNode(ctx)
 }
 
-func (s *E2ETestSuite) Crash(ctx context.Context, chain ibc.Chain, callbacks ...func() error) (uint64, error) {
+func (s *E2ETestSuite) CrashRelayer(ctx context.Context, chain ibc.Chain, callbacks ...func() error) (uint64, error) {
 	eRep := s.GetRelayerExecReporter()
 	s.logger.Info("crashing relayer")
 	now := time.Now()
@@ -196,15 +169,19 @@ func (s *E2ETestSuite) Crash(ctx context.Context, chain ibc.Chain, callbacks ...
 }
 
 // WriteBlockHeight writes the block height to the given file.
-func (s *E2ETestSuite) WriteBlockHeight(ctx context.Context, chain chains.Chain) func() error {
+func (s *E2ETestSuite) WriteCurrentBlockHeight(ctx context.Context, chain chains.Chain) func() error {
 	return func() error {
 		height, err := chain.(ibc.Chain).Height(ctx)
 		if err != nil {
 			return err
 		}
 		chanID := chain.(ibc.Chain).Config().ChainID
-		return s.relayer.(interchaintest.Relayer).WriteBlockHeight(ctx, chanID, height-1)
+		return s.WriteBlockHeight(ctx, chanID, height-1)
 	}
+}
+
+func (s *E2ETestSuite) WriteBlockHeight(ctx context.Context, chainID string, height uint64) error {
+	return s.relayer.(interchaintest.Relayer).WriteBlockHeight(ctx, chainID, height)
 }
 
 // Recover recovers a relay and waits for the relay to catch up to the current height of the stopped chains.
@@ -217,41 +194,6 @@ func (s *E2ETestSuite) Recover(ctx context.Context, waitDuration time.Duration) 
 	}
 	time.Sleep(waitDuration)
 	s.logger.Info("relayer restarted", zap.Duration("elapsed", time.Since(now)))
-	return nil
-}
-
-// Ping checks if the relayer is running
-func (s *E2ETestSuite) Ping(ctx context.Context) error {
-	chainA, chainB := s.GetChains()
-	var msg = "ping"
-	res, err := s.PacketFlow(ctx, chainA, chainB, msg)
-	if err != nil {
-		return err
-	}
-	if err := s.QueryPacketCommitment(ctx, chainB, res.RequestID, res.Data); err != nil {
-		return err
-	}
-	data, err := s.ConvertToPlainString(res.Data)
-	if err != nil {
-		return err
-	}
-	if data != msg {
-		return fmt.Errorf("failed to ping from %s to %s", chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID)
-	}
-	res, err = s.PacketFlow(ctx, chainB, chainA, data)
-	if err != nil {
-		return err
-	}
-	if err := s.QueryPacketCommitment(ctx, chainA, res.RequestID, res.Data); err != nil {
-		return err
-	}
-	data, err = s.ConvertToPlainString(res.Data)
-	if err != nil {
-		return err
-	}
-	if data != msg {
-		return fmt.Errorf("failed to ping from %s to %s", chainB.(ibc.Chain).Config().ChainID, chainA.(ibc.Chain).Config().ChainID)
-	}
 	return nil
 }
 

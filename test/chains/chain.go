@@ -59,7 +59,7 @@ type Chain interface {
 	InitEventListener(ctx context.Context, contract string) EventListener
 
 	//integration test specific
-	SendPacketMockDApp(ctx context.Context, targetChain Chain, keyName string, params map[string]interface{}) (*PacketTransferResponse, error)
+	SendPacketMockDApp(ctx context.Context, targetChain Chain, keyName string, params map[string]interface{}) (PacketTransferResponse, error)
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {

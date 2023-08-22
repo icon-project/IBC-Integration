@@ -254,40 +254,37 @@ func (c *CosmosLocalnet) FindTargetXCallMessage(ctx context.Context, target chai
 	return &chains.XCallResponse{SerialNo: sn, RequestID: reqId, Data: destData}, err
 }
 
-func (c *CosmosLocalnet) SendPacketMockDApp(ctx context.Context, targetChain chains.Chain, keyName string, params map[string]interface{}) (*chains.PacketTransferResponse, error) {
+func (c *CosmosLocalnet) SendPacketMockDApp(ctx context.Context, targetChain chains.Chain, keyName string, params map[string]interface{}) (chains.PacketTransferResponse, error) {
 	listener := targetChain.InitEventListener(ctx, "ibc")
 	defer listener.Stop()
-	response := new(chains.PacketTransferResponse)
+	response := chains.PacketTransferResponse{}
 	testcase := ctx.Value("testcase").(string)
 	dappKey := fmt.Sprintf("mockdapp-%s", testcase)
 	execMethodName, execParams := c.getExecuteParam(ctx, chains.SendMessage, params)
 	ctx, err := c.executeContract(ctx, c.IBCAddresses[dappKey], keyName, execMethodName, execParams)
-
-	tx := ctx.Value("txResult").(*TxResul)
-
-	response.IsPacketSent = err == nil
-
-	packet := c.findPacket(tx, "wasm-send_packet")
-	response.Packet = packet
-	if packet != nil {
-		value, _ := chains.ProtoMarshalToHexBytes(packet)
-
-		filters := map[string]interface{}{
-			"signature": "RecvPacket(bytes)",
-			"index":     []*string{&value},
-		}
-		event, err := listener.FindEvent(filters)
-		response.IsPacketReceiptEventFound = event != nil
-		return response, err
-	} else {
+	if err != nil {
 		return response, err
 	}
+	tx := ctx.Value("txResult").(*TxResul)
+	response.IsPacketSent = true
+	packet := c.findPacket(tx, "wasm-send_packet")
+	response.Packet = packet
+	value, _ := chains.ProtoMarshalToHexBytes(&packet)
+	filters := map[string]interface{}{
+		"signature": "RecvPacket(bytes)",
+		"index":     []*string{&value},
+	}
+	event, err := listener.FindEvent(filters)
+	response.IsPacketReceiptEventFound = event != nil
+	return response, err
+
 }
 
-func (c *CosmosLocalnet) findPacket(tx *TxResul, eventType string) *chantypes.Packet {
-	packet := new(chantypes.Packet)
+func (c *CosmosLocalnet) findPacket(tx *TxResul, eventType string) chantypes.Packet {
+	var packet chantypes.Packet
 	for _, event := range tx.Events {
 		if event.Type == eventType {
+			packet = chantypes.Packet{}
 			for _, attribute := range event.Attributes {
 				keyName, _ := base64.StdEncoding.DecodeString(attribute.Key)
 				if string(keyName) == "packet_src_channel" {
@@ -335,7 +332,6 @@ func (c *CosmosLocalnet) findPacket(tx *TxResul, eventType string) *chantypes.Pa
 			break
 		}
 	}
-
 	return packet
 }
 

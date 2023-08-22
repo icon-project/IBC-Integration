@@ -879,33 +879,31 @@ func (c *IconLocalnet) UnpauseNode(ctx context.Context) error {
 	return c.getFullNode().DockerClient.ContainerUnpause(ctx, c.getFullNode().ContainerID)
 }
 
-func (c *IconLocalnet) SendPacketMockDApp(ctx context.Context, targetChain chains.Chain, keyName string, params map[string]interface{}) (*chains.PacketTransferResponse, error) {
+func (c *IconLocalnet) SendPacketMockDApp(ctx context.Context, targetChain chains.Chain, keyName string, params map[string]interface{}) (chains.PacketTransferResponse, error) {
 	listener := targetChain.InitEventListener(ctx, "ibc")
-	response := new(chains.PacketTransferResponse)
+	response := chains.PacketTransferResponse{}
 	testcase := ctx.Value("testcase").(string)
 	dappKey := fmt.Sprintf("mockdapp-%s", testcase)
 	execMethodName, execParams := c.getExecuteParam(ctx, chains.SendMessage, params)
 	ctx, err := c.executeContract(ctx, c.IBCAddresses[dappKey], keyName, execMethodName, execParams)
 
 	txn := ctx.Value("txResult").(*icontypes.TransactionResult)
-
-	response.IsPacketSent = txn.Status == "0x1"
-
-	if len(txn.EventLogs) > 0 {
-		var packet = new(chantypes.Packet)
-		var protoPacket = icontypes.HexBytes(txn.EventLogs[1].Indexed[1])
-		_ = chains.HexBytesToProtoUnmarshal(protoPacket, packet)
-		response.Packet = packet
-		filter := map[string]interface{}{
-			"wasm-recv_packet.packet_sequence":    fmt.Sprintf("%d", packet.Sequence),
-			"wasm-recv_packet.packet_src_port":    packet.SourcePort,
-			"wasm-recv_packet.packet_src_channel": packet.SourceChannel,
-		}
-		fmt.Printf("filter %v", filter)
-		event, err := listener.FindEvent(filter)
-		response.IsPacketReceiptEventFound = event != nil
-		return response, err
-	} else {
+	if txn.Status != "0x1" {
 		return response, err
 	}
+	response.IsPacketSent = true
+
+	var packet = chantypes.Packet{}
+	var protoPacket = icontypes.HexBytes(txn.EventLogs[1].Indexed[1])
+	_ = chains.HexBytesToProtoUnmarshal(protoPacket, &packet)
+	response.Packet = packet
+	filter := map[string]interface{}{
+		"wasm-recv_packet.packet_sequence":    fmt.Sprintf("%d", packet.Sequence),
+		"wasm-recv_packet.packet_src_port":    packet.SourcePort,
+		"wasm-recv_packet.packet_src_channel": packet.SourceChannel,
+	}
+	event, err := listener.FindEvent(filter)
+	response.IsPacketReceiptEventFound = event != nil
+	return response, err
+
 }

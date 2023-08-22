@@ -86,7 +86,7 @@ type TimeoutResponse struct {
 type PacketTransferResponse struct {
 	IsPacketSent              bool
 	IsPacketReceiptEventFound bool
-	Packet                    *chantypes.Packet
+	Packet                    chantypes.Packet
 }
 
 type BufferArray []byte
