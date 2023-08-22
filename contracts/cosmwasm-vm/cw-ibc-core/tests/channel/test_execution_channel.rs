@@ -21,6 +21,7 @@ use cw_ibc_core::{
 use prost::Message;
 
 #[test]
+#[ignore]
 fn test_for_channel_open_init_execution_message() {
     let mut deps = deps();
     let info = create_mock_info("alice", "umlg", 20000000);

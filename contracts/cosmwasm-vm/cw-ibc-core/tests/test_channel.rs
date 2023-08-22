@@ -3,7 +3,7 @@ use std::{str::FromStr, time::Duration};
 use common::traits::AnyTypes;
 use cosmwasm_std::{
     to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
-    IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
+    IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult, ReplyOn,
 };
 
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
@@ -537,12 +537,14 @@ fn test_validate_open_init_channel() {
     let expected = on_chan_open_init_submessage(&channel_end, &src_port_id, &src_channel, &conn_id);
     let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
-    let on_chan_open_init = create_channel_submesssage(
+    let mut on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
         data,
         info.funds,
         EXECUTE_ON_CHANNEL_OPEN_INIT,
     );
+    on_chan_open_init.reply_on=ReplyOn::Never;
+    
     println!("{:?}", res);
 
     assert!(res.is_ok());

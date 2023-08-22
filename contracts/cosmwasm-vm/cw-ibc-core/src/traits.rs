@@ -150,11 +150,11 @@ pub trait ValidateChannel {
 /// implementing these functions, a module can customize how it handles channel-related messages and
 /// interactions with other modules on different chains.
 pub trait ExecuteChannel {
-    fn execute_channel_open_init(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError>;
+    // fn execute_channel_open_init(
+    //     &self,
+    //     deps: DepsMut,
+    //     message: Reply,
+    // ) -> Result<Response, ContractError>;
 
     fn execute_channel_open_try(
         &self,

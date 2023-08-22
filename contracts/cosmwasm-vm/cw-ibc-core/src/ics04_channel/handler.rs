@@ -32,7 +32,7 @@ use open_confirm::*;
 
 pub mod close_confirm;
 pub use close_confirm::*;
-use cosmwasm_std::IbcEndpoint;
+use cosmwasm_std::{IbcEndpoint, ReplyOn};
 use prost::Message;
 pub mod validate_channel;
 use cw_common::cw_println;
@@ -68,7 +68,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             "inside validate channel open init: input parameter: {:?}",
             message
         );
-        let channel_end = to_ibc_channel(message.channel.clone())?;
+        let mut channel_end = to_ibc_channel(message.channel.clone())?;
         let src_port = to_ibc_port_id(&message.port_id)?;
 
         if channel_end.connection_hops.len() != 1 {
@@ -89,33 +89,58 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         cw_println!(deps, "contract address is : {:?} ", contract_address);
 
-        let channel_end = ChannelEnd {
-            state: State::Uninitialized,
-            ..channel_end
-        };
+        channel_end.state = State::Init;
         self.store_channel_end(deps.storage, &src_port, &src_channel, &channel_end)?;
 
         // Generate event for calling on channel open init in x-call
         let sub_message =
             on_chan_open_init_submessage(&channel_end, &src_port, &src_channel, &connection_id);
-        self.store_callback_data(
+
+        
+    
+        let _sequence = self.increase_channel_sequence(deps.storage)?;
+        self.store_next_sequence_send(
             deps.storage,
-            EXECUTE_ON_CHANNEL_OPEN_INIT,
-            &sub_message.channel().endpoint,
+            &src_port,
+            &src_channel,
+            &Sequence::from(1),
+        )?;
+        self.store_next_sequence_recv(
+            deps.storage,
+            &src_port,
+            &src_channel,
+            &Sequence::from(1),
+        )?;
+        self.store_next_sequence_ack(
+            deps.storage,
+            &src_port,
+            &src_channel,
+            &Sequence::from(1),
+        )?;
+
+        self.store_channel_commitment(deps.storage, &src_port, &src_channel, &channel_end)?;
+        let channel_id_event = create_channel_id_generated_event(src_channel.clone());
+        let init_event = create_channel_event(
+            IbcEventType::OpenInitChannel,
+            src_port.as_str(),
+            src_channel.as_str(),
+            &channel_end,
         )?;
         let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).map_err(ContractError::Std)?;
-        let on_chan_open_init = create_channel_submesssage(
+        let mut on_chan_open_init = create_channel_submesssage(
             contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_INIT,
         );
+        on_chan_open_init.reply_on=ReplyOn::Never;
 
         Ok(Response::new()
             .add_attribute("action", "channel")
             .add_attribute("method", "channel_open_init_validation")
-            .add_submessage(on_chan_open_init))
+            .add_submessage(on_chan_open_init)
+            .add_event(init_event).add_event(channel_id_event))
     }
 
     /// This function validates and creates a new channel end for a channel open try message, and sends
@@ -659,80 +684,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 }
 
 impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
-    /// This function executes the channel open initialization process for an IBC channel and change the state to INIT.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
-    /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
-    /// other modules.
-    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
-    /// contract to another module. It is used to extract the data returned by the sub-message and
-    /// update the state of a channel.
-    ///
-    /// Returns:
-    ///
-    /// This function returns a `Result<Response, ContractError>` where `Response` is a struct
-    /// representing the response to a contract execution and `ContractError` is an enum representing
-    /// the possible errors that can occur during contract execution.
-    fn execute_channel_open_init(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let data: IbcEndpoint =
-                    self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_INIT)?;
-                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_INIT);
-
-                let port_id = to_ibc_port_id(&data.port_id)?;
-                let channel_id = to_ibc_channel_id(&data.channel_id)?;
-                let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
-
-                if channel_end.state != State::Uninitialized {
-                    return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
-                }
-                channel_end.state = State::Init;
-                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
-                let _sequence = self.increase_channel_sequence(deps.storage)?;
-                self.store_next_sequence_send(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &Sequence::from(1),
-                )?;
-                self.store_next_sequence_recv(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &Sequence::from(1),
-                )?;
-                self.store_next_sequence_ack(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &Sequence::from(1),
-                )?;
-
-                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
-                let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-                let main_event = create_channel_event(
-                    IbcEventType::OpenInitChannel,
-                    port_id.as_str(),
-                    channel_id.as_str(),
-                    &channel_end,
-                )?;
-
-                Ok(Response::new()
-                    .add_event(channel_id_event)
-                    .add_event(main_event))
-            }
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
-            }
-        }
-    }
+    
+   
 
     /// This function executes a channel open try operation in chain b and change the state ti INIT.
     ///
