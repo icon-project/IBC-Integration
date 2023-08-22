@@ -268,6 +268,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     deps.as_ref().storage,
                     VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
                 )?;
+                self.clear_callback_data(deps.storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
                 let port = packet.dest.port_id.clone();
                 let chan = packet.dest.channel_id.clone();
                 let seq = packet.sequence;

@@ -220,6 +220,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     deps.as_ref().storage,
                     VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
                 )?;
+                self.clear_callback_data(deps.storage, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE);
                 let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
                 let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
                 let chan_end_on_a = self.get_channel_end(deps.storage, &port_id, &channel_id)?;

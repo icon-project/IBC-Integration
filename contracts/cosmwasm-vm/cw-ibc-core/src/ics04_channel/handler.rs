@@ -684,6 +684,8 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let data: IbcEndpoint =
                     self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_INIT)?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_INIT);
+
                 let port_id = to_ibc_port_id(&data.port_id)?;
                 let channel_id = to_ibc_channel_id(&data.channel_id)?;
                 let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
@@ -757,6 +759,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let data: IbcEndpoint =
                     self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_TRY)?;
+                    self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_TRY);
                 let port_id = to_ibc_port_id(&data.port_id)?;
                 let channel_id = to_ibc_channel_id(&data.channel_id)?;
                 let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
@@ -830,6 +833,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(_res) => {
                 let data: IbcEndpoint =
                     self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_CLOSE_INIT)?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_CLOSE_INIT);
                 let port_id = to_ibc_port_id(&data.port_id)?;
                 let channel_id = to_ibc_channel_id(&data.channel_id)?;
                 let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
@@ -880,6 +884,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     deps.as_ref().storage,
                     EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
                 )?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE);
                 let port_id = to_ibc_port_id(&data.port_id)?;
                 let channel_id = to_ibc_channel_id(&data.channel_id)?;
                 let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
@@ -933,6 +938,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     deps.as_ref().storage,
                     EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
                 )?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE);
                 let port_id = IbcPortId::from_str(&data.port_id).unwrap();
                 let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
                 let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
@@ -980,6 +986,7 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
                     deps.as_ref().storage,
                     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
                 )?;
+                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE);
                 let port_id = to_ibc_port_id(&data.port_id)?;
                 let channel_id = to_ibc_channel_id(&data.channel_id)?;
                 let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;

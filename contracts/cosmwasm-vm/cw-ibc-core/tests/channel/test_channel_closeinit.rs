@@ -78,13 +78,7 @@ fn test_validate_close_init_channel() {
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
     let expected =
         on_chan_close_init_submessage(&port_id, &channel_id, &channel_end, &connection_id);
-    contract
-        .store_callback_data(
-            deps.as_mut().storage,
-            EXECUTE_ON_CHANNEL_CLOSE_INIT,
-            &expected.channel().endpoint,
-        )
-        .unwrap();
+   
 
     let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
@@ -94,7 +88,7 @@ fn test_validate_close_init_channel() {
         info.funds,
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
-
+    println!("{:?}",res);
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_init)
 }
