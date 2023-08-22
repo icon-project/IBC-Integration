@@ -191,7 +191,7 @@ impl<'a> CwIbcCoreContext<'a> {
             funds: info.funds,
         });
         let sub_msg: SubMsg =
-            SubMsg::reply_always(create_client_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
+            SubMsg::reply_on_success(create_client_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
         Ok(Response::new()
             .add_attribute("action", "channel")
