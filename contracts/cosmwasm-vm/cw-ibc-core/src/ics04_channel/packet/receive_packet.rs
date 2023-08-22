@@ -5,6 +5,7 @@ use cw_common::{
         channel::{RawMessageRecvPacket, RawPacket},
         to_raw_packet,
     },
+    to_checked_address,
 };
 
 use cw_common::cw_println;
@@ -176,7 +177,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timeout = CwTimeout::with_block(timeoutblock);
         let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
-        let address = Addr::unchecked(msg.signer.to_string());
+        let address = to_checked_address(deps.as_ref(), &msg.signer);
         self.store_callback_data(
             deps.storage,
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
