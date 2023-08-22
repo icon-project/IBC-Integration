@@ -302,6 +302,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let src_channel = to_ibc_channel_id(&message.channel_id)?;
 
         let mut channel_end = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
+        ensure_channel_state(&src_channel, &channel_end, &State::Init)?;
         let dst_port = channel_end.counterparty().port_id.clone();
         let dst_channel = to_ibc_channel_id(&message.counterparty_channel_id)?;
         let connection_id = channel_end.connection_hops()[0].clone();
@@ -360,8 +361,16 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         channel_end.set_version(version);
         channel_end.set_counterparty_channel_id(dst_channel);
-
+        channel_end.set_state(State::Open); // State Change
         self.store_channel_end(deps.storage, &src_port, &src_channel, &channel_end)?;
+        self.store_channel_commitment(deps.storage, &src_port, &src_channel, &channel_end)?;
+
+        let event = create_channel_event(
+            IbcEventType::OpenAckChannel,
+            src_port.as_str(),
+            src_channel.as_str(),
+            &channel_end,
+        )?;
 
         let module_contract_address =
             self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
@@ -369,25 +378,23 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         // Generate event for calling on channel open try in x-call
         let sub_message =
             on_chan_open_ack_submessage(&channel_end, &src_port, &src_channel, &connection_id)?;
-        self.store_callback_data(
-            deps.storage,
-            EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
-            &sub_message.channel().endpoint,
-        )?;
+        
         let data =
             cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
         let data = to_binary(&data).unwrap();
-        let on_chan_open_try = create_channel_submesssage(
+        let mut on_chan_open_try = create_channel_submesssage(
             module_contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
         );
+        on_chan_open_try.reply_on=ReplyOn::Never;
+
 
         Ok(Response::new()
             .add_attribute("action", "channel")
             .add_attribute("method", "channel_open_init_module_validation")
-            .add_submessage(on_chan_open_try))
+            .add_submessage(on_chan_open_try).add_event(event))
     }
 
     /// This function validates a channel open confirmation message and creates a submessage to execute
@@ -415,7 +422,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let dest_port = to_ibc_port_id(&message.port_id)?;
         let dest_channel = to_ibc_channel_id(&message.channel_id)?;
 
-        let channel_end = self.get_channel_end(deps.storage, &dest_port, &dest_channel)?;
+        let mut channel_end = self.get_channel_end(deps.storage, &dest_port, &dest_channel)?;
+        ensure_channel_state(&dest_channel, &channel_end, &State::TryOpen)?;
         let src_port = &channel_end.counterparty().port_id;
         let src_channel =
             channel_end
@@ -425,6 +433,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                     error: ChannelError::InvalidCounterpartyChannelId,
                 })?;
         channel_open_confirm_validate(&dest_channel, &channel_end)?;
+
         let connection_id = channel_end.connection_hops()[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
 
@@ -478,30 +487,39 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client = self.get_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
-        // Getting the module address for on channel open try call
-        let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
-
-        // Generate event for calling on channel open try in x-call
-        let sub_message = on_chan_open_confirm_submessage(&channel_end, &dest_port, &dest_channel)?;
-        self.store_callback_data(
-            deps.storage,
-            EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
-            &sub_message.channel().endpoint,
+            
+       
+        channel_end.set_state(State::Open); // State Change
+        self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
+        self.store_channel_commitment(deps.storage, &dest_port, &dest_channel, &channel_end)?;
+        let event = create_channel_event(
+            IbcEventType::OpenConfirmChannel,
+            dest_port.as_str(),
+            dest_channel.as_str(),
+            &channel_end,
         )?;
+          // Getting the module address for on channel open try call
+          let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
+
+          // Generate event for calling on channel open try in x-call
+          let sub_message = on_chan_open_confirm_submessage(&channel_end, &dest_port, &dest_channel)?;
+   
         let data =
             cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
         let data = to_binary(&data).unwrap();
-        let on_chan_open_try = create_channel_submesssage(
+        let mut on_chan_open_confirm = create_channel_submesssage(
             contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
         );
+        on_chan_open_confirm.reply_on=ReplyOn::Never;
+
 
         Ok(Response::new()
             .add_attribute("action", "channel")
             .add_attribute("method", "channel_open_confirm_module_validation")
-            .add_submessage(on_chan_open_try))
+            .add_submessage(on_chan_open_confirm).add_event(event))
     }
 
     /// This function validates a channel close initiation message and creates a submessage to execute
@@ -727,108 +745,9 @@ impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
         }
     }
 
-    /// This function handles the execution of a channel open acknowledgement message in an IBC protocol.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
-    /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
-    /// other contracts.
-    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
-    /// contract to another module. It is used to handle the response of the `channel open ack`
-    /// sub-message sent to the IBC module.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// contract execution and `ContractError` is an enum representing the possible errors that can
-    /// occur during contract execution.
-    fn execute_channel_open_ack(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let data: IbcEndpoint = self.get_callback_data(
-                    deps.as_ref().storage,
-                    EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
-                )?;
-                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE);
-                let port_id = to_ibc_port_id(&data.port_id)?;
-                let channel_id = to_ibc_channel_id(&data.channel_id)?;
-                let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
-                ensure_channel_state(&channel_id, &channel_end, &State::Init)?;
+   
 
-                channel_end.set_state(State::Open); // State Change
-                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
-                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
-
-                let event = create_channel_event(
-                    IbcEventType::OpenAckChannel,
-                    port_id.as_str(),
-                    channel_id.as_str(),
-                    &channel_end,
-                )?;
-
-                Ok(Response::new()
-                    .add_event(event)
-                    .add_attribute("method", "execute_channel_open_ack"))
-            }
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
-            }
-        }
-    }
-
-    /// This function executes the confirmation of a channel opening and updates the
-    /// channel state accordingly.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
-    /// dependencies such as storage, API, and querier. It is used to interact with the blockchain and
-    /// other modules.
-    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
-    /// contract to another module. It is used to confirm the opening of an IBC channel.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to a
-    /// contract execution and `ContractError` is an enum representing the possible errors that can
-    /// occur during contract execution.
-    fn execute_channel_open_confirm(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let data: IbcEndpoint = self.get_callback_data(
-                    deps.as_ref().storage,
-                    EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
-                )?;
-                self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE);
-                let port_id = IbcPortId::from_str(&data.port_id).unwrap();
-                let channel_id = IbcChannelId::from_str(&data.channel_id).unwrap();
-                let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
-                ensure_channel_state(&channel_id, &channel_end, &State::TryOpen)?;
-                channel_end.set_state(State::Open); // State Change
-                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
-                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
-                let event = create_channel_event(
-                    IbcEventType::OpenConfirmChannel,
-                    port_id.as_str(),
-                    channel_id.as_str(),
-                    &channel_end,
-                )?;
-                Ok(Response::new().add_event(event))
-            }
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
-            }
-        }
-    }
+    
     /// This function handles the confirmation of closing an IBC channel and updates the channel state
     /// accordingly.
     ///

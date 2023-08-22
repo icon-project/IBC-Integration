@@ -530,10 +530,10 @@ impl<'a> CwIbcCoreContext<'a> {
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
             // EXECUTE_ON_CHANNEL_OPEN_INIT => self.execute_channel_open_init(deps, message),
             //  EXECUTE_ON_CHANNEL_OPEN_TRY => self.execute_channel_open_try(deps, message),
-            EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE => self.execute_channel_open_ack(deps, message),
-            EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE => {
-                self.execute_channel_open_confirm(deps, message)
-            }
+          //  EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE => self.execute_channel_open_ack(deps, message),
+            // EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE => {
+            //     self.execute_channel_open_confirm(deps, message)
+            // }
             EXECUTE_ON_CHANNEL_CLOSE_INIT => self.execute_channel_close_init(deps, message),
             EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE => {
                 self.execute_channel_close_confirm(deps, message)

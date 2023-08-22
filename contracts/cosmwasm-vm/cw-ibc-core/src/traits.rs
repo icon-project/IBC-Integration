@@ -167,17 +167,17 @@ pub trait ExecuteChannel {
         deps: DepsMut,
         message: Reply,
     ) -> Result<Response, ContractError>;
-    fn execute_channel_open_confirm(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError>;
+    // fn execute_channel_open_confirm(
+    //     &self,
+    //     deps: DepsMut,
+    //     message: Reply,
+    // ) -> Result<Response, ContractError>;
 
-    fn execute_channel_open_ack(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError>;
+    // fn execute_channel_open_ack(
+    //     &self,
+    //     deps: DepsMut,
+    //     message: Reply,
+    // ) -> Result<Response, ContractError>;
 
     fn execute_channel_close_confirm(
         &self,
