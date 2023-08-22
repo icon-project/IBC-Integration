@@ -263,7 +263,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if packet.timeout_timestamp > 0 {
             let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
-            if let Expiry::Expired = packet_timestamp.check_expiry(&host_timestamp) {
+            if let Expiry::Expired = host_timestamp.check_expiry(&packet_timestamp) {
                 return Err(ContractError::IbcPacketError {
                     error: PacketError::LowPacketTimestamp,
                 });
@@ -305,7 +305,7 @@ impl<'a> CwIbcCoreContext<'a> {
         if packet.timeout_timestamp > 0 {
             let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
-            if let Expiry::NotExpired = packet_timestamp.check_expiry(&host_timestamp) {
+            if let Expiry::NotExpired = host_timestamp.check_expiry(&packet_timestamp) {
                 return Err(ContractError::IbcPacketError {
                     error: PacketError::PacketTimeoutTimestampNotReached {
                         timeout_timestamp: packet_timestamp,
