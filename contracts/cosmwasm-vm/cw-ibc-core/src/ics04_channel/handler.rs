@@ -621,7 +621,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
         ensure_connection_state(&connection_id, &connection_end, &ConnectionState::Open)?;
 
-        ensure_channel_not_closed(&dest_channel, &channel_end)?;
         channel_end.set_state(State::Closed); // State Change
         self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
         self.store_channel_commitment(deps.storage, &dest_port, &dest_channel, &channel_end)?;
