@@ -322,8 +322,6 @@ fn test_for_channel_open_ack_execution() {
         res.unwrap().messages[0].id,
         EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE
     );
-
-   
 }
 
 #[test]
@@ -439,8 +437,6 @@ fn test_for_channel_open_confirm() {
         res.unwrap().messages[0].id,
         EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE
     );
-
-   
 }
 
 #[test]
@@ -533,25 +529,7 @@ fn test_for_channel_close_init() {
     assert_eq!(res.as_ref().unwrap().messages[0].id, 45);
     assert_eq!(res.unwrap().messages[0], on_chan_open_init);
 
-    let mock_reponse_data = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.to_string(),
-        channel_id: channel_id.to_string(),
-    };
-    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
-    let event = Event::new("empty");
-    let reply_message = Reply {
-        id: 45,
-        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
-            events: vec![event],
-            data: Some(mock_data_binary),
-        }),
-    };
-    let response = contract.reply(deps.as_mut(), env, reply_message);
-    assert!(response.is_ok());
-    assert_eq!(
-        response.as_ref().unwrap().events[0].ty,
-        "channel_close_init"
-    );
+    
 }
 
 #[test]
@@ -666,26 +644,7 @@ fn test_for_channel_close_confirm() {
         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE
     );
 
-    let mock_reponse_data = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.to_string(),
-        channel_id: channel_id.to_string(),
-    };
-    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
-    let event = Event::new("empty");
-    let reply_message = Reply {
-        id: EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
-        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
-            events: vec![event],
-            data: Some(mock_data_binary),
-        }),
-    };
-    let response = contract.reply(deps.as_mut(), env, reply_message);
-
-    assert!(response.is_ok());
-    assert_eq!(
-        response.as_ref().unwrap().events[0].ty,
-        "channel_close_confirm"
-    );
+    
 }
 
 #[test]

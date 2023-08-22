@@ -257,8 +257,8 @@ fn test_execute_open_confirm_channel() {
         result,
     };
 
-   // let result = contract.execute_channel_open_confirm(deps.as_mut(), reply);
-   // assert!(result.is_ok());
+    // let result = contract.execute_channel_open_confirm(deps.as_mut(), reply);
+    // assert!(result.is_ok());
 }
 
 #[ignore]
