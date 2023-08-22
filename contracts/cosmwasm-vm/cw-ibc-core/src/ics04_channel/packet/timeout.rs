@@ -68,6 +68,16 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let conn_id_on_a = chan_end_on_a.connection_hops()[0].clone();
         let conn_end_on_a = self.connection_end(deps.storage, &conn_id_on_a)?;
+        let client_id = conn_end_on_a.client_id();
+        let client = self.get_client(deps.storage, client_id)?;
+        let timestamp_at_height = client.get_timestamp_by_height(
+            deps.as_ref(),
+            client_id,
+            proof_height.revision_height(),
+        )?;
+        let proof_timestamp = to_ibc_timestamp(timestamp_at_height)?;
+        // validate packet is actually expired at proof height
+        self.validate_packet_expired(packet, proof_height, proof_timestamp)?;
 
         let commitment_on_a = match self.get_packet_commitment(
             deps.storage,
@@ -96,36 +106,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        let client_id_on_a = conn_end_on_a.client_id();
-        let _client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
 
-        if !packet_timeout_height.has_expired(proof_height) {
-            return Err(ContractError::IbcPacketError {
-                error: PacketError::PacketTimeoutHeightNotReached {
-                    timeout_height: packet_timeout_height,
-                    chain_height: proof_height,
-                },
-            });
-        }
-        let client = self.get_client(deps.storage, client_id_on_a)?;
-        let timestamp_at_height = client.get_timestamp_by_height(
-            deps.as_ref(),
-            client_id_on_a,
-            proof_height.revision_height(),
-        )?;
-        if timestamp_at_height != 0 {
-            let chain_timestamp = to_ibc_timestamp(timestamp_at_height)?;
-            if let Expiry::NotExpired = chain_timestamp.check_expiry(&packet_timeout_timestamp) {
-                return Err(PacketError::PacketTimeoutTimestampNotReached {
-                    timeout_timestamp: packet_timeout_timestamp,
-                    chain_timestamp,
-                })
-                .map_err(Into::<ContractError>::into);
-            }
-            cw_println!(deps, " timestamp check pass");
-        }
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id_on_a, &proof_height)?;
+            self.consensus_state(deps.storage, client_id, &proof_height)?;
 
         self.verify_connection_delay_passed(
             deps.storage,
@@ -168,12 +151,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
             };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_a)?;
-        client.verify_timeout(
-            deps.as_ref(),
-            client_id_on_a,
-            next_seq_recv_verification_result,
-        )?;
+        client.verify_timeout(deps.as_ref(), client_id, next_seq_recv_verification_result)?;
 
         // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;

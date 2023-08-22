@@ -70,34 +70,18 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        let latest_height_on_a = client_state_of_b_on_a.latest_height();
-        let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
-
-        if packet_timeout_height.has_expired(latest_height_on_a) {
-            return Err(ContractError::IbcPacketError {
-                error: PacketError::LowPacketHeight {
-                    chain_height: latest_height_on_a,
-                    timeout_height: packet_timeout_height,
-                },
-            });
-        }
-
-        cw_println!(deps, " check pass: packet height expired");
-
-        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
+        let counterparty_height = client_state_of_b_on_a.latest_height();
         let client = self.get_client(deps.storage, client_id_on_a)?;
         let timestamp_at_height = client.get_timestamp_by_height(
             deps.as_ref(),
             client_id_on_a,
-            latest_height_on_a.revision_height(),
+            counterparty_height.revision_height(),
         )?;
-        if timestamp_at_height != 0 {
-            let chain_timestamp = to_ibc_timestamp(timestamp_at_height)?;
-            if let Expiry::Expired = chain_timestamp.check_expiry(&packet_timestamp) {
-                return Err(PacketError::LowPacketTimestamp).map_err(Into::<ContractError>::into);
-            }
-            cw_println!(deps, " timestamp check pass");
-        }
+        let counterparty_timestamp = to_ibc_timestamp(timestamp_at_height)?;
+        // validate packet not expired before send
+        self.validate_packet_not_expired(&packet, counterparty_height, counterparty_timestamp)?;
+        cw_println!(deps, " check pass: packet  expired");
+
         let next_seq_send_on_a =
             self.get_next_sequence_send(deps.storage, &src_port, &src_channel)?;
         cw_println!(deps, " fetched next seq send {:?}", next_seq_send_on_a);
@@ -112,6 +96,9 @@ impl<'a> CwIbcCoreContext<'a> {
         }
 
         cw_println!(deps, " packet seq and next seq matched");
+
+        let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
+        let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
         self.increase_next_sequence_send(deps.storage, &src_port, &src_channel)?;
         self.store_packet_commitment(
