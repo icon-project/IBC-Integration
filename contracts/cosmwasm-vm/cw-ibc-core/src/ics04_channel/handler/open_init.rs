@@ -78,7 +78,7 @@ pub fn create_channel_submesssage(
         id,
         msg: on_channel,
         gas_limit: Some(GAS_FOR_SUBMESSAGE_XCALL),
-        reply_on: ReplyOn::Success,
+        reply_on: ReplyOn::Never,
     }
 }
 

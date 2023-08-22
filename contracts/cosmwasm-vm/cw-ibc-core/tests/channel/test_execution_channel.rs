@@ -518,7 +518,7 @@ fn test_for_channel_close_init() {
 
     let res = contract.execute(
         deps.as_mut(),
-        env.clone(),
+        env,
         info,
         CoreExecuteMsg::ChannelCloseInit {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
@@ -528,8 +528,6 @@ fn test_for_channel_close_init() {
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().messages[0].id, 45);
     assert_eq!(res.unwrap().messages[0], on_chan_open_init);
-
-    
 }
 
 #[test]
@@ -643,8 +641,6 @@ fn test_for_channel_close_confirm() {
         res.unwrap().messages[0].id,
         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE
     );
-
-    
 }
 
 #[test]
@@ -897,7 +893,7 @@ fn test_for_recieve_packet() {
     let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
     let (src, dst) = get_dummy_endpoints();
 
-    let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
+    let _packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
 
     let mock_data_binary = to_binary(&make_ack_success().to_vec()).unwrap();
     let event = Event::new("empty");

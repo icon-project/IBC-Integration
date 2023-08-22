@@ -252,7 +252,7 @@ fn test_execute_open_confirm_channel() {
         events: vec![Event::new("Action").add_attribute("method", "channel_open_confirm")],
     };
     let result: SubMsgResult = SubMsgResult::Ok(response);
-    let reply = Reply {
+    let _reply = Reply {
         id: EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
         result,
     };
@@ -306,7 +306,7 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
         events: vec![Event::new("Action").add_attribute("method", "channel_open_confirm")],
     };
     let result: SubMsgResult = SubMsgResult::Ok(response);
-    let reply = Reply {
+    let _reply = Reply {
         id: EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
         result,
     };

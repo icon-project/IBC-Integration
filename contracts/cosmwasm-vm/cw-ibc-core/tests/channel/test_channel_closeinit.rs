@@ -179,7 +179,7 @@ fn test_execute_close_init_channel() {
         events: vec![Event::new("Action").add_attribute("method", "channel_close_init")],
     };
     let result: SubMsgResult = SubMsgResult::Ok(response);
-    let reply = Reply {
+    let _reply = Reply {
         id: EXECUTE_ON_CHANNEL_CLOSE_INIT,
         result,
     };
@@ -229,7 +229,7 @@ fn test_execute_close_init_channel_fail() {
         events: vec![Event::new("Action").add_attribute("method", "channel_close_init")],
     };
     let result: SubMsgResult = SubMsgResult::Ok(response);
-    let reply = Reply {
+    let _reply = Reply {
         id: EXECUTE_ON_CHANNEL_CLOSE_INIT,
         result,
     };

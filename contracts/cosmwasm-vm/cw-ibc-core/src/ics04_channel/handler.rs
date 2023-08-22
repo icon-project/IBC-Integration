@@ -32,7 +32,7 @@ use open_confirm::*;
 
 pub mod close_confirm;
 pub use close_confirm::*;
-use cosmwasm_std::{IbcEndpoint, ReplyOn};
+
 use prost::Message;
 pub mod validate_channel;
 use cw_common::cw_println;
@@ -111,13 +111,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         )?;
         let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).map_err(ContractError::Std)?;
-        let mut on_chan_open_init = create_channel_submesssage(
+        let on_chan_open_init = create_channel_submesssage(
             contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_INIT,
         );
-        on_chan_open_init.reply_on = ReplyOn::Never;
 
         Ok(Response::new()
             .add_attribute("action", "channel")
@@ -261,13 +260,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let data = to_binary(&data).map_err(ContractError::Std)?;
         cw_println!(deps, "after converting data to binary ");
 
-        let mut on_chan_open_try = create_channel_submesssage(
+        let on_chan_open_try = create_channel_submesssage(
             contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_TRY,
         );
-        on_chan_open_try.reply_on = ReplyOn::Never;
 
         Ok(Response::new()
             .add_attribute("action", "channel")
@@ -382,13 +380,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let data =
             cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
         let data = to_binary(&data).unwrap();
-        let mut on_chan_open_try = create_channel_submesssage(
+        let on_chan_open_try = create_channel_submesssage(
             module_contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
         );
-        on_chan_open_try.reply_on = ReplyOn::Never;
 
         Ok(Response::new()
             .add_attribute("action", "channel")
@@ -505,13 +502,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let data =
             cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
         let data = to_binary(&data).unwrap();
-        let mut on_chan_open_confirm = create_channel_submesssage(
+        let on_chan_open_confirm = create_channel_submesssage(
             contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
         );
-        on_chan_open_confirm.reply_on = ReplyOn::Never;
 
         Ok(Response::new()
             .add_attribute("action", "channel")
@@ -665,7 +661,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         );
         let raw_expected_chan = RawChannel::try_from(expected_channel_end).unwrap();
 
-        let counterparty_chan_end_path = commitment::channel_path(&src_port, &src_channel);
+        let counterparty_chan_end_path = commitment::channel_path(src_port, src_channel);
         let expected_counterparty_channel_end = raw_expected_chan.encode_to_vec();
 
         let verify_channel_state = VerifyChannelState {
@@ -692,13 +688,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let data =
             cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).map_err(Into::<ContractError>::into)?;
-        let mut on_chan_close_confirm = create_channel_submesssage(
+        let on_chan_close_confirm = create_channel_submesssage(
             contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
         );
-        on_chan_close_confirm.reply_on = ReplyOn::Never;
 
         Ok(Response::new()
             .add_attribute("action", "channel")
