@@ -206,28 +206,6 @@ fn test_for_channel_open_try_execution_message() {
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY);
-
-    let mock_reponse_data = cosmwasm_std::IbcEndpoint {
-        port_id: port_id.to_string(),
-        channel_id: ChannelId::default().to_string(),
-    };
-    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
-    let event = Event::new("empty");
-    let reply_message = Reply {
-        id: EXECUTE_ON_CHANNEL_OPEN_TRY,
-        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
-            events: vec![event],
-            data: Some(mock_data_binary),
-        }),
-    };
-    let response = contract.reply(deps.as_mut(), env, reply_message);
-
-    assert!(response.is_ok());
-    assert_eq!(
-        response.as_ref().unwrap().events[0].ty,
-        "channel_id_created"
-    );
-    assert_eq!(response.unwrap().events[1].ty, "channel_open_try")
 }
 
 #[test]
@@ -1000,7 +978,6 @@ fn test_for_recieve_packet() {
     let (src, dst) = get_dummy_endpoints();
 
     let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 0, timeout);
-   
 
     let mock_data_binary = to_binary(&make_ack_success().to_vec()).unwrap();
     let event = Event::new("empty");
@@ -1014,7 +991,7 @@ fn test_for_recieve_packet() {
     let response = contract.reply(deps.as_mut(), env, reply_message);
     println!("{:?}", response);
     assert!(response.is_ok());
-   // assert_eq!(response.unwrap().events[0].ty, "recv_packet");
+    // assert_eq!(response.unwrap().events[0].ty, "recv_packet");
 }
 
 #[test]

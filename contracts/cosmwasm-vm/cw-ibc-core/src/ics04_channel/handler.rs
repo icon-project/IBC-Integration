@@ -96,27 +96,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let sub_message =
             on_chan_open_init_submessage(&channel_end, &src_port, &src_channel, &connection_id);
 
-        
-    
         let _sequence = self.increase_channel_sequence(deps.storage)?;
-        self.store_next_sequence_send(
-            deps.storage,
-            &src_port,
-            &src_channel,
-            &Sequence::from(1),
-        )?;
-        self.store_next_sequence_recv(
-            deps.storage,
-            &src_port,
-            &src_channel,
-            &Sequence::from(1),
-        )?;
-        self.store_next_sequence_ack(
-            deps.storage,
-            &src_port,
-            &src_channel,
-            &Sequence::from(1),
-        )?;
+        self.store_next_sequence_send(deps.storage, &src_port, &src_channel, &Sequence::from(1))?;
+        self.store_next_sequence_recv(deps.storage, &src_port, &src_channel, &Sequence::from(1))?;
+        self.store_next_sequence_ack(deps.storage, &src_port, &src_channel, &Sequence::from(1))?;
 
         self.store_channel_commitment(deps.storage, &src_port, &src_channel, &channel_end)?;
         let channel_id_event = create_channel_id_generated_event(src_channel.clone());
@@ -134,13 +117,14 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_INIT,
         );
-        on_chan_open_init.reply_on=ReplyOn::Never;
+        on_chan_open_init.reply_on = ReplyOn::Never;
 
         Ok(Response::new()
             .add_attribute("action", "channel")
             .add_attribute("method", "channel_open_init_validation")
             .add_submessage(on_chan_open_init)
-            .add_event(init_event).add_event(channel_id_event))
+            .add_event(init_event)
+            .add_event(channel_id_event))
     }
 
     /// This function validates and creates a new channel end for a channel open try message, and sends
@@ -165,33 +149,29 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         info: MessageInfo,
         message: &RawMsgChannelOpenTry,
     ) -> Result<Response, ContractError> {
-        let channel = to_ibc_channel(message.channel.clone())?;
-        if channel.connection_hops.len() != 1 {
+        let mut channel_end = to_ibc_channel(message.channel.clone())?;
+        if channel_end.connection_hops.len() != 1 {
             return Err(ContractError::IbcChannelError {
                 error: ChannelError::InvalidConnectionHopsLength {
                     expected: 1,
-                    actual: channel.connection_hops.len(),
+                    actual: channel_end.connection_hops.len(),
                 },
             });
         }
         cw_println!(deps, "Reached in channel open try");
-        let connection_id = channel.connection_hops[0].clone();
+        let connection_id = channel_end.connection_hops[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
 
-        channel_open_try_msg_validate(&channel, &connection_end)?;
+        channel_open_try_msg_validate(&channel_end, &connection_end)?;
         cw_println!(deps, "channel open try msg validate ");
 
         let counter = self.channel_counter(deps.storage)?;
         let dest_channel = ChannelId::new(counter); // creating new channel_id
         let dest_port = to_ibc_port_id(&message.port_id)?;
 
-        let source_port = channel.remote.port_id.clone();
-        let source_channel = channel.remote.channel_id.clone().unwrap();
+        let source_port = channel_end.remote.port_id.clone();
+        let source_channel = channel_end.remote.channel_id.clone().unwrap();
 
-        let channel_end = ChannelEnd {
-            state: State::Uninitialized,
-            ..channel.clone()
-        };
         cw_println!(
             deps,
             "stoed: channel id: {:?}  portid :{:?} channel_end :{:?}",
@@ -199,7 +179,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             &dest_port,
             &channel_end
         );
-        self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
+
         let proof_height = to_ibc_height(message.proof_height.clone())?;
         let client_id = connection_end.client_id();
         let client_state = self.client_state(deps.storage, client_id)?;
@@ -209,7 +189,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let conn_id_on_a = connection_end.counterparty().connection_id().ok_or(
             ContractError::IbcChannelError {
                 error: ChannelError::UndefinedConnectionCounterparty {
-                    connection_id: channel.connection_hops[0].clone(),
+                    connection_id: channel_end.connection_hops[0].clone(),
                 },
             },
         )?;
@@ -225,10 +205,10 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         cw_println!(deps, "after frozen check");
         let expected_channel_end = ChannelEnd::new(
             State::Init,
-            *channel.ordering(),
+            *channel_end.ordering(),
             Counterparty::new(dest_port.clone(), None),
             vec![conn_id_on_a.clone()],
-            channel.version().clone(),
+            channel_end.version().clone(),
         );
         let raw_expected_chan = RawChannel::try_from(expected_channel_end).unwrap();
         let chan_end_path_on_a = commitment::channel_path(&source_port, &source_channel);
@@ -251,6 +231,23 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
         cw_println!(deps, "contract addres is  {:?}", contract_address);
 
+        channel_end.state = State::TryOpen;
+        self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
+        let _sequence = self.increase_channel_sequence(deps.storage)?;
+        self.store_next_sequence_send(deps.storage, &dest_port, &dest_channel, &Sequence::from(1))?;
+        self.store_next_sequence_recv(deps.storage, &dest_port, &dest_channel, &Sequence::from(1))?;
+        self.store_next_sequence_ack(deps.storage, &dest_port, &dest_channel, &Sequence::from(1))?;
+        let channel_id_event = create_channel_id_generated_event(dest_channel.clone());
+
+        let main_event = create_channel_event(
+            IbcEventType::OpenTryChannel,
+            dest_port.as_str(),
+            dest_channel.as_str(),
+            &channel_end,
+        )?;
+
+        self.store_channel_commitment(deps.storage, &dest_port, &dest_channel, &channel_end)?;
+
         // Generate event for calling on channel open try in x-call
         let sub_message = on_chan_open_try_submessage(
             &channel_end,
@@ -259,28 +256,25 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             &channel_end.connection_hops[0].clone(),
         );
 
-        self.store_callback_data(
-            deps.storage,
-            EXECUTE_ON_CHANNEL_OPEN_TRY,
-            &sub_message.channel().endpoint,
-        )?;
-
         let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
 
         let data = to_binary(&data).map_err(ContractError::Std)?;
         cw_println!(deps, "after converting data to binary ");
 
-        let on_chan_open_try = create_channel_submesssage(
+        let mut on_chan_open_try = create_channel_submesssage(
             contract_address,
             data,
             info.funds,
             EXECUTE_ON_CHANNEL_OPEN_TRY,
         );
+        on_chan_open_try.reply_on = ReplyOn::Never;
 
         Ok(Response::new()
             .add_attribute("action", "channel")
             .add_attribute("method", "channel_open_init_module_validation")
-            .add_submessage(on_chan_open_try))
+            .add_submessage(on_chan_open_try)
+            .add_event(main_event)
+            .add_event(channel_id_event))
     }
 
     /// This function validates a channel open acknowledgement message and creates a sub-message to
@@ -684,83 +678,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 }
 
 impl<'a> ExecuteChannel for CwIbcCoreContext<'a> {
-    
-   
-
-    /// This function executes a channel open try operation in chain b and change the state ti INIT.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which provides mutable access to the contract's
-    /// dependencies such as storage, querier, and API.
-    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
-    /// contract to another module. It is used to extract the data returned by the sub-message and
-    /// update the state of the channel accordingly.
-    ///
-    /// Returns:
-    ///
-    /// This function returns a `Result<Response, ContractError>` where `Response` is a struct
-    /// representing the response to a contract execution and `ContractError` is an enum representing
-    /// the possible errors that can occur during contract execution.
-    fn execute_channel_open_try(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        cw_println!(deps, "reached execute_channelopenTry");
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                let data: IbcEndpoint =
-                    self.get_callback_data(deps.as_ref().storage, EXECUTE_ON_CHANNEL_OPEN_TRY)?;
-                    self.clear_callback_data(deps.storage, EXECUTE_ON_CHANNEL_OPEN_TRY);
-                let port_id = to_ibc_port_id(&data.port_id)?;
-                let channel_id = to_ibc_channel_id(&data.channel_id)?;
-                let mut channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
-
-                if channel_end.state != State::Uninitialized {
-                    return Err(ChannelError::UnknownState { state: 5 }).map_err(|e| e.into());
-                }
-                channel_end.state = State::TryOpen;
-                self.store_channel_end(deps.storage, &port_id, &channel_id, &channel_end)?;
-                let _sequence = self.increase_channel_sequence(deps.storage)?;
-                self.store_next_sequence_send(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &Sequence::from(1),
-                )?;
-                self.store_next_sequence_recv(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &Sequence::from(1),
-                )?;
-                self.store_next_sequence_ack(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    &Sequence::from(1),
-                )?;
-                let channel_id_event = create_channel_id_generated_event(channel_id.clone());
-
-                let main_event = create_channel_event(
-                    IbcEventType::OpenTryChannel,
-                    port_id.as_str(),
-                    channel_id.as_str(),
-                    &channel_end,
-                )?;
-
-                self.store_channel_commitment(deps.storage, &port_id, &channel_id, &channel_end)?;
-                Ok(Response::new()
-                    .add_event(channel_id_event)
-                    .add_event(main_event))
-            }
-            cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ChannelError::Other { description: error }).map_err(|e| e.into())
-            }
-        }
-    }
-
     /// This function handles the closing of an IBC channel and updates its state in storage.
     ///
     /// Arguments:

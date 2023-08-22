@@ -72,7 +72,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
 
-        let sub_msg: SubMsg = SubMsg::reply_on_success(create_client_message, EXECUTE_CREATE_CLIENT);
+        let sub_msg: SubMsg =
+            SubMsg::reply_on_success(create_client_message, EXECUTE_CREATE_CLIENT);
 
         Ok(Response::new()
             .add_submessage(sub_msg)

@@ -156,11 +156,11 @@ pub trait ExecuteChannel {
     //     message: Reply,
     // ) -> Result<Response, ContractError>;
 
-    fn execute_channel_open_try(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError>;
+    // fn execute_channel_open_try(
+    //     &self,
+    //     deps: DepsMut,
+    //     message: Reply,
+    // ) -> Result<Response, ContractError>;
 
     fn execute_channel_close_init(
         &self,

@@ -528,8 +528,8 @@ impl<'a> CwIbcCoreContext<'a> {
             EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
-          // EXECUTE_ON_CHANNEL_OPEN_INIT => self.execute_channel_open_init(deps, message),
-            EXECUTE_ON_CHANNEL_OPEN_TRY => self.execute_channel_open_try(deps, message),
+            // EXECUTE_ON_CHANNEL_OPEN_INIT => self.execute_channel_open_init(deps, message),
+            //  EXECUTE_ON_CHANNEL_OPEN_TRY => self.execute_channel_open_try(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE => self.execute_channel_open_ack(deps, message),
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE => {
                 self.execute_channel_open_confirm(deps, message)
