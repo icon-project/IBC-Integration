@@ -64,16 +64,15 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into)?;
         }
 
-        if channel_end.order_matches(&Order::Ordered) {
-            let next_seq_recv =
-                self.get_next_sequence_recv(deps.storage, &dst_port, &dst_channel)?;
-            if packet_sequence > next_seq_recv {
-                return Err(PacketError::InvalidPacketSequence {
-                    given_sequence: packet_sequence,
-                    next_sequence: next_seq_recv,
-                })
-                .map_err(Into::<ContractError>::into)?;
-            }
+        let packet_already_received = self.is_packet_already_received(
+            deps.as_ref(),
+            &channel_end,
+            &dst_port,
+            &dst_channel,
+            packet_sequence,
+        )?;
+        if packet_already_received {
+            return Ok(Response::new().add_attribute("message", "Packet already received"));
         }
 
         let connection_id = &channel_end.connection_hops()[0];
@@ -147,26 +146,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
         cw_println!(deps, "before packet already received ");
 
-        let packet_already_received = match channel_end.ordering {
-            // Note: ibc-go doesn't make the check for `Order::None` channels
-            Order::None => false,
-            Order::Unordered => self
-                .get_packet_receipt(deps.storage, &dst_port, &dst_channel, packet_sequence)
-                .is_ok(),
-            Order::Ordered => {
-                let next_seq_recv =
-                    self.get_next_sequence_recv(deps.storage, &dst_port, &dst_channel)?;
-
-                // the seq_on_a number has already been incremented, so
-                // another relayer already relayed the packet
-                packet.sequence < Into::<u64>::into(next_seq_recv)
-            }
-        };
-
-        if packet_already_received {
-            return Ok(Response::new().add_attribute("message", "Packet already received"));
-        }
-
         let port_id = packet.destination_port.clone();
         // Getting the module address for on packet timeout call
         let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
@@ -236,6 +215,40 @@ impl<'a> CwIbcCoreContext<'a> {
             .add_attribute("method", "channel_recieve_packet_validation")
             .add_event(event_recieve_packet)
             .add_submessage(sub_msg))
+    }
+
+    pub fn is_packet_already_received(
+        &self,
+        deps: Deps,
+        channel_end: &ChannelEnd,
+        port_id: &IbcPortId,
+        channel_id: &IbcChannelId,
+        sequence: Sequence,
+    ) -> Result<bool, ContractError> {
+        match channel_end.ordering {
+            Order::None => Ok(false),
+            Order::Unordered => {
+                let is_received = self
+                    .get_packet_receipt(deps.storage, &port_id, &channel_id, sequence)
+                    .is_ok();
+                Ok(is_received)
+            }
+            Order::Ordered => {
+                let next_seq_recv =
+                    self.get_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
+
+                if sequence > next_seq_recv {
+                    return Err(ContractError::IbcPacketError {
+                        error: PacketError::InvalidPacketSequence {
+                            given_sequence: sequence,
+                            next_sequence: next_seq_recv,
+                        },
+                    });
+                }
+
+                Ok(sequence < next_seq_recv)
+            }
+        }
     }
 
     /// This function validates if a write acknowledgement exists for a given packet and returns an
