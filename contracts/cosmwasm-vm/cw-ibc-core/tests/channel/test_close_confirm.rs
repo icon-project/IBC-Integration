@@ -102,9 +102,10 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
         .unwrap();
 }
 
-
 #[test]
-#[should_panic(expected = "IbcChannelError { error: ChannelClosed { channel_id: ChannelId(\"channel-0\") } }")]
+#[should_panic(
+    expected = "IbcChannelError { error: ChannelClosed { channel_id: ChannelId(\"channel-0\") } }"
+)]
 fn test_validate_close_confirm_channel_fail_channel_closed() {
     let mut deps = deps();
     let env = mock_env();
@@ -194,9 +195,10 @@ fn test_validate_close_confirm_channel_fail_channel_closed() {
         .unwrap();
 }
 
-
 #[test]
-#[should_panic(expected = "IbcConnectionError { error: ConnectionMismatch { connection_id: ConnectionId(\"connection-5\") } }")]
+#[should_panic(
+    expected = "IbcConnectionError { error: ConnectionMismatch { connection_id: ConnectionId(\"connection-5\") } }"
+)]
 fn test_validate_close_confirm_channel_fail_connection_state_invalid() {
     let mut deps = deps();
     let env = mock_env();
@@ -398,8 +400,6 @@ fn test_validate_close_confirm_channel() {
         EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE
     )
 }
-
-
 
 #[test]
 pub fn test_channel_close_confirm_validate() {

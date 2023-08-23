@@ -132,7 +132,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let event = create_packet_event(
             IbcEventType::SendPacket,
-            packet,
+            &packet,
             chan_end_on_a.ordering(),
             conn_id_on_a,
             None,

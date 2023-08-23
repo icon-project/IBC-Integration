@@ -321,7 +321,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                 let event_recieve_packet = create_packet_event(
                     IbcEventType::ReceivePacket,
-                    to_raw_packet(packet.clone()),
+                    &to_raw_packet(&packet),
                     chan_end_on_b.ordering(),
                     &chan_end_on_b.connection_hops[0],
                     None,
@@ -346,7 +346,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let write_ack_event = create_packet_event(
                         IbcEventType::WriteAck,
-                        to_raw_packet(packet),
+                        &to_raw_packet(&packet),
                         &chan_end_on_b.ordering,
                         &chan_end_on_b.connection_hops[0],
                         Some(ack),

@@ -92,7 +92,9 @@ fn test_validate_close_init_channel() {
     assert_eq!(res.unwrap().messages[0], on_chan_open_init)
 }
 
-#[should_panic(expected = "IbcConnectionError { error: ConnectionMismatch { connection_id: ConnectionId(\"connection-5\") } }")]
+#[should_panic(
+    expected = "IbcConnectionError { error: ConnectionMismatch { connection_id: ConnectionId(\"connection-5\") } }"
+)]
 #[test]
 fn test_validate_close_init_channel_fails_invalid_connection_state() {
     let mut deps = deps();
@@ -151,11 +153,14 @@ fn test_validate_close_init_channel_fails_invalid_connection_state() {
         .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
 
-     contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg).unwrap();
-   
+    contract
+        .validate_channel_close_init(deps.as_mut(), info.clone(), &msg)
+        .unwrap();
 }
 
-#[should_panic(expected = "IbcChannelError { error: ChannelClosed { channel_id: ChannelId(\"channel-0\") } }")]
+#[should_panic(
+    expected = "IbcChannelError { error: ChannelClosed { channel_id: ChannelId(\"channel-0\") } }"
+)]
 #[test]
 fn test_validate_close_init_channel_fails_on_closed_channel() {
     let mut deps = deps();
@@ -214,11 +219,14 @@ fn test_validate_close_init_channel_fails_on_closed_channel() {
         .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
 
-     contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg).unwrap();
-   
+    contract
+        .validate_channel_close_init(deps.as_mut(), info.clone(), &msg)
+        .unwrap();
 }
 
-#[should_panic(expected = "IbcChannelError { error: InvalidConnectionHopsLength { expected: 1, actual: 0 } }")]
+#[should_panic(
+    expected = "IbcChannelError { error: InvalidConnectionHopsLength { expected: 1, actual: 0 } }"
+)]
 #[test]
 fn test_validate_close_init_channel_fails_on_invalid_connection_hops() {
     let mut deps = deps();
@@ -277,8 +285,9 @@ fn test_validate_close_init_channel_fails_on_invalid_connection_hops() {
         .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
 
-     contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg).unwrap();
-   
+    contract
+        .validate_channel_close_init(deps.as_mut(), info.clone(), &msg)
+        .unwrap();
 }
 
 #[test]
@@ -325,8 +334,6 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
         .validate_channel_close_init(deps.as_mut(), info, &msg)
         .unwrap();
 }
-
-
 
 #[test]
 fn test_channel_close_init_validate() {

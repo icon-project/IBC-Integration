@@ -56,7 +56,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let event = create_packet_event(
             IbcEventType::WriteAck,
-            to_raw_packet(packet),
+            &to_raw_packet(&packet),
             &channel.ordering,
             &channel.connection_hops[0],
             Some(ack),

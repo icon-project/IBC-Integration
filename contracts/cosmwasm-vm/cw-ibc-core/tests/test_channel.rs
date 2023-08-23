@@ -340,7 +340,7 @@ fn test_create_send_packet_event() {
     //  let event = create_send_packet_event(msg_back, &Order::Ordered, &IbcConnectionId::default());
     let event = create_packet_event(
         IbcEventType::SendPacket,
-        raw,
+        &raw,
         &Order::Ordered,
         &IbcConnectionId::default(),
         None,
@@ -358,7 +358,7 @@ fn test_create_send_packet_with_invalid_utf_ok() {
     };
     let _event = create_packet_event(
         IbcEventType::SendPacket,
-        raw,
+        &raw,
         &Order::Ordered,
         &IbcConnectionId::default(),
         None,
@@ -390,7 +390,7 @@ fn test_create_write_ack_packet_event() {
 
     let event = create_packet_event(
         IbcEventType::WriteAck,
-        to_raw_packet(ibc_packet_recv_message.packet),
+        &to_raw_packet(&ibc_packet_recv_message.packet),
         &Order::Unordered,
         &IbcConnectionId::default(),
         Some(Vec::<u8>::new()),
@@ -403,7 +403,7 @@ fn test_create_write_ack_packet_event_with_invalidutf8_ok() {
     let raw = get_dummy_raw_packet(15, 0);
     let _event = create_packet_event(
         IbcEventType::SendPacket,
-        raw,
+        &raw,
         &Order::Ordered,
         &IbcConnectionId::default(),
         None,
@@ -416,7 +416,7 @@ fn test_create_ack_packet_event() {
     let raw = get_dummy_raw_packet(15, 0);
     let event = create_packet_event(
         IbcEventType::AckPacket,
-        raw,
+        &raw,
         &Order::Ordered,
         &IbcConnectionId::default(),
         None,
@@ -431,7 +431,7 @@ fn test_create_timout_packet_event() {
 
     let event = create_packet_event(
         IbcEventType::Timeout,
-        raw,
+        &raw,
         &Order::Ordered,
         &IbcConnectionId::default(),
         None,
