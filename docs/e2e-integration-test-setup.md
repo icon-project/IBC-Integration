@@ -86,14 +86,17 @@ To run the demo, the following software needs to be installed.
    Example:
 
    ```bash
-   export E2E_CONFIG_PATH=/home/User/IBC-integration/e2e-config.yaml
+   export TEST_CONFIG_PATH=/home/User/IBC-integration/sample-config-archway.yaml
    export GOLOOP_IMAGE_ENV=goloop
    export GOLOOP_IMAGE_TAG_ENV=latest
    ```
 
-2. Run the End-to-End Tests:
-
-   ```bash
-   go test -v ./test/e2e
-   ```
-   
+2. Run the Tests:
+   - for e2e test
+       ```bash
+         go test -v ./test/e2e 
+       ```
+   - for integration test
+       ```bash
+         go test -v ./test/integration 
+       ```

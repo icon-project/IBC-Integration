@@ -1,30 +1,44 @@
-package integration_test
+package int_test
 
 import (
-	"flag"
-	"fmt"
-	"os"
+	"context"
+	"github.com/icon-project/ibc-integration/test/integration/tests"
+	"github.com/icon-project/ibc-integration/test/testsuite"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/spf13/viper"
+	"github.com/stretchr/testify/suite"
 )
 
+func TestIntegrationSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTest))
+}
 
-func TestMain(m *testing.M) {
-	var config string
-	flag.StringVar(&config, "config", "", "path to config file")
-	flag.Parse()
-	
-	if config == "" {
-		fmt.Println("Config not provided")
-		os.Exit(1)
+type IntegrationTest struct {
+	testsuite.E2ETestSuite
+}
+
+func (s *IntegrationTest) TestE2E_all() {
+	t := s.T()
+	ctx := context.TODO()
+	s.Require().NoError(s.SetCfg())
+	rly, err := s.SetupRelayer(ctx)
+
+	assert.NoError(t, err, "Error while setting up relayer, %v", err)
+
+	test := tests.RelayerTestSuite{
+		E2ETestSuite: &s.E2ETestSuite,
+		T:            t,
 	}
+	t.Run("test client creation", func(t *testing.T) {
+		test.TestClientCreation(ctx, rly)
+	})
 
-	viper.SetConfigFile(config)
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error reading config file: %s\n", err)
-		os.Exit(1)
-	}
+	t.Run("test connection", func(t *testing.T) {
+		test.TestConnection(ctx, rly)
+	})
 
-	os.Exit(m.Run())
+	t.Run("test relayer", func(t *testing.T) {
+		test.TestRelayer(ctx, rly)
+	})
 }

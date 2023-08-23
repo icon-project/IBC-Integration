@@ -30,12 +30,12 @@ proto-lint:
 
 proto-gen-go:
 	@echo "Generating Go Protobuf files"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenGo}$$"; then docker start -a $(containerProtoGenGo); else docker run   --name $(containerProtoGenGo) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenGo}$$"; then docker start -a $(containerProtoGenGo); else docker run   --name $(containerProtoGenGo) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
 		sh ./scripts/protocgen_go.sh; fi
 
 proto-gen-rust:
 	@echo "Generating Rust Protobuf files"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenRust}$$"; then docker start -a $(containerProtoGenRust); else docker run  --name $(containerProtoGenRust) -v $(CURDIR):/workspace --workdir /workspace -d $(protoImageName) \
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenRust}$$"; then docker start -a $(containerProtoGenRust); else docker run  --name $(containerProtoGenRust) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
 		sh ./scripts/protocgen_rust.sh; fi
 
 build-builder-img:
@@ -44,20 +44,20 @@ build-builder-img:
 
 optimize-jar:
 	@echo "Generating optimized jar for ICON contracts"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-icon$$"; then docker start -a "${containerBuilder}-icon" ; else docker run  --name "${containerBuilder}-icon"   -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-jar.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-icon$$"; then docker start -a "${containerBuilder}-icon" ; else docker run  --name "${containerBuilder}-icon"   -v $(CURDIR):/workspace --workdir /workspace $(builderImage) sh ./scripts/optimize-jar.sh; fi
 
 optimize-cosmwasm:
 	@echo "Generating optimized cosmwasm for Archway contracts"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-cosmwasm$$"; then docker start -a "${containerBuilder}-cosmwasm" ; else docker run  --name "${containerBuilder}-cosmwasm"  -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-cosmwasm.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-cosmwasm$$"; then docker start -a "${containerBuilder}-cosmwasm" ; else docker run  --name "${containerBuilder}-cosmwasm"  -v $(CURDIR):/workspace --workdir /workspace $(builderImage) sh ./scripts/optimize-cosmwasm.sh; fi
 
 optimize-xcall:
 	@echo "Generating optimized xcall cosmwasm for Archway contracts"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-xcall$$"; then docker start -a "${containerBuilder}-xcall" ; else docker run  --name "${containerBuilder}-xcall"  -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/build-xcall.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-xcall$$"; then docker start -a "${containerBuilder}-xcall" ; else docker run  --name "${containerBuilder}-xcall" -v $(CURDIR):/workspace --workdir /workspace $(builderImage) sh ./scripts/build-xcall.sh; fi
 
 
 optimize-build:
 	@echo "Generating optimized contracts..."
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run  --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace -d $(builderImage) sh ./scripts/optimize-build.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace $(builderImage) sh ./scripts/optimize-build.sh; fi
 
 gobuild:
 	go build .

@@ -13,7 +13,7 @@ pub mod state;
 pub mod types;
 
 use crate::{
-    check::{check_order, check_version},
+    check::check_version,
     error::ContractError,
     ibc::IBC_VERSION,
     msg::InstantiateMsg,
@@ -23,7 +23,7 @@ use crate::{
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Never, Reply, Response,
-    StdError, StdResult, Storage, SubMsgResult,
+    StdError, StdResult, Storage,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};
@@ -36,8 +36,8 @@ use cw_common::cw_types::{
 };
 
 use cw_storage_plus::Item;
+use msg::{ExecuteMsg, QueryMsg};
 use thiserror::Error;
-use types::dapp_msg::{ExecuteMsg, QueryMsg};
 
 /// This function instantiates a contract using the CwIbcConnection.
 ///

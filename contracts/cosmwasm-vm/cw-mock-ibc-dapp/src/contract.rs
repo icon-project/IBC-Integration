@@ -6,9 +6,7 @@ use cosmwasm_std::IbcChannel;
 use cw_common::raw_types::channel::RawPacket;
 use debug_print::debug_println;
 
-use crate::types::{
-    config::Config, dapp_msg::ExecuteMsg, dapp_msg::QueryMsg, message::Message, LOG_PREFIX,
-};
+use crate::types::{message::Message, LOG_PREFIX};
 
 use super::*;
 
@@ -99,40 +97,39 @@ impl<'a> CwIbcConnection<'a> {
                 self.send_message(deps, info, env, msg, timeout_height)
             }
 
-            #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_channel_open(deps.storage, msg)?)
             }
-            #[cfg(not(feature = "native_ibc"))]
+
             ExecuteMsg::IbcChannelConnect { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_channel_connect(deps.storage, msg)?)
             }
-            #[cfg(not(feature = "native_ibc"))]
+
             ExecuteMsg::IbcChannelClose { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_channel_close(msg)?)
             }
-            #[cfg(not(feature = "native_ibc"))]
+
             ExecuteMsg::IbcPacketReceive { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_packet_receive(deps, msg)?)
             }
-            #[cfg(not(feature = "native_ibc"))]
+
             ExecuteMsg::IbcPacketAck { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_packet_ack(deps, msg)?)
             }
-            #[cfg(not(feature = "native_ibc"))]
+
             ExecuteMsg::IbcPacketTimeout { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_packet_timeout(deps, msg)?)
             }
-            #[cfg(feature = "native_ibc")]
-            _ => Err(ContractError::DecodeFailed {
-                error: "InvalidMessage Variant".to_string(),
-            }),
+            ExecuteMsg::IbcWriteAcknowledgement { seq } => {
+                let packet = self.get_received_packet(deps.as_ref().storage, seq)?;
+                self.write_acknowledgement(deps.storage, packet)
+            }
         }
     }
 
@@ -237,12 +234,6 @@ impl<'a> CwIbcConnection<'a> {
         self.add_admin(store, info, owner)?;
         // self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
-        let config: Config = Config {
-            port_id: msg.port_id,
-            denom: msg.denom,
-            order: msg.order,
-        };
-        self.store_config(store, &config)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -250,24 +241,6 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("ibc_host", msg.ibc_host))
     }
 
-    #[cfg(feature = "native_ibc")]
-    fn create_packet_response(&self, deps: Deps, env: Env, data: Binary) -> IbcMsg {
-        let ibc_config = self.ibc_config().may_load(deps.storage).unwrap().unwrap();
-
-        let timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(300));
-
-        IbcMsg::SendPacket {
-            channel_id: ibc_config.dst_endpoint().channel_id.clone(),
-            data,
-            timeout,
-        }
-    }
-    fn reply_ack_on_error(&self, reply: Reply) -> Result<Response, ContractError> {
-        match reply.result {
-            SubMsgResult::Ok(_) => Ok(Response::new()),
-            SubMsgResult::Err(_err) => Ok(Response::new()),
-        }
-    }
     /// This function handles the opening of an IBC channel and returns a response with relevant
     /// attributes.
     ///
@@ -292,13 +265,8 @@ impl<'a> CwIbcConnection<'a> {
         debug_println!("[IbcConnection]: Called On channel open");
         println!("{msg:?}");
 
-        let config = self.get_config(store)?;
-
         let channel = msg.channel();
         let ibc_endpoint = channel.endpoint.clone();
-
-        check_order(&config.order, &channel.order)?;
-        debug_println!("[IbcConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
@@ -334,11 +302,6 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<Response, ContractError> {
         let channel = msg.channel();
         debug_println!("[IBCConnection]: channel connect called");
-
-        let config = self.get_config(store)?;
-
-        check_order(&config.order, &channel.order)?;
-        debug_println!("[IBCConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
@@ -467,16 +430,6 @@ impl<'a> CwIbcConnection<'a> {
         let source = channel.endpoint.clone();
         let destination = channel.counterparty_endpoint;
         let _channel_id = source.channel_id.clone();
-
-        let our_port = self.get_port(store)?;
-        debug_println!(
-            "[IBCConnection]: Check if ports match : {:?} vs {:?}",
-            our_port,
-            source.port_id
-        );
-        if our_port != source.port_id {
-            return Err(ContractError::InvalidPortId);
-        }
 
         let ibc_config = IbcConfig::new(source, destination);
         debug_println!("[IBCConnection]: save ibc config is {:?}", ibc_config);
