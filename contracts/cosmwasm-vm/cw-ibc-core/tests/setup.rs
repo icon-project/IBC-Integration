@@ -1,4 +1,6 @@
 use std::str::FromStr;
+use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
+use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 
 pub fn mock_height(
     number: u64,
@@ -17,6 +19,9 @@ pub fn to_mock_client_id(
     common::ibc::core::ics24_host::identifier::ClientId::from_str(&client_id.to_string()).unwrap()
 }
 
+use common::ibc::core::ics04_channel::Version;
+use common::ibc::core::ics04_channel::channel::Order;
+use common::ibc::timestamp::ZERO_DURATION;
 use cosmwasm_std::{
     coins,
     testing::{
@@ -31,7 +36,7 @@ use common::{
     client_state::get_default_icon_client_state,
     ibc::{
         core::{
-            ics03_connection::version::{get_compatible_versions, Version},
+            ics03_connection::version::{get_compatible_versions, Version as ConnectionVersion},
             ics24_host::identifier::{ChannelId, ConnectionId, PortId},
         },
         signer::Signer,
@@ -329,7 +334,7 @@ pub fn get_dummy_raw_msg_conn_open_init() -> RawMsgConnectionOpenInit {
     RawMsgConnectionOpenInit {
         client_id: ClientId::default().as_str().to_string(),
         counterparty: Some(get_dummy_raw_counterparty(None)),
-        version: Some(Version::default().into()),
+        version: Some(ConnectionVersion::default().into()),
         delay_period: 0,
         signer: get_dummy_bech32_account(),
     }
@@ -387,7 +392,7 @@ pub fn get_dummy_raw_msg_conn_open_ack(
         }),
         client_state: Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
         proof_client: get_dummy_proof(),
-        version: Some(Version::default().into()),
+        version: Some(ConnectionVersion::default().into()),
         signer: get_dummy_bech32_account(),
     }
 }
@@ -520,7 +525,10 @@ pub fn get_dummy_consensus_state() -> ConsensusState {
     consenus_state
 }
 use cw_common::ibc_types::IbcClientId;
+use cw_ibc_core::ChannelEnd;
 use cw_ibc_core::ConnectionEnd;
+use cw_ibc_core::ics04_channel::Counterparty;
+use cw_ibc_core::ics04_channel::State;
 
 use std::time::Duration;
 pub fn get_dummy_connection() -> ConnectionEnd {
@@ -544,3 +552,15 @@ pub fn get_dummy_connection() -> ConnectionEnd {
         Duration::default(),
     )
 }
+
+pub fn get_dummy_channel_end(port_id:&PortId)->ChannelEnd{
+   return  ChannelEnd::new(
+        State::Open,
+        Order::default(),
+        Counterparty::new(port_id.clone(), None),
+        vec![ConnectionId::default()],
+        Version::new("ics20-1".to_string()),
+    )
+}
+
+

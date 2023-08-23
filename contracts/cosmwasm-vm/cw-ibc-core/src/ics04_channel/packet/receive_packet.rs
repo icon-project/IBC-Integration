@@ -149,11 +149,8 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let port_id = packet.destination_port.clone();
         // Getting the module address for on packet timeout call
-        let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
-        {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
+        let contract_address = self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())?;
+       
 
         let src = CwEndPoint {
             port_id: packet.source_port.to_string(),
@@ -209,7 +206,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "event recieve packet: {:?}", event_recieve_packet);
 
         let sub_msg: SubMsg =
-            SubMsg::reply_always(receive_packet_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
+            SubMsg::reply_on_success(receive_packet_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
         Ok(Response::new()
             .add_attribute("action", "channel")
