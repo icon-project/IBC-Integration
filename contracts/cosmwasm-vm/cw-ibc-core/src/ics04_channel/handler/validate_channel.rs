@@ -1,4 +1,4 @@
-use common::ibc::core::ics04_channel::channel::{ChannelEnd, State, Counterparty};
+use common::ibc::core::ics04_channel::channel::{ChannelEnd, Counterparty, State};
 use common::ibc::core::ics24_host::identifier::ChannelId;
 use cw_common::ibc_types::{ChannelError, PacketError};
 

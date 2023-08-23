@@ -1,6 +1,7 @@
-use std::str::FromStr;
 use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
+use cw_ibc_core::light_client::light_client::LightClient;
+use std::str::FromStr;
 
 pub fn mock_height(
     number: u64,
@@ -19,9 +20,12 @@ pub fn to_mock_client_id(
     common::ibc::core::ics24_host::identifier::ClientId::from_str(&client_id.to_string()).unwrap()
 }
 
-use common::ibc::core::ics04_channel::Version;
 use common::ibc::core::ics04_channel::channel::Order;
+use common::ibc::core::ics04_channel::Version;
 use common::ibc::timestamp::ZERO_DURATION;
+use common::traits::AnyTypes;
+use cosmwasm_std::DepsMut;
+use cosmwasm_std::Storage;
 use cosmwasm_std::{
     coins,
     testing::{
@@ -525,10 +529,12 @@ pub fn get_dummy_consensus_state() -> ConsensusState {
     consenus_state
 }
 use cw_common::ibc_types::IbcClientId;
-use cw_ibc_core::ChannelEnd;
-use cw_ibc_core::ConnectionEnd;
+use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics04_channel::Counterparty;
 use cw_ibc_core::ics04_channel::State;
+use cw_ibc_core::ChannelEnd;
+use cw_ibc_core::ConnectionEnd;
+use prost::Message;
 
 use std::time::Duration;
 pub fn get_dummy_connection() -> ConnectionEnd {
@@ -553,14 +559,121 @@ pub fn get_dummy_connection() -> ConnectionEnd {
     )
 }
 
-pub fn get_dummy_channel_end(port_id:&PortId)->ChannelEnd{
-   return  ChannelEnd::new(
+pub fn get_dummy_channel_end(port_id: &PortId) -> ChannelEnd {
+    return ChannelEnd::new(
         State::Open,
         Order::default(),
         Counterparty::new(port_id.clone(), None),
         vec![ConnectionId::default()],
         Version::new("ics20-1".to_string()),
-    )
+    );
 }
 
+pub struct TestContext {
+    pub client_state: Option<ClientState>,
+    pub consensus_state: Option<ConsensusState>,
+    pub connection_end: Option<ConnectionEnd>,
+    pub channel_end: Option<ChannelEnd>,
+    pub lightclient: Option<LightClient>,
+    pub client_id: IbcClientId,
+    pub connection_id: ConnectionId,
+    pub env: Env,
+    pub height: Height,
+    pub port_id: PortId,
+    pub channel_id: ChannelId,
+}
 
+impl TestContext {
+    pub fn default(env: Env) -> Self {
+        Self {
+            client_state: Some(get_dummy_client_state()),
+            consensus_state: Some(get_dummy_consensus_state()),
+            connection_end: Some(get_dummy_connection()),
+            channel_end: Some(get_dummy_channel_end(&PortId::default())),
+            client_id: ClientId::default(),
+            env: env,
+            connection_id: ConnectionId::default(),
+            height: Height::new(0, 10).unwrap(),
+            port_id: PortId::default(),
+            channel_id: ChannelId::default(),
+            lightclient: Some(LightClient::new("lightclient".to_string())),
+        }
+    }
+
+    pub fn init_context(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        self.save_client_state(storage, contract);
+        self.save_consensus_state(storage, contract);
+        self.save_connection(storage, contract);
+        self.save_channel_end(storage, contract);
+        self.save_light_client(storage, contract);
+        self.save_expected_time_per_block(storage, contract);
+    }
+
+    pub fn save_client_state(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        if let Some(client_state) = self.client_state.clone() {
+            let client_state_any = client_state.to_any();
+            let client_state_hash = client_state.get_keccak_hash();
+            contract
+                .store_client_state(
+                    storage,
+                    &self.env,
+                    &self.client_id,
+                    client_state_any.encode_to_vec(),
+                    client_state_hash.to_vec(),
+                )
+                .unwrap();
+        }
+    }
+
+    pub fn save_consensus_state(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        if let Some(consensus_state) = self.consensus_state.clone() {
+            let consensus_state_any = consensus_state.to_any();
+            let consensus_state_hash = consensus_state.get_keccak_hash();
+            contract
+                .store_consensus_state(
+                    storage,
+                    &self.client_id,
+                    self.height,
+                    consensus_state_any.encode_to_vec(),
+                    consensus_state_hash.to_vec(),
+                )
+                .unwrap();
+        }
+    }
+
+    pub fn save_connection(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        if let Some(connection_end) = self.connection_end.clone() {
+            contract
+                .store_connection(storage, &self.connection_id, &connection_end)
+                .unwrap();
+        }
+    }
+
+    pub fn save_channel_end(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        if let Some(channel_end) = self.channel_end.clone() {
+            contract
+                .store_channel_end(storage, &self.port_id, &self.channel_id, &channel_end)
+                .unwrap();
+        }
+    }
+
+    pub fn save_light_client(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        if let Some(lightclient) = self.lightclient.clone() {
+            contract
+                .store_client_implementations(storage, &self.client_id, lightclient)
+                .unwrap();
+        }
+    }
+
+    pub fn save_expected_time_per_block(
+        &self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
+        contract
+            .ibc_store()
+            .expected_time_per_block()
+            .save(storage, &(self.env.block.time.seconds()))
+            .unwrap();
+    }
+}
