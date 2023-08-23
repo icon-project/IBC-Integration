@@ -32,7 +32,7 @@ import score.annotation.External;
 import score.annotation.Payable;
 
 public class IBCConnection {
-    public static String PORT = "mock";
+    public final String PORT = "mock";
     protected final VarDB<Address> ibc = Context.newVarDB("ibcHandler", Address.class);
     protected final VarDB<Address> xCall = Context.newVarDB("callService", Address.class);
     protected final VarDB<Address> admin = Context.newVarDB("admin", Address.class);
