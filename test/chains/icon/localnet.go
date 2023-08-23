@@ -683,7 +683,7 @@ func (c *IconLocalnet) executeContract(ctx context.Context, contractAddress, key
 	trace, err := c.getFullNode().GetDebugTrace(ctx, icontypes.NewHexBytes(txHashByte))
 	if err == nil {
 		logs, _ := json.Marshal(trace.Logs)
-		fmt.Printf("---------debug trace start-----------\n%v\n---------debug trace end-----------\n", logs)
+		fmt.Printf("---------debug trace start-----------\n%s\n---------debug trace end-----------\n", string(logs))
 	}
 	return ctx, fmt.Errorf("%s", res.Failure.MessageValue)
 }
