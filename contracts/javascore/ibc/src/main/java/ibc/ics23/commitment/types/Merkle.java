@@ -15,13 +15,10 @@ import static ibc.icon.score.util.StringUtil.bytesToHex;
 import static ibc.ics23.commitment.Proof.*;
 
 public class Merkle {
-
-    public static List<ProofSpec> getSDKSpecs() {
-        List<ProofSpec> specs = new ArrayList<>();
-        specs.add(Proof.getIavlSpec());
-        specs.add(Proof.getTendermintSpec());
-        return specs;
-    }
+    public static List<ProofSpec> SDK_SPEC = List.of(
+        Proof.getIavlSpec(),
+        Proof.getTendermintSpec()
+    );
 
     public static MerklePath applyPrefix(String path) {
         var mpath = new MerklePath();

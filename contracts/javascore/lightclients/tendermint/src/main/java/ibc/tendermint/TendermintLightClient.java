@@ -219,7 +219,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         var merkleProof = MerkleProof.decode(proof);
         var merklePath = applyPrefix(new String(path));
 
-        Merkle.verifyMembership(merkleProof, Merkle.getSDKSpecs(), root, merklePath, value);
+        Merkle.verifyMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath, value);
     }
 
     @External
@@ -246,7 +246,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         var merkleProof = MerkleProof.decode(proof);
         var merklePath = applyPrefix(new String(path));
 
-        Merkle.verifyNonMembership(merkleProof, Merkle.getSDKSpecs(), root, merklePath);
+        Merkle.verifyNonMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath);
     }
 
     // checkValidity checks if the Tendermint header is valid.
