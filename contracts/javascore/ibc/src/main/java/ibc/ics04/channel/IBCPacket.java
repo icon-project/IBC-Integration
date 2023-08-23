@@ -443,10 +443,6 @@ public class IBCPacket extends IBCChannelHandshake {
                 IBCCommitment.keccak256(packet.getData()));
     }
 
-    private boolean isZero(Height height) {
-        return height.getRevisionNumber().equals(BigInteger.ZERO) && height.getRevisionHeight().equals(BigInteger.ZERO);
-    }
-
     private boolean lt(Height h1, Height h2) {
         return h1.getRevisionNumber().compareTo(h2.getRevisionNumber()) < 0
                 || (h1.getRevisionNumber().equals(h2.getRevisionNumber())

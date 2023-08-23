@@ -173,16 +173,6 @@ public class Merkle {
         return true;
     }
 
-    private static boolean isMerklePrefixEmpty(MerklePrefix prefix) {
-        if (prefix == null) {
-            return true;
-        }
-        if (prefix.getKeyPrefix().length != 0) {
-            return false;
-        }
-        return true;
-    }
-
     private static boolean isProofSpecEmpty(ProofSpec spec) {
         if (spec == null) {
             return true;

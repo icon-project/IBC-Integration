@@ -193,24 +193,6 @@ public class IBCConnection extends IBCClient {
                 clientStatebytes);
     }
 
-    private void verifyClientConsensusState(ConnectionEnd connection, byte[] height, Height consensusHeight,
-                                            byte[] proof, byte[] consensusStateBytes) {
-        byte[] consensusPath = IBCCommitment.consensusStatePath(connection.getCounterparty().getClientId(),
-                consensusHeight.getRevisionNumber(),
-                consensusHeight.getRevisionHeight());
-
-        ILightClient client = getClient(connection.getClientId());
-        client.verifyMembership(
-                connection.getClientId(),
-                height,
-                BigInteger.ZERO,
-                BigInteger.ZERO,
-                proof,
-                connection.getCounterparty().getPrefix().getKeyPrefix(),
-                consensusPath,
-                consensusStateBytes);
-    }
-
     private void verifyConnectionState(ConnectionEnd connection, byte[] height, byte[] proof, String connectionId,
                                        ConnectionEnd counterpartyConnection) {
         ILightClient client = getClient(connection.getClientId());
