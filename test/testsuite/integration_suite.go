@@ -21,7 +21,7 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
-func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string, order ibc.Order) error {
+func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string) error {
 	chainA, chainB := s.GetChains()
 	ctx = context.WithValue(ctx, chains.ContractName{}, chains.ContractName{ContractName: "mockdapp"})
 	ibcHostChainA := chainA.GetIBCAddress("ibc")
@@ -147,25 +147,22 @@ func (s *E2ETestSuite) ResumeNode(ctx context.Context, chain chains.Chain) error
 	return chain.UnpauseNode(ctx)
 }
 
-func (s *E2ETestSuite) CrashRelayer(ctx context.Context, chain ibc.Chain, callbacks ...func() error) (uint64, error) {
+func (s *E2ETestSuite) CrashRelayer(ctx context.Context, callbacks ...func() error) error {
 	eRep := s.GetRelayerExecReporter()
 	s.logger.Info("crashing relayer")
 	now := time.Now()
-	if err := s.relayer.(interchaintest.Relayer).StopRelayerContainer(ctx, eRep); err != nil {
-		return 0, err
-	}
-
 	if len(callbacks) > 0 {
 		var eg errgroup.Group
 		for _, cb := range callbacks {
 			eg.Go(cb)
 		}
 		if err := eg.Wait(); err != nil {
-			return 0, err
+			return err
 		}
 	}
+	err := s.relayer.(interchaintest.Relayer).StopRelayerContainer(ctx, eRep)
 	s.logger.Info("relayer crashed", zap.Duration("elapsed", time.Since(now)))
-	return chain.Height(ctx)
+	return err
 }
 
 // WriteBlockHeight writes the block height to the given file.
@@ -181,6 +178,7 @@ func (s *E2ETestSuite) WriteCurrentBlockHeight(ctx context.Context, chain chains
 }
 
 func (s *E2ETestSuite) WriteBlockHeight(ctx context.Context, chainID string, height uint64) error {
+	s.T().Logf("updating latest height of %s to %d", chainID, height)
 	return s.relayer.(interchaintest.Relayer).WriteBlockHeight(ctx, chainID, height)
 }
 

@@ -299,16 +299,16 @@ func (c *CosmosLocalnet) findPacket(tx *TxResul, eventType string) chantypes.Pac
 					packet.Sequence = uint64(sequence)
 				} else if string(keyName) == "packet_timeout_height" {
 					_hex, _ := base64.StdEncoding.DecodeString(attribute.Value)
-					revisionSplit := strings.Split(string(_hex), "-")
-					if len(revisionSplit) != 2 {
+					heightSplit := strings.Split(string(_hex), "-")
+					if len(heightSplit) != 2 {
 						continue
 					}
-					revisionNumberString := revisionSplit[0]
+					revisionNumberString := heightSplit[0]
 					revisionNumber, err := strconv.ParseUint(revisionNumberString, 10, 64)
 					if err != nil {
 						continue
 					}
-					revisionHeightString := revisionSplit[1]
+					revisionHeightString := heightSplit[1]
 					revisionHeight, err := strconv.ParseUint(revisionHeightString, 10, 64)
 					if err != nil {
 						continue

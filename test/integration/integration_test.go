@@ -41,7 +41,6 @@ func (s *IntegrationTest) TestIntegration_all() {
 	})
 
 	t.Run("test relayer", func(t *testing.T) {
-		ctx = context.WithValue(ctx, "testcase", "relayer")
 		test.TestRelayer(ctx, rly)
 	})
 }

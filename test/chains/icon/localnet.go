@@ -587,7 +587,7 @@ func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight uint64, contra
 	}
 
 	// Create a context with a timeout of 16 seconds.
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	_ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	// Create an event request with the given filter and start height.
@@ -615,7 +615,7 @@ func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight uint64, contra
 	select {
 	case v := <-channel:
 		return v, nil
-	case <-ctx.Done():
+	case <-_ctx.Done():
 		return nil, fmt.Errorf("failed to find eventLog: %s", ctx.Err())
 	}
 }
@@ -678,6 +678,12 @@ func (c *IconLocalnet) executeContract(ctx context.Context, contractAddress, key
 	}
 	if res.Status == "0x1" {
 		return context.WithValue(ctx, "txResult", res), nil
+	}
+	//TODO add debug flag to print trace
+	trace, err := c.getFullNode().GetDebugTrace(ctx, icontypes.NewHexBytes(txHashByte))
+	if err == nil {
+		logs, _ := json.Marshal(trace.Logs)
+		fmt.Printf("---------debug trace start-----------\n%v\n---------debug trace end-----------\n", logs)
 	}
 	return ctx, fmt.Errorf("%s", res.Failure.MessageValue)
 }
@@ -886,11 +892,10 @@ func (c *IconLocalnet) SendPacketMockDApp(ctx context.Context, targetChain chain
 	dappKey := fmt.Sprintf("mockdapp-%s", testcase)
 	execMethodName, execParams := c.getExecuteParam(ctx, chains.SendMessage, params)
 	ctx, err := c.executeContract(ctx, c.IBCAddresses[dappKey], keyName, execMethodName, execParams)
-
-	txn := ctx.Value("txResult").(*icontypes.TransactionResult)
-	if txn.Status != "0x1" {
+	if err != nil {
 		return response, err
 	}
+	txn := ctx.Value("txResult").(*icontypes.TransactionResult)
 	response.IsPacketSent = true
 
 	var packet = chantypes.Packet{}

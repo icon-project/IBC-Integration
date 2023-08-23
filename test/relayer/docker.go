@@ -424,6 +424,9 @@ func (r *DockerRelayer) stopRelayer(ctx context.Context, rep ibc.RelayerExecRepo
 
 	startedAt, err := time.Parse(c.State.StartedAt, time.RFC3339)
 	if err != nil {
+		startedAt, err = time.Parse(c.State.StartedAt, time.RFC3339Nano)
+	}
+	if startedAt.IsZero() {
 		r.log.Info("Failed to parse container StartedAt", zap.Error(err))
 		startedAt = time.Unix(0, 0)
 	}
