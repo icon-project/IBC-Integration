@@ -7,16 +7,13 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.math.BigInteger;
-
-import javax.swing.text.AbstractDocument.Content;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,14 +23,6 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
-import foundation.icon.xcall.CSMessage;
-import foundation.icon.xcall.CSMessageRequest;
-import foundation.icon.xcall.CallServiceImpl;
-import foundation.icon.xcall.CallServiceReceiver;
-import foundation.icon.xcall.DefaultCallServiceReceiver;
-import foundation.icon.xcall.Connection;
-import foundation.icon.xcall.NetworkAddress;
-import foundation.icon.ee.types.Address;
 import score.UserRevertedException;
 import xcall.icon.test.MockContract;
 
@@ -99,6 +88,16 @@ public class CallServiceTest extends TestBase {
         CSMessage msg = new CSMessage(CSMessage.REQUEST, request.toBytes());
         verify(baseConnection.mock).sendMessage(eq(ethNid), eq("xcall-multi"), eq(BigInteger.ZERO), aryEq(msg.toBytes()));
         verify(xcallSpy).CallMessageSent(dapp.getAddress(), ethDapp.toString(), BigInteger.ONE);
+    }
+
+    @Test
+    public void sendMessage_defaultProtocol_notSet() {
+        // Arrange
+        byte[] data = "test".getBytes();
+
+        // Act & Assert
+        UserRevertedException e = assertThrows(UserRevertedException.class, ()->  xcall.invoke(dapp.account, "sendCallMessage", ethDapp.toString(), data));
+        assertEquals("Reverted(0): NoDefaultConnection", e.getMessage());
     }
 
     @Test
@@ -527,5 +526,15 @@ public class CallServiceTest extends TestBase {
 
         // Assert
         assertEquals(fee1.add(protocolFee), fee);
+    }
+
+    @Test
+    public void getFee_defaultProtocol_notSet() throws Exception {
+        // Arrange
+        String nid = "nid";
+
+        // Act & Assert
+        UserRevertedException e = assertThrows(UserRevertedException.class, ()-> xcall.call(BigInteger.class, "getFee", nid, true));
+        assertEquals("Reverted(0): NoDefaultConnection", e.getMessage());
     }
 }
