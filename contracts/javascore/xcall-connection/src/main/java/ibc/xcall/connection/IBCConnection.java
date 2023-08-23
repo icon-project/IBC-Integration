@@ -221,7 +221,6 @@ public class IBCConnection {
         onlyIBCHandler();
 
         Context.require(order == Order.ORDER_UNORDERED, "Channel order has to be unordered");
-        // TODO verify version
 
         String connectionId = connectionHops[0];
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
@@ -243,7 +242,6 @@ public class IBCConnection {
         onlyIBCHandler();
 
         Context.require(order == Order.ORDER_UNORDERED, "Channel order has to be unordered");
-        // TODO verify version
 
         String connectionId = connectionHops[0];
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
@@ -272,14 +270,12 @@ public class IBCConnection {
         Context.require(portId.equals(PORT), "Invalid port");
     }
 
-    //TODO
     @External
     public void onChanCloseInit(String portId, String channelId) {
         onlyIBCHandler();
         Context.revert("CannotCloseChannel");
     }
 
-    //TODO
     @External
     public void onChanCloseConfirm(String portId, String channelId) {
         onlyIBCHandler();
