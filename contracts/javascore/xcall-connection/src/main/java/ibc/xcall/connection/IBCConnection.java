@@ -321,4 +321,9 @@ public class IBCConnection {
         return unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
     }
 
+    @External(readonly = true)
+    public Address getAdmin() {
+        return admin.get();
+    }
+
 }
