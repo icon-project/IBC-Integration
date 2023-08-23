@@ -248,6 +248,7 @@ public class IBCConnection {
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
         Context.require(portId.equals(PORT), "Invalid port");
+        Context.require(counterPartyNid != null, "Invalid counterparty network id");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
         lightClients.set(channelId, configuredClients.get(connectionId));
         destinationPort.set(channelId, counterpartyPortId);
