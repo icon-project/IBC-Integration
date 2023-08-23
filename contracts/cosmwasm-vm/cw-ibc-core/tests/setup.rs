@@ -1,5 +1,5 @@
-use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
-use common::ibc::core::ics03_connection::connection::State as ConnectionState;
+
+
 use cw_ibc_core::light_client::light_client::LightClient;
 use std::str::FromStr;
 
@@ -22,9 +22,9 @@ pub fn to_mock_client_id(
 
 use common::ibc::core::ics04_channel::channel::Order;
 use common::ibc::core::ics04_channel::Version;
-use common::ibc::timestamp::ZERO_DURATION;
+
 use common::traits::AnyTypes;
-use cosmwasm_std::DepsMut;
+
 use cosmwasm_std::Storage;
 use cosmwasm_std::{
     coins,

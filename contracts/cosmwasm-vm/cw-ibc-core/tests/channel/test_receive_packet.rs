@@ -1,16 +1,16 @@
-use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
+
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 
 use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::timestamp::Timestamp;
-use common::icon::icon::proto::core::channel::Packet;
+
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
 use cw_ibc_core::conversions::to_ibc_channel_id;
 use cw_ibc_core::conversions::to_ibc_height;
 use cw_ibc_core::conversions::to_ibc_port_id;
 use cw_ibc_core::light_client::light_client::LightClient;
-use cw_ibc_core::ContractError;
+
 use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 
 use super::*;
@@ -369,7 +369,7 @@ fn test_receive_packet_fails_on_invalid_counterparty() {
     let packet = msg.packet.clone().unwrap();
 
     let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+    let _src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
     let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
     let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
