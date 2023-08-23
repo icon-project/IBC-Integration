@@ -200,7 +200,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let event_recieve_packet = create_packet_event(
             IbcEventType::ReceivePacket,
-            &packet,
+            packet,
             channel_end.ordering(),
             &channel_end.connection_hops[0],
             None,
@@ -230,13 +230,13 @@ impl<'a> CwIbcCoreContext<'a> {
             Order::None => Ok(false),
             Order::Unordered => {
                 let is_received = self
-                    .get_packet_receipt(deps.storage, &port_id, &channel_id, sequence)
+                    .get_packet_receipt(deps.storage, port_id, channel_id, sequence)
                     .is_ok();
                 Ok(is_received)
             }
             Order::Ordered => {
                 let next_seq_recv =
-                    self.get_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
+                    self.get_next_sequence_recv(deps.storage, port_id, channel_id)?;
 
                 if sequence > next_seq_recv {
                     return Err(ContractError::IbcPacketError {

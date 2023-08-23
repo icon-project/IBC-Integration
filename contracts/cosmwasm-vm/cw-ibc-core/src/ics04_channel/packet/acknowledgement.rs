@@ -5,10 +5,10 @@ use crate::conversions::{
 
 use super::*;
 
-use cosmwasm_std::{IbcPacketAckMsg, ReplyOn};
+use cosmwasm_std::ReplyOn;
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
-    raw_types::{channel::RawMessageAcknowledgement, to_raw_packet},
+    raw_types::channel::RawMessageAcknowledgement,
     to_checked_address,
 };
 

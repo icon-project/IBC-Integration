@@ -201,7 +201,7 @@ impl<'a> CwIbcCoreContext<'a> {
             SubMsg::reply_on_success(create_client_message, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE);
         let event = create_packet_event(
             IbcEventType::Timeout,
-            &packet,
+            packet,
             channel_end.ordering(),
             &connection_id,
             None,

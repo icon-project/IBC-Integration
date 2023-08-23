@@ -1,7 +1,6 @@
 use cw_ibc_core::{
-    conversions::{to_ibc_channel_id, to_ibc_packet, to_ibc_timeout_height, to_ibc_timestamp},
+    conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp},
     light_client::light_client::LightClient,
-    VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
 };
 
 use super::*;
@@ -30,7 +29,7 @@ fn test_acknowledgement_packet_validate_ordered() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Ordered,
-        Counterparty::new(dst_port.clone(), Some(dst_channel.clone())),
+        Counterparty::new(dst_port.clone(), Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );

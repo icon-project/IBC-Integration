@@ -17,7 +17,7 @@ use common::ibc::{
     events::IbcEventType,
 };
 use cw_common::ibc_types::{IbcClientId, IbcConnectionId, IbcPortId};
-use cw_common::raw_types::channel::{RawMsgChannelCloseInit, RawPacket};
+use cw_common::raw_types::channel::RawPacket;
 use cw_common::raw_types::to_raw_packet;
 
 use cw_ibc_core::conversions::{to_ibc_channel, to_ibc_channel_id, to_ibc_height, to_ibc_port_id};
