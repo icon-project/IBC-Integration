@@ -1,5 +1,4 @@
-
-
+use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_height, to_ibc_port_id};
 use cw_ibc_core::light_client::light_client::LightClient;
 use std::str::FromStr;
 
@@ -600,6 +599,27 @@ impl TestContext {
         }
     }
 
+    pub fn receive_packet(env: Env, msg: &RawMsgRecvPacket) -> Self {
+        let mut ctx = TestContext::default(env);
+        let packet = msg.packet.clone().unwrap();
+
+        let src_port = to_ibc_port_id(&packet.source_port).unwrap();
+        let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+
+        let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+        let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
+        let mut chan_end_on_b = get_dummy_channel_end(&src_port);
+        chan_end_on_b.set_counterparty_channel_id(src_channel.clone());
+
+        ctx.channel_end = Some(chan_end_on_b.clone());
+        ctx.port_id = dst_port;
+        ctx.channel_id = dst_channel;
+        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
+
+        ctx
+    }
+
     pub fn init_context(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.save_client_state(storage, contract);
         self.save_consensus_state(storage, contract);
@@ -607,6 +627,11 @@ impl TestContext {
         self.save_channel_end(storage, contract);
         self.save_light_client(storage, contract);
         self.save_expected_time_per_block(storage, contract);
+    }
+
+    pub fn init_packet_receive(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
     }
 
     pub fn save_client_state(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
@@ -675,5 +700,15 @@ impl TestContext {
             .expected_time_per_block()
             .save(storage, &(self.env.block.time.seconds()))
             .unwrap();
+    }
+
+    pub fn register_port(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        contract
+            .bind_port(storage, &self.port_id, "moduleaddress".to_string())
+            .unwrap();
+    }
+
+    pub fn channel_end(&self) -> ChannelEnd {
+        return self.channel_end.clone().unwrap();
     }
 }

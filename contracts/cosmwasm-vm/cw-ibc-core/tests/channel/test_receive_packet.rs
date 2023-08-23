@@ -1,4 +1,3 @@
-
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 
 use common::ibc::core::ics04_channel::packet::Receipt;
@@ -56,33 +55,14 @@ fn test_receive_packet() {
     let mut contract = CwIbcCoreContext::default();
     let mut deps = deps();
     let env = get_mock_env();
-    let mut test_context = TestContext::default(env.clone());
+
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = get_dummy_raw_msg_recv_packet(12);
+    let test_context = TestContext::receive_packet(env.clone(), &msg);
     let packet = msg.packet.clone().unwrap();
 
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
-
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
-
-    let mut chan_end_on_b = get_dummy_channel_end(&src_port);
-    chan_end_on_b.set_counterparty_channel_id(src_channel.clone());
-
-    test_context.channel_end = Some(chan_end_on_b.clone());
-    test_context.port_id = dst_port.clone();
-    test_context.channel_id = dst_channel.clone();
-
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    test_context.height = proof_height.clone();
-
-    test_context.init_context(deps.as_mut().storage, &mut contract);
-
-    contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
-        .unwrap();
+    test_context.init_packet_receive(deps.as_mut().storage, &mut contract);
 
     mock_lightclient_reply(&mut deps);
 
@@ -97,9 +77,9 @@ fn test_receive_packet() {
             10,
         )
         .unwrap();
-    println!("{missing_receipts:?}");
+
     assert!(!missing_receipts.contains(&packet.sequence));
-    println!("{:?}", res);
+
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,
@@ -118,32 +98,14 @@ fn test_receive_packet_fails_on_channel_closed() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let packet = msg.packet.clone().unwrap();
 
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+    let mut test_context = TestContext::receive_packet(env.clone(), &msg);
 
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
-
-    let mut test_context = TestContext::default(env.clone());
-
-    let chan_end_on_b = ChannelEnd::new(
-        State::Closed,
-        Order::default(),
-        Counterparty::new(src_port, Some(src_channel)),
-        vec![IbcConnectionId::default()],
-        Version::new("ics20-1".to_string()),
-    );
+    let mut chan_end_on_b = test_context.channel_end();
+    chan_end_on_b.set_state(State::Closed);
     test_context.channel_end = Some(chan_end_on_b);
-    test_context.port_id = dst_port.clone();
-    test_context.channel_id = dst_channel.clone();
-    test_context.init_context(deps.as_mut().storage, &mut contract);
 
-    contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
-        .unwrap();
+    test_context.init_packet_receive(deps.as_mut().storage, &mut contract);
 
     mock_lightclient_reply(&mut deps);
 
@@ -168,32 +130,14 @@ fn test_receive_packet_fails_on_invalid_connection_state() {
     let msg = get_dummy_raw_msg_recv_packet(12);
     let packet = msg.packet.clone().unwrap();
 
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
-
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
-
-    let mut test_context = TestContext::default(env.clone());
-
-    let mut chan_end_on_b = get_dummy_channel_end(&src_port);
-    chan_end_on_b.set_counterparty_channel_id(src_channel);
-    test_context.channel_end = Some(chan_end_on_b);
-    test_context.port_id = dst_port.clone();
-    test_context.channel_id = dst_channel.clone();
+    let mut test_context = TestContext::receive_packet(env.clone(), &msg);
 
     let mut conn_end_on_b = get_dummy_connection();
     conn_end_on_b.set_state(ConnectionState::Init);
     test_context.connection_end = Some(conn_end_on_b.clone());
 
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    test_context.height = proof_height.clone();
+    test_context.init_packet_receive(deps.as_mut().storage, &mut contract);
 
-    test_context.init_context(deps.as_mut().storage, &mut contract);
-
-    contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
-        .unwrap();
     mock_lightclient_reply(&mut deps);
 
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
@@ -215,28 +159,10 @@ fn test_receive_packet_fails_on_packet_already_being_received() {
     let msg = get_dummy_raw_msg_recv_packet(12);
     let packet = msg.packet.clone().unwrap();
 
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
+    let test_context = TestContext::receive_packet(env.clone(), &msg);
 
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+    test_context.init_packet_receive(deps.as_mut().storage, &contract);
 
-    let mut test_context = TestContext::default(env.clone());
-
-    let mut chan_end_on_b = get_dummy_channel_end(&src_port);
-    chan_end_on_b.set_counterparty_channel_id(src_channel);
-    test_context.channel_end = Some(chan_end_on_b);
-    test_context.port_id = dst_port.clone();
-    test_context.channel_id = dst_channel.clone();
-
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    test_context.height = proof_height;
-
-    test_context.init_context(deps.as_mut().storage, &contract);
-
-    contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
-        .unwrap();
     contract
         .store_callback_data(
             deps.as_mut().storage,
@@ -266,85 +192,15 @@ fn test_receive_packet_fails_on_frozen_client() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let packet = msg.packet.clone().unwrap();
 
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
-
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
-
-    let mut chan_end_on_b = get_dummy_channel_end(&src_port);
-    chan_end_on_b.set_counterparty_channel_id(src_channel);
-
-    let conn_end_on_b = get_dummy_connection();
-
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            &dst_port.clone(),
-            &dst_channel.clone(),
-            &chan_end_on_b,
-        )
-        .unwrap();
-    let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
-    contract
-        .store_connection(&mut deps.storage, &conn_id_on_b.clone(), &conn_end_on_b)
-        .unwrap();
+    let mut test_context = TestContext::receive_packet(env.clone(), &msg);
 
     let mut client_state: ClientState = get_dummy_client_state();
     client_state.frozen_height = 1000;
+    test_context.client_state = Some(client_state);
 
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
+    test_context.init_packet_receive(deps.as_mut().storage, &contract);
 
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            proof_height,
-            consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let env = get_mock_env();
-    contract
-        .ibc_store()
-        .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds()))
-        .unwrap();
-    let light_client = LightClient::new("lightclient".to_string());
-
-    contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
-        .unwrap();
-    contract
-        .store_callback_data(
-            deps.as_mut().storage,
-            VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
-            &packet,
-        )
-        .unwrap();
-
-    contract
-        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
-        .unwrap();
     mock_lightclient_reply(&mut deps);
 
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
@@ -364,86 +220,14 @@ fn test_receive_packet_fails_on_invalid_counterparty() {
     let mut deps = deps();
     let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
-
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let packet = msg.packet.clone().unwrap();
 
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let _src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
-
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
-
-    let mut chan_end_on_b = get_dummy_channel_end(&src_port);
+    let mut test_context = TestContext::receive_packet(env.clone(), &msg);
+    let mut chan_end_on_b = test_context.channel_end();
     chan_end_on_b.set_counterparty_channel_id(to_ibc_channel_id("invalidchannel").unwrap());
+    test_context.channel_end = Some(chan_end_on_b);
+    test_context.init_packet_receive(deps.as_mut().storage, &contract);
 
-    let conn_end_on_b = get_dummy_connection();
-
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            &dst_port.clone(),
-            &dst_channel.clone(),
-            &chan_end_on_b,
-        )
-        .unwrap();
-    let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
-    contract
-        .store_connection(&mut deps.storage, &conn_id_on_b.clone(), &conn_end_on_b)
-        .unwrap();
-
-    let client_state: ClientState = get_dummy_client_state();
-
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
-
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            proof_height,
-            consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let env = get_mock_env();
-    contract
-        .ibc_store()
-        .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds()))
-        .unwrap();
-    let light_client = LightClient::new("lightclient".to_string());
-
-    contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
-        .unwrap();
-    contract
-        .store_callback_data(
-            deps.as_mut().storage,
-            VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
-            &packet,
-        )
-        .unwrap();
-
-    contract
-        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
-        .unwrap();
     mock_lightclient_reply(&mut deps);
 
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
@@ -462,80 +246,13 @@ fn test_receive_packet_no_op_on_packet_already_received() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = get_dummy_raw_msg_recv_packet(12);
+    let mut test_context = TestContext::receive_packet(env.clone(), &msg);
     let packet = msg.packet.clone().unwrap();
-
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
     let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
     let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+    test_context.init_packet_receive(deps.as_mut().storage, &contract);
 
-    let mut chan_end_on_b = get_dummy_channel_end(&src_port);
-    chan_end_on_b.set_counterparty_channel_id(src_channel);
-
-    let conn_end_on_b = get_dummy_connection();
-
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            &dst_port.clone(),
-            &dst_channel.clone(),
-            &chan_end_on_b,
-        )
-        .unwrap();
-    let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
-    contract
-        .store_connection(&mut deps.storage, &conn_id_on_b.clone(), &conn_end_on_b)
-        .unwrap();
-
-    let client_state: ClientState = get_dummy_client_state();
-
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
-
-    let proof_height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            proof_height,
-            consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let env = get_mock_env();
-    contract
-        .ibc_store()
-        .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds()))
-        .unwrap();
-    let light_client = LightClient::new("lightclient".to_string());
-
-    contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
-        .unwrap();
-    contract
-        .store_callback_data(
-            deps.as_mut().storage,
-            VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
-            &packet,
-        )
-        .unwrap();
     contract
         .store_packet_receipt(
             deps.as_mut().storage,
@@ -546,9 +263,6 @@ fn test_receive_packet_no_op_on_packet_already_received() {
         )
         .unwrap();
 
-    contract
-        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
-        .unwrap();
     mock_lightclient_reply(&mut deps);
 
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
