@@ -322,14 +322,6 @@ impl<'a> CwIbcCoreContext<'a> {
                     VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
                 )?;
                 self.clear_callback_data(deps.storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
-                let port = packet.dest.port_id.clone();
-                let chan = packet.dest.channel_id.clone();
-                let seq = packet.sequence;
-                let channel_id =
-                    IbcChannelId::from_str(&chan).map_err(Into::<ContractError>::into)?;
-                let port_id = IbcPortId::from_str(&port).unwrap();
-
-                let channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
 
                 let mut res = Response::new()
                     .add_attribute("action", "channel")
@@ -337,6 +329,12 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("message", "success: packet receive");
 
                 if !ack.is_empty() {
+                    self.validate_write_acknowledgement(deps.storage, &to_raw_packet(&packet))?;
+                    let seq = packet.sequence;
+                    let channel_id = to_ibc_channel_id(&packet.dest.channel_id)?;
+                    let port_id = to_ibc_port_id(&packet.dest.port_id)?;
+                    let channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
+
                     self.store_packet_acknowledgement(
                         deps.storage,
                         &port_id,
