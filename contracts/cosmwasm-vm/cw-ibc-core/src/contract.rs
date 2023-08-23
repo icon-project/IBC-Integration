@@ -528,11 +528,8 @@ impl<'a> CwIbcCoreContext<'a> {
             EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
-            // VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE => self.execute_timeout_packet(deps, message),
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE => self.execute_receive_packet(deps, message),
-            // VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE => {
-            //     self.acknowledgement_packet_execute(deps, message)
-            // }
+            
 
             _ => Err(ContractError::ReplyError {
                 code: message.id,
