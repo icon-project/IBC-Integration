@@ -10,7 +10,7 @@ use common::ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},
     Version,
 };
-use cosmwasm_std::{to_binary, Addr, Event, IbcOrder, Reply, SubMsgResponse, SubMsgResult};
+use cosmwasm_std::{to_binary, Addr, IbcOrder};
 use cw_common::ibc_types::IbcClientId;
 
 use cw_ibc_core::ics04_channel::open_init::create_channel_submesssage;
@@ -145,7 +145,7 @@ fn test_validate_close_init_channel_fails_invalid_connection_state() {
             port_id: port_id.clone(),
             channel_id: Some(channel_id.clone()),
         },
-        connection_hops: vec![connection_id.clone()],
+        connection_hops: vec![connection_id],
         version: Version::new("xcall".to_string()),
     };
 
@@ -154,7 +154,7 @@ fn test_validate_close_init_channel_fails_invalid_connection_state() {
         .unwrap();
 
     contract
-        .validate_channel_close_init(deps.as_mut(), info.clone(), &msg)
+        .validate_channel_close_init(deps.as_mut(), info, &msg)
         .unwrap();
 }
 
@@ -211,7 +211,7 @@ fn test_validate_close_init_channel_fails_on_closed_channel() {
             port_id: port_id.clone(),
             channel_id: Some(channel_id.clone()),
         },
-        connection_hops: vec![connection_id.clone()],
+        connection_hops: vec![connection_id],
         version: Version::new("xcall".to_string()),
     };
 
@@ -220,7 +220,7 @@ fn test_validate_close_init_channel_fails_on_closed_channel() {
         .unwrap();
 
     contract
-        .validate_channel_close_init(deps.as_mut(), info.clone(), &msg)
+        .validate_channel_close_init(deps.as_mut(), info, &msg)
         .unwrap();
 }
 
@@ -286,7 +286,7 @@ fn test_validate_close_init_channel_fails_on_invalid_connection_hops() {
         .unwrap();
 
     contract
-        .validate_channel_close_init(deps.as_mut(), info.clone(), &msg)
+        .validate_channel_close_init(deps.as_mut(), info, &msg)
         .unwrap();
 }
 

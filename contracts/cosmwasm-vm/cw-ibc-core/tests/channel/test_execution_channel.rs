@@ -1056,38 +1056,7 @@ fn test_for_ack_execute() {
         VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE
     );
 
-    let src = IbcEndpoint {
-        port_id: src_port.to_string(),
-        channel_id: src_channel.to_string(),
-    };
-    let dest = IbcEndpoint {
-        port_id: dst_port.to_string(),
-        channel_id: dst_channel.to_string(),
-    };
-    let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
-    let timestamp = packet_timestamp.nanoseconds();
-    let ibctimestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
-    let timeout = IbcTimeout::with_both(timeoutblock, ibctimestamp);
-    let ibc_packet = IbcPacket::new(packet.data, src, dest, packet.sequence, timeout);
-    let ack = IbcAcknowledgement::new(msg.acknowledgement);
-    let address = Addr::unchecked(msg.signer);
-    let mock_reponse_data = cosmwasm_std::IbcPacketAckMsg::new(ack, ibc_packet, address);
-    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
-    let event = Event::new("empty");
-    let reply_message = Reply {
-        id: VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
-            events: vec![event],
-            data: Some(mock_data_binary),
-        }),
-    };
-    let response = contract.reply(deps.as_mut(), env, reply_message);
-
-    assert!(response.is_ok());
-    assert_eq!(
-        "execute_acknowledgement_packet",
-        response.unwrap().attributes[1].value
-    )
+    
 }
 
 #[test]

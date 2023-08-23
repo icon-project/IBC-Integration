@@ -147,7 +147,7 @@ fn test_timeout_packet_fails_invalid_counterparty() {
     let src_port = to_ibc_port_id(&packet.source_port).unwrap();
     let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let _dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
     let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
 
     let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
@@ -419,7 +419,7 @@ fn test_timeout_packet_fails_for_invalid_packet() {
         .store_channel_end(
             &mut deps.storage,
             &src_port.clone(),
-            &src_channel.clone(),
+            &src_channel,
             &chan_end_on_a_ordered,
         )
         .unwrap();

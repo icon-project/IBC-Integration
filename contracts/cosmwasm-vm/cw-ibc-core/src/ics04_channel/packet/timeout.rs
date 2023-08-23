@@ -1,4 +1,4 @@
-use cw_common::raw_types::{channel::RawMessageTimeout, to_raw_packet};
+use cw_common::raw_types::channel::RawMessageTimeout;
 
 use crate::conversions::{
     to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
