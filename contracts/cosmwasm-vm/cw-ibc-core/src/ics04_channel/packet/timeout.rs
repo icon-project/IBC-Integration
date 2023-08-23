@@ -1,4 +1,7 @@
-use cw_common::raw_types::channel::RawMessageTimeout;
+use cw_common::{
+    raw_types::{channel::RawMessageTimeout, to_raw_packet},
+    to_checked_address,
+};
 
 use crate::conversions::{
     to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
@@ -179,7 +182,7 @@ impl<'a> CwIbcCoreContext<'a> {
             None,
         )?;
 
-        let address = Addr::unchecked(msg.signer);
+        let address = to_checked_address(deps.as_ref(), &msg.signer);
         let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketTimeout {
             msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
         };
