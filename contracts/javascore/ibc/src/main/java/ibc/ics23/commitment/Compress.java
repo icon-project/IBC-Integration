@@ -160,11 +160,11 @@ public class Compress {
     }
 
     public static boolean isCompressedBatchProofEmpty(CompressedBatchProof proof) {
-        if (proof != null && proof.getEntries().size() != 0) {
+        if (proof != null && !proof.getEntries().isEmpty()) {
             return false;
         }
 
-        if (proof != null && proof.getLookupInners().size() != 0) {
+        if (proof != null && !proof.getLookupInners().isEmpty()) {
             return false;
         }
         return true;

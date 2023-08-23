@@ -49,7 +49,7 @@ public class IBCConnection extends IBCClient {
     public String _connectionOpenTry(MsgConnectionOpenTry msg) {
         List<Version> counterpartyVersions = decodeCounterpartyVersions(msg.getCounterpartyVersions());
         // TODO: investigate need to self client validation
-        Context.require(counterpartyVersions.size() > 0, "counterpartyVersions length must be greater than 0");
+        Context.require(!counterpartyVersions.isEmpty(), "counterpartyVersions length must be greater than 0");
 
         String connectionId = generateConnectionIdentifier();
         Context.require(connections.get(connectionId) == null, "connectionId already exists");
