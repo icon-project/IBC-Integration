@@ -1055,8 +1055,6 @@ fn test_for_ack_execute() {
         res.unwrap().messages[0].id,
         VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE
     );
-
-    
 }
 
 #[test]

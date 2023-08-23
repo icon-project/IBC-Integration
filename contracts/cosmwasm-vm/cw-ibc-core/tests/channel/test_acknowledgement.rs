@@ -6,8 +6,6 @@ use cw_ibc_core::{
 
 use super::*;
 
-
-
 #[test]
 fn test_acknowledgement_packet_validate_ordered() {
     let contract = CwIbcCoreContext::default();
@@ -209,7 +207,9 @@ fn test_acknowledgement_packet_validate_unordered() {
     assert!(res.is_ok());
 }
 
-#[should_panic(expected = "IbcDecodeError { error: DecodeError { description: \"PacketCommitmentNotFound\", stack: [] } }")]
+#[should_panic(
+    expected = "IbcDecodeError { error: DecodeError { description: \"PacketCommitmentNotFound\", stack: [] } }"
+)]
 #[test]
 fn test_acknowledgement_packet_validate_without_commitment() {
     let contract = CwIbcCoreContext::default();
@@ -288,7 +288,9 @@ fn test_acknowledgement_packet_validate_without_commitment() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
-    contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg).unwrap();
+    contract
+        .acknowledgement_packet_validate(deps.as_mut(), info, env, &msg)
+        .unwrap();
 }
 
 #[test]

@@ -529,7 +529,6 @@ impl<'a> CwIbcCoreContext<'a> {
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE => self.execute_receive_packet(deps, message),
-            
 
             _ => Err(ContractError::ReplyError {
                 code: message.id,
