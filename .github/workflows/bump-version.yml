@@ -1,8 +1,12 @@
 name: Bump version
 on:
-  push:
-    branches:
-      - "**"
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
   # pull_request:
   #   types:
   #     - closed
@@ -10,7 +14,7 @@ on:
   #     - master
 
 jobs:
-  build:
+  bump:
     # if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
