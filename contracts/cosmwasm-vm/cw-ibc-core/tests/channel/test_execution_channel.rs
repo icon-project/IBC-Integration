@@ -29,6 +29,17 @@ fn test_for_channel_open_init_execution_message() {
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
+    let client_state = get_dummy_client_state();
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
@@ -511,6 +522,18 @@ fn test_for_channel_close_init() {
     let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
+        .unwrap();
+
+    let client_state = get_dummy_client_state();
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
