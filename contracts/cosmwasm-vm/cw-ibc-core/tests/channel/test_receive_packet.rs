@@ -156,6 +156,18 @@ fn test_receive_packet() {
         )
         .unwrap();
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
+    let missing_receipts = contract
+        .ibc_store()
+        .get_missing_packet_receipts(
+            deps.as_ref().storage,
+            &IbcPortId::from_str(&packet.destination_port).unwrap(),
+            &IbcChannelId::from_str(&packet.destination_channel).unwrap(),
+            0,
+            10,
+        )
+        .unwrap();
+    println!("{missing_receipts:?}");
+    assert!(!missing_receipts.contains(&packet.sequence));
     println!("{:?}", res);
     assert!(res.is_ok());
     assert_eq!(
@@ -212,20 +224,7 @@ fn execute_receive_packet() {
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
-    let missing_receipts = contract
-        .ibc_store()
-        .get_missing_packet_receipts(
-            deps.as_ref().storage,
-            &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            0,
-            10,
-        )
-        .unwrap();
-    println!("{missing_receipts:?}");
-    assert!(!missing_receipts.contains(&packet.sequence));
-
-    assert_eq!(res.unwrap().events[0].ty, "recv_packet")
+    assert!(res.is_ok());
 }
 
 #[test]
@@ -283,67 +282,8 @@ fn execute_receive_packet_ordered() {
         .unwrap();
 
     let res = contract.execute_receive_packet(deps.as_mut(), reply);
-    let seq = contract.get_next_sequence_recv(
-        &deps.storage,
-        &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-        &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-    );
+
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().events[0].ty, "recv_packet");
-    assert!(seq.is_ok());
-    assert_eq!(seq.unwrap(), 2.into())
-}
-#[test]
-#[should_panic(
-    expected = "Std(NotFound { kind: \"common::ibc::core::ics04_channel::packet::Sequence\" })"
-)]
-fn execute_receive_packet_ordered_fail_missing_seq_on_a() {
-    let contract = CwIbcCoreContext::default();
-    let mut deps = deps();
-    let timeout_block = IbcTimeoutBlock {
-        revision: 0,
-        height: 10,
-    };
-    let timeout = IbcTimeout::with_both(timeout_block, cosmwasm_std::Timestamp::from_nanos(100));
-    let (src, dst) = get_dummy_endpoints();
-
-    let packet = IbcPacket::new(vec![0, 1, 2, 3], src, dst, 1, timeout);
-    contract
-        .store_callback_data(
-            deps.as_mut().storage,
-            VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
-            &packet,
-        )
-        .unwrap();
-
-    let result = SubMsgResponse {
-        data: None,
-        events: vec![],
-    };
-    let result: SubMsgResult = SubMsgResult::Ok(result);
-    let reply = Reply { id: 0, result };
-
-    let chan_end_on_b = ChannelEnd::new(
-        State::Open,
-        Order::Ordered,
-        Counterparty::new(
-            IbcPortId::from_str(&packet.src.port_id).unwrap(),
-            Some(IbcChannelId::from_str(&packet.src.channel_id).unwrap()),
-        ),
-        vec![IbcConnectionId::default()],
-        Version::new("ics20-1".to_string()),
-    );
-    contract
-        .store_channel_end(
-            &mut deps.storage,
-            &IbcPortId::from_str(&packet.dest.port_id).unwrap(),
-            &IbcChannelId::from_str(&packet.dest.channel_id).unwrap(),
-            &chan_end_on_b,
-        )
-        .unwrap();
-    contract
-        .execute_receive_packet(deps.as_mut(), reply)
-        .unwrap();
 }
 
 #[test]

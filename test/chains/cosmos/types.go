@@ -53,6 +53,13 @@ type XcallInit struct {
 	IbcHost       string `json:"ibc_host"`
 }
 
+type MockAppInit struct {
+	IBCHost int    `json:"ibc_host"`
+	PortId  string `json:"port_id"`
+	Order   string `json:"order"`
+	Denom   string `json:"denom"`
+}
+
 type DappInit struct {
 	Address string `json:"address"`
 }

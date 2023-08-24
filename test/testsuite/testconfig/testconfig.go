@@ -3,13 +3,14 @@ package testconfig
 import (
 	"bytes"
 	"fmt"
-	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/icon-project/ibc-integration/test/testsuite/relayer"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/icon-project/ibc-integration/test/chains"
+	"github.com/icon-project/ibc-integration/test/testsuite/relayer"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -53,23 +54,22 @@ type ChainOptionConfiguration func(options *ChainOptions)
 
 // DefaultChainOptions returns the default configuration for the chains.
 // These options can be configured by passing configuration functions to E2ETestSuite.GetChains.
-func DefaultChainOptions() ChainOptions {
-	tc := New()
-	return ChainOptions{
+func DefaultChainOptions() (*ChainOptions, error) {
+	tc, err := New()
+	if err != nil {
+		return nil, err
+	}
+	return &ChainOptions{
 		ChainAConfig: &tc.ChainConfigs[0],
 		ChainBConfig: &tc.ChainConfigs[1],
-	}
+	}, nil
 }
 
-func New() TestConfig {
-	testConfig, foundFile := fromFile()
-	if !foundFile {
-		panic("test config not found!!")
-	}
-	return testConfig
+func New() (*TestConfig, error) {
+	return fromFile()
 }
 
-func fromFile() (TestConfig, bool) {
+func fromFile() (*TestConfig, error) {
 
 	cwd, _ := os.Getwd()
 	basePath := filepath.Dir(fmt.Sprintf("%s/..%c..%c", cwd, os.PathSeparator, os.PathSeparator))
@@ -81,22 +81,16 @@ func fromFile() (TestConfig, bool) {
 	configFile := getConfigFilePath(basePath)
 	confContent, err := os.ReadFile(configFile)
 	if err != nil {
-		return TestConfig{}, false
+		return nil, err
 	}
-	//
 	reader := bytes.NewBuffer([]byte(os.ExpandEnv(string(confContent))))
 	viper.AutomaticEnv()
 	viper.SetConfigType(filepath.Ext(configFile)[1:])
 	if err := viper.ReadConfig(reader); err != nil {
-		log.Fatal("Error reading config file:", err)
+		return nil, err
 	}
-	var tc TestConfig
-	if err := viper.Unmarshal(&tc); err != nil {
-		fmt.Println(err)
-		return TestConfig{}, false
-	}
-
-	return tc, true
+	var tc = new(TestConfig)
+	return tc, viper.Unmarshal(tc)
 }
 
 // getConfigFilePath returns the absolute path where the e2e config file should be.

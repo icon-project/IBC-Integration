@@ -1,9 +1,9 @@
 use common::{ibc::core::ics02_client::height::Height, rlp::Nullable};
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 
 use crate::{
     error::ContractError,
-    state::{CwIbcConnection, IbcConfig},
+    state::CwIbcConnection,
     types::{message::Message, LOG_PREFIX},
 };
 

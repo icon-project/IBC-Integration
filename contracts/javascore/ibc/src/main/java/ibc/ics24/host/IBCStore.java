@@ -234,7 +234,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     }
 
     public void setBTPNetworkId(String clientId, int btpNetworkId) {
-        this.btpNetworkId.set(clientId, btpNetworkId);
+        IBCStore.btpNetworkId.set(clientId, btpNetworkId);
     }
 
     @External(readonly = true)

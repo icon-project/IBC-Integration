@@ -103,6 +103,7 @@ impl<'a> CwIbcCoreContext<'a> {
             } => {
                 self.check_sender_is_owner(deps.as_ref().storage, info.sender)?;
                 let client_type = IbcClientType::new(client_type);
+                let client_address = to_checked_address(deps.as_ref(), client_address.as_ref());
                 self.register_client(deps, client_type, client_address)
             }
             CoreExecuteMsg::CreateClient { msg } => {
@@ -222,6 +223,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 self.bind_port(deps.storage, &port_id, checked_address)
             }
             CoreExecuteMsg::SetExpectedTimePerBlock { block_time } => {
+                self.check_sender_is_owner(deps.as_ref().storage, info.sender)?;
                 self.set_expected_time_per_block(deps.storage, block_time)?;
                 Ok(Response::new()
                     .add_attribute("method", "set_expected_time_per_block")
