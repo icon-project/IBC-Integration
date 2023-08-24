@@ -90,7 +90,7 @@ public class MerkleTest {
         var merklePath = new MerklePath();
         merklePath.setKeyPath(keyPath);
 
-        Merkle.verifyMembership(merkleProof, getSDKSpecs(), merkleRoot, merklePath, value);
+        Merkle.verifyMembership(merkleProof, SDK_SPEC, merkleRoot, merklePath, value);
     }
 
     @Test
