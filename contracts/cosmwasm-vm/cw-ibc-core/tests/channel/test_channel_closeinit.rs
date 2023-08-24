@@ -34,7 +34,7 @@ fn test_validate_close_init_channel() {
     let test_context = TestContext::for_channel_close_init(mock_env(), &msg);
     let channel_end = test_context.channel_end();
 
-    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
+    test_context.init_channel_close_init(deps.as_mut().storage, &contract);
 
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
     let expected =
@@ -68,7 +68,7 @@ fn test_validate_close_init_channel_fails_invalid_connection_state() {
     connection_end.state = common::ibc::core::ics03_connection::connection::State::Uninitialized;
     test_context.connection_end = Some(connection_end);
 
-    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
+    test_context.init_channel_close_init(deps.as_mut().storage, &contract);
 
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
@@ -94,7 +94,7 @@ fn test_validate_close_init_channel_fails_on_closed_channel() {
     channel_end.state = State::Closed;
     test_context.channel_end = Some(channel_end);
 
-    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
+    test_context.init_channel_close_init(deps.as_mut().storage, &contract);
 
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
@@ -120,7 +120,7 @@ fn test_validate_close_init_channel_fails_on_invalid_connection_hops() {
     channel_end.connection_hops = vec![];
     test_context.channel_end = Some(channel_end);
 
-    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
+    test_context.init_channel_close_init(deps.as_mut().storage, &contract);
 
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
@@ -140,7 +140,7 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
     let mut test_context = TestContext::for_channel_close_init(mock_env(), &msg);
     test_context.connection_end = None;
 
-    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
+    test_context.init_channel_close_init(deps.as_mut().storage, &contract);
 
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())

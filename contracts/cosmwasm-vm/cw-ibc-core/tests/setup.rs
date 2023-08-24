@@ -655,6 +655,22 @@ impl TestContext {
         ctx
     }
 
+    pub fn for_channel_close_confirm(env: Env, msg: &RawMsgChannelCloseConfirm) -> Self {
+        let mut ctx = TestContext::default(env);
+        let packet = RawPacket {
+            source_port: "their-port".to_string(),
+            source_channel: "their-channel".to_string(),
+            destination_port: msg.port_id.clone(),
+            destination_channel: msg.channel_id.clone(),
+            ..Default::default()
+        };
+
+        ctx = TestContext::setup_channel_end(ctx, Direction::Receive, &packet);
+        ctx.packet = Some(packet);
+
+        ctx
+    }
+
     fn setup_channel_end(mut ctx: TestContext, dir: Direction, packet: &RawPacket) -> TestContext {
         let src_port = to_ibc_port_id(&packet.source_port).unwrap();
         let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
@@ -694,6 +710,11 @@ impl TestContext {
     }
 
     pub fn init_receive_packet(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
+    }
+
+    pub fn init_channel_close_init(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
     }
