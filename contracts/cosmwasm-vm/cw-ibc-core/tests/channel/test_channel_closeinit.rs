@@ -29,64 +29,12 @@ fn test_validate_close_init_channel() {
         common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
-    let module = Addr::unchecked("contractaddress");
-    let client_state: ClientState = get_dummy_client_state();
-    let env = mock_env();
+    let connection_id = ConnectionId::new(0);
 
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
+    let test_context = TestContext::for_channel_close_init(mock_env(), &msg);
+    let channel_end = test_context.channel_end();
 
-    contract
-        .store_capability(
-            &mut deps.storage,
-            port_id.to_string().as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-
-    let commitment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        None,
-        commitment.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    let connection_id = ConnectionId::new(5);
-    let contract = CwIbcCoreContext::new();
-    contract
-        .store_connection(deps.as_mut().storage, &connection_id, &conn_end)
-        .unwrap();
-
-    let channel_end = ChannelEnd {
-        state: State::Open,
-        ordering: Order::Unordered,
-        remote: Counterparty {
-            port_id: port_id.clone(),
-            channel_id: Some(channel_id.clone()),
-        },
-        connection_hops: vec![connection_id.clone()],
-        version: Version::new("xcall".to_string()),
-    };
-
-    contract
-        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
-        .unwrap();
+    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
 
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
     let expected =
@@ -95,7 +43,7 @@ fn test_validate_close_init_channel() {
     let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
-        "contractaddress".to_string(),
+        "moduleaddress".to_string(),
         data,
         info.funds,
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
@@ -106,7 +54,7 @@ fn test_validate_close_init_channel() {
 }
 
 #[should_panic(
-    expected = "IbcConnectionError { error: ConnectionMismatch { connection_id: ConnectionId(\"connection-5\") } }"
+    expected = "IbcConnectionError { error: ConnectionMismatch { connection_id: ConnectionId(\"connection-0\") } }"
 )]
 #[test]
 fn test_validate_close_init_channel_fails_invalid_connection_state() {
@@ -115,55 +63,15 @@ fn test_validate_close_init_channel_fails_invalid_connection_state() {
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_close_init();
 
-    let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
-    let module = Addr::unchecked("contractaddress");
+    let mut test_context = TestContext::for_channel_close_init(mock_env(), &msg);
+    let mut connection_end = test_context.connection_end();
+    connection_end.state = common::ibc::core::ics03_connection::connection::State::Uninitialized;
+    test_context.connection_end = Some(connection_end);
+
+    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
 
     contract
-        .store_capability(
-            &mut deps.storage,
-            port_id.to_string().as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-
-    let commitment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        None,
-        commitment.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Uninitialized,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    let connection_id = ConnectionId::new(5);
-    let contract = CwIbcCoreContext::new();
-    contract
-        .store_connection(deps.as_mut().storage, &connection_id, &conn_end)
-        .unwrap();
-
-    let channel_end = ChannelEnd {
-        state: State::Open,
-        ordering: Order::Unordered,
-        remote: Counterparty {
-            port_id: port_id.clone(),
-            channel_id: Some(channel_id.clone()),
-        },
-        connection_hops: vec![connection_id],
-        version: Version::new("xcall".to_string()),
-    };
-
-    contract
-        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
+        .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
 
     contract
@@ -181,55 +89,15 @@ fn test_validate_close_init_channel_fails_on_closed_channel() {
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_close_init();
 
-    let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
-    let module = Addr::unchecked("contractaddress");
+    let mut test_context = TestContext::for_channel_close_init(mock_env(), &msg);
+    let mut channel_end = test_context.channel_end();
+    channel_end.state = State::Closed;
+    test_context.channel_end = Some(channel_end);
+
+    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
 
     contract
-        .store_capability(
-            &mut deps.storage,
-            port_id.to_string().as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-
-    let commitment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        None,
-        commitment.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    let connection_id = ConnectionId::new(5);
-    let contract = CwIbcCoreContext::new();
-    contract
-        .store_connection(deps.as_mut().storage, &connection_id, &conn_end)
-        .unwrap();
-
-    let channel_end = ChannelEnd {
-        state: State::Closed,
-        ordering: Order::Unordered,
-        remote: Counterparty {
-            port_id: port_id.clone(),
-            channel_id: Some(channel_id.clone()),
-        },
-        connection_hops: vec![connection_id],
-        version: Version::new("xcall".to_string()),
-    };
-
-    contract
-        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
+        .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
 
     contract
@@ -247,57 +115,16 @@ fn test_validate_close_init_channel_fails_on_invalid_connection_hops() {
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_close_init();
 
-    let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
-    let module = Addr::unchecked("contractaddress");
+    let mut test_context = TestContext::for_channel_close_init(mock_env(), &msg);
+    let mut channel_end = test_context.channel_end();
+    channel_end.connection_hops = vec![];
+    test_context.channel_end = Some(channel_end);
+
+    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
 
     contract
-        .store_capability(
-            &mut deps.storage,
-            port_id.to_string().as_bytes().to_vec(),
-            module.to_string(),
-        )
+        .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
-
-    let commitment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        None,
-        commitment.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    let connection_id = ConnectionId::new(5);
-    let contract = CwIbcCoreContext::new();
-    contract
-        .store_connection(deps.as_mut().storage, &connection_id, &conn_end)
-        .unwrap();
-
-    let channel_end = ChannelEnd {
-        state: State::Open,
-        ordering: Order::Unordered,
-        remote: Counterparty {
-            port_id: port_id.clone(),
-            channel_id: Some(channel_id.clone()),
-        },
-        connection_hops: vec![],
-        version: Version::new("xcall".to_string()),
-    };
-
-    contract
-        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
-        .unwrap();
-
     contract
         .validate_channel_close_init(deps.as_mut(), info, &msg)
         .unwrap();
@@ -310,37 +137,13 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_close_init();
-    let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let module_id = common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let _channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
+    let mut test_context = TestContext::for_channel_close_init(mock_env(), &msg);
+    test_context.connection_end = None;
 
-    let module = Addr::unchecked("contractaddress");
-    let _cx_module_id = module_id;
+    test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
 
     contract
-        .claim_capability(
-            &mut deps.storage,
-            port_id.as_bytes().to_vec(),
-            module.to_string(),
-        )
-        .unwrap();
-    let connection_id = ConnectionId::new(5);
-    let contract = CwIbcCoreContext::new();
-    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
-    let channel_end = ChannelEnd {
-        state: State::Open,
-        ordering: Order::Unordered,
-        remote: Counterparty {
-            port_id: port_id.clone(),
-            channel_id: Some(channel_id.clone()),
-        },
-        connection_hops: vec![connection_id],
-        version: Version::new("xcall".to_string()),
-    };
-    contract
-        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
+        .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
 
     contract
