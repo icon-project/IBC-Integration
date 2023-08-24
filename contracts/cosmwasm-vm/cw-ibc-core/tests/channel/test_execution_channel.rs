@@ -6,14 +6,14 @@ use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ac
 use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
+use cw_common::core_msg::InstantiateMsg;
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
 use cw_ibc_core::conversions::{
     to_ibc_channel_id, to_ibc_timeout_block, to_ibc_timeout_height, to_ibc_timestamp,
 };
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
-    ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
-    EXECUTE_ON_CHANNEL_CLOSE_INIT,
+    ics04_channel::close_init::on_chan_close_init_submessage, EXECUTE_ON_CHANNEL_CLOSE_INIT,
 };
 use cw_ibc_core::{
     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
@@ -30,6 +30,17 @@ fn test_for_channel_open_init_execution_message() {
     let env = get_mock_env();
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
+        .unwrap();
+    let client_state = get_dummy_client_state();
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
@@ -515,6 +526,18 @@ fn test_for_channel_close_init() {
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
 
+    let client_state = get_dummy_client_state();
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
+
     assert_eq!(response.attributes[0].value, "instantiate");
 
     let msg = get_dummy_raw_msg_chan_close_init();
@@ -573,7 +596,7 @@ fn test_for_channel_close_init() {
 
     let expected =
         on_chan_close_init_submessage(&port_id, &channel_id, &channel_end, &connection_id);
-    let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: expected };
+    let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
@@ -1037,7 +1060,7 @@ fn test_for_recieve_packet() {
     let response = contract.reply(deps.as_mut(), env, reply_message);
     println!("{:?}", response);
     assert!(response.is_ok());
-    assert_eq!(response.unwrap().events[0].ty, "recv_packet");
+    assert_eq!(response.unwrap().events[0].ty, "write_acknowledgement");
 }
 
 #[test]

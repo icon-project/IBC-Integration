@@ -98,17 +98,10 @@ public class IBCConnection extends IBCClient {
 
         int state = connection.getState();
         // TODO should we allow the state to be TRY_OPEN?
-        Context.require(state == ConnectionEnd.State.STATE_INIT || state == ConnectionEnd.State.STATE_TRYOPEN,
-                "connection state is not INIT or TRYOPEN");
-        if (state == ConnectionEnd.State.STATE_INIT) {
-            Context.require(isSupportedVersion(Version.decode(msg.getVersion())),
-                    "connection state is in INIT but the provided version is not supported");
-        } else {
-            Context.require(
-                    connection.getVersions().size() == 1
-                            && Arrays.equals(connection.getVersions().get(0).encode(), msg.getVersion()),
-                    "connection state is in TRYOPEN but the provided version is not set in the previous connection versions");
-        }
+        Context.require(state == ConnectionEnd.State.STATE_INIT, "connection state is not INIT");
+        Context.require(isSupportedVersion(Version.decode(msg.getVersion())),
+                "connection state is in INIT but the provided version is not supported");
+
 
         // TODO: investigate need to self client validation
         // require(validateSelfClient(msg.clientStateBytes), "failed to validate self
@@ -191,24 +184,6 @@ public class IBCConnection extends IBCClient {
                 connection.getCounterparty().getPrefix().getKeyPrefix(),
                 path,
                 clientStatebytes);
-    }
-
-    private void verifyClientConsensusState(ConnectionEnd connection, byte[] height, Height consensusHeight,
-                                            byte[] proof, byte[] consensusStateBytes) {
-        byte[] consensusPath = IBCCommitment.consensusStatePath(connection.getCounterparty().getClientId(),
-                consensusHeight.getRevisionNumber(),
-                consensusHeight.getRevisionHeight());
-
-        ILightClient client = getClient(connection.getClientId());
-        client.verifyMembership(
-                connection.getClientId(),
-                height,
-                BigInteger.ZERO,
-                BigInteger.ZERO,
-                proof,
-                connection.getCounterparty().getPrefix().getKeyPrefix(),
-                consensusPath,
-                consensusStateBytes);
     }
 
     private void verifyConnectionState(ConnectionEnd connection, byte[] height, byte[] proof, String connectionId,
