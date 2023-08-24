@@ -424,7 +424,7 @@ func (c *IconLocalnet) DeployXCallMockApp(ctx context.Context, connection chains
 	params = `{"nid":"` + connection.CounterpartyNid + `", "source":"` + c.IBCAddresses[connectionKey] + `", "destination":"` + connection.CounterPartyConnection + `"}`
 	ctx, err = c.executeContract(context.Background(), dapp, connection.KeyName, "addConnection", params)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	c.IBCAddresses[fmt.Sprintf("dapp-%s", testcase)] = dapp
 	return nil
@@ -451,12 +451,12 @@ func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection c
 	connectionAddress := c.IBCAddresses[fmt.Sprintf("connection-%s", testcase)]
 	ctx, err := c.executeContract(context.Background(), connectionAddress, connection.KeyName, "configureConnection", string(params))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	params = []byte(`{"nid":"` + connection.CounterpartyNid + `","connection":"` + connectionAddress + `"}`)
 	ctx, err = c.executeContract(context.Background(), c.IBCAddresses[fmt.Sprintf("xcall-%s", testcase)], connection.KeyName, "setDefaultConnection", string(params))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return ctx, nil
