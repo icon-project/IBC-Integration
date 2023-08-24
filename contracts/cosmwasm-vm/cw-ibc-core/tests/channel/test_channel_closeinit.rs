@@ -4,18 +4,17 @@ use cw_ibc_core::{
     ics04_channel::close_init::{channel_close_init_validate, on_chan_close_init_submessage},
 };
 
-use std::{str::FromStr, time::Duration};
+use std::str::FromStr;
 
 use common::ibc::core::ics04_channel::{
     channel::{Counterparty, Order, State},
     Version,
 };
-use cosmwasm_std::{to_binary, Addr, IbcOrder};
-use cw_common::ibc_types::IbcClientId;
+use cosmwasm_std::{to_binary, IbcOrder};
 
 use cw_ibc_core::ics04_channel::open_init::create_channel_submesssage;
 use cw_ibc_core::ics04_channel::EXECUTE_ON_CHANNEL_CLOSE_INIT;
-use cw_ibc_core::{ChannelEnd, ConnectionEnd};
+use cw_ibc_core::ChannelEnd;
 
 #[test]
 fn test_validate_close_init_channel() {
