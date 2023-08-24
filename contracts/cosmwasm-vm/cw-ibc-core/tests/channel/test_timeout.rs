@@ -281,7 +281,7 @@ fn test_timeout_packet_validate_to_light_client() {
 }
 
 #[should_panic(
-    expected = "IbcPacketError { error: PacketTimeoutHeightNotReached { timeout_height: At(Height { revision: 0, height: 60 }), chain_height: Height { revision: 0, height: 50 } } }"
+    expected = "PacketNotExpired"
 )]
 #[test]
 fn test_timeout_packet_fails_if_height_not_expired() {
@@ -424,7 +424,7 @@ fn test_timeout_packet_fails_if_height_not_expired() {
 }
 
 #[should_panic(
-    expected = "IbcPacketError { error: PacketTimeoutTimestampNotReached { timeout_timestamp: Timestamp { time: Some(Time(2023-08-22 1:40:13.0)) }, chain_timestamp: Timestamp { time: Some(Time(2023-08-20 19:06:53.0)) } } }"
+    expected = "PacketNotExpired"
 )]
 #[test]
 fn test_timeout_packet_fails_if_timestamp_not_expired() {
@@ -434,7 +434,7 @@ fn test_timeout_packet_fails_if_timestamp_not_expired() {
     let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let proof_height = 50;
-    let timeout_height = proof_height - 1;
+    let timeout_height = proof_height +10;
     let timeout_timestamp = 1692668413 * 1000000000;
     let msg = get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
 
@@ -527,7 +527,7 @@ fn test_timeout_packet_fails_if_timestamp_not_expired() {
         .get_timestamp_by_height_query(&IbcClientId::default(), proof_height.revision_height())
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
-    let expiry_future = Timestamp::from_nanoseconds(1692558413 * 1000000000).unwrap();
+    let expiry_future = Timestamp::from_nanoseconds(1691668413 * 1000000000).unwrap();
     mocks.insert(
         timestamp_query,
         to_binary(&expiry_future.nanoseconds()).unwrap(),
