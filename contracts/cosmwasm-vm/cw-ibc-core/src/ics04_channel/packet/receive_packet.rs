@@ -173,7 +173,7 @@ impl<'a> CwIbcCoreContext<'a> {
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
             &ibc_packet,
         )?;
-        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketReceive {
+        let cosm_msg = cw_common::ibc_dapp_msg::ExecuteMsg::IbcPacketReceive {
             msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
         };
         let receive_packet_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {

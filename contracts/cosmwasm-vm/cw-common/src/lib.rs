@@ -5,6 +5,7 @@ pub mod core_msg;
 pub mod cw_types;
 pub mod errors;
 pub mod hex_string;
+pub mod ibc_dapp_msg;
 pub mod ibc_types;
 pub mod query_helpers;
 pub mod raw_types;
