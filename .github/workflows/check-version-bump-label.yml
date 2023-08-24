@@ -3,8 +3,14 @@ on:
   pull_request:
     branches:
       - "main"
-  pull_request:
-    types: [opened, labeled, unlabeled, synchronize]
+    # paths:
+    #   - ".github/workflows/labeler.yml"
+    #   - ".github/labeler.yml"
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
 jobs:
   require-version-bump-label:
     runs-on: ubuntu-latest
