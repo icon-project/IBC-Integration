@@ -18,4 +18,4 @@ jobs:
         with:
           with:
             any_of: documentation,enhancement,bug,cicd,test,breaking-change,Feature,scripts
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+            repo_token: ${{ secrets.GITHUB_TOKEN }}
