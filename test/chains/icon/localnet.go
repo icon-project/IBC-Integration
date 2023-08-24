@@ -449,7 +449,6 @@ func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection c
 		"timeoutHeight":      strconv.Itoa(connection.TimeoutHeight),
 	})
 	connectionAddress := c.IBCAddresses[fmt.Sprintf("connection-%s", testcase)]
-	//params := `{"connectionId":"` + connection.ConnectionId + `","counterpartyPortId":"` + connection.CounterPartyPortId + `","counterpartyNid":"` + connection.CounterpartyNid + `","clientId":"` + temp + `","timeoutHeight":"100"}`
 	ctx, err := c.executeContract(context.Background(), connectionAddress, connection.KeyName, "configureConnection", string(params))
 	if err != nil {
 		panic(err)

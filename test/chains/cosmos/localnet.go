@@ -156,8 +156,6 @@ func (c *CosmosLocalnet) ConfigureBaseConnection(ctx context.Context, connection
 		"client_id":            clientId,
 		"timeout_height":       connection.TimeoutHeight,
 	})
-
-	//params := `{"connection_id":"` + connection.ConnectionId + `","counterparty_port_id":"` + connection.CounterPartyPortId + `","counterparty_nid":"` + connection.CounterpartyNid + `","client_id":"` + client_id + `","timeout_height":` + timeoutHeight + `}`
 	_, err := c.executeContract(context.Background(), c.IBCAddresses[fmt.Sprintf("connection-%s", testcase)], connection.KeyName, "configure_connection", string(params))
 
 	return ctx, err
