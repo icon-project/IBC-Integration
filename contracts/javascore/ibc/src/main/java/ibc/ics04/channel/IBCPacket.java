@@ -13,6 +13,7 @@ import score.Context;
 import score.DictDB;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 // TODO verify packet commitments follow a correct format
 public class IBCPacket extends IBCChannelHandshake {
@@ -172,7 +173,7 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(packetCommitment != null, "packet commitment not found");
         byte[] commitment = createPacketCommitment(packet);
 
-        Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
+        Context.require(Arrays.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
         byte[] packetAckPath = IBCCommitment.packetAcknowledgementCommitmentPath(packet.getDestinationPort(),
                 packet.getDestinationChannel(), packet.getSequence());
@@ -300,7 +301,7 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(packetCommitment != null, "packet commitment not found");
         byte[] commitment = createPacketCommitment(packet);
 
-        Context.require(IBCCommitment.equals(packetCommitment, commitment), "commitment byte[] are not equal");
+        Context.require(Arrays.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
         if (channel.getOrdering() == Channel.Order.ORDER_UNORDERED) {
             byte[] packetReceiptKey = IBCCommitment.packetReceiptCommitmentPath(
@@ -441,10 +442,6 @@ public class IBCPacket extends IBCChannelHandshake {
                 Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),
                         false),
                 IBCCommitment.keccak256(packet.getData()));
-    }
-
-    private boolean isZero(Height height) {
-        return height.getRevisionNumber().equals(BigInteger.ZERO) && height.getRevisionHeight().equals(BigInteger.ZERO);
     }
 
     private boolean lt(Height h1, Height h2) {

@@ -16,9 +16,6 @@
 
 package ibc.icon.score.util;
 
-import scorex.util.ArrayList;
-import java.util.List;
-
 public class ByteUtil {
 
     public static byte[] join(byte[]... data) {

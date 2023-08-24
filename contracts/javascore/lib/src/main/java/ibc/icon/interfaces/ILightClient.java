@@ -1,7 +1,6 @@
 package ibc.icon.interfaces;
 
 import foundation.icon.score.client.ScoreInterface;
-import score.annotation.Optional;
 
 import java.math.BigInteger;
 import java.util.Map;
