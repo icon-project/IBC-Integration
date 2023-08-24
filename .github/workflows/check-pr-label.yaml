@@ -1,17 +1,23 @@
-name: Label Checker
+name: Labels Check
 on:
-  push:
-    branches:
-      - "**"
-
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
 jobs:
-
-  check_labels:
-    name: Check labels
+  Check Label:
+    # if: github.base_ref == 'master'
     runs-on: ubuntu-latest
     steps:
-      - uses: agilepathway/label-checker@v1.4.30         
+      - uses: danielchabr/pr-labels-checker@v3
+        id: checkLabel
         with:
-          one_of: major,minor,patch
-          any_of: documentation,enhancement,bug, cicd
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          hasSome: cicd,documentation
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+  # Do_not_merge-check:
+  #   if: github.base_ref == 'master'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: danielchabr/pr-labels-checker@v3
+  #       id: checkLabel
+  #       with:
+  #         hasNone: do not merge,blocked
+  #         githubToken: ${{ secrets.GITHUB_TOKEN }}
