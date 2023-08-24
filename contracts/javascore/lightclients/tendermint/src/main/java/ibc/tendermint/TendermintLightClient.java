@@ -191,7 +191,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 "height", newHeight(clientState.getLatestHeight()).encode());
     }
 
-    @External
+    @External(readonly = true)
     public void verifyMembership(
             String clientId,
             byte[] heightBytes,
@@ -220,7 +220,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         Merkle.verifyMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath, value);
     }
 
-    @External
+    @External(readonly = true)
     public void verifyNonMembership(
             String clientId,
             byte[] heightBytes,

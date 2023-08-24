@@ -61,7 +61,7 @@ public class MockClient implements ILightClient {
         );
     }
 
-    @External
+    @External(readonly = true)
     public void verifyMembership(
             String clientId,
             byte[] heightBytes,
@@ -73,7 +73,7 @@ public class MockClient implements ILightClient {
             byte[] value) {
     }
 
-    @External
+    @External(readonly = true)
     public void verifyNonMembership(
             String clientId,
             byte[] heightBytes,
