@@ -659,7 +659,7 @@ fn test_for_packet_send() {
     assert_eq!(response.attributes[0].value, "instantiate");
 
     let chan_end_on_a = ChannelEnd::new(
-        State::TryOpen,
+        State::Open,
         Order::default(),
         Counterparty::new(
             IbcPortId::from_str(&raw.destination_port).unwrap(),
@@ -1032,7 +1032,7 @@ fn test_for_ack_execute() {
         .unwrap();
     let light_client = LightClient::new("lightclient".to_string());
     contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
+        .bind_port(&mut deps.storage, &src_port, "moduleaddress".to_string())
         .unwrap();
 
     contract

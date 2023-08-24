@@ -1,4 +1,6 @@
-use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_height, to_ibc_port_id};
+use cw_ibc_core::conversions::{
+    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
+};
 use cw_ibc_core::light_client::light_client::LightClient;
 use std::str::FromStr;
 
@@ -531,8 +533,8 @@ use cw_common::ibc_types::IbcClientId;
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics04_channel::Counterparty;
 use cw_ibc_core::ics04_channel::State;
-use cw_ibc_core::ChannelEnd;
 use cw_ibc_core::ConnectionEnd;
+use cw_ibc_core::{compute_packet_commitment, ChannelEnd, Sequence};
 use prost::Message;
 
 use std::time::Duration;
@@ -568,12 +570,18 @@ pub fn get_dummy_channel_end(port_id: &PortId) -> ChannelEnd {
     );
 }
 
+enum Direction {
+    Send,
+    Receive,
+}
+
 pub struct TestContext {
     pub client_state: Option<ClientState>,
     pub consensus_state: Option<ConsensusState>,
     pub connection_end: Option<ConnectionEnd>,
     pub channel_end: Option<ChannelEnd>,
     pub lightclient: Option<LightClient>,
+    pub packet: Option<RawPacket>,
     pub client_id: IbcClientId,
     pub connection_id: ConnectionId,
     pub env: Env,
@@ -596,26 +604,66 @@ impl TestContext {
             port_id: PortId::default(),
             channel_id: ChannelId::default(),
             lightclient: Some(LightClient::new("lightclient".to_string())),
+            packet: None,
         }
     }
 
-    pub fn receive_packet(env: Env, msg: &RawMsgRecvPacket) -> Self {
+    pub fn for_receive_packet(env: Env, msg: &RawMsgRecvPacket) -> Self {
         let mut ctx = TestContext::default(env);
         let packet = msg.packet.clone().unwrap();
 
+        ctx = TestContext::setup_channel_end(ctx, Direction::Receive, &packet);
+        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
+
+        ctx
+    }
+
+    pub fn for_acknowledge_packet(env: Env, msg: &RawMsgAcknowledgement) -> Self {
+        let mut ctx = TestContext::default(env);
+        let packet = msg.packet.clone().unwrap();
+
+        ctx = TestContext::setup_channel_end(ctx, Direction::Send, &packet);
+        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
+        ctx.packet = Some(packet);
+
+        ctx
+    }
+
+    pub fn for_send_packet(env: Env, msg: &RawPacket) -> Self {
+        let mut ctx = TestContext::default(env);
+        let packet = msg.clone();
+
+        ctx = TestContext::setup_channel_end(ctx, Direction::Send, &packet);
+        ctx.packet = Some(packet);
+
+        ctx
+    }
+
+    fn setup_channel_end(mut ctx: TestContext, dir: Direction, packet: &RawPacket) -> TestContext {
         let src_port = to_ibc_port_id(&packet.source_port).unwrap();
         let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
         let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
         let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
 
-        let mut chan_end_on_b = get_dummy_channel_end(&src_port);
-        chan_end_on_b.set_counterparty_channel_id(src_channel.clone());
+        match dir {
+            Direction::Send => {
+                let mut chan_end_on_b = get_dummy_channel_end(&dst_port);
+                chan_end_on_b.set_counterparty_channel_id(dst_channel.clone());
 
-        ctx.channel_end = Some(chan_end_on_b.clone());
-        ctx.port_id = dst_port;
-        ctx.channel_id = dst_channel;
-        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
+                ctx.channel_end = Some(chan_end_on_b.clone());
+                ctx.port_id = src_port;
+                ctx.channel_id = src_channel;
+            }
+            Direction::Receive => {
+                let mut chan_end_on_b = get_dummy_channel_end(&src_port);
+                chan_end_on_b.set_counterparty_channel_id(src_channel.clone());
+
+                ctx.channel_end = Some(chan_end_on_b.clone());
+                ctx.port_id = dst_port;
+                ctx.channel_id = dst_channel;
+            }
+        }
 
         ctx
     }
@@ -629,9 +677,35 @@ impl TestContext {
         self.save_expected_time_per_block(storage, contract);
     }
 
-    pub fn init_packet_receive(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+    pub fn init_receive_packet(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
+    }
+
+    pub fn init_acknowledge_packet(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
+        self.save_packet_commitment(storage, contract);
+    }
+
+    pub fn init_send_packet(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
+        self.save_next_sequence_send(storage, contract);
+        self.save_packet_commitment(storage, contract);
+    }
+
+    pub fn save_next_sequence_send(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext){
+        if let Some(packet) =self.packet.clone() {
+             contract
+        .store_next_sequence_send(
+            storage,
+            &self.port_id,
+            &self.channel_id,
+            &Sequence::from(packet.sequence),
+        )
+        .unwrap();
+        }
     }
 
     pub fn save_client_state(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
@@ -686,6 +760,26 @@ impl TestContext {
         if let Some(lightclient) = self.lightclient.clone() {
             contract
                 .store_client_implementations(storage, &self.client_id, lightclient)
+                .unwrap();
+        }
+    }
+
+    pub fn save_packet_commitment(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        if let Some(packet) = self.packet.clone() {
+            let packet_timeout_height =
+                to_ibc_timeout_height(packet.timeout_height.clone()).unwrap();
+            let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp).unwrap();
+            let packet_sequence = Sequence::from(packet.sequence);
+            let packet_commitment =
+                compute_packet_commitment(&packet.data, &packet_timeout_height, &packet_timestamp);
+            contract
+                .store_packet_commitment(
+                    storage,
+                    &self.port_id,
+                    &self.channel_id,
+                    packet_sequence,
+                    packet_commitment,
+                )
                 .unwrap();
         }
     }

@@ -172,7 +172,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "after matching ackowledgement ");
 
         // Getting the module address for on packet timeout call
-        let contract_address = self.lookup_modules(deps.storage, dst_port.as_bytes().to_vec())?;
+        let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
         let src = CwEndPoint {
             port_id: src_port.to_string(),
