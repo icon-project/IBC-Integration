@@ -301,7 +301,6 @@ pub fn query_get_capability(app: &App, port_id: String, contract_address: Addr) 
         build_smart_query(contract_address.to_string(), to_binary(&query).unwrap());
 
     let balance = app.raw_query(&to_binary(&query).unwrap()).unwrap().unwrap();
-    println!("balances {balance:?}");
     let res: String = from_binary(&balance).unwrap();
     res
 }
@@ -365,7 +364,6 @@ fn test_create_client() {
     call_register_client_type(&mut ctx).unwrap();
     let result = call_create_client(&mut ctx);
     assert!(result.is_ok());
-    println!("{:?}", &result);
 }
 #[test]
 fn test_update_client() {
@@ -379,7 +377,7 @@ fn test_update_client() {
         &mut ctx,
         HexString::from_str(payload.update.unwrap().as_str()).unwrap(),
     );
-    println!("{:?}", &result);
+
     assert!(result.is_ok());
 }
 
@@ -388,9 +386,8 @@ fn test_packet_receiver() {
     let mut ctx = test_icon_to_arcway_handshake();
 
     let result = call_receive_packet(&mut ctx);
-    println!("{result:?}");
+
     assert!(result.is_ok());
-    println!("{:?}", &result);
 }
 
 #[test]
@@ -399,10 +396,9 @@ fn test_packet_send_multi_dapp() {
     call_multi_dapp_add_connection(&mut ctx).unwrap();
 
     let result = call_multi_dapp_send_message(&mut ctx);
-    println!("{result:?}");
+
     ctx.list_contracts();
     assert!(result.is_ok());
-    println!("{:?}", &result);
 }
 
 #[test]
@@ -411,9 +407,7 @@ fn test_packet_send() {
 
     let data = [123, 100, 95, 112, 97];
     let result = call_xcall_app_message(&mut ctx, data.into());
-    println!("{result:?}");
     assert!(result.is_ok());
-    println!("Packet Send Ok {:?}", &result);
 }
 
 pub fn get_client_id(res: &AppResponse) -> String {
@@ -424,7 +418,6 @@ pub fn get_client_id(res: &AppResponse) -> String {
 
 pub fn get_connection_id(res: &AppResponse, event: IbcEventType) -> String {
     let event = get_event(res, &get_event_name(event)).unwrap();
-    println!("{:?}", event);
     let connection_id = event.get("connection_id").unwrap().to_string();
     connection_id
 }
@@ -473,8 +466,6 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     println!("Set Default Connection Ok {:?}", &result);
 
     let result = call_channel_open_try(&mut ctx);
-
-    println!("{:?}", result);
 
     assert!(result.is_ok());
     println!("Channel Open Try Ok{:?}", &result);
