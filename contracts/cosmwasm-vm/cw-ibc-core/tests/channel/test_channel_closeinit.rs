@@ -30,6 +30,19 @@ fn test_validate_close_init_channel() {
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let module = Addr::unchecked("contractaddress");
+    let client_state: ClientState = get_dummy_client_state();
+    let env = mock_env();
+
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
 
     contract
         .store_capability(
@@ -94,7 +107,7 @@ fn test_validate_close_init_channel() {
         info.funds,
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
-
+    println!("{:?}", res);
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_init)
 }

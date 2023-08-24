@@ -1,6 +1,7 @@
 use std::{str::FromStr, time::Duration};
 
 use common::traits::AnyTypes;
+use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
     to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
@@ -505,6 +506,7 @@ fn test_validate_open_init_channel() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
+    let env = mock_env();
     let raw = get_dummy_raw_msg_chan_open_init(None);
 
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
@@ -516,6 +518,17 @@ fn test_validate_open_init_channel() {
     let _cx_module_id = module_id;
 
     let channel_end = to_ibc_channel(raw.channel.clone()).unwrap();
+    let client_state = get_dummy_client_state();
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
 
     contract
         .claim_capability(
@@ -553,6 +566,7 @@ fn test_validate_open_init_channel() {
 #[should_panic(expected = "Unauthorized")]
 fn test_validate_open_init_channel_fail_missing_module_id() {
     let mut deps = deps();
+    let env = mock_env();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
@@ -574,6 +588,17 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
     );
     let conn_id = ConnectionId::new(0);
     let contract = CwIbcCoreContext::new();
+    let client_state = get_dummy_client_state();
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
     contract
         .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
