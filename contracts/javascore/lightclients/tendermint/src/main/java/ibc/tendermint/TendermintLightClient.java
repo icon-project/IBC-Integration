@@ -14,14 +14,12 @@ import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
-import score.annotation.Optional;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
 
 import static ibc.ics23.commitment.types.Merkle.applyPrefix;
-import static ibc.ics23.commitment.types.Merkle.prefixLengthInBigEndian;
 import static ibc.tendermint.TendermintHelper.*;
 import static score.Context.require;
 
