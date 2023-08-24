@@ -1,7 +1,7 @@
 name: Labels Check
 on:
   pull_request:
-    types: [opened, labeled, unlabeled, synchronize]
+    types: [opened, labeled, unlabeled, synchronize, edited]
 jobs:
   Check Label:
     # if: github.base_ref == 'master'
