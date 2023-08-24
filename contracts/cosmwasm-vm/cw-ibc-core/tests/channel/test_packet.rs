@@ -371,7 +371,8 @@ fn test_packet_send_fails_for_invalid_port() {
             Addr::unchecked("moduleaddress").to_string(),
         )
         .unwrap();
-    packet.source_port="invalidPort".to_string();
-    contract.send_packet(deps.as_mut(), &mock_env(), info, packet).unwrap();
-   
+    packet.source_port = "invalidPort".to_string();
+    contract
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
+        .unwrap();
 }
