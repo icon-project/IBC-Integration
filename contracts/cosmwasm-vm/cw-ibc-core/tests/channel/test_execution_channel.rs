@@ -952,7 +952,7 @@ fn test_for_ack_execute() {
     let chan_end_on_a_ordered = ChannelEnd::new(
         State::Open,
         Order::Unordered,
-        Counterparty::new(dst_port.clone(), Some(dst_channel)),
+        Counterparty::new(dst_port, Some(dst_channel)),
         vec![IbcConnectionId::default()],
         Version::new("ics20-1".to_string()),
     );

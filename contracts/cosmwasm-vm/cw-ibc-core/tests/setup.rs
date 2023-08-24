@@ -561,13 +561,13 @@ pub fn get_dummy_connection() -> ConnectionEnd {
 }
 
 pub fn get_dummy_channel_end(port_id: &PortId) -> ChannelEnd {
-    return ChannelEnd::new(
+    ChannelEnd::new(
         State::Open,
         Order::default(),
         Counterparty::new(port_id.clone(), None),
         vec![ConnectionId::default()],
         Version::new("ics20-1".to_string()),
-    );
+    )
 }
 
 enum Direction {
@@ -598,7 +598,7 @@ impl TestContext {
             connection_end: Some(get_dummy_connection()),
             channel_end: Some(get_dummy_channel_end(&PortId::default())),
             client_id: ClientId::default(),
-            env: env,
+            env,
             connection_id: ConnectionId::default(),
             height: Height::new(0, 10).unwrap(),
             port_id: PortId::default(),
@@ -649,7 +649,7 @@ impl TestContext {
         match dir {
             Direction::Send => {
                 let mut chan_end_on_b = get_dummy_channel_end(&dst_port);
-                chan_end_on_b.set_counterparty_channel_id(dst_channel.clone());
+                chan_end_on_b.set_counterparty_channel_id(dst_channel);
 
                 ctx.channel_end = Some(chan_end_on_b.clone());
                 ctx.port_id = src_port;
@@ -657,7 +657,7 @@ impl TestContext {
             }
             Direction::Receive => {
                 let mut chan_end_on_b = get_dummy_channel_end(&src_port);
-                chan_end_on_b.set_counterparty_channel_id(src_channel.clone());
+                chan_end_on_b.set_counterparty_channel_id(src_channel);
 
                 ctx.channel_end = Some(chan_end_on_b.clone());
                 ctx.port_id = dst_port;
@@ -695,16 +695,16 @@ impl TestContext {
         self.save_packet_commitment(storage, contract);
     }
 
-    pub fn save_next_sequence_send(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext){
-        if let Some(packet) =self.packet.clone() {
-             contract
-        .store_next_sequence_send(
-            storage,
-            &self.port_id,
-            &self.channel_id,
-            &Sequence::from(packet.sequence),
-        )
-        .unwrap();
+    pub fn save_next_sequence_send(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        if let Some(packet) = self.packet.clone() {
+            contract
+                .store_next_sequence_send(
+                    storage,
+                    &self.port_id,
+                    &self.channel_id,
+                    &Sequence::from(packet.sequence),
+                )
+                .unwrap();
         }
     }
 
@@ -803,6 +803,6 @@ impl TestContext {
     }
 
     pub fn channel_end(&self) -> ChannelEnd {
-        return self.channel_end.clone().unwrap();
+        self.channel_end.clone().unwrap()
     }
 }

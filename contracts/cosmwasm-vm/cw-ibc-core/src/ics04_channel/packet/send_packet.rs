@@ -44,7 +44,7 @@ impl<'a> CwIbcCoreContext<'a> {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::InvalidChannelState {
                     channel_id: src_channel,
-                    state: chan_end_on_a.state().clone(),
+                    state: *chan_end_on_a.state(),
                 },
             });
         }

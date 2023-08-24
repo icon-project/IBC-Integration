@@ -13,12 +13,11 @@ fn test_packet_send() {
     let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
 
     packet.data = vec![0];
-    let test_context=TestContext::for_send_packet(env.clone(), &packet);
+    let test_context = TestContext::for_send_packet(env, &packet);
     test_context.init_send_packet(deps.as_mut().storage, &contract);
     let src_port = to_ibc_port_id(&packet.source_port).unwrap();
     let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
     let res = contract.send_packet(deps.as_mut(), &mock_env(), packet);
-
 
     assert!(res.is_ok());
     let res = res.unwrap();
@@ -63,11 +62,10 @@ fn test_packet_send_fail_invalid_sequence() {
     let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
     packet.data = vec![0];
 
-    let test_context=TestContext::for_send_packet(env.clone(), &packet);
+    let test_context = TestContext::for_send_packet(env, &packet);
     test_context.init_send_packet(deps.as_mut().storage, &contract);
     packet.sequence = 10;
-   
-  
+
     contract
         .send_packet(deps.as_mut(), &mock_env(), packet)
         .unwrap();
