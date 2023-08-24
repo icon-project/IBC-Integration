@@ -2,10 +2,10 @@ name: Pull Request Labeler
 on:
   pull_request:
     branches:
-      - "**"
-    paths:
-      - ".github/workflows/labeler.yml"
-      - ".github/labeler.yml"
+      - "main"
+    # paths:
+    #   - ".github/workflows/labeler.yml"
+    #   - ".github/labeler.yml"
   pull_request_target:
     types:
       - opened
