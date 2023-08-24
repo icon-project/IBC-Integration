@@ -279,40 +279,11 @@ impl<'a> CwIbcCoreContext<'a> {
         host_height: Height,
         host_timestamp: Timestamp,
     ) -> Result<(), ContractError> {
-        let packet_height = packet
-            .timeout_height
-            .clone()
-            .map(|h| h.revision_height)
-            .unwrap_or(0);
-        if packet_height == 0 && packet.timeout_timestamp == 0 {
-            return Err(ContractError::IbcPacketError {
-                error: PacketError::InvalidTimeoutHeight,
-            });
-        }
-
-        if packet_height > 0 {
-            let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
-
-            if !packet_timeout_height.has_expired(host_height) {
-                return Err(ContractError::IbcPacketError {
-                    error: PacketError::PacketTimeoutHeightNotReached {
-                        timeout_height: packet_timeout_height,
-                        chain_height: host_height,
-                    },
-                });
-            }
-        }
-        if packet.timeout_timestamp > 0 {
-            let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
-
-            if let Expiry::NotExpired = host_timestamp.check_expiry(&packet_timestamp) {
-                return Err(ContractError::IbcPacketError {
-                    error: PacketError::PacketTimeoutTimestampNotReached {
-                        timeout_timestamp: packet_timestamp,
-                        chain_timestamp: host_timestamp,
-                    },
-                });
-            }
+        let packet_not_expired = self
+            .validate_packet_not_expired(packet, host_height, host_timestamp)
+            .is_ok();
+        if packet_not_expired {
+            return Err(ContractError::PacketNotExpired);
         }
 
         Ok(())

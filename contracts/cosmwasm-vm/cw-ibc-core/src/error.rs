@@ -77,6 +77,9 @@ pub enum ContractError {
 
     #[error("InvalidHeight")]
     InvalidHeight,
+
+    #[error("PacketNotExpired")]
+    PacketNotExpired,
 }
 
 impl From<FromHexError> for ContractError {
