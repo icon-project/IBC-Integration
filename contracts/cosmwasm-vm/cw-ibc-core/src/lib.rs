@@ -56,10 +56,9 @@ use cw_common::ibc_types::{IbcChannelId, IbcClientId, IbcConnectionId, IbcPortId
 use cw_storage_plus::{Item, Map};
 
 pub use cw_common::commitment::*;
+use cw_common::core_msg::InstantiateMsg;
 use std::str::FromStr;
 use thiserror::Error;
-
-use crate::msg::InstantiateMsg;
 
 use crate::traits::{IbcClient, ValidateChannel};
 
@@ -71,7 +70,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: msg::InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let call_service = CwIbcCoreContext::default();
 

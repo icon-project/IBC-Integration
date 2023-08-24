@@ -4,14 +4,14 @@ use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ac
 use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
+use cw_common::core_msg::InstantiateMsg;
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
 use cw_ibc_core::conversions::{
     to_ibc_channel_id, to_ibc_timeout_block, to_ibc_timeout_height, to_ibc_timestamp,
 };
 use cw_ibc_core::light_client::light_client::LightClient;
 use cw_ibc_core::{
-    ics04_channel::close_init::on_chan_close_init_submessage, msg::InstantiateMsg,
-    EXECUTE_ON_CHANNEL_CLOSE_INIT,
+    ics04_channel::close_init::on_chan_close_init_submessage, EXECUTE_ON_CHANNEL_CLOSE_INIT,
 };
 use cw_ibc_core::{
     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
