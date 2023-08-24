@@ -30,6 +30,17 @@ fn test_for_channel_open_init_execution_message() {
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
+    let client_state = get_dummy_client_state();
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
 
@@ -449,6 +460,18 @@ fn test_for_channel_close_init() {
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
 
+    let client_state = get_dummy_client_state();
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
+
     assert_eq!(response.attributes[0].value, "instantiate");
 
     let msg = get_dummy_raw_msg_chan_close_init();
@@ -507,7 +530,7 @@ fn test_for_channel_close_init() {
 
     let expected =
         on_chan_close_init_submessage(&port_id, &channel_id, &channel_end, &connection_id);
-    let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: expected };
+    let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),

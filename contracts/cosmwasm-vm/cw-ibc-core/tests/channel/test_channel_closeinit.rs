@@ -30,6 +30,19 @@ fn test_validate_close_init_channel() {
     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let module = Addr::unchecked("contractaddress");
+    let client_state: ClientState = get_dummy_client_state();
+    let env = mock_env();
+
+    let client = client_state.to_any().encode_to_vec();
+    contract
+        .store_client_state(
+            &mut deps.storage,
+            &env,
+            &IbcClientId::default(),
+            client,
+            client_state.get_keccak_hash().to_vec(),
+        )
+        .unwrap();
 
     contract
         .store_capability(
@@ -79,7 +92,7 @@ fn test_validate_close_init_channel() {
     let expected =
         on_chan_close_init_submessage(&port_id, &channel_id, &channel_end, &connection_id);
 
-    let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: expected };
+    let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),

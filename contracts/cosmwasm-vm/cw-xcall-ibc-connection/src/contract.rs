@@ -8,6 +8,7 @@ use cw_xcall_lib::network_address::NetId;
 
 use cw_common::cw_println;
 
+use super::*;
 use crate::{
     state::{
         HOST_SEND_MESSAGE_REPLY_ID, HOST_WRITE_ACKNOWLEDGEMENT_REPLY_ID,
@@ -18,8 +19,6 @@ use crate::{
         message::Message, LOG_PREFIX,
     },
 };
-
-use super::*;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-xcall-ibc-connection";
