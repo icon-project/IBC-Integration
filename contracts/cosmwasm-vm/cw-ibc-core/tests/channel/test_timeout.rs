@@ -280,9 +280,7 @@ fn test_timeout_packet_validate_to_light_client() {
     )
 }
 
-#[should_panic(
-    expected = "PacketNotExpired"
-)]
+#[should_panic(expected = "PacketNotExpired")]
 #[test]
 fn test_timeout_packet_fails_if_height_not_expired() {
     let contract = CwIbcCoreContext::default();
@@ -423,9 +421,7 @@ fn test_timeout_packet_fails_if_height_not_expired() {
         .unwrap();
 }
 
-#[should_panic(
-    expected = "PacketNotExpired"
-)]
+#[should_panic(expected = "PacketNotExpired")]
 #[test]
 fn test_timeout_packet_fails_if_timestamp_not_expired() {
     let contract = CwIbcCoreContext::default();
@@ -434,7 +430,7 @@ fn test_timeout_packet_fails_if_timestamp_not_expired() {
     let info = create_mock_info("channel-creater", "umlg", 20000000);
 
     let proof_height = 50;
-    let timeout_height = proof_height +10;
+    let timeout_height = proof_height + 10;
     let timeout_timestamp = 1692668413 * 1000000000;
     let msg = get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
 
