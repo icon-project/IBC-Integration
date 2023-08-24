@@ -173,7 +173,7 @@ impl<'a> CwIbcCoreContext<'a> {
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
             &ibc_packet,
         )?;
-        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketReceive {
+        let cosm_msg = cw_common::ibc_dapp_msg::ExecuteMsg::IbcPacketReceive {
             msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
         };
         let receive_packet_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -230,13 +230,13 @@ impl<'a> CwIbcCoreContext<'a> {
             Order::None => Ok(false),
             Order::Unordered => {
                 let is_received = self
-                    .get_packet_receipt(deps.storage, &port_id, &channel_id, sequence)
+                    .get_packet_receipt(deps.storage, port_id, channel_id, sequence)
                     .is_ok();
                 Ok(is_received)
             }
             Order::Ordered => {
                 let next_seq_recv =
-                    self.get_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
+                    self.get_next_sequence_recv(deps.storage, port_id, channel_id)?;
 
                 if sequence > next_seq_recv {
                     return Err(ContractError::IbcPacketError {

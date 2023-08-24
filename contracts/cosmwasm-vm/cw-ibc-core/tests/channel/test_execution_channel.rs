@@ -594,7 +594,7 @@ fn test_for_channel_close_init() {
 
     let expected =
         on_chan_close_init_submessage(&port_id, &channel_id, &channel_end, &connection_id);
-    let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: expected };
+    let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelClose { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
         "contractaddress".to_string(),
