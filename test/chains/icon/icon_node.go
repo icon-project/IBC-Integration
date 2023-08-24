@@ -253,12 +253,14 @@ func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath,
 }
 
 // Get Transaction result when hash is provided after executing a transaction
-func (in *IconNode) TransactionResult(ctx context.Context, hash string) (icontypes.TransactionResult, error) {
-	var result icontypes.TransactionResult
+func (in *IconNode) TransactionResult(ctx context.Context, hash string) (*icontypes.TransactionResult, error) {
 	uri := fmt.Sprintf("http://%s:9080/api/v3", in.Name()) //"http://" + in.HostRPCPort + "/api/v3"
-	out, _, _ := in.ExecBin(ctx, "rpc", "txresult", hash, "--uri", uri)
-	json.Unmarshal(out, &result)
-	return result, nil
+	out, _, err := in.ExecBin(ctx, "rpc", "txresult", hash, "--uri", uri)
+	if err != nil {
+		return nil, err
+	}
+	var result = new(icontypes.TransactionResult)
+	return result, json.Unmarshal(out, result)
 }
 
 // ExecTx executes a transaction, waits for 2 blocks if successful, then returns the tx hash.
@@ -270,8 +272,7 @@ func (in *IconNode) ExecTx(ctx context.Context, initMessage string, filePath str
 	if err != nil {
 		return "", err
 	}
-	json.Unmarshal(stdout, &output)
-	return output, nil
+	return output, json.Unmarshal(stdout, &output)
 }
 
 // TxCommand is a helper to retrieve a full command for broadcasting a tx
@@ -332,16 +333,21 @@ func (tn *IconNode) WriteFile(ctx context.Context, content []byte, relPath strin
 	return fw.WriteFile(ctx, tn.VolumeName, relPath, content)
 }
 
-func (in *IconNode) QueryContract(ctx context.Context, scoreAddress, methodName, params string) (string, error) {
+func (in *IconNode) QueryContract(ctx context.Context, scoreAddress, methodName, params string) ([]byte, error) {
 	uri := fmt.Sprintf("http://%s:9080/api/v3", in.Name())
+	var args = []string{"rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", uri}
 	if params != "" {
-		out, _, _ := in.ExecBin(ctx, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--param", params, "--uri", uri)
-		return string(out), nil
-	} else {
-		out, _, _ := in.ExecBin(ctx, "rpc", "call", "--to", scoreAddress, "--method", methodName, "--uri", uri)
-		return string(out), nil
+		var paramName = "--param"
+		if strings.HasPrefix(params, "{") && strings.HasSuffix(params, "}") {
+			paramName = "--raw"
+		}
+		args = append(args, paramName, params)
 	}
-
+	out, _, err := in.ExecBin(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (in *IconNode) CreateKey(ctx context.Context, password string) error {
@@ -360,11 +366,7 @@ func (in *IconNode) CreateKey(ctx context.Context, password string) error {
 }
 
 func (in *IconNode) ExecuteContract(ctx context.Context, scoreAddress, methodName, keyStorePath, params string) (string, error) {
-	hash, err := in.ExecCallTx(ctx, scoreAddress, methodName, keyStorePath, params)
-	if err != nil {
-		return "", err
-	}
-	return hash, nil
+	return in.ExecCallTx(ctx, scoreAddress, methodName, keyStorePath, params)
 }
 
 func (in *IconNode) ExecCallTx(ctx context.Context, scoreAddress, methodName, keystorePath, params string) (string, error) {
@@ -375,8 +377,7 @@ func (in *IconNode) ExecCallTx(ctx context.Context, scoreAddress, methodName, ke
 	if err != nil {
 		return "", err
 	}
-	json.Unmarshal(stdout, &output)
-	return output, nil
+	return output, json.Unmarshal(stdout, &output)
 }
 
 func (in *IconNode) ExecCallTxCommand(ctx context.Context, scoreAddress, methodName, keystorePath, params string) []string {

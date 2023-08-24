@@ -1019,7 +1019,7 @@ fn test_for_recieve_packet() {
     let response = contract.reply(deps.as_mut(), env, reply_message);
     println!("{:?}", response);
     assert!(response.is_ok());
-    assert_eq!(response.unwrap().events[0].ty, "recv_packet");
+    assert_eq!(response.unwrap().events[0].ty, "write_acknowledgement");
 }
 
 #[test]

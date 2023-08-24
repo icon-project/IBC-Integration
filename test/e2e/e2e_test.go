@@ -2,10 +2,10 @@ package e2e_test
 
 import (
 	"context"
-	"github.com/icon-project/ibc-integration/test/testsuite"
+	"github.com/icon-project/ibc-integration/test/e2e/tests"
 	"testing"
 
-	"github.com/icon-project/ibc-integration/test/e2e/tests"
+	"github.com/icon-project/ibc-integration/test/testsuite"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -20,10 +20,9 @@ type E2ETest struct {
 func (s *E2ETest) TestE2E_all() {
 	t := s.T()
 	ctx := context.TODO()
-
+	s.Require().NoError(s.SetCfg())
 	t.Run("test xcall", func(t *testing.T) {
-		rly := s.SetupChainsAndRelayer(ctx)
-		s.StartRelayer(rly)
+		_ = s.SetupChainsAndRelayer(ctx)
 		xcall := tests.XCallTestSuite{
 			E2ETestSuite: &s.E2ETestSuite,
 			T:            t,
