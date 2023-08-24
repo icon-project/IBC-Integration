@@ -230,13 +230,13 @@ impl<'a> CwIbcCoreContext<'a> {
             Order::None => Ok(false),
             Order::Unordered => {
                 let is_received = self
-                    .get_packet_receipt(deps.storage, &port_id, &channel_id, sequence)
+                    .get_packet_receipt(deps.storage, port_id, channel_id, sequence)
                     .is_ok();
                 Ok(is_received)
             }
             Order::Ordered => {
                 let next_seq_recv =
-                    self.get_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
+                    self.get_next_sequence_recv(deps.storage, port_id, channel_id)?;
 
                 if sequence > next_seq_recv {
                     return Err(ContractError::IbcPacketError {
@@ -336,7 +336,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("message", "success: packet receive");
 
                 if !ack.is_empty() {
-                    let raw_packet = to_raw_packet(packet.clone());
+                    let raw_packet = to_raw_packet(packet);
                     self.validate_write_acknowledgement(deps.storage, &raw_packet)?;
                     self.store_packet_acknowledgement(
                         deps.storage,
