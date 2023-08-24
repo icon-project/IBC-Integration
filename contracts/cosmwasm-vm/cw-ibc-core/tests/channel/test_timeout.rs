@@ -244,7 +244,6 @@ fn test_timeout_packet_validate_to_light_client() {
         .bind_port(&mut deps.storage, &src_port, "moduleaddress".to_string())
         .unwrap();
 
-    // mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
         next_proof_context_hash: vec![1, 2, 3],
@@ -392,7 +391,6 @@ fn test_timeout_packet_fails_if_height_not_expired() {
         .bind_port(&mut deps.storage, &src_port, "moduleaddress".to_string())
         .unwrap();
 
-    // mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
         next_proof_context_hash: vec![1, 2, 3],
@@ -540,7 +538,6 @@ fn test_timeout_packet_fails_if_timestamp_not_expired() {
         .bind_port(&mut deps.storage, &src_port, "moduleaddress".to_string())
         .unwrap();
 
-    // mock_lightclient_reply(&mut deps);
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
         next_proof_context_hash: vec![1, 2, 3],
