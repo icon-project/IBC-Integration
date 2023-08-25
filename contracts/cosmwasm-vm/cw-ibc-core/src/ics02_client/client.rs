@@ -1,3 +1,4 @@
+use common::constants::ICON_CLIENT_STATE_TYPE_URL;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
@@ -439,10 +440,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Box<dyn IClientState>, ContractError> {
         let client_state_any = self.client_state_any(store, client_id)?;
 
-        let client_state =
-            ClientState::from_any(client_state_any).map_err(Into::<ContractError>::into)?;
-
-        Ok(Box::new(client_state))
+        return self.decode_client_state(client_state_any);
     }
 
     pub fn client_state_any(
@@ -540,6 +538,19 @@ impl<'a> CwIbcCoreContext<'a> {
 
     pub fn max_expected_time_per_block(&self) -> std::time::Duration {
         Duration::from_secs(60)
+    }
+
+    pub fn decode_client_state(&self,client_state:Any)->Result<Box<dyn IClientState>,ContractError> {
+        match client_state.type_url.as_str() {
+            ICON_CLIENT_STATE_TYPE_URL=>{
+                let client_state= ClientState::from_any(client_state)
+                .map_err(|e|ContractError::IbcDecodeError { error: e })?;
+                Ok(Box::new(client_state))
+
+            },
+            _ => Err(ContractError::FailedConversion)
+        }
+
     }
 }
 

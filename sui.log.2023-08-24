@@ -1,0 +1,23 @@
+2023-08-24T14:49:58.584605Z  INFO sui::client_commands: 0x29a0918bee7a7e37d1a7d0613efc3f4455883ea217046f7db91d53e69c204589
+2023-08-24T14:51:04.878049Z  INFO sui::client_commands: devnet
+2023-08-24T14:52:12.330008Z  WARN sui_sdk::wallet_context: Client/Server api version mismatch, client api version : 1.5.0, server api version : 1.8.0
+2023-08-24T14:52:13.069231Z  INFO sui::client_commands:                              Object ID                              |  Gas Value 
+2023-08-24T14:52:13.069270Z  INFO sui::client_commands: ----------------------------------------------------------------------------------
+2023-08-24T14:52:13.069273Z  INFO sui::client_commands:  0xf3d97c63255c22b050b465ecc75ecb02cc02dcc72c1b1d0ac91696b4bf8fb7f0 | 10000000000
+2023-08-24T14:52:32.174554Z  WARN sui_sdk::wallet_context: Client/Server api version mismatch, client api version : 1.5.0, server api version : 1.8.0
+2023-08-24T14:52:32.771375Z  INFO sui::client_commands:                              Object ID                              |  Gas Value 
+2023-08-24T14:52:32.771454Z  INFO sui::client_commands: ----------------------------------------------------------------------------------
+2023-08-24T14:52:32.771493Z  INFO sui::client_commands:  0xf3d97c63255c22b050b465ecc75ecb02cc02dcc72c1b1d0ac91696b4bf8fb7f0 | 10000000000
+2023-08-24T14:52:53.068790Z  WARN sui_sdk::wallet_context: Client/Server api version mismatch, client api version : 1.5.0, server api version : 1.8.0
+2023-08-24T14:52:53.695028Z  INFO sui::client_commands:                  Object ID                  |  Version   |                    Digest                    |   Owner Type    |               Object Type               
+2023-08-24T14:52:53.695057Z  INFO sui::client_commands: ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2023-08-24T14:52:53.695059Z  INFO sui::client_commands:  0xf3d97c63255c22b050b465ecc75ecb02cc02dcc72c1b1d0ac91696b4bf8fb7f0 |     34     | S1cIyoZyj1Sw/jg14yiC7EuKdLuv9IQs4+cyEUCjEq4= |  AddressOwner   |  Some(Struct(MoveObjectType(GasCoin)))  
+2023-08-24T14:52:53.695060Z  INFO sui::client_commands: Showing 1 results.
+2023-08-24T14:53:15.029014Z  WARN sui_sdk::wallet_context: Client/Server api version mismatch, client api version : 1.5.0, server api version : 1.8.0
+2023-08-24T14:53:15.585991Z  INFO sui::client_commands:                  Object ID                  |  Version   |                    Digest                    |   Owner Type    |               Object Type               
+2023-08-24T14:53:15.586017Z  INFO sui::client_commands: ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2023-08-24T14:53:15.586019Z  INFO sui::client_commands:  0xf3d97c63255c22b050b465ecc75ecb02cc02dcc72c1b1d0ac91696b4bf8fb7f0 |     34     | S1cIyoZyj1Sw/jg14yiC7EuKdLuv9IQs4+cyEUCjEq4= |  AddressOwner   |  Some(Struct(MoveObjectType(GasCoin)))  
+2023-08-24T14:53:15.586020Z  INFO sui::client_commands: Showing 1 results.
+2023-08-24T14:53:42.202739Z  INFO sui::client_commands: Showing 2 results.
+2023-08-24T14:53:42.202774Z  INFO sui::client_commands: 0x29a0918bee7a7e37d1a7d0613efc3f4455883ea217046f7db91d53e69c204589 <=
+2023-08-24T14:53:42.202777Z  INFO sui::client_commands: 0x8695f80cb204b0beb91cc2ac0682cd72e8cfd5d852eef8372ad8160ec4f1c6d6

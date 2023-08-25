@@ -45,15 +45,17 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let client_counter = self.client_counter(deps.as_ref().storage)?;
 
-        let client_type = IbcClientType::new(ICON_CLIENT_TYPE.to_owned());
+        let client_state_any = message.client_state.ok_or(ContractError::IbcClientError {
+            error: ClientError::MissingRawClientState,
+        })?;
 
+        let client_state= self.decode_client_state(client_state_any.clone())?;
+        let client_type = client_state.client_type();
         let client_id = ClientId::new(client_type.clone(), client_counter)?;
 
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
-        let client_state = message.client_state.ok_or(ContractError::IbcClientError {
-            error: ClientError::MissingRawClientState,
-        })?;
+        
         let consensus_state = message
             .consensus_state
             .ok_or(ContractError::IbcClientError {
@@ -62,7 +64,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let create_client_message = LightClientMessage::CreateClient {
             client_id: client_id.to_string(),
-            client_state: client_state.encode_to_vec(),
+            client_state: client_state_any.encode_to_vec(),
             consensus_state: consensus_state.encode_to_vec(),
         };
 
