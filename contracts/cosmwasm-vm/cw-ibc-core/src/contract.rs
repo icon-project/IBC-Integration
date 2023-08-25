@@ -109,7 +109,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::CreateClient { msg } => {
                 cw_println!(deps, "[IBCCore] CreateClient Called");
                 let message: RawMsgCreateClient = Self::raw_from_hex(&msg)?;
-                self.create_client(deps, info,env, message)
+                self.create_client(deps, info, env, message)
             }
             CoreExecuteMsg::UpdateClient { msg } => {
                 cw_println!(deps, "[IBCCore] UpdateClient Called");

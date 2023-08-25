@@ -1,6 +1,6 @@
 use crate::{
     conversions::to_ibc_client_id, light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT,
-    EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR,
+    EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR, EXECUTE_UPDATE_CLIENT,
 };
 
 use super::{events::client_misbehaviour_event, *};
@@ -41,68 +41,59 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        env:Env,
+        env: Env,
         message: RawMsgCreateClient,
     ) -> Result<Response, ContractError> {
-        let client_counter = self.client_counter(deps.as_ref().storage)?;
 
         let client_state_any = message.client_state.ok_or(ContractError::IbcClientError {
             error: ClientError::MissingRawClientState,
         })?;
         let consensus_state_any = message
-        .consensus_state
-        .ok_or(ContractError::IbcClientError {
-            error: ClientError::MissingRawConsensusState,
-        })?;
-        
+            .consensus_state
+            .ok_or(ContractError::IbcClientError {
+                error: ClientError::MissingRawConsensusState,
+            })?;
 
-        let client_state= self.decode_client_state(client_state_any.clone())?;
-        let consensus_state= self.decode_consensus_state(consensus_state_any.clone())?;
+        let client_state = self.decode_client_state(client_state_any.clone())?;
+        let consensus_state = self.decode_consensus_state(consensus_state_any.clone())?;
         let client_type = client_state.client_type();
-        let client_id = ClientId::new(client_type.clone(), client_counter)?;
-        let height= client_state.latest_height().clone();
-        
+        let height = client_state.latest_height().clone();
+        let client_id = self.generate_client_identifier(deps.storage, client_type.clone())?;
+        let light_client_address =
+            self.get_client_from_registry(deps.as_ref().storage, client_type.clone())?;
 
-        let client_id =
-        self.generate_client_identifier(deps.storage, client_type.clone())?;
+        self.store_client_type(deps.storage, &client_id, client_type.clone())?;
 
-    let light_client_address =
-        self.get_client_from_registry(deps.as_ref().storage, client_type.clone())?;
+        self.store_client_implementations(
+            deps.storage,
+            &client_id,
+            LightClient::new(light_client_address),
+        )?;
 
-    self.store_client_type(deps.storage, &client_id, client_type.clone())?;
+        self.store_client_state(
+            deps.storage,
+            &env,
+            &client_id,
+            client_state_any.encode_to_vec(),
+            client_state.hash(),
+        )?;
 
-    self.store_client_implementations(
-        deps.storage,
-        &client_id,
-        LightClient::new(light_client_address),
-    )?;
+        self.store_consensus_state(
+            deps.storage,
+            &client_id,
+            height,
+            consensus_state_any.encode_to_vec(),
+            consensus_state.hash(),
+        )?;
 
-    self.store_client_state(
-        deps.storage,
-        &env,
-        &client_id,
-        client_state_any.encode_to_vec(),
-        client_state.hash(),
-    )?;
-
-    self.store_consensus_state(
-        deps.storage,
-        &client_id,
-        height,
-        consensus_state_any.encode_to_vec(),
-        consensus_state.hash(),
-    )?;
-
-    let event = create_client_event(
-        client_id.as_str(),
-        client_type.as_str(),
-        &height.to_string(),
-    );
+        let event = create_client_event(
+            client_id.as_str(),
+            client_type.as_str(),
+            &height.to_string(),
+        );
 
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type)?;
-        
-       
 
         let create_client_message = LightClientMessage::CreateClient {
             client_id: client_id.to_string(),
@@ -115,7 +106,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             msg: to_binary(&create_client_message).map_err(ContractError::Std)?,
             funds: info.funds,
         });
-        let sub_msg =SubMsg {
+        let sub_msg = SubMsg {
             id: EXECUTE_CREATE_CLIENT,
             msg: create_client_message,
             gas_limit: None,
@@ -123,7 +114,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         };
 
         Ok(Response::new()
-            .add_submessage(sub_msg).add_event(event).add_attribute("client_id", client_id.to_string())
+            .add_submessage(sub_msg)
+            .add_event(event)
+            .add_attribute("client_id", client_id.to_string())
             .add_attribute("method", "create_client"))
     }
 
@@ -164,6 +157,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into);
         }
+
+        self.store_callback_data(deps.storage, EXECUTE_UPDATE_CLIENT, &client_id)?;
 
         let sub_msg: SubMsg = client.update_client(&client_id, &header)?;
         cw_println!(
@@ -332,7 +327,6 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         Ok(client_identifier)
     }
 
-    
     /// The above code is implementing the `execute_update_client_reply` function for a Rust-based smart
     /// contract. This function is responsible for handling the result of a sub-message that updates the
     /// client state and consensus state of an IBC client. The function first checks if the sub-message
@@ -419,7 +413,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 Some(data) => {
                     let response: UpgradeClientResponse =
                         from_binary(&data).map_err(ContractError::Std)?;
-                    let client_id = response.client_id().map_err(ContractError::from)?;
+                        let stored_id:ClientId=self.get_callback_data(deps.as_ref().storage, EXECUTE_UPDATE_CLIENT)?;
+                        
+                        let client_id = response.client_id().map_err(ContractError::from)?;
 
                     self.store_client_state(
                         deps.storage,

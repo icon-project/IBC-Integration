@@ -1,9 +1,12 @@
+use dyn_clone::DynClone;
 use ibc_proto::google::protobuf::Any;
 use ibc_proto::protobuf::Protobuf;
 use prost::{DecodeError, Message};
 
 use crate::client_state::get_default_icon_client_state;
+use crate::consensus_state::IConsensusState;
 use crate::constants::ICON_BTP_HEADER_TYPE_URL;
+use crate::ibc::Height;
 use crate::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use debug_print::debug_println;
 
@@ -145,6 +148,22 @@ impl TryFrom<Any> for BtpHeader {
             ICON_BTP_HEADER_TYPE_URL => decode_btp_header(raw.value.deref()),
             _ => Err(DecodeError::new("invalid url")),
         }
+    }
+}
+
+pub trait ISignedHeader: core::fmt::Debug + Send + Sync + DynClone + prost::Message {
+    fn height(&self) -> crate::ibc::Height;
+    fn consensus_state(&self)->Box<dyn IConsensusState>;
+}
+
+impl ISignedHeader for BtpHeader {
+    fn height(&self) -> crate::ibc::Height {
+        return Height::new(0, self.main_height).unwrap();
+    }
+
+    fn consensus_state(&self)->Box<dyn IConsensusState> {
+        let consensus_state= self.to_consensus_state();
+        Box::new(consensus_state)
     }
 }
 

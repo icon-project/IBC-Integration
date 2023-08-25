@@ -541,31 +541,33 @@ impl<'a> CwIbcCoreContext<'a> {
         Duration::from_secs(60)
     }
 
-    pub fn decode_client_state(&self,client_state:Any)->Result<Box<dyn IClientState>,ContractError> {
+    pub fn decode_client_state(
+        &self,
+        client_state: Any,
+    ) -> Result<Box<dyn IClientState>, ContractError> {
         match client_state.type_url.as_str() {
-            ICON_CLIENT_STATE_TYPE_URL=>{
-                let client_state= ClientState::from_any(client_state)
-                .map_err(|e|ContractError::IbcDecodeError { error: e })?;
-            
+            ICON_CLIENT_STATE_TYPE_URL => {
+                let client_state = ClientState::from_any(client_state)
+                    .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+
                 Ok(Box::new(client_state))
-
-            },
-            _ => Err(ContractError::FailedConversion)
+            }
+            _ => Err(ContractError::FailedConversion),
         }
-
     }
-    pub fn decode_consensus_state(&self,consensus_state:Any)->Result<Box<dyn IConsensusState>,ContractError> {
+    pub fn decode_consensus_state(
+        &self,
+        consensus_state: Any,
+    ) -> Result<Box<dyn IConsensusState>, ContractError> {
         match consensus_state.type_url.as_str() {
-            ICON_CONSENSUS_STATE_TYPE_URL =>{
-                let client_state= ConsensusState::from_any(consensus_state)
-                .map_err(|e|ContractError::IbcDecodeError { error: e })?;
-            
-                Ok(Box::new(client_state))
+            ICON_CONSENSUS_STATE_TYPE_URL => {
+                let consensus_state = ConsensusState::from_any(consensus_state)
+                    .map_err(|e| ContractError::IbcDecodeError { error: e })?;
 
-            },
-            _ => Err(ContractError::FailedConversion)
+                Ok(Box::new(consensus_state))
+            }
+            _ => Err(ContractError::FailedConversion),
         }
-
     }
 }
 

@@ -9,10 +9,10 @@ use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use common::utils::keccak256;
+use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::ContractResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
-use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::core_msg::ExecuteMsg;
@@ -24,10 +24,10 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 use cw_common::ProstMessage;
 
 use cw_ibc_core::conversions::{to_ibc_client_id, to_ibc_connection_id, to_ibc_height};
+use cw_ibc_core::ics04_channel::IbcClient;
 use cw_ibc_core::{
     ConnectionEnd, EXECUTE_CONNECTION_OPENTRY, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT,
 };
-use cw_ibc_core::ics04_channel::IbcClient;
 
 use cw_common::core_msg::InstantiateMsg;
 use cw_ibc_core::context::CwIbcCoreContext;
@@ -90,10 +90,6 @@ fn test_for_create_client_execution_message() {
         .unwrap();
 
     assert_eq!(response.attributes[1].value, "create_client");
-
-
-
-   
 }
 
 #[test]
@@ -133,14 +129,16 @@ fn test_for_update_client_execution_messages() {
     contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-  
+
     let msg = RawMsgCreateClient {
         client_state: Some(client_state.to_any()),
         consensus_state: Some(consenus_state.to_any()),
-        signer: "signer".to_string()
+        signer: "signer".to_string(),
     };
 
-    contract.create_client(deps.as_mut(), info.clone(), mock_env(), msg).unwrap();
+    contract
+        .create_client(deps.as_mut(), info.clone(), mock_env(), msg)
+        .unwrap();
 
     let merkle_node = RawMerkleNode {
         dir: 0,

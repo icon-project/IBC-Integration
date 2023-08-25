@@ -74,13 +74,13 @@ impl From<ClientState> for Any {
     }
 }
 
-pub trait IClientState :core::fmt::Debug + Send + Sync + DynClone + prost::Message{
+pub trait IClientState: core::fmt::Debug + Send + Sync + DynClone + prost::Message {
     fn latest_height(&self) -> crate::ibc::Height;
     fn frozen_height(&self) -> Option<crate::ibc::Height>;
     fn expired(&self, elapsed: std::time::Duration) -> bool;
     fn is_frozen(&self) -> bool;
     fn client_type(&self) -> IbcClientType;
-    fn hash(&self)->Vec<u8>;
+    fn hash(&self) -> Vec<u8>;
 }
 
 impl IClientState for ClientState {
@@ -108,7 +108,7 @@ impl IClientState for ClientState {
         IbcClientType::new(ICON_CLIENT_TYPE.to_string())
     }
 
-    fn hash(&self)->Vec<u8> {
+    fn hash(&self) -> Vec<u8> {
         self.get_keccak_hash().to_vec()
     }
 }

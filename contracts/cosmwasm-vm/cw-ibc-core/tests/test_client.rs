@@ -274,7 +274,7 @@ fn check_for_create_client_message() {
     };
 
     let response = contract
-        .create_client(deps.as_mut(), info,mock_env(), create_client_message)
+        .create_client(deps.as_mut(), info, mock_env(), create_client_message)
         .unwrap();
 
     assert_eq!(response.messages[0].id, 21);
@@ -316,7 +316,7 @@ fn check_for_client_state_from_storage() {
     };
 
     contract
-        .create_client(deps.as_mut(), info,mock_env(), create_client_message)
+        .create_client(deps.as_mut(), info, mock_env(), create_client_message)
         .unwrap();
 
     let mock_reponse_data = CreateClientResponse::new(
@@ -388,7 +388,7 @@ fn check_for_consensus_state_from_storage() {
     };
 
     contract
-        .create_client(deps.as_mut(), info, mock_env(),create_client_message)
+        .create_client(deps.as_mut(), info, mock_env(), create_client_message)
         .unwrap();
 
     let mock_reponse_data = CreateClientResponse::new(
@@ -431,7 +431,6 @@ fn check_for_consensus_state_from_storage() {
     )
 }
 
-
 #[test]
 #[should_panic(expected = "InvalidNextClientSequence")]
 fn fails_on_create_client_message_without_proper_initialisation() {
@@ -463,7 +462,7 @@ fn fails_on_create_client_message_without_proper_initialisation() {
     };
 
     contract
-        .create_client(deps.as_mut(), info,mock_env(), create_client_message)
+        .create_client(deps.as_mut(), info, mock_env(), create_client_message)
         .unwrap();
 }
 
@@ -501,7 +500,12 @@ fn check_for_update_client_message() {
     };
 
     let response = contract
-        .create_client(deps.as_mut(), info.clone(),mock_env(), create_client_message)
+        .create_client(
+            deps.as_mut(),
+            info.clone(),
+            mock_env(),
+            create_client_message,
+        )
         .unwrap();
     assert_eq!(response.messages[0].id, 21);
 
@@ -511,11 +515,11 @@ fn check_for_update_client_message() {
     let msg = RawMsgCreateClient {
         client_state: Some(client_state.to_any()),
         consensus_state: Some(consenus_state.to_any()),
-        signer: "signer".to_string()
+        signer: "signer".to_string(),
     };
-    contract.create_client(deps.as_mut(), info.clone(), mock_env(), msg).unwrap();
-
-    
+    contract
+        .create_client(deps.as_mut(), info.clone(), mock_env(), msg)
+        .unwrap();
 
     let client_state: ClientState = get_dummy_client_state();
 
@@ -658,16 +662,16 @@ fn check_for_upgrade_client() {
 
     let event = Event::new("empty");
 
-    
-
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
     let msg = RawMsgCreateClient {
         client_state: Some(client_state.to_any()),
         consensus_state: Some(consenus_state.to_any()),
-        signer: "signer".to_string()
+        signer: "signer".to_string(),
     };
-    contract.create_client(deps.as_mut(), info.clone(), mock_env(), msg).unwrap();
+    contract
+        .create_client(deps.as_mut(), info.clone(), mock_env(), msg)
+        .unwrap();
 
     let upgrade_client_state = ClientState {
         trusting_period: 2000000000,
@@ -733,18 +737,16 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     .try_into()
     .unwrap();
 
-   
-
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
     let msg = RawMsgCreateClient {
         client_state: Some(client_state.to_any()),
         consensus_state: Some(consenus_state.to_any()),
-        signer: "signer".to_string()
+        signer: "signer".to_string(),
     };
-    contract.create_client(deps.as_mut(), info.clone(), mock_env(), msg).unwrap();
-
-    
+    contract
+        .create_client(deps.as_mut(), info.clone(), mock_env(), msg)
+        .unwrap();
 
     let upgrade_client_state: Any = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 200000000,
@@ -826,17 +828,15 @@ fn fails_on_upgrade_client_frozen_client() {
         consenus_state.to_any().encode_to_vec(),
     );
 
-   
-
-   
-
     let client_id = ClientId::from_str("iconclient-0").unwrap();
     let msg = RawMsgCreateClient {
         client_state: Some(client_state.to_any()),
         consensus_state: Some(consenus_state.to_any()),
-        signer: "signer".to_string()
+        signer: "signer".to_string(),
     };
-    contract.create_client(deps.as_mut(), info.clone(), mock_env(), msg).unwrap();
+    contract
+        .create_client(deps.as_mut(), info.clone(), mock_env(), msg)
+        .unwrap();
 
     let upgrade_client_state: Any = common::icon::icon::lightclient::v1::ClientState {
         trusting_period: 200000000,
@@ -912,9 +912,11 @@ fn check_for_execute_upgrade_client() {
     let msg = RawMsgCreateClient {
         client_state: Some(client_state.to_any()),
         consensus_state: Some(consenus_state.to_any()),
-        signer: "signer".to_string()
+        signer: "signer".to_string(),
     };
-    contract.create_client(deps.as_mut(), info.clone(), mock_env(), msg).unwrap();
+    contract
+        .create_client(deps.as_mut(), info.clone(), mock_env(), msg)
+        .unwrap();
 
     let upgrade_client_state = ClientState {
         trusting_period: 2000000000,
@@ -1196,7 +1198,7 @@ fn success_on_getting_client_state() {
         signer: signer.to_string(),
     };
     contract
-        .create_client(deps.as_mut(), info,mock_env(), create_client_message)
+        .create_client(deps.as_mut(), info, mock_env(), create_client_message)
         .unwrap();
 
     let mock_reponse_data = CreateClientResponse::new(
@@ -1219,7 +1221,6 @@ fn success_on_getting_client_state() {
             data: Some(mock_data_binary),
         }),
     };
-
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 

@@ -20,7 +20,7 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
-        env:Env,
+        env: Env,
         message: RawMsgCreateClient,
     ) -> Result<Response, ContractError>;
 
