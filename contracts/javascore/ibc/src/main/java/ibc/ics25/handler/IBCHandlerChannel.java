@@ -105,7 +105,6 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
 
     @External
     public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
-        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         byte[] channel = _channelCloseConfirm(msg);
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         module.onChanCloseConfirm(msg.getPortId(), msg.getChannelId());
