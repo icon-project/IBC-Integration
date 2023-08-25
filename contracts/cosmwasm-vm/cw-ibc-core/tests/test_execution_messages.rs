@@ -14,7 +14,7 @@ use cosmwasm_std::ContractResult;
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
-use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
+use cw_common::client_response::UpdateClientResponse;
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcClientId;
@@ -25,9 +25,7 @@ use cw_common::ProstMessage;
 
 use cw_ibc_core::conversions::{to_ibc_client_id, to_ibc_connection_id, to_ibc_height};
 use cw_ibc_core::ics04_channel::IbcClient;
-use cw_ibc_core::{
-    ConnectionEnd, EXECUTE_CONNECTION_OPENTRY, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT,
-};
+use cw_ibc_core::{ConnectionEnd, EXECUTE_CONNECTION_OPENTRY, EXECUTE_UPDATE_CLIENT};
 
 use cw_common::core_msg::InstantiateMsg;
 use cw_ibc_core::context::CwIbcCoreContext;
@@ -86,7 +84,7 @@ fn test_for_create_client_execution_message() {
     };
 
     let response = contract
-        .execute(deps.as_mut(), env.clone(), info, create_client_message)
+        .execute(deps.as_mut(), env, info, create_client_message)
         .unwrap();
 
     assert_eq!(response.attributes[1].value, "create_client");

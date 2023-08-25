@@ -525,7 +525,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         cw_println!(deps, "Connection State Matched");
 
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let _consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
 
         cw_println!(deps, "Consensus State Decoded");
 

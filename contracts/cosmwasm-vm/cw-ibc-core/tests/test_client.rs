@@ -332,7 +332,7 @@ fn check_for_client_state_from_storage() {
 
     let event = Event::new("empty");
 
-    let reply_message = Reply {
+    let _reply_message = Reply {
         id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
@@ -404,7 +404,7 @@ fn check_for_consensus_state_from_storage() {
 
     let event = Event::new("empty");
 
-    let reply_message = Reply {
+    let _reply_message = Reply {
         id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],
@@ -488,7 +488,7 @@ fn check_for_update_client_message() {
     let client_type = ClientType::new("iconclient".to_string());
     let light_client = Addr::unchecked("lightclient");
     contract
-        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .register_client(deps.as_mut(), client_type, light_client)
         .unwrap();
 
     let signer = Signer::from_str("new_signer").unwrap();
@@ -658,9 +658,9 @@ fn check_for_upgrade_client() {
         consenus_state.to_any().encode_to_vec(),
     );
 
-    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
+    let _mock_data_binary = to_binary(&mock_reponse_data).unwrap();
 
-    let event = Event::new("empty");
+    let _event = Event::new("empty");
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
@@ -726,7 +726,7 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     let light_client = Addr::unchecked("lightclient");
 
     contract
-        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .register_client(deps.as_mut(), client_type, light_client)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
 
@@ -819,7 +819,7 @@ fn fails_on_upgrade_client_frozen_client() {
     .try_into()
     .unwrap();
 
-    let mock_reponse_data = CreateClientResponse::new(
+    let _mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-100".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
@@ -892,7 +892,7 @@ fn check_for_execute_upgrade_client() {
     let light_client = Addr::unchecked("lightclient");
 
     contract
-        .register_client(deps.as_mut(), client_type.clone(), light_client)
+        .register_client(deps.as_mut(), client_type, light_client)
         .unwrap();
 
     let client_state = ClientState {
@@ -1214,7 +1214,7 @@ fn success_on_getting_client_state() {
 
     let event = Event::new("empty");
 
-    let reply_message = Reply {
+    let _reply_message = Reply {
         id: EXECUTE_CREATE_CLIENT,
         result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
             events: vec![event],

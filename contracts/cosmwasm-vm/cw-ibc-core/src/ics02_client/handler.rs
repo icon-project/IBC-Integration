@@ -1,10 +1,10 @@
 use crate::{
     conversions::to_ibc_client_id, light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT,
-    EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR,
+    EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR,
 };
 
 use super::{events::client_misbehaviour_event, *};
-use common::constants::ICON_CLIENT_TYPE;
+
 use cosmwasm_std::Env;
 use cw_common::{
     client_msg::ExecuteMsg as LightClientMessage,
@@ -56,7 +56,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let client_state = self.decode_client_state(client_state_any.clone())?;
         let consensus_state = self.decode_consensus_state(consensus_state_any.clone())?;
         let client_type = client_state.client_type();
-        let height = client_state.latest_height().clone();
+        let height = client_state.latest_height();
         let client_id = self.generate_client_identifier(deps.storage, client_type.clone())?;
         let light_client_address =
             self.get_client_from_registry(deps.as_ref().storage, client_type.clone())?;
