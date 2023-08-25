@@ -29,6 +29,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         env: &Env,
+        info: MessageInfo,
         packet: RawPacket,
     ) -> Result<Response, ContractError> {
         let src_port = to_ibc_port_id(&packet.source_port)?;
@@ -36,6 +37,12 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let dst_port = to_ibc_port_id(&packet.destination_port)?;
         let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
+
+        let authenticated =
+            self.authenticate_capability(deps.as_ref().storage, info, src_port.as_bytes().to_vec());
+        if !authenticated {
+            return Err(ContractError::Unauthorized {});
+        }
 
         let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
         cw_println!(deps, "fetched channel_end");

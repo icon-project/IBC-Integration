@@ -22,33 +22,6 @@ import scorex.util.StringTokenizer;
 import java.util.List;
 
 public class StringUtil {
-    public static String toLowerCamelCase(String str) {
-        String camelCase = toCamelCase(str);
-        if (camelCase.length() > 0) {
-            StringBuilder builder = new StringBuilder();
-            builder.append(camelCase.substring(0, 1).toLowerCase());
-            if (camelCase.length() > 1) {
-                builder.append(camelCase.substring(1));
-            }
-        }
-        return camelCase;
-    }
-
-    public static String toCamelCase(String str) {
-        StringBuilder builder = new StringBuilder();
-        List<String> words = tokenize(str, '_');
-        for (String word : words) {
-            if (word.length() > 0) {
-                String lower = word.toLowerCase();
-                builder.append(lower.substring(0, 1).toUpperCase());
-                if (word.length() > 1) {
-                    builder.append(lower.substring(1));
-                }
-            }
-        }
-        return builder.toString();
-    }
-
     public static List<String> tokenize(String str, char... delimiters) {
         List<String> list = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(str, new String(delimiters));
