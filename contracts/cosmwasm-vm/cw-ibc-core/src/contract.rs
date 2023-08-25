@@ -1,7 +1,6 @@
 use std::env;
 
 use super::*;
-use common::ibc::core::ics04_channel::packet::Receipt;
 
 use cosmwasm_std::to_binary;
 
@@ -428,12 +427,8 @@ impl<'a> CwIbcCoreContext<'a> {
                 let _port_id = PortId::from_str(&port_id).unwrap();
                 let _channel_id = IbcChannelId::from_str(&channel_id).unwrap();
                 let _sequence = Sequence::from(sequence);
-                let res = self
-                    .get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence)
-                    .unwrap();
-                match res {
-                    Receipt::Ok => to_binary(&true),
-                }
+                let res = self.get_packet_receipt(deps.storage, &_port_id, &_channel_id, _sequence);
+                to_binary(&res.is_ok())
             }
             QueryMsg::GetAllPorts {} => {
                 let ports = self.get_all_ports(deps.storage).unwrap();

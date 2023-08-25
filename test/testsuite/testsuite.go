@@ -142,6 +142,8 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 }
 
 func (s *E2ETestSuite) DeployXCallMockApp(ctx context.Context, port string) error {
+	testcase := ctx.Value("testcase").(string)
+	connectionKey := fmt.Sprintf("connection-%s", testcase)
 	chainA, chainB := s.GetChains()
 	if err := chainA.DeployXCallMockApp(ctx, chains.XCallConnection{
 		KeyName:                Owner,
@@ -149,7 +151,7 @@ func (s *E2ETestSuite) DeployXCallMockApp(ctx context.Context, port string) erro
 		ConnectionId:           "connection-0", //TODO
 		PortId:                 port,
 		CounterPartyPortId:     port,
-		CounterPartyConnection: chainB.GetIBCAddress("connection"),
+		CounterPartyConnection: chainB.GetIBCAddress(connectionKey),
 	}); err != nil {
 		return err
 	}
@@ -159,7 +161,7 @@ func (s *E2ETestSuite) DeployXCallMockApp(ctx context.Context, port string) erro
 		ConnectionId:           "connection-0", //TODO
 		PortId:                 port,
 		CounterPartyPortId:     port,
-		CounterPartyConnection: chainA.GetIBCAddress("connection"),
+		CounterPartyConnection: chainA.GetIBCAddress(connectionKey),
 	}); err != nil {
 		return err
 	}

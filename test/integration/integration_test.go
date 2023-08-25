@@ -18,7 +18,7 @@ type IntegrationTest struct {
 	testsuite.E2ETestSuite
 }
 
-func (s *IntegrationTest) TestE2E_all() {
+func (s *IntegrationTest) TestIntegration_all() {
 	t := s.T()
 	ctx := context.TODO()
 	s.Require().NoError(s.SetCfg())
@@ -31,10 +31,12 @@ func (s *IntegrationTest) TestE2E_all() {
 		T:            t,
 	}
 	t.Run("test client creation", func(t *testing.T) {
+		ctx = context.WithValue(ctx, "testcase", "client")
 		test.TestClientCreation(ctx, rly)
 	})
 
 	t.Run("test connection", func(t *testing.T) {
+		ctx = context.WithValue(ctx, "testcase", "connection")
 		test.TestConnection(ctx, rly)
 	})
 

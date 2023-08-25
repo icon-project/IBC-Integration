@@ -24,13 +24,33 @@ var correcrRequestID = `{"execute_call":{"request_id":"1"}}`
 var nullRequestID = `{"execute_call":{"request_id":""}}`
 var correcrSequenceID = `{"execute_rollback":{"sequence_no":"1"}}`
 
-func (c *CosmosLocalnet) GetQueryParam(method, params string) any {
-	if strings.Contains(method, "admin") {
-		return Query{GetAdmin: &GetAdmin{}}
-	} else if strings.Contains(method, "fee") {
-		return Query{GetProtocolFee: &GetProtocolFee{}}
+func (c *CosmosLocalnet) GetQueryParam(method string, params map[string]interface{}) Query {
+	var query Query
+	switch method {
+	case chains.HasPacketReceipt:
+		query = Query{HasPacketReceipt: &params}
+		break
+	case chains.GetClientState:
+		query = Query{GetClientState: &params}
+		break
+	case chains.GetNextClientSequence:
+		query = Query{GetNextClientSequence: &params}
+		break
+	case chains.GetConnection:
+		query = Query{GetConnection: &params}
+		break
+	case chains.GetChannel:
+		query = Query{GetChannel: &params}
+		break
+	case chains.GetNextConnectionSequence:
+		query = Query{GetNextConnectionSequence: &params}
+		break
+	case chains.GetNextChannelSequence:
+		query = Query{GetNextChannelSequence: &params}
+		break
+
 	}
-	return params
+	return query
 }
 
 func (c *CosmosLocalnet) getExecuteParam(ctx context.Context, methodName string, params map[string]interface{}) (string, string) {
@@ -45,7 +65,7 @@ func sendCallData(ctx context.Context, param string) string {
 	} else if param == "data size eqauls" {
 		sendCall = packetEqualLimit
 	} else if param == "data size less" {
-		ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+		ctxValue := ctx.Value(chains.Mykey("contract Names")).(chains.ContractKey)
 		dappAddr := ctxValue.ContractAddress["dapp"]
 		fmt.Println(args)
 		str := fmt.Sprintf(`{"send_call_message":{"to":"%s","data":[1,2,3],"rollback":[3,4,5]}}`, dappAddr)
@@ -189,7 +209,7 @@ func (c *CosmosLocalnet) getInitParams(ctx context.Context, contractName string,
 }
 
 func (c *CosmosLocalnet) getExecuteCallParam(ctx context.Context) string {
-	ctxValue := ctx.Value(chains.Mykey("Contract Names")).(chains.ContractKey)
+	ctxValue := ctx.Value(chains.Mykey("contract Names")).(chains.ContractKey)
 	dappAddress := ctxValue.ContractAddress["dapp"]
 
 	csRequest := CallServiceMessageRequest{

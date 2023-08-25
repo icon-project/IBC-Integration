@@ -6,7 +6,7 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
-func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
+func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string, duration int) error {
 	chainA, chainB := s.GetChains()
 	if err := chainA.SetupXCall(ctx, portId, Owner); err != nil {
 		return err
@@ -15,22 +15,24 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string) error {
 		return err
 	}
 	var err error
-	_, err = chainA.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
+	_, err = chainA.ConfigureBaseConnection(ctx, chains.XCallConnection{
 		KeyName:            Owner,
 		CounterpartyNid:    chainB.(ibc.Chain).Config().ChainID,
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
 		CounterPartyPortId: portId,
+		TimeoutHeight:      duration,
 	})
 	if err != nil {
 		return err
 	}
-	_, err = chainB.ConfigureBaseConnection(context.Background(), chains.XCallConnection{
+	_, err = chainB.ConfigureBaseConnection(ctx, chains.XCallConnection{
 		KeyName:            Owner,
 		CounterpartyNid:    chainA.(ibc.Chain).Config().ChainID,
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
 		CounterPartyPortId: portId,
+		TimeoutHeight:      duration,
 	})
 	if err != nil {
 		return err
