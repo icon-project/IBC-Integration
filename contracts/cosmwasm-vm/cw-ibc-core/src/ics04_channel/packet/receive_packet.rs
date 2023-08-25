@@ -336,6 +336,8 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("message", "success: packet receive");
 
                 if !ack.is_empty() {
+                    let raw_packet = to_raw_packet(packet);
+                    self.validate_write_acknowledgement(deps.storage, &raw_packet)?;
                     self.store_packet_acknowledgement(
                         deps.storage,
                         &port_id,
@@ -346,7 +348,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let write_ack_event = create_packet_event(
                         IbcEventType::WriteAck,
-                        to_raw_packet(packet),
+                        raw_packet,
                         &channel_end.ordering,
                         &channel_end.connection_hops[0],
                         Some(ack),

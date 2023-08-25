@@ -1,7 +1,6 @@
 use super::*;
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
 
-use common::ibc::core::ics04_channel::packet::Receipt;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cw_common::core_msg::InstantiateMsg;
@@ -1010,16 +1009,6 @@ fn test_for_recieve_packet() {
         res.unwrap().messages[0].id,
         VALIDATE_ON_PACKET_RECEIVE_ON_MODULE
     );
-
-    contract
-        .store_packet_receipt(
-            &mut deps.storage,
-            &dst_port,
-            &dst_channel,
-            Sequence::from(packet.sequence),
-            Receipt::Ok,
-        )
-        .unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
