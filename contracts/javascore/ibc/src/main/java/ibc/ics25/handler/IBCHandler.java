@@ -31,7 +31,6 @@ public class IBCHandler extends IBCHandlerPacket {
 
     @External
     public void createClient(MsgCreateClient msg) {
-        onlyOwner();
         super.createClient(msg);
     }
 
