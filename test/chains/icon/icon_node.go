@@ -409,3 +409,14 @@ func (in *IconNode) ExecCallTxCommand(ctx context.Context, scoreAddress, methodN
 
 	return in.NodeCommand(command...)
 }
+
+func (in *IconNode) GetDebugTrace(ctx context.Context, hash icontypes.HexBytes) (*DebugTrace, error) {
+	uri := fmt.Sprintf("http://%s:9080/api/v3d", in.Name())
+	out, _, err := in.ExecBin(ctx, "debug", "trace", string(hash), "--uri", uri)
+	if err != nil {
+		return nil, err
+	}
+	var result = new(DebugTrace)
+	return result, json.Unmarshal(out, result)
+
+}
