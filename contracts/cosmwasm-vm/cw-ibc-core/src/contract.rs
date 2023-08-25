@@ -109,7 +109,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::CreateClient { msg } => {
                 cw_println!(deps, "[IBCCore] CreateClient Called");
                 let message: RawMsgCreateClient = Self::raw_from_hex(&msg)?;
-                self.create_client(deps, info, message)
+                self.create_client(deps, info,env, message)
             }
             CoreExecuteMsg::UpdateClient { msg } => {
                 cw_println!(deps, "[IBCCore] UpdateClient Called");
@@ -526,7 +526,6 @@ impl<'a> CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.id {
-            EXECUTE_CREATE_CLIENT => self.execute_create_client_reply(deps, env, message),
             EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),

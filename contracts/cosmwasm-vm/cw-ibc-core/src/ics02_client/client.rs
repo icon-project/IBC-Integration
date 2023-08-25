@@ -1,4 +1,5 @@
 use common::constants::ICON_CLIENT_STATE_TYPE_URL;
+use common::constants::ICON_CONSENSUS_STATE_TYPE_URL;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
@@ -545,6 +546,20 @@ impl<'a> CwIbcCoreContext<'a> {
             ICON_CLIENT_STATE_TYPE_URL=>{
                 let client_state= ClientState::from_any(client_state)
                 .map_err(|e|ContractError::IbcDecodeError { error: e })?;
+            
+                Ok(Box::new(client_state))
+
+            },
+            _ => Err(ContractError::FailedConversion)
+        }
+
+    }
+    pub fn decode_consensus_state(&self,consensus_state:Any)->Result<Box<dyn IConsensusState>,ContractError> {
+        match consensus_state.type_url.as_str() {
+            ICON_CONSENSUS_STATE_TYPE_URL =>{
+                let client_state= ConsensusState::from_any(consensus_state)
+                .map_err(|e|ContractError::IbcDecodeError { error: e })?;
+            
                 Ok(Box::new(client_state))
 
             },
