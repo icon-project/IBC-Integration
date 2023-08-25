@@ -14,14 +14,12 @@ import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
-import score.annotation.Optional;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
 
 import static ibc.ics23.commitment.types.Merkle.applyPrefix;
-import static ibc.ics23.commitment.types.Merkle.prefixLengthInBigEndian;
 import static ibc.tendermint.TendermintHelper.*;
 import static score.Context.require;
 
@@ -193,7 +191,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 "height", newHeight(clientState.getLatestHeight()).encode());
     }
 
-    @External
+    @External(readonly = true)
     public void verifyMembership(
             String clientId,
             byte[] heightBytes,
@@ -219,10 +217,10 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         var merkleProof = MerkleProof.decode(proof);
         var merklePath = applyPrefix(new String(path));
 
-        Merkle.verifyMembership(merkleProof, Merkle.getSDKSpecs(), root, merklePath, value);
+        Merkle.verifyMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath, value);
     }
 
-    @External
+    @External(readonly = true)
     public void verifyNonMembership(
             String clientId,
             byte[] heightBytes,
@@ -246,7 +244,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         var merkleProof = MerkleProof.decode(proof);
         var merklePath = applyPrefix(new String(path));
 
-        Merkle.verifyNonMembership(merkleProof, Merkle.getSDKSpecs(), root, merklePath);
+        Merkle.verifyNonMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath);
     }
 
     // checkValidity checks if the Tendermint header is valid.

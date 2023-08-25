@@ -2,6 +2,7 @@ package icon
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -17,18 +18,77 @@ func (c *IconLocalnet) getExecuteParam(ctx context.Context, methodName string, p
 			"moduleAddress": params["address"],
 		})
 		return "bindPort", string(_params)
-	}
+	} else if strings.Contains(methodName, chains.SendMessage) {
+		_params, _ := json.Marshal(map[string]interface{}{
+			"data":          hex.EncodeToString(params["msg"].(chains.BufferArray)),
+			"timeoutHeight": fmt.Sprintf("%d", params["timeout_height"]),
+		})
 
+		return "sendPacket", string(_params)
+	}
 	_params, _ := json.Marshal(params)
 
 	return methodName, string(_params)
 }
 
-func (c *IconLocalnet) GetQueryParam(methodName string) string {
-	if strings.Contains(methodName, "get_admin") {
-		return "admin"
+func (c *IconLocalnet) GetQueryParam(method string, params map[string]interface{}) Query {
+	var query Query
+	switch method {
+	case chains.HasPacketReceipt:
+		query = Query{
+			"hasPacketReceipt",
+			Value{map[string]interface{}{
+				"portId":    params["port_id"],
+				"channelId": params["channel_id"],
+				"sequence":  fmt.Sprintf("%d", params["sequence"]), //common.NewHexInt(int64(sequence)),
+			}},
+		}
+		break
+	case chains.GetClientState:
+		query = Query{
+			"getClientState",
+			Value{map[string]interface{}{
+				"clientId": params["client_id"],
+			}},
+		}
+		break
+	case chains.GetNextClientSequence:
+		query = Query{
+			"getNextClientSequence",
+			Value{map[string]interface{}{}},
+		}
+		break
+	case chains.GetNextConnectionSequence:
+		query = Query{
+			"getNextConnectionSequence",
+			Value{map[string]interface{}{}},
+		}
+		break
+	case chains.GetNextChannelSequence:
+		query = Query{
+			"getNextChannelSequence",
+			Value{map[string]interface{}{}},
+		}
+		break
+	case chains.GetConnection:
+		query = Query{
+			"getConnection",
+			Value{map[string]interface{}{
+				"connectionId": params["connection_id"],
+			}},
+		}
+		break
+	case chains.GetChannel:
+		query = Query{
+			"getChannel",
+			Value{map[string]interface{}{
+				"channelId": params["channel_id"],
+				"portId":    params["port_id"],
+			}},
+		}
+		break
 	}
-	return methodName
+	return query
 }
 
 func (c *IconLocalnet) getInitParams(ctx context.Context, contractName string, initMsg map[string]interface{}) string {

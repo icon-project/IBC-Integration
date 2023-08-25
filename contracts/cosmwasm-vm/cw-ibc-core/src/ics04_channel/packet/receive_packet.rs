@@ -5,9 +5,11 @@ use cw_common::{
         channel::{RawMessageRecvPacket, RawPacket},
         to_raw_packet,
     },
+    to_checked_address,
 };
 
 use cw_common::cw_println;
+use handler::validate_channel::ensure_channel_state;
 
 use crate::conversions::{
     to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
@@ -48,15 +50,11 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let dst_port = to_ibc_port_id(&packet.destination_port)?;
         let dst_channel = to_ibc_channel_id(&packet.destination_channel)?;
+        let packet_sequence = Sequence::from(packet.sequence);
 
         let channel_end = self.get_channel_end(deps.storage, &dst_port, &dst_channel)?;
-        if !channel_end.state_matches(&State::Open) {
-            return Err(PacketError::InvalidChannelState {
-                channel_id: dst_channel,
-                state: channel_end.state,
-            })
-            .map_err(Into::<ContractError>::into)?;
-        }
+        ensure_channel_state(&dst_channel, &channel_end, &State::Open)?;
+
         cw_println!(deps, "validate recevie packet state_matched");
         let counterparty = Counterparty::new(src_port.clone(), Some(src_channel.clone()));
 
@@ -67,9 +65,21 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
+
+        let packet_already_received = self.is_packet_already_received(
+            deps.as_ref(),
+            &channel_end,
+            &dst_port,
+            &dst_channel,
+            packet_sequence,
+        )?;
+        if packet_already_received {
+            return Ok(Response::new().add_attribute("message", "Packet already received"));
+        }
+
         let connection_id = &channel_end.connection_hops()[0];
-        let conn_end_on_b = self.connection_end(deps.storage, connection_id)?;
-        if !conn_end_on_b.state_matches(&ConnectionState::Open) {
+        let connection_end = self.connection_end(deps.storage, connection_id)?;
+        if !connection_end.state_matches(&ConnectionState::Open) {
             return Err(PacketError::ConnectionNotOpen {
                 connection_id: channel_end.connection_hops()[0].clone(),
             })
@@ -82,19 +92,19 @@ impl<'a> CwIbcCoreContext<'a> {
         // validate packet not expired on receive
         self.validate_packet_not_expired(packet, current_host_height, current_host_timestamp)?;
 
-        let client_id_on_b = conn_end_on_b.client_id();
-        let client_state_of_a_on_b = self.client_state(deps.storage, client_id_on_b)?;
+        let client_id = connection_end.client_id();
+        let client_state = self.client_state(deps.storage, client_id)?;
         // The client must not be frozen.
-        if client_state_of_a_on_b.is_frozen() {
+        if client_state.is_frozen() {
             return Err(PacketError::FrozenClient {
-                client_id: client_id_on_b.clone(),
+                client_id: client_id.clone(),
             })
             .map_err(Into::<ContractError>::into)?;
         }
         cw_println!(deps, "client state created ",);
 
         let consensus_state_of_a_on_b =
-            self.consensus_state(deps.storage, client_id_on_b, &proof_height)?;
+            self.consensus_state(deps.storage, client_id, &proof_height)?;
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
         let expected_commitment_on_a = commitment::compute_packet_commitment_bytes(
@@ -119,36 +129,17 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "verify connection delay passed");
         let verify_packet_data = VerifyPacketData {
             height: proof_height.to_string(),
-            prefix: conn_end_on_b.counterparty().prefix().clone().into_vec(),
+            prefix: connection_end.counterparty().prefix().clone().into_vec(),
             proof: msg.proof_commitment.clone(),
             root: consensus_state_of_a_on_b.root().into_vec(),
             commitment_path: commitment_path_on_a,
             commitment: expected_commitment_on_a.into_vec(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_b)?;
-        client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id_on_b)?;
-        let packet_sequence = Sequence::from(packet.sequence);
+        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id)?;
 
-        if channel_end.order_matches(&Order::Ordered) {
-            let next_seq_recv =
-                self.get_next_sequence_recv(deps.storage, &dst_port, &dst_channel)?;
-            if packet_sequence > next_seq_recv {
-                return Err(PacketError::InvalidPacketSequence {
-                    given_sequence: packet_sequence,
-                    next_sequence: next_seq_recv,
-                })
-                .map_err(Into::<ContractError>::into)?;
-            }
-
-            if packet_sequence == next_seq_recv {
-                // Case where the recvPacket is successful and an
-                // acknowledgement will be written (not a no-op)
-                self.validate_write_acknowledgement(deps.storage, packet)?;
-            }
-        } else {
-            self.validate_write_acknowledgement(deps.storage, packet)?;
-        };
+        cw_println!(deps, "before packet already received ");
 
         let port_id = packet.destination_port.clone();
         // Getting the module address for on packet timeout call
@@ -170,27 +161,89 @@ impl<'a> CwIbcCoreContext<'a> {
         let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timeout = CwTimeout::with_block(timeoutblock);
         let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
-        let address = Addr::unchecked(msg.signer.to_string());
+        let address = to_checked_address(deps.as_ref(), &msg.signer);
         self.store_callback_data(
             deps.storage,
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
             &ibc_packet,
         )?;
-        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketReceive {
+        let cosm_msg = cw_common::ibc_dapp_msg::ExecuteMsg::IbcPacketReceive {
             msg: cosmwasm_std::IbcPacketReceiveMsg::new(ibc_packet, address),
         };
-        let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+        let receive_packet_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: contract_address,
             msg: to_binary(&cosm_msg).unwrap(),
             funds: info.funds,
         });
+
+        match channel_end.ordering {
+            Order::Unordered => {
+                self.store_packet_receipt(
+                    deps.storage,
+                    &dst_port,
+                    &dst_channel,
+                    packet.sequence.into(),
+                    Receipt::Ok,
+                )?;
+            }
+            Order::Ordered => {
+                self.increase_next_sequence_recv(deps.storage, &dst_port, &dst_channel)?;
+            }
+            _ => {}
+        };
+
+        let event_recieve_packet = create_packet_event(
+            IbcEventType::ReceivePacket,
+            packet.clone(),
+            channel_end.ordering(),
+            &channel_end.connection_hops[0],
+            None,
+        )?;
+
+        cw_println!(deps, "event recieve packet: {:?}", event_recieve_packet);
+
         let sub_msg: SubMsg =
-            SubMsg::reply_always(create_client_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
+            SubMsg::reply_always(receive_packet_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
         Ok(Response::new()
             .add_attribute("action", "channel")
             .add_attribute("method", "channel_recieve_packet_validation")
+            .add_event(event_recieve_packet)
             .add_submessage(sub_msg))
+    }
+
+    pub fn is_packet_already_received(
+        &self,
+        deps: Deps,
+        channel_end: &ChannelEnd,
+        port_id: &IbcPortId,
+        channel_id: &IbcChannelId,
+        sequence: Sequence,
+    ) -> Result<bool, ContractError> {
+        match channel_end.ordering {
+            Order::None => Ok(false),
+            Order::Unordered => {
+                let is_received = self
+                    .get_packet_receipt(deps.storage, port_id, channel_id, sequence)
+                    .is_ok();
+                Ok(is_received)
+            }
+            Order::Ordered => {
+                let next_seq_recv =
+                    self.get_next_sequence_recv(deps.storage, port_id, channel_id)?;
+
+                if sequence > next_seq_recv {
+                    return Err(ContractError::IbcPacketError {
+                        error: PacketError::InvalidPacketSequence {
+                            given_sequence: sequence,
+                            next_sequence: next_seq_recv,
+                        },
+                    });
+                }
+
+                Ok(sequence < next_seq_recv)
+            }
+        }
     }
 
     /// This function validates if a write acknowledgement exists for a given packet and returns an
@@ -326,66 +379,16 @@ impl<'a> CwIbcCoreContext<'a> {
                     IbcChannelId::from_str(&chan).map_err(Into::<ContractError>::into)?;
                 let port_id = IbcPortId::from_str(&port).unwrap();
 
-                let chan_end_on_b = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
-                cw_println!(deps, "execute_receive_packet decoding of data successful");
-                let packet_already_received = match chan_end_on_b.ordering {
-                    // Note: ibc-go doesn't make the check for `Order::None` channels
-                    Order::None => false,
-                    Order::Unordered => self
-                        .get_packet_receipt(deps.storage, &port_id, &channel_id, seq.into())
-                        .is_ok(),
-                    Order::Ordered => {
-                        let next_seq_recv =
-                            self.get_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
-
-                        // the seq_on_a number has already been incremented, so
-                        // another relayer already relayed the packet
-                        seq < Into::<u64>::into(next_seq_recv)
-                    }
-                };
-
-                cw_println!(deps, "before packet already received ");
-                if packet_already_received {
-                    return Ok(Response::new().add_attribute("message", "Packet already received"));
-                }
-
-                cw_println!(deps, "before channel ordering check");
-
-                // `recvPacket` core handler state changes
-                match chan_end_on_b.ordering {
-                    Order::Unordered => {
-                        self.store_packet_receipt(
-                            deps.storage,
-                            &port_id,
-                            &channel_id,
-                            seq.into(),
-                            Receipt::Ok,
-                        )?;
-                    }
-                    Order::Ordered => {
-                        self.increase_next_sequence_recv(deps.storage, &port_id, &channel_id)?;
-                    }
-                    _ => {}
-                }
-                cw_println!(deps, "before after channel ordering check");
-
-                let event_recieve_packet = create_packet_event(
-                    IbcEventType::ReceivePacket,
-                    to_raw_packet(packet.clone()),
-                    chan_end_on_b.ordering(),
-                    &chan_end_on_b.connection_hops[0],
-                    None,
-                )?;
-
-                cw_println!(deps, "event recieve packet: {:?}", event_recieve_packet);
+                let channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
 
                 let mut res = Response::new()
                     .add_attribute("action", "channel")
                     .add_attribute("method", "execute_receive_packet")
-                    .add_attribute("message", "success: packet receive")
-                    .add_event(event_recieve_packet);
+                    .add_attribute("message", "success: packet receive");
 
                 if !ack.is_empty() {
+                    let raw_packet = to_raw_packet(packet);
+                    self.validate_write_acknowledgement(deps.storage, &raw_packet)?;
                     self.store_packet_acknowledgement(
                         deps.storage,
                         &port_id,
@@ -396,9 +399,9 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let write_ack_event = create_packet_event(
                         IbcEventType::WriteAck,
-                        to_raw_packet(packet),
-                        &chan_end_on_b.ordering,
-                        &chan_end_on_b.connection_hops[0],
+                        raw_packet,
+                        &channel_end.ordering,
+                        &channel_end.connection_hops[0],
                         Some(ack),
                     )?;
 

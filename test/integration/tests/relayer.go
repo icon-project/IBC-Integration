@@ -3,8 +3,10 @@ package tests
 import (
 	"context"
 	"fmt"
+	"github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/testsuite"
@@ -106,7 +108,7 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 	chainA, chainB := r.GetChains()
 	eRep := r.GetRelayerExecReporter()
 	pathName := r.GeneratePathName()
-	T := r.T
+
 	err := relayer.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName)
 	r.Require().NoErrorf(err, "Error on generating path, %s", err)
 	err = relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{TrustingPeriod: "100000m"})
@@ -116,99 +118,230 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 	err = r.StartRelayer(relayer, pathName)
 	r.Require().NoErrorf(err, "Error on starting relayer, %s", err)
 
-	portID := "transfer"
-	err = r.SetupMockDApp(ctx, portID, ibc.Unordered)
-	assert.NoErrorf(T, err, "Error on setting up mock dapp, %s", err)
+	r.T.Run("Un-order packet flow", func(t *testing.T) {
+		ctx = context.WithValue(ctx, "testcase", "unordered")
+		portID := "transfer-un-ordered"
+		err = r.SetupMockDApp(ctx, portID)
+		assert.NoErrorf(t, err, "Error on setting up mock dapp, %v", err)
 
-	T.Run("should able to create a channel", func(t *testing.T) {
-		err := r.CreateChannel(ctx, pathName, portID, ibc.Unordered)
+		r.T.Run("should able to create Unordered channel", func(t *testing.T) {
+			seqA, _ := r.GetChannelSequence(ctx, chainA)
+			seqB, _ := r.GetChannelSequence(ctx, chainB)
+			err := r.CreateChannel(ctx, pathName, portID, ibc.Unordered)
 
-		assert.NoErrorf(t, err, "Error on creating channel %v", err)
+			assert.NoErrorf(t, err, "Error on creating channel %v", err)
 
-		res, err := r.GetChannel(ctx, chainA, 0, portID)
-		assert.NoErrorf(t, err, "Error on getting channel %v", err)
-		t.Log(res)
-		res, err = r.GetChannel(ctx, chainB, 0, portID)
-		assert.NoErrorf(t, err, "Error on getting channel %v", err)
-		t.Log(res)
+			res, err := r.GetChannel(ctx, chainA, 0, portID)
+			assert.NoErrorf(t, err, "Error on getting channel %v", err)
+			t.Log(res)
+			res, err = r.GetChannel(ctx, chainB, 0, portID)
+			assert.NoErrorf(t, err, "Error on getting channel %v", err)
+			t.Log(res)
 
-		seq, err := r.GetChannelSequence(ctx, chainA)
-		assert.NoErrorf(t, err, "Error on getting next channel sequence %v", err)
-		assert.Equal(t, 1, seq)
-		seq, err = r.GetChannelSequence(ctx, chainB)
-		assert.NoErrorf(t, err, "Error on getting next channel sequence %v", err)
-		assert.Equal(t, 1, seq)
+			seq, err := r.GetChannelSequence(ctx, chainA)
+			assert.NoErrorf(t, err, "Error on getting next channel sequence %v", err)
+			assert.Equal(t, seqA+1, seq)
+			seq, err = r.GetChannelSequence(ctx, chainB)
+			assert.NoErrorf(t, err, "Error on getting next channel sequence %v", err)
+			assert.Equal(t, seqB+1, seq)
+		})
+
+		r.T.Run("single relay packet flow chainA-chainB", func(t *testing.T) {
+			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000)
+			assert.NoErrorf(t, err, "Error while sending package from chainA-chainB")
+			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
+			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
+		})
+		r.T.Run("single relay packet flow chainB-chainA", func(t *testing.T) {
+			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000)
+			assert.NoErrorf(t, err, "Error while sending package from chainB-chainA")
+			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
+			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
+		})
+
+		r.T.Run("crash and recover relay chainA-chainB", func(t *testing.T) {
+			r.RelayerCrashTest(ctx, chainA, chainB)
+		})
+
+		r.T.Run("crash and recover relay chainB-chainA", func(t *testing.T) {
+			r.RelayerCrashTest(ctx, chainB, chainA)
+		})
+		r.T.Run("unordered packet test chainA-chainB", func(t *testing.T) {
+			r.PacketFlowTest(ctx, chainA, chainB, ibc.Unordered)
+		})
+
+		r.T.Run("unordered packet test chainB-chainA", func(t *testing.T) {
+			r.PacketFlowTest(ctx, chainB, chainA, ibc.Unordered)
+		})
 	})
 
-	T.Run("single relay packet flow", func(t *testing.T) {
-		r.Require().NoError(r.Ping(context.Background()))
+	r.T.Run("Order packet flow", func(t *testing.T) {
+		ctx = context.WithValue(ctx, "testcase", "ordered")
+		portID := "transfer-ordered"
+		err = r.SetupMockDApp(ctx, portID)
+		assert.NoErrorf(t, err, "Error on setting up mock dapp, %v", err)
+
+		r.T.Run("should able to create Ordered channel", func(t *testing.T) {
+			seqA, _ := r.GetChannelSequence(ctx, chainA)
+			seqB, _ := r.GetChannelSequence(ctx, chainB)
+			err := r.CreateChannel(ctx, pathName, portID, ibc.Ordered)
+
+			assert.NoErrorf(t, err, "Error on creating channel %v", err)
+
+			res, err := r.GetChannel(ctx, chainA, 0, portID)
+			assert.NoErrorf(t, err, "Error on getting channel %v", err)
+			t.Log(res)
+			res, err = r.GetChannel(ctx, chainB, 0, portID)
+			assert.NoErrorf(t, err, "Error on getting channel %v", err)
+			t.Log(res)
+
+			seq, err := r.GetChannelSequence(ctx, chainA)
+			assert.NoErrorf(t, err, "Error on getting next channel sequence %v", err)
+			assert.Equal(t, seqA+1, seq)
+			seq, err = r.GetChannelSequence(ctx, chainB)
+			assert.NoErrorf(t, err, "Error on getting next channel sequence %v", err)
+			assert.Equal(t, seqB+1, seq)
+		})
+
+		r.T.Run("single relay packet flow chainA-chainB", func(t *testing.T) {
+			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000)
+			assert.NoErrorf(t, err, "Error while sending package from chainA-chainB")
+			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
+			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
+		})
+
+		r.T.Run("single relay packet flow chainB-chainA", func(t *testing.T) {
+			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000)
+			assert.NoErrorf(t, err, "Error while sending package from chainB-chainA")
+			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
+			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
+		})
+
+		r.T.Run("ordered packet test chainA-chainB", func(t *testing.T) {
+			r.PacketFlowTest(ctx, chainA, chainB, ibc.Ordered)
+		})
+
+		r.T.Run("ordered packet test chainB-chainA", func(t *testing.T) {
+			r.PacketFlowTest(ctx, chainB, chainA, ibc.Ordered)
+		})
 	})
 
-	T.Run("multi relay packet flow", func(t *testing.T) {
-		r.Require().NoError(r.Ping(context.Background()))
-	})
-
-	T.Run("unordered packet test", func(t *testing.T) {
-
-	})
-
-	T.Run("crash and recover relay", func(t *testing.T) {
-		chainA, chainB := r.GetChains()
-		r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA, portID))
-		//r.Require().NoError(r.CrashTest(context.Background(), chainB, chainA, portID))
-	})
-
-	_ = r.StopRelayer(ctx, relayer)
 }
 
-func (r *RelayerTestSuite) CrashTest(ctx context.Context, chainA, chainB chains.Chain, portID string) error {
-	// crash relayer and write block height information for crashed node to file
-	callbackA := r.WriteBlockHeight(ctx, chainA)
-	callbackB := r.WriteBlockHeight(ctx, chainB)
-	crashedAt, err := r.Crash(ctx, callbackA, callbackB)
-	if err != nil {
-		return err
+func (r *RelayerTestSuite) PacketFlowTest(ctx context.Context, src, target chains.Chain, order ibc.Order) {
+	packet, crashHeight := r.handleCrashAndSendPacket(ctx, src, target)
+
+	height, err := src.(ibc.Chain).Height(ctx)
+	assert.NoErrorf(r.T, err, "Error while getting block height: %v", err)
+
+	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, height+1)
+	assert.NoErrorf(r.T, err, "Error on setting block height (%d): %v", height+1, err)
+
+	isPacketReceived := r.recoverRelayerAndCheckPacket(ctx, target, packet)
+
+	assert.Falsef(r.T, isPacketReceived, "The packet event has received on the target chain.\n%v\n", packet)
+
+	msg := "new-message"
+	response, err := r.SendPacket(ctx, src, target, msg, 1000)
+	if order == ibc.Ordered {
+		assert.Errorf(r.T, err, "Error on sending packet (%s): %v", msg, err)
+		assert.Falsef(r.T, response.IsPacketReceiptEventFound, "The packet event has been received on the target chain.")
+	} else {
+		assert.NoErrorf(r.T, err, "Error on sending packet (%s) %v", msg, err)
+		assert.Truef(r.T, response.IsPacketReceiptEventFound, "The packet event has NOT been received on the target chain.")
 	}
-	r.T.Logf("crashed at: %s", crashedAt)
-	currentHeight, err := chainB.(ibc.Chain).Height(ctx)
-	if err != nil {
-		return err
+	assert.Truef(r.T, response.IsPacketSent, "The packet has not been sent to the target chain.")
+
+	packetNew, _ := r.handleCrashAndSendPacket(ctx, src, target)
+
+	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, crashHeight-1)
+	assert.NoErrorf(r.T, err, "Error on setting block height (%d): %v", crashHeight-1, err)
+
+	isPacketReceived = r.recoverRelayerAndCheckPacket(ctx, target, packet)
+	assert.Truef(r.T, isPacketReceived, "The packet event has NOT received on the target chain.\n%v\n", packet)
+
+	params := map[string]interface{}{
+		"sequence":   packetNew.Sequence,
+		"port_id":    packetNew.SourcePort,
+		"channel_id": packetNew.SourceChannel,
 	}
-	// send packet from chainA to chainB crashed node and check if it is received
-	var msg = chainB.(ibc.Chain).Config().ChainID
-	xcall, err := r.SendPacket(ctx, chainA, chainB, msg)
-	if err != nil {
-		return err
-	}
-	// recover relayer now
-	recoveredAt, err := r.Recover(ctx, chainA.(ibc.Chain), currentHeight)
-	if err != nil {
-		return err
-	}
-	r.T.Logf("fully recovered at: %s", recoveredAt)
-	// check if packet was sent in a recovered state
-	res, err := r.FindPacketSent(xcall, chainA, chainB, currentHeight)
-	if err != nil {
-		return err
-	}
-	msg, err = r.ConvertToPlainString(res.Data)
-	if err != nil {
-		return err
-	}
-	if res.Data != msg {
-		return fmt.Errorf("invalid packet: %s", msg)
-	}
-	channel, err := r.GetChannel(ctx, chainA, 0, portID)
-	if err != nil {
-		return err
-	}
-	if err := r.GetPacketReceipt(xcall, chainB, channel.Counterparty.ChannelId, channel.Counterparty.PortId); err != nil {
-		return err
-	}
-	// check if relay is working as expected with ping pong to cross chain
-	if err := r.Ping(ctx); err != nil {
-		return err
-	}
+
+	isPacketReceived = findPacket(ctx, target, params)
+
+	assert.Truef(r.T, isPacketReceived, "The packet event has NOT received on the target chain.\n%v\n", packetNew)
+
 	r.T.Logf("relay recovered successfully")
-	return nil
+}
+
+func (r *RelayerTestSuite) RelayerCrashTest(ctx context.Context, chainA, chainB chains.Chain) {
+	// crash relayer and write block height information for crashed node to file
+	packet, _ := r.handleCrashAndSendPacket(ctx, chainA, chainB)
+
+	// recover relayer now
+	isPacketReceived := r.recoverRelayerAndCheckPacket(ctx, chainB, packet)
+	assert.Truef(r.T, isPacketReceived, "The packet event has NOT received on the target chain.\n%v\n", packet)
+
+	// check if relay is working as expected with ping pong to cross chain
+	msg := "new-message"
+	response, err := r.SendPacket(ctx, chainA, chainB, msg, 1000)
+	assert.NoErrorf(r.T, err, "Error on sending packet (%s) %v", msg, err)
+	assert.Truef(r.T, response.IsPacketSent, "The packet has not been sent to the target chain.")
+	assert.Truef(r.T, response.IsPacketReceiptEventFound, "The packet event has NOT been received on the target chain.")
+
+	r.T.Logf("relay recovered successfully")
+}
+
+func (r *RelayerTestSuite) recoverRelayerAndCheckPacket(ctx context.Context, targetChain chains.Chain, packet types.Packet) bool {
+	err := r.Recover(ctx, time.Second*30)
+	assert.NoErrorf(r.T, err, "Error on relayer recover %v", err)
+
+	params := map[string]interface{}{
+		"sequence":   packet.Sequence,
+		"port_id":    packet.SourcePort,
+		"channel_id": packet.SourceChannel,
+	}
+	isPacketReceived := findPacket(ctx, targetChain, params)
+	return isPacketReceived
+}
+
+func (r *RelayerTestSuite) handleCrashAndSendPacket(ctx context.Context, src chains.Chain, target chains.Chain) (types.Packet, uint64) {
+	callbackA := r.WriteCurrentBlockHeight(ctx, src)
+	callbackB := r.WriteCurrentBlockHeight(ctx, target)
+	crashedHeight, err := src.(ibc.Chain).Height(ctx)
+	err = r.CrashRelayer(ctx, callbackA, callbackB)
+	assert.NoErrorf(r.T, err, "Error on relayer crash %v", err)
+	chainID := src.(ibc.Chain).Config().ChainID
+	r.T.Logf("crashed at: %s %d", chainID, crashedHeight)
+	// send packet from src to target crashed node and check if it is received
+	var msg = fmt.Sprintf("data-%s", chainID)
+	response, _ := r.SendPacket(ctx, src, target, msg, 1000000)
+	packet := response.Packet
+	assert.NotEqualf(r.T, types.Packet{}, packet, "packet is empty")
+	assert.Truef(r.T, response.IsPacketSent, "The packet has not been sent to the target chain.")
+	assert.Falsef(r.T, response.IsPacketReceiptEventFound, "The packet event has already been received on the target chain.")
+	return packet, crashedHeight
+}
+
+func findPacket(ctx context.Context, chain chains.Chain, params map[string]interface{}) bool {
+	duration := 30 * time.Second
+	interval := 2 * time.Second
+
+	_ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
+
+	var isPacketReceived bool
+
+	for {
+		select {
+		case <-_ctx.Done():
+			fmt.Println("Loop finished")
+			return isPacketReceived
+		default:
+			isPacketReceived = chain.IsPacketReceived(ctx, params)
+			if isPacketReceived {
+				return isPacketReceived
+			}
+			time.Sleep(interval)
+		}
+	}
 }

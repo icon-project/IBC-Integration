@@ -221,7 +221,6 @@ public class IBCConnection {
         onlyIBCHandler();
 
         Context.require(order == Order.ORDER_UNORDERED, "Channel order has to be unordered");
-        // TODO verify version
 
         String connectionId = connectionHops[0];
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
@@ -243,13 +242,13 @@ public class IBCConnection {
         onlyIBCHandler();
 
         Context.require(order == Order.ORDER_UNORDERED, "Channel order has to be unordered");
-        // TODO verify version
 
         String connectionId = connectionHops[0];
         Counterparty counterparty = Counterparty.decode(counterpartyPb);
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
         Context.require(portId.equals(PORT), "Invalid port");
+        Context.require(counterPartyNid != null, "Invalid counterparty network id");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
         lightClients.set(channelId, configuredClients.get(connectionId));
         destinationPort.set(channelId, counterpartyPortId);
@@ -272,14 +271,12 @@ public class IBCConnection {
         Context.require(portId.equals(PORT), "Invalid port");
     }
 
-    //TODO
     @External
     public void onChanCloseInit(String portId, String channelId) {
         onlyIBCHandler();
         Context.revert("CannotCloseChannel");
     }
 
-    //TODO
     @External
     public void onChanCloseConfirm(String portId, String channelId) {
         onlyIBCHandler();
@@ -322,6 +319,11 @@ public class IBCConnection {
     @External(readonly = true)
     public BigInteger getUnclaimedFees(String nid, Address relayer) {
         return unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
+    }
+
+    @External(readonly = true)
+    public Address getAdmin() {
+        return admin.get();
     }
 
 }

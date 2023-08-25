@@ -3,6 +3,7 @@ use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cw_common::ibc_types::IbcHeight;
+use cw_common::to_checked_address;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
@@ -43,7 +44,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|_e| ContractError::FailedToInitContract)?;
-    let config = Config::new(info.sender, msg.ibc_host);
+    let ibc_host = to_checked_address(deps.as_ref(), msg.ibc_host.as_ref());
+    let config = Config::new(info.sender, ibc_host);
     let mut context = CwContext::new(deps, _env);
     context.insert_config(&config)?;
     Ok(Response::default())
