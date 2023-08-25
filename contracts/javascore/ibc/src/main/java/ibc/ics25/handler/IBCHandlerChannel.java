@@ -43,10 +43,10 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
 
     @External
     public void channelOpenInit(MsgChannelOpenInit msg) {
-        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         // TODO optimize to not do decoding twice
         Channel channel = Channel.decode(msg.getChannel());
         String id = _channelOpenInit(msg);
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         module.onChanOpenInit(
                 channel.getOrdering(),
                 connectionHopsToArray(channel.getConnectionHops()),
@@ -61,10 +61,10 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
 
     @External
     public void channelOpenTry(MsgChannelOpenTry msg) {
-        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         // TODO optimize to not do decoding twice
         Channel channel = Channel.decode(msg.getChannel());
         String id = _channelOpenTry(msg);
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         module.onChanOpenTry(
                 channel.getOrdering(),
                 connectionHopsToArray(channel.getConnectionHops()),
@@ -96,8 +96,8 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
 
     @External
     public void channelCloseInit(MsgChannelCloseInit msg) {
-        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         byte[] channel = _channelCloseInit(msg);
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         module.onChanCloseInit(msg.getPortId(), msg.getChannelId());
         ChannelCloseInit(msg.getPortId(), msg.getChannelId(), channel);
 
@@ -107,6 +107,7 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
     public void channelCloseConfirm(MsgChannelCloseConfirm msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         byte[] channel = _channelCloseConfirm(msg);
+        IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
         module.onChanCloseConfirm(msg.getPortId(), msg.getChannelId());
         ChannelCloseConfirm(msg.getPortId(), msg.getChannelId(), channel);
     }
