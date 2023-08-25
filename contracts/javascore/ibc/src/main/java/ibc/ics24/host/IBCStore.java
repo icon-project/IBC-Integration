@@ -204,11 +204,6 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     }
 
     @External(readonly = true)
-    public boolean hasPacketReceipt(String portId, String channelId, BigInteger sequence) {
-        return packetReceipts.at(portId).at(channelId).getOrDefault(sequence, false);
-    }
-
-    @External(readonly = true)
     public List<Integer> getMissingPacketReceipts(String portId, String channelId, int startSequence, int endSequence) {
         DictDB<BigInteger, Boolean> receipts = packetReceipts.at(portId).at(channelId);
         List<Integer> missingReceipts = new ArrayList<>();
