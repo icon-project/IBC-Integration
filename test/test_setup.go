@@ -46,6 +46,14 @@ func DockerSetup(t *testing.T) (*client.Client, string) {
 	return dockerutil.DockerSetup(t)
 }
 
+func CleanDockerSetup(t *testing.T, name string) {
+	t.Helper()
+	if name == "" {
+		name = t.Name()
+	}
+	dockerutil.CleanDockerSetup(t, name)
+}
+
 // startup both chains
 // creates wallets in the relayer for src and dst chain
 // funds relayer src and dst wallets on respective chain in genesis

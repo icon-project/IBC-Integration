@@ -462,9 +462,17 @@ func (c *IconLocalnet) GetIBCAddress(key string) string {
 }
 
 func (c *IconLocalnet) BackupConfig() ([]byte, error) {
+	wallets := make(map[string]interface{})
+	for key, value := range c.Wallets {
+		wallets[key] = map[string]string{
+			"mnemonic":         value.Mnemonic(),
+			"address":          hex.EncodeToString(value.Address()),
+			"formattedAddress": value.FormattedAddress(),
+		}
+	}
 	backup := map[string]interface{}{
 		"addresses": c.IBCAddresses,
-		"wallets":   c.Wallets,
+		"wallets":   wallets,
 	}
 	return json.MarshalIndent(backup, "", "\t")
 }
@@ -476,7 +484,15 @@ func (c *IconLocalnet) RestoreConfig(backup []byte) error {
 		return err
 	}
 	c.IBCAddresses = result["addresses"].(map[string]string)
-	c.Wallets = result["wallets"].(map[string]ibc.Wallet)
+	wallets := make(map[string]ibc.Wallet)
+
+	for key, value := range result["wallets"].(map[string]interface{}) {
+		_value := value.(map[string]string)
+		mnemonic := _value["mnemonic"]
+		address, _ := hex.DecodeString(_value["address"])
+		wallets[key] = NewWallet(key, address, mnemonic, c.Config())
+	}
+	c.Wallets = wallets
 	return nil
 }
 

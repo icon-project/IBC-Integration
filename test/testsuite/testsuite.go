@@ -113,13 +113,6 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 		if err := relayer.StartRelayer(ctx, eRep, pathName); err != nil {
 			return fmt.Errorf("failed to start relayer: %s", err)
 		}
-		s.T().Cleanup(func() {
-			if !s.T().Failed() {
-				if err := relayer.StopRelayer(ctx, eRep); err != nil {
-					s.T().Logf("error stopping relayer: %v", err)
-				}
-			}
-		})
 		if err := test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)); err != nil {
 			return fmt.Errorf("failed to wait for blocks: %v", err)
 		}

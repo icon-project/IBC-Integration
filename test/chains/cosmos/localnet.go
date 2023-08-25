@@ -568,14 +568,13 @@ func (c *CosmosLocalnet) BuildWallets(ctx context.Context, keyName string) (ibc.
 }
 
 func (c *CosmosLocalnet) BuildWallet(ctx context.Context, keyName string, mnemonic string) (ibc.Wallet, error) {
-	if mnemonic != "" {
-		if err := c.RecoverKey(ctx, keyName, mnemonic); err != nil {
-			return nil, fmt.Errorf("failed to recover key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
-		}
-	} else {
-		if err := c.CreateKey(ctx, keyName); err != nil {
-			return nil, fmt.Errorf("failed to create key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
-		}
+	if mnemonic == "" {
+		wallet, _ := c.BuildRelayerWallet(ctx, keyName)
+		mnemonic = wallet.Mnemonic()
+	}
+
+	if err := c.RecoverKey(ctx, keyName, mnemonic); err != nil {
+		return nil, fmt.Errorf("failed to recover key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
 	}
 
 	addrBytes, err := c.GetAddress(ctx, keyName)
@@ -729,9 +728,17 @@ func (c *CosmosLocalnet) UnpauseNode(ctx context.Context) error {
 }
 
 func (c *CosmosLocalnet) BackupConfig() ([]byte, error) {
+	wallets := make(map[string]interface{})
+	for key, value := range c.Wallets {
+		wallets[key] = map[string]string{
+			"mnemonic":         value.Mnemonic(),
+			"address":          hex.EncodeToString(value.Address()),
+			"formattedAddress": value.FormattedAddress(),
+		}
+	}
 	backup := map[string]interface{}{
 		"addresses": c.IBCAddresses,
-		"wallets":   c.Wallets,
+		"wallets":   wallets,
 	}
 	return json.MarshalIndent(backup, "", "\t")
 }
@@ -743,6 +750,13 @@ func (c *CosmosLocalnet) RestoreConfig(backup []byte) error {
 		return err
 	}
 	c.IBCAddresses = result["addresses"].(map[string]string)
-	c.Wallets = result["wallets"].(map[string]ibc.Wallet)
+	wallets := make(map[string]ibc.Wallet)
+	for key, value := range result["wallets"].(map[string]interface{}) {
+		_value := value.(map[string]string)
+		mnemonic := _value["mnemonic"]
+		address, _ := hex.DecodeString(_value["address"])
+		wallets[key] = cosmos.NewWallet(key, address, mnemonic, c.Config())
+	}
+	c.Wallets = wallets
 	return nil
 }

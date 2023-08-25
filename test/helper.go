@@ -8,23 +8,37 @@ import (
 	"path/filepath"
 )
 
-type Contract struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
+var ibcConfigPath = filepath.Join(os.Getenv(chains.BASE_PATH), "ibc-config")
+
+func CleanBackupConfig() {
+	files, err := filepath.Glob(filepath.Join(ibcConfigPath, "*.json"))
+	if err != nil {
+		fmt.Println("Error deleting file:", err)
+		return
+	}
+
+	for _, file := range files {
+		err := os.Remove(file)
+		if err != nil {
+			fmt.Println("Error deleting file:", err)
+		}
+	}
+
 }
-
-type IBCContracts []Contract
-type XCallContracts []Contract
-
-var ibcContracts = filepath.Join(os.Getenv("HOME"), "ibcContracts-%s.json")
 
 // for saving data in particular format
 func BackupConfig(chain chains.Chain) error {
-	addresses, err := chain.BackupConfig()
+	config, err := chain.BackupConfig()
 	if err != nil {
 		return err
 	}
-	fileName := fmt.Sprintf(ibcContracts, chain.(ibc.Chain).Config().ChainID)
+	fileName := fmt.Sprintf("%s/%s.json", ibcConfigPath, chain.(ibc.Chain).Config().ChainID)
+	dirPath := filepath.Dir(fileName)
+
+	err = os.MkdirAll(dirPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
 	file, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
@@ -37,12 +51,12 @@ func BackupConfig(chain chains.Chain) error {
 		}
 	}(file)
 
-	_, err = file.Write(addresses)
+	_, err = file.Write(config)
 	return err
 }
 
 func RestoreConfig(chain chains.Chain) error {
-	fileName := fmt.Sprintf(ibcContracts, chain.(ibc.Chain).Config().ChainID)
+	fileName := fmt.Sprintf("%s/%s.json", ibcConfigPath, chain.(ibc.Chain).Config().ChainID)
 	file, err := os.Open(fileName)
 	if err != nil {
 		fmt.Println("Error opening file:", err)

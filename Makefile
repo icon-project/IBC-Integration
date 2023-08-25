@@ -62,4 +62,11 @@ optimize-build:
 gobuild:
 	go build .
 
+e2e-demo-setup:
+	go test -v ./test/e2e-demo -testify.m TestSetupE2EDemo
+
+e2e-demo-clean:
+	go test -v ./test/e2e-demo -testify.m TestCleanupE2EDemo
+
+
 .PHONY: proto-all proto-gen proto-gen-any proto-swagger-gen proto-format proto-lint proto-check-breaking proto-update-deps gobuild
