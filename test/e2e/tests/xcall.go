@@ -79,7 +79,7 @@ func (x *XCallTestSuite) testPacketDrop(ctx context.Context, t *testing.T, chain
 	//height, _ := chainA.(ibc.Chain).Height(ctx)
 	listener := chainA.InitEventListener(ctx, "ibc")
 	defer listener.Stop()
-	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, []byte(msg), nil)
+	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, []byte(msg), []byte("rollback-test"))
 
 	x.Require().Errorf(err, "failed to find eventlog")
 	sn := res.SerialNo
@@ -90,10 +90,11 @@ func (x *XCallTestSuite) testPacketDrop(ctx context.Context, t *testing.T, chain
 		"sequence":   uint64(snInt),
 	}
 
-	ctx, err = chainB.CheckForTimeout(ctx, params, listener)
+	ctx, err = chainA.CheckForTimeout(ctx, chainB, params, listener)
 	response := ctx.Value("timeout-response").(*chains.TimeoutResponse)
 	assert.Truef(t, response.HasTimeout, "timeout event not found - %s", sn)
 	assert.Falsef(t, response.IsPacketFound, "packet found on target chain - %s", sn)
+	assert.Truef(t, response.HasRollbackCalled, "failed to call rollback  - %s", sn)
 }
 
 func (x *XCallTestSuite) testOneWayMessage(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {

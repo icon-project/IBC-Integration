@@ -37,7 +37,7 @@ type Chain interface {
 	SendPacketXCall(ctx context.Context, keyName, _to string, data, rollback []byte) (context.Context, error)
 	IsPacketReceived(ctx context.Context, params map[string]interface{}) bool
 	XCall(ctx context.Context, targetChain Chain, keyName, _to string, data, rollback []byte) (*XCallResponse, error)
-	CheckForTimeout(ctx context.Context, params map[string]interface{}, listener EventListener) (context.Context, error)
+	CheckForTimeout(ctx context.Context, src Chain, params map[string]interface{}, listener EventListener) (context.Context, error)
 	EOAXCall(ctx context.Context, targetChain Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error)
 	ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error)
 	ExecuteRollback(ctx context.Context, sn string) (context.Context, error)

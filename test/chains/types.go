@@ -79,8 +79,9 @@ type EventListener interface {
 }
 
 type TimeoutResponse struct {
-	HasTimeout    bool
-	IsPacketFound bool
+	HasTimeout        bool
+	IsPacketFound     bool
+	HasRollbackCalled bool
 }
 
 type PacketTransferResponse struct {

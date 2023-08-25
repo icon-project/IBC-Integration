@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 	"strconv"
 	"strings"
 	"time"
@@ -199,33 +198,26 @@ func (c *CosmosLocalnet) InitEventListener(ctx context.Context, contract string)
 	return listener
 }
 
-func (c *CosmosLocalnet) CheckForTimeout(ctx context.Context, params map[string]interface{}, listener chains.EventListener) (context.Context, error) {
-	var result = new(chains.TimeoutResponse)
-	ctx, err := c.QueryContract(ctx, c.GetIBCAddress("ibc"), chains.HasPacketReceipt, params)
+func (c *CosmosLocalnet) CheckForTimeout(ctx context.Context, target chains.Chain, params map[string]interface{}, listener chains.EventListener) (context.Context, error) {
+	response := new(chains.TimeoutResponse)
+	ctx, err := target.QueryContract(ctx, target.GetIBCAddress("ibc"), chains.HasPacketReceipt, params)
 	if err != nil {
-		result.IsPacketFound = false
-	} else {
-		response := ctx.Value("query-result").(map[string]interface{})
-		result.IsPacketFound = response["data"].(bool)
+		response.IsPacketFound = false
+		return context.WithValue(ctx, "timeout-response", response), err
 	}
-
-	filters := map[string]interface{}{
-		"signature": "PacketTimeout(bytes)",
-		"index":     []*string{},
+	sn := fmt.Sprintf("%d", params["sequence"])
+	isPackageFound, _ := strconv.ParseBool(string(ctx.Value("query-result").([]byte)))
+	filter := map[string]interface{}{
+		"wasm-timeout_packet.packet_sequence": sn,
 	}
-	event, err := listener.FindEvent(filters)
+	event, err := listener.FindEvent(filter)
+	response.IsPacketFound = isPackageFound
+	response.HasTimeout = err == nil && event != nil
 
-	if err != nil {
-		result.HasTimeout = false
-		return context.WithValue(ctx, "timeout-response", result), err
-	}
+	ctx, err = c.ExecuteRollback(ctx, sn)
+	response.HasRollbackCalled = err == nil && ctx.Value("IsRollbackEventFound").(bool)
 
-	var packet = new(chantypes.Packet)
-	var connStr = types.HexBytes(event["indexed"][1])
-
-	_ = chains.HexBytesToProtoUnmarshal(connStr, packet)
-	result.HasTimeout = packet != nil
-	return context.WithValue(ctx, "timeout-response", result), nil
+	return context.WithValue(ctx, "timeout-response", response), err
 }
 
 func (c *CosmosLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string, data, rollback []byte) (context.Context, error) {
@@ -240,7 +232,7 @@ func (c *CosmosLocalnet) SendPacketXCall(ctx context.Context, keyName, _to strin
 		return nil, err
 	}
 	tx := ctx.Value("txResult").(*TxResul)
-	return context.WithValue(ctx, "sn", c.findSn(tx)), nil
+	return context.WithValue(ctx, "sn", c.findSn(tx, "wasm-CallMessageSent")), nil
 }
 
 // FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
@@ -355,15 +347,15 @@ func (c *CosmosLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain,
 	}
 
 	tx := ctx.Value("txResult").(*TxResul)
-	sn := c.findSn(tx)
+	sn := c.findSn(tx, "wasm-CallMessageSent")
 	reqId, destData, err := targetChain.FindCallMessage(ctx, height, c.cfg.ChainID+"/"+c.IBCAddresses["dapp"], strings.Split(_to, "/")[1], sn)
 	return sn, reqId, destData, err
 }
 
-func (c *CosmosLocalnet) findSn(tx *TxResul) string {
+func (c *CosmosLocalnet) findSn(tx *TxResul, eType string) string {
 	// find better way to parse events
 	for _, event := range tx.Events {
-		if event.Type == "wasm-CallMessageSent" {
+		if event.Type == eType {
 			for _, attribute := range event.Attributes {
 				keyName, _ := base64.StdEncoding.DecodeString(attribute.Key)
 				if string(keyName) == "sn" {
@@ -396,7 +388,13 @@ func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (c
 func (c *CosmosLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
 	testcase := ctx.Value("testcase").(string)
 	xCallKey := fmt.Sprintf("xcall-%s", testcase)
-	return c.executeContract(context.Background(), c.IBCAddresses[xCallKey], chains.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
+	ctx, err := c.executeContract(context.Background(), c.IBCAddresses[xCallKey], chains.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
+	if err != nil {
+		return nil, err
+	}
+	tx := ctx.Value("txResult").(*TxResul)
+	sequence := c.findSn(tx, "wasm-RollbackExecuted")
+	return context.WithValue(ctx, "IsRollbackEventFound", sequence == sn), nil
 }
 
 func (c *CosmosLocalnet) FindCallMessage(ctx context.Context, startHeight uint64, from, to, sn string) (string, string, error) {
