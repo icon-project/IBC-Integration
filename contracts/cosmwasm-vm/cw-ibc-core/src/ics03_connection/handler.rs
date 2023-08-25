@@ -227,7 +227,6 @@ impl<'a> CwIbcCoreContext<'a> {
             proof_height.to_string(),
             to_vec(&counterparty_prefix)?,
             msg.proof_try,
-            consensus_state.root().as_bytes().to_vec(),
             connection_path,
             expected_connection_end.encode_vec().unwrap(),
         );
@@ -237,7 +236,6 @@ impl<'a> CwIbcCoreContext<'a> {
             proof_height.to_string(),
             to_vec(&counterparty_prefix)?,
             msg.proof_client,
-            consensus_state.root().as_bytes().to_vec(),
             client_state_path,
             message_client_state.value,
         );
@@ -248,7 +246,6 @@ impl<'a> CwIbcCoreContext<'a> {
             proof_height.to_string(),
             to_vec(&counterparty_prefix)?,
             msg.proof_consensus,
-            consensus_state.root().as_bytes().to_vec(),
             consensus_state_path_on_b,
             consensus_state.clone().as_bytes(),
         );
@@ -390,7 +387,6 @@ impl<'a> CwIbcCoreContext<'a> {
             proof_height.to_string(),
             to_vec(&counterparty_prefix).map_err(ContractError::Std)?,
             message.proof_init,
-            consensus_state.root().as_bytes().to_vec(),
             counterparty_connection_path,
             expected_connection_end.encode_vec().unwrap().to_vec(),
         );
@@ -411,7 +407,6 @@ impl<'a> CwIbcCoreContext<'a> {
             proof_height.to_string(),
             to_vec(&counterparty_prefix).map_err(ContractError::Std)?,
             message.proof_client,
-            consensus_state.root().as_bytes().to_vec(),
             client_state_path,
             message_client_state.value.to_vec(),
         );
@@ -422,7 +417,6 @@ impl<'a> CwIbcCoreContext<'a> {
             proof_height.to_string(),
             to_vec(&counterparty_prefix).map_err(ContractError::Std)?,
             message.proof_consensus,
-            consensus_state.root().as_bytes().to_vec(),
             consensus_state_path,
             consensus_state.as_bytes(),
         );
@@ -556,7 +550,6 @@ impl<'a> CwIbcCoreContext<'a> {
             proof_height.to_string(),
             to_vec(&counterparty_prefix).map_err(ContractError::Std)?,
             msg.proof_ack,
-            consensus_state.root().as_bytes().to_vec(),
             connection_path,
             expected_connection_end.encode_vec().unwrap(),
         );

@@ -1,6 +1,6 @@
 use crate::{
     conversions::to_ibc_client_id, light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT,
-    EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR, EXECUTE_UPDATE_CLIENT,
+    EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR,
 };
 
 use super::{events::client_misbehaviour_event, *};
@@ -44,7 +44,6 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         env: Env,
         message: RawMsgCreateClient,
     ) -> Result<Response, ContractError> {
-
         let client_state_any = message.client_state.ok_or(ContractError::IbcClientError {
             error: ClientError::MissingRawClientState,
         })?;
@@ -157,8 +156,6 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into);
         }
-
-        self.store_callback_data(deps.storage, EXECUTE_UPDATE_CLIENT, &client_id)?;
 
         let sub_msg: SubMsg = client.update_client(&client_id, &header)?;
         cw_println!(
@@ -413,9 +410,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 Some(data) => {
                     let response: UpgradeClientResponse =
                         from_binary(&data).map_err(ContractError::Std)?;
-                        let stored_id:ClientId=self.get_callback_data(deps.as_ref().storage, EXECUTE_UPDATE_CLIENT)?;
-                        
-                        let client_id = response.client_id().map_err(ContractError::from)?;
+                    let client_id = response.client_id().map_err(ContractError::from)?;
 
                     self.store_client_state(
                         deps.storage,
