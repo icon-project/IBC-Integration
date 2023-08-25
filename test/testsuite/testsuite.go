@@ -24,11 +24,6 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-const (
-	Owner = "gochain"
-	User  = "User"
-)
-
 // E2ETestSuite has methods and functionality which can be shared among all test suites.
 type E2ETestSuite struct {
 	suite.Suite
@@ -99,23 +94,16 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 		return nil, err
 	}
 
-	if err := chainA.BuildWallets(ctx, Owner); err != nil {
-		return nil, err
-	}
-	if err := chainB.BuildWallets(ctx, Owner); err != nil {
-		return nil, err
-	}
-	if err := chainA.BuildWallets(ctx, User); err != nil {
-		return nil, err
-	}
-	if err := chainB.BuildWallets(ctx, User); err != nil {
-		return nil, err
-	}
 	var err error
-	if _, err := chainA.SetupIBC(ctx, Owner); err != nil {
+	err = s.buildWallets(ctx, chainA, chainB)
+	if err != nil {
 		return nil, err
 	}
-	if _, err = chainB.SetupIBC(ctx, Owner); err != nil {
+
+	if _, err := chainA.SetupIBC(ctx, interchaintest.IBCOwnerAccoun); err != nil {
+		return nil, err
+	}
+	if _, err = chainB.SetupIBC(ctx, interchaintest.IBCOwnerAccoun); err != nil {
 		return nil, err
 	}
 	if err := ic.BuildRelayer(ctx, eRep, buildOptions); err != nil {
@@ -141,12 +129,34 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 	return r, err
 }
 
+func (s *E2ETestSuite) buildWallets(ctx context.Context, chainA chains.Chain, chainB chains.Chain) error {
+	if _, err := chainA.BuildWallets(ctx, interchaintest.IBCOwnerAccoun); err != nil {
+		return err
+	}
+	if _, err := chainB.BuildWallets(ctx, interchaintest.IBCOwnerAccoun); err != nil {
+		return err
+	}
+	if _, err := chainA.BuildWallets(ctx, interchaintest.UserAccount); err != nil {
+		return err
+	}
+	if _, err := chainB.BuildWallets(ctx, interchaintest.UserAccount); err != nil {
+		return err
+	}
+	if _, err := chainA.BuildWallets(ctx, interchaintest.XCallOwnerAccount); err != nil {
+		return err
+	}
+	if _, err := chainB.BuildWallets(ctx, interchaintest.XCallOwnerAccount); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *E2ETestSuite) DeployXCallMockApp(ctx context.Context, port string) error {
 	testcase := ctx.Value("testcase").(string)
 	connectionKey := fmt.Sprintf("connection-%s", testcase)
 	chainA, chainB := s.GetChains()
 	if err := chainA.DeployXCallMockApp(ctx, chains.XCallConnection{
-		KeyName:                Owner,
+		KeyName:                interchaintest.XCallOwnerAccount,
 		CounterpartyNid:        chainB.(ibc.Chain).Config().ChainID,
 		ConnectionId:           "connection-0", //TODO
 		PortId:                 port,
@@ -156,7 +166,7 @@ func (s *E2ETestSuite) DeployXCallMockApp(ctx context.Context, port string) erro
 		return err
 	}
 	if err := chainB.DeployXCallMockApp(ctx, chains.XCallConnection{
-		KeyName:                Owner,
+		KeyName:                interchaintest.XCallOwnerAccount,
 		CounterpartyNid:        chainA.(ibc.Chain).Config().ChainID,
 		ConnectionId:           "connection-0", //TODO
 		PortId:                 port,
@@ -295,7 +305,7 @@ func buildChain(log *zap.Logger, testName string, cfg *testconfig.Chain) (chains
 	ibcChainConfig := cfg.ChainConfig.GetIBCChainConfig(&chain)
 	switch cfg.ChainConfig.Type {
 	case "icon":
-		chain = icon.NewIconLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystoreFile, cfg.KeystorePassword, cfg.Contracts)
+		chain = icon.NewIconLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.Contracts)
 		return chain, nil
 	case "cosmos", "wasm":
 		enc := cosmos.DefaultEncoding()

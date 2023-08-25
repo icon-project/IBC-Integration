@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	interchaintest "github.com/icon-project/ibc-integration/test"
 	"strconv"
 	"strings"
 	"time"
@@ -42,6 +43,7 @@ func NewCosmosLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainCo
 		cfg:         chain.Config(),
 		keyName:     keyPassword,
 		filepath:    contracts,
+		Wallets:     map[string]ibc.Wallet{},
 	}, nil
 }
 
@@ -227,7 +229,7 @@ func (c *CosmosLocalnet) SendPacketXCall(ctx context.Context, keyName, _to strin
 	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
 	rollbackArray := strings.Join(strings.Fields(fmt.Sprintf("%d", rollback)), ",")
 	params := fmt.Sprintf(`{"to":"%s", "data":%s, "rollback":%s}`, _to, dataArray, rollbackArray)
-	ctx, err := c.executeContract(ctx, c.IBCAddresses[dappKey], chains.FaucetAccountKeyName, "send_call_message", params)
+	ctx, err := c.executeContract(ctx, c.IBCAddresses[dappKey], interchaintest.UserAccount, "send_call_message", params)
 	if err != nil {
 		return nil, err
 	}
@@ -382,13 +384,13 @@ func (c *CosmosLocalnet) IsPacketReceived(ctx context.Context, params map[string
 func (c *CosmosLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
 	testcase := ctx.Value("testcase").(string)
 	xCallKey := fmt.Sprintf("xcall-%s", testcase)
-	return c.executeContract(ctx, c.IBCAddresses[xCallKey], chains.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
+	return c.executeContract(ctx, c.IBCAddresses[xCallKey], interchaintest.FaucetAccountKeyName, "execute_call", `{"request_id":"`+reqId+`", "data":`+data+`}`)
 }
 
 func (c *CosmosLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
 	testcase := ctx.Value("testcase").(string)
 	xCallKey := fmt.Sprintf("xcall-%s", testcase)
-	ctx, err := c.executeContract(context.Background(), c.IBCAddresses[xCallKey], chains.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
+	ctx, err := c.executeContract(context.Background(), c.IBCAddresses[xCallKey], interchaintest.FaucetAccountKeyName, "execute_rollback", `{"sequence_no":"`+sn+`"}`)
 	if err != nil {
 		return nil, err
 	}
@@ -461,8 +463,9 @@ func (c *CosmosLocalnet) FindEvent(ctx context.Context, startHeight uint64, cont
 
 func (c *CosmosLocalnet) DeployContract(ctx context.Context, keyName string) (context.Context, error) {
 	// Fund user to deploy contract
-	contractOwner, _, _ := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
+	wallet, _ := c.GetAndFundTestUser(ctx, keyName, "", int64(100_000_000))
 
+	contractOwner := wallet.FormattedAddress()
 	// Get contract Name from context
 	ctxValue := ctx.Value(chains.ContractName{}).(chains.ContractName)
 	initMsg := ctx.Value(chains.InitMessageKey("init-msg")).(chains.InitMessage)
@@ -559,10 +562,29 @@ func (c *CosmosLocalnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.
 	return nil, nil
 }
 
-func (c *CosmosLocalnet) BuildWallets(ctx context.Context, keyName string) error {
+func (c *CosmosLocalnet) BuildWallets(ctx context.Context, keyName string) (ibc.Wallet, error) {
 	// Build Wallet and fund user
-	_, _, err := c.GetAndFundTestUser(ctx, keyName, int64(100_000_000), c.CosmosChain)
-	return err
+	return c.GetAndFundTestUser(ctx, keyName, "", int64(100_000_000))
+}
+
+func (c *CosmosLocalnet) BuildWallet(ctx context.Context, keyName string, mnemonic string) (ibc.Wallet, error) {
+	if mnemonic != "" {
+		if err := c.RecoverKey(ctx, keyName, mnemonic); err != nil {
+			return nil, fmt.Errorf("failed to recover key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
+		}
+	} else {
+		if err := c.CreateKey(ctx, keyName); err != nil {
+			return nil, fmt.Errorf("failed to create key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
+		}
+	}
+
+	addrBytes, err := c.GetAddress(ctx, keyName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account address for key %q on chain %s: %w", keyName, c.cfg.Name, err)
+	}
+	wallet := cosmos.NewWallet(keyName, addrBytes, mnemonic, c.cfg)
+	c.Wallets[keyName] = wallet
+	return wallet, nil
 }
 
 func (c *CosmosLocalnet) GetCommonArgs() []string {
@@ -704,4 +726,23 @@ func (c *CosmosLocalnet) PauseNode(ctx context.Context) error {
 // UnpauseNode restarts a node
 func (c *CosmosLocalnet) UnpauseNode(ctx context.Context) error {
 	return c.getFullNode().Client.Start()
+}
+
+func (c *CosmosLocalnet) BackupConfig() ([]byte, error) {
+	backup := map[string]interface{}{
+		"addresses": c.IBCAddresses,
+		"wallets":   c.Wallets,
+	}
+	return json.MarshalIndent(backup, "", "\t")
+}
+
+func (c *CosmosLocalnet) RestoreConfig(backup []byte) error {
+	result := make(map[string]interface{})
+	err := json.Unmarshal(backup, &result)
+	if err != nil {
+		return err
+	}
+	c.IBCAddresses = result["addresses"].(map[string]string)
+	c.Wallets = result["wallets"].(map[string]ibc.Wallet)
+	return nil
 }

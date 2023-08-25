@@ -3,7 +3,6 @@ package interchaintest
 import (
 	"context"
 	"fmt"
-
 	"github.com/docker/docker/client"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
@@ -494,8 +493,8 @@ func (ic *Interchain) generateRelayerWallets(ctx context.Context) error {
 	for r, chains := range relayerChains {
 		for _, c := range chains {
 			// Just an ephemeral unique name, only for the local use of the keyring.
-			//accountName := ic.relayers[r] + "-" + ic.chains[c]
-			newWallet, err := c.BuildRelayerWallet(ctx, ic.chains[c])
+			accountName := "relayer-" + c.Config().Name
+			newWallet, err := c.BuildRelayerWallet(ctx, accountName)
 			if err != nil {
 				return err
 			}
@@ -520,6 +519,7 @@ func (ic *Interchain) configureRelayerKeys(ctx context.Context, rep *testreporte
 			}
 
 			chainName := ic.chains[c]
+
 			if err := r.AddChainConfiguration(ctx,
 				rep,
 				c.Config(), chainName,
@@ -527,8 +527,13 @@ func (ic *Interchain) configureRelayerKeys(ctx context.Context, rep *testreporte
 			); err != nil {
 				return fmt.Errorf("failed to configure relayer %s for chain %s: %w", ic.relayers[r], chainName, err)
 			}
-			//TODO ignore key restore for icon
-			if c.Config().Type != "icon" {
+
+			if c.Config().Type == "icon" {
+				wallet := ic.relayerWallets[relayerChain{R: r, C: c}]
+				if err := r.(Relayer).RestoreICONKeystore(ctx, c.Config().ChainID, wallet); err != nil {
+					return fmt.Errorf("failed to restore key to relayer %s for chain %s: %w", ic.relayers[r], chainName, err)
+				}
+			} else {
 				if err := r.RestoreKey(ctx,
 					rep,
 					c.Config(), chainName,

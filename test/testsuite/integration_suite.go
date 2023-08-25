@@ -31,13 +31,13 @@ func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string) error {
 		},
 	})
 	var err error
-	ctx, err = chainA.DeployContract(ctx, Owner)
+	ctx, err = chainA.DeployContract(ctx, interchaintest.XCallOwnerAccount)
 
 	if err != nil {
 		return err
 	}
 
-	ctx, err = chainA.ExecuteContract(ctx, ibcHostChainA, Owner, chains.BindPort, map[string]interface{}{
+	ctx, err = chainA.ExecuteContract(ctx, ibcHostChainA, interchaintest.IBCOwnerAccoun, chains.BindPort, map[string]interface{}{
 		"port_id": portId,
 		"address": chainA.GetIBCAddress(GetAppKey(ctx, "mockdapp")),
 	})
@@ -51,13 +51,13 @@ func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string) error {
 			"ibc_host": ibcHostChainB,
 		},
 	})
-	ctx, err = chainB.DeployContract(ctx, Owner)
+	ctx, err = chainB.DeployContract(ctx, interchaintest.XCallOwnerAccount)
 
 	if err != nil {
 		return err
 	}
 
-	ctx, err = chainB.ExecuteContract(ctx, ibcHostChainB, Owner, chains.BindPort, map[string]interface{}{
+	ctx, err = chainB.ExecuteContract(ctx, ibcHostChainB, interchaintest.IBCOwnerAccoun, chains.BindPort, map[string]interface{}{
 		"port_id": portId,
 		"address": chainB.GetIBCAddress(GetAppKey(ctx, "mockdapp")),
 	})
@@ -134,7 +134,7 @@ func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain,
 		"msg":            chains.BufferArray(msg),
 		"timeout_height": height + timeout,
 	}
-	return src.SendPacketMockDApp(ctx, target, User, params)
+	return src.SendPacketMockDApp(ctx, target, interchaintest.UserAccount, params)
 }
 
 // CrashRelayer Node

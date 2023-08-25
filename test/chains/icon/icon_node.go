@@ -1,9 +1,12 @@
 package icon
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/icza/dyno"
 	"os"
 	"path"
 	"path/filepath"
@@ -34,18 +37,6 @@ const (
 	GOLOOP_IMAGE_TAG_ENV = "GOLOOP_IMAGE_TAG"
 	GOLOOP_IMAGE_TAG     = "latest"
 )
-
-var ContainerEnvs = [9]string{
-	"GOCHAIN_CONFIG=/goloop/data/config.json",
-	"GOCHAIN_GENESIS=/goloop/data/genesis.json",
-	"GOCHAIN_DATA=/goloop/chain/iconee",
-	"GOCHAIN_LOGFILE=/goloop/chain/iconee.log",
-	"GOCHAIN_DB_TYPE=rocksdb",
-	"GOCHAIN_CLEAN_DATA=true",
-	"JAVAEE_BIN=/goloop/execman/bin/execman",
-	"PYEE_VERIFY_PACKAGE=true",
-	"ICON_CONFIG=/goloop/data/icon_config.json",
-}
 
 type IconNode struct {
 	VolumeName   string
@@ -79,15 +70,13 @@ func (in *IconNode) Name() string {
 }
 
 // Create Node Container with ports exposed and published for host to communicate with
-func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
+func (in *IconNode) CreateNodeContainer(ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
 	imageRef := in.Image.Ref()
 	testBasePath := os.Getenv(chains.BASE_PATH)
-
 	containerConfig := &types.ContainerCreateConfig{
 		Config: &container.Config{
 			Image:    imageRef,
 			Hostname: in.HostName(),
-			Env:      ContainerEnvs[:],
 			Labels:   map[string]string{dockerutil.CleanupLabel: in.TestName},
 		},
 
@@ -97,11 +86,6 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 			AutoRemove:      false,
 			DNS:             []string{},
 			Mounts: []mount.Mount{
-				{
-					Type:   mount.TypeBind,
-					Source: fmt.Sprintf("%s/test/chains/icon/data/single", testBasePath),
-					Target: "/goloop/data",
-				},
 				{
 					Type:   mount.TypeBind,
 					Source: fmt.Sprintf("%s/test/chains/icon/data/governance", testBasePath),
@@ -120,7 +104,89 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context) error {
 		in.log.Error("Failed to create container", zap.Error(err))
 		return err
 	}
+	err = in.modifyGenesisToAddGenesisAccount(ctx, cc.ID, additionalGenesisWallets...)
+	if err != nil {
+		in.log.Error("Failed to update genesis file in container", zap.Error(err))
+		return err
+	}
 	in.ContainerID = cc.ID
+	return nil
+}
+
+func (tn *IconNode) GenesisFileContent(ctx context.Context) ([]byte, error) {
+	fileName := fmt.Sprintf("%s/test/chains/icon/data/genesis.json", os.Getenv(chains.BASE_PATH))
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("genesis file not found : %w", err)
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			fmt.Println("Error closing file:", err)
+		}
+	}(file)
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("getting genesis.json content: %w", err)
+	}
+	fileSize := fileInfo.Size()
+
+	// Read the file content into a buffer
+	buffer := make([]byte, fileSize)
+	_, err = file.Read(buffer)
+	if err != nil {
+		return nil, fmt.Errorf("reading genesis.json content: %w", err)
+	}
+	return buffer, nil
+}
+
+type GenesisAccount struct {
+	Address string           `json:"address"`
+	Balance icontypes.HexInt `json:"balance"`
+	Name    string           `json:"name"`
+}
+
+func (in *IconNode) modifyGenesisToAddGenesisAccount(ctx context.Context, containerID string, additionalGenesisWallets ...ibc.WalletAmount) error {
+	g := make(map[string]interface{})
+	genbz, err := in.GenesisFileContent(ctx)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(genbz, &g); err != nil {
+		return fmt.Errorf("failed to unmarshal genesis file: %w", err)
+	}
+
+	for index, wallet := range additionalGenesisWallets {
+		genesisAccount := GenesisAccount{
+			Address: wallet.Address,
+			Balance: "0xd3c21bcecceda1000000", // 1_000_000*10**18
+			Name:    fmt.Sprintf("ibc-%d", index),
+		}
+		if err := dyno.Append(g, genesisAccount, "accounts"); err != nil {
+			return fmt.Errorf("failed to set add genesis accounts in genesis json: %w", err)
+		}
+	}
+	result, _ := json.Marshal(g)
+
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	err = tw.WriteHeader(&tar.Header{
+		Name: "genesis.json",
+		Mode: 0644,
+		Size: int64(len(result)),
+	})
+	_, err = tw.Write(result)
+	if err != nil {
+		return err
+	}
+	err = tw.Close()
+	if err != nil {
+		return err
+	}
+	if err := in.DockerClient.CopyToContainer(context.Background(), containerID, "/goloop/data/", &buf, types.CopyToContainerOptions{}); err != nil {
+		return fmt.Errorf("failed to update genesis: %w", err)
+	}
 	return nil
 }
 
@@ -350,19 +416,8 @@ func (in *IconNode) QueryContract(ctx context.Context, scoreAddress, methodName,
 	return out, nil
 }
 
-func (in *IconNode) CreateKey(ctx context.Context, password string) error {
-	in.lock.Lock()
-	defer in.lock.Unlock()
-
-	fileName := password + ".json"
-	output, _, err := in.ExecBin(ctx,
-		"ks", "gen",
-		"--password", password,
-		"--out", path.Join(in.HomeDir(), fileName),
-	)
-	outputs := strings.Fields(string(output))
-	in.Address = outputs[0]
-	return err
+func (in *IconNode) RestoreKeystore(ctx context.Context, ks []byte, keyName string) error {
+	return in.WriteFile(ctx, ks, keyName+".json")
 }
 
 func (in *IconNode) ExecuteContract(ctx context.Context, scoreAddress, methodName, keyStorePath, params string) (string, error) {

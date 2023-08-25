@@ -24,7 +24,7 @@ func (s *IntegrationTest) TestIntegration_all() {
 	s.Require().NoError(s.SetCfg())
 	rly, err := s.SetupRelayer(ctx)
 
-	assert.NoError(t, err, "Error while setting up relayer, %v", err)
+	assert.NoErrorf(t, err, "Error while setting up relayer, %v", err)
 
 	test := tests.RelayerTestSuite{
 		E2ETestSuite: &s.E2ETestSuite,

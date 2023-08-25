@@ -19,6 +19,9 @@ const (
 	testPathName = "test-path"
 
 	FaucetAccountKeyName = "faucet"
+	IBCOwnerAccoun       = "ibc-owner"
+	XCallOwnerAccount    = "xcall-owner"
+	UserAccount          = "user"
 )
 
 // KeepDockerVolumesOnFailure sets whether volumes associated with a particular test
@@ -36,6 +39,10 @@ func KeepDockerVolumesOnFailure(b bool) {
 // If any part of the setup fails, t.Fatal is called.
 func DockerSetup(t *testing.T) (*client.Client, string) {
 	t.Helper()
+	origKeep := dockerutil.KeepVolumesOnFailure
+	defer func() {
+		dockerutil.KeepVolumesOnFailure = origKeep
+	}()
 	return dockerutil.DockerSetup(t)
 }
 
