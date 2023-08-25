@@ -40,17 +40,21 @@ impl<'a> IconClient<'a> {
             "network type section decision hash {}",
             hex::encode(decision)
         );
-        let validators_map = common::utils::to_lookup(validators);
+
+        if validators.is_empty() {
+            return Err(ContractError::InSuffcientQuorum);
+        }
 
         let num_validators = validators.len() as u64;
 
-        for signature in signatures {
+        for (i, signature) in signatures.iter().enumerate() {
             let signer = self
                 .context
                 .recover_icon_signer(decision.as_slice(), signature);
 
+            let validator = validators.get(i).cloned().unwrap();
             if let Some(val) = signer {
-                if validators_map.contains_key(&val) {
+                if validator == val {
                     votes += 1;
                 }
             }

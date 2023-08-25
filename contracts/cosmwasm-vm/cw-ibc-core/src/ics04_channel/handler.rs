@@ -81,6 +81,15 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let connection_id = channel_end.connection_hops[0].clone();
         // An IBC connection running on the local (host) chain should exist.
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
+        let client_id = connection_end.client_id();
+        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
         channel_open_init_msg_validate(&channel_end, connection_end)?;
         let counter = self.channel_counter(deps.storage)?;
         let src_channel = ChannelId::new(counter); // creating new channel_id
@@ -103,7 +112,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_OPEN_INIT,
             &sub_message.channel().endpoint,
         )?;
-        let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
+        let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
         let data = to_binary(&data).map_err(ContractError::Std)?;
         let on_chan_open_init = create_channel_submesssage(
             contract_address,
@@ -240,7 +249,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             &sub_message.channel().endpoint,
         )?;
 
-        let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
+        let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
 
         let data = to_binary(&data).map_err(ContractError::Std)?;
         cw_println!(deps, "after converting data to binary ");
@@ -355,8 +364,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
             &sub_message.channel().endpoint,
         )?;
-        let data =
-            cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
+        let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_try = create_channel_submesssage(
             module_contract_address,
@@ -469,8 +477,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
             &sub_message.channel().endpoint,
         )?;
-        let data =
-            cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
+        let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelConnect { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_open_try = create_channel_submesssage(
             contract_address,
@@ -516,6 +523,15 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         channel_close_init_validate(&src_channel, &channel_end)?;
         let connection_id = channel_end.connection_hops()[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
+        let client_id = connection_end.client_id();
+        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
 
         ensure_connection_state(&connection_id, &connection_end, &ConnectionState::Open)?;
 
@@ -528,8 +544,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_CLOSE_INIT,
             &sub_message.channel().endpoint,
         )?;
-        let data =
-            cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
+        let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).unwrap();
         let on_chan_close_init = create_channel_submesssage(
             contract_address,
@@ -641,8 +656,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE,
             &sub_message.channel().endpoint,
         )?;
-        let data =
-            cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
+        let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelClose { msg: sub_message };
         let data = to_binary(&data).map_err(Into::<ContractError>::into)?;
         let on_chan_close_confirm = create_channel_submesssage(
             contract_address,

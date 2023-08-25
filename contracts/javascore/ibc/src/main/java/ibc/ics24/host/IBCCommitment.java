@@ -88,17 +88,4 @@ public class IBCCommitment {
     public static byte[] nextSequenceRecvCommitmentKey(String portId, String channelId) {
         return Context.hash(KECCAK256, nextSequenceRecvCommitmentPath(portId, channelId));
     }
-
-    public static boolean equals(byte[] a, byte[] b) {
-        boolean isEqual;
-        int length = a.length;
-        isEqual = length == b.length;
-
-        for (int i = 0; isEqual && (i < length); ++i) {
-            isEqual = (a[i] == b[i]);
-        }
-
-        return isEqual;
-    }
-
 }

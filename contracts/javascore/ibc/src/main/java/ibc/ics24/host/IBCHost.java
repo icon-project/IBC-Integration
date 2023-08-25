@@ -26,7 +26,7 @@ public class IBCHost extends IBCStore {
 
     /***
      * addPortId adds given portId to a list of portIds that we track
-     * 
+     *
      * @param portId Name of portId
      */
     public void addPortId(String portId) {
@@ -66,7 +66,7 @@ public class IBCHost extends IBCStore {
      * @param expectedTimePerBlock time per block to set
      */
     public void setExpectedTimePerBlock(BigInteger expectedTimePerBlock) {
-        this.expectedTimePerBlock.set(expectedTimePerBlock);
+        IBCHost.expectedTimePerBlock.set(expectedTimePerBlock);
     }
 
     public void sendBTPMessage(String clientId, byte[] message) {

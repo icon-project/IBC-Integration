@@ -269,28 +269,7 @@ public class ConnectionTest extends TestBase {
         msg.setConnectionId("connection-0");
 
         // Act & Assert
-        String expectedErrorMessage = "connection state is not INIT or TRYOPEN";
-        Executable clientVerificationFailed = () -> connection.invoke(owner,
-                "_connectionOpenAck", msg);
-        AssertionError e = assertThrows(AssertionError.class,
-                clientVerificationFailed);
-        assertTrue(e.getMessage().contains(expectedErrorMessage));
-    }
-
-    @Test
-    void connectionOpenAck_wrongVersion() {
-        // Arrange
-        connectionOpenTry();
-        MsgConnectionOpenAck msg = new MsgConnectionOpenAck();
-        msg.setConnectionId("connection-0");
-        Version wrongVersion = Version.newBuilder()
-                .setIdentifier("OtherVersion")
-                .addFeatures("some features").build();
-        msg.setVersion(wrongVersion.toByteArray());
-
-        // Act & Assert
-        String expectedErrorMessage = "connection state is in TRYOPEN but the provided version is not set in the " +
-                "previous connection versions";
+        String expectedErrorMessage = "connection state is not INIT";
         Executable clientVerificationFailed = () -> connection.invoke(owner,
                 "_connectionOpenAck", msg);
         AssertionError e = assertThrows(AssertionError.class,
