@@ -3,7 +3,6 @@ package ibc.ics05.port;
 import ibc.icon.interfaces.IIBCModuleScoreInterface;
 import ibc.icon.score.util.StringUtil;
 import score.Address;
-import score.ArrayDB;
 
 /**
  * ModuleManager is an abstract contract that provides the functions

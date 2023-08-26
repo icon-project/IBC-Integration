@@ -205,7 +205,7 @@ impl<'a> CwIbcCoreContext<'a> {
             VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
             &packet_ack_msg,
         )?;
-        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketAck {
+        let cosm_msg = cw_common::ibc_dapp_msg::ExecuteMsg::IbcPacketAck {
             msg: packet_ack_msg,
         };
 
