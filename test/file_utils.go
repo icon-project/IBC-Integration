@@ -55,6 +55,33 @@ func BackupConfig(chain chains.Chain) error {
 	return err
 }
 
+func GetLocalFileContent(fileName string) ([]byte, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("%s file not found : %w", fileName, err)
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			fmt.Println("Error closing file:", err)
+		}
+	}(file)
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get file: %w", err)
+	}
+	fileSize := fileInfo.Size()
+
+	// Read the file content into a buffer
+	buffer := make([]byte, fileSize)
+	_, err = file.Read(buffer)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get content: %w", err)
+	}
+	return buffer, nil
+}
+
 func RestoreConfig(chain chains.Chain) error {
 	fileName := fmt.Sprintf("%s/%s.json", ibcConfigPath, chain.(ibc.Chain).Config().ChainID)
 	file, err := os.Open(fileName)

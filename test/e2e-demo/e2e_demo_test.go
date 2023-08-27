@@ -9,19 +9,15 @@ import (
 	"testing"
 )
 
-func TestE2EDemoSetup(t *testing.T) {
-	suite.Run(t, new(E2EDemoTest))
+func TestE2EDemo(t *testing.T) {
+	suite.Run(t, new(E2EDemoSuite))
 }
 
-type E2EDemoTest struct {
+type E2EDemoSuite struct {
 	testsuite.E2ETestSuite
 }
 
-func (e *E2EDemoTest) Name() string {
-	return "TestE2EDemo"
-}
-
-func (e *E2EDemoTest) TestSetupE2EDemo() {
+func (e *E2EDemoSuite) TestSetup() {
 	t := e.T()
 	ctx := context.TODO()
 	var err error
@@ -32,7 +28,7 @@ func (e *E2EDemoTest) TestSetupE2EDemo() {
 	portId := "transfer"
 	defer func(_err *error) {
 		if _err != nil {
-			interchaintest.CleanDockerSetup(e.T(), "TestE2EDemoSetup/TestSetupE2EDemo")
+			interchaintest.CleanDockerSetup(e.T(), "TestE2EDemo/TestSetup")
 		}
 	}(&err)
 	ctx = context.WithValue(ctx, "testcase", "demo")
@@ -49,7 +45,7 @@ func (e *E2EDemoTest) TestSetupE2EDemo() {
 
 }
 
-func (e *E2EDemoTest) TestCleanupE2EDemo() {
-	interchaintest.CleanDockerSetup(e.T(), "TestE2EDemoSetup/TestSetupE2EDemo")
+func (e *E2EDemoSuite) TestCleanup() {
+	interchaintest.CleanDockerSetup(e.T(), "TestE2EDemo/TestSetup")
 	interchaintest.CleanBackupConfig()
 }

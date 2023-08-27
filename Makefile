@@ -63,10 +63,12 @@ gobuild:
 	go build .
 
 e2e-demo-setup:
-	go test -v ./test/e2e-demo -testify.m TestSetupE2EDemo
+	@echo "Configuring e2e demo..."
+	export PRESERVE_DOCKER=true && \
+	go test -v ./test/e2e-demo -testify.m TestSetup
 
 e2e-demo-clean:
-	go test -v ./test/e2e-demo -testify.m TestCleanupE2EDemo
+	go test -v ./test/e2e-demo -testify.m TestCleanup
 
 
 .PHONY: proto-all proto-gen proto-gen-any proto-swagger-gen proto-format proto-lint proto-check-breaking proto-update-deps gobuild

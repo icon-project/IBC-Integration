@@ -68,8 +68,11 @@ func DockerSetup(t DockerSetupTestingT) (*client.Client, string) {
 		panic(fmt.Errorf("failed to create docker client: %v", err))
 	}
 
+	cleanDockerContainer := os.Getenv("PRESERVE_DOCKER") != "true"
 	// Clean up docker resources at end of test.
-	//t.Cleanup(dockerCleanup(t, cli))
+	if cleanDockerContainer {
+		t.Cleanup(dockerCleanup(t, cli))
+	}
 
 	// Also eagerly clean up any leftover resources from a previous test run,
 	// e.g. if the test was interrupted.
@@ -150,7 +153,7 @@ func cleanup(cli *client.Client, t DockerSetupTestingT, name string) {
 		cancel()
 
 		if t.Failed() || showContainerLogs {
-			logTail := "50"
+			logTail := "100"
 			if containerLogTail != "" {
 				logTail = containerLogTail
 			}
