@@ -522,6 +522,15 @@ fn test_packet_send_fails_on_timedout_height() {
             light_client.clone(),
         )
         .unwrap();
+    contract
+    .bind_port(
+        &mut deps.storage,
+        &IbcPortId::from_str(&packet.source_port).unwrap(),
+        Addr::unchecked("moduleaddress").to_string(),
+    )
+    .unwrap();
+
+
 
     let timestamp_query = light_client
         .get_timestamp_by_height_query(&IbcClientId::default(), client_state.latest_height)
@@ -658,6 +667,14 @@ fn test_packet_send_fails_on_timedout_timestamp() {
     );
     mock_lightclient_query(mocks, &mut deps);
     contract
-        .send_packet(deps.as_mut(), &mock_env(), packet)
+    .bind_port(
+        &mut deps.storage,
+        &IbcPortId::from_str(&packet.source_port).unwrap(),
+        Addr::unchecked("moduleaddress").to_string(),
+    )
+    .unwrap();
+    let info = create_mock_info("moduleaddress", "test", 100);
+    contract
+        .send_packet(deps.as_mut(), &mock_env(),info, packet)
         .unwrap();
 }

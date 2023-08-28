@@ -56,14 +56,13 @@ use cw_common::ibc_types::{IbcChannelId, IbcClientId, IbcConnectionId, IbcPortId
 use cw_storage_plus::{Item, Map};
 
 pub use cw_common::commitment::*;
-use cw_common::core_msg::InstantiateMsg;
 use std::str::FromStr;
 use thiserror::Error;
 
 use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
 
-use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
+use cw_common::core_msg::{ExecuteMsg as CoreExecuteMsg, InstantiateMsg};
 use cw_common::core_msg::QueryMsg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
