@@ -37,6 +37,7 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     contract
         .validate_channel_close_confirm(deps.as_mut(), info, &msg)
@@ -95,10 +96,10 @@ fn test_validate_close_confirm_channel_fail_connection_state_invalid() {
     query_map = mock_consensus_state_query(
         query_map,
         &IbcClientId::default(),
-        &consenus_state,
-        height.revision_height(),
+        &test_context.consensus_state.unwrap(),
+        test_context.height.revision_height(),
     );
-    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&test_context.client_state.unwrap());
     mock_lightclient_query(query_map, &mut deps);
 
     contract
@@ -113,13 +114,13 @@ fn test_validate_close_confirm_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 200000000);
     let msg = get_dummy_raw_msg_chan_close_confirm(10);
-    let test_context = TestContext::for_channel_close_confirm(env, &msg);
+    let mut test_context = TestContext::for_channel_close_confirm(env, &msg);
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
     test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
 
-    mock_lightclient_reply(&mut deps);
+    mock_lightclient_query(test_context.mock_queries,&mut deps);
     let res = contract.validate_channel_close_confirm(deps.as_mut(), info, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());

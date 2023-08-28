@@ -30,10 +30,11 @@ fn test_validate_close_init_channel() {
     let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
     let connection_id = ConnectionId::new(0);
 
-    let test_context = TestContext::for_channel_close_init(mock_env(), &msg);
+    let mut test_context = TestContext::for_channel_close_init(mock_env(), &msg);
     let channel_end = test_context.channel_end();
 
     test_context.init_channel_close_init(deps.as_mut().storage, &contract);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     let res = contract.validate_channel_close_init(deps.as_mut(), info.clone(), &msg);
     let expected =

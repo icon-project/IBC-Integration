@@ -61,7 +61,7 @@ fn test_receive_packet() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let test_context = TestContext::for_receive_packet(env.clone(), &msg);
+    let mut test_context = TestContext::for_receive_packet(env.clone(), &msg);
     let packet = msg.packet.clone().unwrap();
 
     test_context.init_receive_packet(deps.as_mut().storage, &mut contract);
@@ -161,7 +161,7 @@ fn test_receive_packet_fails_on_packet_already_being_received() {
     let msg = get_dummy_raw_msg_recv_packet(12);
     let packet = msg.packet.clone().unwrap();
 
-    let test_context = TestContext::for_receive_packet(env.clone(), &msg);
+    let mut test_context = TestContext::for_receive_packet(env.clone(), &msg);
 
     test_context.init_receive_packet(deps.as_mut().storage, &contract);
 
@@ -248,7 +248,7 @@ fn test_receive_packet_no_op_on_packet_already_received() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
 
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let test_context = TestContext::for_receive_packet(env.clone(), &msg);
+    let mut test_context = TestContext::for_receive_packet(env.clone(), &msg);
     let packet = msg.packet.clone().unwrap();
 
     let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();

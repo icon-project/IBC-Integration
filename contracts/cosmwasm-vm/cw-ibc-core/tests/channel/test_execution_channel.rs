@@ -136,85 +136,10 @@ fn test_for_channel_open_try_execution_message() {
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
-    let _module_id =
-        common::ibc::core::ics26_routing::context::ModuleId::from_str("xcall").unwrap();
-    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let _channel = to_ibc_channel(msg.channel.clone()).unwrap();
-    let light_client = LightClient::new("lightclient".to_string());
-
-    contract
-        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
-        .unwrap();
-
-    contract
-        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
-        .unwrap();
-
-    let commitment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let connection_id = IbcConnectionId::new(0);
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        Some(connection_id),
-        commitment.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    let conn_id = ConnectionId::new(0);
-
-    contract
-        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
-        .unwrap();
-    let client_state: ClientState = get_dummy_client_state();
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let client_type = IbcClientType::new("iconclient".to_string());
-    contract
-        .store_client_into_registry(
-            &mut deps.storage,
-            client_type,
-            "contractaddress".to_string(),
-        )
-        .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
-    let height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            height,
-            consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    query_map = mock_consensus_state_query(
-        query_map,
-        &IbcClientId::default(),
-        &consenus_state,
-        height.revision_height(),
-    );
-    mock_lightclient_query(query_map, &mut deps);
+    let mut test_context=TestContext::for_channel_open_try(env.clone(), &msg);
+    test_context.init_channel_open_try(deps.as_mut().storage, &contract);
+    
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -223,6 +148,7 @@ fn test_for_channel_open_try_execution_message() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
+    println!("{:?}",res);
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY);
@@ -369,98 +295,16 @@ fn test_for_channel_open_confirm() {
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
 
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let committment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-    let connection_id = IbcConnectionId::new(5);
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        IbcClientId::default(),
-        Some(connection_id),
-        committment.unwrap(),
-    );
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
+    let mut test_context= TestContext::for_channel_open_confirm(env.clone(), &msg);
+   
+    let mut channel_end=test_context.channel_end();
+    channel_end.state=State::TryOpen;
+    test_context.channel_end=Some(channel_end);
+    test_context.init_channel_open_confirm(deps.as_mut().storage, &contract);
+   
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
 
-    let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-    let channel_id = to_ibc_channel_id(&msg.channel_id).unwrap();
-    let light_client = LightClient::new("lightclient".to_string());
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
-    let height = to_ibc_height(msg.proof_height.clone()).unwrap();
-
-    contract
-        .bind_port(&mut deps.storage, &port_id, "moduleaddress".to_string())
-        .unwrap();
-
-    contract
-        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
-        .unwrap();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    query_map = mock_consensus_state_query(
-        query_map,
-        &IbcClientId::default(),
-        &consenus_state,
-        height.revision_height(),
-    );
-    mock_lightclient_query(query_map, &mut deps);
-
-    let conn_id = ConnectionId::new(0);
-    contract
-        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
-        .unwrap();
-
-    let channel_end = ChannelEnd {
-        state: State::TryOpen,
-        ordering: Order::Unordered,
-        remote: Counterparty {
-            port_id: port_id.clone(),
-            channel_id: Some(channel_id.clone()),
-        },
-        connection_hops: vec![conn_id],
-        version: Version::new("xcall".to_string()),
-    };
-    contract
-        .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
-        .unwrap();
-    let client_state: ClientState = get_dummy_client_state();
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let client_type = IbcClientType::new("iconclient".to_string());
-    contract
-        .store_client_into_registry(
-            &mut deps.storage,
-            client_type,
-            "contractaddress".to_string(),
-        )
-        .unwrap();
-
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            height,
-            consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
+   
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -469,6 +313,7 @@ fn test_for_channel_open_confirm() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
+    println!("{:?}",res);
 
     assert!(res.is_ok());
     assert_eq!(
@@ -714,121 +559,16 @@ fn test_for_packet_send() {
     let mut contract = CwIbcCoreContext::default();
     let env = get_mock_env();
     let timestamp_future = Timestamp::default();
-    let timeout_height_future = 10;
+    let timeout_height_future = 110;
     let raw = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
-
-    let chan_end_on_a = ChannelEnd::new(
-        State::Open,
-        Order::default(),
-        Counterparty::new(
-            IbcPortId::from_str(&raw.destination_port).unwrap(),
-            Some(IbcChannelId::from_str(&raw.destination_channel).unwrap()),
-        ),
-        vec![IbcConnectionId::default()],
-        Version::new("ics20-1".to_string()),
-    );
-
-    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-
-    let conn_end_on_a = ConnectionEnd::new(
-        ConnectionState::Open,
-        ClientId::default(),
-        ConnectionCounterparty::new(
-            ClientId::default(),
-            Some(ConnectionId::default()),
-            conn_prefix.unwrap(),
-        ),
-        get_compatible_versions(),
-        ZERO_DURATION,
-    );
-
-    let packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
-
-    contract
-        .store_channel_end(&mut deps.storage, &src_port, &src_channel, &chan_end_on_a)
-        .unwrap();
-    let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
-    contract
-        .store_connection(&mut deps.storage, conn_id_on_a, &conn_end_on_a)
-        .unwrap();
-    contract
-        .store_next_sequence_send(
-            &mut deps.storage,
-            &src_port.clone(),
-            &src_channel,
-            &1.into(),
-        )
-        .unwrap();
-
-    let client_state = ClientState {
-        latest_height: 10,
-        ..get_dummy_client_state()
-    };
-
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
-    let height: Height = RawHeight {
-        revision_number: 0,
-        revision_height: 10,
-    }
-    .try_into()
-    .unwrap();
-    contract
-        .store_client_implementations(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            LightClient::new("lightclient".to_string()),
-        )
-        .unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    query_map = mock_consensus_state_query(
-        query_map,
-        &IbcClientId::default(),
-        &consenus_state,
-        height.revision_height(),
-    );
-    mock_lightclient_query(query_map, &mut deps);
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            height,
-            consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    contract
-        .bind_port(
-            &mut deps.storage,
-            &IbcPortId::from_str(&packet.source_port).unwrap(),
-            Addr::unchecked("moduleaddress").to_string(),
-        )
-        .unwrap();
-
+    let mut test_context=TestContext::for_send_packet(env.clone(), &raw);
+    test_context.init_send_packet(deps.as_mut().storage, &contract);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.execute(
         deps.as_mut(),
         env,
@@ -856,103 +596,10 @@ fn test_for_recieve_packet() {
     assert_eq!(response.attributes[0].value, "instantiate");
     let msg = get_dummy_raw_msg_recv_packet(12);
     //  let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let packet = msg.packet.clone().unwrap();
-    let src_port = to_ibc_port_id(&packet.source_port).unwrap();
-    let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
-
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
-    let light_client = LightClient::new("lightclient".to_string());
-
-    contract
-        .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
-        .unwrap();
-
-    contract
-        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
-        .unwrap();
-    let chan_end_on_b = ChannelEnd::new(
-        State::Open,
-        Order::default(),
-        Counterparty::new(src_port, Some(src_channel)),
-        vec![IbcConnectionId::default()],
-        Version::new("ics20-1".to_string()),
-    );
-    let conn_prefix = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-        "hello".to_string().as_bytes().to_vec(),
-    );
-
-    let conn_end_on_b = ConnectionEnd::new(
-        ConnectionState::Open,
-        IbcClientId::default(),
-        ConnectionCounterparty::new(
-            IbcClientId::default(),
-            Some(IbcConnectionId::default()),
-            conn_prefix.unwrap(),
-        ),
-        get_compatible_versions(),
-        ZERO_DURATION,
-    );
-
-    contract
-        .store_channel_end(&mut deps.storage, &dst_port, &dst_channel, &chan_end_on_b)
-        .unwrap();
-    let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
-    contract
-        .store_connection(&mut deps.storage, &conn_id_on_b.clone(), &conn_end_on_b)
-        .unwrap();
-
-    let client_state: ClientState = get_dummy_client_state();
-
-    let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: vec![1, 2, 3, 4],
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
-
-    let height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    contract
-        .store_consensus_state(
-            &mut deps.storage,
-            &IbcClientId::default(),
-            height,
-            consenus_state_any,
-            consenus_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    let env = get_mock_env();
-    contract
-        .ibc_store()
-        .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds()))
-        .unwrap();
-    let light_client = LightClient::new("lightclient".to_string());
-    contract
-        .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
-        .unwrap();
-    contract
-        .store_channel_end(&mut deps.storage, &dst_port, &dst_channel, &chan_end_on_b)
-        .unwrap();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    query_map = mock_consensus_state_query(
-        query_map,
-        &IbcClientId::default(),
-        &consenus_state,
-        height.revision_height(),
-    );
-    mock_lightclient_query(query_map, &mut deps);
+    let mut test_context =TestContext::for_receive_packet(env.clone(), &msg);
+    test_context.init_receive_packet(deps.as_mut().storage, &contract);
+   
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     let res = contract.execute(
         deps.as_mut(),

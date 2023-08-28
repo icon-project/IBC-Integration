@@ -2,7 +2,7 @@
 use std::{collections::HashMap, hash::Hash, str::FromStr};
 
 use cw_ibc_core::conversions::{
-    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
+    to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp, to_ibc_channel,
 };
 
 pub fn mock_height(
@@ -527,6 +527,7 @@ pub fn mock_lightclient_query(
     mocks: HashMap<Binary, Binary>,
     deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>,
 ) {
+    
     deps.querier.update_wasm(move |r| match r {
         WasmQuery::Smart {
             contract_addr: _,
@@ -626,6 +627,7 @@ pub struct TestContext {
     pub connection_end: Option<ConnectionEnd>,
     pub channel_end: Option<ChannelEnd>,
     pub lightclient: Option<LightClient>,
+    pub module_address: Option<Addr>,
     pub packet: Option<RawPacket>,
     pub client_id: IbcClientId,
     pub connection_id: ConnectionId,
@@ -633,6 +635,7 @@ pub struct TestContext {
     pub height: Height,
     pub port_id: PortId,
     pub channel_id: ChannelId,
+    pub mock_queries:HashMap<Binary,Binary>,
 }
 
 impl TestContext {
@@ -650,6 +653,8 @@ impl TestContext {
             channel_id: ChannelId::default(),
             lightclient: Some(LightClient::new("lightclient".to_string())),
             packet: None,
+            mock_queries:HashMap::<Binary,Binary>::new(),
+            module_address:Some(Addr::unchecked("moduleaddress")),
         }
     }
 
@@ -716,6 +721,38 @@ impl TestContext {
         ctx
     }
 
+    pub fn for_channel_open_confirm(env: Env, msg: &RawMsgChannelOpenConfirm) -> Self {
+        let mut ctx = TestContext::default(env);
+        let packet = RawPacket {
+            source_port: "their-port".to_string(),
+            source_channel: "their-channel".to_string(),
+            destination_port: msg.port_id.clone(),
+            destination_channel: msg.channel_id.clone(),
+            ..Default::default()
+        };
+
+        ctx = TestContext::setup_channel_end(ctx, Direction::Receive, &packet);
+        ctx.packet = Some(packet);
+
+        ctx
+    }
+
+    pub fn for_channel_open_try(env: Env, msg: &RawMsgChannelOpenTry) -> Self {
+        let mut ctx = TestContext::default(env);
+        ctx.port_id=to_ibc_port_id(&msg.port_id).unwrap();
+
+        ctx
+    }
+
+    pub fn for_channel_open_init(env: Env, msg: &RawMsgChannelOpenInit) -> Self {
+        let mut ctx = TestContext::default(env);
+        ctx.port_id=to_ibc_port_id(&msg.port_id).unwrap();
+        ctx.channel_id=ChannelId::new(0);
+        ctx.channel_end=Some(to_ibc_channel(msg.channel.clone()).unwrap());
+
+        ctx
+    }
+
     fn setup_channel_end(mut ctx: TestContext, dir: Direction, packet: &RawPacket) -> TestContext {
         let src_port = to_ibc_port_id(&packet.source_port).unwrap();
         let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
@@ -745,27 +782,32 @@ impl TestContext {
         ctx
     }
 
-    pub fn init_context(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+    pub fn init_context(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.save_client_state(storage, contract);
-        self.save_consensus_state(storage, contract);
+        self.save_consensus_state(storage, self.height.revision_height());
         self.save_connection(storage, contract);
         self.save_channel_end(storage, contract);
         self.save_light_client(storage, contract);
         self.save_expected_time_per_block(storage, contract);
     }
 
-    pub fn init_receive_packet(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+    pub fn init_receive_packet(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
     }
 
-    pub fn init_channel_close_init(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+    pub fn init_channel_close_init(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
+    }
+
+    pub fn init_channel_open_init(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
     }
 
     pub fn init_channel_close_confirm(
-        &self,
+        &mut self,
         storage: &mut dyn Storage,
         contract: &CwIbcCoreContext,
     ) {
@@ -773,17 +815,38 @@ impl TestContext {
         self.register_port(storage, contract);
     }
 
-    pub fn init_acknowledge_packet(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+    pub fn init_channel_open_confirm(
+        &mut self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
+    }
+
+    pub fn init_channel_open_try(
+        &mut self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
+        
+    }
+
+    pub fn init_acknowledge_packet(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
         self.save_packet_commitment(storage, contract);
     }
 
-    pub fn init_send_packet(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+    pub fn init_send_packet(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
         self.save_next_sequence_send(storage, contract);
         self.save_packet_commitment(storage, contract);
+        self.save_consensus_state(storage, self.client_state.clone().unwrap().latest_height);
+
     }
 
     pub fn save_next_sequence_send(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
@@ -799,35 +862,20 @@ impl TestContext {
         }
     }
 
-    pub fn save_client_state(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+    pub fn save_client_state(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         if let Some(client_state) = self.client_state.clone() {
             let client_state_any = client_state.to_any();
-            let client_state_hash = client_state.get_keccak_hash();
-            contract
-                .store_client_state(
-                    storage,
-                    &self.env,
-                    &self.client_id,
-                    client_state_any.encode_to_vec(),
-                    client_state_hash.to_vec(),
-                )
-                .unwrap();
+            let query=LightClient::build_client_state_query(&self.client_id).unwrap();
+            self.mock_queries.insert(query, to_binary(&client_state_any.encode_to_vec()).unwrap());
+            contract.store_last_processed_on(storage, &self.env, &self.client_id).unwrap();
         }
     }
 
-    pub fn save_consensus_state(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+    pub fn save_consensus_state(&mut self, storage: &mut dyn Storage, height:u64) {
         if let Some(consensus_state) = self.consensus_state.clone() {
             let consensus_state_any = consensus_state.to_any();
-            let consensus_state_hash = consensus_state.get_keccak_hash();
-            contract
-                .store_consensus_state(
-                    storage,
-                    &self.client_id,
-                    self.height,
-                    consensus_state_any.encode_to_vec(),
-                    consensus_state_hash.to_vec(),
-                )
-                .unwrap();
+            let query=LightClient::build_consensus_state_query(&self.client_id,height).unwrap();
+            self.mock_queries.insert(query, to_binary(&consensus_state_any.encode_to_vec()).unwrap());
         }
     }
 
@@ -888,9 +936,13 @@ impl TestContext {
     }
 
     pub fn register_port(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
-        contract
-            .bind_port(storage, &self.port_id, "moduleaddress".to_string())
+        if let Some(module)= self.module_address.clone() {
+            contract
+            .bind_port(storage, &self.port_id, module.to_string())
             .unwrap();
+
+        }
+       
     }
 
     pub fn channel_end(&self) -> ChannelEnd {
