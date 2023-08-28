@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/testsuite"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/stretchr/testify/assert"
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-	"github.com/stretchr/testify/assert"
 )
 
 type XCallTestSuite struct {
@@ -19,91 +18,137 @@ type XCallTestSuite struct {
 	T *testing.T
 }
 
-func (x *XCallTestSuite) TestDemo() {
+func (x *XCallTestSuite) TextXCall() {
+	testcase := "xcall"
 	portId := "transfer"
-	ctx := context.TODO()
-	x.SetupXCall(ctx, portId)
-	x.DeployMockApp(ctx, portId)
-
+	ctx := context.WithValue(context.TODO(), "testcase", testcase)
+	x.Require().NoError(x.SetupXCall(ctx, portId, 100), "fail to setup xcall")
+	x.Require().NoError(x.DeployXCallMockApp(ctx, portId), "fail to deploy xcall dapp")
+	chainA, chainB := x.GetChains()
 	x.T.Run("xcall one way message chainA-chainB", func(t *testing.T) {
-		chainA, chainB := x.GetChains()
-		x.TestOneWayMessage(ctx, t, chainA, chainB)
+
+		x.testOneWayMessage(ctx, t, chainA, chainB)
 	})
 
 	x.T.Run("xcall one way message chainB-chainA", func(t *testing.T) {
-		chainA, chainB := x.GetChains()
-		x.TestOneWayMessage(ctx, t, chainB, chainA)
+
+		x.testOneWayMessage(ctx, t, chainB, chainA)
 	})
 
 	x.T.Run("xcall test rollback chainA-chainB", func(t *testing.T) {
-		chainA, chainB := x.GetChains()
-		x.TestRollback(ctx, t, chainA, chainB)
+		x.testRollback(ctx, t, chainA, chainB)
 	})
 
 	x.T.Run("xcall test rollback chainB-chainA", func(t *testing.T) {
-		chainA, chainB := x.GetChains()
-		x.TestRollback(ctx, t, chainB, chainA)
+		x.testRollback(ctx, t, chainB, chainA)
 	})
 
 	x.T.Run("xcall test send maxSize Data: 2048 bytes", func(t *testing.T) {
-		chainA, chainB := x.GetChains()
-		x.TestOneWayMessageWithSize(ctx, t, 1300, chainA, chainB)
-		x.TestOneWayMessageWithSize(ctx, t, 1868, chainB, chainA)
+		x.testOneWayMessageWithSize(ctx, t, 1300, chainA, chainB)
+		x.testOneWayMessageWithSize(ctx, t, 1300, chainB, chainA)
 	})
 
 	x.T.Run("xcall test send maxSize Data: 2049bytes", func(t *testing.T) {
-		chainA, chainB := x.GetChains()
-		x.TestOneWayMessageWithSizeExpectingError(ctx, t, 1869, chainB, chainA)
-		x.TestOneWayMessageWithSizeExpectingError(ctx, t, 2000, chainA, chainB)
+		x.testOneWayMessageWithSizeExpectingError(ctx, t, 2000, chainB, chainA)
+		x.testOneWayMessageWithSizeExpectingError(ctx, t, 2000, chainA, chainB)
 	})
 
 }
 
-func (x *XCallTestSuite) TestOneWayMessage(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
-	msg := "MessageTransferTestingWithoutRollback"
-	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
-	_, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, []byte(msg), nil)
-	x.Require().NoError(err)
-	_, err = chainB.ExecuteCall(ctx, reqId, data)
-	x.Require().NoError(err)
+func (x *XCallTestSuite) TestXCallPacketDrop() {
+	testcase := "packet-drop"
+	portId := "transfer-1"
+	ctx := context.WithValue(context.TODO(), "testcase", testcase)
+	x.Require().NoError(x.SetupXCall(ctx, portId, 1), "fail to setup xcall")
+	x.Require().NoError(x.DeployXCallMockApp(ctx, portId), "fail to deploy xcall dapp")
+	chainA, chainB := x.GetChains()
+	x.T.Run("xcall packet drop chainA-chainB", func(t *testing.T) {
+		x.testPacketDrop(ctx, t, chainA, chainB)
+	})
 
-	dataOutput, err := convertToPlainString(data)
+	x.T.Run("xcall packet drop chainB-chainA", func(t *testing.T) {
+		x.testPacketDrop(ctx, t, chainB, chainA)
+	})
+}
+
+func (x *XCallTestSuite) testPacketDrop(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
+	testcase := ctx.Value("testcase").(string)
+	dappKey := fmt.Sprintf("dapp-%s", testcase)
+	msg := "drop-msg"
+	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
+	//height, _ := chainA.(ibc.Chain).Height(ctx)
+	listener := chainA.InitEventListener(ctx, "ibc")
+	defer listener.Stop()
+	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, []byte(msg), []byte("rollback-test"))
+
+	x.Require().Errorf(err, "failed to find eventlog")
+	sn := res.SerialNo
+	snInt, _ := strconv.Atoi(res.SerialNo)
+	params := map[string]interface{}{
+		"port_id":    "transfer-1",
+		"channel_id": "channel-0",
+		"sequence":   uint64(snInt),
+	}
+
+	ctx, err = chainA.CheckForTimeout(ctx, chainB, params, listener)
+	response := ctx.Value("timeout-response").(*chains.TimeoutResponse)
+	assert.Truef(t, response.HasTimeout, "timeout event not found - %s", sn)
+	assert.Falsef(t, response.IsPacketFound, "packet found on target chain - %s", sn)
+	assert.Truef(t, response.HasRollbackCalled, "failed to call rollback  - %s", sn)
+}
+
+func (x *XCallTestSuite) testOneWayMessage(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
+	testcase := ctx.Value("testcase").(string)
+	dappKey := fmt.Sprintf("dapp-%s", testcase)
+	msg := "MessageTransferTestingWithoutRollback"
+	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
+	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, []byte(msg), nil)
+	x.Require().NoError(err)
+	ctx, err = chainB.ExecuteCall(ctx, res.RequestID, res.Data)
+	x.Require().NoError(err)
+	dataOutput, err := x.ConvertToPlainString(res.Data)
 	x.Require().NoError(err)
 
 	assert.Equal(t, msg, dataOutput)
+	fmt.Println("Data Transfer Testing Without Rollback from " + chainA.(ibc.Chain).Config().ChainID + " to " + chainB.(ibc.Chain).Config().ChainID + " with data " + msg + " and Received:" + dataOutput + " PASSED")
 }
 
-func (x *XCallTestSuite) TestRollback(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
+func (x *XCallTestSuite) testRollback(ctx context.Context, t *testing.T, chainA, chainB chains.Chain) {
+	testcase := ctx.Value("testcase").(string)
+	dappKey := fmt.Sprintf("dapp-%s", testcase)
 	msg := "rollback"
 	rollback := "RollbackDataTesting"
-	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
-	sn, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, []byte(msg), []byte(rollback))
+	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
+	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, []byte(msg), []byte(rollback))
 	x.Require().NoError(err)
 	height, err := chainA.(ibc.Chain).Height(ctx)
 	x.Require().NoError(err)
-	_, err = chainB.ExecuteCall(ctx, reqId, data)
-	x.Require().NoError(err)
-	code, err := chainA.FindCallResponse(ctx, int64(height), sn)
+	ctx, err = chainB.ExecuteCall(ctx, res.RequestID, res.Data)
+	code, err := chainA.FindCallResponse(ctx, height, res.SerialNo)
 	x.Require().NoError(err)
 	assert.Equal(t, "0", code)
-	_, err = chainA.ExecuteRollback(ctx, sn)
+	ctx, err = chainA.ExecuteRollback(ctx, res.SerialNo)
 	x.Require().NoError(err)
 }
 
-func (x *XCallTestSuite) TestOneWayMessageWithSize(ctx context.Context, t *testing.T, dataSize int, chainA, chainB chains.Chain) {
+func (x *XCallTestSuite) testOneWayMessageWithSize(ctx context.Context, t *testing.T, dataSize int, chainA, chainB chains.Chain) {
+	testcase := ctx.Value("testcase").(string)
+	dappKey := fmt.Sprintf("dapp-%s", testcase)
 	_msg := make([]byte, dataSize)
-	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
-	_, reqId, data, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, _msg, nil)
+	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
+	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, _msg, nil)
 	assert.NoError(t, err)
 
-	_, err = chainB.ExecuteCall(ctx, reqId, data)
+	_, err = chainB.ExecuteCall(ctx, res.RequestID, res.Data)
 	assert.NoError(t, err)
 }
 
-func (x *XCallTestSuite) TestOneWayMessageWithSizeExpectingError(ctx context.Context, t *testing.T, dataSize int, chainA, chainB chains.Chain) {
+func (x *XCallTestSuite) testOneWayMessageWithSizeExpectingError(ctx context.Context, t *testing.T, dataSize int, chainA, chainB chains.Chain) {
+	testcase := ctx.Value("testcase").(string)
+	dappKey := fmt.Sprintf("dapp-%s", testcase)
 	_msg := make([]byte, dataSize)
-	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress("dapp")
-	_, _, _, err := chainA.XCall(context.Background(), chainB, testsuite.User, dst, _msg, nil)
+	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
+	_, err := chainA.XCall(ctx, chainB, testsuite.User, dst, _msg, nil)
 	if err != nil {
 		if strings.Contains(err.Error(), "submessages:") {
 			subStart := strings.Index(err.Error(), "submessages:") + len("submessages:")
@@ -114,44 +159,6 @@ func (x *XCallTestSuite) TestOneWayMessageWithSizeExpectingError(ctx context.Con
 		} else {
 			assert.Equal(t, err, errors.New("UnknownFailure"))
 		}
-
 	}
 
-}
-
-func convertToPlainString(input string) (string, error) {
-	if strings.HasPrefix(input, "0x") {
-		input = input[2:]
-	}
-
-	if strings.HasPrefix(input, "[") && strings.HasSuffix(input, "]") {
-		input = input[1 : len(input)-1]
-
-		parts := strings.Split(input, ", ")
-		var plainString strings.Builder
-		for _, part := range parts {
-			value, err := strconv.Atoi(part)
-			if err != nil {
-				return "", err
-			}
-			plainString.WriteByte(byte(value))
-		}
-
-		return plainString.String(), nil
-	}
-
-	if len(input)%2 != 0 {
-		return "", fmt.Errorf("invalid input length")
-	}
-
-	var plainString strings.Builder
-	for i := 0; i < len(input); i += 2 {
-		value, err := strconv.ParseUint(input[i:i+2], 16, 8)
-		if err != nil {
-			return "", err
-		}
-		plainString.WriteByte(byte(value))
-	}
-
-	return plainString.String(), nil
 }

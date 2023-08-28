@@ -16,7 +16,6 @@
 
 package ibc.icon.integration;
 
-import foundation.icon.icx.crypto.KeystoreException;
 import foundation.icon.score.client.Wallet;
 
 import java.io.File;

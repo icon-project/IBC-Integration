@@ -49,6 +49,14 @@ impl<'a> CwIbcCoreContext<'a> {
         self.client_state(deps.storage, &client_id)?;
 
         let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
 
         let response: Vec<u8> = client.get_client_state(deps.as_ref(), &client_id)?;
 
@@ -174,6 +182,14 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = to_ibc_connection_id(&msg.connection_id)?;
         let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
+        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
 
         let counterparty_client_id = connection_end.counterparty().client_id();
@@ -309,6 +325,15 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_id = to_ibc_client_id(&message.client_id)?;
         let consensus_height = to_ibc_height(message.consensus_height)?;
         let proof_height = to_ibc_height(message.proof_height)?;
+
+        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
 
         let counterparty = to_ibc_counterparty(message.counterparty)?;
         let counterparty_prefix = counterparty.prefix().clone();
@@ -481,6 +506,14 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = to_ibc_connection_id(&msg.connection_id)?;
         let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
+        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
+
+        if client_state.is_frozen() {
+            return Err(ClientError::ClientFrozen {
+                client_id: client_id.clone(),
+            })
+            .map_err(Into::<ContractError>::into);
+        }
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
         cw_println!(
             deps,

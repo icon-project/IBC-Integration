@@ -143,19 +143,6 @@ impl<'a> CwIbcConnection<'a> {
         &self.admin
     }
 
-    pub fn get_config(&self, store: &dyn Storage) -> Result<Config, ContractError> {
-        self.config.load(store).map_err(ContractError::Std)
-    }
-
-    pub fn store_config(
-        &self,
-        store: &mut dyn Storage,
-
-        config: &Config,
-    ) -> Result<(), ContractError> {
-        self.config.save(store, config).map_err(ContractError::Std)
-    }
-
     pub fn get_ibc_config(&self, store: &dyn Storage) -> Result<IbcConfig, ContractError> {
         self.ibc_config.load(store).map_err(ContractError::Std)
     }
@@ -182,35 +169,23 @@ impl<'a> CwIbcConnection<'a> {
         self.ibc_host.load(store).map_err(ContractError::Std)
     }
 
-    pub fn get_denom(&self, store: &dyn Storage) -> Result<String, ContractError> {
-        let config = self.get_config(store)?;
-        Ok(config.denom)
-    }
-
-    pub fn get_port(&self, store: &dyn Storage) -> Result<String, ContractError> {
-        let config = self.get_config(store)?;
-        Ok(config.port_id)
-    }
-
     pub fn store_received_packet(
         &self,
         store: &mut dyn Storage,
         seq: u64,
         packet: CwPacket,
     ) -> Result<(), ContractError> {
-        return self
-            .received_packets
+        self.received_packets
             .save(store, seq, &packet)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
     pub fn get_received_packet(
         &self,
         store: &dyn Storage,
         seq: u64,
     ) -> Result<CwPacket, ContractError> {
-        return self
-            .received_packets
+        self.received_packets
             .load(store, seq)
-            .map_err(ContractError::Std);
+            .map_err(ContractError::Std)
     }
 }

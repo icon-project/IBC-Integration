@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/icon-project/ibc-integration/test/integration/tests"
 	"github.com/icon-project/ibc-integration/test/testsuite"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -17,18 +18,29 @@ type IntegrationTest struct {
 	testsuite.E2ETestSuite
 }
 
-func (s *IntegrationTest) TestE2E_all() {
+func (s *IntegrationTest) TestIntegration_all() {
 	t := s.T()
 	ctx := context.TODO()
+	s.Require().NoError(s.SetCfg())
+	rly, err := s.SetupRelayer(ctx)
+
+	assert.NoError(t, err, "Error while setting up relayer, %v", err)
+
+	test := tests.RelayerTestSuite{
+		E2ETestSuite: &s.E2ETestSuite,
+		T:            t,
+	}
+	t.Run("test client creation", func(t *testing.T) {
+		ctx = context.WithValue(ctx, "testcase", "client")
+		test.TestClientCreation(ctx, rly)
+	})
+
+	t.Run("test connection", func(t *testing.T) {
+		ctx = context.WithValue(ctx, "testcase", "connection")
+		test.TestConnection(ctx, rly)
+	})
 
 	t.Run("test relayer", func(t *testing.T) {
-		ctx, rly, err := s.SetupRelayer(ctx)
-		s.Require().NoError(err)
-		s.StartRelayer(rly)
-		relayer := tests.RelayerTestSuite{
-			E2ETestSuite: &s.E2ETestSuite,
-			T:            t,
-		}
-		relayer.TestRelayer(ctx)
+		test.TestRelayer(ctx, rly)
 	})
 }

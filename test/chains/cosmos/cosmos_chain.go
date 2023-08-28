@@ -20,8 +20,7 @@ func NewCosmosChain(t *testing.T, ctx context.Context, environment string, chain
 		client, network := interchaintest.DockerSetup(t)
 		var localchain chains.Chain
 		localchain, _ = NewCosmosLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(&localchain), chains.DefaultNumValidators, chains.DefaultNumFullNodes, keyPassword, contractPaths)
-		ic := interchaintest.NewInterchain().
-			AddChain(localchain.(ibc.Chain))
+		ic := interchaintest.NewInterchain().AddChain(localchain.(ibc.Chain))
 		// Log location
 		f, _ := interchaintest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
 		// Reporter/logs

@@ -15,13 +15,10 @@ import static ibc.icon.score.util.StringUtil.bytesToHex;
 import static ibc.ics23.commitment.Proof.*;
 
 public class Merkle {
-
-    public static List<ProofSpec> getSDKSpecs() {
-        List<ProofSpec> specs = new ArrayList<>();
-        specs.add(Proof.getIavlSpec());
-        specs.add(Proof.getTendermintSpec());
-        return specs;
-    }
+    public static List<ProofSpec> SDK_SPEC = List.of(
+        Proof.getIavlSpec(),
+        Proof.getTendermintSpec()
+    );
 
     public static MerklePath applyPrefix(String path) {
         var mpath = new MerklePath();
@@ -157,30 +154,16 @@ public class Merkle {
         if (proof == null) {
             return true;
         }
-        if (proof.getProofs().size() != 0) {
-            return false;
-        }
-        return true;
+
+        return proof.getProofs().isEmpty();
     }
 
     private static boolean isMerkleRootEmpty(MerkleRoot root) {
         if (root == null) {
             return true;
         }
-        if (root.getHash().length != 0) {
-            return false;
-        }
-        return true;
-    }
 
-    private static boolean isMerklePrefixEmpty(MerklePrefix prefix) {
-        if (prefix == null) {
-            return true;
-        }
-        if (prefix.getKeyPrefix().length != 0) {
-            return false;
-        }
-        return true;
+        return root.getHash().length == 0;
     }
 
     private static boolean isProofSpecEmpty(ProofSpec spec) {

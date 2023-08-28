@@ -32,8 +32,15 @@ func (c *CosmosLocalnet) OverrideConfig(key string, value any) {
 }
 
 type Query struct {
-	GetAdmin       *GetAdmin       `json:"get_admin,omitempty"`
-	GetProtocolFee *GetProtocolFee `json:"get_protocol_fee,omitempty"`
+	GetClientState            *map[string]interface{} `json:"get_client_state,omitempty"`
+	GetAdmin                  *GetAdmin               `json:"get_admin,omitempty"`
+	GetProtocolFee            *GetProtocolFee         `json:"get_protocol_fee,omitempty"`
+	GetNextClientSequence     *map[string]interface{} `json:"get_next_client_sequence,omitempty"`
+	HasPacketReceipt          *map[string]interface{} `json:"has_packet_receipt,omitempty"`
+	GetConnection             *map[string]interface{} `json:"get_connection,omitempty"`
+	GetChannel                *map[string]interface{} `json:"get_channel,omitempty"`
+	GetNextConnectionSequence *map[string]interface{} `json:"get_next_connection_sequence,omitempty"`
+	GetNextChannelSequence    *map[string]interface{} `json:"get_next_channel_sequence,omitempty"`
 }
 
 type SetAdmin struct {
@@ -51,6 +58,13 @@ type UpdateAdmin struct {
 type XcallInit struct {
 	TimeoutHeight int    `json:"timeout_height"`
 	IbcHost       string `json:"ibc_host"`
+}
+
+type MockAppInit struct {
+	IBCHost int    `json:"ibc_host"`
+	PortId  string `json:"port_id"`
+	Order   string `json:"order"`
+	Denom   string `json:"denom"`
 }
 
 type DappInit struct {

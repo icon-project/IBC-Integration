@@ -629,14 +629,15 @@ fn check_for_update_client_message() {
     assert_eq!(response.messages[0].id, 21);
 
     assert_eq!(response.attributes[0].value, "create_client");
-
+    let client_state_any = client_state.to_any();
+    let consensus_state_any = consenus_state.to_any();
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
         "0-25".to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
         keccak256(&consenus_state.encode_to_vec()).to_vec(),
-        client_state.encode_to_vec(),
-        consenus_state.encode_to_vec(),
+        client_state_any.encode_to_vec(),
+        consensus_state_any.encode_to_vec(),
     );
 
     let mock_data_binary = to_binary(&mock_reponse_data).unwrap();

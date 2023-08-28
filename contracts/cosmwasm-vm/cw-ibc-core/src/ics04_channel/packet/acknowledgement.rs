@@ -9,6 +9,7 @@ use cosmwasm_std::IbcPacketAckMsg;
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
     raw_types::{channel::RawMessageAcknowledgement, to_raw_packet},
+    to_checked_address,
 };
 
 use cw_common::cw_println;
@@ -195,7 +196,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let timeout = CwTimeout::with_both(timeoutblock, cw_timestamp);
 
         let cw_packet = CwPacket::new(packet.data, src, dest, packet.sequence, timeout);
-        let address = Addr::unchecked(msg.signer.to_string());
+        let address = to_checked_address(deps.as_ref(), &msg.signer);
         let ack: CwAcknowledgement = CwAcknowledgement::new(acknowledgement);
         let packet_ack_msg: CwPacketAckMsg =
             cosmwasm_std::IbcPacketAckMsg::new(ack, cw_packet, address);
@@ -204,7 +205,7 @@ impl<'a> CwIbcCoreContext<'a> {
             VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
             &packet_ack_msg,
         )?;
-        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketAck {
+        let cosm_msg = cw_common::ibc_dapp_msg::ExecuteMsg::IbcPacketAck {
             msg: packet_ack_msg,
         };
 

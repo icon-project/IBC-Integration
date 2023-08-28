@@ -3,12 +3,14 @@ package testsuite
 import (
 	"context"
 	"fmt"
+	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
+	"strconv"
+
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains/cosmos"
 	"github.com/icon-project/ibc-integration/test/chains/icon"
 	"github.com/icon-project/ibc-integration/test/testsuite/relayer"
 	"github.com/icon-project/ibc-integration/test/testsuite/testconfig"
-	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 
 	"strings"
 
@@ -31,17 +33,28 @@ const (
 type E2ETestSuite struct {
 	suite.Suite
 	relayer ibc.Relayer
+	cfg     *testconfig.TestConfig
 	//grpcClients    map[string]GRPCClients
 	paths          map[string]path
 	relayers       relayer.RelayerMap
 	logger         *zap.Logger
 	DockerClient   *dockerclient.Client
 	network        string
-	startRelayerFn func(relayer ibc.Relayer)
+	startRelayerFn func(relayer ibc.Relayer, pathName string) error
 
 	// pathNameIndex is the latest index to be used for generating paths
-	pathNameIndex int64
-	pathNames     []string
+	pathNameIndex   int64
+	CurrentPathName string
+	pathNames       []string
+}
+
+func (s *E2ETestSuite) SetCfg() error {
+	tc, err := testconfig.New()
+	if err != nil {
+		return err
+	}
+	s.cfg = tc
+	return nil
 }
 
 // path is a pairing of two chains which will be used in a test.
@@ -57,11 +70,12 @@ func newPath(chainA, chainB chains.Chain) path {
 	}
 }
 
-func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (context.Context, ibc.Relayer, error) {
-	config := testconfig.New()
+// SetupRelayer sets up the relayer, creates interchain networks, builds chains, and starts the relayer.
+// It returns a Relayer interface and an error if any.
+func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 	chainA, chainB := s.GetChains()
-	r := relayer.New(s.T(), config.RelayerConfig, s.logger, s.DockerClient, s.network)
-	pathName := s.generatePathName()
+	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
+	//pathName := s.GeneratePathName()
 	ic := interchaintest.NewInterchain().
 		AddChain(chainA.(ibc.Chain)).
 		AddChain(chainB.(ibc.Chain)).
@@ -70,7 +84,7 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (context.Context, ibc.R
 			Chain1:  chainA.(ibc.Chain),
 			Chain2:  chainB.(ibc.Chain),
 			Relayer: r,
-			Path:    pathName,
+			//Path:    pathName,
 		})
 
 	eRep := s.GetRelayerExecReporter()
@@ -82,35 +96,35 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (context.Context, ibc.R
 		SkipPathCreation:  true,
 	}
 	if err := ic.BuildChains(ctx, eRep, buildOptions); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+
 	if err := chainA.BuildWallets(ctx, Owner); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if err := chainB.BuildWallets(ctx, Owner); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if err := chainA.BuildWallets(ctx, User); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if err := chainB.BuildWallets(ctx, User); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	var err error
-	ctx, err = chainA.SetupIBC(ctx, Owner)
-	if err != nil {
-		return nil, nil, err
+	if _, err := chainA.SetupIBC(ctx, Owner); err != nil {
+		return nil, err
 	}
-	ctx, err = chainB.SetupIBC(ctx, Owner)
-	if err != nil {
-		return nil, nil, err
+	if _, err = chainB.SetupIBC(ctx, Owner); err != nil {
+		return nil, err
 	}
 	if err := ic.BuildRelayer(ctx, eRep, buildOptions); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	s.startRelayerFn = func(relayer ibc.Relayer) {
-		err := relayer.StartRelayer(ctx, eRep, pathName)
-		s.Require().NoError(err, fmt.Sprintf("failed to start relayer: %s", err))
+	s.startRelayerFn = func(relayer ibc.Relayer, pathName string) error {
+		if err := relayer.StartRelayer(ctx, eRep, pathName); err != nil {
+			return fmt.Errorf("failed to start relayer: %s", err)
+		}
 		s.T().Cleanup(func() {
 			if !s.T().Failed() {
 				if err := relayer.StopRelayer(ctx, eRep); err != nil {
@@ -118,43 +132,48 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (context.Context, ibc.R
 				}
 			}
 		})
-		// wait for relayer to start.
-		s.Require().NoError(test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)), "failed to wait for blocks")
+		if err := test.WaitForBlocks(ctx, 10, chainA.(ibc.Chain), chainB.(ibc.Chain)); err != nil {
+			return fmt.Errorf("failed to wait for blocks: %v", err)
+		}
+		return nil
 	}
 	s.relayer = r
-	err = r.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName)
-	return context.WithValue(ctx, "relayer-response", map[string]string{
-		"pathName": pathName,
-	}), r, err
+	return r, err
 }
 
-func (s *E2ETestSuite) DeployMockApp(ctx context.Context, port string) {
+func (s *E2ETestSuite) DeployXCallMockApp(ctx context.Context, port string) error {
+	testcase := ctx.Value("testcase").(string)
+	connectionKey := fmt.Sprintf("connection-%s", testcase)
 	chainA, chainB := s.GetChains()
-	var err error
-	err = chainA.DeployXCallMockApp(ctx, chains.XCallConnection{
+	if err := chainA.DeployXCallMockApp(ctx, chains.XCallConnection{
 		KeyName:                Owner,
 		CounterpartyNid:        chainB.(ibc.Chain).Config().ChainID,
 		ConnectionId:           "connection-0", //TODO
 		PortId:                 port,
 		CounterPartyPortId:     port,
-		CounterPartyConnection: chainB.GetIBCAddress("connection"),
-	})
-	s.Require().NoError(err)
-	err = chainB.DeployXCallMockApp(ctx, chains.XCallConnection{
+		CounterPartyConnection: chainB.GetIBCAddress(connectionKey),
+	}); err != nil {
+		return err
+	}
+	if err := chainB.DeployXCallMockApp(ctx, chains.XCallConnection{
 		KeyName:                Owner,
 		CounterpartyNid:        chainA.(ibc.Chain).Config().ChainID,
 		ConnectionId:           "connection-0", //TODO
 		PortId:                 port,
 		CounterPartyPortId:     port,
-		CounterPartyConnection: chainA.GetIBCAddress("connection"),
-	})
-	s.Require().NoError(err)
+		CounterPartyConnection: chainA.GetIBCAddress(connectionKey),
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
-// generatePathName generates the path name using the test suites name
-func (s *E2ETestSuite) generatePathName() string {
+// GeneratePathName generates the path name using the test suites name
+func (s *E2ETestSuite) GeneratePathName() string {
 	path := s.GetPathName(s.pathNameIndex)
 	s.pathNameIndex++
+	s.CurrentPathName = path
+	s.pathNames = append(s.pathNames, path)
 	return path
 }
 
@@ -175,7 +194,7 @@ func (s *E2ETestSuite) generatePath(ctx context.Context, relayer ibc.Relayer) st
 	chainAID := chainA.(ibc.Chain).Config().ChainID
 	chainBID := chainB.(ibc.Chain).Config().ChainID
 
-	pathName := s.generatePathName()
+	pathName := s.GeneratePathName()
 
 	err := relayer.GeneratePath(ctx, s.GetRelayerExecReporter(), chainAID, chainBID, pathName)
 	s.Require().NoError(err)
@@ -201,9 +220,10 @@ func (s *E2ETestSuite) GetChains(chainOpts ...testconfig.ChainOptionConfiguratio
 		return path.chainA, path.chainB
 	}
 
-	chainOptions := testconfig.DefaultChainOptions()
+	chainOptions, err := testconfig.DefaultChainOptions()
+	s.Require().NoError(err)
 	for _, opt := range chainOpts {
-		opt(&chainOptions)
+		opt(chainOptions)
 	}
 
 	chainA, chainB := s.createChains(chainOptions)
@@ -228,23 +248,22 @@ func (s *E2ETestSuite) GetRelayerWallets(relayer ibc.Relayer) (ibc.Wallet, ibc.W
 }
 
 // StartRelayer starts the given relayer.
-func (s *E2ETestSuite) StartRelayer(relayer ibc.Relayer) {
+func (s *E2ETestSuite) StartRelayer(relayer ibc.Relayer, pathName string) error {
 	if s.startRelayerFn == nil {
-		panic("cannot start relayer before it is created!")
+		return fmt.Errorf("cannot start relayer before it is created: %v", relayer)
 	}
-
-	s.startRelayerFn(relayer)
+	return s.startRelayerFn(relayer, pathName)
 }
 
 // StopRelayer stops the given relayer.
-func (s *E2ETestSuite) StopRelayer(ctx context.Context, relayer ibc.Relayer) {
+func (s *E2ETestSuite) StopRelayer(ctx context.Context, relayer ibc.Relayer) error {
 	err := relayer.StopRelayer(ctx, s.GetRelayerExecReporter())
-	s.Require().NoError(err)
+	return err
 }
 
 // createChains creates two separate chains in docker containers.
 // test and can be retrieved with GetChains.
-func (s *E2ETestSuite) createChains(chainOptions testconfig.ChainOptions) (chains.Chain, chains.Chain) {
+func (s *E2ETestSuite) createChains(chainOptions *testconfig.ChainOptions) (chains.Chain, chains.Chain) {
 	client, network := interchaintest.DockerSetup(s.T())
 	t := s.T()
 
@@ -254,9 +273,9 @@ func (s *E2ETestSuite) createChains(chainOptions testconfig.ChainOptions) (chain
 
 	logger := zaptest.NewLogger(t)
 
-	chainA, _ := buildChain(logger, t.Name(), *chainOptions.ChainAConfig)
+	chainA, _ := buildChain(logger, t.Name(), chainOptions.ChainAConfig)
 
-	chainB, _ := buildChain(logger, t.Name(), *chainOptions.ChainBConfig)
+	chainB, _ := buildChain(logger, t.Name(), chainOptions.ChainBConfig)
 
 	// this is intentionally called after the interchaintest.DockerSetup function. The above function registers a
 	// cleanup task which deletes all containers. By registering a cleanup function afterwards, it is executed first
@@ -268,7 +287,7 @@ func (s *E2ETestSuite) createChains(chainOptions testconfig.ChainOptions) (chain
 	return chainA, chainB
 }
 
-func buildChain(log *zap.Logger, testName string, cfg testconfig.Chain) (chains.Chain, error) {
+func buildChain(log *zap.Logger, testName string, cfg *testconfig.Chain) (chains.Chain, error) {
 	var (
 		chain chains.Chain
 		err   error
@@ -293,4 +312,30 @@ func buildChain(log *zap.Logger, testName string, cfg testconfig.Chain) (chains.
 func (s *E2ETestSuite) GetRelayerExecReporter() *testreporter.RelayerExecReporter {
 	rep := testreporter.NewNopReporter()
 	return rep.RelayerExecReporter(s.T())
+}
+
+func (s *E2ETestSuite) ConvertToPlainString(input string) (string, error) {
+	var plainString []byte
+	if strings.HasPrefix(input, "[") && strings.HasSuffix(input, "]") {
+		input = input[1 : len(input)-1]
+		for _, part := range strings.Split(input, ", ") {
+			value, err := strconv.Atoi(part)
+			if err != nil {
+				return "", err
+			}
+			plainString = append(plainString, byte(value))
+		}
+		return string(plainString), nil
+	} else if strings.HasPrefix(input, "0x") {
+		input = input[2:]
+		for i := 0; i < len(input); i += 2 {
+			value, err := strconv.ParseUint(input[i:i+2], 16, 8)
+			if err != nil {
+				return "", err
+			}
+			plainString = append(plainString, byte(value))
+		}
+		return string(plainString), nil
+	}
+	return "", fmt.Errorf("invalid input length")
 }
