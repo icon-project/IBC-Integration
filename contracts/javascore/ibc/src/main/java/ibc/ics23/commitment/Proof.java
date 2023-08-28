@@ -330,7 +330,7 @@ public class Proof {
         if (batchProof == null) {
             return true;
         }
-        if (batchProof.getEntries().size() != 0) {
+        if (!batchProof.getEntries().isEmpty()) {
             return false;
         }
         return true;
