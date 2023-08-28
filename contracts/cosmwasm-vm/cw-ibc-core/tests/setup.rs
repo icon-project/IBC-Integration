@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, collections::HashMap, hash::Hash};
 
 pub fn mock_height(
     number: u64,
@@ -24,7 +24,7 @@ use cosmwasm_std::{
         MOCK_CONTRACT_ADDR,
     },
     to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
-    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
+    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery, Binary,
 };
 
 use common::{
@@ -37,7 +37,7 @@ use common::{
         signer::Signer,
         Height,
     },
-    icon::icon::lightclient::v1::{ClientState, ConsensusState},
+    icon::icon::lightclient::v1::{ClientState, ConsensusState}, traits::AnyTypes,
 };
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
@@ -488,6 +488,36 @@ pub fn mock_lightclient_reply(deps: &mut OwnedDeps<MockStorage, MockApi, MockQue
     });
 }
 
+pub fn mock_consensus_state_query(mut query_map:HashMap<Binary,Binary>,client_id:&IbcClientId,state:&ConsensusState,height: u64)->HashMap<Binary,Binary>{
+    let query= LightClient::build_consensus_state_query(client_id, height).unwrap();
+    let reply_any = state.to_any();
+    let reply = to_binary(&reply_any.encode_to_vec()).unwrap();
+    query_map.insert(query, reply);
+    query_map
+}
+
+pub fn mock_lightclient_query(
+    mocks: HashMap<Binary, Binary>,
+    deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>,
+) {
+    deps.querier.update_wasm(move |r| match r {
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg,
+        } => {
+            if mocks.get(msg).is_some() {
+                let res = mocks.get(msg).unwrap().clone();
+                SystemResult::Ok(ContractResult::Ok(res))
+            } else {
+                SystemResult::Ok(ContractResult::Ok(to_binary(&true).unwrap()))
+            }
+        }
+        _ => todo!(),
+    });
+}
+
+
+
 pub fn get_dummy_endpoints() -> (IbcEndpoint, IbcEndpoint) {
     let src = IbcEndpoint {
         port_id: "our-port".to_string(),
@@ -520,7 +550,8 @@ pub fn get_dummy_consensus_state() -> ConsensusState {
     consenus_state
 }
 use cw_common::ibc_types::IbcClientId;
-use cw_ibc_core::ConnectionEnd;
+use cw_ibc_core::{ConnectionEnd, light_client::light_client::LightClient};
+use prost::Message;
 
 use std::time::Duration;
 pub fn get_dummy_connection() -> ConnectionEnd {

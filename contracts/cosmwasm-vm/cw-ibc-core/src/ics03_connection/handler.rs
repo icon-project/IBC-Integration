@@ -206,7 +206,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         cw_println!(deps, "[ConnOpenAck]: State Matched");
 
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
 
         let client = self.get_client(deps.as_ref().storage, client_id)?;
 
@@ -372,7 +372,7 @@ impl<'a> CwIbcCoreContext<'a> {
             HexString::from_bytes(&expected_connection_end.encode_vec().unwrap())
         );
 
-        let consensus_state = self.consensus_state(deps.storage, &client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), &client_id, &proof_height)?;
         cw_println!(
             deps,
             "[ConnOpenTry]: root: {:?} ",
@@ -531,7 +531,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         cw_println!(deps, "Connection State Matched");
 
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
 
         cw_println!(deps, "Consensus State Decoded");
 

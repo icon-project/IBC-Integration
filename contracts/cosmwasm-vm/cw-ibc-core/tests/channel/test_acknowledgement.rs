@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use common::icon::tendermint::light::LightHeader;
 use cw_ibc_core::{
     conversions::{to_ibc_channel_id, to_ibc_packet, to_ibc_timeout_height, to_ibc_timestamp},
     light_client::light_client::LightClient,
@@ -403,7 +406,10 @@ fn test_acknowledgement_packet_validate_unordered() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
-    mock_lightclient_reply(&mut deps);
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
+    mock_lightclient_query(query_map,&mut deps);
+
     contract
         .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())
         .unwrap();

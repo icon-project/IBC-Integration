@@ -149,7 +149,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        let consensus_state = self.consensus_state(deps.storage, client_id_on_a, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id_on_a, &proof_height)?;
         self.verify_connection_delay_passed(
             deps.storage,
             env,

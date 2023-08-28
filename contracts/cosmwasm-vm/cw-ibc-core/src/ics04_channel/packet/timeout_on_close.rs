@@ -100,7 +100,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id, &proof_height)?;
+            self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let prefix_on_b = connection_end.counterparty().prefix();
         let conn_id_on_b =
             connection_end

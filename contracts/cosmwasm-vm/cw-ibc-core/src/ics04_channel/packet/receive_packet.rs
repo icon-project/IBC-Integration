@@ -110,7 +110,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let proof_height = to_ibc_height(msg.proof_height.clone())?;
 
         let consensus_state_of_a_on_b =
-            self.consensus_state(deps.storage, client_id, &proof_height)?;
+            self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
         let expected_commitment_on_a = commitment::compute_packet_commitment_bytes(

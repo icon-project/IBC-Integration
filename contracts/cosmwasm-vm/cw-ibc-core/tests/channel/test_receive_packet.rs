@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 
@@ -155,6 +157,10 @@ fn test_receive_packet() {
             &chan_end_on_b.clone(),
         )
         .unwrap();
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
+    mock_lightclient_query(query_map,&mut deps);
+
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     let missing_receipts = contract
         .ibc_store()

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_port_id};
 
 use super::*;
@@ -113,6 +115,11 @@ fn test_packet_send() {
             Addr::unchecked("moduleaddress").to_string(),
         )
         .unwrap();
+    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
+    mock_lightclient_query(query_map,&mut deps);
+
 
     let res = contract.send_packet(deps.as_mut(), &mock_env(), info, packet);
     println!("{:?}", res);
@@ -251,6 +258,11 @@ fn test_packet_send_fail_misiing_sequense() {
             Addr::unchecked("moduleaddress").to_string(),
         )
         .unwrap();
+    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
+    mock_lightclient_query(query_map,&mut deps);
+
 
     contract
         .send_packet(deps.as_mut(), &mock_env(), info, packet)

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use cw_ibc_core::{
     conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp},
     light_client::light_client::LightClient,
@@ -105,7 +107,7 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
     contract
         .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
-    mock_lightclient_reply(&mut deps);
+   
     let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
         message_root: vec![1, 2, 3, 4],
         next_proof_context_hash: vec![1, 2, 3],
@@ -129,6 +131,9 @@ fn test_timeout_on_close_packet_validate_to_light_client() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
+    mock_lightclient_query(query_map,&mut deps);
 
     let res =
         contract.timeout_on_close_packet_validate_to_light_client(deps.as_mut(), info, env, msg);

@@ -172,11 +172,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into);
         }
 
-        let old_consensus_state = self.consensus_state(
-            deps.as_ref().storage,
-            &client_id,
-            &old_client_state.latest_height(),
-        )?;
+        let old_consensus_state =
+            self.consensus_state(deps.as_ref(), &client_id, &old_client_state.latest_height())?;
 
         let now = self.host_timestamp(&env)?;
         let duration = now

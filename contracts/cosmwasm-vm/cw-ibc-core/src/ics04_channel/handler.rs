@@ -187,7 +187,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let proof_height = to_ibc_height(message.proof_height.clone())?;
         let client_id = connection_end.client_id();
         let client_state = self.client_state(deps.storage, client_id)?;
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let prefix_on_a = connection_end.counterparty().prefix();
 
         let conn_id_on_a = connection_end.counterparty().connection_id().ok_or(
@@ -305,7 +305,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let proof_height = to_ibc_height(message.proof_height.clone())?;
 
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
 
         let counterparty_prefix = connection_end.counterparty().prefix();
         let counterparty_connection_id = connection_end.counterparty().connection_id().ok_or(
@@ -422,7 +422,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client_id = connection_end.client_id();
         let client_state = self.client_state(deps.storage, client_id)?;
         let proof_height = to_ibc_height(message.proof_height.clone())?;
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let counterparty_prefix = connection_end.counterparty().prefix();
 
         let counterparty_connection_id = connection_end.counterparty().connection_id().ok_or(
@@ -602,7 +602,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client_id = connection_end.client_id();
         let client_state = self.client_state(deps.storage, client_id)?;
         let proof_height = to_ibc_height(message.proof_height.clone())?;
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let prefix_on_a = connection_end.counterparty().prefix();
 
         let conn_id_on_a = connection_end.counterparty().connection_id().ok_or(

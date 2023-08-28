@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::*;
 use cosmwasm_std::IbcChannel;
 
@@ -98,6 +100,11 @@ fn test_validate_open_ack_channel_fail_missing_counterparty() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
+    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
+    mock_lightclient_query(query_map,&mut deps);
+
 
     contract
         .validate_channel_open_ack(deps.as_mut(), info, &msg)
@@ -204,7 +211,10 @@ fn test_validate_open_ack_channel() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-
+    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
+    mock_lightclient_query(query_map,&mut deps);
     let res = contract.validate_channel_open_ack(deps.as_mut(), info, &msg);
 
     assert!(res.is_ok());

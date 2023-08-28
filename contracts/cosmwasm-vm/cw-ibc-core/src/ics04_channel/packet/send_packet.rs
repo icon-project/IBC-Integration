@@ -92,7 +92,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, " check pass: packet exipred");
 
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id_on_a, &latest_height_on_a)?;
+            self.consensus_state(deps.as_ref(), client_id_on_a, &latest_height_on_a)?;
         let latest_timestamp = consensus_state_of_b_on_a.timestamp();
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
         if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {

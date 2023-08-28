@@ -3,6 +3,7 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::traits::AnyTypes;
 use common::{client_state::IClientState, consensus_state::IConsensusState};
+use cosmwasm_std::Deps;
 use cosmwasm_std::Env;
 use prost::DecodeError;
 use prost::Message;
@@ -460,21 +461,13 @@ impl<'a> CwIbcCoreContext<'a> {
 
     pub fn consensus_state(
         &self,
-        store: &dyn Storage,
+        deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: &common::ibc::Height,
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
-        let consensus_state_key = commitment::consensus_state_commitment_key(
-            client_id,
-            height.revision_number(),
-            height.revision_height(),
-        );
-        let consensus_state_any = self.consensus_state_any(store, client_id)?;
-
-        let consensus_state: ConsensusState =
-            ConsensusState::from_any(consensus_state_any).map_err(Into::<ContractError>::into)?;
-
-        Ok(Box::new(consensus_state))
+        let client_impl = self.get_client(deps.storage, &client_id)?;
+        let height = height.revision_height();
+        return client_impl.get_consensus_state(deps, client_id, height);
     }
 
     pub fn consensus_state_any(
@@ -487,6 +480,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Any::decode(consensus_state_data.as_slice()).map_err(Into::<ContractError>::into)?;
         Ok(consensus_state_any)
     }
+
     pub fn host_height(&self, env: &Env) -> Result<common::ibc::Height, ContractError> {
         let height = env.block.height;
         let height = common::ibc::Height::new(0, height).map_err(Into::<ContractError>::into)?;
