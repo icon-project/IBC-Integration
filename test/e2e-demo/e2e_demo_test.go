@@ -2,6 +2,7 @@ package e2e_demo
 
 import (
 	"context"
+	"fmt"
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/testsuite"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,8 @@ func (e *E2EDemoSuite) TestSetup() {
 
 	portId := "transfer"
 	defer func(_err *error) {
-		if _err != nil {
+		if *_err != nil {
+			fmt.Println("cleaning up...")
 			interchaintest.CleanDockerSetup(e.T(), "TestE2EDemo/TestSetup")
 		}
 	}(&err)
