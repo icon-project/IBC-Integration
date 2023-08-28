@@ -37,7 +37,8 @@ impl LightClient {
             msg: to_binary(&exec_message).map_err(ContractError::Std)?,
             funds: vec![],
         });
-        let sub_msg: SubMsg = SubMsg::reply_always(client_update_message, EXECUTE_UPDATE_CLIENT);
+        let sub_msg: SubMsg =
+            SubMsg::reply_on_success(client_update_message, EXECUTE_UPDATE_CLIENT);
         Ok(sub_msg)
     }
 

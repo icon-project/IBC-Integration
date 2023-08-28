@@ -60,7 +60,6 @@ use cw_common::core_msg::InstantiateMsg;
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
 
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;

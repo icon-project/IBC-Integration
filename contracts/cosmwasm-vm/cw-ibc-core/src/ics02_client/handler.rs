@@ -72,7 +72,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
 
-        let sub_msg: SubMsg = SubMsg::reply_always(create_client_message, EXECUTE_CREATE_CLIENT);
+        let sub_msg: SubMsg =
+            SubMsg::reply_on_success(create_client_message, EXECUTE_CREATE_CLIENT);
 
         Ok(Response::new()
             .add_submessage(sub_msg)
@@ -211,7 +212,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
 
-        let sub_message = SubMsg::reply_always(wasm_msg, EXECUTE_UPGRADE_CLIENT);
+        let sub_message = SubMsg::reply_on_success(wasm_msg, EXECUTE_UPGRADE_CLIENT);
 
         Ok(Response::new()
             .add_submessage(sub_message)
@@ -529,7 +530,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             funds: info.funds,
         });
 
-        let sub_message = SubMsg::reply_always(wasm_exec_message, MISBEHAVIOUR);
+        let sub_message = SubMsg::reply_on_success(wasm_exec_message, MISBEHAVIOUR);
 
         Ok(Response::new()
             .add_submessage(sub_message)

@@ -37,7 +37,7 @@ impl<'a> CwIbcCoreContext<'a> {
         ensure_channel_state(&ibc_channel, &channel, &State::Open)?;
 
         let ack_commitment = keccak256(&ack).to_vec();
-        let raw_packet = to_raw_packet(packet);
+        let raw_packet = to_raw_packet(&packet);
         self.validate_write_acknowledgement(deps.storage, &raw_packet)?;
 
         self.store_packet_acknowledgement(
@@ -50,7 +50,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let event = create_packet_event(
             IbcEventType::WriteAck,
-            raw_packet,
+            &to_raw_packet(&packet),
             &channel.ordering,
             &channel.connection_hops[0],
             Some(ack),
