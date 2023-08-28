@@ -140,7 +140,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "packet seq matched");
 
         let client_id_on_a = conn_end_on_a.client_id();
-        let client_state_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        let client_state_on_a = self.client_state(deps.as_ref(), client_id_on_a)?;
         // The client must not be frozen.
         if client_state_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {

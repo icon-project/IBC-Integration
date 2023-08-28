@@ -148,7 +148,6 @@ fn test_for_channel_open_try_execution_message() {
     contract
         .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
-    
 
     let commitment = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -207,9 +206,14 @@ fn test_for_channel_open_try_execution_message() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -280,9 +284,14 @@ fn test_for_channel_open_ack_execution() {
     contract
         .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state.clone(), height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state.clone(),
+        height.revision_height(),
+    );
+   
 
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -328,6 +337,8 @@ fn test_for_channel_open_ack_execution() {
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    mock_lightclient_query(query_map, &mut deps);
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
         .store_client_into_registry(
@@ -336,7 +347,7 @@ fn test_for_channel_open_ack_execution() {
             "contractaddress".to_string(),
         )
         .unwrap();
-    
+
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -436,9 +447,14 @@ fn test_for_channel_open_confirm() {
     contract
         .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     let conn_id = ConnectionId::new(0);
     contract
@@ -477,7 +493,7 @@ fn test_for_channel_open_confirm() {
             "contractaddress".to_string(),
         )
         .unwrap();
-    
+
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_state(
@@ -534,7 +550,7 @@ fn test_for_channel_close_init() {
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-
+    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
     let client_state = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -613,6 +629,9 @@ fn test_for_channel_close_init() {
         info.funds.clone(),
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
+    let mut query_map=HashMap::<Binary,Binary>::new();
+	  query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+	  mock_lightclient_query(query_map,&mut deps);
 
     let res = contract.execute(
         deps.as_mut(),
@@ -622,6 +641,7 @@ fn test_for_channel_close_init() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
+    println!("{:?}",res);
 
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().messages[0].id, 45);
@@ -744,9 +764,16 @@ fn test_for_channel_close_confirm() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        height.revision_height(),
+    );
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    mock_lightclient_query(query_map, &mut deps);
+   
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -868,19 +895,28 @@ fn test_for_packet_send() {
     }
     .try_into()
     .unwrap();
-    let height :Height= RawHeight {
+    let height: Height = RawHeight {
         revision_number: 0,
         revision_height: 10,
     }
     .try_into()
     .unwrap();
-contract
-.store_client_implementations(&mut deps.storage, &IbcClientId::default(), LightClient::new("lightclient".to_string()))
-.unwrap();
+    contract
+        .store_client_implementations(
+            &mut deps.storage,
+            &IbcClientId::default(),
+            LightClient::new("lightclient".to_string()),
+        )
+        .unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
     contract
         .store_consensus_state(
             &mut deps.storage,
@@ -897,7 +933,6 @@ contract
             Addr::unchecked("moduleaddress").to_string(),
         )
         .unwrap();
-   
 
     let res = contract.execute(
         deps.as_mut(),
@@ -1015,9 +1050,14 @@ fn test_for_recieve_packet() {
     contract
         .store_channel_end(&mut deps.storage, &dst_port, &dst_channel, &chan_end_on_b)
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     let res = contract.execute(
         deps.as_mut(),
@@ -1193,9 +1233,15 @@ fn test_for_ack_execute() {
     contract
         .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        proof_height.revision_height(),
+    );
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     let res = contract.execute(
         deps.as_mut(),

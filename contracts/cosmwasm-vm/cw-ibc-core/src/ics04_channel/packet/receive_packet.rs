@@ -97,7 +97,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "packet height is greater than timeout height");
 
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
         // The client must not be frozen.
         if client_state.is_frozen() {
             return Err(PacketError::FrozenClient {

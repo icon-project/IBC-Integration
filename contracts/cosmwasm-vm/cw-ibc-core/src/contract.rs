@@ -297,7 +297,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetClientState { client_id } => {
                 let res = self
-                    .client_state_any(deps.storage, &IbcClientId::from_str(&client_id).unwrap())
+                    .client_state_any(deps, &IbcClientId::from_str(&client_id).unwrap())
                     .map_err(|_| ContractError::InvalidClientId { client_id })
                     .unwrap();
 

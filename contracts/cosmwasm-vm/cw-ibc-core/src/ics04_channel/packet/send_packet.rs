@@ -69,7 +69,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
         let client_id_on_a = conn_end_on_a.client_id();
-        let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        let client_state_of_b_on_a = self.client_state(deps.as_ref(), client_id_on_a)?;
         if client_state_of_b_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::FrozenClient {

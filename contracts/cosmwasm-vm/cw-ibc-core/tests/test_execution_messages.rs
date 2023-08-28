@@ -10,10 +10,10 @@ use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use common::utils::keccak256;
-use cosmwasm_std::{ContractResult, Binary};
 use cosmwasm_std::SystemResult;
 use cosmwasm_std::WasmQuery;
 use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
+use cosmwasm_std::{Binary, ContractResult};
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
@@ -37,6 +37,7 @@ use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
 use common::traits::AnyTypes;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
+use cw_multi_test::Ibc;
 use setup::*;
 
 #[test]
@@ -297,7 +298,7 @@ fn test_for_connection_open_init() {
         .unwrap();
     contract
         .client_state(
-            &mut deps.storage,
+            deps.as_ref(),
             &IbcClientId::from_str(&message.client_id).unwrap(),
         )
         .unwrap();
@@ -377,9 +378,14 @@ fn test_for_connection_open_try() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        proof_height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
     let response = contract
         .execute(
             deps.as_mut(),
@@ -452,9 +458,14 @@ fn test_for_connection_open_ack() {
     contract
         .store_client_implementations(&mut deps.storage, &client_id.clone(), light_client)
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        proof_height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -578,9 +589,17 @@ fn test_for_connection_open_confirm() {
             light_client,
         )
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        proof_height.revision_height(),
+    );
+    let client_state_query=LightClient::build_client_state_query(&IbcClientId::default()).unwrap();
+    query_map.insert(client_state_query, to_binary(&client_state).unwrap());
+
+    mock_lightclient_query(query_map, &mut deps);
 
     let cl = client_state.to_any().encode_to_vec();
 
@@ -680,9 +699,14 @@ fn test_for_connection_open_try_fails() {
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, peoof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        peoof_height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     let response = contract
         .execute(

@@ -99,15 +99,21 @@ fn test_validate_close_confirm_channel_fail_missing_counterparty() {
         )
         .unwrap();
     contract
-    .store_client_implementations(
-        &mut deps.storage,
+        .store_client_implementations(
+            &mut deps.storage,
+            &IbcClientId::default(),
+            LightClient::new("lightclient".to_string()),
+        )
+        .unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
         &IbcClientId::default(),
-        LightClient::new("lightclient".to_string()),
-    )
-    .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+        &consenus_state,
+        height.revision_height(),
+    );
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .validate_channel_close_confirm(deps.as_mut(), info, &msg)
@@ -217,9 +223,15 @@ fn test_validate_close_confirm_channel() {
             LightClient::new("lightclient".to_string()),
         )
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        height.revision_height(),
+    );
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    mock_lightclient_query(query_map, &mut deps);
     let res = contract.validate_channel_close_confirm(deps.as_mut(), info, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());

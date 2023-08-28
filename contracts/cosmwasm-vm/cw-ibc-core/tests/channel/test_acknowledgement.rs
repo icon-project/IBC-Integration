@@ -406,9 +406,15 @@ fn test_acknowledgement_packet_validate_unordered() {
         .expected_time_per_block()
         .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        proof_height.revision_height(),
+    );
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .bind_port(&mut deps.storage, &dst_port, "moduleaddress".to_string())

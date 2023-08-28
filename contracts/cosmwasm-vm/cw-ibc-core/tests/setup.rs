@@ -1,4 +1,4 @@
-use std::{str::FromStr, collections::HashMap, hash::Hash};
+use std::{collections::HashMap, hash::Hash, str::FromStr};
 
 pub fn mock_height(
     number: u64,
@@ -23,8 +23,8 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    to_binary, Addr, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint, MessageInfo,
-    OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery, Binary,
+    to_binary, Addr, Binary, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint,
+    MessageInfo, OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
 use common::{
@@ -37,7 +37,8 @@ use common::{
         signer::Signer,
         Height,
     },
-    icon::icon::lightclient::v1::{ClientState, ConsensusState}, traits::AnyTypes,
+    icon::icon::lightclient::v1::{ClientState, ConsensusState},
+    traits::AnyTypes,
 };
 use cw_common::raw_types::channel::*;
 use cw_common::raw_types::connection::*;
@@ -488,8 +489,25 @@ pub fn mock_lightclient_reply(deps: &mut OwnedDeps<MockStorage, MockApi, MockQue
     });
 }
 
-pub fn mock_consensus_state_query(mut query_map:HashMap<Binary,Binary>,client_id:&IbcClientId,state:&ConsensusState,height: u64)->HashMap<Binary,Binary>{
-    let query= LightClient::build_consensus_state_query(client_id, height).unwrap();
+pub fn mock_consensus_state_query(
+    mut query_map: HashMap<Binary, Binary>,
+    client_id: &IbcClientId,
+    state: &ConsensusState,
+    height: u64,
+) -> HashMap<Binary, Binary> {
+    let query = LightClient::build_consensus_state_query(client_id, height).unwrap();
+    let reply_any = state.to_any();
+    let reply = to_binary(&reply_any.encode_to_vec()).unwrap();
+    query_map.insert(query, reply);
+    query_map
+}
+
+pub fn mock_client_state_query(
+    mut query_map: HashMap<Binary, Binary>,
+    client_id: &IbcClientId,
+    state: &ClientState,
+) -> HashMap<Binary, Binary> {
+    let query = LightClient::build_client_state_query(client_id).unwrap();
     let reply_any = state.to_any();
     let reply = to_binary(&reply_any.encode_to_vec()).unwrap();
     query_map.insert(query, reply);
@@ -515,8 +533,6 @@ pub fn mock_lightclient_query(
         _ => todo!(),
     });
 }
-
-
 
 pub fn get_dummy_endpoints() -> (IbcEndpoint, IbcEndpoint) {
     let src = IbcEndpoint {
@@ -550,7 +566,7 @@ pub fn get_dummy_consensus_state() -> ConsensusState {
     consenus_state
 }
 use cw_common::ibc_types::IbcClientId;
-use cw_ibc_core::{ConnectionEnd, light_client::light_client::LightClient};
+use cw_ibc_core::{light_client::light_client::LightClient, ConnectionEnd};
 use prost::Message;
 
 use std::time::Duration;

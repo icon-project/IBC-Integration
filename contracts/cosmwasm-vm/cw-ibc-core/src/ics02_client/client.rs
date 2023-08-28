@@ -331,9 +331,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_client_implementations(store, client_id).ok();
 
         if client.is_none() {
-            return Err(ClientError::ClientNotFound {
-                client_id: client_id.clone(),
-            })
+            return Err(ClientError::ClientSpecific { description: "LightclientNotFount".to_string() })
             .map_err(Into::<ContractError>::into);
         }
         Ok(client.unwrap())
@@ -435,28 +433,21 @@ impl<'a> CwIbcCoreContext<'a> {
 impl<'a> CwIbcCoreContext<'a> {
     pub fn client_state(
         &self,
-        store: &dyn Storage,
+        deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn IClientState>, ContractError> {
-        let client_state_any = self.client_state_any(store, client_id)?;
-
-        let client_state =
-            ClientState::from_any(client_state_any).map_err(Into::<ContractError>::into)?;
-
-        Ok(Box::new(client_state))
+        let light_client= self.get_client(deps.storage, &client_id)?;
+        return light_client.get_client_state(deps, client_id);
     }
 
     pub fn client_state_any(
         &self,
-        store: &dyn Storage,
+        deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let client_key = commitment::client_state_commitment_key(client_id);
-
-        let client_state_any_data = self.ibc_store().client_states().load(store, client_id)?;
-        let client_state_any =
-            Any::decode(client_state_any_data.as_slice()).map_err(Into::<ContractError>::into)?;
-        Ok(client_state_any)
+        let light_client= self.get_client(deps.storage, &client_id)?;
+        return light_client.get_client_state_any(deps, client_id)
+        
     }
 
     pub fn consensus_state(

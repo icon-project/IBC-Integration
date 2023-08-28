@@ -108,7 +108,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         })?;
 
         let client = self.get_client(deps.as_ref().storage, &client_id)?;
-        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+        let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
@@ -153,7 +153,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         message: RawMsgUpgradeClient,
     ) -> Result<Response, ContractError> {
         let client_id = to_ibc_client_id(&message.client_id)?;
-        let old_client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+        let old_client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         let new_client_state = message.client_state.ok_or(ContractError::IbcClientError {
             error: ClientError::MissingRawClientState,
@@ -508,7 +508,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let client_id = to_ibc_client_id(&message.client_id)?;
 
-        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+        let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {

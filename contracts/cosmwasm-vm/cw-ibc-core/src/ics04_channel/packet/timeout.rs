@@ -97,7 +97,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let client_id_on_a = conn_end_on_a.client_id();
-        let _client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        let _client_state_of_b_on_a = self.client_state(deps.as_ref(), client_id_on_a)?;
 
         if !packet_timeout_height.has_expired(proof_height) {
             return Err(ContractError::IbcPacketError {

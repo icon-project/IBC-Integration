@@ -8,9 +8,9 @@ use common::ibc::core::ics24_host::identifier::ClientId;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::traits::AnyTypes;
-use cosmwasm_std::Binary;
 use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::to_binary;
+use cosmwasm_std::Binary;
 
 use cosmwasm_std::Addr;
 use cosmwasm_std::ContractResult;
@@ -202,38 +202,26 @@ fn connection_open_init() {
     contract
         .store_client_implementations(
             deps.as_mut().storage,
-            &ClientId::from_str("iconclient-0").unwrap(),
-            LightClient::new("lightclientaddress".to_string()),
+            &client_id,
+            LightClient::new("lightclient".to_string()),
         )
         .unwrap();
-
-    deps.querier.update_wasm(|r| match r {
-        WasmQuery::Smart {
-            contract_addr: _,
-            msg: _,
-        } => SystemResult::Ok(ContractResult::Ok(to_binary(&vec![0, 1, 2, 3]).unwrap())),
-        _ => todo!(),
-    });
 
     let cl = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &get_mock_env(),
-            &client_id,
-            cl,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-    contract
-        .client_state(&mut deps.storage, &client_id)
-        .unwrap();
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    let client_state_query=LightClient::build_client_state_query(&client_id).unwrap();
+    query_map.insert(client_state_query, to_binary(&cl).unwrap());
+   
+    mock_lightclient_query(query_map,&mut deps);
     contract
         .connection_next_sequence_init(&mut deps.storage, u64::default())
         .unwrap();
+   
+	
+	 
 
     let res = contract.connection_open_init(deps.as_mut(), res_msg);
-
+    println!("{:?}",res);
     assert!(res.is_ok());
 }
 
@@ -513,10 +501,15 @@ fn connection_open_ack_validate() {
     contract
         .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
-    
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        proof_height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     let counterparty_prefix =
         common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
@@ -673,9 +666,14 @@ fn connection_open_try_validate() {
         )
         .unwrap();
     let env = get_mock_env();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        proof_height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     let res = contract.connection_open_try(deps.as_mut(), info, env, message);
     assert!(res.is_ok());
@@ -783,10 +781,15 @@ fn connection_open_confirm_validate() {
     contract
         .store_client_implementations(&mut deps.storage, &IbcClientId::default(), light_client)
         .unwrap();
-    
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &consenus_state, proof_height.revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &consenus_state,
+        proof_height.revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     let cl = client_state.to_any().encode_to_vec();
 
@@ -912,7 +915,7 @@ fn connection_check_open_init_validate_fails() {
     let contract = CwIbcCoreContext::new();
 
     contract
-        .client_state(&mut deps.storage, &client_id)
+        .client_state(deps.as_ref(), &client_id)
         .unwrap();
     contract
         .connection_next_sequence_init(&mut deps.storage, u64::default())
@@ -988,7 +991,7 @@ fn connection_open_init_validate_invalid_client_id() {
         )
         .unwrap();
     contract
-        .client_state(&mut deps.storage, &client_id)
+        .client_state( deps.as_ref(), &client_id)
         .unwrap();
     contract
         .connection_next_sequence_init(&mut deps.storage, seq_on_a)
@@ -1089,8 +1092,6 @@ fn connection_open_init_fails() {
         .connection_open_init(deps.as_mut(), message)
         .unwrap();
 }
-
-
 
 #[test]
 #[should_panic(expected = "ConnectionMismatch")]

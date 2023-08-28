@@ -90,7 +90,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let client_id = connection_end.client_id();
-        let client_state_of_b_on_a = self.client_state(deps.storage, client_id)?;
+        let client_state_of_b_on_a = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state_of_b_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {

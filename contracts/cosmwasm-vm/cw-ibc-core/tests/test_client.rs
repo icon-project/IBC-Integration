@@ -9,7 +9,7 @@ use common::ibc::{signer::Signer, Height};
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use common::utils::keccak256;
-use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse, Binary};
+use cosmwasm_std::{to_binary, Addr, Binary, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
@@ -422,7 +422,7 @@ fn check_for_client_state_from_storage() {
         common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
 
     let client_state = contract
-        .client_state(deps.as_ref().storage, &client_id)
+        .client_state(deps.as_ref(), &client_id)
         .unwrap();
 
     assert_eq!(client_state.client_type().as_str(), "iconclient");
@@ -452,9 +452,6 @@ fn check_for_consensus_state_from_storage() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-  
-   
-
 
     let signer = Signer::from_str("new_signer").unwrap();
 
@@ -491,17 +488,20 @@ fn check_for_consensus_state_from_storage() {
     let client_id =
         common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
 
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &client_id, &consenus_state, client_state.latest_height);
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &client_id,
+        &consenus_state,
+        client_state.latest_height,
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    
-
-    let height =client_state.latest_height();
+    let height = client_state.latest_height();
 
     let consensus_state_result = contract.consensus_state(deps.as_ref(), &client_id, &height);
 
@@ -816,10 +816,9 @@ fn check_for_upgrade_client() {
     };
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &client_id, &consenus_state, 100);
-    mock_lightclient_query(query_map,&mut deps);
-
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(query_map, &client_id, &consenus_state, 100);
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
@@ -911,10 +910,9 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     };
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &client_id, &consenus_state, 100);
-    mock_lightclient_query(query_map,&mut deps);
-
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(query_map, &client_id, &consenus_state, 100);
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
@@ -1109,9 +1107,14 @@ fn check_for_execute_upgrade_client() {
     };
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &client_id, &consenus_state,client_state.latest_height().revision_height());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &client_id,
+        &consenus_state,
+        client_state.latest_height().revision_height(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)

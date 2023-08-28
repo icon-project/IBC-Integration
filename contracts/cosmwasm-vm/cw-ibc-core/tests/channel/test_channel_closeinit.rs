@@ -34,16 +34,10 @@ fn test_validate_close_init_channel() {
     let env = mock_env();
 
     let client = client_state.to_any().encode_to_vec();
-    contract
-        .store_client_state(
-            &mut deps.storage,
-            &env,
-            &IbcClientId::default(),
-            client,
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-
+    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    mock_lightclient_query(query_map,&mut deps);
     contract
         .store_capability(
             &mut deps.storage,
@@ -151,7 +145,9 @@ fn test_validate_close_init_channel_fail_missing_connection_end() {
     contract
         .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
-
+    let mut query_map=HashMap::<Binary,Binary>::new();
+    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&get_dummy_client_state());
+    mock_lightclient_query(query_map,&mut deps);
     contract
         .validate_channel_close_init(deps.as_mut(), info, &msg)
         .unwrap();

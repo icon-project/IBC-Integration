@@ -136,10 +136,21 @@ fn test_write_acknowledgement() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
     let msg = get_dummy_raw_msg_recv_packet(12);
     let (contract, mut deps) = setup_test(info.clone(), &env, msg.clone());
-    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &get_dummy_consensus_state(), msg.proof_height.as_ref().unwrap().revision_height);
-    mock_lightclient_query(query_map,&mut deps);
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            LightClient::new("lightclient".to_string()),
+        )
+        .unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &get_dummy_consensus_state(),
+        msg.proof_height.as_ref().unwrap().revision_height,
+    );
+    mock_lightclient_query(query_map, &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -163,10 +174,21 @@ pub fn test_write_acknowledgement_fails_unauthorized() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
     let msg = get_dummy_raw_msg_recv_packet(12);
     let (contract, mut deps) = setup_test(info.clone(), &env, msg.clone());
-    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &get_dummy_consensus_state(), msg.proof_height.as_ref().unwrap().revision_height);
-    mock_lightclient_query(query_map,&mut deps);
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            LightClient::new("lightclient".to_string()),
+        )
+        .unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &get_dummy_consensus_state(),
+        msg.proof_height.as_ref().unwrap().revision_height,
+    );
+    mock_lightclient_query(query_map, &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -190,10 +212,21 @@ pub fn test_write_acknowledgement_fails_invalid_ack() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
     let msg = get_dummy_raw_msg_recv_packet(12);
     let (contract, mut deps) = setup_test(info.clone(), &env, msg.clone());
-    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &get_dummy_consensus_state(), msg.proof_height.as_ref().unwrap().revision_height);
-    mock_lightclient_query(query_map,&mut deps);
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            LightClient::new("lightclient".to_string()),
+        )
+        .unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &get_dummy_consensus_state(),
+        msg.proof_height.as_ref().unwrap().revision_height,
+    );
+    mock_lightclient_query(query_map, &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -219,10 +252,21 @@ pub fn test_write_acknowledgement_fails_invalid_channel_state() {
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
     let msg = get_dummy_raw_msg_recv_packet(12);
     let (contract, mut deps) = setup_test(info.clone(), &env, msg.clone());
-    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_consensus_state_query(query_map, &IbcClientId::default(), &get_dummy_consensus_state(), msg.proof_height.as_ref().unwrap().revision_height);
-    mock_lightclient_query(query_map,&mut deps);
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            LightClient::new("lightclient".to_string()),
+        )
+        .unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &get_dummy_consensus_state(),
+        msg.proof_height.as_ref().unwrap().revision_height,
+    );
+    mock_lightclient_query(query_map, &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
