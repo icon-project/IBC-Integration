@@ -275,7 +275,7 @@ fn test_packet_send_fail_misiing_sequense() {
     let mut mocks = HashMap::<Binary, Binary>::new();
     mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
     mock_lightclient_query(mocks, &mut deps);
-    let info = create_mock_info("moduleaddress", "test", 100);
+    let _info = create_mock_info("moduleaddress", "test", 100);
     contract
         .bind_port(
             &mut deps.storage,
@@ -283,9 +283,9 @@ fn test_packet_send_fail_misiing_sequense() {
             Addr::unchecked("moduleaddress").to_string(),
         )
         .unwrap();
-let info= create_mock_info("moduleaddress", "test", 100);
+    let info = create_mock_info("moduleaddress", "test", 100);
     contract
-        .send_packet(deps.as_mut(), &mock_env(),info, packet)
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
 
@@ -523,14 +523,12 @@ fn test_packet_send_fails_on_timedout_height() {
         )
         .unwrap();
     contract
-    .bind_port(
-        &mut deps.storage,
-        &IbcPortId::from_str(&packet.source_port).unwrap(),
-        Addr::unchecked("moduleaddress").to_string(),
-    )
-    .unwrap();
-
-
+        .bind_port(
+            &mut deps.storage,
+            &IbcPortId::from_str(&packet.source_port).unwrap(),
+            Addr::unchecked("moduleaddress").to_string(),
+        )
+        .unwrap();
 
     let timestamp_query = light_client
         .get_timestamp_by_height_query(&IbcClientId::default(), client_state.latest_height)
@@ -538,9 +536,9 @@ fn test_packet_send_fails_on_timedout_height() {
     let mut mocks = HashMap::<Binary, Binary>::new();
     mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
     mock_lightclient_query(mocks, &mut deps);
-    let info= create_mock_info("moduleaddress", "test", 100);
+    let info = create_mock_info("moduleaddress", "test", 100);
     contract
-        .send_packet(deps.as_mut(), &mock_env(),info, packet)
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
 
@@ -667,14 +665,14 @@ fn test_packet_send_fails_on_timedout_timestamp() {
     );
     mock_lightclient_query(mocks, &mut deps);
     contract
-    .bind_port(
-        &mut deps.storage,
-        &IbcPortId::from_str(&packet.source_port).unwrap(),
-        Addr::unchecked("moduleaddress").to_string(),
-    )
-    .unwrap();
+        .bind_port(
+            &mut deps.storage,
+            &IbcPortId::from_str(&packet.source_port).unwrap(),
+            Addr::unchecked("moduleaddress").to_string(),
+        )
+        .unwrap();
     let info = create_mock_info("moduleaddress", "test", 100);
     contract
-        .send_packet(deps.as_mut(), &mock_env(),info, packet)
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }

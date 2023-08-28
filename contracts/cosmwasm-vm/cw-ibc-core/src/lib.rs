@@ -62,8 +62,8 @@ use thiserror::Error;
 use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
 
-use cw_common::core_msg::{ExecuteMsg as CoreExecuteMsg, InstantiateMsg};
 use cw_common::core_msg::QueryMsg;
+use cw_common::core_msg::{ExecuteMsg as CoreExecuteMsg, InstantiateMsg};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
