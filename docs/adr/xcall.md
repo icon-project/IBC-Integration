@@ -402,7 +402,7 @@ proxyReqs: reqId -> CSMessageRequest
 
 # default values should be false in case of boolean storage
 pendingReqs: msgHash -> connection address -> boolean
-pendingResponses: sn -> connection address -> boolean
+pendingResponses: msgHash -> connection address -> boolean
 successfulResponses: sn -> boolean
 
 admin: <admin>
@@ -566,13 +566,14 @@ internal function handleResponse(data bytes) {
             return; // just ignore
 
         if req.protocols.length > 1:
-            pendingResponses.at(resSn).set(source, true);
+             _hash = hash(data);
+            pendingResponses.at(_hash).set(source, true);
             for protocol : req.protocols:
-                if !pendingResponses[resSn][protocol]:
+                if !pendingResponses[_hash][protocol]:
                     return;
 
             for (String protocol : protocols):
-                pendingResponses[resSn][protocol] = null
+                pendingResponses[_hash][protocol] = null
         else if (msgReq.protocols.length == 1):
             require(source == msgReq.protocols[0]);
         else:
