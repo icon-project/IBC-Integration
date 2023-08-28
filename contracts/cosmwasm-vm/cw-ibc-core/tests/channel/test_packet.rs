@@ -18,7 +18,7 @@ fn test_packet_send() {
     let src_port = to_ibc_port_id(&packet.source_port).unwrap();
     let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
     let info = create_mock_info("moduleaddress", "test", 100);
-    let res = contract.send_packet(deps.as_mut(), &mock_env(),info, packet);
+    let res = contract.send_packet(deps.as_mut(), &mock_env(), info, packet);
 
     assert!(res.is_ok());
     let res = res.unwrap();
@@ -76,7 +76,7 @@ fn test_packet_send_fail_invalid_sequence() {
     packet.sequence = 10;
     let info = create_mock_info("moduleaddress", "test", 100);
     contract
-        .send_packet(deps.as_mut(), &mock_env(),info, packet)
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
 
@@ -100,7 +100,7 @@ fn test_packet_send_fails_on_frozen_client() {
     test_context.init_send_packet(deps.as_mut().storage, &contract);
     let info = create_mock_info("moduleaddress", "test", 100);
     contract
-        .send_packet(deps.as_mut(), &mock_env(),info, packet)
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
 
@@ -124,7 +124,7 @@ fn test_packet_send_fails_on_invalid_client_state() {
     test_context.init_send_packet(deps.as_mut().storage, &contract);
     let info = create_mock_info("moduleaddress", "test", 100);
     contract
-        .send_packet(deps.as_mut(), &mock_env(),info, packet)
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
 
