@@ -212,6 +212,30 @@ A rollback can only be delivered by the same protocols used to send the message,
 so the `_protocols` will be the protocols used to send the message.
 So they can be assumed to be safe as long as all messages sent have been done using trusted protocols.
 
+Example implementations of handleCallMessage:
+```javascript
+external handleCallMessage(String _from, byte[] _data) {
+    assert caller == xCall
+    if (_from == xCallNetworkAddress):
+        //Rollback logic
+    else:
+        //Application logic
+}
+```
+
+The below example requires that all the trusted protocols where used in the message but many different strategies could be used. For example asserting that one of the trusted protocols was used would also be a possible verification strategy.
+```javascript
+external handleCallMessage(String _from, byte[] _data, String[] _protocols) {
+    assert caller == xCall
+    if (_from == xCallNetworkAddress):
+        //Rollback logic
+    else:
+        nid = NetworkAddress(_from).net()
+        assert myTrustedProtocols[nid] is in _protocols
+        //Application logic
+}
+```
+
 #### Success verification
 
 If rollback was specified and the call was successful, the success can be verified.
@@ -261,6 +285,7 @@ external readonly getProtocolFee() Returns Integer;
 
 The security of xCall comes from the security of the underlying connections.
 It is up to the dapp to verify that protocols are checked to be valid during `handleCallMessage`.
+Any address can deliver messages to xCall and are assumed to be correct and will be delivered to the dapp which can then discard the message in case of invalid protocols.
 
 ## Implementation Guidelines
 
