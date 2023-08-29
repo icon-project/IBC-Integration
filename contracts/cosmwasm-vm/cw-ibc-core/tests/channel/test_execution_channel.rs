@@ -889,7 +889,7 @@ fn test_for_packet_send() {
         .unwrap();
 
     let timestamp_query = light_client
-        .get_timestamp_by_height_query(&IbcClientId::default(), height.revision_height())
+        .get_timestamp_at_height_query(&IbcClientId::default(), height.revision_height())
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
     mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());

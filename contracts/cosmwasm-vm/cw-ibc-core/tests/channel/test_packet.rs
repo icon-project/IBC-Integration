@@ -116,7 +116,7 @@ fn test_packet_send() {
         .unwrap();
 
     let timestamp_query = light_client
-        .get_timestamp_by_height_query(&IbcClientId::default(), height.revision_height())
+        .get_timestamp_at_height_query(&IbcClientId::default(), height.revision_height())
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
     mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
@@ -270,7 +270,7 @@ fn test_packet_send_fail_misiing_sequense() {
         .unwrap();
 
     let timestamp_query = light_client
-        .get_timestamp_by_height_query(&IbcClientId::default(), height.revision_height())
+        .get_timestamp_at_height_query(&IbcClientId::default(), height.revision_height())
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
     mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
@@ -531,7 +531,7 @@ fn test_packet_send_fails_on_timedout_height() {
         .unwrap();
 
     let timestamp_query = light_client
-        .get_timestamp_by_height_query(&IbcClientId::default(), client_state.latest_height)
+        .get_timestamp_at_height_query(&IbcClientId::default(), client_state.latest_height)
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
     mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
@@ -655,7 +655,7 @@ fn test_packet_send_fails_on_timedout_timestamp() {
         .unwrap();
 
     let timestamp_query = light_client
-        .get_timestamp_by_height_query(&IbcClientId::default(), client_state.latest_height)
+        .get_timestamp_at_height_query(&IbcClientId::default(), client_state.latest_height)
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
     let expiry_future = Timestamp::from_nanoseconds(1692768413 * 1000000000).unwrap();

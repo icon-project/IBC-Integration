@@ -80,7 +80,7 @@ pub enum QueryMsg {
     #[returns(Vec<u8>)]
     GetPreviousConsensusState { client_id: String, height: u64 },
     #[returns(u64)]
-    GetTimestampByHeight { client_id: String, height: u64 },
+    GetTimestampAtHeight { client_id: String, height: u64 },
 }
 
 #[cw_serde]

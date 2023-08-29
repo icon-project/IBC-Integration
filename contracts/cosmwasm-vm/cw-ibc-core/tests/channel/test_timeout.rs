@@ -234,7 +234,7 @@ fn test_timeout_packet_validate_to_light_client() {
         )
         .unwrap();
     let timestamp_query = light_client
-        .get_timestamp_by_height_query(&IbcClientId::default(), proof_height.revision_height())
+        .get_timestamp_at_height_query(&IbcClientId::default(), proof_height.revision_height())
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
     mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
@@ -379,7 +379,7 @@ fn test_timeout_packet_fails_if_height_not_expired() {
         )
         .unwrap();
     let timestamp_query = light_client
-        .get_timestamp_by_height_query(&IbcClientId::default(), proof_height.revision_height())
+        .get_timestamp_at_height_query(&IbcClientId::default(), proof_height.revision_height())
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
     mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
@@ -520,7 +520,7 @@ fn test_timeout_packet_fails_if_timestamp_not_expired() {
         )
         .unwrap();
     let timestamp_query = light_client
-        .get_timestamp_by_height_query(&IbcClientId::default(), proof_height.revision_height())
+        .get_timestamp_at_height_query(&IbcClientId::default(), proof_height.revision_height())
         .unwrap();
     let mut mocks = HashMap::<Binary, Binary>::new();
     let expiry_future = Timestamp::from_nanoseconds(1691668413 * 1000000000).unwrap();

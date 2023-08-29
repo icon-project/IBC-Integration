@@ -79,7 +79,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let counterparty_height = client_state_of_b_on_a.latest_height();
         let client = self.get_client(deps.storage, client_id_on_a)?;
-        let timestamp_at_height = client.get_timestamp_by_height(
+        let timestamp_at_height = client.get_timestamp_at_height(
             deps.as_ref(),
             client_id_on_a,
             counterparty_height.revision_height(),
