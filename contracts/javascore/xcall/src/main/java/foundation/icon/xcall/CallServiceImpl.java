@@ -45,7 +45,7 @@ public class CallServiceImpl implements CallService, FeeManage {
     private final DictDB<BigInteger, CallRequest> requests = Context.newDictDB("requests", CallRequest.class);
     private final DictDB<BigInteger, CSMessageRequest> proxyReqs = Context.newDictDB("proxyReqs", CSMessageRequest.class);
     private final BranchDB<byte[], DictDB<String, Boolean>> pendingReqs = Context.newBranchDB("pendingReqs", Boolean.class);
-    private final BranchDB<BigInteger, DictDB<String, Boolean>> pendingResponses = Context.newBranchDB("pendingResponses", Boolean.class);
+    private final BranchDB<byte[], DictDB<String, Boolean>> pendingResponses = Context.newBranchDB("pendingResponses", Boolean.class);
     private final DictDB<BigInteger, Boolean> successfulResponses = Context.newDictDB("successfulResponses", Boolean.class);
 
     private final DictDB<String, Address> defaultConnection = Context.newDictDB("defaultConnection", Address.class);
@@ -304,29 +304,12 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     private void handleRequest(String netFrom, byte[] data) {
         CSMessageRequest msgReq = CSMessageRequest.fromBytes(data);
-        String[] protocols = msgReq.getProtocols();
         String from = msgReq.getFrom();
         Context.require(NetworkAddress.valueOf(from).net().equals(netFrom));
-        Address sourceAddress = Context.getCaller();
-        String source = sourceAddress.toString();
+        Address caller = Context.getCaller();
 
-        if (protocols.length > 1) {
-            byte[] hash = Context.hash("sha-256", data);
-            DictDB<String, Boolean> pendingRequests = pendingReqs.at(hash);
-            pendingRequests.set(source, true);
-            for (String protocol : protocols) {
-                if (!pendingRequests.getOrDefault(protocol, false)) {
-                    return;
-                }
-            }
-
-            for (String protocol : protocols) {
-                pendingRequests.set(protocol, null);
-            }
-        } else if (protocols.length == 1) {
-            Context.require(source.equals(protocols[0]));
-        } else {
-            Context.require(sourceAddress.equals(defaultConnection.get(netFrom)));
+        if (!verifyProtocols(pendingReqs, netFrom,msgReq.getProtocols(), caller, data)) {
+            return;
         }
 
         String to = msgReq.getTo();
@@ -343,31 +326,15 @@ public class CallServiceImpl implements CallService, FeeManage {
         CSMessageResponse msgRes = CSMessageResponse.fromBytes(data);
         BigInteger resSn = msgRes.getSn();
         CallRequest req = requests.get(resSn);
-        Address sourceAddress = Context.getCaller();
-        String source = sourceAddress.toString();
+        Address caller = Context.getCaller();
 
         if (req == null) {
             Context.println("handleResponse: no request for " + resSn);
             return; // just ignore
         }
 
-        String[] protocols = req.getProtocols();
-        if (protocols.length > 1) {
-            DictDB<String, Boolean> pendingResponse = pendingResponses.at(resSn);
-            pendingResponse.set(source, true);
-            for (String protocol : protocols) {
-                if (!pendingResponse.getOrDefault(protocol, false)) {
-                    return;
-                }
-            }
-
-            for (String protocol : protocols) {
-                pendingResponse.set(protocol, null);
-            }
-        } else if (protocols.length == 1) {
-            Context.require(source.equals(protocols[0]));
-        } else {
-            Context.require(sourceAddress.equals(defaultConnection.get(req.getTo())));
+        if (!verifyProtocols(pendingResponses, req.getTo(), req.getProtocols(), caller, data)) {
+            return;
         }
 
         ResponseMessage(resSn, msgRes.getCode());
@@ -384,6 +351,28 @@ public class CallServiceImpl implements CallService, FeeManage {
                 requests.set(resSn, req);
                 RollbackMessage(resSn);
         }
+    }
+
+    private boolean verifyProtocols(BranchDB<byte[], DictDB<String, Boolean>> db, String net, String[] protocols, Address caller, byte[] data) {
+        if (protocols.length > 1) {
+            byte[] hash = Context.hash("sha-256", data);
+            DictDB<String, Boolean> pending = db.at(hash);
+            pending.set(caller.toString(), true);
+            for (String protocol : protocols) {
+                if (!pending.getOrDefault(protocol, false)) {
+                    return false;
+                }
+            }
+
+            for (String protocol : protocols) {
+                pending.set(protocol, null);
+            }
+        } else if (protocols.length == 1) {
+            Context.require(caller.toString().equals(protocols[0]));
+        } else {
+            Context.require(caller.equals(defaultConnection.get(net)));
+        }
+        return true;
     }
 
     private byte[] getDataHash(byte[] data) {
