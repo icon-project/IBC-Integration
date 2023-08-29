@@ -78,10 +78,6 @@ public class CallServiceImpl implements CallService, FeeManage {
         Context.require(Context.getCaller().equals(caller), errMsg);
     }
 
-    private void onlyOwner() {
-        checkCallerOrThrow(Context.getOwner(), "OnlyOwner");
-    }
-
     private BigInteger getNextSn() {
         BigInteger _sn = this.sn.getOrDefault(BigInteger.ZERO);
         _sn = _sn.add(BigInteger.ONE);
@@ -210,10 +206,10 @@ public class CallServiceImpl implements CallService, FeeManage {
         CallRequest req = requests.get(_sn);
         Context.require(req != null, "InvalidSerialNum");
         Context.require(req.enabled(), "RollbackNotEnabled");
+        cleanupCallRequest(_sn);
 
         sendToDapp(req.getFrom(), getNetworkAddress(), req.getRollback(), req.getProtocols());
 
-        cleanupCallRequest(_sn);
         RollbackExecuted(_sn);
     }
 
@@ -386,7 +382,7 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     @External
     public void setAdmin(Address _address) {
-        onlyOwner();
+        checkCallerOrThrow(admin(), "OnlyAdmin");
         admin.set(_address);
     }
 
@@ -399,6 +395,7 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     @External
     public void setProtocolFeeHandler(Address address) {
+        checkCallerOrThrow(admin(), "OnlyAdmin");
         feeHandler.set(address);
     }
 

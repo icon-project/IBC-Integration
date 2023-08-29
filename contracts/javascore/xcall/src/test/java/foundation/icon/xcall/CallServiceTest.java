@@ -286,6 +286,29 @@ public class CallServiceTest extends TestBase {
     }
 
     @Test
+    public void executeCall_defaultProtocol_rollback() throws Exception {
+        // Arrange
+        byte[] data = "test".getBytes();
+        MockContract<DefaultCallServiceReceiver> defaultDapp = new MockContract<>(DefaultCallServiceReceiverScoreInterface.class, DefaultCallServiceReceiver.class, sm, owner);
+        CSMessageRequest request = new CSMessageRequest(ethDapp.toString(), defaultDapp.getAddress().toString(), BigInteger.ONE, true, data, null);
+        CSMessage msg = new CSMessage(CSMessage.REQUEST, request.toBytes());
+
+        xcall.invoke(owner, "setDefaultConnection", ethDapp.net(), baseConnection.getAddress());
+        xcall.invoke(baseConnection.account, "handleBTPMessage", ethNid, "xcall-multi", BigInteger.ZERO, msg.toBytes());
+
+        // Act
+        xcall.invoke(user, "executeCall", BigInteger.ONE, data);
+
+        // Assert
+        CSMessageResponse msgRes = new CSMessageResponse(BigInteger.ONE, CSMessageResponse.SUCCESS);
+        msg = new CSMessage(CSMessage.RESPONSE, msgRes.toBytes());
+
+        verify(defaultDapp.mock).handleCallMessage(ethDapp.toString(), data);
+        verify(xcallSpy).CallExecuted(BigInteger.ONE, 1, "");
+        verify(baseConnection.mock).sendMessage(ethNid, "xcall-multi", BigInteger.ONE.negate(), msg.toBytes());
+    }
+
+    @Test
     public void executeCall_failedExecution() {
         // Arrange
         byte[] data = "test".getBytes();
@@ -536,5 +559,28 @@ public class CallServiceTest extends TestBase {
         // Act & Assert
         UserRevertedException e = assertThrows(UserRevertedException.class, ()-> xcall.call(BigInteger.class, "getFee", nid, true));
         assertEquals("Reverted(0): NoDefaultConnection", e.getMessage());
+    }
+
+    @Test
+    public void entryPermissions() {
+        String expectedErrorMessage = "Reverted(0): OnlyAdmin";
+        Account nonAuthorized = sm.createAccount();
+        UserRevertedException e;
+
+        e = assertThrows(UserRevertedException.class,
+            () -> xcall.invoke(nonAuthorized, "setAdmin", nonAuthorized.getAddress()));
+        assertEquals(expectedErrorMessage, e.getMessage());
+
+        e = assertThrows(UserRevertedException.class,
+            () -> xcall.invoke(nonAuthorized, "setProtocolFee", BigInteger.ONE));
+        assertEquals(expectedErrorMessage, e.getMessage());
+
+        e = assertThrows(UserRevertedException.class,
+            () -> xcall.invoke(nonAuthorized, "setProtocolFeeHandler", nonAuthorized.getAddress()));
+        assertEquals(expectedErrorMessage, e.getMessage());
+
+        e = assertThrows(UserRevertedException.class,
+            () -> xcall.invoke(nonAuthorized, "setDefaultConnection", "nid", nonAuthorized.getAddress()));
+        assertEquals(expectedErrorMessage, e.getMessage());
     }
 }
