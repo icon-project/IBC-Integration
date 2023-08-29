@@ -32,7 +32,7 @@ import score.annotation.External;
 import score.annotation.Payable;
 
 public class IBCConnection {
-    public static String PORT = "mock";
+    public static String PORT;
     protected final VarDB<Address> ibc = Context.newVarDB("ibcHandler", Address.class);
     protected final VarDB<Address> xCall = Context.newVarDB("callService", Address.class);
     protected final VarDB<Address> admin = Context.newVarDB("admin", Address.class);
@@ -57,11 +57,11 @@ public class IBCConnection {
     protected final BranchDB<String, DictDB<BigInteger, BigInteger>> unclaimedAckFees = Context.newBranchDB("unclaimedAckFees", BigInteger.class);
     protected final BranchDB<String, DictDB<Address, BigInteger>> unclaimedPacketFees = Context.newBranchDB("unclaimedPacketFees", BigInteger.class);
 
-    public IBCConnection(Address _xCall, Address _ibc, String port) {
+    public IBCConnection(Address _xCall, Address _ibc, String _port) {
         ibc.set(_ibc);
         xCall.set(_xCall);
         admin.set(Context.getCaller());
-        PORT = port;
+        PORT = _port;
     }
 
     private void checkCallerOrThrow(Address caller, String errMsg) {
