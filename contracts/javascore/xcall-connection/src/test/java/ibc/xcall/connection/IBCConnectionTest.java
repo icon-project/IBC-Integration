@@ -28,10 +28,24 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
 
     @BeforeEach
     public void setup() throws Exception {
-      super.setup();
+        super.setup();
     }
 
     ArgumentCaptor<byte[]> packetCaptor = ArgumentCaptor.forClass(byte[].class);
+
+    @Test
+    public void channelOpe_NotConfigured() {
+        // Arrange
+        String errorMessage = "Reverted(0): Invalid counterparty network id";
+
+        // Act
+        AssertionError e1 = assertThrows(AssertionError.class,
+                () -> channelOpenTry("connectionId", "counterpartyPort", "channelId", "counterpartyChannel"));
+        AssertionError e2 = assertThrows(AssertionError.class,
+                () -> channelOpenInit("connectionId", "counterpartyPort", "channelId"));
+        assertEquals(errorMessage, e1.getMessage());
+        assertEquals(errorMessage, e2.getMessage());
+    }
 
     @Test
     public void sendMessage_noResponse() {
