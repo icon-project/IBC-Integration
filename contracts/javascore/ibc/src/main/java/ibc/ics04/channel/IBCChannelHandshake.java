@@ -26,6 +26,8 @@ public class IBCChannelHandshake extends IBCConnection {
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
         Context.require(connectionPb != null, "connection does not exist");
         ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+        Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
+                "connection state is not OPEN");
 
         Context.require(
                 connection.getVersions().size() == 1,
@@ -54,6 +56,8 @@ public class IBCChannelHandshake extends IBCConnection {
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
         Context.require(connectionPb != null, "connection does not exist");
         ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
+        Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
+                "connection state is not OPEN");
 
         Context.require(
                 connection.getVersions().size() == 1,
