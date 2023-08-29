@@ -7,8 +7,7 @@ import (
 )
 
 const (
-	FaucetAccountKeyName = "faucet"
-	BASE_PATH            = "BASE_PATH"
+	BASE_PATH = "BASE_PATH"
 )
 
 type ContractKey struct {

@@ -17,7 +17,8 @@ type CosmosLocalnet struct {
 	cfg          ibc.ChainConfig
 	keyName      string
 	filepath     map[string]string
-	IBCAddresses map[string]string
+	IBCAddresses map[string]string     `json:"addresses"`
+	Wallets      map[string]ibc.Wallet `json:"wallets"`
 }
 
 func (c *CosmosLocalnet) Config() ibc.ChainConfig {

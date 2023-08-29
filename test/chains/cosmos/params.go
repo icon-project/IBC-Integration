@@ -5,6 +5,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	interchaintest "github.com/icon-project/ibc-integration/test"
+	"github.com/icon-project/ibc-integration/test/chains/icon"
+	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/types"
@@ -100,33 +103,36 @@ func executeCallData(param string) string {
 func (c *CosmosLocalnet) GetAndFundTestUser(
 	ctx context.Context,
 	keyNamePrefix string,
+	mnemonic string,
 	amount int64,
-	chain ibc.Chain,
-) (keyName string, address string, err error) {
+) (ibc.Wallet, error) {
 	// Check if the address for the given key is already created
 	addr, err := c.CosmosChain.GetAddress(ctx, keyNamePrefix)
-	adminAddr, _ := types.Bech32ifyAddressBytes(c.CosmosChain.Config().Bech32Prefix, addr)
-	if err != nil {
-		chainCfg := c.CosmosChain.Config()
-		user, err := chain.BuildWallet(ctx, keyNamePrefix, "")
-		if err != nil {
-			return "", "", fmt.Errorf("failed to get source user wallet: %w", err)
-		}
 
-		err = chain.SendFunds(ctx, chains.FaucetAccountKeyName, ibc.WalletAmount{
-			Address: user.FormattedAddress(),
-			Amount:  amount,
-			Denom:   chainCfg.Denom,
-		})
-
-		if err != nil {
-			return "", "", fmt.Errorf("failed to get funds from faucet: %w", err)
-		}
-		fmt.Printf("Address of %s is : %s \n", user.KeyName(), user.FormattedAddress())
-		return user.KeyName(), user.FormattedAddress(), nil
-	} else {
-		return keyNamePrefix, adminAddr, err
+	if err == nil { //key already exists
+		return cosmos.NewWallet(keyNamePrefix, addr, mnemonic, c.Config()), nil
 	}
+
+	chainCfg := c.Config()
+	user, err := c.BuildWallet(ctx, keyNamePrefix, mnemonic)
+	if err != nil {
+		return &icon.IconWallet{}, fmt.Errorf("failed to get source user wallet: %w", err)
+	}
+
+	err = c.SendFunds(ctx, interchaintest.FaucetAccountKeyName, ibc.WalletAmount{
+		Address: user.FormattedAddress(),
+		Amount:  amount,
+		Denom:   chainCfg.Denom,
+	})
+
+	if err != nil {
+		return user, fmt.Errorf("failed to transfer funds from faucet: %w", err)
+	}
+
+	fmt.Printf("Address of %s is : %s \n", user.KeyName(), user.FormattedAddress())
+
+	return user, nil
+
 }
 
 func (c *CosmosLocalnet) SetAdminParams(ctx context.Context, keyName string) (context.Context, string, error) {

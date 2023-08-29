@@ -43,6 +43,7 @@ func NewICONRelayer(log *zap.Logger, testName string, cli *client.Client, networ
 }
 
 type ICONRelayerChainConfigValue struct {
+	KeyDirectory      string `json:"key-directory"`
 	Key               string `json:"key"`
 	ChainID           string `json:"chain-id"`
 	RPCAddr           string `json:"rpc-addr"`
@@ -101,8 +102,9 @@ func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, r
 			ChainID:           chainConfig.ChainID,
 			RPCAddr:           "http://" + rpcAddr + "/api/v3/",
 			Timeout:           "10s",
-			Keystore:          "/home/relayer/keys/godwallet.json",
-			Password:          "gochain",
+			Keystore:          "relayer-" + chainConfig.Name,
+			KeyDirectory:      "/home/relayer/.relayer/keys",
+			Password:          "relayer-" + chainConfig.Name,
 			IconNetworkID:     3,
 			BtpNetworkID:      chainConfig.ConfigFileOverrides["btp-network-id"].(int),
 			StartHeight:       chainConfig.ConfigFileOverrides["start-height"].(int),

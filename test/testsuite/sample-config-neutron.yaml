@@ -3,8 +3,6 @@ chains:
     version: '3'
     environment: local
     nid: '3'
-    keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
-    keystore_password: gochain
     chain_config:
       type: icon
       name: goloop1
@@ -43,8 +41,6 @@ chains:
       trusting_period: 508h
       no_host_mount: false
     nid: '3'
-    keystore_file: "$BASE_PATH/contracts/javascore/test-lib/conf/godWallet.json"
-    keystore_password: gochain
     contracts:
       ibc: "$BASE_PATH/artifacts/archway/cw_ibc_core.wasm"
       client: "$BASE_PATH/artifacts/archway/cw_icon_light_client.wasm"
