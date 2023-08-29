@@ -131,6 +131,7 @@ public class CallServiceImpl implements CallService, FeeManage {
 
         if (sources == null || sources.length == 0) {
             Address src = defaultConnection.get(dst.net());
+            Context.require(src != null, "NoDefaultConnection");
             BigInteger fee = Context.call(BigInteger.class, src, "getFee", dst.net(), needResponse);
             sendMessage(src, fee, dst.net(), CSMessage.REQUEST,
                     needResponse ? sn : BigInteger.ZERO, msgBytes);
@@ -192,7 +193,9 @@ public class CallServiceImpl implements CallService, FeeManage {
 
             BigInteger sn = req.getSn().negate();
             if (req.getProtocols().length == 0) {
-                sendMessage(defaultConnection.get(from.net()), BigInteger.ZERO, from.net(), CSMessage.RESPONSE, sn, msgRes.toBytes());
+                Address src = defaultConnection.get(from.net());
+                Context.require(src != null, "NoDefaultConnection");
+                sendMessage(src, BigInteger.ZERO, from.net(), CSMessage.RESPONSE, sn, msgRes.toBytes());
             } else {
                 for (String protocol : req.getProtocols()) {
                     sendMessage(Address.fromString(protocol), BigInteger.ZERO, from.net(), CSMessage.RESPONSE, sn, msgRes.toBytes());
@@ -414,7 +417,10 @@ public class CallServiceImpl implements CallService, FeeManage {
     public BigInteger getFee(String _net, boolean _rollback, @Optional String[] sources) {
         BigInteger fee = getProtocolFee();
         if (sources == null || sources.length == 0) {
-            return fee.add(Context.call(BigInteger.class, defaultConnection.get(_net), "getFee", _net, _rollback));
+            Address src = defaultConnection.get(_net);
+            Context.require(src != null, "NoDefaultConnection");
+
+            return fee.add(Context.call(BigInteger.class, src, "getFee", _net, _rollback));
         }
 
         for (String protocol : sources) {
