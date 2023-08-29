@@ -20,7 +20,7 @@ func NewIconChain(t *testing.T, ctx context.Context, environment string, chainCo
 		// Start Docker
 		client, network := interchaintest.DockerSetup(t)
 		var localchain chains.Chain
-		localchain = NewIconLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(&localchain), chains.DefaultNumValidators, chains.DefaultNumFullNodes, keystorePath, keyPassword, scorePaths)
+		localchain = NewIconLocalnet(t.Name(), logger, chainConfig.GetIBCChainConfig(&localchain), chains.DefaultNumValidators, chains.DefaultNumFullNodes, scorePaths)
 		ic := interchaintest.NewInterchain().
 			AddChain(localchain.(ibc.Chain))
 		// Log location

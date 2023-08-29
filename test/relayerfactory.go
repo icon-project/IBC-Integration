@@ -30,6 +30,7 @@ type Relayer interface {
 	RestartRelayerContainer(context.Context) error
 	StopRelayerContainer(context.Context, ibc.RelayerExecReporter) error
 	WriteBlockHeight(context.Context, string, uint64) error
+	RestoreICONKeystore(ctx context.Context, chainID string, wallet ibc.Wallet) error
 }
 
 var _ Relayer = (*relayer.DockerRelayer)(nil)
