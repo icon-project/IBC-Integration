@@ -856,6 +856,7 @@ impl TestContext {
     ) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
+        contract.init_channel_counter(storage, u64::default());
     }
 
     pub fn init_channel_open_try(
