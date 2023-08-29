@@ -77,6 +77,9 @@ pub enum ContractError {
 
     #[error("InvalidHeight")]
     InvalidHeight,
+
+    #[error("CallAlreadyInProgress")]
+    CallAlreadyInProgress,
 }
 
 impl From<FromHexError> for ContractError {

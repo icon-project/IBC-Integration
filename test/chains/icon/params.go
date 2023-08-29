@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"path"
 	"strings"
 
@@ -156,18 +157,22 @@ func (c *IconLocalnet) UpdateAdminParams(ctx context.Context, methodaName, keyNa
 
 }
 
-func (c *IconLocalnet) CheckForKeyStore(ctx context.Context, keyName string) string {
+func (c *IconLocalnet) CheckForKeyStore(ctx context.Context, keyName string) ibc.Wallet {
 	// Check if keystore file exists for given keyname if not create a keystore file
 	jsonFile := keyName + ".json"
-	path := path.Join(c.HomeDir(), jsonFile)
-	_, _, err := c.getFullNode().Exec(ctx, []string{"cat", path}, nil)
+	ksPath := path.Join(c.HomeDir(), jsonFile)
+	_, _, err := c.getFullNode().Exec(ctx, []string{"cat", ksPath}, nil)
 	if err == nil {
-		c.keystorePath = path
-		return ""
+		c.keystorePath = ksPath
+		return nil
 	}
+	address, privateKey, _ := c.createKeystore(ctx, keyName)
 
-	wallet, _ := c.BuildWallet(ctx, keyName, "")
+	wallet := NewWallet(keyName, []byte(address), privateKey, c.cfg)
+	c.Wallets[keyName] = wallet
+
 	fmt.Printf("Address of %s is: %s\n", keyName, wallet.FormattedAddress())
-	c.keystorePath = path
-	return wallet.FormattedAddress()
+	c.keystorePath = ksPath
+
+	return wallet
 }

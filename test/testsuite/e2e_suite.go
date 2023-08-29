@@ -2,21 +2,22 @@ package testsuite
 
 import (
 	"context"
+	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
 func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string, duration int) error {
 	chainA, chainB := s.GetChains()
-	if err := chainA.SetupXCall(ctx, portId, Owner); err != nil {
+	if err := chainA.SetupXCall(ctx, portId, interchaintest.XCallOwnerAccount); err != nil {
 		return err
 	}
-	if err := chainB.SetupXCall(ctx, portId, Owner); err != nil {
+	if err := chainB.SetupXCall(ctx, portId, interchaintest.XCallOwnerAccount); err != nil {
 		return err
 	}
 	var err error
 	_, err = chainA.ConfigureBaseConnection(ctx, chains.XCallConnection{
-		KeyName:            Owner,
+		KeyName:            interchaintest.XCallOwnerAccount,
 		CounterpartyNid:    chainB.(ibc.Chain).Config().ChainID,
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
@@ -27,7 +28,7 @@ func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string, duration i
 		return err
 	}
 	_, err = chainB.ConfigureBaseConnection(ctx, chains.XCallConnection{
-		KeyName:            Owner,
+		KeyName:            interchaintest.XCallOwnerAccount,
 		CounterpartyNid:    chainA.(ibc.Chain).Config().ChainID,
 		ConnectionId:       "connection-0", //TODO
 		PortId:             portId,
