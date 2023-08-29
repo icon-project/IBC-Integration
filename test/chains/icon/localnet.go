@@ -396,7 +396,7 @@ func (c *IconLocalnet) SetupXCall(ctx context.Context, portId string, keyName st
 		panic(err)
 	}
 
-	connection, err := c.getFullNode().DeployContract(ctx, c.scorePaths["connection"], c.keystorePath, `{"_xCall":"`+xcall+`","_ibc":"`+ibcAddress+`", "port":"`+portId+`"}`)
+	connection, err := c.getFullNode().DeployContract(ctx, c.scorePaths["connection"], c.keystorePath, `{"_xCall":"`+xcall+`","_ibc":"`+ibcAddress+`", "_port":"`+portId+`"}`)
 	if err != nil {
 		panic(err)
 	}
