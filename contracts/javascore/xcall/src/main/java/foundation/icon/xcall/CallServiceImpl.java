@@ -377,7 +377,7 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     @External(readonly = true)
     public Address admin() {
-        return admin.getOrDefault(Context.getOwner());
+        return admin.get();
     }
 
     @External
