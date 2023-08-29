@@ -53,7 +53,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     test_context.channel_end = Some(channel_end);
     test_context.init_acknowledge_packet(deps.as_mut().storage, &contract);
 
-    mock_lightclient_query(test_context.mock_queries,&mut deps);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
     assert!(res.is_ok());

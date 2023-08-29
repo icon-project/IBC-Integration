@@ -99,7 +99,11 @@ fn test_validate_close_confirm_channel_fail_connection_state_invalid() {
         &test_context.consensus_state.unwrap(),
         test_context.height.revision_height(),
     );
-    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&test_context.client_state.unwrap());
+    query_map = mock_client_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &test_context.client_state.unwrap(),
+    );
     mock_lightclient_query(query_map, &mut deps);
 
     contract
@@ -120,7 +124,7 @@ fn test_validate_close_confirm_channel() {
         .unwrap();
     test_context.init_channel_close_confirm(deps.as_mut().storage, &contract);
 
-    mock_lightclient_query(test_context.mock_queries,&mut deps);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.validate_channel_close_confirm(deps.as_mut(), info, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());

@@ -136,9 +136,9 @@ fn test_for_channel_open_try_execution_message() {
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
-    let mut test_context=TestContext::for_channel_open_try(env.clone(), &msg);
+    let mut test_context = TestContext::for_channel_open_try(env.clone(), &msg);
     test_context.init_channel_open_try(deps.as_mut().storage, &contract);
-    
+
     mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.execute(
         deps.as_mut(),
@@ -148,7 +148,7 @@ fn test_for_channel_open_try_execution_message() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}",res);
+    println!("{:?}", res);
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY);
@@ -196,7 +196,6 @@ fn test_for_channel_open_ack_execution() {
         &consenus_state.clone(),
         height.revision_height(),
     );
-   
 
     let commitement = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
         "hello".to_string().as_bytes().to_vec(),
@@ -242,7 +241,7 @@ fn test_for_channel_open_ack_execution() {
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    query_map = mock_client_state_query(query_map, &IbcClientId::default(), &client_state);
     mock_lightclient_query(query_map, &mut deps);
     let client_type = IbcClientType::new("iconclient".to_string());
     contract
@@ -295,16 +294,15 @@ fn test_for_channel_open_confirm() {
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
 
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-    let mut test_context= TestContext::for_channel_open_confirm(env.clone(), &msg);
-   
-    let mut channel_end=test_context.channel_end();
-    channel_end.state=State::TryOpen;
-    test_context.channel_end=Some(channel_end);
+    let mut test_context = TestContext::for_channel_open_confirm(env.clone(), &msg);
+
+    let mut channel_end = test_context.channel_end();
+    channel_end.state = State::TryOpen;
+    test_context.channel_end = Some(channel_end);
     test_context.init_channel_open_confirm(deps.as_mut().storage, &contract);
-   
+
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
-   
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -313,7 +311,7 @@ fn test_for_channel_open_confirm() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}",res);
+    println!("{:?}", res);
 
     assert!(res.is_ok());
     assert_eq!(
@@ -331,7 +329,13 @@ fn test_for_channel_close_init() {
     let response = contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            LightClient::new("lightclient".to_string()),
+        )
+        .unwrap();
     let client_state = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
@@ -410,9 +414,9 @@ fn test_for_channel_close_init() {
         info.funds.clone(),
         EXECUTE_ON_CHANNEL_CLOSE_INIT,
     );
-    let mut query_map=HashMap::<Binary,Binary>::new();
-	  query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
-	  mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_client_state_query(query_map, &IbcClientId::default(), &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     let res = contract.execute(
         deps.as_mut(),
@@ -422,7 +426,7 @@ fn test_for_channel_close_init() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}",res);
+    println!("{:?}", res);
 
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().messages[0].id, 45);
@@ -532,9 +536,9 @@ fn test_for_channel_close_confirm() {
         &consenus_state,
         height.revision_height(),
     );
-    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    query_map = mock_client_state_query(query_map, &IbcClientId::default(), &client_state);
     mock_lightclient_query(query_map, &mut deps);
-   
+
     let res = contract.execute(
         deps.as_mut(),
         env.clone(),
@@ -566,7 +570,7 @@ fn test_for_packet_send() {
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
-    let mut test_context=TestContext::for_send_packet(env.clone(), &raw);
+    let mut test_context = TestContext::for_send_packet(env.clone(), &raw);
     test_context.init_send_packet(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.execute(
@@ -596,9 +600,9 @@ fn test_for_recieve_packet() {
     assert_eq!(response.attributes[0].value, "instantiate");
     let msg = get_dummy_raw_msg_recv_packet(12);
     //  let msg = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(12)).unwrap();
-    let mut test_context =TestContext::for_receive_packet(env.clone(), &msg);
+    let mut test_context = TestContext::for_receive_packet(env.clone(), &msg);
     test_context.init_receive_packet(deps.as_mut().storage, &contract);
-   
+
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     let res = contract.execute(
@@ -775,7 +779,7 @@ fn test_for_ack_execute() {
         &consenus_state,
         proof_height.revision_height(),
     );
-    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    query_map = mock_client_state_query(query_map, &IbcClientId::default(), &client_state);
     mock_lightclient_query(query_map, &mut deps);
 
     let res = contract.execute(

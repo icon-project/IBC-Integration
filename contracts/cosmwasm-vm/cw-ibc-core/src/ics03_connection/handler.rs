@@ -48,8 +48,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
-       
-
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
@@ -60,7 +58,6 @@ impl<'a> CwIbcCoreContext<'a> {
         let delay_period = Duration::from_nanos(message.delay_period);
         let ibc_version = to_ibc_version(message.version).ok();
         let ibc_counterparty = to_ibc_counterparty(message.counterparty)?;
-
 
         let versions = match ibc_version {
             Some(version) => {

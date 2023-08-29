@@ -185,9 +185,7 @@ impl LightClient {
         Ok(Box::new(client_state))
     }
 
-    pub fn build_client_state_query(
-        client_id: &IbcClientId,
-    ) -> Result<Binary, ContractError> {
+    pub fn build_client_state_query(client_id: &IbcClientId) -> Result<Binary, ContractError> {
         let query_message = cw_common::client_msg::QueryMsg::GetClientState {
             client_id: client_id.as_str().to_string(),
         };

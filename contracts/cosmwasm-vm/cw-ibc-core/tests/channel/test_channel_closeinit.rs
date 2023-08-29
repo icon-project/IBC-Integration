@@ -73,9 +73,13 @@ fn test_validate_close_init_channel_fails_invalid_connection_state() {
     contract
         .init_channel_counter(deps.as_mut().storage, u64::default())
         .unwrap();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&get_dummy_client_state());
-    mock_lightclient_query(query_map,&mut deps);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_client_state_query(
+        query_map,
+        &IbcClientId::default(),
+        &get_dummy_client_state(),
+    );
+    mock_lightclient_query(query_map, &mut deps);
     contract
         .validate_channel_close_init(deps.as_mut(), info, &msg)
         .unwrap();

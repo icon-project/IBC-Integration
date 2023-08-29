@@ -596,7 +596,8 @@ fn test_for_connection_open_confirm() {
         &consenus_state,
         proof_height.revision_height(),
     );
-    let client_state_query=LightClient::build_client_state_query(&IbcClientId::default()).unwrap();
+    let client_state_query =
+        LightClient::build_client_state_query(&IbcClientId::default()).unwrap();
     query_map.insert(client_state_query, to_binary(&client_state).unwrap());
 
     mock_lightclient_query(query_map, &mut deps);

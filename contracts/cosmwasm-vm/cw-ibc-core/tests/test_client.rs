@@ -421,9 +421,7 @@ fn check_for_client_state_from_storage() {
     let client_id =
         common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
 
-    let client_state = contract
-        .client_state(deps.as_ref(), &client_id)
-        .unwrap();
+    let client_state = contract.client_state(deps.as_ref(), &client_id).unwrap();
 
     assert_eq!(client_state.client_type().as_str(), "iconclient");
 }

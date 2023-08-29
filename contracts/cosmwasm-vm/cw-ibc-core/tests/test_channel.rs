@@ -509,15 +509,20 @@ fn test_validate_open_init_channel() {
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let env = mock_env();
     let raw = get_dummy_raw_msg_chan_open_init(None);
-    let mut test_context= TestContext::for_channel_open_init(env.clone(), &raw);
+    let mut test_context = TestContext::for_channel_open_init(env.clone(), &raw);
     test_context.init_channel_open_init(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries.clone(), &mut deps);
-    
+
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-   
+
     let res = contract.validate_channel_open_init(deps.as_mut(), info.clone(), &raw);
 
-    let expected = on_chan_open_init_submessage(&test_context.channel_end(), &test_context.port_id, &test_context.channel_id, &test_context.connection_id);
+    let expected = on_chan_open_init_submessage(
+        &test_context.channel_end(),
+        &test_context.port_id,
+        &test_context.channel_id,
+        &test_context.connection_id,
+    );
     let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
     let on_chan_open_init = create_channel_submesssage(
@@ -541,8 +546,8 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-    let mut test_context= TestContext::for_channel_open_init(env.clone(), &raw);
-    test_context.module_address=None;
+    let mut test_context = TestContext::for_channel_open_init(env.clone(), &raw);
+    test_context.module_address = None;
     test_context.init_channel_open_init(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries.clone(), &mut deps);
     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
@@ -659,7 +664,7 @@ fn test_validate_open_try_channel() {
         &consenus_state,
         height.revision_height(),
     );
-    query_map=mock_client_state_query(query_map,&IbcClientId::default(),&client_state);
+    query_map = mock_client_state_query(query_map, &IbcClientId::default(), &client_state);
     mock_lightclient_query(query_map, &mut deps);
 
     let res = contract.validate_channel_open_try(deps.as_mut(), info, &raw);
@@ -669,7 +674,9 @@ fn test_validate_open_try_channel() {
 }
 
 #[test]
-#[should_panic(expected = "td(GenericErr { msg: \"Querier system error: No such contract: lightclient\" })")]
+#[should_panic(
+    expected = "td(GenericErr { msg: \"Querier system error: No such contract: lightclient\" })"
+)]
 fn test_validate_open_try_channel_fail_missing_client_state() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
@@ -697,7 +704,13 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
     contract
         .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
         .unwrap();
-    contract.store_client_implementations(deps.as_mut().storage, &IbcClientId::default(), LightClient::new("lightclient".to_string())).unwrap();
+    contract
+        .store_client_implementations(
+            deps.as_mut().storage,
+            &IbcClientId::default(),
+            LightClient::new("lightclient".to_string()),
+        )
+        .unwrap();
     contract
         .validate_channel_open_try(deps.as_mut(), info, &raw)
         .unwrap();

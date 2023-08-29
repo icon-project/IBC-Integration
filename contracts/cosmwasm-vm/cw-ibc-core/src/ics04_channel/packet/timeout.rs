@@ -188,8 +188,13 @@ impl<'a> CwIbcCoreContext<'a> {
             msg: to_binary(&cosm_msg).unwrap(),
             funds: info.funds,
         });
-       
-        let sub_msg =SubMsg { id:VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE, msg: timeout_message, gas_limit: None, reply_on: cosmwasm_std::ReplyOn::Never};
+
+        let sub_msg = SubMsg {
+            id: VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
+            msg: timeout_message,
+            gas_limit: None,
+            reply_on: cosmwasm_std::ReplyOn::Never,
+        };
 
         Ok(Response::new()
             .add_attribute("action", "packet")

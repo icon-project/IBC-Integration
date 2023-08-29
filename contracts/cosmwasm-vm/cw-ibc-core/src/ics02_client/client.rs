@@ -331,7 +331,9 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_client_implementations(store, client_id).ok();
 
         if client.is_none() {
-            return Err(ClientError::ClientSpecific { description: "LightclientNotFount".to_string() })
+            return Err(ClientError::ClientSpecific {
+                description: "LightclientNotFount".to_string(),
+            })
             .map_err(Into::<ContractError>::into);
         }
         Ok(client.unwrap())
@@ -436,7 +438,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn IClientState>, ContractError> {
-        let light_client= self.get_client(deps.storage, &client_id)?;
+        let light_client = self.get_client(deps.storage, &client_id)?;
         return light_client.get_client_state(deps, client_id);
     }
 
@@ -445,9 +447,8 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let light_client= self.get_client(deps.storage, &client_id)?;
-        return light_client.get_client_state_any(deps, client_id)
-        
+        let light_client = self.get_client(deps.storage, &client_id)?;
+        return light_client.get_client_state_any(deps, client_id);
     }
 
     pub fn consensus_state(

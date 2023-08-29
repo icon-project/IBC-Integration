@@ -208,20 +208,17 @@ fn connection_open_init() {
         .unwrap();
 
     let cl = client_state.to_any().encode_to_vec();
-    let mut query_map=HashMap::<Binary,Binary>::new();
-    let client_state_query=LightClient::build_client_state_query(&client_id).unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    let client_state_query = LightClient::build_client_state_query(&client_id).unwrap();
     query_map.insert(client_state_query, to_binary(&cl).unwrap());
-   
-    mock_lightclient_query(query_map,&mut deps);
+
+    mock_lightclient_query(query_map, &mut deps);
     contract
         .connection_next_sequence_init(&mut deps.storage, u64::default())
         .unwrap();
-   
-	
-	 
 
     let res = contract.connection_open_init(deps.as_mut(), res_msg);
-    println!("{:?}",res);
+    println!("{:?}", res);
     assert!(res.is_ok());
 }
 
@@ -914,9 +911,7 @@ fn connection_check_open_init_validate_fails() {
 
     let contract = CwIbcCoreContext::new();
 
-    contract
-        .client_state(deps.as_ref(), &client_id)
-        .unwrap();
+    contract.client_state(deps.as_ref(), &client_id).unwrap();
     contract
         .connection_next_sequence_init(&mut deps.storage, u64::default())
         .unwrap();
@@ -990,9 +985,7 @@ fn connection_open_init_validate_invalid_client_id() {
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
-    contract
-        .client_state( deps.as_ref(), &client_id)
-        .unwrap();
+    contract.client_state(deps.as_ref(), &client_id).unwrap();
     contract
         .connection_next_sequence_init(&mut deps.storage, seq_on_a)
         .unwrap();
