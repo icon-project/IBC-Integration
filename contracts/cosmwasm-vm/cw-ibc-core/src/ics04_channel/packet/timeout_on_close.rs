@@ -192,13 +192,13 @@ impl<'a> CwIbcCoreContext<'a> {
         let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketTimeout {
             msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
         };
-        let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+        let timeout_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: contract_address,
             msg: to_binary(&cosm_msg).unwrap(),
             funds: info.funds,
         });
-        let sub_msg: SubMsg =
-            SubMsg::reply_on_success(create_client_message, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE);
+        let sub_msg =SubMsg { id:VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE, msg: timeout_message, gas_limit: None, reply_on: cosmwasm_std::ReplyOn::Never};
+
         let event = create_packet_event(
             IbcEventType::Timeout,
             packet,
