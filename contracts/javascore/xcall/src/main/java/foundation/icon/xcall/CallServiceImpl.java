@@ -143,7 +143,7 @@ public class CallServiceImpl implements CallService, FeeManage {
 
         BigInteger protocolFee = getProtocolFee();
         BigInteger balance = Context.getBalance(Context.getAddress());
-        Context.require(balance.compareTo(protocolFee) >= 0);
+        Context.require(balance.compareTo(protocolFee) >= 0, "InsufficientBalance");
         Context.transfer(feeHandler.get(), balance);
 
         CallMessageSent(caller, dst.toString(), sn);
@@ -364,9 +364,9 @@ public class CallServiceImpl implements CallService, FeeManage {
                 pending.set(protocol, null);
             }
         } else if (protocols.length == 1) {
-            Context.require(caller.toString().equals(protocols[0]));
+            Context.require(caller.toString().equals(protocols[0]), "ProtocolSourceMismatch");
         } else {
-            Context.require(caller.equals(defaultConnection.get(net)));
+            Context.require(caller.equals(defaultConnection.get(net)), "ProtocolSourceMismatch");
         }
         return true;
     }
