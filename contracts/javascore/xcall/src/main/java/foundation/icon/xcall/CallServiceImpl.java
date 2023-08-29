@@ -27,12 +27,10 @@ import score.annotation.EventLog;
 import score.annotation.External;
 import score.annotation.Optional;
 import score.annotation.Payable;
-import scorex.util.HashMap;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+
 
 public class CallServiceImpl implements CallService, FeeManage {
     public static final int MAX_DATA_SIZE = 2048;
