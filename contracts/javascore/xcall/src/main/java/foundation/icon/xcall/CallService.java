@@ -48,8 +48,8 @@ public interface CallService {
     BigInteger sendCallMessage(String _to,
                                 byte[] _data,
                                 @Optional byte[] _rollback,
-                                @Optional String[] sources,
-                                @Optional String[] destinations);
+                                @Optional String[] _sources,
+                                @Optional String[] _destinations);
 
    /**
      * Handles incoming Messages.

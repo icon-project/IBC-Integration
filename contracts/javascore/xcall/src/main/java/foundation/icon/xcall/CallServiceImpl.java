@@ -102,8 +102,8 @@ public class CallServiceImpl implements CallService, FeeManage {
     public BigInteger sendCallMessage(String _to,
                                       byte[] _data,
                                       @Optional byte[] _rollback,
-                                      @Optional String[] sources,
-                                      @Optional String[] destinations) {
+                                      @Optional String[] _sources,
+                                      @Optional String[] _destinations) {
         Address caller = Context.getCaller();
         // check if caller is a contract or rollback data is null in case of EOA
         Context.require(_rollback == null || caller.isContract(), "RollbackNotPossible");
@@ -115,24 +115,24 @@ public class CallServiceImpl implements CallService, FeeManage {
 
         BigInteger sn = getNextSn();
         if (needResponse) {
-            CallRequest req = new CallRequest(caller, dst.net(), sources, _rollback);
+            CallRequest req = new CallRequest(caller, dst.net(), _sources, _rollback);
             requests.set(sn, req);
         }
 
         String from = new NetworkAddress(NID, caller.toString()).toString();
-        CSMessageRequest msgReq = new CSMessageRequest(from, dst.account(), sn, needResponse, _data, destinations);
+        CSMessageRequest msgReq = new CSMessageRequest(from, dst.account(), sn, needResponse, _data, _destinations);
 
         byte[] msgBytes = msgReq.toBytes();
         Context.require(msgBytes.length <= MAX_DATA_SIZE, "MaxDataSizeExceeded");
 
-        if (sources == null || sources.length == 0) {
+        if (_sources == null || _sources.length == 0) {
             Address src = defaultConnection.get(dst.net());
             Context.require(src != null, "NoDefaultConnection");
             BigInteger fee = Context.call(BigInteger.class, src, "getFee", dst.net(), needResponse);
             sendMessage(src, fee, dst.net(), CSMessage.REQUEST,
                     needResponse ? sn : BigInteger.ZERO, msgBytes);
         } else {
-            for (String _src : sources) {
+            for (String _src : _sources) {
                 Address src = Address.fromString(_src);
                 BigInteger fee = Context.call(BigInteger.class, src, "getFee", dst.net(), needResponse);
                 sendMessage(src, fee, dst.net(), CSMessage.REQUEST,
@@ -214,8 +214,8 @@ public class CallServiceImpl implements CallService, FeeManage {
     }
 
     @External(readonly = true)
-    public boolean verifySuccess(BigInteger sn) {
-        return successfulResponses.getOrDefault(sn, false);
+    public boolean verifySuccess(BigInteger _sn) {
+        return successfulResponses.getOrDefault(_sn, false);
     }
 
     @Override
@@ -387,22 +387,22 @@ public class CallServiceImpl implements CallService, FeeManage {
     }
 
     @External
-    public void setProtocolFee(BigInteger _value) {
+    public void setProtocolFee(BigInteger _protocolFee) {
         checkCallerOrThrow(admin(), "OnlyAdmin");
-        Context.require(_value.signum() >= 0, "ValueShouldBePositive");
-        protocolFee.set(_value);
+        Context.require(_protocolFee.signum() >= 0, "ValueShouldBePositive");
+        protocolFee.set(_protocolFee);
     }
 
     @External
-    public void setProtocolFeeHandler(Address address) {
+    public void setProtocolFeeHandler(Address _address) {
         checkCallerOrThrow(admin(), "OnlyAdmin");
-        feeHandler.set(address);
+        feeHandler.set(_address);
     }
 
     @External
-    public void setDefaultConnection(String nid, Address connection) {
+    public void setDefaultConnection(String _nid, Address _connection) {
         checkCallerOrThrow(admin(), "OnlyAdmin");
-        defaultConnection.set(nid, connection);
+        defaultConnection.set(_nid, _connection);
     }
 
     @External(readonly = true)
@@ -411,16 +411,15 @@ public class CallServiceImpl implements CallService, FeeManage {
     }
 
     @External(readonly = true)
-    public BigInteger getFee(String _net, boolean _rollback, @Optional String[] sources) {
+    public BigInteger getFee(String _net, boolean _rollback, @Optional String[] _sources) {
         BigInteger fee = getProtocolFee();
-        if (sources == null || sources.length == 0) {
+        if (_sources == null || _sources.length == 0) {
             Address src = defaultConnection.get(_net);
             Context.require(src != null, "NoDefaultConnection");
-
             return fee.add(Context.call(BigInteger.class, src, "getFee", _net, _rollback));
         }
 
-        for (String protocol : sources) {
+        for (String protocol : _sources) {
             Address address = Address.fromString(protocol);
             fee = fee.add(Context.call(BigInteger.class, address, "getFee", _net, _rollback));
         }
