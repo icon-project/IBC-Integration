@@ -209,15 +209,20 @@ func (c *CosmosLocalnet) CheckForTimeout(ctx context.Context, target chains.Chai
 	}
 	sn := fmt.Sprintf("%d", params["sequence"])
 	isPackageFound, _ := strconv.ParseBool(string(ctx.Value("query-result").([]byte)))
+	response.IsPacketFound = isPackageFound
 	filter := map[string]interface{}{
 		"wasm-timeout_packet.packet_sequence": sn,
 	}
 	event, err := listener.FindEvent(filter)
-	response.IsPacketFound = isPackageFound
-	response.HasTimeout = err == nil && event != nil
-
+	if err != nil {
+		return context.WithValue(ctx, "timeout-response", response), err
+	}
+	response.HasTimeout = event != nil
 	ctx, err = c.ExecuteRollback(ctx, sn)
-	response.HasRollbackCalled = err == nil && ctx.Value("IsRollbackEventFound").(bool)
+	if err != nil {
+		return context.WithValue(ctx, "timeout-response", response), err
+	}
+	response.HasRollbackCalled = ctx.Value("IsRollbackEventFound").(bool)
 
 	return context.WithValue(ctx, "timeout-response", response), err
 }

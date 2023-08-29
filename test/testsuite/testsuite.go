@@ -100,10 +100,10 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 		return nil, err
 	}
 
-	if _, err := chainA.SetupIBC(ctx, interchaintest.IBCOwnerAccoun); err != nil {
+	if _, err := chainA.SetupIBC(ctx, interchaintest.IBCOwnerAccount); err != nil {
 		return nil, err
 	}
-	if _, err = chainB.SetupIBC(ctx, interchaintest.IBCOwnerAccoun); err != nil {
+	if _, err = chainB.SetupIBC(ctx, interchaintest.IBCOwnerAccount); err != nil {
 		return nil, err
 	}
 	if err := ic.BuildRelayer(ctx, eRep, buildOptions); err != nil {
@@ -123,10 +123,10 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 }
 
 func (s *E2ETestSuite) buildWallets(ctx context.Context, chainA chains.Chain, chainB chains.Chain) error {
-	if _, err := chainA.BuildWallets(ctx, interchaintest.IBCOwnerAccoun); err != nil {
+	if _, err := chainA.BuildWallets(ctx, interchaintest.IBCOwnerAccount); err != nil {
 		return err
 	}
-	if _, err := chainB.BuildWallets(ctx, interchaintest.IBCOwnerAccoun); err != nil {
+	if _, err := chainB.BuildWallets(ctx, interchaintest.IBCOwnerAccount); err != nil {
 		return err
 	}
 	if _, err := chainA.BuildWallets(ctx, interchaintest.UserAccount); err != nil {

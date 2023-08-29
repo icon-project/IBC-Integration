@@ -371,7 +371,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 		return nil, err
 	}
 	// TODO: variable clientType
-	c.executeContract(context.Background(), ibcAddress, interchaintest.IBCOwnerAccoun, "registerClient", `{"clientType":"`+"07-tendermint"+`", "client":"`+client+`"}`)
+	c.executeContract(context.Background(), ibcAddress, interchaintest.IBCOwnerAccount, "registerClient", `{"clientType":"`+"07-tendermint"+`", "client":"`+client+`"}`)
 
 	contracts.ContractAddress = map[string]string{
 		"ibc":    ibcAddress,
@@ -380,11 +380,11 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	c.IBCAddresses = contracts.ContractAddress
 
 	params := `{"name": "test","country": "KOR","city": "Seoul","email": "prep@icon.foundation.com","website": "https://icon.kokoa.com","details": "https://icon.kokoa.com/json/details.json","p2pEndpoint": "localhost:9080"}`
-	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccoun, "registerPRep", params)
+	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccount, "registerPRep", params)
 	params = `{"pubKey":"0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5"}`
-	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccoun, "setPRepNodePublicKey", params)
+	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccount, "setPRepNodePublicKey", params)
 	params = `{"networkTypeName":"eth", "name":"testNetwork", "owner":"` + ibcAddress + `"}`
-	ctx, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000001", interchaintest.IBCOwnerAccoun, "openBTPNetwork", params)
+	ctx, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000001", interchaintest.IBCOwnerAccount, "openBTPNetwork", params)
 	//height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
 	id := ctx.Value("txResult").(*icontypes.TransactionResult).EventLogs[1].Indexed[2]
 	typeId := ctx.Value("txResult").(*icontypes.TransactionResult).EventLogs[1].Indexed[1]
@@ -424,7 +424,7 @@ func (c *IconLocalnet) SetupXCall(ctx context.Context, portId string, keyName st
 		return err
 	}
 
-	ctx, err = c.executeContract(context.Background(), ibcAddress, interchaintest.IBCOwnerAccoun, "bindPort", `{"portId":"`+portId+`", "moduleAddress":"`+connection+`"}`)
+	ctx, err = c.executeContract(context.Background(), ibcAddress, interchaintest.IBCOwnerAccount, "bindPort", `{"portId":"`+portId+`", "moduleAddress":"`+connection+`"}`)
 	c.IBCAddresses[fmt.Sprintf("xcall-%s", testcase)] = xcall
 	c.IBCAddresses[fmt.Sprintf("connection-%s", testcase)] = connection
 	return err

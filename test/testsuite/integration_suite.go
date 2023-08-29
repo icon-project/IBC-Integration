@@ -37,7 +37,7 @@ func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string) error {
 		return err
 	}
 
-	ctx, err = chainA.ExecuteContract(ctx, ibcHostChainA, interchaintest.IBCOwnerAccoun, chains.BindPort, map[string]interface{}{
+	ctx, err = chainA.ExecuteContract(ctx, ibcHostChainA, interchaintest.IBCOwnerAccount, chains.BindPort, map[string]interface{}{
 		"port_id": portId,
 		"address": chainA.GetIBCAddress(GetAppKey(ctx, "mockdapp")),
 	})
@@ -57,7 +57,7 @@ func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string) error {
 		return err
 	}
 
-	ctx, err = chainB.ExecuteContract(ctx, ibcHostChainB, interchaintest.IBCOwnerAccoun, chains.BindPort, map[string]interface{}{
+	ctx, err = chainB.ExecuteContract(ctx, ibcHostChainB, interchaintest.IBCOwnerAccount, chains.BindPort, map[string]interface{}{
 		"port_id": portId,
 		"address": chainB.GetIBCAddress(GetAppKey(ctx, "mockdapp")),
 	})

@@ -19,7 +19,7 @@ const (
 	testPathName = "test-path"
 
 	FaucetAccountKeyName = "faucet"
-	IBCOwnerAccoun       = "ibc-owner"
+	IBCOwnerAccount      = "ibc-owner"
 	XCallOwnerAccount    = "xcall-owner"
 	UserAccount          = "user"
 )
