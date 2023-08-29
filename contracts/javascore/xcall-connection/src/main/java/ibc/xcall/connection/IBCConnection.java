@@ -150,9 +150,6 @@ public class IBCConnection {
         String nid = networkIds.get(packet.getDestinationChannel());
         Context.require(nid != null, "Channel is not configured");
 
-        BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
-        unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
-
         if (msg.getSn() == null)  {
             Context.transfer(new Address(msg.getData()), msg.getFee());
             return new byte[0];
@@ -161,6 +158,9 @@ public class IBCConnection {
         if (msg.getSn().compareTo(BigInteger.ZERO) > 0) {
             incomingPackets.at(packet.getDestinationChannel()).set(msg.getSn(), calldata);
         }
+
+        BigInteger unclaimedFees = unclaimedPacketFees.at(nid).getOrDefault(relayer, BigInteger.ZERO);
+        unclaimedPacketFees.at(nid).set(relayer, unclaimedFees.add(msg.getFee()));
 
         Context.call(xCall.get(), "handleMessage", nid, msg.getData());
         return new byte[0];
@@ -227,6 +227,7 @@ public class IBCConnection {
         String counterpartyPortId = counterparty.getPortId();
         String counterPartyNid = configuredNetworkIds.at(connectionId).get(counterpartyPortId);
         Context.require(portId.equals(PORT), "Invalid port");
+        Context.require(counterPartyNid != null, "Invalid counterparty network id");
         Context.require(channels.get(counterPartyNid) == null, "Network id is already configured");
 
         lightClients.set(channelId, configuredClients.get(connectionId));
