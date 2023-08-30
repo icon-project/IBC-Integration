@@ -1,0 +1,15 @@
+cicd:
+  - '.github/workflows/*'
+
+scripts:
+  - 'scripts/*'
+
+test:
+  - 'test/**'
+
+documentation:
+- '**/*.md'
+
+docker:
+- 'docker/**'
+
