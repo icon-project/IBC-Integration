@@ -36,9 +36,6 @@ public class IBCChannelHandshake extends IBCConnection {
         Context.require(channel.getState() == Channel.State.STATE_INIT,
                 "channel state must be STATE_INIT");
 
-        // TODO: verifySupportedFeature
-        // TODO: authenticates a port binding
-
         String channelId = generateChannelIdentifier();
         channels.at(msg.getPortId()).set(channelId, msg.getChannel());
         nextSequenceSends.at(msg.getPortId()).set(channelId, BigInteger.ONE);
@@ -64,10 +61,6 @@ public class IBCChannelHandshake extends IBCConnection {
                 "single version must be negotiated on connection before opening channel");
         Context.require(channel.getState() == Channel.State.STATE_TRYOPEN,
                 "channel state must be STATE_TRYOPEN");
-
-        // TODO verifySupportedFeature
-
-        // TODO authenticates a port binding
 
         Channel.Counterparty expectedCounterparty = new Channel.Counterparty();
         expectedCounterparty.setPortId(msg.getPortId());
@@ -110,8 +103,6 @@ public class IBCChannelHandshake extends IBCConnection {
                         || channel.getState() == Channel.State.STATE_TRYOPEN,
                 "invalid channel state");
 
-        // TODO authenticates a port binding
-
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
         Context.require(connectionPb != null, "connection does not exist");
         ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
@@ -153,8 +144,6 @@ public class IBCChannelHandshake extends IBCConnection {
         Context.require(channel.getConnectionHops().size() == 1);
         Context.require(channel.getState() == Channel.State.STATE_TRYOPEN, "channel state is not TRYOPEN");
 
-        // TODO authenticates a port binding
-
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
         Context.require(connectionPb != null, "connection does not exist");
         ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
@@ -192,8 +181,6 @@ public class IBCChannelHandshake extends IBCConnection {
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
 
-        // TODO authenticates a port binding
-
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
         Context.require(connectionPb != null, "connection does not exist");
         ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
@@ -215,8 +202,6 @@ public class IBCChannelHandshake extends IBCConnection {
         Context.require(channel != null, "channel does not exist");
         Context.require(channel.getState() != Channel.State.STATE_CLOSED, "channel state is already CLOSED");
         Context.require(channel.getConnectionHops().size() == 1);
-
-        // TODO authenticates a port binding
 
         byte[] connectionPb = connections.get(channel.getConnectionHops().get(0));
         Context.require(connectionPb != null, "connection does not exist");

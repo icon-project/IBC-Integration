@@ -15,9 +15,7 @@ import score.DictDB;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-// TODO verify packet commitments follow a correct format
 public class IBCPacket extends IBCChannelHandshake {
-
 
     public void _sendPacket(Packet packet) {
         byte[] channelPb = channels.at(packet.getSourcePort()).get(packet.getSourceChannel());
@@ -70,10 +68,6 @@ public class IBCPacket extends IBCChannelHandshake {
     public void _recvPacket(Packet packet, byte[] proof, byte[] proofHeight) {
         Channel channel = Channel.decode(channels.at(packet.getDestinationPort()).get(packet.getDestinationChannel()));
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
-
-        // TODO
-        // Authenticate capability to ensure caller has authority to receive packet on
-        // this channel
 
         Context.require(
                 packet.getSourcePort().equals(channel.getCounterparty().getPortId()),
@@ -207,7 +201,6 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] proofHeight = msg.getProofHeight();
         byte[] proof = msg.getProof();
 
-        // TODO limit what packets can be timedout to limit spam creating of btp blocks.
         Channel channel = Channel
                 .decode(channels.at(packet.getDestinationPort()).get(packet.getDestinationChannel()));
         Context.require(
@@ -278,8 +271,6 @@ public class IBCPacket extends IBCChannelHandshake {
     public void _timeoutPacket(Packet packet, byte[] proofHeight, byte[] proof, BigInteger nextSequenceRecv) {
         Channel channel = Channel.decode(channels.at(packet.getSourcePort()).get(packet.getSourceChannel()));
 
-        // abortTransactionUnless(authenticateCapability(channelCapabilityPath(packet.getSourcePort(),
-        // packet.getSourceChannel())))
         Context.require(packet.getDestinationChannel().equals(channel.getCounterparty().getChannelId()));
         Context.require(packet.getDestinationPort().equals(channel.getCounterparty().getPortId()));
 

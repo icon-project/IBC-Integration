@@ -168,8 +168,6 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                     newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode());
         }
 
-        // TODO: check consensus state monotonicity
-
         // update the consensus state from a new header and set processed time metadata
         if (tmHeader.getSignedHeader().getHeader().getHeight().compareTo(clientState.getLatestHeight()) > 0) {
             clientState.setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight());
