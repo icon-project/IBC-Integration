@@ -493,8 +493,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_binary(&(is_channel_valid && _sequence_valid))
         }
         QueryMsg::GetPreviousConsensusState { client_id, height } => {
-            let res =
+            let res: Vec<u64> =
                 QueryHandler::get_previous_consensus(deps.storage, height, client_id).unwrap();
+            to_binary(&res)
+        }
+        QueryMsg::GetLatestConsensusState { client_id } => {
+            let res = QueryHandler::get_latest_consensus_state(deps.storage, &client_id).unwrap();
             to_binary(&res)
         }
     }

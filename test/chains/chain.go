@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"os"
 	"strings"
 
@@ -29,7 +30,7 @@ type Chain interface {
 	GetLastBlock(ctx context.Context) (context.Context, error)
 	GetBlockByHeight(ctx context.Context) (context.Context, error)
 	FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx, error)
-	BuildWallets(ctx context.Context, keyName string) error
+	BuildWallets(ctx context.Context, keyName string) (ibc.Wallet, error)
 	SetupIBC(ctx context.Context, keyName string) (context.Context, error)
 	SetupXCall(ctx context.Context, portId, keyName string) error
 	FindTargetXCallMessage(ctx context.Context, target Chain, height uint64, to string) (*XCallResponse, error)
@@ -58,6 +59,8 @@ type Chain interface {
 	UnpauseNode(context.Context) error
 	InitEventListener(ctx context.Context, contract string) EventListener
 
+	BackupConfig() ([]byte, error)
+	RestoreConfig([]byte) error
 	//integration test specific
 	SendPacketMockDApp(ctx context.Context, targetChain Chain, keyName string, params map[string]interface{}) (PacketTransferResponse, error)
 }

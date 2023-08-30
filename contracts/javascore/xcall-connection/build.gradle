@@ -55,7 +55,7 @@ deployJar {
     parameters {
         arg('_xCall', "$xCallMultiProtocol")
         arg('_ibc', "$ibcCore")
-        arg('port', "mock")
+        arg('_port', "mock")
     }
 }
 

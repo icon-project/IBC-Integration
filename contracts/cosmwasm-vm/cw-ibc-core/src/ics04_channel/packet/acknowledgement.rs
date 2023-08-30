@@ -5,10 +5,10 @@ use crate::conversions::{
 
 use super::*;
 
-use cosmwasm_std::IbcPacketAckMsg;
+use cosmwasm_std::ReplyOn;
 use cw_common::{
     cw_types::{CwAcknowledgement, CwPacketAckMsg},
-    raw_types::{channel::RawMessageAcknowledgement, to_raw_packet},
+    raw_types::channel::RawMessageAcknowledgement,
     to_checked_address,
 };
 
@@ -80,20 +80,12 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        let commitment_on_a = match self.get_packet_commitment(
+        let commitment_on_a = self.get_packet_commitment(
             deps.storage,
             &src_port,
             &src_channel,
             Sequence::from(packet.sequence),
-        ) {
-            Ok(commitment_on_a) => commitment_on_a,
-
-            // This error indicates that the timeout has already been relayed
-            // or there is a misconfigured relayer attempting to prove a timeout
-            // for a packet never sent. Core IBC will treat this error as a no-op in order to
-            // prevent an entire relay transaction from failing and consuming unnecessary fees.
-            Err(_) => return Ok(Response::new()),
-        };
+        )?;
         cw_println!(
             deps,
             "Commitment on a {:?}",
@@ -140,7 +132,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "packet seq matched");
 
         let client_id_on_a = conn_end_on_a.client_id();
-        let client_state_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        let client_state_on_a = self.client_state(deps.as_ref(), client_id_on_a)?;
         // The client must not be frozen.
         if client_state_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {
@@ -149,7 +141,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        let consensus_state = self.consensus_state(deps.storage, client_id_on_a, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id_on_a, &proof_height)?;
         self.verify_connection_delay_passed(
             deps.storage,
             env,
@@ -180,7 +172,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "after matching ackowledgement ");
 
         // Getting the module address for on packet timeout call
-        let contract_address = self.lookup_modules(deps.storage, dst_port.as_bytes().to_vec())?;
+        let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
         let src = CwEndPoint {
             port_id: src_port.to_string(),
@@ -195,17 +187,41 @@ impl<'a> CwIbcCoreContext<'a> {
         let cw_timestamp = cosmwasm_std::Timestamp::from_nanos(timestamp);
         let timeout = CwTimeout::with_both(timeoutblock, cw_timestamp);
 
-        let cw_packet = CwPacket::new(packet.data, src, dest, packet.sequence, timeout);
+        let cw_packet = CwPacket::new(packet.data.clone(), src, dest, packet.sequence, timeout);
         let address = to_checked_address(deps.as_ref(), &msg.signer);
         let ack: CwAcknowledgement = CwAcknowledgement::new(acknowledgement);
         let packet_ack_msg: CwPacketAckMsg =
             cosmwasm_std::IbcPacketAckMsg::new(ack, cw_packet, address);
-        self.store_callback_data(
-            deps.storage,
-            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-            &packet_ack_msg,
+
+        let event = create_packet_event(
+            IbcEventType::AckPacket,
+            &packet,
+            &chan_end_on_a.ordering,
+            conn_id_on_a,
+            None,
         )?;
-        let cosm_msg = cw_common::ibc_dapp_msg::ExecuteMsg::IbcPacketAck {
+        self.delete_packet_commitment(
+            deps.storage,
+            &src_port,
+            &src_channel,
+            packet.sequence.into(),
+        )?;
+        // reset height to zero once packet is ack
+        self.ibc_store().store_sent_packet(
+            deps.storage,
+            &src_port,
+            &src_channel,
+            packet.sequence,
+            0,
+        )?;
+
+        if let Order::Ordered = chan_end_on_a.ordering {
+            // Note: in validation, we verified that `msg.packet.sequence == nextSeqRecv`
+            // (where `nextSeqRecv` is the value in the store)
+            self.increase_next_sequence_ack(deps.storage, &src_port, &src_channel)?;
+        }
+
+        let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketAck {
             msg: packet_ack_msg,
         };
 
@@ -220,104 +236,17 @@ impl<'a> CwIbcCoreContext<'a> {
             create_client_message
         );
 
-        let sub_msg: SubMsg = SubMsg::reply_on_success(
-            create_client_message,
-            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-        );
+        let sub_msg = SubMsg {
+            id: VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
+            msg: create_client_message,
+            gas_limit: None,
+            reply_on: ReplyOn::Never,
+        };
 
         Ok(Response::new()
             .add_attribute("action", "packet")
             .add_attribute("method", "packet_acknowledgement_module")
-            .add_submessage(sub_msg))
-    }
-
-    /// This function processes an acknowledgement packet from xcall and produce event for acknowledgement
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is a `DepsMut` object, which is a mutable reference to the dependencies of the
-    /// contract. These dependencies include the storage, API, and other modules that the contract may
-    /// use.
-    /// * `message`: `message` is a `Reply` struct that contains the result of a sub-message sent by the
-    /// contract to another module. It is used to extract the acknowledgement packet message and perform
-    /// necessary actions based on the result.
-    ///
-    /// Returns:
-    ///
-    /// a `Result` with either a `Response` or a `ContractError`.
-    pub fn acknowledgement_packet_execute(
-        &self,
-        deps: DepsMut,
-        message: Reply,
-    ) -> Result<Response, ContractError> {
-        cw_println!(deps, "replying from ack module {:?}", message);
-        match message.result {
-            cosmwasm_std::SubMsgResult::Ok(_res) => {
-                cw_println!(deps, "receiving reply from packet ack ");
-
-                let reply: IbcPacketAckMsg = self.get_callback_data(
-                    deps.as_ref().storage,
-                    VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-                )?;
-                cw_println!(deps, "received ack message from module ");
-
-                let packet = reply.original_packet;
-                let channel_id = IbcChannelId::from_str(&packet.src.channel_id).unwrap();
-                let port_id = IbcPortId::from_str(&packet.src.port_id).unwrap();
-                let chan_end_on_a = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
-                let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
-
-                let event = create_packet_event(
-                    IbcEventType::AckPacket,
-                    to_raw_packet(packet.clone()),
-                    &chan_end_on_a.ordering,
-                    conn_id_on_a,
-                    None,
-                )?;
-                if self
-                    .get_packet_commitment(
-                        deps.storage,
-                        &port_id,
-                        &channel_id,
-                        packet.sequence.into(),
-                    )
-                    .is_err()
-                {
-                    return Ok(Response::new());
-                }
-
-                cw_println!(deps, " after getting packet commitment ");
-
-                // TODO: check ack_commitment returned from module
-                self.delete_packet_commitment(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    packet.sequence.into(),
-                )?;
-                // reset height to zero once packet is ack
-                self.ibc_store().store_sent_packet(
-                    deps.storage,
-                    &port_id,
-                    &channel_id,
-                    packet.sequence,
-                    0,
-                )?;
-
-                if let Order::Ordered = chan_end_on_a.ordering {
-                    // Note: in validation, we verified that `msg.packet.sequence == nextSeqRecv`
-                    // (where `nextSeqRecv` is the value in the store)
-                    self.increase_next_sequence_ack(deps.storage, &port_id, &channel_id)?;
-                }
-                Ok(Response::new()
-                    .add_attribute("action", "packet")
-                    .add_attribute("method", "execute_acknowledgement_packet")
-                    .add_event(event))
-            }
-            cosmwasm_std::SubMsgResult::Err(e) => {
-                cw_println!(deps, "error from module ack reply");
-                Err(PacketError::Other(e)).map_err(Into::<ContractError>::into)?
-            }
-        }
+            .add_submessage(sub_msg)
+            .add_event(event))
     }
 }

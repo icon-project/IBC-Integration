@@ -50,7 +50,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let next_sequence_recv = Sequence::from(msg.next_sequence_recv);
 
-        let channel_end = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
+        let mut channel_end = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
         let counterparty = Counterparty::new(dst_port.clone(), Some(dst_channel.clone()));
         if !channel_end.counterparty_matches(&counterparty) {
             return Err(ContractError::IbcPacketError {
@@ -60,22 +60,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        let conn_id_on_a = channel_end.connection_hops()[0].clone();
-        let connection_end = self.connection_end(deps.storage, &conn_id_on_a)?;
-        let commitment_on_a = match self.get_packet_commitment(
-            deps.storage,
-            &src_port,
-            &src_channel,
-            packet_sequence,
-        ) {
-            Ok(commitment_on_a) => commitment_on_a,
-
-            // This error indicates that the timeout has already been relayed
-            // or there is a misconfigured relayer attempting to prove a timeout
-            // for a packet never sent. Core IBC will treat this error as a no-op in order to
-            // prevent an entire relay transaction from failing and consuming unnecessary fees.
-            Err(_) => return Ok(Response::new()),
-        };
+        let connection_id = channel_end.connection_hops()[0].clone();
+        let connection_end = self.connection_end(deps.storage, &connection_id)?;
+        let commitment_on_a =
+            self.get_packet_commitment(deps.storage, &src_port, &src_channel, packet_sequence)?;
 
         let expected_commitment_on_a = commitment::compute_packet_commitment(
             &packet.data,
@@ -90,7 +78,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let client_id = connection_end.client_id();
-        let client_state_of_b_on_a = self.client_state(deps.storage, client_id)?;
+        let client_state_of_b_on_a = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state_of_b_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {
@@ -100,7 +88,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id, &proof_height)?;
+            self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let prefix_on_b = connection_end.counterparty().prefix();
         let conn_id_on_b =
             connection_end
@@ -179,6 +167,11 @@ impl<'a> CwIbcCoreContext<'a> {
         )?;
         cw_println!(deps, "Light Client Validation Passed");
 
+        if let Order::Ordered = channel_end.ordering {
+            channel_end.state = State::Closed;
+            self.store_channel_end(deps.storage, &src_port, &src_channel, &channel_end)?;
+        }
+
         // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
@@ -194,27 +187,35 @@ impl<'a> CwIbcCoreContext<'a> {
         let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timeout = CwTimeout::with_block(timeoutblock);
         let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
-        self.store_callback_data(
-            deps.storage,
-            VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
-            &ibc_packet,
-        )?;
 
         let address = to_checked_address(deps.as_ref(), &msg.signer);
         let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketTimeout {
             msg: cosmwasm_std::IbcPacketTimeoutMsg::new(ibc_packet, address),
         };
-        let create_client_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
+        let timeout_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: contract_address,
             msg: to_binary(&cosm_msg).unwrap(),
             funds: info.funds,
         });
-        let sub_msg: SubMsg =
-            SubMsg::reply_on_success(create_client_message, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE);
+        let sub_msg = SubMsg {
+            id: VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
+            msg: timeout_message,
+            gas_limit: None,
+            reply_on: cosmwasm_std::ReplyOn::Never,
+        };
+
+        let event = create_packet_event(
+            IbcEventType::Timeout,
+            packet,
+            channel_end.ordering(),
+            &connection_id,
+            None,
+        )?;
 
         Ok(Response::new()
             .add_attribute("action", "packet")
             .add_attribute("method", "packet_timeout_module_validation")
-            .add_submessage(sub_msg))
+            .add_submessage(sub_msg)
+            .add_event(event))
     }
 }

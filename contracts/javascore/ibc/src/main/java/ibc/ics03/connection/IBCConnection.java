@@ -48,8 +48,10 @@ public class IBCConnection extends IBCClient {
 
     public String _connectionOpenTry(MsgConnectionOpenTry msg) {
         List<Version> counterpartyVersions = decodeCounterpartyVersions(msg.getCounterpartyVersions());
-        // TODO: investigate need to self client validation
-        Context.require(counterpartyVersions.size() > 0, "counterpartyVersions length must be greater than 0");
+
+        // Skip self client validation.
+
+        Context.require(!counterpartyVersions.isEmpty(), "counterpartyVersions length must be greater than 0");
 
         String connectionId = generateConnectionIdentifier();
         Context.require(connections.get(connectionId) == null, "connectionId already exists");
@@ -76,7 +78,6 @@ public class IBCConnection extends IBCClient {
         verifyConnectionState(connection, msg.getProofHeight(), msg.getProofInit(), counterparty.getConnectionId(),
                 expectedConnection);
 
-        // TODO Investigate need for client verification if premissioned
         verifyClientState(
                 connection,
                 msg.getProofHeight(),
@@ -97,15 +98,12 @@ public class IBCConnection extends IBCClient {
         ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
 
         int state = connection.getState();
-        // TODO should we allow the state to be TRY_OPEN?
         Context.require(state == ConnectionEnd.State.STATE_INIT, "connection state is not INIT");
         Context.require(isSupportedVersion(Version.decode(msg.getVersion())),
                 "connection state is in INIT but the provided version is not supported");
 
 
-        // TODO: investigate need to self client validation
-        // require(validateSelfClient(msg.clientStateBytes), "failed to validate self
-        // client state");
+        // Skip self client validation.
 
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(connection.getClientId());
@@ -128,7 +126,7 @@ public class IBCConnection extends IBCClient {
                 msg.getProofClient(),
                 msg.getClientStateBytes());
 
-        // TODO: we should also verify a consensus state
+        // Skip consensus verification
 
         connection.setState(ConnectionEnd.State.STATE_OPEN);
         connection.setVersions(expectedConnection.getVersions());
@@ -230,7 +228,7 @@ public class IBCConnection extends IBCClient {
         return versions;
     }
 
-    // TODO implement
+    // We currently support no official version
     private boolean isSupportedVersion(Version version) {
         return true;
     }

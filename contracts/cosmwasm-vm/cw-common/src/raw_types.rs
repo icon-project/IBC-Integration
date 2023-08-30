@@ -53,7 +53,7 @@ pub use ibc_proto::protobuf::Protobuf;
 use self::channel::RawPacket;
 use crate::cw_types::CwPacket;
 
-pub fn to_raw_packet(packet: CwPacket) -> RawPacket {
+pub fn to_raw_packet(packet: &CwPacket) -> RawPacket {
     let timestamp = packet.timeout.timestamp().map(|t| t.nanos()).unwrap_or(0);
 
     let timeout_height = packet.timeout.block().map(|b| RawHeight {
@@ -62,11 +62,11 @@ pub fn to_raw_packet(packet: CwPacket) -> RawPacket {
     });
     RawPacket {
         sequence: packet.sequence,
-        source_port: packet.src.port_id,
-        source_channel: packet.src.channel_id,
-        destination_port: packet.dest.port_id,
-        destination_channel: packet.dest.channel_id,
-        data: packet.data.0,
+        source_port: packet.src.port_id.to_string(),
+        source_channel: packet.src.channel_id.to_string(),
+        destination_port: packet.dest.port_id.to_string(),
+        destination_channel: packet.dest.channel_id.to_string(),
+        data: packet.data.0.clone(),
         timeout_height,
         timeout_timestamp: timestamp,
     }

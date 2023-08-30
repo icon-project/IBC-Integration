@@ -46,10 +46,12 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
         cw_println!(deps, "fetched channel_end");
-        if chan_end_on_a.state_matches(&State::Closed) {
+
+        if !chan_end_on_a.state_matches(&State::Open) {
             return Err(ContractError::IbcPacketError {
-                error: PacketError::ChannelClosed {
+                error: PacketError::InvalidChannelState {
                     channel_id: src_channel,
+                    state: *chan_end_on_a.state(),
                 },
             });
         }
@@ -69,7 +71,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
         let client_id_on_a = conn_end_on_a.client_id();
-        let client_state_of_b_on_a = self.client_state(deps.storage, client_id_on_a)?;
+        let client_state_of_b_on_a = self.client_state(deps.as_ref(), client_id_on_a)?;
         if client_state_of_b_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::FrozenClient {
@@ -92,7 +94,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, " check pass: packet exipred");
 
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id_on_a, &latest_height_on_a)?;
+            self.consensus_state(deps.as_ref(), client_id_on_a, &latest_height_on_a)?;
         let latest_timestamp = consensus_state_of_b_on_a.timestamp();
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
         if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {
@@ -139,7 +141,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let event = create_packet_event(
             IbcEventType::SendPacket,
-            packet,
+            &packet,
             chan_end_on_a.ordering(),
             conn_id_on_a,
             None,
