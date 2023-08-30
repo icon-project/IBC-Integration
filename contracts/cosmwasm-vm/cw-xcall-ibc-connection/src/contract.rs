@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use common::{
     ibc::Height,
     rlp::{self},
@@ -16,6 +18,7 @@ use crate::{
     },
     types::{
         channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
+        config_response::to_config_response,
         message::Message, LOG_PREFIX,
     },
 };
@@ -216,6 +219,13 @@ impl<'a> CwIbcConnection<'a> {
             }
             QueryMsg::GetUnclaimedFee { nid, relayer } => {
                 to_binary(&self.get_unclaimed_fee(deps.storage, nid, relayer))
+            }
+            QueryMsg::GetIbcConfig { nid } => {
+                let ibc_config = self.get_ibc_config(deps.storage, &nid).unwrap();
+                let channel_config = self
+                    .get_channel_config(deps.storage, &ibc_config.src_endpoint().channel_id)
+                    .unwrap();
+                to_binary(&to_config_response(ibc_config, channel_config))
             }
         }
     }
