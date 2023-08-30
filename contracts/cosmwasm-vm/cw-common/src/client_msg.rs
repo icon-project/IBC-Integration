@@ -23,6 +23,8 @@ pub enum QueryMsg {
     #[returns(Vec<u8>)]
     GetConsensusState { client_id: String, height: u64 },
     #[returns(Vec<u8>)]
+    GetLatestConsensusState { client_id: String },
+    #[returns(Vec<u8>)]
     GetClientState { client_id: String },
     #[returns(bool)]
     VerifyMembership {

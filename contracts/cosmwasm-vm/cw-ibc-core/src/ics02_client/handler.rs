@@ -317,19 +317,17 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         LightClient::new(light_client_address),
                     )?;
 
-                    self.store_client_state(
+                    self.store_client_commitment(
                         deps.storage,
                         &env,
                         &client_id,
-                        callback_data.client_state_bytes().to_vec(),
                         callback_data.client_state_commitment().to_vec(),
                     )?;
 
-                    self.store_consensus_state(
+                    self.store_consensus_commitment(
                         deps.storage,
                         &client_id,
                         callback_data.height(),
-                        callback_data.consensus_state_bytes().to_vec(),
                         callback_data.consensus_state_commitment().to_vec(),
                     )?;
 
@@ -380,19 +378,17 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     let height = update_client_response.height();
 
-                    self.store_client_state(
+                    self.store_client_commitment(
                         deps.storage,
                         &env,
                         &client_id,
-                        update_client_response.client_state_bytes.to_vec(),
                         update_client_response.client_state_commitment.to_vec(),
                     )?;
 
-                    self.store_consensus_state(
+                    self.store_consensus_commitment(
                         deps.storage,
                         &client_id,
                         height,
-                        update_client_response.consensus_state_bytes.to_vec(),
                         update_client_response.consensus_state_commitment.to_vec(),
                     )?;
 
@@ -444,19 +440,17 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         from_binary(&data).map_err(ContractError::Std)?;
                     let client_id = response.client_id().map_err(ContractError::from)?;
 
-                    self.store_client_state(
+                    self.store_client_commitment(
                         deps.storage,
                         &env,
                         &client_id,
-                        response.client_state_bytes.to_vec(),
                         response.client_state_commitment().to_vec(),
                     )?;
 
-                    self.store_consensus_state(
+                    self.store_consensus_commitment(
                         deps.storage,
                         &client_id,
                         response.height(),
-                        response.consensus_state_bytes.to_vec(),
                         response.consensus_state_commitment().to_vec(),
                     )?;
 
@@ -576,11 +570,10 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
                     let event = client_misbehaviour_event(client_id.as_str(), client_type.as_str());
 
-                    self.store_client_state(
+                    self.store_client_commitment(
                         deps.storage,
                         &env,
                         &client_id,
-                        misbehaviour_response.client_state_bytes,
                         misbehaviour_response.client_state_commitment,
                     )?;
 

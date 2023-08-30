@@ -519,11 +519,10 @@ fn test_connection_open_confirm_fails() {
     let cl = client_state.encode_to_vec();
 
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &get_mock_env(),
             &conn_end.client_id().clone(),
-            cl,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -531,11 +530,10 @@ fn test_connection_open_confirm_fails() {
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &conn_end.client_id().clone(),
             proof_height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();

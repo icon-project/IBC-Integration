@@ -622,11 +622,10 @@ fn test_validate_open_try_channel() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -648,11 +647,10 @@ fn test_validate_open_try_channel() {
     let height = to_ibc_height(raw.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -715,83 +713,6 @@ fn test_validate_open_try_channel_fail_missing_client_state() {
         .validate_channel_open_try(deps.as_mut(), info, &raw)
         .unwrap();
 }
-
-// #[ignore]
-// #[test]
-// fn test_execute_open_try_channel() {
-//     let mut deps = deps();
-//     let contract = CwIbcCoreContext::default();
-//     let msg = get_dummy_raw_msg_chan_open_try(10);
-//     let channel = to_ibc_channel(msg.channel).unwrap();
-//     let port_id = to_ibc_port_id(&msg.port_id).unwrap();
-//     let channel_id = ChannelId::new(0);
-//     let counter_port_id = channel.remote.port_id.clone();
-//     let counter_channel_id = channel.remote.channel_id.clone();
-
-//     let _store = contract.init_channel_counter(deps.as_mut().storage, u64::default());
-
-//     let ss = common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-//         "hello".to_string().as_bytes().to_vec(),
-//     );
-//     let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-//         IbcClientId::default(),
-//         None,
-//         ss.unwrap(),
-//     );
-//     let conn_end = ConnectionEnd::new(
-//         common::ibc::core::ics03_connection::connection::State::Open,
-//         IbcClientId::default(),
-//         counter_party,
-//         vec![common::ibc::core::ics03_connection::version::Version::default()],
-//         Duration::default(),
-//     );
-//     let conn_id = ConnectionId::new(5);
-
-//     let contract = CwIbcCoreContext::new();
-//     contract
-//         .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
-//         .unwrap();
-
-//     let counter_party = Counterparty::new(counter_port_id, counter_channel_id);
-//     // creating new channel_id
-//     let channel_end = ChannelEnd::new(
-//         State::Uninitialized,
-//         *channel.ordering(),
-//         counter_party,
-//         channel.connection_hops.clone(),
-//         channel.version().clone(),
-//     );
-//     contract
-//         .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
-//         .unwrap();
-
-//     let expected_data = cosmwasm_std::IbcEndpoint {
-//         port_id: port_id.to_string(),
-//         channel_id: channel_id.to_string(),
-//     };
-//     contract
-//         .store_callback_data(
-//             deps.as_mut().storage,
-//             EXECUTE_ON_CHANNEL_OPEN_TRY,
-//             &expected_data,
-//         )
-//         .unwrap();
-
-//     let response = SubMsgResponse {
-//         data: Some(to_binary(&expected_data).unwrap()),
-//         events: vec![Event::new("action").add_attribute("action", "channel open try execution")],
-//     };
-//     let result: SubMsgResult = SubMsgResult::Ok(response);
-//     let reply = Reply {
-//         id: EXECUTE_ON_CHANNEL_OPEN_TRY,
-//         result,
-//     };
-
-//     let result = contract.execute_channel_open_try(deps.as_mut(), reply);
-//     assert!(result.is_ok());
-//     assert_eq!(result.as_ref().unwrap().events[0].ty, "channel_id_created");
-//     assert_eq!(result.unwrap().events[1].ty, "channel_open_try")
-// }
 
 #[test]
 fn test_get_channel() {

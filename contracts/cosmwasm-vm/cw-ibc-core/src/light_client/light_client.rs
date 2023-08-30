@@ -226,6 +226,23 @@ impl LightClient {
         let msg = to_binary(&query_message).map_err(ContractError::Std)?;
         Ok(msg)
     }
+
+    pub fn get_latest_consensus_state(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+    ) -> Result<Any, ContractError> {
+        let query_message = cw_common::client_msg::QueryMsg::GetLatestConsensusState {
+            client_id: client_id.as_str().to_string(),
+        };
+        let msg = to_binary(&query_message).map_err(ContractError::Std)?;
+        let query = build_smart_query(self.address.clone(), msg);
+
+        let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
+        let state = ConsensusState::decode(response.as_slice())
+            .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+        Ok(state.to_any())
+    }
     pub fn get_consensus_state_any(
         &self,
         deps: Deps,

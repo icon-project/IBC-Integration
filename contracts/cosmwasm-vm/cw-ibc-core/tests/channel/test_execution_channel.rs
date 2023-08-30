@@ -35,11 +35,10 @@ fn test_for_channel_open_init_execution_message() {
     let client_state = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -233,11 +232,10 @@ fn test_for_channel_open_ack_execution() {
     let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -254,11 +252,10 @@ fn test_for_channel_open_ack_execution() {
 
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -339,11 +336,10 @@ fn test_for_channel_close_init() {
     let client_state = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -496,11 +492,10 @@ fn test_for_channel_close_confirm() {
     let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -521,11 +516,10 @@ fn test_for_channel_close_confirm() {
     let height = to_ibc_height(msg.proof_height.clone()).unwrap();
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &IbcClientId::default(),
             height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -733,11 +727,10 @@ fn test_for_ack_execute() {
     let client_state: ClientState = get_dummy_client_state();
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -750,11 +743,10 @@ fn test_for_ack_execute() {
 
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &IbcClientId::default(),
             proof_height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();

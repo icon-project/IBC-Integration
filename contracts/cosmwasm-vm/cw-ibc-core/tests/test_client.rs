@@ -1448,19 +1448,24 @@ fn success_on_getting_client_state() {
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
-    let state = contract
-        .get_client_state(deps.as_mut().storage, &client_id)
-        .unwrap();
-    let client_state_any = Any::decode(state.as_slice()).unwrap();
-    let client_state: ClientState = ClientState::from_any(client_state_any).unwrap();
-    let client_state: Box<dyn IClientState> = Box::new(client_state);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &client_id,
+        &consenus_state,
+        client_state.latest_height().revision_height(),
+    );
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
-    assert_eq!(None, client_state.frozen_height())
+    let state = contract.client_state(deps.as_ref(), &client_id).unwrap();
+
+    assert_eq!(None, state.frozen_height())
 }
 
 #[test]
 #[should_panic(
-    expected = "IbcDecodeError { error: DecodeError { description: \"NotFound ClientId(iconclient-0)\", stack: [] } }"
+    expected = "IbcClientError { error: ClientSpecific { description: \"LightclientNotFount\" } }"
 )]
 fn fails_on_getting_client_state() {
     let mut deps = deps();
@@ -1468,9 +1473,7 @@ fn fails_on_getting_client_state() {
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
-    contract
-        .get_client_state(deps.as_mut().storage, &client_id)
-        .unwrap();
+    let state = contract.client_state(deps.as_ref(), &client_id).unwrap();
 }
 
 #[test]
@@ -1495,11 +1498,10 @@ fn sucess_on_misbehaviour_validate() {
         .unwrap();
 
     contract
-        .store_client_state(
+        .store_client_commitment(
             deps.as_mut().storage,
             &get_mock_env(),
             &client_id,
-            client_state.to_any().encode_to_vec(),
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -1556,11 +1558,10 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .unwrap();
 
     contract
-        .store_client_state(
+        .store_client_commitment(
             deps.as_mut().storage,
             &get_mock_env(),
             &client_id,
-            client_state.to_any().encode_to_vec(),
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();

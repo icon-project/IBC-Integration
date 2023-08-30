@@ -93,8 +93,6 @@ use super::*;
 pub struct CwIbcStore<'a> {
     client_registry: Map<'a, IbcClientType, String>,
     client_types: Map<'a, &'a IbcClientId, IbcClientType>,
-    client_states: Map<'a, &'a IbcClientId, Vec<u8>>,
-    consensus_states: Map<'a, &'a IbcClientId, Vec<u8>>,
     client_implementations: Map<'a, &'a IbcClientId, LightClient>,
     next_sequence_send: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
     next_sequence_recv: Map<'a, (&'a PortId, &'a ChannelId), Sequence>,
@@ -147,8 +145,6 @@ impl<'a> CwIbcStore<'a> {
             expected_time_per_block: Item::new(StorageKey::BlockTime.as_str()),
             packet_receipts: Map::new(StorageKey::PacketReceipts.as_str()),
             last_processed_on: Map::new(StorageKey::LastProcessedOn.as_str()),
-            client_states: Map::new(StorageKey::ClientStates.as_str()),
-            consensus_states: Map::new(StorageKey::ConsensusStates.as_str()),
             callback_data: Map::new(StorageKey::CallbackData.as_str()),
             sent_packets: Map::new(StorageKey::SentPackets.as_str()),
         }
@@ -211,13 +207,13 @@ impl<'a> CwIbcStore<'a> {
         &self.last_processed_on
     }
 
-    pub fn client_states(&self) -> &Map<'a, &'a IbcClientId, Vec<u8>> {
-        &self.client_states
-    }
+    // pub fn client_states(&self) -> &Map<'a, &'a IbcClientId, Vec<u8>> {
+    //     &self.client_states
+    // }
 
-    pub fn consensus_states(&self) -> &Map<'a, &'a IbcClientId, Vec<u8>> {
-        &self.consensus_states
-    }
+    // pub fn consensus_states(&self) -> &Map<'a, &'a IbcClientId, Vec<u8>> {
+    //     &self.consensus_states
+    // }
 
     pub fn callback_data(&self) -> &Map<'a, u64, Vec<u8>> {
         &self.callback_data

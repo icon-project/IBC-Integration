@@ -80,11 +80,10 @@ fn test_timeout_packet_fails_invalid_channel() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -109,11 +108,10 @@ fn test_timeout_packet_fails_invalid_channel() {
 
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &IbcClientId::default(),
             proof_height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -210,11 +208,10 @@ fn test_timeout_packet_fails_invalid_counterparty() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -239,11 +236,10 @@ fn test_timeout_packet_fails_invalid_counterparty() {
 
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &IbcClientId::default(),
             proof_height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -336,11 +332,10 @@ fn test_timeout_packet_fails_invalid_packet_commitment() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -365,11 +360,10 @@ fn test_timeout_packet_fails_invalid_packet_commitment() {
 
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &IbcClientId::default(),
             proof_height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -450,11 +444,10 @@ fn test_timeout_packet_fails_for_invalid_packet() {
 
     let client = client_state.to_any().encode_to_vec();
     contract
-        .store_client_state(
+        .store_client_commitment(
             &mut deps.storage,
             &env,
             &IbcClientId::default(),
-            client,
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -479,11 +472,10 @@ fn test_timeout_packet_fails_for_invalid_packet() {
 
     let consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
-        .store_consensus_state(
+        .store_consensus_commitment(
             &mut deps.storage,
             &IbcClientId::default(),
             proof_height,
-            consenus_state_any,
             consenus_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
