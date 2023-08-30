@@ -814,7 +814,8 @@ impl TestContext {
             destination_channel: msg.counterparty_channel_id.clone(),
             ..Default::default()
         };
-        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Send, &packet);
+        ctx = TestContext::setup_channel_end(ctx, State::Init, Direction::Send, &packet);
+
         ctx.packet = Some(packet);
         ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
         ctx

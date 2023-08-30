@@ -5,9 +5,9 @@ use std::time::Duration;
 pub mod setup;
 
 use common::ibc::core::ics24_host::identifier::ClientId;
-use common::ibc::mock;
+
 use common::icon::icon::lightclient::v1::ClientState;
-use common::icon::icon::lightclient::v1::ConsensusState;
+
 use common::traits::AnyTypes;
 use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::testing::mock_env;
@@ -22,8 +22,7 @@ use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::conversions::to_ibc_client_id;
-use cw_ibc_core::conversions::to_ibc_connection_id;
-use cw_ibc_core::conversions::to_ibc_height;
+
 use cw_ibc_core::ics03_connection::event::create_connection_event;
 use cw_ibc_core::ics03_connection::event::CLIENT_ID_ATTRIBUTE_KEY;
 use cw_ibc_core::ics03_connection::event::CONN_ID_ATTRIBUTE_KEY;

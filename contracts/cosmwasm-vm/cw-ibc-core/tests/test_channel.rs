@@ -4,7 +4,7 @@ use std::{str::FromStr, time::Duration};
 use common::traits::AnyTypes;
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
+    to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
 };
 
@@ -578,7 +578,7 @@ fn test_validate_open_try_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let raw = get_dummy_raw_msg_chan_open_try(10);
-    let mut test_context = TestContext::for_channel_open_try(env.clone(), &raw);
+    let mut test_context = TestContext::for_channel_open_try(env, &raw);
     test_context.init_channel_open_try(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
