@@ -143,11 +143,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let port_id = packet.destination_port.clone();
         // Getting the module address for on packet timeout call
-        let contract_address = match self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())
-        {
-            Ok(addr) => addr,
-            Err(error) => return Err(error),
-        };
+        let contract_address = self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())?;
 
         let src = CwEndPoint {
             port_id: packet.source_port.to_string(),
@@ -194,7 +190,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let event_recieve_packet = create_packet_event(
             IbcEventType::ReceivePacket,
-            packet.clone(),
+            packet,
             channel_end.ordering(),
             &channel_end.connection_hops[0],
             None,
@@ -203,7 +199,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "event recieve packet: {:?}", event_recieve_packet);
 
         let sub_msg: SubMsg =
-            SubMsg::reply_always(receive_packet_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
+            SubMsg::reply_on_success(receive_packet_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
         Ok(Response::new()
             .add_attribute("action", "channel")
@@ -372,14 +368,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     deps.as_ref().storage,
                     VALIDATE_ON_PACKET_RECEIVE_ON_MODULE,
                 )?;
-                let port = packet.dest.port_id.clone();
-                let chan = packet.dest.channel_id.clone();
-                let seq = packet.sequence;
-                let channel_id =
-                    IbcChannelId::from_str(&chan).map_err(Into::<ContractError>::into)?;
-                let port_id = IbcPortId::from_str(&port).unwrap();
-
-                let channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
+                self.clear_callback_data(deps.storage, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);
 
                 let mut res = Response::new()
                     .add_attribute("action", "channel")
@@ -387,8 +376,12 @@ impl<'a> CwIbcCoreContext<'a> {
                     .add_attribute("message", "success: packet receive");
 
                 if !ack.is_empty() {
-                    let raw_packet = to_raw_packet(packet);
-                    self.validate_write_acknowledgement(deps.storage, &raw_packet)?;
+                    self.validate_write_acknowledgement(deps.storage, &to_raw_packet(&packet))?;
+                    let seq = packet.sequence;
+                    let channel_id = to_ibc_channel_id(&packet.dest.channel_id)?;
+                    let port_id = to_ibc_port_id(&packet.dest.port_id)?;
+                    let channel_end = self.get_channel_end(deps.storage, &port_id, &channel_id)?;
+
                     self.store_packet_acknowledgement(
                         deps.storage,
                         &port_id,
@@ -399,7 +392,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
                     let write_ack_event = create_packet_event(
                         IbcEventType::WriteAck,
-                        raw_packet,
+                        &to_raw_packet(&packet),
                         &channel_end.ordering,
                         &channel_end.connection_hops[0],
                         Some(ack),

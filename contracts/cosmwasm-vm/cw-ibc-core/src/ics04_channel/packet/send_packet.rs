@@ -46,10 +46,12 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
         cw_println!(deps, "fetched channel_end");
-        if chan_end_on_a.state_matches(&State::Closed) {
+
+        if !chan_end_on_a.state_matches(&State::Open) {
             return Err(ContractError::IbcPacketError {
-                error: PacketError::ChannelClosed {
+                error: PacketError::InvalidChannelState {
                     channel_id: src_channel,
+                    state: *chan_end_on_a.state(),
                 },
             });
         }
@@ -131,7 +133,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let event = create_packet_event(
             IbcEventType::SendPacket,
-            packet,
+            &packet,
             chan_end_on_a.ordering(),
             conn_id_on_a,
             None,

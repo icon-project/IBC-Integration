@@ -3,7 +3,10 @@ package relayer
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
+	iccrypto "github.com/icon-project/icon-bridge/common/crypto"
+
 	"io"
 	"path"
 	"strings"
@@ -14,6 +17,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
+	_wallet "github.com/icon-project/icon-bridge/common/wallet"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"go.uber.org/zap"
@@ -159,10 +163,6 @@ func (r *DockerRelayer) ModifyTomlConfigFile(ctx context.Context, relativePath s
 // AddWallet adds a stores a wallet for the given chain ID.
 func (r *DockerRelayer) AddWallet(chainID string, wallet ibc.Wallet) {
 	r.wallets[chainID] = wallet
-}
-
-func (r *DockerRelayer) test(ctx context.Context) {
-	fmt.Println("test")
 }
 
 func (r *DockerRelayer) AddChainConfiguration(ctx context.Context, rep ibc.RelayerExecReporter, chainConfig ibc.ChainConfig, keyName, rpcAddr, grpcAddr string) error {
@@ -464,10 +464,7 @@ func (r *DockerRelayer) cleanUp(ctx context.Context) error {
 }
 
 func (r *DockerRelayer) StopRelayer(ctx context.Context, rep ibc.RelayerExecReporter) error {
-	if err := r.stopRelayer(ctx, rep); err != nil {
-		return err
-	}
-	return r.cleanUp(ctx)
+	return r.stopRelayer(ctx, rep)
 }
 
 // RestartRelayer restarts the relayer with the same paths as before.
@@ -481,6 +478,23 @@ func (r *DockerRelayer) StopRelayerContainer(ctx context.Context, rep ibc.Relaye
 // WriteBlockHeight writes the block height to the relayer's home directory.
 func (r *DockerRelayer) WriteBlockHeight(ctx context.Context, chainID string, height uint64) error {
 	return r.WriteFileToHomeDir(ctx, fmt.Sprintf(".relayer/%s/latest_height", chainID), []byte(fmt.Sprintf("%d", height)))
+}
+
+func (r *DockerRelayer) RestoreICONKeystore(ctx context.Context, chainID string, wallet ibc.Wallet) error {
+	keyName := wallet.KeyName()
+	pk, _ := hex.DecodeString(wallet.Mnemonic())
+	privateKey, _ := iccrypto.ParsePrivateKey(pk)
+	ks, err := _wallet.EncryptKeyAsKeyStore(privateKey, []byte(keyName))
+
+	if err != nil {
+		return fmt.Errorf("failed to parse keystore: %w", err)
+	}
+	ksPath := fmt.Sprintf(".relayer/keys/%s/%s.json", chainID, keyName)
+	fw := dockerutil.NewFileWriter(r.log, r.client, r.testName)
+	if err := fw.WriteFile(ctx, r.volumeName, ksPath, ks); err != nil {
+		return fmt.Errorf("failed to restore keystore: %w", err)
+	}
+	return nil
 }
 
 // RestartRelayer restarts the relayer with the same paths as before.

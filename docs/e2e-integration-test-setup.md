@@ -40,33 +40,33 @@ To run the demo, the following software needs to be installed.
 ### Additional steps for Apple Silicon 
 
 * Build an `icon-chain` image
-   
+
    ```bash
    git clone https://github.com/icon-project/goloop.git
    cd goloop
    make gochain-icon-image
    ``` 
-   
+
 * Build a `goloop` image
-   
+
    ```bash
    git clone https://github.com/icon-project/goloop/
    cd goloop/ 
    make goloop-icon-image
    ```
-   
+
 * Build an `archway` or `neutron` image
 
-   **For Archway:**
-   
+  **For Archway:**
+
    ```bash
    git clone https://github.com/archway-network/archway/
    cd archway
    docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
    ```
-   
-   **For Neutron:**
-   
+
+  **For Neutron:**
+
    ```bash
    git clone https://github.com/neutron-org/neutron.git
    cd neutron
@@ -75,28 +75,54 @@ To run the demo, the following software needs to be installed.
 
 ℹ️ Change the image name and version of Archway/Neutron in `e2e-config.yaml` or `e2e-config-neutron.yaml`.
 
-### Running the End-to-End Tests
+### Running IBC Integration System Tests
 
-1. Export the following system variables:
+To conduct tests for IBC integration system, carefully adhere to the provided instructions:
 
-    - `E2E_CONFIG_PATH`: Absolute path to the config file (`e2e-config.yaml` for Archway or `e2e-config-neutron.yaml` for Neutron).
-    - `GOLOOP_IMAGE_ENV`: Goloop image name.
-    - `GOLOOP_IMAGE_TAG_ENV`: Goloop image version.
+#### 1. Configure Environment Variables
 
-   Example:
+Prior to initiating the tests, ensure proper configuration of essential environment variables, which play a pivotal role in the testing process:
 
-   ```bash
-   export TEST_CONFIG_PATH=/home/User/IBC-integration/sample-config-archway.yaml
-   export GOLOOP_IMAGE_ENV=goloop
-   export GOLOOP_IMAGE_TAG_ENV=latest
-   ```
+- **`E2E_CONFIG_PATH`**: Set this variable to the absolute path of your chosen configuration file. For Archway, utilize `sample-config-archway.yaml`, and for Neutron, employ `sample-config-neutron.yaml`.
+- **`GOLOOP_IMAGE_ENV`**: Indicate the name of the Goloop image.
+- **`GOLOOP_IMAGE_TAG_ENV`**: Specify the version of the Goloop image.
 
-2. Run the Tests:
-   - for e2e test
-       ```bash
-         go test -v ./test/e2e 
-       ```
-   - for integration test
-       ```bash
-         go test -v ./test/integration 
-       ```
+Here's an example of environment variable configuration:
+
+```bash
+export E2E_CONFIG_PATH=/home/User/IBC-integration/sample-config-archway.yaml
+export GOLOOP_IMAGE_ENV=goloop-icon
+export GOLOOP_IMAGE_TAG_ENV=latest
+```
+
+#### 2. Execute the Test Suite
+
+Depending on your specific testing requirements, employ the appropriate commands to run the test suite:
+
+- To execute the end-to-end tests:
+```bash
+go test -v ./test/e2e -timeout 0
+```
+
+- To run the integration tests:
+```bash
+go test -v ./test/integration -timeout 0
+```
+
+#### 3. Set Up the Demo Test Environment (Optional)
+
+If necessary, establish the e2e demo test environment by executing the following command:
+
+```bash
+make e2e-demo-setup
+```
+
+During the setup process, distinct configuration files are generated in the `test/e2e-demo/ibc-config` directory. These files include contract addresses, along with wallets containing mnemonic/private keys. These keys are essential for conducting subsequent tests.
+
+#### 4. Clean Up the Demo Test Environment (Optional)
+
+Upon completion of the testing process, if you've set up the e2e demo environment, you can execute the following command to perform a cleanup:
+
+```bash
+make e2e-demo-clean
+```

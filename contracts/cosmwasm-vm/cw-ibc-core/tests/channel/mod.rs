@@ -8,7 +8,7 @@ use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::ibc::timestamp::Timestamp;
 use common::ibc::timestamp::ZERO_DURATION;
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::IbcAcknowledgement;
+
 use cosmwasm_std::{Binary, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock};
 use cw_common::commitment::compute_packet_commitment;
 use cw_common::ibc_types::IbcChannelId;

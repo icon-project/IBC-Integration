@@ -495,6 +495,14 @@ impl<'a> CwIbcCoreContext<'a> {
                     .unwrap();
                 to_binary(&missing)
             }
+            QueryMsg::GetPreviousConsensusStateHeight { client_id, height } => {
+                let client_val = IbcClientId::from_str(&client_id).unwrap();
+                let client = self.get_client(deps.storage, &client_val).unwrap();
+                let res = client
+                    .get_previous_consensus_state(deps, &client_val, height)
+                    .unwrap();
+                to_binary(&res)
+            }
         }
     }
 
@@ -525,21 +533,7 @@ impl<'a> CwIbcCoreContext<'a> {
             EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
-            EXECUTE_ON_CHANNEL_OPEN_INIT => self.execute_channel_open_init(deps, message),
-            EXECUTE_ON_CHANNEL_OPEN_TRY => self.execute_channel_open_try(deps, message),
-            EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE => self.execute_channel_open_ack(deps, message),
-            EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE => {
-                self.execute_channel_open_confirm(deps, message)
-            }
-            EXECUTE_ON_CHANNEL_CLOSE_INIT => self.execute_channel_close_init(deps, message),
-            EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE => {
-                self.execute_channel_close_confirm(deps, message)
-            }
-            VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE => self.execute_timeout_packet(deps, message),
             VALIDATE_ON_PACKET_RECEIVE_ON_MODULE => self.execute_receive_packet(deps, message),
-            VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE => {
-                self.acknowledgement_packet_execute(deps, message)
-            }
 
             _ => Err(ContractError::ReplyError {
                 code: message.id,

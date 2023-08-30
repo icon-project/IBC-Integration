@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
+	interchaintest "github.com/icon-project/ibc-integration/test"
+	"github.com/icon-project/icon-bridge/common/wallet"
 	"io"
 	"log"
 	"math/big"
@@ -35,28 +37,33 @@ import (
 )
 
 type IconLocalnet struct {
-	log                       *zap.Logger
-	testName                  string
-	cfg                       ibc.ChainConfig
-	numValidators             int
-	numFullNodes              int
-	FullNodes                 IconNodes
-	findTxMu                  sync.Mutex
-	keystorePath, keyPassword string
-	scorePaths                map[string]string
-	IBCAddresses              map[string]string
+	log           *zap.Logger
+	testName      string
+	cfg           ibc.ChainConfig
+	numValidators int
+	numFullNodes  int
+	FullNodes     IconNodes
+	findTxMu      sync.Mutex
+	keystorePath  string
+	scorePaths    map[string]string
+	IBCAddresses  map[string]string     `json:"addresses"`
+	Wallets       map[string]ibc.Wallet `json:"wallets"`
 }
 
-func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, keystorePath string, keyPassword string, scorePaths map[string]string) chains.Chain {
+func (c *IconLocalnet) CreateKey(ctx context.Context, keyName string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func NewIconLocalnet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, numValidators int, numFullNodes int, scorePaths map[string]string) chains.Chain {
 	return &IconLocalnet{
 		testName:      testName,
 		cfg:           chainConfig,
 		numValidators: numValidators,
 		numFullNodes:  numFullNodes,
 		log:           log,
-		keystorePath:  keystorePath,
-		keyPassword:   keyPassword,
 		scorePaths:    scorePaths,
+		Wallets:       map[string]ibc.Wallet{},
 	}
 }
 
@@ -166,7 +173,6 @@ func (c *IconLocalnet) NewChainNode(
 	}); err != nil {
 		return nil, fmt.Errorf("set volume owner: %w", err)
 	}
-	_ = in.CopyFile(ctx, c.keystorePath, "gochain.json")
 	return in, nil
 }
 
@@ -178,7 +184,7 @@ func (c *IconLocalnet) Start(testName string, ctx context.Context, additionalGen
 	for _, n := range c.FullNodes {
 		n := n
 		eg.Go(func() error {
-			if err := n.CreateNodeContainer(egCtx); err != nil {
+			if err := n.CreateNodeContainer(egCtx, additionalGenesisWallets...); err != nil {
 				return err
 			}
 			// All (validators, gentx, fullnodes, peering, additional accounts) are included in the image itself.
@@ -233,9 +239,27 @@ func (c *IconLocalnet) HomeDir() string {
 	return c.getFullNode().HomeDir()
 }
 
-// CreateKey creates a test key in the "user" node (either the first fullnode or the first validator if no fullnodes).
-func (c *IconLocalnet) CreateKey(ctx context.Context, password string) error {
-	return c.getFullNode().CreateKey(ctx, password)
+func (c *IconLocalnet) createKeystore(ctx context.Context, keyName string) (string, string, error) {
+	w := wallet.New()
+	ks, err := wallet.KeyStoreFromWallet(w, []byte(keyName))
+	if err != nil {
+		return "", "", err
+	}
+
+	err = c.getFullNode().RestoreKeystore(ctx, ks, keyName)
+	if err != nil {
+		c.log.Error("fail to restore keystore", zap.Error(err))
+		return "", "", err
+	}
+	ksd, err := wallet.NewKeyStoreData(ks)
+	if err != nil {
+		return "", "", err
+	}
+	key, err := wallet.DecryptICONKeyStore(ksd, []byte(keyName))
+	if err != nil {
+		return "", "", err
+	}
+	return w.Address(), hex.EncodeToString(key.Bytes()), nil
 }
 
 // RecoverKey recovers an existing user from a given mnemonic.
@@ -256,7 +280,7 @@ func (c *IconLocalnet) GetAddress(ctx context.Context, keyName string) ([]byte, 
 func (c *IconLocalnet) SendFunds(ctx context.Context, keyName string, amount ibc.WalletAmount) error {
 	c.CheckForKeyStore(ctx, keyName)
 
-	cmd := c.getFullNode().NodeCommand("rpc", "sendtx", "transfer", "--key_store", c.keystorePath, "--key_password", c.keyPassword,
+	cmd := c.getFullNode().NodeCommand("rpc", "sendtx", "transfer", "--key_store", c.keystorePath, "--key_password", keyName,
 		"--to", amount.Address, "--value", fmt.Sprint(amount.Amount)+"000000000000000000", "--step_limit", "10000000000000")
 	_, _, err := c.getFullNode().Exec(ctx, cmd, nil)
 	return err
@@ -297,16 +321,15 @@ func (c *IconLocalnet) BuildRelayerWallet(ctx context.Context, keyName string) (
 }
 
 func (c *IconLocalnet) BuildWallet(ctx context.Context, keyName string, mnemonic string) (ibc.Wallet, error) {
-	if err := c.CreateKey(ctx, keyName); err != nil {
-		return nil, fmt.Errorf("failed to create key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
-	}
-	addr := c.getFullNode().Address
-	addrBytes, err := c.GetAddress(ctx, addr)
+	address, privateKey, err := c.createKeystore(ctx, keyName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get account address for key %q on chain %s: %w", keyName, c.cfg.Name, err)
+		return nil, fmt.Errorf("failed to create key with name %q on chain %s: %w", keyName, c.cfg.Name, err)
+
 	}
 
-	return NewWallet(keyName, addrBytes, mnemonic, c.cfg), nil
+	w := NewWallet(keyName, []byte(address), privateKey, c.cfg)
+	c.Wallets[keyName] = w
+	return w, nil
 }
 
 func (c *IconLocalnet) getFullNode() *IconNode {
@@ -333,9 +356,9 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	var contracts chains.ContractKey
 	time.Sleep(4 * time.Second)
 	ownerAddr := c.CheckForKeyStore(ctx, keyName)
-	if ownerAddr != "" {
+	if ownerAddr != nil {
 		contracts.ContractOwner = map[string]string{
-			keyName: ownerAddr,
+			keyName: ownerAddr.FormattedAddress(),
 		}
 	}
 	ibcAddress, err := c.getFullNode().DeployContract(ctx, c.scorePaths["ibc"], c.keystorePath, "")
@@ -348,7 +371,7 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 		return nil, err
 	}
 	// TODO: variable clientType
-	c.executeContract(context.Background(), ibcAddress, "gochain", "registerClient", `{"clientType":"`+"07-tendermint"+`", "client":"`+client+`"}`)
+	c.executeContract(context.Background(), ibcAddress, interchaintest.IBCOwnerAccount, "registerClient", `{"clientType":"`+"07-tendermint"+`", "client":"`+client+`"}`)
 
 	contracts.ContractAddress = map[string]string{
 		"ibc":    ibcAddress,
@@ -357,11 +380,11 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	c.IBCAddresses = contracts.ContractAddress
 
 	params := `{"name": "test","country": "KOR","city": "Seoul","email": "prep@icon.foundation.com","website": "https://icon.kokoa.com","details": "https://icon.kokoa.com/json/details.json","p2pEndpoint": "localhost:9080"}`
-	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", "gochain", "registerPRep", params)
+	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccount, "registerPRep", params)
 	params = `{"pubKey":"0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5"}`
-	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", "gochain", "setPRepNodePublicKey", params)
+	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccount, "setPRepNodePublicKey", params)
 	params = `{"networkTypeName":"eth", "name":"testNetwork", "owner":"` + ibcAddress + `"}`
-	ctx, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000001", "gochain", "openBTPNetwork", params)
+	ctx, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000001", interchaintest.IBCOwnerAccount, "openBTPNetwork", params)
 	//height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
 	id := ctx.Value("txResult").(*icontypes.TransactionResult).EventLogs[1].Indexed[2]
 	typeId := ctx.Value("txResult").(*icontypes.TransactionResult).EventLogs[1].Indexed[1]
@@ -396,12 +419,12 @@ func (c *IconLocalnet) SetupXCall(ctx context.Context, portId string, keyName st
 		return err
 	}
 
-	connection, err := c.getFullNode().DeployContract(ctx, c.scorePaths["connection"], c.keystorePath, `{"_xCall":"`+xcall+`","_ibc":"`+ibcAddress+`", "port":"`+portId+`"}`)
+	connection, err := c.getFullNode().DeployContract(ctx, c.scorePaths["connection"], c.keystorePath, `{"_xCall":"`+xcall+`","_ibc":"`+ibcAddress+`", "_port":"`+portId+`"}`)
 	if err != nil {
 		return err
 	}
 
-	ctx, err = c.executeContract(context.Background(), ibcAddress, "gochain", "bindPort", `{"portId":"`+portId+`", "moduleAddress":"`+connection+`"}`)
+	ctx, err = c.executeContract(context.Background(), ibcAddress, interchaintest.IBCOwnerAccount, "bindPort", `{"portId":"`+portId+`", "moduleAddress":"`+connection+`"}`)
 	c.IBCAddresses[fmt.Sprintf("xcall-%s", testcase)] = xcall
 	c.IBCAddresses[fmt.Sprintf("connection-%s", testcase)] = connection
 	return err
@@ -424,7 +447,7 @@ func (c *IconLocalnet) DeployXCallMockApp(ctx context.Context, connection chains
 	params = `{"nid":"` + connection.CounterpartyNid + `", "source":"` + c.IBCAddresses[connectionKey] + `", "destination":"` + connection.CounterPartyConnection + `"}`
 	ctx, err = c.executeContract(context.Background(), dapp, connection.KeyName, "addConnection", params)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	c.IBCAddresses[fmt.Sprintf("dapp-%s", testcase)] = dapp
 	return nil
@@ -436,6 +459,41 @@ func (c *IconLocalnet) GetIBCAddress(key string) string {
 		panic(fmt.Sprintf(`IBC address not exist %s`, key))
 	}
 	return value
+}
+
+func (c *IconLocalnet) BackupConfig() ([]byte, error) {
+	wallets := make(map[string]interface{})
+	for key, value := range c.Wallets {
+		wallets[key] = map[string]string{
+			"mnemonic":         value.Mnemonic(),
+			"address":          hex.EncodeToString(value.Address()),
+			"formattedAddress": value.FormattedAddress(),
+		}
+	}
+	backup := map[string]interface{}{
+		"addresses": c.IBCAddresses,
+		"wallets":   wallets,
+	}
+	return json.MarshalIndent(backup, "", "\t")
+}
+
+func (c *IconLocalnet) RestoreConfig(backup []byte) error {
+	result := make(map[string]interface{})
+	err := json.Unmarshal(backup, &result)
+	if err != nil {
+		return err
+	}
+	c.IBCAddresses = result["addresses"].(map[string]string)
+	wallets := make(map[string]ibc.Wallet)
+
+	for key, value := range result["wallets"].(map[string]interface{}) {
+		_value := value.(map[string]string)
+		mnemonic := _value["mnemonic"]
+		address, _ := hex.DecodeString(_value["address"])
+		wallets[key] = NewWallet(key, address, mnemonic, c.Config())
+	}
+	c.Wallets = wallets
+	return nil
 }
 
 func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection chains.XCallConnection) (context.Context, error) {
@@ -529,18 +587,17 @@ func (c *IconLocalnet) EOAXCall(ctx context.Context, targetChain chains.Chain, k
 func (c *IconLocalnet) ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error) {
 	testcase := ctx.Value("testcase").(string)
 	xCallKey := fmt.Sprintf("xcall-%s", testcase)
-	return c.executeContract(ctx, c.IBCAddresses[xCallKey], "gochain", "executeCall", `{"_reqId":"`+reqId+`","_data":"`+data+`"}`)
+	return c.executeContract(ctx, c.IBCAddresses[xCallKey], interchaintest.UserAccount, "executeCall", `{"_reqId":"`+reqId+`","_data":"`+data+`"}`)
 }
 
 func (c *IconLocalnet) ExecuteRollback(ctx context.Context, sn string) (context.Context, error) {
 	testcase := ctx.Value("testcase").(string)
 	xCallKey := fmt.Sprintf("xcall-%s", testcase)
-	ctx, err := c.executeContract(ctx, c.IBCAddresses[xCallKey], "gochain", "executeRollback", `{"_sn":"`+sn+`"}`)
+	ctx, err := c.executeContract(ctx, c.IBCAddresses[xCallKey], interchaintest.UserAccount, "executeRollback", `{"_sn":"`+sn+`"}`)
 	if err != nil {
 		return nil, err
 	}
 	txn := ctx.Value("txResult").(*icontypes.TransactionResult)
-
 	sequence, err := icontypes.HexInt(txn.EventLogs[0].Indexed[1]).Int()
 	return context.WithValue(ctx, "IsRollbackEventFound", fmt.Sprintf("%d", sequence) == sn), nil
 
@@ -623,7 +680,7 @@ func (c *IconLocalnet) FindEvent(ctx context.Context, startHeight uint64, contra
 	case v := <-channel:
 		return v, nil
 	case <-_ctx.Done():
-		return nil, fmt.Errorf("failed to find eventLog: %s", ctx.Err())
+		return nil, fmt.Errorf("failed to find eventLog: %s", _ctx.Err())
 	}
 }
 
@@ -642,9 +699,9 @@ func (c *IconLocalnet) DeployContract(ctx context.Context, keyName string) (cont
 
 	// Check if keystore is alreadry available for given keyName
 	ownerAddr := c.CheckForKeyStore(ctx, keyName)
-	if ownerAddr != "" {
+	if ownerAddr != nil {
 		contracts.ContractOwner = map[string]string{
-			keyName: ownerAddr,
+			keyName: ownerAddr.FormattedAddress(),
 		}
 	}
 
@@ -766,17 +823,20 @@ func (c *IconLocalnet) QueryContract(ctx context.Context, contractAddress, metho
 
 }
 
-func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) error {
-	address := c.CheckForKeyStore(ctx, keyName)
-	if address == "" {
-		return nil
+func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) (ibc.Wallet, error) {
+	w := c.CheckForKeyStore(ctx, keyName)
+	if w == nil {
+		return nil, fmt.Errorf("error keyName already exists")
 	}
 
 	amount := ibc.WalletAmount{
-		Address: address,
+		Address: w.FormattedAddress(),
 		Amount:  10000,
 	}
-	return c.SendFunds(ctx, "gochain", amount)
+	var err error
+
+	err = c.SendFunds(ctx, interchaintest.FaucetAccountKeyName, amount)
+	return w, err
 }
 
 func (c *IconLocalnet) GetClientName(suffix int) string {

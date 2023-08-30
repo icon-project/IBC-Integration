@@ -25,7 +25,7 @@ use cosmwasm_std::{
 };
 pub use cw_common::client_msg::ExecuteMsg as LightClientMessage;
 use cw_common::commitment;
-use std::str::FromStr;
+
 pub use traits::*;
 pub mod packet;
 use common::ibc::core::ics04_channel::commitment::PacketCommitment;

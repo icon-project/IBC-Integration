@@ -13,27 +13,24 @@ The sendMessage function is responsible for sending a message to a specified tar
 
 The behavior of sendMessage depends on the value of sn (sequence number). If sn is greater than 0, it indicates a new message that requires a response. In this case, both the sending fee and the response fee should be included. If sn is 0, it signifies a one-way message where no response is expected. If sn is less than 0, it implies that the message is a response to a previously received message. In this scenario, no fee is included in the sending message since it should have already been paid when the positive sn was sent.
 
-After handling the sn value, the sendMessage function triggers the handleMessage function on the targetNetwork. It passes targetNetwork, sn, and msg as arguments to handleMessage. The purpose of this function is to handle the incoming message on the specified targetNetwork's xCall contract.
+After handling the sn value, the sendMessage function triggers the handleMessage function on the targetNetwork. It passes targetNetwork and msg as arguments to handleMessage on xCall.
 
-In case the message fails to be delivered for any reason, the code triggers the handleError function. It passes sn, errorCode, and errorMessage to the function. The responsibility of this function is to handle errors that occur during the message delivery process.
+In case the message fails to be delivered for any reason, the connection triggers the handleError function. It passes the failed sn to the function. The responsibility of this function is to handle errors that occur during the message delivery process.
 
 The second external function, getFee(network, response), calculates and returns the fee required to send a message to the specified network and back. It takes into account the optional response parameter when determining the fee.
 
 In summary, this code snippet illustrates a specific behavior expected from a connection regarding message sending and error handling.
-``` javascript
+```javascript
 external function sendMessage(targetNetwork, svc, sn, msg)
-    if sn < 0:
-        sn = sn.negate()
-    On targetNetwork, trigger handleMessage(targetNetwork, sn, msg)
+    On targetNetwork, trigger handleMessage(targetNetwork, msg)
     if message fails to deliver:
-        trigger handleBTPError(sn, errorCode, errorMessage)
+        trigger handleError(sn)
 ```
-
 ``` javascript
 external function getFee(network, response)
     Returns the fee required to send a message to "network" and back, considering the optional response parameter.
-...
 ```
+
 
 ## General IBC Connection Design Overview
 The IBC (Inter-Blockchain Communication) connection facilitates communication between different chains using IBC channels and ports. This connection relies on the administrator to associate network IDs with specific connections/ports. Once established, these properties become immutable and cannot be changed. Consequently, users can depend on the stability and reliability of a configured connection to another chain.
@@ -62,7 +59,6 @@ destinationChannel: channelId -> counterPartyChannelId
 destinationPort: channelId -> counterPartyPortId
 
 incomingPackets: channel -> sn -> packet
-outgoingPackets: channel -> paketSequence -> sn
 
 sendPacketFee: NetworkId -> int
 ackFee: NetworkId -> int
@@ -134,9 +130,6 @@ void sendMessage(String _to, String _svc, BigInteger _sn, byte[] _msg) {
     }
 
     assert Context.value() == packetfee + _ackFee
-    if (!_sn.equals(BigInteger.ZERO)) {
-        outgoingPackets[channel][seqNum] = _sn;
-    }
 
     Message msg = new Message(_sn, packetfee, _msg);
     Packet packet = Packet(
@@ -176,7 +169,7 @@ public byte[] onRecvPacket(byte[] calldata, Address relayer) {
 
     if (msg.getSn() == null) {
         Context.transfer(msg.getFee(), Address.fromBytes(msg.getData()))
-        return  new byte[0]
+        return new byte[0]
     }
 
     if (msg.getSn() > 0) {
@@ -193,17 +186,14 @@ public byte[] onRecvPacket(byte[] calldata, Address relayer) {
 public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer) {
     onlyIBCHandler();
     Packet packet = Packet.decode(calldata);
-    BigInteger sn = outgoingPackets[packet.getSourceChannel()][packet.getSequence()];
-    outgoingPackets[packet.getSourceChannel()][packet.getSequence()] = null;
     String nid = networkIds[packet.getSourceChannel()];
 
     assert nid != null;
-    assert sn != null;
 
     Context.transfer(unclaimedAckFees[_to][packet.sequence], relayer)
     unclaimedAckFees[nid][packet.sequence] = null
 
-    xCall.handleMessage(nid, sn, acknowledgement);
+    xCall.handleMessage(nid, acknowledgement);
 }
 ```
 
@@ -212,19 +202,16 @@ public void onTimeoutPacket(byte[] calldata, Address relayer) {
     onlyIBCHandler();
     Packet packet = Packet.decode(calldata);
     Message msg = Message.fromBytes(packet.getData());
-    BigInteger sn = outgoingPackets.at(packet.getSourceChannel()).get(packet.getSequence());
-    outgoingPackets.at(packet.getSourceChannel()).set(packet.getSequence(), null);
+    BigInteger sn = msg.sn
     String nid = networkIds[packet.getSourceChannel()];
 
-    assert sn != null;
+    if (sn == null)
+        return
 
-    fee = msg.getFee();
-    if (sn != null) {
-        fee += unclaimedAckFees[nid][packet.sequence];
-        unclaimedAckFees[nid][packet.sequence] = null
-        xCall.handleError(sn, -1, "Timeout");
-    }
-
+    fee = msg.fee
+    fee += unclaimedAckFees[nid][packet.sequence];
+    unclaimedAckFees[nid][packet.sequence] = null
+    xCall.handleError(sn, -1, "Timeout");
     Context.transfer(fee, relayer)
 }
 ```

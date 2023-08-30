@@ -80,6 +80,8 @@ pub enum ContractError {
 
     #[error("PacketNotExpired")]
     PacketNotExpired,
+    #[error("CallAlreadyInProgress")]
+    CallAlreadyInProgress,
 }
 
 impl From<FromHexError> for ContractError {

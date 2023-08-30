@@ -79,13 +79,14 @@ pub fn create_channel_id_generated_event(channel_id: ChannelId) -> Event {
 
 pub fn create_packet_event(
     event_type: IbcEventType,
-    packet: RawPacket,
+    packet: &RawPacket,
     channel_order: &Order,
     connection_id: &IbcConnectionId,
     ack: Option<Vec<u8>>,
 ) -> Result<Event, ContractError> {
     let timeout_height = packet
         .timeout_height
+        .as_ref()
         .map(|h| format!("{}-{}", h.revision_number, h.revision_height))
         .unwrap_or("0-0".to_string());
     let hex_data = hex::encode(&packet.data);

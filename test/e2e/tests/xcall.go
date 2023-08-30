@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/testsuite"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
@@ -79,9 +80,8 @@ func (x *XCallTestSuite) testPacketDrop(ctx context.Context, t *testing.T, chain
 	//height, _ := chainA.(ibc.Chain).Height(ctx)
 	listener := chainA.InitEventListener(ctx, "ibc")
 	defer listener.Stop()
-	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, []byte(msg), []byte("rollback-test"))
-
-	x.Require().Errorf(err, "failed to find eventlog")
+	res, err := chainA.XCall(ctx, chainB, interchaintest.UserAccount, dst, []byte(msg), []byte("rollback-data"))
+	assert.Errorf(t, err, "failed to find eventlog - %w", err)
 	sn := res.SerialNo
 	snInt, _ := strconv.Atoi(res.SerialNo)
 	params := map[string]interface{}{
@@ -102,13 +102,12 @@ func (x *XCallTestSuite) testOneWayMessage(ctx context.Context, t *testing.T, ch
 	dappKey := fmt.Sprintf("dapp-%s", testcase)
 	msg := "MessageTransferTestingWithoutRollback"
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
-	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, []byte(msg), nil)
-	x.Require().NoError(err)
+	res, err := chainA.XCall(ctx, chainB, interchaintest.UserAccount, dst, []byte(msg), nil)
+	assert.NoErrorf(t, err, "error on sending packet- %w", err)
 	ctx, err = chainB.ExecuteCall(ctx, res.RequestID, res.Data)
-	x.Require().NoError(err)
+	assert.NoErrorf(t, err, "error on execute call packet- %w", err)
 	dataOutput, err := x.ConvertToPlainString(res.Data)
-	x.Require().NoError(err)
-
+	assert.NoErrorf(t, err, "error on converting res data as msg- %w", err)
 	assert.Equal(t, msg, dataOutput)
 	fmt.Println("Data Transfer Testing Without Rollback from " + chainA.(ibc.Chain).Config().ChainID + " to " + chainB.(ibc.Chain).Config().ChainID + " with data " + msg + " and Received:" + dataOutput + " PASSED")
 }
@@ -119,16 +118,15 @@ func (x *XCallTestSuite) testRollback(ctx context.Context, t *testing.T, chainA,
 	msg := "rollback"
 	rollback := "RollbackDataTesting"
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
-	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, []byte(msg), []byte(rollback))
-	x.Require().NoError(err)
+	res, err := chainA.XCall(ctx, chainB, interchaintest.UserAccount, dst, []byte(msg), []byte(rollback))
+	assert.NoErrorf(t, err, "error on sending packet- %w", err)
 	height, err := chainA.(ibc.Chain).Height(ctx)
-	x.Require().NoError(err)
 	ctx, err = chainB.ExecuteCall(ctx, res.RequestID, res.Data)
 	code, err := chainA.FindCallResponse(ctx, height, res.SerialNo)
-	x.Require().NoError(err)
+	assert.NoErrorf(t, err, "no call response found %w", err)
 	assert.Equal(t, "0", code)
 	ctx, err = chainA.ExecuteRollback(ctx, res.SerialNo)
-	x.Require().NoError(err)
+	assert.NoErrorf(t, err, "error on excute rollback- %w", err)
 }
 
 func (x *XCallTestSuite) testOneWayMessageWithSize(ctx context.Context, t *testing.T, dataSize int, chainA, chainB chains.Chain) {
@@ -136,7 +134,7 @@ func (x *XCallTestSuite) testOneWayMessageWithSize(ctx context.Context, t *testi
 	dappKey := fmt.Sprintf("dapp-%s", testcase)
 	_msg := make([]byte, dataSize)
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
-	res, err := chainA.XCall(ctx, chainB, testsuite.User, dst, _msg, nil)
+	res, err := chainA.XCall(ctx, chainB, interchaintest.UserAccount, dst, _msg, nil)
 	assert.NoError(t, err)
 
 	_, err = chainB.ExecuteCall(ctx, res.RequestID, res.Data)
@@ -148,7 +146,7 @@ func (x *XCallTestSuite) testOneWayMessageWithSizeExpectingError(ctx context.Con
 	dappKey := fmt.Sprintf("dapp-%s", testcase)
 	_msg := make([]byte, dataSize)
 	dst := chainB.(ibc.Chain).Config().ChainID + "/" + chainB.GetIBCAddress(dappKey)
-	_, err := chainA.XCall(ctx, chainB, testsuite.User, dst, _msg, nil)
+	_, err := chainA.XCall(ctx, chainB, interchaintest.UserAccount, dst, _msg, nil)
 	if err != nil {
 		if strings.Contains(err.Error(), "submessages:") {
 			subStart := strings.Index(err.Error(), "submessages:") + len("submessages:")

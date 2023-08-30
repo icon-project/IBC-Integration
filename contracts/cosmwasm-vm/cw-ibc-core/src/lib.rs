@@ -59,7 +59,6 @@ pub use cw_common::commitment::*;
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::traits::ExecuteChannel;
 use crate::traits::{IbcClient, ValidateChannel};
 
 use cw_common::core_msg::QueryMsg;

@@ -2,9 +2,9 @@ use cosmwasm_std::testing::mock_env;
 
 use cw_common::core_msg::InstantiateMsg;
 use cw_ibc_core::context::CwIbcCoreContext;
-use setup::{create_mock_info, deps};
 
 mod setup;
+use setup::*;
 
 #[test]
 pub fn only_owner_can_set_expected_time_per_block() {
