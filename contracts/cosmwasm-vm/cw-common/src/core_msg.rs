@@ -205,4 +205,6 @@ pub enum QueryMsg {
         start_sequence: u64,
         end_sequence: u64,
     },
+    #[returns(Vec<u64>)]
+    GetPreviousConsensusStateHeight { client_id: String, height: u64 },
 }
