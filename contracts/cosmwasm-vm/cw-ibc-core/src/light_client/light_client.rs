@@ -210,8 +210,6 @@ impl LightClient {
         Ok(response)
     }
     pub fn get_timestamp_at_height_query(
-        &self,
-
         client_id: &IbcClientId,
         height: u64,
     ) -> Result<Binary, ContractError> {
@@ -229,7 +227,7 @@ impl LightClient {
         client_id: &IbcClientId,
         height: u64,
     ) -> Result<u64, ContractError> {
-        let msg = self.get_timestamp_at_height_query(client_id, height)?;
+        let msg = Self::get_timestamp_at_height_query(client_id, height)?;
         let query = build_smart_query(self.address.clone(), msg);
 
         let response: u64 = deps.querier.query(&query).map_err(ContractError::Std)?;
