@@ -8,9 +8,6 @@ use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use common::utils::keccak256;
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::ContractResult;
-use cosmwasm_std::SystemResult;
-use cosmwasm_std::WasmQuery;
 
 use cosmwasm_std::Binary;
 use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
@@ -24,9 +21,8 @@ use std::collections::HashMap;
 
 use cw_common::ProstMessage;
 
-use cw_ibc_core::conversions::{to_ibc_client_id, to_ibc_connection_id, to_ibc_height};
 use cw_ibc_core::ics04_channel::IbcClient;
-use cw_ibc_core::{IbcClientType, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT};
+use cw_ibc_core::{IbcClientType, EXECUTE_UPDATE_CLIENT};
 
 use cw_common::core_msg::InstantiateMsg;
 use cw_ibc_core::context::CwIbcCoreContext;

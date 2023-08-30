@@ -1,6 +1,6 @@
 use crate::{
     conversions::to_ibc_client_id, light_client::light_client::LightClient, EXECUTE_CREATE_CLIENT,
-    EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR, EXECUTE_UPDATE_CLIENT,
+    EXECUTE_UPDATE_CLIENT, EXECUTE_UPGRADE_CLIENT, MISBEHAVIOUR,
 };
 
 use super::{events::client_misbehaviour_event, *};
@@ -69,20 +69,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             LightClient::new(light_client_address),
         )?;
 
-        self.store_client_commitment(
-            deps.storage,
-            &env,
-            &client_id,
-            
-            client_state.hash(),
-        )?;
+        self.store_client_commitment(deps.storage, &env, &client_id, client_state.hash())?;
 
-        self.store_consensus_commitment(
-            deps.storage,
-            &client_id,
-            height,
-            consensus_state.hash(),
-        )?;
+        self.store_consensus_commitment(deps.storage, &client_id, height, consensus_state.hash())?;
 
         let event = create_client_event(
             client_id.as_str(),
@@ -340,7 +329,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 Some(data) => {
                     let update_client_response: UpdateClientResponse = from_binary_response(&data)?;
                     cw_println!(deps, "Received Client Update Callback with data");
-                    let client_id:ClientId= self.get_callback_data(deps.as_ref().storage, EXECUTE_UPDATE_CLIENT)?;
+                    let client_id: ClientId =
+                        self.get_callback_data(deps.as_ref().storage, EXECUTE_UPDATE_CLIENT)?;
                     self.clear_callback_data(deps.storage, EXECUTE_UPDATE_CLIENT);
                     let height = update_client_response.height();
 
