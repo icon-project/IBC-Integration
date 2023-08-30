@@ -401,7 +401,6 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
         BigInteger currentHeight = mockApp._lastBlockHeight();
         BigInteger timeoutHeight = currentHeight.add(BigInteger.TEN);
 
-        // TODO: make adaptable to block time
         Consumer<TransactionResult> consumer = getPacketInterface(relayer).SendPacket((logs) -> {prevSentPacket = Packet.decode(logs.get(0).getPacket());}, null);
         consumer.accept(mockApp._send("sendPacket", Map.of("data", "test".getBytes(), "timeoutHeight", timeoutHeight)));
         waitByHeight(timeoutHeight);
