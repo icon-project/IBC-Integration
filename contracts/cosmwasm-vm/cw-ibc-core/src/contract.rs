@@ -496,6 +496,14 @@ impl<'a> CwIbcCoreContext<'a> {
                     .unwrap();
                 to_binary(&missing)
             }
+            QueryMsg::GetPreviousConsensusStateHeight { client_id, height } => {
+                let client_val = IbcClientId::from_str(&client_id).unwrap();
+                let client = self.get_client(deps.storage, &client_val).unwrap();
+                let res = client
+                    .get_previous_consensus_state(deps, &client_val, height)
+                    .unwrap();
+                to_binary(&res)
+            }
         }
     }
 

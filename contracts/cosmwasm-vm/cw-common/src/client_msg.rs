@@ -79,7 +79,7 @@ pub enum QueryMsg {
     VerifyConnectionOpenTry(VerifyConnectionPayload),
     #[returns(bool)]
     VerifyConnectionOpenAck(VerifyConnectionPayload),
-    #[returns(Vec<u8>)]
+    #[returns(Vec<u64>)]
     GetPreviousConsensusState { client_id: String, height: u64 },
 }
 

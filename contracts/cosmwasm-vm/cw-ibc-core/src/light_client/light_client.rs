@@ -270,4 +270,23 @@ impl LightClient {
             .map_err(|e| ContractError::IbcDecodeError { error: e })?;
         Ok(Box::new(consensus_state))
     }
+
+    pub fn get_previous_consensus_state(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+        height: u64,
+    ) -> Result<Vec<u64>, ContractError> {
+        let query_message = cw_common::client_msg::QueryMsg::GetPreviousConsensusState {
+            client_id: client_id.as_str().to_string(),
+            height,
+        };
+        let msg = to_binary(&query_message).map_err(ContractError::Std)?;
+
+        let query = build_smart_query(self.address.clone(), msg);
+
+        let response: Vec<u64> = deps.querier.query(&query).map_err(ContractError::Std)?;
+
+        Ok(response)
+    }
 }
