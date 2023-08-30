@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use common::ibc::core::ics04_channel::{channel::Order, Version};
-use cosmwasm_std::{Env, MessageInfo, OwnedDeps};
+use cosmwasm_std::{testing::mock_dependencies, Env, MessageInfo, OwnedDeps};
 use cw_common::{
     ibc_types::{IbcClientId, IbcConnectionId},
     raw_types::channel::RawMessageRecvPacket,
@@ -133,24 +133,13 @@ pub fn setup_test(
 #[test]
 fn test_write_acknowledgement() {
     let env = get_mock_env();
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let (contract, mut deps) = setup_test(info.clone(), &env, msg.clone());
-    contract
-        .store_client_implementations(
-            deps.as_mut().storage,
-            &IbcClientId::default(),
-            LightClient::new("lightclient".to_string()),
-        )
-        .unwrap();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    query_map = mock_consensus_state_query(
-        query_map,
-        &IbcClientId::default(),
-        &get_dummy_consensus_state(),
-        msg.proof_height.as_ref().unwrap().revision_height,
-    );
-    mock_lightclient_query(query_map, &mut deps);
+    let mut test_context = TestContext::for_receive_packet(env.clone(), &msg);
+    test_context.init_receive_packet(deps.as_mut().storage, &contract);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -171,24 +160,13 @@ fn test_write_acknowledgement() {
 #[should_panic(expected = "Unauthorized")]
 pub fn test_write_acknowledgement_fails_unauthorized() {
     let env = get_mock_env();
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let (contract, mut deps) = setup_test(info.clone(), &env, msg.clone());
-    contract
-        .store_client_implementations(
-            deps.as_mut().storage,
-            &IbcClientId::default(),
-            LightClient::new("lightclient".to_string()),
-        )
-        .unwrap();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    query_map = mock_consensus_state_query(
-        query_map,
-        &IbcClientId::default(),
-        &get_dummy_consensus_state(),
-        msg.proof_height.as_ref().unwrap().revision_height,
-    );
-    mock_lightclient_query(query_map, &mut deps);
+    let mut test_context = TestContext::for_receive_packet(env.clone(), &msg);
+    test_context.init_receive_packet(deps.as_mut().storage, &contract);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -211,22 +189,12 @@ pub fn test_write_acknowledgement_fails_invalid_ack() {
     let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let (contract, mut deps) = setup_test(info.clone(), &env, msg.clone());
-    contract
-        .store_client_implementations(
-            deps.as_mut().storage,
-            &IbcClientId::default(),
-            LightClient::new("lightclient".to_string()),
-        )
-        .unwrap();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    query_map = mock_consensus_state_query(
-        query_map,
-        &IbcClientId::default(),
-        &get_dummy_consensus_state(),
-        msg.proof_height.as_ref().unwrap().revision_height,
-    );
-    mock_lightclient_query(query_map, &mut deps);
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::default();
+    let mut test_context = TestContext::for_receive_packet(env.clone(), &msg);
+    test_context.init_receive_packet(deps.as_mut().storage, &contract);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
+
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -251,22 +219,12 @@ pub fn test_write_acknowledgement_fails_invalid_channel_state() {
     let env = get_mock_env();
     let info = create_mock_info("channel-creater", "umlg", 2000000000);
     let msg = get_dummy_raw_msg_recv_packet(12);
-    let (contract, mut deps) = setup_test(info.clone(), &env, msg.clone());
-    contract
-        .store_client_implementations(
-            deps.as_mut().storage,
-            &IbcClientId::default(),
-            LightClient::new("lightclient".to_string()),
-        )
-        .unwrap();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    query_map = mock_consensus_state_query(
-        query_map,
-        &IbcClientId::default(),
-        &get_dummy_consensus_state(),
-        msg.proof_height.as_ref().unwrap().revision_height,
-    );
-    mock_lightclient_query(query_map, &mut deps);
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::default();
+    let mut test_context = TestContext::for_receive_packet(env.clone(), &msg);
+
+    test_context.init_receive_packet(deps.as_mut().storage, &contract);
+    mock_lightclient_query(test_context.mock_queries.clone(), &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -275,15 +233,11 @@ pub fn test_write_acknowledgement_fails_invalid_channel_state() {
         VALIDATE_ON_PACKET_RECEIVE_ON_MODULE
     );
     let packet = msg.packet.unwrap();
-    let dst_port = to_ibc_port_id(&packet.destination_port).unwrap();
-    let dst_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
-    let mut channel_end = contract
-        .get_channel_end(deps.as_ref().storage, &dst_port, &dst_channel)
-        .unwrap();
-    channel_end.set_state(State::Closed);
-    contract
-        .store_channel_end(deps.as_mut().storage, &dst_port, &dst_channel, &channel_end)
-        .unwrap();
+
+    let mut channel_end = test_context.channel_end();
+    channel_end.state = State::Closed;
+    test_context.channel_end = Some(channel_end);
+    test_context.save_channel_end(deps.as_mut().storage, &contract);
 
     let ibc_packet = to_ibc_packet(packet).unwrap();
 

@@ -1,10 +1,11 @@
 use std::{collections::HashMap, hash::Hash, str::FromStr};
 
 use cw_ibc_core::conversions::{
-    to_ibc_channel, to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_height,
-    to_ibc_timestamp,
+    to_ibc_channel, to_ibc_channel_id, to_ibc_client_id, to_ibc_connection_id, to_ibc_height,
+    to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
 };
-
+use cw_ibc_core::ics03_connection::State as ConnectionState;
+use cw_ibc_core::ics04_channel::IbcClient;
 pub fn mock_height(
     number: u64,
     height: u64,
@@ -661,7 +662,45 @@ impl TestContext {
         let mut ctx = TestContext::default(env);
         let packet = msg.packet.clone().unwrap();
 
-        ctx = TestContext::setup_channel_end(ctx, Direction::Receive, &packet);
+        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Receive, &packet);
+        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
+
+        ctx
+    }
+
+    pub fn for_connection_open_init(env: Env, msg: &RawMsgConnectionOpenInit) -> Self {
+        let mut ctx = TestContext::default(env);
+        ctx.client_id = to_ibc_client_id(&msg.client_id).unwrap();
+        ctx.connection_end = None;
+        ctx
+    }
+
+    pub fn for_connection_open_ack(env: Env, msg: &RawMsgConnectionOpenAck) -> Self {
+        let mut ctx = TestContext::default(env);
+        let mut connection = ctx.connection_end();
+        connection.state = ConnectionState::Init;
+        ctx.connection_end = Some(connection);
+        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
+        ctx.connection_id = to_ibc_connection_id(&msg.connection_id).unwrap();
+
+        ctx
+    }
+
+    pub fn for_connection_open_confirm(env: Env, msg: &RawMsgConnectionOpenConfirm) -> Self {
+        let mut ctx = TestContext::default(env);
+        let mut connection = ctx.connection_end();
+        connection.state = ConnectionState::TryOpen;
+        ctx.connection_end = Some(connection);
+        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
+        ctx.connection_id = to_ibc_connection_id(&msg.connection_id).unwrap();
+
+        ctx
+    }
+
+    pub fn for_connection_open_try(env: Env, msg: &RawMsgConnectionOpenTry) -> Self {
+        let mut ctx = TestContext::default(env);
+        let mut connection = ctx.connection_end();
+        ctx.connection_end = Some(connection);
         ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
 
         ctx
@@ -671,7 +710,7 @@ impl TestContext {
         let mut ctx = TestContext::default(env);
         let packet = msg.packet.clone().unwrap();
 
-        ctx = TestContext::setup_channel_end(ctx, Direction::Send, &packet);
+        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Send, &packet);
         ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
         ctx.packet = Some(packet);
 
@@ -682,7 +721,7 @@ impl TestContext {
         let mut ctx = TestContext::default(env);
         let packet = msg.clone();
 
-        ctx = TestContext::setup_channel_end(ctx, Direction::Send, &packet);
+        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Send, &packet);
         ctx.packet = Some(packet);
 
         ctx
@@ -698,7 +737,29 @@ impl TestContext {
             ..Default::default()
         };
 
-        ctx = TestContext::setup_channel_end(ctx, Direction::Send, &packet);
+        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Send, &packet);
+        ctx.packet = Some(packet);
+
+        ctx
+    }
+
+    pub fn for_packet_timeout(env: Env, msg: &RawMsgTimeout) -> Self {
+        let mut ctx = TestContext::default(env);
+        let packet = msg.packet.clone().unwrap();
+
+        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Send, &packet);
+        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
+        ctx.packet = Some(packet);
+
+        ctx
+    }
+
+    pub fn for_packet_timeout_on_close(env: Env, msg: &RawMsgTimeoutOnClose) -> Self {
+        let mut ctx = TestContext::default(env);
+        let packet = msg.packet.clone().unwrap();
+
+        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Send, &packet);
+        ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
         ctx.packet = Some(packet);
 
         ctx
@@ -714,7 +775,7 @@ impl TestContext {
             ..Default::default()
         };
 
-        ctx = TestContext::setup_channel_end(ctx, Direction::Receive, &packet);
+        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Receive, &packet);
         ctx.packet = Some(packet);
 
         ctx
@@ -730,7 +791,8 @@ impl TestContext {
             ..Default::default()
         };
 
-        ctx = TestContext::setup_channel_end(ctx, Direction::Receive, &packet);
+        ctx = TestContext::setup_channel_end(ctx, State::TryOpen, Direction::Receive, &packet);
+
         ctx.packet = Some(packet);
 
         ctx
@@ -752,7 +814,7 @@ impl TestContext {
             destination_channel: msg.counterparty_channel_id.clone(),
             ..Default::default()
         };
-        ctx = TestContext::setup_channel_end(ctx, Direction::Send, &packet);
+        ctx = TestContext::setup_channel_end(ctx, State::Open, Direction::Send, &packet);
         ctx.packet = Some(packet);
         ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
         ctx
@@ -767,7 +829,12 @@ impl TestContext {
         ctx
     }
 
-    fn setup_channel_end(mut ctx: TestContext, dir: Direction, packet: &RawPacket) -> TestContext {
+    fn setup_channel_end(
+        mut ctx: TestContext,
+        state: State,
+        dir: Direction,
+        packet: &RawPacket,
+    ) -> TestContext {
         let src_port = to_ibc_port_id(&packet.source_port).unwrap();
         let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
 
@@ -778,6 +845,7 @@ impl TestContext {
             Direction::Send => {
                 let mut chan_end_on_b = get_dummy_channel_end(&dst_port);
                 chan_end_on_b.set_counterparty_channel_id(dst_channel);
+                chan_end_on_b.set_state(state);
 
                 ctx.channel_end = Some(chan_end_on_b.clone());
                 ctx.port_id = src_port;
@@ -786,7 +854,7 @@ impl TestContext {
             Direction::Receive => {
                 let mut chan_end_on_b = get_dummy_channel_end(&src_port);
                 chan_end_on_b.set_counterparty_channel_id(src_channel);
-
+                chan_end_on_b.set_state(state);
                 ctx.channel_end = Some(chan_end_on_b.clone());
                 ctx.port_id = dst_port;
                 ctx.channel_id = dst_channel;
@@ -808,6 +876,56 @@ impl TestContext {
     pub fn init_receive_packet(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
+    }
+
+    pub fn init_connection_open_ack(
+        &mut self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
+        self.init_context(storage, contract);
+
+        contract
+            .connection_next_sequence_init(storage, u128::default().try_into().unwrap())
+            .unwrap();
+    }
+
+    pub fn init_connection_open_init(
+        &mut self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
+        self.init_context(storage, contract);
+
+        contract
+            .connection_next_sequence_init(storage, u128::default().try_into().unwrap())
+            .unwrap();
+    }
+
+    pub fn init_connection_open_confirm(
+        &mut self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
+        self.init_context(storage, contract);
+
+        contract
+            .connection_next_sequence_init(storage, u128::default().try_into().unwrap())
+            .unwrap();
+    }
+
+    pub fn init_connection_open_try(
+        &mut self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+        init_sequence: bool,
+    ) {
+        self.init_context(storage, contract);
+        if (init_sequence) {
+            contract
+                .connection_next_sequence_init(storage, u128::default().try_into().unwrap())
+                .unwrap();
+        }
     }
 
     pub fn init_channel_close_init(
@@ -882,6 +1000,26 @@ impl TestContext {
     }
 
     pub fn init_send_packet(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
+        self.save_next_sequence_send(storage, contract);
+        self.save_packet_commitment(storage, contract);
+        self.save_consensus_state(storage, self.client_state.clone().unwrap().latest_height);
+    }
+
+    pub fn init_timeout_packet(&mut self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
+        self.init_context(storage, contract);
+        self.register_port(storage, contract);
+        self.save_next_sequence_send(storage, contract);
+        self.save_packet_commitment(storage, contract);
+        self.save_consensus_state(storage, self.client_state.clone().unwrap().latest_height);
+    }
+
+    pub fn init_timeout_packet_on_close(
+        &mut self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
         self.init_context(storage, contract);
         self.register_port(storage, contract);
         self.save_next_sequence_send(storage, contract);
