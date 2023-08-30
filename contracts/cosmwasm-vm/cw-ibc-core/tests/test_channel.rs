@@ -33,11 +33,11 @@ use cw_ibc_core::ics04_channel::{
     EXECUTE_ON_CHANNEL_OPEN_TRY,
 };
 use cw_ibc_core::light_client::light_client::LightClient;
+use cw_ibc_core::traits::*;
 use cw_ibc_core::{
     context::CwIbcCoreContext, ics04_channel::create_channel_id_generated_event, ChannelEnd,
     ConnectionEnd, Sequence,
 };
-use cw_ibc_core::{traits::*, IbcClientType};
 
 pub mod channel;
 pub mod setup;

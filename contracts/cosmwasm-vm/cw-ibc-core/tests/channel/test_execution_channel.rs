@@ -1,19 +1,9 @@
-use std::collections::HashMap;
-
 use super::*;
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
 
-use common::ibc::core::ics24_host::identifier::ClientId;
-
 use cw_common::core_msg::InstantiateMsg;
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
-use cw_ibc_core::conversions::{
-    to_ibc_channel_id, to_ibc_timeout_block, to_ibc_timeout_height, to_ibc_timestamp,
-};
-use cw_ibc_core::light_client::light_client::LightClient;
-use cw_ibc_core::{
-    ics04_channel::close_init::on_chan_close_init_submessage, EXECUTE_ON_CHANNEL_CLOSE_INIT,
-};
+
 use cw_ibc_core::{
     EXECUTE_ON_CHANNEL_CLOSE_CONFIRM_ON_MODULE, EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
     EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE, VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
@@ -43,7 +33,7 @@ fn test_for_channel_open_init_execution_message() {
 
     let res = contract.execute(
         deps.as_mut(),
-        env.clone(),
+        env,
         info,
         CoreExecuteMsg::ChannelOpenInit {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
@@ -109,7 +99,7 @@ fn test_for_channel_open_ack_execution() {
 
     let res = contract.execute(
         deps.as_mut(),
-        env.clone(),
+        env,
         info,
         CoreExecuteMsg::ChannelOpenAck {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
@@ -219,7 +209,7 @@ fn test_for_channel_close_confirm() {
 
     let res = contract.execute(
         deps.as_mut(),
-        env.clone(),
+        env,
         info,
         CoreExecuteMsg::ChannelCloseConfirm {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
@@ -343,7 +333,7 @@ fn test_for_ack_execute() {
 
     let res = contract.execute(
         deps.as_mut(),
-        env.clone(),
+        env,
         info,
         CoreExecuteMsg::AcknowledgementPacket {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
