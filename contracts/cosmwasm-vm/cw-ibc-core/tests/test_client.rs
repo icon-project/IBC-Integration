@@ -340,10 +340,6 @@ fn check_for_client_state_from_storage() {
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
-    contract
-        .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
-        .unwrap();
-
     let client_id =
         common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
 

@@ -26,7 +26,6 @@ use cw_common::ProstMessage;
 
 use cw_ibc_core::conversions::{to_ibc_client_id, to_ibc_connection_id, to_ibc_height};
 use cw_ibc_core::ics04_channel::IbcClient;
-use cw_ibc_core::{ConnectionEnd, EXECUTE_CONNECTION_OPENTRY, EXECUTE_UPDATE_CLIENT};
 use cw_ibc_core::{IbcClientType, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT};
 
 use cw_common::core_msg::InstantiateMsg;

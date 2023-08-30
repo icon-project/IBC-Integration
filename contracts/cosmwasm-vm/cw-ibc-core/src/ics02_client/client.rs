@@ -2,6 +2,9 @@ use common::constants::ICON_CLIENT_STATE_TYPE_URL;
 use common::constants::ICON_CONSENSUS_STATE_TYPE_URL;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 
+use common::icon::icon::lightclient::v1::ClientState;
+use common::icon::icon::lightclient::v1::ConsensusState;
+use common::traits::AnyTypes;
 use common::{client_state::IClientState, consensus_state::IConsensusState};
 use cosmwasm_std::Deps;
 use cosmwasm_std::Env;
