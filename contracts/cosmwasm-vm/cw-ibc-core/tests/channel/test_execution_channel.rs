@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use super::*;
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
 
-use common::ibc::core::ics02_client::height::Height;
 use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cw_common::core_msg::InstantiateMsg;
@@ -33,7 +32,7 @@ fn test_for_channel_open_init_execution_message() {
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
     let client_state = get_dummy_client_state();
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -141,7 +140,7 @@ fn test_for_channel_open_try_execution_message() {
     mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.execute(
         deps.as_mut(),
-        env.clone(),
+        env,
         info,
         CoreExecuteMsg::ChannelOpenTry {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
@@ -192,7 +191,7 @@ fn test_for_channel_open_ack_execution() {
     query_map = mock_consensus_state_query(
         query_map,
         &IbcClientId::default(),
-        &consenus_state.clone(),
+        &consenus_state,
         height.revision_height(),
     );
 
@@ -230,7 +229,7 @@ fn test_for_channel_open_ack_execution() {
         .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -250,7 +249,7 @@ fn test_for_channel_open_ack_execution() {
         )
         .unwrap();
 
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,
@@ -302,7 +301,7 @@ fn test_for_channel_open_confirm() {
 
     let res = contract.execute(
         deps.as_mut(),
-        env.clone(),
+        env,
         info,
         CoreExecuteMsg::ChannelOpenConfirm {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
@@ -334,7 +333,7 @@ fn test_for_channel_close_init() {
         )
         .unwrap();
     let client_state = get_dummy_client_state();
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -490,7 +489,7 @@ fn test_for_channel_close_confirm() {
         .store_channel_end(&mut deps.storage, &port_id, &channel_id, &channel_end)
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -514,7 +513,7 @@ fn test_for_channel_close_confirm() {
     .try_into()
     .unwrap();
     let height = to_ibc_height(msg.proof_height.clone()).unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,
@@ -725,7 +724,7 @@ fn test_for_ack_execute() {
         )
         .unwrap();
     let client_state: ClientState = get_dummy_client_state();
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -741,7 +740,7 @@ fn test_for_ack_execute() {
     .try_into()
     .unwrap();
 
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,

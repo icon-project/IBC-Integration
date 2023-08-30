@@ -1,11 +1,11 @@
-use std::{collections::HashMap, hash::Hash, str::FromStr};
+use std::{collections::HashMap, str::FromStr};
 
 use cw_ibc_core::conversions::{
     to_ibc_channel, to_ibc_channel_id, to_ibc_client_id, to_ibc_connection_id, to_ibc_height,
     to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
 };
 use cw_ibc_core::ics03_connection::State as ConnectionState;
-use cw_ibc_core::ics04_channel::IbcClient;
+
 pub fn mock_height(
     number: u64,
     height: u64,
@@ -699,7 +699,7 @@ impl TestContext {
 
     pub fn for_connection_open_try(env: Env, msg: &RawMsgConnectionOpenTry) -> Self {
         let mut ctx = TestContext::default(env);
-        let mut connection = ctx.connection_end();
+        let connection = ctx.connection_end();
         ctx.connection_end = Some(connection);
         ctx.height = to_ibc_height(msg.proof_height.clone()).unwrap();
 
@@ -921,7 +921,7 @@ impl TestContext {
         init_sequence: bool,
     ) {
         self.init_context(storage, contract);
-        if (init_sequence) {
+        if init_sequence {
             contract
                 .connection_next_sequence_init(storage, u128::default().try_into().unwrap())
                 .unwrap();
@@ -1052,7 +1052,7 @@ impl TestContext {
         }
     }
 
-    pub fn save_consensus_state(&mut self, storage: &mut dyn Storage, height: u64) {
+    pub fn save_consensus_state(&mut self, _storage: &mut dyn Storage, height: u64) {
         if let Some(consensus_state) = self.consensus_state.clone() {
             let consensus_state_any = consensus_state.to_any();
             let query = LightClient::build_consensus_state_query(&self.client_id, height).unwrap();

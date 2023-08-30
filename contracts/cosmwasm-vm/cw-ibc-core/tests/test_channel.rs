@@ -509,7 +509,7 @@ fn test_validate_open_init_channel() {
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let env = mock_env();
     let raw = get_dummy_raw_msg_chan_open_init(None);
-    let mut test_context = TestContext::for_channel_open_init(env.clone(), &raw);
+    let mut test_context = TestContext::for_channel_open_init(env, &raw);
     test_context.init_channel_open_init(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries.clone(), &mut deps);
 
@@ -546,7 +546,7 @@ fn test_validate_open_init_channel_fail_missing_module_id() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let raw = get_dummy_raw_msg_chan_open_init(None);
-    let mut test_context = TestContext::for_channel_open_init(env.clone(), &raw);
+    let mut test_context = TestContext::for_channel_open_init(env, &raw);
     test_context.module_address = None;
     test_context.init_channel_open_init(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries.clone(), &mut deps);
@@ -620,7 +620,7 @@ fn test_validate_open_try_channel() {
 
     let client_state: ClientState = get_dummy_client_state();
 
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -645,7 +645,7 @@ fn test_validate_open_try_channel() {
     .try_into()
     .unwrap();
     let height = to_ibc_height(raw.proof_height.clone()).unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,

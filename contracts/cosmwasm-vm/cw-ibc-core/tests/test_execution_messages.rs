@@ -7,10 +7,9 @@ use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use common::utils::keccak256;
-use cosmwasm_std::SystemResult;
-use cosmwasm_std::WasmQuery;
+
+use cosmwasm_std::Binary;
 use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
-use cosmwasm_std::{Binary, ContractResult};
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
@@ -23,11 +22,8 @@ use std::time::Duration;
 
 use cw_common::ProstMessage;
 
-use cw_ibc_core::conversions::{to_ibc_client_id, to_ibc_connection_id, to_ibc_height};
-use cw_ibc_core::{
-    ConnectionEnd, IbcClientType, EXECUTE_CONNECTION_OPENTRY, EXECUTE_CREATE_CLIENT,
-    EXECUTE_UPDATE_CLIENT,
-};
+use cw_ibc_core::conversions::{to_ibc_connection_id, to_ibc_height};
+use cw_ibc_core::{ConnectionEnd, IbcClientType, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT};
 
 use cw_common::core_msg::InstantiateMsg;
 use cw_ibc_core::context::CwIbcCoreContext;
@@ -38,7 +34,7 @@ use common::icon::icon::lightclient::v1::ClientState as RawClientState;
 use common::icon::icon::lightclient::v1::ConsensusState as RawConsensusState;
 use common::traits::AnyTypes;
 use cw_common::core_msg::ExecuteMsg as CoreExecuteMsg;
-use cw_multi_test::Ibc;
+
 use setup::*;
 
 #[test]
@@ -445,7 +441,7 @@ fn test_for_connection_open_try_fails() {
     let response = contract
         .execute(
             deps.as_mut(),
-            env.clone(),
+            env,
             info,
             ExecuteMsg::ConnectionOpenTry {
                 msg: HexString::from_bytes(&message.encode_to_vec()),
@@ -516,7 +512,7 @@ fn test_connection_open_confirm_fails() {
         )
         .unwrap();
 
-    let cl = client_state.encode_to_vec();
+    let _cl = client_state.encode_to_vec();
 
     contract
         .store_client_commitment(
@@ -527,7 +523,7 @@ fn test_connection_open_confirm_fails() {
         )
         .unwrap();
 
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_commitment(

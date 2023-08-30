@@ -78,7 +78,7 @@ fn test_timeout_packet_fails_invalid_channel() {
 
     let client_state: ClientState = get_dummy_client_state();
 
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -106,7 +106,7 @@ fn test_timeout_packet_fails_invalid_channel() {
     .try_into()
     .unwrap();
 
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,
@@ -206,7 +206,7 @@ fn test_timeout_packet_fails_invalid_counterparty() {
 
     let client_state: ClientState = get_dummy_client_state();
 
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -234,7 +234,7 @@ fn test_timeout_packet_fails_invalid_counterparty() {
     .try_into()
     .unwrap();
 
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,
@@ -330,7 +330,7 @@ fn test_timeout_packet_fails_invalid_packet_commitment() {
 
     let client_state: ClientState = get_dummy_client_state();
 
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -358,7 +358,7 @@ fn test_timeout_packet_fails_invalid_packet_commitment() {
     .try_into()
     .unwrap();
 
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,
@@ -442,7 +442,7 @@ fn test_timeout_packet_fails_for_invalid_packet() {
 
     let client_state: ClientState = get_dummy_client_state();
 
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -470,7 +470,7 @@ fn test_timeout_packet_fails_for_invalid_packet() {
     .try_into()
     .unwrap();
 
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,

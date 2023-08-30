@@ -14,7 +14,7 @@ use cosmwasm_std::{to_binary, Addr, Binary, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
-use cw_common::ibc_types::IbcClientId;
+
 use cw_common::raw_types::client::{
     RawMsgCreateClient, RawMsgSubmitMisbehaviour, RawMsgUpdateClient, RawMsgUpgradeClient,
 };
@@ -365,7 +365,7 @@ fn check_for_client_state_from_storage() {
     let client_type = ClientType::new("iconclient".to_string());
     let client_id = ClientId::new(client_type.clone(), 0).unwrap();
     let mut test_context = TestContext::default(mock_env());
-    test_context.client_id = client_id.clone();
+    test_context.client_id = client_id;
     test_context.init_context(deps.as_mut().storage, &contract);
 
     contract
@@ -1468,12 +1468,12 @@ fn success_on_getting_client_state() {
     expected = "IbcClientError { error: ClientSpecific { description: \"LightclientNotFount\" } }"
 )]
 fn fails_on_getting_client_state() {
-    let mut deps = deps();
+    let deps = deps();
     let contract = CwIbcCoreContext::default();
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
-    let state = contract.client_state(deps.as_ref(), &client_id).unwrap();
+    let _state = contract.client_state(deps.as_ref(), &client_id).unwrap();
 }
 
 #[test]

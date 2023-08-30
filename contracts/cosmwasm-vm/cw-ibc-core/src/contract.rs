@@ -676,24 +676,13 @@ impl<'a> CwIbcCoreContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-    use std::str::FromStr;
 
     use crate::context::CwIbcCoreContext;
     use crate::contract::{CONTRACT_NAME, CONTRACT_VERSION};
-    use common::ibc::core::ics02_client::height::Height;
-    use common::{
-        constants::ICON_CONSENSUS_STATE_TYPE_URL,
-        icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
-    };
-    use cosmwasm_std::Binary;
 
     use crate::msg::MigrateMsg;
     use cw2::{get_contract_version, ContractVersion};
     use cw_common::ibc_types::IbcClientType;
-
-    use cw_common::cw_println;
-    use prost::Message;
 
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
 
@@ -702,8 +691,7 @@ mod tests {
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         Addr, OwnedDeps,
     };
-    use cw_common::ibc_types::IbcClientId;
-    use cw_common::raw_types::{Any, RawHeight};
+
     const SENDER: &str = "sender";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {

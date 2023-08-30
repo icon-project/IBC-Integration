@@ -7,7 +7,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Binary, CosmosMsg, Deps, SubMsg};
 use cw_common::client_msg::{LightClientPacketMessage, VerifyConnectionState};
 
-use cw_common::ibc_types::{IbcClientId, IbcConsensusState};
+use cw_common::ibc_types::IbcClientId;
 use cw_common::raw_types::Any;
 use cw_common::types::{VerifyChannelState, VerifyPacketAcknowledgement, VerifyPacketData};
 use cw_common::{client_msg::VerifyConnectionPayload, query_helpers::build_smart_query};

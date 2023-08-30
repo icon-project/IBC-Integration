@@ -1,10 +1,4 @@
-use std::collections::HashMap;
-
-use cw_ibc_core::{
-    conversions::{to_ibc_channel_id, to_ibc_timeout_height, to_ibc_timestamp},
-    light_client::light_client::LightClient,
-    VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE,
-};
+use cw_ibc_core::VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE;
 
 use super::*;
 

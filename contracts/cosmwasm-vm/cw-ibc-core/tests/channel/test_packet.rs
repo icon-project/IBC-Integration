@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_port_id};
 
 use super::*;
@@ -229,7 +227,7 @@ fn test_packet_send_fails_for_invalid_port() {
         ..get_dummy_client_state()
     };
 
-    let client = client_state.to_any().encode_to_vec();
+    let _client = client_state.to_any().encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -250,7 +248,7 @@ fn test_packet_send_fails_for_invalid_port() {
     }
     .try_into()
     .unwrap();
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
     contract
         .store_consensus_commitment(
             &mut deps.storage,

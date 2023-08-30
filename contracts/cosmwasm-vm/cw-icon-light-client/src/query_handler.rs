@@ -43,9 +43,9 @@ impl QueryHandler {
     ) -> Result<ConsensusState, ContractError> {
         let state = CLIENT_STATES
             .load(storage, client_id.to_string())
-            .map_err(|e| ContractError::Std(e))?;
+            .map_err(ContractError::Std)?;
         let client_state =
-            ClientState::decode(state.as_slice()).map_err(|e| ContractError::DecodeError(e))?;
+            ClientState::decode(state.as_slice()).map_err(ContractError::DecodeError)?;
 
         let consensus_state =
             QueryHandler::get_consensus_state(storage, client_id, client_state.latest_height)?;

@@ -1,12 +1,8 @@
 use common::ibc::core::ics24_host::identifier::ConnectionId;
-use common::icon::icon::lightclient::v1::ClientState;
-use common::icon::icon::lightclient::v1::ConsensusState;
-use common::traits::AnyTypes;
+
 use common::{client_state::IClientState, consensus_state::IConsensusState};
 use cosmwasm_std::Deps;
 use cosmwasm_std::Env;
-use prost::DecodeError;
-use prost::Message;
 
 use crate::ics24_host::LastProcessedOn;
 use crate::light_client::light_client::LightClient;
@@ -438,7 +434,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn IClientState>, ContractError> {
-        let light_client = self.get_client(deps.storage, &client_id)?;
+        let light_client = self.get_client(deps.storage, client_id)?;
         return light_client.get_client_state(deps, client_id);
     }
 
@@ -447,8 +443,8 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let light_client = self.get_client(deps.storage, &client_id)?;
-        return light_client.get_client_state_any(deps, client_id);
+        let light_client = self.get_client(deps.storage, client_id)?;
+        light_client.get_client_state_any(deps, client_id)
     }
 
     pub fn consensus_state(
@@ -457,7 +453,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: &common::ibc::Height,
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
-        let client_impl = self.get_client(deps.storage, &client_id)?;
+        let client_impl = self.get_client(deps.storage, client_id)?;
         let height = height.revision_height();
         return client_impl.get_consensus_state(deps, client_id, height);
     }
@@ -467,9 +463,9 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let client_impl = self.get_client(deps.storage, &client_id)?;
+        let client_impl = self.get_client(deps.storage, client_id)?;
 
-        return client_impl.get_latest_consensus_state(deps, client_id);
+        client_impl.get_latest_consensus_state(deps, client_id)
     }
 
     pub fn host_height(&self, env: &Env) -> Result<common::ibc::Height, ContractError> {

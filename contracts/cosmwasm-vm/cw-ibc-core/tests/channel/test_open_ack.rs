@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::*;
 use cosmwasm_std::IbcChannel;
 
@@ -10,7 +8,6 @@ use cw_ibc_core::{
         open_try::channel_open_try_msg_validate,
         EXECUTE_ON_CHANNEL_OPEN_ACK_ON_MODULE,
     },
-    light_client::light_client::LightClient,
 };
 
 #[test]
@@ -21,7 +18,7 @@ fn test_validate_open_ack_channel_fail_missing_counterparty() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_open_ack(10);
-    let mut test_context = TestContext::for_channel_open_ack(env.clone(), &msg);
+    let mut test_context = TestContext::for_channel_open_ack(env, &msg);
     // channel should be init
     let mut channel_end = test_context.channel_end();
     channel_end.set_state(State::Init);
@@ -49,7 +46,7 @@ fn test_validate_open_ack_channel() {
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let msg = get_dummy_raw_msg_chan_open_ack(10);
 
-    let mut test_context = TestContext::for_channel_open_ack(env.clone(), &msg);
+    let mut test_context = TestContext::for_channel_open_ack(env, &msg);
     let mut channel_end = test_context.channel_end();
     channel_end.set_state(State::Init);
     test_context.channel_end = Some(channel_end);
@@ -74,7 +71,7 @@ fn test_open_ack_channel_fail_invalid_state() {
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let msg = get_dummy_raw_msg_chan_open_ack(10);
 
-    let mut test_context = TestContext::for_channel_open_ack(env.clone(), &msg);
+    let mut test_context = TestContext::for_channel_open_ack(env, &msg);
     // channel should be init
     let mut channel_end = test_context.channel_end();
     channel_end.set_state(State::Open);

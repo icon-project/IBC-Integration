@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-
-use common::ibc::core::ics03_connection::connection::Counterparty as ConnectionCounterparty;
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 
 use common::ibc::core::ics04_channel::packet::Receipt;

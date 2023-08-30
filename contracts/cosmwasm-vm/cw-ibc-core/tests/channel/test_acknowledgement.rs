@@ -1,11 +1,4 @@
-use std::collections::HashMap;
-
-use common::icon::tendermint::light::LightHeader;
-use cw_ibc_core::{
-    conversions::{to_ibc_channel_id, to_ibc_packet, to_ibc_timeout_height, to_ibc_timestamp},
-    light_client::light_client::LightClient,
-    VALIDATE_ON_PACKET_ACKNOWLEDGEMENT_ON_MODULE,
-};
+use cw_ibc_core::conversions::to_ibc_channel_id;
 
 use super::*;
 

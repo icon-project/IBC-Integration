@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::str::FromStr;
+
 use std::time::Duration;
 
 pub mod setup;
@@ -14,10 +14,6 @@ use cosmwasm_std::to_binary;
 use cosmwasm_std::Binary;
 
 use cosmwasm_std::Addr;
-use cosmwasm_std::ContractResult;
-
-use cosmwasm_std::SystemResult;
-use cosmwasm_std::WasmQuery;
 
 use cw_common::get_address_storage_prefix;
 
@@ -439,7 +435,7 @@ fn connection_open_ack_validate_fail() {
         .store_client_implementations(&mut deps.storage, &client_id.clone(), light_client)
         .unwrap();
 
-    let client_state_bytes_any = client_state.encode_to_vec();
+    let _client_state_bytes_any = client_state.encode_to_vec();
 
     contract
         .store_client_commitment(
@@ -450,7 +446,7 @@ fn connection_open_ack_validate_fail() {
         )
         .unwrap();
 
-    let consenus_state_any = consenus_state.to_any().encode_to_vec();
+    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
 
     contract
         .store_consensus_commitment(
@@ -608,7 +604,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
     let contract = CwIbcCoreContext::default();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
-    let mut test_context = TestContext::for_connection_open_confirm(env.clone(), &message);
+    let mut test_context = TestContext::for_connection_open_confirm(env, &message);
 
     let mut conn = test_context.connection_end();
     conn.state = State::Init;
@@ -665,7 +661,7 @@ fn connection_open_init_fails_of_clientstate() {
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
 
-    let client_state_bytes = client_state.encode_to_vec();
+    let _client_state_bytes = client_state.encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,
@@ -787,7 +783,7 @@ fn connection_open_init_fails() {
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
     let client_id = to_ibc_client_id(&message.client_id).unwrap();
-    let cl = client_state.encode_to_vec();
+    let _cl = client_state.encode_to_vec();
     contract
         .store_client_commitment(
             &mut deps.storage,

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use cosmwasm_std::IbcChannel;
 
 use cw_ibc_core::{
@@ -8,7 +6,6 @@ use cw_ibc_core::{
         open_confirm::{channel_open_confirm_validate, on_chan_open_confirm_submessage},
         EXECUTE_ON_CHANNEL_OPEN_CONFIRM_ON_MODULE,
     },
-    light_client::light_client::LightClient,
 };
 
 use super::*;
@@ -21,7 +18,7 @@ fn test_validate_open_confirm_channel_fail_missing_counterparty() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 2000);
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-    let mut test_context = TestContext::for_channel_open_confirm(env.clone(), &msg);
+    let mut test_context = TestContext::for_channel_open_confirm(env, &msg);
     let mut conn_end = test_context.connection_end();
     let mut counter_party = conn_end.counterparty().clone();
     counter_party.connection_id = None;
@@ -43,7 +40,7 @@ fn test_validate_open_confirm_channel() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-    let mut test_context = TestContext::for_channel_open_confirm(env.clone(), &msg);
+    let mut test_context = TestContext::for_channel_open_confirm(env, &msg);
     let mut channel_end = test_context.channel_end();
     channel_end.state = State::TryOpen;
     test_context.channel_end = Some(channel_end);
@@ -70,7 +67,7 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("channel-creater", "umlg", 20000000);
     let msg = get_dummy_raw_msg_chan_open_confirm(10);
-    let mut test_context = TestContext::for_channel_open_confirm(env.clone(), &msg);
+    let mut test_context = TestContext::for_channel_open_confirm(env, &msg);
     let mut channel_end = test_context.channel_end();
     channel_end.state = State::Open;
     test_context.channel_end = Some(channel_end);
@@ -78,7 +75,7 @@ fn test_execute_open_confirm_channel_fail_invalid_state() {
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
-    let res = contract
+    let _res = contract
         .validate_channel_open_confirm(deps.as_mut(), info, &msg)
         .unwrap();
 }
