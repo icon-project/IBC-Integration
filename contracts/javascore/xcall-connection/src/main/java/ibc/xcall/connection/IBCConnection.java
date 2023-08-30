@@ -18,6 +18,7 @@ package ibc.xcall.connection;
 
 
 import java.math.BigInteger;
+import java.util.Map;
 
 import icon.proto.core.channel.Channel.Counterparty;
 import icon.proto.core.channel.Channel.Order;
@@ -30,6 +31,7 @@ import score.DictDB;
 import score.VarDB;
 import score.annotation.External;
 import score.annotation.Payable;
+import scorex.util.HashMap;
 
 public class IBCConnection {
     public static String PORT;
@@ -105,6 +107,21 @@ public class IBCConnection {
         configuredNetworkIds.at(connectionId).set(counterpartyPortId, counterpartyNid);
         configuredClients.set(connectionId, clientId);
         configuredTimeoutHeight.set(connectionId, timeoutHeight);
+    }
+
+    @External(readonly = true)
+    public Map<String, String> getIBCConfig(String nid) {
+        Map<String, String> config = new HashMap<>();
+        String channelId = channels.getOrDefault(nid, "");
+
+        config.put("channelId", channelId);
+        config.put("port", PORT);
+        config.put("destinationChannelId", destinationChannel.getOrDefault(channelId, ""));
+        config.put("destinationPort", destinationPort.getOrDefault(channelId, ""));
+        config.put("lightClient", lightClients.getOrDefault(channelId, ""));
+        config.put("timeoutHeight", timeoutHeights.getOrDefault(channelId, BigInteger.ZERO).toString());
+
+        return config;
     }
 
     @Payable
