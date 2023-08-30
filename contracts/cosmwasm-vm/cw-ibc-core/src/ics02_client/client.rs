@@ -335,37 +335,6 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(client.unwrap())
     }
 
-    /// This method retrieves the client state from storage using the client ID.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is an abstract
-    /// type that represents a key-value store where data can be stored and retrieved. The specific
-    /// implementation of the `Storage` trait is not specified in this function, allowing for
-    /// flexibility in choosing the type of storage
-    /// * `client_id`: The `client_id` parameter is of type `ClientId` and represents the identifier of
-    /// an IBC client. It is used to retrieve the client state from the storage.
-    ///
-    /// Returns:
-    ///
-    /// a `Result` containing either a `Vec<u8>` representing the client state or a `ContractError` if
-    /// there was an error loading the client state from the storage.
-    // pub fn get_client_state(
-    //     &self,
-    //     store: &dyn Storage,
-    //     client_id: &ClientId,
-    // ) -> Result<Vec<u8>, ContractError> {
-    //     let client_state = self
-    //         .ibc_store()
-    //         .client_states()
-    //         .load(store, client_id)
-    //         .map_err(|_| ContractError::IbcDecodeError {
-    //             error: DecodeError::new("NotFound ClientId(".to_owned() + client_id.as_str() + ")"),
-    //         })?;
-
-    //     Ok(client_state)
-    // }
-
     /// This method retrieves the commitment from storage using the commitment key (PacketCommitment,AckCommitment,Connection,Channel,Client).
     ///
     /// Arguments:

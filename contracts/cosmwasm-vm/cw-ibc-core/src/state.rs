@@ -207,14 +207,6 @@ impl<'a> CwIbcStore<'a> {
         &self.last_processed_on
     }
 
-    // pub fn client_states(&self) -> &Map<'a, &'a IbcClientId, Vec<u8>> {
-    //     &self.client_states
-    // }
-
-    // pub fn consensus_states(&self) -> &Map<'a, &'a IbcClientId, Vec<u8>> {
-    //     &self.consensus_states
-    // }
-
     pub fn callback_data(&self) -> &Map<'a, u64, Vec<u8>> {
         &self.callback_data
     }
