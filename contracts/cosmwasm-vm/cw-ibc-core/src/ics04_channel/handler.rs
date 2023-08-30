@@ -233,7 +233,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         };
         let client_id = connection_end.client_id().clone();
 
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
@@ -363,7 +363,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             client_id: client_id.to_string(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         channel_end.set_version(version);
@@ -490,7 +490,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let client_id = connection_end.client_id().clone();
 
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         channel_end.set_state(State::Open); // State Change
@@ -692,7 +692,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         };
 
         let client_id = connection_end.client_id().clone();
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         // Getting the module address for on channel open try call

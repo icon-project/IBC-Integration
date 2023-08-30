@@ -324,7 +324,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// a `Result` object that contains either a `String` representing the client or a `ContractError` if
     /// there was an error retrieving the client from the storage or if the client was not found.
-    pub fn get_client(
+    pub fn get_light_client(
         &self,
         store: &dyn Storage,
         client_id: &ClientId,
@@ -408,7 +408,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn IClientState>, ContractError> {
-        let light_client = self.get_client(deps.storage, client_id)?;
+        let light_client = self.get_light_client(deps.storage, client_id)?;
         return light_client.get_client_state(deps, client_id);
     }
 
@@ -417,7 +417,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let light_client = self.get_client(deps.storage, client_id)?;
+        let light_client = self.get_light_client(deps.storage, client_id)?;
         light_client.get_client_state_any(deps, client_id)
     }
 
@@ -427,7 +427,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: &common::ibc::Height,
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
-        let client_impl = self.get_client(deps.storage, client_id)?;
+        let client_impl = self.get_light_client(deps.storage, client_id)?;
         let height = height.revision_height();
         return client_impl.get_consensus_state(deps, client_id, height);
     }
@@ -437,7 +437,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let client_impl = self.get_client(deps.storage, client_id)?;
+        let client_impl = self.get_light_client(deps.storage, client_id)?;
 
         client_impl.get_latest_consensus_state(deps, client_id)
     }

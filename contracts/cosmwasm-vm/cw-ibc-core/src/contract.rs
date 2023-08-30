@@ -288,7 +288,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetConsensusStateByHeight { client_id, height } => {
                 let client_val = IbcClientId::from_str(&client_id).unwrap();
-                let client = self.get_client(deps.storage, &client_val).unwrap();
+                let client = self.get_light_client(deps.storage, &client_val).unwrap();
                 let res = client
                     .get_consensus_state(deps, &client_val, height)
                     .unwrap();
@@ -498,7 +498,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetPreviousConsensusStateHeight { client_id, height } => {
                 let client_val = IbcClientId::from_str(&client_id).unwrap();
-                let client = self.get_client(deps.storage, &client_val).unwrap();
+                let client = self.get_light_client(deps.storage, &client_val).unwrap();
                 let res = client
                     .get_previous_consensus_state(deps, &client_val, height)
                     .unwrap();

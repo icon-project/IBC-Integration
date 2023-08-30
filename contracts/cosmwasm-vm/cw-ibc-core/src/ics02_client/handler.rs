@@ -146,7 +146,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             error: ClientError::MissingRawHeader,
         })?;
 
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
@@ -244,7 +244,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 .map_err(ContractError::Std)?,
         };
 
-        let client = self.get_client(deps.storage, &client_id)?;
+        let client = self.get_light_client(deps.storage, &client_id)?;
 
         let wasm_msg: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
             contract_addr: client.get_address(),
@@ -477,7 +477,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into);
         }
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
 
         let clinet_message = LightClientMessage::Misbehaviour {
             client_id: client_id.to_string(),

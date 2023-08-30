@@ -1186,7 +1186,7 @@ fn sucess_on_getting_client() {
         .unwrap();
 
     let result = contract
-        .get_client(mock_deps.as_ref().storage, &client_id)
+        .get_light_client(mock_deps.as_ref().storage, &client_id)
         .unwrap();
 
     assert_eq!(result, client_address)
@@ -1203,7 +1203,7 @@ fn fails_on_getting_client_empty_client() {
     let client_id = ClientId::new(client_type, 0).unwrap();
 
     contract
-        .get_client(mock_deps.as_ref().storage, &client_id)
+        .get_light_client(mock_deps.as_ref().storage, &client_id)
         .unwrap();
 }
 

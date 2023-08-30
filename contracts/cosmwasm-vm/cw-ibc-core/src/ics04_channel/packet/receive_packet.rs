@@ -142,7 +142,7 @@ impl<'a> CwIbcCoreContext<'a> {
             commitment: expected_commitment_on_a.into_vec(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id)?;
         client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id)?;
 
         cw_println!(deps, "before packet already received ");

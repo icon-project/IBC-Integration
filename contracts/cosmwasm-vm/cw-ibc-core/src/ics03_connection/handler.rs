@@ -198,7 +198,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
 
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id)?;
 
         let expected_connection_end: ConnectionEnd = ConnectionEnd::new(
             State::TryOpen,
@@ -343,7 +343,7 @@ impl<'a> CwIbcCoreContext<'a> {
             from_utf8(&prefix.clone().into_vec()).unwrap()
         );
 
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
 
         let expected_connection_end = ConnectionEnd::new(
             State::Init,
@@ -513,13 +513,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         ensure_connection_state(&connection_id, &connection_end, &State::TryOpen)?;
 
-        cw_println!(deps, "Connection State Matched");
-
-        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
-
-        cw_println!(deps, "Consensus State Decoded");
-
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id)?;
 
         let expected_connection_end = ConnectionEnd::new(
             State::Open,
@@ -530,11 +524,6 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         let connection_path = commitment::connection_path(counterparty.connection_id().unwrap());
-        cw_println!(
-            deps,
-            "[ConnOpenConfirm]: CounterParty Conn Path  {:?}",
-            hex::encode(&connection_path)
-        );
 
         let verify_connection_state = VerifyConnectionState::new(
             proof_height.to_string(),
@@ -542,12 +531,6 @@ impl<'a> CwIbcCoreContext<'a> {
             msg.proof_ack,
             connection_path,
             expected_connection_end.encode_vec().unwrap(),
-        );
-
-        cw_println!(
-            deps,
-            "Verify Connection State {:?}",
-            verify_connection_state
         );
         client.verify_connection_open_confirm(deps.as_ref(), verify_connection_state, client_id)?;
 
