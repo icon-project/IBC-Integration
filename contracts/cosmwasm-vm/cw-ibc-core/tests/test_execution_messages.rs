@@ -453,7 +453,7 @@ fn test_for_connection_open_try_fails() {
 
 #[test]
 #[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>\" })")]
-fn test_connection_open_confirm_fails() {
+fn test_connection_open_confirm_fails_connection_not_found() {
     let mut deps = deps();
     let env = get_mock_env();
     let info = create_mock_info("alice", "umlg", 3000);
@@ -468,75 +468,10 @@ fn test_connection_open_confirm_fails() {
         .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_confirm();
-    let connection_id = to_ibc_connection_id(&message.connection_id).unwrap();
-    let proof_height = to_ibc_height(message.proof_height.clone()).unwrap();
-
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: "helloconnectionmessage".as_bytes().to_vec(),
-        next_proof_context_hash: vec![1, 2, 3],
-    }
-    .try_into()
-    .unwrap();
-    let client_state: ClientState = get_dummy_client_state();
-
-    let counterparty_prefix =
-        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-            "hello".as_bytes().to_vec(),
-        )
-        .unwrap();
-    let counterparty_client_id = ClientId::from_str("counterpartyclient-1").unwrap();
-    let counter_party = common::ibc::core::ics03_connection::connection::Counterparty::new(
-        counterparty_client_id,
-        connection_id.into(),
-        counterparty_prefix,
-    );
-
-    let conn_end = ConnectionEnd::new(
-        common::ibc::core::ics03_connection::connection::State::TryOpen,
-        IbcClientId::default(),
-        counter_party,
-        vec![common::ibc::core::ics03_connection::version::Version::default()],
-        Duration::default(),
-    );
-    let conn_id = ConnectionId::new(1);
-    contract
-        .store_connection(&mut deps.storage, &conn_id, &conn_end)
-        .unwrap();
-
-    let light_client = LightClient::new("lightclient".to_string());
-    contract
-        .store_client_implementations(
-            &mut deps.storage,
-            &conn_end.client_id().clone(),
-            light_client,
-        )
-        .unwrap();
-
-    let _cl = client_state.encode_to_vec();
-
-    contract
-        .store_client_commitment(
-            &mut deps.storage,
-            &get_mock_env(),
-            &conn_end.client_id().clone(),
-            client_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-
-    let _consenus_state_any = consenus_state.to_any().encode_to_vec();
-
-    contract
-        .store_consensus_commitment(
-            &mut deps.storage,
-            &conn_end.client_id().clone(),
-            proof_height,
-            consenus_state.get_keccak_hash().to_vec(),
-        )
-        .unwrap();
-
-    contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
-        .unwrap();
+    let mut test_context = TestContext::for_connection_open_confirm(env.clone(), &message);
+    test_context.connection_end = None;
+    test_context.init_connection_open_confirm(deps.as_mut().storage, &contract);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     contract
         .execute(
