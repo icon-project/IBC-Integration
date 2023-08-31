@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_port_id};
 
 use super::*;

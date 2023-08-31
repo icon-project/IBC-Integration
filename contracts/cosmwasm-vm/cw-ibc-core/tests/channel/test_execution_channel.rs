@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::*;
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
 

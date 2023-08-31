@@ -1052,19 +1052,14 @@ impl TestContext {
                 .store_last_processed_on(storage, &self.env, &self.client_id)
                 .unwrap();
             self.save_timestamp_at_height(client_state.latest_height, 0_u64);
-           
         }
     }
 
-    pub fn save_timestamp_at_height(&mut self,height:u64,timestamp:u64){
-        let timestamp_query = LightClient::get_timestamp_at_height_query(
-            &self.client_id,
-            height,
-        )
-        .unwrap();
+    pub fn save_timestamp_at_height(&mut self, height: u64, timestamp: u64) {
+        let timestamp_query =
+            LightClient::get_timestamp_at_height_query(&self.client_id, height).unwrap();
         self.mock_queries
             .insert(timestamp_query, to_binary(&timestamp).unwrap());
-
     }
 
     pub fn save_consensus_state(&mut self, _storage: &mut dyn Storage, height: u64) {
