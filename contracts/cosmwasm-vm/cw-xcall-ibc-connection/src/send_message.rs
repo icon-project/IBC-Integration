@@ -39,6 +39,10 @@ impl<'a> CwIbcConnection<'a> {
             )?;
         }
 
+        if network_fee.send_packet_fee+network_fee.ack_fee < info.funds[0].amount.into() {
+            return Err(ContractError::InsufficientFunds {});
+        }
+
         let timeout_height =
             self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
         let msg = Message {
