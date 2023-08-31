@@ -77,7 +77,7 @@ fn test_timeout_packet_fails_invalid_packet_commitment() {
 
     let mut msg = get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
     let mut test_context = TestContext::for_packet_timeout(env.clone(), &msg);
-
+    test_context.save_timestamp_at_height(proof_height, 0);
     test_context.init_timeout_packet(deps.as_mut().storage, &contract);
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
@@ -107,7 +107,7 @@ fn test_timeout_packet_fails_for_invalid_packet() {
     let timeout_timestamp = 0;
     let mut msg = get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
     let mut test_context = TestContext::for_packet_timeout(env.clone(), &msg);
-
+    test_context.save_timestamp_at_height(proof_height, 0);
     test_context.init_timeout_packet(deps.as_mut().storage, &contract);
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
@@ -135,6 +135,7 @@ fn test_timeout_packet_validate_to_light_client() {
     let msg = get_dummy_raw_msg_timeout(proof_height, timeout_height, timeout_timestamp);
     let mut test_context = TestContext::for_packet_timeout(env.clone(), &msg);
     test_context.init_timeout_packet(deps.as_mut().storage, &contract);
+    test_context.save_timestamp_at_height(proof_height, 0);
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
