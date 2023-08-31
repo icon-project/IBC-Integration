@@ -64,7 +64,7 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-        self.init(deps.storage, info, msg)
+        self.init(deps, info, msg)
     }
 
     /// This function executes various messages based on their type and returns a response or an error.
@@ -297,22 +297,24 @@ impl<'a> CwIbcConnection<'a> {
     /// occur during contract execution.
     fn init(
         &self,
-        store: &mut dyn Storage,
+        deps: DepsMut,
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
         let owner = info.sender.as_str().to_string();
 
-        self.add_owner(store, owner.clone())?;
-        self.add_admin(store, info, owner)?;
+        self.add_owner(deps.storage, owner.clone())?;
+        self.add_admin(deps.storage, info, owner)?;
         // self.set_timeout_height(store, msg.timeout_height)?;
-        self.set_ibc_host(store, msg.ibc_host.clone())?;
-        self.set_xcall_host(store, msg.xcall_address)?;
+        let ibc_host = deps.api.addr_validate(&msg.ibc_host.to_string())?;
+        let xcall_address = deps.api.addr_validate(&msg.xcall_address.to_string())?;
+        self.set_ibc_host(deps.storage, ibc_host)?;
+        self.set_xcall_host(deps.storage, xcall_address)?;
         let config = Config {
             port_id: msg.port_id,
             denom: msg.denom,
         };
-        self.store_config(store, &config)?;
+        self.store_config(deps.storage, &config)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")

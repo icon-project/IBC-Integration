@@ -37,7 +37,7 @@ impl<'a> CwIbcConnection<'a> {
         let nid = channel_config.counterparty_nid;
         let denom = self.get_denom(deps.as_ref().storage)?;
         if n_message.sn.is_none() {
-            let receiver_address = from_utf8(&n_message.data).unwrap();
+            let receiver_address = deps.api.addr_validate(from_utf8(&n_message.data).unwrap())?;
             let amount = n_message.fee;
             let msg = BankMsg::Send {
                 to_address: receiver_address.to_string(),
