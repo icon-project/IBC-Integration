@@ -1,0 +1,25 @@
+# .github/release.yml
+
+changelog:
+  exclude:
+    labels:
+      - cicd
+      - scripts
+      - test
+  categories:
+    - title: Breaking Changes 🛠
+      labels:
+        - Major
+        - breaking-change
+    - title: New Features 🎉
+      labels:
+        - Minor
+        - enhancement
+        - Feature
+    - title: Bug Fixes 🐛
+      labels:
+        - Patch
+        - bug
+    - title: Other Changes 📝
+      labels:
+        - "*"

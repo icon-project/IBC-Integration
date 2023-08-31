@@ -86,16 +86,24 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
-task collectJars(type: Copy) {
-    from subprojects.jar
+
+task collectOptimizedJars(type: Copy) {
+    from subprojects.collect { subproject ->
+        subproject.fileTree('build/libs') {
+            include '**/*-optimized.jar'
+        }
+    }
     into "$buildDir/output-jars"
 }
 
-task zipOutputJars(type: Zip) {
-    dependsOn collectJars
-    from "$buildDir/output-jars"
-    archiveFileName = "${rootProject.name}-output-jars.zip"
+task zipOutputOptimizedJars(type: Zip) {
+    dependsOn collectOptimizedJars
+    from("$buildDir/output-jars") {
+        include '**/*-optimized.jar'
+    }
+    archiveFileName = "javascore-contracts.zip"
     destinationDirectory = file("$buildDir")
 }
+
 
 
